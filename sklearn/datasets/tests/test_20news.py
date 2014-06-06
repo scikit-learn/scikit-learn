@@ -41,7 +41,7 @@ def test_20news():
 
 def test_20news_vectorized():
     # This test is slow.
-    raise SkipTest
+    raise SkipTest("Test too slow.")
 
     bunch = datasets.fetch_20newsgroups_vectorized(subset="train")
     assert_true(sp.isspmatrix_csr(bunch.data))

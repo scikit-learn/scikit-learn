@@ -56,7 +56,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
 
     Notes
     -----
-    When used for text classification with tf–idf vectors, this classifier is
+    When used for text classification with tf-idf vectors, this classifier is
     also known as the Rocchio classifier.
 
     References

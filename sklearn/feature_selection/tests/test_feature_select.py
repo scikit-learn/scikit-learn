@@ -5,13 +5,18 @@ Todo: cross-check the F-value with stats model
 import itertools
 import numpy as np
 from scipy import stats, sparse
-import warnings
 
-from nose.tools import assert_equal, assert_raises, assert_true
-from numpy.testing import assert_array_equal, assert_array_almost_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_not_in
-
+from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import ignore_warnings
 from sklearn.utils import safe_mask
+
 from sklearn.datasets.samples_generator import (make_classification,
                                                 make_regression)
 from sklearn.feature_selection import (chi2, f_classif, f_oneway, f_regression,
@@ -37,7 +42,14 @@ def test_f_oneway_vs_scipy_stats():
 def test_f_oneway_ints():
     # Smoke test f_oneway on integers: that it does raise casting errors
     # with recent numpys
-    f_oneway(np.random.randint(10, size=(10, 10)), np.arange(10))
+    X = np.random.randint(10, size=(10, 10))
+    y = np.arange(10)
+    fint, pint = f_oneway(X, y)
+
+    # test that is gives the same result as with float
+    f, p = f_oneway(X.astype(np.float), y)
+    assert_array_almost_equal(f, fint, decimal=5)
+    assert_array_almost_equal(p, pint, decimal=5)
 
 
 def test_f_classif():
@@ -53,11 +65,11 @@ def test_f_classif():
 
     F, pv = f_classif(X, y)
     F_sparse,  pv_sparse = f_classif(sparse.csr_matrix(X), y)
-    assert(F > 0).all()
-    assert(pv > 0).all()
-    assert(pv < 1).all()
-    assert(pv[:5] < 0.05).all()
-    assert(pv[5:] > 1.e-4).all()
+    assert_true((F > 0).all())
+    assert_true((pv > 0).all())
+    assert_true((pv < 1).all())
+    assert_true((pv[:5] < 0.05).all())
+    assert_true((pv[5:] > 1.e-4).all())
     assert_array_almost_equal(F_sparse, F)
     assert_array_almost_equal(pv_sparse, pv)
 
@@ -71,11 +83,11 @@ def test_f_regression():
                            shuffle=False, random_state=0)
 
     F, pv = f_regression(X, y)
-    assert(F > 0).all()
-    assert(pv > 0).all()
-    assert(pv < 1).all()
-    assert(pv[:5] < 0.05).all()
-    assert(pv[5:] > 1.e-4).all()
+    assert_true((F > 0).all())
+    assert_true((pv > 0).all())
+    assert_true((pv < 1).all())
+    assert_true((pv[:5] < 0.05).all())
+    assert_true((pv[5:] > 1.e-4).all())
 
     # again without centering, compare with sparse
     F, pv = f_regression(X, y, center=False)
@@ -99,6 +111,25 @@ def test_f_regression_input_dtype():
     assert_array_almost_equal(pv1, pv2, 5)
 
 
+def test_f_regression_center():
+    """Test whether f_regression preserves dof according to 'center' argument
+
+    We use two centered variates so we have a simple relationship between
+    F-score with variates centering and F-score without variates centering.
+    """
+    # Create toy example
+    X = np.arange(-5, 6)  # X has zero mean
+    n_samples = X.size
+    Y = np.ones(n_samples)
+    Y[::2] *= -1.
+    Y[0] = 0.  # have Y mean being null
+
+    F1, _ = f_regression(X, Y, center=True)
+    F2, _ = f_regression(X, Y, center=False)
+    assert_array_almost_equal(F1 * (n_samples - 1.) / (n_samples - 2.), F2)
+    assert_almost_equal(F2[0], 0.232558139)  # value from statsmodels OLS
+
+
 def test_f_classif_multi_class():
     """
     Test whether the F test yields meaningful results
@@ -111,11 +142,11 @@ def test_f_classif_multi_class():
                                class_sep=10, shuffle=False, random_state=0)
 
     F, pv = f_classif(X, y)
-    assert(F > 0).all()
-    assert(pv > 0).all()
-    assert(pv < 1).all()
-    assert(pv[:5] < 0.05).all()
-    assert(pv[5:] > 1.e-5).all()
+    assert_true((F > 0).all())
+    assert_true((pv > 0).all())
+    assert_true((pv < 1).all())
+    assert_true((pv[:5] < 0.05).all())
+    assert_true((pv[5:] > 1.e-4).all())
 
 
 def test_select_percentile_classif():
@@ -210,6 +241,20 @@ def test_select_kbest_all():
     assert_array_equal(X, X_r)
 
 
+def test_select_kbest_zero():
+    """
+    Test whether k=0 correctly returns no features.
+    """
+    X, y = make_classification(n_samples=20, n_features=10,
+                               shuffle=False, random_state=0)
+
+    univariate_filter = SelectKBest(f_classif, k=0)
+    univariate_filter.fit(X, y).transform(X)
+    support = univariate_filter.get_support()
+    gtruth = np.zeros(10, dtype=bool)
+    assert_array_equal(support, gtruth)
+
+
 def test_select_fpr_classif():
     """
     Test whether the relative univariate feature selection
@@ -276,7 +321,7 @@ def test_select_fwe_classif():
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
     gtruth[:5] = 1
-    assert(np.sum(np.abs(support - gtruth)) < 2)
+    assert_array_almost_equal(support, gtruth)
 
 
 ##############################################################################
@@ -337,7 +382,15 @@ def test_select_percentile_regression_full():
 
 
 def test_invalid_percentile():
-    assert_raises(ValueError, SelectPercentile, percentile=101)
+    X, y = make_regression(n_samples=10, n_features=20,
+                           n_informative=2, shuffle=False, random_state=0)
+
+    assert_raises(ValueError, SelectPercentile(percentile=-1).fit, X, y)
+    assert_raises(ValueError, SelectPercentile(percentile=101).fit, X, y)
+    assert_raises(ValueError, GenericUnivariateSelect(mode='percentile',
+                                                      param=-1).fit, X, y)
+    assert_raises(ValueError, GenericUnivariateSelect(mode='percentile',
+                                                      param=101).fit, X, y)
 
 
 def test_select_kbest_regression():
@@ -378,8 +431,8 @@ def test_select_fpr_regression():
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
     gtruth[:5] = 1
-    assert(support[:5] == 1).all()
-    assert(np.sum(support[5:] == 1) < 3)
+    assert_array_equal(support[:5], np.ones((5, ), dtype=np.bool))
+    assert_less(np.sum(support[5:] == 1), 3)
 
 
 def test_select_fdr_regression():
@@ -419,8 +472,8 @@ def test_select_fwe_regression():
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
     gtruth[:5] = 1
-    assert(support[:5] == 1).all()
-    assert(np.sum(support[5:] == 1) < 2)
+    assert_array_equal(support[:5], np.ones((5, ), dtype=np.bool))
+    assert_less(np.sum(support[5:] == 1), 2)
 
 
 def test_selectkbest_tiebreaking():
@@ -432,16 +485,15 @@ def test_selectkbest_tiebreaking():
     y = [1]
     dummy_score = lambda X, y: (X[0], X[0])
     for X in Xs:
-        with warnings.catch_warnings(record=True):
-            sel = SelectKBest(dummy_score, k=1)
-            X1 = sel.fit_transform([X], y)
-            assert_equal(X1.shape[1], 1)
-            assert_best_scores_kept(sel)
+        sel = SelectKBest(dummy_score, k=1)
+        X1 = ignore_warnings(sel.fit_transform)([X], y)
+        assert_equal(X1.shape[1], 1)
+        assert_best_scores_kept(sel)
 
-            sel = SelectKBest(dummy_score, k=2)
-            X2 = sel.fit_transform([X], y)
-            assert_equal(X2.shape[1], 2)
-            assert_best_scores_kept(sel)
+        sel = SelectKBest(dummy_score, k=2)
+        X2 = ignore_warnings(sel.fit_transform)([X], y)
+        assert_equal(X2.shape[1], 2)
+        assert_best_scores_kept(sel)
 
 
 def test_selectpercentile_tiebreaking():
@@ -451,16 +503,15 @@ def test_selectpercentile_tiebreaking():
     y = [1]
     dummy_score = lambda X, y: (X[0], X[0])
     for X in Xs:
-        with warnings.catch_warnings(record=True):
-            sel = SelectPercentile(dummy_score, percentile=34)
-            X1 = sel.fit_transform([X], y)
-            assert_equal(X1.shape[1], 1)
-            assert_best_scores_kept(sel)
+        sel = SelectPercentile(dummy_score, percentile=34)
+        X1 = ignore_warnings(sel.fit_transform)([X], y)
+        assert_equal(X1.shape[1], 1)
+        assert_best_scores_kept(sel)
 
-            sel = SelectPercentile(dummy_score, percentile=67)
-            X2 = sel.fit_transform([X], y)
-            assert_equal(X2.shape[1], 2)
-            assert_best_scores_kept(sel)
+        sel = SelectPercentile(dummy_score, percentile=67)
+        X2 = ignore_warnings(sel.fit_transform)([X], y)
+        assert_equal(X2.shape[1], 2)
+        assert_best_scores_kept(sel)
 
 
 def test_tied_pvalues():
@@ -481,21 +532,46 @@ def test_tied_pvalues():
         assert_not_in(9998, Xt)
 
 
+def test_tied_scores():
+    """Test for stable sorting in k-best with tied scores."""
+    X_train = np.array([[0, 0, 0], [1, 1, 1]])
+    y_train = [0, 1]
+
+    for n_features in [1, 2, 3]:
+        sel = SelectKBest(chi2, k=n_features).fit(X_train, y_train)
+        X_test = sel.transform([0, 1, 2])
+        assert_array_equal(X_test[0], np.arange(3)[-n_features:])
+
+
 def test_nans():
     """Assert that SelectKBest and SelectPercentile can handle NaNs."""
     # First feature has zero variance to confuse f_classif (ANOVA) and
     # make it return a NaN.
-    X = [[0, 1, 0],
-         [0, -1, -1],
-         [0, .5, .5]]
+    X = [[0, 1, 0], [0, -1, -1], [0, .5, .5]]
     y = [1, 0, 1]
 
     for select in (SelectKBest(f_classif, 2),
                    SelectPercentile(f_classif, percentile=67)):
-        select.fit(X, y)
+        ignore_warnings(select.fit)(X, y)
         assert_array_equal(select.get_support(indices=True), np.array([1, 2]))
 
 
 def test_score_func_error():
-    # test that score-func needs to be a callable
-    assert_raises(TypeError, SelectKBest, score_func=10)
+    X = [[0, 1, 0], [0, -1, -1], [0, .5, .5]]
+    y = [1, 0, 1]
+
+    for SelectFeatures in [SelectKBest, SelectPercentile, SelectFwe,
+                           SelectFdr, SelectFpr, GenericUnivariateSelect]:
+        assert_raises(TypeError, SelectFeatures(score_func=10).fit, X, y)
+
+
+def test_invalid_k():
+    X = [[0, 1, 0], [0, -1, -1], [0, .5, .5]]
+    y = [1, 0, 1]
+
+    assert_raises(ValueError, SelectKBest(k=-1).fit, X, y)
+    assert_raises(ValueError, SelectKBest(k=4).fit, X, y)
+    assert_raises(ValueError,
+                  GenericUnivariateSelect(mode='k_best', param=-1).fit, X, y)
+    assert_raises(ValueError,
+                  GenericUnivariateSelect(mode='k_best', param=4).fit, X, y)

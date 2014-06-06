@@ -11,7 +11,7 @@ print(__doc__)
 from sklearn import svm
 from sklearn.datasets import samples_generator
 from sklearn.feature_selection import SelectKBest, f_regression
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import make_pipeline
 
 # import some data to play with
 X, y = samples_generator.make_classification(
@@ -24,6 +24,6 @@ anova_filter = SelectKBest(f_regression, k=3)
 # 2) svm
 clf = svm.SVC(kernel='linear')
 
-anova_svm = Pipeline([('anova', anova_filter), ('svm', clf)])
+anova_svm = make_pipeline(anova_filter, clf)
 anova_svm.fit(X, y)
 anova_svm.predict(X)

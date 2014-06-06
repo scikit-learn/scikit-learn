@@ -5,10 +5,9 @@ from random import Random
 import numpy as np
 import scipy.sparse as sp
 
-from nose.tools import assert_equal
-from nose.tools import assert_true
-from nose.tools import assert_false
 from numpy.testing import assert_array_equal
+from sklearn.utils.testing import (assert_equal, assert_in,
+                                   assert_false, assert_true)
 
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_selection import SelectKBest, chi2
@@ -83,6 +82,11 @@ def test_unseen_or_no_features():
         if sparse:
             X = X.toarray()
         assert_array_equal(X, np.zeros((1, 2)))
+
+        try:
+            v.transform([])
+        except ValueError as e:
+            assert_in("empty", str(e))
 
 
 def test_deterministic_vocabulary():

@@ -1,10 +1,310 @@
 .. currentmodule:: sklearn
 
-0.14.1
-=======
+.. _changes_0_15:
 
-0.14.1 is a minor bug-fix release that fixed a small regression in the
-setup.py
+0.15
+=====
+
+Changelog
+---------
+   - The ``img_to_graph`` and ``grid_tograph`` functions in
+     :mod:`sklearn.feature_extraction.image` now return ``np.ndarray``
+     instead of ``np.matrix`` when ``return_as=np.ndarray``.  See the
+     Notes section for more information on compatibility.
+
+   - The :ref:`Working With Text Data <text_data_tutorial>` tutorial
+     has now been worked in to the main documentation's tutorial section.
+     Includes exercises and skeletons for tutorial presentation.
+     Original tutorial created by several authors including
+     `Olivier Grisel`_, Lars Buitinck and many others.
+     Tutorial integration into the scikit-learn documentation
+     by `Jaques Grobler`_
+
+   - Added :class:`ensemble.BaggingClassifier` and
+     :class:`ensemble.BaggingRegressor` meta-estimators for ensembling
+     any kind of base estimator. See the :ref:`Bagging <bagging>` section of
+     the user guide for details and examples. By `Gilles Louppe`_.
+
+   - Add sparse input support to :class:`ensemble.AdaBoostClassifier` and
+     :class:`ensemble.AdaBoostRegressor` meta-estimators.
+     By `Hamzeh Alsalhi`_.
+
+   - Memory improvements of decision trees, by `Arnaud Joly`_.
+
+   - Decision trees can now be built in best-first manner by using ``max_leaf_nodes``
+     as the stopping criteria. Refactored the tree code to use either a
+     stack or a priority queue for tree building.
+     By `Peter Prettenhofer`_ and `Gilles Louppe`_.
+
+   - Decision trees can now be fitted on fortran- and c-style arrays, and
+     non-continuous arrays without the need to make a copy.
+     If the input array has a different dtype than ``np.float32``, a fortran-
+     style copy will be made since fortran-style memory layout has speed
+     advantages. By `Peter Prettenhofer`_ and `Gilles Louppe`_.
+
+   - Speed improvement of regression trees by optimizing the
+     the computation of the mean square error criterion. This lead
+     to speed improvement of the tree, forest and gradient boosting tree
+     modules. By `Arnaud Joly`_
+
+   - Changed the internal storage of decision trees to use a struct array.
+     This fixed some small bugs, while improving code and providing a small
+     speed gain. By `Joel Nothman`_.
+
+   - Reduce memory usage and overhead when fitting and predicting with forests
+     of randomized trees in parallel with ``n_jobs != 1`` by leveraging new
+     threading backend of joblib 0.8 and releasing the GIL in the tree fitting
+     Cython code.  By `Olivier Grisel`_ and `Gilles Louppe`_.
+
+   - Speed improvement of the :mod:`sklearn.ensemble.gradient_boosting` module.
+     By `Gilles Louppe`_ and `Peter Prettenhofer`_.
+
+   - Various enhancements to the  :mod:`sklearn.ensemble.gradient_boosting`
+     module: a ``warm_start`` argument to fit additional trees,
+     a ``max_leaf_nodes`` argument to fit GBM style trees,
+     a ``monitor`` fit argument to inspect the estimator during training, and
+     refactoring of the verbose code. By `Peter Prettenhofer`_.
+
+   - Fixed bug in :class:`gradient_boosting.GradientBoostingRegressor` with
+     ``loss='huber'``: ``gamma`` might have not been initialized.
+
+   - Fixed feature importances as computed with a forest of randomized trees
+     when fit with ``sample_weight != None`` and/or with ``bootstrap=True``.
+     By `Gilles Louppe`_.
+
+   - Faster :class:`sklearn.ensemble.ExtraTrees` by caching feature values.
+     By `Arnaud Joly`_.
+
+   - Faster depth-based tree building algorithm such as decision tree,
+     random forest, extra trees or gradient tree boosting (with depth based
+     growing strategy) by avoiding trying to split on found constant features
+     in the sample subset. By `Arnaud Joly`_.
+
+   - Added :func:`metrics.pairwise_distances_argmin_min`, by Philippe Gervais.
+
+   - Added predict method to :class:`cluster.AffinityPropagation` and
+     :class:`cluster.MeanShift`, by `Mathieu Blondel`_.
+
+   - Vector and matrix multiplications have been optimised throughout the
+     library by `Denis Engemann`_, and `Alexandre Gramfort`_.
+     In particular, they should take less memory with older NumPy versions
+     (prior to 1.7.2).
+
+   - New unsupervised feature selection algorithm
+     :class:`feature_selection.VarianceThreshold`, by `Lars Buitinck`_.
+
+   - Precision-recall and ROC examples now use train_test_split, and have more
+     explanation of why these metrics are useful. By `Kyle Kastner`_
+
+   - The training algorithm for :class:`decomposition.NMF` is faster for
+     sparse matrices and has much lower memory complexity, meaning it will
+     scale up gracefully to large datasets. By `Lars Buitinck`_.
+
+   - Added svd_method option with default value to "randomized" to
+     :class:`decomposition.factor_analysis.FactorAnalysis` to save memory and
+     significantly speedup computation by `Denis Engemann`_, and
+     `Alexandre Gramfort`_.
+
+   - Changed :class:`cross_validation.StratifiedKFold` to try and
+     preserve as much of the original ordering of samples as possible so as
+     not to hide overfitting on datasets with a non-negligible level of
+     samples dependency.
+     By `Daniel Nouri`_ and `Olivier Grisel`_.
+
+   - Add multi-output support to :class:`gaussian_process.GaussianProcess`
+     by John Novak.
+
+   - Norm computations optimized for NumPy 1.6 and later versions by
+     `Lars Buitinck`_. In particular, the k-means algorithm no longer
+     needs a temporary data structure the size of its input.
+
+   - Added :class:`linear_model.RANSACRegressor` meta-estimator for the robust
+     fitting of regression models. By Johannes Schönberger.
+
+   - Added :ref:`Computational Performance <computational_performance>`
+     documentation. Discussion and examples of prediction latency / throughput
+     and different factors that have influence over speed. Additional tips for
+     building faster models and choosing a relevant compromise between speed
+     and predictive power.
+     By `Eustache Diemert`_.
+
+   - :class:`dummy.DummyClassifier` can now be used to predict a constant
+     output value. By `Manoj Kumar`_.
+
+   - :class:`dummy.DummyRegressor` has now a strategy parameter which allows
+     to predict the mean, the median of the training set or a constant
+     output value. By `Maheshakya Wijewardena`_.
+
+   - Fixed bug in :class:`decomposition.MiniBatchDictionaryLearning` :
+     ``partial_fit`` was not working properly.
+
+   - Multi-label classification output in multilabel indicator format
+     is now supported by :func:`metrics.roc_auc_score` and
+     :func:`metrics.average_precision_score` by `Arnaud Joly`_.
+
+   - Fixed bug in :class:`linear_model.stochastic_gradient` :
+     ``l1_ratio`` was used as ``(1.0 - l1_ratio)`` .
+
+   - Fixed bug in :class:`multiclass.OneVsOneClassifier` with string
+     labels
+
+   - Shorthand constructors :func:`pipeline.make_pipeline` and
+     :func:`pipeline.make_union` were added by `Lars Buitinck`_.
+
+   - Added :func:`learning_curve <learning_curve.learning_curve>` utility to
+     chart performance with respect to training size. See
+     :ref:`example_plot_learning_curve.py`. By `Alexander Fabisch`_.
+
+   - Add positive option in :class:`LassoCV <linear_model.LassoCV>` and
+     :class:`ElasticNetCV <linear_model.ElasticNetCV>`.
+     By Brian Wignall and `Alexandre Gramfort`_.
+
+   - Fixed a bug in :class:`LassoCV <linear_model.LassoCV>` and
+     :class:`ElasticNetCV <linear_model.ElasticNetCV>`: they would not
+     pre-compute the Gram matrix with ``precompute=True`` or
+     ``precompute="auto"`` and ``n_samples > n_features``. By `Manoj Kumar`_.
+
+   - Fixed a race condition in parallel processing with
+     ``pre_dispatch != "all"`` (for instance in ``cross_val_score``).
+     By `Olivier Grisel`_.
+
+   - Added :class:`linear_model.MultiTaskElasticNetCV` and
+     :class:`linear_model.MultiTaskLassoCV`. By `Manoj Kumar`_.
+
+   - Added :class:`cluster.AgglomerativeClustering` for hierarchical
+     agglomerative clustering with average linkage, complete linkage and
+     ward strategies, by  `Nelle Varoquaux`_ and `Gael Varoquaux`_.
+
+   - Fixed incorrect estimation of the degrees of freedom in
+     :func:`feature_selection.f_regression` when variates are not centered.
+     By `VirgileFritsch`_.
+
+   - Significant performance improvements (more than 100x speedup for
+     large problems) in :class:`isotonic.IsotonicRegression` by
+     `Andrew Tulloch`_.
+
+   - Speed and memory usage improvements to the SGD algorithm for linear
+     models: it now uses threads, not separate processes, when ``n_jobs>1``.
+     By `Lars Buitinck`_.
+
+   - Added ``partial_fit`` to :class:`BernoulliRBM
+     <neural_network.BernoulliRBM>`
+     By `Danny Sullivan`_.
+
+   - Raise error in :class:`cluster.FeatureAgglomeration` and
+     :class:`cluster.WardAgglomeration` when no samples are given,
+     rather than returning meaningless clustering.
+
+   - Grid search and cross validation allow NaNs in the input arrays so that
+     preprocessors such as :class:`preprocessing.Imputer
+     <preprocessing.Imputer>` can be trained within the cross validation loop,
+     avoiding potentially skewed results.
+
+   - Ridge regression can now deal with sample weights in feature space
+     (only sample space until then). By `Michael Eickenberg`_.
+     Both solutions are provided by the Cholesky solver.
+
+   - Several classification and regression metrics now support weighted
+     samples with the new ``sample_weight`` argument:
+     :func:`metrics.accuracy_score`,
+     :func:`metrics.zero_one_loss`,
+     :func:`metrics.precision_score`,
+     :func:`metrics.average_precision_score`,
+     :func:`metrics.f1_score`,
+     :func:`metrics.fbeta_score`,
+     :func:`metrics.recall_score`,
+     :func:`metrics.roc_auc_score`,
+     :func:`metrics.explained_variance_score`,
+     :func:`metrics.mean_squared_error`,
+     :func:`metrics.mean_absolute_error`,
+     :func:`metrics.r2_score`.
+     By `Noel Dawe`_.
+
+   - Shuffle option for :class:`cross_validation.StratifiedKFold`.
+     By `Jeffrey Blackburne`_.
+
+
+API changes summary
+-------------------
+
+   - :mod:`sklearn.hmm` is deprecated. Its removal is planned
+     for the 0.17 release.
+
+   - Use of :class:`covariance.EllipticEnvelop` has now been removed after
+     deprecation.
+     Please use :class:`covariance.EllipticEnvelope` instead.
+
+   - :class:`cluster.Ward` is deprecated. Use
+     :class:`cluster.AgglomerativeClustering` instead.
+
+   - :class:`cluster.WardClustering` is deprecated. Use
+   - :class:`cluster.AgglomerativeClustering` instead.
+
+   - Direct support for the sequence of sequences (or list of lists) multilabel
+     format is deprecated. To convert to and from the supported binary
+     indicator matrix format, use
+     :class:`MultiLabelBinarizer <preprocessing.MultiLabelBinarizer>`.
+     By `Joel Nothman`_.
+
+   - Add score method to :class:`PCA <decomposition.PCA>` following the model of
+     probabilistic PCA and deprecate
+     :class:`ProbabilisticPCA <decomposition.ProbabilisticPCA>` model whose
+     score implementation is not correct. The computation now also exploits the
+     matrix inversion lemma for faster computation. By `Alexandre Gramfort`_.
+
+   - The score method of :class:`FactorAnalysis <decomposition.FactorAnalysis>`
+     now returns the average log-likelihood of the samples. Use score_samples
+     to get log-likelihood of each sample. By `Alexandre Gramfort`_.
+
+   - Generating boolean masks (the setting ``indices=False``)
+     from cross-validation generators is deprecated.
+     Support for masks will be removed in 0.17.
+     The generators have produced arrays of indices by default since 0.10.
+     By `Joel Nothman`_.
+
+   - 1-d arrays containing strings with ``dtype=object`` (as used in Pandas)
+     are now considered valid classification targets. This fixes a regression
+     from version 0.13 in some classifiers. By `Joel Nothman`_.
+
+   - Fix wrong `explained_variance_ratio_` attribute in
+     :class:`RandomizedPCA <decomposition.RandomizedPCA>`.
+     By `Alexandre Gramfort`_.
+
+   - Fit alphas for each l1_ratio instead of mean_l1_ratio in
+     :class: `linear_model.ElasticNetCV` and :class: `linear_model.LassoCV`.
+     This changes the shape of alphas_ from (n_alphas,) to
+     (n_l1_ratio, n_alphas) if the l1_ratio provided is a 1-D array like object
+     of length greater than one.
+     By `Manoj Kumar`_.
+
+   - Fix :class:`linear_model.ElasticNetCV` and :class:`linear_model.LassoCV`
+     when fitting intercept and X is sparse. The automatic grid
+     of alphas was not computed correctly and the scaling with normalize
+     was wrong. By `Manoj Kumar`_.
+
+   - Fix wrong maximal number of features drawn (`max_features`) at each split
+     for decision trees, random forests and gradient tree boosting.
+     Previously, the count for the number of drawn features started only after
+     one non constant features in the split. This bug fix will affect
+     computational and generalization performance of those algorithms in the
+     presence of constant features. To get back previous generalization
+     performance, you should modify the value of `max_features`.
+     By `Arnaud Joly`_.
+
+   - Fix wrong maximal number of features drawn (`max_features`) at each split
+     for :class:`ensemble.ExtraTreesClassifier` and
+     :class:`ensemble.ExtraTreesRegressor`. Previously, only non constant
+     features in the split was counted as drawn. Now constant features are
+     counted as drawn. Furthermore at least one feature must be non constant
+     in order to make a valid split. This bug fix will affect
+     computational and generalization performance of extra trees in the
+     presence of constant features. To get back previous generalization
+     performance, you should modify the value of `max_features`.
+     By `Arnaud Joly`_.
+
+   - Fix :func:`utils.compute_class_weight` when class_weight is "auto".
+     Previously it was broken for input of non-int dtype and the weighted
+     array that was returned was wrong. By `Manoj Kumar`_.
 
 .. _changes_0_14:
 
@@ -48,7 +348,7 @@ Changelog
      :class:`linear_model.Ridge`, by @eickenberg and `Mathieu Blondel`_.
 
    - Fixed :mod:`sklearn.linear_model.stochastic_gradient.py` L2 regularization
-     issue (minor practical significants).
+     issue (minor practical significance).
      By `Norbert Crombach`_ and `Mathieu Blondel`_ .
 
    - Added an interactive version of `Andreas Müller`_'s
@@ -287,6 +587,12 @@ API changes summary
    - :class:`sklearn.preprocessing.StandardScaler` now converts integer input
      to float, and raises a warning. Previously it rounded for dense integer
      input.
+
+   - :class:`sklearn.multiclass.OneVsRestClassifier` now has a
+     ``decision_function`` method. This will return the distance of each
+     sample from the decision boundary for each class, as long as the
+     underlying estimators implement the ``decision_function`` method.
+     By `Kyle Kastner`_.
 
    - Better input validation, warning on unexpected shapes for y.
 
@@ -561,7 +867,7 @@ Changelog
      :class:`ensemble.GradientBoostingRegressor` and
      :class:`ensemble.GradientBoostingClassifier` use the estimator
      :class:`tree.DecisionTreeRegressor` instead of the
-     :class:`tree._tree.Tree` datastructure by `Arnaud Joly`_.
+     :class:`tree._tree.Tree` data structure by `Arnaud Joly`_.
 
    - Fixed a floating point exception in the :ref:`decision trees <tree>`
      module, by Seberg.
@@ -717,7 +1023,7 @@ List of contributors for release 0.13 by number of commits.
  *  17  `Fabian Pedregosa`_
  *  17  Nelle Varoquaux
  *  16  `Christian Osendorfer`_
- *  14  Daniel Nouri
+ *  14  `Daniel Nouri`_
  *  13  `Virgile Fritsch`_
  *  13  syhw
  *  12  `Satrajit Ghosh`_
@@ -786,13 +1092,13 @@ Changelog
  - Documentation fixes for elastic net by `Andreas Müller`_ and
    `Alexandre Gramfort`_
 
- - Proper behavior with fortran-ordered numpy arrays by `Gael Varoquaux`_
+ - Proper behavior with fortran-ordered NumPy arrays by `Gael Varoquaux`_
 
  - Make GridSearchCV work with non-CSR sparse matrix by `Lars Buitinck`_
 
  - Fix parallel computing in MDS by `Gael Varoquaux`_
 
- - Fix unicode support in count vectorizer by `Andreas Müller`_
+ - Fix Unicode support in count vectorizer by `Andreas Müller`_
 
  - Fix MinCovDet breaking with X.shape = (3, 1) by `Virgile Fritsch`_
 
@@ -1090,7 +1396,7 @@ Other changes
      by `Olivier Grisel`_.
 
    - Beam pruning option in :class:`_BaseHMM` module has been removed since it
-     is difficult to cythonize. If you are interested in contributing a cython
+     is difficult to Cythonize. If you are interested in contributing a Cython
      version, you can use the python version in the git history as a reference.
 
    - Classes in :ref:`neighbors` now support arbitrary Minkowski metric for
@@ -1133,7 +1439,7 @@ API changes summary
      Options now are 'ovr' and 'crammer_singer', with 'ovr' being the default.
      This does not change the default behavior but hopefully is less confusing.
 
-   - Classs :class:`feature_selection.text.Vectorizer` is deprecated and
+   - Class :class:`feature_selection.text.Vectorizer` is deprecated and
      replaced by :class:`feature_selection.text.TfidfVectorizer`.
 
    - The preprocessor / analyzer nested structure for text feature
@@ -1151,7 +1457,7 @@ API changes summary
 
        - ``input`` explicitly control how to interpret the sequence passed to
          ``fit`` and ``predict``: filenames, file objects or direct (byte or
-         unicode) strings.
+         Unicode) strings.
 
        - charset decoding is explicit and strict by default.
 
@@ -1799,7 +2105,7 @@ Changelog
   - Refactoring of :class:`neighbors.NeighborsClassifier` and
     :func:`neighbors.kneighbors_graph`: added different algorithms for
     the k-Nearest Neighbor Search and implemented a more stable
-    algorithm for finding barycenter weigths. Also added some
+    algorithm for finding barycenter weights. Also added some
     developer documentation for this module, see
     `notes_neighbors
     <https://github.com/scikit-learn/scikit-learn/wiki/Neighbors-working-notes>`_ for more information [`Fabian Pedregosa`_].
@@ -1856,7 +2162,7 @@ People that made this release possible preceded by number of commits:
 0.6
 ===
 
-scikit-learn 0.6 was released on december 2010. It is marked by the
+scikit-learn 0.6 was released on December 2010. It is marked by the
 inclusion of several new modules and a general renaming of old
 ones. It is also marked by the inclusion of new example, including
 applications to real-world datasets.
@@ -2087,11 +2393,11 @@ Major changes in this release include:
 
     - feature_selection module redesign.
 
-    - Migration to GIT as content management system.
+    - Migration to GIT as version control system.
 
     - Removal of obsolete attrselect module.
 
-    - Rename of private compiled extensions (aded underscore).
+    - Rename of private compiled extensions (added underscore).
 
     - Removal of legacy unmaintained code.
 
@@ -2135,7 +2441,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Fabian Pedregosa: http://fseoane.net/blog/
 
-.. _Mathieu Blondel: http://www.mblondel.org/journal/
+.. _Mathieu Blondel: http://www.mblondel.org
 
 .. _James Bergstra: http://www-etud.iro.umontreal.ca/~bergstrj/
 
@@ -2220,3 +2526,25 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Yannick Schwartz: https://team.inria.fr/parietal/schwarty/
 
 .. _Mikhail Korobov: http://kmike.ru/pages/about/
+
+.. _Kyle Kastner: http://kastnerkyle.github.io
+
+.. _@FedericoV: https://github.com/FedericoV/
+
+.. _Daniel Nouri: http://danielnouri.org
+
+.. _Johannes Schönberger: https://github.com/ahojnnes
+
+.. _Manoj Kumar: https://github.com/Manoj-Kumar-S
+
+.. _Andrew Tulloch: http://tullo.ch
+
+.. _Maheshakya Wijewardena: https://github.com/maheshakya
+
+.. _Danny Sullivan: http://dannysullivan.co
+
+.. _Michael Eickenberg: https://github.com/eickenberg
+
+.. _Jeffrey Blackburne: https://github.com/jblackburne
+
+.. _Hamzeh Alsalhi: https://github.com/hamsal

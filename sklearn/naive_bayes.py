@@ -74,8 +74,9 @@ class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
         Returns
         -------
         C : array-like, shape = [n_samples, n_classes]
-            Returns the log-probability of the sample for each class
-            in the model, where classes are ordered arithmetically.
+            Returns the log-probability of the samples for each class in
+            the model. The columns correspond to the classes in sorted
+            order, as they appear in the attribute `classes_`.
         """
         jll = self._joint_log_likelihood(X)
         # normalize by P(x) = P(f_1, ..., f_n)
@@ -93,8 +94,9 @@ class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
         Returns
         -------
         C : array-like, shape = [n_samples, n_classes]
-            Returns the probability of the sample for each class in
-            the model, where classes are ordered arithmetically.
+            Returns the probability of the samples for each class in
+            the model. The columns correspond to the classes in sorted
+            order, as they appear in the attribute `classes_`.
         """
         return np.exp(self.predict_log_proba(X))
 
@@ -102,15 +104,6 @@ class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
 class GaussianNB(BaseNB):
     """
     Gaussian Naive Bayes (GaussianNB)
-
-    Parameters
-    ----------
-    X : array-like, shape = [n_samples, n_features]
-        Training vector, where n_samples in the number of samples and
-        n_features is the number of features.
-
-    y : array, shape = [n_samples]
-        Target vector relative to X
 
     Attributes
     ----------
@@ -167,9 +160,10 @@ class GaussianNB(BaseNB):
         self.class_prior_ = np.zeros(n_classes)
         epsilon = 1e-9
         for i, y_i in enumerate(unique_y):
-            self.theta_[i, :] = np.mean(X[y == y_i, :], axis=0)
-            self.sigma_[i, :] = np.var(X[y == y_i, :], axis=0) + epsilon
-            self.class_prior_[i] = np.float(np.sum(y == y_i)) / n_samples
+            Xi = X[y == y_i, :]
+            self.theta_[i, :] = np.mean(Xi, axis=0)
+            self.sigma_[i, :] = np.var(Xi, axis=0) + epsilon
+            self.class_prior_[i] = np.float(Xi.shape[0]) / n_samples
         return self
 
     def _joint_log_likelihood(self, X):
@@ -246,7 +240,7 @@ class BaseDiscreteNB(BaseNB):
         self : object
             Returns self.
         """
-        X = atleast2d_or_csr(X).astype(np.float64)
+        X = atleast2d_or_csr(X, dtype=np.float64)
         _, n_features = X.shape
 
         if _check_partial_fit_first_call(self, classes):
@@ -284,7 +278,7 @@ class BaseDiscreteNB(BaseNB):
         self._update_class_log_prior()
         return self
 
-    def fit(self, X, y, sample_weight=None, class_prior=None):
+    def fit(self, X, y, sample_weight=None):
         """Fit Naive Bayes classifier according to X, y
 
         Parameters
@@ -315,21 +309,12 @@ class BaseDiscreteNB(BaseNB):
         if Y.shape[1] == 1:
             Y = np.concatenate((1 - Y, Y), axis=1)
 
-        if X.shape[0] != Y.shape[0]:
-            msg = "X.shape[0]=%d and y.shape[0]=%d are incompatible."
-            raise ValueError(msg % (X.shape[0], y.shape[0]))
-
         # convert to float to support sample weight consistently
         Y = Y.astype(np.float64)
         if sample_weight is not None:
             Y *= array2d(sample_weight).T
 
-        if class_prior is not None:
-            warnings.warn('class_prior has been made an ``__init__`` parameter'
-                          ' and will be removed from fit in version 0.15.',
-                          DeprecationWarning)
-        else:
-            class_prior = self.class_prior
+        class_prior = self.class_prior
 
         # Count raw events from data before updating the class log prior
         # and feature log probas
@@ -425,8 +410,8 @@ class MultinomialNB(BaseDiscreteNB):
 
     References
     ----------
-    C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
-    Information Retrieval. Cambridge University Press, pp. 234–265.
+    C.D. Manning, P. Raghavan and H. Schuetze (2008). Introduction to
+    Information Retrieval. Cambridge University Press, pp. 234-265.
     http://nlp.stanford.edu/IR-book/html/htmledition/
         naive-bayes-text-classification-1.html
     """
@@ -515,13 +500,13 @@ class BernoulliNB(BaseDiscreteNB):
     References
     ----------
 
-    C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
-    Information Retrieval. Cambridge University Press, pp. 234–265.
+    C.D. Manning, P. Raghavan and H. Schuetze (2008). Introduction to
+    Information Retrieval. Cambridge University Press, pp. 234-265.
     http://nlp.stanford.edu/IR-book/html/htmledition/the-bernoulli-model-1.html
 
     A. McCallum and K. Nigam (1998). A comparison of event models for naive
     Bayes text classification. Proc. AAAI/ICML-98 Workshop on Learning for
-    Text Categorization, pp. 41–48.
+    Text Categorization, pp. 41-48.
 
     V. Metsis, I. Androutsopoulos and G. Paliouras (2006). Spam filtering with
     naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).

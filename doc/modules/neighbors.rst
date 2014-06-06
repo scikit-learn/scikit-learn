@@ -419,11 +419,13 @@ depends on a number of factors:
   a significant fraction of the total cost.  If very few query points
   will be required, brute force is better than a tree-based method.
 
-Currently, ``algorithm = 'auto'`` selects ``'ball_tree'`` if
-:math:`k < N/2`, and ``'brute'`` otherwise.  This choice is based on
-the assumption that the number of query points is at least the same order
-as the number of training points, and that ``leaf_size`` is close to its
-default value of ``30``.
+Currently, ``algorithm = 'auto'`` selects ``'kd_tree'`` if :math:`k < N/2` 
+and the ``'effective_metric_'`` is in the ``'VALID_METRICS'`` list of 
+``'kd_tree'``. It selects ``'ball_tree'`` if :math:`k < N/2` and the 
+``'effective_metric_'`` is not in the ``'VALID_METRICS'`` list of 
+``'kd_tree'``. It selects ``'brute'`` if :math:`k >= N/2`. This choice is based on the assumption that the number of query points is at least the 
+same order as the number of training points, and that ``leaf_size`` is 
+close to its default value of ``30``.
 
 Effect of ``leaf_size``
 -----------------------

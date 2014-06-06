@@ -61,14 +61,14 @@ master_doc = 'index'
 
 # General information about the project.
 project = u('scikit-learn')
-copyright = u('2010 - 2013, scikit-learn developers (BSD License)')
+copyright = u('2010 - 2014, scikit-learn developers (BSD License)')
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-version = '0.14'
+version = '0.15-git'
 # The full version, including alpha/beta/rc tags.
 import sklearn
 release = sklearn.__version__
@@ -224,3 +224,8 @@ latex_preamble = r"""
 #latex_use_modindex = True
 
 trim_doctests_flags = True
+
+# Add the 'copybutton' javascript, to hide/show the prompt in code
+# examples
+def setup(app):
+    app.add_javascript('js/copybutton.js')

@@ -22,12 +22,12 @@ import shutil
 import tempfile
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from scipy import linalg, ndimage
 
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn import feature_selection
-from sklearn.cluster import WardAgglomeration
+from sklearn.cluster import FeatureAgglomeration
 from sklearn.linear_model import BayesianRidge
 from sklearn.pipeline import Pipeline
 from sklearn.grid_search import GridSearchCV
@@ -66,9 +66,9 @@ cachedir = tempfile.mkdtemp()
 mem = Memory(cachedir=cachedir, verbose=1)
 
 # Ward agglomeration followed by BayesianRidge
-A = grid_to_graph(n_x=size, n_y=size)
-ward = WardAgglomeration(n_clusters=10, connectivity=A, memory=mem,
-                         n_components=1)
+connectivity = grid_to_graph(n_x=size, n_y=size)
+ward = FeatureAgglomeration(n_clusters=10, connectivity=connectivity,
+                            memory=mem, n_components=1)
 clf = Pipeline([('ward', ward), ('ridge', ridge)])
 # Select the optimal number of parcels with grid search
 clf = GridSearchCV(clf, {'ward__n_clusters': [10, 20, 30]}, n_jobs=1, cv=cv)
@@ -90,19 +90,19 @@ coef_selection_ = coef_.reshape(size, size)
 
 ###############################################################################
 # Inverse the transformation to plot the results on an image
-pl.close('all')
-pl.figure(figsize=(7.3, 2.7))
-pl.subplot(1, 3, 1)
-pl.imshow(coef, interpolation="nearest", cmap=pl.cm.RdBu_r)
-pl.title("True weights")
-pl.subplot(1, 3, 2)
-pl.imshow(coef_selection_, interpolation="nearest", cmap=pl.cm.RdBu_r)
-pl.title("Feature Selection")
-pl.subplot(1, 3, 3)
-pl.imshow(coef_agglomeration_, interpolation="nearest", cmap=pl.cm.RdBu_r)
-pl.title("Feature Agglomeration")
-pl.subplots_adjust(0.04, 0.0, 0.98, 0.94, 0.16, 0.26)
-pl.show()
+plt.close('all')
+plt.figure(figsize=(7.3, 2.7))
+plt.subplot(1, 3, 1)
+plt.imshow(coef, interpolation="nearest", cmap=plt.cm.RdBu_r)
+plt.title("True weights")
+plt.subplot(1, 3, 2)
+plt.imshow(coef_selection_, interpolation="nearest", cmap=plt.cm.RdBu_r)
+plt.title("Feature Selection")
+plt.subplot(1, 3, 3)
+plt.imshow(coef_agglomeration_, interpolation="nearest", cmap=plt.cm.RdBu_r)
+plt.title("Feature Agglomeration")
+plt.subplots_adjust(0.04, 0.0, 0.98, 0.94, 0.16, 0.26)
+plt.show()
 
 # Attempt to remove the temporary cachedir, but don't worry if it fails
 shutil.rmtree(cachedir, ignore_errors=True)

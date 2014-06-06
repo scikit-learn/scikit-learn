@@ -9,6 +9,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
 
 from sklearn.base import BaseEstimator, clone, is_classifier
@@ -202,3 +203,28 @@ def test_set_params():
     #bad_pipeline = Pipeline([("bad", NoEstimator())])
     #assert_raises(AttributeError, bad_pipeline.set_params,
             #bad__stupid_param=True)
+
+
+def test_score_sample_weight():
+    from sklearn.tree import DecisionTreeClassifier
+    from sklearn.tree import DecisionTreeRegressor
+    from sklearn import datasets
+
+    rng = np.random.RandomState(0)
+
+    # test both ClassifierMixin and RegressorMixin
+    estimators = [DecisionTreeClassifier(max_depth=2),
+                  DecisionTreeRegressor(max_depth=2)]
+    sets = [datasets.load_iris(),
+            datasets.load_boston()]
+
+    for est, ds in zip(estimators, sets):
+        est.fit(ds.data, ds.target)
+        # generate random sample weights
+        sample_weight = rng.randint(1, 10, size=len(ds.target))
+        # check that the score with and without sample weights are different
+        assert_not_equal(est.score(ds.data, ds.target),
+                         est.score(ds.data, ds.target,
+                                   sample_weight=sample_weight),
+                         msg="Unweighted and weighted scores "
+                             "are unexpectedly equal")

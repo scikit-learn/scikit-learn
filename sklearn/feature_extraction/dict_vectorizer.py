@@ -76,8 +76,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    DictVectorizer : performs vectorization in a similar as this class,
-      but using a hash table instead of only a hash function.
+    FeatureHasher : performs vectorization using only a hash function.
     sklearn.preprocessing.OneHotEncoder : handles nominal/categorical features
       encoded as columns of integers.
     """
@@ -234,7 +233,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
                 indptr.append(len(indices))
 
-            if len(indptr) == 0:
+            if len(indptr) == 1:
                 raise ValueError("Sample sequence X is empty.")
 
             if len(indices) > 0:
