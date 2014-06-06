@@ -1,6 +1,7 @@
 scikit-learn (0.15.0~b1-1) experimental; urgency=medium
 
   * Fresh beta of upcoming upstream release
+  * Build-depend on libatlas3-base
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 06 Jun 2014 09:19:09 -0400
 
