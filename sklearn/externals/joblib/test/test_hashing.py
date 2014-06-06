@@ -11,6 +11,7 @@ import time
 import hashlib
 import tempfile
 import os
+import sys
 import gc
 import io
 import collections
@@ -128,11 +129,22 @@ def test_hash_numpy():
 
 
 @with_numpy
+def test_hash_numpy_noncontiguous():
+    a = np.asarray(np.arange(6000).reshape((1000, 2, 3)),
+                   order='F')[:, :1, :]
+    b = np.ascontiguousarray(a)
+    nose.tools.assert_not_equal(hash(a), hash(b))
+
+    c = np.asfortranarray(a)
+    nose.tools.assert_not_equal(hash(a), hash(c))
+
+
+@with_numpy
 def test_hash_memmap():
     """ Check that memmap and arrays hash identically if coerce_mmap is
         True.
     """
-    filename = tempfile.mktemp()
+    filename = tempfile.mktemp(prefix='joblib_test_hash_memmap_')
     try:
         m = np.memmap(filename, shape=(10, 10), mode='w+')
         a = np.asarray(m)
@@ -174,6 +186,10 @@ def test_hash_numpy_performance():
         In [26]: %timeit hash(a)
         100 loops, best of 3: 20.8 ms per loop
     """
+    # This test is not stable under windows for some reason, skip it.
+    if sys.platform == 'win32':
+        raise nose.SkipTest()
+
     rnd = np.random.RandomState(0)
     a = rnd.random_sample(1000000)
     if hasattr(np, 'getbuffer'):
@@ -184,7 +200,7 @@ def test_hash_numpy_performance():
     md5_hash = lambda x: hashlib.md5(getbuffer(x)).hexdigest()
 
     relative_diff = relative_time(md5_hash, hash, a)
-    yield nose.tools.assert_true, relative_diff < 0.1
+    nose.tools.assert_true(relative_diff < 0.1)
 
     # Check that hashing an tuple of 3 arrays takes approximately
     # 3 times as much as hashing one array
@@ -192,8 +208,7 @@ def test_hash_numpy_performance():
     time_hash = time_func(hash, (a, a, a))
     relative_diff = 0.5 * (abs(time_hash - time_hashlib)
                            / (time_hash + time_hashlib))
-
-    yield nose.tools.assert_true, relative_diff < 0.2
+    nose.tools.assert_true(relative_diff < 0.2)
 
 
 def test_bound_methods_hash():
@@ -237,6 +252,7 @@ def test_numpy_scalar():
     nose.tools.assert_not_equal(hash(a), hash(b))
 
 
+@nose.tools.with_setup(test_memory_setup_func, test_memory_teardown_func)
 def test_dict_hash():
     # Check that dictionaries hash consistently, eventhough the ordering
     # of the keys is not garanteed
@@ -263,6 +279,7 @@ def test_dict_hash():
                             hash(b))
 
 
+@nose.tools.with_setup(test_memory_setup_func, test_memory_teardown_func)
 def test_set_hash():
     # Check that sets hash consistently, eventhough their ordering
     # is not garanteed

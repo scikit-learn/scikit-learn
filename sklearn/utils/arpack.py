@@ -138,7 +138,7 @@ DNEUPD_ERRORS = {
        "increase the size of the arrays DR and DI to have "
        "dimension at least dimension NCV and allocate at least NCV "
        "columns for Z. NOTE: Not necessary if Z and V share "
-       "the same space. Please notify the authors if this error"
+       "the same space. Please notify the authors if this error "
        "occurs.",
     -1: "N must be positive.",
     -2: "NEV must be positive.",

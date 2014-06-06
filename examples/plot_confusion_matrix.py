@@ -18,7 +18,7 @@ from sklearn import svm, datasets
 from sklearn.cross_validation import train_test_split
 from sklearn.metrics import confusion_matrix
 
-import pylab as pl
+import matplotlib.pyplot as plt
 
 # import some data to play with
 iris = datasets.load_iris()
@@ -38,9 +38,9 @@ cm = confusion_matrix(y_test, y_pred)
 print(cm)
 
 # Show confusion matrix in a separate window
-pl.matshow(cm)
-pl.title('Confusion matrix')
-pl.colorbar()
-pl.ylabel('True label')
-pl.xlabel('Predicted label')
-pl.show()
+plt.matshow(cm)
+plt.title('Confusion matrix')
+plt.colorbar()
+plt.ylabel('True label')
+plt.xlabel('Predicted label')
+plt.show()

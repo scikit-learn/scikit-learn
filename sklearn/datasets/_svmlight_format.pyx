@@ -5,46 +5,51 @@
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
+import array
+from cpython cimport array
+cimport cython
 from libc.string cimport strchr
+
 cimport numpy as np
 import numpy as np
 import scipy.sparse as sp
 
 from ..externals.six import b
 
-from ..utils.arraybuilder import ArrayBuilder
-
 np.import_array()
-
-
-# csr_matrix.indices and .indptr's dtypes are undocumented. We derive them
-# empirically.
-_temp_csr = sp.csr_matrix(0)
-_INDICES_DTYPE = _temp_csr.indices.dtype
-_INDPTR_DTYPE = _temp_csr.indptr.dtype
-del _temp_csr
 
 
 cdef bytes COMMA = u','.encode('ascii')
 cdef bytes COLON = u':'.encode('ascii')
 
 
-def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based, bint query_id):
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
+                        bint query_id):
+    cdef array.array data, indices, indptr, query
     cdef bytes line
     cdef char *hash_ptr, *line_cstr
-    cdef np.int32_t idx, prev_idx
+    cdef int idx, prev_idx
     cdef Py_ssize_t i
     cdef bytes qid_prefix = b('qid')
     cdef Py_ssize_t n_features
-    
-    data = ArrayBuilder(dtype=dtype)
-    indptr = ArrayBuilder(dtype=_INDPTR_DTYPE)
-    indices = ArrayBuilder(dtype=_INDICES_DTYPE)
-    query_values = ArrayBuilder(dtype=np.int)
+
+    # Special-case float32 but use float64 for everything else;
+    # the Python code will do further conversions.
+    if dtype == np.float32:
+        data = array.array("f")
+    else:
+        dtype = np.float64
+        data = array.array("d")
+    indices = array.array("i")
+    indptr = array.array("i", [0])
+    query = array.array("i")
+
     if multilabel:
         labels = []
     else:
-        labels = ArrayBuilder(dtype=np.double)
+        labels = array.array("d")
 
     for line in f:
         # skip comments
@@ -63,22 +68,21 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based, bint query_i
             target.sort()
             labels.append(tuple(target))
         else:
-            labels.append(float(target))
-        indptr.append(len(data))
+            array.resize_smart(labels, len(labels) + 1)
+            labels[len(labels) - 1] = float(target)
 
         prev_idx = -1
         n_features = len(features)
         if n_features and line_parts[1].startswith(qid_prefix):
             _, value = line_parts[1].split(COLON, 1)
             if query_id:
-                query_values.append(int(value))
+                array.resize_smart(query, len(query) + 1)
+                query[len(query) - 1] = int(value)
             line_parts.pop(1)
             n_features -= 1
 
         for i in xrange(1, n_features + 1):
             idx_s, value = line_parts[i].split(COLON, 1)
-            # XXX if we replace int with np.int32 in the line below, this
-            # function becomes twice as slow.
             idx = int(idx_s)
             if idx < 0 or not zero_based and idx == 0:
                 raise ValueError(
@@ -86,18 +90,16 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based, bint query_i
             if idx <= prev_idx:
                 raise ValueError("Feature indices in SVMlight/LibSVM data "
                                  "file should be sorted and unique.")
-            indices.append(idx)
-            data.append(dtype(value))
+
+            array.resize_smart(indices, len(indices) + 1)
+            indices[len(indices) - 1] = idx
+
+            array.resize_smart(data, len(data) + 1)
+            data[len(data) - 1] = float(value)
+
             prev_idx = idx
 
-    indptr.append(len(data))
+        array.resize_smart(indptr, len(indptr) + 1)
+        indptr[len(indptr) - 1] = len(data)
 
-    indptr = indptr.get()
-    data = data.get()
-    indices = indices.get()
-    query_values = query_values.get()
-
-    if not multilabel:
-        labels = labels.get()
-
-    return data, indices, indptr, labels, query_values
+    return (dtype, data, indices, indptr, labels, query)

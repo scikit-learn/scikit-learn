@@ -295,7 +295,7 @@ def format_records(records):   # , print_globals=False):
             if name_base in frame.f_code.co_varnames:
                 if name_base in locals.keys():
                     try:
-                        value = repr(eval(name_full, locals))
+                        value = safe_repr(eval(name_full, locals))
                     except:
                         value = "undefined"
                 else:
@@ -305,7 +305,7 @@ def format_records(records):   # , print_globals=False):
             #elif print_globals:
             #    if frame.f_globals.has_key(name_base):
             #        try:
-            #            value = repr(eval(name_full,frame.f_globals))
+            #            value = safe_repr(eval(name_full,frame.f_globals))
             #        except:
             #            value = "undefined"
             #    else:

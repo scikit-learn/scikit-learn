@@ -7,6 +7,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_warns
 
 from sklearn.utils.testing import assert_greater
 from sklearn.multiclass import OneVsRestClassifier
@@ -25,6 +26,7 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn import svm
 from sklearn import datasets
+from sklearn.externals.six.moves import zip
 
 iris = datasets.load_iris()
 rng = np.random.RandomState(0)
@@ -85,7 +87,9 @@ def test_ovr_multilabel():
                      LinearRegression(), Ridge(),
                      ElasticNet(), Lasso(alpha=0.5)):
         # test input as lists of tuples
-        clf = OneVsRestClassifier(base_clf).fit(X, y)
+        clf = assert_warns(DeprecationWarning,
+                           OneVsRestClassifier(base_clf).fit,
+                           X, y)
         assert_equal(set(clf.classes_), classes)
         y_pred = clf.predict([[0, 4, 4]])[0]
         assert_equal(set(y_pred), set(["spam", "eggs"]))
@@ -114,6 +118,7 @@ def test_ovr_multilabel_dataset():
                                                        n_labels=2,
                                                        length=50,
                                                        allow_unlabeled=au,
+                                                       return_indicator=True,
                                                        random_state=0)
         X_train, Y_train = X[:80], Y[:80]
         X_test, Y_test = X[80:], Y[80:]
@@ -137,6 +142,7 @@ def test_ovr_multilabel_predict_proba():
                                                        n_labels=3,
                                                        length=50,
                                                        allow_unlabeled=au,
+                                                       return_indicator=True,
                                                        random_state=0)
         X_train, Y_train = X[:80], Y[:80]
         X_test, Y_test = X[80:], Y[80:]
@@ -146,13 +152,18 @@ def test_ovr_multilabel_predict_proba():
         decision_only = OneVsRestClassifier(svm.SVR()).fit(X_train, Y_train)
         assert_raises(AttributeError, decision_only.predict_proba, X_test)
 
+        # Estimator with predict_proba disabled, depending on parameters.
+        decision_only = OneVsRestClassifier(svm.SVC(probability=False))
+        decision_only.fit(X_train, Y_train)
+        assert_raises(AttributeError, decision_only.predict_proba, X_test)
+
         Y_pred = clf.predict(X_test)
         Y_proba = clf.predict_proba(X_test)
 
         # predict assigns a label if the probability that the
         # sample has the label is greater than 0.5.
-        pred = [tuple(l.nonzero()[0]) for l in (Y_proba > 0.5)]
-        assert_equal(pred, Y_pred)
+        pred = Y_proba > .5
+        assert_array_equal(pred, Y_pred)
 
 
 def test_ovr_single_label_predict_proba():
@@ -183,12 +194,13 @@ def test_ovr_multilabel_decision_function():
                                                    n_labels=3,
                                                    length=50,
                                                    allow_unlabeled=True,
+                                                   return_indicator=True,
                                                    random_state=0)
     X_train, Y_train = X[:80], Y[:80]
     X_test, Y_test = X[80:], Y[80:]
     clf = OneVsRestClassifier(svm.SVC()).fit(X_train, Y_train)
-    assert_array_equal((clf.decision_function(X_test) > 0).nonzero()[1],
-                       np.hstack(clf.predict(X_test)))
+    assert_array_equal((clf.decision_function(X_test) > 0).astype(int),
+                       clf.predict(X_test))
 
 
 def test_ovr_single_label_decision_function():
@@ -310,6 +322,17 @@ def test_ovo_ties2():
         multi_clf = OneVsOneClassifier(Perceptron())
         ovo_prediction = multi_clf.fit(X, y).predict(X)
         assert_equal(ovo_prediction[0], (1 + i) % 3)
+
+
+def test_ovo_string_y():
+    "Test that the OvO doesn't screw the encoding of string labels"
+    X = np.eye(4)
+    y = np.array(['a', 'b', 'c', 'd'])
+
+    svc = LinearSVC()
+    ovo = OneVsOneClassifier(svc)
+    ovo.fit(X, y)
+    assert_array_equal(y, ovo.predict(X))
 
 
 def test_ecoc_exceptions():

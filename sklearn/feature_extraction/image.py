@@ -15,7 +15,6 @@ import numpy as np
 from scipy import sparse
 from numpy.lib.stride_tricks import as_strided
 
-from ..utils.fixes import in1d
 from ..utils import array2d, check_random_state
 from ..base import BaseEstimator
 
@@ -68,8 +67,8 @@ def _mask_edges_weights(mask, edges, weights=None):
     """Apply a mask to edges (weighted or not)"""
     inds = np.arange(mask.size)
     inds = inds[mask.ravel()]
-    ind_mask = np.logical_and(in1d(edges[0], inds),
-                              in1d(edges[1], inds))
+    ind_mask = np.logical_and(np.in1d(edges[0], inds),
+                              np.in1d(edges[1], inds))
     edges = edges[:, ind_mask]
     if weights is not None:
         weights = weights[ind_mask]
@@ -125,7 +124,7 @@ def _to_graph(n_x, n_y, n_z, mask=None, img=None,
                               (n_voxels, n_voxels),
                               dtype=dtype)
     if return_as is np.ndarray:
-        return graph.todense()
+        return graph.toarray()
     return return_as(graph)
 
 
@@ -146,6 +145,15 @@ def img_to_graph(img, mask=None, return_as=sparse.coo_matrix, dtype=None):
     dtype: None or dtype, optional
         The data of the returned sparse matrix. By default it is the
         dtype of img
+
+    Notes
+    ===========
+    For sklearn versions 0.14.1 and prior, return_as=np.ndarray was handled
+    by returning a dense np.matrix instance.  Going forward, np.ndarray
+    returns an np.ndarray, as expected.
+
+    For compatibility, user code relying on this method should wrap its
+    calls in ``np.asarray`` to avoid type issues.
     """
     img = np.atleast_3d(img)
     n_x, n_y, n_z = img.shape
@@ -173,6 +181,15 @@ def grid_to_graph(n_x, n_y, n_z=1, mask=None, return_as=sparse.coo_matrix,
         The class to use to build the returned adjacency matrix.
     dtype: dtype, optional, default int
         The data of the returned sparse matrix. By default it is int
+
+    Notes
+    ===========
+    For sklearn versions 0.14.1 and prior, return_as=np.ndarray was handled
+    by returning a dense np.matrix instance.  Going forward, np.ndarray
+    returns an np.ndarray, as expected.
+
+    For compatibility, user code relying on this method should wrap its
+    calls in ``np.asarray`` to avoid type issues.
     """
     return _to_graph(n_x, n_y, n_z, mask=mask, return_as=return_as,
                      dtype=dtype)

@@ -26,18 +26,6 @@ A tutorial on statistical-learning for scientific data processing
 
 .. include:: ../../includes/big_toc_css.rst
 
-.. warning::
-
-    In scikit-learn release 0.9, the import path has changed from
-    `scikits.learn` to `sklearn`. To import with cross-version 
-    compatibility, use::
-
-        try:
-            from sklearn import something
-        except ImportError:
-            from scikits.learn import something
-
-
 .. toctree::
    :maxdepth: 2
 
@@ -47,4 +35,3 @@ A tutorial on statistical-learning for scientific data processing
    unsupervised_learning
    putting_together
    finding_help
-

@@ -2,6 +2,7 @@ import numpy as np
 from scipy.sparse import csr_matrix
 
 from sklearn.utils.testing import assert_array_equal, assert_equal
+from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal, assert_raises
 
 from sklearn.metrics.pairwise import kernel_metrics
@@ -32,7 +33,7 @@ def test_additive_chi2_sampler():
     # reduce to n_samples_x x n_samples_y by summing over features
     kernel = (large_kernel.sum(axis=2))
 
-    # appoximate kernel mapping
+    # approximate kernel mapping
     transform = AdditiveChi2Sampler(sample_steps=3)
     X_trans = transform.fit_transform(X)
     Y_trans = transform.transform(Y)
@@ -56,6 +57,26 @@ def test_additive_chi2_sampler():
     transform = AdditiveChi2Sampler(sample_steps=4)
     assert_raises(ValueError, transform.fit, X)
 
+    # test that the sample interval is set correctly
+    sample_steps_available = [1, 2, 3]
+    for sample_steps in sample_steps_available:
+
+        # test that the sample_interval is initialized correctly
+        transform = AdditiveChi2Sampler(sample_steps=sample_steps)
+        assert_equal(transform.sample_interval, None)
+
+        # test that the sample_interval is changed in the fit method
+        transform.fit(X)
+        assert_not_equal(transform.sample_interval_, None)
+
+    # test that the sample_interval is set correctly
+    sample_interval = 0.3
+    transform = AdditiveChi2Sampler(sample_steps=4,
+                                    sample_interval=sample_interval)
+    assert_equal(transform.sample_interval, sample_interval)
+    transform.fit(X)
+    assert_equal(transform.sample_interval_, sample_interval)
+
 
 def test_skewed_chi2_sampler():
     """test that RBFSampler approximates kernel on random data"""
@@ -73,7 +94,7 @@ def test_skewed_chi2_sampler():
     # reduce to n_samples_x x n_samples_y by summing over features in log-space
     kernel = np.exp(log_kernel.sum(axis=2))
 
-    # appoximate kernel mapping
+    # approximate kernel mapping
     transform = SkewedChi2Sampler(skewedness=c, n_components=1000,
                                   random_state=42)
     X_trans = transform.fit_transform(X)
@@ -94,7 +115,7 @@ def test_rbf_sampler():
     gamma = 10.
     kernel = rbf_kernel(X, Y, gamma=gamma)
 
-    # appoximate kernel mapping
+    # approximate kernel mapping
     rbf_transform = RBFSampler(gamma=gamma, n_components=1000, random_state=42)
     X_trans = rbf_transform.fit_transform(X)
     Y_trans = rbf_transform.transform(Y)
@@ -169,6 +190,7 @@ def test_nystroem_callable():
         return np.minimum(x, y).sum()
 
     kernel_log = []
+    X = list(X)     # test input validation
     Nystroem(kernel=logging_histogram_kernel,
              n_components=(n_samples - 1),
              kernel_params={'log': kernel_log}).fit(X)

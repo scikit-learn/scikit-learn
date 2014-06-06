@@ -1,14 +1,16 @@
 import sys
+import re
 
 import numpy as np
-
-from numpy.testing import assert_almost_equal, assert_array_equal
+from scipy.sparse import csc_matrix, csr_matrix, lil_matrix
+from sklearn.utils.testing import (assert_almost_equal, assert_array_equal,
+                                   assert_true)
 
 from sklearn.datasets import load_digits
 from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.neural_network import BernoulliRBM
 from sklearn.utils.validation import assert_all_finite
-
+from sklearn.utils import gen_even_slices
 np.seterr(all='warn')
 
 Xdigits = load_digits().data
@@ -29,6 +31,22 @@ def test_fit():
     assert_array_equal(X, Xdigits)
 
 
+def test_partial_fit():
+    X = Xdigits.copy()
+    rbm = BernoulliRBM(n_components=64, learning_rate=0.1,
+                       batch_size=20, random_state=9)
+    n_samples = X.shape[0]
+    n_batches = int(np.ceil(float(n_samples) / rbm.batch_size))
+    batch_slices = np.array_split(X, n_batches)
+
+    for i in range(7):
+        for batch in batch_slices:
+            rbm.partial_fit(batch)
+
+    assert_almost_equal(rbm.score_samples(X).mean(), -21., decimal=0)
+    assert_array_equal(X, Xdigits)
+
+
 def test_transform():
     X = Xdigits[:100]
     rbm1 = BernoulliRBM(n_components=16, batch_size=5,
@@ -39,6 +57,30 @@ def test_transform():
     Xt2 = rbm1._mean_hiddens(X)
 
     assert_array_equal(Xt1, Xt2)
+
+
+def test_small_sparse():
+    """BernoulliRBM should work on small sparse matrices."""
+    X = csr_matrix(Xdigits[:4])
+    BernoulliRBM().fit(X)       # no exception
+
+
+def test_small_sparse_partial_fit():
+    for sparse in [csc_matrix, csr_matrix]:
+        X_sparse = sparse(Xdigits[:100])
+        X = Xdigits[:100].copy()
+
+        rbm1 = BernoulliRBM(n_components=64, learning_rate=0.1,
+                            batch_size=10, random_state=9)
+        rbm2 = BernoulliRBM(n_components=64, learning_rate=0.1,
+                            batch_size=10, random_state=9)
+
+        rbm1.partial_fit(X_sparse)
+        rbm2.partial_fit(X)
+
+        assert_almost_equal(rbm1.score_samples(X).mean(),
+                            rbm2.score_samples(X).mean(),
+                            decimal=0)
 
 
 def test_sample_hiddens():
@@ -90,10 +132,10 @@ def test_fit_gibbs_sparse():
 
 
 def test_gibbs_smoke():
-    """ just seek if we don't get NaNs sampling the full digits dataset """
+    """Check if we don't get NaNs sampling the full digits dataset."""
     rng = np.random.RandomState(42)
     X = Xdigits
-    rbm1 = BernoulliRBM(n_components=42, batch_size=10,
+    rbm1 = BernoulliRBM(n_components=42, batch_size=40,
                         n_iter=20, random_state=rng)
     rbm1.fit(X)
     X_sampled = rbm1.gibbs(X)
@@ -101,16 +143,28 @@ def test_gibbs_smoke():
 
 
 def test_score_samples():
-    """Check that the pseudo likelihood is computed without clipping.
-
-    http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression/
-    """
+    """Test score_samples (pseudo-likelihood) method."""
+    # Assert that pseudo-likelihood is computed without clipping.
+    # See Fabian's blog, http://bit.ly/1iYefRk
     rng = np.random.RandomState(42)
     X = np.vstack([np.zeros(1000), np.ones(1000)])
     rbm1 = BernoulliRBM(n_components=10, batch_size=2,
                         n_iter=10, random_state=rng)
     rbm1.fit(X)
-    assert((rbm1.score_samples(X) < -300).all())
+    assert_true((rbm1.score_samples(X) < -300).all())
+
+    # Sparse vs. dense should not affect the output. Also test sparse input
+    # validation.
+    rbm1.random_state = 42
+    d_score = rbm1.score_samples(X)
+    rbm1.random_state = 42
+    s_score = rbm1.score_samples(lil_matrix(X))
+    assert_almost_equal(d_score, s_score)
+
+    # Test numerical stability (#2785): would previously generate infinities
+    # and crash with an exception.
+    with np.errstate(under='ignore'):
+        rbm1.score_samples(np.arange(1000) * 100)
 
 
 def test_rbm_verbose():
@@ -120,4 +174,27 @@ def test_rbm_verbose():
     try:
         rbm.fit(Xdigits)
     finally:
+        sys.stdout = old_stdout
+
+
+def test_sparse_and_verbose():
+    """
+    Make sure RBM works with sparse input when verbose=True
+    """
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    from scipy.sparse import csc_matrix
+    X = csc_matrix([[0.], [1.]])
+    rbm = BernoulliRBM(n_components=2, batch_size=2, n_iter=1,
+                       random_state=42, verbose=True)
+    try:
+        rbm.fit(X)
+        s = sys.stdout.getvalue()
+        # make sure output is sound
+        assert_true(re.match(r"\[BernoulliRBM\] Iteration 1,"
+                             r" pseudo-likelihood = -?(\d)+(\.\d+)?,"
+                             r" time = (\d|\.)+s",
+                             s))
+    finally:
+        sio = sys.stdout
         sys.stdout = old_stdout

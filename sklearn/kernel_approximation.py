@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 The :mod:`sklearn.kernel_approximation` module implements several
 approximate kernel feature maps base on Fourier transforms.
@@ -29,7 +28,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     gamma : float
-        Parameter of RBF kernel: exp(-γ × x²)
+        Parameter of RBF kernel: exp(-gamma * x^2)
 
     n_components : int
         Number of Monte Carlo samples per original feature.
@@ -190,14 +189,14 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
 
 
 class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
-    """Approximate feature map for additive chi² kernel.
+    """Approximate feature map for additive chi2 kernel.
 
     Uses sampling the fourier transform of the kernel characteristic
     at regular intervals.
 
     Since the kernel that is to be approximated is additive, the components of
     the input vectors can be treated separately.  Each entry in the original
-    space is transformed into 2×sample_steps+1 features, where sample_steps is
+    space is transformed into 2*sample_steps+1 features, where sample_steps is
     a parameter of the method. Typical values of sample_steps include 1, 2 and
     3.
 
@@ -253,7 +252,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
                 raise ValueError("If sample_steps is not in [1, 2, 3],"
                                  " you need to provide sample_interval")
         else:
-            self.sample_interval_ = self.interval
+            self.sample_interval_ = self.sample_interval
         return self
 
     def transform(self, X, y=None):
@@ -266,7 +265,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         Returns
         -------
         X_new : {array, sparse matrix}, \
-               shape = (n_samples, n_features × (2×sample_steps + 1))
+               shape = (n_samples, n_features * (2*sample_steps + 1))
             Whether the return value is an array of sparse matrix depends on
             the type of the input X.
         """
@@ -357,7 +356,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
         How many data points will be used to construct the mapping.
 
     gamma : float, default=None
-        Gamma parameter for the RBF, polynomial, exponential chi² and
+        Gamma parameter for the RBF, polynomial, exponential chi2 and
         sigmoid kernels. Interpretation of the default value is left to
         the kernel; see the documentation for sklearn.metrics.pairwise.
         Ignored by other kernels.
@@ -394,7 +393,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
     References
     ----------
     * Williams, C.K.I. and Seeger, M.
-      "Using the Nystrom method to speed up kernel machines",
+      "Using the Nystroem method to speed up kernel machines",
       Advances in neural information processing systems 2001
 
     * T. Yang, Y. Li, M. Mahdavi, R. Jin and Z. Zhou
@@ -433,6 +432,8 @@ class Nystroem(BaseEstimator, TransformerMixin):
         """
 
         rnd = check_random_state(self.random_state)
+        if not sp.issparse(X):
+            X = np.asarray(X)
         n_samples = X.shape[0]
 
         # get basis vectors
@@ -450,12 +451,9 @@ class Nystroem(BaseEstimator, TransformerMixin):
         basis_inds = inds[:n_components]
         basis = X[basis_inds]
 
-        if False:
-            basis_kernel = self.kernel(basis, basis)
-        else:
-            basis_kernel = pairwise_kernels(basis, metric=self.kernel,
-                                            filter_params=True,
-                                            **self._get_kernel_params())
+        basis_kernel = pairwise_kernels(basis, metric=self.kernel,
+                                        filter_params=True,
+                                        **self._get_kernel_params())
 
         # sqrt of kernel matrix on basis vectors
         U, S, V = svd(basis_kernel)
@@ -481,13 +479,10 @@ class Nystroem(BaseEstimator, TransformerMixin):
             Transformed data.
         """
 
-        if False:
-            embedded = self.kernel(X, self.components_)
-        else:
-            embedded = pairwise_kernels(X, self.components_,
-                                        metric=self.kernel,
-                                        filter_params=True,
-                                        **self._get_kernel_params())
+        embedded = pairwise_kernels(X, self.components_,
+                                    metric=self.kernel,
+                                    filter_params=True,
+                                    **self._get_kernel_params())
         return np.dot(embedded, self.normalization_.T)
 
     def _get_kernel_params(self):

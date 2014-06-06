@@ -78,7 +78,6 @@ METRIC_MAPPING = {'euclidean': EuclideanDistance,
                   'canberra': CanberraDistance,
                   'braycurtis': BrayCurtisDistance,
                   'matching': MatchingDistance,
-                  'hamming': HammingDistance,
                   'jaccard': JaccardDistance,
                   'dice': DiceDistance,
                   'kulsinski': KulsinskiDistance,
@@ -124,7 +123,7 @@ cdef class DistanceMetric:
     The following lists the string metric identifiers and the associated
     distance metric classes:
 
-    *Metrics intended for real-valued vector spaces:*
+    **Metrics intended for real-valued vector spaces:**
 
     ==============  ====================  ========  ============================
     identifier      class name            args      distance function
@@ -138,7 +137,8 @@ cdef class DistanceMetric:
     "mahalanobis"   MahalanobisDistance   V or VI   sqrt((x - y)' V^-1 (x - y))
     ==============  ====================  ========  ============================
 
-    *Metrics intended for two-dimensional vector spaces:*
+    **Metrics intended for two-dimensional vector spaces:**
+
     ============  ==================  ========================================
     identifier    class name          distance function
     ------------  ------------------  ----------------------------------------
@@ -147,7 +147,7 @@ cdef class DistanceMetric:
     ============  ==================  ========================================
 
 
-    *Metrics intended for integer-valued vector spaces:*  Though intended
+    **Metrics intended for integer-valued vector spaces:**  Though intended
     for integer-valued vectors, these are also valid metrics in the case of
     real-valued vectors.
 
@@ -159,7 +159,7 @@ cdef class DistanceMetric:
     "braycurtis"   BrayCurtisDistance    sum(|x - y|) / (sum(|x|) + sum(|y|))
     =============  ====================  =====================================
 
-    *Metrics intended for boolean-valued vector spaces:*  Any nonzero entry
+    **Metrics intended for boolean-valued vector spaces:**  Any nonzero entry
     is evaluated to "True".  In the listings below, the following
     abbreviations are used:
 
@@ -171,9 +171,9 @@ cdef class DistanceMetric:
      - NNEQ : number of non-equal dimensions, NNEQ = NTF + NFT
      - NNZ : number of nonzero dimensions, NNZ = NTF + NFT + NTT
 
-    =================  =======================  =================================
+    =================  =======================  ===============================
     identifier         class name               distance function
-    -----------------  -----------------------  ---------------------------------
+    -----------------  -----------------------  -------------------------------
     "jaccard"          JaccardDistance          NNEQ / NNZ
     "maching"          MatchingDistance         NNEQ / N
     "dice"             DiceDistance             NNEQ / (NTT + NNZ)
@@ -182,9 +182,9 @@ cdef class DistanceMetric:
     "russellrao"       RussellRaoDistance       NNZ / N
     "sokalmichener"    SokalMichenerDistance    2 * NNEQ / (N + NNEQ)
     "sokalsneath"      SokalSneathDistance      NNEQ / (NNEQ + 0.5 * NTT)
-    =================  =======================  =================================
+    =================  =======================  ===============================
 
-    *User-defined distance:*
+    **User-defined distance:**
 
     ===========    ===============    =======
     identifier     class name         args

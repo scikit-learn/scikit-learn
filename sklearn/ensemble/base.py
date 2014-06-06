@@ -5,9 +5,12 @@ Base class for ensemble-based estimators.
 # Authors: Gilles Louppe
 # License: BSD 3 clause
 
+import numpy as np
+
 from ..base import clone
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
+from ..externals.joblib import cpu_count
 
 
 class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
@@ -27,17 +30,18 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
     estimator_params : list of strings
         The list of attributes to use as parameters when instantiating a
         new base estimator. If none are given, default parameters are used.
+
+    Attributes
+    ----------
+    `base_estimator_`: list of estimators
+        The base estimator from which the ensemble is grown.
+
+    `estimators_`: list of estimators
+        The collection of fitted base estimators.
     """
 
     def __init__(self, base_estimator, n_estimators=10,
                  estimator_params=tuple()):
-
-        # Check parameters
-        if not isinstance(base_estimator, BaseEstimator):
-            raise TypeError("estimator must be a subclass of BaseEstimator")
-        if n_estimators <= 0:
-            raise ValueError("n_estimators must be greater than zero.")
-
         # Set parameters
         self.base_estimator = base_estimator
         self.n_estimators = n_estimators
@@ -48,13 +52,23 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
         # This needs to be filled by the derived classes.
         self.estimators_ = []
 
+    def _validate_estimator(self, default=None):
+        """Check the estimator and set the `base_estimator_` attribute."""
+        if self.base_estimator is not None:
+            self.base_estimator_ = self.base_estimator
+        else:
+            self.base_estimator_ = default
+
+        if self.base_estimator_ is None:
+            raise ValueError("base_estimator cannot be None")
+
     def _make_estimator(self, append=True):
-        """Makes, configures and returns a copy of the base estimator.
+        """Make and configure a copy of the `base_estimator_` attribute.
 
         Warning: This method should be used to properly instantiate new
         sub-estimators.
         """
-        estimator = clone(self.base_estimator)
+        estimator = clone(self.base_estimator_)
         estimator.set_params(**dict((p, getattr(self, p))
                                     for p in self.estimator_params))
 
@@ -74,3 +88,21 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
     def __iter__(self):
         """Returns iterator over estimators in the ensemble."""
         return iter(self.estimators_)
+
+
+def _partition_estimators(ensemble):
+    """Private function used to partition estimators between jobs."""
+    # Compute the number of jobs
+    if ensemble.n_jobs == -1:
+        n_jobs = min(cpu_count(), ensemble.n_estimators)
+
+    else:
+        n_jobs = min(ensemble.n_jobs, ensemble.n_estimators)
+
+    # Partition estimators between jobs
+    n_estimators = (ensemble.n_estimators // n_jobs) * np.ones(n_jobs,
+                                                               dtype=np.int)
+    n_estimators[:ensemble.n_estimators % n_jobs] += 1
+    starts = np.cumsum(n_estimators)
+
+    return n_jobs, n_estimators.tolist(), [0] + starts.tolist()

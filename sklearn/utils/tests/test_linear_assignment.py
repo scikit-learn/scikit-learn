@@ -3,7 +3,8 @@
 
 import numpy as np
 
-from sklearn.utils.linear_assignment_ import _Hungarian
+# XXX we should be testing the public API here
+from sklearn.utils.linear_assignment_ import _hungarian
 
 
 def test_hungarian():
@@ -42,17 +43,16 @@ def test_hungarian():
          ),
     ]
 
-    m = _Hungarian()
     for cost_matrix, expected_total in matrices:
         cost_matrix = np.array(cost_matrix)
-        indexes = m.compute(cost_matrix)
+        indexes = _hungarian(cost_matrix)
         total_cost = 0
         for r, c in indexes:
             x = cost_matrix[r, c]
             total_cost += x
         assert expected_total == total_cost
 
-        indexes = m.compute(cost_matrix.T)
+        indexes = _hungarian(cost_matrix.T)
         total_cost = 0
         for c, r in indexes:
             x = cost_matrix[r, c]

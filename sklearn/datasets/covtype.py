@@ -8,6 +8,7 @@ real-valued features.
 #         Peter Prettenhofer <peter.prettenhofer@gmail.com>
 # License: BSD 3 clause
 
+import sys
 import errno
 from gzip import GzipFile
 from io import BytesIO
@@ -60,14 +61,22 @@ def fetch_covtype(data_home=None, download_if_missing=True,
     """
 
     data_home = get_data_home(data_home=data_home)
-    covtype_dir = join(data_home, "covertype")
+    if sys.version_info[0] == 3:
+        # The zlib compression format use by joblib is not compatible when
+        # switching from Python 2 to Python 3, let us use a separate folder
+        # under Python 3:
+        dir_suffix = "-py3"
+    else:
+        # Backward compat for Python 2 users
+        dir_suffix = ""
+    covtype_dir = join(data_home, "covertype" + dir_suffix)
     samples_path = join(covtype_dir, "samples")
     targets_path = join(covtype_dir, "targets")
     available = exists(samples_path)
 
     if download_if_missing and not available:
         _mkdirp(covtype_dir)
-        logger.warn("Downloading %s" % URL)
+        logger.warning("Downloading %s" % URL)
         f = BytesIO(urlopen(URL).read())
         Xy = np.genfromtxt(GzipFile(fileobj=f), delimiter=',')
 

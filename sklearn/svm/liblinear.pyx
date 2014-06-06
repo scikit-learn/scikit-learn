@@ -57,7 +57,7 @@ def train_wrap(X, np.ndarray[np.float64_t,   ndim=1, mode='c'] Y,
     cdef int nr_class = get_nr_class(model)
     cdef int nr_feature = get_nr_feature(model)
     if bias > 0: nr_feature = nr_feature + 1
-    if nr_class == 2:
+    if nr_class == 2 and solver_type != 4:  # solver is not Crammer-Singer
         w = np.empty((1, nr_feature),order='F')
         copy_w(w.data, model, nr_feature)
     else:

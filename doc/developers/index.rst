@@ -545,24 +545,6 @@ cross-compatibility and is included in scikit-learn as
 ``sklearn.externals.six``.
 
 
-Python 3.x support
-------------------
-
-All scikit-learn code should work unchanged in both Python 2.[67]
-and 3.2 or newer. Since Python 3.x is not backwards compatible,
-that may require changes to code and it certainly requires testing
-on both 2.6 or 2.7, and 3.2 or newer.
-
-For most numerical algorithms, Python 3.x support is easy:
-just remember that ``print`` is a function and
-integer division is written ``//``.
-String handling has been overhauled, though, as have parts of
-the Python standard library.
-The `six <http://pythonhosted.org/six/>`_ package helps with
-cross-compability and is included in scikit-learn as
-``sklearn.externals.six``.
-
-
 APIs of scikit-learn objects
 ============================
 
@@ -665,9 +647,11 @@ To summarize, a `__init__` should look like::
         self.param1 = param1
         self.param2 = param2
 
-There should be no logic, and the parameters should not be changed.
-The corresponding logic should be put where the parameters are used. The
-following is wrong::
+There should be no logic, not even input validation,
+and the parameters should not be changed.
+The corresponding logic should be put where the parameters are used,
+typically in ``fit``.
+The following is wrong::
 
     def __init__(self, param1=1, param2=2, param3=3):
         # WRONG: parameters should not be modified
@@ -678,8 +662,9 @@ following is wrong::
         # the argument in the constructor
         self.param3 = param2
 
-Scikit-learn relies on this mechanism to introspect objects to set
-their parameters by cross-validation.
+The reason for postponing the validation is that the same validation
+would have to be performed in ``set_params``,
+which is used in algorithms like ``GridSearchCV``.
 
 Fitting
 ^^^^^^^
@@ -782,10 +767,7 @@ E.g., here's a custom classifier::
   ...         return self
   ...     def predict(self, X):
   ...         return np.repeat(self.classes_[self.majority_], len(X))
-  ...     # doctest: +SKIP
 
-.. We don't run the above "doctest" because it requires a recent NumPy and we
-   don't want users to import from sklearn.utils.fixes.
 
 get_params and set_params
 -------------------------
@@ -878,12 +860,11 @@ should match the order in which ``predict_proba``, ``predict_log_proba``
 and ``decision_function`` return their values.
 The easiest way to achieve this is to put::
 
-    self.classes_, y = unique(y, return_inverse=True)
+    self.classes_, y = np.unique(y, return_inverse=True)
 
 in ``fit``.
 This return a new ``y`` that contains class indexes, rather than labels,
 in the range [0, ``n_classes``).
-``unique`` is available in ``sklearn.utils.fixes``.
 
 A classifier's ``predict`` method should return
 arrays containing class labels from ``classes_``.

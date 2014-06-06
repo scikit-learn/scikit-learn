@@ -21,7 +21,7 @@ print(__doc__)
 # License: BSD 3 clause
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn.linear_model import LogisticRegression
 from sklearn import datasets
@@ -59,8 +59,8 @@ for i, C in enumerate(10. ** np.arange(1, 4)):
     print("Sparsity with L2 penalty: %.2f%%" % sparsity_l2_LR)
     print("score with L2 penalty: %.4f" % clf_l2_LR.score(X, y))
 
-    l1_plot = pl.subplot(3, 2, 2 * i + 1)
-    l2_plot = pl.subplot(3, 2, 2 * (i + 1))
+    l1_plot = plt.subplot(3, 2, 2 * i + 1)
+    l2_plot = plt.subplot(3, 2, 2 * (i + 1))
     if i == 0:
         l1_plot.set_title("L1 penalty")
         l2_plot.set_title("L2 penalty")
@@ -69,11 +69,11 @@ for i, C in enumerate(10. ** np.arange(1, 4)):
                    cmap='binary', vmax=1, vmin=0)
     l2_plot.imshow(np.abs(coef_l2_LR.reshape(8, 8)), interpolation='nearest',
                    cmap='binary', vmax=1, vmin=0)
-    pl.text(-8, 3, "C = %d" % C)
+    plt.text(-8, 3, "C = %d" % C)
 
     l1_plot.set_xticks(())
     l1_plot.set_yticks(())
     l2_plot.set_xticks(())
     l2_plot.set_yticks(())
 
-pl.show()
+plt.show()
