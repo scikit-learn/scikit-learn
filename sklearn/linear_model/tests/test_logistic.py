@@ -157,7 +157,7 @@ def test_consistency_path():
     # penalizes the intercept
     for method in ('lbfgs', 'newton-cg', 'liblinear'):
         coefs, Cs = logistic_regression_path(
-            X, Y1, Cs=Cs, fit_intercept=False, gtol=1e-16, solver=method)
+            X, Y1, Cs=Cs, fit_intercept=False, tol=1e-16, solver=method)
         for i, C in enumerate(Cs):
             lr = LogisticRegression(C=C, fit_intercept=False, tol=1e-16)
             lr.fit(X, Y1)
@@ -168,7 +168,7 @@ def test_consistency_path():
     for method in ('lbfgs', 'newton-cg', 'liblinear'):
         Cs = [1e3]
         coefs, Cs = logistic_regression_path(
-            X, Y1, Cs=Cs, fit_intercept=True, gtol=1e-16, solver=method)
+            X, Y1, Cs=Cs, fit_intercept=True, tol=1e-16, solver=method)
         lr = LogisticRegression(C=Cs[0], fit_intercept=True, tol=1e-16)
         lr.fit(X, Y1)
         lr_coef = np.concatenate([lr.coef_.ravel(), lr.intercept_])
@@ -230,9 +230,6 @@ def test_logistic_loss_grad_hess():
         loss, grad = _logistic_loss_and_grad(w, X, y, alpha=1.)
         loss_2, grad_2, hess = _logistic_loss_grad_hess(w, X, y, alpha=1.)
         assert_array_almost_equal(grad, grad_2)
-        # XXX: we should check a few simple properties of our problem, such
-        # as the fact that if X=0, the problem is alpha * ||w||**2, so we
-        # know the hessian
 
         # Now check our hessian along the second direction of the grad
         vector = np.zeros_like(grad)
