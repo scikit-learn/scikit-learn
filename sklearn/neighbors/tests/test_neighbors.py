@@ -1,4 +1,3 @@
-import warnings
 from itertools import product
 
 import numpy as np
@@ -11,6 +10,8 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
 from sklearn import neighbors, datasets
 
@@ -200,6 +201,14 @@ def test_kneighbors_classifier_predict_proba():
     cls.fit(X, y.astype(str))
     y_prob = cls.predict_proba(X)
     assert_array_equal(real_prob, y_prob)
+    # Check that it works with weights='distance'
+    cls = neighbors.KNeighborsClassifier(
+        n_neighbors=2, p=1, weights='distance')
+    cls.fit(X, y)
+    y_prob = cls.predict_proba(np.array([[0, 2, 0], [2, 2, 2]]))
+    real_prob = np.array([[0, 1, 0], [0, 0.4, 0.6]])
+    assert_array_almost_equal(real_prob, y_prob)
+
 
 
 def test_radius_neighbors_classifier(n_samples=40,
@@ -756,7 +765,7 @@ def test_neighbors_badargs():
                       nbrs.predict,
                       X)
         assert_raises(ValueError,
-                      nbrs.fit,
+                      ignore_warnings(nbrs.fit),
                       Xsparse, y)
         nbrs = cls()
         assert_raises(ValueError,
@@ -785,10 +794,7 @@ def test_neighbors_deprecation_arg():
     warning to be raised, as well as not crash the estimator."""
     for cls in (neighbors.KNeighborsClassifier,
                 neighbors.KNeighborsRegressor):
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            cls(warn_on_equidistant=True)
-            assert_equal(len(w), 1)
+        assert_warns(DeprecationWarning, cls, warn_on_equidistant=True)
 
 
 def test_neighbors_metrics(n_samples=20, n_features=3,

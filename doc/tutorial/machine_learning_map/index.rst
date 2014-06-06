@@ -75,7 +75,7 @@ Click on any estimator in the chart below to see it's documentation.
       <p>
         <img src="../../_static/ml_map.png" class="map" width="2122" height="1323" alt="Move mouse over image" usemap="#imgmap">
       	    <map name="imgmap">
-	    	<area href="../index.html" title="Back to Getting Started" shape="poly" coords="97,1094, 76,1097, 56,1105, 40,1120, 35,1132, 34,1145, 35,1153, 40,1162, 46,1171, 54,1177, 62,1182, 72,1187, 81,1188, 100,1189, 118,1186, 127,1182, 136,1177, 146,1170, 152,1162, 155,1158, 158,1146, 158,1126, 143,1110, 138,1105, 127,1100, 97,1094"></area>
+	    	<area href="../../documentation.html" title="Back to Documentation" shape="poly" coords="97,1094, 76,1097, 56,1105, 40,1120, 35,1132, 34,1145, 35,1153, 40,1162, 46,1171, 54,1177, 62,1182, 72,1187, 81,1188, 100,1189, 118,1186, 127,1182, 136,1177, 146,1170, 152,1162, 155,1158, 158,1146, 158,1126, 143,1110, 138,1105, 127,1100, 97,1094"></area>
 		<area href="../../modules/linear_model.html#elastic-net" title="Elastic Net Documentation" shape="poly" coords="1556,446, 1556,446, 1556,476, 1556,476, 1556,476, 1676,476, 1676,476, 1676,476, 1676,446, 1676,446, 1676,446, 1556,446, 1556,446" data-maphilight='{"strokeColor":"0000ff","strokeWidth":5,"fillColor":"66FF66","fillOpacity":0.4}'></area>
 		<area href="../../modules/ensemble.html" title="Ensembe Methods Documentation" shape="poly" coords="209,200, 209,200, 209,252, 209,252, 209,252, 332,252, 332,252, 332,252, 332,200, 332,200, 332,200, 209,200, 209,200" data-maphilight='{"strokeColor":"0000ff","strokeWidth":5,"fillColor":"66FF66","fillOpacity":0.4}'></area>
 		<area href="../../modules/ensemble.html" title="Ensembe Methods Documentation" shape="poly" coords="1828,506, 1828,506, 1828,544, 1828,544, 1828,544, 2054,544, 2054,544, 2054,544, 2054,506, 2054,506, 2054,506, 1828,506, 1828,506" data-maphilight='{"strokeColor":"0000ff","strokeWidth":5,"fillColor":"66FF66","fillOpacity":0.4}'></area>
@@ -104,6 +104,11 @@ Click on any estimator in the chart below to see it's documentation.
 	    </map>
 	</img>
       </p>
+      <script type="text/javascript">
+          // Note that this is a hack-fix for now. This should be
+	  // fixed using css, not js. See issue #2328 for reference
+          $('.map').css({'height': '1300px'});
+      </script>
     </body>
 
 

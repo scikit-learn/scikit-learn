@@ -216,7 +216,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     if ((not sparse.isspmatrix(adjacency) and
          not np.all((adjacency - adjacency.T) < 1e-10)) or
         (sparse.isspmatrix(adjacency) and
-         (adjacency - adjacency.T).nnz > 0)):
+         not np.all((adjacency - adjacency.T).data < 1e-10))):
         warnings.warn("Graph adjacency matrix should be symmetric. "
                       "Converted to be symmetric by average with its "
                       "transpose.")
@@ -288,7 +288,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             # number of nodes
             # lobpcg will fallback to symeig, so we short circuit it
             if sparse.isspmatrix(laplacian):
-                laplacian = laplacian.todense()
+                laplacian = laplacian.toarray()
             lambdas, diffusion_map = symeig(laplacian)
             embedding = diffusion_map.T[:n_components] * dd
         else:
@@ -310,8 +310,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         return embedding[:n_components].T
 
 
-class SpectralEmbedding(BaseEstimator, TransformerMixin):
-    """Spectral Embedding for Non-linear Dimensionality Reduction.
+class SpectralEmbedding(BaseEstimator):
+    """Spectral embedding for non-linear dimensionality reduction.
 
     Forms an affinity matrix given by the specified function and
     applies spectral decomposition to the corresponding graph laplacian.

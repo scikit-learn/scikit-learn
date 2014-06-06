@@ -162,7 +162,8 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             else:
                 mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
 
-            y_pred[:, k] = classes_k.take(mode.flatten().astype(np.int))
+            mode = np.asarray(mode.ravel(), dtype=np.intp)
+            y_pred[:, k] = classes_k.take(mode)
 
         if not self.outputs_2d_:
             y_pred = y_pred.ravel()
@@ -199,6 +200,10 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         weights = _get_weights(neigh_dist, self.weights)
         if weights is None:
             weights = np.ones_like(neigh_ind)
+        else:
+            # Some weights may be infinite (zero distance), which can cause
+            # downstream NaN values when used for normalization.
+            weights[np.isinf(weights)] = np.finfo('f').max
 
         all_rows = np.arange(X.shape[0])
         probabilities = []

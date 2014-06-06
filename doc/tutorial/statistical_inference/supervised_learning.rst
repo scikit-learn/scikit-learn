@@ -439,9 +439,10 @@ the separating line (less regularization).
     |svm_margin_unreg|  	  |svm_margin_reg|
     ============================= ==============================
 
-.. image:: ../../auto_examples/svm/images/plot_svm_iris_1.png
-   :target: ../../auto_examples/svm/plot_svm_iris.html
-   :scale: 83
+.. topic:: Example:
+
+ - :ref:`example_svm_plot_iris.py`
+
 
 SVMs can be used in regression --:class:`SVR` (Support Vector Regression)--, or in
 classification --:class:`SVC` (Support Vector Classification).

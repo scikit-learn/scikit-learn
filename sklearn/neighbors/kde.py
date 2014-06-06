@@ -8,6 +8,7 @@ import numpy as np
 from scipy.special import gammainc
 from ..base import BaseEstimator
 from ..utils import array2d, check_random_state
+from ..utils.extmath import row_norms
 from .ball_tree import BallTree, DTYPE
 from .kd_tree import KDTree
 
@@ -207,7 +208,7 @@ class KernelDensity(BaseEstimator):
             # d-dimensional tophat distribution.
             dim = data.shape[1]
             X = rng.normal(size=(n_samples, dim))
-            s_sq = (X ** 2).sum(1)
+            s_sq = row_norms(X, squared=True)
             correction = (gammainc(0.5 * dim, 0.5 * s_sq) ** (1. / dim)
                           * self.bandwidth / np.sqrt(s_sq))
             return data[i] + X * correction[:, np.newaxis]

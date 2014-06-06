@@ -18,8 +18,8 @@ from ..base import BaseEstimator
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import safe_asarray, atleast2d_or_csr, check_arrays
+from ..utils.fixes import argpartition
 from ..utils.validation import DataConversionWarning
-from ..utils.fixes import unique
 from ..externals import six
 
 
@@ -174,10 +174,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             self._fit_method = 'kd_tree'
             return self
 
-        X = safe_asarray(X)
-
-        if X.ndim != 2:
-            raise ValueError("data type not understood")
+        X = atleast2d_or_csr(X, copy=False)
 
         n_samples = X.shape[0]
         if n_samples == 0:
@@ -190,7 +187,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             if self.effective_metric_ not in VALID_METRICS_SPARSE['brute']:
                 raise ValueError("metric '%s' not valid for sparse input"
                                  % self.effective_metric_)
-            self._fit_X = X.tocsr()
+            self._fit_X = X.copy()
             self._tree = None
             self._fit_method = 'brute'
             return self
@@ -297,11 +294,12 @@ class KNeighborsMixin(object):
                                           self.effective_metric_,
                                           **self.effective_metric_kwds_)
 
-            # XXX: should be implemented with a partial sort
-            neigh_ind = dist.argsort(axis=1)
+            neigh_ind = argpartition(dist, n_neighbors - 1, axis=1)
             neigh_ind = neigh_ind[:, :n_neighbors]
+            # argpartition doesn't guarantee sorted order, so we sort again
+            j = np.arange(neigh_ind.shape[0])[:, None]
+            neigh_ind = neigh_ind[j, np.argsort(dist[j, neigh_ind])]
             if return_distance:
-                j = np.arange(neigh_ind.shape[0])[:, None]
                 if self.effective_metric_ == 'euclidean':
                     return np.sqrt(dist[j, neigh_ind]), neigh_ind
                 else:
@@ -347,10 +345,10 @@ class KNeighborsMixin(object):
         >>> neigh.fit(X) # doctest: +ELLIPSIS
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
         >>> A = neigh.kneighbors_graph(X)
-        >>> A.todense()
-        matrix([[ 1.,  0.,  1.],
-                [ 0.,  1.,  1.],
-                [ 1.,  0.,  1.]])
+        >>> A.toarray()
+        array([[ 1.,  0.,  1.],
+               [ 0.,  1.,  1.],
+               [ 1.,  0.,  1.]])
 
         See also
         --------
@@ -527,10 +525,10 @@ class RadiusNeighborsMixin(object):
         >>> neigh.fit(X) # doctest: +ELLIPSIS
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
         >>> A = neigh.radius_neighbors_graph(X)
-        >>> A.todense()
-        matrix([[ 1.,  0.,  1.],
-                [ 0.,  1.,  0.],
-                [ 1.,  0.,  1.]])
+        >>> A.toarray()
+        array([[ 1.,  0.,  1.],
+               [ 0.,  1.,  0.],
+               [ 1.,  0.,  1.]])
 
         See also
         --------
@@ -607,8 +605,8 @@ class SupervisedIntegerMixin(object):
 
         if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
             if y.ndim != 1:
-                warnings.warn("A column-vector y was passed when a 1d array"
-                              "was expected. Please change the shape of y to"
+                warnings.warn("A column-vector y was passed when a 1d array "
+                              "was expected. Please change the shape of y to "
                               "(n_samples, ), for example using ravel().",
                               DataConversionWarning, stacklevel=2)
 
@@ -620,7 +618,7 @@ class SupervisedIntegerMixin(object):
         self.classes_ = []
         self._y = np.empty(y.shape, dtype=np.int)
         for k in range(self._y.shape[1]):
-            classes, self._y[:, k] = unique(y[:, k], return_inverse=True)
+            classes, self._y[:, k] = np.unique(y[:, k], return_inverse=True)
             self.classes_.append(classes)
 
         if not self.outputs_2d_:

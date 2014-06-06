@@ -23,13 +23,13 @@ of the standard linear regression
 print(__doc__)
 
 
-# Code source: Gael Varoqueux
-# Modified for Documentation merge by Jaques Grobler
+# Code source: Gaël Varoquaux
+# Modified for documentation by Jaques Grobler
 # License: BSD 3 clause
 
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn import linear_model
 
@@ -43,10 +43,11 @@ classifiers = dict(ols=linear_model.LinearRegression(),
                    ridge=linear_model.Ridge(alpha=.1))
 
 fignum = 1
-for name, clf in classifiers.iteritems():
-    fig = pl.figure(fignum, figsize=(4, 3))
-    pl.clf()
-    ax = pl.axes([.12, .12, .8, .8])
+for name, clf in classifiers.items():
+    fig = plt.figure(fignum, figsize=(4, 3))
+    plt.clf()
+    plt.title(name)
+    ax = plt.axes([.12, .12, .8, .8])
 
     for _ in range(6):
         this_X = .1 * np.random.normal(size=(2, 1)) + X_train
@@ -67,4 +68,4 @@ for name, clf in classifiers.iteritems():
     ax.set_xlim(0, 2)
     fignum += 1
 
-pl.show()
+plt.show()

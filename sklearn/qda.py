@@ -12,7 +12,6 @@ import numpy as np
 
 from .base import BaseEstimator, ClassifierMixin
 from .externals.six.moves import xrange
-from .utils.fixes import unique
 from .utils import check_arrays, array2d, column_or_1d
 
 __all__ = ['QDA']
@@ -97,7 +96,7 @@ class QDA(BaseEstimator, ClassifierMixin):
         """
         X, y = check_arrays(X, y)
         y = column_or_1d(y, warn=True)
-        self.classes_, y = unique(y, return_inverse=True)
+        self.classes_, y = np.unique(y, return_inverse=True)
         n_samples, n_features = X.shape
         n_classes = len(self.classes_)
         if n_classes < 2:
@@ -136,20 +135,6 @@ class QDA(BaseEstimator, ClassifierMixin):
         self.scalings_ = np.asarray(scalings)
         self.rotations_ = rotations
         return self
-
-    @property
-    def scalings(self):  # pragma: no cover
-        warnings.warn("QDA.scalings is deprecated and will be removed in 0.15."
-                      " Use QDA.scalings_ instead.", DeprecationWarning,
-                      stacklevel=2)
-        return self.scalings_
-
-    @property
-    def rotations(self):  # pragma: no cover
-        warnings.warn("QDA.rotations is deprecated and will be removed in "
-                      "0.15. Use QDA.rotations_ instead.", DeprecationWarning,
-                      stacklevel=2)
-        return self.rotations_
 
     def _decision_function(self, X):
         X = array2d(X)

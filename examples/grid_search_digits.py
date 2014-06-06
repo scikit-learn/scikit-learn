@@ -1,12 +1,11 @@
 """
-=====================================================================
-Parameter estimation using grid search with a nested cross-validation
-=====================================================================
+============================================================
+Parameter estimation using grid search with cross-validation
+============================================================
 
-This examples shows how a classifier is optimized by "nested"
-cross-validation, which is done using the
-:class:`sklearn.grid_search.GridSearchCV` object on a development set
-that comprises only half of the available labeled data.
+This examples shows how a classifier is optimized by cross-validation,
+which is done using the :class:`sklearn.grid_search.GridSearchCV` object
+on a development set that comprises only half of the available labeled data.
 
 The performance of the selected hyper-parameters and trained model is
 then measured on a dedicated evaluation set that was not used during

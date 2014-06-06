@@ -471,6 +471,84 @@ order to avoid that, the disparities :math:`\hat{d}_{ij}` are normalized.
     <http://www.springerlink.com/content/010q1x323915712x/>`_
     Kruskal, J. Psychometrika, 29, (1964)
 
+.. _t_sne:
+
+t-distributed Stochastic Neighbor Embedding (t-SNE)
+===================================================
+
+t-SNE (:class:`TSNE`) converts affinities of data points to probabilities.
+The affinities in the original space are represented by Gaussian joint
+probabilities and the affinities in the embedded space are represented by
+Student's t-distributions. The Kullback-Leibler (KL) divergence of the joint
+probabilities in the original space and the embedded space will be minimized
+by gradient descent. Note that the KL divergence is not convex, i.e.
+multiple restarts with different initializations will end up in local minima
+of the KL divergence. Hence, it is sometimes useful to try different seeds
+and select the embedding with the lowest KL divergence.
+
+
+.. figure:: ../auto_examples/manifold/images/plot_lle_digits_13.png
+   :target: ../auto_examples/manifold/plot_lle_digits.html
+   :align: center
+   :scale: 50
+
+
+The main purpose of t-SNE is visualization of high-dimensional data. Hence,
+it works best when the data will be embedded on two or three dimensions.
+
+Optimizing the KL divergence can be a little bit tricky sometimes. There are
+three parameters that control the optimization of t-SNE:
+
+* early exaggeration factor
+* learning rate
+* maximum number of iterations
+
+The maximum number of iterations is usually high enough and does not need
+any tuning. The optimization consists of two phases: the early exaggeration
+phase and the final optimization. During early exaggeration the joint
+probabilities in the original space will be artificially increased by
+multiplication with a given factor. Larger factors result in larger gaps
+between natural clusters in the data. If the factor is too high, the KL
+divergence could increase during this phase. Usually it does not have to be
+tuned. A critical parameter is the learning rate. If it is too low gradient
+descent will get stuck in a bad local minimum. If it is too high the KL
+divergence will increase during optimization. More tips can be found in
+Laurens van der Maaten's FAQ (see references).
+
+Standard t-SNE that has been implemented here is usually much slower than
+other manifold learning algorithms. The optimization is quite difficult
+and the computation of the gradient is on :math:`O[d N^2]`, where :math:`d`
+is the number of output dimensions and :math:`N` is the number of samples.
+
+While Isomap, LLE and variants are best suited to unfold a single continuous
+low dimensional manifold, t-SNE will focus on the local structure of the data
+and will tend to extract clustered local groups of samples as highlighted on
+the S-curve example. This ability to group samples based on the local structure
+might be beneficial to visually disentangle a dataset that comprises several
+manifolds at once as is the case in the digits dataset.
+
+Also note that the digits labels roughly match the natural grouping found by
+t-SNE while the linear 2D projection of the PCA model yields a representation
+where label regions largely overlap. This is a strong clue that this data can
+be well separated by non linear methods that focus on the local structure (e.g.
+an SVM with a Gaussian RBF kernel). However, failing to visualize well
+separated homogeneously labeled groups with t-SNE in 2D does not necessarily
+implie that the data cannot be correctly classified by a supervised model. It
+might be the case that 2 dimensions are not enough low to accurately represents
+the internal structure of the data.
+
+
+.. topic:: References:
+
+  * `"Visualizing High-Dimensional Data Using t-SNE"
+    <http://jmlr.org/papers/v9/vandermaaten08a.html>`_
+    van der Maaten, L.J.P.; Hinton, G. Journal of Machine Learning Research
+    (2008)
+
+  * `"t-Distributed Stochastic Neighbor Embedding"
+    <http://homepage.tudelft.nl/19j49/t-SNE.html>`_
+    van der Maaten, L.J.P.
+
 Tips on practical use
 =====================
 

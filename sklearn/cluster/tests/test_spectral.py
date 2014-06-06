@@ -17,7 +17,9 @@ from sklearn.utils.testing import assert_greater
 from sklearn.cluster import SpectralClustering, spectral_clustering
 from sklearn.cluster.spectral import spectral_embedding
 from sklearn.cluster.spectral import discretize
-from sklearn.metrics import pairwise_distances, adjusted_rand_score
+from sklearn.metrics import pairwise_distances
+from sklearn.metrics import adjusted_rand_score
+from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.datasets.samples_generator import make_blobs
 
 
@@ -48,25 +50,6 @@ def test_spectral_clustering():
                 assert_equal(model_copy.n_clusters, model.n_clusters)
                 assert_equal(model_copy.eigen_solver, model.eigen_solver)
                 assert_array_equal(model_copy.labels_, model.labels_)
-
-
-def test_spectral_lobpcg_mode():
-    # Test the lobpcg mode of SpectralClustering
-    # We need a fairly big data matrix, as lobpcg does not work with
-    # small data matrices
-    centers = np.array([
-        [0., 0.],
-        [10., 10.],
-    ])
-    X, true_labels = make_blobs(n_samples=100, centers=centers,
-                                cluster_std=.1, random_state=42)
-    D = pairwise_distances(X)  # Distance matrix
-    S = np.max(D) - D  # Similarity matrix
-    labels = spectral_clustering(S, n_clusters=len(centers),
-                                 random_state=0, eigen_solver="lobpcg")
-    # We don't care too much that it's good, just that it *worked*.
-    # There does have to be some lower limit on the performance though.
-    assert_greater(np.mean(labels == true_labels), .3)
 
 
 def test_spectral_amg_mode():
@@ -131,28 +114,16 @@ def test_spectral_unknown_assign_labels():
 
 
 def test_spectral_clustering_sparse():
-    # We need a large matrice, or the lobpcg solver will fallback to its
-    # non-sparse and buggy mode
-    S = np.array([[1, 5, 2, 2, 1, 0, 0, 0, 0, 0],
-                  [5, 1, 3, 2, 1, 0, 0, 0, 0, 0],
-                  [2, 3, 1, 1, 1, 0, 0, 0, 0, 0],
-                  [2, 2, 1, 1, 1, 0, 0, 0, 0, 0],
-                  [1, 1, 1, 1, 1, 1, 2, 1, 1, 1],
-                  [0, 0, 0, 0, 1, 2, 2, 3, 3, 2],
-                  [0, 0, 0, 0, 2, 2, 3, 3, 3, 4],
-                  [0, 0, 0, 0, 1, 3, 3, 1, 2, 4],
-                  [0, 0, 0, 0, 1, 3, 3, 2, 1, 4],
-                  [0, 0, 0, 0, 1, 2, 4, 4, 4, 1],
-                  ])
+    X, y = make_blobs(n_samples=20, random_state=0,
+                      centers=[[1, 1], [-1, -1]], cluster_std=0.01)
 
+    S = rbf_kernel(X, gamma=1)
+    S = np.maximum(S - 1e-4, 0)
     S = sparse.coo_matrix(S)
 
     labels = SpectralClustering(random_state=0, n_clusters=2,
                                 affinity='precomputed').fit(S).labels_
-    if labels[0] == 0:
-        labels = 1 - labels
-
-    assert_greater(np.mean(labels == [1, 1, 1, 1, 1, 0, 0, 0, 0, 0]), .89)
+    assert_equal(adjusted_rand_score(y, labels), 1)
 
 
 def test_affinities():
@@ -182,7 +153,6 @@ def test_affinities():
             sp = SpectralClustering(n_clusters=2, affinity=kern,
                                     random_state=0)
             labels = sp.fit(X).labels_
-            print(labels)
             assert_equal((X.shape[0],), labels.shape)
 
     sp = SpectralClustering(n_clusters=2, affinity=lambda x, y: 1,
@@ -218,7 +188,7 @@ def test_discretize(seed=8):
                                              y_true)),
                                             shape=(n_samples,
                                                    n_class + 1))
-            y_true_noisy = (y_indicator.todense()
+            y_true_noisy = (y_indicator.toarray()
                             + 0.1 * random_state.randn(n_samples,
                                                        n_class + 1))
             y_pred = discretize(y_true_noisy, random_state)

@@ -11,3 +11,4 @@ Model selection and evaluation
     modules/grid_search
     modules/pipeline
     modules/model_evaluation
+    modules/learning_curve

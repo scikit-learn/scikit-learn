@@ -1,9 +1,11 @@
 import numpy as np
 from scipy import sparse
 
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_true
 
 from sklearn.preprocessing.imputation import Imputer
 from sklearn.pipeline import Pipeline
@@ -41,8 +43,6 @@ def _check_statistics(X, X_true,
         assert_raises(ValueError, imputer.transform, X.copy().transpose())
     else:
         X_trans = imputer.transform(X.copy().transpose())
-        assert_array_equal(imputer.statistics_, statistics,
-                           err_msg.format(1, False))
         assert_array_equal(X_trans, X_true.transpose(),
                            err_msg.format(1, False))
 
@@ -70,10 +70,21 @@ def _check_statistics(X, X_true,
         if sparse.issparse(X_trans):
             X_trans = X_trans.toarray()
 
-        assert_array_equal(imputer.statistics_, statistics,
-                           err_msg.format(1, True))
         assert_array_equal(X_trans, X_true.transpose(),
                            err_msg.format(1, True))
+
+
+def test_imputation_shape():
+    """Verify the shapes of the imputed matrix for different strategies."""
+    X = np.random.randn(10, 2)
+    X[::2] = np.nan
+
+    for strategy in ['mean', 'median', 'most_frequent']:
+        imputer = Imputer(strategy=strategy)
+        X_imputed = imputer.fit_transform(X)
+        assert_equal(X_imputed.shape, (10, 2))
+        X_imputed = imputer.fit_transform(sparse.csr_matrix(X))
+        assert_equal(X_imputed.shape, (10, 2))
 
 
 def test_imputation_mean_median_only_zero():
@@ -94,16 +105,20 @@ def test_imputation_mean_median_only_zero():
     ])
     statistics_mean = [np.nan, 3, np.nan, np.nan, 7]
 
+    # Behaviour of median with NaN is undefined, e.g. different results in
+    # np.median and np.ma.median
+    X_for_median = X[:, [0, 1, 2, 4]]
     X_imputed_median = np.array([
-        [2, 5,  5],
-        [1, np.nan,  3],
-        [2, 5, 5],
-        [6, 5,  13],
+        [2, 5],
+        [1, 3],
+        [2, 5],
+        [6, 13],
     ])
-    statistics_median = [np.nan, 2, np.nan, 5, 5]
+    statistics_median = [np.nan, 2, np.nan, 5]
 
     _check_statistics(X, X_imputed_mean, "mean", statistics_mean, 0)
-    _check_statistics(X, X_imputed_median, "median", statistics_median, 0)
+    _check_statistics(X_for_median, X_imputed_median, "median",
+                      statistics_median, 0)
 
 
 def test_imputation_mean_median():
@@ -176,6 +191,36 @@ def test_imputation_mean_median():
                           true_statistics, test_missing_values)
 
 
+def test_imputation_median_special_cases():
+    """Test median imputation with sparse boundary cases
+    """
+    X = np.array([
+        [0, np.nan, np.nan],  # odd: implicit zero
+        [5, np.nan, np.nan],  # odd: explicit nonzero
+        [0, 0, np.nan],    # even: average two zeros
+        [-5, 0, np.nan],   # even: avg zero and neg
+        [0, 5, np.nan],    # even: avg zero and pos
+        [4, 5, np.nan],    # even: avg nonzeros
+        [-4, -5, np.nan],  # even: avg negatives
+        [-1, 2, np.nan],   # even: crossing neg and pos
+    ]).transpose()
+
+    X_imputed_median = np.array([
+        [0, 0, 0],
+        [5, 5, 5],
+        [0, 0, 0],
+        [-5, 0, -2.5],
+        [0, 5, 2.5],
+        [4, 5, 4.5],
+        [-4, -5, -4.5],
+        [-1, 2, .5],
+    ]).transpose()
+    statistics_median = [0, 5, 0, -2.5, 2.5, 4.5, -4.5, .5]
+
+    _check_statistics(X, X_imputed_median, "median",
+                      statistics_median, 'NaN')
+
+
 def test_imputation_most_frequent():
     """Test imputation using the most-frequent strategy."""
     X = np.array([
@@ -211,7 +256,7 @@ def test_imputation_pipeline_grid_search():
 
     l = 100
     X = sparse_random_matrix(l, l, density=0.10)
-    Y = sparse_random_matrix(l, 1, density=0.10).todense()
+    Y = sparse_random_matrix(l, 1, density=0.10).toarray()
     gs = grid_search.GridSearchCV(pipeline, parameters)
     gs.fit(X, Y)
 
@@ -236,26 +281,68 @@ def test_imputation_pickle():
 
 
 def test_imputation_copy():
-    """Test imputation with copy=True."""
-    l = 5
+    """Test imputation with copy"""
+    X_orig = sparse_random_matrix(5, 5, density=0.75, random_state=0)
 
-    # Test default behaviour and with copy=True
-    for params in [{}, {'copy': True}]:
-        X = sparse_random_matrix(l, l, density=0.75, random_state=0)
+    # copy=True, dense => copy
+    X = X_orig.copy().toarray()
+    imputer = Imputer(missing_values=0, strategy="mean", copy=True)
+    Xt = imputer.fit(X).transform(X)
+    Xt[0, 0] = -1
+    assert_false(np.all(X == Xt))
 
-        # Dense
-        imputer = Imputer(missing_values=0, strategy="mean", **params)
-        Xt = imputer.fit(X).transform(X)
-        Xt[0, 0] = np.nan
-        # Check that the objects are different and that they don't use
-        # the same buffer
-        assert_false(np.all(X.todense() == Xt))
+    # copy=True, sparse csr => copy
+    X = X_orig.copy()
+    imputer = Imputer(missing_values=X.data[0], strategy="mean", copy=True)
+    Xt = imputer.fit(X).transform(X)
+    Xt.data[0] = -1
+    assert_false(np.all(X.data == Xt.data))
 
-        # Sparse
-        imputer = Imputer(missing_values=0, strategy="mean", **params)
-        X = X.todense()
-        Xt = imputer.fit(X).transform(X)
-        Xt[0, 0] = np.nan
-        # Check that the objects are different and that they don't use
-        # the same buffer
-        assert_false(np.all(X == Xt))
+    # copy=False, dense => no copy
+    X = X_orig.copy().toarray()
+    imputer = Imputer(missing_values=0, strategy="mean", copy=False)
+    Xt = imputer.fit(X).transform(X)
+    Xt[0, 0] = -1
+    assert_true(np.all(X == Xt))
+
+    # copy=False, sparse csr, axis=1 => no copy
+    X = X_orig.copy()
+    imputer = Imputer(missing_values=X.data[0], strategy="mean",
+                      copy=False, axis=1)
+    Xt = imputer.fit(X).transform(X)
+    Xt.data[0] = -1
+    assert_true(np.all(X.data == Xt.data))
+
+    # copy=False, sparse csc, axis=0 => no copy
+    X = X_orig.copy().tocsc()
+    imputer = Imputer(missing_values=X.data[0], strategy="mean",
+                      copy=False, axis=0)
+    Xt = imputer.fit(X).transform(X)
+    Xt.data[0] = -1
+    assert_true(np.all(X.data == Xt.data))
+
+    # copy=False, sparse csr, axis=0 => copy
+    X = X_orig.copy()
+    imputer = Imputer(missing_values=X.data[0], strategy="mean",
+                      copy=False, axis=0)
+    Xt = imputer.fit(X).transform(X)
+    Xt.data[0] = -1
+    assert_false(np.all(X.data == Xt.data))
+
+    # copy=False, sparse csc, axis=1 => copy
+    X = X_orig.copy().tocsc()
+    imputer = Imputer(missing_values=X.data[0], strategy="mean",
+                      copy=False, axis=1)
+    Xt = imputer.fit(X).transform(X)
+    Xt.data[0] = -1
+    assert_false(np.all(X.data == Xt.data))
+
+    # copy=False, sparse csr, axis=1, missing_values=0 => copy
+    X = X_orig.copy()
+    imputer = Imputer(missing_values=0, strategy="mean",
+                      copy=False, axis=1)
+    Xt = imputer.fit(X).transform(X)
+    assert_false(sparse.issparse(Xt))
+
+    # Note: If X is sparse and if missing_values=0, then a (dense) copy of X is
+    # made, even if copy=False.
