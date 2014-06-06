@@ -434,7 +434,7 @@ def sparse_enet_coordinate_descent(double[:] w,
 @cython.cdivision(True)
 def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
                             double alpha, double beta,
-                            np.ndarray[DOUBLE, ndim=2] Q,
+                            double[:, ::1] Q,
                             np.ndarray[DOUBLE, ndim=1] q,
                             np.ndarray[DOUBLE, ndim=1] y,
                             int max_iter, double tol, bint positive=0):
@@ -455,10 +455,12 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
     # get the data information into easy vars
     cdef unsigned int n_samples = y.shape[0]
     cdef unsigned int n_features = Q.shape[0]
+    cdef unsigned int n_tasks = y.strides[0] / sizeof(DOUBLE)
 
     # initial value "Q w" which will be kept of up to date in the iterations
     cdef np.ndarray[DOUBLE, ndim=1] H = np.dot(Q, w)
 
+    cdef np.ndarray[DOUBLE, ndim=1] XtA = np.zeros(n_features)
     cdef double tmp
     cdef double w_ii
     cdef double d_w_max
@@ -466,6 +468,7 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
     cdef double d_w_ii
     cdef double gap = tol + 1.0
     cdef double d_w_tol = tol
+    cdef double dual_norm_XtA
     cdef unsigned int ii
     cdef unsigned int n_iter
 
@@ -476,74 +479,88 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
             " results and is discouraged.")
 
-    for n_iter in range(max_iter):
-        w_max = 0.0
-        d_w_max = 0.0
-        for ii in range(n_features):  # Loop over coordinates
-            if Q[ii, ii] == 0.0:
-                continue
+    with nogil:
+        for n_iter in range(max_iter):
+            w_max = 0.0
+            d_w_max = 0.0
+            for ii in range(n_features):  # Loop over coordinates
+                if Q[ii, ii] == 0.0:
+                    continue
 
-            w_ii = w[ii]  # Store previous value
+                w_ii = w[ii]  # Store previous value
 
-            if w_ii != 0.0:
-                # H -= w_ii * Q[ii]
-                daxpy(n_features, -w_ii,
-                      <DOUBLE*>(Q.data + ii * n_features * sizeof(DOUBLE)), 1,
-                      <DOUBLE*>H.data, 1)
+                if w_ii != 0.0:
+                    # H -= w_ii * Q[ii]
+                    daxpy(n_features, -w_ii,
+                          <DOUBLE*>(&Q[ii, 0]), 1,
+                          <DOUBLE*>H.data, 1)
 
-            tmp = q[ii] - H[ii]
+                tmp = q[ii] - H[ii]
 
-            if positive and tmp < 0:
-                w[ii] = 0.0
-            else:
-                w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
-                    / (Q[ii, ii] + beta)
+                if positive and tmp < 0:
+                    w[ii] = 0.0
+                else:
+                    w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
+                        / (Q[ii, ii] + beta)
 
-            if w[ii] != 0.0:
-                # H +=  w[ii] * Q[ii] # Update H = X.T X w
-                daxpy(n_features, w[ii],
-                      <DOUBLE*>(Q.data + ii * n_features * sizeof(DOUBLE)), 1,
-                      <DOUBLE*>H.data, 1)
+                if w[ii] != 0.0:
+                    # H +=  w[ii] * Q[ii] # Update H = X.T X w
+                    daxpy(n_features, w[ii],
+                          <DOUBLE*>(&Q[ii, 0]), 1,
+                          <DOUBLE*>H.data, 1)
 
-            # update the maximum absolute coefficient update
-            d_w_ii = fabs(w[ii] - w_ii)
-            if d_w_ii > d_w_max:
-                d_w_max = d_w_ii
+                # update the maximum absolute coefficient update
+                d_w_ii = fabs(w[ii] - w_ii)
+                if d_w_ii > d_w_max:
+                    d_w_max = d_w_ii
 
-            if fabs(w[ii]) > w_max:
-                w_max = fabs(w[ii])
+                if fabs(w[ii]) > w_max:
+                    w_max = fabs(w[ii])
 
-        if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
-            # the biggest coordinate update of this iteration was smaller than
-            # the tolerance: check the duality gap as ultimate stopping
-            # criterion
+            if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
+                # the biggest coordinate update of this iteration was smaller than
+                # the tolerance: check the duality gap as ultimate stopping
+                # criterion
 
-            q_dot_w = np.dot(w, q)
+                # q_dot_w = np.dot(w, q)
+                # Note that increment in q is not 1 because the strides
+                # vary if q is sliced from a 2-D array.
+                q_dot_w = ddot(n_features, <DOUBLE*>w.data, 1,
+                               <DOUBLE*>q.data, n_tasks)
 
-            XtA = q - H - beta * w
-            if positive:
-                dual_norm_XtA = np.max(XtA)
-            else:
-                dual_norm_XtA = linalg.norm(XtA, np.inf)
+                for ii in range(n_features):
+                    XtA[ii] = q[ii] - H[ii] - beta * w[ii]
+                if positive:
+                    dual_norm_XtA = max(n_features, &XtA[0])
+                else:
+                    dual_norm_XtA = abs_max(n_features, &XtA[0])
 
-            R_norm2 = y_norm2 + np.sum(w * H) - 2.0 * q_dot_w
-            w_norm2 = np.dot(w, w)
-            if (dual_norm_XtA > alpha):
-                const = alpha / dual_norm_XtA
-                A_norm2 = R_norm2 * (const ** 2)
-                gap = 0.5 * (R_norm2 + A_norm2)
-            else:
-                const = 1.0
-                gap = R_norm2
+                # temp = np.sum(w * H)
+                tmp = 0.0
+                for ii in range(n_features):
+                    tmp += w[ii] * H[ii]
+                R_norm2 = y_norm2 + tmp - 2.0 * q_dot_w
 
-            gap += alpha * linalg.norm(w, 1) \
-                   - const * y_norm2 \
-                   + const * q_dot_w + \
-                  0.5 * beta * (1 + const ** 2) * (w_norm2)
+                # w_norm2 = np.dot(w, w)
+                w_norm2 = ddot(n_features, <DOUBLE*>w.data, 1,
+                               <DOUBLE*>w.data, 1)
 
-            if gap < tol:
-                # return if we reached desired tolerance
-                break
+                if (dual_norm_XtA > alpha):
+                    const = alpha / dual_norm_XtA
+                    A_norm2 = R_norm2 * (const ** 2)
+                    gap = 0.5 * (R_norm2 + A_norm2)
+                else:
+                    const = 1.0
+                    gap = R_norm2
+
+                # The call to dasum is equivalent to the L1 norm of w
+                gap += (alpha * dasum(n_features, <DOUBLE*>w.data, 1) -
+                        const * y_norm2 +  const * q_dot_w +
+                        0.5 * beta * (1 + const ** 2) * w_norm2)
+
+                if gap < tol:
+                    # return if we reached desired tolerance
+                    break
 
     return w, gap, tol
 
