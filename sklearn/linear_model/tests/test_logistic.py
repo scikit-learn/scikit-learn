@@ -214,7 +214,7 @@ def test_logistic_loss_and_grad():
 
 
 def test_logistic_loss_grad_hess():
-    n_samples, n_features = 100, 5
+    n_samples, n_features = 50, 5
     X_ref = np.random.randn(n_samples, n_features)
     y = np.sign(X_ref.dot(5 * np.random.randn(n_features)))
     X_ref -= X_ref.mean()
@@ -265,7 +265,7 @@ def test_logistic_loss_grad_hess():
 
 def test_logistic_cv():
     # test for LogisticRegressionCV object
-    n_samples, n_features = 100, 5
+    n_samples, n_features = 50, 5
     np.random.seed(0)
     X_ref = np.random.randn(n_samples, n_features)
     y = np.sign(X_ref.dot(5 * np.random.randn(n_features)))
@@ -279,7 +279,7 @@ def test_logistic_cv():
 
 
 def test_logistic_cv_sparse():
-    X, y = make_classification(n_samples=100, n_features=5,
+    X, y = make_classification(n_samples=50, n_features=5,
                                random_state=np.random.RandomState(0))
     X[X < 1.0] = 0.0
     csr = sp.csr_matrix(X)
@@ -297,7 +297,7 @@ def test_logistic_cv_sparse():
 
 
 def test_intercept_logistic_helper():
-    n_samples, n_features = 100, 5
+    n_samples, n_features = 10, 5
     X, y = make_classification(n_samples=n_samples, n_features=n_features,
                                random_state=np.random.RandomState(0))
 
@@ -309,16 +309,16 @@ def test_intercept_logistic_helper():
 
     # Do not fit intercept. This can be considered equivalent to adding
     # a feature vector of ones, i.e column of one vectors.
-    X_ = np.hstack((X, np.ones(100)[:, np.newaxis]))
+    X_ = np.hstack((X, np.ones(10)[:, np.newaxis]))
     loss, grad, hess = _logistic_loss_grad_hess(w, X_, y, alpha)
 
     # In the fit_intercept=False case, the feature vector of ones is
     # penalized. This should be taken care of.
-    assert_equal(loss_interp + 0.5 * (w[-1]**2), loss)
+    assert_almost_equal(loss_interp + 0.5 * (w[-1]**2), loss)
 
     # Check gradient.
-    assert_array_equal(grad_interp[:n_features], grad[:n_features])
-    assert_equal(grad_interp[-1] + alpha * w[-1], grad[-1])
+    assert_array_almost_equal(grad_interp[:n_features], grad[:n_features])
+    assert_almost_equal(grad_interp[-1] + alpha * w[-1], grad[-1])
 
     np.random.seed(0)
     grad = np.random.rand(n_features + 1)
@@ -330,15 +330,14 @@ def test_intercept_logistic_helper():
 
 def test_error_multitask():
     # Right now LogisticRegressionCV cannot handle multiple classes.
-    X, y = make_classification(n_samples=100, n_features=50,
-                               n_informative=20, n_classes=3)
+    X, y = make_classification(n_samples=10, n_features=20, n_informative=10,
+                               n_classes=3)
     assert_raises(ValueError, LogisticRegressionCV().fit, X, y)
 
 
 def test_shape_attributes_logregcv():
-    n_samples, n_features = 100, 100
-    X, y = make_classification(n_samples=n_samples, n_features=n_features,
-                               n_informative=20)
+    n_samples, n_features = 10, 10
+    X, y = make_classification(n_samples=n_samples, n_features=n_features)
     clf = LogisticRegressionCV(cv=3)
     clf.fit(X, y)
 
