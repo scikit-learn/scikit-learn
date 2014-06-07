@@ -163,9 +163,9 @@ a stratified 3-fold.
 
     ::
 
-    >>> cross_validation.cross_val_score(clf, X_digits, y_digits)
-    ...                                                  # doctest: +ELLIPSIS
-    array([ 0.935...,  0.958...,  0.937...])
+        >>> cross_validation.cross_val_score(clf, X_digits, y_digits)
+        ...                                                  # doctest: +ELLIPSIS
+        array([ 0.935...,  0.958...,  0.937...])
 
     Two cross-validation loops are performed in parallel: one by the
     :class:`GridSearchCV` estimator to set `gamma` and the other one by

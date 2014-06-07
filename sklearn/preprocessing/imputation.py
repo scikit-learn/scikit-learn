@@ -2,7 +2,6 @@
 # License: BSD 3 clause
 
 import warnings
-import math
 
 import numpy as np
 import numpy.ma as ma
@@ -102,17 +101,19 @@ class Imputer(BaseEstimator, TransformerMixin):
 
     strategy : string, optional (default="mean")
         The imputation strategy.
-          - If "mean", then replace missing values using the mean along
-            the axis.
-          - If "median", then replace missing values using the median along
-            the axis.
-          - If "most_frequent", then replace missing using the most frequent
-            value along the axis.
+
+        - If "mean", then replace missing values using the mean along
+          the axis.
+        - If "median", then replace missing values using the median along
+          the axis.
+        - If "most_frequent", then replace missing using the most frequent
+          value along the axis.
 
     axis : integer, optional (default=0)
         The axis along which to impute.
-         - If `axis=0`, then impute along columns.
-         - If `axis=1`, then impute along rows.
+
+        - If `axis=0`, then impute along columns.
+        - If `axis=1`, then impute along rows.
 
     verbose : integer, optional (default=0)
         Controls the verbosity of the imputer.
@@ -121,10 +122,11 @@ class Imputer(BaseEstimator, TransformerMixin):
         If True, a copy of X will be created. If False, imputation will
         be done in-place whenever possible. Note that, in the following cases,
         a new copy will always be made, even if `copy=False`:
-            - If X is not an array of floating values;
-            - If X is sparse and `missing_values=0`;
-            - If `axis=0` and X is encoded as a CSR matrix;
-            - If `axis=1` and X is encoded as a CSC matrix.
+
+        - If X is not an array of floating values;
+        - If X is sparse and `missing_values=0`;
+        - If `axis=0` and X is encoded as a CSR matrix;
+        - If `axis=1` and X is encoded as a CSC matrix.
 
     Attributes
     ----------

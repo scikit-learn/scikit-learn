@@ -197,10 +197,10 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         Isotonic fit of y.
 
     `X_min_` : float
-        Minimum value of input array X_ for left bound.
+        Minimum value of input array `X_` for left bound.
 
     `X_max_` : float
-        Maximum value of input array X_ for right bound.
+        Maximum value of input array `X_` for right bound.
 
     References
     ----------

@@ -455,10 +455,12 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    classes_ : array of labels
+    `classes_` : array of labels
         A copy of the `classes` parameter where provided, or otherwise, the
         sorted set of classes found when fitting.
 
+    Examples
+    --------
     >>> mlb = MultiLabelBinarizer()
     >>> mlb.fit_transform([(1, 2), (3,)])
     array([[1, 1, 0],
@@ -477,7 +479,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         self.classes = classes
 
     def fit(self, y):
-        """Fit the label sets binarizer, storing classes_
+        """Fit the label sets binarizer, storing `classes_`
 
         Parameters
         ----------

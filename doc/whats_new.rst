@@ -153,7 +153,7 @@ Changelog
 
    - Added :func:`learning_curve <learning_curve.learning_curve>` utility to
      chart performance with respect to training size. See
-     :ref:`example_plot_learning_curve.py`. By `Alexander Fabisch`_.
+     :ref:`example_plot_learning_curve.py`. By Alexander Fabisch.
 
    - Add positive option in :class:`LassoCV <linear_model.LassoCV>` and
      :class:`ElasticNetCV <linear_model.ElasticNetCV>`.
@@ -177,7 +177,7 @@ Changelog
 
    - Fixed incorrect estimation of the degrees of freedom in
      :func:`feature_selection.f_regression` when variates are not centered.
-     By `VirgileFritsch`_.
+     By `Virgile Fritsch`_.
 
    - Significant performance improvements (more than 100x speedup for
      large problems) in :class:`isotonic.IsotonicRegression` by
@@ -272,7 +272,7 @@ API changes summary
 
    - Fit alphas for each l1_ratio instead of mean_l1_ratio in
      :class: `linear_model.ElasticNetCV` and :class: `linear_model.LassoCV`.
-     This changes the shape of alphas_ from (n_alphas,) to
+     This changes the shape of ``alphas_`` from (n_alphas,) to
      (n_l1_ratio, n_alphas) if the l1_ratio provided is a 1-D array like object
      of length greater than one.
      By `Manoj Kumar`_.
@@ -511,7 +511,7 @@ Changelog
 
    - Speed optimization of the :mod:`hmm` module by `Mikhail Korobov`_
 
-   - Significant speed improvements for :class:`sklearn.cluster.DBSCAN`_
+   - Significant speed improvements for :class:`sklearn.cluster.DBSCAN`
      by `cleverless <https://github.com/cleverless>`_
 
 

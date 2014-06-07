@@ -1299,7 +1299,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         all the CPUs. Note that this is used only if multiple values for
         l1_ratio are given.
 
-    positive: bool, optional
+    positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
     Attributes
@@ -1483,9 +1483,9 @@ class MultiTaskElasticNet(Lasso):
 
         Parameters
         -----------
-        X: ndarray, shape = (n_samples, n_features)
+        X : ndarray, shape = (n_samples, n_features)
             Data
-        y: ndarray, shape = (n_samples, n_tasks)
+        y : ndarray, shape = (n_samples, n_tasks)
             Target
 
         Notes

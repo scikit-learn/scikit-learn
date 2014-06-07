@@ -559,11 +559,12 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         Which linkage criterion to use. The linkage criterion determines which
         distance to use between sets of observation. The algorithm will merge
         the pairs of cluster that minimize this criterion.
-            - ward minimizes the variance of the clusters being merged.
-            - average uses the average of the distances of each observation of
-              the two sets.
-            - complete or maximum linkage uses the maximum distances between
-              all observations of the two sets.
+
+        - ward minimizes the variance of the clusters being merged.
+        - average uses the average of the distances of each observation of
+          the two sets.
+        - complete or maximum linkage uses the maximum distances between
+          all observations of the two sets.
 
     pooling_func : callable, default=np.mean
         This combines the values of agglomerated features into a single

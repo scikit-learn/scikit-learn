@@ -236,7 +236,7 @@ or::
 
 
 Arch Linux
----------
+----------
 
 Arch Linux's package is provided through the `official repositories
 <https://www.archlinux.org/packages/?q=scikit-learn>`_ as `python-scikit-learn`
