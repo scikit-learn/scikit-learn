@@ -456,8 +456,8 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     `classes_` : array of labels
-        A copy of the `classes` parameter where provided, or otherwise, the
-        sorted set of classes found when fitting.
+        A copy of the `classes` parameter where provided,
+        or otherwise, the sorted set of classes found when fitting.
 
     Examples
     --------
