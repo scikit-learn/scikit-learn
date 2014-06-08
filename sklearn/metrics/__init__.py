@@ -28,9 +28,6 @@ from .metrics import (accuracy_score,
                       zero_one_loss)
 
 
-# Deprecated in 0.16
-from .metrics import auc_score
-
 from .scorer import make_scorer, SCORERS
 
 from . import cluster

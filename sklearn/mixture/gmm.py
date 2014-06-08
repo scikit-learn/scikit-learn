@@ -274,11 +274,6 @@ class GMM(BaseEstimator):
         _validate_covars(covars, self.covariance_type, self.n_components)
         self.covars_ = covars
 
-    @deprecated("GMM.eval was renamed to GMM.score_samples in 0.14 and will be"
-                " removed in 0.16.")
-    def eval(self, X):
-        return self.score_samples(X)
-
     def score_samples(self, X):
         """Return the per-sample likelihood of the data under the model.
 

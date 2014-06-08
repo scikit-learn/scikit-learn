@@ -531,14 +531,6 @@ def test_mem_layout():
     assert_equal(100, len(clf.estimators_))
 
 
-def test_oob_score():
-    """Test if oob_score is deprecated. """
-    clf = GradientBoostingClassifier(n_estimators=100, random_state=1,
-                                     subsample=0.5)
-    clf.fit(X, y)
-    assert_warns(DeprecationWarning, hasattr, clf, 'oob_score_')
-
-
 def test_oob_improvement():
     """Test if oob improvement has correct shape and regression test. """
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1,

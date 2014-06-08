@@ -366,9 +366,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     CountVectorizer, TfidfVectorizer
 
     """
-    def __init__(self, input='content', charset=None, encoding='utf-8',
-                 decode_error='strict', charset_error=None,
-                 strip_accents=None,
+    def __init__(self, input='content', encoding='utf-8',
+                 decode_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), analyzer='word', n_features=(2 ** 20),
@@ -377,19 +376,6 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         self.input = input
         self.encoding = encoding
         self.decode_error = decode_error
-        if charset is not None:
-            warnings.warn("The charset parameter is deprecated as of version "
-                          "0.14 and will be removed in 0.16. Use encoding "
-                          "instead.",
-                          DeprecationWarning)
-            self.encoding = charset
-        if charset_error is not None:
-            warnings.warn("The charset_error parameter is deprecated as of "
-                          "version 0.14 and will be removed in 0.16. Use "
-                          "decode_error instead.",
-                          DeprecationWarning)
-            self.decode_error = charset_error
-
         self.strip_accents = strip_accents
         self.preprocessor = preprocessor
         self.tokenizer = tokenizer
@@ -597,9 +583,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     HashingVectorizer, TfidfVectorizer
     """
 
-    def __init__(self, input='content', encoding='utf-8', charset=None,
-                 decode_error='strict', charset_error=None,
-                 strip_accents=None,
+    def __init__(self, input='content', encoding='utf-8',
+                 decode_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), analyzer='word',
@@ -608,19 +593,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.input = input
         self.encoding = encoding
         self.decode_error = decode_error
-        if charset is not None:
-            warnings.warn("The charset parameter is deprecated as of version "
-                          "0.14 and will be removed in 0.16. Use encoding "
-                          "instead.",
-                          DeprecationWarning)
-            self.encoding = charset
-        if charset_error is not None:
-            warnings.warn("The charset_error parameter is deprecated as of "
-                          "version 0.14 and will be removed in 0.16. Use "
-                          "decode_error instead.",
-                          DeprecationWarning)
-            self.decode_error = charset_error
-
         self.strip_accents = strip_accents
         self.preprocessor = preprocessor
         self.tokenizer = tokenizer
@@ -1168,9 +1140,8 @@ class TfidfVectorizer(CountVectorizer):
 
     """
 
-    def __init__(self, input='content', encoding='utf-8', charset=None,
-                 decode_error='strict', charset_error=None,
-                 strip_accents=None, lowercase=True,
+    def __init__(self, input='content', encoding='utf-8',
+                 decode_error='strict', strip_accents=None, lowercase=True,
                  preprocessor=None, tokenizer=None, analyzer='word',
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), max_df=1.0, min_df=1,
@@ -1179,8 +1150,7 @@ class TfidfVectorizer(CountVectorizer):
                  sublinear_tf=False):
 
         super(TfidfVectorizer, self).__init__(
-            input=input, charset=charset, charset_error=charset_error,
-            encoding=encoding, decode_error=decode_error,
+            input=input, encoding=encoding, decode_error=decode_error,
             strip_accents=strip_accents, lowercase=lowercase,
             preprocessor=preprocessor, tokenizer=tokenizer, analyzer=analyzer,
             stop_words=stop_words, token_pattern=token_pattern,

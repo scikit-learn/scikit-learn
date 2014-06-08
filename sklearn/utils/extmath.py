@@ -228,8 +228,7 @@ def randomized_range_finder(A, size, n_iter, random_state=None):
 
 
 def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
-                   transpose='auto', flip_sign=True, random_state=0,
-                   n_iterations=None):
+                   transpose='auto', flip_sign=True, random_state=0):
     """Computes a truncated randomized SVD
 
     Parameters
@@ -281,11 +280,6 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
     * A randomized algorithm for the decomposition of matrices
       Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
     """
-    if n_iterations is not None:
-        warnings.warn("n_iterations was renamed to n_iter for consistency "
-                      "and will be removed in 0.16.", DeprecationWarning)
-        n_iter = n_iterations
-
     random_state = check_random_state(random_state)
     n_random = n_components + n_oversamples
     n_samples, n_features = M.shape

@@ -789,14 +789,6 @@ def test_neighbors_badargs():
                   X, mode='blah')
 
 
-def test_neighbors_deprecation_arg():
-    """Test that passing the deprecated parameter will cause a
-    warning to be raised, as well as not crash the estimator."""
-    for cls in (neighbors.KNeighborsClassifier,
-                neighbors.KNeighborsRegressor):
-        assert_warns(DeprecationWarning, cls, warn_on_equidistant=True)
-
-
 def test_neighbors_metrics(n_samples=20, n_features=3,
                            n_query_pts=2, n_neighbors=5):
     """Test computing the neighbors for various metrics"""

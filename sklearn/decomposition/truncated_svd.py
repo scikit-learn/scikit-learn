@@ -110,11 +110,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
 
     """
     def __init__(self, n_components=2, algorithm="randomized",
-                 n_iter=5, random_state=None, tol=0., n_iterations=None):
-        if n_iterations is not None:
-            warnings.warn("n_iterations was renamed to n_iter for consistency "
-                          "and will be removed in 0.16.", DeprecationWarning)
-            n_iter = n_iterations
+                 n_iter=5, random_state=None, tol=0.):
         self.algorithm = algorithm
         self.n_components = n_components
         self.n_iter = n_iter
@@ -223,9 +219,3 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         """
         X = array2d(X)
         return np.dot(X, self.components_)
-
-    @property
-    def n_iterations(self):
-        warnings.warn("n_iterations was renamed to n_iter for consistency "
-                      "and will be removed in 0.16.", DeprecationWarning)
-        return self.n_iter

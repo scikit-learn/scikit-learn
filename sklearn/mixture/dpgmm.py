@@ -218,11 +218,6 @@ class DPGMM(GMM):
         raise NotImplementedError("""The variational algorithm does
         not support setting the covariance parameters.""")
 
-    @deprecated("DPGMM.eval was renamed to DPGMM.score_samples in 0.14 and "
-                "will be  removed in 0.16.")
-    def eval(self, X):
-        return self.score_samples(X)
-
     def score_samples(self, X):
         """Return the likelihood of the data under the model.
 
@@ -658,11 +653,6 @@ class VBGMM(DPGMM):
             thresh=thresh, verbose=verbose, min_covar=min_covar,
             n_iter=n_iter, params=params, init_params=init_params)
         self.alpha = float(alpha) / n_components
-
-    @deprecated("VBGMM.eval was renamed to VBGMM.score_samples in 0.14 and"
-                " will be removed in 0.16.")
-    def eval(self, X):
-        return self.score_samples(X)
 
     def score_samples(self, X):
         """Return the likelihood of the data under the model.
