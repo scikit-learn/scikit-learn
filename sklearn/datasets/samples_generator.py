@@ -343,7 +343,7 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
         warnings.warn('Support for the sequence of sequences multilabel '
                       'representation is being deprecated and replaced with '
                       'a sparse indicator matrix. '
-                      'return_indicator wil default to True from version '
+                      'return_indicator will default to True from version '
                       '0.17.',
                       DeprecationWarning)
 
