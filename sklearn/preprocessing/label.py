@@ -167,7 +167,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
             elif self.new_labels == "nan":
                 # Create copy of array and return
                 y_array = np.array(y)
-                z = np.zeros(y_array.shape)
+                z = np.zeros(y_array.shape, dtype=float)
 
                 # Find entries with new labels
                 missing_mask = np.in1d(y, diff)
@@ -180,7 +180,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
             elif self.new_labels == "label":
                 # Create copy of array and return
                 y_array = np.array(y)
-                z = np.zeros(y_array.shape)
+                z = np.zeros(y_array.shape, dtype=int)
 
                 # Find entries with new labels
                 missing_mask = np.in1d(y, diff)
