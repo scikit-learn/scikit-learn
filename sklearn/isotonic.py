@@ -202,6 +202,10 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     `X_max_` : float
         Maximum value of input array X_ for right bound.
 
+    `f_` : function
+        The stepwise interpolating function that covers the domain
+        X_.
+
     References
     ----------
     Isotonic Median Regression: A Linear Programming Approach
@@ -278,7 +282,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         Notes
         -----
-        X is stored for future use, as `transform` needs x to interpolate
+        X is stored for future use, as `transform` needs X to interpolate
         new input data.
         """
         if weight is not None:
@@ -290,7 +294,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         # Build y_
         order_inv = self._build_y(X, y, sample_weight)
 
-        # Handle the left and right bounds on x
+        # Handle the left and right bounds on X
         self.X_min_ = np.min(self.X_)
         self.X_max_ = np.max(self.X_)
 
