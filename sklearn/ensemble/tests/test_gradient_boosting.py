@@ -778,7 +778,7 @@ def test_monitor_early_stopping():
 
     for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
         est = Cls(n_estimators=20, max_depth=1, random_state=1, subsample=0.5)
-        _ = est.fit(X, y, monitor=early_stopping_monitor)
+        est.fit(X, y, monitor=early_stopping_monitor)
         assert_equal(est.n_estimators, 20)  # this is not altered
         assert_equal(est.estimators_.shape[0], 10)
         assert_equal(est.train_score_.shape[0], 10)

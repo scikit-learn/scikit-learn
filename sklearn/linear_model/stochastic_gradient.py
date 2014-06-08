@@ -8,7 +8,6 @@ import numpy as np
 import scipy.sparse as sp
 
 from abc import ABCMeta, abstractmethod
-import warnings
 
 from ..externals.joblib import Parallel, delayed
 
