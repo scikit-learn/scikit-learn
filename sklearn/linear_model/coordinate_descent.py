@@ -157,11 +157,11 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     fit_intercept : bool
         Fit or not an intercept.
-        WARNING : will be deprecated in 0.16
+        WARNING : deprecated, will be removed in 0.16.
 
     normalize : boolean, optional, default False
         If ``True``, the regressors X will be normalized before regression.
-        WARNING : will be deprecated in 0.16
+        WARNING : deprecated, will be removed in 0.16.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -325,11 +325,11 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     fit_intercept : bool
         Fit or not an intercept.
-        WARNING : will be deprecated in 0.16
+        WARNING : deprecated, will be removed in 0.16.
 
     normalize : boolean, optional, default False
         If ``True``, the regressors X will be normalized before regression.
-        WARNING : will be deprecated in 0.16
+        WARNING : deprecated, will be removed in 0.16.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
