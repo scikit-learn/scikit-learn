@@ -1,9 +1,11 @@
 """Testing for Spectral Clustering methods"""
 
 from sklearn.externals.six.moves import cPickle
-from sklearn.metrics.pairwise import kernel_metrics
 
 dumps, loads = cPickle.dumps, cPickle.loads
+
+import re
+import warnings
 
 import numpy as np
 from scipy import sparse
@@ -13,13 +15,14 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_true
 
 from sklearn.cluster import SpectralClustering, spectral_clustering
 from sklearn.cluster.spectral import spectral_embedding
 from sklearn.cluster.spectral import discretize
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics import adjusted_rand_score
-from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.metrics.pairwise import kernel_metrics, rbf_kernel
 from sklearn.datasets.samples_generator import make_blobs
 
 
@@ -134,10 +137,14 @@ def test_affinities():
                       centers=[[1, 1], [-1, -1]], cluster_std=0.01
                       )
     # nearest neighbors affinity
-    sp = SpectralClustering(n_clusters=2, affinity='nearest_neighbors',
-                            random_state=0)
-    labels = sp.fit(X).labels_
-    assert_equal(adjusted_rand_score(y, labels), 1)
+    with warnings.catch_warnings(record=True) as warning_list:
+        warnings.simplefilter("always", UserWarning)
+        sp = SpectralClustering(n_clusters=2, affinity='nearest_neighbors',
+                                random_state=0)
+        labels = sp.fit(X).labels_
+        assert_equal(adjusted_rand_score(y, labels), 1)
+    assert_true(re.search(r'\bnot fully connected\b',
+                          str(warning_list[0].message)))
 
     sp = SpectralClustering(n_clusters=2, gamma=2, random_state=0)
     labels = sp.fit(X).labels_
