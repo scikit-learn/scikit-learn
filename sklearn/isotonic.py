@@ -154,14 +154,14 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         min sum w_i (y[i] - y_[i]) ** 2
 
-        subject to y_[i] <= y_[j] whenever x[i] <= x[j]
+        subject to y_[i] <= y_[j] whenever X[i] <= X[j]
         and min(y_) = y_min, max(y_) = y_max
 
     where:
         - ``y[i]`` are inputs (real numbers)
         - ``y_[i]`` are fitted
-        - ``x`` specifies the order.
-          If ``x`` is non-decreasing then ``y_`` is non-decreasing.
+        - ``X`` specifies the order.
+          If ``X`` is non-decreasing then ``y_`` is non-decreasing.
         - ``w[i]`` are optional strictly positive weights (default to 1.0)
 
     Parameters
@@ -190,17 +190,17 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
     Attributes
     ----------
-    `x_` : ndarray (n_samples, )
-        A copy of the input x.
+    `X_` : ndarray (n_samples, )
+        A copy of the input X.
 
     `y_` : ndarray (n_samples, )
         Isotonic fit of y.
 
-    `x_min_` : float
-        Minimum value of input array x_ for left bound.
+    `X_min_` : float
+        Minimum value of input array X_ for left bound.
 
-    `x_max_` : float
-        Maximum value of input array x_ for right bound.
+    `X_max_` : float
+        Maximum value of input array X_ for right bound.
 
     References
     ----------
@@ -216,52 +216,52 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         self.increasing = increasing
         self.out_of_bounds = out_of_bounds
 
-    def _check_fit_data(self, x, y, sample_weight=None):
-        if len(x.shape) != 1:
-            raise ValueError("x should be a 1d array")
+    def _check_fit_data(self, X, y, sample_weight=None):
+        if len(X.shape) != 1:
+            raise ValueError("X should be a 1d array")
 
-    def _build_f(self, x, y):
+    def _build_f(self, X, y):
         """Build the f_ interp1d function."""
 
         # Handle the out_of_bounds argument by setting bounds_error
         if self.out_of_bounds in ["raise"]:
-            self.f_ = interpolate.interp1d(x, y, kind='linear',
+            self.f_ = interpolate.interp1d(X, y, kind='linear',
                                            bounds_error=True)
         elif self.out_of_bounds in ["nan", "clip"]:
-            self.f_ = interpolate.interp1d(x, y, kind='linear',
+            self.f_ = interpolate.interp1d(X, y, kind='linear',
                                            bounds_error=False)
         else:
             raise ValueError("The argument ``out_of_bounds`` must be in "
                              "'nan', 'clip', 'raise'; got {0}"
                              .format(self.out_of_bounds))
 
-    def _build_y(self, x, y, sample_weight):
+    def _build_y(self, X, y, sample_weight):
         """Build the y_ IsotonicRegression."""
-        x, y, sample_weight = check_arrays(x, y, sample_weight,
+        X, y, sample_weight = check_arrays(X, y, sample_weight,
                                            sparse_format='dense')
         y = as_float_array(y)
-        self._check_fit_data(x, y, sample_weight)
+        self._check_fit_data(X, y, sample_weight)
 
         # Determine increasing if auto-determination requested
         if self.increasing == 'auto':
-            self.increasing_ = check_increasing(x, y)
+            self.increasing_ = check_increasing(X, y)
         else:
             self.increasing_ = self.increasing
 
-        order = np.lexsort((y, x))
+        order = np.lexsort((y, X))
         order_inv = np.argsort(order)
-        self.x_ = as_float_array(x[order], copy=False)
+        self.X_ = as_float_array(X[order], copy=False)
         self.y_ = isotonic_regression(y[order], sample_weight, self.y_min,
                                       self.y_max, increasing=self.increasing_)
 
         return order_inv
 
-    def fit(self, x, y, sample_weight=None, weight=None):
-        """Fit the model using x, y as training data.
+    def fit(self, X, y, sample_weight=None, weight=None):
+        """Fit the model using X, y as training data.
 
         Parameters
         ----------
-        x : array-like, shape=(n_samples,)
+        X : array-like, shape=(n_samples,)
             Training data.
 
         y : array-like, shape=(n_samples,)
@@ -278,7 +278,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         Notes
         -----
-        x is stored for future use, as `transform` needs x to interpolate
+        X is stored for future use, as `transform` needs x to interpolate
         new input data.
         """
         if weight is not None:
@@ -288,14 +288,14 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             sample_weight = weight
 
         # Build y_
-        order_inv = self._build_y(x, y, sample_weight)
+        order_inv = self._build_y(X, y, sample_weight)
 
         # Handle the left and right bounds on x
-        self.x_min_ = np.min(self.x_)
-        self.x_max_ = np.max(self.x_)
+        self.X_min_ = np.min(self.X_)
+        self.X_max_ = np.max(self.X_)
 
         # Build f_
-        self._build_f(self.x_, self.y_)
+        self._build_f(self.X_, self.y_)
 
         return self
 
@@ -318,7 +318,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         # Handle the out_of_bounds argument by setting bounds_error and T
         if self.out_of_bounds == "clip":
-            return self.f_(np.clip(T, self.x_min_, self.x_max_))
+            return self.f_(np.clip(T, self.X_min_, self.X_max_))
         elif self.out_of_bounds in ["raise", "nan"]:
             return self.f_(T)
         else:
@@ -326,12 +326,12 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
                              "'nan', 'clip', 'raise'; got {0}"
                              .format(self.out_of_bounds))
 
-    def fit_transform(self, x, y, sample_weight=None, weight=None):
+    def fit_transform(self, X, y, sample_weight=None, weight=None):
         """Fit model and transform y by linear interpolation.
 
         Parameters
         ----------
-        x : array-like, shape=(n_samples,)
+        X : array-like, shape=(n_samples,)
             Training data.
 
         y : array-like, shape=(n_samples,)
@@ -348,8 +348,8 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         Notes
         -----
-        x doesn't influence the result of `fit_transform`. It is however stored
-        for future use, as `transform` needs x to interpolate new input
+        X doesn't influence the result of `fit_transform`. It is however stored
+        for future use, as `transform` needs X to interpolate new input
         data.
         """
         if weight is not None:
@@ -359,14 +359,14 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             sample_weight = weight
 
         # Build y_
-        order_inv = self._build_y(x, y, sample_weight)
+        order_inv = self._build_y(X, y, sample_weight)
 
-        # Handle the left and right bounds on x
-        self.x_min_ = np.min(self.x_)
-        self.x_max_ = np.max(self.x_)
+        # Handle the left and right bounds on X
+        self.X_min_ = np.min(self.X_)
+        self.X_max_ = np.max(self.X_)
 
         # Build f_
-        self._build_f(self.x_, self.y_)
+        self._build_f(self.X_, self.y_)
 
         return self.y_[order_inv]
 
