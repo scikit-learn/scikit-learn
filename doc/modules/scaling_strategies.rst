@@ -22,7 +22,7 @@ Here is sketch of a system designed to achieve this goal:
   3. an incremental algorithm
 
 Streaming instances
-------------------
+-------------------
 Basically, 1. may be a reader that yields instances from files on a
 hard drive, a database, from a network stream etc. However, 
 details on how to achieve this are beyond the scope of this documentation.

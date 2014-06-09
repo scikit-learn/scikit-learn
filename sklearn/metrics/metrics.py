@@ -312,6 +312,7 @@ def average_precision_score(y_true, y_score, average="macro",
     Note: this implementation is restricted to the binary classification task
     or multilabel classification task.
 
+    Parameters
     ----------
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
         True binary labels in binary label indicators.

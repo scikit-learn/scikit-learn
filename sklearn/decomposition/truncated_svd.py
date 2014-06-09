@@ -48,15 +48,19 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         Must be strictly less than the number of features.
         The default value is useful for visualisation. For LSA, a value of
         100 is recommended.
+
     algorithm : string, default = "randomized"
         SVD solver to use. Either "arpack" for the ARPACK wrapper in SciPy
         (scipy.sparse.linalg.svds), or "randomized" for the randomized
         algorithm due to Halko (2009).
+
     n_iter : int, optional
         Number of iterations for randomized SVD solver. Not used by ARPACK.
+
     random_state : int or RandomState, optional
         (Seed for) pseudo-random number generator. If not given, the
         numpy.random singleton is used.
+
     tol : float, optional
         Tolerance for ARPACK. 0 means machine precision. Ignored by randomized
         SVD solver.
@@ -65,12 +69,12 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     ----------
     `components_` : array, shape (n_components, n_features)
 
+    `explained_variance_ratio_` : array, [n_components]
+        Percentage of variance explained by each of the selected components.
+
     `explained_variance_` : array, [n_components]
         The variance of the training samples transformed by a projection to
         each component.
-
-    `explained_variance_ratio_` : array, [n_components]
-        Percentage of variance explained by each of the selected components.
 
     Examples
     --------

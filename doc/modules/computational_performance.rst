@@ -65,7 +65,7 @@ always faster, and for some of them by 1 to 2 orders of magnitude:
 
 To benchmark different estimators for your case you can simply change the
 ``n_features`` parameter in this example:
-:ref:`example_applications_plot_predictiaccordon_latency.py`. This should give
+:ref:`example_applications_plot_prediction_latency.py`. This should give
 you an estimate of the order of magnitude of the prediction latency.
 
 Influence of the Number of Features

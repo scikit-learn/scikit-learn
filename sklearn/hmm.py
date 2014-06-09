@@ -793,7 +793,7 @@ class GaussianHMM(_BaseHMM):
                 cv.shape = (1, 1)
             self._covars_ = distribute_covar_matrix_to_match_covariance_type(
                 cv, self._covariance_type, self.n_components)
-            self._covars_[self._covars_==0] = 1e-5
+            self._covars_[self._covars_ == 0] = 1e-5
 
     def _initialize_sufficient_statistics(self):
         stats = super(GaussianHMM, self)._initialize_sufficient_statistics()
@@ -1115,18 +1115,6 @@ class GMMHMM(_BaseHMM):
 
     Attributes
     ----------
-    init_params : string, optional
-        Controls which parameters are initialized prior to training. Can
-        contain any combination of 's' for startprob, 't' for transmat, 'm'
-        for means, 'c' for covars, and 'w' for GMM mixing weights.
-        Defaults to all parameters.
-
-    params : string, optional
-        Controls which parameters are updated in the training process.  Can
-        contain any combination of 's' for startprob, 't' for transmat, 'm' for
-        means, and 'c' for covars, and 'w' for GMM mixing weights.
-        Defaults to all parameters.
-
     n_components : int
         Number of states in the model.
 
@@ -1147,6 +1135,18 @@ class GMMHMM(_BaseHMM):
 
     thresh : float, optional
         Convergence threshold.
+
+    init_params : string, optional
+        Controls which parameters are initialized prior to training.
+        Can contain any combination of 's' for startprob, 't' for transmat, 'm'
+        for means, 'c' for covars, and 'w' for GMM mixing weights.  Defaults to
+        all parameters.
+
+    params : string, optional
+        Controls which parameters are updated in the training process. Can
+        contain any combination of 's' for startprob, 't' for transmat,
+        'm' for means, and 'c' for covars, and 'w' for GMM mixing weights.
+        Defaults to all parameters.
 
     Examples
     --------

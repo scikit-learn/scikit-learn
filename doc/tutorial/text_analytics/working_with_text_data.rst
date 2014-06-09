@@ -468,9 +468,8 @@ we can do::
   we trained on a small, 400-document subset of our full training set.
 
 
-
 Exercises
-=========
+~~~~~~~~~
 
 To do the exercises, copy the content of the 'skeletons' folder as
 a new folder named 'workspace'::

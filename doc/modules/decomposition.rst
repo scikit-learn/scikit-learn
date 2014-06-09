@@ -621,6 +621,7 @@ into two matrices :math:`V` and :math:`H` of non-negative elements,
 by optimizing for the squared Frobenius norm::
 
 .. math::
+
     \arg\min_{W,H} ||X - WH||^2 = \sum_{i,j} X_{ij} - {WH}_{ij}
 
 This norm is an obvious extension of the Euclidean norm to matrices.
