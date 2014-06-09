@@ -228,16 +228,14 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         """Build the f_ interp1d function."""
 
         # Handle the out_of_bounds argument by setting bounds_error
-        if self.out_of_bounds in ["raise"]:
-            self.f_ = interpolate.interp1d(X, y, kind='linear',
-                                           bounds_error=True)
-        elif self.out_of_bounds in ["nan", "clip"]:
-            self.f_ = interpolate.interp1d(X, y, kind='linear',
-                                           bounds_error=False)
-        else:
+        if self.out_of_bounds not in ["raise", "nan", "clip"]:
             raise ValueError("The argument ``out_of_bounds`` must be in "
                              "'nan', 'clip', 'raise'; got {0}"
                              .format(self.out_of_bounds))
+
+        bounds_error = self.out_of_bounds == "raise"
+        self.f_ = interpolate.interp1d(X, y, kind='linear',
+                                       bounds_error=bounds_error)
 
     def _build_y(self, X, y, sample_weight):
         """Build the y_ IsotonicRegression."""
@@ -318,17 +316,18 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         """
         T = as_float_array(T)
         if len(T.shape) != 1:
-            raise ValueError("T should be a 1d array")
+            raise ValueError("Isotonic regression input should be a 1d array")
 
-        # Handle the out_of_bounds argument by setting bounds_error and T
+        # Handle the out_of_bounds argument by clipping if needed
+        if self.out_of_bounds not in ["raise", "nan", "clip"]:
+            raise ValueError("The argument ``out_of_bounds`` must be in "
+                             "'nan', 'clip', 'raise'; got {0}"
+                             .format(self.out_of_bounds))
+
         if self.out_of_bounds == "clip":
             return self.f_(np.clip(T, self.X_min_, self.X_max_))
         elif self.out_of_bounds in ["raise", "nan"]:
             return self.f_(T)
-        else:
-            raise ValueError("The argument ``out_of_bounds`` must be in "
-                             "'nan', 'clip', 'raise'; got {0}"
-                             .format(self.out_of_bounds))
 
     def fit_transform(self, X, y, sample_weight=None, weight=None):
         """Fit model and transform y by linear interpolation.
