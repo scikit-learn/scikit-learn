@@ -290,7 +290,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             sample_weight = weight
 
         # Build y_
-        order_inv = self._build_y(X, y, sample_weight)
+        self._build_y(X, y, sample_weight)
 
         # Handle the left and right bounds on X
         self.X_min_ = np.min(self.X_)
@@ -325,9 +325,8 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
                              .format(self.out_of_bounds))
 
         if self.out_of_bounds == "clip":
-            return self.f_(np.clip(T, self.X_min_, self.X_max_))
-        elif self.out_of_bounds in ["raise", "nan"]:
-            return self.f_(T)
+            T = self.f_(np.clip(T, self.X_min_, self.X_max_))
+        return self.f_(T)
 
     def fit_transform(self, X, y, sample_weight=None, weight=None):
         """Fit model and transform y by linear interpolation.
