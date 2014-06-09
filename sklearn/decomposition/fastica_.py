@@ -196,8 +196,8 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         If True, X_mean is returned too.
 
     compute_sources : bool, optional
-        If False, sources are not computes but only the rotation matrix. This
-        can save memory when working with big data. Defaults to True.
+        If False, sources are not computed, but only the rotation matrix.
+        This can save memory when working with big data. Defaults to True.
 
     Returns
     -------
