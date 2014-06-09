@@ -218,7 +218,21 @@ def test_isotonic_regression_oob_bad():
     assert_raises(ValueError, ir.fit, x, y)
 
 
-def test_isotonic_weight_deprecation():
+def test_isotonic_regression_oob_bad_after():
+    # Set y and x
+    y = np.array([3, 7, 5, 9, 8, 7, 10])
+    x = np.arange(len(y))
+
+    # Create model and fit
+    ir = IsotonicRegression(increasing='auto', out_of_bounds="raise")
+
+    # Make sure that we throw an error for bad out_of_bounds value in transform
+    ir.fit(x, y)
+    ir.out_of_bounds = "xyz"
+    assert_raises(ValueError, ir.transform, x)
+
+
+def test_isotonic_fit_weight_deprecation():
     # Test deprecation of the weight argument
     y = np.array([3, 7, 5, 9, 8, 7, 10])
     x = np.arange(len(y))
@@ -226,6 +240,17 @@ def test_isotonic_weight_deprecation():
     # Create model and fit
     ir = IsotonicRegression()
     assert_warns(DeprecationWarning, ir.fit, x, y,
+                 weight=[1.0/len(y)] * len(y))
+
+
+def test_isotonic_fit_transform_weight_deprecation():
+    # Test deprecation of the weight argument
+    y = np.array([3, 7, 5, 9, 8, 7, 10])
+    x = np.arange(len(y))
+
+    # Create model and fit
+    ir = IsotonicRegression()
+    assert_warns(DeprecationWarning, ir.fit_transform, x, y,
                  weight=[1.0/len(y)] * len(y))
 
 
