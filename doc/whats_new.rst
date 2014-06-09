@@ -2323,7 +2323,7 @@ Examples
 --------
 
     - new examples using some of the mlcomp datasets:
-      :ref:`example_mlcomp_sparse_document_classification.py`,
+      ``example_mlcomp_sparse_document_classification.py`` (since removed) and
       :ref:`example_document_classification_20newsgroups.py`
 
     - Many more examples. `See here
