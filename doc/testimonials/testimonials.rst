@@ -538,3 +538,34 @@ Simon Frid - Data Scientist, Lead at Lovely
 
 
 
+`Data Publica <http://www.data-publica.com/>`_
+----------------------------------------------
+
+.. raw:: html
+
+    <div class="logo">
+
+.. image:: images/datapublica.png
+    :target: http://www.data-publica.com/
+
+.. raw:: html
+
+    </div>
+
+Data Publica builds a new predictive sales tool for commercial and marketing teams called C-Radar.
+We extensively use scikit-learn to build segmentations of customers through clustering, and to predict future customers based on past partnerships success or failure.
+We also categorize companies using their website communication thanks to scikit-learn and its machine learning algorithm implementations.
+Eventually, machine learning makes it possible to detect weak signals that traditional tools cannot see.
+All these complex tasks are performed in an easy and straightforward way thanks to the great quality of the scikit-learn framework.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Guillaume Lebourgeois & Samuel Charron - Data Scientists at Data Publica
+
+.. raw:: html
+
+   </span>
+
+
