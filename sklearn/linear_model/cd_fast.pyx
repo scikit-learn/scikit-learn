@@ -432,11 +432,8 @@ def sparse_enet_coordinate_descent(double[:] w,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
-                            double alpha, double beta,
-                            double[:, ::1] Q,
-                            np.ndarray[DOUBLE, ndim=1] q,
-                            np.ndarray[DOUBLE, ndim=1] y,
+def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
+                            double[:, :] Q, double[:] q, double[:] y,
                             int max_iter, double tol, bint positive=0):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
@@ -473,6 +470,7 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
     cdef unsigned int n_iter
 
     cdef double y_norm2 = np.dot(y, y)
+    cdef double*  Q_ptr = &Q[0, 0]
     tol = tol * y_norm2
 
     if alpha == 0:
@@ -492,7 +490,7 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
                 if w_ii != 0.0:
                     # H -= w_ii * Q[ii]
                     daxpy(n_features, -w_ii,
-                          <DOUBLE*>(&Q[ii, 0]), 1,
+                          Q_ptr + ii * n_features, 1,
                           <DOUBLE*>H.data, 1)
 
                 tmp = q[ii] - H[ii]
@@ -506,7 +504,7 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
                 if w[ii] != 0.0:
                     # H +=  w[ii] * Q[ii] # Update H = X.T X w
                     daxpy(n_features, w[ii],
-                          <DOUBLE*>(&Q[ii, 0]), 1,
+                          Q_ptr + ii * n_features, 1,
                           <DOUBLE*>H.data, 1)
 
                 # update the maximum absolute coefficient update
@@ -525,8 +523,7 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
                 # q_dot_w = np.dot(w, q)
                 # Note that increment in q is not 1 because the strides
                 # vary if q is sliced from a 2-D array.
-                q_dot_w = ddot(n_features, <DOUBLE*>w.data, 1,
-                               <DOUBLE*>q.data, n_tasks)
+                q_dot_w = ddot(n_features, &w[0], 1, &q[0], n_tasks)
 
                 for ii in range(n_features):
                     XtA[ii] = q[ii] - H[ii] - beta * w[ii]
@@ -542,8 +539,7 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
                 R_norm2 = y_norm2 + tmp - 2.0 * q_dot_w
 
                 # w_norm2 = np.dot(w, w)
-                w_norm2 = ddot(n_features, <DOUBLE*>w.data, 1,
-                               <DOUBLE*>w.data, 1)
+                w_norm2 = ddot(n_features, &w[0], 1, &w[0], 1)
 
                 if (dual_norm_XtA > alpha):
                     const = alpha / dual_norm_XtA
@@ -554,7 +550,7 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
                     gap = R_norm2
 
                 # The call to dasum is equivalent to the L1 norm of w
-                gap += (alpha * dasum(n_features, <DOUBLE*>w.data, 1) -
+                gap += (alpha * dasum(n_features, &w[0], 1) -
                         const * y_norm2 +  const * q_dot_w +
                         0.5 * beta * (1 + const ** 2) * w_norm2)
 
@@ -562,7 +558,7 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
                     # return if we reached desired tolerance
                     break
 
-    return w, gap, tol
+    return np.asarray(w), gap, tol
 
 
 cdef double diff_abs_max(int n, double* a, double* b):
