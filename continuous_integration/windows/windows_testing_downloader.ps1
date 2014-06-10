@@ -60,7 +60,7 @@ function DownloadPackages ($package_dict, $append_string) {
 
     ForEach ($key in $package_dict.Keys) {
         $url = $package_dict[$key]
-        $file = $key + "_py" + $append_string
+        $file = $key + $append_string
         if ($url -match "(\.exe)") {
             $file = $file + ".exe"
         } elseif ($url -match "(\.msi)") {
