@@ -38,8 +38,8 @@ function Python27URLs {
     # Function returns a dictionary of packages to download for Python 2.7
     $urls = @{
         "python" = "https://www.python.org/ftp/python/2.7.7/python-2.7.7.msi"
-        "numpy" = "http://sourceforge.net/projects/numpy/files/NumPy/1.8.1/numpy-1.8.1-win32-superpack-python2.7.exe/download"
-        "scipy" = "http://sourceforge.net/projects/scipy/files/scipy/0.14.0/scipy-0.14.0-win32-superpack-python2.7.exe/download"
+        "numpy" = "http://28daf2247a33ed269873-7b1aad3fab3cc330e1fd9d109892382a.r6.cf2.rackcdn.com/numpy-1.8.1-cp27-none-win32.whl"
+        "scipy" = "http://28daf2247a33ed269873-7b1aad3fab3cc330e1fd9d109892382a.r6.cf2.rackcdn.com/scipy-0.14.0-cp27-none-win32.whl"
         "get-pip" = "https://raw.github.com/pypa/pip/master/contrib/get-pip.py"
     }
     return $urls    
@@ -49,8 +49,8 @@ function Python34URLs {
     # Function returns a dictionary of packages to download for Python 3.4
     $urls = @{
         "python" = "https://www.python.org/ftp/python/3.4.1/python-3.4.1.msi"
-        "numpy" = "http://sourceforge.net/projects/numpy/files/NumPy/1.8.1/numpy-1.8.1-win32-superpack-python3.4.exe/download"
-        "scipy" = "http://sourceforge.net/projects/scipy/files/scipy/0.14.0/scipy-0.14.0-win32-superpack-python3.4.exe/download"
+        "numpy" = "http://28daf2247a33ed269873-7b1aad3fab3cc330e1fd9d109892382a.r6.cf2.rackcdn.com/numpy-1.8.1-cp34-none-win32.whl"
+        "scipy" = "http://28daf2247a33ed269873-7b1aad3fab3cc330e1fd9d109892382a.r6.cf2.rackcdn.com/scipy-0.14.0-cp34-none-win32.whl"
     }
     return $urls    
 }
@@ -71,15 +71,31 @@ function DownloadPackages ($package_dict, $append_string) {
         $basedir = $pwd.Path + "\"
         $filepath = $basedir + $file
         Write-Host "Downloading" $file "from" $url
-        $webclient.DownloadFile($url, $filepath)
+
+        # Retry up to 5 times in case of network transient errors
+        $retry_attempts = 5
+        for($i=0; $i -lt $retry_attempts; $i++){
+             try{
+                  $webclient.DownloadFile($url, $filepath)
+                  break
+             }
+             Catch [Exception]{
+                  Start-Sleep 1
+             }
+        }
         Write-Host "File saved at" $filepath
     }
 }
 
+
 function InstallPython($match_string) {
     $pkg_regex = "python" + $match_string + "*"
     $pkg = Get-ChildItem -Filter $pkg_regex -Name
-    Invoke-Expression -Command ".\$pkg /qn"
+    Invoke-Expression -Command "msiexec /qn /i $pkg"
+    
+    Write-Host "Finishing installation of Python"
+    Start-Sleep 5
+    Write-Host "Python installation complete"
 }
 
 function InstallPip($match_string, $python_version) {
@@ -90,27 +106,31 @@ function InstallPip($match_string, $python_version) {
     Invoke-Expression -Command "$python_path $pkg"
 }
 
-function PipInstall($pkg_name, $python_version) {
+function PipInstall($pkg_name, $python_version, $extra_args) {
     $py = $python_version -replace "\."
     $pip = "C:\Python" + $py + "\Scripts\pip.exe"
     Invoke-Expression -Command "$pip install $pkg_name"
 }
 
-function InstallNose($match_string, $python_version) {
+function InstallNose($python_version) {
     PipInstall "nose" $python_version 
 }
 
-function InstallNumpy($match_string) {
-    $pkg_regex = "numpy" + $match_string + "*"
-    $pkg = Get-ChildItem -Filter $pkg_regex -Name
-    Invoke-Expression -Command ".\$pkg"
-
+function WheelInstall($name, $url, $python_version) {
+    $py = $python_version -replace "\."
+    $pip = "C:\Python" + $py + "\Scripts\pip.exe"
+    $args = "install --use-wheel --no-index"
+    Invoke-Expression -Command "$pip $args $url $name"
 }
 
-function InstallScipy($match_string) {
-    $pkg_regex = "python" + $match_string + "*"
-    $pkg = Get-ChildItem -Filter $pkg_regex -Name
-    Invoke-Expression -Command ".\$pkg"
+function InstallNumpy($package_dict, $python_version) {
+    #Don't pass name so we can use URL directly
+    WheelInstall "" $package_dict["numpy"] $python_version
+}
+
+function InstallScipy($package_dict, $python_version) {
+    #Don't pass name so we can use URL directly
+    WheelInstall "" $package_dict["scipy"] $python_version
 }
 
 function main {
@@ -133,14 +153,22 @@ function main {
     $pystring = $python -replace "\."
     $pystring = "_py" + $pystring
     $package_dict = $versions[$python]
+
+    #This will download the whl packages as well which is
+    #clunky but makes configuration simpler
     DownloadPackages $package_dict $pystring
     InstallPython $pystring
     if ($package_dict.ContainsKey("get-pip")) {
        InstallPip $pystring $python
     }
-    InstallNose $pystring $python
-    InstallNumpy $pystring
-    InstallScipy $pystring
+    InstallNose $python
+
+    #The installers below here use wheel packages
+    #Created from CGohlke's installers with
+    #wheel convert <exefile>
+    #These are hosted in Rackspace Cloud Files
+    InstallNumpy $package_dict $python
+    InstallScipy $package_dict $python
     return
 }
 
