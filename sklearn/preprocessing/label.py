@@ -535,7 +535,7 @@ def _inverse_binarize_multiclass(y, classes):
 
 
 def _inverse_binarize_thresholding(y, y_type, classes, threshold):
-    """Inverse label binarization transformation using thresholding"""
+    """Inverse label binarization transformation using thresholding."""
 
     if y_type == "binary" and y.ndim == 2 and y.shape[1] != 1:
         raise ValueError("y_type='binary', but y.shape = {0}".format(y.shape))
