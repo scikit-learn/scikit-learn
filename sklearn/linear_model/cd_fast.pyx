@@ -433,8 +433,8 @@ def sparse_enet_coordinate_descent(double[:] w,
 @cython.wraparound(False)
 @cython.cdivision(True)
 def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
-                            double[:, :] Q, double[:] q, double[:] y,
-                            int max_iter, double tol, bint positive=0):
+                                 double[:, :] Q, double[:] q, double[:] y,
+                                 int max_iter, double tol, bint positive=0):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -455,9 +455,9 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
     cdef unsigned int n_tasks = y.strides[0] / sizeof(DOUBLE)
 
     # initial value "Q w" which will be kept of up to date in the iterations
-    cdef np.ndarray[DOUBLE, ndim=1] H = np.dot(Q, w)
+    cdef double[:] H = np.dot(Q, w)
 
-    cdef np.ndarray[DOUBLE, ndim=1] XtA = np.zeros(n_features)
+    cdef double[:] XtA = np.zeros(n_features)
     cdef double tmp
     cdef double w_ii
     cdef double d_w_max
@@ -470,7 +470,9 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
     cdef unsigned int n_iter
 
     cdef double y_norm2 = np.dot(y, y)
-    cdef double*  Q_ptr = &Q[0, 0]
+    cdef double* Q_ptr = &Q[0, 0]
+    cdef double* H_ptr = &H[0]
+    cdef double* XtA_ptr = &XtA[0]
     tol = tol * y_norm2
 
     if alpha == 0:
@@ -489,9 +491,8 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
 
                 if w_ii != 0.0:
                     # H -= w_ii * Q[ii]
-                    daxpy(n_features, -w_ii,
-                          Q_ptr + ii * n_features, 1,
-                          <DOUBLE*>H.data, 1)
+                    daxpy(n_features, -w_ii, Q_ptr + ii * n_features, 1,
+                          H_ptr, 1)
 
                 tmp = q[ii] - H[ii]
 
@@ -503,9 +504,8 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
 
                 if w[ii] != 0.0:
                     # H +=  w[ii] * Q[ii] # Update H = X.T X w
-                    daxpy(n_features, w[ii],
-                          Q_ptr + ii * n_features, 1,
-                          <DOUBLE*>H.data, 1)
+                    daxpy(n_features, w[ii], Q_ptr + ii * n_features, 1,
+                          H_ptr, 1)
 
                 # update the maximum absolute coefficient update
                 d_w_ii = fabs(w[ii] - w_ii)
@@ -528,9 +528,9 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
                 for ii in range(n_features):
                     XtA[ii] = q[ii] - H[ii] - beta * w[ii]
                 if positive:
-                    dual_norm_XtA = max(n_features, &XtA[0])
+                    dual_norm_XtA = max(n_features, XtA_ptr)
                 else:
-                    dual_norm_XtA = abs_max(n_features, &XtA[0])
+                    dual_norm_XtA = abs_max(n_features, XtA_ptr)
 
                 # temp = np.sum(w * H)
                 tmp = 0.0
