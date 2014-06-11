@@ -725,7 +725,8 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     # y_score typically has many tied values. Here we extract
     # the indices associated with the distinct values. We also
     # concatenate a value for the end of the curve.
-    distinct_value_indices = np.where(np.diff(y_score))[0]
+    y_round = np.round(y_score, 6) # a million thresholds should be enough?
+    distinct_value_indices = np.where(np.diff(y_round))[0]
     threshold_idxs = np.r_[distinct_value_indices, y_true.size - 1]
 
     # accumulate the true positives with decreasing threshold

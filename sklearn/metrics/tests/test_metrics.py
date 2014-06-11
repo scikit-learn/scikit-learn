@@ -7,6 +7,7 @@ import warnings
 
 from sklearn import datasets
 from sklearn import svm
+from sklearn import ensemble
 
 from sklearn.preprocessing import LabelBinarizer, MultiLabelBinarizer
 from sklearn.datasets import make_multilabel_classification
@@ -464,6 +465,29 @@ def test_roc_returns_consistency():
     assert_array_almost_equal(tpr, tpr_correct, decimal=2)
     assert_equal(fpr.shape, tpr.shape)
     assert_equal(fpr.shape, thresholds.shape)
+
+
+def test_roc_nonrepeating_thresholds():
+    """Test to ensure that we don't return spurious repeating thresholds
+    due to machine precision issues
+    """
+    dataset = datasets.load_digits()
+    X = dataset['data']
+    y = dataset['target']
+
+    # This random forest classifier can only return probabilities
+    # significant to two decimal places
+    clf = ensemble.RandomForestClassifier(n_estimators=100, random_state=0)
+
+    # How well can the classifier predict whether a digit is less than 5?
+    # This task contributes floating point roundoff errors to the probabilities
+    probas_pred = clf.fit(X[::2], y[::2]).predict_proba(X[1::2])
+    probas_pred = probas_pred[:, :5].sum(axis=1)
+    y_true = [yy < 5 for yy in y[1::2]]
+
+    # Check for repeating values in the thresholds
+    fpr, tpr, thresholds = roc_curve(y_true, probas_pred)
+    assert_equal(thresholds.size, np.unique(np.round(thresholds, 2)).size)
 
 
 def test_roc_curve_multi():
