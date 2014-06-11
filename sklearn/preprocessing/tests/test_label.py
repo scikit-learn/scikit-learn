@@ -41,6 +41,15 @@ def toarray(a):
 def test_label_binarizer():
     lb = LabelBinarizer()
 
+    # one-class case defaults to negative label
+    inp = ["pos", "pos", "pos", "pos"]
+    expected = np.array([[0, 0, 0, 0]]).T
+    got = lb.fit_transform(inp)
+    assert_false(lb.multilabel_)
+    assert_array_equal(lb.classes_, ["pos"])
+    assert_array_equal(expected, got)
+    assert_array_equal(lb.inverse_transform(got), inp)
+
     # two-class case
     inp = ["neg", "pos", "pos", "neg"]
     expected = np.array([[0, 1, 1, 0]]).T
@@ -108,15 +117,17 @@ def test_label_binarizer_column_y():
 
 
 def test_label_binarizer_set_label_encoding():
-    lb = LabelBinarizer(neg_label=-2, pos_label=2)
+    lb = LabelBinarizer(neg_label=-2, pos_label=0)
 
-    # two-class case
+    # two-class case with pos_label=0
     inp = np.array([0, 1, 1, 0])
-    expected = np.array([[-2, 2, 2, -2]]).T
+    expected = np.array([[-2, 0, 0, -2]]).T
     got = lb.fit_transform(inp)
     assert_false(lb.multilabel_)
     assert_array_equal(expected, got)
     assert_array_equal(lb.inverse_transform(got), inp)
+
+    lb = LabelBinarizer(neg_label=-2, pos_label=2)
 
     # multi-class case
     inp = np.array([3, 2, 1, 2, 0])
@@ -169,15 +180,40 @@ def test_label_binarizer_errors():
     lb = LabelBinarizer().fit(one_class)
     assert_false(lb.multilabel_)
 
-    multi_label = np.array([[0, 0, 1, 0], [1, 0, 1, 0]])
+    multi_label = [(2, 3), (0,), (0, 2)]
     assert_raises(ValueError, lb.transform, multi_label)
 
     lb = LabelBinarizer()
     assert_raises(ValueError, lb.transform, [])
     assert_raises(ValueError, lb.inverse_transform, [])
 
+    y = np.array([[0, 1, 0], [1, 1, 1]])
+    classes = np.arange(3)
+    assert_raises(ValueError, label_binarize, y, classes, multilabel=True,
+                  neg_label=2, pos_label=1)
+    assert_raises(ValueError, label_binarize, y, classes, multilabel=True,
+                  neg_label=2, pos_label=2)
+
     assert_raises(ValueError, LabelBinarizer, neg_label=2, pos_label=1)
     assert_raises(ValueError, LabelBinarizer, neg_label=2, pos_label=2)
+
+    assert_raises(ValueError, LabelBinarizer, neg_label=1, pos_label=2,
+                  sparse_output=True)
+
+    # Fail on y_type
+    assert_raises(ValueError, _inverse_binarize_thresholding,
+                  y=csr_matrix([[1, 2], [2, 1]]), y_type="foo", classes=[1, 2],
+                  threshold=0)
+
+    # Fail on the number of classes
+    assert_raises(ValueError, _inverse_binarize_thresholding,
+                  y=csr_matrix([[1, 2], [2, 1]]), y_type="foo",
+                  classes=[1, 2, 3], threshold=0)
+
+    # Fail on the dimension of 'binary'
+    assert_raises(ValueError, _inverse_binarize_thresholding,
+                  y=np.array([[1, 2, 3], [2, 1, 3]]), y_type="binary",
+                  classes=[1, 2, 3], threshold=0)
 
 
 def test_label_encoder():
@@ -270,6 +306,7 @@ def test_label_binarize_with_multilabel_indicator():
     output = lb.fit(y).transform(y)
     assert_array_equal(output, expected)
 
+
 def test_sparse_output_mutlilabel_binarizer():
     # test input as iterable of iterables
     inputs = [
@@ -303,6 +340,7 @@ def test_sparse_output_mutlilabel_binarizer():
             assert_array_equal(indicator_mat, got)
             assert_array_equal([1, 2, 3], mlb.classes_)
             assert_equal(mlb.inverse_transform(got), inverse)
+
 
 def test_mutlilabel_binarizer():
     # test input as iterable of iterables
@@ -480,7 +518,8 @@ def check_sparse_output(y, classes, pos_label, neg_label, expected):
                                                       y_type=type_of_target(y),
                                                       classes=classes,
                                                       threshold=(neg_label +
-                                                                 pos_label)/2.)
+                                                                 pos_label) /
+                                                                 2.)
 
         assert_array_equal(toarray(inversed), toarray(y))
 
@@ -518,7 +557,8 @@ def test_label_binarize_sparse_output_multiclass():
 
 
 def test_label_binarize_sparse_output_multilabel():
-    y_seq = [(1,), (0, 1, 2), tuple()] #XXX: Move to multiLabel tests
+    # XXX: Asssert deprecation warning for y_seq
+    y_seq = [(1,), (0, 1, 2), tuple()]
     y_ind = np.array([[0, 1, 0], [1, 1, 1], [0, 0, 0]])
     classes = [0, 1, 2]
     pos_label = 2
@@ -528,7 +568,7 @@ def test_label_binarize_sparse_output_multilabel():
                 for sparse_matrix in [coo_matrix, csc_matrix, csr_matrix,
                                       dok_matrix, lil_matrix]]
 
-    for y in [y_ind, y_seq] + y_sparse:
+    for y in [y_seq, y_ind] + y_sparse:
         yield check_sparse_output, y, classes, pos_label, neg_label, expected
 
     assert_raises(ValueError, label_binarize, y, classes, neg_label=-1,

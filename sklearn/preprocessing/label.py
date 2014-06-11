@@ -284,7 +284,6 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         self.classes_ = unique_labels(y)
         return self
 
-
     def transform(self, y):
         """Transform multi-class labels to binary labels
 
@@ -476,7 +475,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
         data = np.empty_like(indices)
         data.fill(pos_label)
 
-        Y = sp.csr_matrix((data, indices, indptr), 
+        Y = sp.csr_matrix((data, indices, indptr),
                           shape=(n_samples, n_classes))
 
     elif y_type == "multilabel-indicator":
@@ -486,25 +485,10 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
             data.fill(pos_label)
             Y.data = data
 
-    # XXX: Remove
-    # elif y_type == "multilabel-sequences":
-    #     indptr = array.array('i', [0])
-    #     indices = array.array('i')
-    #     for i, label_sequence in enumerate(y):
-    #         y_i = np.searchsorted(sorted_class, np.unique(label_sequence))
-    #         indices.extend(y_i)
-    #         indptr.append(indptr[-1] + len(y_i))
-
-    #     data = np.empty_like(indices)
-    #     data.fill(pos_label)
-    #     Y = sp.csr_matrix((data, indices, indptr), 
-    #         shape=(n_samples, n_classes))
-    
-    # XXX: Enable spare output on fit_transform
     elif y_type == "multilabel-sequences":
         Y = MultiLabelBinarizer(classes=classes,
                                 sparse_output=sparse_output).fit_transform(y)
-        
+
         # XXX simplify this with scalar multiplication?
         if sp.issparse(Y):
             Y.data[Y.data == 1] = pos_label
@@ -527,11 +511,12 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
         Y = Y[:, indices]
 
     if y_type == "binary":
-        Y = Y[:, Y.shape[1]-1].reshape((-1, 1))
+        Y = Y[:, Y.shape[1] - 1].reshape((-1, 1))
 
     Y = Y.astype('int')
 
     return Y
+
 
 def _inverse_binarize_multiclass(y, classes):
     """Inverse label binarization transformation for multiclass"""
@@ -569,7 +554,6 @@ def _inverse_binarize_thresholding(y, y_type, classes, threshold):
             y.eliminate_zeros()
         else:
             y = np.array(y.toarray() > threshold, dtype=np.int)
-
     else:
         y = np.array(y > threshold, dtype=np.int)
 
@@ -589,6 +573,7 @@ def _inverse_binarize_thresholding(y, y_type, classes, threshold):
 
     #XXX: use MultiLabelBinarizer inverse_transform
     elif y_type == "multilabel-sequences":
+
         if sp.issparse(y):
             return [tuple(classes.take(y.indices[start:end]))
                     for start, end in zip(y.indptr[:-1], y.indptr[1:])]
