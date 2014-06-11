@@ -10,6 +10,11 @@ from collections import Sequence
 from itertools import chain
 import warnings
 
+from scipy.sparse import issparse
+from scipy.sparse.base import spmatrix
+from scipy.sparse import dok_matrix
+from scipy.sparse import lil_matrix
+
 import numpy as np
 
 from ..externals.six import string_types
@@ -139,9 +144,18 @@ def is_label_indicator_matrix(y):
     """
     if not (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1):
         return False
-    labels = np.unique(y)
-    return len(labels) <= 2 and (y.dtype.kind in 'biu'  # bool, int, uint
-                                 or _is_integral_float(labels))
+
+    if issparse(y):
+        if isinstance(y, (dok_matrix, lil_matrix)):
+            y = y.tocsr()
+        return (len(y.data) == 0 or np.ptp(y.data) == 0 and
+                (y.dtype.kind in 'biu' or  # bool, int, uint
+                _is_integral_float(np.unique(y.data))))
+    else:
+        labels = np.unique(y)
+
+        return len(labels) < 3 and (y.dtype.kind in 'biu' or  # bool, int, uint
+                                    _is_integral_float(labels))
 
 
 def is_sequence_of_sequences(y):
@@ -163,7 +177,7 @@ def is_sequence_of_sequences(y):
     try:
         out = (not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence)
                and not isinstance(y[0], string_types))
-    except IndexError:
+    except (IndexError, TypeError):
         return False
     if out:
         warnings.warn('Direct support for sequence of sequences multilabel '
@@ -256,7 +270,7 @@ def type_of_target(y):
     'multilabel-indicator'
     """
     # XXX: is there a way to duck-type this condition?
-    valid = (isinstance(y, (np.ndarray, Sequence))
+    valid = (isinstance(y, (np.ndarray, Sequence, spmatrix))
              and not isinstance(y, string_types))
     if not valid:
         raise ValueError('Expected array-like (array or non-string sequence), '
