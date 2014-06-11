@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.sparse as sp
+import warnings
 from scipy import linalg
 
 from sklearn.utils.testing import assert_true
@@ -573,7 +574,6 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
 
     rng = np.random.RandomState(42)
 
-
     for n_samples, n_features in zip(n_sampless, n_featuress):
         X = rng.randn(n_samples, n_features)
         y = rng.randn(n_samples)
@@ -643,7 +643,6 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
     n_featuress = [3, 2]
 
     rng = np.random.RandomState(42)
-
 
     for n_samples, n_features in zip(n_sampless, n_featuress):
         X = rng.randn(n_samples, n_features)
@@ -724,7 +723,16 @@ def test_deprecation_warning_dense_cholesky():
     func3 = lambda: ridge_regression(X, y, alpha=1, solver='dense_cholesky')
 
     for func in [func1, func2, func3]:
-        assert_warns_message(warning_class, warning_message, func)
+        found = False
+        with warnings.catch_warnings(record=True) as w:
+            # Cause all warnings to always be triggered.
+            warnings.simplefilter("always")
+            func()
+            for W in w:
+                if (W.category is warning_class and
+                    warning_message in str(W.message)):
+                    found = True
+        assert_true(found)
 
 
 def test_raises_value_error_if_solver_not_supported():
@@ -742,3 +750,7 @@ def test_raises_value_error_if_solver_not_supported():
         ridge_regression(X, y, alpha=1., solver=wrong_solver)
 
     assert_raise_message(exception, message, func)
+
+if __name__ == "__main__":
+    import nose
+    nose.runmodule()
