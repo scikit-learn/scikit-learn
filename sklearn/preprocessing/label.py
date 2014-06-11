@@ -190,6 +190,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     pos_label : int (default: 1)
         Value with which positive labels must be encoded.
 
+    sparse_output : boolean (default: False)
+        True if the returned array from transform is desired to be in sparse
+        CSR format.
+
     Attributes
     ----------
     `classes_` : array of shape [n_class]
@@ -197,7 +201,18 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
     `multilabel_` : boolean
         True if the transformer was fitted on a multilabel rather than a
-        multiclass set of labels.
+        multiclass set of labels. The multilabel_ attribute is deprecated as
+        of version 0.16 and will be removed in 0.18
+
+    `sparse_input_` : boolean,
+        True if the input data to transform is given as a sparse matrix, False
+        otherwise.
+
+    `indicator_matrix_` : str
+        'sparse' when the input data to tansform is a multilable-indicator and
+        is sparse, None otherwise. The indicator_matrix_ attribute is
+        deprecated as of version 0.16 and will be removed in 0.18
+
 
     Examples
     --------
@@ -258,14 +273,14 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
     @property
     @deprecated("Attribute indicator_matrix_ is deprecated and "
-                "will be removed in 0.17. Use 'y_type_ == '"
+                "will be removed in 0.18. Use 'y_type_ == '"
                 "multilabel-indicator'' instead")
     def indicator_matrix_(self):
         return self.y_type_ == 'multilabel-indicator'
 
     @property
     @deprecated("Attribute multilabel_ is deprecated and "
-                "will be removed in 0.17. Use "
+                "will be removed in 0.18. Use "
                 "'y_type_.startswith('multilabel')' instead")
     def multilabel_(self):
         return self.y_type_.startswith('multilabel')
@@ -302,13 +317,14 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        y : numpy array of shape (n_samples,) or (n_samples, n_classes)
-            Target values. The 2-d matrix should only contain 0 and 1,
-            represents multilabel classification.
+        y : numpy array or sparse matrix of shape (n_samples,) or
+            (n_samples, n_classes) Target values. The 2-d matrix should only
+            contain 0 and 1, represents multilabel classification. Sparse
+            matrix can be CSR, CSC, COO, DOK, or LIL.
 
         Returns
         -------
-        Y : numpy array of shape [n_samples, n_classes]
+        Y : numpy array or CSR matrix of shape [n_samples, n_classes]
             Shape will be [n_samples, 1] for binary problems.
         """
         self._check_fitted()
@@ -655,7 +671,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        y_indicator : array, shape (n_samples, n_classes)
+        y_indicator : array or CSR matrix, shape (n_samples, n_classes)
             A matrix such that `y_indicator[i, j] = 1` iff `classes_[j]` is in
             `y[i]`, and 0 otherwise.
         """
@@ -694,7 +710,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        y_indicator : array, shape (n_samples, n_classes)
+        y_indicator : array or CSR matrix, shape (n_samples, n_classes)
             A matrix such that `y_indicator[i, j] = 1` iff `classes_[j]` is in
             `y[i]`, and 0 otherwise.
         """
@@ -735,7 +751,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        yt : array of shape (n_samples, n_classes)
+        yt : array or sparse matrix of shape (n_samples, n_classes)
             A matrix containing only 1s ands 0s.
 
         Returns
@@ -749,8 +765,9 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
                              .format(len(self.classes_), yt.shape[1]))
 
         if sp.issparse(yt):
-            if (not len(yt.data) == 0 and 
-            not set(np.unique(yt.data)) == set([1])):
+            yt = yt.tocsr()
+            if (not len(yt.data) == 0 and not set(np.unique(yt.data))
+                == set([1])):
                 raise ValueError('Expected only 0s and 1s in label indicator.')
         else:
             unexpected = np.setdiff1d(yt, [0, 1])
@@ -761,5 +778,5 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
             return [tuple(self.classes_.take(yt.indices[start:end]))
                     for start, end in zip(yt.indptr[:-1], yt.indptr[1:])]
         else:
-            return [tuple(self.classes_.compress(indicators)) for indicators 
+            return [tuple(self.classes_.compress(indicators)) for indicators
                     in yt]
