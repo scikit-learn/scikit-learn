@@ -256,6 +256,20 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     def multilabel(self):
         return self.multilabel_
 
+    @property
+    @deprecated("Attribute indicator_matrix_ is deprecated and "
+                "will be removed in 0.17. Use 'y_type_ == '"
+                "multilabel-indicator'' instead")
+    def indicator_matrix_(self):
+        return self.y_type_ == 'multilabel-indicator'
+
+    @property
+    @deprecated("Attribute multilabel_ is deprecated and "
+                "will be removed in 0.17. Use "
+                "'y_type_.startswith('multilabel')' instead")
+    def multilabel_(self):
+        return self.y_type_.startswith('multilabel')
+
     def _check_fitted(self):
         if not hasattr(self, "classes_"):
             raise ValueError("LabelBinarizer was not fitted yet.")
@@ -275,11 +289,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         """
         self.y_type_ = type_of_target(y)
 
-        self.multilabel_ = self.y_type_.startswith('multilabel')
-
-        self.sparse_input_ = False
-        if sp.issparse(y):
-            self.sparse_input_ = True
+        self.sparse_input_ = sp.issparse(y)
 
         self.classes_ = unique_labels(y)
         return self
@@ -302,13 +312,6 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             Shape will be [n_samples, 1] for binary problems.
         """
         self._check_fitted()
-
-        y_is_multilabel = type_of_target(y).startswith('multilabel')
-
-        if y_is_multilabel and not self.multilabel_:
-            raise ValueError("The object was not fitted with multilabel"
-                             " input.")
-
         return label_binarize(y, self.classes_,
                               pos_label=self.pos_label,
                               neg_label=self.neg_label,
@@ -336,9 +339,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        y : numpy array or CSR matrix of shape [n_samples] or sequence of
-            sequences Target values. In the multilabel case the nested
-            sequences can have variable lengths.
+        y : numpy array or CSR matrix of shape [n_samples] Target values.
 
         Notes
         -----
@@ -485,13 +486,13 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
             data.fill(pos_label)
             Y.data = data
 
+    # XXX raise deprecation warning
     elif y_type == "multilabel-sequences":
         Y = MultiLabelBinarizer(classes=classes,
                                 sparse_output=sparse_output).fit_transform(y)
 
-        # XXX simplify this with scalar multiplication?
         if sp.issparse(Y):
-            Y.data[Y.data == 1] = pos_label
+            Y.data[:] = pos_label
         else:
             Y[Y == 1] = pos_label
         return Y
@@ -571,14 +572,10 @@ def _inverse_binarize_thresholding(y, y_type, classes, threshold):
     elif y_type == "multilabel-indicator":
         return y
 
-    #XXX: use MultiLabelBinarizer inverse_transform
+    # XXX raise deprecation warning
     elif y_type == "multilabel-sequences":
-
-        if sp.issparse(y):
-            return [tuple(classes.take(y.indices[start:end]))
-                    for start, end in zip(y.indptr[:-1], y.indptr[1:])]
-        else:
-            return [tuple(classes.take(np.flatnonzero(y_i))) for y_i in y]
+        mlb = MultiLabelBinarizer(classes=classes).fit([])
+        return mlb.inverse_transform(y)
 
     else:
         raise ValueError("{0} format is not supported".format(y_type))
@@ -747,13 +744,22 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
             The set of labels for each sample such that `y[i]` consists of
             `classes_[j]` for each `yt[i, j] == 1`.
         """
-        yt = np.asarray(yt)
         if yt.shape[1] != len(self.classes_):
             raise ValueError('Expected indicator for {0} classes, but got {1}'
                              .format(len(self.classes_), yt.shape[1]))
-        unexpected = np.setdiff1d(yt, [0, 1])
-        if len(unexpected) > 0:
-            raise ValueError('Expected only 0s and 1s in label indicator. '
-                             'Also got {0}'.format(unexpected))
 
-        return [tuple(self.classes_.compress(indicators)) for indicators in yt]
+        if sp.issparse(yt):
+            if (not len(yt.data) == 0 and 
+            not set(np.unique(yt.data)) == set([1])):
+                raise ValueError('Expected only 0s and 1s in label indicator.')
+        else:
+            unexpected = np.setdiff1d(yt, [0, 1])
+            if len(unexpected) > 0:
+                raise ValueError('Expected only 0s and 1s in label indicator. '
+                                 'Also got {0}'.format(unexpected))
+        if sp.issparse(yt):
+            return [tuple(self.classes_.take(yt.indices[start:end]))
+                    for start, end in zip(yt.indptr[:-1], yt.indptr[1:])]
+        else:
+            return [tuple(self.classes_.compress(indicators)) for indicators 
+                    in yt]
