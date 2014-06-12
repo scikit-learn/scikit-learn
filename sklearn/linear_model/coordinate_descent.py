@@ -1514,6 +1514,10 @@ class MultiTaskElasticNet(Lasso):
         n_samples, n_features = X.shape
         _, n_tasks = y.shape
 
+        if n_samples != y.shape[0]:
+            raise ValueError("X and y have inconsistent dimensions (%d != %d)"
+                             % (n_samples, y.shape[0]))
+
         X, y, X_mean, y_mean, X_std = center_data(
             X, y, self.fit_intercept, self.normalize, copy=False)
 

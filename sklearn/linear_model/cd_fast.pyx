@@ -59,6 +59,18 @@ cdef double max(int n, double* a) nogil:
     return m
 
 
+cdef double diff_abs_max(int n, double* a, double* b) nogil:
+    """np.max(np.abs(a - b))"""
+    cdef int i
+    cdef double m = fabs(a[0] - b[0])
+    cdef double d
+    for i in range(1, n):
+        d = fabs(a[i] - b[i])
+        if d > m:
+            m = d
+    return m
+
+
 cdef extern from "cblas.h":
     enum CBLAS_ORDER:
         CblasRowMajor=101
@@ -75,15 +87,15 @@ cdef extern from "cblas.h":
                              ) nogil
     double dasum "cblas_dasum"(int N, double *X, int incX) nogil
     void dger "cblas_dger"(CBLAS_ORDER Order, int M, int N, double alpha,
-                double *X, int incX, double *Y, int incY, double *A, int lda)
+                double *X, int incX, double *Y, int incY, double *A, int lda) nogil
     void dgemv "cblas_dgemv"(CBLAS_ORDER Order,
                       CBLAS_TRANSPOSE TransA, int M, int N,
                       double alpha, double *A, int lda,
                       double *X, int incX, double beta,
-                      double *Y, int incY)
-    double dnrm2 "cblas_dnrm2"(int N, double *X, int incX)
-    void dcopy "cblas_dcopy"(int N, double *X, int incX, double *Y, int incY)
-    void dscal "cblas_dscal"(int N, double alpha, double *X, int incX)
+                      double *Y, int incY) nogil
+    double dnrm2 "cblas_dnrm2"(int N, double *X, int incX) nogil
+    void dcopy "cblas_dcopy"(int N, double *X, int incX, double *Y, int incY) nogil
+    void dscal "cblas_dscal"(int N, double alpha, double *X, int incX) nogil
 
 
 @cython.boundscheck(False)
@@ -561,26 +573,13 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
     return np.asarray(w), gap, tol
 
 
-cdef double diff_abs_max(int n, double* a, double* b):
-    """np.max(np.abs(a - b))"""
-    cdef int i
-    cdef double m = fabs(a[0] - b[0])
-    cdef double d
-    for i in range(1, n):
-        d = fabs(a[i] - b[i])
-        if d > m:
-            m = d
-    return m
-
-
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def enet_coordinate_descent_multi_task(np.ndarray[DOUBLE, ndim=2, mode='fortran'] W,
-                                       double l1_reg, double l2_reg,
-                                       np.ndarray[DOUBLE, ndim=2, mode='fortran'] X,
-                                       np.ndarray[DOUBLE, ndim=2] Y,
-                                       int max_iter, double tol):
+def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
+                                       double l2_reg, double[::1, :] X,
+                                       double[:, :] Y, int max_iter,
+                                       double tol):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net mult-task regression
 
@@ -596,14 +595,17 @@ def enet_coordinate_descent_multi_task(np.ndarray[DOUBLE, ndim=2, mode='fortran'
     cdef unsigned int n_features = X.shape[1]
     cdef unsigned int n_tasks = Y.shape[1]
 
-    # compute norms of the columns of X
-    cdef np.ndarray[DOUBLE, ndim=1] norm_cols_X = (X ** 2).sum(axis=0)
+    # to store XtA
+    cdef double[:, ::1] XtA = np.zeros((n_features, n_tasks))
+    cdef double XtA_axis1norm
+    cdef double dual_norm_XtA
 
     # initial value of the residuals
-    cdef np.ndarray[DOUBLE, ndim=2, mode='c'] R
+    cdef double[:, ::1] R = np.zeros((n_samples, n_tasks))
 
-    cdef np.ndarray[DOUBLE, ndim=1, mode='c'] tmp = np.zeros(n_tasks, dtype=np.float)
-    cdef np.ndarray[DOUBLE, ndim=1] w_ii = np.zeros(n_tasks, dtype=np.float)
+    cdef double[:] norm_cols_X = np.zeros(n_features)
+    cdef double[::1] tmp = np.zeros(n_tasks, dtype=np.float)
+    cdef double[:] w_ii = np.zeros(n_tasks, dtype=np.float)
     cdef double d_w_max
     cdef double w_max
     cdef double d_w_ii
@@ -611,99 +613,135 @@ def enet_coordinate_descent_multi_task(np.ndarray[DOUBLE, ndim=2, mode='fortran'
     cdef double W_ii_abs_max
     cdef double gap = tol + 1.0
     cdef double d_w_tol = tol
+    cdef double ry_sum
+    cdef double l21_norm
     cdef unsigned int ii
+    cdef unsigned int jj
     cdef unsigned int n_iter
+
+    cdef double* X_ptr = &X[0, 0]
+    cdef double* W_ptr = &W[0, 0]
+    cdef double* Y_ptr = &Y[0, 0]
+    cdef double* wii_ptr = &w_ii[0]
 
     if l1_reg == 0:
         warnings.warn("Coordinate descent with l1_reg=0 may lead to unexpected"
             " results and is discouraged.")
 
-    R = Y - np.dot(X, W.T)
-    R = np.asarray(R, order='C')
+    with nogil:
+        # norm_cols_X = (np.asarray(X) ** 2).sum(axis=0)
+        for ii in range(n_features):
+            for jj in range(n_samples):
+                norm_cols_X[ii] += X[jj][ii]**2
 
-    # tol = tol * linalg.norm(Y, ord='fro') ** 2
-    tol = tol * dnrm2(n_samples * n_tasks, <DOUBLE*>Y.data, 1) ** 2
+        # R = Y - np.dot(X, W.T)
+        for ii in range(n_samples):
+            for jj in range(n_tasks):
+                R[ii][jj] = Y[ii][jj] - (
+                    ddot(n_features, X_ptr + ii, n_samples, W_ptr + jj, n_tasks)
+                    )
 
-    for n_iter in range(max_iter):
-        w_max = 0.0
-        d_w_max = 0.0
-        for ii in range(n_features): # Loop over coordinates
-            if norm_cols_X[ii] == 0.0:
-                continue
+        # tol = tol * linalg.norm(Y, ord='fro') ** 2
+        tol = tol * dnrm2(n_samples * n_tasks, Y_ptr, 1) ** 2
 
-            # w_ii = W[:, ii] # Store previous value
-            dcopy(n_tasks, <DOUBLE*>(W.data + ii * n_tasks * sizeof(DOUBLE)),
-                  1, <DOUBLE*>w_ii.data, 1)
+        for n_iter in range(max_iter):
+            w_max = 0.0
+            d_w_max = 0.0
+            for ii in range(n_features): # Loop over coordinates
+                if norm_cols_X[ii] == 0.0:
+                    continue
 
-            # if np.sum(w_ii ** 2) != 0.0:  # can do better
-            if dnrm2(n_tasks, <DOUBLE*>w_ii.data, 1) != 0.0:
-                # R += np.dot(X[:, ii][:, None], w_ii[None, :]) # rank 1 update
-                dger(CblasRowMajor, n_samples, n_tasks, 1.0,
-                    <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)), 1,
-                    <DOUBLE*>w_ii.data, 1,
-                    <DOUBLE*>R.data, n_tasks)
+                # w_ii = W[:, ii] # Store previous value
+                dcopy(n_tasks, W_ptr + ii * n_tasks, 1, wii_ptr, 1)
 
-            # tmp = np.dot(X[:, ii][None, :], R).ravel()
-            dgemv(CblasRowMajor, CblasTrans,
-                  n_samples, n_tasks, 1.0, <DOUBLE*>R.data,
-                  n_tasks, <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)),
-                  1, 0.0, <DOUBLE*>tmp.data, 1)
+                # if np.sum(w_ii ** 2) != 0.0:  # can do better
+                if dnrm2(n_tasks, wii_ptr, 1) != 0.0:
+                    # R += np.dot(X[:, ii][:, None], w_ii[None, :]) # rank 1 update
+                    dger(CblasRowMajor, n_samples, n_tasks, 1.0,
+                         X_ptr + ii * n_samples, 1,
+                         wii_ptr, 1, &R[0, 0], n_tasks)
 
-            # nn = sqrt(np.sum(tmp ** 2))
-            nn = dnrm2(n_tasks, <DOUBLE*>tmp.data, 1)
+                # tmp = np.dot(X[:, ii][None, :], R).ravel()
+                dgemv(CblasRowMajor, CblasTrans,
+                      n_samples, n_tasks, 1.0, &R[0, 0], n_tasks,
+                      X_ptr + ii * n_samples, 1, 0.0, &tmp[0], 1)
 
-            # W[:, ii] = tmp * fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg)
-            dcopy(n_tasks, <DOUBLE*>tmp.data,
-                  1, <DOUBLE*>(W.data + ii * n_tasks * sizeof(DOUBLE)), 1)
-            dscal(n_tasks, fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg),
-                  <DOUBLE*>(W.data + ii * n_tasks * sizeof(DOUBLE)), 1)
+                # nn = sqrt(np.sum(tmp ** 2))
+                nn = dnrm2(n_tasks, &tmp[0], 1)
 
-            # if np.sum(W[:, ii] ** 2) != 0.0:  # can do better
-            if dnrm2(n_tasks, <DOUBLE*>(W.data + ii * n_tasks * sizeof(DOUBLE)), 1) != 0.0:
-                # R -= np.dot(X[:, ii][:, None], W[:, ii][None, :]) # Update residual : rank 1 update
-                dger(CblasRowMajor, n_samples, n_tasks, -1.0,
-                    <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)), 1,
-                    <DOUBLE*>(W.data + ii * n_tasks * sizeof(DOUBLE)), 1,
-                    <DOUBLE*>R.data, n_tasks)
+                # W[:, ii] = tmp * fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg)
+                dcopy(n_tasks, &tmp[0], 1, W_ptr + ii * n_tasks, 1)
+                dscal(n_tasks, fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg),
+                          W_ptr + ii * n_tasks, 1)
 
-            # update the maximum absolute coefficient update
-            d_w_ii = diff_abs_max(n_tasks,
-                                  <DOUBLE*>(W.data + ii * n_tasks * sizeof(DOUBLE)),
-                                  <DOUBLE*>w_ii.data)
-            if d_w_ii > d_w_max:
-                d_w_max = d_w_ii
+                # if np.sum(W[:, ii] ** 2) != 0.0:  # can do better
+                if dnrm2(n_tasks, W_ptr + ii * n_tasks, 1) != 0.0:
+                    # R -= np.dot(X[:, ii][:, None], W[:, ii][None, :]) # Update residual : rank 1 update
+                    dger(CblasRowMajor, n_samples, n_tasks, -1.0,
+                         X_ptr + ii * n_samples, 1, W_ptr + ii * n_tasks, 1,
+                         &R[0, 0], n_tasks)
 
-            W_ii_abs_max = abs_max(n_tasks,
-                                   <DOUBLE*>(W.data + ii * n_tasks * sizeof(DOUBLE)))
-            if W_ii_abs_max > w_max:
-                w_max = W_ii_abs_max
+                # update the maximum absolute coefficient update
+                d_w_ii = diff_abs_max(n_tasks, W_ptr + ii * n_tasks, wii_ptr)
 
-        if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
-            # the biggest coordinate update of this iteration was smaller than
-            # the tolerance: check the duality gap as ultimate stopping
-            # criterion
+                if d_w_ii > d_w_max:
+                    d_w_max = d_w_ii
 
-            XtA = np.dot(X.T, R) - l2_reg * W.T
-            dual_norm_XtA = np.max(np.sqrt(np.sum(XtA ** 2, axis=1)))
+                W_ii_abs_max = abs_max(n_tasks, W_ptr + ii * n_tasks)
+                if W_ii_abs_max > w_max:
+                    w_max = W_ii_abs_max
 
-            # TODO: use squared L2 norm directly
-            # R_norm = linalg.norm(R, ord='fro')
-            # w_norm = linalg.norm(W, ord='fro')
-            R_norm = dnrm2(n_samples * n_tasks, <DOUBLE*>R.data, 1)
-            w_norm = dnrm2(n_features * n_tasks, <DOUBLE*>W.data, 1)
-            if (dual_norm_XtA > l1_reg):
-                const =  l1_reg / dual_norm_XtA
-                A_norm = R_norm * const
-                gap = 0.5 * (R_norm ** 2 + A_norm ** 2)
-            else:
-                const = 1.0
-                gap = R_norm ** 2
+            if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
+                # the biggest coordinate update of this iteration was smaller than
+                # the tolerance: check the duality gap as ultimate stopping
+                # criterion
 
-            gap += l1_reg * np.sqrt(np.sum(W ** 2, axis=0)).sum() - const * np.sum(R * Y) + \
-                  0.5 * l2_reg * (1 + const ** 2) * (w_norm ** 2)
+                # XtA = np.dot(X.T, R) - l2_reg * W.T
+                for ii in range(n_features):
+                    for jj in range(n_tasks):
+                        XtA[ii][jj] = ddot(
+                            n_samples, X_ptr + ii * n_samples, 1,
+                            &R[0, 0] + jj, n_tasks
+                            ) - l2_reg * W[jj][ii]
 
-            if gap < tol:
-                # return if we reached desired tolerance
-                break
+                # dual_norm_XtA = np.max(np.sqrt(np.sum(XtA ** 2, axis=1)))
+                dual_norm_XtA = 0.0
+                for ii in range(n_features):
+                    # np.sqrt(np.sum(XtA ** 2, axis=1))
+                    XtA_axis1norm = dnrm2(n_tasks, &XtA[0, 0] + ii * n_tasks, 1)
+                    if XtA_axis1norm > dual_norm_XtA:
+                        dual_norm_XtA = XtA_axis1norm
 
-    return W, gap, tol
+                # TODO: use squared L2 norm directly
+                # R_norm = linalg.norm(R, ord='fro')
+                # w_norm = linalg.norm(W, ord='fro')
+                R_norm = dnrm2(n_samples * n_tasks, &R[0, 0], 1)
+                w_norm = dnrm2(n_features * n_tasks, W_ptr, 1)
+                if (dual_norm_XtA > l1_reg):
+                    const =  l1_reg / dual_norm_XtA
+                    A_norm = R_norm * const
+                    gap = 0.5 * (R_norm ** 2 + A_norm ** 2)
+                else:
+                    const = 1.0
+                    gap = R_norm ** 2
+
+                # ry_sum = np.sum(R * y)
+                ry_sum = 0.0
+                for ii in range(n_samples):
+                    for jj in range(n_tasks):
+                        ry_sum += R[ii, jj] * Y[ii, jj]
+
+                # l21_norm = np.sqrt(np.sum(W ** 2, axis=0)).sum()
+                l21_norm = 0.0
+                for ii in range(n_features):
+                    # np.sqrt(np.sum(W ** 2, axis=0))
+                    l21_norm += dnrm2(n_tasks, W_ptr + n_tasks * ii, 1)
+
+                gap += l1_reg * l21_norm - const * ry_sum + \
+                     0.5 * l2_reg * (1 + const ** 2) * (w_norm ** 2)
+
+                if gap < tol:
+                    # return if we reached desired tolerance
+                    break
+
+    return np.asarray(W), gap, tol
