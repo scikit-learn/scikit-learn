@@ -502,7 +502,6 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
             data.fill(pos_label)
             Y.data = data
 
-    # XXX raise deprecation warning
     elif y_type == "multilabel-sequences":
         Y = MultiLabelBinarizer(classes=classes,
                                 sparse_output=sparse_output).fit_transform(y)
@@ -588,8 +587,12 @@ def _inverse_binarize_thresholding(y, y_type, classes, threshold):
     elif y_type == "multilabel-indicator":
         return y
 
-    # XXX raise deprecation warning
     elif y_type == "multilabel-sequences":
+        warnings.warn('Direct support for sequence of sequences multilabel '
+                      'representation will be unavailable from version 0.17. '
+                      'Use sklearn.preprocessing.MultiLabelBinarizer to '
+                      'convert to a label indicator representation.',
+                      DeprecationWarning)
         mlb = MultiLabelBinarizer(classes=classes).fit([])
         return mlb.inverse_transform(y)
 

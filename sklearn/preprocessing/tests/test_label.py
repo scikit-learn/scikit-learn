@@ -16,6 +16,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.preprocessing.label import LabelBinarizer
@@ -557,7 +558,6 @@ def test_label_binarize_sparse_output_multiclass():
 
 
 def test_label_binarize_sparse_output_multilabel():
-    # XXX: Asssert deprecation warning for y_seq
     y_seq = [(1,), (0, 1, 2), tuple()]
     y_ind = np.array([[0, 1, 0], [1, 1, 1], [0, 0, 0]])
     classes = [0, 1, 2]
@@ -568,11 +568,35 @@ def test_label_binarize_sparse_output_multilabel():
                 for sparse_matrix in [coo_matrix, csc_matrix, csr_matrix,
                                       dok_matrix, lil_matrix]]
 
-    for y in [y_seq, y_ind] + y_sparse:
+    for y in [y_ind] + y_sparse:
         yield check_sparse_output, y, classes, pos_label, neg_label, expected
+
+    deprecation_message = ("Direct support for sequence of sequences " +
+                          "multilabel representation will be unavailable " +
+                          "from version 0.17. Use sklearn.preprocessing." +
+                          "MultiLabelBinarizer to convert to a label " +
+                          "indicator representation.")
+
+    assert_warns_message(DeprecationWarning, deprecation_message,
+                         check_sparse_output, y_seq, classes, pos_label,
+                         neg_label, expected)
 
     assert_raises(ValueError, label_binarize, y, classes, neg_label=-1,
                   pos_label=pos_label, sparse_output=True)
+
+
+def test_deprecation_inverse_binarize_thresholding():
+    deprecation_message = ("Direct support for sequence of sequences " +
+                          "multilabel representation will be unavailable " +
+                          "from version 0.17. Use sklearn.preprocessing." +
+                          "MultiLabelBinarizer to convert to a label " +
+                          "indicator representation.")
+
+    assert_warns_message(DeprecationWarning, deprecation_message,
+                         _inverse_binarize_thresholding,
+                         y=csr_matrix([[1, 0], [0, 1]]),
+                         y_type="multilabel-sequences",
+                         classes=[1, 2], threshold=0)
 
 
 def test_invalid_input_label_binarize():
