@@ -1,4 +1,4 @@
-# Author: Arnaud Joly, Joel Nothman
+# Author: Arnaud Joly, Joel Nothman, Hamzeh Alsalhi
 #
 # License: BSD 3 clause
 """
