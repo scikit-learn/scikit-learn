@@ -468,8 +468,9 @@ def test_roc_returns_consistency():
 
 
 def test_roc_nonrepeating_thresholds():
-    """Test to ensure that we don't return spurious repeating thresholds
-    due to machine precision issues
+    """Test to ensure that we don't return spurious repeating thresholds.
+
+    Duplicated thresholds can arise due to machine precision issues.
     """
     dataset = datasets.load_digits()
     X = dataset['data']
@@ -481,7 +482,8 @@ def test_roc_nonrepeating_thresholds():
 
     # How well can the classifier predict whether a digit is less than 5?
     # This task contributes floating point roundoff errors to the probabilities
-    probas_pred = clf.fit(X[::2], y[::2]).predict_proba(X[1::2])
+    train, test = slice(None, None, 2), slice(1, None, 2)
+    probas_pred = clf.fit(X[train], y[train]).predict_proba(X[test])
     probas_pred = probas_pred[:, :5].sum(axis=1)
     y_true = [yy < 5 for yy in y[1::2]]
 
