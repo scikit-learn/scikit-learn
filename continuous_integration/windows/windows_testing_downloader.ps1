@@ -16,15 +16,14 @@
 # Powershell scripts are also disabled by default. One must run the command:
 # set-executionpolicy unrestricted
 # from a Powershell terminal with administrator rights to enable scripts.
-# To start an administrator Powershell terminal, right click second icon from the left on Windows Server 2012's bottom taskbar
+# To start an administrator Powershell terminal, right click second icon from the left on Windows Server 2012's bottom taskbar.
 
 param (
     [string]$python = "None"
 )
 
 function DisableInternetExplorerESC {
-    # Disables InternetExplorerESC to enable easier manual downloads of testing packages
-    # See
+    # Disables InternetExplorerESC to enable easier manual downloads of testing packages.
     # http://stackoverflow.com/questions/9368305/disable-ie-security-on-windows-server-via-powershell
     $AdminKey = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}"
     $UserKey = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A8-37EF-4b3f-8CFC-4F3A74704073}"
@@ -35,7 +34,7 @@ function DisableInternetExplorerESC {
 }
 
 function Python27URLs {
-    # Function returns a dictionary of packages to download for Python 2.7
+    # Function returns a dictionary of packages to download for Python 2.7.
     $urls = @{
         "python" = "https://www.python.org/ftp/python/2.7.7/python-2.7.7.msi"
         "numpy" = "http://28daf2247a33ed269873-7b1aad3fab3cc330e1fd9d109892382a.r6.cf2.rackcdn.com/numpy-1.8.1-cp27-none-win32.whl"
@@ -46,7 +45,7 @@ function Python27URLs {
 }
 
 function Python34URLs {
-    # Function returns a dictionary of packages to download for Python 3.4
+    # Function returns a dictionary of packages to download for Python 3.4.
     $urls = @{
         "python" = "https://www.python.org/ftp/python/3.4.1/python-3.4.1.msi"
         "numpy" = "http://28daf2247a33ed269873-7b1aad3fab3cc330e1fd9d109892382a.r6.cf2.rackcdn.com/numpy-1.8.1-cp34-none-win32.whl"
@@ -72,7 +71,7 @@ function DownloadPackages ($package_dict, $append_string) {
         $filepath = $basedir + $file
         Write-Host "Downloading" $file "from" $url
 
-        # Retry up to 5 times in case of network transient errors
+        # Retry up to 5 times in case of network transient errors.
         $retry_attempts = 5
         for($i=0; $i -lt $retry_attempts; $i++){
              try{
@@ -93,7 +92,7 @@ function InstallPython($match_string) {
     $pkg = Get-ChildItem -Filter $pkg_regex -Name
     Invoke-Expression -Command "msiexec /qn /i $pkg"
     
-    Write-Host "Finishing installation of Python"
+    Write-Host "Installing Python"
     Start-Sleep 5
     Write-Host "Python installation complete"
 }
@@ -106,9 +105,24 @@ function InstallPip($match_string, $python_version) {
     Invoke-Expression -Command "$python_path $pkg"
 }
 
-function PipInstall($pkg_name, $python_version, $extra_args) {
+function EnsurePip($python_version) {
     $py = $python_version -replace "\."
-    $pip = "C:\Python" + $py + "\Scripts\pip.exe"
+    $python_path = "C:\Python" + $py + "\python.exe"
+    Invoke-Expression -Command "$python_path -m ensurepip"
+}
+
+function GetPipPath($python_version) {
+    $py = $python_version -replace "\."
+    if ($py.StartsWith("3")) {
+        $pip = "C:\Python" + $py + "\Scripts\pip3.exe"
+    } else {
+        $pip = "C:\Python" + $py + "\Scripts\pip.exe"
+    }
+    return $pip
+}
+
+function PipInstall($pkg_name, $python_version, $extra_args) {
+    $pip = GetPipPath($python_version)
     Invoke-Expression -Command "$pip install $pkg_name"
 }
 
@@ -117,19 +131,18 @@ function InstallNose($python_version) {
 }
 
 function WheelInstall($name, $url, $python_version) {
-    $py = $python_version -replace "\."
-    $pip = "C:\Python" + $py + "\Scripts\pip.exe"
+    $pip = GetPipPath($python_version)
     $args = "install --use-wheel --no-index"
     Invoke-Expression -Command "$pip $args $url $name"
 }
 
 function InstallNumpy($package_dict, $python_version) {
-    #Don't pass name so we can use URL directly
+    #Don't pass name so we can use URL directly.
     WheelInstall "" $package_dict["numpy"] $python_version
 }
 
 function InstallScipy($package_dict, $python_version) {
-    #Don't pass name so we can use URL directly
+    #Don't pass name so we can use URL directly.
     WheelInstall "" $package_dict["scipy"] $python_version
 }
 
@@ -155,21 +168,24 @@ function main {
     $package_dict = $versions[$python]
 
     #This will download the whl packages as well which is
-    #clunky but makes configuration simpler
+    #clunky but makes configuration simpler.
     DownloadPackages $package_dict $pystring
     InstallPython $pystring
     if ($package_dict.ContainsKey("get-pip")) {
        InstallPip $pystring $python
+    } else {
+       EnsurePip $python 
     }
     InstallNose $python
 
-    #The installers below here use wheel packages
-    #Created from CGohlke's installers with
+    #The installers below here use wheel packages.
+    #Wheels were created from CGohlke's installers with
     #wheel convert <exefile>
-    #These are hosted in Rackspace Cloud Files
+    #These are hosted in Rackspace Cloud Files.
     InstallNumpy $package_dict $python
     InstallScipy $package_dict $python
     return
 }
 
 main
+
