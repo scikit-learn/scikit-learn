@@ -34,6 +34,7 @@ case.
 
 import numpy as np
 import warnings
+import scipy.sparse as sp
 
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .base import MetaEstimatorMixin
@@ -84,21 +85,38 @@ def fit_ovr(estimator, X, y, n_jobs=1):
     """Fit a one-vs-the-rest strategy."""
     _check_estimator(estimator)
 
-    lb = LabelBinarizer()
-    Y = lb.fit_transform(y)
+    lb = LabelBinarizer(sparse_output=True)
+    
+    ## debug
+    print(y)
+    ##
+
+    Y = sp.csc_matrix(lb.fit_transform(y))
+
+    ## Debug
+    print(Y.toarray())
+    ##
 
     estimators = Parallel(n_jobs=n_jobs)(
-        delayed(_fit_binary)(estimator, X, Y[:, i], classes=["not %s" % i, i])
-        for i in range(Y.shape[1]))
+        delayed(_fit_binary)(estimator, X, Y.getcol(i).toarray(), 
+            classes=["not %s" % i, i]) for i in range(Y.shape[1]))
     return estimators, lb
 
 
 def predict_ovr(estimators, label_binarizer, X):
     """Make predictions using the one-vs-the-rest strategy."""
-    Y = np.array([_predict_binary(e, X) for e in estimators])
+
     e = estimators[0]
     thresh = 0 if hasattr(e, "decision_function") and is_classifier(e) else .5
-    return label_binarizer.inverse_transform(Y.T, threshold=thresh)
+
+    Y = sp.coo_matrix(np.array(_predict_binary(e, X) > thresh, dtype=np.int))
+
+    for e in estimators[1:]:
+        r = sp.coo_matrix(np.array(_predict_binary(e, X) > thresh, 
+            dtype=np.int))
+        Y = sp.vstack([Y, r])
+
+    return label_binarizer.inverse_transform(Y.T)
 
 
 def predict_proba_ovr(estimators, X, is_multilabel):
