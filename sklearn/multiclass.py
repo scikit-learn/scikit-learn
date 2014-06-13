@@ -88,13 +88,13 @@ def fit_ovr(estimator, X, y, n_jobs=1):
     lb = LabelBinarizer(sparse_output=True)
     
     ## debug
-    print(y)
+    #print(y)
     ##
 
     Y = sp.csc_matrix(lb.fit_transform(y))
 
     ## Debug
-    print(Y.toarray())
+    #print(Y.toarray())
     ##
 
     estimators = Parallel(n_jobs=n_jobs)(
@@ -109,17 +109,25 @@ def predict_ovr(estimators, label_binarizer, X):
     e = estimators[0]
     thresh = 0 if hasattr(e, "decision_function") and is_classifier(e) else .5
 
-    # XXX: this needs to handle multiclass correctly, a copy of 
-    # inverse_transform is needed where only the thresholding behavior is used
+    if label_binarizer.y_type_ == "multiclass":
+        Y = np.array([])
+        for x in X:
+            x_scores = np.array([])
+            for e in estimators:
+                x_scores = np.append(x_scores, _predict_binary(e, x))
+            c = label_binarizer.classes_[x_scores.argmax()]
+            Y = np.append(Y,c)
+        return Y
 
-    Y = sp.coo_matrix(np.array(_predict_binary(e, X) > thresh, dtype=np.int))
-
-    for e in estimators[1:]:
-        r = sp.coo_matrix(np.array(_predict_binary(e, X) > thresh, 
+    else:
+        Y = sp.coo_matrix(np.array(_predict_binary(e, X) > thresh,
             dtype=np.int))
-        Y = sp.vstack([Y, r])
-
-    return label_binarizer.inverse_transform(Y.T)
+        for e in estimators[1:]:
+            r = sp.coo_matrix(np.array(_predict_binary(e, X) > thresh,
+                dtype=np.int))
+            Y = sp.vstack([Y, r])
+        print(Y)
+        return label_binarizer.inverse_transform(Y.T, threshold=0.5)
 
 
 def predict_proba_ovr(estimators, X, is_multilabel):
