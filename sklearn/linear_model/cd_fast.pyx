@@ -2,6 +2,7 @@
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Alexis Mignon <alexis.mignon@gmail.com>
+#         Manoj Kumar <manojkumarsivaraj334@gmail.com>
 #
 # Licence: BSD 3 clause
 
@@ -632,12 +633,12 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
         # norm_cols_X = (np.asarray(X) ** 2).sum(axis=0)
         for ii in range(n_features):
             for jj in range(n_samples):
-                norm_cols_X[ii] += X[jj][ii]**2
+                norm_cols_X[ii] += X[jj, ii] ** 2
 
         # R = Y - np.dot(X, W.T)
         for ii in range(n_samples):
             for jj in range(n_tasks):
-                R[ii][jj] = Y[ii][jj] - (
+                R[ii, jj] = Y[ii, jj] - (
                     ddot(n_features, X_ptr + ii, n_samples, W_ptr + jj, n_tasks)
                     )
 
@@ -699,10 +700,10 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
                 # XtA = np.dot(X.T, R) - l2_reg * W.T
                 for ii in range(n_features):
                     for jj in range(n_tasks):
-                        XtA[ii][jj] = ddot(
+                        XtA[ii, jj] = ddot(
                             n_samples, X_ptr + ii * n_samples, 1,
                             &R[0, 0] + jj, n_tasks
-                            ) - l2_reg * W[jj][ii]
+                            ) - l2_reg * W[jj, ii]
 
                 # dual_norm_XtA = np.max(np.sqrt(np.sum(XtA ** 2, axis=1)))
                 dual_norm_XtA = 0.0
