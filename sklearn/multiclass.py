@@ -109,6 +109,9 @@ def predict_ovr(estimators, label_binarizer, X):
     e = estimators[0]
     thresh = 0 if hasattr(e, "decision_function") and is_classifier(e) else .5
 
+    # XXX: this needs to handle multiclass correctly, a copy of 
+    # inverse_transform is needed where only the thresholding behavior is used
+
     Y = sp.coo_matrix(np.array(_predict_binary(e, X) > thresh, dtype=np.int))
 
     for e in estimators[1:]:
