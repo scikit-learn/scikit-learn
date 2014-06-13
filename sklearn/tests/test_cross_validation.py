@@ -66,10 +66,15 @@ class MockListClassifier(BaseEstimator):
 class MockClassifier(BaseEstimator):
     """Dummy classifier to test the cross-validation"""
 
-    def __init__(self, a=0):
+    def __init__(self, a=0, allow_nd=False):
         self.a = a
+        self.allow_nd = allow_nd
 
     def fit(self, X, Y=None, sample_weight=None, class_prior=None):
+        if self.allow_nd:
+            X = X.reshape(len(X), -1)
+        if X.ndim >= 3 and not self.allow_nd:
+            raise ValueError('X cannot be d')
         if sample_weight is not None:
             assert_true(sample_weight.shape[0] == X.shape[0],
                         'MockClassifier extra fit_param sample_weight.shape[0]'
@@ -83,6 +88,8 @@ class MockClassifier(BaseEstimator):
         return self
 
     def predict(self, T):
+        if self.allow_nd:
+            T = T.reshape(len(T), -1)
         return T.shape[0]
 
     def score(self, X=None, Y=None):
@@ -508,6 +515,14 @@ def test_cross_val_score():
 
     assert_raises(ValueError, cval.cross_val_score, clf, X, y,
                   scoring="sklearn")
+
+    # test with 3d X and
+    X_3d = X[:, :, np.newaxis]
+    clf = MockClassifier(allow_nd=True)
+    scores = cval.cross_val_score(clf, X_3d, y)
+
+    clf = MockClassifier(allow_nd=False)
+    assert_raises(ValueError, cval.cross_val_score, clf, X_3d, y)
 
 
 def test_cross_val_score_precomputed():
