@@ -115,7 +115,7 @@ def predict_ovr(estimators, label_binarizer, X):
                 x_scores = np.append(x_scores, _predict_binary(e, x))
             c = label_binarizer.classes_[x_scores.argmax()]
             Y = np.append(Y,c)
-        return Y.T
+        return np.array(Y.T, dtype=label_binarizer.classes_.dtype)
 
     else:
         Y = sp.coo_matrix(np.array(_predict_binary(e, X) > thresh,
