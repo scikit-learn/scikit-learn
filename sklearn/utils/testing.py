@@ -155,11 +155,10 @@ def assert_warns(warning_class, func, *args, **kw):
             raise AssertionError("No warning raised when calling %s"
                                  % func.__name__)
 
-        if not w[0].category is warning_class:
-            raise AssertionError("First warning for %s is not a "
-                                 "%s( is %s)"
-                                 % (func.__name__, warning_class, w[0]))
-
+        found = any(warning.category is warning_class for warning in w)
+        if not found:
+            raise AssertionError("%s did not give warning: %s( is %s)"
+                                 % (func.__name__, warning_class, w))
     return result
 
 
@@ -579,6 +578,7 @@ def if_not_mac_os(versions=('10.7', '10.8', '10.9'),
     """
     mac_version, _, _ = platform.mac_ver()
     skip = '.'.join(mac_version.split('.')[:2]) in versions
+
     def decorator(func):
         if skip:
             @wraps(func)

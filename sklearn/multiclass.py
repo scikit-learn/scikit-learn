@@ -32,14 +32,19 @@ case.
 #
 # License: BSD 3 clause
 
+import array
 import numpy as np
 import warnings
+import scipy.sparse as sp
 
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .base import MetaEstimatorMixin
 from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
+from .utils.multiclass import type_of_target
+from .utils.multiclass import unique_labels
+from .utils.validation import _num_samples
 from .externals.joblib import Parallel
 from .externals.joblib import delayed
 
@@ -81,24 +86,96 @@ def _check_estimator(estimator):
 
 
 def fit_ovr(estimator, X, y, n_jobs=1):
-    """Fit a one-vs-the-rest strategy."""
+    """Fit a list of estimators using a one-vs-the-rest strategy.
+
+    Parameters
+    ----------
+    estimator : estimator object
+        An estimator object implementing `fit` and one of `decision_function`
+        or `predict_proba`.
+
+    X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        Data.
+
+    y : {array-like, sparse matrix}, shape = [n_samples] or
+        [n_samples, n_classes] Multi-class targets. An indicator matrix
+        turns on multilabel classification.
+
+    Returns
+    -------
+    self
+    """
     _check_estimator(estimator)
-
-    lb = LabelBinarizer()
+    # A sparse LabelBinarizer, with sparse_output=True, has been shown to
+    # outpreform or match a dense label binarizer in all cases and has also
+    # resulted in less or equal memory consumption in the fit_ovr function
+    # overall.
+    lb = LabelBinarizer(sparse_output=True)
     Y = lb.fit_transform(y)
-
-    estimators = Parallel(n_jobs=n_jobs)(
-        delayed(_fit_binary)(estimator, X, Y[:, i], classes=["not %s" % i, i])
-        for i in range(Y.shape[1]))
+    Y = Y.tocsc()
+    columns = (col.toarray().ravel() for col in Y.T)
+    # In cases where individual estimators are very fast to train setting
+    # n_jobs > 1 in can results in slower performance due to the overhead
+    # of spawning threads.
+    estimators = Parallel(n_jobs=n_jobs)(delayed(_fit_binary)
+                                         (estimator,
+                                          X,
+                                          column,
+                                          classes=["not %s" % i,
+                                                   lb.classes_[i]])
+                                         for i, column in enumerate(columns))
     return estimators, lb
 
 
 def predict_ovr(estimators, label_binarizer, X):
-    """Make predictions using the one-vs-the-rest strategy."""
-    Y = np.array([_predict_binary(e, X) for e in estimators])
+    """Predict multi-class targets using the one vs rest strategy.
+
+    Parameters
+    ----------
+    estimators : list of `n_classes` estimators, Estimators used for
+        predictions. The list must be homogeneous with respect to the type of
+        estimators. fit_ovr supplies this list as part of its output.
+
+    label_binarizer : LabelBinarizer object, Object used to transform
+        multiclass labels to binary labels and vice-versa. fit_ovr supplies
+        this object as part of its output.
+
+    X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        Data.
+
+    Returns
+    -------
+    y : {array-like, sparse matrix}, shape = [n_samples] or
+        [n_samples, n_classes]. Predicted multi-class targets.
+    """
+    e_types = set([type(e) for e in estimators if not
+                   isinstance(e, _ConstantPredictor)])
+    if len(e_types) > 1:
+        raise ValueError("List of estimators must contain estimators of the"
+                         " same type but contains types {0}".format(e_types))
     e = estimators[0]
     thresh = 0 if hasattr(e, "decision_function") and is_classifier(e) else .5
-    return label_binarizer.inverse_transform(Y.T, threshold=thresh)
+
+    if label_binarizer.y_type_ == "multiclass":
+        maxima = np.empty(X.shape[0], dtype=float)
+        maxima.fill(-np.inf)
+        argmaxima = np.zeros(X.shape[0], dtype=int)
+        for i, e in enumerate(estimators):
+            pred = _predict_binary(e, X)
+            np.maximum(maxima, pred, out=maxima)
+            argmaxima[maxima == pred] = i
+        return label_binarizer.classes_[np.array(argmaxima.T)]
+    else:
+        n_samples = _num_samples(X)
+        indices = array.array('i')
+        indptr = array.array('i', [0])
+        for e in estimators:
+            indices.extend(np.where(_predict_binary(e, X) > thresh)[0])
+            indptr.append(len(indices))
+        data = np.ones(len(indices), dtype=int)
+        indicator = sp.csc_matrix((data, indices, indptr),
+                                  shape=(n_samples, len(estimators)))
+        return label_binarizer.inverse_transform(indicator)
 
 
 def predict_proba_ovr(estimators, X, is_multilabel):
@@ -190,9 +267,9 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Data.
 
-        y : array-like, shape = [n_samples] or [n_samples, n_classes]
-            Multi-class targets. An indicator matrix turns on multilabel
-            classification.
+        y : {array-like, sparse matrix}, shape = [n_samples] or
+            [n_samples, n_classes] Multi-class targets. An indicator matrix
+            turns on multilabel classification.
 
         Returns
         -------
@@ -216,8 +293,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Returns
         -------
-        y : array-like, shape = [n_samples]
-            Predicted multi-class targets.
+        y : {array-like, sparse matrix}, shape = [n_samples] or
+            [n_samples, n_classes]. Predicted multi-class targets.
         """
         self._check_is_fitted()
 
@@ -242,7 +319,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Returns
         -------
-        T : array-like, shape = [n_samples, n_classes]
+        T : {array-like, sparse matrix}, shape = [n_samples, n_classes]
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in `self.classes_`.
         """
@@ -271,7 +348,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     @property
     def multilabel_(self):
         """Whether this is a multilabel classifier"""
-        return self.label_binarizer_.multilabel_
+        return self.label_binarizer_.y_type_.startswith('multilabel')
 
     def score(self, X, y):
         if self.multilabel_:
