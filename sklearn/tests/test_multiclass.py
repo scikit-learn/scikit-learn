@@ -46,16 +46,10 @@ def test_ovr_fit_predict():
     # A classifier which implements decision_function.
     ovr = OneVsRestClassifier(LinearSVC(random_state=0))
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
-    print(iris.target)
-
-    print(pred)
     assert_equal(len(ovr.estimators_), n_classes)
 
     clf = LinearSVC(random_state=0)
     pred2 = clf.fit(iris.data, iris.target).predict(iris.data)
-    print(pred2)
-    print(np.mean(iris.target == pred))
-    print(np.mean(iris.target == pred2))
     assert_equal(np.mean(iris.target == pred), np.mean(iris.target == pred2))
 
     # A classifier which implements predict_proba.
@@ -149,14 +143,6 @@ def test_ovr_multilabel_dataset():
         X_test, Y_test = X[80:], Y[80:]
         clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
         Y_pred = clf.predict(X_test)
-
-        ## XXX
-        print(Y)
-        clf = OneVsRestClassifier(base_clf).fit(X_train, sp.coo_matrix(Y_train))
-        Y_pred = clf.predict(X_test)
-        assert_true(sp.issparse(Y_pred))
-        Y_pred = Y_pred.toarray()
-        ##
 
         assert_true(clf.multilabel_)
         assert_almost_equal(precision_score(Y_test, Y_pred, average="micro"),

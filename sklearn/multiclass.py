@@ -85,21 +85,19 @@ def fit_ovr(estimator, X, y, n_jobs=1):
     """Fit a one-vs-the-rest strategy."""
     _check_estimator(estimator)
 
-    lb = LabelBinarizer(sparse_output=True)
-    
-    ## debug
-    #print(y)
-    ##
+    lb = LabelBinarizer(sparse_output=sp.issparse(y))
 
-    Y = sp.csc_matrix(lb.fit_transform(y))
+    Y = lb.fit_transform(y)
 
-    ## Debug
-    #print(Y.toarray())
-    ##
+    if sp.issparse(Y):
+        estimators = Parallel(n_jobs=n_jobs)(
+            delayed(_fit_binary)(estimator, X, Y.getcol(i).toarray(), 
+                classes=["not %s" % i, i]) for i in range(Y.shape[1]))
+    else:
+        estimators = Parallel(n_jobs=n_jobs)(
+            delayed(_fit_binary)(estimator, X, Y[:, i], 
+                classes=["not %s" % i, i]) for i in range(Y.shape[1]))
 
-    estimators = Parallel(n_jobs=n_jobs)(
-        delayed(_fit_binary)(estimator, X, Y.getcol(i).toarray(), 
-            classes=["not %s" % i, i]) for i in range(Y.shape[1]))
     return estimators, lb
 
 
@@ -117,7 +115,7 @@ def predict_ovr(estimators, label_binarizer, X):
                 x_scores = np.append(x_scores, _predict_binary(e, x))
             c = label_binarizer.classes_[x_scores.argmax()]
             Y = np.append(Y,c)
-        return Y
+        return Y.T
 
     else:
         Y = sp.coo_matrix(np.array(_predict_binary(e, X) > thresh,
@@ -126,7 +124,6 @@ def predict_ovr(estimators, label_binarizer, X):
             r = sp.coo_matrix(np.array(_predict_binary(e, X) > thresh,
                 dtype=np.int))
             Y = sp.vstack([Y, r])
-        print(Y)
         return label_binarizer.inverse_transform(Y.T, threshold=0.5)
 
 
