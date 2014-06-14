@@ -738,7 +738,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
 
 def precision_recall_curve(y_true, probas_pred, pos_label=None,
-                           sample_weight=None):
+                           sample_weight=None, thresh_min=None):
     """Compute precision-recall pairs for different probability thresholds
 
     Note: this implementation is restricted to the binary classification task.
@@ -804,8 +804,15 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
                                              pos_label=pos_label,
                                              sample_weight=sample_weight)
 
+    N = tps[-1]
+
+    if thresh_min is not None:
+        thesh_mask = thresholds > thresh_min
+        tps = tps[thesh_mask]
+        fps = fps[thesh_mask]
+
     precision = tps / (tps + fps)
-    recall = tps / tps[-1]
+    recall = tps / N
 
     # stop when full recall attained
     # and reverse the outputs so recall is decreasing
