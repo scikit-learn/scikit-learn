@@ -203,12 +203,12 @@ try:
 except ImportError:
     def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
         """
-        Returns a boolean array where two arrays are element-wise equal within a
-        tolerance.
+        Returns a boolean array where two arrays are element-wise equal within
+        a tolerance.
 
-        This function was added to numpy v1.7.0, and the version you are running
-        has been backported from numpy v1.8.1. See its documentation for more
-        details.
+        This function was added to numpy v1.7.0, and the version you are
+        running has been backported from numpy v1.8.1. See its documentation
+        for more details.
         """
         def within_tol(x, y, atol, rtol):
             with np.errstate(invalid='ignore'):
@@ -226,7 +226,7 @@ except ImportError:
         else:
             finite = xfin & yfin
             cond = np.zeros_like(finite, subok=True)
-            # Because we're using boolean indexing, x & y must be the same shape.
+            # Since we're using boolean indexing, x & y must be the same shape.
             # Ideally, we'd just do x, y = broadcast_arrays(x, y). It's in
             # lib.stride_tricks, though, so we can't import it here.
             x = x * np.ones_like(cond)
