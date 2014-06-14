@@ -484,11 +484,11 @@ def test_roc_nonrepeating_thresholds():
     # This task contributes floating point roundoff errors to the probabilities
     train, test = slice(None, None, 2), slice(1, None, 2)
     probas_pred = clf.fit(X[train], y[train]).predict_proba(X[test])
-    probas_pred = probas_pred[:, :5].sum(axis=1)
-    y_true = [yy < 5 for yy in y[1::2]]
+    y_score = probas_pred[:, :5].sum(axis=1)  # roundoff errors begin here
+    y_true = [yy < 5 for yy in y[test]]
 
     # Check for repeating values in the thresholds
-    fpr, tpr, thresholds = roc_curve(y_true, probas_pred)
+    fpr, tpr, thresholds = roc_curve(y_true, y_score)
     assert_equal(thresholds.size, np.unique(np.round(thresholds, 2)).size)
 
 
