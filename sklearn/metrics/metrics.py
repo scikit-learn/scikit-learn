@@ -35,6 +35,7 @@ from ..utils import deprecated
 from ..utils import column_or_1d
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
+from ..utils.fixes import isclose
 
 
 ###############################################################################
@@ -727,7 +728,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     # concatenate a value for the end of the curve.
     # We need to use isclose to avoid spurious repeated thresholds
     # stemming from floating point roundoff errors.
-    distinct_value_indices = np.where(np.logical_not(np.isclose(
+    distinct_value_indices = np.where(np.logical_not(isclose(
         np.diff(y_score), 0)))[0]
     threshold_idxs = np.r_[distinct_value_indices, y_true.size - 1]
 
