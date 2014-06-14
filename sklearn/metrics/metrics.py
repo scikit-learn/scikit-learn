@@ -810,6 +810,7 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
         thesh_mask = thresholds > thresh_min
         tps = tps[thesh_mask]
         fps = fps[thesh_mask]
+        thresholds = thresholds[thesh_mask]
 
     precision = tps / (tps + fps)
     recall = tps / N
