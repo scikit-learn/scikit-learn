@@ -814,11 +814,12 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
     precision = tps / (tps + fps)
     recall = tps / N
 
-    # stop when full recall attained
-    # and reverse the outputs so recall is decreasing
-    last_ind = tps.searchsorted(tps[-1])
-    sl = slice(last_ind, None, -1)
-    return np.r_[precision[sl], 1], np.r_[recall[sl], 0], thresholds[sl]
+    # last_ind = tps.searchsorted(tps[-1])
+    # sl = slice(last_ind, None, -1)
+    desc_indx = np.argsor(precision)[::-1]
+
+    # return np.r_[precision[sl], 1], np.r_[recall[sl], 0], thresholds[sl]
+    return precision[desc_indx], recall[desc_indx], thresholds[desc_indx]
 
 
 def roc_curve(y_true, y_score, pos_label=None, sample_weight=None):
