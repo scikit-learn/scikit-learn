@@ -701,7 +701,7 @@ Then the total log loss of the whole set is
 
 .. math::
 
-    L_{\log}(T, Y) = -\log P(T|Y) = - \sum_i \sum_j t_{i,k} \log y_{i,k}
+    L_{\log}(T, Y) = -\log P(T|Y) = - \frac{1}{N} \sum_{i=0}^{N-1} \sum_{k=0}^{K-1} t_{i,k} \log y_{i,k}
 
 The function :func:`log_loss` computes either total or mean log loss
 given a list of ground-truth labels and a probability matrix,
