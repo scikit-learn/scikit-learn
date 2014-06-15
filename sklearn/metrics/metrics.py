@@ -1072,7 +1072,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
 
     normalize : bool, optional (default=True)
         If true, return the mean loss per sample.
-        Otherwise, return the total loss.
+        Otherwise, return the sum of the per-sample losses.
 
     Returns
     -------

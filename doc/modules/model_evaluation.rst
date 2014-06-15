@@ -681,29 +681,35 @@ as well as some variants of expectation-maximization,
 and can be used to evaluate the probability outputs (``predict_proba``)
 of a classifier, rather than its discrete predictions.
 
-For binary classification with a true label :math:`y_t \in \{0,1\}`
-and a probability estimate :math:`y_p = P(y_t = 1)`,
+For binary classification with a true label :math:`y \in \{0,1\}`
+and a probability estimate :math:`p = \operatorname{Pr}(y = 1)`,
 the log loss per sample is the negative log-likelihood
 of the classifier given the true label:
 
 .. math::
 
-    L_{\log}(y_t, y_p) = -\log P(y_t|y_p) = -(y_t \log y_p + (1 - y_t) \log (1 - y_p))
+    L_{\log}(y, p) = -\log \operatorname{Pr}(y|p) = -(y \log p) + (1 - y) \log (1 - p))
 
 This extends to the multiclass case as follows.
 Let the true labels for a set of samples
-be encoded as a 1-of-K binary indicator matrix :math:`T`,
-i.e. :math:`t_{i,k} = 1` if sample :math:`i` has label :math:`k`
+be encoded as a 1-of-K binary indicator matrix :math:`Y`,
+i.e. :math:`y_{i,k} = 1` if sample :math:`i` has label :math:`k`
 taken from a set of :math:`K` labels.
-Let :math:`Y` be a matrix of probability estimates,
-with :math:`y_{i,k} = P(t_{i,k} = 1)`.
-Then the total log loss of the whole set is
+Let :math:`P` be a matrix of probability estimates,
+with :math:`p_{i,k} = \operatorname{Pr}(t_{i,k} = 1)`.
+Then the log loss of the whole set is
 
 .. math::
 
-    L_{\log}(T, Y) = -\log P(T|Y) = - \frac{1}{N} \sum_{i=0}^{N-1} \sum_{k=0}^{K-1} t_{i,k} \log y_{i,k}
+    L_{\log}(Y, P) = -\log \operatorname{Pr}(Y|P) = - \frac{1}{N} \sum_{i=0}^{N-1} \sum_{k=0}^{K-1} y_{i,k} \log p_{i,k}
 
-The function :func:`log_loss` computes either total or mean log loss
+To see how this generalizes the binary log loss given above,
+note that in the binary case,
+:math:`p_{i,0} = 1 - p_{i,1}` and :math:`y_{i,0} = 1 - y_{i,1}`,
+so expanding the inner sum over :math:`y_{i,k} \in \{0,1\}`
+gives the binary log loss.
+
+The function :func:`log_loss` computes log loss
 given a list of ground-truth labels and a probability matrix,
 as returned by an estimator's ``predict_proba`` method.
 
