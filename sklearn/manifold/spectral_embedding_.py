@@ -8,7 +8,7 @@ import warnings
 import numpy as np
 
 from scipy import sparse
-from scipy.sparse.linalg import lobpcg
+from scipy.sparse.linalg import eigsh, lobpcg
 from scipy.sparse.linalg.eigen.lobpcg.lobpcg import symeig
 
 from ..base import BaseEstimator
@@ -17,7 +17,6 @@ from ..utils import check_random_state
 from ..utils.validation import atleast2d_or_csr
 from ..utils.graph import graph_laplacian
 from ..utils.sparsetools import connected_components
-from ..utils.arpack import eigsh
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph
 

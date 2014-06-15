@@ -10,11 +10,10 @@ import numpy as np
 
 from scipy.sparse import dia_matrix
 from scipy.sparse import issparse
+from scipy.sparse.linalg import eigsh, svds
 
 from sklearn.base import BaseEstimator, BiclusterMixin
 from sklearn.externals import six
-from sklearn.utils.arpack import svds
-from sklearn.utils.arpack import eigsh
 from sklearn.cluster import KMeans
 from sklearn.cluster import MiniBatchKMeans
 
@@ -195,9 +194,8 @@ class SpectralCoclustering(BaseSpectral):
         Selects the algorithm for finding singular vectors. May be
         'randomized' or 'arpack'. If 'randomized', use
         :func:`sklearn.utils.extmath.randomized_svd`, which may be faster
-        for large matrices. If 'arpack', use
-        :func:`sklearn.utils.arpack.svds`, which is more accurate, but
-        possibly slower in some cases.
+        for large matrices. If 'arpack', use :func:`scipy.sparse.linalg.svds`,
+        which is more accurate, but possibly slower in some cases.
 
     n_svd_vecs : int, optional, default: None
         Number of vectors to use in calculating the SVD. Corresponds
@@ -323,9 +321,8 @@ class SpectralBiclustering(BaseSpectral):
         Selects the algorithm for finding singular vectors. May be
         'randomized' or 'arpack'. If 'randomized', uses
         `sklearn.utils.extmath.randomized_svd`, which may be faster
-        for large matrices. If 'arpack', uses
-        `sklearn.utils.arpack.svds`, which is more accurate, but
-        possibly slower in some cases.
+        for large matrices. If 'arpack', uses :func:`scipy.sparse.linalg.svds`,
+        which is more accurate, but possibly slower in some cases.
 
     n_svd_vecs : int, optional, default: None
         Number of vectors to use in calculating the SVD. Corresponds
