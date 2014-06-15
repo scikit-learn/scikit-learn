@@ -523,27 +523,6 @@ From text
    grid_search.RandomizedSearchCV
 
 
-.. _hmm_ref:
-
-:mod:`sklearn.hmm`: Hidden Markov Models
-========================================
-
-.. automodule:: sklearn.hmm
-   :no-members:
-   :no-inherited-members:
-
-**User guide:** See the :ref:`hmm` section for further details.
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   hmm.GaussianHMM
-   hmm.MultinomialHMM
-   hmm.GMMHMM
-
 .. _isotonic_ref:
 
 :mod:`sklearn.isotonic`: Isotonic regression
