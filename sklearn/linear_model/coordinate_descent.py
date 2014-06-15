@@ -1098,7 +1098,8 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                                          dtype=np.float64)
                 for this_l1_ratio, this_alphas in zip(l1_ratios, alphas)
                 for train, test in folds)
-        mse_paths = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(jobs)
+        mse_paths = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
+                             backend="threading")(jobs)
         mse_paths = np.reshape(mse_paths, (n_l1_ratio, len(folds), -1))
         mean_mse = np.mean(mse_paths, axis=1)
         self.mse_path_ = np.squeeze(np.rollaxis(mse_paths, 2, 1))
@@ -1512,6 +1513,10 @@ class MultiTaskElasticNet(Lasso):
 
         n_samples, n_features = X.shape
         _, n_tasks = y.shape
+
+        if n_samples != y.shape[0]:
+            raise ValueError("X and y have inconsistent dimensions (%d != %d)"
+                             % (n_samples, y.shape[0]))
 
         X, y, X_mean, y_mean, X_std = center_data(
             X, y, self.fit_intercept, self.normalize, copy=False)
