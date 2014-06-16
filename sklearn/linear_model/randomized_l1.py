@@ -49,7 +49,7 @@ def _resample_model(estimator_func, X, y, scaling=.5, n_resampling=200,
                 verbose=max(0, verbose - 1),
                 **params)
             for _ in range(n_resampling)):
-        scores_ += active_set.astype(np.float)
+        scores_ += active_set
 
     scores_ /= n_resampling
     return scores_
