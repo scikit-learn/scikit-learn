@@ -279,7 +279,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         return self.y_type_ == 'multilabel-indicator'
 
     @property
-    @deprecated("Attribute multilabel_ is deprecated in 0.15 and will be " 
+    @deprecated("Attribute multilabel_ is deprecated in 0.15 and will be "
                 "removed in 0.17. Use 'y_type_.startswith('multilabel')' "
                 "instead")
     def multilabel_(self):
@@ -585,8 +585,6 @@ def _inverse_binarize_thresholding(y, y_type, classes, threshold):
             y.fill(classes[0])
             return y
         else:
-            if sp.issparse(y):
-                y = y.toarray()
             return classes[y.ravel()]
 
     elif y_type == "multilabel-indicator":
