@@ -272,16 +272,16 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         return self.multilabel_
 
     @property
-    @deprecated("Attribute indicator_matrix_ is deprecated and "
-                "will be removed in 0.18. Use 'y_type_ == '"
-                "multilabel-indicator'' instead")
+    @deprecated("Attribute indicator_matrix_ is deprecated in 0.15 and will "
+                "be removed in 0.17. Use 'y_type_ == 'multilabel-indicator'' "
+                "instead")
     def indicator_matrix_(self):
         return self.y_type_ == 'multilabel-indicator'
 
     @property
-    @deprecated("Attribute multilabel_ is deprecated and "
-                "will be removed in 0.18. Use "
-                "'y_type_.startswith('multilabel')' instead")
+    @deprecated("Attribute multilabel_ is deprecated in 0.15 and will be " 
+                "removed in 0.17. Use 'y_type_.startswith('multilabel')' "
+                "instead")
     def multilabel_(self):
         return self.y_type_.startswith('multilabel')
 
@@ -774,17 +774,14 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
 
         if sp.issparse(yt):
             yt = yt.tocsr()
-            if (not len(yt.data) == 0 and not set(np.unique(yt.data))
-                == set([1])):
+            if len(yt.data) != 0 and len(np.setdiff1d(yt.data, [0, 1])) > 0:
                 raise ValueError('Expected only 0s and 1s in label indicator.')
+            return [tuple(self.classes_.take(yt.indices[start:end]))
+                    for start, end in zip(yt.indptr[:-1], yt.indptr[1:])]
         else:
             unexpected = np.setdiff1d(yt, [0, 1])
             if len(unexpected) > 0:
                 raise ValueError('Expected only 0s and 1s in label indicator. '
                                  'Also got {0}'.format(unexpected))
-        if sp.issparse(yt):
-            return [tuple(self.classes_.take(yt.indices[start:end]))
-                    for start, end in zip(yt.indptr[:-1], yt.indptr[1:])]
-        else:
             return [tuple(self.classes_.compress(indicators)) for indicators
                     in yt]
