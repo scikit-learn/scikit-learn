@@ -49,7 +49,8 @@ def test_label_binarizer():
     got = lb.fit_transform(inp)
     with warnings.catch_warnings(record=True) as w:
         assert_false(lb.multilabel_)
-        assert_array_equal(w[0].category, DeprecationWarning)
+        if w:
+            assert_array_equal(w[0].category, DeprecationWarning)
     assert_array_equal(lb.classes_, ["pos"])
     assert_array_equal(expected, got)
     assert_array_equal(lb.inverse_transform(got), inp)
@@ -60,7 +61,8 @@ def test_label_binarizer():
     got = lb.fit_transform(inp)
     with warnings.catch_warnings(record=True) as w:
         assert_false(lb.multilabel_)
-        assert_array_equal(w[0].category, DeprecationWarning)
+        if w:
+            assert_array_equal(w[0].category, DeprecationWarning)
     assert_array_equal(lb.classes_, ["neg", "pos"])
     assert_array_equal(expected, got)
     assert_array_equal(lb.inverse_transform(got), inp)
@@ -76,7 +78,8 @@ def test_label_binarizer():
     assert_array_equal(lb.classes_, ['0', 'eggs', 'ham', 'spam'])
     with warnings.catch_warnings(record=True) as w:
         assert_false(lb.multilabel_)
-        assert_array_equal(w[0].category, DeprecationWarning)
+        if w:
+            assert_array_equal(w[0].category, DeprecationWarning)
     assert_array_equal(expected, got)
     assert_array_equal(lb.inverse_transform(got), inp)
 
@@ -100,12 +103,14 @@ def test_label_binarizer_column_y():
     assert_array_equal(out_1, multilabel_indicator)
     with warnings.catch_warnings(record=True) as w:
         assert_true(lb_1.multilabel_)
-        assert_array_equal(w[0].category, DeprecationWarning)
+        if w:
+            assert_array_equal(w[0].category, DeprecationWarning)
 
     assert_array_equal(out_2, binaryclass_array)
     with warnings.catch_warnings(record=True) as w:
         assert_false(lb_2.multilabel_)
-        assert_array_equal(w[0].category, DeprecationWarning)
+        if w:
+            assert_array_equal(w[0].category, DeprecationWarning)
 
     # second for multiclass classification vs multi-label with multiple
     # classes
@@ -124,12 +129,14 @@ def test_label_binarizer_column_y():
     assert_array_equal(out_1, out_2)
     with warnings.catch_warnings(record=True) as w:
         assert_true(lb_1.multilabel_)
-        assert_array_equal(w[0].category, DeprecationWarning)
+        if w:
+            assert_array_equal(w[0].category, DeprecationWarning)
 
     assert_array_equal(out_2, indicator)
     with warnings.catch_warnings(record=True) as w:
         assert_false(lb_2.multilabel_)
-        assert_array_equal(w[0].category, DeprecationWarning)
+        if w:
+            assert_array_equal(w[0].category, DeprecationWarning)
 
 
 def test_label_binarizer_set_label_encoding():
@@ -141,7 +148,8 @@ def test_label_binarizer_set_label_encoding():
     got = lb.fit_transform(inp)
     with warnings.catch_warnings(record=True) as w:
         assert_false(lb.multilabel_)
-        assert_array_equal(w[0].category, DeprecationWarning)
+        if w:
+            assert_array_equal(w[0].category, DeprecationWarning)
     assert_array_equal(expected, got)
     assert_array_equal(lb.inverse_transform(got), inp)
 
@@ -157,7 +165,8 @@ def test_label_binarizer_set_label_encoding():
     got = lb.fit_transform(inp)
     with warnings.catch_warnings(record=True) as w:
         assert_false(lb.multilabel_)
-        assert_array_equal(w[0].category, DeprecationWarning)
+        if w:
+            assert_array_equal(w[0].category, DeprecationWarning)
     assert_array_equal(expected, got)
     assert_array_equal(lb.inverse_transform(got), inp)
 
@@ -173,7 +182,8 @@ def test_label_binarizer_multilabel():
     got = assert_warns(DeprecationWarning, lb.fit_transform, inp)
     with warnings.catch_warnings(record=True) as w:
         assert_true(lb.multilabel_)
-        assert_array_equal(w[0].category, DeprecationWarning)
+        if w:
+            assert_array_equal(w[0].category, DeprecationWarning)
     assert_array_equal(indicator_mat, got)
     assert_equal(lb.inverse_transform(got), inp)
 
@@ -192,7 +202,8 @@ def test_label_binarizer_multilabel():
     got = assert_warns(DeprecationWarning, lb.fit_transform, inp)
     with warnings.catch_warnings(record=True) as w:
         assert_true(lb.multilabel_)
-        assert_array_equal(w[0].category, DeprecationWarning)
+        if w:
+            assert_array_equal(w[0].category, DeprecationWarning)
     assert_array_equal(expected, got)
     assert_equal([set(x) for x in lb.inverse_transform(got)],
                  [set(x) for x in inp])
