@@ -52,7 +52,7 @@ def l1_cross_distances(X):
         ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
         D[ll_0:ll_1] = np.abs(X[k] - X[(k + 1):n_samples])
 
-    return D, ij.astype(np.int)
+    return D, ij
 
 
 class GaussianProcess(BaseEstimator, RegressorMixin):

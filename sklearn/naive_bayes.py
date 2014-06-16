@@ -298,7 +298,6 @@ class BaseDiscreteNB(BaseNB):
             Returns self.
         """
         X, y = check_arrays(X, y, sparse_format='csr')
-        X = X.astype(np.float)
         y = column_or_1d(y, warn=True)
         _, n_features = X.shape
 
@@ -308,7 +307,8 @@ class BaseDiscreteNB(BaseNB):
         if Y.shape[1] == 1:
             Y = np.concatenate((1 - Y, Y), axis=1)
 
-        # convert to float to support sample weight consistently
+        # convert to float to support sample weight consistently;
+        # this means we also don't have to cast X to floating point
         Y = Y.astype(np.float64)
         if sample_weight is not None:
             Y *= array2d(sample_weight).T

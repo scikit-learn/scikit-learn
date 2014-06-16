@@ -1703,7 +1703,7 @@ cdef class BinaryTree:
 
         # prepare r for query
         r = np.asarray(r, dtype=DTYPE, order='C')
-        r = np.atleast_1d(r).astype(DTYPE)
+        r = np.atleast_1d(r)
         if r.ndim != 1:
             raise ValueError("r must be a 1-dimensional array")
         i_rsort = np.argsort(r)
