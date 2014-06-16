@@ -48,7 +48,7 @@ def test_label_binarizer():
     expected = np.array([[0, 0, 0, 0]]).T
     got = lb.fit_transform(inp)
     with warnings.catch_warnings(record=True) as w:
-        assert_false(lb.multilabel_)
+        assert_false(lb.multilabel)
         if w:
             assert_array_equal(w[0].category, DeprecationWarning)
     assert_array_equal(lb.classes_, ["pos"])
@@ -102,6 +102,7 @@ def test_label_binarizer_column_y():
 
     assert_array_equal(out_1, multilabel_indicator)
     assert_true(lb_1.multilabel_)
+    assert_false(lb_1.indicator_matrix_)
 
     assert_array_equal(out_2, binaryclass_array)
     assert_false(lb_2.multilabel_)
@@ -324,6 +325,7 @@ def test_label_binarize_with_multilabel_indicator():
     lb = LabelBinarizer(pos_label=pos_label, neg_label=neg_label)
     output = lb.fit_transform(y)
     assert_array_equal(output, expected)
+    assert_true(lb.indicator_matrix_)
 
     output = lb.fit(y).transform(y)
     assert_array_equal(output, expected)
@@ -362,6 +364,11 @@ def test_sparse_output_mutlilabel_binarizer():
             assert_array_equal(indicator_mat, got)
             assert_array_equal([1, 2, 3], mlb.classes_)
             assert_equal(mlb.inverse_transform(got), inverse)
+
+    assert_raises(ValueError, mlb.inverse_transform,
+                  csr_matrix(np.array([[0, 1, 1],
+                                       [2, 0, 0],
+                                       [1, 1, 0]])))
 
 
 def test_mutlilabel_binarizer():
