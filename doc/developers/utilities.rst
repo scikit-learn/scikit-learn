@@ -190,28 +190,6 @@ Backports
   :mod:`sklearn.feature_extraction`.
 
 
-ARPACK
-------
-
-- :func:`arpack.eigs`
-  (backported from ``scipy.sparse.linalg.eigs`` in scipy 0.10)
-  Sparse non-symmetric eigenvalue decomposition using the Arnoldi
-  method.  A limited version of ``eigs`` is available in earlier
-  scipy versions.
-
-- :func:`arpack.eigsh`
-  (backported from ``scipy.sparse.linalg.eigsh`` in scipy 0.10)
-  Sparse non-symmetric eigenvalue decomposition using the Arnoldi
-  method.  A limited version of ``eigsh`` is available in earlier
-  scipy versions.
-
-- :func:`arpack.svds`
-  (backported from ``scipy.sparse.linalg.svds`` in scipy 0.10)
-  Sparse non-symmetric eigenvalue decomposition using the Arnoldi
-  method.  A limited version of ``svds`` is available in earlier
-  scipy versions.
-
-
 Benchmarking
 ------------
 

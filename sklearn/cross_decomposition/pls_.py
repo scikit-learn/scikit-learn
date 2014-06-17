@@ -5,15 +5,16 @@ The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 # Author: Edouard Duchesnay <edouard.duchesnay@cea.fr>
 # License: BSD 3 clause
 
+from abc import ABCMeta, abstractmethod
+import warnings
+
+import numpy as np
+from scipy import linalg
+from scipy.sparse.linalg import svds
+
 from ..base import BaseEstimator, RegressorMixin, TransformerMixin
 from ..utils import check_arrays
 from ..externals import six
-
-import warnings
-from abc import ABCMeta, abstractmethod
-import numpy as np
-from scipy import linalg
-from ..utils import arpack
 
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
 
@@ -757,7 +758,7 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         if self.n_components == C.shape[1]:
             U, s, V = linalg.svd(C, full_matrices=False)
         else:
-            U, s, V = arpack.svds(C, k=self.n_components)
+            U, s, V = svds(C, k=self.n_components)
         V = V.T
         self.x_scores_ = np.dot(X, U)
         self.y_scores_ = np.dot(Y, V)

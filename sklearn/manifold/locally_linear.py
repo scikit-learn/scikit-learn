@@ -7,9 +7,10 @@
 import numpy as np
 from scipy.linalg import eigh, svd, qr, solve
 from scipy.sparse import eye, csr_matrix
+from scipy.sparse.linalg import eigsh
+
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import array2d, check_random_state, check_arrays
-from ..utils.arpack import eigsh
 from ..neighbors import NearestNeighbors
 
 
