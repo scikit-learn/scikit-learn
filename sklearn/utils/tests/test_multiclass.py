@@ -1,5 +1,6 @@
 import numpy as np
 from itertools import product
+from functools import partial
 from sklearn.externals.six.moves import xrange
 from sklearn.externals.six import iteritems
 
@@ -8,6 +9,8 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.multiclass import is_label_indicator_matrix
@@ -132,10 +135,15 @@ def test_unique_labels():
     assert_array_equal(unique_labels([4, 0, 2]), np.array([0, 2, 4]))
 
     # Multilabels
-    assert_array_equal(unique_labels([(0, 1, 2), (0,), tuple(), (2, 1)]),
+    assert_array_equal(assert_warns(DeprecationWarning,
+                                    unique_labels,
+                                    [(0, 1, 2), (0,), tuple(), (2, 1)]),
                        np.arange(3))
-    assert_array_equal(unique_labels([[0, 1, 2], [0], list(), [2, 1]]),
+    assert_array_equal(assert_warns(DeprecationWarning,
+                                    unique_labels,
+                                    [[0, 1, 2], [0], list(), [2, 1]]),
                        np.arange(3))
+
     assert_array_equal(unique_labels(np.array([[0, 0, 1],
                                                [1, 0, 1],
                                                [0, 0, 0]])),
@@ -160,8 +168,15 @@ def test_unique_labels():
     # Some tests with strings input
     assert_array_equal(unique_labels(["a", "b", "c"], ["d"]),
                        ["a", "b", "c", "d"])
-    assert_array_equal(unique_labels([["a", "b"], ["c"]], [["d"]]),
+
+    assert_array_equal(assert_warns(DeprecationWarning, unique_labels,
+                                    [["a", "b"], ["c"]], [["d"]]),
                        ["a", "b", "c", "d"])
+
+
+@ignore_warnings
+def test_unique_labels_non_specific():
+    """Test unique_labels with a variety of collected examples"""
 
     # Smoke test for all supported format
     for format in ["binary", "multiclass", "multilabel-sequences",
@@ -178,6 +193,9 @@ def test_unique_labels():
         for example in EXAMPLES[y_type]:
             assert_raises(ValueError, unique_labels, example)
 
+
+@ignore_warnings
+def test_unique_labels_mixed_types():
     #Mix of multilabel-indicator and multilabel-sequences
     mix_multilabel_format = product(EXAMPLES["multilabel-indicator"],
                                     EXAMPLES["multilabel-sequences"])
@@ -207,6 +225,7 @@ def test_unique_labels():
                        ["0", "2"])
 
 
+@ignore_warnings
 def test_is_multilabel():
     for group, group_examples in iteritems(EXAMPLES):
         if group.startswith('multilabel'):
@@ -234,14 +253,18 @@ def test_is_sequence_of_sequences():
     for group, group_examples in iteritems(EXAMPLES):
         if group == 'multilabel-sequences':
             assert_, exp = assert_true, 'True'
+            check = partial(assert_warns, DeprecationWarning,
+                            is_sequence_of_sequences)
         else:
             assert_, exp = assert_false, 'False'
+            check = is_sequence_of_sequences
         for example in group_examples:
-            assert_(is_sequence_of_sequences(example),
+            assert_(check(example),
                     msg='is_sequence_of_sequences(%r) should be %s'
                     % (example, exp))
 
 
+@ignore_warnings
 def test_type_of_target():
     for group, group_examples in iteritems(EXAMPLES):
         for example in group_examples:

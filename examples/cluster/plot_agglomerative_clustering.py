@@ -74,4 +74,3 @@ for connectivity in (None, knn_graph):
 
 
 plt.show()
-

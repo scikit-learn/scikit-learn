@@ -17,7 +17,7 @@ details of the training data and learn from the noise, i.e. they overfit.
 print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeRegressor
 
 # Create a random dataset
@@ -41,15 +41,15 @@ y_2 = clf_2.predict(X_test)
 y_3 = clf_3.predict(X_test)
 
 # Plot the results
-pl.figure()
-pl.scatter(y[:, 0], y[:, 1], c="k", label="data")
-pl.scatter(y_1[:, 0], y_1[:, 1], c="g", label="max_depth=2")
-pl.scatter(y_2[:, 0], y_2[:, 1], c="r", label="max_depth=5")
-pl.scatter(y_3[:, 0], y_3[:, 1], c="b", label="max_depth=8")
-pl.xlim([-6, 6])
-pl.ylim([-6, 6])
-pl.xlabel("data")
-pl.ylabel("target")
-pl.title("Multi-output Decision Tree Regression")
-pl.legend()
-pl.show()
+plt.figure()
+plt.scatter(y[:, 0], y[:, 1], c="k", label="data")
+plt.scatter(y_1[:, 0], y_1[:, 1], c="g", label="max_depth=2")
+plt.scatter(y_2[:, 0], y_2[:, 1], c="r", label="max_depth=5")
+plt.scatter(y_3[:, 0], y_3[:, 1], c="b", label="max_depth=8")
+plt.xlim([-6, 6])
+plt.ylim([-6, 6])
+plt.xlabel("data")
+plt.ylabel("target")
+plt.title("Multi-output Decision Tree Regression")
+plt.legend()
+plt.show()

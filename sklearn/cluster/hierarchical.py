@@ -544,7 +544,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         path to the caching directory.
 
     n_components : int (optional)
-        The number of connected components in the graph defined by the \
+        The number of connected components in the graph defined by the
         connectivity matrix. If not set, it is estimated.
 
     compute_full_tree : bool or 'auto' (optional)
@@ -559,19 +559,20 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         Which linkage criterion to use. The linkage criterion determines which
         distance to use between sets of observation. The algorithm will merge
         the pairs of cluster that minimize this criterion.
-            - ward minimizes the variance of the clusters being merged.
-            - average uses the average of the distances of each observation of
-              the two sets.
-            - complete or maximum linkage uses the maximum distances between
-              all observations of the two sets.
+
+        - ward minimizes the variance of the clusters being merged.
+        - average uses the average of the distances of each observation of
+          the two sets.
+        - complete or maximum linkage uses the maximum distances between
+          all observations of the two sets.
+
+    pooling_func : callable, default=np.mean
+        This combines the values of agglomerated features into a single
+        value, and should accept an array of shape [M, N] and the keyword
+        argument `axis=1`, and reduce it to an array of size [M].
 
     Attributes
     ----------
-    `children_` : array-like, shape = [n_nodes, 2]
-        The children of each non-leaf node. Values less than `n_samples` refer
-        to leaves of the tree. A greater value `i` indicates a node with
-        children `children_[i - n_samples]`.
-
     `labels_` : array [n_samples]
         cluster labels for each point
 
@@ -580,12 +581,18 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
 
     `n_components_` : int
         The estimated number of connected components in the graph.
+
+    `children_` : array-like, shape = [n_nodes, 2]
+        The children of each non-leaf node. Values less than `n_samples`
+        refer to leaves of the tree. A greater value `i` indicates a node with
+        children `children_[i - n_samples]`.
     """
 
     def __init__(self, n_clusters=2, affinity="euclidean",
                  memory=Memory(cachedir=None, verbose=0),
                  connectivity=None, n_components=None,
-                 compute_full_tree='auto', linkage='ward'):
+                 compute_full_tree='auto', linkage='ward',
+                 pooling_func=np.mean):
         self.n_clusters = n_clusters
         self.memory = memory
         self.n_components = n_components
@@ -593,6 +600,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         self.compute_full_tree = compute_full_tree
         self.linkage = linkage
         self.affinity = affinity
+        self.pooling_func = pooling_func
 
     def fit(self, X):
         """Fit the hierarchical clustering on the data
@@ -711,7 +719,7 @@ class Ward(AgglomerativeClustering):
         path to the caching directory.
 
     n_components : int (optional)
-        The number of connected components in the graph defined by the \
+        The number of connected components in the graph defined by the
         connectivity matrix. If not set, it is estimated.
 
     compute_full_tree : bool or 'auto' (optional)
@@ -725,11 +733,6 @@ class Ward(AgglomerativeClustering):
 
     Attributes
     ----------
-    `children_` : array-like, shape = [n_nodes, 2]
-        The children of each non-leaf node. Values less than `n_samples` refer
-        to leaves of the tree. A greater value `i` indicates a node with
-        children `children_[i - n_samples]`.
-
     `labels_` : array [n_features]
         cluster labels for each feature
 
@@ -739,6 +742,12 @@ class Ward(AgglomerativeClustering):
     `n_components_` : int
         The estimated number of connected components in the graph.
 
+    `children_` : array-like, shape = [n_nodes, 2]
+        The children of each non-leaf node. Values less than `n_samples`
+        refer to leaves of the tree. A greater value `i` indicates a node with
+        children `children_[i - n_samples]`.
+
+
     See also
     --------
     AgglomerativeClustering : agglomerative hierarchical clustering
@@ -747,7 +756,7 @@ class Ward(AgglomerativeClustering):
 
     def __init__(self, n_clusters=2, memory=Memory(cachedir=None, verbose=0),
                  connectivity=None, copy=None, n_components=None,
-                 compute_full_tree='auto'):
+                 compute_full_tree='auto', pooling_func=np.mean):
 
         warnings.warn("The Ward class is deprecated since 0.14 and will be "
                       "removed in 0.17. Use the AgglomerativeClustering "
@@ -765,6 +774,7 @@ class Ward(AgglomerativeClustering):
         self.connectivity = connectivity
         self.compute_full_tree = compute_full_tree
         self.affinity = "euclidean"
+        self.pooling_func = pooling_func
 
 
 class WardAgglomeration(AgglomerationTransform, Ward):

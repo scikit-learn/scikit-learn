@@ -265,9 +265,12 @@ def check_dispatch_multiprocessing(backend):
 
     # Only 3 tasks are dispatched out of 6. The 4th task is dispatched only
     # after any of the first 3 jobs have completed.
-    nose.tools.assert_equal(list(queue)[:4],
-            ['Produced 0', 'Produced 1', 'Produced 2',
-             'Consumed any', ])
+    first_four = list(queue)[:4]
+    # The the first consumption event can sometimes happen before the end of
+    # the dispatching, hence, pop it before introspecting the "Produced" events
+    first_four.remove('Consumed any')
+    nose.tools.assert_equal(first_four,
+                            ['Produced 0', 'Produced 1', 'Produced 2'])
     nose.tools.assert_equal(len(queue), 12)
 
 

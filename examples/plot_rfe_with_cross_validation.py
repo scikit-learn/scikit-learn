@@ -29,9 +29,9 @@ rfecv.fit(X, y)
 print("Optimal number of features : %d" % rfecv.n_features_)
 
 # Plot number of features VS. cross-validation scores
-import pylab as pl
-pl.figure()
-pl.xlabel("Number of features selected")
-pl.ylabel("Cross validation score (nb of correct classifications)")
-pl.plot(range(1, len(rfecv.grid_scores_) + 1), rfecv.grid_scores_)
-pl.show()
+import matplotlib.pyplot as plt
+plt.figure()
+plt.xlabel("Number of features selected")
+plt.ylabel("Cross validation score (nb of correct classifications)")
+plt.plot(range(1, len(rfecv.grid_scores_) + 1), rfecv.grid_scores_)
+plt.show()

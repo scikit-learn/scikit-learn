@@ -447,7 +447,7 @@ Ferenc Huszar - Senior Data Scientist at Peerindex
 
 
 `DataRobot <http://www.datarobot.com>`_
-------------------------------------
+----------------------------------------
 
 .. raw:: html
 
@@ -498,6 +498,71 @@ really thorough, as well, which makes the library quite easy to use.
    <span class="testimonial-author">
 
 David Koh - Senior Data Scientist at OkCupid
+
+.. raw:: html
+
+   </span>
+   
+
+`Lovely <https://www.livelovely.com/>`_
+-----------------------------------------
+
+.. raw:: html
+
+    <div class="logo">
+
+.. image:: images/lovely.png
+    :target: https://www.livelovely.com
+
+.. raw:: html
+
+    </div>
+
+At Lovely, we strive to deliver the best apartment marketplace, with respect to
+our users and our listings. From understanding user behavior, improving data
+quality, and detecting fraud, scikit-learn is a regular tool for gathering
+insights, predictive modeling and improving our product. The easy-to-read
+documentation and intuitive architecture of the API makes machine learning both
+explorable and accessible to a wide range of python developers. I'm constantly
+recommending that more developers and scientists try scikit-learn.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Simon Frid - Data Scientist, Lead at Lovely
+
+.. raw:: html
+
+   </span>
+
+
+
+`Data Publica <http://www.data-publica.com/>`_
+----------------------------------------------
+
+.. raw:: html
+
+    <div class="logo">
+
+.. image:: images/datapublica.png
+    :target: http://www.data-publica.com/
+
+.. raw:: html
+
+    </div>
+
+Data Publica builds a new predictive sales tool for commercial and marketing teams called C-Radar.
+We extensively use scikit-learn to build segmentations of customers through clustering, and to predict future customers based on past partnerships success or failure.
+We also categorize companies using their website communication thanks to scikit-learn and its machine learning algorithm implementations.
+Eventually, machine learning makes it possible to detect weak signals that traditional tools cannot see.
+All these complex tasks are performed in an easy and straightforward way thanks to the great quality of the scikit-learn framework.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Guillaume Lebourgeois & Samuel Charron - Data Scientists at Data Publica
 
 .. raw:: html
 

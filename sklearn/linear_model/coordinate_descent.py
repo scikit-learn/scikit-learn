@@ -157,11 +157,11 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     fit_intercept : bool
         Fit or not an intercept.
-        WARNING : will be deprecated in 0.16
+        WARNING : deprecated, will be removed in 0.16.
 
     normalize : boolean, optional, default False
         If ``True``, the regressors X will be normalized before regression.
-        WARNING : will be deprecated in 0.16
+        WARNING : deprecated, will be removed in 0.16.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -325,11 +325,11 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     fit_intercept : bool
         Fit or not an intercept.
-        WARNING : will be deprecated in 0.16
+        WARNING : deprecated, will be removed in 0.16.
 
     normalize : boolean, optional, default False
         If ``True``, the regressors X will be normalized before regression.
-        WARNING : will be deprecated in 0.16
+        WARNING : deprecated, will be removed in 0.16.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -467,12 +467,19 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 coef_, l1_reg, l2_reg, X.data, X.indices,
                 X.indptr, y, X_sparse_scaling,
                 max_iter, tol, positive)
-        elif not multi_output:
+        elif multi_output:
+            model = cd_fast.enet_coordinate_descent_multi_task(
+                coef_, l1_reg, l2_reg, X, y, max_iter, tol)
+        elif isinstance(precompute, np.ndarray):
+            model = cd_fast.enet_coordinate_descent_gram(
+                coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
+                tol, positive)
+        elif precompute is False:
             model = cd_fast.enet_coordinate_descent(
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol, positive)
         else:
-            model = cd_fast.enet_coordinate_descent_multi_task(
-                coef_, l1_reg, l2_reg, X, y, max_iter, tol)
+            raise ValueError("Precompute should be one of True, False, "
+                            "'auto' or array-like")
         coef_, dual_gap_, eps_ = model
         coefs[..., i] = coef_
         dual_gaps[i] = dual_gap_
@@ -573,7 +580,7 @@ class ElasticNet(LinearModel, RegressorMixin):
     max_iter : int, optional
         The maximum number of iterations
 
-    copy_X : boolean, optional, default False
+    copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
 
     tol: float, optional
@@ -889,7 +896,13 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
     y_test = y[test]
     fit_intercept = path_params['fit_intercept']
     normalize = path_params['normalize']
-    precompute = path_params['precompute']
+
+    if y.ndim == 1:
+        precompute = path_params['precompute']
+    else:
+        # No Gram variant of multi-task exists right now.
+        # Fall back to default enet_multitask
+        precompute = False
 
     X_train, y_train, X_mean, y_mean, X_std, precompute, Xy = \
         _pre_fit(X_train, y_train, None, precompute, normalize, fit_intercept,
@@ -911,8 +924,8 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
     # Do the ordering and type casting here, as if it is done in the path,
     # X is copied and a reference is kept here
     X_train = atleast2d_or_csc(X_train, dtype=dtype, order=X_order)
-    alphas, coefs, _ = path(X_train, y[train], **path_params)
-    del X_train
+    alphas, coefs, _ = path(X_train, y_train, **path_params)
+    del X_train, y_train
 
     if y.ndim == 1:
         # Doing this so that it becomes coherent with multioutput.
@@ -1085,7 +1098,8 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                                          dtype=np.float64)
                 for this_l1_ratio, this_alphas in zip(l1_ratios, alphas)
                 for train, test in folds)
-        mse_paths = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(jobs)
+        mse_paths = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
+                             backend="threading")(jobs)
         mse_paths = np.reshape(mse_paths, (n_l1_ratio, len(folds), -1))
         mean_mse = np.mean(mse_paths, axis=1)
         self.mse_path_ = np.squeeze(np.rollaxis(mse_paths, 2, 1))
@@ -1286,7 +1300,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         all the CPUs. Note that this is used only if multiple values for
         l1_ratio are given.
 
-    positive: bool, optional
+    positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
     Attributes
@@ -1470,9 +1484,9 @@ class MultiTaskElasticNet(Lasso):
 
         Parameters
         -----------
-        X: ndarray, shape = (n_samples, n_features)
+        X : ndarray, shape = (n_samples, n_features)
             Data
-        y: ndarray, shape = (n_samples, n_tasks)
+        y : ndarray, shape = (n_samples, n_tasks)
             Target
 
         Notes
@@ -1499,6 +1513,10 @@ class MultiTaskElasticNet(Lasso):
 
         n_samples, n_features = X.shape
         _, n_tasks = y.shape
+
+        if n_samples != y.shape[0]:
+            raise ValueError("X and y have inconsistent dimensions (%d != %d)"
+                             % (n_samples, y.shape[0]))
 
         X, y, X_mean, y_mean, X_std = center_data(
             X, y, self.fit_intercept, self.normalize, copy=False)
@@ -1638,11 +1656,6 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         List of alphas where to compute the models.
         If not provided, set automatically.
 
-    precompute : True | False | 'auto' | array-like
-        Whether to use a precomputed Gram matrix to speed up
-        calculations. If set to ``'auto'`` let us decide. The Gram
-        matrix can also be passed as argument.
-
     n_alphas : int, optional
         Number of alphas along the regularization path
 
@@ -1716,8 +1729,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     ... #doctest: +NORMALIZE_WHITESPACE
     MultiTaskElasticNetCV(alphas=None, copy_X=True, cv=None, eps=0.001,
            fit_intercept=True, l1_ratio=0.5, max_iter=1000, n_alphas=100,
-           n_jobs=1, normalize=False, precompute='auto', tol=0.0001,
-           verbose=0)
+           n_jobs=1, normalize=False, tol=0.0001, verbose=0)
     >>> print(clf.coef_)
     [[ 0.52875032  0.46958558]
      [ 0.52875032  0.46958558]]
@@ -1740,7 +1752,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     path = staticmethod(enet_path)
 
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
-                 fit_intercept=True, normalize=False, precompute='auto',
+                 fit_intercept=True, normalize=False,
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
                  verbose=0, n_jobs=1):
         self.l1_ratio = l1_ratio
@@ -1749,7 +1761,6 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
         self.normalize = normalize
-        self.precompute = precompute
         self.max_iter = max_iter
         self.tol = tol
         self.cv = cv
@@ -1780,11 +1791,6 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
     alphas : array-like, optional
         List of alphas where to compute the models.
         If not provided, set automaticlly.
-
-    precompute : True | False | 'auto' | array-like
-        Whether to use a precomputed Gram matrix to speed up
-        calculations. If set to ``'auto'`` let us decide. The Gram
-        matrix can also be passed as argument.
 
     n_alphas : int, optional
         Number of alphas along the regularization path
@@ -1856,10 +1862,10 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
     path = staticmethod(lasso_path)
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
-                 normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
-                 copy_X=True, cv=None, verbose=False, n_jobs=1):
+                 normalize=False, max_iter=1000, tol=1e-4, copy_X=True,
+                 cv=None, verbose=False, n_jobs=1):
         super(MultiTaskLassoCV, self).__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
             fit_intercept=fit_intercept, normalize=normalize,
-            precompute=precompute, max_iter=max_iter, tol=tol, copy_X=copy_X,
+            max_iter=max_iter, tol=tol, copy_X=copy_X,
             cv=cv, verbose=verbose, n_jobs=n_jobs)

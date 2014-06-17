@@ -214,6 +214,12 @@ def check_arrays(*arrays, **options):
 
     allow_nans : boolean, False by default
         Allows nans in the arrays
+<<<<<<< HEAD
+=======
+
+    allow_nd : boolean, False by default
+        Allows arrays of more than 2 dimensions.
+>>>>>>> upstream/master
     """
     sparse_format = options.pop('sparse_format', None)
     if sparse_format not in (None, 'csr', 'csc', 'dense'):
@@ -223,6 +229,10 @@ def check_arrays(*arrays, **options):
     dtype = options.pop('dtype', None)
     allow_lists = options.pop('allow_lists', False)
     allow_nans = options.pop('allow_nans', False)
+<<<<<<< HEAD
+=======
+    allow_nd = options.pop('allow_nd', False)
+>>>>>>> upstream/master
 
     if options:
         raise TypeError("Unexpected keyword arguments: %r" % options.keys())
@@ -269,7 +279,7 @@ def check_arrays(*arrays, **options):
                 if not allow_nans:
                     _assert_all_finite(array)
 
-            if array.ndim >= 3:
+            if not allow_nd and array.ndim >= 3:
                 raise ValueError("Found array with dim %d. Expected <= 2" %
                                  array.ndim)
 

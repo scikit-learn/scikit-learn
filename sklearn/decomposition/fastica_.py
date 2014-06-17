@@ -196,8 +196,8 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         If True, X_mean is returned too.
 
     compute_sources : bool, optional
-        If False, sources are not computes but only the rotation matrix. This
-        can save memory when working with big data. Defaults to True.
+        If False, sources are not computed, but only the rotation matrix.
+        This can save memory when working with big data. Defaults to True.
 
     Returns
     -------
@@ -393,9 +393,9 @@ class FastICA(BaseEstimator, TransformerMixin):
         The mixing matrix.
 
     `sources_` : 2D array, shape (n_samples, n_components)
-        The estimated latent sources of the data. This attribute is deprecated
-        and will be removed in 0.16. Use `fit_transform` instead and store
-        the result.
+        The estimated latent sources of the data. This attribute is
+        deprecated and will be removed in 0.16. Use `fit_transform` instead and
+        store the result.
 
     Notes
     -----

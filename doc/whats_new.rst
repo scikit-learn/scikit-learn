@@ -7,6 +7,10 @@
 
 Changelog
 ---------
+   - The ``img_to_graph`` and ``grid_tograph`` functions in
+     :mod:`sklearn.feature_extraction.image` now return ``np.ndarray``
+     instead of ``np.matrix`` when ``return_as=np.ndarray``.  See the
+     Notes section for more information on compatibility.
 
    - The :ref:`Working With Text Data <text_data_tutorial>` tutorial
      has now been worked in to the main documentation's tutorial section.
@@ -20,6 +24,10 @@ Changelog
      :class:`ensemble.BaggingRegressor` meta-estimators for ensembling
      any kind of base estimator. See the :ref:`Bagging <bagging>` section of
      the user guide for details and examples. By `Gilles Louppe`_.
+
+   - Add sparse input support to :class:`ensemble.AdaBoostClassifier` and
+     :class:`ensemble.AdaBoostRegressor` meta-estimators.
+     By `Hamzeh Alsalhi`_.
 
    - Memory improvements of decision trees, by `Arnaud Joly`_.
 
@@ -145,11 +153,16 @@ Changelog
 
    - Added :func:`learning_curve <learning_curve.learning_curve>` utility to
      chart performance with respect to training size. See
-     :ref:`example_plot_learning_curve.py`. By `Alexander Fabisch`_.
+     :ref:`example_plot_learning_curve.py`. By Alexander Fabisch.
 
    - Add positive option in :class:`LassoCV <linear_model.LassoCV>` and
      :class:`ElasticNetCV <linear_model.ElasticNetCV>`.
      By Brian Wignall and `Alexandre Gramfort`_.
+
+   - Fixed a bug in :class:`LassoCV <linear_model.LassoCV>` and
+     :class:`ElasticNetCV <linear_model.ElasticNetCV>`: they would not
+     pre-compute the Gram matrix with ``precompute=True`` or
+     ``precompute="auto"`` and ``n_samples > n_features``. By `Manoj Kumar`_.
 
    - Fixed a race condition in parallel processing with
      ``pre_dispatch != "all"`` (for instance in ``cross_val_score``).
@@ -164,7 +177,7 @@ Changelog
 
    - Fixed incorrect estimation of the degrees of freedom in
      :func:`feature_selection.f_regression` when variates are not centered.
-     By `VirgileFritsch`_.
+     By `Virgile Fritsch`_.
 
    - Significant performance improvements (more than 100x speedup for
      large problems) in :class:`isotonic.IsotonicRegression` by
@@ -187,6 +200,32 @@ Changelog
      <preprocessing.Imputer>` can be trained within the cross validation loop,
      avoiding potentially skewed results.
 
+<<<<<<< HEAD
+=======
+   - Ridge regression can now deal with sample weights in feature space
+     (only sample space until then). By `Michael Eickenberg`_.
+     Both solutions are provided by the Cholesky solver.
+
+   - Several classification and regression metrics now support weighted
+     samples with the new ``sample_weight`` argument:
+     :func:`metrics.accuracy_score`,
+     :func:`metrics.zero_one_loss`,
+     :func:`metrics.precision_score`,
+     :func:`metrics.average_precision_score`,
+     :func:`metrics.f1_score`,
+     :func:`metrics.fbeta_score`,
+     :func:`metrics.recall_score`,
+     :func:`metrics.roc_auc_score`,
+     :func:`metrics.explained_variance_score`,
+     :func:`metrics.mean_squared_error`,
+     :func:`metrics.mean_absolute_error`,
+     :func:`metrics.r2_score`.
+     By `Noel Dawe`_.
+
+   - Shuffle option for :class:`cross_validation.StratifiedKFold`.
+     By `Jeffrey Blackburne`_.
+
+>>>>>>> upstream/master
 
 API changes summary
 -------------------
@@ -203,6 +242,12 @@ API changes summary
 
    - :class:`cluster.WardClustering` is deprecated. Use
    - :class:`cluster.AgglomerativeClustering` instead.
+
+   - Direct support for the sequence of sequences (or list of lists) multilabel
+     format is deprecated. To convert to and from the supported binary
+     indicator matrix format, use
+     :class:`MultiLabelBinarizer <preprocessing.MultiLabelBinarizer>`.
+     By `Joel Nothman`_.
 
    - Add score method to :class:`PCA <decomposition.PCA>` following the model of
      probabilistic PCA and deprecate
@@ -230,7 +275,7 @@ API changes summary
 
    - Fit alphas for each l1_ratio instead of mean_l1_ratio in
      :class: `linear_model.ElasticNetCV` and :class: `linear_model.LassoCV`.
-     This changes the shape of alphas_ from (n_alphas,) to
+     This changes the shape of ``alphas_`` from (n_alphas,) to
      (n_l1_ratio, n_alphas) if the l1_ratio provided is a 1-D array like object
      of length greater than one.
      By `Manoj Kumar`_.
@@ -469,7 +514,7 @@ Changelog
 
    - Speed optimization of the :mod:`hmm` module by `Mikhail Korobov`_
 
-   - Significant speed improvements for :class:`sklearn.cluster.DBSCAN`_
+   - Significant speed improvements for :class:`sklearn.cluster.DBSCAN`
      by `cleverless <https://github.com/cleverless>`_
 
 
@@ -2281,7 +2326,7 @@ Examples
 --------
 
     - new examples using some of the mlcomp datasets:
-      :ref:`example_mlcomp_sparse_document_classification.py`,
+      ``example_mlcomp_sparse_document_classification.py`` (since removed) and
       :ref:`example_document_classification_20newsgroups.py`
 
     - Many more examples. `See here
@@ -2500,3 +2545,9 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Maheshakya Wijewardena: https://github.com/maheshakya
 
 .. _Danny Sullivan: http://dannysullivan.co
+
+.. _Michael Eickenberg: https://github.com/eickenberg
+
+.. _Jeffrey Blackburne: https://github.com/jblackburne
+
+.. _Hamzeh Alsalhi: https://github.com/hamsal

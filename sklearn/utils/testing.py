@@ -572,9 +572,9 @@ def if_not_mac_os(versions=('10.7', '10.8', '10.9'),
 
 
 def clean_warning_registry():
-    """Safe way to reset warniings """
+    """Safe way to reset warnings """
     warnings.resetwarnings()
     reg = "__warningregistry__"
-    for mod in sys.modules.values():
+    for mod in sys.modules.copy().values():
         if hasattr(mod, reg):
             getattr(mod, reg).clear()

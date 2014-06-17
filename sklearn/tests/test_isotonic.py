@@ -1,9 +1,61 @@
 import numpy as np
 
-from sklearn.isotonic import isotonic_regression, IsotonicRegression
+from sklearn.isotonic import check_increasing, isotonic_regression,\
+    IsotonicRegression
 
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_raises, assert_array_equal,\
+    assert_true, assert_false, assert_equal
+
+from sklearn.utils.testing import assert_warns, assert_warns_message,\
+    assert_no_warnings
+
+
+def test_check_increasing_up():
+    x = [0, 1, 2, 3, 4, 5]
+    y = [0, 1.5, 2.77, 8.99, 8.99, 50]
+
+    # Check that we got increasing=True and no warnings
+    is_increasing = assert_no_warnings(check_increasing, x, y)
+    assert_true(is_increasing)
+
+
+def test_check_increasing_up_extreme():
+    x = [0, 1, 2, 3, 4, 5]
+    y = [0, 1, 2, 3, 4, 5]
+
+    # Check that we got increasing=True and no warnings
+    is_increasing = assert_no_warnings(check_increasing, x, y)
+    assert_true(is_increasing)
+
+
+def test_check_increasing_down():
+    x = [0, 1, 2, 3, 4, 5]
+    y = [0, -1.5, -2.77, -8.99, -8.99, -50]
+
+    # Check that we got increasing=False and no warnings
+    is_increasing = assert_no_warnings(check_increasing, x, y)
+    assert_false(is_increasing)
+
+
+def test_check_increasing_down_extreme():
+    x = [0, 1, 2, 3, 4, 5]
+    y = [0, -1, -2, -3, -4, -5]
+
+    # Check that we got increasing=False and no warnings
+    is_increasing = assert_no_warnings(check_increasing, x, y)
+    assert_false(is_increasing)
+
+
+def test_check_ci_warn():
+    x = [0, 1, 2, 3, 4, 5]
+    y = [0, -1, 2, -3, 4, -5]
+
+    # Check that we got increasing=False and CI interval warning
+    is_increasing = assert_warns_message(UserWarning, "interval",
+                                         check_increasing,
+                                         x, y)
+
+    assert_false(is_increasing)
 
 
 def test_isotonic_regression():
@@ -34,6 +86,34 @@ def test_isotonic_regression_reversed():
     y_ = IsotonicRegression(increasing=False).fit_transform(
         np.arange(len(y)), y)
     assert_array_equal(np.ones(y_[:-1].shape), ((y_[:-1] - y_[1:]) >= 0))
+
+
+def test_isotonic_regression_auto_decreasing():
+    # Set y and x for decreasing
+    y = np.array([10, 9, 10, 7, 6, 6.1, 5])
+    x = np.arange(len(y))
+
+    # Create model and fit_transform
+    ir = IsotonicRegression(increasing='auto')
+    y_ = assert_no_warnings(ir.fit_transform, x, y)
+
+    # Check that relationship decreases
+    is_increasing = y_[0] < y_[-1]
+    assert_false(is_increasing)
+
+
+def test_isotonic_regression_auto_increasing():
+    # Set y and x for decreasing
+    y = np.array([5, 6.1, 6, 7, 10, 9, 10])
+    x = np.arange(len(y))
+
+    # Create model and fit_transform
+    ir = IsotonicRegression(increasing='auto')
+    y_ = assert_no_warnings(ir.fit_transform, x, y)
+
+    # Check that relationship increases
+    is_increasing = y_[0] < y_[-1]
+    assert_true(is_increasing)
 
 
 def test_assert_raises_exceptions():
@@ -81,6 +161,107 @@ def test_isotonic_sample_weight():
     received_y = ir.fit_transform(x, y, sample_weight=sample_weight)
 
     assert_array_equal(expected_y, received_y)
+
+
+def test_isotonic_regression_oob_raise():
+    # Set y and x
+    y = np.array([3, 7, 5, 9, 8, 7, 10])
+    x = np.arange(len(y))
+
+    # Create model and fit
+    ir = IsotonicRegression(increasing='auto', out_of_bounds="raise")
+    ir.fit(x, y)
+
+    # Check that an exception is thrown
+    assert_raises(ValueError, ir.predict, [min(x)-10, max(x)+10])
+
+
+def test_isotonic_regression_oob_clip():
+    # Set y and x
+    y = np.array([3, 7, 5, 9, 8, 7, 10])
+    x = np.arange(len(y))
+
+    # Create model and fit
+    ir = IsotonicRegression(increasing='auto', out_of_bounds="clip")
+    ir.fit(x, y)
+
+    # Predict from  training and test x and check that min/max match.
+    y1 = ir.predict([min(x) - 10, max(x) + 10])
+    y2 = ir.predict(x)
+    assert_equal(max(y1), max(y2))
+    assert_equal(min(y1), min(y2))
+
+
+def test_isotonic_regression_oob_nan():
+    # Set y and x
+    y = np.array([3, 7, 5, 9, 8, 7, 10])
+    x = np.arange(len(y))
+
+    # Create model and fit
+    ir = IsotonicRegression(increasing='auto', out_of_bounds="nan")
+    ir.fit(x, y)
+
+    # Predict from  training and test x and check that we have two NaNs.
+    y1 = ir.predict([min(x)-10, max(x)+10])
+    assert_equal(sum(np.isnan(y1)), 2)
+
+
+def test_isotonic_regression_oob_bad():
+    # Set y and x
+    y = np.array([3, 7, 5, 9, 8, 7, 10])
+    x = np.arange(len(y))
+
+    # Create model and fit
+    ir = IsotonicRegression(increasing='auto', out_of_bounds="xyz")
+
+    # Make sure that we throw an error for bad out_of_bounds value
+    assert_raises(ValueError, ir.fit, x, y)
+
+
+def test_isotonic_regression_oob_bad_after():
+    # Set y and x
+    y = np.array([3, 7, 5, 9, 8, 7, 10])
+    x = np.arange(len(y))
+
+    # Create model and fit
+    ir = IsotonicRegression(increasing='auto', out_of_bounds="raise")
+
+    # Make sure that we throw an error for bad out_of_bounds value in transform
+    ir.fit(x, y)
+    ir.out_of_bounds = "xyz"
+    assert_raises(ValueError, ir.transform, x)
+
+
+def test_isotonic_fit_weight_deprecation():
+    # Test deprecation of the weight argument
+    y = np.array([3, 7, 5, 9, 8, 7, 10])
+    x = np.arange(len(y))
+
+    # Create model and fit
+    ir = IsotonicRegression()
+    assert_warns(DeprecationWarning, ir.fit, x, y,
+                 weight=[1.0/len(y)] * len(y))
+
+
+def test_isotonic_fit_transform_weight_deprecation():
+    # Test deprecation of the weight argument
+    y = np.array([3, 7, 5, 9, 8, 7, 10])
+    x = np.arange(len(y))
+
+    # Create model and fit
+    ir = IsotonicRegression()
+    assert_warns(DeprecationWarning, ir.fit_transform, x, y,
+                 weight=[1.0/len(y)] * len(y))
+
+
+def test_isotonic_regression_weight_deprecation():
+    # Test deprecation of the weight argument
+    y = np.array([3, 7, 5, 9, 8, 7, 10])
+    x = np.arange(len(y))
+
+    # Call fit method
+    assert_warns(DeprecationWarning, isotonic_regression, y,
+                 weight=[1.0/len(y)] * len(y))
 
 
 if __name__ == "__main__":

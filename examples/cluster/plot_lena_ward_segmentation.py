@@ -17,7 +17,7 @@ print(__doc__)
 import time as time
 import numpy as np
 import scipy as sp
-import pylab as pl
+import matplotlib.pyplot as plt
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.cluster import AgglomerativeClustering
 
@@ -46,11 +46,11 @@ print("Number of clusters: ", np.unique(label).size)
 
 ###############################################################################
 # Plot the results on an image
-pl.figure(figsize=(5, 5))
-pl.imshow(lena, cmap=pl.cm.gray)
+plt.figure(figsize=(5, 5))
+plt.imshow(lena, cmap=plt.cm.gray)
 for l in range(n_clusters):
-    pl.contour(label == l, contours=1,
-               colors=[pl.cm.spectral(l / float(n_clusters)), ])
-pl.xticks(())
-pl.yticks(())
-pl.show()
+    plt.contour(label == l, contours=1,
+                colors=[plt.cm.spectral(l / float(n_clusters)), ])
+plt.xticks(())
+plt.yticks(())
+plt.show()

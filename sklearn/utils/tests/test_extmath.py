@@ -347,15 +347,15 @@ def test_fast_dot():
         #  col < row
         C = np.dot(A.T, A)
         C_ = fast_dot(A.T, A)
-        assert_almost_equal(C, C_)
+        assert_almost_equal(C, C_, decimal=5)
 
         C = np.dot(A.T, B)
         C_ = fast_dot(A.T, B)
-        assert_almost_equal(C, C_)
+        assert_almost_equal(C, C_, decimal=5)
 
         C = np.dot(A, B.T)
         C_ = fast_dot(A, B.T)
-        assert_almost_equal(C, C_)
+        assert_almost_equal(C, C_, decimal=5)
 
     # Test square matrix * rectangular use case.
     A = rng.random_sample([2, 2])
@@ -365,11 +365,11 @@ def test_fast_dot():
 
         C = np.dot(A, B)
         C_ = fast_dot(A, B)
-        assert_almost_equal(C, C_)
+        assert_almost_equal(C, C_, decimal=5)
 
         C = np.dot(A.T, B)
         C_ = fast_dot(A.T, B)
-        assert_almost_equal(C, C_)
+        assert_almost_equal(C, C_, decimal=5)
 
     if has_blas:
         for x in [np.array([[d] * 10] * 2) for d in [np.inf, np.nan]]:

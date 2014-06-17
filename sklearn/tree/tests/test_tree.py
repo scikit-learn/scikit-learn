@@ -308,9 +308,15 @@ def test_importances_gini_equal_mse():
     # The gini index and the mean square error (variance) might differ due
     # to numerical instability. Since those instabilities mainly occurs at
     # high tree depth, we restrict this maximal depth.
+<<<<<<< HEAD
     clf = DecisionTreeClassifier(criterion="gini", max_depth=8,
                                  random_state=0).fit(X, y)
     reg = DecisionTreeRegressor(criterion="mse", max_depth=8,
+=======
+    clf = DecisionTreeClassifier(criterion="gini", max_depth=5,
+                                 random_state=0).fit(X, y)
+    reg = DecisionTreeRegressor(criterion="mse", max_depth=5,
+>>>>>>> upstream/master
                                 random_state=0).fit(X, y)
 
     assert_almost_equal(clf.feature_importances_, reg.feature_importances_)
@@ -350,6 +356,10 @@ def test_max_features():
         est = TreeEstimator(max_features=3)
         est.fit(iris.data, iris.target)
         assert_equal(est.max_features_, 3)
+
+        est = TreeEstimator(max_features=0.01)
+        est.fit(iris.data, iris.target)
+        assert_equal(est.max_features_, 1)
 
         est = TreeEstimator(max_features=0.5)
         est.fit(iris.data, iris.target)
@@ -746,3 +756,8 @@ def test_big_input():
         clf.fit(X, [0, 1, 0, 1])
     except ValueError as e:
         assert_in("float32", str(e))
+
+
+def test_memoryerror():
+    from sklearn.tree._tree import _realloc_test
+    assert_raises(MemoryError, _realloc_test)

@@ -48,8 +48,8 @@ from sklearn.cross_validation import train_test_split
 from sklearn.utils.validation import DataConversionWarning
 
 dont_test = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
-             'LabelBinarizer', 'LabelEncoder', 'TfidfTransformer',
-             'IsotonicRegression', 'OneHotEncoder',
+             'LabelBinarizer', 'LabelEncoder', 'MultiLabelBinarizer',
+             'TfidfTransformer', 'IsotonicRegression', 'OneHotEncoder',
              'RandomTreesEmbedding', 'FeatureHasher', 'DummyClassifier',
              'DummyRegressor', 'TruncatedSVD', 'PolynomialFeatures']
 
@@ -252,17 +252,21 @@ def check_transformer(name, Transformer, X, y):
             for x_pred, x_pred2, x_pred3 in zip(X_pred, X_pred2, X_pred3):
                 assert_array_almost_equal(
                     x_pred, x_pred2, 2,
-                    "fit_transform not correct in %s" % Transformer)
+                    "fit_transform and transform outcomes not consistent in %s"
+                    % Transformer)
                 assert_array_almost_equal(
-                    x_pred3, x_pred2, 2,
-                    "fit_transform not correct in %s" % Transformer)
+                    x_pred, x_pred3, 2,
+                    "consecutive fit_transform outcomes not consistent in %s"
+                    % Transformer)
         else:
             assert_array_almost_equal(
                 X_pred, X_pred2, 2,
-                "fit_transform not correct in %s" % Transformer)
+                "fit_transform and transform outcomes not consistent in %s"
+                % Transformer)
             assert_array_almost_equal(
-                X_pred3, X_pred2, 2,
-                "fit_transform not correct in %s" % Transformer)
+                X_pred, X_pred3, 2,
+                "consecutive fit_transform outcomes not consistent in %s"
+                % Transformer)
 
         # raises error on malformed input for transform
         assert_raises(ValueError, transformer.transform, X.T)
@@ -359,6 +363,8 @@ def check_estimators_nan_inf(name, Estimator, X_train, X_train_finite, y):
             # than the number of features.
             # So we impose a smaller number (avoid "auto" mode)
             estimator = Estimator(n_components=1)
+        elif name == "SelectKBest":
+            estimator = Estimator(k=1)
 
         set_random_state(estimator, 1)
         # try to fit
@@ -1039,6 +1045,7 @@ def test_estimators_overwrite_params():
                 # FIXME!
                 # in particular GaussianProcess!
                 continue
+
             yield (check_estimators_overwrite_params, name, Estimator, X,
                    multioutput_estimator_convert_y_2d(name, y))
 
@@ -1061,6 +1068,8 @@ def check_estimators_overwrite_params(name, Estimator, X, y):
         # than the number of features.
         # So we impose a smaller number (avoid "auto" mode)
         estimator = Estimator(n_components=1)
+    elif name == "SelectKBest":
+        estimator = Estimator(k=1)
 
     set_random_state(estimator)
 

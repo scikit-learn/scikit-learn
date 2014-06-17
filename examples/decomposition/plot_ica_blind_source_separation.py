@@ -16,7 +16,7 @@ non-Gaussian processes.
 print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from scipy import signal
 
 from sklearn.decomposition import FastICA, PCA
@@ -54,7 +54,7 @@ H = pca.fit_transform(X)  # Reconstruct signals based on orthogonal components
 ###############################################################################
 # Plot results
 
-pl.figure()
+plt.figure()
 
 models = [X, S, S_, H]
 names = ['Observations (mixed signal)',
@@ -64,10 +64,10 @@ names = ['Observations (mixed signal)',
 colors = ['red', 'steelblue', 'orange']
 
 for ii, (model, name) in enumerate(zip(models, names), 1):
-    pl.subplot(4, 1, ii)
-    pl.title(name)
+    plt.subplot(4, 1, ii)
+    plt.title(name)
     for sig, color in zip(model.T, colors):
-        pl.plot(sig, color=color)
+        plt.plot(sig, color=color)
 
-pl.subplots_adjust(0.09, 0.04, 0.94, 0.94, 0.26, 0.46)
-pl.show()
+plt.subplots_adjust(0.09, 0.04, 0.94, 0.94, 0.26, 0.46)
+plt.show()

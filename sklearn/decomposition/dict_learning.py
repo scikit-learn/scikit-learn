@@ -228,7 +228,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     if algorithm in ('lars', 'omp'):
         regularization = n_nonzero_coefs
         if regularization is None:
-            regularization = max(n_features / 10, 1)
+            regularization = min(max(n_features / 10, 1), n_components)
     else:
         regularization = alpha
         if regularization is None:
@@ -510,7 +510,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     n_components : int,
         Number of dictionary atoms to extract.
 
-    alpha : int,
+    alpha : float,
         Sparsity controlling parameter.
 
     n_iter : int,
@@ -835,7 +835,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     n_components : int,
         number of dictionary elements to extract
 
-    alpha : int,
+    alpha : float,
         sparsity controlling parameter
 
     max_iter : int,
@@ -988,7 +988,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
     n_components : int,
         number of dictionary elements to extract
 
-    alpha : int,
+    alpha : float,
         sparsity controlling parameter
 
     n_iter : int,

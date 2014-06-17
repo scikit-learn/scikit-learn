@@ -10,7 +10,6 @@ from sklearn.datasets import load_digits
 from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.neural_network import BernoulliRBM
 from sklearn.utils.validation import assert_all_finite
-from sklearn.utils import gen_even_slices
 np.seterr(all='warn')
 
 Xdigits = load_digits().data
@@ -196,5 +195,4 @@ def test_sparse_and_verbose():
                              r" time = (\d|\.)+s",
                              s))
     finally:
-        sio = sys.stdout
         sys.stdout = old_stdout

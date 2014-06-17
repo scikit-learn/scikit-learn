@@ -29,7 +29,7 @@ from __future__ import print_function
 
 from time import time
 import logging
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn.cross_validation import train_test_split
 from sklearn.datasets import fetch_lfw_people
@@ -129,14 +129,14 @@ print(confusion_matrix(y_test, y_pred, labels=range(n_classes)))
 
 def plot_gallery(images, titles, h, w, n_row=3, n_col=4):
     """Helper function to plot a gallery of portraits"""
-    pl.figure(figsize=(1.8 * n_col, 2.4 * n_row))
-    pl.subplots_adjust(bottom=0, left=.01, right=.99, top=.90, hspace=.35)
+    plt.figure(figsize=(1.8 * n_col, 2.4 * n_row))
+    plt.subplots_adjust(bottom=0, left=.01, right=.99, top=.90, hspace=.35)
     for i in range(n_row * n_col):
-        pl.subplot(n_row, n_col, i + 1)
-        pl.imshow(images[i].reshape((h, w)), cmap=pl.cm.gray)
-        pl.title(titles[i], size=12)
-        pl.xticks(())
-        pl.yticks(())
+        plt.subplot(n_row, n_col, i + 1)
+        plt.imshow(images[i].reshape((h, w)), cmap=plt.cm.gray)
+        plt.title(titles[i], size=12)
+        plt.xticks(())
+        plt.yticks(())
 
 
 # plot the result of the prediction on a portion of the test set
@@ -156,4 +156,4 @@ plot_gallery(X_test, prediction_titles, h, w)
 eigenface_titles = ["eigenface %d" % i for i in range(eigenfaces.shape[0])]
 plot_gallery(eigenfaces, eigenface_titles, h, w)
 
-pl.show()
+plt.show()

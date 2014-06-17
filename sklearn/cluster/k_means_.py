@@ -203,9 +203,8 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
         by subtracting and then adding the data mean.
 
     n_jobs : int
-        The number of jobs to use for the computation. This works by breaking
-        down the pairwise matrix into n_jobs even slices and computing them in
-        parallel.
+        The number of jobs to use for the computation. This works by computing
+        each of the n_init runs in parallel.
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
         used at all, which is useful for debugging. For n_jobs below -1,
@@ -580,9 +579,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         Relative tolerance with regards to inertia to declare convergence
 
     n_jobs : int
-        The number of jobs to use for the computation. This works by breaking
-        down the pairwise matrix into n_jobs even slices and computing them in
-        parallel.
+        The number of jobs to use for the computation. This works by computing
+        each of the n_init runs in parallel.
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
         used at all, which is useful for debugging. For n_jobs below -1,
@@ -840,20 +838,22 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
         # Reassign clusters that have very low counts
         to_reassign = np.logical_or(
             (counts <= 1), counts <= reassignment_ratio * counts.max())
-        n_reassigns = min(to_reassign.sum(), X.shape[0])
-        if n_reassigns:
+        number_of_reassignments = to_reassign.sum()
+        if number_of_reassignments:
             # Pick new clusters amongst observations with probability
             # proportional to their closeness to their center.
             # Flip the ordering of the distances.
             distances -= distances.max()
             distances *= -1
-            rand_vals = random_state.rand(n_reassigns)
+            rand_vals = random_state.rand(number_of_reassignments)
             rand_vals *= distances.sum()
             new_centers = np.searchsorted(distances.cumsum(),
                                           rand_vals)
             if verbose:
-                print("[MiniBatchKMeans] Reassigning %i cluster centers."
-                      % n_reassigns)
+                n_reassigns = to_reassign.sum()
+                if n_reassigns:
+                    print("[MiniBatchKMeans] Reassigning %i cluster centers."
+                          % n_reassigns)
 
             if sp.issparse(X) and not sp.issparse(centers):
                 assign_rows_csr(X, new_centers, np.where(to_reassign)[0],
