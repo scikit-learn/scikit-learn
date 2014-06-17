@@ -27,8 +27,8 @@ from sklearn.utils.multiclass import type_of_target
 
 EXAMPLES = {
     'multilabel-indicator': [
-        # valid when the data is formated as sparse or dense, indicated 
-        # by CSR format
+        # valid when the data is formated as sparse or dense, identified 
+        # by CSR format when the testing takes place
         csr_matrix(np.random.RandomState(42).randint(2, size=(10, 10))),
         csr_matrix(np.array([[0, 1], [1, 0]])),
         csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.bool)),
