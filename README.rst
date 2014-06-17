@@ -39,12 +39,13 @@ scikit-learn is tested to work under Python 2.6, Python 2.7, and Python 3.4.
 `six <http://pythonhosted.org/six/>`_). It should also work with Python 3.3.
 
 The required dependencies to build the software are NumPy >= 1.6.2,
-SciPy >= 0.11 and a working C/C++ compiler.
+SciPy >= 0.9 and a working C/C++ compiler.
 
-For running the examples Matplotlib >= 0.99.1 is required and for running the
-tests you need nose >= 0.10.
+For running the examples Matplotlib >= 1.1.1 is required and for running the
+tests you need nose >= 1.1.2.
 
-This configuration matches the Ubuntu 10.04 LTS release from April 2010.
+This configuration matches the Ubuntu Precise 12.04 LTS release from April
+2012.
 
 
 Install
