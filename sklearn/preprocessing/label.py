@@ -527,9 +527,9 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
         Y = Y[:, indices]
 
     if y_type == "binary":
-        Y = Y[:, Y.shape[1] - 1].reshape((-1, 1))
+        Y = Y[:, -1].reshape((-1, 1))
 
-    Y = Y.astype('int')
+    # Y = Y.astype('int') # find the failing doctest with travis
 
     return Y
 
