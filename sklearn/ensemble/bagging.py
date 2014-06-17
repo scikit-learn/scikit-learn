@@ -791,7 +791,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         Parameters
         ----------
         X : array-like of shape = [n_samples, n_features]
-            The input samples. Supports both dense and sparse input.
+            The input samples. Supports input being both dense and sparse.
 
         Returns
         -------
