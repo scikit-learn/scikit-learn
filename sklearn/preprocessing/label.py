@@ -542,7 +542,8 @@ def _inverse_binarize_multiclass(y, classes):
         y = y.tocsr()
         n_samples, n_outputs = y.shape
         outputs = np.arange(n_outputs)
-        y_i_max = y.max(axis=1).tocsr()
+        y_i_max = [y.getrow(i).toarray().max() for i in range(n_samples)]
+
         y_inverse = np.empty(n_samples, dtype=classes.dtype)
 
         for i, (start, end) in enumerate(zip(y.indptr[:-1], y.indptr[1:])):
