@@ -540,15 +540,25 @@ def _inverse_binarize_multiclass(y, classes):
     # Multiclass uses the maximal score instead of a thresold
     if sp.issparse(y):
         y = y.tocsr()
+        n_samples, n_outputs = y.shape
+        outputs = np.arange(n_outputs)
+        y_i_max = y.max(axis=1).tocsr()
+        y_inverse = np.empty(n_samples, dtype=classes.dtype)
 
-        # Check if there is an all zero row and throw an exception if so
-        for i in range(y.shape[0]):
-            if len(y[i, :].data) == 0:
-                raise ValueError("Row {0} is all zeros and does not indicate"
-                                 "a class".format(i))
+        for i, (start, end) in enumerate(zip(y.indptr[:-1], y.indptr[1:])):
+            if y_i_max[i] > 0. or end - start == n_outputs:
+                # Fully populated row or the maximum is a positive value
+                c = y.indices[start + y.data[start:end].argmax()]
+            elif end - start == 0:
+                # Only zeroes
+                c = classes[0]
+            else:
+                # Mix of negative values and zeroes
+                c = classe[np.setdiff1d(outputs, y.indices[start:end])][0]
 
-        return np.array([classes[y.indices[start + y.data[start:end].argmax()]]
-                        for start, end in zip(y.indptr[:-1], y.indptr[1:])])
+            y_inverse[i] = classes[c]
+
+        return y_inverse
     else:
         return classes.take(y.argmax(axis=1), mode="clip")
 
