@@ -150,7 +150,7 @@ def is_label_indicator_matrix(y):
             y = y.tocsr()
         return (len(y.data) == 0 or np.ptp(y.data) == 0 and
                 (y.dtype.kind in 'biu' or  # bool, int, uint
-                _is_integral_float(np.unique(y.data))))
+                 _is_integral_float(np.unique(y.data))))
     else:
         labels = np.unique(y)
 
