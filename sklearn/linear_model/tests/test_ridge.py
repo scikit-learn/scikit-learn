@@ -723,16 +723,7 @@ def test_deprecation_warning_dense_cholesky():
     func3 = lambda: ridge_regression(X, y, alpha=1, solver='dense_cholesky')
 
     for func in [func1, func2, func3]:
-        found = False
-        with warnings.catch_warnings(record=True) as w:
-            # Cause all warnings to always be triggered.
-            warnings.simplefilter("always")
-            func()
-            for W in w:
-                if (W.category is warning_class and
-                    warning_message in str(W.message)):
-                    found = True
-        assert_true(found)
+        assert_warns_message(warning_class, warning_message, func)
 
 
 def test_raises_value_error_if_solver_not_supported():
