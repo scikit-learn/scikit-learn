@@ -632,9 +632,12 @@ def test_invalid_input_label_binarize():
     assert_raises(ValueError, label_binarize, [0, 2], classes=[0, 2],
                   pos_label=0, neg_label=1)
     assert_raises(ValueError, label_binarize, [1, 2], classes=[0, 2])
-    assert_raises(ValueError, _inverse_binarize_multiclass,
-                  csr_matrix([[0, 1, 0], [0, 0, 0]]), np.arange(3))
 
+
+def test_inverse_binarize_multiclass():
+    got = _inverse_binarize_multiclass(csr_matrix([[0, 1, 0], [-1, -1, -1]]),
+        np.arange(3))
+    assert_array_equal(got, np.array([1, 0]))
 
 if __name__ == "__main__":
     import nose
