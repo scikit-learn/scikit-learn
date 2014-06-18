@@ -245,12 +245,11 @@ Basically, you ought to make sure that Numpy is built using an optimized `BLAS
 
 Not all models benefit from optimized BLAS and Lapack implementations. For
 instance models based on (randomized) decision trees typically do not rely on
-BLAS calls in their inner loops. Nor do models implemented in third party C++
-library (like ``LinearSVC``, ``LogisticRegression`` from ``liblinear`` and SVC /
-SVR from ``libsvm``). On the other hand a linear model implemented with a BLAS
-DGEMM call (via ``numpy.dot``) will typically benefit hugely from a tuned BLAS
-implementation and lead to orders of magnitude speedup over a non-optimized
-BLAS.
+BLAS calls in their inner loops, nor do kernel SVMs (``SVC``, ``SVR``,
+``NuSVC``, ``NuSVR``).  On the other hand a linear model implemented with a
+BLAS DGEMM call (via ``numpy.dot``) will typically benefit hugely from a tuned
+BLAS implementation and lead to orders of magnitude speedup over a
+non-optimized BLAS.
 
 You can display the BLAS / LAPACK implementation used by your NumPy / SciPy /
 scikit-learn install with the following commands::
@@ -270,6 +269,24 @@ and in this
 `blog post <http://danielnouri.org/notes/2012/12/19/libblas-and-liblapack-issues-and-speed,-with-scipy-and-ubuntu/>`_
 from Daniel Nouri which has some nice step by step install instructions for
 Debian / Ubuntu.
+
+.. warning::
+
+    Multithreaded BLAS libraries sometimes conflict with Python's
+    ``multiprocessing`` module, which is used by e.g. ``GridSearchCV`` and
+    most other estimators that take an ``n_jobs`` argument (with the exception
+    of ``SGDClassifier``, ``SGDRegressor``, ``Perceptron``,
+    ``PassiveAggressiveClassifier`` and tree-based methods such as random
+    forests). This is true of Apple's Accelerate and OpenBLAS when built with
+    OpenMP support.
+
+    Besides scikit-learn, NumPy and SciPy also use BLAS internally, as
+    explained earlier.
+
+    If you experience hanging subprocesses with ``n_jobs>1`` or ``n_jobs=-1``,
+    make sure you have a single-threaded BLAS library, or set ``n_jobs=1``,
+    or upgrade to Python 3.4 which has a new version of ``multiprocessing``
+    that should be immune to this problem.
 
 Model Compression
 -----------------
