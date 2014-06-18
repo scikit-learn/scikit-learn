@@ -57,26 +57,26 @@ def test_ovr_fit_predict():
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
     assert_greater(np.mean(iris.target == pred), 0.65)
 
+
 def test_ovr_fit_predict_sparse():
     for sparse in [sp.csr_matrix, sp.csc_matrix, sp.coo_matrix, sp.dok_matrix,
                    sp.lil_matrix]:
         # A classifier which implements decision_function.
         ovr = OneVsRestClassifier(LinearSVC(random_state=0))
-        pred = ovr.fit(iris.data, 
+        pred = ovr.fit(iris.data,
                        sparse(iris.target)).predict(sparse(iris.data))
         assert_equal(len(ovr.estimators_), n_classes)
         assert_true(sp.issparse(pred))
 
         clf = LinearSVC(random_state=0)
         pred2 = clf.fit(iris.data, iris.target).predict(iris.data)
-        assert_equal(np.mean(iris.target == pred.toarray()), 
+        assert_equal(np.mean(iris.target == pred.toarray()),
                      np.mean(iris.target == pred2))
 
         # A classifier which implements predict_proba.
         ovr = OneVsRestClassifier(MultinomialNB())
         pred = ovr.fit(iris.data, iris.target).predict(iris.data)
         assert_greater(np.mean(iris.target == pred), 0.65)
-
 
 
 def test_ovr_always_present():
