@@ -224,7 +224,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         Parameters
         ----------
         X : array-like of shape = [n_samples, n_features]
-            The training input samples.
+            The training input samples. Supports both dense and sparse input.
 
         y : array-like, shape = [n_samples]
             The target values (class labels in classification, real numbers in
@@ -505,7 +505,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         Parameters
         ----------
         X : array-like of shape = [n_samples, n_features]
-            The input samples.
+            The input samples. Supports both dense and sparse input.
 
         Returns
         -------
@@ -528,7 +528,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         Parameters
         ----------
         X : array-like of shape = [n_samples, n_features]
-            The input samples.
+            The input samples. Supports both dense and sparse input.
 
         Returns
         -------
@@ -571,7 +571,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         Parameters
         ----------
         X : array-like of shape = [n_samples, n_features]
-            The input samples.
+            The input samples. Supports both dense and sparse input.
 
         Returns
         -------
@@ -619,7 +619,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         Parameters
         ----------
         X : array-like of shape = [n_samples, n_features]
-            The input samples.
+            The input samples. Supports both dense and sparse input.
 
         Returns
         -------
@@ -791,7 +791,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         Parameters
         ----------
         X : array-like of shape = [n_samples, n_features]
-            The input samples.
+            The input samples. Supports input being both dense and sparse.
 
         Returns
         -------
