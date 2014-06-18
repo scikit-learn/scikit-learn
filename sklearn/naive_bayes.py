@@ -298,7 +298,6 @@ class BaseDiscreteNB(BaseNB):
             Returns self.
         """
         X, y = check_arrays(X, y, sparse_format='csr')
-        X = X.astype(np.float)
         y = column_or_1d(y, warn=True)
         _, n_features = X.shape
 
