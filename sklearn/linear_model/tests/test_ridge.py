@@ -1,6 +1,5 @@
 import numpy as np
 import scipy.sparse as sp
-import warnings
 from scipy import linalg
 
 from sklearn.utils.testing import assert_true
@@ -574,6 +573,7 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
 
     rng = np.random.RandomState(42)
 
+
     for n_samples, n_features in zip(n_sampless, n_featuress):
         X = rng.randn(n_samples, n_features)
         y = rng.randn(n_samples)
@@ -643,6 +643,7 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
     n_featuress = [3, 2]
 
     rng = np.random.RandomState(42)
+
 
     for n_samples, n_features in zip(n_sampless, n_featuress):
         X = rng.randn(n_samples, n_features)
@@ -741,7 +742,3 @@ def test_raises_value_error_if_solver_not_supported():
         ridge_regression(X, y, alpha=1., solver=wrong_solver)
 
     assert_raise_message(exception, message, func)
-
-if __name__ == "__main__":
-    import nose
-    nose.runmodule()
