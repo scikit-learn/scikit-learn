@@ -17,6 +17,7 @@ import scipy.sparse as sp
 from ..base import BaseEstimator, TransformerMixin
 
 from ..utils.fixes import np_version
+from ..utils.fixes import sparse_min_max
 from ..utils import deprecated, column_or_1d
 
 from ..utils.multiclass import unique_labels
@@ -542,7 +543,7 @@ def _inverse_binarize_multiclass(y, classes):
         y = y.tocsr()
         n_samples, n_outputs = y.shape
         outputs = np.arange(n_outputs)
-        y_i_max = [y.getrow(i).toarray().max() for i in range(n_samples)]
+        y_i_max = sparse_min_max(y, 1)[1]
 
         y_inverse = np.empty(n_samples, dtype=classes.dtype)
 
