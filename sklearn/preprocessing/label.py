@@ -199,6 +199,8 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
     Examples
     --------
+
+    # Mutli class (special case Two classes)
     >>> from sklearn import preprocessing
     >>> lb = preprocessing.LabelBinarizer()
     >>> lb.fit([1, 2, 6, 4, 2])
@@ -207,9 +209,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     array([1, 2, 4, 6])
     >>> lb.multilabel_
     False
-    >>> lb.transform([1, 6])
+    >>> lb.transform([1, 6])  
     array([[1, 0, 0, 0],
-           [0, 0, 0, 1]])
+           [0, 0, 0, 1]])  
+    # Array of shape (n_samples, n_classes)
 
     >>> import numpy as np
     >>> lb.fit(np.array([[0, 1, 1], [1, 0, 0]]))
@@ -218,6 +221,18 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     array([0, 1, 2])
     >>> lb.multilabel_
     True
+
+    # Two classes (Binary)
+    >>> from sklearn import preprocessing
+    >>> lb = preprocessing.LabelBinarizer()
+    >>> lb.fit([1,3,1,1,3])
+    LabelBinarizer(neg_label=0, pos_label=1)
+    >>> lb.classes_
+    array([1, 3])
+    >>>lb.transform([3,1])
+    array([[1],[0]])
+    # Array of shape (n_samples, 1)
+
 
     See also
     --------
@@ -278,7 +293,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        Y : numpy array of shape [n_samples, n_classes]
+        Y : numpy array of shape [n_samples, 1] (Two classes) or [n_samples, n_classes] (Other multi classes)
         """
         self._check_fitted()
 
@@ -298,7 +313,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        Y : numpy array of shape [n_samples, n_classes]
+        Y : numpy array of shape [n_samples, n_classes] or [n_samples, 1]
             Target values.
 
         threshold : float or None
@@ -398,6 +413,10 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
     >>> label_binarize([1, 6], classes=[1, 6, 4, 2])
     array([[1, 0, 0, 0],
            [0, 1, 0, 0]])
+
+    # Two class label_binarize
+    >>> label_binarize([1,6,1],classes =[1,6])
+    array([[0],[1],[0]])
 
     See also
     --------
