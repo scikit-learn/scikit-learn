@@ -32,6 +32,7 @@ case.
 #
 # License: BSD 3 clause
 
+import array
 import numpy as np
 import warnings
 import scipy.sparse as sp
@@ -91,11 +92,11 @@ def fit_ovr(estimator, X, y, n_jobs=1):
 
     if sp.issparse(Y):
         estimators = Parallel(n_jobs=n_jobs)(
-            delayed(_fit_binary)(estimator, X, Y.getcol(i).toarray(), 
+            delayed(_fit_binary)(estimator, X, Y.getcol(i).toarray(),
                 classes=["not %s" % i, i]) for i in range(Y.shape[1]))
     else:
         estimators = Parallel(n_jobs=n_jobs)(
-            delayed(_fit_binary)(estimator, X, Y[:, i], 
+            delayed(_fit_binary)(estimator, X, Y[:, i],
                 classes=["not %s" % i, i]) for i in range(Y.shape[1]))
 
     return estimators, lb
@@ -114,17 +115,19 @@ def predict_ovr(estimators, label_binarizer, X):
             for e in estimators:
                 x_scores = np.append(x_scores, _predict_binary(e, x))
             c = label_binarizer.classes_[x_scores.argmax()]
-            Y = np.append(Y,c)
+            Y = np.append(Y, c)
         return np.array(Y.T, dtype=label_binarizer.classes_.dtype)
 
     else:
-        Y = sp.coo_matrix(np.array(_predict_binary(e, X) > thresh,
-            dtype=np.int))
-        for e in estimators[1:]:
-            r = sp.coo_matrix(np.array(_predict_binary(e, X) > thresh,
-                dtype=np.int))
-            Y = sp.vstack([Y, r])
-        return label_binarizer.inverse_transform(Y.T, threshold=0.5)
+        indices = array.array('i')
+        indptr = array.array('i', [0])
+        for e in estimators:
+            indices.extend(np.where(_predict_binary(e, X) > thresh)[0])
+            indptr.append(len(indices))
+        data = np.ones(len(indices), dtype=int)
+        indicator = sp.csc_matrix((data, indices, indptr),
+                                  shape=(len(X), len(estimators)))
+        return label_binarizer.inverse_transform(indicator)
 
 
 def predict_proba_ovr(estimators, X, is_multilabel):
