@@ -202,8 +202,8 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
     `multilabel_` : boolean
         True if the transformer was fitted on a multilabel rather than a
-        multiclass set of labels. The multilabel_ attribute is deprecated as
-        of version 0.16 and will be removed in 0.18
+        multiclass set of labels. The multilabel_ attribute is deprecated
+        and will be removed in 0.18
 
     `sparse_input_` : boolean,
         True if the input data to transform is given as a sparse matrix, False
@@ -256,7 +256,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             raise ValueError("neg_label={0} must be strictly less than "
                              "pos_label={1}.".format(neg_label, pos_label))
 
-        if (sparse_output and (pos_label == 0 or neg_label != 0)):
+        if sparse_output and (pos_label == 0 or neg_label != 0):
             raise ValueError("Sparse binarization is only supported with non "
                              "zero pos_label and zero neg_label, got "
                              "pos_label={0} and neg_label={1}"
@@ -273,15 +273,15 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         return self.multilabel_
 
     @property
-    @deprecated("Attribute indicator_matrix_ is deprecated in 0.15 and will "
-                "be removed in 0.17. Use 'y_type_ == 'multilabel-indicator'' "
+    @deprecated("Attribute indicator_matrix_ is deprecated and will be "
+                "removed in 0.17. Use 'y_type_ == 'multilabel-indicator'' "
                 "instead")
     def indicator_matrix_(self):
         return self.y_type_ == 'multilabel-indicator'
 
     @property
-    @deprecated("Attribute multilabel_ is deprecated in 0.15 and will be "
-                "removed in 0.17. Use 'y_type_.startswith('multilabel')' "
+    @deprecated("Attribute multilabel_ is deprecated and will be removed "
+                "in 0.17. Use 'y_type_.startswith('multilabel')' "
                 "instead")
     def multilabel_(self):
         return self.y_type_.startswith('multilabel')
@@ -304,9 +304,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         self : returns an instance of self.
         """
         self.y_type_ = type_of_target(y)
-
         self.sparse_input_ = sp.issparse(y)
-
         self.classes_ = unique_labels(y)
         return self
 
@@ -411,7 +409,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
     pos_label : int (default: 1)
         Value with which positive labels must be encoded.
 
-    sparse_output : boolean (default : False),
+    sparse_output : boolean (default: False),
         Set to true if output binary array is desired in CSR sparse format
 
     Returns
@@ -443,7 +441,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
     See also
     --------
     LabelBinarizer : class used to wrap the functionality of label_binarize and
-    allow for fitting to classes independently of the transform operation
+        allow for fitting to classes independently of the transform operation
     """
     if neg_label >= pos_label:
         raise ValueError("neg_label={0} must be strictly less than "
@@ -534,11 +532,12 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
 
 
 def _inverse_binarize_multiclass(y, classes):
-    """Inverse label binarization transformation for multiclass"""
+    """Inverse label binarization transformation for multiclass. 
 
+    Multiclass uses the maximal score instead of a threshold.
+    """
     classes = np.asarray(classes)
 
-    # Multiclass uses the maximal score instead of a thresold
     if sp.issparse(y):
         y = y.tocsr()
         n_samples, n_outputs = y.shape
@@ -580,7 +579,8 @@ def _inverse_binarize_thresholding(y, y_type, classes, threshold):
     # Perform thresholding
     if sp.issparse(y):
         if threshold > 0:
-            y = y.tocsr()
+            if not y.format in ('csr', 'csc'):
+                y = y.tocsr()
             y.data = np.array(y.data > threshold, dtype=np.int)
             y.eliminate_zeros()
         else:

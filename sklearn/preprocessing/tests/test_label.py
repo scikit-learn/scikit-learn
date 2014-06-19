@@ -541,9 +541,10 @@ def check_sparse_output(y, classes, pos_label, neg_label, expected):
         # Check label binarizer
         lb = LabelBinarizer(neg_label=neg_label, pos_label=pos_label,
                             sparse_output=sparse_output)
-        output = lb.fit_transform(y)
-        assert_array_equal(toarray(output), expected)
-        inverse_output = lb.inverse_transform(output)
+        binarized = lb.fit_transform(y)
+        assert_array_equal(toarray(binarized), expected)
+        assert_equal(issparse(binarized), sparse_output)
+        inverse_output = lb.inverse_transform(binarized)
         assert_array_equal(toarray(inverse_output), toarray(y))
         assert_equal(issparse(inverse_output), issparse(y))
 
