@@ -27,7 +27,7 @@ from sklearn.utils.multiclass import type_of_target
 
 EXAMPLES = {
     'multilabel-indicator': [
-        # valid when the data is formated as sparse or dense, identified 
+        # valid when the data is formated as sparse or dense, identified
         # by CSR format when the testing takes place
         csr_matrix(np.random.RandomState(42).randint(2, size=(10, 10))),
         csr_matrix(np.array([[0, 1], [1, 0]])),
@@ -263,21 +263,21 @@ def test_is_label_indicator_matrix():
                 sparse_assert_, sparse_exp = assert_false, 'False'
 
             if (issparse(example) or
-            (isinstance(example, np.ndarray) and
-             example.ndim == 2 and
-             example.dtype.kind in 'biuf' and
-             example.shape[1] > 0)):
-                examples_sparse = [sparse_matrix(example)
-                                   for sparse_matrix in [coo_matrix,
-                                                         csc_matrix,
-                                                         csr_matrix,
-                                                         dok_matrix,
-                                                         lil_matrix]]
-                for example_sparse in examples_sparse:
-                    sparse_assert_(is_label_indicator_matrix(example_sparse),
-                                   msg=('is_label_indicator_matrix(%r)'
-                                   ' should be %s')
-                                   % (example_sparse, sparse_exp))
+                (isinstance(example, np.ndarray) and
+                 example.ndim == 2 and
+                 example.dtype.kind in 'biuf' and
+                 example.shape[1] > 0)):
+                    examples_sparse = [sparse_matrix(example)
+                                       for sparse_matrix in [coo_matrix,
+                                                             csc_matrix,
+                                                             csr_matrix,
+                                                             dok_matrix,
+                                                             lil_matrix]]
+                    for exmpl_sparse in examples_sparse:
+                        sparse_assert_(is_label_indicator_matrix(exmpl_sparse),
+                                       msg=('is_label_indicator_matrix(%r)'
+                                       ' should be %s')
+                                       % (exmpl_sparse, sparse_exp))
 
             # Densify sparse examples before testing
             if issparse(example):
