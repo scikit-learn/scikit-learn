@@ -61,22 +61,28 @@ def test_ovr_fit_predict():
 def test_ovr_fit_predict_sparse():
     for sparse in [sp.csr_matrix, sp.csc_matrix, sp.coo_matrix, sp.dok_matrix,
                    sp.lil_matrix]:
-        # A classifier which implements decision_function.
-        ovr = OneVsRestClassifier(LinearSVC(random_state=0))
-        pred = ovr.fit(iris.data,
-                       sparse(iris.target)).predict(sparse(iris.data))
-        assert_equal(len(ovr.estimators_), n_classes)
-        assert_true(sp.issparse(pred))
+        base_clf = MultinomialNB(alpha=1)
+        for au, prec, recall in zip((True, False), (0.65, 0.74), (0.72, 0.84)):
+            make_mlb = datasets.make_multilabel_classification
+            X, Y = make_mlb(n_samples=100,
+                            n_features=20,
+                            n_classes=5,
+                            n_labels=2,
+                            length=50,
+                            allow_unlabeled=au,
+                            return_indicator=True,
+                            random_state=0)
 
-        clf = LinearSVC(random_state=0)
-        pred2 = clf.fit(iris.data, iris.target).predict(iris.data)
-        assert_equal(np.mean(iris.target == pred.toarray()),
-                     np.mean(iris.target == pred2))
+            X_train, Y_train = X[:80], Y[:80]
+            X_test, Y_test = X[80:], Y[80:]
+            clf = OneVsRestClassifier(base_clf).fit(X_train, sparse(Y_train))
+            Y_pred = clf.predict(X_test)
 
-        # A classifier which implements predict_proba.
-        ovr = OneVsRestClassifier(MultinomialNB())
-        pred = ovr.fit(iris.data, iris.target).predict(iris.data)
-        assert_greater(np.mean(iris.target == pred), 0.65)
+            assert_true(clf.multilabel_)
+            assert_almost_equal(precision_score(Y_test, Y_pred.toarray(),
+                                average="micro"), prec, decimal=2)
+            assert_almost_equal(recall_score(Y_test, Y_pred.toarray(),
+                                average="micro"), recall, decimal=2)
 
 
 def test_ovr_always_present():
