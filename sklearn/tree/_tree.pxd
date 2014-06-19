@@ -64,6 +64,16 @@ cdef class Criterion:
 # Splitter
 # =============================================================================
 
+cdef struct SplitInfo:
+    # Data to track current and best split point
+    SIZE_t pos       # Set to >= end if the node is a leaf
+    SIZE_t feature
+    double threshold
+    double improvement
+    double impurity_left
+    double impurity_right
+
+
 cdef class Splitter:
     # The splitter searches in the input space for a feature and a threshold
     # to split the samples samples[start:end].
@@ -119,12 +129,7 @@ cdef class Splitter:
 
     cdef void node_split(self,
                          double impurity,   # Impurity of the node
-                         SIZE_t* pos,       # Set to >= end if the node is a leaf
-                         SIZE_t* feature,
-                         double* threshold,
-                         double* impurity_left,
-                         double* impurity_right,
-                         double* impurity_improvement,
+                         SplitInfo* split,
                          SIZE_t* n_constant_features) nogil
 
     cdef void node_value(self, double* dest) nogil
