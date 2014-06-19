@@ -64,28 +64,30 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         If True the order of the dataset is shuffled to avoid having
         images of the same person grouped.
 
-    random_state : optional, integer or RandomState object
-        The seed or the random number generator used to shuffle the
-        data.
-
     download_if_missing: optional, True by default
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
+    random_state : optional, integer or RandomState object
+        The seed or the random number generator used to shuffle the
+        data.
+
     Returns
-    --------
-    data : array of shape 400
-        Each face image is an array of shape 4096 (reshaped)
+    -------
+    An object with the following attributes:
+    
+    data : numpy array of shape (400, 4096)
+        Each row corresponds to a ravelled face image of original size 64 x 64 pixels.
 
-    images : array of shape 400
-        Each face image is an array of shape 64 x 64.
+    images : numpy array of shape (400, 64, 64)
+        Each row is a face image corresponding to one of the 40 subjects of the dataset.
 
-    target : array of shape 400
-        Labels of face images with values ranging between 0-39.
+    target : numpy array of shape (400, )
+        Labels associated to each face image. Those labels are ranging from 0-39 and correspond to the Subject IDs.
 
     DESCR : string
         Description of the modified Olivetti Faces Dataset.
-
+ 
     Notes
     ------
 
