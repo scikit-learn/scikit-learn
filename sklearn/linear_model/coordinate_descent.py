@@ -16,6 +16,7 @@ from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
 from .base import center_data, sparse_center_data
 from ..utils import array2d, atleast2d_or_csc
+from ..utils.validation import check_random_state
 from ..cross_validation import _check_cv as check_cv
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
@@ -446,6 +447,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     positive = params.get('positive', False)
     max_iter = params.get('max_iter', 1000)
     dual_gaps = np.empty(n_alphas)
+    rng = check_random_state(params.get('random_state', None))
     models = []
 
     if not multi_output:
@@ -466,17 +468,17 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             model = cd_fast.sparse_enet_coordinate_descent(
                 coef_, l1_reg, l2_reg, X.data, X.indices,
                 X.indptr, y, X_sparse_scaling,
-                max_iter, tol, positive)
+                max_iter, tol, rng, positive)
         elif multi_output:
             model = cd_fast.enet_coordinate_descent_multi_task(
-                coef_, l1_reg, l2_reg, X, y, max_iter, tol)
+                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng)
         elif isinstance(precompute, np.ndarray):
             model = cd_fast.enet_coordinate_descent_gram(
                 coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
-                tol, positive)
+                tol, rng, positive)
         elif precompute is False:
             model = cd_fast.enet_coordinate_descent(
-                coef_, l1_reg, l2_reg, X, y, max_iter, tol, positive)
+                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, positive)
         else:
             raise ValueError("Precompute should be one of True, False, "
                             "'auto' or array-like")
@@ -623,7 +625,8 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000,
-                 copy_X=True, tol=1e-4, warm_start=False, positive=False):
+                 copy_X=True, tol=1e-4, warm_start=False, positive=False,
+                 random_state=None):
         self.alpha = alpha
         self.l1_ratio = l1_ratio
         self.coef_ = None
@@ -636,6 +639,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.warm_start = warm_start
         self.positive = positive
         self.intercept_ = 0.0
+        self.random_state = random_state
 
     def fit(self, X, y):
         """Fit model with coordinate descent.
@@ -809,8 +813,8 @@ class Lasso(ElasticNet):
     >>> clf = linear_model.Lasso(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-       normalize=False, positive=False, precompute='auto', tol=0.0001,
-       warm_start=False)
+       normalize=False, positive=False, precompute='auto', random_state=None,
+       tol=0.0001, warm_start=False)
     >>> print(clf.coef_)
     [ 0.85  0.  ]
     >>> print(clf.intercept_)
@@ -836,12 +840,13 @@ class Lasso(ElasticNet):
 
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  precompute='auto', copy_X=True, max_iter=1000,
-                 tol=1e-4, warm_start=False, positive=False):
+                 tol=1e-4, warm_start=False, positive=False,
+                 random_state=None):
         super(Lasso, self).__init__(
             alpha=alpha, l1_ratio=1.0, fit_intercept=fit_intercept,
             normalize=normalize, precompute=precompute, copy_X=copy_X,
             max_iter=max_iter, tol=tol, warm_start=warm_start,
-            positive=positive)
+            positive=positive, random_state=random_state)
 
 
 ###############################################################################
@@ -961,7 +966,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
                  copy_X=True, cv=None, verbose=False, n_jobs=1,
-                 positive=False):
+                 positive=False, random_state=None):
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
@@ -975,6 +980,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.positive = positive
+        self.random_state = random_state
 
     def fit(self, X, y):
         """Fit linear model with coordinate descent
@@ -1234,12 +1240,13 @@ class LassoCV(LinearModelCV, RegressorMixin):
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
                  copy_X=True, cv=None, verbose=False, n_jobs=1,
-                 positive=False):
+                 positive=False, random_state=None):
         super(LassoCV, self).__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
             fit_intercept=fit_intercept, normalize=normalize,
             precompute=precompute, max_iter=max_iter, tol=tol, copy_X=copy_X,
-            cv=cv, verbose=verbose, n_jobs=n_jobs, positive=positive)
+            cv=cv, verbose=verbose, n_jobs=n_jobs, positive=positive,
+            random_state=random_state)
 
 
 class ElasticNetCV(LinearModelCV, RegressorMixin):
@@ -1361,7 +1368,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
-                 verbose=0, n_jobs=1, positive=False):
+                 verbose=0, n_jobs=1, positive=False, random_state=None):
         self.l1_ratio = l1_ratio
         self.eps = eps
         self.n_alphas = n_alphas
@@ -1376,6 +1383,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.positive = positive
+        self.random_state = random_state
 
 
 ###############################################################################
@@ -1447,8 +1455,8 @@ class MultiTaskElasticNet(Lasso):
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 0], [1, 1], [2, 2]])
     ... #doctest: +NORMALIZE_WHITESPACE
     MultiTaskElasticNet(alpha=0.1, copy_X=True, fit_intercept=True,
-            l1_ratio=0.5, max_iter=1000, normalize=False, tol=0.0001,
-            warm_start=False)
+            l1_ratio=0.5, max_iter=1000, normalize=False, random_state=None,
+            tol=0.0001, warm_start=False)
     >>> print(clf.coef_)
     [[ 0.45663524  0.45612256]
      [ 0.45663524  0.45612256]]
@@ -1468,7 +1476,7 @@ class MultiTaskElasticNet(Lasso):
     """
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, copy_X=True, max_iter=1000, tol=1e-4,
-                 warm_start=False):
+                 warm_start=False, random_state=None):
         self.l1_ratio = l1_ratio
         self.alpha = alpha
         self.coef_ = None
@@ -1478,6 +1486,7 @@ class MultiTaskElasticNet(Lasso):
         self.copy_X = copy_X
         self.tol = tol
         self.warm_start = warm_start
+        self.random_state = random_state
 
     def fit(self, X, y):
         """Fit MultiTaskLasso model with coordinate descent
@@ -1532,7 +1541,8 @@ class MultiTaskElasticNet(Lasso):
 
         self.coef_, self.dual_gap_, self.eps_ = \
             cd_fast.enet_coordinate_descent_multi_task(
-                self.coef_, l1_reg, l2_reg, X, y, self.max_iter, self.tol)
+                self.coef_, l1_reg, l2_reg, X, y, self.max_iter, self.tol,
+                check_random_state(self.random_state))
 
         self._set_intercept(X_mean, y_mean, X_std)
 
@@ -1600,7 +1610,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
     >>> clf = linear_model.MultiTaskLasso(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 0], [1, 1], [2, 2]])
     MultiTaskLasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-            normalize=False, tol=0.0001, warm_start=False)
+            normalize=False, random_state=None, tol=0.0001, warm_start=False)
     >>> print(clf.coef_)
     [[ 0.89393398  0.        ]
      [ 0.89393398  0.        ]]
@@ -1619,7 +1629,8 @@ class MultiTaskLasso(MultiTaskElasticNet):
     should be directly passed as a Fortran-contiguous numpy array.
     """
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
-                 copy_X=True, max_iter=1000, tol=1e-4, warm_start=False):
+                 copy_X=True, max_iter=1000, tol=1e-4, warm_start=False,
+                 random_state=None):
         self.alpha = alpha
         self.coef_ = None
         self.fit_intercept = fit_intercept
@@ -1629,6 +1640,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
         self.tol = tol
         self.warm_start = warm_start
         self.l1_ratio = 1.0
+        self.random_state = random_state
 
 
 class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
@@ -1729,7 +1741,8 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     ... #doctest: +NORMALIZE_WHITESPACE
     MultiTaskElasticNetCV(alphas=None, copy_X=True, cv=None, eps=0.001,
            fit_intercept=True, l1_ratio=0.5, max_iter=1000, n_alphas=100,
-           n_jobs=1, normalize=False, tol=0.0001, verbose=0)
+           n_jobs=1, normalize=False, random_state=None,
+           tol=0.0001, verbose=0)
     >>> print(clf.coef_)
     [[ 0.52875032  0.46958558]
      [ 0.52875032  0.46958558]]
@@ -1754,7 +1767,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False,
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
-                 verbose=0, n_jobs=1):
+                 verbose=0, n_jobs=1, random_state=None):
         self.l1_ratio = l1_ratio
         self.eps = eps
         self.n_alphas = n_alphas
@@ -1767,6 +1780,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         self.copy_X = copy_X
         self.verbose = verbose
         self.n_jobs = n_jobs
+        self.random_state = random_state
 
 
 class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
@@ -1863,9 +1877,9 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, max_iter=1000, tol=1e-4, copy_X=True,
-                 cv=None, verbose=False, n_jobs=1):
+                 cv=None, verbose=False, n_jobs=1, random_state=None):
         super(MultiTaskLassoCV, self).__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
             fit_intercept=fit_intercept, normalize=normalize,
             max_iter=max_iter, tol=tol, copy_X=copy_X,
-            cv=cv, verbose=verbose, n_jobs=n_jobs)
+            cv=cv, verbose=verbose, n_jobs=n_jobs, random_state=random_state)
