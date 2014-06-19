@@ -902,7 +902,7 @@ cdef class FriedmanMSE(MSE):
 # Splitter
 # =============================================================================
 
-cdef inline void _init_splitinfo(SplitInfo* self, SIZE_t start_pos) nogil:
+cdef inline void _init_split(SplitRecord* self, SIZE_t start_pos) nogil:
     self.impurity_left = INFINITY
     self.impurity_right = INFINITY
     self.pos = start_pos
@@ -1011,7 +1011,7 @@ cdef class Splitter:
 
         weighted_n_node_samples[0] = self.criterion.weighted_n_node_samples
 
-    cdef void node_split(self, double impurity, SplitInfo* split,
+    cdef void node_split(self, double impurity, SplitRecord* split,
                          SIZE_t* n_constant_features) nogil:
         """Find a split on node samples[start:end]."""
         pass
@@ -1033,7 +1033,7 @@ cdef class BestSplitter(Splitter):
                                self.min_samples_leaf,
                                self.random_state), self.__getstate__())
 
-    cdef void node_split(self, double impurity, SplitInfo* split,
+    cdef void node_split(self, double impurity, SplitRecord* split,
                          SIZE_t* n_constant_features) nogil:
         """Find the best split on node samples[start:end]."""
         # Find the best split
@@ -1053,7 +1053,7 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
 
-        cdef SplitInfo best, current
+        cdef SplitRecord best, current
 
         cdef SIZE_t f_i = n_features
         cdef SIZE_t f_j, p, tmp
@@ -1068,7 +1068,7 @@ cdef class BestSplitter(Splitter):
         cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
 
-        _init_splitinfo(&best, end)
+        _init_split(&best, end)
 
         # Sample up to max_features without replacement using a
         # Fisher-Yates-based algorithm (using the local variables `f_i` and
@@ -1324,7 +1324,7 @@ cdef class RandomSplitter(Splitter):
                                  self.min_samples_leaf,
                                  self.random_state), self.__getstate__())
 
-    cdef void node_split(self, double impurity, SplitInfo* split,
+    cdef void node_split(self, double impurity, SplitRecord* split,
                          SIZE_t* n_constant_features) nogil:
         """Find the best random split on node samples[start:end]."""
         # Draw random splits and pick the best
@@ -1344,7 +1344,7 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
 
-        cdef SplitInfo best, current
+        cdef SplitRecord best, current
 
         cdef SIZE_t f_i = n_features
         cdef SIZE_t f_j, p, tmp
@@ -1361,7 +1361,7 @@ cdef class RandomSplitter(Splitter):
         cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
 
-        _init_splitinfo(&best, end)
+        _init_split(&best, end)
 
         # Sample up to max_features without replacement using a
         # Fisher-Yates-based algorithm (using the local variables `f_i` and
@@ -1561,7 +1561,7 @@ cdef class PresortBestSplitter(Splitter):
             sample_mask = safe_realloc(&self.sample_mask, self.n_total_samples)
             memset(sample_mask, 0, self.n_total_samples)
 
-    cdef void node_split(self, double impurity, SplitInfo* split,
+    cdef void node_split(self, double impurity, SplitRecord* split,
                          SIZE_t* n_constant_features) nogil:
         """Find the best split on node samples[start:end]."""
         # Find the best split
@@ -1586,7 +1586,7 @@ cdef class PresortBestSplitter(Splitter):
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
 
-        cdef SplitInfo best, current
+        cdef SplitRecord best, current
 
         cdef SIZE_t f_i = n_features
         cdef SIZE_t f_j, p
@@ -1601,7 +1601,7 @@ cdef class PresortBestSplitter(Splitter):
         cdef SIZE_t partition_end
         cdef SIZE_t i, j
 
-        _init_splitinfo(&best, end)
+        _init_split(&best, end)
 
         # Set sample mask
         for p in range(start, end):
@@ -1816,7 +1816,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef bint is_left
         cdef SIZE_t n_node_samples = splitter.n_samples
         cdef double weighted_n_node_samples
-        cdef SplitInfo split
+        cdef SplitRecord split
         cdef SIZE_t node_id
 
         cdef double threshold
@@ -2054,7 +2054,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                     SIZE_t depth,
                                     PriorityHeapRecord* res) nogil:
         """Adds node w/ partition ``[start, end)`` to the frontier. """
-        cdef SplitInfo split
+        cdef SplitRecord split
         cdef SIZE_t node_id
         cdef SIZE_t n_node_samples
         cdef SIZE_t n_constant_features = 0
