@@ -12,6 +12,7 @@ import warnings
 
 import numpy as np
 import scipy.sparse as sp
+import fht as fht
 from scipy.linalg import svd
 
 from .base import BaseEstimator
@@ -409,6 +410,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
     sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
     """
+
     def __init__(self, kernel="rbf", gamma=None, coef0=1, degree=3,
                  kernel_params=None, n_components=100, random_state=None):
         self.kernel = kernel
@@ -498,36 +500,86 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
 
 class Fastfood(BaseEstimator, TransformerMixin):
-
+    @staticmethod
+    def random_gauss_vector(d, random_state):
+        return random_state.normal(size=d)
+        # return np.random.normal(size=d)
 
     @staticmethod
-    def random_gauss_vector(d):
-        return np.random.normal(size=d)
+    def permutation_matrix(d, random_state):
+        return random_state.permutation(np.identity(d))
 
     @staticmethod
-    def permutation_matrix(d):
-        return np.random.permutation(np.identity(d))
+    def binary_vector(d, random_state):
+        return random_state.choice([-1, 1], size=d)
 
     @staticmethod
-    def binary_vector(d):
-        return np.random.choice([-1, 1], size=d)
-
-    @staticmethod
-    def scaling_vector(d, G):
-        S = np.linalg.norm(np.random.normal(size=(d, d)), axis=0)
-        return S * (1 / np.sqrt(np.linalg.norm(G)))
+    def scaling_vector(d, g, random_state):
+        s = np.linalg.norm(random_state.normal(size=(d, d)), axis=0)
+        return s * (1 / np.sqrt(np.linalg.norm(g)))
 
     @staticmethod
     def is_number_power_of_two(n):
         return n != 0 and ((n & (n - 1)) == 0)
 
     @staticmethod
-    def create_vectors(d):
-        g = random_gauss(d)
-        P = permutation_matrix(d)
-        b = binary_vector(d)
+    def create_vectors(d, random_state):
+        g = Fastfood.random_gauss_vector(d, random_state)
+        b = Fastfood.binary_vector(d, random_state)
+        P = Fastfood.permutation_matrix(d, random_state)
 
         return b, g, P
+
+    @staticmethod
+    def enforce_dimensionality_constraints(d, n):
+        if n < d:
+            # warn that this makes no sense for the rbf kernel, because we want to generate more than d features 
+            raise ValueError("Warning:\n"
+                             "n = %s makes no sense for the rbf kernel, "
+                             "because we want to generate more than d features!" % n)
+        if not (Fastfood.is_number_power_of_two(d)):
+            # find d that fulfills 2^l
+            d = np.power(2, np.floor(np.log2(d)) + 1)
+        divisor, remainder = divmod(n, d)
+        if remainder != 0:
+            # output info, that we increase n so that d is a divider of n
+            n = (divisor + 1) * d
+        return int(d), int(n)
+
+
+    @staticmethod
+    def V(s, b, g, P, d, sigma):
+        gaussian_iid = Fastfood.create_gaussian_iid_matrix(b, g, P)
+        gaussian = np.dot(np.diag(s), gaussian_iid)
+
+        # H = (1 / (d * np.sqrt(2))) * hadamard(d)
+        # HB = np.dot(np.diag(H), B)
+
+        return 1 / (sigma * np.sqrt(d)) * gaussian
+
+    @staticmethod
+    def phi(V, X):
+        return (1 / np.sqrt(V.shape[0])) * np.cos(np.dot(V, X.T))
+
+    def __init__(self, sigma, n_components, random_state=None):
+        self.sigma = sigma
+        self.n_components = n_components
+        self.random_state = random_state
+
+    def fit(self, X, y=None):
+
+        rnd = check_random_state(self.random_state)
+
+        d_orig = X.shape[1]
+
+        self.d, self.n = Fastfood.enforce_dimensionality_constraints(d_orig, self.n_components)
+
+        self.number_of_features_to_pad_with_zeros = self.d - d_orig
+
+        self.b, self.g, self.P = Fastfood.create_vectors(self.d, rnd)
+        self.s = Fastfood.scaling_vector(self.d, self.g)
+
+        return self
 
     @staticmethod
     def create_gaussian_iid_matrix(b, g, P):
@@ -540,57 +592,17 @@ class Fastfood(BaseEstimator, TransformerMixin):
         gaussian_iid = np.dot(HG, PHB)
         return gaussian_iid
 
-    @staticmethod
-    def V(d,sigma):
-        B, G, PI = create_vectors(d)
-        S = scaling_vector(d, G)
-        gaussian_iid = create_gaussian_iid_matrix(B, G, PI)
-        gaussian = np.dot(np.diag(S),gaussian_iid);
-    
-        # H = (1 / (d * np.sqrt(2))) * hadamard(d)
-        # HB = np.dot(np.diag(H), B)
-    
-        SHGPIHB = np.dot(np.diag(S), gaussian)
-        return 1 / (sigma * np.sqrt(d)) * SHGPIHB
+    def transform(self, X):
 
-    @staticmethod
-    def enforce_dimensionality_constraints(d, n):
-        if n < d:
-            # warn that this makes no sense for the rbf kernel, because we want to generate more than d features 
-            raise ValueError("Warning:\n"
-                             "n = %s makes no sense for the rbf kernel, "
-                             "because we want to generate more than d features!" % n)
-        if not (Fastfood.is_number_power_of_two(d)):
-            # find d that fulfills 2^l
-            d = np.power(2, np.floor(np.log2(d)) + 1)
-            print("%s" % d)
-        divisor, remainder = divmod(n, d)
-        if remainder != 0:
-            # output info, that we increase n so that d is a divider of n
-            n = (divisor + 1) * d
-        return d, n
+        V = np.matrix(np.zeros((self.n, self.d)))
 
-
-    def __init__(self, sigma, n_components, random_state=None):
-        self.sigma = sigma
-        self.n_components = n_components
-        self.random_state = random_state
-
-    def fit(self, X, y=None):
-
-        d_orig = X.shape[1]
-
-        self.d, self.n = enforce_dimensionality_constraints(d_orig, self.n_components)
-
-        self.number_of_features_to_pad_with_zeros = self.d - d_orig
-        V = np.matrix(np.zeros((n, d)))
-
-        for i in range(int(np.round(n / d))):
+        for i in range(int(np.round(self.n / self.d))):
             # how to achive 1:3 = 1,2,3? efficiently?
-            V[i * self.d:(i + 1) * self.d, 0:self.d] = np.transpose(Fastfood.V(self.d, self.sigma))
+            V[i * self.d:(i + 1) * self.d, 0:self.d] = np.transpose(
+                Fastfood.V(self.s, self.g, self.b, self.P, self.d, self.sigma))
 
-        return V
+        X_padded = np.pad(X, ((0, 0), (0, self.number_of_features_to_pad_with_zeros)), 'constant')
 
+        print self.n, self.d, V.shape, X.shape, X_padded.shape, Fastfood.phi(V, X_padded).shape
 
-    def transform(self, X, y=None):
-        pass
+        return Fastfood.phi(V, X_padded).T
