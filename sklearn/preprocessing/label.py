@@ -532,7 +532,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
 
 
 def _inverse_binarize_multiclass(y, classes):
-    """Inverse label binarization transformation for multiclass. 
+    """Inverse label binarization transformation for multiclass.
 
     Multiclass uses the maximal score instead of a threshold.
     """
@@ -555,7 +555,7 @@ def _inverse_binarize_multiclass(y, classes):
                 c = classes[0]
             else:
                 # Mix of negative values and zeroes
-                c = classe[np.setdiff1d(outputs, y.indices[start:end])][0]
+                c = classes[np.setdiff1d(outputs, y.indices[start:end])][0]
 
             y_inverse[i] = classes[c]
 
@@ -564,13 +564,14 @@ def _inverse_binarize_multiclass(y, classes):
         return classes.take(y.argmax(axis=1), mode="clip")
 
 
-def _inverse_binarize_thresholding(y, y_type, classes, threshold):
+def _inverse_binarize_thresholding(y, output_type, classes, threshold):
     """Inverse label binarization transformation using thresholding."""
 
-    if y_type == "binary" and y.ndim == 2 and y.shape[1] != 1:
-        raise ValueError("y_type='binary', but y.shape = {0}".format(y.shape))
+    if output_type == "binary" and y.ndim == 2 and y.shape[1] != 1:
+        raise ValueError("output_type='binary', but y.shape = {0}".
+                         format(y.shape))
 
-    if y_type != "binary" and y.shape[1] != len(classes):
+    if output_type != "binary" and y.shape[1] != len(classes):
         raise ValueError("The number of class is not equal to the number of "
                          "dimension of y.")
 
@@ -589,7 +590,7 @@ def _inverse_binarize_thresholding(y, y_type, classes, threshold):
         y = np.array(y > threshold, dtype=np.int)
 
     # Inverse transform data
-    if y_type == "binary":
+    if output_type == "binary":
         if len(classes) == 1:
             y = np.empty(len(y), dtype=classes.dtype)
             y.fill(classes[0])
@@ -597,10 +598,10 @@ def _inverse_binarize_thresholding(y, y_type, classes, threshold):
         else:
             return classes[y.ravel()]
 
-    elif y_type == "multilabel-indicator":
+    elif output_type == "multilabel-indicator":
         return y
 
-    elif y_type == "multilabel-sequences":
+    elif output_type == "multilabel-sequences":
         warnings.warn('Direct support for sequence of sequences multilabel '
                       'representation will be unavailable from version 0.17. '
                       'Use sklearn.preprocessing.MultiLabelBinarizer to '
@@ -610,7 +611,7 @@ def _inverse_binarize_thresholding(y, y_type, classes, threshold):
         return mlb.inverse_transform(y)
 
     else:
-        raise ValueError("{0} format is not supported".format(y_type))
+        raise ValueError("{0} format is not supported".format(output_type))
 
 
 class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
