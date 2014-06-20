@@ -580,7 +580,7 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold):
     # Perform thresholding
     if sp.issparse(y):
         if threshold > 0:
-            if not y.format in ('csr', 'csc'):
+            if y.format not in ('csr', 'csc'):
                 y = y.tocsr()
             y.data = np.array(y.data > threshold, dtype=np.int)
             y.eliminate_zeros()
@@ -591,7 +591,7 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold):
 
     # Inverse transform data
     if output_type == "binary":
-        if  y.ndim == 2 and y.shape[1] == 2:
+        if y.ndim == 2 and y.shape[1] == 2:
             return classes[y[:, 1]]
         else:
             if len(classes) == 1:

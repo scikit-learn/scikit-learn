@@ -98,11 +98,11 @@ def test_label_binarizer_column_y():
     assert_array_equal(out_1, multilabel_indicator)
     assert_true(assert_warns(DeprecationWarning, getattr, lb_1, "multilabel_"))
     assert_false(assert_warns(DeprecationWarning, getattr, lb_1,
-        "indicator_matrix_"))
+                              "indicator_matrix_"))
 
     assert_array_equal(out_2, binaryclass_array)
     assert_false(assert_warns(DeprecationWarning, getattr, lb_2,
-                 "multilabel_"))
+                              "multilabel_"))
 
     # second for multiclass classification vs multi-label with multiple
     # classes
@@ -123,7 +123,7 @@ def test_label_binarizer_column_y():
 
     assert_array_equal(out_2, indicator)
     assert_false(assert_warns(DeprecationWarning, getattr, lb_2,
-        "multilabel_"))
+                              "multilabel_"))
 
 
 def test_label_binarizer_set_label_encoding():
@@ -441,9 +441,9 @@ def check_binarized_results(y, classes, pos_label, neg_label, expected):
             inversed = _inverse_binarize_thresholding(binarized,
                                                       output_type=y_type,
                                                       classes=classes,
-                                                      threshold=(neg_label +
+                                                      threshold=((neg_label +
                                                                  pos_label) /
-                                                                 2.)
+                                                                 2.))
 
         assert_array_equal(toarray(inversed), toarray(y))
 
@@ -497,10 +497,10 @@ def test_label_binarize_multilabel():
                expected)
 
     deprecation_message = ("Direct support for sequence of sequences " +
-                          "multilabel representation will be unavailable " +
-                          "from version 0.17. Use sklearn.preprocessing." +
-                          "MultiLabelBinarizer to convert to a label " +
-                          "indicator representation.")
+                           "multilabel representation will be unavailable " +
+                           "from version 0.17. Use sklearn.preprocessing." +
+                           "MultiLabelBinarizer to convert to a label " +
+                           "indicator representation.")
 
     assert_warns_message(DeprecationWarning, deprecation_message,
                          check_binarized_results, y_seq, classes, pos_label,
@@ -512,10 +512,10 @@ def test_label_binarize_multilabel():
 
 def test_deprecation_inverse_binarize_thresholding():
     deprecation_message = ("Direct support for sequence of sequences " +
-                          "multilabel representation will be unavailable " +
-                          "from version 0.17. Use sklearn.preprocessing." +
-                          "MultiLabelBinarizer to convert to a label " +
-                          "indicator representation.")
+                           "multilabel representation will be unavailable " +
+                           "from version 0.17. Use sklearn.preprocessing." +
+                           "MultiLabelBinarizer to convert to a label " +
+                           "indicator representation.")
 
     assert_warns_message(DeprecationWarning, deprecation_message,
                          _inverse_binarize_thresholding,
@@ -535,7 +535,7 @@ def test_inverse_binarize_multiclass():
     got = _inverse_binarize_multiclass(csr_matrix([[0, 1, 0],
                                                    [-1, 0, -1],
                                                    [0, 0, 0]]),
-        np.arange(3))
+                                       np.arange(3))
     assert_array_equal(got, np.array([1, 1, 0]))
 
 if __name__ == "__main__":
