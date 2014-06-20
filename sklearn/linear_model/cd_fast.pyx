@@ -132,6 +132,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     # initial value of the residuals
     cdef np.ndarray[DOUBLE, ndim=1] R = np.empty(n_samples)
 
+    cdef np.ndarray[np.int64_t, ndim=1] f_shuffle
+
     cdef np.ndarray[DOUBLE, ndim=1] XtA = np.empty(n_features)
     cdef double tmp
     cdef double w_ii
@@ -168,9 +170,14 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
         for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
+
+            with gil:
+                f_shuffle = rng.permutation(n_features)
+
             for f_iter in range(n_features):  # Loop over coordinates
-                with gil:
-                    ii = rng.randint(n_features)
+
+                # Update random feature
+                ii = f_shuffle[f_iter]
 
                 if norm_cols_X[ii] == 0.0:
                     continue
@@ -298,6 +305,8 @@ def sparse_enet_coordinate_descent(double[:] w,
     cdef double[:] X_T_R = np.zeros(n_features)
     cdef double[:] XtA = np.zeros(n_features)
 
+    cdef np.int64_t[:] f_shuffle
+
     cdef double tmp
     cdef double w_ii
     cdef double d_w_max
@@ -346,10 +355,13 @@ def sparse_enet_coordinate_descent(double[:] w,
             d_w_max = 0.0
             startptr = X_indptr[0]
 
+            with gil:
+                f_shuffle = rng.permutation(n_features)
+
             for f_iter in range(n_features):  # Loop over coordinates
 
-                with gil:
-                    ii = rng.randint(n_features)
+                # Update a random feature
+                ii = f_shuffle[f_iter]
 
                 if norm_cols_X[ii] == 0.0:
                     continue
@@ -481,6 +493,7 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
     cdef double[:] H = np.dot(Q, w)
 
     cdef double[:] XtA = np.zeros(n_features)
+    cdef np.int64_t[:] f_shuffle
     cdef double tmp
     cdef double w_ii
     cdef double d_w_max
@@ -507,10 +520,15 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
         for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
+
+            with gil:
+                f_shuffle = rng.permutation(n_features)
+
             for f_iter in range(n_features):  # Loop over coordinates
 
-                with gil:
-                    ii = rng.randint(n_features)
+                # Update a random feature
+                ii = f_shuffle[f_iter]
+
                 if Q[ii, ii] == 0.0:
                     continue
 
@@ -621,6 +639,7 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
     cdef double[:] norm_cols_X = np.zeros(n_features)
     cdef double[::1] tmp = np.zeros(n_tasks, dtype=np.float)
     cdef double[:] w_ii = np.zeros(n_tasks, dtype=np.float)
+    cdef np.int64_t[:] f_shuffle
     cdef double d_w_max
     cdef double w_max
     cdef double d_w_ii
@@ -663,10 +682,14 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
         for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
+
+            with gil:
+                f_shuffle = rng.permutation(n_features)
+
             for f_iter in range(n_features): # Loop over coordinates
 
-                with gil:
-                    ii = rng.randint(n_features)
+                # Update random feature
+                ii = f_shuffle[f_iter]
 
                 if norm_cols_X[ii] == 0.0:
                     continue
