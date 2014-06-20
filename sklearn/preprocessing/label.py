@@ -287,6 +287,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         Returns
         -------
         Y : numpy array of shape [n_samples, n_classes]
+            Shape will be [n_samples, 1] for binary problems.
         """
         self._check_fitted()
 
@@ -393,6 +394,7 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
     Returns
     -------
     Y : numpy array of shape [n_samples, n_classes]
+        Shape will be [n_samples, 1] for binary problems.
 
     Examples
     --------
