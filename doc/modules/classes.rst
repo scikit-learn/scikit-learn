@@ -161,7 +161,6 @@ Classes
    :toctree: generated/
    :template: class.rst
 
-   cross_validation.Bootstrap
    cross_validation.KFold
    cross_validation.LeaveOneLabelOut
    cross_validation.LeaveOneOut
