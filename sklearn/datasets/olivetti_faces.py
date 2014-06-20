@@ -72,6 +72,21 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         The seed or the random number generator used to shuffle the
         data.
 
+    Returns
+    -------
+    A Bunch object with the following attributes:
+        data : array of shape 400
+            Each face is an array of shape 4096 (reshaped)
+
+        images : array of shape 400
+            Each face image is an array of shape 64 x 64
+
+        target : array of shape 400
+            Labels of face images with values ranging between 0-39
+
+        DESCR : string
+            Description of the modified Olivetti Faces Dataset
+ 
     Notes
     ------
 
