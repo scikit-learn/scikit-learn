@@ -771,6 +771,9 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
+    full_recall : bool, optional
+        if false, positive samples with lowest probas are discarded
+
     Returns
     -------
     precision : array, shape = [n_thresholds + 1]
