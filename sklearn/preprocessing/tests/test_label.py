@@ -147,40 +147,6 @@ def test_label_binarizer_set_label_encoding():
     assert_array_equal(lb.inverse_transform(got), inp)
 
 
-def test_label_binarizer_multilabel():
-    lb = LabelBinarizer()
-
-    # test input as lists of tuples
-    inp = [(2, 3), (1,), (1, 2)]
-    indicator_mat = np.array([[0, 1, 1],
-                              [1, 0, 0],
-                              [1, 1, 0]])
-    got = assert_warns(DeprecationWarning, lb.fit_transform, inp)
-    assert_true(assert_warns(DeprecationWarning, getattr, lb, "multilabel_"))
-    assert_array_equal(indicator_mat, got)
-    got_inv = assert_warns(DeprecationWarning, lb.inverse_transform, got)
-    assert_equal(got_inv, inp)
-
-    # test input as label indicator matrix
-    lb.fit(indicator_mat)
-    assert_array_equal(indicator_mat,
-                       lb.inverse_transform(indicator_mat))
-
-    # regression test for the two-class multilabel case
-    lb = LabelBinarizer()
-    inp = [[1, 0], [0], [1], [0, 1]]
-    expected = np.array([[1, 1],
-                         [1, 0],
-                         [0, 1],
-                         [1, 1]])
-    got = assert_warns(DeprecationWarning, lb.fit_transform, inp)
-    assert_true(assert_warns(DeprecationWarning, getattr, lb, "multilabel_"))
-    assert_array_equal(expected, got)
-    got_inv = assert_warns(DeprecationWarning, lb.inverse_transform, got)
-    assert_equal([set(x) for x in got_inv],
-                 [set(x) for x in inp])
-
-
 @ignore_warnings
 def test_label_binarizer_errors():
     """Check that invalid arguments yield ValueError"""
@@ -247,74 +213,11 @@ def test_label_encoder_fit_transform():
     assert_array_equal(ret, [1, 1, 2, 0])
 
 
-def test_label_encoder_string_labels():
-    """Test LabelEncoder's transform and inverse_transform methods with
-    non-numeric labels"""
-    le = LabelEncoder()
-    le.fit(["paris", "paris", "tokyo", "amsterdam"])
-    assert_array_equal(le.classes_, ["amsterdam", "paris", "tokyo"])
-    assert_array_equal(le.transform(["tokyo", "tokyo", "paris"]),
-                       [2, 2, 1])
-    assert_array_equal(le.inverse_transform([2, 2, 1]),
-                       ["tokyo", "tokyo", "paris"])
-    assert_raises(ValueError, le.transform, ["london"])
-
-
 def test_label_encoder_errors():
     """Check that invalid arguments yield ValueError"""
     le = LabelEncoder()
     assert_raises(ValueError, le.transform, [])
     assert_raises(ValueError, le.inverse_transform, [])
-
-
-def test_label_binarizer_iris():
-    lb = LabelBinarizer()
-    Y = lb.fit_transform(iris.target)
-    clfs = [SGDClassifier().fit(iris.data, Y[:, k])
-            for k in range(len(lb.classes_))]
-    Y_pred = np.array([clf.decision_function(iris.data) for clf in clfs]).T
-    y_pred = lb.inverse_transform(Y_pred)
-    accuracy = np.mean(iris.target == y_pred)
-    y_pred2 = SGDClassifier().fit(iris.data, iris.target).predict(iris.data)
-    accuracy2 = np.mean(iris.target == y_pred2)
-    assert_almost_equal(accuracy, accuracy2)
-
-
-def test_label_binarizer_multilabel_unlabeled():
-    """Check that LabelBinarizer can handle an unlabeled sample"""
-    lb = LabelBinarizer()
-    y = [[1, 2], [1], []]
-    Y = np.array([[1, 1],
-                  [1, 0],
-                  [0, 0]])
-    assert_array_equal(assert_warns(DeprecationWarning,
-                                    lb.fit_transform, y), Y)
-
-
-def test_label_binarize_with_multilabel_indicator():
-    """Check that passing a binary indicator matrix is not noop"""
-
-    classes = np.arange(3)
-    neg_label = -1
-    pos_label = 2
-
-    y = np.array([[0, 1, 0], [1, 1, 1]])
-    expected = np.array([[-1, 2, -1], [2, 2, 2]])
-
-    # With label binarize
-    output = label_binarize(y, classes, neg_label=neg_label,
-                            pos_label=pos_label)
-    assert_array_equal(output, expected)
-
-    # With the transformer
-    lb = LabelBinarizer(pos_label=pos_label, neg_label=neg_label)
-    output = lb.fit_transform(y)
-    assert_array_equal(output, expected)
-    assert_true(assert_warns(DeprecationWarning, getattr, lb,
-                "indicator_matrix_"))
-
-    output = lb.fit(y).transform(y)
-    assert_array_equal(output, expected)
 
 
 def test_sparse_output_mutlilabel_binarizer():
@@ -509,7 +412,7 @@ def test_label_binarize_with_class_order():
     assert_array_equal(out, expected)
 
 
-def check_sparse_output(y, classes, pos_label, neg_label, expected):
+def check_binarized_results(y, classes, pos_label, neg_label, expected):
     for sparse_output in [True, False]:
         if ((pos_label == 0 or neg_label != 0) and sparse_output):
             assert_raises(ValueError, label_binarize, y, classes,
@@ -550,30 +453,30 @@ def check_sparse_output(y, classes, pos_label, neg_label, expected):
         assert_equal(issparse(inverse_output), issparse(y))
 
 
-def test_label_binarize_sparse_output_binary():
+def test_label_binarize_binary():
     y = [0, 1, 0]
     classes = [0, 1]
     pos_label = 2
     neg_label = -1
     expected = np.array([[2, -1], [-1, 2], [2, -1]])[:, 1].reshape((-1, 1))
 
-    yield check_sparse_output, y, classes, pos_label, neg_label, expected
+    yield check_binarized_results, y, classes, pos_label, neg_label, expected
 
 
-def test_label_binarize_sparse_output_multiclass():
+def test_label_binarize_multiclass():
     y = [0, 1, 2]
     classes = [0, 1, 2]
     pos_label = 2
     neg_label = 0
     expected = 2 * np.eye(3)
 
-    yield check_sparse_output, y, classes, pos_label, neg_label, expected
+    yield check_binarized_results, y, classes, pos_label, neg_label, expected
 
     assert_raises(ValueError, label_binarize, y, classes, neg_label=-1,
                   pos_label=pos_label, sparse_output=True)
 
 
-def test_label_binarize_sparse_output_multilabel():
+def test_label_binarize_multilabel():
     y_seq = [(1,), (0, 1, 2), tuple()]
     y_ind = np.array([[0, 1, 0], [1, 1, 1], [0, 0, 0]])
     classes = [0, 1, 2]
@@ -585,7 +488,8 @@ def test_label_binarize_sparse_output_multilabel():
                                       dok_matrix, lil_matrix]]
 
     for y in [y_ind] + y_sparse:
-        yield check_sparse_output, y, classes, pos_label, neg_label, expected
+        yield (check_binarized_results, y, classes, pos_label, neg_label,
+               expected)
 
     deprecation_message = ("Direct support for sequence of sequences " +
                           "multilabel representation will be unavailable " +
@@ -594,7 +498,7 @@ def test_label_binarize_sparse_output_multilabel():
                           "indicator representation.")
 
     assert_warns_message(DeprecationWarning, deprecation_message,
-                         check_sparse_output, y_seq, classes, pos_label,
+                         check_binarized_results, y_seq, classes, pos_label,
                          neg_label, expected)
 
     assert_raises(ValueError, label_binarize, y, classes, neg_label=-1,
