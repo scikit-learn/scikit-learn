@@ -58,7 +58,12 @@ def test_label_binarizer():
     assert_false(assert_warns(DeprecationWarning, getattr, lb, "multilabel_"))
     assert_array_equal(lb.classes_, ["neg", "pos"])
     assert_array_equal(expected, got)
-    assert_array_equal(lb.inverse_transform(got), inp)
+
+    to_invert = np.array([[1, 0],
+                          [0, 1],
+                          [0, 1],
+                          [1, 0]])
+    assert_array_equal(lb.inverse_transform(to_invert), inp)
 
     # multi-class case
     inp = ["spam", "ham", "eggs", "ham", "0"]

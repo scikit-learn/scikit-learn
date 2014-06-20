@@ -567,7 +567,7 @@ def _inverse_binarize_multiclass(y, classes):
 def _inverse_binarize_thresholding(y, output_type, classes, threshold):
     """Inverse label binarization transformation using thresholding."""
 
-    if output_type == "binary" and y.ndim == 2 and y.shape[1] != 1:
+    if output_type == "binary" and y.ndim == 2 and y.shape[1] > 2:
         raise ValueError("output_type='binary', but y.shape = {0}".
                          format(y.shape))
 
@@ -591,12 +591,15 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold):
 
     # Inverse transform data
     if output_type == "binary":
-        if len(classes) == 1:
-            y = np.empty(len(y), dtype=classes.dtype)
-            y.fill(classes[0])
-            return y
+        if  y.ndim == 2 and y.shape[1] == 2:
+            return classes[y[:, 1]]
         else:
-            return classes[y.ravel()]
+            if len(classes) == 1:
+                y = np.empty(len(y), dtype=classes.dtype)
+                y.fill(classes[0])
+                return y
+            else:
+                return classes[y.ravel()]
 
     elif output_type == "multilabel-indicator":
         return y
