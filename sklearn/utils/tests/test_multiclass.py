@@ -206,14 +206,14 @@ def test_unique_labels_non_specific():
 
 @ignore_warnings
 def test_unique_labels_mixed_types():
-    #Mix of multilabel-indicator and multilabel-sequences
+    # Mix of multilabel-indicator and multilabel-sequences
     mix_multilabel_format = product(EXAMPLES["multilabel-indicator"],
                                     EXAMPLES["multilabel-sequences"])
     for y_multilabel, y_multiclass in mix_multilabel_format:
         assert_raises(ValueError, unique_labels, y_multiclass, y_multilabel)
         assert_raises(ValueError, unique_labels, y_multilabel, y_multiclass)
 
-    #Mix with binary or multiclass and multilabel
+    # Mix with binary or multiclass and multilabel
     mix_clf_format = product(EXAMPLES["multilabel-indicator"] +
                              EXAMPLES["multilabel-sequences"],
                              EXAMPLES["multiclass"] +
