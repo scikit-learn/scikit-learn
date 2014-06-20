@@ -210,17 +210,17 @@ def test_label_binarizer_errors():
 
     # Fail on y_type
     assert_raises(ValueError, _inverse_binarize_thresholding,
-                  y=csr_matrix([[1, 2], [2, 1]]), y_type="foo", classes=[1, 2],
-                  threshold=0)
+                  y=csr_matrix([[1, 2], [2, 1]]), output_type="foo",
+                  classes=[1, 2], threshold=0)
 
     # Fail on the number of classes
     assert_raises(ValueError, _inverse_binarize_thresholding,
-                  y=csr_matrix([[1, 2], [2, 1]]), y_type="foo",
+                  y=csr_matrix([[1, 2], [2, 1]]), output_type="foo",
                   classes=[1, 2, 3], threshold=0)
 
     # Fail on the dimension of 'binary'
     assert_raises(ValueError, _inverse_binarize_thresholding,
-                  y=np.array([[1, 2, 3], [2, 1, 3]]), y_type="binary",
+                  y=np.array([[1, 2, 3], [2, 1, 3]]), output_type="binary",
                   classes=[1, 2, 3], threshold=0)
 
 
@@ -525,12 +525,13 @@ def check_sparse_output(y, classes, pos_label, neg_label, expected):
         assert_equal(issparse(binarized), sparse_output)
 
         # check inverse
-        if type_of_target(y) == "multiclass":
+        y_type = type_of_target(y)
+        if y_type == "multiclass":
             inversed = _inverse_binarize_multiclass(binarized, classes=classes)
 
         else:
             inversed = _inverse_binarize_thresholding(binarized,
-                                                      y_type=type_of_target(y),
+                                                      output_type=y_type,
                                                       classes=classes,
                                                       threshold=(neg_label +
                                                                  pos_label) /
@@ -610,7 +611,7 @@ def test_deprecation_inverse_binarize_thresholding():
     assert_warns_message(DeprecationWarning, deprecation_message,
                          _inverse_binarize_thresholding,
                          y=csr_matrix([[1, 0], [0, 1]]),
-                         y_type="multilabel-sequences",
+                         output_type="multilabel-sequences",
                          classes=[1, 2], threshold=0)
 
 
