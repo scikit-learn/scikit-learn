@@ -65,13 +65,15 @@ cdef class Criterion:
 # =============================================================================
 
 cdef struct SplitRecord:
-    # Data to track current and best split point
-    SIZE_t pos       # Set to >= end if the node is a leaf
-    SIZE_t feature
-    double threshold
-    double improvement
-    double impurity_left
-    double impurity_right
+    # Data to track sample split
+    SIZE_t feature         # Which feature to split on.
+    SIZE_t pos             # Split samples array at the given position,
+                           # i.e. count of samples below threshold for feature.
+                           # pos is >= end if the node is a leaf.
+    double threshold       # Threshold to split at.
+    double improvement     # Impurity improvement given parent node.
+    double impurity_left   # Impurity of the left split.
+    double impurity_right  # Impurity of the right split.
 
 
 cdef class Splitter:
