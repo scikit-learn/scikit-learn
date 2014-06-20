@@ -532,9 +532,11 @@ def test_invalid_input_label_binarize():
 
 
 def test_inverse_binarize_multiclass():
-    got = _inverse_binarize_multiclass(csr_matrix([[0, 1, 0], [-1, -1, -1]]),
+    got = _inverse_binarize_multiclass(csr_matrix([[0, 1, 0],
+                                                   [-1, 0, -1],
+                                                   [0, 0, 0]]),
         np.arange(3))
-    assert_array_equal(got, np.array([1, 0]))
+    assert_array_equal(got, np.array([1, 1, 0]))
 
 if __name__ == "__main__":
     import nose
