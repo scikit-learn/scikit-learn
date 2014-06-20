@@ -297,9 +297,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Calculate matrix of distances D between samples
         D, ij = l1_cross_distances(X)
-        if self._prohibitMultipleInputFeature(D):
-            raise Exception("Multiple input features cannot have the same"
-                            " value for non-noisy data.")
+        if self._repeated_samples_prohibited(D):
+            raise ValueError("Repeated samples (rows in X) are not allowed for noise-free models")
 
         # Regression matrix and parameters
         F = self.regr(X)
@@ -525,13 +524,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
                 return y
 
-    def _prohibitMultipleInputFeature(self, D):
+    def _repeated_samples_prohibited(self, D):
         """
         Multiple input features are only allowed for noisy data
         """
-        return self.nugget <= DEFAULT_NUGGET and \
-               np.min(np.sum(D, axis=1)) == 0. and \
-               self.corr != correlation.pure_nugget
+        return self.nugget <= DEFAULT_NUGGET and np.min(
+            np.sum(D, axis=1)) == 0. and self.corr != correlation.pure_nugget
 
 
     def reduced_likelihood_function(self, theta=None):
@@ -595,8 +593,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         if D is None:
             # Light storage mode (need to recompute D, ij and F)
             D, ij = l1_cross_distances(self.X)
-            if self._prohibitMultipleInputFeature(D):
-                raise Exception("Multiple X only make sense for noisy data")
+            if self._repeated_samples_prohibited(D):
+                raise ValueError("Repeated samples (rows in X) are not allowed for noise-free models")
             F = self.regr(self.X)
 
         # Set up R

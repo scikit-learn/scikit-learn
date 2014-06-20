@@ -8,7 +8,6 @@ from nose.tools import raises
 from nose.tools import assert_true
 
 import numpy as np
-import scipy.stats as ss
 
 from sklearn.gaussian_process import GaussianProcess
 from sklearn.gaussian_process import regression_models as regression
@@ -142,7 +141,7 @@ def test_no_normalize():
     assert_true(np.allclose(y_pred, y))
 
 
-@raises(Exception)
+@raises(ValueError)
 def test_no_multiple_feature():
     '''
     check that multiple features are not allowed for non-noisy data
@@ -172,7 +171,8 @@ def test_1d_noisy(regr=regression.constant, corr=correlation.absolute_exponentia
     X = np.atleast_2d([1., 3., 5., 6., 7., 8., 9., 10.] * 2).T
     x = np.atleast_2d(np.linspace(0, 10, 50)).T
 
-    y = f(X).ravel() + np.random.normal(0, 0.1, len(X))
+    rs = np.random.RandomState(0)
+    y = f(X).ravel() + rs.normal(0, 0.1, len(X))
 
     gp = GaussianProcess(regr=regr, corr=corr, beta0=beta0,
                          theta0=1e-2, thetaL=1e-4, thetaU=1e-1,
@@ -181,4 +181,3 @@ def test_1d_noisy(regr=regression.constant, corr=correlation.absolute_exponentia
 
     y = f(x).ravel()
     assert_true((np.abs(y_pred - y) <= (1.96 * MSE)  ).all())  #check that true value is within 95% conf. int.
-
