@@ -10,6 +10,7 @@ from sklearn.kernel_approximation import RBFSampler
 from sklearn.kernel_approximation import AdditiveChi2Sampler
 from sklearn.kernel_approximation import SkewedChi2Sampler
 from sklearn.kernel_approximation import Nystroem
+from sklearn.kernel_approximation import Fastfood
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
 
 # generate data
@@ -195,3 +196,17 @@ def test_nystroem_callable():
              n_components=(n_samples - 1),
              kernel_params={'log': kernel_log}).fit(X)
     assert_equal(len(kernel_log), n_samples * (n_samples - 1) / 2)
+
+def test_enfore_dimensionality_constraint():
+
+    yield assert_raises, ValueError, Fastfood.enforce_dimensionality_constraints, 20, 16
+
+    for message, input, expected in [
+        ('test n is scaled to be a multiple of d', (16, 20), (16, 32)),
+        ('test n equals d', (16, 16), (16, 16)),
+        ('test n becomes power of two', (3, 16), (4, 16)),
+        ('test all', (7, 12), (8, 16)),
+            ]:
+        d, n = input
+        output = Fastfood.enforce_dimensionality_constraints(d, n)
+        yield assert_equal, expected, output, message

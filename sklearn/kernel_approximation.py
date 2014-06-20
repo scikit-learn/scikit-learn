@@ -6,6 +6,7 @@ approximate kernel feature maps base on Fourier transforms.
 # Author: Andreas Mueller <amueller@ais.uni-bonn.de>
 #
 # License: BSD 3 clause
+from __builtin__ import staticmethod
 
 import warnings
 
@@ -494,3 +495,102 @@ class Nystroem(BaseEstimator, TransformerMixin):
             params['coef0'] = self.coef0
 
         return params
+
+
+class Fastfood(BaseEstimator, TransformerMixin):
+
+
+    @staticmethod
+    def random_gauss_vector(d):
+        return np.random.normal(size=d)
+
+    @staticmethod
+    def permutation_matrix(d):
+        return np.random.permutation(np.identity(d))
+
+    @staticmethod
+    def binary_vector(d):
+        return np.random.choice([-1, 1], size=d)
+
+    @staticmethod
+    def scaling_vector(d, G):
+        S = np.linalg.norm(np.random.normal(size=(d, d)), axis=0)
+        return S * (1 / np.sqrt(np.linalg.norm(G)))
+
+    @staticmethod
+    def is_number_power_of_two(n):
+        return n != 0 and ((n & (n - 1)) == 0)
+
+    @staticmethod
+    def create_vectors(d):
+        g = random_gauss(d)
+        P = permutation_matrix(d)
+        b = binary_vector(d)
+
+        return b, g, P
+
+    @staticmethod
+    def create_gaussian_iid_matrix(b, g, P):
+        HB = fht.fht(np.diag(b))
+
+        PHB = np.dot(P, HB)
+        HG = fht.fht(np.diag(g))
+        # HG = np.dot(H, G)
+
+        gaussian_iid = np.dot(HG, PHB)
+        return gaussian_iid
+
+    @staticmethod
+    def V(d,sigma):
+        B, G, PI = create_vectors(d)
+        S = scaling_vector(d, G)
+        gaussian_iid = create_gaussian_iid_matrix(B, G, PI)
+        gaussian = np.dot(np.diag(S),gaussian_iid);
+    
+        # H = (1 / (d * np.sqrt(2))) * hadamard(d)
+        # HB = np.dot(np.diag(H), B)
+    
+        SHGPIHB = np.dot(np.diag(S), gaussian)
+        return 1 / (sigma * np.sqrt(d)) * SHGPIHB
+
+    @staticmethod
+    def enforce_dimensionality_constraints(d, n):
+        if n < d:
+            # warn that this makes no sense for the rbf kernel, because we want to generate more than d features 
+            raise ValueError("Warning:\n"
+                             "n = %s makes no sense for the rbf kernel, "
+                             "because we want to generate more than d features!" % n)
+        if not (Fastfood.is_number_power_of_two(d)):
+            # find d that fulfills 2^l
+            d = np.power(2, np.floor(np.log2(d)) + 1)
+            print("%s" % d)
+        divisor, remainder = divmod(n, d)
+        if remainder != 0:
+            # output info, that we increase n so that d is a divider of n
+            n = (divisor + 1) * d
+        return d, n
+
+
+    def __init__(self, sigma, n_components, random_state=None):
+        self.sigma = sigma
+        self.n_components = n_components
+        self.random_state = random_state
+
+    def fit(self, X, y=None):
+
+        d_orig = X.shape[1]
+
+        self.d, self.n = enforce_dimensionality_constraints(d_orig, self.n_components)
+
+        self.number_of_features_to_pad_with_zeros = self.d - d_orig
+        V = np.matrix(np.zeros((n, d)))
+
+        for i in range(int(np.round(n / d))):
+            # how to achive 1:3 = 1,2,3? efficiently?
+            V[i * self.d:(i + 1) * self.d, 0:self.d] = np.transpose(Fastfood.V(self.d, self.sigma))
+
+        return V
+
+
+    def transform(self, X, y=None):
+        pass
