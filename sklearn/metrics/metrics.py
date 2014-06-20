@@ -37,9 +37,9 @@ from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 
 
-###############################################################################
+#
 # General utilities
-###############################################################################
+#
 def _check_reg_targets(y_true, y_pred):
     """Check that y_true and y_pred belong to the same regression task
 
@@ -159,7 +159,7 @@ def _average_and_variance(values, sample_weight=None):
         if sample_weight.ndim == 1:
             sample_weight = sample_weight.reshape((-1, 1))
     average = np.average(values, weights=sample_weight)
-    variance = np.average((values - average)**2, weights=sample_weight)
+    variance = np.average((values - average) ** 2, weights=sample_weight)
     return average, variance
 
 
@@ -232,9 +232,9 @@ class UndefinedMetricWarning(UserWarning):
     pass
 
 
-###############################################################################
+#
 # Classification metrics
-###############################################################################
+#
 def hinge_loss(y_true, pred_decision, pos_label=None, neg_label=None):
     """Average hinge loss (non-regularized)
 
@@ -738,7 +738,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
 
 def precision_recall_curve(y_true, probas_pred, pos_label=None,
-                           sample_weight=None, thresh_min=None):
+                           sample_weight=None, min_prediction=None):
     """Compute precision-recall pairs for different probability thresholds
 
     Note: this implementation is restricted to the binary classification task.
@@ -769,6 +769,9 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
+
+    min_prediction : float, optional (default=None)
+        Threshold below samples are no longer considered
 
     Returns
     -------
@@ -804,16 +807,16 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
                                              pos_label=pos_label,
                                              sample_weight=sample_weight)
 
-    N = tps[-1]
+    last_tps = tps[-1]
 
-    if thresh_min is not None:
-        thesh_mask = thresholds > thresh_min
+    if min_prediction is not None:
+        thesh_mask = thresholds > min_prediction
         tps = tps[thesh_mask]
         fps = fps[thesh_mask]
         thresholds = thresholds[thesh_mask]
 
     precision = tps / (tps + fps)
-    recall = tps / N
+    recall = tps / last_tps
 
     desc_recall_indx = np.argsort(recall)
 
@@ -1676,7 +1679,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     else:
         labels = np.asarray(labels)
 
-    ### Calculate tp_sum, pred_sum, true_sum ###
+    # Calculate tp_sum, pred_sum, true_sum ###
 
     if y_type.startswith('multilabel'):
         if y_type == 'multilabel-sequences':
@@ -1734,7 +1737,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
             true_sum = np.bincount(y_true, weights=sample_weight,
                                    minlength=len(labels))
 
-    ### Select labels to keep ###
+    # Select labels to keep ###
 
     if y_type == 'binary' and average is not None and pos_label is not None:
         if label_order is not None and len(label_order) == 2:
@@ -1761,7 +1764,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         pred_sum = np.array([pred_sum.sum()])
         true_sum = np.array([true_sum.sum()])
 
-    ### Finally, we have all our sufficient statistics. Divide! ###
+    # Finally, we have all our sufficient statistics. Divide! ###
 
     beta2 = beta ** 2
     with np.errstate(divide='ignore', invalid='ignore'):
@@ -1779,7 +1782,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                    (beta2 * precision + recall))
         f_score[tp_sum == 0] = 0.0
 
-    ## Average the results ##
+    # Average the results ##
 
     if average == 'weighted':
         weights = true_sum
@@ -2146,9 +2149,9 @@ def hamming_loss(y_true, y_pred, classes=None):
         raise ValueError("{0} is not supported".format(y_type))
 
 
-###############################################################################
+#
 # Regression metrics
-###############################################################################
+#
 def mean_absolute_error(y_true, y_pred, sample_weight=None):
     """Mean absolute error regression loss
 
@@ -2223,9 +2226,9 @@ def mean_squared_error(y_true, y_pred, sample_weight=None):
                       weights=sample_weight)
 
 
-###############################################################################
+#
 # Regression score functions
-###############################################################################
+#
 def explained_variance_score(y_true, y_pred, sample_weight=None):
     """Explained variance regression score function
 
