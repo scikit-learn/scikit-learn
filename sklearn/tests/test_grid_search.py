@@ -667,4 +667,8 @@ def test_grid_search_allows_nans():
         ('imputer', Imputer(strategy='mean', missing_values='NaN')),
         ('classifier', MockClassifier()),
     ])
+<<<<<<< HEAD
+    gs = GridSearchCV(p, {'classifier__foo_param': [1, 2, 3]}, cv=2).fit(X, y)
+=======
     GridSearchCV(p, {'classifier__foo_param': [1, 2, 3]}, cv=2).fit(X, y)
+>>>>>>> upstream/master

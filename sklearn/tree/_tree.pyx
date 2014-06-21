@@ -964,6 +964,10 @@ cdef class Splitter:
             else:
                 weighted_n_samples += 1.0
 
+<<<<<<< HEAD
+        self.samples = samples
+=======
+>>>>>>> upstream/master
         self.n_samples = j
         self.weighted_n_samples = weighted_n_samples
 

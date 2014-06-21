@@ -1129,7 +1129,11 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
         Array of scores of the estimator for each run of the cross validation.
     """
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True,
+<<<<<<< HEAD
+                        allow_nans=True)
+=======
                         allow_nans=True, allow_nd=True)
+>>>>>>> upstream/master
     if y is not None:
         y = np.asarray(y)
 

@@ -326,7 +326,11 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
     f = assert_warns_message
 
     def in_warn_message(msg):
+<<<<<<< HEAD
+        return 'Early stopping' in msg or 'Dropping regressor' in msg
+=======
         return 'Early stopping' in msg or 'Dropping a regressor' in msg
+>>>>>>> upstream/master
     lars_alphas, _, lars_coef = f(ConvergenceWarning,
                                   in_warn_message,
                                   linear_model.lars_path, X, y, method='lasso')

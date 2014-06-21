@@ -27,8 +27,13 @@ def test_barycenter_kneighbors_graph():
 
     A = barycenter_kneighbors_graph(X, 2)
     # check that columns sum to one
+<<<<<<< HEAD
+    assert_array_almost_equal(np.sum(A.todense(), 1), np.ones((3, 1)))
+    pred = np.dot(A.todense(), X)
+=======
     assert_array_almost_equal(np.sum(A.toarray(), 1), np.ones(3))
     pred = np.dot(A.toarray(), X)
+>>>>>>> upstream/master
     assert_less(linalg.norm(pred - X) / X.shape[0], 1)
 
 
@@ -50,7 +55,11 @@ def test_lle_simple_grid():
                                           random_state=rng)
     tol = 0.1
 
+<<<<<<< HEAD
+    N = barycenter_kneighbors_graph(X, clf.n_neighbors).todense()
+=======
     N = barycenter_kneighbors_graph(X, clf.n_neighbors).toarray()
+>>>>>>> upstream/master
     reconstruction_error = linalg.norm(np.dot(N, X) - X, 'fro')
     assert_less(reconstruction_error, tol)
 

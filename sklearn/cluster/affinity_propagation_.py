@@ -213,7 +213,11 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         Indices of cluster centers
 
     `cluster_centers_` : array, shape (n_clusters, n_features)
+<<<<<<< HEAD
+        Cluster centers (if affinity != ``precomputed'').
+=======
         Cluster centers (if affinity != ``precomputed``).
+>>>>>>> upstream/master
 
     `labels_` : array, shape (n_samples,)
         Labels of each point
