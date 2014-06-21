@@ -19,16 +19,8 @@ def _bisect_left(a, x):
 
 def _bisect_right(a, x):
     """Private function to perform bisect right operation"""
-    lo = 0
-    hi = a.shape[0]
-    while lo < hi:
-        mid = (lo + hi) // 2
-        # Only string length of x is considered when comparing.
-        if x < a[mid] and not a[mid][:len(x)] == x:
-            hi = mid
-        else:
-            lo = mid + 1
-    return lo
+    return np.searchsorted(np.array([item[:len(x)] for item in a]),
+                           x, side='right')
 
 
 def _find_matching_indices(sorted_array, item, h):
@@ -134,21 +126,22 @@ class LSHForest(BaseEstimator):
       >>> import numpy as np
       >>> from sklearn.neighbors import LSHForest
 
-      >>> X = np.random.randn(10000,5000)
+      >>> X = np.logspace(0, 3, num=50)
+      >>> X = X.reshape((10,5))
       >>> lshf.fit(X)
-      LSH_forest(c=50, hashing_algorithm='random_projections',
-      lower_bound=4, max_label_length=32, n_neighbors=None,
-      n_trees=10, seed=None)
+      LSHForest(c=50, hashing_algorithm='random_projections', lower_bound=4,
+           max_label_length=32, n_neighbors=None, n_trees=10, seed=None)
 
-      >>> lshf.kneighbors(X[:3], n_neighbors=5, return_distance=True)
-      (array([[   0, 4141, 7075, 6868, 4023],
-       [   1, 3589,  293, 5127, 3650],
-       [   2, 8002, 2869, 4980, 8628]]), array([[  0.  ,  96.77695265,
-       97.22573638,  97.630195  ,  97.66305502],
-       [  0.        ,  97.02907881,  97.80782362,  97.82990518,
-         97.90257593],
-       [  0.        ,  97.56281346,  98.47597898,  98.56080233,
-         98.64283293]]))
+      >>> lshf.kneighbors(X[:5], n_neighbors=3, return_distance=True)
+      (array([[0, 1, 2],
+             [1, 0, 2],
+             [2, 1, 0],
+             [3, 2, 1],
+             [4, 3, 2]]), array([[  0.        ,   3.15525015,   9.54018168],
+             [  0.        ,   3.15525015,   6.38493153],
+             [  0.        ,   6.38493153,   9.54018168],
+             [  0.        ,  12.92048135,  19.30541288],
+             [  0.        ,  26.1457523 ,  39.06623365]]))
 
     """
 

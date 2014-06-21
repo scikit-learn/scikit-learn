@@ -25,5 +25,5 @@ __all__ = ['BallTree',
            'RadiusNeighborsRegressor',
            'kneighbors_graph',
            'radius_neighbors_graph',
-           'KernelDensity'
+           'KernelDensity',
            'LSHForest']
