@@ -51,7 +51,7 @@ dont_test = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
              'LabelBinarizer', 'LabelEncoder', 'MultiLabelBinarizer',
              'TfidfTransformer', 'IsotonicRegression', 'OneHotEncoder',
              'RandomTreesEmbedding', 'FeatureHasher', 'DummyClassifier',
-             'DummyRegressor', 'TruncatedSVD', 'PolynomialFeatures']
+             'DummyRegressor', 'TruncatedSVD', 'PolynomialFeatures', 'RandomProjections']
 
 
 def multioutput_estimator_convert_y_2d(name, y):
