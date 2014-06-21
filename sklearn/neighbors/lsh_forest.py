@@ -128,6 +128,7 @@ class LSHForest(BaseEstimator):
 
       >>> X = np.logspace(0, 3, num=50)
       >>> X = X.reshape((10,5))
+      >>> lshf = LSHForest()
       >>> lshf.fit(X)
       LSHForest(c=50, hashing_algorithm='random_projections', lower_bound=4,
            max_label_length=32, n_neighbors=None, n_trees=10, seed=None)
