@@ -211,6 +211,14 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     array([[1, 0, 0, 0],
            [0, 0, 0, 1]])
 
+    Binary targets transform to a column vector
+    >>> lb = preprocessing.LabelBinarizer()
+    >>> lb.fit_transform(['yes', 'no', 'no', 'yes'])
+    array([[1],
+           [0],
+           [0],
+           [1]])
+
     >>> import numpy as np
     >>> lb.fit(np.array([[0, 1, 1], [1, 0, 0]]))
     LabelBinarizer(neg_label=0, pos_label=1)
@@ -279,6 +287,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         Returns
         -------
         Y : numpy array of shape [n_samples, n_classes]
+            Shape will be [n_samples, 1] for binary problems.
         """
         self._check_fitted()
 
@@ -385,6 +394,7 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
     Returns
     -------
     Y : numpy array of shape [n_samples, n_classes]
+        Shape will be [n_samples, 1] for binary problems.
 
     Examples
     --------
@@ -398,6 +408,14 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
     >>> label_binarize([1, 6], classes=[1, 6, 4, 2])
     array([[1, 0, 0, 0],
            [0, 1, 0, 0]])
+
+    Binary targets transform to a column vector
+
+    >>> label_binarize(['yes', 'no', 'no', 'yes'], classes=['no', 'yes'])
+    array([[1],
+           [0],
+           [0],
+           [1]])
 
     See also
     --------

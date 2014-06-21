@@ -708,8 +708,8 @@ class Bootstrap(object):
         else:
             raise ValueError("Invalid value for test_size: %r" % test_size)
         if self.test_size > n - self.train_size:
-            raise ValueError("test_size + train_size=%d, should not be " +
-                             "larger than n=%d" %
+            raise ValueError(("test_size + train_size=%d, should not be " +
+                              "larger than n=%d") %
                              (self.test_size + self.train_size, n))
 
         self.random_state = random_state
