@@ -7,6 +7,7 @@ Locality Sensitive Hashing Algorithms
 import numpy as np
 from abc import ABCMeta, abstractmethod
 from ..externals.six import with_metaclass
+from ..utils import check_random_state
 
 __all__ = ["RandomProjections"]
 
@@ -31,12 +32,12 @@ class BaseHash(with_metaclass(ABCMeta)):
 
     """
     @abstractmethod
-    def __init__(self, n_dim=None, hash_size=None, seed=1):
+    def __init__(self, n_dim=None, hash_size=None, random_state=1):
         if n_dim is None or hash_size is None:
             raise ValueError("n_dim or hash_size cannot be None.")
 
         self.n_dim = n_dim
-        self.random_state = np.random.RandomState(seed=seed)
+        self.random_state = random_state
         self.hash_size = hash_size
 
     def generate_hash_function(self):
@@ -56,17 +57,18 @@ class RandomProjections(BaseHash):
     .. [1] Wikipedia, "Random Projection", Avaliable[online]:
            http://en.wikipedia.org/wiki/Locality-sensitive_hashing#Random_projection
     """
-    def __init__(self, n_dim, hash_size, seed=1):
+    def __init__(self, n_dim, hash_size, random_state=1):
         super(RandomProjections, self).__init__(n_dim=n_dim,
                                                 hash_size=hash_size,
-                                                seed=seed)
+                                                random_state=random_state)
 
     def generate_hash_function(self):
         """
         Generates hyperplanes of shape (hash_size, n_dim) from standard
         normal distribution.
         """
-        return self.random_state.randn(self.hash_size, self.n_dim)
+        random_state = check_random_state(self.random_state)
+        return random_state.randn(self.hash_size, self.n_dim)
 
     def do_hash(self, input_point=None, hash_function=None):
         """

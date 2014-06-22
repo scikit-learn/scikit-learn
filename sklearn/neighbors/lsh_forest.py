@@ -19,8 +19,15 @@ def _bisect_left(a, x):
 
 def _bisect_right(a, x):
     """Private function to perform bisect right operation"""
-    return np.searchsorted(np.array([item[:len(x)] for item in a]),
-                           x, side='right')
+    lo = 0
+    hi = len(a)
+    while lo < hi:
+        mid = (lo+hi)//2
+        if x < a[mid] and not a[mid][:len(x)] == x:
+            hi = mid
+        else:
+            lo = mid + 1
+    return lo
 
 
 def _find_matching_indices(sorted_array, item, h):
@@ -79,7 +86,7 @@ class LSHForest(BaseEstimator):
     Parameters
     ----------
 
-    max_label_length: int, optional (default = 32)
+    max_label_length: int, optional(default = 32)
         Maximum length of a binary hash
 
     n_trees: int, optional (default = 10)
@@ -92,7 +99,7 @@ class LSHForest(BaseEstimator):
 
         -'random_projections': hash using :class:`RandomProjections`
 
-    c: int, optional (default = 10)
+    c: int, optional(default = 10)
         Threshold value to select candidates for nearest neighbors.
         Number of candidates is often greater than c*n_trees(unless
         restricted by lower_bound)
@@ -104,6 +111,9 @@ class LSHForest(BaseEstimator):
     lower_bound: int, optional(defualt = 4)
         lowerest hash length to be searched when candidate selection is
         performed for nearest neighbors.
+
+    random_state: float, optional(default = 0)
+        A random value to initialize random number generator.
 
     Attributes
     ----------
@@ -128,7 +138,6 @@ class LSHForest(BaseEstimator):
 
       >>> X = np.logspace(0, 3, num=50)
       >>> X = X.reshape((10,5))
-      >>> lshf = LSHForest()
       >>> lshf.fit(X)
       LSHForest(c=50, hashing_algorithm='random_projections', lower_bound=4,
            max_label_length=32, n_neighbors=None, n_trees=10, seed=None)
@@ -148,11 +157,11 @@ class LSHForest(BaseEstimator):
 
     def __init__(self, max_label_length=32, n_trees=10,
                  hashing_algorithm='random_projections',
-                 c=50, n_neighbors=1, lower_bound=4, seed=1):
+                 c=50, n_neighbors=1, lower_bound=4, random_state=0):
         self.max_label_length = max_label_length
         self.n_trees = n_trees
         self.hashing_algorithm = hashing_algorithm
-        self.random_state = np.random.RandomState(seed)
+        self.random_state = random_state
         self.c = c
         self.m = n_neighbors
         self.lower_bound = lower_bound
@@ -163,7 +172,9 @@ class LSHForest(BaseEstimator):
             raise ValueError("n_dim or hash_size cannot be None.")
 
         if self.hashing_algorithm == 'random_projections':
-            return RandomProjections(n_dim=n_dim, hash_size=hash_size)
+            return RandomProjections(n_dim=n_dim,
+                                     hash_size=hash_size,
+                                     random_state=self.random_state)
         else:
             raise ValueError("Unknown hashing algorithm: %s"
                              % (self.hashing_algorithm))
