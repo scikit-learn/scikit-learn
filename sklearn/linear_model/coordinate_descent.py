@@ -447,7 +447,10 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     positive = params.get('positive', False)
     max_iter = params.get('max_iter', 1000)
     dual_gaps = np.empty(n_alphas)
-    rng = check_random_state(params.get('random_state', None))
+
+    rng = params.get('random_state', None)
+    if rng is not None:
+        rng = check_random_state(rng)
     models = []
 
     if not multi_output:
@@ -706,7 +709,8 @@ class ElasticNet(LinearModel, RegressorMixin):
                           fit_intercept=False, normalize=False, copy_X=True,
                           verbose=False, tol=self.tol, positive=self.positive,
                           X_mean=X_mean, X_std=X_std,
-                          coef_init=coef_[k], max_iter=self.max_iter)
+                          coef_init=coef_[k], max_iter=self.max_iter,
+                          random_state=self.random_state)
             coef_[k] = this_coef[:, 0]
             dual_gaps_[k] = this_dual_gap[0]
 
@@ -1530,6 +1534,10 @@ class MultiTaskElasticNet(Lasso):
         X, y, X_mean, y_mean, X_std = center_data(
             X, y, self.fit_intercept, self.normalize, copy=False)
 
+        rng = None
+        if self.random_state is not None:
+            rng = check_random_state(self.random_state)
+
         if not self.warm_start or self.coef_ is None:
             self.coef_ = np.zeros((n_tasks, n_features), dtype=np.float64,
                                   order='F')
@@ -1541,8 +1549,7 @@ class MultiTaskElasticNet(Lasso):
 
         self.coef_, self.dual_gap_, self.eps_ = \
             cd_fast.enet_coordinate_descent_multi_task(
-                self.coef_, l1_reg, l2_reg, X, y, self.max_iter, self.tol,
-                check_random_state(self.random_state))
+                self.coef_, l1_reg, l2_reg, X, y, self.max_iter, self.tol, rng)
 
         self._set_intercept(X_mean, y_mean, X_std)
 

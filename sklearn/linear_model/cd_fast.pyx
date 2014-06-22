@@ -172,12 +172,16 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             d_w_max = 0.0
 
             with gil:
-                f_shuffle = rng.permutation(n_features)
+                if rng is not None:
+                    f_shuffle = rng.permutation(n_features)
 
             for f_iter in range(n_features):  # Loop over coordinates
 
-                # Update random feature
-                ii = f_shuffle[f_iter]
+                if rng is None:
+                    ii = f_iter
+                else:
+                    # Update random feature
+                    ii = f_shuffle[f_iter]
 
                 if norm_cols_X[ii] == 0.0:
                     continue
@@ -356,12 +360,16 @@ def sparse_enet_coordinate_descent(double[:] w,
             startptr = X_indptr[0]
 
             with gil:
-                f_shuffle = rng.permutation(n_features)
+                if rng is not None:
+                    f_shuffle = rng.permutation(n_features)
 
             for f_iter in range(n_features):  # Loop over coordinates
 
-                # Update a random feature
-                ii = f_shuffle[f_iter]
+                if rng is None:
+                    ii = f_iter
+                else:
+                    # Update random feature
+                    ii = f_shuffle[f_iter]
 
                 if norm_cols_X[ii] == 0.0:
                     continue
@@ -522,12 +530,16 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
             d_w_max = 0.0
 
             with gil:
-                f_shuffle = rng.permutation(n_features)
+                if rng is not None:
+                    f_shuffle = rng.permutation(n_features)
 
             for f_iter in range(n_features):  # Loop over coordinates
 
-                # Update a random feature
-                ii = f_shuffle[f_iter]
+                if rng is None:
+                    ii = f_iter
+                else:
+                    # Update random feature
+                    ii = f_shuffle[f_iter]
 
                 if Q[ii, ii] == 0.0:
                     continue
@@ -684,12 +696,16 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
             d_w_max = 0.0
 
             with gil:
-                f_shuffle = rng.permutation(n_features)
+                if rng is not None:
+                    f_shuffle = rng.permutation(n_features)
 
-            for f_iter in range(n_features): # Loop over coordinates
+            for f_iter in range(n_features):  # Loop over coordinates
 
-                # Update random feature
-                ii = f_shuffle[f_iter]
+                if rng is None:
+                    ii = f_iter
+                else:
+                    # Update random feature
+                    ii = f_shuffle[f_iter]
 
                 if norm_cols_X[ii] == 0.0:
                     continue
