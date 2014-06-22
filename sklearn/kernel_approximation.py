@@ -527,8 +527,9 @@ class Fastfood(BaseEstimator, TransformerMixin):
         g = Fastfood.random_gauss_vector(d, random_state)
         b = Fastfood.binary_vector(d, random_state)
         P = Fastfood.permutation_matrix(d, random_state)
+        s = Fastfood.scaling_vector(d, g, random_state)
 
-        return b, g, P
+        return b, g, P, s
 
     @staticmethod
     def enforce_dimensionality_constraints(d, n):
@@ -541,10 +542,12 @@ class Fastfood(BaseEstimator, TransformerMixin):
             # find d that fulfills 2^l
             d = np.power(2, np.floor(np.log2(d)) + 1)
         divisor, remainder = divmod(n, d)
+        times_to_stack_v = int(divisor)
         if remainder != 0:
             # output info, that we increase n so that d is a divider of n
             n = (divisor + 1) * d
-        return int(d), int(n)
+            times_to_stack_v = int(divisor+1)
+        return int(d), int(n),times_to_stack_v
 
 
     @staticmethod
@@ -572,37 +575,42 @@ class Fastfood(BaseEstimator, TransformerMixin):
 
         d_orig = X.shape[1]
 
-        self.d, self.n = Fastfood.enforce_dimensionality_constraints(d_orig, self.n_components)
-
+        self.d, self.n, self.times_to_stack_v = Fastfood.enforce_dimensionality_constraints(d_orig, self.n_components)
         self.number_of_features_to_pad_with_zeros = self.d - d_orig
+        
+        print self.times_to_stack_v,self.d
+        self.b = np.zeros((self.d, self.times_to_stack_v))
+        self.g = np.zeros((self.d, self.times_to_stack_v))
+        self.P = np.zeros((self.d, self.d, self.times_to_stack_v)) 
+        self.s = np.zeros((self.d, self.times_to_stack_v))
+        for stack in range(self.times_to_stack_v):
+            self.b[:, stack], self.g[:, stack], self.P[:, :, stack], self.s[:, stack] \
+                = Fastfood.create_vectors(self.d, check_random_state(self.random_state+stack))
 
-        self.b, self.g, self.P = Fastfood.create_vectors(self.d, rnd)
-        self.s = Fastfood.scaling_vector(self.d, self.g)
-
+        print "s:", self.s
         return self
-
+ 
     @staticmethod
     def create_gaussian_iid_matrix(b, g, P):
         HB = fht.fht(np.diag(b))
+        GP = np.dot(np.diag(g), P)
 
-        PHB = np.dot(P, HB)
-        HG = fht.fht(np.diag(g))
+        HGP = fht.fht(GP)
         # HG = np.dot(H, G)
 
-        gaussian_iid = np.dot(HG, PHB)
+        gaussian_iid = np.dot(HGP, HB)
         return gaussian_iid
 
     def transform(self, X):
 
         V = np.matrix(np.zeros((self.n, self.d)))
 
-        for i in range(int(np.round(self.n / self.d))):
-            # how to achive 1:3 = 1,2,3? efficiently?
+        for i in range(self.times_to_stack_v):
             V[i * self.d:(i + 1) * self.d, 0:self.d] = np.transpose(
-                Fastfood.V(self.s, self.g, self.b, self.P, self.d, self.sigma))
+                Fastfood.V(self.s[:, i], self.g[:, i], self.b[:, i], self.P[:, :, i], self.d, self.sigma))
 
         X_padded = np.pad(X, ((0, 0), (0, self.number_of_features_to_pad_with_zeros)), 'constant')
 
-        print self.n, self.d, V.shape, X.shape, X_padded.shape, Fastfood.phi(V, X_padded).shape
-
+        #print self.n, self.d, V.shape, X.shape, X_padded.shape, Fastfood.phi(V, X_padded).shape
+        print V
         return Fastfood.phi(V, X_padded).T

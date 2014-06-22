@@ -5,6 +5,8 @@ from sklearn.utils.testing import assert_array_equal, assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal, assert_raises
 
+from sklearn.utils import check_random_state
+
 from sklearn.metrics.pairwise import kernel_metrics
 from sklearn.kernel_approximation import RBFSampler
 from sklearn.kernel_approximation import AdditiveChi2Sampler
@@ -211,14 +213,14 @@ def test_enfore_dimensionality_constraint():
         output = Fastfood.enforce_dimensionality_constraints(d, n)
         yield assert_equal, expected, output, message
 
-def given_gaussian_iid_matrix(d):
-    b, g, P = Fastfood.create_vectors(d)
+def given_gaussian_iid_matrix(d, random_state):
+    b, g, P, _ = Fastfood.create_vectors(d, random_state)
     gaussian_iid = Fastfood.create_gaussian_iid_matrix(b, g, P)
     return b, g, P, gaussian_iid
 
 
 def test_rows_of_gaussian_iid_have_same_length():
-    _, _, _, gaussian_iid = given_gaussian_iid_matrix(8)
+    _, _, _, gaussian_iid = given_gaussian_iid_matrix(8, random_state=check_random_state(42))
     norm_of_all_rows = np.linalg.norm(gaussian_iid, axis=1)
 
     all(assert_array_almost_equal(n, norm_of_all_rows[0]) for n in norm_of_all_rows)
@@ -231,9 +233,10 @@ def test_fastfood():
     kernel = rbf_kernel(X, Y, gamma=gamma)
 
     # approximate kernel mapping
-    rbf_transform = Fastfood(sigma=np.sqrt(1/(2*gamma)), n_components=1000, random_state=42)
-    X_trans = rbf_transform.fit_transform(X)
-    Y_trans = rbf_transform.transform(Y)
+    rbf_transform = Fastfood(sigma=np.sqrt(1/(2*gamma))/20, n_components=4, random_state=42)
+    X_trans = rbf_transform.fit_transform(X[:, 0:3])
+    Y_trans = rbf_transform.transform(Y[:, 0:3])
+    #print X_trans, Y_trans
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
     assert_array_almost_equal(kernel, kernel_approx, 1)
