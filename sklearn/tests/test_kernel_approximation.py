@@ -124,6 +124,7 @@ def test_rbf_sampler():
     Y_trans = rbf_transform.transform(Y)
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
+
     assert_array_almost_equal(kernel, kernel_approx, 1)
 
 
@@ -199,15 +200,15 @@ def test_nystroem_callable():
              kernel_params={'log': kernel_log}).fit(X)
     assert_equal(len(kernel_log), n_samples * (n_samples - 1) / 2)
 
-def test_enfore_dimensionality_constraint():
+def test_enforce_dimensionality_constraint():
 
     yield assert_raises, ValueError, Fastfood.enforce_dimensionality_constraints, 20, 16
 
     for message, input, expected in [
-        ('test n is scaled to be a multiple of d', (16, 20), (16, 32)),
-        ('test n equals d', (16, 16), (16, 16)),
-        ('test n becomes power of two', (3, 16), (4, 16)),
-        ('test all', (7, 12), (8, 16)),
+        ('test n is scaled to be a multiple of d', (16, 20), (16, 32, 2)),
+        ('test n equals d', (16, 16), (16, 16, 1)),
+        ('test n becomes power of two', (3, 16), (4, 16, 4)),
+        ('test all', (7, 12), (8, 16, 2)),
             ]:
         d, n = input
         output = Fastfood.enforce_dimensionality_constraints(d, n)
@@ -233,10 +234,15 @@ def test_fastfood():
     kernel = rbf_kernel(X, Y, gamma=gamma)
 
     # approximate kernel mapping
-    rbf_transform = Fastfood(sigma=np.sqrt(1/(2*gamma))/20, n_components=4, random_state=42)
-    X_trans = rbf_transform.fit_transform(X[:, 0:3])
-    Y_trans = rbf_transform.transform(Y[:, 0:3])
+    rbf_transform = Fastfood(sigma=np.sqrt(1/(2*gamma))/12, n_components=1000, random_state=42)
+    X_trans = rbf_transform.fit_transform(X)
+    Y_trans = rbf_transform.transform(Y)
     #print X_trans, Y_trans
     kernel_approx = np.dot(X_trans, Y_trans.T)
+    
+    print kernel_approx[1:10,1:10]
+    print kernel[1:10,1:10]
+    
 
     assert_array_almost_equal(kernel, kernel_approx, 1)
+    raise

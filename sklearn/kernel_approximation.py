@@ -547,7 +547,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
             # output info, that we increase n so that d is a divider of n
             n = (divisor + 1) * d
             times_to_stack_v = int(divisor+1)
-        return int(d), int(n),times_to_stack_v
+        return int(d), int(n), times_to_stack_v
 
 
     @staticmethod
@@ -564,6 +564,17 @@ class Fastfood(BaseEstimator, TransformerMixin):
     def phi(V, X):
         return (1 / np.sqrt(V.shape[0])) * np.cos(np.dot(V, X.T))
 
+    @staticmethod
+    def create_gaussian_iid_matrix(b, g, P):
+        HB = fht.fht(np.diag(b))
+        GP = np.dot(np.diag(g), P)
+    
+        HGP = fht.fht(GP)
+        # HG = np.dot(H, G)
+    
+        gaussian_iid = np.dot(HGP, HB)
+        return gaussian_iid
+    
     def __init__(self, sigma, n_components, random_state=None):
         self.sigma = sigma
         self.n_components = n_components
@@ -577,29 +588,16 @@ class Fastfood(BaseEstimator, TransformerMixin):
 
         self.d, self.n, self.times_to_stack_v = Fastfood.enforce_dimensionality_constraints(d_orig, self.n_components)
         self.number_of_features_to_pad_with_zeros = self.d - d_orig
-        
-        print self.times_to_stack_v,self.d
+
         self.b = np.zeros((self.d, self.times_to_stack_v))
         self.g = np.zeros((self.d, self.times_to_stack_v))
         self.P = np.zeros((self.d, self.d, self.times_to_stack_v)) 
         self.s = np.zeros((self.d, self.times_to_stack_v))
         for stack in range(self.times_to_stack_v):
             self.b[:, stack], self.g[:, stack], self.P[:, :, stack], self.s[:, stack] \
-                = Fastfood.create_vectors(self.d, check_random_state(self.random_state+stack))
+                = Fastfood.create_vectors(self.d, rnd)
 
-        print "s:", self.s
         return self
- 
-    @staticmethod
-    def create_gaussian_iid_matrix(b, g, P):
-        HB = fht.fht(np.diag(b))
-        GP = np.dot(np.diag(g), P)
-
-        HGP = fht.fht(GP)
-        # HG = np.dot(H, G)
-
-        gaussian_iid = np.dot(HGP, HB)
-        return gaussian_iid
 
     def transform(self, X):
 
@@ -608,9 +606,9 @@ class Fastfood(BaseEstimator, TransformerMixin):
         for i in range(self.times_to_stack_v):
             V[i * self.d:(i + 1) * self.d, 0:self.d] = np.transpose(
                 Fastfood.V(self.s[:, i], self.g[:, i], self.b[:, i], self.P[:, :, i], self.d, self.sigma))
+            print V[i * self.d,1]
 
         X_padded = np.pad(X, ((0, 0), (0, self.number_of_features_to_pad_with_zeros)), 'constant')
 
         #print self.n, self.d, V.shape, X.shape, X_padded.shape, Fastfood.phi(V, X_padded).shape
-        print V
         return Fastfood.phi(V, X_padded).T
