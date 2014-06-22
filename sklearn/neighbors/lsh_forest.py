@@ -138,9 +138,10 @@ class LSHForest(BaseEstimator):
 
       >>> X = np.logspace(0, 3, num=50)
       >>> X = X.reshape((10,5))
+      >>> lshf = LSHForest()
       >>> lshf.fit(X)
       LSHForest(c=50, hashing_algorithm='random_projections', lower_bound=4,
-           max_label_length=32, n_neighbors=None, n_trees=10, seed=None)
+           max_label_length=32, n_neighbors=1, n_trees=10, seed=None)
 
       >>> lshf.kneighbors(X[:5], n_neighbors=3, return_distance=True)
       (array([[0, 1, 2],
@@ -157,13 +158,13 @@ class LSHForest(BaseEstimator):
 
     def __init__(self, max_label_length=32, n_trees=10,
                  hashing_algorithm='random_projections',
-                 c=50, n_neighbors=1, lower_bound=4, random_state=0):
+                 c=50, n_neighbors=1, lower_bound=4, random_state=None):
         self.max_label_length = max_label_length
         self.n_trees = n_trees
         self.hashing_algorithm = hashing_algorithm
         self.random_state = random_state
         self.c = c
-        self.m = n_neighbors
+        self.n_neighbors = n_neighbors
         self.lower_bound = lower_bound
 
     def _select_hashing_algorithm(self, n_dim, hash_size):
@@ -191,8 +192,8 @@ class LSHForest(BaseEstimator):
         binary_hashes = []
         for i in range(n_points):
             binary_hashes.append(
-                self.hash_generator.do_hash(self._input_array[i],
-                                            hash_function))
+                self._hash_generator.do_hash(self._input_array[i],
+                                             hash_function))
 
         return np.argsort(binary_hashes), np.sort(binary_hashes)
 
@@ -217,7 +218,7 @@ class LSHForest(BaseEstimator):
         self._input_array = safe_asarray(X)
         n_dim = self._input_array.shape[1]
 
-        self.hash_generator = self._select_hashing_algorithm(
+        self._hash_generator = self._select_hashing_algorithm(
             n_dim, self.max_label_length)
 
         # Creates a g(p,x) for each tree
@@ -226,7 +227,7 @@ class LSHForest(BaseEstimator):
         self._original_indices = []
         for i in range(self.n_trees):
             # This is g(p,x) for a particular tree.
-            hash_function = self.hash_generator.generate_hash_function()
+            hash_function = self._hash_generator.generate_hash_function()
             original_index, bin_hashes = self._create_tree(hash_function)
             self._original_indices.append(original_index)
             self._trees.append(bin_hashes)
@@ -252,7 +253,7 @@ class LSHForest(BaseEstimator):
         # descend phase
         max_depth = 0
         for i in range(self.n_trees):
-            bin_query = self.hash_generator.do_hash(
+            bin_query = self._hash_generator.do_hash(
                 query, self.hash_functions_[i])
             k = _find_longest_prefix_match(self._trees[i], bin_query)
             if k > max_depth:
@@ -294,12 +295,12 @@ class LSHForest(BaseEstimator):
             Returns the distances of neighbors if set to True.
         """
         if n_neighbors is not None:
-            self.m = n_neighbors
+            self.n_neighbors = n_neighbors
         X = safe_asarray(X)
         x_dim = X.ndim
 
         if x_dim == 1:
-            neighbors, distances = self._query(X, self.m)
+            neighbors, distances = self._query(X, self.n_neighbors)
             if return_distance:
                 return np.array([neighbors]), np.array([distances])
             else:
@@ -307,7 +308,40 @@ class LSHForest(BaseEstimator):
         else:
             neighbors, distances = [], []
             for i in range(X.shape[0]):
-                neighs, dists = self._query(X[i], self.m)
+                neighs, dists = self._query(X[i], self.n_neighbors)
                 neighbors.append(neighs)
                 distances.append(dists)
             return np.array(neighbors), np.array(distances)
+
+    def insert(self, item):
+        """
+        Inserts a new data point into the LSH Forest.
+
+        Parameters
+        ----------
+
+        item: array_like, shape (n_features, )
+            New data point to be inserted into the LSH Forest.
+        """
+        item = safe_asarray(item)
+
+        if item.ndim != 1:
+            raise ValueError("item shoud be a 1-D vector.")
+        if item.shape[0] != self._input_array.shape[1]:
+            raise ValueError("Number of features in item and"
+                             " fitted array does not match.")
+
+        input_array_shape = self._input_array.shape[0]
+        for i in range(self.n_trees):
+            bin_query = self._hash_generator.do_hash(
+                item, self.hash_functions_[i])
+            # gets the position to be added in the tree.
+            position = self._trees[i].searchsorted(bin_query)
+            # adds the hashed value into the tree.
+            self._trees[i].itemset(position, bin_query)
+            # add the entry into the original_indices.
+            self._original_indices[i].itemset(position,
+                                              input_array_shape)
+
+        # adds the entry into the input_array.
+        self._input_array = np.row_stack((self._input_array, item))
