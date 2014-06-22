@@ -1,7 +1,8 @@
 import numpy as np
 from scipy.sparse import csr_matrix
+import datetime
 
-from sklearn.utils.testing import assert_array_equal, assert_equal
+from sklearn.utils.testing import assert_array_equal, assert_equal,assert_greater
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal, assert_raises
 
@@ -246,3 +247,31 @@ def test_fastfood():
 
     assert_array_almost_equal(kernel, kernel_approx, 1)
     raise
+
+def test_fastfood_perormance_to_rks():
+    """test that Fastfood approximates kernel on random data"""
+    # compute exact kernel
+    gamma = 10.
+    
+    fastfood_start = datetime.datetime.utcnow()
+    # Fastfood: approximate kernel mapping
+    rbf_transform = Fastfood(sigma=np.sqrt(1/(2*gamma))/12, n_components=1000, random_state=42)
+    X_trans_fastfood = rbf_transform.fit_transform(X)
+    Y_trans_fastfood = rbf_transform.transform(Y)
+    fastfood_end = datetime.datetime.utcnow()
+    fastfood_spent_time =fastfood_end- fastfood_start
+#print X_trans, Y_trans
+    #kernel_approx = np.dot(X_trans_fastfood, Y_trans_fastfood.T)
+
+    rks_start = datetime.datetime.utcnow()
+    # Random Kitchens Sinks: approximate kernel mapping
+    rks_rbf_transform = RBFSampler(gamma=gamma, n_components=1000, random_state=42)
+    X_trans_rks = rks_rbf_transform.fit_transform(X)
+    Y_trans_rks = rks_rbf_transform.transform(Y)
+    rks_end = datetime.datetime.utcnow()
+    rks_spent_time =rks_end- rks_start
+    print fastfood_spent_time,rks_spent_time
+
+    assert_greater(rks_spent_time,fastfood_spent_time)
+    #kernel_approx = np.dot(X_trans_rks, Y_trans_rks.T)
+    
