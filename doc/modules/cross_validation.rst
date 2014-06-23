@@ -382,48 +382,32 @@ See also
 stratified splits, *i.e* which creates splits by preserving the same
 percentage for each target class as in the complete set.
 
-.. _Bootstrap:
-
-Bootstrapping cross-validation
-------------------------------
-
-:class:`Bootstrap`
-
-Bootstrapping_ is a general statistics technique that iterates the
-computation of an estimator on a resampled dataset.
-
-The :class:`Bootstrap` iterator will generate a user defined number
-of independent train / test dataset splits. Samples are then drawn
-(with replacement) on each side of the split. It furthermore possible
-to control the size of the train and test subset to make their union
-smaller than the total dataset if it is very large.
-
-.. note::
-
-  Contrary to other cross-validation strategies, bootstrapping
-  will allow some samples to occur several times in each splits.
-
-.. _Bootstrapping: http://en.wikipedia.org/wiki/Bootstrapping_%28statistics%29
-
-  >>> bs = cross_validation.Bootstrap(9, n_iter=3, random_state=0)
-  >>> for train_index, test_index in bs:
-  ...     print("%s %s" % (train_index, test_index))
-  ...
-  [1 8 7 7 8] [0 3 0 5]
-  [5 4 2 4 2] [6 7 1 0]
-  [4 7 0 1 1] [5 3 6 5]
-
 A note on shuffling
 ===================
 
-If the data ordering is not arbitrary (e.g. samples with the same label are contiguous), shuffling it first may be essential to getting a meaningful cross-validation result. However, the opposite may be true if the samples are not independent and identically distributed. For example if samples correspond to news articles, and are ordered by their time of publication, then shuffling the data will likely lead to a model that is overfit and an inflated validation score: it will be tested on samples that are artificially similar (close in time) to training samples.
+If the data ordering is not arbitrary (e.g. samples with the same label are
+contiguous), shuffling it first may be essential to get a meaningful cross-
+validation result. However, the opposite may be true if the samples are not
+independently and identically distributed. For example, if samples correspond
+to news articles, and are ordered by their time of publication, then shuffling
+the data will likely lead to a model that is overfit and an inflated validation
+score: it will be tested on samples that are artificially similar (close in
+time) to training samples.
 
-Some cross validation iterators, such as :class:`KFold`, have an inbuilt option to shuffle the data indices before splitting them. Note that:
+Some cross validation iterators, such as :class:`KFold`, have an inbuilt option
+to shuffle the data indices before splitting them. Note that:
 
 * This consumes less memory than shuffling the data directly.
-* By default no shuffling occurs, including for the (stratified) K fold cross-validation performed by specifying ``cv=some_integer`` to :func:`cross_val_score`, grid search, etc. Keep in mind that :func:`train_test_split` still returns a random split.
-* The ``random_state`` parameter defaults to ``None``, meaning that the shuffling will be different every time ``KFold(..., shuffle=True)`` is iterated. However, ``GridSearchCV`` will use the same shuffling for each set of parameters validated by a single call to its ``fit`` method.
-* To ensure results are repeatable (*on the same platform*), use a fixed value for ``random_state``.
+* By default no shuffling occurs, including for the (stratified) K fold cross-
+  validation performed by specifying ``cv=some_integer`` to
+  :func:`cross_val_score`, grid search, etc. Keep in mind that
+  :func:`train_test_split` still returns a random split.
+* The ``random_state`` parameter defaults to ``None``, meaning that the
+  shuffling will be different every time ``KFold(..., shuffle=True)`` is
+  iterated. However, ``GridSearchCV`` will use the same shuffling for each set
+  of parameters validated by a single call to its ``fit`` method.
+* To ensure results are repeatable (*on the same platform*), use a fixed value
+  for ``random_state``.
 
 Cross validation and model selection
 ====================================

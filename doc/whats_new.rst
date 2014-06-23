@@ -240,6 +240,10 @@ API changes summary
    - :class:`cluster.WardClustering` is deprecated. Use
    - :class:`cluster.AgglomerativeClustering` instead.
 
+   - :class:`cross_validation.Bootstrap` is deprecated.
+     :class:`cross_validation.KFold` or
+     :class:`cross_validation.ShuffleSplit` are recommended instead.
+
    - Direct support for the sequence of sequences (or list of lists) multilabel
      format is deprecated. To convert to and from the supported binary
      indicator matrix format, use
@@ -305,6 +309,9 @@ API changes summary
    - Fix :func:`utils.compute_class_weight` when class_weight is "auto".
      Previously it was broken for input of non-int dtype and the weighted
      array that was returned was wrong. By `Manoj Kumar`_.
+
+   - Fix :class:`cross_validation.Bootstrap` to return ``ValueError``
+     when `n_train` + `n_test` > `n`. By `Ronald Phlypo`_.
 
 .. _changes_0_14:
 
@@ -2548,3 +2555,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Jeffrey Blackburne: https://github.com/jblackburne
 
 .. _Hamzeh Alsalhi: https://github.com/hamsal
+
+.. _Ronald Phlypo: https://github.com/rphlypo

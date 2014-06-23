@@ -757,7 +757,8 @@ def test_cross_val_generator_with_indices():
                         labels, indices=True)
     lopo = assert_warns(DeprecationWarning, cval.LeavePLabelOut,
                         labels, 2, indices=True)
-    b = cval.Bootstrap(2)  # only in index mode
+    # Bootstrap as a cross-validation is deprecated
+    b = assert_warns(DeprecationWarning, cval.Bootstrap, 2)
     ss = assert_warns(DeprecationWarning, cval.ShuffleSplit,
                       2, indices=True)
     for cv in [loo, lpo, kf, skf, lolo, lopo, b, ss]:
@@ -768,6 +769,7 @@ def test_cross_val_generator_with_indices():
             y_train, y_test = y[train], y[test]
 
 
+@ignore_warnings
 def test_cross_val_generator_with_default_indices():
     X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     y = np.array([1, 1, 2, 2])
@@ -816,14 +818,16 @@ def test_cross_val_generator_mask_indices_same():
             assert_array_equal(np.where(train_mask)[0], train_ind)
             assert_array_equal(np.where(test_mask)[0], test_ind)
 
-
+@ignore_warnings
 def test_bootstrap_errors():
     assert_raises(ValueError, cval.Bootstrap, 10, train_size=100)
     assert_raises(ValueError, cval.Bootstrap, 10, test_size=100)
     assert_raises(ValueError, cval.Bootstrap, 10, train_size=1.1)
     assert_raises(ValueError, cval.Bootstrap, 10, test_size=1.1)
+    assert_raises(ValueError, cval.Bootstrap, 10, train_size=0.6,
+                  test_size=0.5)
 
-
+@ignore_warnings
 def test_bootstrap_test_sizes():
     assert_equal(cval.Bootstrap(10, test_size=0.2).test_size, 2)
     assert_equal(cval.Bootstrap(10, test_size=2).test_size, 2)

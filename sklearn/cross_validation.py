@@ -676,6 +676,11 @@ class Bootstrap(object):
 
     def __init__(self, n, n_iter=3, train_size=.5, test_size=None,
                  random_state=None, n_bootstraps=None):
+        # See, e.g., http://youtu.be/BzHz0J9a6k0?t=9m38s for a motivation
+        # behind this deprecation
+        warnings.warn("Bootstrap will no longer be supported as a " +
+                      "cross-validation method as of version 0.15 and " +
+                      "will be removed in 0.17", DeprecationWarning)
         self.n = n
         if n_bootstraps is not None:  # pragma: no cover
             warnings.warn("n_bootstraps was renamed to n_iter and will "
@@ -702,9 +707,10 @@ class Bootstrap(object):
             self.test_size = self.n - self.train_size
         else:
             raise ValueError("Invalid value for test_size: %r" % test_size)
-        if self.test_size > n:
-            raise ValueError("test_size=%d should not be larger than n=%d" %
-                             (self.test_size, n))
+        if self.test_size > n - self.train_size:
+            raise ValueError(("test_size + train_size=%d, should not be " +
+                              "larger than n=%d") %
+                             (self.test_size + self.train_size, n))
 
         self.random_state = random_state
 
@@ -1191,8 +1197,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
     Returns
     -------
     train_score : float, optional
-        Score on training set, returned only if `return_train_score` is `True`. 
-        
+        Score on training set, returned only if `return_train_score` is `True`.
+
     test_score : float
         Score on test set.
 
