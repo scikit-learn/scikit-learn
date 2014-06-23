@@ -243,8 +243,8 @@ def test_fastfood():
     #print X_trans, Y_trans
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
-    print kernel_approx[1:10,1:10]
-    print kernel[1:10,1:10]
+    print 'approximation:', kernel_approx[1:10,1:10]
+    print 'true kernel:', kernel[1:10,1:10]
 
     assert_array_almost_equal(kernel, kernel_approx, 1)
     raise
