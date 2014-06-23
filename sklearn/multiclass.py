@@ -129,7 +129,8 @@ class _ConstantPredictor(BaseEstimator):
         return np.repeat(self.y_, X.shape[0])
 
     def predict_proba(self, X):
-        return np.repeat([[0, 1]], X.shape[0], axis=0)
+        return np.repeat([np.hstack([1 - self.y_, self.y_])],
+                         X.shape[0], axis=0)
 
 
 class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
