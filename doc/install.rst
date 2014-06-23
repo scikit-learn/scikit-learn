@@ -295,7 +295,13 @@ Testing requires having the `nose
 installation, the package can be tested by executing *from outside* the
 source directory::
 
-    nosetests sklearn --exe
+   $ nosetests -v sklearn
+
+Under Windows, it is recommended to use the following command (adjust the path
+to the ``python.exe`` program) as using the ``nosetests.exe`` program can badly
+interact with tests that use ``multiprocessing``::
+
+   C:\Python34\python.exe -c "import nose; nose.main()" -v sklearn
 
 This should give you a lot of output (and some warnings) but
 eventually should finish with a message similar to::
