@@ -172,10 +172,10 @@ def _logistic_loss_grad_hess(w, X, y, alpha):
     return out, grad, Hs
 
 
-def logistic_regression_path(X, y, Cs=10, fit_intercept=True,
+def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              max_iter=100, tol=1e-4, verbose=0,
                              solver='liblinear', callback=None,
-                             coef=None):
+                             coef=None, copy=False):
     """Compute a Logistic Regression model for a list of regularization
     parameters.
 
@@ -196,6 +196,10 @@ def logistic_regression_path(X, y, Cs=10, fit_intercept=True,
         the number of regularization parameters that should be used. In this
         case, the parameters will be chosen in a logarithmic scale between
         1e-4 and 1e4.
+
+    pos_class: int, None
+        The class with respect to which we perform a one-vs-all fit.
+        If None, then it is assumed that the given problem is binary.
 
     fit_intercept : boolean
         Whether to fit an intercept for the model. In this case the shape of
@@ -222,6 +226,12 @@ def logistic_regression_path(X, y, Cs=10, fit_intercept=True,
     coef: array-lime, shape (n_features,)
         Initialization value for coefficients of logistic regression.
 
+    copy: boolean
+        Whether or not to produce a copy of the data. Setting this to
+        True will be useful in cases, when logistic_regression_path
+        is called repeatedly with the same data, as y is modified
+        along the path.
+
     Returns
     -------
     coefs: ndarray, shape (n_cs, n_features) or (n_cs, n_features + 1)
@@ -237,12 +247,20 @@ def logistic_regression_path(X, y, Cs=10, fit_intercept=True,
     if isinstance(Cs, numbers.Integral):
         Cs = np.logspace(-4, 4, Cs)
 
-    y = np.sign(y - np.asarray(y).mean())
     X = atleast2d_or_csc(X, dtype=np.float64)
-    X, y = check_arrays(X, y, copy=False)
-    if not (np.unique(y).size == 2):
-        raise NotImplementedError('logistic_regression_path is currently only '
-                                  'implemented for the binary class case')
+    X, y = check_arrays(X, y, copy=copy)
+
+    if pos_class is None:
+        n_classes = np.unique(y)
+        if not (n_classes.size == 2):
+            raise ValueError('To fit OvA, use the pos_class argument')
+        # np.unique(y) gives labels in sorted order.
+        pos_class = n_classes[1]
+
+    mask = (y == pos_class)
+    y[mask] = 1
+    y[~mask] = -1
+
     if fit_intercept:
         w0 = np.zeros(X.shape[1] + 1)
     else:
@@ -293,8 +311,8 @@ def logistic_regression_path(X, y, Cs=10, fit_intercept=True,
 
 
 # helper function for LogisticCV
-def _log_reg_scoring_path(X, y, train, test, Cs=10, scoring=None,
-                          fit_intercept=False,
+def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
+                          scoring=None, fit_intercept=False,
                           max_iter=100, tol=1e-4,
                           verbose=0, method='liblinear'):
     """Computes scores across logistic_regression_path
@@ -312,6 +330,10 @@ def _log_reg_scoring_path(X, y, train, test, Cs=10, scoring=None,
 
     test : list of indices
         The indices of the test set
+
+    pos_class: int, None
+        The class with respect to which we perform a one-vs-all fit.
+        If None, then it is assumed that the given problem is binary.
 
     Cs: list of floats, integer
         Each of the values in Cs describes the inverse of
@@ -339,18 +361,33 @@ def _log_reg_scoring_path(X, y, train, test, Cs=10, scoring=None,
     method : {'lbfgs', 'newton-cg', 'liblinear'}
         Decides which solver to use.
     """
+
     log_reg = LogisticRegression(fit_intercept=fit_intercept)
     log_reg._enc = LabelEncoder()
     log_reg._enc.fit_transform([-1, 1])
 
-    coefs, Cs = logistic_regression_path(X[train], y[train], Cs=Cs,
+    X_train = X[train]
+    X_test = X[test]
+    y_train = y[train]
+    y_test = y[test]
+
+    if pos_class is not None:
+        # In order to avoid a copy in y, mask test and train separately
+        mask = (y_train == pos_class)
+        y_train[mask] = 1
+        y_train[~mask] = -1
+        mask = (y_test == pos_class)
+        y_test[mask] = 1
+        y_test[~mask] = -1
+
+    coefs, Cs = logistic_regression_path(X_train, y_train, Cs=Cs,
                                          fit_intercept=fit_intercept,
                                          solver=method,
                                          max_iter=max_iter,
                                          tol=tol, verbose=verbose)
+
     scores = list()
-    X_test = X[test]
-    y_test = y[test]
+
     if isinstance(scoring, six.string_types):
         scoring = SCORERS[scoring]
     for w in coefs:
@@ -549,27 +586,38 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
 
     Attributes
     ----------
-    `coef_` : array, shape (n_classes-1, n_features)
+    `coef_` : array, shape (1, n_features) or
+              (n_classes, n_features)
         Coefficient of the features in the decision function.
 
+        `coef_` is of shape (1, n_features) when the given problem
+        is binary.
         `coef_` is readonly property derived from `raw_coef_` that \
         follows the internal memory layout of liblinear.
 
-    `intercept_` : array, shape (n_classes-1)
+    `intercept_` : array, shape (1,) or (n_classes,)
         Intercept (a.k.a. bias) added to the decision function.
-        It is available only when parameter intercept is set to True.
+        It is available only when parameter intercept is set to True
+        and is of shape(1,) when the problem is binary.
 
     `Cs_` : array
         Array of C i.e inverse of regularization parameter values used
         for cross-validation.
 
-    `coefs_paths_` : array, shape (n_folds, len(Cs_), n_features + 1) or
+    `coefs_paths_` : array, shape (n_folds, len(Cs_), n_features) or
                      (n_folds, len(Cs_), n_features + 1)
-        path of coefficients obtained during cross-validating across each
-        fold and then across each Cs.
+        dict with classes as the keys, and the path of coefficients obtained
+        during cross-validating across each fold and then across each Cs
+        after doing an OvA for the corresponding class.
+        Each dict value has shape (n_folds, len(Cs_), n_features) or
+        (n_folds, len(Cs_), n_features + 1) depending on whether the
+        intercept is fit or not.
 
-    `scores_` : array, shape (n_folds, len(Cs_))
-        grid of scores obtained during cross-validating each fold.
+    `scores_` : dict
+        dict with classes as the keys, and the values as the
+        grid of scores obtained during cross-validating each fold, after doing
+        an OvA for the corresponding class.
+        Each dict value has shape (n_folds, len(Cs))
 
     See also
     --------
@@ -600,7 +648,7 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
             n_features is the number of features.
 
         y : array-like, shape (n_samples,)
-            Target vector relative to X
+            Target vector relative to X.
 
         Returns
         -------
@@ -609,19 +657,23 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
         """
         X = atleast2d_or_csc(X, dtype=np.float64)
         X, y = check_arrays(X, y, copy=False)
-        self._lb = LabelBinarizer(neg_label=-1, pos_label=1)
-        y = np.squeeze(self._lb.fit_transform(y))
-        if len(self.classes_) != 2:
-            raise ValueError("LogisticRegressionCV works only on 2 "
-                             "class problems. Please use "
-                             "OneVsOneClassifier or OneVsRestClassifier")
 
         # init cross-validation generator
         cv = check_cv(self.cv, X, y, classifier=True)
         folds = list(cv)
 
+        self.classes_ = labels = np.unique(y)
+        n_classes = len(labels)
+
+        if n_classes == 2:
+            # OvA in case of binary problems is as good as fitting
+            # the higher label
+            n_classes = 1
+            labels = labels[1:]
+
         fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                             delayed(_log_reg_scoring_path)(X, y, train, test,
+                                        pos_class=label,
                                         Cs=self.Cs,
                                         fit_intercept=self.fit_intercept,
                                         method=self.solver,
@@ -630,29 +682,42 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
                                         verbose=max(0, self.verbose - 1),
                                         scoring=self.scoring,
                                     )
+                              for label in labels
                               for train, test in folds
                             )
         coefs_paths, Cs, scores = zip(*fold_coefs_)
+
         self.Cs_ = Cs[0]
-        self.coefs_paths_ = coefs_paths
-        self.scores_ = np.array(scores)
-        best_index = self.scores_.sum(axis=0).argmax()
-        self.C_ = self.Cs_[best_index]
-        coef_init = np.mean([c[best_index] for c in coefs_paths], axis=0)
-        w, _ = logistic_regression_path(
-            X, y, Cs=[self.C_], fit_intercept=self.fit_intercept,
-            coef=coef_init, solver=self.solver, max_iter=self.max_iter,
-            tol=self.tol, verbose=max(0, self.verbose - 1))
-        w = w[0][:, np.newaxis].T
-        if self.fit_intercept:
-            self.coef_ = w[:, :-1]
-            self.intercept_ = w[:, -1]
-        else:
-            self.coef_ = w
-            self.intercept_ = 0.
+        coefs_paths = np.reshape(coefs_paths, (n_classes, len(folds),
+                                 len(self.Cs_), -1))
+        self.coefs_paths_ = dict(zip(labels, coefs_paths))
+        scores = np.reshape(scores, (n_classes, len(folds), -1))
+        self.scores_ = dict(zip(labels, scores))
+
+        self.C_ = list()
+        self.coef_ = list()
+        self.intercept_ = list()
+
+        for label in labels:
+            scores = self.scores_[label]
+            coefs_paths = self.coefs_paths_[label]
+            best_index = scores.sum(axis=0).argmax()
+            C_ = self.Cs_[best_index]
+            self.C_.append(C_)
+            coef_init = np.mean(coefs_paths[:, best_index, :], axis=0)
+
+            w, _ = logistic_regression_path(
+                X, y, pos_class=label, Cs=[C_], solver=self.solver,
+                fit_intercept=self.fit_intercept, coef=coef_init,
+                max_iter=self.max_iter, tol=self.tol, copy=True,
+                verbose=max(0, self.verbose - 1))
+            w = w[0]
+            if self.fit_intercept:
+                self.coef_.append(w[:-1])
+                self.intercept_.append(w[-1])
+            else:
+                self.coef_.append(w)
+                self.intercept_.append(0.)
+        self.coef_ = np.asarray(self.coef_)
+        self.intercept_ = np.asarray(self.intercept_)
         return self
-
-    @property
-    def classes_(self):
-        return self._lb.classes_
-
