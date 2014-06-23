@@ -201,6 +201,7 @@ def test_nystroem_callable():
              kernel_params={'log': kernel_log}).fit(X)
     assert_equal(len(kernel_log), n_samples * (n_samples - 1) / 2)
 
+
 def test_enforce_dimensionality_constraint():
 
     yield assert_raises, ValueError, Fastfood.enforce_dimensionality_constraints, 20, 16
@@ -214,6 +215,7 @@ def test_enforce_dimensionality_constraint():
         d, n = input
         output = Fastfood.enforce_dimensionality_constraints(d, n)
         yield assert_equal, expected, output, message
+
 
 def given_gaussian_iid_matrix(d, random_state):
     b, g, P, _ = Fastfood.create_vectors(d, random_state)
@@ -244,9 +246,9 @@ def test_fastfood():
     print kernel_approx[1:10,1:10]
     print kernel[1:10,1:10]
 
-
     assert_array_almost_equal(kernel, kernel_approx, 1)
     raise
+
 
 def test_fastfood_perormance_to_rks():
     """test that Fastfood approximates kernel on random data"""
@@ -274,4 +276,3 @@ def test_fastfood_perormance_to_rks():
 
     assert_greater(rks_spent_time,fastfood_spent_time)
     #kernel_approx = np.dot(X_trans_rks, Y_trans_rks.T)
-
