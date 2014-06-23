@@ -13,7 +13,7 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 import fht as fht
-from scipy.linalg import svd
+from scipy.linalg import svd, hadamard
 
 from .base import BaseEstimator
 from .base import TransformerMixin
@@ -555,9 +555,6 @@ class Fastfood(BaseEstimator, TransformerMixin):
         gaussian_iid = Fastfood.create_gaussian_iid_matrix(b, g, P)
         gaussian = np.dot(np.diag(s), gaussian_iid)
 
-        # H = (1 / (d * np.sqrt(2))) * hadamard(d)
-        # HB = np.dot(np.diag(H), B)
-
         return 1 / (sigma * np.sqrt(d)) * gaussian
 
     @staticmethod
@@ -566,11 +563,14 @@ class Fastfood(BaseEstimator, TransformerMixin):
 
     @staticmethod
     def create_gaussian_iid_matrix(b, g, P):
-        HB = fht.fht(np.diag(b))
+        H = (1 / (b.shape[0] * np.sqrt(2))) * hadamard(b.shape[0])
+
+        # HB = fht.fht(np.diag(b))
+        HB = np.dot(H, np.diag(b))
         GP = np.dot(np.diag(g), P)
     
-        HGP = fht.fht(GP)
-        # HG = np.dot(H, G)
+        # HGP = fht.fht(GP)
+        HGP = np.dot(H, GP)
     
         gaussian_iid = np.dot(HGP, HB)
         return gaussian_iid
@@ -591,7 +591,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
 
         self.b = np.zeros((self.d, self.times_to_stack_v))
         self.g = np.zeros((self.d, self.times_to_stack_v))
-        self.P = np.zeros((self.d, self.d, self.times_to_stack_v)) 
+        self.P = np.zeros((self.d, self.d, self.times_to_stack_v))
         self.s = np.zeros((self.d, self.times_to_stack_v))
         for stack in range(self.times_to_stack_v):
             self.b[:, stack], self.g[:, stack], self.P[:, :, stack], self.s[:, stack] \
@@ -606,7 +606,6 @@ class Fastfood(BaseEstimator, TransformerMixin):
         for i in range(self.times_to_stack_v):
             V[i * self.d:(i + 1) * self.d, 0:self.d] = np.transpose(
                 Fastfood.V(self.s[:, i], self.g[:, i], self.b[:, i], self.P[:, :, i], self.d, self.sigma))
-            print V[i * self.d,1]
 
         X_padded = np.pad(X, ((0, 0), (0, self.number_of_features_to_pad_with_zeros)), 'constant')
 

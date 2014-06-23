@@ -1,10 +1,14 @@
 import numpy as np
 from scipy.sparse import csr_matrix
 import datetime
+import fht as fht
+from scipy.fftpack import dct
+
 
 from sklearn.utils.testing import assert_array_equal, assert_equal,assert_greater
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal, assert_raises
+
 
 from sklearn.utils import check_random_state
 
@@ -18,8 +22,8 @@ from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
 
 # generate data
 rng = np.random.RandomState(0)
-X = rng.random_sample(size=(300, 50))
-Y = rng.random_sample(size=(300, 50))
+X = rng.random_sample(size=(300, 60))
+Y = rng.random_sample(size=(300, 60))
 X /= X.sum(axis=1)[:, np.newaxis]
 Y /= Y.sum(axis=1)[:, np.newaxis]
 
@@ -237,7 +241,7 @@ def test_fastfood():
     kernel = rbf_kernel(X, Y, gamma=gamma)
 
     # approximate kernel mapping
-    rbf_transform = Fastfood(sigma=np.sqrt(1/(2*gamma))/12, n_components=1000, random_state=42)
+    rbf_transform = Fastfood(sigma=np.sqrt(1/(2*gamma))/1000, n_components=1000, random_state=42)
     X_trans = rbf_transform.fit_transform(X)
     Y_trans = rbf_transform.transform(Y)
     #print X_trans, Y_trans
@@ -249,25 +253,24 @@ def test_fastfood():
     assert_array_almost_equal(kernel, kernel_approx, 1)
     raise
 
-
-def test_fastfood_perormance_to_rks():
+def test_fastfood_performance_to_rks():
     """test that Fastfood approximates kernel on random data"""
     # compute exact kernel
     gamma = 10.
 
     fastfood_start = datetime.datetime.utcnow()
     # Fastfood: approximate kernel mapping
-    rbf_transform = Fastfood(sigma=np.sqrt(1/(2*gamma))/12, n_components=1000, random_state=42)
+    rbf_transform = Fastfood(sigma=np.sqrt(1/(2*gamma)), n_components=2000, random_state=42)
     X_trans_fastfood = rbf_transform.fit_transform(X)
     Y_trans_fastfood = rbf_transform.transform(Y)
     fastfood_end = datetime.datetime.utcnow()
     fastfood_spent_time =fastfood_end- fastfood_start
-#print X_trans, Y_trans
+    #print X_trans, Y_trans
     #kernel_approx = np.dot(X_trans_fastfood, Y_trans_fastfood.T)
 
     rks_start = datetime.datetime.utcnow()
     # Random Kitchens Sinks: approximate kernel mapping
-    rks_rbf_transform = RBFSampler(gamma=gamma, n_components=1000, random_state=42)
+    rks_rbf_transform = RBFSampler(gamma=gamma, n_components=2000, random_state=42)
     X_trans_rks = rks_rbf_transform.fit_transform(X)
     Y_trans_rks = rks_rbf_transform.transform(Y)
     rks_end = datetime.datetime.utcnow()
@@ -276,3 +279,26 @@ def test_fastfood_perormance_to_rks():
 
     assert_greater(rks_spent_time,fastfood_spent_time)
     #kernel_approx = np.dot(X_trans_rks, Y_trans_rks.T)
+
+
+def test_fht_dct_performance():
+    """test FHT and DCT"""
+
+    # generate data
+    rng = np.random.RandomState(0)
+    X = rng.random_sample(size=(4096, 4096))
+    X /= X.sum(axis=1)[:, np.newaxis]
+
+    fht_start = datetime.datetime.utcnow()
+    _ = fht.fht(X)
+    fht_end = datetime.datetime.utcnow()
+    fht_spent_time = fht_end - fht_start
+
+    dct_start = datetime.datetime.utcnow()
+    _ = dct(X)
+    dct_end = datetime.datetime.utcnow()
+    dct_spent_time = dct_end- dct_start
+    
+    print fht_spent_time, dct_spent_time
+
+    assert_greater(fht_spent_time, dct_spent_time)
