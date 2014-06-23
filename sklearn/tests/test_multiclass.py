@@ -20,7 +20,7 @@ from sklearn.metrics import recall_score
 from sklearn.svm import LinearSVC
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import (LinearRegression, Lasso, ElasticNet, Ridge,
-                                  Perceptron)
+                                  Perceptron, LogisticRegression)
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
@@ -63,10 +63,14 @@ def test_ovr_always_present():
     X[:5, :] = 0
     y = [[int(i >= 5), 2, 3] for i in range(10)]
     with warnings.catch_warnings(record=True):
-        ovr = OneVsRestClassifier(DecisionTreeClassifier())
+        ovr = OneVsRestClassifier(LogisticRegression())
         ovr.fit(X, y)
         y_pred = ovr.predict(X)
         assert_array_equal(np.array(y_pred), np.array(y))
+        y_pred = ovr.decision_function(X)
+        assert_equal(np.unique(y_pred[:, -2:]), 1)
+        y_pred = ovr.predict_proba(X)
+        assert_array_equal(y_pred[:, -2:], np.ones((X.shape[0], 2)))
 
 
 def test_ovr_multilabel():

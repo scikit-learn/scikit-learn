@@ -128,6 +128,9 @@ class _ConstantPredictor(BaseEstimator):
     def decision_function(self, X):
         return np.repeat(self.y_, X.shape[0])
 
+    def predict_proba(self, X):
+        return np.repeat([[0, 1]], X.shape[0], axis=0)
+
 
 class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     """One-vs-the-rest (OvR) multiclass/multilabel strategy
