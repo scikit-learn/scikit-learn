@@ -618,10 +618,9 @@ instead of :class:`PCA` or its variants, in the cases where the data matrix
 does not contain negative values.
 It finds a decomposition of samples :math:`X`
 into two matrices :math:`V` and :math:`H` of non-negative elements,
-by optimizing for the squared Frobenius norm::
+by optimizing for the squared Frobenius norm:
 
 .. math::
-
     \arg\min_{W,H} ||X - WH||^2 = \sum_{i,j} X_{ij} - {WH}_{ij}
 
 This norm is an obvious extension of the Euclidean norm to matrices.
@@ -692,4 +691,3 @@ the data.
       matrix factorization"
       <http://scgroup.hpclab.ceid.upatras.gr/faculty/stratis/Papers/HPCLAB020107.pdf>`_
       C. Boutsidis, E. Gallopoulos, 2008
-
