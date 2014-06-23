@@ -7,8 +7,9 @@ example files.
 Files that generate images should start with 'plot'
 
 """
-from __future__ import division
+from __future__ import division, print_function
 from time import time
+import ast
 import os
 import re
 import shutil
@@ -46,14 +47,6 @@ try:
     basestring
 except NameError:
     basestring = str
-
-try:
-    from PIL import Image
-except ImportError:
-    import Image
-
-import matplotlib
-matplotlib.use('Agg')
 
 import token
 import tokenize
@@ -746,6 +739,11 @@ def make_thumbnail(in_fname, out_fname, width, height):
     """Make a thumbnail with the same aspect ratio centered in an
        image with a given width and height
     """
+    # local import to avoid testing dependency on PIL:
+    try:
+        from PIL import Image
+    except ImportError:
+        import Image
     img = Image.open(in_fname)
     width_in, height_in = img.size
     scale_w = width / float(width_in)
@@ -777,7 +775,6 @@ def make_thumbnail(in_fname, out_fname, width, height):
             warnings.warn('Install optipng to reduce the size of the generated images')
 
 
-
 def get_short_module_name(module_name, obj_name):
     """ Get the shortest possible module name """
     parts = module_name.split('.')
@@ -791,6 +788,82 @@ def get_short_module_name(module_name, obj_name):
             short_name = '.'.join(parts[:(i + 1)])
             break
     return short_name
+
+
+class NameFinder(ast.NodeVisitor):
+    """Finds the longest form of variable names and their imports in code
+
+    Only retains names from imported modules.
+    """
+
+    def __init__(self):
+        super(NameFinder, self).__init__()
+        self.imported_names = {}
+        self.accessed_names = set()
+
+    def visit_Import(self, node, prefix=''):
+        for alias in node.names:
+            local_name = alias.asname or alias.name
+            self.imported_names[local_name] = prefix + alias.name
+
+    def visit_ImportFrom(self, node):
+        self.visit_Import(node, node.module + '.')
+
+    def visit_Name(self, node):
+        self.accessed_names.add(node.id)
+
+    def visit_Attribute(self, node):
+        attrs = []
+        while isinstance(node, ast.Attribute):
+            attrs.append(node.attr)
+            node = node.value
+
+        if isinstance(node, ast.Name):
+            # This is a.b, not e.g. a().b
+            attrs.append(node.id)
+            self.accessed_names.add('.'.join(reversed(attrs)))
+        else:
+            # need to get a in a().b
+            self.visit(node)
+
+    def get_mapping(self):
+        for name in self.accessed_names:
+            local_name = name.split('.', 1)[0]
+            remainder = name[len(local_name):]
+            if local_name in self.imported_names:
+                # Join import path to relative path
+                full_name = self.imported_names[local_name] + remainder
+                yield name, full_name
+
+
+def identify_names(code):
+    """Builds a codeobj summary by identifying and resovles used names
+
+    >>> code = '''
+    ... from a.b import c
+    ... import d as e
+    ... print(c)
+    ... e.HelloWorld().f.g
+    ... '''
+    >>> for name, o in sorted(identify_names(code).items()):
+    ...     print(name, o['name'], o['module'], o['module_short'])
+    c c a.b a.b
+    e.HelloWorld HelloWorld d d
+    """
+    finder = NameFinder()
+    finder.visit(ast.parse(code))
+
+    example_code_obj = {}
+    for name, full_name in finder.get_mapping():
+        # name is as written in file (e.g. np.asarray)
+        # full_name includes resolved import path (e.g. numpy.asarray)
+        module, attribute = full_name.rsplit('.', 1)
+        # get shortened module name
+        module_short = get_short_module_name(module, attribute)
+        cobj = {'name': attribute, 'module': module,
+                'module_short': module_short}
+        example_code_obj[name] = cobj
+    return example_code_obj
 
 
 def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
@@ -846,6 +919,8 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
             # We need to execute the code
             print('plotting %s' % fname)
             t0 = time()
+            import matplotlib
+            matplotlib.use('Agg')
             import matplotlib.pyplot as plt
             plt.close('all')
             cwd = os.getcwd()
@@ -862,79 +937,6 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
                 time_elapsed = time() - t0
                 sys.stdout = orig_stdout
                 my_stdout = my_buffer.getvalue()
-
-                # get variables so we can later add links to the documentation
-                example_code_obj = {}
-                for var_name, var in my_globals.items():
-                    if not hasattr(var, '__module__'):
-                        continue
-                    if not isinstance(var.__module__, basestring):
-                        continue
-                    if var.__module__.split('.')[0] not in DOCMODULES:
-                        continue
-
-                    # get the type as a string with other things stripped
-                    tstr = str(type(var))
-                    tstr = (tstr[tstr.find('\'')
-                            + 1:tstr.rfind('\'')].split('.')[-1])
-                    # get shortened module name
-                    module_short = get_short_module_name(var.__module__,
-                                                         tstr)
-                    cobj = {'name': tstr, 'module': var.__module__,
-                            'module_short': module_short,
-                            'obj_type': 'object'}
-                    example_code_obj[var_name] = cobj
-
-                # find functions so we can later add links to the documentation
-                funregex = re.compile('[\w.]+\(')
-                with open(src_file, 'rt') as fid:
-                    for line in fid.readlines():
-                        if line.startswith('#'):
-                            continue
-                        for match in funregex.findall(line):
-                            fun_name = match[:-1]
-
-                            try:
-                                exec('this_fun = %s' % fun_name, my_globals)
-                            except Exception as err:
-                                # Here, we were not able to execute the
-                                # previous statement, either because the
-                                # fun_name was not a function but a statement
-                                # (print), or because the regexp didn't
-                                # catch the whole function name :
-                                #    eg:
-                                #       X = something().blah()
-                                # will work for something, but not blah.
-
-                                continue
-                            this_fun = my_globals['this_fun']
-                            if not callable(this_fun):
-                                continue
-                            if not hasattr(this_fun, '__module__'):
-                                continue
-                            if not isinstance(this_fun.__module__, basestring):
-                                continue
-                            if (this_fun.__module__.split('.')[0]
-                                    not in DOCMODULES):
-                                continue
-
-                            # get shortened module name
-                            fun_name_short = fun_name.split('.')[-1]
-                            module_short = get_short_module_name(
-                                this_fun.__module__, fun_name_short)
-                            cobj = {'name': fun_name_short,
-                                    'module': this_fun.__module__,
-                                    'module_short': module_short,
-                                    'obj_type': 'function'}
-                            example_code_obj[fun_name] = cobj
-                fid.close()
-
-                if len(example_code_obj) > 0:
-                    # save the dictionary, so we can later add hyperlinks
-                    codeobj_fname = example_file[:-3] + '_codeobj.pickle'
-                    with open(codeobj_fname, 'wb') as fid:
-                        pickle.dump(example_code_obj, fid, pickle.HIGHEST_PROTOCOL)
-                    fid.close()
 
                 if '__doc__' in my_globals:
                     # The __doc__ is often printed in the example, we
@@ -1028,6 +1030,13 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
     f.write(this_template % locals())
     f.flush()
 
+    # save variables so we can later add links to the documentation
+    example_code_obj = identify_names(open(example_file).read())
+    if example_code_obj:
+        codeobj_fname = example_file[:-3] + '_codeobj.pickle'
+        with open(codeobj_fname, 'wb') as fid:
+            pickle.dump(example_code_obj, fid, pickle.HIGHEST_PROTOCOL)
+
 
 def embed_code_links(app, exception):
     """Embed hyperlinks to documentation into example code"""
@@ -1084,19 +1093,27 @@ def embed_code_links(app, exception):
                                                                   full_fname)
                         if link is not None:
                             parts = name.split('.')
-                            name_html = orig_pattern % parts[0]
-                            for part in parts[1:]:
-                                name_html += period + orig_pattern % part
+                            name_html = period.join(orig_pattern % part
+                                                    for part in parts)
                             str_repl[name_html] = link_pattern % (link, name_html)
                     # do the replacement in the html file
+
+                    # ensure greediness
+                    names = sorted(str_repl, key=len, reverse=True)
+                    expr = re.compile(r'(?<!\.)\b' +  # don't follow . or word
+                                      '|'.join(re.escape(name)
+                                               for name in names))
+
+                    def substitute_link(match):
+                        return str_repl[match.group()]
+
                     if len(str_repl) > 0:
                         with open(full_fname, 'rb') as fid:
                             lines_in = fid.readlines()
                         with open(full_fname, 'wb') as fid:
                             for line in lines_in:
                                 line = line.decode('utf-8')
-                                for name, link in str_repl.items():
-                                    line = line.replace(name, link)
+                                line = expr.sub(substitute_link, line)
                                 fid.write(line.encode('utf-8'))
     except HTTPError as e:
         print("The following HTTP Error has occurred:\n")
@@ -1137,3 +1154,8 @@ def setup(app):
         for filename in filelist:
             if filename.endswith('png'):
                 os.remove(os.path.join(build_image_dir, filename))
+
+
+def setup_module():
+    # HACK: Stop nosetests running setup() above
+    pass

@@ -22,6 +22,8 @@ inplace:
 
 test-code: in
 	$(NOSETESTS) -s -v sklearn
+test-sphinxext:
+	$(NOSETESTS) -s -v doc/sphinxext/
 test-doc:
 	$(NOSETESTS) -s -v doc/ doc/modules/ doc/datasets/ \
 	doc/developers doc/tutorial/basic doc/tutorial/statistical_inference \
@@ -31,7 +33,7 @@ test-coverage:
 	rm -rf coverage .coverage
 	$(NOSETESTS) -s -v --with-coverage sklearn
 
-test: test-code test-doc
+test: test-code test-sphinxext test-doc
 
 trailing-spaces:
 	find sklearn -name "*.py" -exec perl -pi -e 's/[ \t]*$$//' {} \;

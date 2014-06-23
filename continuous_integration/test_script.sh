@@ -16,4 +16,4 @@ if [[ "$COVERAGE" == "true" ]]; then
 else
     make test-code
 fi
-make test-doc
+make test-doc test-sphinxext
