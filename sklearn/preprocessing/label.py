@@ -542,7 +542,7 @@ def _inverse_binarize_multiclass(y, classes):
         y = y.tocsr()
         n_samples, n_outputs = y.shape
         outputs = np.arange(n_outputs)
-        y_i_max = y.max(axis=1).toarray()
+        y_i_max = sparse_min_max(y, 1)[1]
         repeated_max = np.repeat(y_i_max, np.diff(y.indptr))
         # picks out all indices obtaining the maximum per row
         all_argmax = np.flatnonzero(repeated_max == y.data)
