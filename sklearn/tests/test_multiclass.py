@@ -62,27 +62,29 @@ def test_ovr_fit_predict_sparse():
     for sparse in [sp.csr_matrix, sp.csc_matrix, sp.coo_matrix, sp.dok_matrix,
                    sp.lil_matrix]:
         base_clf = MultinomialNB(alpha=1)
-        for au, prec, recall in zip((True, False), (0.65, 0.74), (0.72, 0.84)):
-            make_mlb = datasets.make_multilabel_classification
-            X, Y = make_mlb(n_samples=100,
-                            n_features=20,
-                            n_classes=5,
-                            n_labels=2,
-                            length=50,
-                            allow_unlabeled=au,
-                            return_indicator=True,
-                            random_state=0)
 
-            X_train, Y_train = X[:80], Y[:80]
-            X_test, Y_test = X[80:], Y[80:]
-            clf = OneVsRestClassifier(base_clf).fit(X_train, sparse(Y_train))
-            Y_pred = clf.predict(X_test)
+        make_mlb = datasets.make_multilabel_classification
+        X, Y = make_mlb(n_samples=100,
+                        n_features=20,
+                        n_classes=5,
+                        n_labels=3,
+                        length=50,
+                        allow_unlabeled=True,
+                        return_indicator=True,
+                        random_state=0)
 
-            assert_true(clf.multilabel_)
-            assert_almost_equal(precision_score(Y_test, Y_pred.toarray(),
-                                average="micro"), prec, decimal=2)
-            assert_almost_equal(recall_score(Y_test, Y_pred.toarray(),
-                                average="micro"), recall, decimal=2)
+        X_train, Y_train = X[:80], Y[:80]
+        X_test, Y_test = X[80:], Y[80:]
+
+        clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
+        Y_pred = clf.predict(X_test)
+
+        clf_sprs = OneVsRestClassifier(base_clf).fit(X_train, sparse(Y_train))
+        Y_pred_sprs = clf_sprs.predict(X_test)
+
+        assert_true(clf.multilabel_)
+        assert_true(sp.issparse(Y_pred_sprs))
+        assert_array_equal(Y_pred_sprs.toarray(), Y_pred)
 
 
 def test_ovr_always_present():
