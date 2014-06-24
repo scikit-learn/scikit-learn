@@ -43,9 +43,11 @@ from os.path import exists
 try:
     # Python 2
     from urllib2 import urlopen
+    PY2 = True
 except ImportError:
     # Python 3
     from urllib.request import urlopen
+    PY2 = False
 
 import numpy as np
 
@@ -60,24 +62,19 @@ COVERAGES_URL = join(DIRECTORY_URL, "coverages.zip")
 DATA_ARCHIVE_NAME = "species_coverage.pkz"
 
 
-def _load_coverage(F, header_length=6,
-                   dtype=np.int16):
-    """
-    load a coverage file.
+def _load_coverage(F, header_length=6, dtype=np.int16):
+    """Load a coverage file from an open file object.
+
     This will return a numpy array of the given dtype
     """
-    try:
-        header = [F.readline() for i in range(header_length)]
-    except:
-        F = open(F)
-        header = [F.readline() for i in range(header_length)]
-
+    header = [F.readline() for i in range(header_length)]
     make_tuple = lambda t: (t.split()[0], float(t.split()[1]))
     header = dict([make_tuple(line) for line in header])
 
     M = np.loadtxt(F, dtype=dtype)
-    nodata = header['NODATA_value']
+    nodata = header[b'NODATA_value']
     if nodata != -9999:
+        print(nodata)
         M[nodata] = -9999
     return M
 
@@ -87,24 +84,21 @@ def _load_csv(F):
 
     Parameters
     ----------
-    F : string or file object
-        file object or name of file
-
+    F : file object
+        CSV file open in byte mode.
     Returns
     -------
     rec : np.ndarray
         record array representing the data
     """
-    try:
+    if PY2:
+        # Numpy recarray wants Python 2 str but not unicode
         names = F.readline().strip().split(',')
-    except:
-        F = open(F)
-        names = F.readline().strip().split(',')
-
-    rec = np.loadtxt(F, skiprows=1, delimiter=',',
-                     dtype='a22,f4,f4')
+    else:
+        # Numpy recarray wants Python 3 str but not bytes...
+        names = F.readline().decode('ascii').strip().split(',')
+    rec = np.loadtxt(F, skiprows=0, delimiter=',', dtype='a22,f4,f4')
     rec.dtype.names = names
-
     return rec
 
 
@@ -243,8 +237,7 @@ def fetch_species_distributions(data_home=None,
             fhandle = BytesIO(X[f])
             print(' - converting', f)
             coverages.append(_load_coverage(fhandle))
-        coverages = np.asarray(coverages,
-                               dtype=dtype)
+        coverages = np.asarray(coverages, dtype=dtype)
 
         bunch = Bunch(coverages=coverages,
                       test=test,

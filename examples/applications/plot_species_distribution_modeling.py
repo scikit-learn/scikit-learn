@@ -64,20 +64,17 @@ except ImportError:
 print(__doc__)
 
 
-def create_species_bunch(species_name,
-                         train, test,
-                         coverages, xgrid, ygrid):
-    """
-    create a bunch with information about a particular organism
+def create_species_bunch(species_name, train, test, coverages, xgrid, ygrid):
+    """Create a bunch with information about a particular organism
 
     This will use the test/train record arrays to extract the
     data specific to the given species name.
     """
     bunch = Bunch(name=' '.join(species_name.split("_")[:2]))
-
+    species_name = species_name.encode('ascii')
     points = dict(test=test, train=train)
 
-    for label, pts in points.iteritems():
+    for label, pts in points.items():
         # choose points associated with the desired species
         pts = pts[pts['species'] == species_name]
         bunch['pts_%s' % label] = pts
