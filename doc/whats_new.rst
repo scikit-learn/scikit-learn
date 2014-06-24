@@ -270,23 +270,23 @@ API changes summary
      are now considered valid classification targets. This fixes a regression
      from version 0.13 in some classifiers. By `Joel Nothman`_.
 
-   - Fix wrong `explained_variance_ratio_` attribute in
+   - Fix wrong ``explained_variance_ratio_`` attribute in
      :class:`RandomizedPCA <decomposition.RandomizedPCA>`.
      By `Alexandre Gramfort`_.
 
-   - Fit alphas for each l1_ratio instead of mean_l1_ratio in
-     :class: `linear_model.ElasticNetCV` and :class: `linear_model.LassoCV`.
-     This changes the shape of ``alphas_`` from (n_alphas,) to
-     (n_l1_ratio, n_alphas) if the l1_ratio provided is a 1-D array like object
-     of length greater than one.
+   - Fit alphas for each ``l1_ratio`` instead of ``mean_l1_ratio`` in
+     :class:`linear_model.ElasticNetCV` and :class:`linear_model.LassoCV`.
+     This changes the shape of ``alphas_`` from ``(n_alphas,)`` to
+     ``(n_l1_ratio, n_alphas)`` if the ``l1_ratio`` provided is a 1-D array like
+     object of length greater than one.
      By `Manoj Kumar`_.
 
    - Fix :class:`linear_model.ElasticNetCV` and :class:`linear_model.LassoCV`
-     when fitting intercept and X is sparse. The automatic grid
+     when fitting intercept and input data is sparse. The automatic grid
      of alphas was not computed correctly and the scaling with normalize
      was wrong. By `Manoj Kumar`_.
 
-   - Fix wrong maximal number of features drawn (`max_features`) at each split
+   - Fix wrong maximal number of features drawn (``max_features``) at each split
      for decision trees, random forests and gradient tree boosting.
      Previously, the count for the number of drawn features started only after
      one non constant features in the split. This bug fix will affect
@@ -295,7 +295,7 @@ API changes summary
      performance, you should modify the value of `max_features`.
      By `Arnaud Joly`_.
 
-   - Fix wrong maximal number of features drawn (`max_features`) at each split
+   - Fix wrong maximal number of features drawn (``max_features``) at each split
      for :class:`ensemble.ExtraTreesClassifier` and
      :class:`ensemble.ExtraTreesRegressor`. Previously, only non constant
      features in the split was counted as drawn. Now constant features are
@@ -303,12 +303,12 @@ API changes summary
      in order to make a valid split. This bug fix will affect
      computational and generalization performance of extra trees in the
      presence of constant features. To get back previous generalization
-     performance, you should modify the value of `max_features`.
+     performance, you should modify the value of ``max_features``.
      By `Arnaud Joly`_.
 
-   - Fix :func:`utils.compute_class_weight` when class_weight is "auto".
-     Previously it was broken for input of non-int dtype and the weighted
-     array that was returned was wrong. By `Manoj Kumar`_.
+   - Fix :func:`utils.compute_class_weight` when ``class_weight=="auto"``.
+     Previously it was broken for input of non-integer ``dtype`` and the
+     weighted array that was returned was wrong. By `Manoj Kumar`_.
 
    - Fix :class:`cross_validation.Bootstrap` to return ``ValueError``
      when `n_train` + `n_test` > `n`. By `Ronald Phlypo`_.
