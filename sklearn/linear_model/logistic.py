@@ -584,6 +584,13 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
     verbose : bool or integer
         Amount of verbosity.
 
+    refit : bool
+        If set to True, the scores are averaged across all folds, and the
+        coefs and the C that corresponds to the best score is taken, and a
+        final refit is done using these parameters.
+        Otherwise, the coefs and C that corresponds to the best score across
+        each fold is taken and retuned after averaging.
+
     Attributes
     ----------
     `coef_` : array, shape (1, n_features) or
@@ -619,6 +626,9 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
         an OvA for the corresponding class.
         Each dict value has shape (n_folds, len(Cs))
 
+    `C_` : array, shape(n_classes,) or (n_classes - 1,)
+        Array of C that maps to the best scores across every class.
+
     See also
     --------
     LogisticRegression
@@ -627,7 +637,7 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
 
     def __init__(self, Cs=10, fit_intercept=True, cv=None, scoring=None,
                  solver='newton-cg', tol=1e-4, max_iter=100,
-                 n_jobs=1, verbose=False):
+                 n_jobs=1, verbose=False, refit=True):
         self.Cs = Cs
         self.fit_intercept = fit_intercept
         self.cv = cv
@@ -637,6 +647,7 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
         self.n_jobs = n_jobs
         self.verbose = verbose
         self.solver = solver
+        self.refit = refit
 
     def fit(self, X, y):
         """Fit the model according to the given training data.
@@ -701,17 +712,30 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
         for label in labels:
             scores = self.scores_[label]
             coefs_paths = self.coefs_paths_[label]
-            best_index = scores.sum(axis=0).argmax()
-            C_ = self.Cs_[best_index]
-            self.C_.append(C_)
-            coef_init = np.mean(coefs_paths[:, best_index, :], axis=0)
 
-            w, _ = logistic_regression_path(
-                X, y, pos_class=label, Cs=[C_], solver=self.solver,
-                fit_intercept=self.fit_intercept, coef=coef_init,
-                max_iter=self.max_iter, tol=self.tol, copy=True,
-                verbose=max(0, self.verbose - 1))
-            w = w[0]
+            if self.refit:
+                best_index = scores.sum(axis=0).argmax()
+                C_ = self.Cs_[best_index]
+                self.C_.append(C_)
+                coef_init = np.mean(coefs_paths[:, best_index, :], axis=0)
+
+                w, _ = logistic_regression_path(
+                    X, y, pos_class=label, Cs=[C_], solver=self.solver,
+                    fit_intercept=self.fit_intercept, coef=coef_init,
+                    max_iter=self.max_iter, tol=self.tol, copy=True,
+                    verbose=max(0, self.verbose - 1))
+                w = w[0]
+
+            else:
+                # Take the best scores across every fold and the average of all
+                # coefficients coressponding to the best scores.
+                best_indices = np.argmax(scores, axis=1)
+                w = np.mean(
+                    [coefs_paths[i][best_indices[i]]
+                    for i in range(len(folds))], axis=0
+                    )
+                self.C_.append(np.mean(self.Cs_[best_indices]))
+
             if self.fit_intercept:
                 self.coef_.append(w[:-1])
                 self.intercept_.append(w[-1])
