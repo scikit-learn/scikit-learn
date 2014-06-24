@@ -120,7 +120,7 @@ def test_ovr_multilabel():
     X = np.array([[0, 4, 5], [0, 5, 0], [3, 3, 3], [4, 0, 6], [6, 0, 0]])
     y = [["spam", "eggs"], ["spam"], ["ham", "eggs", "spam"],
          ["ham", "eggs"], ["ham"]]
-    #y = [[1, 2], [1], [0, 1, 2], [0, 2], [0]]
+    # y = [[1, 2], [1], [0, 1, 2], [0, 2], [0]]
     Y = np.array([[0, 1, 1],
                   [0, 1, 0],
                   [1, 1, 1],
@@ -408,6 +408,7 @@ def test_ecoc_gridsearch():
     cv.fit(iris.data, iris.target)
     best_C = cv.best_estimator_.estimators_[0].C
     assert_true(best_C in Cs)
+
 
 if __name__ == "__main__":
     import nose

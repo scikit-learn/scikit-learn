@@ -91,14 +91,19 @@ def fit_ovr(estimator, X, y, n_jobs=1):
     Y = lb.fit_transform(y)
 
     if sp.issparse(Y):
-        estimators = Parallel(n_jobs=n_jobs)(
-            delayed(_fit_binary)(estimator, X, Y.getcol(i).toarray(),
-                classes=["not %s" % i, i]) for i in range(Y.shape[1]))
+        estimators = Parallel(n_jobs=n_jobs)(delayed(_fit_binary)
+                                             (estimator,
+                                              X,
+                                              Y.getcol(i).toarray(),
+                                              classes=["not %s" % i, i])
+                                             for i in range(Y.shape[1]))
     else:
-        estimators = Parallel(n_jobs=n_jobs)(
-            delayed(_fit_binary)(estimator, X, Y[:, i],
-                classes=["not %s" % i, i]) for i in range(Y.shape[1]))
-
+        estimators = Parallel(n_jobs=n_jobs)(delayed(_fit_binary)
+                                             (estimator,
+                                              X,
+                                              Y[:, i],
+                                              classes=["not %s" % i, i])
+                                             for i in range(Y.shape[1]))
     return estimators, lb
 
 
