@@ -33,7 +33,12 @@ from glob import glob
 import itertools
 import os.path
 import re
-import sgmllib
+try:
+    from html.parser import HTMLParser
+    PY2 = False
+except ImportError:
+    from sgmllib import SGMLParser as HTMLParser
+    PY2 = True
 import tarfile
 import time
 import urllib
@@ -59,13 +64,26 @@ def _not_in_sphinx():
 # Reuters Dataset related routines
 ###############################################################################
 
-class ReutersParser(sgmllib.SGMLParser):
 
+class ReutersParser(HTMLParser):
     """Utility class to parse a SGML file and yield documents one at a time."""
 
-    def __init__(self, verbose=0):
-        sgmllib.SGMLParser.__init__(self, verbose)
+    def __init__(self, verbose=0, encoding='latin-1'):
+        HTMLParser.__init__(self, verbose)
         self._reset()
+        self.encoding = encoding
+
+        if not PY2:
+            # In Python 3 need to be defined explicitly
+            def handle_starttag(tag, attrs):
+                method = 'start_' + tag
+                getattr(self, method, lambda x: None)(attrs)
+            self.handle_starttag = handle_starttag
+
+            def handle_endtag(tag):
+                method = 'end_' + tag
+                getattr(self, method, lambda: None)()
+            self.handle_endtag = handle_endtag
 
     def _reset(self):
         self.in_title = 0
@@ -80,7 +98,7 @@ class ReutersParser(sgmllib.SGMLParser):
     def parse(self, fd):
         self.docs = []
         for chunk in fd:
-            self.feed(chunk)
+            self.feed(chunk.decode(self.encoding))
             for doc in self.docs:
                 yield doc
             self.docs = []
@@ -172,7 +190,7 @@ def stream_reuters_documents(data_path=None):
 
     parser = ReutersParser()
     for filename in glob(os.path.join(data_path, "*.sgm")):
-        for doc in parser.parse(open(filename)):
+        for doc in parser.parse(open(filename, 'rb')):
             yield doc
 
 
@@ -210,7 +228,7 @@ def get_minibatch(doc_iter, size, pos_class=positive_class):
     Note: size is before excluding invalid docs with no topics assigned.
 
     """
-    data = [('{title}\n\n{body}'.format(**doc), pos_class in doc['topics'])
+    data = [(u'{title}\n\n{body}'.format(**doc), pos_class in doc['topics'])
             for doc in itertools.islice(doc_iter, size)
             if doc['topics']]
     if not len(data):
