@@ -63,7 +63,12 @@ def test_ovr_always_present():
     # Note: tests is the case where _ConstantPredictor is utilised
     X = np.ones((10, 2))
     X[:5, :] = 0
-    y = [[int(i >= 5), 2, 3] for i in range(10)]
+    y = np.zeros((10, 3))
+    y[5:, 0] = 1
+    y[:, 1] = 1
+    y[:, 2] = 1
+
+    [[int(i >= 5), 2, 3] for i in range(10)]
     ovr = OneVsRestClassifier(LogisticRegression())
     assert_warns(UserWarning, ovr.fit, X, y)
     y_pred = ovr.predict(X)
@@ -71,7 +76,7 @@ def test_ovr_always_present():
     y_pred = ovr.decision_function(X)
     assert_equal(np.unique(y_pred[:, -2:]), 1)
     y_pred = ovr.predict_proba(X)
-    assert_array_equal(y_pred[:, -2:], np.ones((X.shape[0], 2)))
+    assert_array_equal(y_pred[:, -1], np.ones(X.shape[0]))
 
     # y has a constantly absent label
     y = np.zeros((10, 2))
