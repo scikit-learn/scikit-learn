@@ -19,6 +19,8 @@ import sys
 import gzip
 import posixpath
 import subprocess
+
+
 # Try Python 2 first, otherwise load from Python 3
 try:
     from StringIO import StringIO
@@ -51,6 +53,17 @@ except NameError:
 import token
 import tokenize
 import numpy as np
+
+try:
+    # make sure that the Agg backend is set before importing any
+    # matplotlib
+    import matplotlib
+    matplotlib.use('Agg')
+except ImportError:
+    # this script can be imported by nosetest to find tests to run: we should not
+    # impose the matplotlib requirement in that case.
+    pass
+
 
 from sklearn.externals import joblib
 
@@ -919,8 +932,6 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
             # We need to execute the code
             print('plotting %s' % fname)
             t0 = time()
-            import matplotlib
-            matplotlib.use('Agg')
             import matplotlib.pyplot as plt
             plt.close('all')
             cwd = os.getcwd()
