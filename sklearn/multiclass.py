@@ -109,7 +109,6 @@ def fit_ovr(estimator, X, y, n_jobs=1):
 
 def predict_ovr(estimators, label_binarizer, X):
     """Make predictions using the one-vs-the-rest strategy."""
-
     e = estimators[0]
     thresh = 0 if hasattr(e, "decision_function") and is_classifier(e) else .5
 
