@@ -8,8 +8,8 @@ import warnings
 import numpy as np
 
 from scipy import sparse
+from scipy.linalg import eigh
 from scipy.sparse.linalg import lobpcg
-from scipy.sparse.linalg.eigen.lobpcg.lobpcg import symeig
 
 from ..base import BaseEstimator
 from ..externals import six
@@ -286,10 +286,10 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         if n_nodes < 5 * n_components + 1:
             # see note above under arpack why lobpcg has problems with small
             # number of nodes
-            # lobpcg will fallback to symeig, so we short circuit it
+            # lobpcg will fallback to eigh, so we short circuit it
             if sparse.isspmatrix(laplacian):
                 laplacian = laplacian.toarray()
-            lambdas, diffusion_map = symeig(laplacian)
+            lambdas, diffusion_map = eigh(laplacian)
             embedding = diffusion_map.T[:n_components] * dd
         else:
             # lobpcg needs native floats
