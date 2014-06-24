@@ -114,15 +114,14 @@ def predict_ovr(estimators, label_binarizer, X):
     thresh = 0 if hasattr(e, "decision_function") and is_classifier(e) else .5
 
     if label_binarizer.y_type_ == "multiclass":
-        Y = np.array([])
-        for x in X:
-            x_scores = np.array([])
-            for e in estimators:
-                x_scores = np.append(x_scores, _predict_binary(e, x))
-            c = label_binarizer.classes_[x_scores.argmax()]
-            Y = np.append(Y, c)
-        return np.array(Y.T, dtype=label_binarizer.classes_.dtype)
-
+        maxima = np.empty(X.shape[0], dtype=float)
+        maxima.fill(-np.inf)
+        argmaxima = np.zeros(X.shape[0], dtype=int)
+        for i, e in enumerate(estimators):
+            pred = _predict_binary(e, X)
+            np.maximum(maxima, pred, out=maxima)
+            argmaxima[maxima == pred] = i
+        return np.array(argmaxima.T, dtype=label_binarizer.classes_.dtype)
     else:
         indices = array.array('i')
         indptr = array.array('i', [0])
