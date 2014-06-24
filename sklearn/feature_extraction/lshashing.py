@@ -9,6 +9,8 @@ from abc import ABCMeta, abstractmethod
 from ..externals.six import with_metaclass
 from ..utils import check_random_state
 
+from ..random_projection import GaussianRandomProjection
+
 __all__ = ["RandomProjections"]
 
 
@@ -49,7 +51,8 @@ class BaseHash(with_metaclass(ABCMeta)):
 
 class RandomProjections(BaseHash):
     """
-    Performs random projections [1] as an LSH algorithm
+    Performs random projections [1] as an LSH algorithm. This uses Gaussian
+    Random Projections from `sklearn.random_projections` module.
 
     References
     ----------
@@ -62,20 +65,42 @@ class RandomProjections(BaseHash):
                                                 hash_size=hash_size,
                                                 random_state=random_state)
 
-    def generate_hash_function(self):
+    def _generate_hash_function(self):
         """
-        Generates hyperplanes of shape (hash_size, n_dim) from standard
-        normal distribution.
+        Fits a `GaussianRandomProjections` with `n_components=hash_size
+        and n_features=n_dim.
         """
         random_state = check_random_state(self.random_state)
-        return random_state.randn(self.hash_size, self.n_dim)
+        grp = GaussianRandomProjection(n_components=self.hash_size,
+                                       random_state=random_state.randint(0,
+                                                                         10))
+        X = np.zeros((2, self.n_dim), dtype=float)
+        grp.fit(X)
+        return grp
 
-    def do_hash(self, input_point=None, hash_function=None):
+    def do_hash(self, input_array=None):
         """
-        Does hashing on the data point with the provided hash_function.
-        """
-        if input_point is None or hash_function is None:
-            raise ValueError("input_point or hash_function cannot be None.")
+        Does hashing on an array of data points.
+        This creates a binary hash by getting the dot product of
+        input_point and hash_function then transforming the projection
+        into a binary string array based on the sign(positive/negative)
+        of the projection.
 
-        projections = np.dot(hash_function, input_point)
-        return "".join(['1' if i > 0 else '0' for i in projections])
+        Parameters
+        ----------
+
+        input_array: array_like, shape (n_samples, n_features)
+            A matrix of dimensions (n_samples, n_features), which is being
+            hashed.
+        """
+        if input_array is None:
+            raise ValueError("input_array cannot be None.")
+
+        grp = self._generate_hash_function()
+        res = grp.transform(input_array)
+
+        bin_hashes = np.empty(res.shape[0], dtype='|S'+str(self.hash_size))
+        for i in range(res.shape[0]):
+            bin_hashes[i] = "".join(map(str, np.array(res[i] > 0, dtype=int)))
+
+        return bin_hashes, grp.components_
