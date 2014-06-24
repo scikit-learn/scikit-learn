@@ -311,7 +311,7 @@ API changes summary
      weighted array that was returned was wrong. By `Manoj Kumar`_.
 
    - Fix :class:`cross_validation.Bootstrap` to return ``ValueError``
-     when `n_train` + `n_test` > `n`. By `Ronald Phlypo`_.
+     when ``n_train + n_test > n``. By `Ronald Phlypo`_.
 
 .. _changes_0_14:
 
