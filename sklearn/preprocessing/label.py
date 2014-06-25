@@ -538,28 +538,28 @@ def _inverse_binarize_multiclass(y, classes):
         y = y.tocsr()
         n_samples, n_outputs = y.shape
         outputs = np.arange(n_outputs)
-        y_i_max = sparse_min_max(y, 1)[1]
-        indptr_diff = np.diff(y.indptr)
+        row_max = sparse_min_max(y, 1)[1]
+        row_nnz = np.diff(y.indptr)
 
-        y_data_repeated_max = np.repeat(y_i_max, indptr_diff)
+        y_data_repeated_max = np.repeat(row_max, row_nnz)
         # picks out all indices obtaining the maximum per row
         y_i_all_argmax = np.flatnonzero(y_data_repeated_max == y.data)
 
         # For corner case where last row has a max of 0
-        if y_i_max[-1] == 0:
+        if row_max[-1] == 0:
             y_i_all_argmax = np.append(y_i_all_argmax, [len(y.data)])
 
-        # picks out from all_arg max the first argmax in each row
+        # Gets the index of the first argmax in each row from y_i_all_argmax
         index_first_argmax = np.searchsorted(y_i_all_argmax, y.indptr[:-1])
         # first argmax of each row
         y_ind_ext = np.append(y.indices, [0])
         y_i_argmax = y_ind_ext[y_i_all_argmax[index_first_argmax]]
         # Handle rows of all 0
-        y_i_argmax[np.where(indptr_diff == 0)[0]] = 0
+        y_i_argmax[np.where(row_nnz == 0)[0]] = 0
 
         # Handles rows with max of 0 that contain negative numbers
-        samples = np.arange(n_samples)[(np.diff(y.indptr) > 0) &
-                                       (y_i_max.ravel() <= 0)]
+        samples = np.arange(n_samples)[(row_nnz > 0) &
+                                       (row_max.ravel() <= 0)]
         for i in samples:
             ind = y.indices[y.indptr[i]:y.indptr[i+1]]
             y_i_argmax[i] = classes[np.setdiff1d(outputs, ind)][0]
