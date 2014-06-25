@@ -223,8 +223,6 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     LabelBinarizer(neg_label=0, pos_label=1, sparse_output=False)
     >>> lb.classes_
     array([1, 2, 4, 6])
-    >>> lb.multilabel_
-    False
     >>> lb.transform([1, 6])
     array([[1, 0, 0, 0],
            [0, 0, 0, 1]])
@@ -242,8 +240,6 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     LabelBinarizer(neg_label=0, pos_label=1, sparse_output=False)
     >>> lb.classes_
     array([0, 1, 2])
-    >>> lb.multilabel_
-    True
 
     See also
     --------
@@ -543,29 +539,31 @@ def _inverse_binarize_multiclass(y, classes):
         n_samples, n_outputs = y.shape
         outputs = np.arange(n_outputs)
         y_i_max = sparse_min_max(y, 1)[1]
-        repeated_max = np.repeat(y_i_max, np.diff(y.indptr))
+        indptr_diff = np.diff(y.indptr)
+
+        y_data_repeated_max = np.repeat(y_i_max, indptr_diff)
         # picks out all indices obtaining the maximum per row
-        all_argmax = np.flatnonzero(repeated_max == y.data)
+        y_i_all_argmax = np.flatnonzero(y_data_repeated_max == y.data)
 
         # For corner case where last row has a max of 0
-        if(y_i_max[-1] == 0):
-            all_argmax = np.append(all_argmax, [len(y.data)])
+        if y_i_max[-1] == 0:
+            y_i_all_argmax = np.append(y_i_all_argmax, [len(y.data)])
 
-        y_ind_ext = np.append(y.indices, [0])
         # picks out from all_arg max the first argmax in each row
-        result = np.searchsorted(all_argmax, y.indptr[:-1])
+        index_first_argmax = np.searchsorted(y_i_all_argmax, y.indptr[:-1])
         # first argmax of each row
-        argmax = y_ind_ext[all_argmax[result]]
+        y_ind_ext = np.append(y.indices, [0])
+        y_i_argmax = y_ind_ext[y_i_all_argmax[index_first_argmax]]
         # Handle rows of all 0
-        argmax[np.where(np.diff(y.indptr) == 0)[0]] = 0
+        y_i_argmax[np.where(indptr_diff == 0)[0]] = 0
 
         # Handles rows with max of 0 that contain negative numbers
-        for i in np.intersect1d(np.where(np.diff(y.indptr) != 0)[0],
+        for i in np.intersect1d(np.where(indptr_diff != 0)[0],
                                 np.where(y_i_max.ravel() <= 0)[0]):
             ind = y.indices[y.indptr[i]:y.indptr[i+1]]
-            argmax[i] = classes[np.setdiff1d(outputs, ind)][0]
+            y_i_argmax[i] = classes[np.setdiff1d(outputs, ind)][0]
 
-        return classes[argmax]
+        return classes[y_i_argmax]
     else:
         return classes.take(y.argmax(axis=1), mode="clip")
 
