@@ -418,6 +418,23 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     download_if_missing: optional, True by default
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
+    
+    Returns
+    -------
+    The data is returned as a Bunch object with the following attributes:
+
+    data : numpy array of shape (2200, 5828)
+        Each row corresponds to 2 ravelled face images of original size 62 x 67 pixels.
+     
+    pairs : numpy array of shape (2200, 2, 62, 67)
+        Each row has 2 face images corresponding to same or different person from the dataset containing 5749 people.
+
+    target : numpy array of shape (13233,)
+        Labels associated to each pair of images. The two label values being Different persons or Same person.
+        
+    DESCR : string
+        Description of the Labeled Faces in the Wild (LFW) dataset.
+
     """
     lfw_home, data_folder_path = check_fetch_lfw(
         data_home=data_home, funneled=funneled,
