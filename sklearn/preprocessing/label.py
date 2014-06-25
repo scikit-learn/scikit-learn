@@ -16,8 +16,10 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
 
+
 from ..utils.fixes import np_version
 from ..utils.fixes import sparse_min_max
+from ..utils.fixes import astype
 from ..utils import deprecated, column_or_1d
 
 from ..utils.multiclass import unique_labels
@@ -508,7 +510,8 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
         return Y
 
     if not sparse_output:
-        Y = Y.toarray().astype(int, copy=False)
+        Y = Y.toarray()
+        Y = astype(Y, int, copy=False)
 
         if neg_label != 0:
             Y[Y == 0] = neg_label
@@ -524,6 +527,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
     if y_type == "binary":
         Y = Y[:, -1].reshape((-1, 1))
 
+    print Y
     return Y
 
 
