@@ -535,6 +535,8 @@ def _inverse_binarize_multiclass(y, classes):
     classes = np.asarray(classes)
 
     if sp.issparse(y):
+        # Find the argmax for each row in y where y is a CSR matrix
+
         y = y.tocsr()
         n_samples, n_outputs = y.shape
         outputs = np.arange(n_outputs)
@@ -559,7 +561,7 @@ def _inverse_binarize_multiclass(y, classes):
 
         # Handles rows with max of 0 that contain negative numbers
         samples = np.arange(n_samples)[(row_nnz > 0) &
-                                       (row_max.ravel() <= 0)]
+                                       (row_max.ravel() == 0)]
         for i in samples:
             ind = y.indices[y.indptr[i]:y.indptr[i+1]]
             y_i_argmax[i] = classes[np.setdiff1d(outputs, ind)][0]
