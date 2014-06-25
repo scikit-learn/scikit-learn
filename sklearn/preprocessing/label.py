@@ -530,7 +530,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
 def _inverse_binarize_multiclass(y, classes):
     """Inverse label binarization transformation for multiclass.
 
-    Multiclass uses the maximal score instead of a threshold
+    Multiclass uses the maximal score instead of a threshold.
     """
     classes = np.asarray(classes)
 
