@@ -266,9 +266,9 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
     The data is returned as a Bunch object with the following attributes:
 
     data : numpy array of shape (13233, 2914)
-        Each row corresponds to a ravelled face image of original size 62 x 67 pixels.
+        Each row corresponds to a ravelled face image of original size 62 x 47 pixels.
      
-    images : numpy array of shape (13233, 62, 67)
+    images : numpy array of shape (13233, 62, 47)
         Each row is a face image corresponding to one of the 5749 people in the dataset.
 
     target : numpy array of shape (13233,)
