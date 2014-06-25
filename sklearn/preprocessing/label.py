@@ -508,8 +508,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
         return Y
 
     if not sparse_output:
-        Y = Y.toarray()
-        Y = Y.astype(int, copy=False)
+        Y = Y.toarray().astype(int, copy=False)
 
         if neg_label != 0:
             Y[Y == 0] = neg_label
