@@ -19,6 +19,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils.fixes import np_version
 from ..utils.fixes import sparse_min_max
 from ..utils import deprecated, column_or_1d
+from ..utils import astype
 
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
