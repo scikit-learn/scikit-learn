@@ -558,8 +558,9 @@ def _inverse_binarize_multiclass(y, classes):
         y_i_argmax[np.where(indptr_diff == 0)[0]] = 0
 
         # Handles rows with max of 0 that contain negative numbers
-        for i in np.intersect1d(np.where(indptr_diff != 0)[0],
-                                np.where(y_i_max.ravel() <= 0)[0]):
+        samples = np.arange(n_samples)[(np.diff(y.indptr) > 0) &
+                                       (y_i_max.ravel() <= 0)]
+        for i in samples:
             ind = y.indices[y.indptr[i]:y.indptr[i+1]]
             y_i_argmax[i] = classes[np.setdiff1d(outputs, ind)][0]
 
