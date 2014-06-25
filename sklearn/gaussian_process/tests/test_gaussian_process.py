@@ -141,3 +141,22 @@ def test_no_normalize():
     gp = GaussianProcess(normalize=False).fit(X, y)
     y_pred = gp.predict(X)
     assert_true(np.allclose(y_pred, y))
+    
+    
+def test_hyperparam_optimization_limits():
+    """
+    Regression test for parameter optimization constraints.
+    """
+    testX = X.repeat(2,axis=1)
+    theta_init = np.array([1e-1,1e-1])
+    theta_lower = np.array([1e-2,1e-2])
+    theta_upper = np.array([2e-1,2e-1])
+    gp = GaussianProcess(corr='squared_exponential',theta0=theta_init,thetaL=theta_lower,thetaU=theta_upper,random_start=50)
+    gp.fit(testX,y)
+    # Check the upper bound
+    assert_true( (gp.theta_ <= theta_upper).all() or np.allclose(gp.theta_,theta_upper) )
+    # Check the lower bound
+    assert_true( (gp.theta_ >= theta_lower).all() or np.allclose(gp.theta_,theta_lower) )
+    
+    
+    
