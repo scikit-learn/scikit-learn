@@ -74,7 +74,6 @@ fpr["micro"], tpr["micro"], _ = roc_curve(y_test.ravel(), y_score.ravel())
 roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
 
 # Plot of one ROC curve
-plt.clf()
 plt.plot(fpr[2], tpr[2], label='ROC curve (area = %0.2f)' % roc_auc[2])
 plt.plot([0, 1], [0, 1], 'k--')
 plt.xlim([0.0, 1.0])
@@ -86,7 +85,6 @@ plt.legend(loc="lower right")
 plt.show()
 
 # Plot ROC curve
-plt.clf()
 plt.plot(fpr["micro"], tpr["micro"],
          label='micro-average ROC curve (area = {0:0.2f})'
                ''.format(roc_auc["micro"]))
