@@ -6,6 +6,10 @@ The original database is available from StatLib
 
 The data contains 20,640 observations on 9 variables.
 
+The file contains all the the variables. 
+Specifically, it contains average house value (target), average income, 
+housing average age, average rooms, average bedrooms, population, 
+average occupation, latitude, and longitude in that order.
 
 References
 ----------
@@ -56,10 +60,26 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
+    Returns
+    -------
+    The data is returned as a Bunch object with the following attributes:
+
+    data : numpy array of shape (20640, 8)
+        Each row corresponding to the 8 feature values in order.
+
+    target : numpy array of shape (20640,)
+        Each value corresponds to the average house value in units of 100,000.
+
+    feature_names : array of length 8
+        Array of ordered feature names used in the dataset.
+
+    DESCR : string
+        Description of the California Housing Dataset
+
     Notes
     ------
 
-    This dataset consists of 20,640 samples and 9 features.
+    This dataset consists of 20,640 samples and 9 variables.
     """
     data_home = get_data_home(data_home=data_home)
     if not exists(data_home):
