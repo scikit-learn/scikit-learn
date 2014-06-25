@@ -197,7 +197,7 @@ class VectorizerMixin(object):
             return strip_accents
 
     def build_tokenizer(self):
-        """Return a function that split a string in sequence of tokens"""
+        """Return a function that splits a string into a sequence of tokens"""
         if self.tokenizer is not None:
             return self.tokenizer
         token_pattern = re.compile(self.token_pattern)
@@ -274,12 +274,12 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     ----------
 
     input: string {'filename', 'file', 'content'}
-        If filename, the sequence passed as an argument to fit is
+        If 'filename', the sequence passed as an argument to fit is
         expected to be a list of filenames that need reading to fetch
         the raw content to analyze.
 
-        If 'file', the sequence items must have 'read' method (file-like
-        object) it is called to fetch the bytes in memory.
+        If 'file', the sequence items must have a 'read' method (file-like
+        object) that is called to fetch the bytes in memory.
 
         Otherwise the input is expected to be the sequence strings or
         bytes items are expected to be analyzed directly.
@@ -335,8 +335,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
 
     token_pattern: string
         Regular expression denoting what constitutes a "token", only used
-        if `analyzer == 'word'`. The default regexp select tokens of 2
-        or more letters characters (punctuation is completely ignored
+        if `analyzer == 'word'`. The default regexp selects tokens of 2
+        or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
 
     n_features : integer, optional, (2 ** 20) by default
@@ -475,12 +475,12 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     Parameters
     ----------
     input : string {'filename', 'file', 'content'}
-        If filename, the sequence passed as an argument to fit is
+        If 'filename', the sequence passed as an argument to fit is
         expected to be a list of filenames that need reading to fetch
         the raw content to analyze.
 
-        If 'file', the sequence items must have 'read' method (file-like
-        object) it is called to fetch the bytes in memory.
+        If 'file', the sequence items must have a 'read' method (file-like
+        object) that is called to fetch the bytes in memory.
 
         Otherwise the input is expected to be the sequence strings or
         bytes items are expected to be analyzed directly.
@@ -535,13 +535,13 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         in the range [0.7, 1.0) to automatically detect and filter stop
         words based on intra corpus document frequency of terms.
 
-    lowercase : boolean, default True
-        Convert all characters to lowercase befor tokenizing.
+    lowercase : boolean, True by default
+        Convert all characters to lowercase before tokenizing.
 
     token_pattern : string
         Regular expression denoting what constitutes a "token", only used
         if `tokenize == 'word'`. The default regexp select tokens of 2
-        or more letters characters (punctuation is completely ignored
+        or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
 
     max_df : float in range [0.0, 1.0] or int, optional, 1.0 by default
@@ -1035,12 +1035,12 @@ class TfidfVectorizer(CountVectorizer):
     Parameters
     ----------
     input : string {'filename', 'file', 'content'}
-        If filename, the sequence passed as an argument to fit is
+        If 'filename', the sequence passed as an argument to fit is
         expected to be a list of filenames that need reading to fetch
         the raw content to analyze.
 
-        If 'file', the sequence items must have 'read' method (file-like
-        object) it is called to fetch the bytes in memory.
+        If 'file', the sequence items must have a 'read' method (file-like
+        object) that is called to fetch the bytes in memory.
 
         Otherwise the input is expected to be the sequence strings or
         bytes items are expected to be analyzed directly.
@@ -1094,12 +1094,12 @@ class TfidfVectorizer(CountVectorizer):
         words based on intra corpus document frequency of terms.
 
     lowercase : boolean, default True
-        Convert all characters to lowercase befor tokenizing.
+        Convert all characters to lowercase before tokenizing.
 
     token_pattern : string
         Regular expression denoting what constitutes a "token", only used
-        if `analyzer == 'word'`. The default regexp select tokens of 2
-        or more letters characters (punctuation is completely ignored
+        if `analyzer == 'word'`. The default regexp selects tokens of 2
+        or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
 
     max_df : float in range [0.0, 1.0] or int, optional, 1.0 by default
