@@ -42,10 +42,10 @@ disk and not to a string::
 
   >>> from sklearn.externals import joblib
   >>> joblib.dump(clf, 'filename.pkl') # doctest: +SKIP
-  
+
 Later you can load back the pickled model (possibly in another Python process)
 with::
-  
+
   >>> clf = joblib.load('filename.pkl') # doctest:+SKIP
 
 .. note::
@@ -89,10 +89,10 @@ Here is the warning from the official pickle documentation:
     The pickle module is not intended to be secure against erroneous or
     maliciously constructed data.  Never unpickle data received from an untrusted
     or unauthenticated source.
-    
+
 If you want to know more about these issues and explore other possible
 serialization methods, please refer to this
-`talk by Alex Gaynor <http://pyvideo.org/video/2566/pickles-are-for-delis-not-software>`_.  
-  
-  
-  
+`talk by Alex Gaynor <http://pyvideo.org/video/2566/pickles-are-for-delis-not-software>`_.
+
+
+
