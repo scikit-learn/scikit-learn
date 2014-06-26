@@ -336,8 +336,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     token_pattern: string
         Regular expression denoting what constitutes a "token", only used
         if `analyzer == 'word'`. The default regexp selects tokens of 2
-        or more characters (punctuation is completely ignored and always
-        treated as a token separator).
+        or more alphanumeric characters (punctuation is completely ignored
+        and always treated as a token separator).
 
     n_features : integer, optional, (2 ** 20) by default
         The number of features (columns) in the output matrices. Small numbers
@@ -541,8 +541,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     token_pattern : string
         Regular expression denoting what constitutes a "token", only used
         if `tokenize == 'word'`. The default regexp select tokens of 2
-        or more characters (punctuation is completely ignored and always
-        treated as a token separator).
+        or more alphanumeric characters (punctuation is completely ignored
+        and always treated as a token separator).
 
     max_df : float in range [0.0, 1.0] or int, optional, 1.0 by default
         When building the vocabulary ignore terms that have a document
@@ -1099,8 +1099,8 @@ class TfidfVectorizer(CountVectorizer):
     token_pattern : string
         Regular expression denoting what constitutes a "token", only used
         if `analyzer == 'word'`. The default regexp selects tokens of 2
-        or more characters (punctuation is completely ignored and always
-        treated as a token separator).
+        or more alphanumeric characters (punctuation is completely ignored
+        and always treated as a token separator).
 
     max_df : float in range [0.0, 1.0] or int, optional, 1.0 by default
         When building the vocabulary ignore terms that have a term frequency
