@@ -59,40 +59,13 @@ with::
 Security & maintainability limitations
 --------------------------------------
 
-You must be aware that pickle has some issues regarding maintainability and
-security. From the **maintainability** point of view, you should take care the
-issues that may arise if you upgrade your sklearn library while still loading a
-model that was trained with a previous version, the model may have a code
-structure that could not be compatible with newer versions and thus, don't work.
-The same issue could also happen if you upgrade numpy or scipy versions.
+pickle (and joblib by extension), has some issues regarding maintainability
+and security. Because of this,
 
-A good practice is to save the scikit-learn, numpy and scipy versions to know
-exactly what versions have been used to generate the model. You can do that, for
-example, by executing a ``pip freeze`` command and saving the output to a text
-file which should be stored together with your pickles.
-Also, save a snapshot of your data to make it possible to retrain the model
-if incompatibility issues arise when upgrading the libraries.
-
-Regarding **security** issues, you may know that pickle is implemented with a
-stack machine that executes instructions. As a difference with other
-serialization methods like JSON, BSON, YAML, etc, which are all data oriented,
-pickle is instruction oriented. Pickle serializes objects by persisting a set of
-instructions that will be then executed at deserialization time in order to
-reconstruct your objects. In fact, as part of the deserialization process,
-pickle could call any arbitrary function, which opens up security
-vulnerabilities against any malicious data or exploits.
-
-Here is the warning from the official pickle documentation:
-
-.. warning::
-
-    The pickle module is not intended to be secure against erroneous or
-    maliciously constructed data.  Never unpickle data received from an untrusted
-    or unauthenticated source.
+* Never unpickle untrusted data
+* Models saved in one version of scikit-learn might not load in another
+  version.
 
 If you want to know more about these issues and explore other possible
 serialization methods, please refer to this
 `talk by Alex Gaynor <http://pyvideo.org/video/2566/pickles-are-for-delis-not-software>`_.
-
-
-
