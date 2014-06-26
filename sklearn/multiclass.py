@@ -86,7 +86,7 @@ def fit_ovr(estimator, X, y, n_jobs=1):
     """Fit a one-vs-the-rest strategy."""
     _check_estimator(estimator)
 
-    lb = LabelBinarizer(sparse_output=sp.issparse(y))
+    lb = LabelBinarizer(sparse_output=True)
 
     Y = lb.fit_transform(y)
 
@@ -94,7 +94,7 @@ def fit_ovr(estimator, X, y, n_jobs=1):
         estimators = Parallel(n_jobs=n_jobs)(delayed(_fit_binary)
                                              (estimator,
                                               X,
-                                              Y.getcol(i).toarray(),
+                                              Y.getcol(i).toarray().ravel(),
                                               classes=["not %s" % i, i])
                                              for i in range(Y.shape[1]))
     else:

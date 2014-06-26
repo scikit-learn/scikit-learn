@@ -517,6 +517,8 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
 
         if pos_switch:
             Y[Y == pos_label] = 0
+    else:
+        Y.data = astype(Y.data, int, copy=False)
 
     # preserve label ordering
     if np.any(classes != sorted_class):
@@ -524,7 +526,10 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
         Y = Y[:, indices]
 
     if y_type == "binary":
-        Y = Y[:, -1].reshape((-1, 1))
+        if sparse_output:
+            Y = Y.getcol(-1)
+        else:
+            Y = Y[:, -1].reshape((-1, 1))
 
     return Y
 
@@ -600,6 +605,8 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold):
 
     # Inverse transform data
     if output_type == "binary":
+        if sp.issparse(y):
+            y = y.toarray()
         if y.ndim == 2 and y.shape[1] == 2:
             return classes[y[:, 1]]
         else:
