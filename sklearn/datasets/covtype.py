@@ -73,7 +73,7 @@ def fetch_covtype(data_home=None, download_if_missing=True,
         Each row corresponds to the 54 features in the dataset.
         
     target : numpy array of shape (581012,)
-        Each value corresponds to one of the 7 forest covertypes labelled 1 to 7.
+        Each value corresponds to one of the 7 forest covertypes with values ranging between 1 to 7.
 
     DESCR : string
         Description of the Forest Covertype Dataset.

@@ -6,8 +6,8 @@ The original database is available from StatLib
 
 The data contains 20,640 observations on 9 variables.
 
-The file contains all the the variables. 
-Specifically, it contains average house value (target), average income, 
+This dataset contains the average house value as target variable 
+and the following input variables (features): average income, 
 housing average age, average rooms, average bedrooms, population, 
 average occupation, latitude, and longitude in that order.
 
@@ -79,7 +79,7 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
     Notes
     ------
 
-    This dataset consists of 20,640 samples and 9 variables.
+    This dataset consists of 20,640 samples and 9 features.
     """
     data_home = get_data_home(data_home=data_home)
     if not exists(data_home):
