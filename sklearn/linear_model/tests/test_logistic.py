@@ -14,6 +14,7 @@ from sklearn.utils.testing import raises
 from sklearn.linear_model.logistic import (LogisticRegression,
     logistic_regression_path, LogisticRegressionCV,
     _logistic_loss_and_grad, _logistic_loss_grad_hess)
+from sklearn.cross_validation import StratifiedKFold
 from sklearn.datasets import load_iris, make_classification
 
 X = [[-1, 0], [0, 1], [1, 1]]
@@ -361,3 +362,21 @@ def test_shape_attributes_logregcv():
     assert_array_equal(clf.Cs_.shape, (10, ))
     scores = np.asarray(list(clf.scores_.values()))
     assert_array_equal(scores.shape, (1, 3, 10))
+
+
+def test_ova_iris():
+    # Test that our OvA implementation is correct using the iris dataset.
+    train, target = iris.data, iris.target
+
+    # Use pre-defined fold as folds generated for different y
+    cv = StratifiedKFold(target, 3)
+    clf = LogisticRegressionCV(cv=cv)
+    clf.fit(train, target)
+
+    clf1 = LogisticRegressionCV(cv=cv)
+    target[target == 0] = 1
+    clf1.fit(train, target)
+
+    assert_array_equal(clf.scores_[2], clf1.scores_[2])
+    assert_array_equal(clf.intercept_[2:], clf1.intercept_)
+    assert_array_equal(clf.coef_[2][np.newaxis, :], clf1.coef_)
