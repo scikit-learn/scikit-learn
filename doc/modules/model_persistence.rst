@@ -66,6 +66,17 @@ and security. Because of this,
 * Models saved in one version of scikit-learn might not load in another
   version.
 
+In order to rebuild a similar model with future versions of scikit-learn,
+additional metadata should be saved along the pickled model:
+
+* The training data, e.g. a reference to a immutable snapshot
+* The python source code used to generate the model
+* The versions of scikit-learn and its dependencies
+* The cross validation score obtained on the training data
+
+This should make it possible to check that the cross-validation score is in the
+same range as before.
+
 If you want to know more about these issues and explore other possible
 serialization methods, please refer to this
 `talk by Alex Gaynor <http://pyvideo.org/video/2566/pickles-are-for-delis-not-software>`_.
