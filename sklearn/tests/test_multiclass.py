@@ -117,6 +117,34 @@ def test_ovr_always_present():
     assert_array_equal(y_pred[:, -1], np.zeros(X.shape[0]))
 
 
+def test_ovr_multiclass():
+    # Toy dataset where features correspond directly to labels.
+    X = np.array([[0, 0, 5], [0, 5, 0], [3, 0, 0], [0, 0, 6], [6, 0, 0]])
+    y = ["eggs", "spam", "ham", "eggs", "ham"]
+    # y = [[1, 2], [1], [0, 1, 2], [0, 2], [0]]
+    Y = np.array([[0, 0, 1],
+                  [0, 1, 0],
+                  [1, 0, 0],
+                  [0, 0, 1],
+                  [1, 0, 0]])
+
+    classes = set("ham eggs spam".split())
+
+    for base_clf in (MultinomialNB(), LinearSVC(random_state=0),
+                     LinearRegression(), Ridge(),
+                     ElasticNet(), Lasso(alpha=0.5)):
+
+        clf = OneVsRestClassifier(base_clf).fit(X, y)
+        assert_equal(set(clf.classes_), classes)
+        y_pred = clf.predict(np.array([[0, 0, 4]]))[0]
+        assert_equal(set(y_pred), set("eggs"))
+
+        # test input as label indicator matrix
+        clf = OneVsRestClassifier(base_clf).fit(X, Y)
+        y_pred = clf.predict([[0, 0, 4]])[0]
+        assert_array_equal(y_pred, [0, 0, 1])
+
+
 def test_ovr_multilabel():
     # Toy dataset where features correspond directly to labels.
     X = np.array([[0, 4, 5], [0, 5, 0], [3, 3, 3], [4, 0, 6], [6, 0, 0]])

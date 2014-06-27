@@ -86,7 +86,9 @@ def fit_ovr(estimator, X, y, n_jobs=1):
     """Fit a one-vs-the-rest strategy."""
     _check_estimator(estimator)
 
-    lb = LabelBinarizer(sparse_output=True)
+    # XXX benchmark one line vs the other
+    lb = LabelBinarizer(sparse_output=sp.issparse(y))
+    # lb = LabelBinarizer(sparse_output=sp.issparse(y))
 
     Y = lb.fit_transform(y)
 
@@ -120,7 +122,7 @@ def predict_ovr(estimators, label_binarizer, X):
             pred = _predict_binary(e, X)
             np.maximum(maxima, pred, out=maxima)
             argmaxima[maxima == pred] = i
-        return np.array(argmaxima.T, dtype=label_binarizer.classes_.dtype)
+        return label_binarizer.classes_[np.array(argmaxima.T)]
     else:
         indices = array.array('i')
         indptr = array.array('i', [0])
