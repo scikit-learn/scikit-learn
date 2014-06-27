@@ -7,6 +7,7 @@ from scipy.fftpack import dct
 
 import fht
 from scipy.fftpack import dct
+from scipy.linalg import hadamard
 
 from sklearn.utils.testing import assert_array_equal, assert_equal, assert_greater
 from sklearn.utils.testing import assert_not_equal, assert_almost_equal
@@ -240,6 +241,20 @@ def test_rows_of_gaussian_iid_have_same_length():
         norm_of_all_rows = np.linalg.norm(HGPHB, axis=1)
         n = norm_of_all_rows[0]
         yield assert_all_equal, norm_of_all_rows, n
+
+
+def test_hadamard_equivalence():
+    # Ensure that the fht along axes 0 is equivalent an explicit hadamard
+    # transform for random diagonal gaussian matrices
+    for i, d in ((x, 2 ** x) for x in xrange(1, 8)):
+        g = np.diag(np.random.normal(size=d))
+        h = hadamard(d)
+        normalization = (1 / np.power(2, i / 2.0))
+        # explicit
+        one = normalization * np.dot(h, g)
+        # fht
+        two = fht.fht(g, axes=0)
+        yield assert_array_almost_equal, one, two
 
 
 def test_fastfood():
