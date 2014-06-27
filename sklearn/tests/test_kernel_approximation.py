@@ -290,7 +290,7 @@ def test_fastfood():
     gamma = 10.
     kernel = rbf_kernel(X, Y, gamma=gamma)
 
-    sigma = np.sqrt(1 / (2 * gamma))
+    sigma = np.sqrt(1 / ((2 * gamma))) * 6
 
     # approximate kernel mapping
     ff_transform = Fastfood(sigma, n_components=2048, random_state=42)
