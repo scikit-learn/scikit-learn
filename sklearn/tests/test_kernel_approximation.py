@@ -263,18 +263,20 @@ def test_fastfood():
     gamma = 10.
     kernel = rbf_kernel(X, Y, gamma=gamma)
 
+    sigma = np.sqrt(1 / (2 * gamma))
+
     # approximate kernel mapping
-    rbf_transform = Fastfood(sigma=np.sqrt(1/(2*gamma))/1000, n_components=1000, random_state=42)
-    X_trans = rbf_transform.fit_transform(X)
-    Y_trans = rbf_transform.transform(Y)
+    ff_transform = Fastfood(sigma, n_components=2048, random_state=42)
+
+    X_trans = ff_transform.fit_transform(X)
+    Y_trans = ff_transform.transform(Y)
     #print X_trans, Y_trans
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
-    print 'approximation:', kernel_approx[1:10,1:10]
-    print 'true kernel:', kernel[1:10,1:10]
+    print 'approximation:', kernel_approx[1:10, 1:10]
+    print 'true kernel:', kernel[1:10, 1:10]
 
     assert_array_almost_equal(kernel, kernel_approx, 1)
-    raise
 
 def test_fastfood_performance_to_rks():
     """test that Fastfood approximates kernel on random data"""
