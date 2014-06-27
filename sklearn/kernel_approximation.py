@@ -599,13 +599,6 @@ class Fastfood(BaseEstimator, TransformerMixin):
 
     def transform(self, X):
 
-        #V = np.matrix(np.zeros((self.n, self.d)))
-
-#        for i in range(self.times_to_stack_v):
-#            V[i * self.d:(i + 1) * self.d, 0:self.d] = np.transpose(
-#                Fastfood.V(self.s[:, i], self.g[:, i], self.b[:, i], self.P[:, :, i], self.d, self.sigma))
-
-        #first create all the v matrices
         to_stack = []
         for i in range(self.times_to_stack_v):
             HGPHB = Fastfood.create_gaussian_iid_matrix(self.B, self.G, self.P)
