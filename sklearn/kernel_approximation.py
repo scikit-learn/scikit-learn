@@ -587,32 +587,36 @@ class Fastfood(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
 
-        rnd = check_random_state(self.random_state)
-
         d_orig = X.shape[1]
 
-        self.d, self.n, self.times_to_stack_v = Fastfood.enforce_dimensionality_constraints(d_orig, self.n_components)
+        self.d, self.n, self.times_to_stack_v = \
+                Fastfood.enforce_dimensionality_constraints(d_orig, self.n_components)
         self.number_of_features_to_pad_with_zeros = self.d - d_orig
 
-        self.b = np.zeros((self.d, self.times_to_stack_v))
-        self.g = np.zeros((self.d, self.times_to_stack_v))
-        self.P = np.zeros((self.d, self.d, self.times_to_stack_v))
-        self.s = np.zeros((self.d, self.times_to_stack_v))
-        for stack in range(self.times_to_stack_v):
-            self.b[:, stack], self.g[:, stack], self.P[:, :, stack], self.s[:, stack] \
-                = Fastfood.create_vectors(self.d, rnd)
+        self.B, self.G, self.P, self.S = self.create_vectors()
 
         return self
 
     def transform(self, X):
 
-        V = np.matrix(np.zeros((self.n, self.d)))
+        #V = np.matrix(np.zeros((self.n, self.d)))
 
+#        for i in range(self.times_to_stack_v):
+#            V[i * self.d:(i + 1) * self.d, 0:self.d] = np.transpose(
+#                Fastfood.V(self.s[:, i], self.g[:, i], self.b[:, i], self.P[:, :, i], self.d, self.sigma))
+
+        #first create all the v matrices
+        to_stack = []
         for i in range(self.times_to_stack_v):
-            V[i * self.d:(i + 1) * self.d, 0:self.d] = np.transpose(
-                Fastfood.V(self.s[:, i], self.g[:, i], self.b[:, i], self.P[:, :, i], self.d, self.sigma))
+            v = Fastfood.V(self.s,
+                           self.g,
+                           self.b,
+                           self.P,
+                           self.d, self.sigma)
+            to_stack.append(v)
+        V_stacked = np.hstack(to_stack)
 
         X_padded = np.pad(X, ((0, 0), (0, self.number_of_features_to_pad_with_zeros)), 'constant')
 
         #print self.n, self.d, V.shape, X.shape, X_padded.shape, Fastfood.phi(V, X_padded).shape
-        return Fastfood.phi(V, X_padded).T
+        return Fastfood.phi(V_stacked , X_padded).T
