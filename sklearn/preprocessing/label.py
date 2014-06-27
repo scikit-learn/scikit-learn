@@ -492,12 +492,8 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
                           shape=(n_samples, n_classes))
 
     elif y_type == "multilabel-indicator":
-        # XXX simplify this conditional path
-        if sp.issparse(y):
-            if y.format not in ('csr', 'csc'):
-                Y = sp.csr_matrix(y)
-            else:
-                Y = y
+        if sp.issparse(y) and y.format == 'csc':
+            Y = sp.csc_matrix(y)
         else:
             Y = sp.csr_matrix(y)
         if pos_label != 1:
