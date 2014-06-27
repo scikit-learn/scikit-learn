@@ -5,8 +5,11 @@ import fht as fht
 from scipy.fftpack import dct
 
 
-from sklearn.utils.testing import assert_array_equal, assert_equal,assert_greater
-from sklearn.utils.testing import assert_not_equal
+import fht
+from scipy.fftpack import dct
+
+from sklearn.utils.testing import assert_array_equal, assert_equal, assert_greater
+from sklearn.utils.testing import assert_not_equal, assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal, assert_raises
 
 
@@ -19,6 +22,7 @@ from sklearn.kernel_approximation import SkewedChi2Sampler
 from sklearn.kernel_approximation import Nystroem
 from sklearn.kernel_approximation import Fastfood
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
+
 
 # generate data
 rng = np.random.RandomState(0)
@@ -220,17 +224,23 @@ def test_enforce_dimensionality_constraint():
         yield assert_equal, expected, output, message
 
 
-def given_gaussian_iid_matrix(d, random_state):
-    b, g, P, _ = Fastfood.create_vectors(d, random_state)
-    gaussian_iid = Fastfood.create_gaussian_iid_matrix(b, g, P)
-    return b, g, P, gaussian_iid
+def assert_all_equal(array_, value):
+    for i in array_:
+        assert_almost_equal(i, value)
 
 
 def test_rows_of_gaussian_iid_have_same_length():
-    _, _, _, gaussian_iid = given_gaussian_iid_matrix(8, random_state=check_random_state(42))
-    norm_of_all_rows = np.linalg.norm(gaussian_iid, axis=1)
+    fastfood = Fastfood(1, 1, 42)
+    for d in (2 ** x for x in xrange(1, 8)):
+        print d
+        fastfood.d = d
 
-    all(assert_array_almost_equal(n, norm_of_all_rows[0]) for n in norm_of_all_rows)
+        B, G, P, S = fastfood.create_vectors()
+        HGPHB = fastfood.create_gaussian_iid_matrix(B, G, P)
+
+        norm_of_all_rows = np.linalg.norm(HGPHB, axis=1)
+        n = norm_of_all_rows[0]
+        yield assert_all_equal, norm_of_all_rows, n
 
 
 def test_fastfood():
