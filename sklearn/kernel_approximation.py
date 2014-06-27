@@ -562,7 +562,6 @@ class Fastfood(BaseEstimator, TransformerMixin):
         HGPHB = np.dot(HGP, HB)
         return HGPHB
 
-    @staticmethod
     def create_approximation_matix(self, S, HGPHB):
         """ Create V from HGPHB and S """
         SHGPHB = np.dot(np.diag(S), HGPHB)
