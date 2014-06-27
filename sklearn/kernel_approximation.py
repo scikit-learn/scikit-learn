@@ -608,13 +608,10 @@ class Fastfood(BaseEstimator, TransformerMixin):
         #first create all the v matrices
         to_stack = []
         for i in range(self.times_to_stack_v):
-            v = Fastfood.V(self.s,
-                           self.g,
-                           self.b,
-                           self.P,
-                           self.d, self.sigma)
+            HGPHB = Fastfood.create_gaussian_iid_matrix(self.B, self.G, self.P)
+            v = self.create_approximation_matix(self.S, HGPHB)
             to_stack.append(v)
-        V_stacked = np.hstack(to_stack)
+        V_stacked = np.vstack(to_stack)
 
         X_padded = np.pad(X, ((0, 0), (0, self.number_of_features_to_pad_with_zeros)), 'constant')
 
