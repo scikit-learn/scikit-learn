@@ -544,6 +544,15 @@ class Fastfood(BaseEstimator, TransformerMixin):
             times_to_stack_v = int(divisor+1)
         return int(d), int(n), times_to_stack_v
 
+    @staticmethod
+    def create_gaussian_iid_matrix(B, G, P):
+        """ Create HGPHB """
+
+        HB = Fastfood.hadamard(np.diag(B))
+        GP = np.dot(np.diag(G), P)
+        HGP = Fastfood.hadamard(GP)
+        HGPHB = np.dot(HGP, HB)
+        return HGPHB
 
     @staticmethod
     def V(s, b, g, P, d, sigma):
@@ -564,22 +573,12 @@ class Fastfood(BaseEstimator, TransformerMixin):
         implementations.
         """
         # the fast hadamard transform
-        #return fht.fht(b)
+        return fht.fht(X, axes=0)
 
         # full multiplication with explicit hadamard matrix
-        H = (1 / (X.shape[0] * np.sqrt(2))) * hadamard(X.shape[0])
-        return np.dot(H, X)
+        #H = (1 / (X.shape[0] * np.sqrt(2))) * hadamard(X.shape[0])
+        #return np.dot(H, X)
 
-    @staticmethod
-    def create_gaussian_iid_matrix(b, g, P):
-
-        HB = Fastfood.hadamard(np.diag(b))
-        GP = np.dot(np.diag(g), P)
-
-        HGP = Fastfood.hadamard(GP)
-
-        gaussian_iid = np.dot(HGP, HB)
-        return gaussian_iid
 
     def __init__(self, sigma, n_components, random_state=None):
         self.sigma = sigma
