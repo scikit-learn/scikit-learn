@@ -28,6 +28,7 @@ from sklearn.linear_model.ridge import _solve_cholesky
 from sklearn.linear_model.ridge import _solve_cholesky_kernel
 
 from sklearn.cross_validation import KFold
+from sklearn.cross_validation import StratifiedKFold
 
 
 diabetes = datasets.load_diabetes()
@@ -742,3 +743,22 @@ def test_raises_value_error_if_solver_not_supported():
         ridge_regression(X, y, alpha=1., solver=wrong_solver)
 
     assert_raise_message(exception, message, func)
+
+
+def test_scoring_cv():
+    """Checks whether the scoring argument is used in the case of
+    cv objects other than LOO"""
+
+    rng = np.random.RandomState(42)
+    X = rng.randn(100, 2)
+    y = rng.permutation(len(X)) > .8 * len(X)  # unbalanced classes
+
+    cv = StratifiedKFold(y, n_folds=2)
+
+    rccv_accuracy = RidgeClassifierCV(cv=cv, scoring='accuracy')
+    rccv_accuracy.fit(X, y)
+
+    rccv_f1 = RidgeClassifierCV(cv=cv, scoring='f1')
+    rccv_f1.fit(X, y)
+
+

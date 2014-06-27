@@ -870,7 +870,10 @@ class _BaseRidgeCV(LinearModel):
             #fit_params = {'sample_weight' : sample_weight}
             fit_params = {}
             gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept),
-                              parameters, fit_params=fit_params, cv=self.cv)
+                              parameters, fit_params=fit_params, cv=self.cv,
+                              scoring=self.scoring,
+                              score_func=self.score_func,
+                              loss_func=self.loss_func)
             gs.fit(X, y)
             estimator = gs.best_estimator_
             self.alpha_ = gs.best_estimator_.alpha
