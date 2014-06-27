@@ -501,6 +501,12 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
 class Fastfood(BaseEstimator, TransformerMixin):
 
+    def __init__(self, sigma, n_components, random_state=None):
+        self.sigma = sigma
+        self.n_components = n_components
+        self.random_state = random_state
+        self.rng = check_random_state(self.random_state)
+
     @staticmethod
     def is_number_power_of_two(n):
         return n != 0 and ((n & (n - 1)) == 0)
@@ -579,12 +585,6 @@ class Fastfood(BaseEstimator, TransformerMixin):
         # full multiplication with explicit hadamard matrix
         #H = (1 / (X.shape[0] * np.sqrt(2))) * hadamard(X.shape[0])
         #return np.dot(H, X)
-
-    def __init__(self, sigma, n_components, random_state=None):
-        self.sigma = sigma
-        self.n_components = n_components
-        self.random_state = random_state
-        self.rng = check_random_state(self.random_state)
 
     def fit(self, X, y=None):
 
