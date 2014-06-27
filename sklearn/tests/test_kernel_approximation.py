@@ -327,7 +327,7 @@ def test_fastfood_performance_to_rks():
     Y_trans_rks = rks_rbf_transform.transform(Y)
     rks_end = datetime.datetime.utcnow()
     rks_spent_time =rks_end- rks_start
-    print fastfood_spent_time,rks_spent_time
+    print "Timimg fastfood:", fastfood_spent_time,rks_spent_time
 
     assert_greater(rks_spent_time,fastfood_spent_time)
     #kernel_approx = np.dot(X_trans_rks, Y_trans_rks.T)
@@ -350,7 +350,7 @@ def test_fht_dct_performance():
     _ = dct(X)
     dct_end = datetime.datetime.utcnow()
     dct_spent_time = dct_end- dct_start
-    
-    print fht_spent_time, dct_spent_time
+
+    print "Timing fht: ", fht_spent_time, dct_spent_time
 
     assert_greater(fht_spent_time, dct_spent_time)
