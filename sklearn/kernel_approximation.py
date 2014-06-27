@@ -520,9 +520,9 @@ class Fastfood(BaseEstimator, TransformerMixin):
 
     def create_vectors(self, d):
         G = self.random_gauss_vector(d)
-        B = Fastfood.binary_vector(d)
-        P = Fastfood.permutation_matrix(d)
-        S = Fastfood.scaling_vector(d, G)
+        B = self.binary_vector(d)
+        P = self.permutation_matrix(d)
+        S = self.scaling_vector(d, G)
 
         return B, G, P, S
 
