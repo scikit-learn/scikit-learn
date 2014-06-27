@@ -579,10 +579,11 @@ class Fastfood(BaseEstimator, TransformerMixin):
         implementations.
         """
         # the fast hadamard transform
-        return fht.fht(X, axes=0)
+        return fht.fht2(X, axes=0, normalized=False)
 
         # full multiplication with explicit hadamard matrix
         #H = (1 / (X.shape[0] * np.sqrt(2))) * hadamard(X.shape[0])
+        #H = hadamard(X.shape[0])
         #return np.dot(H, X)
 
     def fit(self, X, y=None):
