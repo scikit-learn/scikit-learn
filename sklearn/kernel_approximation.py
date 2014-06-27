@@ -562,15 +562,26 @@ class Fastfood(BaseEstimator, TransformerMixin):
         return (1 / np.sqrt(V.shape[0])) * np.cos(np.dot(V, X.T))
 
     @staticmethod
-    def create_gaussian_iid_matrix(b, g, P):
-        H = (1 / (b.shape[0] * np.sqrt(2))) * hadamard(b.shape[0])
+    def hadamard(X):
+        """ Abstraction for the hadamard transform.
 
-        # HB = fht.fht(np.diag(b))
-        HB = np.dot(H, np.diag(b))
+        Doing this in a single function should eas testing different
+        implementations.
+        """
+        # the fast hadamard transform
+        #return fht.fht(b)
+
+        # full multiplication with explicit hadamard matrix
+        H = (1 / (X.shape[0] * np.sqrt(2))) * hadamard(X.shape[0])
+        return np.dot(H, X)
+
+    @staticmethod
+    def create_gaussian_iid_matrix(b, g, P):
+
+        HB = Fastfood.hadamard(np.diag(b))
         GP = np.dot(np.diag(g), P)
 
-        # HGP = fht.fht(GP)
-        HGP = np.dot(H, GP)
+        HGP = Fastfood.hadamard(GP)
 
         gaussian_iid = np.dot(HGP, HB)
         return gaussian_iid
