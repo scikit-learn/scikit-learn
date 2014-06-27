@@ -232,7 +232,6 @@ def assert_all_equal(array_, value):
 def test_rows_of_gaussian_iid_have_same_length():
     fastfood = Fastfood(1, 1, 42)
     for d in (2 ** x for x in xrange(1, 8)):
-        print d
         fastfood.d = d
 
         B, G, P, S = fastfood.create_vectors()
