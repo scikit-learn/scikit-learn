@@ -257,6 +257,33 @@ def test_hadamard_equivalence():
         yield assert_array_almost_equal, one, two
 
 
+def test_scalability_to_one():
+    """ Test equation 11. """
+    fastfood = Fastfood(1, 1)
+    d = 128
+    fastfood.d = d
+
+    B, G, P, S = fastfood.create_vectors()
+    HGPHB = fastfood.create_gaussian_iid_matrix(B, G, P)
+
+    # G is a vector need to make a diagonal matrix for the test
+    G = np.diag(G)
+
+    # The norm checks only work with an UNNORMALIZED hadamard transform
+    norm_by_transpose = np.sqrt(np.diagonal(np.dot(HGPHB, HGPHB.T)))[0]
+    norm_by_ax0 = np.linalg.norm(HGPHB, axis=0)[0]
+    norm_by_ax1 = np.linalg.norm(HGPHB, axis=1)[0]
+    norm_by_eq11 = np.sqrt(((np.linalg.norm(G) ** 2)) * d)
+
+    assert_almost_equal(norm_by_transpose, norm_by_ax0)
+    assert_almost_equal(norm_by_transpose, norm_by_ax1)
+    assert_almost_equal(norm_by_transpose, norm_by_eq11)
+
+    # This is the test for the rescale which doesn't work yet
+    # scale = np.power(np.linalg.norm(np.diag(G)), -0.5) * np.power(d, -0.5)
+    # print np.linalg.norm(HGPHB * scale, axis=1)
+
+
 def test_fastfood():
     """test that Fastfood approximates kernel on random data"""
     # compute exact kernel
