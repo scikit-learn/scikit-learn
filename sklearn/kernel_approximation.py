@@ -506,16 +506,16 @@ class Fastfood(BaseEstimator, TransformerMixin):
         return n != 0 and ((n & (n - 1)) == 0)
 
     def random_gauss_vector(self, d):
-        return self.random_state.normal(size=d)
+        return self.rng.normal(size=d)
 
     def permutation_matrix(self, d):
-        return self.random_state.permutation(np.identity(d))
+        return self.rng.permutation(np.identity(d))
 
     def binary_vector(self, d):
-        return self.random_state.choice([-1, 1], size=d)
+        return self.rng.choice([-1, 1], size=d)
 
     def scaling_vector(self, d, g):
-        s = np.linalg.norm(self.random_state.normal(size=(d, d)), axis=0)
+        s = np.linalg.norm(self.rng.normal(size=(d, d)), axis=0)
         return s * (1 / np.sqrt(np.linalg.norm(g)))
 
     def create_vectors(self):
@@ -584,6 +584,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
         self.sigma = sigma
         self.n_components = n_components
         self.random_state = random_state
+        self.rng = check_random_state(self.random_state)
 
     def fit(self, X, y=None):
 
