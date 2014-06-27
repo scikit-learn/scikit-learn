@@ -87,7 +87,7 @@ def fit_ovr(estimator, X, y, n_jobs=1):
     _check_estimator(estimator)
 
     # XXX benchmark one line vs the other
-    lb = LabelBinarizer(sparse_output=sp.issparse(y))
+    lb = LabelBinarizer(sparse_output=True)
     # lb = LabelBinarizer(sparse_output=sp.issparse(y))
 
     Y = lb.fit_transform(y)
