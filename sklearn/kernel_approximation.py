@@ -568,13 +568,13 @@ class Fastfood(BaseEstimator, TransformerMixin):
         # HB = fht.fht(np.diag(b))
         HB = np.dot(H, np.diag(b))
         GP = np.dot(np.diag(g), P)
-    
+
         # HGP = fht.fht(GP)
         HGP = np.dot(H, GP)
-    
+
         gaussian_iid = np.dot(HGP, HB)
         return gaussian_iid
-    
+
     def __init__(self, sigma, n_components, random_state=None):
         self.sigma = sigma
         self.n_components = n_components
