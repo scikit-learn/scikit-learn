@@ -129,7 +129,6 @@ def test_rbf_sampler():
     Y_trans = rbf_transform.transform(Y)
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
-
     assert_array_almost_equal(kernel, kernel_approx, 1)
 
 
