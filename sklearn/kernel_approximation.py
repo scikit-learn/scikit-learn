@@ -565,8 +565,8 @@ class Fastfood(BaseEstimator, TransformerMixin):
     @staticmethod
     def create_approximation_matix(self, S, HGPHB):
         """ Create V from HGPHB and S """
-        gaussian = np.dot(np.diag(S), HGPHB)
-        return 1 / (self.sigma * np.sqrt(self.d)) * gaussian
+        SHGPHB = np.dot(np.diag(S), HGPHB)
+        return 1 / (self.sigma * np.sqrt(self.d)) * SHGPHB
 
     @staticmethod
     def phi(V, X):
