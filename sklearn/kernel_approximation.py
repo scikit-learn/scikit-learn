@@ -518,7 +518,9 @@ class Fastfood(BaseEstimator, TransformerMixin):
         s = np.linalg.norm(self.random_state.normal(size=(d, d)), axis=0)
         return s * (1 / np.sqrt(np.linalg.norm(g)))
 
-    def create_vectors(self, d):
+    def create_vectors(self):
+        """ Create G, B, P and S. """
+        d = self.d
         G = self.random_gauss_vector(d)
         B = self.binary_vector(d)
         P = self.permutation_matrix(d)
@@ -546,7 +548,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
 
     @staticmethod
     def create_gaussian_iid_matrix(B, G, P):
-        """ Create HGPHB """
+        """ Create HGPHB from B, G and P"""
 
         HB = Fastfood.hadamard(np.diag(B))
         GP = np.dot(np.diag(G), P)
@@ -555,11 +557,10 @@ class Fastfood(BaseEstimator, TransformerMixin):
         return HGPHB
 
     @staticmethod
-    def V(s, b, g, P, d, sigma):
-        gaussian_iid = Fastfood.create_gaussian_iid_matrix(b, g, P)
-        gaussian = np.dot(np.diag(s), gaussian_iid)
-
-        return 1 / (sigma * np.sqrt(d)) * gaussian
+    def create_approximation_matix(self, S, HGPHB):
+        """ Create V from HGPHB and S """
+        gaussian = np.dot(np.diag(S), HGPHB)
+        return 1 / (self.sigma * np.sqrt(self.d)) * gaussian
 
     @staticmethod
     def phi(V, X):
@@ -578,7 +579,6 @@ class Fastfood(BaseEstimator, TransformerMixin):
         # full multiplication with explicit hadamard matrix
         #H = (1 / (X.shape[0] * np.sqrt(2))) * hadamard(X.shape[0])
         #return np.dot(H, X)
-
 
     def __init__(self, sigma, n_components, random_state=None):
         self.sigma = sigma
