@@ -500,36 +500,31 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
 
 class Fastfood(BaseEstimator, TransformerMixin):
-    @staticmethod
-    def random_gauss_vector(d, random_state):
-        return random_state.normal(size=d)
-        # return np.random.normal(size=d)
-
-    @staticmethod
-    def permutation_matrix(d, random_state):
-        return random_state.permutation(np.identity(d))
-
-    @staticmethod
-    def binary_vector(d, random_state):
-        return random_state.choice([-1, 1], size=d)
-
-    @staticmethod
-    def scaling_vector(d, g, random_state):
-        s = np.linalg.norm(random_state.normal(size=(d, d)), axis=0)
-        return s * (1 / np.sqrt(np.linalg.norm(g)))
 
     @staticmethod
     def is_number_power_of_two(n):
         return n != 0 and ((n & (n - 1)) == 0)
 
-    @staticmethod
-    def create_vectors(d, random_state):
-        g = Fastfood.random_gauss_vector(d, random_state)
-        b = Fastfood.binary_vector(d, random_state)
-        P = Fastfood.permutation_matrix(d, random_state)
-        s = Fastfood.scaling_vector(d, g, random_state)
+    def random_gauss_vector(self, d):
+        return self.random_state.normal(size=d)
 
-        return b, g, P, s
+    def permutation_matrix(self, d):
+        return self.random_state.permutation(np.identity(d))
+
+    def binary_vector(self, d):
+        return self.random_state.choice([-1, 1], size=d)
+
+    def scaling_vector(self, d, g):
+        s = np.linalg.norm(self.random_state.normal(size=(d, d)), axis=0)
+        return s * (1 / np.sqrt(np.linalg.norm(g)))
+
+    def create_vectors(self, d):
+        G = self.random_gauss_vector(d)
+        B = Fastfood.binary_vector(d)
+        P = Fastfood.permutation_matrix(d)
+        S = Fastfood.scaling_vector(d, G)
+
+        return B, G, P, S
 
     @staticmethod
     def enforce_dimensionality_constraints(d, n):
