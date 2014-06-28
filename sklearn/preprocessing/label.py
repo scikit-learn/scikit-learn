@@ -492,10 +492,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
                           shape=(n_samples, n_classes))
 
     elif y_type == "multilabel-indicator":
-        if sp.issparse(y) and y.format == 'csc':
-            Y = sp.csc_matrix(y)
-        else:
-            Y = sp.csr_matrix(y)
+        Y = sp.csr_matrix(y)
         if pos_label != 1:
             data = np.empty_like(Y.data)
             data.fill(pos_label)
