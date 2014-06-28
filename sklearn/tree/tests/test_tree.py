@@ -17,6 +17,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import raises
@@ -481,11 +482,12 @@ def test_min_weight_fraction_leaf():
                 node_weights = np.bincount(out, weights=weights)
                 # drop inner nodes
                 leaf_weights = node_weights[node_weights != 0]
-                assert_true(np.min(leaf_weights) >=
-                            total_weight * est.min_weight_fraction_leaf,
-                            "Failed with {0} "
-                            "min_weight_fraction_leaf={1}".format(
-                                name, est.min_weight_fraction_leaf))
+                assert_greater_equal(
+                    np.min(leaf_weights),
+                    total_weight * est.min_weight_fraction_leaf,
+                    "Failed with {0} "
+                    "min_weight_fraction_leaf={1}".format(
+                        name, est.min_weight_fraction_leaf))
 
 
 def test_pickle():
