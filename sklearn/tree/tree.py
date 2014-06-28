@@ -237,6 +237,13 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                  "number of samples=%d" %
                                  (len(sample_weight), n_samples))
 
+        # Set min_weight_leaf from min_weight_fraction_leaf
+        if self.min_weight_fraction_leaf != 0. and sample_weight is not None:
+            min_weight_leaf = (self.min_weight_fraction_leaf *
+                               np.sum(sample_weight))
+        else:
+            min_weight_leaf = 0.
+
         # Set min_samples_split sensibly
         min_samples_split = max(self.min_samples_split,
                                 2 * self.min_samples_leaf)
@@ -255,7 +262,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             splitter = SPLITTERS[self.splitter](criterion,
                                                 self.max_features_,
                                                 self.min_samples_leaf,
-                                                self.min_weight_fraction_leaf,
+                                                min_weight_leaf,
                                                 random_state)
 
         self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
@@ -264,12 +271,12 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         if max_leaf_nodes < 0:
             builder = DepthFirstTreeBuilder(splitter, min_samples_split,
                                             self.min_samples_leaf,
-                                            self.min_weight_fraction_leaf,
+                                            min_weight_leaf,
                                             max_depth)
         else:
             builder = BestFirstTreeBuilder(splitter, min_samples_split,
                                            self.min_samples_leaf,
-                                           self.min_weight_fraction_leaf,
+                                           min_weight_leaf,
                                            max_depth,
                                            max_leaf_nodes)
 
