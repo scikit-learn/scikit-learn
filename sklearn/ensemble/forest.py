@@ -1384,18 +1384,23 @@ class RandomTreesEmbedding(BaseForest):
     def _set_oob_score(*args):
         raise NotImplementedError("OOB score not supported by tree embedding")
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_weight=None):
         """Fit estimator.
 
         Parameters
         ----------
         X : array-like, shape=(n_samples, n_features)
             Input data used to build forests.
+
+        Returns
+        -------
+        self : object
+            Returns self.
         """
-        self.fit_transform(X, y)
+        self.fit_transform(X, y, sample_weight=sample_weight)
         return self
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, sample_weight=None):
         """Fit estimator and transform dataset.
 
         Parameters
@@ -1411,7 +1416,8 @@ class RandomTreesEmbedding(BaseForest):
         X = safe_asarray(X)
         rnd = check_random_state(self.random_state)
         y = rnd.uniform(size=X.shape[0])
-        super(RandomTreesEmbedding, self).fit(X, y)
+        super(RandomTreesEmbedding, self).fit(X, y,
+                                              sample_weight=sample_weight)
         self.one_hot_encoder_ = OneHotEncoder(sparse=self.sparse_output)
         return self.one_hot_encoder_.fit_transform(self.apply(X))
 
