@@ -400,9 +400,11 @@ def test_error():
     for name, TreeEstimator in ALL_TREES.items():
         # Invalid values for parameters
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=-1).fit, X, y)
-        assert_raises(ValueError, TreeEstimator(min_weight_fraction_leaf=-1).fit,
+        assert_raises(ValueError,
+                      TreeEstimator(min_weight_fraction_leaf=-1).fit,
                       X, y)
-        assert_raises(ValueError, TreeEstimator(min_weight_fraction_leaf=0.51).fit,
+        assert_raises(ValueError,
+                      TreeEstimator(min_weight_fraction_leaf=0.51).fit,
                       X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_split=-1).fit,
                       X, y)
@@ -447,6 +449,7 @@ def test_min_samples_leaf():
     y = iris.target
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
+    # by setting max_leaf_nodes
     for max_leaf_nodes in (None, 1000):
         for name, TreeEstimator in ALL_TREES.items():
             est = TreeEstimator(min_samples_leaf=5,
@@ -471,23 +474,25 @@ def test_min_weight_fraction_leaf():
     total_weight = np.sum(weights)
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
-    for max_leaf_nodes in (None, 1000):
-        for name, TreeEstimator in ALL_TREES.items():
-            for frac in np.linspace(0, 0.5, 6):
-                est = TreeEstimator(min_weight_fraction_leaf=frac,
-                                    max_leaf_nodes=max_leaf_nodes,
-                                    random_state=0)
-                est.fit(X, y, sample_weight=weights)
-                out = est.tree_.apply(X)
-                node_weights = np.bincount(out, weights=weights)
-                # drop inner nodes
-                leaf_weights = node_weights[node_weights != 0]
-                assert_greater_equal(
-                    np.min(leaf_weights),
-                    total_weight * est.min_weight_fraction_leaf,
-                    "Failed with {0} "
-                    "min_weight_fraction_leaf={1}".format(
-                        name, est.min_weight_fraction_leaf))
+    # by setting max_leaf_nodes
+    for max_leaf_nodes, name, frac in product((None, 1000),
+                                              ALL_TREES,
+                                              np.linspace(0, 0.5, 6)):
+        TreeEstimator = ALL_TREES[name]
+        est = TreeEstimator(min_weight_fraction_leaf=frac,
+                            max_leaf_nodes=max_leaf_nodes,
+                            random_state=0)
+        est.fit(X, y, sample_weight=weights)
+        out = est.tree_.apply(X)
+        node_weights = np.bincount(out, weights=weights)
+        # drop inner nodes
+        leaf_weights = node_weights[node_weights != 0]
+        assert_greater_equal(
+            np.min(leaf_weights),
+            total_weight * est.min_weight_fraction_leaf,
+            "Failed with {0} "
+            "min_weight_fraction_leaf={1}".format(
+                name, est.min_weight_fraction_leaf))
 
 
 def test_pickle():
