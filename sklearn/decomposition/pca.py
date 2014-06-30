@@ -144,8 +144,9 @@ class PCA(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     `components_` : array, [n_components, n_features]
-        How much the original components contribute to the new maximum \
-        variance basis.  Also known as loadings
+        Principal axes, representing the directions (in feature space) of \
+        maximum variance in the data.  These are also known as loading \
+        vectors.
 
     `explained_variance_ratio_` : array, [n_components]
         Percentage of variance explained by each of the selected components. \
