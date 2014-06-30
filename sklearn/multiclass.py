@@ -94,23 +94,20 @@ def fit_ovr(estimator, X, y, n_jobs=1):
 
     if sp.issparse(Y):
         Y = Y.tocsc()
-        estimators = Parallel(n_jobs=n_jobs)(delayed(_fit_binary)
-                                             (estimator,
-                                              X,
-                                              get_col_(Y, i),
-                                              classes=["not %s" % i, i])
-                                             for i in range(Y.shape[1]))
+        columns = [_get_col(Y, i) for i in range(Y.shape[1])]
     else:
-        estimators = Parallel(n_jobs=n_jobs)(delayed(_fit_binary)
-                                             (estimator,
-                                              X,
-                                              Y[:, i],
-                                              classes=["not %s" % i, i])
-                                             for i in range(Y.shape[1]))
+        columns = Y.T
+    estimators = Parallel(n_jobs=n_jobs)(delayed(_fit_binary)
+                                         (estimator,
+                                          X,
+                                          column,
+                                          classes=["not %s" % i, i])
+                                         for i, column in enumerate(columns))
+
     return estimators, lb
 
 
-def get_col_(Y, i):
+def _get_col(Y, i):
     """Y is CSC matrix, i is the column index. Returns the dense column."""
     c = np.zeros(Y.shape[0], dtype=int)
     c[Y.indices[Y.indptr[i]:Y.indptr[i+1]]] = Y.data[Y.indptr[i]:Y.indptr[i+1]]
@@ -313,7 +310,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     @property
     def multilabel_(self):
         """Whether this is a multilabel classifier"""
-        return self.label_binarizer_.multilabel_
+        return self.label_binarizer_.y_type_.startswith('multilabel')
 
     def score(self, X, y):
         if self.multilabel_:

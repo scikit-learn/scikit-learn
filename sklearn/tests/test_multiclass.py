@@ -86,6 +86,19 @@ def test_ovr_fit_predict_sparse():
         assert_true(sp.issparse(Y_pred_sprs))
         assert_array_equal(Y_pred_sprs.toarray(), Y_pred)
 
+        # Test predict_proba
+        Y_proba = clf_sprs.predict_proba(X_test)
+
+        # predict assigns a label if the probability that the
+        # sample has the label is greater than 0.5.
+        pred = Y_proba > .5
+        assert_array_equal(pred, Y_pred_sprs.toarray())
+
+        # Test decision_function
+        clf_sprs = OneVsRestClassifier(svm.SVC()).fit(X_train, sparse(Y_train))
+        dec_pred = (clf_sprs.decision_function(X_test) > 0).astype(int)
+        assert_array_equal(dec_pred, clf_sprs.predict(X_test).toarray())
+
 
 def test_ovr_always_present():
     """Test that ovr works with classes that are always present or absent
