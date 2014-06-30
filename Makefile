@@ -18,6 +18,7 @@ clean: clean-ctags
 
 in: inplace # just a shortcut
 inplace:
+	rm -f sklearn/utils.sparsefuncs*.so  # to avoid errors in 0.15 upgrade
 	$(PYTHON) setup.py build_ext -i
 
 test-code: in
