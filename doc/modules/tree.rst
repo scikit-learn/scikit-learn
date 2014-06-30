@@ -320,8 +320,15 @@ Tips on practical use
     create arbitrary small leaves, though ``min_samples_split`` is more common
     in the literature.
 
-  * Balance your dataset before training to prevent the tree from creating
-    a tree biased toward the classes that are dominant.
+  * Balance your dataset before training to prevent the tree from creating a
+    tree biased toward the classes that are dominant. Balance the dataset by
+    sampling an equal number of samples from each class, or preferably by
+    normalizing the sum of the sample weights (``sample_weight``) for each
+    class to the same value. Then use ``min_weight_fraction_leaf`` instead of
+    ``min_samples_leaf`` to control the leaf node sizes.
+    ``min_weight_fraction_leaf`` will ensure that leaf nodes contain at least
+    some fraction of the overall sum of the sample weights and will not be
+    biased toward the dominant classes like ``min_samples_leaf``.
 
   * All decision trees use ``np.float32`` arrays internally.
     If training data is not in this format, a copy of the dataset will be made.
