@@ -225,7 +225,10 @@ latex_preamble = r"""
 
 trim_doctests_flags = True
 
-# Add the 'copybutton' javascript, to hide/show the prompt in code
-# examples
+
 def setup(app):
+    # to hide/show the prompt in code examples:
     app.add_javascript('js/copybutton.js')
+    # to format example galleries:
+    app.add_javascript('js/examples.js')
+    app.add_stylesheet('css/examples.css')
