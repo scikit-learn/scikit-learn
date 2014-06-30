@@ -7,6 +7,8 @@ from nose.tools import assert_raises
 from sklearn.utils.testing import (
     _assert_less,
     _assert_greater,
+    assert_less_equal,
+    assert_greater_equal,
     assert_warns,
     assert_no_warnings,
     assert_equal,
@@ -43,6 +45,18 @@ try:
 
 except ImportError:
     pass
+
+
+def test_assert_less_equal():
+    assert_less_equal(0, 1)
+    assert_less_equal(1, 1)
+    assert_raises(AssertionError, assert_less_equal, 1, 0)
+
+
+def test_assert_greater_equal():
+    assert_greater_equal(1, 0)
+    assert_greater_equal(1, 1)
+    assert_raises(AssertionError, assert_greater_equal, 0, 1)
 
 
 def test_set_random_state():
@@ -86,7 +100,7 @@ class TestWarns(unittest.TestCase):
 
         # Check that the warnings state is unchanged
         assert_equal(before_filters, after_filters,
-                     "assert_warns does not preserver warnings state")
+                     "assert_warns does not preserve warnings state")
 
     def test_warn_wrong_warning(self):
         def f():
