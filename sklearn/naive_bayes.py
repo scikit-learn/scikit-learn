@@ -106,13 +106,16 @@ class GaussianNB(BaseNB):
 
     Attributes
     ----------
-    `class_prior_` : array, shape = [n_classes]
+    `class_prior_` : array, shape (n_classes)
         probability of each class.
 
-    `theta_` : array, shape = [n_classes, n_features]
+    `class_count_` : array, shape (n_classes)
+        number of training samples observed in each class.
+
+    `theta_` : array, shape (n_classes, n_features)
         mean of each feature per class
 
-    `sigma_` : array, shape = [n_classes, n_features]
+    `sigma_` : array, shape (n_classes, n_features)
         variance of each feature per class
 
     Examples
@@ -173,12 +176,13 @@ class GaussianNB(BaseNB):
         return self
 
     @staticmethod
-    def update_mean_variance(M, mu, var, X):
+    def _update_mean_variance(n_past, mu, var, X):
         """Compute online update of Gaussian mean and variance.
 
-        Given starting sample count, mean, and variance, and a new set of points
-        X, return the updated mean and variance. (NB - each dimension (column)
-        in X is treated as independent -- you get variance, not covariance).
+        Given starting sample count, mean, and variance, and a new set of
+        points X, return the updated mean and variance. (NB - each dimension
+        (column) in X is treated as independent -- you get variance, not
+        covariance).
 
         Can take scalar mean and variance, or vector mean and variance to
         simultaneously update a number of independent Gaussians.
@@ -189,36 +193,40 @@ class GaussianNB(BaseNB):
 
         Parameters
         ----------
-        M : scalar
+        n_past : scalar
             Number of samples represented in old mean and variance.
 
-        mu: array-like, shape = [number of Gaussians]
+        mu: array-like, shape (number of Gaussians)
             Means for Gaussians in original set.
 
-        var: array-like, shape = [number of Gaussians]
+        var: array-like, shape (number of Gaussians)
             Variances for Gaussians in original set.
 
         Returns
         -------
-        mu_new: array-like, shape = [number of Gaussians]
+        mu_new: array-like, shape (number of Gaussians)
             Updated mean for each Gaussian over the combined set.
 
-        var_new: array-like, shape = [number of Gaussians]
+        var_new: array-like, shape (number of Gaussians)
             Updated variance for each Gaussian over the combined set.
         """
-        if M == 0:
+        if n_past == 0:
             return np.mean(X, axis=0), np.var(X, axis=0)
+        elif X.shape[0] == 0:
+            return mu, var
 
-        _sum = mu * M
-        s = var * M
-        N = X.shape[0]
-        ns = N * np.var(X, axis=0)
-        nsum = np.sum(X, axis=0)
+        old_ssd = var * n_past
+        n_new = X.shape[0]
+        new_ssd = n_new * np.var(X, axis=0)
+        new_sum = np.sum(X, axis=0)
+        n_total = float(n_past + n_new)
 
-        ns = s + ns + M * (N * _sum / M - nsum) ** 2 / (N * (N + M))
-        nsum = nsum + _sum
+        total_ssd = (old_ssd + new_ssd +
+                     n_past * (n_new * mu - new_sum) ** 2 / (n_new * n_total))
 
-        return nsum / (M + N), ns / (M + N)
+        total_sum = new_sum + (mu * n_past)
+
+        return total_sum / n_total, total_ssd / n_total
 
     def partial_fit(self, X, y, classes=None):
         """Incremental fit on a batch of samples.
@@ -237,14 +245,14 @@ class GaussianNB(BaseNB):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape = [n_samples]
+        y : array-like, shape (n_samples)
             Target values.
 
-        classes : array-like, shape = [n_classes]
+        classes : array-like, shape = (n_classes)
             List of all the classes that can possibly appear in the y vector.
 
             Must be provided at the first call to partial_fit, can be omitted
@@ -272,16 +280,14 @@ class GaussianNB(BaseNB):
             # Put epsilon back in each time
             self.sigma_[:, :] -= epsilon
 
-
         class2idx = dict((cls, idx) for idx, cls in enumerate(self.classes_))
         for y_i in np.unique(y):
             i = class2idx[y_i]
             X_i = X[y == y_i, :]
             N_i = X_i.shape[0]
 
-            new_theta, new_sigma = self.update_mean_variance(
-                self.class_count_[i],
-                self.theta_[i, :], self.sigma_[i, :],
+            new_theta, new_sigma = self._update_mean_variance(
+                self.class_count_[i], self.theta_[i, :], self.sigma_[i, :],
                 X_i)
 
             self.theta_[i, :] = new_theta
