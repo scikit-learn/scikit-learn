@@ -594,7 +594,8 @@ class Fastfood(BaseEstimator, TransformerMixin):
                 Fastfood.enforce_dimensionality_constraints(d_orig, self.n_components)
         self.number_of_features_to_pad_with_zeros = self.d - d_orig
 
-        self.B, self.G, self.P, self.S = self.create_vectors()
+        self.vectors = [self.create_vectors()
+                        for _ in range(self.times_to_stack_v)]
 
         return self
 
@@ -602,8 +603,9 @@ class Fastfood(BaseEstimator, TransformerMixin):
 
         to_stack = []
         for i in range(self.times_to_stack_v):
-            HGPHB = Fastfood.create_gaussian_iid_matrix(self.B, self.G, self.P)
-            v = self.create_approximation_matix(self.S, HGPHB)
+            B, G, P, S = self.vectors[i]
+            HGPHB = Fastfood.create_gaussian_iid_matrix(B, G, P)
+            v = self.create_approximation_matix(S, HGPHB)
             to_stack.append(v)
         V_stacked = np.vstack(to_stack)
 
