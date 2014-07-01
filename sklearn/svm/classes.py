@@ -709,6 +709,11 @@ class OneClassSVM(BaseLibSVM):
     `intercept_` : array, shape = [n_classes-1]
         Constants in decision function.
 
+    See also
+    --------
+    SVDD
+             Builds the smallest sphere around data set.
+
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0, tol=1e-3,
                  nu=0.5, shrinking=True, cache_size=200, verbose=False,
@@ -749,20 +754,21 @@ class OneClassSVM(BaseLibSVM):
 
 
 class SVDD(BaseLibSVM):
-    """
-    Finds the smallest ball containing all data.
+    """Support vectors data description.
 
-    The implemintation based on libsvm.
+    Builds data envelope.
+
+    The implementation is based on libsvm.
+
     Parameters
     ----------
     C : float, optional (default=1.0)
-        Penalty parameter C of the error term.
+        penalty parameter C of the error term. Should be in interval [1/l, 1]. 
 
     kernel : string, optional (default='rbf')
          Specifies the kernel type to be used in the algorithm.
          It must be one of 'linear', 'poly', 'rbf' or 'sigmoid'.
-         If none is given, 'rbf' will be used. Callable and 
-         precomputed kernels arenot supported yet.
+         If none is given, 'linear' will be used. Precomputed and callable kernels aren't supported.
 
     degree : int, optional (default=3)
         Degree of the polynomial kernel function ('poly').
@@ -776,11 +782,11 @@ class SVDD(BaseLibSVM):
         Independent term in kernel function.
         It is only significant in 'poly' and 'sigmoid'.
 
-    shrinking: boolean, optional (default=True)
-        Whether to use the shrinking heuristic.
-
-    tol : float, optional (default=1e-3)
+    tol : float, optional
         Tolerance for stopping criterion.
+
+    shrinking : boolean, optional
+        Whether to use the shrinking heuristic.
 
     cache_size : float, optional
         Specify the size of the kernel cache (in MB)
@@ -796,59 +802,80 @@ class SVDD(BaseLibSVM):
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
         shuffling the data for probability estimation.
-        
+
     Attributes
     ----------
     `support_` : array-like, shape = [n_SV]
         Index of support vectors.
 
-    `support_vectors_` : array-like, shape = [nSV, n_features]
+    `support_vectors_` : array-like, shape = [n_SV, n_features]
         Support vectors.
 
-    `dual_coef_` : array, shape = [n_classes-1, n_SV]
-        Coefficients of the support vector in the decision function.
+    `dual_coef_` : array, shape = [1, n_SV]
+        Coefficient of the support vector in the decision function.
 
-    `coef_` : array, shape = [n_classes-1, n_features]
+    `coef_` : array, shape = [1, n_features]
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`
 
-    `intercept_` : array, shape = [n_class * (n_class-1) / 2]
+    `intercept_` : array, shape = [1]
         Constants in decision function.
 
+
+    Examples
+    --------
+    >>> from sklearn.svm import SVDD
+    >>> import numpy as np
+    >>> train_x = np.array([[1, 1], [1, -1], [-1, 1], [-1, -1]])
+    >>> clf = SVDD(kernel='linear')
+    >>> clf.fit(train_x)
+    SVDD(C=1, cache_size=200, coef0=0.0, degree=3, gamma=0.0, kernel='linear',
+       max_iter=-1, random_state=None, shrinking=True, tol=0.001,
+       verbose=False)
+    >>> test_x = np.array([[0, 0], [4, 4]])
+    >>> clf.predict(test_x)
+    array([ 1., -1.])
+
+    See also
+    --------
+    OneClassSVM
+             Estimate the support of a high-dimensional distribution.
+
+
     """
-    def __init__(self, regularization = None, kernel='rbf', degree=3, gamma=0.0, 
-                 coef0=0.0, tol=1e-3, C=1, nu=0.5, shrinking=True, cache_size=200, 
+    def __init__(self, kernel='linear', degree=3, gamma=0.0,
+                 coef0=0.0, tol=1e-3, C=1, shrinking=True, cache_size=200, 
                  verbose=False, max_iter=-1, random_state=None):
-        self.regularization = regularization
-        if (regularization == None):
-            super(SVDD, self).__init__(
-                'svdd', kernel, degree, gamma, coef0, tol, C, nu, 0.0,
-                shrinking, False, cache_size, None, verbose, max_iter,
-                random_state)
-        elif(regularization == 'l1'):
-            super(SVDD, self).__init__(
-                'svdd_r2', kernel, degree, gamma, coef0, tol, C, nu, 0.0,
-                shrinking, False, cache_size, None, verbose, max_iter,
-                random_state)
-        elif(regularization == 'l2'):
-            super(SVDD, self).__init__(
-                'svdd_r2q', kernel, degree, gamma, coef0, tol, C, nu, 0.0,
+        super(SVDD, self).__init__(
+                'svdd', kernel, degree, gamma, coef0, tol, C, 0.0, 0.0,
                 shrinking, False, cache_size, None, verbose, max_iter,
                 random_state)
 
     def fit(self, X, sample_weight=None, **params):
-        if (self.regularization == None):
-            super(SVDD, self).fit(X, [], sample_weight=sample_weight,
-                                     **params)
-        elif (self.regularization == 'l1'):
-            super(SVDD, self).fit(X, [], sample_weight=sample_weight,
-                                     **params)
-        elif (self.regularization == 'l2'):
-            super(SVDD, self).fit(X, [], sample_weight=sample_weight,
-                                     **params)
+        """
+        Builds data envelope.
 
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Set of samples, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+
+        Notes
+        -----
+        If X is not a C-ordered contiguous array it is copied.
+
+        """
+
+        super(SVDD, self).fit(X, [], sample_weight=sample_weight,
+                                     **params)
         return self
         

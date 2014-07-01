@@ -673,6 +673,66 @@ def test_consistent_proba():
     proba_2 = a.fit(X, Y).predict_proba(X)
     assert_array_almost_equal(proba_1, proba_2)
 
+def test_SVDD_big_C_value():
+    clf = svm.SVDD(C=2)
+    clf.fit(X)
+    assert_array_equal(clf.predict(X), np.ones(len(X)), "All elements shoul be targets")
+
+
+def test_SVDD_precomputed_kernel():
+    clf = svm.SVDD(kernel='precomputed')
+    K = np.dot(X, np.array(X).T)
+    assert_raises(TypeError, clf.fit, K)
+
+
+def test_SVDD_linear_kernel():
+    clf = svm.SVDD(kernel='linear', C = 1)
+    train_X = np.array([[1, 0],
+                        [0, 1],
+                        [-1, 0],
+                        [0, -1]])
+    clf.fit(train_X)
+    test_X = np.array([[0.5, 0],
+                       [0, 0.5],
+                       [-0.5, 0],
+                       [0, -0.5],
+                       [0, 0],
+                       [1, 1],
+                       [1, -1],
+                       [-1, 1],
+                       [-1, -1]])
+    expected_y = np.array([1] * 5 + [-1] * 4)
+    assert_array_equal(clf.predict(test_X), expected_y, "Wrong classification")
+
+
+def test_SVDD_descision_function():
+    clf = svm.SVDD(kernel='rbf')
+    rnd = check_random_state(2)
+
+    # Generate train data
+    X = 0.3 * rnd.randn(100, 2)
+    X_train = np.r_[X + 2, X - 2]
+
+    # Generate some regular novel observations
+    X = 0.3 * rnd.randn(20, 2)
+    X_test = np.r_[X + 2, X - 2]
+    # Generate some abnormal novel observations
+    X_outliers = rnd.uniform(low=-4, high=4, size=(20, 2))
+
+    # fit the model
+    clf = svm.SVDD(C=1, kernel="rbf", gamma=0.1)
+    clf.fit(X_train)
+
+    # predict things
+    y_pred_test = clf.predict(X_test)
+    assert_greater(np.mean(y_pred_test == 1), .9)
+    y_pred_outliers = clf.predict(X_outliers)
+    assert_greater(np.mean(y_pred_outliers == -1), .9)
+    dec_func_test = clf.decision_function(X_test)
+    assert_array_equal((dec_func_test > 0).ravel(), y_pred_test == 1)
+    dec_func_outliers = clf.decision_function(X_outliers)
+    assert_array_equal((dec_func_outliers > 0).ravel(),  y_pred_outliers == 1)
+
 
 if __name__ == '__main__':
     import nose

@@ -617,6 +617,38 @@ bound of the fraction of support vectors.
 It can be shown that the `\nu`-SVC formulation is a reparametrization
 of the `C`-SVC and therefore mathematically equivalent.
 
+SVDD
+----
+
+Given vectors :math:`x_1, \cdots, x_l`, :class:`SVDD` build the smallest sphere
+around them. Solvng the problem:
+
+.. math:: 
+    
+    \min R^2 + C\sum_{i = 1}^l\xi_i
+
+    \textrm {subject to } & \|x_i - a\| \leq R^2 + \xi_i\\
+    & \xi_i \geq 0, i=1, ..., n
+
+This problem isnot convex, but it can be refolmulated as convex one:
+
+.. math:: 
+    
+    \min \bar{R} + C\sum_{i = 1}^l\xi_i
+
+    \textrm {subject to } & \|x_i - a\| \leq \bar{R} + \xi_i\\
+    & \xi_i \geq 0, i=1, ..., n\\
+    & \bar{R} \geq 0
+
+.. note::
+    
+    :math:`\frac{1}{C}` is approximate number of outliers in train set. 
+
+.. topic:: References:
+    
+    * `"Support Vector Data Description"
+      <http://mediamatica.ewi.tudelft.nl/sites/default/files/ML_SVDD_04.pdf>`_
+      D. Tax, R. Duin, Machine Learning, 54, 45–66, 2004
 
 Implementation details
 ======================

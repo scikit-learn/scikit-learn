@@ -15,7 +15,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..externals import six
 
 
-LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr', 'svdd', 'svdd_r2', 'svdd_r2q']
+LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr', 'svdd']
 
 
 def _one_vs_one_coef(dual_coef, n_support, support_vectors):
@@ -130,6 +130,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         rnd = check_random_state(self.random_state)
 
         sparse = sp.isspmatrix(X)
+
+
         if sparse and self.kernel == "precomputed":
             raise TypeError("Sparse precomputed kernels are not supported.")
         self._sparse = sparse and not callable(self.kernel)
@@ -143,10 +145,13 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         solver_type = LIBSVM_IMPL.index(self._impl)
 
         # input validation
-        if (solver_type not in [2, 5, 6, 7]) and X.shape[0] != y.shape[0]:
+        if (solver_type not in [2, 5, 6]) and X.shape[0] != y.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n" +
                              "X has %s samples, but y has %s." %
                              (X.shape[0], y.shape[0]))
+
+        if (self.kernel == "precomputed" and solver_type == 5):
+            raise TypeError("SVDD does not support precomputed kernels")
 
         if self.kernel == "precomputed" and X.shape[0] != X.shape[1]:
             raise ValueError("X.shape[0] should be equal to X.shape[1]")

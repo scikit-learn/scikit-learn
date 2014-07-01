@@ -19,7 +19,7 @@ structure of the observations. Although the robust covariance estimate is
 able to focus on the main mode of the data distribution, it sticks to the
 assumption that the data should be Gaussian distributed, yielding some biased
 estimation of the data structure, but yet accurate to some extent.
-The One-Class SVM algorithm
+The One-Class SVM algorithm and Support Vector Data Discription
 
 First example
 -------------
@@ -39,7 +39,7 @@ robust estimator of covariance to concentrate on the main mode of the data
 distribution: the location seems to be well estimated, although the covariance
 is hard to estimate due to the banana-shaped distribution. Anyway, we can
 get rid of some outlying observations.
-The One-Class SVM is able to capture the real data structure, but the
+The One-Class SVM and SVDD are able to capture the real data structure, but the
 difficulty is to adjust its kernel bandwidth parameter so as to obtain
 a good compromise between the shape of the data scatter matrix and the
 risk of over-fitting the data.
@@ -52,7 +52,7 @@ print(__doc__)
 
 import numpy as np
 from sklearn.covariance import EllipticEnvelope
-from sklearn.svm import OneClassSVM
+from sklearn.svm import OneClassSVM, SVDD
 import matplotlib.pyplot as plt
 import matplotlib.font_manager
 from sklearn.datasets import load_boston
@@ -67,8 +67,9 @@ classifiers = {
                                              contamination=0.261),
     "Robust Covariance (Minimum Covariance Determinant)":
     EllipticEnvelope(contamination=0.261),
-    "OCSVM": OneClassSVM(nu=0.261, gamma=0.05)}
-colors = ['m', 'g', 'b']
+    "OCSVM": OneClassSVM(nu=0.261, gamma=0.05),
+    "SVDD": SVDD(kernel='rbf', gamma = 0.03, C=0.01)}
+colors = ['m', 'g', 'b', 'y']
 legend1 = {}
 legend2 = {}
 
@@ -105,8 +106,9 @@ plt.xlim((xx1.min(), xx1.max()))
 plt.ylim((yy1.min(), yy1.max()))
 plt.legend((legend1_values_list[0].collections[0],
             legend1_values_list[1].collections[0],
-            legend1_values_list[2].collections[0]),
-           (legend1_keys_list[0], legend1_keys_list[1], legend1_keys_list[2]),
+            legend1_values_list[2].collections[0],
+            legend1_values_list[3].collections[0]),
+           (legend1_keys_list[0], legend1_keys_list[1], legend1_keys_list[2], legend1_keys_list[3]),
            loc="upper center",
            prop=matplotlib.font_manager.FontProperties(size=12))
 plt.ylabel("accessibility to radial highways")
@@ -122,8 +124,9 @@ plt.xlim((xx2.min(), xx2.max()))
 plt.ylim((yy2.min(), yy2.max()))
 plt.legend((legend2_values_list[0].collections[0],
             legend2_values_list[1].collections[0],
-            legend2_values_list[2].collections[0]),
-           (legend2_values_list[0], legend2_values_list[1], legend2_values_list[2]),
+            legend2_values_list[2].collections[0],
+            legend2_values_list[3].collections[0]),
+           (legend2_keys_list[0], legend2_keys_list[1], legend2_keys_list[2], legend2_keys_list[3]),
            loc="upper center",
            prop=matplotlib.font_manager.FontProperties(size=12))
 plt.ylabel("% lower status of the population")

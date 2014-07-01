@@ -48,6 +48,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
    - Make labels sorted in svm_group_classes, Fabian Pedregosa.
 
+   - Add SVDD realization, based on 
+     <http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/#libsvm_for_svdd_and_finding_the_smallest_sphere_containing_all_data>
+     Smolyakov Dmitry (Datadvance)
+
  */
 
 #include <math.h>
@@ -1500,11 +1504,11 @@ public:
     R2_Qq(const PREFIX(problem)& prob, const svm_parameter& param)
     :Kernel(prob.l, prob.x, param)
     {
-            cache = new Cache(prob.l,(int)(param.cache_size*(1<<20)));
+            cache = new Cache(prob.l,(long int)(param.cache_size*(1<<20)));
             this->C = param.C;
             QD = new double[prob.l];
             for(int i=0;i<prob.l;i++)
-                    QD[i]= (Qfloat)(this->*kernel_function)(i,i) + 1/C;
+                    QD[i]= (this->*kernel_function)(i,i) + 1/C;
     }
 
     Qfloat *get_Q(int i, int len) const
@@ -1535,6 +1539,7 @@ public:
 
     ~R2_Qq()
     {
+            delete[] QD;
             delete cache;
     }
 private:
@@ -1918,7 +1923,7 @@ static void solve_svdd(
 
 
 			// rho = aTa/2 = sum sum Q_ij /l/l/2
-		// obj = 0.5*(-sum Q_ii + sum sum Q_ij /l)*C
+			// obj = 0.5*(-sum Q_ii + sum sum Q_ij /l)*C
 			// 0.5 for consistency with C > 1/l, where dual is divided by 2
 			for(i=0;i<l;i++)
 			{
@@ -1934,7 +1939,6 @@ static void solve_svdd(
 								  (prob->x[j]),*param);
 					#endif
 				  }
-					// rho += Kernel::dot(prob->x[i],prob->x[j]);
 			}
 			si->obj = (obj + rho/l)*C[0];
 			si->rho = rho / (l*l);
@@ -1951,8 +1955,6 @@ static void solve_svdd(
 
 		info("R^2 = %f\n",r_square);
 
-		//si->rho = -0.59708263;
-
 
 		delete[] linear_term;
 		delete[] QD;
@@ -1961,16 +1963,6 @@ static void solve_svdd(
 
 	}
 
-static void solve_r2(
-		const PREFIX(problem) *prob, const svm_parameter *param,
-		double *alpha, Solver::SolutionInfo* si)
-{
-	    svm_parameter svdd_param = *param;
-	    svdd_param.C = 2;
-
-	    solve_svdd(prob,&svdd_param,alpha,si);
-	    si->rho = -3.14;
-}
 
 static void solve_r2q(
 		const PREFIX(problem) *prob, const svm_parameter *param,
@@ -2004,15 +1996,16 @@ static void solve_r2q(
 
 
 	Solver s;
-	s.Solve(l, R2_Qq(*prob,*param), linear_term, ones,
-			alpha, C, param->eps, si, param->shrinking, param->max_iter);
-	si->solve_timed_out = 0;
+	R2_Qq Q = R2_Qq(*prob,*param);
+	s.Solve(l, Q, linear_term, ones,
+			alpha, C, 1e-2, si, param->shrinking, param->max_iter);
+	si->solve_timed_out = false;
 
 
-	info("R^2 = %f\n", -2 *si->obj);
 
 	delete[] linear_term;
 	delete[] ones;
+	delete[] C;
 }
 
 //
@@ -2058,10 +2051,6 @@ struct decision_function
                     case SVDD:
                             si.upper_bound = Malloc(double,  prob->l);
                             solve_svdd(prob,param,alpha,&si);
-                            break;
-                    case R2:
-                            si.upper_bound = Malloc(double,  prob->l);
-                            solve_r2(prob,param,alpha,&si);
                             break;
                     case R2q:
                             si.upper_bound = Malloc(double,  prob->l);
@@ -3026,7 +3015,6 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 			return sum;
 	}
 	else if (model->param.svm_type == SVDD
-	      || model->param.svm_type == R2
 	      || model->param.svm_type == R2q)
 	  {
 	    // Compute distance from center of hypersphere
@@ -3036,9 +3024,9 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 	    if (model->param.kernel_type != PRECOMPUTED)
 	      {
 #ifdef _DENSE_REP
-		tmp_value = NAMESPACE::Kernel::k_function(x,x,model->param); // x^T x - 2 x^T
+		tmp_value = -1 * NAMESPACE::Kernel::k_function(x,x,model->param); // x^T x - 2 x^T
 #else
-		tmp_value = NAMESPACE::Kernel::k_function(x,x,model->param);
+		tmp_value = -1 * NAMESPACE::Kernel::k_function(x,x,model->param);
 #endif
 	      }
 
@@ -3047,17 +3035,12 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 
 	    for(int i=0;i<model->l;i++)
 #ifdef _DENSE_REP
-		    tmp_value -= 2 * sv_coef[i] * NAMESPACE::Kernel::k_function(x,model->SV + i,model->param);
+		    tmp_value += 2 * sv_coef[i] * NAMESPACE::Kernel::k_function(x,model->SV + i,model->param);
 #else
-		    tmp_value -= 2 * sv_coef[i] * NAMESPACE::Kernel::k_function(x,model->SV[i],model->param);
+		    tmp_value += 2 * sv_coef[i] * NAMESPACE::Kernel::k_function(x,model->SV[i],model->param);
 #endif
-	    *dec_values = tmp_value + 2*model->rho[0];
-	     double sum = 0.0;
-	     for (int i = 0; i < model->l; ++i)
-	       {
-		 sum += sv_coef[i];
-	       }
-	     return (*dec_values<=0?1:-1);
+	    *dec_values = tmp_value - 2*model->rho[0];
+	     return (*dec_values>=0?1:-1);
 
 	  }
 	else
