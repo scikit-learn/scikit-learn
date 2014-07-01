@@ -129,7 +129,28 @@ class VectorizerMixin(object):
                     tokens.append(" ".join(original_tokens[i: i + n]))
 
         return tokens
-
+    
+    def _word_skipgrams(self, tokens, stop_words=None, k=4):
+        """Turn tokens into a sequence of skip-(bi)grams after stop words filtering"""
+        # handle stop words
+        if stop_words is not None:
+            tokens = [w for w in tokens if w not in stop_words]
+        
+        original_tokens = tokens
+        tokens = []
+        tokens.extend(original_tokens)
+        n_original_tokens = len(original_tokens)
+        for n in xrange(0, n_original_tokens):
+            for i in xrange(max(0, n-k), n):
+                if i==n:
+                    continue
+                if original_tokens[n] > original_tokens[i]:
+                    tokens.append(original_tokens[i] + original_tokens[n])
+                else:
+                    tokens.append(original_tokens[n] + original_tokens[i])
+        
+        return tokens
+    
     def _char_ngrams(self, text_document):
         """Tokenize text_document into a sequence of character n-grams"""
         # normalize white spaces
@@ -227,7 +248,14 @@ class VectorizerMixin(object):
 
             return lambda doc: self._word_ngrams(
                 tokenize(preprocess(self.decode(doc))), stop_words)
+        
+        elif self.analyzer == 'skipgram':
+            stop_words = self.get_stop_words()
+            tokenize = self.build_tokenizer()
 
+            return lambda doc: self._word_skipgrams(
+                tokenize(preprocess(self.decode(doc))), stop_words)
+        
         else:
             raise ValueError('%s is not a valid tokenization scheme/analyzer' %
                              self.analyzer)
