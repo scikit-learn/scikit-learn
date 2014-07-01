@@ -273,7 +273,7 @@ class GaussianNB(BaseNB):
             self.sigma_[:, :] -= epsilon
 
 
-        class2idx = {cls: idx for idx, cls in enumerate(self.classes_)}
+        class2idx = dict((cls, idx) for idx, cls in enumerate(self.classes_))
         for y_i in np.unique(y):
             i = class2idx[y_i]
             X_i = X[y == y_i, :]
