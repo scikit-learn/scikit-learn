@@ -20,7 +20,8 @@ from ..utils import ConvergenceWarning
 from ..utils.extmath import pinvh
 from ..linear_model import lars_path
 from ..linear_model import cd_fast
-from ..cross_validation import _check_cv as check_cv, cross_val_score
+from ..model_selection.partition import _check_cv as check_cv
+from ..model_selection import cross_val_score
 from ..externals.joblib import Parallel, delayed
 import collections
 
@@ -388,7 +389,7 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
 
 
 class GraphLassoCV(GraphLasso):
-    """Sparse inverse covariance w/ cross-validated choice of the l1 penalty
+    """Sparse inverse covariance w/ cross-from .partition import _check_cvvalidated choice of the l1 penalty
 
     Parameters
     ----------

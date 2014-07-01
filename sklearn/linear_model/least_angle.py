@@ -22,7 +22,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 from .base import LinearModel
 from ..base import RegressorMixin
 from ..utils import array2d, arrayfuncs, as_float_array, check_arrays
-from ..cross_validation import _check_cv as check_cv
+from ..model_selection.partition import _check_cv as check_cv
 from ..utils import ConvergenceWarning
 from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange
