@@ -129,6 +129,7 @@ def predict_ovr(estimators, label_binarizer, X):
             argmaxima[maxima == pred] = i
         return label_binarizer.classes_[np.array(argmaxima.T)]
     else:
+        len_X = X.shape[0] if sp.issparse(X) else len(X)
         indices = array.array('i')
         indptr = array.array('i', [0])
         for e in estimators:
@@ -136,7 +137,7 @@ def predict_ovr(estimators, label_binarizer, X):
             indptr.append(len(indices))
         data = np.ones(len(indices), dtype=int)
         indicator = sp.csc_matrix((data, indices, indptr),
-                                  shape=(len(X), len(estimators)))
+                                  shape=(len_X, len(estimators)))
         return label_binarizer.inverse_transform(indicator)
 
 
