@@ -106,10 +106,10 @@ class GaussianNB(BaseNB):
 
     Attributes
     ----------
-    `class_prior_` : array, shape (n_classes)
+    `class_prior_` : array, shape (n_classes,)
         probability of each class.
 
-    `class_count_` : array, shape (n_classes)
+    `class_count_` : array, shape (n_classes,)
         number of training samples observed in each class.
 
     `theta_` : array, shape (n_classes, n_features)
@@ -141,11 +141,11 @@ class GaussianNB(BaseNB):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape = (n_samples, n_features)
             Training vectors, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape = [n_samples]
+        y : array-like, shape = (n_samples,)
             Target values.
 
         Returns
@@ -193,21 +193,21 @@ class GaussianNB(BaseNB):
 
         Parameters
         ----------
-        n_past : scalar
+        n_past : int
             Number of samples represented in old mean and variance.
 
-        mu: array-like, shape (number of Gaussians)
+        mu: array-like, shape (number of Gaussians,)
             Means for Gaussians in original set.
 
-        var: array-like, shape (number of Gaussians)
+        var: array-like, shape (number of Gaussians,)
             Variances for Gaussians in original set.
 
         Returns
         -------
-        mu_new: array-like, shape (number of Gaussians)
+        mu_new: array-like, shape (number of Gaussians,)
             Updated mean for each Gaussian over the combined set.
 
-        var_new: array-like, shape (number of Gaussians)
+        var_new: array-like, shape (number of Gaussians,)
             Updated variance for each Gaussian over the combined set.
         """
         if n_past == 0:
@@ -249,10 +249,10 @@ class GaussianNB(BaseNB):
             Training vectors, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape (n_samples)
+        y : array-like, shape (n_samples,)
             Target values.
 
-        classes : array-like, shape = (n_classes)
+        classes : array-like, shape (n_classes,)
             List of all the classes that can possibly appear in the y vector.
 
             Must be provided at the first call to partial_fit, can be omitted
@@ -295,7 +295,7 @@ class GaussianNB(BaseNB):
             self.class_count_[i] += N_i
 
         self.sigma_[:, :] += epsilon
-        self.class_prior_ = self.class_count_ / np.sum(self.class_count_)
+        self.class_prior_[:] = self.class_count_ / np.sum(self.class_count_)
         return self
 
     def _joint_log_likelihood(self, X):
