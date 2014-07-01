@@ -16,6 +16,7 @@ from cpython cimport bool
 import warnings
 
 ctypedef np.float64_t DOUBLE
+ctypedef np.uint32_t UINT_32
 
 
 np.import_array()
@@ -132,7 +133,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     # initial value of the residuals
     cdef np.ndarray[DOUBLE, ndim=1] R = np.empty(n_samples)
 
-    cdef np.ndarray[np.int64_t, ndim=1] f_shuffle
+    cdef np.ndarray[UINT_32, ndim=1] shuffled_features = \
+        np.arange(n_features, dtype=np.uint32)
 
     cdef np.ndarray[DOUBLE, ndim=1] XtA = np.empty(n_features)
     cdef double tmp
@@ -173,15 +175,11 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
             with gil:
                 if rng is not None:
-                    f_shuffle = rng.permutation(n_features)
+                    rng.shuffle(shuffled_features)
 
             for f_iter in range(n_features):  # Loop over coordinates
 
-                if rng is None:
-                    ii = f_iter
-                else:
-                    # Update random feature
-                    ii = f_shuffle[f_iter]
+                ii = shuffled_features[f_iter]
 
                 if norm_cols_X[ii] == 0.0:
                     continue
@@ -309,7 +307,7 @@ def sparse_enet_coordinate_descent(double[:] w,
     cdef double[:] X_T_R = np.zeros(n_features)
     cdef double[:] XtA = np.zeros(n_features)
 
-    cdef np.int64_t[:] f_shuffle
+    cdef UINT_32[:] shuffled_features = np.arange(n_features, dtype=np.uint32)
 
     cdef double tmp
     cdef double w_ii
@@ -361,15 +359,11 @@ def sparse_enet_coordinate_descent(double[:] w,
 
             with gil:
                 if rng is not None:
-                    f_shuffle = rng.permutation(n_features)
+                    rng.shuffle(shuffled_features)
 
             for f_iter in range(n_features):  # Loop over coordinates
 
-                if rng is None:
-                    ii = f_iter
-                else:
-                    # Update random feature
-                    ii = f_shuffle[f_iter]
+                ii = shuffled_features[f_iter]
 
                 if norm_cols_X[ii] == 0.0:
                     continue
@@ -501,7 +495,7 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
     cdef double[:] H = np.dot(Q, w)
 
     cdef double[:] XtA = np.zeros(n_features)
-    cdef np.int64_t[:] f_shuffle
+    cdef UINT_32[:] shuffled_features = np.arange(n_features, dtype=np.uint32)
     cdef double tmp
     cdef double w_ii
     cdef double d_w_max
@@ -531,15 +525,11 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
 
             with gil:
                 if rng is not None:
-                    f_shuffle = rng.permutation(n_features)
+                    rng.shuffle(shuffled_features)
 
             for f_iter in range(n_features):  # Loop over coordinates
 
-                if rng is None:
-                    ii = f_iter
-                else:
-                    # Update random feature
-                    ii = f_shuffle[f_iter]
+                ii = shuffled_features[f_iter]
 
                 if Q[ii, ii] == 0.0:
                     continue
@@ -651,7 +641,7 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
     cdef double[:] norm_cols_X = np.zeros(n_features)
     cdef double[::1] tmp = np.zeros(n_tasks, dtype=np.float)
     cdef double[:] w_ii = np.zeros(n_tasks, dtype=np.float)
-    cdef np.int64_t[:] f_shuffle
+    cdef UINT_32[:] shuffled_features = np.arange(n_features, dtype=np.uint32)
     cdef double d_w_max
     cdef double w_max
     cdef double d_w_ii
@@ -697,15 +687,11 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
 
             with gil:
                 if rng is not None:
-                    f_shuffle = rng.permutation(n_features)
+                    rng.shuffle(shuffled_features)
 
             for f_iter in range(n_features):  # Loop over coordinates
 
-                if rng is None:
-                    ii = f_iter
-                else:
-                    # Update random feature
-                    ii = f_shuffle[f_iter]
+                ii = shuffled_features[f_iter]
 
                 if norm_cols_X[ii] == 0.0:
                     continue
