@@ -1,7 +1,8 @@
 from .partition import LeaveOneOut, LeavePOut, KFold, \
         StratifiedKFold, LeaveOneLabelOut, LeavePLabelOut, \
         ShuffleSplit, StratifiedShuffleSplit, train_test_split, check_cv
-from .validate import cross_val_score, permutation_test_score
+from .validate import cross_val_score, permutation_test_score, \
+        learning_curve, validation_curve
 
 __all__ = ['KFold',
            'LeaveOneLabelOut',
@@ -14,4 +15,7 @@ __all__ = ['KFold',
            'check_cv',
            'cross_val_score',
            'permutation_test_score',
-           'train_test_split']
+           'train_test_split',
+           'learning_curve',
+           'validation_curve',
+          ]
