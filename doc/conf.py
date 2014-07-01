@@ -123,7 +123,7 @@ html_theme = 'scikit-learn'
 # documentation.
 html_theme_options = {'oldversion': False, 'collapsiblesidebar': True,
                       'google_analytics': True, 'surveybanner': False,
-                      'sprintbanner' : True}
+                      'sprintbanner': True}
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ['themes']
@@ -231,4 +231,3 @@ def setup(app):
     app.add_javascript('js/copybutton.js')
     # to format example galleries:
     app.add_javascript('js/examples.js')
-    app.add_stylesheet('css/examples.css')
