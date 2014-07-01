@@ -320,15 +320,19 @@ Tips on practical use
     create arbitrary small leaves, though ``min_samples_split`` is more common
     in the literature.
 
-  * Balance your dataset before training to prevent the tree from creating a
-    tree biased toward the classes that are dominant. Balance the dataset by
+  * Balance your dataset before training to prevent the tree from being biased
+    toward the classes that are dominant. Class balancing can be done by
     sampling an equal number of samples from each class, or preferably by
     normalizing the sum of the sample weights (``sample_weight``) for each
-    class to the same value. Then use ``min_weight_fraction_leaf`` instead of
-    ``min_samples_leaf`` to control the leaf node sizes.
-    ``min_weight_fraction_leaf`` will ensure that leaf nodes contain at least
-    some fraction of the overall sum of the sample weights and will not be
-    biased toward the dominant classes like ``min_samples_leaf``.
+    class to the same value. Also note that weight-based pre-pruning criteria,
+    such as ``min_weight_fraction_leaf``, will then be less biased toward
+    dominant classes than criteria that are not aware of the sample weights,
+    like ``min_samples_leaf``.
+
+  * If the samples are weighted, it will be easier to optimize the tree
+    structure using weight-based pre-pruning criterion such as
+    ``min_weight_fraction_leaf``, which ensure that leaf nodes contain at least
+    a fraction of the overall sum of the sample weights.
 
   * All decision trees use ``np.float32`` arrays internally.
     If training data is not in this format, a copy of the dataset will be made.
