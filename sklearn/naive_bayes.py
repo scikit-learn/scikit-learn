@@ -126,6 +126,11 @@ class GaussianNB(BaseNB):
     GaussianNB()
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
+    >>> clf_pf = GaussianNB()
+    >>> clf_pf.partial_fit(X, Y, np.unique(Y))
+    GaussianNB()
+    >>> print(clf_pf.predict([[-0.8, -1]]))
+    [1]
     """
 
     def fit(self, X, y):
@@ -157,12 +162,134 @@ class GaussianNB(BaseNB):
         self.theta_ = np.zeros((n_classes, n_features))
         self.sigma_ = np.zeros((n_classes, n_features))
         self.class_prior_ = np.zeros(n_classes)
+        self.class_count_ = np.zeros(n_classes)
         epsilon = 1e-9
         for i, y_i in enumerate(unique_y):
             Xi = X[y == y_i, :]
             self.theta_[i, :] = np.mean(Xi, axis=0)
             self.sigma_[i, :] = np.var(Xi, axis=0) + epsilon
-            self.class_prior_[i] = np.float(Xi.shape[0]) / n_samples
+            self.class_count_[i] = Xi.shape[0]
+        self.class_prior_[:] = self.class_count_ / n_samples
+        return self
+
+    @staticmethod
+    def update_mean_variance(M, mu, var, X):
+        """Compute online update of Gaussian mean and variance.
+
+        Given starting sample count, mean, and variance, and a new set of points
+        X, return the updated mean and variance. (NB - each dimension (column)
+        in X is treated as independent -- you get variance, not covariance).
+
+        Can take scalar mean and variance, or vector mean and variance to
+        simultaneously update a number of independent Gaussians.
+
+        See Stanford CS tech report STAN-CS-79-773 by Chan, Golub, and LeVeque:
+
+        http://i.stanford.edu/pub/cstr/reports/cs/tr/79/773/CS-TR-79-773.pdf
+
+        Parameters
+        ----------
+        M : scalar
+            Number of samples represented in old mean and variance.
+
+        mu: array-like, shape = [number of Gaussians]
+            Means for Gaussians in original set.
+
+        var: array-like, shape = [number of Gaussians]
+            Variances for Gaussians in original set.
+
+        Returns
+        -------
+        mu_new: array-like, shape = [number of Gaussians]
+            Updated mean for each Gaussian over the combined set.
+
+        var_new: array-like, shape = [number of Gaussians]
+            Updated variance for each Gaussian over the combined set.
+        """
+        if M == 0:
+            return np.mean(X, axis=0), np.var(X, axis=0)
+
+        _sum = mu * M
+        s = var * M
+        N = X.shape[0]
+        ns = N * np.var(X, axis=0)
+        nsum = np.sum(X, axis=0)
+
+        ns = s + ns + M * (N * _sum / M - nsum) ** 2 / (N * (N + M))
+        nsum = nsum + _sum
+
+        return nsum / (M + N), ns / (M + N)
+
+    def partial_fit(self, X, y, classes=None):
+        """Incremental fit on a batch of samples.
+
+        This method is expected to be called several times consecutively
+        on different chunks of a dataset so as to implement out-of-core
+        or online learning.
+
+        This is especially useful when the whole dataset is too big to fit in
+        memory at once.
+
+        This method has some performance and numerical stability overhead,
+        hence it is better to call partial_fit on chunks of data that are
+        as large as possible (as long as fitting in the memory budget) to
+        hide the overhead.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        y : array-like, shape = [n_samples]
+            Target values.
+
+        classes : array-like, shape = [n_classes]
+            List of all the classes that can possibly appear in the y vector.
+
+            Must be provided at the first call to partial_fit, can be omitted
+            in subsequent calls.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        X, y = check_arrays(X, y, sparse_format='dense')
+        y = column_or_1d(y, warn=True)
+        epsilon = 1e-9
+
+        if _check_partial_fit_first_call(self, classes):
+            # This is the first call to partial_fit:
+            # initialize various cumulative counters
+            n_features = X.shape[1]
+            n_classes = len(self.classes_)
+            self.theta_ = np.zeros((n_classes, n_features))
+            self.sigma_ = np.zeros((n_classes, n_features))
+            self.class_prior_ = np.zeros(n_classes)
+            self.class_count_ = np.zeros(n_classes)
+        else:
+            # Put epsilon back in each time
+            self.sigma_[:, :] -= epsilon
+
+
+        class2idx = {cls: idx for idx, cls in enumerate(self.classes_)}
+        for y_i in np.unique(y):
+            i = class2idx[y_i]
+            X_i = X[y == y_i, :]
+            N_i = X_i.shape[0]
+
+            new_theta, new_sigma = self.update_mean_variance(
+                self.class_count_[i],
+                self.theta_[i, :], self.sigma_[i, :],
+                X_i)
+
+            self.theta_[i, :] = new_theta
+            self.sigma_[i, :] = new_sigma
+            self.class_count_[i] += N_i
+
+        self.sigma_[:, :] += epsilon
+        self.class_prior_ = self.class_count_ / np.sum(self.class_count_)
         return self
 
     def _joint_log_likelihood(self, X):

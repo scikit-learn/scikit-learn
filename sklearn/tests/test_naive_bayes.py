@@ -136,6 +136,20 @@ def test_discretenb_partial_fit():
         yield check_partial_fit, cls
 
 
+def test_gnb_partial_fit():
+    clf = GaussianNB().fit(X, y)
+    clf_pf = GaussianNB().partial_fit(X, y, np.unique(y))
+    assert_array_almost_equal(clf.theta_, clf_pf.theta_)
+    assert_array_almost_equal(clf.sigma_, clf_pf.sigma_)
+    assert_array_almost_equal(clf.class_prior_, clf_pf.class_prior_)
+
+    clf_pf2 = GaussianNB().partial_fit(X[0::2, :], y[0::2], np.unique(y))
+    clf_pf2.partial_fit(X[1::2], y[1::2])
+    assert_array_almost_equal(clf.theta_, clf_pf2.theta_)
+    assert_array_almost_equal(clf.sigma_, clf_pf2.sigma_)
+    assert_array_almost_equal(clf.class_prior_, clf_pf2.class_prior_)
+
+
 def test_discretenb_pickle():
     """Test picklability of discrete naive Bayes classifiers"""
 
