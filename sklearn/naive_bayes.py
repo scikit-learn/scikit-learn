@@ -104,6 +104,12 @@ class GaussianNB(BaseNB):
     """
     Gaussian Naive Bayes (GaussianNB)
 
+    Can perform online updates to model parameters via `partial_fit` method.
+    For details on algorithm used to update feature means and variance online,
+    see Stanford CS tech report STAN-CS-79-773 by Chan, Golub, and LeVeque:
+
+        http://i.stanford.edu/pub/cstr/reports/cs/tr/79/773/CS-TR-79-773.pdf
+
     Attributes
     ----------
     `class_prior_` : array, shape (n_classes,)
@@ -141,11 +147,11 @@ class GaussianNB(BaseNB):
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape = (n_samples,)
+        y : array-like, shape (n_samples,)
             Target values.
 
         Returns
@@ -222,7 +228,8 @@ class GaussianNB(BaseNB):
         n_total = float(n_past + n_new)
 
         total_ssd = (old_ssd + new_ssd +
-                     n_past * (n_new * mu - new_sum) ** 2 / (n_new * n_total))
+                     (n_past / float(n_new * n_total)) *
+                     (n_new * mu - new_sum) ** 2)
 
         total_sum = new_sum + (mu * n_past)
 
