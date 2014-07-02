@@ -106,7 +106,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             double alpha, double beta,
                             np.ndarray[DOUBLE, ndim=2] X,
                             np.ndarray[DOUBLE, ndim=1] y,
-                            int max_iter, double tol, bint positive=0):
+                            int max_iter, double tol,
+                            object rng, bint positive=0):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -146,6 +147,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef unsigned int ii
     cdef unsigned int i
     cdef unsigned int n_iter
+    cdef unsigned int f_iter
 
     if alpha == 0:
         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
@@ -166,7 +168,13 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
         for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
-            for ii in range(n_features):  # Loop over coordinates
+            for f_iter in range(n_features):  # Loop over coordinates
+                with gil:
+                    if rng:
+                        ii = rng.randint(n_features)
+                    else:
+                        ii = f_iter
+
                 if norm_cols_X[ii] == 0.0:
                     continue
 
@@ -262,7 +270,7 @@ def sparse_enet_coordinate_descent(double[:] w,
                             double[:] X_data, int[:] X_indices,
                             int[:] X_indptr, double[:] y,
                             double[:] X_mean, int max_iter,
-                            double tol, bint positive=0):
+                            double tol, object rng, bint positive=0):
     """Cython version of the coordinate descent algorithm for Elastic-Net
 
     We minimize:
@@ -305,6 +313,7 @@ def sparse_enet_coordinate_descent(double[:] w,
     cdef double d_w_tol = tol
     cdef unsigned int jj
     cdef unsigned int n_iter
+    cdef unsigned int f_iter
     cdef bint center = False
 
     with nogil:
@@ -340,7 +349,12 @@ def sparse_enet_coordinate_descent(double[:] w,
             d_w_max = 0.0
             startptr = X_indptr[0]
 
-            for ii in range(n_features):  # Loop over coordinates
+            for f_iter in range(n_features):  # Loop over coordinates
+                with gil:
+                    if rng:
+                        ii = rng.randint(n_features)
+                    else:
+                        ii = f_iter
 
                 if norm_cols_X[ii] == 0.0:
                     continue
@@ -447,7 +461,8 @@ def sparse_enet_coordinate_descent(double[:] w,
 @cython.cdivision(True)
 def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
                                  double[:, :] Q, double[:] q, double[:] y,
-                                 int max_iter, double tol, bint positive=0):
+                                 int max_iter, double tol, object rng,
+                                 bint positive=0):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -481,6 +496,7 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
     cdef double dual_norm_XtA
     cdef unsigned int ii
     cdef unsigned int n_iter
+    cdef unsigned int f_iter
 
     cdef double y_norm2 = np.dot(y, y)
     cdef double* Q_ptr = &Q[0, 0]
@@ -496,7 +512,13 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
         for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
-            for ii in range(n_features):  # Loop over coordinates
+            for f_iter in range(n_features):  # Loop over coordinates
+                with gil:
+                    if rng:
+                        ii = rng.randint(n_features)
+                    else:
+                        ii = f_iter
+
                 if Q[ii, ii] == 0.0:
                     continue
 
@@ -580,7 +602,7 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
 def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
                                        double l2_reg, double[::1, :] X,
                                        double[:, :] Y, int max_iter,
-                                       double tol):
+                                       double tol, object rng):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net mult-task regression
 
@@ -619,6 +641,7 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
     cdef unsigned int ii
     cdef unsigned int jj
     cdef unsigned int n_iter
+    cdef unsigned int f_iter
 
     cdef double* X_ptr = &X[0, 0]
     cdef double* W_ptr = &W[0, 0]
@@ -648,7 +671,12 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
         for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
-            for ii in range(n_features): # Loop over coordinates
+            for f_iter in range(n_features):  # Loop over coordinates
+                with gil:
+                    if rng:
+                        ii = rng.randint(n_features)
+                    else:
+                        ii = f_iter
                 if norm_cols_X[ii] == 0.0:
                     continue
 
