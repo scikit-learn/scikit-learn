@@ -130,8 +130,8 @@ class VectorizerMixin(object):
 
         return tokens
     
-    def _word_skipgrams(self, tokens, stop_words=None, k=4):
-        """Turn tokens into a sequence of skip-(bi)grams after stop words filtering"""
+    def _word_skipgrams(self, tokens, stop_words=None):
+        """Turn tokens into a sequence of skipgrams after stop words filtering"""
         # handle stop words
         if stop_words is not None:
             tokens = [w for w in tokens if w not in stop_words]
@@ -140,14 +140,15 @@ class VectorizerMixin(object):
         tokens = []
         tokens.extend(original_tokens)
         n_original_tokens = len(original_tokens)
+        k = self.ngram_range[1]
         for n in xrange(0, n_original_tokens):
             for i in xrange(max(0, n-k), n):
-                if i==n:
+                if i == n:
                     continue
                 if original_tokens[n] > original_tokens[i]:
-                    tokens.append(original_tokens[i] + original_tokens[n])
+                    tokens.append(original_tokens[i] + " " + original_tokens[n])
                 else:
-                    tokens.append(original_tokens[n] + original_tokens[i])
+                    tokens.append(original_tokens[n] + " " + original_tokens[i])
         
         return tokens
     
@@ -329,10 +330,12 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         'unicode' is a slightly slower method that works on any characters.
         None (default) does nothing.
 
-    analyzer: string, {'word', 'char', 'char_wb'} or callable
+    analyzer: string, {'word', 'char', 'char_wb', 'skipgram'} or callable
         Whether the feature should be made of word or character n-grams.
         Option 'char_wb' creates character n-grams only from text inside
-        word boundaries.
+        word boundaries. Option skipgrams is a generalization of word 
+        n-grams in which words do not need to be consecutive in text and 
+        can have gaps in between.
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
@@ -530,10 +533,12 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         'unicode' is a slightly slower method that works on any characters.
         None (default) does nothing.
 
-    analyzer : string, {'word', 'char', 'char_wb'} or callable
+    analyzer : string, {'word', 'char', 'char_wb', 'skipgram'} or callable
         Whether the feature should be made of word or character n-grams.
         Option 'char_wb' creates character n-grams only from text inside
-        word boundaries.
+        word boundaries.Option skipgrams is a generalization of word 
+        n-grams in which words do not need to be consecutive in text and 
+        can have gaps in between.
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
@@ -1090,8 +1095,11 @@ class TfidfVectorizer(CountVectorizer):
         'unicode' is a slightly slower method that works on any characters.
         None (default) does nothing.
 
-    analyzer : string, {'word', 'char'} or callable
+    analyzer : string, {'word', 'char', 'skipgram'} or callable
         Whether the feature should be made of word or character n-grams.
+        The skipgram option is a generalization of word n-grams in which
+        words do not need to be consecutive in text and can have gaps in
+        between.
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
