@@ -467,6 +467,15 @@ def test_label_binarize_binary():
 
     yield check_binarized_results, y, classes, pos_label, neg_label, expected
 
+    # Binary case where sparse_output = True will no result in a Value Error
+    y = [0, 1, 0]
+    classes = [0, 1]
+    pos_label = 3
+    neg_label = 0
+    expected = np.array([[3, 0], [0, 3], [3, 0]])[:, 1].reshape((-1, 1))
+
+    yield check_binarized_results, y, classes, pos_label, neg_label, expected
+
 
 def test_label_binarize_multiclass():
     y = [0, 1, 2]
