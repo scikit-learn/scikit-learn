@@ -130,6 +130,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         rnd = check_random_state(self.random_state)
 
         sparse = sp.isspmatrix(X)
+
+
         if sparse and self.kernel == "precomputed":
             raise TypeError("Sparse precomputed kernels are not supported.")
         self._sparse = sparse and not callable(self.kernel)

@@ -673,16 +673,27 @@ def test_consistent_proba():
     proba_2 = a.fit(X, Y).predict_proba(X)
     assert_array_almost_equal(proba_1, proba_2)
 
-def test_SVDD_big_C_value():
-    clf = svm.SVDD(C=2)
-    clf.fit(X)
-    assert_array_equal(clf.predict(X), np.ones(len(X)), "All elements shoul be targets")
 
 
 def test_SVDD_precomputed_kernel():
     clf = svm.SVDD(kernel='precomputed')
     K = np.dot(X, np.array(X).T)
     assert_raises(TypeError, clf.fit, K)
+
+
+def test_SVDD_extreame_C_value():
+    clf = svm.SVDD(C=0.011, kernel='rbf')
+    rnd = check_random_state(2)
+    X = rnd.randn(100, 2)
+    clf.fit(X)
+    y_pred = clf.predict(X)
+    assert_greater(np.mean(y_pred == -1), .9)
+
+    clf = svm.SVDD(C=1, kernel="rbf", gamma=0.1)
+    clf.fit(X)
+
+    y_pred_test = clf.predict(X)
+    assert_greater(np.mean(y_pred_test == 1), .9)
 
 
 def test_SVDD_linear_kernel():
