@@ -14,7 +14,7 @@ matrices supported), sample them, and estimate them from
 data. Facilities to help determine the appropriate number of
 components are also provided.
 
- .. figure:: ../auto_examples/mixture/images/plot_gmm_pdf_1.png
+ .. figure:: ../auto_examples/mixture/images/plot_gmm_pdf_001.png
    :target: ../auto_examples/mixture/plot_gmm_pdf.html
    :align: center
    :scale: 50%
@@ -55,7 +55,7 @@ The :class:`GMM` comes with different options to constrain the covariance
 of the difference classes estimated: spherical, diagonal, tied or full
 covariance.
 
-.. figure:: ../auto_examples/mixture/images/plot_gmm_classifier_1.png
+.. figure:: ../auto_examples/mixture/images/plot_gmm_classifier_001.png
    :target: ../auto_examples/mixture/plot_gmm_classifier.html
    :align: center
    :scale: 75%
@@ -102,7 +102,7 @@ only in the asymptotic regime (i.e. if much data is available).
 Note that using a :ref:`DPGMM <dpgmm>` avoids the specification of the
 number of components for a Gaussian mixture model.
 
-.. figure:: ../auto_examples/mixture/images/plot_gmm_selection_1.png
+.. figure:: ../auto_examples/mixture/images/plot_gmm_selection_001.png
    :target: ../auto_examples/mixture/plot_gmm_selection.html
    :align: center
    :scale: 50%
@@ -210,11 +210,11 @@ components, and at the expense of extra computational time the user
 only needs to specify a loose upper bound on this number and a
 concentration parameter.
 
-.. |plot_gmm| image:: ../auto_examples/mixture/images/plot_gmm_1.png
+.. |plot_gmm| image:: ../auto_examples/mixture/images/plot_gmm_001.png
    :target: ../auto_examples/mixture/plot_gmm.html
    :scale: 48%
 
-.. |plot_gmm_sin| image:: ../auto_examples/mixture/images/plot_gmm_sin_1.png
+.. |plot_gmm_sin| image:: ../auto_examples/mixture/images/plot_gmm_sin_001.png
    :target: ../auto_examples/mixture/plot_gmm_sin.html
    :scale: 48%
 

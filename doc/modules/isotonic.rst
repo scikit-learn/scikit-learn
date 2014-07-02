@@ -18,6 +18,6 @@ arbitrary real number. It yields the vector which is composed of non-decreasing
 elements the closest in terms of mean squared error. In practice this list
 of elements forms a function that is piecewise linear.
 
-.. figure:: ../auto_examples/images/plot_isotonic_regression_1.png
+.. figure:: ../auto_examples/images/plot_isotonic_regression_001.png
    :target: ../auto_examples/images/plot_isotonic_regression.html
    :align: center
