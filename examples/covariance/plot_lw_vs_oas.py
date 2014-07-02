@@ -10,10 +10,10 @@ criterion), yielding the Ledoit-Wolf covariance estimate.
 
 Chen et al. proposed an improvement of the Ledoit-Wolf shrinkage
 parameter, the OAS coefficient, whose convergence is significantly
-better under the assumption that the data are gaussian.
+better under the assumption that the data are Gaussian.
 
 This example, inspired from Chen's publication [1], shows a comparison
-of the estimated MSE of the LW and OAS methods, using gaussian
+of the estimated MSE of the LW and OAS methods, using Gaussian
 distributed data.
 
 [1] "Shrinkage Algorithms for MMSE Covariance Estimation"

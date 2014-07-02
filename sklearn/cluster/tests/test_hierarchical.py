@@ -167,7 +167,7 @@ def test_agglomerative_clustering():
         clustering = AgglomerativeClustering(
             n_clusters=10,
             connectivity=sparse.lil_matrix(
-                connectivity.todense()[:10, :10]),
+                connectivity.toarray()[:10, :10]),
             linkage=linkage)
         assert_raises(ValueError, clustering.fit, X)
 
@@ -175,7 +175,7 @@ def test_agglomerative_clustering():
     # exception
     clustering = AgglomerativeClustering(
         n_clusters=10,
-        connectivity=connectivity.todense(),
+        connectivity=connectivity.toarray(),
         affinity="manhattan",
         linkage="ward")
     assert_raises(ValueError, clustering.fit, X)

@@ -28,9 +28,7 @@ Vision
 --------
 
 The vision is to provide tools to easily achieve better performance and
-reproducibility when working with long running jobs. In addition, Joblib
-can also be used to provide a light-weight make replacement or caching
-solution.
+reproducibility when working with long running jobs.
 
  *  **Avoid computing twice the same thing**: code is rerun over an
     over, for instance when prototyping computational-heavy jobs (as in
@@ -102,10 +100,10 @@ Main features
 
 """
 
-__version__ = '0.8.0a3'
+__version__ = '0.8.2'
 
 
-from .memory import Memory
+from .memory import Memory, MemorizedResult
 from .logger import PrintTime
 from .logger import Logger
 from .hashing import hash

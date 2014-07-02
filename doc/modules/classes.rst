@@ -161,7 +161,6 @@ Classes
    :toctree: generated/
    :template: class.rst
 
-   cross_validation.Bootstrap
    cross_validation.KFold
    cross_validation.LeaveOneLabelOut
    cross_validation.LeaveOneOut
@@ -523,27 +522,6 @@ From text
    grid_search.RandomizedSearchCV
 
 
-.. _hmm_ref:
-
-:mod:`sklearn.hmm`: Hidden Markov Models
-========================================
-
-.. automodule:: sklearn.hmm
-   :no-members:
-   :no-inherited-members:
-
-**User guide:** See the :ref:`hmm` section for further details.
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   hmm.GaussianHMM
-   hmm.MultinomialHMM
-   hmm.GMMHMM
-
 .. _isotonic_ref:
 
 :mod:`sklearn.isotonic`: Isotonic regression
@@ -568,6 +546,7 @@ From text
    :template: function.rst
 
    isotonic.isotonic_regression
+   isotonic.check_increasing
 
 .. _kernel_approximation_ref:
 
@@ -709,6 +688,7 @@ From text
     manifold.Isomap
     manifold.MDS
     manifold.SpectralEmbedding
+    manifold.TSNE
 
 .. autosummary::
     :toctree: generated
@@ -1059,6 +1039,7 @@ Pairwise metrics
    preprocessing.KernelCenterer
    preprocessing.LabelBinarizer
    preprocessing.LabelEncoder
+   preprocessing.MultiLabelBinarizer
    preprocessing.MinMaxScaler
    preprocessing.Normalizer
    preprocessing.OneHotEncoder

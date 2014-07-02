@@ -16,6 +16,7 @@ from scipy import sparse
 from numpy.lib.stride_tricks import as_strided
 
 from ..utils import array2d, check_random_state
+from ..utils.fixes import astype
 from ..base import BaseEstimator
 
 __all__ = ['PatchExtractor',
@@ -107,7 +108,8 @@ def _to_graph(n_x, n_y, n_z, mask=None, img=None,
         n_voxels = diag.size
     else:
         if mask is not None:
-            mask = mask.astype(np.bool)
+            mask = astype(mask, dtype=np.bool, copy=False)
+            mask = np.asarray(mask, dtype=np.bool)
             edges = _mask_edges_weights(mask, edges)
             n_voxels = np.sum(mask)
         else:
@@ -124,7 +126,7 @@ def _to_graph(n_x, n_y, n_z, mask=None, img=None,
                               (n_voxels, n_voxels),
                               dtype=dtype)
     if return_as is np.ndarray:
-        return graph.todense()
+        return graph.toarray()
     return return_as(graph)
 
 
@@ -145,6 +147,15 @@ def img_to_graph(img, mask=None, return_as=sparse.coo_matrix, dtype=None):
     dtype: None or dtype, optional
         The data of the returned sparse matrix. By default it is the
         dtype of img
+
+    Notes
+    =====
+    For sklearn versions 0.14.1 and prior, return_as=np.ndarray was handled
+    by returning a dense np.matrix instance.  Going forward, np.ndarray
+    returns an np.ndarray, as expected.
+
+    For compatibility, user code relying on this method should wrap its
+    calls in ``np.asarray`` to avoid type issues.
     """
     img = np.atleast_3d(img)
     n_x, n_y, n_z = img.shape
@@ -172,6 +183,15 @@ def grid_to_graph(n_x, n_y, n_z=1, mask=None, return_as=sparse.coo_matrix,
         The class to use to build the returned adjacency matrix.
     dtype: dtype, optional, default int
         The data of the returned sparse matrix. By default it is int
+
+    Notes
+    =====
+    For sklearn versions 0.14.1 and prior, return_as=np.ndarray was handled
+    by returning a dense np.matrix instance.  Going forward, np.ndarray
+    returns an np.ndarray, as expected.
+
+    For compatibility, user code relying on this method should wrap its
+    calls in ``np.asarray`` to avoid type issues.
     """
     return _to_graph(n_x, n_y, n_z, mask=mask, return_as=return_as,
                      dtype=dtype)

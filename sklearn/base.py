@@ -156,8 +156,8 @@ class BaseEstimator(object):
     Notes
     -----
     All estimators should specify all the parameters that can be set
-    at the class level in their __init__ as explicit keyword
-    arguments (no *args, **kwargs).
+    at the class level in their ``__init__`` as explicit keyword
+    arguments (no ``*args`` or ``**kwargs``).
     """
 
     @classmethod

@@ -7,7 +7,7 @@ from .isomap import Isomap
 from .minibatch_isomap import MiniBatchIsomap
 from .mds import MDS
 from .spectral_embedding_ import SpectralEmbedding, spectral_embedding
+from .t_sne import TSNE
 
 __all__ = ['locally_linear_embedding', 'LocallyLinearEmbedding', 'Isomap',
-           'MiniBatchIsomap', 'MDS', 'SpectralEmbedding', 
-           'spectral_embedding']
+           'MDS', 'SpectralEmbedding', 'spectral_embedding', "TSNE", 'MiniBatchIsomap']

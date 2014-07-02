@@ -225,8 +225,10 @@ def test_z_file():
     # Test saving and loading data with Zfiles
     filename = env['filename'] + str(random.randint(0, 1000))
     data = numpy_pickle.asbytes('Foo, \n Bar, baz, \n\nfoobar')
-    numpy_pickle.write_zfile(open(filename, 'wb'), data)
-    data_read = numpy_pickle.read_zfile(open(filename, 'rb'))
+    with open(filename, 'wb') as f:
+        numpy_pickle.write_zfile(f, data)
+    with open(filename, 'rb') as f:
+        data_read = numpy_pickle.read_zfile(f)
     nose.tools.assert_equal(data, data_read)
 
 ################################################################################

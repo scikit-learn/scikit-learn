@@ -128,6 +128,10 @@ class _ConstantPredictor(BaseEstimator):
     def decision_function(self, X):
         return np.repeat(self.y_, X.shape[0])
 
+    def predict_proba(self, X):
+        return np.repeat([np.hstack([1 - self.y_, self.y_])],
+                         X.shape[0], axis=0)
+
 
 class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     """One-vs-the-rest (OvR) multiclass/multilabel strategy
@@ -142,10 +146,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     multiclass classification and is a fair default choice.
 
     This strategy can also be used for multilabel learning, where a classifier
-    is used to predict multiple labels for instance, by fitting on a sequence
-    of sequences of labels (e.g., a list of tuples) rather than a single
-    target vector. For multilabel learning, the number of classes must be at
-    least three, since otherwise OvR reduces to binary classification.
+    is used to predict multiple labels for instance, by fitting on a 2-d matrix
+    in which cell [i, j] is 1 if sample i has label j and 0 otherwise.
 
     In the multilabel learning literature, OvR is also known as the binary
     relevance method.
@@ -188,9 +190,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Data.
 
-        y : array-like, shape = [n_samples]
-         or sequence of sequences, len = n_samples
-            Multi-class targets. A sequence of sequences turns on multilabel
+        y : array-like, shape = [n_samples] or [n_samples, n_classes]
+            Multi-class targets. An indicator matrix turns on multilabel
             classification.
 
         Returns
@@ -369,7 +370,8 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing `fit` and `predict`.
+        An estimator object implementing `fit` and one of `decision_function`
+        or `predict_proba`.
 
     n_jobs : int, optional, default: 1
         The number of jobs to use for the computation. If -1 all CPUs are used.

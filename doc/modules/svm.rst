@@ -67,8 +67,8 @@ assumed to be linear. It also lacks some of the members of
 
 As other classifiers, :class:`SVC`, :class:`NuSVC` and
 :class:`LinearSVC` take as input two arrays: an array X of size ``[n_samples,
-n_features]`` holding the training samples, and an array Y of integer values,
-size ``[n_samples]``, holding the class labels for the training samples::
+n_features]`` holding the training samples, and an array y of class labels
+(strings or integers), size ``[n_samples]``::
 
 
     >>> from sklearn import svm

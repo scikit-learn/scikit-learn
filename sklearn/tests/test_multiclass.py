@@ -7,6 +7,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_warns
 
 from sklearn.utils.testing import assert_greater
 from sklearn.multiclass import OneVsRestClassifier
@@ -19,7 +20,7 @@ from sklearn.metrics import recall_score
 from sklearn.svm import LinearSVC
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import (LinearRegression, Lasso, ElasticNet, Ridge,
-                                  Perceptron)
+                                  Perceptron, LogisticRegression)
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
@@ -57,15 +58,33 @@ def test_ovr_fit_predict():
 
 
 def test_ovr_always_present():
-    # Test that ovr works with classes that are always present or absent
+    """Test that ovr works with classes that are always present or absent
+    """
+    # Note: tests is the case where _ConstantPredictor is utilised
     X = np.ones((10, 2))
     X[:5, :] = 0
-    y = [[int(i >= 5), 2, 3] for i in range(10)]
-    with warnings.catch_warnings(record=True):
-        ovr = OneVsRestClassifier(DecisionTreeClassifier())
-        ovr.fit(X, y)
-        y_pred = ovr.predict(X)
-        assert_array_equal(np.array(y_pred), np.array(y))
+    y = np.zeros((10, 3))
+    y[5:, 0] = 1
+    y[:, 1] = 1
+    y[:, 2] = 1
+
+    [[int(i >= 5), 2, 3] for i in range(10)]
+    ovr = OneVsRestClassifier(LogisticRegression())
+    assert_warns(UserWarning, ovr.fit, X, y)
+    y_pred = ovr.predict(X)
+    assert_array_equal(np.array(y_pred), np.array(y))
+    y_pred = ovr.decision_function(X)
+    assert_equal(np.unique(y_pred[:, -2:]), 1)
+    y_pred = ovr.predict_proba(X)
+    assert_array_equal(y_pred[:, -1], np.ones(X.shape[0]))
+
+    # y has a constantly absent label
+    y = np.zeros((10, 2))
+    y[5:, 0] = 1  # variable label
+    ovr = OneVsRestClassifier(LogisticRegression())
+    assert_warns(UserWarning, ovr.fit, X, y)
+    y_pred = ovr.predict_proba(X)
+    assert_array_equal(y_pred[:, -1], np.zeros(X.shape[0]))
 
 
 def test_ovr_multilabel():
@@ -86,7 +105,9 @@ def test_ovr_multilabel():
                      LinearRegression(), Ridge(),
                      ElasticNet(), Lasso(alpha=0.5)):
         # test input as lists of tuples
-        clf = OneVsRestClassifier(base_clf).fit(X, y)
+        clf = assert_warns(DeprecationWarning,
+                           OneVsRestClassifier(base_clf).fit,
+                           X, y)
         assert_equal(set(clf.classes_), classes)
         y_pred = clf.predict([[0, 4, 4]])[0]
         assert_equal(set(y_pred), set(["spam", "eggs"]))
@@ -115,6 +136,7 @@ def test_ovr_multilabel_dataset():
                                                        n_labels=2,
                                                        length=50,
                                                        allow_unlabeled=au,
+                                                       return_indicator=True,
                                                        random_state=0)
         X_train, Y_train = X[:80], Y[:80]
         X_test, Y_test = X[80:], Y[80:]
@@ -138,6 +160,7 @@ def test_ovr_multilabel_predict_proba():
                                                        n_labels=3,
                                                        length=50,
                                                        allow_unlabeled=au,
+                                                       return_indicator=True,
                                                        random_state=0)
         X_train, Y_train = X[:80], Y[:80]
         X_test, Y_test = X[80:], Y[80:]
@@ -157,8 +180,8 @@ def test_ovr_multilabel_predict_proba():
 
         # predict assigns a label if the probability that the
         # sample has the label is greater than 0.5.
-        pred = [tuple(l.nonzero()[0]) for l in (Y_proba > 0.5)]
-        assert_equal(pred, Y_pred)
+        pred = Y_proba > .5
+        assert_array_equal(pred, Y_pred)
 
 
 def test_ovr_single_label_predict_proba():
@@ -189,12 +212,13 @@ def test_ovr_multilabel_decision_function():
                                                    n_labels=3,
                                                    length=50,
                                                    allow_unlabeled=True,
+                                                   return_indicator=True,
                                                    random_state=0)
     X_train, Y_train = X[:80], Y[:80]
     X_test, Y_test = X[80:], Y[80:]
     clf = OneVsRestClassifier(svm.SVC()).fit(X_train, Y_train)
-    assert_array_equal((clf.decision_function(X_test) > 0).nonzero()[1],
-                       np.hstack(clf.predict(X_test)))
+    assert_array_equal((clf.decision_function(X_test) > 0).astype(int),
+                       clf.predict(X_test))
 
 
 def test_ovr_single_label_decision_function():

@@ -18,6 +18,7 @@ from ..base import BaseEstimator
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import safe_asarray, atleast2d_or_csr, check_arrays
+from ..utils.fixes import argpartition
 from ..utils.validation import DataConversionWarning
 from ..externals import six
 
@@ -293,11 +294,12 @@ class KNeighborsMixin(object):
                                           self.effective_metric_,
                                           **self.effective_metric_kwds_)
 
-            # XXX: should be implemented with a partial sort
-            neigh_ind = dist.argsort(axis=1)
+            neigh_ind = argpartition(dist, n_neighbors - 1, axis=1)
             neigh_ind = neigh_ind[:, :n_neighbors]
+            # argpartition doesn't guarantee sorted order, so we sort again
+            j = np.arange(neigh_ind.shape[0])[:, None]
+            neigh_ind = neigh_ind[j, np.argsort(dist[j, neigh_ind])]
             if return_distance:
-                j = np.arange(neigh_ind.shape[0])[:, None]
                 if self.effective_metric_ == 'euclidean':
                     return np.sqrt(dist[j, neigh_ind]), neigh_ind
                 else:
@@ -343,10 +345,10 @@ class KNeighborsMixin(object):
         >>> neigh.fit(X) # doctest: +ELLIPSIS
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
         >>> A = neigh.kneighbors_graph(X)
-        >>> A.todense()
-        matrix([[ 1.,  0.,  1.],
-                [ 0.,  1.,  1.],
-                [ 1.,  0.,  1.]])
+        >>> A.toarray()
+        array([[ 1.,  0.,  1.],
+               [ 0.,  1.,  1.],
+               [ 1.,  0.,  1.]])
 
         See also
         --------
@@ -523,10 +525,10 @@ class RadiusNeighborsMixin(object):
         >>> neigh.fit(X) # doctest: +ELLIPSIS
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
         >>> A = neigh.radius_neighbors_graph(X)
-        >>> A.todense()
-        matrix([[ 1.,  0.,  1.],
-                [ 0.,  1.,  0.],
-                [ 1.,  0.,  1.]])
+        >>> A.toarray()
+        array([[ 1.,  0.,  1.],
+               [ 0.,  1.,  0.],
+               [ 1.,  0.,  1.]])
 
         See also
         --------

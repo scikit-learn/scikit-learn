@@ -28,7 +28,7 @@ from sklearn.linear_model import BayesianRidge, LinearRegression
 # Generating simulated data with Gaussian weigthts
 np.random.seed(0)
 n_samples, n_features = 100, 100
-X = np.random.randn(n_samples, n_features)  # Create gaussian data
+X = np.random.randn(n_samples, n_features)  # Create Gaussian data
 # Create weigts with a precision lambda_ of 4.
 lambda_ = 4.
 w = np.zeros(n_features)

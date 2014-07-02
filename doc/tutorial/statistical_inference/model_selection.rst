@@ -57,7 +57,7 @@ The `sklearn` exposes cross-validation generators to generate list
 of indices for this purpose::
 
     >>> from sklearn import cross_validation
-    >>> k_fold = cross_validation.KFold(n=6, n_folds=3, indices=True)
+    >>> k_fold = cross_validation.KFold(n=6, n_folds=3)
     >>> for train_indices, test_indices in k_fold:
     ...      print('Train: %s | test: %s' % (train_indices, test_indices))
     Train: [2 3 4 5] | test: [0 1]
@@ -163,9 +163,9 @@ a stratified 3-fold.
 
     ::
 
-    >>> cross_validation.cross_val_score(clf, X_digits, y_digits)
-    ...                                                  # doctest: +ELLIPSIS
-    array([ 0.935...,  0.958...,  0.937...])
+        >>> cross_validation.cross_val_score(clf, X_digits, y_digits)
+        ...                                                  # doctest: +ELLIPSIS
+        array([ 0.935...,  0.958...,  0.937...])
 
     Two cross-validation loops are performed in parallel: one by the
     :class:`GridSearchCV` estimator to set `gamma` and the other one by

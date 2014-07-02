@@ -8,10 +8,10 @@ import warnings
 import numpy as np
 
 from scipy import sparse
+from scipy.linalg import eigh
 from scipy.sparse.linalg import lobpcg
-from scipy.sparse.linalg.eigen.lobpcg.lobpcg import symeig
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator
 from ..externals import six
 from ..utils import check_random_state
 from ..utils.validation import atleast2d_or_csr
@@ -37,21 +37,21 @@ def _graph_connected_component(graph, node_id):
 
     Returns
     -------
-    connected_components : array-like, shape: (n_samples,)
+    connected_components_matrix : array-like, shape: (n_samples,)
         An array of bool value indicates the indexes of the nodes
         belong to the largest connected components of the given query
         node
     """
-    connected_components = np.zeros(shape=(graph.shape[0]), dtype=np.bool)
-    connected_components[node_id] = True
+    connected_components_matrix = np.zeros(shape=(graph.shape[0]), dtype=np.bool)
+    connected_components_matrix[node_id] = True
     n_node = graph.shape[0]
     for i in range(n_node):
-        last_num_component = connected_components.sum()
-        _, node_to_add = np.where(graph[connected_components] != 0)
-        connected_components[node_to_add] = True
-        if last_num_component >= connected_components.sum():
+        last_num_component = connected_components_matrix.sum()
+        _, node_to_add = np.where(graph[connected_components_matrix] != 0)
+        connected_components_matrix[node_to_add] = True
+        if last_num_component >= connected_components_matrix.sum():
             break
-    return connected_components
+    return connected_components_matrix
 
 
 def _graph_is_connected(graph):
@@ -286,10 +286,10 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         if n_nodes < 5 * n_components + 1:
             # see note above under arpack why lobpcg has problems with small
             # number of nodes
-            # lobpcg will fallback to symeig, so we short circuit it
+            # lobpcg will fallback to eigh, so we short circuit it
             if sparse.isspmatrix(laplacian):
-                laplacian = laplacian.todense()
-            lambdas, diffusion_map = symeig(laplacian)
+                laplacian = laplacian.toarray()
+            lambdas, diffusion_map = eigh(laplacian)
             embedding = diffusion_map.T[:n_components] * dd
         else:
             # lobpcg needs native floats

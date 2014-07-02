@@ -41,7 +41,7 @@ this reason, it is often helpful to use the tools described below.
 
 .. topic:: Examples:
 
-   * :ref:`example_plot_polynomial_regression.py`
+   * :ref:`example_linear_model_plot_polynomial_regression.py`
    * :ref:`example_plot_validation_curve.py`
    * :ref:`example_plot_learning_curve.py`
 

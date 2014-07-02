@@ -45,8 +45,9 @@ Radial Basis Function Kernel
 ----------------------------
 
 The :class:`RBFSampler` constructs an approximate mapping for the radial basis
-function kernel. This transformation can be used to explicitly model a kernel map,
-prior to applying a linear algorithm, for example a linear SVM::
+function kernel, also known as *Random Kitchen Sinks* [RR2007]_. This
+transformation can be used to explicitly model a kernel map, prior to applying
+a linear algorithm, for example a linear SVM::
 
     >>> from sklearn.kernel_approximation import RBFSampler
     >>> from sklearn.linear_model import SGDClassifier
@@ -157,9 +158,9 @@ into a Hilbert space :math:`\mathcal{H}`, such that
 
 .. math::
 
-        k(x,y) = < \phi(x), \phi(y)>
+        k(x,y) = \langle \phi(x), \phi(y) \rangle
 
-Where :math:`< \cdot, \cdot >` denotes the inner product in the
+Where :math:`\langle \cdot, \cdot \rangle` denotes the inner product in the
 Hilbert space.
 
 If an algorithm, such as a linear support vector machine or PCA,

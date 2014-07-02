@@ -24,7 +24,6 @@ if LooseVersion(scipy.__version__) >= LooseVersion('0.12'):
     solve_triangular_args = {'check_finite': False}
 
 
-
 premature = """ Orthogonal matching pursuit ended prematurely due to linear
 dependence in the dictionary. The requested precision might not have been met.
 """
@@ -805,15 +804,15 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    `n_nonzero_coefs_` : int
-        Estimated number of non-zero coefficients giving the best mean
-        squared error over the cross-validation folds.
+    `intercept_` : float or array, shape (n_targets,)
+        Independent term in decision function.
 
     `coef_` : array, shape (n_features,) or (n_features, n_targets)
-        parameter vector (w in the problem formulation).
+        Parameter vector (w in the problem formulation).
 
-    `intercept_` : float or array, shape (n_targets,)
-        independent term in decision function.
+    `n_nonzero_coefs_` : int
+        Estimated number of non-zero coefficients giving the best mean squared
+        error over the cross-validation folds.
 
     See also
     --------

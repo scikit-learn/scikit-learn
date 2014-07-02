@@ -48,8 +48,8 @@ from sklearn.cross_validation import train_test_split
 from sklearn.utils.validation import DataConversionWarning
 
 dont_test = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
-             'LabelBinarizer', 'LabelEncoder', 'TfidfTransformer',
-             'IsotonicRegression', 'OneHotEncoder',
+             'LabelBinarizer', 'LabelEncoder', 'MultiLabelBinarizer',
+             'TfidfTransformer', 'IsotonicRegression', 'OneHotEncoder',
              'RandomTreesEmbedding', 'FeatureHasher', 'DummyClassifier',
              'DummyRegressor', 'TruncatedSVD', 'PolynomialFeatures']
 
@@ -252,17 +252,21 @@ def check_transformer(name, Transformer, X, y):
             for x_pred, x_pred2, x_pred3 in zip(X_pred, X_pred2, X_pred3):
                 assert_array_almost_equal(
                     x_pred, x_pred2, 2,
-                    "fit_transform not correct in %s" % Transformer)
+                    "fit_transform and transform outcomes not consistent in %s"
+                    % Transformer)
                 assert_array_almost_equal(
-                    x_pred3, x_pred2, 2,
-                    "fit_transform not correct in %s" % Transformer)
+                    x_pred, x_pred3, 2,
+                    "consecutive fit_transform outcomes not consistent in %s"
+                    % Transformer)
         else:
             assert_array_almost_equal(
                 X_pred, X_pred2, 2,
-                "fit_transform not correct in %s" % Transformer)
+                "fit_transform and transform outcomes not consistent in %s"
+                % Transformer)
             assert_array_almost_equal(
-                X_pred3, X_pred2, 2,
-                "fit_transform not correct in %s" % Transformer)
+                X_pred, X_pred3, 2,
+                "consecutive fit_transform outcomes not consistent in %s"
+                % Transformer)
 
         # raises error on malformed input for transform
         assert_raises(ValueError, transformer.transform, X.T)

@@ -7,12 +7,14 @@ Generate samples of synthetic data sets.
 # License: BSD 3 clause
 
 import numbers
+import warnings
 import numpy as np
 from scipy import linalg
 
-from ..preprocessing import LabelBinarizer
+from ..preprocessing import MultiLabelBinarizer
 from ..utils import array2d, check_random_state
 from ..utils import shuffle as util_shuffle
+from ..utils.fixes import astype
 from ..utils.random import sample_without_replacement
 from ..externals import six
 map = six.moves.map
@@ -25,8 +27,9 @@ def _generate_hypercube(samples, dimensions, rng):
     if dimensions > 30:
         return np.hstack([_generate_hypercube(samples, dimensions - 30, rng),
                           _generate_hypercube(samples, 30, rng)])
-    out = sample_without_replacement(2 ** dimensions, samples,
-                                     random_state=rng).astype('>u4')
+    out = astype(sample_without_replacement(2 ** dimensions, samples,
+                                            random_state=rng),
+                 dtype='>u4', copy=False)
     out = np.unpackbits(out.view('>u1')).reshape((-1, 32))[:, -dimensions:]
     return out
 
@@ -336,8 +339,15 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     X, Y = zip(*[sample_example() for i in range(n_samples)])
 
     if return_indicator:
-        lb = LabelBinarizer()
+        lb = MultiLabelBinarizer()
         Y = lb.fit([range(n_classes)]).transform(Y)
+    else:
+        warnings.warn('Support for the sequence of sequences multilabel '
+                      'representation is being deprecated and replaced with '
+                      'a sparse indicator matrix. '
+                      'return_indicator will default to True from version '
+                      '0.17.',
+                      DeprecationWarning)
 
     return np.array(X, dtype=np.float64), Y
 
