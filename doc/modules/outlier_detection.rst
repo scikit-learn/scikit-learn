@@ -69,7 +69,7 @@ but regular, observation outside the frontier.
      frontier learned around some data by a
      :class:`svm.OneClassSVM` object.
 
-.. figure:: ../auto_examples/svm/images/plot_oneclass_1.png
+.. figure:: ../auto_examples/svm/images/plot_oneclass_001.png
    :target: ../auto_examples/svm/plot_oneclasse.html
    :align: center
    :scale: 75%
@@ -105,7 +105,7 @@ whithout being influenced by outliers). The Mahalanobis distances
 obtained from this estimate is used to derive a measure of outlyingness.
 This strategy is illustrated below.
 
-.. figure:: ../auto_examples/covariance/images/plot_mahalanobis_distances_1.png
+.. figure:: ../auto_examples/covariance/images/plot_mahalanobis_distances_001.png
    :target: ../auto_examples/covariance/plot_mahalanobis_distances.html
    :align: center
    :scale: 75%
@@ -138,15 +138,15 @@ The examples below illustrate how the performance of the
 less unimodal.  :class:`svm.OneClassSVM` works better on data with
 multiple modes.
 
-.. |outlier1| image:: ../auto_examples/covariance/images/plot_outlier_detection_1.png
+.. |outlier1| image:: ../auto_examples/covariance/images/plot_outlier_detection_001.png
    :target: ../auto_examples/covariance/plot_outlier_detection.html
    :scale: 50%
 
-.. |outlier2| image:: ../auto_examples/covariance/images/plot_outlier_detection_2.png
+.. |outlier2| image:: ../auto_examples/covariance/images/plot_outlier_detection_002.png
    :target: ../auto_examples/covariance/plot_outlier_detection.html
    :scale: 50%
 
-.. |outlier3| image:: ../auto_examples/covariance/images/plot_outlier_detection_3.png
+.. |outlier3| image:: ../auto_examples/covariance/images/plot_outlier_detection_003.png
    :target: ../auto_examples/covariance/plot_outlier_detection.html
    :scale: 50%
 

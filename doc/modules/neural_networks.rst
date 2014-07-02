@@ -32,7 +32,7 @@ density estimation.
 The method gained popularity for initializing deep neural networks with the
 weights of independent RBMs. This method is known as unsupervised pre-training.
 
-.. figure:: ../auto_examples/images/plot_rbm_logistic_classification_1.png
+.. figure:: ../auto_examples/images/plot_rbm_logistic_classification_001.png
    :target: ../auto_examples/plot_rbm_logistic_classification.html
    :align: center
    :scale: 100%
