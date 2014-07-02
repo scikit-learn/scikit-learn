@@ -87,10 +87,10 @@ class MiniBatchIsomap(BaseEstimator, TransformerMixin):
     `kernel_pca_` : object
         `KernelPCA` object used to implement the embedding.
 
-    `train_data_` : array-like, shape (n_samples, n_features)
+    `training_data_` : array-like, shape (n_samples, n_features)
         Stores the training data.
 
-    `train_data_norm2_` : array-like, shape (1, n_samples)
+    `training_data_norm2_` : array-like, shape (1, n_samples)
         Stores the norm of each training sample. Avoids recomputing it in each
         iteration
 
@@ -128,15 +128,14 @@ class MiniBatchIsomap(BaseEstimator, TransformerMixin):
         self.n = 0  # number of processed samples
         self.i = 0  # current index of sample to delete/insert
         self.overflow_mode = overflow_mode
-        return
 
     def _fit_transform(self, X):
         X, = check_arrays(X, sparse_format='dense')
         self.n = X.shape[0]
         self.n_max_samples = max(self.n_max_samples, self.n)
         self.i = self.n - 1
-        self.train_data_ = X
-        self.train_data_norm2_ = np.sum(X * X, axis=1)[np.newaxis, :]
+        self.training_data_ = X
+        self.training_data_norm2_ = np.sum(X * X, axis=1)[np.newaxis, :]
         self.kernel_pca_ = KernelPCA(n_components=self.n_components,
                                      kernel="precomputed",
                                      eigen_solver=self.eigen_solver,
@@ -155,7 +154,7 @@ class MiniBatchIsomap(BaseEstimator, TransformerMixin):
 
         # Compute geodesic distances
         self.dist_matrix_, self.predecessor_matrix_ = graph_shortest_path(
-                                                self.kng_,
+                                                self.kng_symmetric_,
                                                 method=self.path_method,
                                                 directed=False)
 
@@ -165,7 +164,6 @@ class MiniBatchIsomap(BaseEstimator, TransformerMixin):
         self.embedding_ = self.kernel_pca_.fit_transform(G)
         self.embedding_ *= np.sqrt(self.n) / np.sqrt(self.kernel_pca_.lambdas_)
         self._resize_data_structures()
-        return
 
     def _resize_data_structures(self):
         """Resize matrices to n_max_samples.
@@ -199,17 +197,15 @@ class MiniBatchIsomap(BaseEstimator, TransformerMixin):
         new[:self.n, :] = self.embedding_
         self.embedding_ = new
 
-        new = np.zeros((self.n_max_samples, self.train_data_.shape[1]),
-                       dtype=self.train_data_.dtype)
-        new[:self.n, :] = self.train_data_
-        self.train_data_ = new
+        new = np.zeros((self.n_max_samples, self.training_data_.shape[1]),
+                       dtype=self.training_data_.dtype)
+        new[:self.n, :] = self.training_data_
+        self.training_data_ = new
 
         new = np.zeros((1, self.n_max_samples),
-                       dtype=self.train_data_norm2_.dtype)
-        new[:, :self.n] = self.train_data_norm2_
-        self.train_data_norm2_ = new
-
-        return
+                       dtype=self.training_data_norm2_.dtype)
+        new[:, :self.n] = self.training_data_norm2_
+        self.training_data_norm2_ = new
 
     def _partial_fit_transform(self, X):
         # Assert that manifold has been initially trained using fit()
@@ -229,17 +225,18 @@ class MiniBatchIsomap(BaseEstimator, TransformerMixin):
             ## Build set of deleted points: all points incident on oldest point
             deleted_edges = []
             # delete edges for nearest neighbors of self.i
-            for e in self.kng_.rows[self.i]:
+            for e in self.kng_symmetric_.rows[self.i]:
                 deleted_edges.append((self.i, e))
 
             # delete edges where self.i is nearest neighbor
+            # use of kng_symmetric_ not possible here
             affected_indices = self.kng_.tocsc()[:, self.i].indices
             added_edges = []
             for e in affected_indices:
                 deleted_edges.append((e, self.i))
                 # TODO: avoid recomputation of distances -> very expensive
                 knn_dist, knn_point = self._find_nearest_neighbors(
-                                    self.train_data_[e, :].reshape(1, -1),
+                                    self.training_data_[e, :].reshape(1, -1),
                                     exclude_sample=self.i)
                 # One point is deleted, next larger distance might be added
                 dist = knn_dist[0, self.n_neighbors]
@@ -291,8 +288,8 @@ class MiniBatchIsomap(BaseEstimator, TransformerMixin):
         X, = check_arrays(X, sparse_format='dense')
 
         # store training data
-        self.train_data_[self.i, :] = X
-        self.train_data_norm2_[:, self.i] = \
+        self.training_data_[self.i, :] = X
+        self.training_data_norm2_[:, self.i] = \
             np.sum(X * X, axis=1)[np.newaxis, :]
 
         # Find kNN of new point
@@ -302,6 +299,8 @@ class MiniBatchIsomap(BaseEstimator, TransformerMixin):
         # Find added and deleted edges caused by the new point
         knn_dist = np.ascontiguousarray(knn_dist, dtype=np.float64)
         knn_point = np.ascontiguousarray(knn_point, dtype=np.int_)
+
+        # use of kng_symmetric_ not possible here!
         added_edges, deleted_edges = _determine_edge_changes(
                                                 self.i,
                                                 self.n,
@@ -309,7 +308,7 @@ class MiniBatchIsomap(BaseEstimator, TransformerMixin):
                                                 knn_dist,
                                                 knn_point,
                                                 self.kng_,
-                                                self.train_data_)
+                                                self.training_data_)
 
         ## Process deleted edges
         self._delete_edges(deleted_edges)
@@ -465,17 +464,17 @@ class MiniBatchIsomap(BaseEstimator, TransformerMixin):
         -------
         X_new: array-like, shape (n_samples, n_components)
         """
-        # fit kernel centerer to train_data_
+        # fit kernel centerer to training_data_
         G = self.dist_matrix_[:self.n, :self.n] ** 2
         G *= -0.5
         kernelCenterer = KernelCenterer().fit(G)
 
-        # Find nearest neighbors of X in train_data_
+        # Find nearest neighbors of X in training_data_
         distances, indices = self._find_nearest_neighbors(X)
         indices = indices[:, :self.n_neighbors]
         distances = distances[:, :self.n_neighbors]
 
-        #Create the graph of shortest distances from X to self.train_data_
+        #Create the graph of shortest distances from X to self.training_data_
         # via the nearest neighbors of X.
         #This can be done as a single array operation, but it potentially
         # takes a lot of memory.  To avoid that, use a loop:
@@ -491,7 +490,7 @@ class MiniBatchIsomap(BaseEstimator, TransformerMixin):
         return  temp * np.sqrt(self.n)
 
     def _find_nearest_neighbors(self, X, exclude_sample=None):
-        '''Find nearest neighbors in the train_data_
+        '''Find nearest neighbors in the training_data_
 
         Adapted from sklearn pairwise and kneighbors.
 
@@ -500,7 +499,7 @@ class MiniBatchIsomap(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             samples to find neighbors for
         exclude_sample : int
-            which element of train_data_ is ignored for distance computation
+            which element of training_data_ is ignored for distance computation
 
         Returns
         -------
@@ -510,8 +509,8 @@ class MiniBatchIsomap(BaseEstimator, TransformerMixin):
             indices to which training sample the distance corresponds
         '''
         # use pairwise.euclidean_distances with precomputed norm (MUCH faster)
-        distances = euclidean_distances(X, self.train_data_[:self.n, :],
-                                        Y_norm_squared=self.train_data_norm2_[:, :self.n],
+        distances = euclidean_distances(X, self.training_data_[:self.n, :],
+                                        Y_norm_squared=self.training_data_norm2_[:, :self.n],
                                         squared=True)
         # adapted from KNeighborsMixin.kneighbors
         neigh_ind = distances.argsort(axis=1)
@@ -559,7 +558,6 @@ class MiniBatchIsomap(BaseEstimator, TransformerMixin):
                 self.predecessor_matrix_[self.i, j] = self.i
         self.dist_matrix_[:self.n, self.i] = \
                                 self.dist_matrix_[self.i, :self.n].T
-        return
 
     def _delete_edges(self, deleted_edges):
         '''Delete edges from graph.
@@ -621,4 +619,3 @@ class MiniBatchIsomap(BaseEstimator, TransformerMixin):
             B_auxiliary[u, :] = 0
             B_auxiliary[:, u] = 0
         self.kng_symmetric_ = self.kng_symmetric_.tolil()
-        return
