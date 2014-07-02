@@ -280,8 +280,10 @@ def test_scalability_to_one():
     assert_almost_equal(norm_by_transpose, norm_by_eq11)
 
     # This is the test for the rescale which doesn't work yet
-    # scale = np.power(np.linalg.norm(np.diag(G)), -0.5) * np.power(d, -0.5)
-    # print np.linalg.norm(HGPHB * scale, axis=1)
+    scale = np.power(np.linalg.norm(np.diag(G)), -1) * np.power(d, -0.5)
+    print 'norm: ', norm_by_transpose
+    print 'scaled: ', (norm_by_transpose) * scale
+    print 'scaled matrix:', np.linalg.norm(HGPHB * scale, axis=1)
 
 
 def test_fastfood():
