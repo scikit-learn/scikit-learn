@@ -130,8 +130,6 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         rnd = check_random_state(self.random_state)
 
         sparse = sp.isspmatrix(X)
-
-
         if sparse and self.kernel == "precomputed":
             raise TypeError("Sparse precomputed kernels are not supported.")
         self._sparse = sparse and not callable(self.kernel)
@@ -145,7 +143,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         solver_type = LIBSVM_IMPL.index(self._impl)
 
         # input validation
-        if (solver_type not in [2, 5, 6]) and X.shape[0] != y.shape[0]:
+        if (solver_type not in [2, 5]) and X.shape[0] != y.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n" +
                              "X has %s samples, but y has %s." %
                              (X.shape[0], y.shape[0]))
