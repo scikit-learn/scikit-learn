@@ -8,6 +8,7 @@
 #          Arnaud Joly
 #          Denis Engemann
 # License: BSD 3 clause
+import os
 import inspect
 import pkgutil
 import warnings
@@ -583,9 +584,13 @@ def clean_warning_registry():
         if hasattr(mod, reg):
             getattr(mod, reg).clear()
 
+
 def check_skip_network():
     if int(os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', 0)):
         raise SkipTest("Text tutorial requires large dataset download")
+
+
+with_network = with_setup(check_skip_network)
 
 
 def check_skip_travis():
@@ -593,5 +598,5 @@ def check_skip_travis():
     if os.environ.get('TRAVIS') == "true":
         raise SkipTest("This test needs to be skipped on Travis")
 
+
 with_network = with_setup(check_skip_network)
-with_travis = with_setup(check_skip_travis)
