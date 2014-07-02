@@ -16,6 +16,7 @@ from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
 from .base import center_data, sparse_center_data
 from ..utils import check_array
+from ..utils.validation import check_random_state
 from ..cross_validation import _check_cv as check_cv
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
@@ -462,6 +463,12 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     max_iter = params.get('max_iter', 1000)
     dual_gaps = np.empty(n_alphas)
     n_iters = []
+
+    rng = check_random_state(params.get('random_state', None))
+    selection = params.get('selection', 'cyclic')
+    if selection not in ['random', 'cyclic']:
+        raise ValueError("selection should be either random or cyclic.")
+    random = (selection == 'random')
     models = []
 
     if not multi_output:
@@ -482,17 +489,18 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             model = cd_fast.sparse_enet_coordinate_descent(
                 coef_, l1_reg, l2_reg, X.data, X.indices,
                 X.indptr, y, X_sparse_scaling,
-                max_iter, tol, positive)
+                max_iter, tol, rng, random, positive)
         elif multi_output:
             model = cd_fast.enet_coordinate_descent_multi_task(
-                coef_, l1_reg, l2_reg, X, y, max_iter, tol)
+                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random)
         elif isinstance(precompute, np.ndarray):
             model = cd_fast.enet_coordinate_descent_gram(
                 coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
-                tol, positive)
+                tol, rng, random, positive)
         elif precompute is False:
             model = cd_fast.enet_coordinate_descent(
-                coef_, l1_reg, l2_reg, X, y, max_iter, tol, positive)
+                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random,
+                positive)
         else:
             raise ValueError("Precompute should be one of True, False, "
                              "'auto' or array-like")
@@ -616,6 +624,17 @@ class ElasticNet(LinearModel, RegressorMixin):
     positive: bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
+    selection : str, default 'cyclic'
+        If set to 'random', a random coefficient is updated every iteration
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4.
+
+    random_state : int, RandomState instance, or None (default)
+        The seed of the pseudo random number generator that selects
+        a random feature to update. Useful only when selection is set to
+        'random'.
+
     Attributes
     ----------
     ``coef_`` : array, shape = (n_features,) | (n_targets, n_features)
@@ -647,7 +666,8 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000,
-                 copy_X=True, tol=1e-4, warm_start=False, positive=False):
+                 copy_X=True, tol=1e-4, warm_start=False, positive=False,
+                 random_state=None, selection='cyclic'):
         self.alpha = alpha
         self.l1_ratio = l1_ratio
         self.coef_ = None
@@ -660,6 +680,8 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.warm_start = warm_start
         self.positive = positive
         self.intercept_ = 0.0
+        self.random_state = random_state
+        self.selection = selection
 
     def fit(self, X, y):
         """Fit model with coordinate descent.
@@ -703,6 +725,9 @@ class ElasticNet(LinearModel, RegressorMixin):
         n_samples, n_features = X.shape
         n_targets = y.shape[1]
 
+        if self.selection not in ['cyclic', 'random']:
+            raise ValueError("selection should be either random or cyclic.")
+
         if not self.warm_start or self.coef_ is None:
             coef_ = np.zeros((n_targets, n_features), dtype=np.float64,
                              order='F')
@@ -727,7 +752,9 @@ class ElasticNet(LinearModel, RegressorMixin):
                           fit_intercept=False, normalize=False, copy_X=True,
                           verbose=False, tol=self.tol, positive=self.positive,
                           X_mean=X_mean, X_std=X_std, return_n_iter=True,
-                          coef_init=coef_[k], max_iter=self.max_iter)
+                          coef_init=coef_[k], max_iter=self.max_iter,
+                          random_state=self.random_state,
+                          selection=self.selection)
             coef_[k] = this_coef[:, 0]
             dual_gaps_[k] = this_dual_gap[0]
             self.n_iter_.append(this_iter[0])
@@ -820,6 +847,17 @@ class Lasso(ElasticNet):
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
+    selection : str, default 'cyclic'
+        If set to 'random', a random coefficient is updated every iteration
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4.
+
+    random_state : int, RandomState instance, or None (default)
+        The seed of the pseudo random number generator that selects
+        a random feature to update. Useful only when selection is set to
+        'random'.
+
     Attributes
     ----------
     ``coef_`` : array, shape = (n_features,) | (n_targets, n_features)
@@ -842,8 +880,8 @@ class Lasso(ElasticNet):
     >>> clf = linear_model.Lasso(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-       normalize=False, positive=False, precompute='auto', tol=0.0001,
-       warm_start=False)
+       normalize=False, positive=False, precompute='auto', random_state=None,
+       selection='cyclic', tol=0.0001, warm_start=False)
     >>> print(clf.coef_)
     [ 0.85  0.  ]
     >>> print(clf.intercept_)
@@ -869,12 +907,14 @@ class Lasso(ElasticNet):
 
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  precompute='auto', copy_X=True, max_iter=1000,
-                 tol=1e-4, warm_start=False, positive=False):
+                 tol=1e-4, warm_start=False, positive=False,
+                 random_state=None, selection='cyclic'):
         super(Lasso, self).__init__(
             alpha=alpha, l1_ratio=1.0, fit_intercept=fit_intercept,
             normalize=normalize, precompute=precompute, copy_X=copy_X,
             max_iter=max_iter, tol=tol, warm_start=warm_start,
-            positive=positive)
+            positive=positive, random_state=random_state,
+            selection=selection)
 
 
 ###############################################################################
@@ -994,7 +1034,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
                  copy_X=True, cv=None, verbose=False, n_jobs=1,
-                 positive=False):
+                 positive=False, random_state=None, selection='cyclic'):
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
@@ -1008,6 +1048,8 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.positive = positive
+        self.random_state = random_state
+        self.selection = selection
 
     def fit(self, X, y):
         """Fit linear model with coordinate descent
@@ -1050,6 +1092,9 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                 model = MultiTaskElasticNet()
             else:
                 model = MultiTaskLasso()
+
+        if self.selection not in ["random", "cyclic"]:
+            raise ValueError("selection should be either random or cyclic.")
 
         # This makes sure that there is no duplication in memory.
         # Dealing right with copy_X is important in the following:
@@ -1225,6 +1270,17 @@ class LassoCV(LinearModelCV, RegressorMixin):
     positive : bool, optional
         If positive, restrict regression coefficients to be positive
 
+    selection : str, default 'cyclic'
+        If set to 'random', a random coefficient is updated every iteration
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4.
+
+    random_state : int, RandomState instance, or None (default)
+        The seed of the pseudo random number generator that selects
+        a random feature to update. Useful only when selection is set to
+        'random'.
+
     Attributes
     ----------
     ``alpha_`` : float
@@ -1271,12 +1327,13 @@ class LassoCV(LinearModelCV, RegressorMixin):
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
                  copy_X=True, cv=None, verbose=False, n_jobs=1,
-                 positive=False):
+                 positive=False, random_state=None, selection='cyclic'):
         super(LassoCV, self).__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
             fit_intercept=fit_intercept, normalize=normalize,
             precompute=precompute, max_iter=max_iter, tol=tol, copy_X=copy_X,
-            cv=cv, verbose=verbose, n_jobs=n_jobs, positive=positive)
+            cv=cv, verbose=verbose, n_jobs=n_jobs, positive=positive,
+            random_state=random_state, selection=selection)
 
 
 class ElasticNetCV(LinearModelCV, RegressorMixin):
@@ -1340,6 +1397,17 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
+    selection : str, default 'cyclic'
+        If set to 'random', a random coefficient is updated every iteration
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4.
+
+    random_state : int, RandomState instance, or None (default)
+        The seed of the pseudo random number generator that selects
+        a random feature to update. Useful only when selection is set to
+        'random'.
+
     Attributes
     ----------
     ``alpha_`` : float
@@ -1402,7 +1470,8 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
-                 verbose=0, n_jobs=1, positive=False):
+                 verbose=0, n_jobs=1, positive=False, random_state=None,
+                 selection='cyclic'):
         self.l1_ratio = l1_ratio
         self.eps = eps
         self.n_alphas = n_alphas
@@ -1417,7 +1486,8 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.positive = positive
-
+        self.random_state = random_state
+        self.selection = selection
 
 ###############################################################################
 # Multi Task ElasticNet and Lasso models (with joint feature selection)
@@ -1472,6 +1542,17 @@ class MultiTaskElasticNet(Lasso):
         When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
+    selection : str, default 'cyclic'
+        If set to 'random', a random coefficient is updated every iteration
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4.
+
+    random_state : int, RandomState instance, or None (default)
+        The seed of the pseudo random number generator that selects
+        a random feature to update. Useful only when selection is set to
+        'random'.
+
     Attributes
     ----------
     ``intercept_`` : array, shape = (n_tasks,)
@@ -1492,8 +1573,8 @@ class MultiTaskElasticNet(Lasso):
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 0], [1, 1], [2, 2]])
     ... #doctest: +NORMALIZE_WHITESPACE
     MultiTaskElasticNet(alpha=0.1, copy_X=True, fit_intercept=True,
-            l1_ratio=0.5, max_iter=1000, normalize=False, tol=0.0001,
-            warm_start=False)
+            l1_ratio=0.5, max_iter=1000, normalize=False, random_state=None,
+            selection='cyclic', tol=0.0001, warm_start=False)
     >>> print(clf.coef_)
     [[ 0.45663524  0.45612256]
      [ 0.45663524  0.45612256]]
@@ -1513,7 +1594,7 @@ class MultiTaskElasticNet(Lasso):
     """
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, copy_X=True, max_iter=1000, tol=1e-4,
-                 warm_start=False):
+                 warm_start=False, random_state=None, selection='cyclic'):
         self.l1_ratio = l1_ratio
         self.alpha = alpha
         self.coef_ = None
@@ -1523,6 +1604,8 @@ class MultiTaskElasticNet(Lasso):
         self.copy_X = copy_X
         self.tol = tol
         self.warm_start = warm_start
+        self.random_state = random_state
+        self.selection = selection
 
     def fit(self, X, y):
         """Fit MultiTaskLasso model with coordinate descent
@@ -1575,9 +1658,14 @@ class MultiTaskElasticNet(Lasso):
 
         self.coef_ = np.asfortranarray(self.coef_)  # coef contiguous in memory
 
+        if self.selection not in ['random', 'cyclic']:
+            raise ValueError("selection should be either random or cyclic.")
+        random = (self.selection == 'random')
+
         self.coef_, self.dual_gap_, self.eps_, self.n_iter_ = \
             cd_fast.enet_coordinate_descent_multi_task(
-                self.coef_, l1_reg, l2_reg, X, y, self.max_iter, self.tol)
+                self.coef_, l1_reg, l2_reg, X, y, self.max_iter, self.tol,
+                check_random_state(self.random_state), random)
 
         self._set_intercept(X_mean, y_mean, X_std)
 
@@ -1631,6 +1719,17 @@ class MultiTaskLasso(MultiTaskElasticNet):
         When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
+    selection : str, default 'cyclic'
+        If set to 'random', a random coefficient is updated every iteration
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4
+
+    random_state : int, RandomState instance, or None (default)
+        The seed of the pseudo random number generator that selects
+        a random feature to update. Useful only when selection is set to
+        'random'.
+
     Attributes
     ----------
     ``coef_`` : array, shape = (n_tasks, n_features)
@@ -1649,7 +1748,8 @@ class MultiTaskLasso(MultiTaskElasticNet):
     >>> clf = linear_model.MultiTaskLasso(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 0], [1, 1], [2, 2]])
     MultiTaskLasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-            normalize=False, tol=0.0001, warm_start=False)
+            normalize=False, random_state=None, selection='cyclic', tol=0.0001,
+            warm_start=False)
     >>> print(clf.coef_)
     [[ 0.89393398  0.        ]
      [ 0.89393398  0.        ]]
@@ -1668,7 +1768,8 @@ class MultiTaskLasso(MultiTaskElasticNet):
     should be directly passed as a Fortran-contiguous numpy array.
     """
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
-                 copy_X=True, max_iter=1000, tol=1e-4, warm_start=False):
+                 copy_X=True, max_iter=1000, tol=1e-4, warm_start=False,
+                 random_state=None, selection='cyclic'):
         self.alpha = alpha
         self.coef_ = None
         self.fit_intercept = fit_intercept
@@ -1678,6 +1779,8 @@ class MultiTaskLasso(MultiTaskElasticNet):
         self.tol = tol
         self.warm_start = warm_start
         self.l1_ratio = 1.0
+        self.random_state = random_state
+        self.selection = selection
 
 
 class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
@@ -1748,6 +1851,17 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         all the CPUs. Note that this is used only if multiple values for
         l1_ratio are given.
 
+    selection : str, default 'cyclic'
+        If set to 'random', a random coefficient is updated every iteration
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4.
+
+    random_state : int, RandomState instance, or None (default)
+        The seed of the pseudo random number generator that selects
+        a random feature to update. Useful only when selection is set to
+        'random'.
+
     Attributes
     ----------
     ``intercept_`` : array, shape (n_tasks,)
@@ -1782,7 +1896,8 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     ... #doctest: +NORMALIZE_WHITESPACE
     MultiTaskElasticNetCV(alphas=None, copy_X=True, cv=None, eps=0.001,
            fit_intercept=True, l1_ratio=0.5, max_iter=1000, n_alphas=100,
-           n_jobs=1, normalize=False, tol=0.0001, verbose=0)
+           n_jobs=1, normalize=False, random_state=None, selection='cyclic',
+           tol=0.0001, verbose=0)
     >>> print(clf.coef_)
     [[ 0.52875032  0.46958558]
      [ 0.52875032  0.46958558]]
@@ -1807,7 +1922,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False,
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
-                 verbose=0, n_jobs=1):
+                 verbose=0, n_jobs=1, random_state=None, selection='cyclic'):
         self.l1_ratio = l1_ratio
         self.eps = eps
         self.n_alphas = n_alphas
@@ -1820,6 +1935,8 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         self.copy_X = copy_X
         self.verbose = verbose
         self.n_jobs = n_jobs
+        self.random_state = random_state
+        self.selection = selection
 
 
 class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
@@ -1882,6 +1999,17 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
         all the CPUs. Note that this is used only if multiple values for
         l1_ratio are given.
 
+    selection : str, default 'cyclic'
+        If set to 'random', a random coefficient is updated every iteration
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4.
+
+    random_state : int, RandomState instance, or None (default)
+        The seed of the pseudo random number generator that selects
+        a random feature to update. Useful only when selection is set to
+        'random'.
+
     Attributes
     ----------
     ``intercept_`` : array, shape (n_tasks,)
@@ -1920,9 +2048,11 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, max_iter=1000, tol=1e-4, copy_X=True,
-                 cv=None, verbose=False, n_jobs=1):
+                 cv=None, verbose=False, n_jobs=1, random_state=None,
+                 selection='cyclic'):
         super(MultiTaskLassoCV, self).__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
             fit_intercept=fit_intercept, normalize=normalize,
             max_iter=max_iter, tol=tol, copy_X=copy_X,
-            cv=cv, verbose=verbose, n_jobs=n_jobs)
+            cv=cv, verbose=verbose, n_jobs=n_jobs, random_state=random_state,
+            selection=selection)

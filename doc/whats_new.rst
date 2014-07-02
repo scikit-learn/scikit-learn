@@ -40,6 +40,10 @@ Enhancements
    - Added ``newton-cg`` and `lbfgs` solver support in
      :class:`linear_model.LogisticRegression`. By `Manoj Kumar`_.
 
+   - Add ``selection="random"`` parameter to implement stochastic coordinate
+     descent for :class:`linear_model.Lasso`, :class:`linear_model.ElasticNet`
+     and related. By `Manoj Kumar`_.
+
 
 Documentation improvements
 ..........................
