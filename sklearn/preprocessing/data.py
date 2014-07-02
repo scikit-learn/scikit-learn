@@ -36,6 +36,7 @@ __all__ = [
     'Normalizer',
     'OneHotEncoder',
     'StandardScaler',
+    'UnaryEncoder',
     'add_dummy_feature',
     'binarize',
     'normalize',
@@ -1093,3 +1094,178 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         """
         return _transform_selected(X, self._transform,
                                    self.categorical_features, copy=True)
+
+class UnaryEncoder(BaseEstimator, TransformerMixin):
+    """Encode natural number features using a unary scheme.
+
+    The input to this transformer should be a matrix of integers, denoting
+    the values taken on by natural number features, with a meaningful ordering.
+    The output will be a sparse matrix were each input feature is represented
+    by a number of columns matching the maximum value for that feature observed
+    during fitting, or the value specified by the n_values parameter. The column
+    will contain a 1 if the feature value is larger than the relative column
+    number and a 0 otherwise. These unary representations for the input features
+    of a given sample are concatenated.
+
+    This encoding is helpful for feeding numerical data to many scikit-learn
+    estimators, notably linear models and SVMs with the standard kernels.
+
+    Parameters
+    ----------
+    n_values : "auto", int or array of ints
+        Number of values per feature.
+
+        - "auto" : determine value range from training data.
+        - int : maximum value for all features.
+        - array : maximum value per feature.
+
+    natural_feature: "all" or array of indices or mask
+        Specify what features are treated as categorical.
+
+        - "all" (default): All features are treated as categorical.
+        - array of indices: Array of natural number feature indices.
+        - mask: Array of length n_features and with dtype=bool.
+
+        Non-natural number features are always stacked to the right of the
+        matrix.
+
+    dtype : number type, default=np.int
+        Desired dtype of output.
+
+    Attributes
+    ----------
+    `feature_indices_` : array of shape (n_features,)
+        Indices to feature ranges.
+        Feature ``i`` in the original data is mapped to features
+        from ``feature_indices_[i]`` to ``feature_indices_[i+1]``
+
+    `n_values_` : array of shape (n_features,)
+        Maximum number of values per feature.
+
+    Examples
+    --------
+
+    >>> from sklearn.preprocessing import UnaryEncoder
+    >>> enc = UnaryEncoder()
+    >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], \
+[1, 0, 2]])  # doctest: +ELLIPSIS
+    UnaryEncoder(categorical_features='all', dtype=<... 'float'>,
+           n_values='auto')
+    >>> enc.n_values_
+    array([1, 2, 3])
+    >>> enc.feature_indices_
+    array([0, 1, 3, 6])
+    >>> enc.transform([[0, 1, 1]]).toarray()
+    array([[0, 1, 0, 1, 0, 0]])
+    >>> enc.transform([[10, 10, 10]]).toarray()
+    array([[1, 1, 1, 1, 1, 1]])
+    """
+    def __init__(self, n_values="auto", natural_features="all",
+                 dtype=np.int):
+        self.n_values = n_values
+        self.natural_features = natural_features
+        self.dtype = dtype
+
+    def fit(self, X, y=None):
+        """Fit UnaryEncoder to X.
+
+        Parameters
+        ----------
+        X : array-like, shape=(n_samples, n_feature)
+            Input array of type int.
+
+        Returns
+        -------
+        self
+        """
+        self.fit_transform(X)
+        return self
+
+    def _encode_sample(self, sample):
+        n = np.where(sample != 0)[0]
+        return np.concatenate(
+            [i + j for i, j in zip(map(np.arange, sample[n]),
+                                   self.feature_indices_[:-1][n])])
+
+    def _get_sparse_encoding(self, X) :
+        X = np.minimum(X, self.n_values_)
+
+        n_samples, n_features = X.shape
+
+        column_indices = np.concatenate(list(map(self._encode_sample, X)))
+        row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
+                                np.sum(X, axis=1))
+        data = np.ones(np.sum(X))
+        out = sparse.coo_matrix((data, (row_indices, column_indices)),
+                                shape=(n_samples, self.feature_indices_[-1]),
+                                dtype=self.dtype).tocsr()
+        return out
+
+    def _fit_transform(self, X):
+        """Assumes X contains only natural numbers."""
+        X = check_arrays(X, sparse_format='dense', dtype=np.int)[0]
+        if np.any(X < 0):
+            raise ValueError("X needs to contain only non-negative integers.")
+        n_samples, n_features = X.shape
+        if self.n_values == 'auto':
+            n_values = np.max(X, axis=0)
+        elif isinstance(self.n_values, numbers.Integral):
+            n_values = np.empty(n_features, dtype=np.int)
+            n_values.fill(self.n_values)
+        else:
+            try:
+                n_values = np.asarray(self.n_values, dtype=int)
+            except (ValueError, TypeError):
+                raise TypeError("Wrong type for parameter `n_values`. Expected"
+                                " 'auto', int or array of ints, got %r"
+                                % type(X))
+            if n_values.ndim < 1 or n_values.shape[0] != X.shape[1]:
+                raise ValueError("Shape mismatch: if n_values is an array,"
+                                 " it has to be of shape (n_features,).")
+        self.n_values_ = n_values
+        n_values = np.hstack([[0], n_values])
+        indices = np.cumsum(n_values)
+        self.feature_indices_ = indices
+
+        return self._get_sparse_encoding(X)
+
+    def fit_transform(self, X, y=None):
+        """Fit UnaryEncoder to X, then transform X.
+
+        Equivalent to self.fit(X).transform(X), but more convenient and more
+        efficient. See fit for the parameters, transform for the return value.
+        """
+        return _transform_selected(X, self._fit_transform,
+                                   self.natural_features, copy=True)
+
+    def _transform(self, X):
+        """Asssumes X contains only natural numbers."""
+        X = check_arrays(X, sparse_format='dense', dtype=np.int)[0]
+        if np.any(X < 0):
+            raise ValueError("X needs to contain only non-negative integers.")
+        n_samples, n_features = X.shape
+
+        indices = self.feature_indices_
+        if n_features != indices.shape[0] - 1:
+            raise ValueError("X has different shape than during fitting."
+                             " Expected %d, got %d."
+                             % (indices.shape[0] - 1, n_features))
+
+        return self._get_sparse_encoding(X)
+
+    def transform(self, X):
+        """Transform X using unary encoding.
+
+        Parameters
+        ----------
+        X : array-like, shape=(n_samples, n_features)
+            Input array of type int.
+
+        Returns
+        -------
+        X_out : sparse matrix, dtype=int
+            Transformed input.
+        """
+        return _transform_selected(X, self._transform,
+                                   self.natural_features, copy=True)
+
