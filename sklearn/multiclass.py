@@ -83,7 +83,7 @@ def _check_estimator(estimator):
 
 
 def fit_ovr(estimator, X, y, n_jobs=1):
-    """Fit a one-vs-the-rest strategy"""
+    """Fit a one-vs-the-rest strategy."""
     _check_estimator(estimator)
 
     lb = LabelBinarizer(sparse_output=True)
