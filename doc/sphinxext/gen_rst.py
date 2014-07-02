@@ -415,11 +415,11 @@ SINGLE_IMAGE = """
 # thumbnails for the front page of the scikit-learn home page.
 # key: first image in set
 # values: (number of plot in set, height of thumbnail)
-carousel_thumbs = {'plot_classifier_comparison_1.png': (1, 600),
-                   'plot_outlier_detection_1.png': (3, 372),
-                   'plot_gp_regression_1.png': (2, 250),
-                   'plot_adaboost_twoclass_1.png': (1, 372),
-                   'plot_compare_methods_1.png': (1, 349)}
+carousel_thumbs = {'plot_classifier_comparison_001.png': (1, 600),
+                   'plot_outlier_detection_001.png': (3, 372),
+                   'plot_gp_regression_001.png': (2, 250),
+                   'plot_adaboost_twoclass_001.png': (1, 372),
+                   'plot_compare_methods_001.png': (1, 349)}
 
 
 def extract_docstring(filename, ignore_heading=False):
@@ -883,7 +883,7 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
     """ Generate the rst file for a given example.
     """
     base_image_name = os.path.splitext(fname)[0]
-    image_fname = '%s_%%s.png' % base_image_name
+    image_fname = '%s_%%03d.png' % base_image_name
 
     this_template = rst_template
     last_dir = os.path.split(src_dir)[-1]
@@ -988,12 +988,8 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
             print(" - time elapsed : %.2g sec" % time_elapsed)
         else:
             figure_list = [f[len(image_dir):]
-                            for f in glob.glob(image_path % '[1-9]')]
-                            #for f in glob.glob(image_path % '*')]
-            # Catter for the fact that there can be more than 10 images
-            if len(figure_list) >= 9:
-                figure_list.extend([f[len(image_dir):]
-                            for f in glob.glob(image_path % '1[0-9]')])
+                           for f in glob.glob(image_path.replace("%03d", '*'))]
+        figure_list.sort()
 
         # generate thumb file
         this_template = plot_rst_template

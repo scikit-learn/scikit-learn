@@ -11,7 +11,7 @@ Pipelining
 We have seen that some estimators can transform data and that some estimators
 can predict variables. We can also create combined estimators:
 
-.. image:: ../../auto_examples/images/plot_digits_pipe_1.png
+.. image:: ../../auto_examples/images/plot_digits_pipe_001.png
    :target: ../../auto_examples/plot_digits_pipe.html
    :scale: 65
    :align: right

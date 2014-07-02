@@ -292,7 +292,7 @@ predicted to be in group :math:`j`. Here an example of such confusion matrix::
 Here a visual representation of such confusion matrix (this figure comes
 from the :ref:`example_plot_confusion_matrix.py` example):
 
-.. image:: ../auto_examples/images/plot_confusion_matrix_1.png
+.. image:: ../auto_examples/images/plot_confusion_matrix_001.png
    :target: ../auto_examples/plot_confusion_matrix.html
    :scale: 75
    :align: center
@@ -794,7 +794,7 @@ Here a small example of how to use the :func:`roc_curve` function::
 
 The following figure shows an example of such ROC curve.
 
-.. image:: ../auto_examples/images/plot_roc_1.png
+.. image:: ../auto_examples/images/plot_roc_001.png
    :target: ../auto_examples/plot_roc.html
    :scale: 75
    :align: center
@@ -835,7 +835,7 @@ F1 score, ROC AUC doesn't require to optimize a threshold for each label. The
 if predicted outputs have been binarized.
 
 
-.. image:: ../auto_examples/images/plot_roc_2.png
+.. image:: ../auto_examples/images/plot_roc_002.png
    :target: ../auto_examples/plot_roc.html
    :scale: 75
    :align: center
