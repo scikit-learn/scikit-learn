@@ -204,7 +204,10 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         data_min = np.min(X, axis=0)
         data_range = np.max(X, axis=0) - data_min
         # Do not scale constant features
-        data_range[data_range == 0.0] = 1.0
+        if isinstance(data_range, np.ndarray):
+            data_range[data_range == 0.0] = 1.0
+        elif data_range == 0.:
+            data_range = 1.
         self.scale_ = (feature_range[1] - feature_range[0]) / data_range
         self.min_ = feature_range[0] - data_min * self.scale_
         self.data_range = data_range
