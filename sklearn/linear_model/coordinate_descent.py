@@ -463,10 +463,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     dual_gaps = np.empty(n_alphas)
     n_iters = []
 
-    rng = params.get('random_state', None)
-    if rng is not None:
-        rng = check_random_state(rng)
-
+    rng = params.get('random_state', 0)
+    shuffle = params.get('shuffle', False)
     models = []
 
     if not multi_output:
@@ -487,17 +485,18 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             model = cd_fast.sparse_enet_coordinate_descent(
                 coef_, l1_reg, l2_reg, X.data, X.indices,
                 X.indptr, y, X_sparse_scaling,
-                max_iter, tol, rng, positive)
+                max_iter, tol, rng, shuffle, positive)
         elif multi_output:
             model = cd_fast.enet_coordinate_descent_multi_task(
-                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng)
+                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, shuffle)
         elif isinstance(precompute, np.ndarray):
             model = cd_fast.enet_coordinate_descent_gram(
                 coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
-                tol, rng, positive)
+                tol, rng, shuffle, positive)
         elif precompute is False:
             model = cd_fast.enet_coordinate_descent(
-                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, positive)
+                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, shuffle,
+                positive)
         else:
             raise ValueError("Precompute should be one of True, False, "
                              "'auto' or array-like")
@@ -621,6 +620,13 @@ class ElasticNet(LinearModel, RegressorMixin):
     positive: bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
+    random_state: int
+        Used to seed the random feature generator in coordinate descent code.
+        Useful only if shuffle is set to True.
+
+    shuffle: bool, default False
+        If set to True, a random coefficient is updated every iteration.
+
     Attributes
     ----------
     ``coef_`` : array, shape = (n_features,) | (n_targets, n_features)
@@ -653,7 +659,7 @@ class ElasticNet(LinearModel, RegressorMixin):
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000,
                  copy_X=True, tol=1e-4, warm_start=False, positive=False,
-                 random_state=None):
+                 random_state=0, shuffle=False):
         self.alpha = alpha
         self.l1_ratio = l1_ratio
         self.coef_ = None
@@ -667,6 +673,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.positive = positive
         self.intercept_ = 0.0
         self.random_state = random_state
+        self.shuffle = shuffle
 
     def fit(self, X, y):
         """Fit model with coordinate descent.
@@ -735,7 +742,8 @@ class ElasticNet(LinearModel, RegressorMixin):
                           verbose=False, tol=self.tol, positive=self.positive,
                           X_mean=X_mean, X_std=X_std,
                           coef_init=coef_[k], max_iter=self.max_iter,
-                          random_state=self.random_state)
+                          random_state=self.random_state,
+                          shuffle=self.shuffle)
             coef_[k] = this_coef[:, 0]
             dual_gaps_[k] = this_dual_gap[0]
             self.n_iter_.append(this_iter[0])
@@ -828,6 +836,13 @@ class Lasso(ElasticNet):
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
+    random_state: int
+        Used to seed the random feature generator in coordinate descent code.
+        Useful only if shuffle is set to True.
+
+    shuffle: bool, default False
+        If set to True, a random coefficient is updated every iteration.
+
     Attributes
     ----------
     ``coef_`` : array, shape = (n_features,) | (n_targets, n_features)
@@ -850,8 +865,8 @@ class Lasso(ElasticNet):
     >>> clf = linear_model.Lasso(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-       normalize=False, positive=False, precompute='auto', random_state=None,
-       tol=0.0001, warm_start=False)
+       normalize=False, positive=False, precompute='auto', random_state=0,
+       shuffle=False, tol=0.0001, warm_start=False)
     >>> print(clf.coef_)
     [ 0.85  0.  ]
     >>> print(clf.intercept_)
@@ -878,12 +893,13 @@ class Lasso(ElasticNet):
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  precompute='auto', copy_X=True, max_iter=1000,
                  tol=1e-4, warm_start=False, positive=False,
-                 random_state=None):
+                 random_state=0, shuffle=False):
         super(Lasso, self).__init__(
             alpha=alpha, l1_ratio=1.0, fit_intercept=fit_intercept,
             normalize=normalize, precompute=precompute, copy_X=copy_X,
             max_iter=max_iter, tol=tol, warm_start=warm_start,
-            positive=positive, random_state=random_state)
+            positive=positive, random_state=random_state,
+            shuffle=shuffle)
 
 
 ###############################################################################
@@ -1003,7 +1019,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
                  copy_X=True, cv=None, verbose=False, n_jobs=1,
-                 positive=False, random_state=None):
+                 positive=False, random_state=0, shuffle=False):
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
@@ -1018,6 +1034,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         self.n_jobs = n_jobs
         self.positive = positive
         self.random_state = random_state
+        self.shuffle = shuffle
 
     def fit(self, X, y):
         """Fit linear model with coordinate descent
@@ -1235,6 +1252,13 @@ class LassoCV(LinearModelCV, RegressorMixin):
     positive : bool, optional
         If positive, restrict regression coefficients to be positive
 
+    random_state: int
+        Used to seed the random feature generator in coordinate descent code.
+        Useful only if shuffle is set to True.
+
+    shuffle: bool, default False
+        If set to True, a random coefficient is updated every iteration.
+
     Attributes
     ----------
     ``alpha_`` : float
@@ -1281,13 +1305,13 @@ class LassoCV(LinearModelCV, RegressorMixin):
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
                  copy_X=True, cv=None, verbose=False, n_jobs=1,
-                 positive=False, random_state=None):
+                 positive=False, random_state=0, shuffle=False):
         super(LassoCV, self).__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
             fit_intercept=fit_intercept, normalize=normalize,
             precompute=precompute, max_iter=max_iter, tol=tol, copy_X=copy_X,
             cv=cv, verbose=verbose, n_jobs=n_jobs, positive=positive,
-            random_state=random_state)
+            random_state=random_state, shuffle=shuffle)
 
 
 class ElasticNetCV(LinearModelCV, RegressorMixin):
@@ -1351,6 +1375,13 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
+    random_state: int
+        Used to seed the random feature generator in coordinate descent code.
+        Useful only if shuffle is set to True.
+
+    shuffle: bool, default False
+        If set to True, a random coefficient is updated every iteration.
+
     Attributes
     ----------
     ``alpha_`` : float
@@ -1413,7 +1444,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
-                 verbose=0, n_jobs=1, positive=False, random_state=None):
+                 verbose=0, n_jobs=1, positive=False, random_state=0):
         self.l1_ratio = l1_ratio
         self.eps = eps
         self.n_alphas = n_alphas
@@ -1484,6 +1515,13 @@ class MultiTaskElasticNet(Lasso):
         When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
+    random_state: int
+        Used to seed the random feature generator in coordinate descent code.
+        Useful only if shuffle is set to True.
+
+    shuffle: bool, default False
+        If set to True, a random coefficient is updated every iteration.
+
     Attributes
     ----------
     ``intercept_`` : array, shape = (n_tasks,)
@@ -1504,8 +1542,8 @@ class MultiTaskElasticNet(Lasso):
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 0], [1, 1], [2, 2]])
     ... #doctest: +NORMALIZE_WHITESPACE
     MultiTaskElasticNet(alpha=0.1, copy_X=True, fit_intercept=True,
-            l1_ratio=0.5, max_iter=1000, normalize=False, random_state=None,
-            tol=0.0001, warm_start=False)
+            l1_ratio=0.5, max_iter=1000, normalize=False, random_state=0,
+            shuffle=False, tol=0.0001, warm_start=False)
     >>> print(clf.coef_)
     [[ 0.45663524  0.45612256]
      [ 0.45663524  0.45612256]]
@@ -1525,7 +1563,7 @@ class MultiTaskElasticNet(Lasso):
     """
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, copy_X=True, max_iter=1000, tol=1e-4,
-                 warm_start=False, random_state=None):
+                 warm_start=False, random_state=0, shuffle=False):
         self.l1_ratio = l1_ratio
         self.alpha = alpha
         self.coef_ = None
@@ -1536,6 +1574,7 @@ class MultiTaskElasticNet(Lasso):
         self.tol = tol
         self.warm_start = warm_start
         self.random_state = random_state
+        self.shuffle = shuffle
 
     def fit(self, X, y):
         """Fit MultiTaskLasso model with coordinate descent
@@ -1579,10 +1618,6 @@ class MultiTaskElasticNet(Lasso):
         X, y, X_mean, y_mean, X_std = center_data(
             X, y, self.fit_intercept, self.normalize, copy=False)
 
-        rng = None
-        if self.random_state is not None:
-            rng = check_random_state(self.random_state)
-
         if not self.warm_start or self.coef_ is None:
             self.coef_ = np.zeros((n_tasks, n_features), dtype=np.float64,
                                   order='F')
@@ -1594,7 +1629,8 @@ class MultiTaskElasticNet(Lasso):
 
         self.coef_, self.dual_gap_, self.eps_, self.n_iter_ = \
             cd_fast.enet_coordinate_descent_multi_task(
-                self.coef_, l1_reg, l2_reg, X, y, self.max_iter, self.tol, rng)
+                self.coef_, l1_reg, l2_reg, X, y, self.max_iter, self.tol,
+                self.random_state)
 
         self._set_intercept(X_mean, y_mean, X_std)
 
@@ -1648,6 +1684,13 @@ class MultiTaskLasso(MultiTaskElasticNet):
         When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
+    random_state: int
+        Used to seed the random feature generator in coordinate descent code.
+        Useful only if shuffle is set to True.
+
+    shuffle: bool, default False
+        If set to True, a random coefficient is updated every iteration.
+
     Attributes
     ----------
     ``coef_`` : array, shape = (n_tasks, n_features)
@@ -1666,7 +1709,8 @@ class MultiTaskLasso(MultiTaskElasticNet):
     >>> clf = linear_model.MultiTaskLasso(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 0], [1, 1], [2, 2]])
     MultiTaskLasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-            normalize=False, random_state=None, tol=0.0001, warm_start=False)
+            normalize=False, random_state=0, shuffle=False, tol=0.0001,
+            warm_start=False)
     >>> print(clf.coef_)
     [[ 0.89393398  0.        ]
      [ 0.89393398  0.        ]]
@@ -1686,7 +1730,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
     """
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=1000, tol=1e-4, warm_start=False,
-                 random_state=None):
+                 random_state=0, shuffle=False):
         self.alpha = alpha
         self.coef_ = None
         self.fit_intercept = fit_intercept
@@ -1697,6 +1741,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
         self.warm_start = warm_start
         self.l1_ratio = 1.0
         self.random_state = random_state
+        self.shuffle = shuffle
 
 
 class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
@@ -1767,6 +1812,13 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         all the CPUs. Note that this is used only if multiple values for
         l1_ratio are given.
 
+    random_state: int
+        Used to seed the random feature generator in coordinate descent code.
+        Useful only if shuffle is set to True.
+
+    shuffle: bool, default False
+        If set to True, a random coefficient is updated every iteration.
+
     Attributes
     ----------
     ``intercept_`` : array, shape (n_tasks,)
@@ -1801,7 +1853,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     ... #doctest: +NORMALIZE_WHITESPACE
     MultiTaskElasticNetCV(alphas=None, copy_X=True, cv=None, eps=0.001,
            fit_intercept=True, l1_ratio=0.5, max_iter=1000, n_alphas=100,
-           n_jobs=1, normalize=False, random_state=None,
+           n_jobs=1, normalize=False, random_state=0, shuffle=False,
            tol=0.0001, verbose=0)
     >>> print(clf.coef_)
     [[ 0.52875032  0.46958558]
@@ -1827,7 +1879,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False,
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
-                 verbose=0, n_jobs=1, random_state=None):
+                 verbose=0, n_jobs=1, random_state=0, shuffle=False):
         self.l1_ratio = l1_ratio
         self.eps = eps
         self.n_alphas = n_alphas
@@ -1841,6 +1893,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.random_state = random_state
+        self.shuffle = shuffle
 
 
 class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
@@ -1903,6 +1956,13 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
         all the CPUs. Note that this is used only if multiple values for
         l1_ratio are given.
 
+    random_state: int
+        Used to seed the random feature generator in coordinate descent code.
+        Useful only if shuffle is set to True.
+
+    shuffle: bool, default False
+        If set to True, a random coefficient is updated every iteration.
+
     Attributes
     ----------
     ``intercept_`` : array, shape (n_tasks,)
@@ -1941,9 +2001,11 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, max_iter=1000, tol=1e-4, copy_X=True,
-                 cv=None, verbose=False, n_jobs=1, random_state=None):
+                 cv=None, verbose=False, n_jobs=1, random_state=0,
+                 shuffle=False):
         super(MultiTaskLassoCV, self).__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
             fit_intercept=fit_intercept, normalize=normalize,
             max_iter=max_iter, tol=tol, copy_X=copy_X,
-            cv=cv, verbose=verbose, n_jobs=n_jobs, random_state=random_state)
+            cv=cv, verbose=verbose, n_jobs=n_jobs, random_state=random_state,
+            shuffle=shuffle)
