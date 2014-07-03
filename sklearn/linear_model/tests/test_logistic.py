@@ -11,9 +11,11 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import raises
 
-from sklearn.linear_model.logistic import (LogisticRegression,
+from sklearn.linear_model.logistic import (
+    LogisticRegression,
     logistic_regression_path, LogisticRegressionCV,
-    _logistic_loss_and_grad, _logistic_loss_grad_hess)
+    _logistic_loss_and_grad, _logistic_loss_grad_hess
+    )
 from sklearn.cross_validation import StratifiedKFold
 from sklearn.datasets import load_iris, make_classification
 
@@ -197,20 +199,21 @@ def test_logistic_loss_and_grad():
 
         # First check that our derivation of the grad is correct
         loss, grad = _logistic_loss_and_grad(w, X, y, alpha=1.)
-        approx_grad = optimize.approx_fprime(w,
-                            lambda w: _logistic_loss_and_grad(
-                                          w, X, y, alpha=1.)[0], 1e-3)
+        approx_grad = optimize.approx_fprime(
+            w, lambda w: _logistic_loss_and_grad(w, X, y, alpha=1.)[0], 1e-3
+            )
         assert_array_almost_equal(grad, approx_grad, decimal=2)
 
         # Second check that our intercept implementation is good
         w = np.zeros(n_features + 1)
-        loss_interp, grad_interp = _logistic_loss_and_grad(w,
-                                                    X, y, alpha=1.)
+        loss_interp, grad_interp = _logistic_loss_and_grad(
+            w, X, y, alpha=1.
+            )
         assert_array_almost_equal(loss, loss_interp)
 
-        approx_grad = optimize.approx_fprime(w,
-                            lambda w: _logistic_loss_and_grad(
-                                          w, X, y, alpha=1.)[0], 1e-3)
+        approx_grad = optimize.approx_fprime(
+            w, lambda w: _logistic_loss_and_grad(w, X, y, alpha=1.)[0], 1e-3
+            )
         assert_array_almost_equal(grad_interp, approx_grad, decimal=2)
 
 
@@ -244,10 +247,9 @@ def test_logistic_loss_grad_hess():
         e = 1e-3
         d_x = np.linspace(-e, e, 30)
         d_grad = np.array([
-                _logistic_loss_and_grad(
-                    w + t * vector, X, y, alpha=1.)[1]
-                for t in d_x
-                ])
+            _logistic_loss_and_grad(w + t * vector, X, y, alpha=1.)[1]
+            for t in d_x
+            ])
 
         d_grad -= d_grad.mean(axis=0)
         approx_hess_col = linalg.lstsq(d_x[:, np.newaxis], d_grad)[0].ravel()
@@ -256,27 +258,29 @@ def test_logistic_loss_grad_hess():
 
         # Second check that our intercept implementation is good
         w = np.zeros(n_features + 1)
-        loss_interp, grad_interp = _logistic_loss_and_grad(w,
-                                                    X, y, alpha=1.)
+        loss_interp, grad_interp = _logistic_loss_and_grad(
+            w, X, y, alpha=1.
+            )
         loss_interp_2, grad_interp_2, hess = \
-                    _logistic_loss_grad_hess(w, X, y, alpha=1.)
+            _logistic_loss_grad_hess(w, X, y, alpha=1.)
         assert_array_almost_equal(loss_interp, loss_interp_2)
         assert_array_almost_equal(grad_interp, grad_interp_2)
 
 
 def test_logistic_cv():
-    # test for LogisticRegressionCV object
+    """test for LogisticRegressionCV object"""
     n_samples, n_features = 50, 5
     np.random.seed(0)
     X_ref = np.random.randn(n_samples, n_features)
     y = np.sign(X_ref.dot(5 * np.random.randn(n_features)))
     X_ref -= X_ref.mean()
     X_ref /= X_ref.std()
-    lr_cv = LogisticRegressionCV(Cs=[1.], fit_intercept=False)
+    lr_cv = LogisticRegressionCV(Cs=[1.], fit_intercept=False,
+        solver='liblinear')
     lr_cv.fit(X_ref, y)
-    lr = LogisticRegression(C=1, fit_intercept=False)
+    lr = LogisticRegression(C=1., fit_intercept=False)
     lr.fit(X_ref, y)
-    assert_array_almost_equal(lr.coef_, lr_cv.coef_, decimal=2)
+    assert_array_almost_equal(lr.coef_, lr_cv.coef_)
 
 
 def test_logistic_cv_sparse():
@@ -284,17 +288,15 @@ def test_logistic_cv_sparse():
                                random_state=np.random.RandomState(0))
     X[X < 1.0] = 0.0
     csr = sp.csr_matrix(X)
-    csc = sp.csc_matrix(X)
 
     for fit_intercept in [True, False]:
         clf = LogisticRegressionCV(fit_intercept=fit_intercept)
         clf.fit(X, y)
-        for data in [csr, csc]:
-            clfs = LogisticRegressionCV(fit_intercept=fit_intercept)
-            clfs.fit(data, y)
-            assert_array_almost_equal(clfs.coef_, clf.coef_)
-            assert_array_almost_equal(clfs.intercept_, clf.intercept_)
-            assert_equal(clfs.C_, clf.C_)
+        clfs = LogisticRegressionCV(fit_intercept=fit_intercept)
+        clfs.fit(csr, y)
+        assert_array_almost_equal(clfs.coef_, clf.coef_)
+        assert_array_almost_equal(clfs.intercept_, clf.intercept_)
+        assert_equal(clfs.C_, clf.C_)
 
 
 def test_intercept_logistic_helper():
@@ -329,8 +331,7 @@ def test_intercept_logistic_helper():
     assert_almost_equal(hess_interp[-1] + alpha * grad[-1], hess[-1])
 
 
-def test_multitask():
-    # Right now LogisticRegressionCV cannot handle multiple classes.
+def test_multiclass():
     X, y = make_classification(n_samples=10, n_features=20, n_informative=10,
                                n_classes=3)
     clf = LogisticRegressionCV(cv=3)

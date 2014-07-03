@@ -14,9 +14,9 @@ from scipy import optimize, sparse
 
 from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from ..feature_selection.from_model import _LearntSelectorMixin
-from ..preprocessing import LabelEncoder, LabelBinarizer
+from ..preprocessing import LabelEncoder
 from ..svm.base import BaseLibLinear
-from ..utils import atleast2d_or_csc, as_float_array, check_arrays
+from ..utils import atleast2d_or_csc, check_arrays
 from ..utils.extmath import log_logistic, safe_sparse_dot
 from ..utils.fixes import expit
 from ..externals.joblib import Parallel, delayed
@@ -69,7 +69,7 @@ def _logistic_loss_and_grad(w, X, y, alpha):
         Array of labels.
 
     alpha : float
-        Inverse of the cross_validation parameter.
+        Regularization parameter. alpha is equal to 1 / C.
     """
     _, n_features = X.shape
     grad = np.empty_like(w)
@@ -88,7 +88,7 @@ def _logistic_loss_and_grad(w, X, y, alpha):
     return out, grad
 
 
-def _logistic_loss(w, X, y, alpha, fit_intercept=False):
+def _logistic_loss(w, X, y, alpha):
     """Computes the logistic loss.
 
     Parameters
@@ -99,11 +99,11 @@ def _logistic_loss(w, X, y, alpha, fit_intercept=False):
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
         Training data
 
-    y : ndarray, shape (n_samples)
+    y : ndarray, shape (n_samples,)
         Array of labels.
 
     alpha : float
-        Inverse of the cross_validation parameter.
+        Regularization parameter. alpha is equal to 1 / C.
     """
     w, c, yz = _intercept_dot(w, X, y)
 
@@ -123,11 +123,11 @@ def _logistic_loss_grad_hess(w, X, y, alpha):
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
         Training data
 
-    y : ndarray, shape (n_samples)
+    y : ndarray, shape (n_samples,)
         Array of labels.
 
     alpha : float
-        Inverse of the cross_validation parameter.
+        Regularization parameter. alpha is equal to 1 / C.
     """
     n_samples, n_features = X.shape
     grad = np.empty_like(w)
@@ -141,7 +141,6 @@ def _logistic_loss_grad_hess(w, X, y, alpha):
     z0 = (z - 1) * y
     grad[:n_features] = safe_sparse_dot(X.T, z0) + alpha * w
     if c is not None:
-        z0_sum = np.sum(z0)
         grad[-1] = np.sum(z0)
 
     # The mat-vec product of the Hessian
@@ -174,8 +173,7 @@ def _logistic_loss_grad_hess(w, X, y, alpha):
 
 def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              max_iter=100, tol=1e-4, verbose=0,
-                             solver='liblinear', callback=None,
-                             coef=None, copy=False):
+                             solver='liblinear', coef=None, copy=False):
     """Compute a Logistic Regression model for a list of regularization
     parameters.
 
@@ -219,10 +217,6 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     solver : {'lbfgs', 'newton-cg', 'liblinear'}
         Numerical solver to use.
 
-    callback : callable
-        Function to be called before and after the fit of each regularization
-        parameter. Must have the signature callback(w, X, y, alpha).
-
     coef: array-lime, shape (n_features,)
         Initialization value for coefficients of logistic regression.
 
@@ -242,7 +236,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     Notes
     -----
     You might get slighly different results with the solver trust-ncg than
-    with the others since this uses LIBLINEAR penalizes the intercept.
+    with the others since this uses LIBLINEAR which penalizes the intercept.
     """
     if isinstance(Cs, numbers.Integral):
         Cs = np.logspace(-4, 4, Cs)
@@ -274,8 +268,6 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     coefs = list()
 
     for C in Cs:
-        if callback is not None:
-            callback(w0, X, y, 1. / C)
         if solver == 'lbfgs':
             func = _logistic_loss_and_grad
             try:
@@ -304,8 +296,6 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         else:
             raise ValueError("solver must be one of {'liblinear', 'lbfgs', "
                              "'newton-cg'}, got '%s' instead" % solver)
-        if callback is not None:
-            callback(w0, X, y, 1. / C)
         coefs.append(w0)
     return coefs, Cs
 
@@ -335,7 +325,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         The class with respect to which we perform a one-vs-all fit.
         If None, then it is assumed that the given problem is binary.
 
-    Cs: list of floats, integer
+    Cs: list of floats, ints
         Each of the values in Cs describes the inverse of
         regularization strength and must be a positive float.
         If not provided, then a fixed set of values for Cs are used.
@@ -540,14 +530,14 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
 
 class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
                            _LearntSelectorMixin):
-    """Logistic Regression (aka logit, MaxEnt) classifier.
+    """Logistic Regression CV (aka logit, MaxEnt) classifier.
 
     This class implements L2 regularized logistic regression using and
     LBFGS optimizer.
 
     Parameters
     ----------
-    Cs: list of floats, integer
+    Cs: list of floats, ints
         Each of the values in Cs describes the inverse of regularization
         strength and must be a positive float.
         Like in support vector machines, smaller values specify stronger
@@ -588,18 +578,17 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
         If set to True, the scores are averaged across all folds, and the
         coefs and the C that corresponds to the best score is taken, and a
         final refit is done using these parameters.
-        Otherwise, the coefs and C that corresponds to the best score across
-        each fold is taken and retuned after averaging.
+        Otherwise the coefs, intercepts and C that correspond to the
+        best scores across folds are averaged.
 
     Attributes
     ----------
-    `coef_` : array, shape (1, n_features) or
-              (n_classes, n_features)
+    `coef_` : array, shape (1, n_features) or (n_classes, n_features)
         Coefficient of the features in the decision function.
 
         `coef_` is of shape (1, n_features) when the given problem
         is binary.
-        `coef_` is readonly property derived from `raw_coef_` that \
+        `coef_` is readonly property derived from `raw_coef_` that
         follows the internal memory layout of liblinear.
 
     `intercept_` : array, shape (1,) or (n_classes,)
@@ -626,7 +615,7 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
         an OvA for the corresponding class.
         Each dict value has shape (n_folds, len(Cs))
 
-    `C_` : array, shape(n_classes,) or (n_classes - 1,)
+    `C_` : array, shape (n_classes,) or (n_classes - 1,)
         Array of C that maps to the best scores across every class.
 
     See also
@@ -683,19 +672,18 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
             labels = labels[1:]
 
         fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-                            delayed(_log_reg_scoring_path)(X, y, train, test,
-                                        pos_class=label,
-                                        Cs=self.Cs,
-                                        fit_intercept=self.fit_intercept,
-                                        method=self.solver,
-                                        max_iter=self.max_iter,
-                                        tol=self.tol,
-                                        verbose=max(0, self.verbose - 1),
-                                        scoring=self.scoring,
-                                    )
-                              for label in labels
-                              for train, test in folds
-                            )
+            delayed(_log_reg_scoring_path)(X, y, train, test,
+                                           pos_class=label,
+                                           Cs=self.Cs,
+                                           fit_intercept=self.fit_intercept,
+                                           method=self.solver,
+                                           max_iter=self.max_iter,
+                                           tol=self.tol,
+                                           verbose=max(0, self.verbose - 1),
+                                           scoring=self.scoring)
+            for label in labels
+            for train, test in folds
+            )
         coefs_paths, Cs, scores = zip(*fold_coefs_)
 
         self.Cs_ = Cs[0]
@@ -730,10 +718,10 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
                 # Take the best scores across every fold and the average of all
                 # coefficients coressponding to the best scores.
                 best_indices = np.argmax(scores, axis=1)
-                w = np.mean(
-                    [coefs_paths[i][best_indices[i]]
-                    for i in range(len(folds))], axis=0
-                    )
+                w = np.mean([
+                    coefs_paths[i][best_indices[i]]
+                    for i in range(len(folds))
+                    ], axis=0)
                 self.C_.append(np.mean(self.Cs_[best_indices]))
 
             if self.fit_intercept:
