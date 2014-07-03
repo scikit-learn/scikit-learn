@@ -202,7 +202,7 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                                   / (precision_[idx, idx] + 1000 * eps))
                         coefs, _, _, _ = cd_fast.enet_coordinate_descent_gram(
                             coefs, alpha, 0, sub_covariance, row, row,
-                            max_iter, tol, 0, False)
+                            max_iter, tol, check_random_state(None), False)
                     else:
                         # Use LARS
                         _, _, coefs = lars_path(
