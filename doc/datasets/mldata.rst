@@ -3,6 +3,8 @@
 
     >>> import numpy as np
     >>> import os
+    >>> custom_data_home = os.path.join(os.environ['HOME'],
+    ...     'scikit_learn_data')
 
 .. _mldata:
 
@@ -35,7 +37,8 @@ specified by the ``data_home`` keyword argument, which defaults to
 ``~/scikit_learn_data/``::
 
   >>> os.listdir(os.path.join(custom_data_home, 'mldata'))
-  ['mnist-original.mat']
+  ... #doctest: +ELLIPSIS
+  [...'mnist-original.mat'...]
 
 Data sets in `mldata.org <http://mldata.org>`_ do not adhere to a strict
 naming or formatting convention. ``fetch_mldata`` is able to make sense

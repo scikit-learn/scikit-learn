@@ -257,7 +257,7 @@ def test_countvectorizer_custom_vocabulary():
     for typ in [dict, list, iter, partial(defaultdict, int)]:
         v = typ(vocab)
         vect = CountVectorizer(vocabulary=v)
-        vect.fit(JUNK_FOOD_DOCS)
+        vect.fit(JUNK_FOOD_DOCS, n_jobs=1)
         if isinstance(v, Mapping):
             assert_equal(vect.vocabulary_, vocab)
         else:
@@ -413,7 +413,7 @@ def test_vectorizer():
     v2m = CountVectorizer(vocabulary=v1m.vocabulary_)
 
     # compare that the two vectorizer give the same output on the test sample
-    for v, n_jobs in ((v1. 1), (v2, 1), (v1m, 2), (v2m, 2)):
+    for v, n_jobs in ((v1, 1), (v2, 1), (v1m, 2), (v2m, 2)):
         counts_test = v.transform(test_data, n_jobs=n_jobs)
 
         vocabulary = v.vocabulary_
@@ -481,7 +481,7 @@ def test_vectorizer():
     assert_array_almost_equal(tfidf_test, tfidf_test2)
 
     # test transform on unfitted vectorizer with empty vocabulary
-    v3 = CountVectorizer(vocabulary=None, n_jobs=1)
+    v3 = CountVectorizer(vocabulary=None)
     assert_raises(ValueError, v3.transform, train_data)
 
     # ascii preprocessor?
@@ -549,12 +549,12 @@ def test_hashing_vectorizer():
 
 
 def test_feature_names():
-    cv = CountVectorizer(max_df=0.5, n_jobs=1)
+    cv = CountVectorizer(max_df=0.5)
 
     # test for Value error on unfitted/empty vocabulary
     assert_raises(ValueError, cv.get_feature_names)
 
-    X = cv.fit_transform(ALL_FOOD_DOCS)
+    X = cv.fit_transform(ALL_FOOD_DOCS, n_jobs=1)
     n_samples, n_features = X.shape
     assert_equal(len(cv.vocabulary_), n_features)
 
@@ -580,8 +580,8 @@ def _test_vectorizer_max_features(n):
 
     for vec_factory in vec_factories:
         # test bounded number of extracted features
-        vectorizer = vec_factory(max_df=0.6, max_features=4, n_jobs=n)
-        vectorizer.fit(ALL_FOOD_DOCS)
+        vectorizer = vec_factory(max_df=0.6, max_features=4)
+        vectorizer.fit(ALL_FOOD_DOCS, n_jobs=n)
         assert_equal(set(vectorizer.vocabulary_), expected_vocabulary)
         assert_equal(vectorizer.stop_words_, expected_stop_words)
 
@@ -594,15 +594,15 @@ def test_vectorizer_max_features():
 def test_count_vectorizer_max_features():
     """Regression test: max_features didn't work correctly in 0.14."""
 
-    cv_1 = CountVectorizer(max_features=1, n_jobs=1)
-    cv_3 = CountVectorizer(max_features=3, n_jobs=1)
-    cv_None = CountVectorizer(max_features=None, n_jobs=1)
-    cv_3m = CountVectorizer(max_features=3, n_jobs=2)
+    cv_1 = CountVectorizer(max_features=1)
+    cv_3 = CountVectorizer(max_features=3)
+    cv_None = CountVectorizer(max_features=None)
+    cv_3m = CountVectorizer(max_features=3)
 
-    counts_1 = cv_1.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
-    counts_3 = cv_3.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
-    counts_None = cv_None.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
-    counts_3m = cv_3m.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
+    counts_1 = cv_1.fit_transform(JUNK_FOOD_DOCS, n_jobs=1).sum(axis=0)
+    counts_3 = cv_3.fit_transform(JUNK_FOOD_DOCS, n_jobs=1).sum(axis=0)
+    counts_None = cv_None.fit_transform(JUNK_FOOD_DOCS, n_jobs=1).sum(axis=0)
+    counts_3m = cv_3m.fit_transform(JUNK_FOOD_DOCS, n_jobs=2).sum(axis=0)
 
     features_1 = cv_1.get_feature_names()
     features_3 = cv_3.get_feature_names()
@@ -624,21 +624,21 @@ def test_count_vectorizer_max_features():
 
 def test_vectorizer_max_df():
     test_data = ['abc', 'dea', 'eat']
-    vect = CountVectorizer(analyzer='char', max_df=1.0, n_jobs=1)
-    vect.fit(test_data)
+    vect = CountVectorizer(analyzer='char', max_df=1.0)
+    vect.fit(test_data, n_jobs=1)
     assert_true('a' in vect.vocabulary_.keys())
     assert_equal(len(vect.vocabulary_.keys()), 6)
     assert_equal(len(vect.stop_words_), 0)
 
     vect.max_df = 0.5  # 0.5 * 3 documents -> max_doc_count == 1.5
-    vect.fit(test_data)
+    vect.fit(test_data, n_jobs=1)
     assert_true('a' not in vect.vocabulary_.keys())  # {ae} ignored
     assert_equal(len(vect.vocabulary_.keys()), 4)    # {bcdt} remain
     assert_true('a' in vect.stop_words_)
     assert_equal(len(vect.stop_words_), 2)
 
     vect.max_df = 1
-    vect.fit(test_data)
+    vect.fit(test_data, n_jobs=1)
     assert_true('a' not in vect.vocabulary_.keys())  # {ae} ignored
     assert_equal(len(vect.vocabulary_.keys()), 4)    # {bcdt} remain
     assert_true('a' in vect.stop_words_)
@@ -647,21 +647,21 @@ def test_vectorizer_max_df():
 
 def test_vectorizer_min_df():
     test_data = ['abc', 'dea', 'eat']
-    vect = CountVectorizer(analyzer='char', min_df=1, n_jobs=1)
-    vect.fit(test_data)
+    vect = CountVectorizer(analyzer='char', min_df=1)
+    vect.fit(test_data, n_jobs=1)
     assert_true('a' in vect.vocabulary_.keys())
     assert_equal(len(vect.vocabulary_.keys()), 6)
     assert_equal(len(vect.stop_words_), 0)
 
     vect.min_df = 2
-    vect.fit(test_data)
+    vect.fit(test_data, n_jobs=1)
     assert_true('c' not in vect.vocabulary_.keys())  # {bcdt} ignored
     assert_equal(len(vect.vocabulary_.keys()), 2)    # {ae} remain
     assert_true('c' in vect.stop_words_)
     assert_equal(len(vect.stop_words_), 4)
 
     vect.min_df = 0.8  # 0.8 * 3 documents -> min_doc_count == 2.4
-    vect.fit(test_data)
+    vect.fit(test_data, n_jobs=1)
     assert_true('c' not in vect.vocabulary_.keys())  # {bcdet} ignored
     assert_equal(len(vect.vocabulary_.keys()), 1)    # {a} remains
     assert_true('c' in vect.stop_words_)
@@ -719,8 +719,8 @@ def test_hashed_binary_occurrences():
 def test_vectorizer_inverse_transform():
     # raw documents
     data = ALL_FOOD_DOCS
-    for vectorizer in (TfidfVectorizer(), CountVectorizer(n_jobs=1)):
-        transformed_data = vectorizer.fit_transform(data)
+    for vectorizer in (TfidfVectorizer(), CountVectorizer()):
+        transformed_data = vectorizer.fit_transform(data, n_jobs=1)
         inversed_data = vectorizer.inverse_transform(transformed_data)
         analyze = vectorizer.build_analyzer()
         for doc, inversed_terms in zip(data, inversed_data):
@@ -748,7 +748,7 @@ def test_count_vectorizer_pipeline_grid_selection():
     y_train = y[1:-1]
     y_test = np.array([y[0], y[-1]])
 
-    pipeline = Pipeline([('vect', CountVectorizer(n_jobs=1)),
+    pipeline = Pipeline([('vect', CountVectorizer()),
                          ('svc', LinearSVC())])
 
     parameters = {
@@ -756,9 +756,14 @@ def test_count_vectorizer_pipeline_grid_selection():
         'svc__loss': ('l1', 'l2')
     }
 
+    fit_params = {
+        'vect__n_jobs': 1
+    }
+
     # find the best parameters for both the feature extraction and the
     # classifier
-    grid_search = GridSearchCV(pipeline, parameters, n_jobs=1)
+    grid_search = GridSearchCV(pipeline, parameters, n_jobs=1,
+                               fit_params=fit_params)
 
     # cross-validation doesn't work if the length of the data is not known,
     # hence use lists instead of iterators
@@ -795,9 +800,14 @@ def test_vectorizer_pipeline_grid_selection():
         'svc__loss': ('l1', 'l2'),
     }
 
+    fit_params = {
+        'vect__n_jobs': 1
+    }
+
     # find the best parameters for both the feature extraction and the
     # classifier
-    grid_search = GridSearchCV(pipeline, parameters, n_jobs=1)
+    grid_search = GridSearchCV(pipeline, parameters, n_jobs=1,
+                               fit_params=fit_params)
 
     # cross-validation doesn't work if the length of the data is not known,
     # hence use lists instead of iterators
@@ -833,8 +843,8 @@ def test_vectorizer_unicode():
         "\xd0\xbe\xd0\xb1\xd1\x83\xd1\x87\xd0\xb0\xd1\x82\xd1\x8c\xd1\x81\xd1"
         "\x8f.")
 
-    vect = CountVectorizer(n_jobs=1)
-    X_counted = vect.fit_transform([document])
+    vect = CountVectorizer()
+    X_counted = vect.fit_transform([document], n_jobs=1)
     assert_equal(X_counted.shape, (1, 15))
 
     vect = HashingVectorizer(norm=None, non_negative=True)
@@ -867,7 +877,6 @@ def test_pickling_vectorizer():
         HashingVectorizer(binary=True),
         HashingVectorizer(ngram_range=(1, 2)),
         CountVectorizer(),
-        CountVectorizer(n_jobs=2),
         CountVectorizer(preprocessor=strip_tags),
         CountVectorizer(analyzer=lazy_analyze),
         CountVectorizer(preprocessor=strip_tags).fit(JUNK_FOOD_DOCS),
