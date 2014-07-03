@@ -117,6 +117,31 @@ mem = joblib.Memory(cachedir='_build')
 get_data = mem.cache(_get_data)
 
 
+def _sort_figure_list(figure_list, file_pattern=r"(.+)_(\d+).png"):
+    """Sort png filenames by number suffixes
+
+    This is useful to load the list of previously generated files using the glob
+    module that does not have a deterministic ordering of the results.
+
+    >>> filenames = ['aaa_2.png', 'bbb_1.png', 'aaa_12.png', 'aaa_1.png']
+    >>> _sort_figure_list(filenames)
+    ['aaa_1.png', 'aaa_2.png', 'aaa_12.png', 'bbb_1.png']
+
+    """
+    pattern = re.compile(file_pattern)
+    figure_list_components = []
+    for name in figure_list:
+        m = pattern.match(name)
+        if not m:
+            raise ValueError(
+                "Figure filename '%s' does not match expected pattern: %s"
+                % (name, file_pattern))
+        base_name, figure_number = m.groups()
+        figure_list_components.append((base_name, int(figure_number)))
+    figure_list_components.sort()
+    return ["{0}_{1}.png".format(*c) for c in figure_list_components]
+
+
 def parse_sphinx_searchindex(searchindex):
     """Parse a Sphinx search index
 
@@ -988,12 +1013,8 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
             print(" - time elapsed : %.2g sec" % time_elapsed)
         else:
             figure_list = [f[len(image_dir):]
-                            for f in glob.glob(image_path % '[1-9]')]
-                            #for f in glob.glob(image_path % '*')]
-            # Catter for the fact that there can be more than 10 images
-            if len(figure_list) >= 9:
-                figure_list.extend([f[len(image_dir):]
-                            for f in glob.glob(image_path % '1[0-9]')])
+                            for f in glob.glob(image_path % '*')]
+        _sort_figure_list(figure_list)
 
         # generate thumb file
         this_template = plot_rst_template
