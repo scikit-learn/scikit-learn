@@ -25,6 +25,41 @@ from sklearn.externals.six import with_metaclass
 from sklearn.externals.six.moves import zip
 
 
+class _PartitionTestGenerator(object):
+    def __init__(self, mask_generator, y, n=None, indices=None):
+        self._mask_generator = mask_generator
+        if indices is None:
+            indices = True
+        else:
+            warnings.warn("The indices parameter is deprecated and will be "
+                          "removed (assumed True) in 0.17", DeprecationWarning,
+                          stacklevel=1)
+        if y is None:
+            if n is None:
+                raise ValueError("Must supply y or n parameters")
+            if abs(n - int(n)) >= np.finfo('f').eps:
+                raise ValueError("n must be an integer")
+            self._n = int(n)
+            self._indices = indices
+        else:
+            self._n = len(y) # TODO: Check for dict of arrays or DataFrame
+            self._indices = True
+        self._y = y
+
+
+    def __iter__(self):
+        indices = self._indices
+        if indices:
+            ind = np.arange(self._n)
+        for test_index in self._mask_generator._iter_test_masks(self._y):
+            train_index = np.logical_not(test_index)
+            if indices:
+                train_index = ind[train_index]
+                test_index = ind[test_index]
+            yield train_index, test_index
+
+
+
 class _PartitionIterator(with_metaclass(ABCMeta)):
     """Base class for CV iterators where train_mask = ~test_mask
 
@@ -36,16 +71,21 @@ class _PartitionIterator(with_metaclass(ABCMeta)):
         Total number of elements in dataset.
     """
 
-    def __init__(self, n, indices=None):
+    def __init__(self, n=None, indices=None):
         if indices is None:
             indices = True
         else:
             warnings.warn("The indices parameter is deprecated and will be "
                           "removed (assumed True) in 0.17", DeprecationWarning,
                           stacklevel=1)
-        if abs(n - int(n)) >= np.finfo('f').eps:
-            raise ValueError("n must be an integer")
-        self.n = int(n)
+        if n is not None:
+            warnings.warn("The n parameter is deprecated and will be "
+                          "removed (use split method instead)",
+                          DeprecationWarning, stacklevel=1)
+            if abs(n - int(n)) >= np.finfo('f').eps:
+                raise ValueError("n must be an integer")
+            n = int(n)
+        self.n = n
         self._indices = indices
 
     @property
@@ -56,34 +96,49 @@ class _PartitionIterator(with_metaclass(ABCMeta)):
         return self._indices
 
     def __iter__(self):
-        indices = self._indices
-        if indices:
-            ind = np.arange(self.n)
-        for test_index in self._iter_test_masks():
-            train_index = np.logical_not(test_index)
-            if indices:
-                train_index = ind[train_index]
-                test_index = ind[test_index]
-            yield train_index, test_index
+        #TODO: deprecation warning
+        y = None
+        self._pre_split_check(y)
+        for train, test in _PartitionTestGenerator(self, y, n=self.n, indices=self.indices):
+            yield train, test
+#        indices = self._indices
+#        if indices:
+#            ind = np.arange(self.n)
+#        for test_index in self._iter_test_masks():
+#            train_index = np.logical_not(test_index)
+#            if indices:
+#                train_index = ind[train_index]
+#                test_index = ind[test_index]
+#            yield train_index, test_index
+
+    def split(self, y):
+        self._pre_split_check(y)
+        return _PartitionTestGenerator(self, y, indices=self.indices)
+
+    def _pre_split_check(self, y):
+        pass
+
+    def _sample_size(self, y):
+        return self.n if y is None else len(y) #TODO: Check for dict of arrays or dataframe
 
     # Since subclasses must implement either _iter_test_masks or
     # _iter_test_indices, neither can be abstract.
-    def _iter_test_masks(self):
+    def _iter_test_masks(self, y):
         """Generates boolean masks corresponding to test sets.
 
         By default, delegates to _iter_test_indices()
         """
-        for test_index in self._iter_test_indices():
-            test_mask = self._empty_mask()
+        for test_index in self._iter_test_indices(y):
+            test_mask = self._empty_mask(y)
             test_mask[test_index] = True
             yield test_mask
 
-    def _iter_test_indices(self):
+    def _iter_test_indices(self, y):
         """Generates integer indices corresponding to test sets."""
         raise NotImplementedError
 
-    def _empty_mask(self):
-        return np.zeros(self.n, dtype=np.bool)
+    def _empty_mask(self, y):
+        return np.zeros(self._sample_size(y), dtype=np.bool)
 
 
 class LeaveOneOut(_PartitionIterator):
@@ -227,16 +282,19 @@ class _BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
                 "k-fold cross validation requires at least one"
                 " train / test split by setting n_folds=2 or more,"
                 " got n_folds={0}.".format(n_folds))
-        if n_folds > self.n:
-            raise ValueError(
-                ("Cannot have number of folds n_folds={0} greater"
-                 " than the number of samples: {1}.").format(n_folds, n))
 
         if not isinstance(shuffle, bool):
             raise TypeError("shuffle must be True or False;"
                             " got {0}".format(shuffle))
         self.shuffle = shuffle
         self.random_state = random_state
+
+    def _pre_split_check(self, y):
+        n = self._sample_size(y)
+        if self.n_folds > n:
+            raise ValueError(
+                ("Cannot have number of folds n_folds={0} greater"
+                 " than the number of samples: {1}.").format(self.n_folds, n))
 
 
 class KFold(_BaseKFold):
@@ -293,23 +351,23 @@ class KFold(_BaseKFold):
     classification tasks).
     """
 
-    def __init__(self, n, n_folds=3, indices=None, shuffle=False,
+    def __init__(self, n=None, n_folds=3, indices=None, shuffle=False,
                  random_state=None):
         super(KFold, self).__init__(n, n_folds, indices, shuffle, random_state)
-        self.idxs = np.arange(n)
-        if shuffle:
-            rng = check_random_state(self.random_state)
-            rng.shuffle(self.idxs)
 
-    def _iter_test_indices(self):
-        n = self.n
+    def _iter_test_indices(self, y):
+        n = self._sample_size(y)
+        idxs = np.arange(n)
+        if self.shuffle:
+            rng = check_random_state(self.random_state)
+            rng.shuffle(idxs)
         n_folds = self.n_folds
         fold_sizes = (n // n_folds) * np.ones(n_folds, dtype=np.int)
         fold_sizes[:n % n_folds] += 1
         current = 0
         for fold_size in fold_sizes:
             start, stop = current, current + fold_size
-            yield self.idxs[start:stop]
+            yield idxs[start:stop]
             current = stop
 
     def __repr__(self):
@@ -376,11 +434,20 @@ class StratifiedKFold(_BaseKFold):
 
     """
 
-    def __init__(self, y, n_folds=3, indices=None, shuffle=False,
+    def __init__(self, y=None, n_folds=3, indices=None, shuffle=False,
                  random_state=None):
+        #TODO: deprecation warning if y is not none, should use split
+        n = len(y) if y is not None else None
         super(StratifiedKFold, self).__init__(
-            len(y), n_folds, indices, shuffle, random_state)
-        y = np.asarray(y)
+            n, n_folds, indices, shuffle, random_state)
+        self.y = np.asarray(y) if y is not None else None
+
+    def _make_test_folds(self, y):
+        if y is None:
+            if self.y is None:
+                raise ValueError("Must supply y in constructor or split")
+            y = self.y
+
         n_samples = y.shape[0]
         unique_labels, y_inversed = np.unique(y, return_inverse=True)
         label_counts = np.bincount(y_inversed)
@@ -418,12 +485,12 @@ class StratifiedKFold(_BaseKFold):
                 label_test_folds[test_split] = test_fold_idx
                 test_folds[y == label] = label_test_folds
 
-        self.test_folds = test_folds
-        self.y = y
+        return test_folds
 
-    def _iter_test_masks(self):
+    def _iter_test_masks(self, y):
+        test_folds = self._make_test_folds(y)
         for i in range(self.n_folds):
-            yield self.test_folds == i
+            yield test_folds == i
 
     def __repr__(self):
         return '%s.%s(labels=%s, n_folds=%i, shuffle=%s, random_state=%s)' % (
