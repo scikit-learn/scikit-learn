@@ -7,6 +7,8 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_greater_equal
+from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
@@ -230,6 +232,13 @@ def test_min_max_scaler_1d():
     X_scaled = scaler.fit(X).transform(X)
     assert_array_almost_equal(X_scaled.min(axis=0), 0.0)
     assert_array_almost_equal(X_scaled.max(axis=0), 1.0)
+
+    # Constant feature.
+    X = np.zeros(5)
+    scaler = MinMaxScaler()
+    X_scaled = scaler.fit(X).transform(X)
+    assert_greater_equal(X_scaled.min(), 0.)
+    assert_less_equal(X_scaled.max(), 1.)
 
 
 def test_scaler_without_centering():
