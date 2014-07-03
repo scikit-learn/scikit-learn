@@ -15,7 +15,7 @@ build feature vectors from text documents.
 from __future__ import unicode_literals
 
 import array
-from collections import Mapping
+from collections import Mapping, defaultdict
 import numbers
 from operator import itemgetter
 import re
@@ -481,9 +481,9 @@ def _count_vocab_process(documents, vectorizer):
     analyze = vectorizer.build_analyzer()
     result = []
     for document in documents:
-        doc_term_cnt = {}
+        doc_term_cnt = defaultdict(int)
         for feat in analyze(document):
-            doc_term_cnt[feat] = doc_term_cnt.get(feat, 0) + 1
+            doc_term_cnt[feat] += 1
         result.append(doc_term_cnt)
     return result
 
@@ -607,12 +607,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     dtype : type, optional
         Type of the matrix returned by fit_transform() or transform().
 
-    n_jobs : int, optional, 1 by default
-        The number of jobs to use for the computation. If -1 all CPUs
-        are used. If 1 is given, no parallel computing code is used
-        at all. For n_jobs below -1, (n_cpus + 1 + n_jobs) are used.
-        Thus for n_jobs = -2, all CPUs but one are used.
-
     Attributes
     ----------
     `vocabulary_` : dict
@@ -626,7 +620,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     Notes
     -----
-    When using n_jobs != 1 (that is, enabling multiprocessing), the analyzer
+    When using n_jobs != 1 in any of the transform function, the analyzer
     function should be pickleable. That means you can't pass lambda functions
     as the analyzer if you want to use the multiprocessing feature.
 
@@ -661,8 +655,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), analyzer='word',
                  max_df=1.0, min_df=1, max_features=None,
-                 vocabulary=None, binary=False, dtype=np.int64,
-                 n_jobs=1):
+                 vocabulary=None, binary=False, dtype=np.int64):
         self.input = input
         self.encoding = encoding
         self.decode_error = decode_error
@@ -723,7 +716,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             self.fixed_vocabulary = False
         self.binary = binary
         self.dtype = dtype
-        self.n_jobs = n_jobs
 
     def _limit_features(self, X, vocabulary, high=None, low=None,
                         limit=None):
@@ -766,10 +758,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                              " min_df or a higher max_df.")
         return X[:, kept_indices], removed_terms
 
-    def _count_vocab(self, raw_documents, fixed_vocab):
+    def _count_vocab(self, raw_documents, fixed_vocab, n_jobs=1):
         """Create sparse feature matrix, and vocabulary where fixed_vocab=False
         """
-        doc_list = Parallel(n_jobs=self.n_jobs)(
+        doc_list = Parallel(n_jobs=n_jobs)(
             delayed(_count_vocab_process)(docs, clone(self))
             for docs in _batch_iter(raw_documents, 100))
         doc_list = chain(*doc_list)
@@ -802,7 +794,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.fit_transform(raw_documents)
         return self
 
-    def fit_transform(self, raw_documents, y=None):
+    def fit_transform(self, raw_documents, y=None, n_jobs=1):
         """Learn the vocabulary dictionary and return term-document matrix.
 
         This is equivalent to fit followed by transform, but more efficiently
@@ -812,6 +804,12 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         ----------
         raw_documents : iterable
             An iterable which yields either str, unicode or file objects.
+
+        n_jobs : int, optional, 1 by default
+            The number of jobs to use for the computation. If -1 all CPUs
+            are used. If 1 is given, no parallel computing code is used
+            at all. For n_jobs below -1, (n_cpus + 1 + n_jobs) are used.
+            Thus for n_jobs = -2, all CPUs but one are used.
 
         Returns
         -------
@@ -825,7 +823,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         min_df = self.min_df
         max_features = self.max_features
 
-        vocabulary, X = self._count_vocab(raw_documents, self.fixed_vocabulary)
+        vocabulary, X = self._count_vocab(raw_documents,
+                                          fixed_vocab=self.fixed_vocabulary,
+                                          n_jobs=n_jobs)
 
         if self.binary:
             X.data.fill(1)
@@ -850,7 +850,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         return X
 
-    def transform(self, raw_documents):
+    def transform(self, raw_documents, n_jobs=1):
         """Transform documents to document-term matrix.
 
         Extract token counts out of raw text documents using the vocabulary
@@ -861,6 +861,12 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         raw_documents : iterable
             An iterable which yields either str, unicode or file objects.
 
+        n_jobs : int, optional, 1 by default
+            The number of jobs to use for the computation. If -1 all CPUs
+            are used. If 1 is given, no parallel computing code is used
+            at all. For n_jobs below -1, (n_cpus + 1 + n_jobs) are used.
+            Thus for n_jobs = -2, all CPUs but one are used.
+
         Returns
         -------
         X : sparse matrix, [n_samples, n_features]
@@ -870,7 +876,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             raise ValueError("Vocabulary wasn't fitted or is empty!")
 
         # use the same matrix-building strategy as fit_transform
-        _, X = self._count_vocab(raw_documents, fixed_vocab=True)
+        _, X = self._count_vocab(raw_documents, fixed_vocab=True, n_jobs=n_jobs)
         if self.binary:
             X.data.fill(1)
         return X
@@ -1178,13 +1184,6 @@ class TfidfVectorizer(CountVectorizer):
         The learned idf vector (global term weights)
         when ``use_idf`` is set to True, None otherwise.
 
-    ``n_jobs`` : int, optional, 1 by default
-        The number of jobs to use for the computation. If -1 all CPUs
-        are used. If 1 is given, no parallel computing code is used
-        at all. For n_jobs below -1, (n_cpus + 1 + n_jobs) are used.
-        Thus for n_jobs = -2, all CPUs but one are used.
-        See the notes in CountVectorizer for more information on this parameter
-
     See also
     --------
     CountVectorizer
@@ -1205,7 +1204,7 @@ class TfidfVectorizer(CountVectorizer):
                  ngram_range=(1, 1), max_df=1.0, min_df=1,
                  max_features=None, vocabulary=None, binary=False,
                  dtype=np.int64, norm='l2', use_idf=True, smooth_idf=True,
-                 sublinear_tf=False, n_jobs=1):
+                 sublinear_tf=False):
 
         super(TfidfVectorizer, self).__init__(
             input=input, charset=charset, charset_error=charset_error,
@@ -1215,7 +1214,7 @@ class TfidfVectorizer(CountVectorizer):
             stop_words=stop_words, token_pattern=token_pattern,
             ngram_range=ngram_range, max_df=max_df, min_df=min_df,
             max_features=max_features, vocabulary=vocabulary, binary=binary,
-            dtype=dtype, n_jobs=n_jobs)
+            dtype=dtype)
 
         self._tfidf = TfidfTransformer(norm=norm, use_idf=use_idf,
                                        smooth_idf=smooth_idf,
@@ -1276,7 +1275,7 @@ class TfidfVectorizer(CountVectorizer):
         self._tfidf.fit(X)
         return self
 
-    def fit_transform(self, raw_documents, y=None):
+    def fit_transform(self, raw_documents, y=None, n_jobs=1):
         """Learn vocabulary and idf, return term-document matrix.
 
         This is equivalent to fit followed by transform, but more efficiently
@@ -1287,18 +1286,23 @@ class TfidfVectorizer(CountVectorizer):
         raw_documents : iterable
             an iterable which yields either str, unicode or file objects
 
+        n_jobs : int, default to 1
+            The number of processes that should be spawned to do the
+            transformation
+
         Returns
         -------
         X : sparse matrix, [n_samples, n_features]
             Tf-idf-weighted document-term matrix.
         """
-        X = super(TfidfVectorizer, self).fit_transform(raw_documents)
+        X = super(TfidfVectorizer, self).fit_transform(raw_documents,
+                                                       n_jobs=n_jobs)
         self._tfidf.fit(X)
         # X is already a transformed view of raw_documents so
         # we set copy to False
         return self._tfidf.transform(X, copy=False)
 
-    def transform(self, raw_documents, copy=True):
+    def transform(self, raw_documents, copy=True, n_jobs=1):
         """Transform documents to document-term matrix.
 
         Uses the vocabulary and document frequencies (df) learned by fit (or
@@ -1309,10 +1313,14 @@ class TfidfVectorizer(CountVectorizer):
         raw_documents : iterable
             an iterable which yields either str, unicode or file objects
 
+        n_jobs : int, default to 1
+            The number of processes that should be spawned to do the
+            transformation
+
         Returns
         -------
         X : sparse matrix, [n_samples, n_features]
             Tf-idf-weighted document-term matrix.
         """
-        X = super(TfidfVectorizer, self).transform(raw_documents)
+        X = super(TfidfVectorizer, self).transform(raw_documents, n_jobs=n_jobs)
         return self._tfidf.transform(X, copy=False)
