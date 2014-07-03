@@ -6,6 +6,10 @@ from scipy import sparse
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_less
+from sklearn.utils.testing import assert_array_less_equal
+from sklearn.utils.testing import assert_array_greater
+from sklearn.utils.testing import assert_array_greater_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less_equal
@@ -175,6 +179,31 @@ def test_min_max_scaler_iris():
     assert_array_almost_equal(X_trans.max(axis=0), .6)
     X_trans_inv = scaler.inverse_transform(X_trans)
     assert_array_almost_equal(X, X_trans_inv)
+
+    # check that it doesn't truncate by default
+    scaler = MinMaxScaler(feature_range=(2.5, 3.8))
+    scaler.fit(X[:20, :])
+    X_trans = scaler.transform(X)
+    assert_array_less_equal(X_trans.min(axis=0), 2.5)
+    assert_array_less(X_trans[X < X[:20].min(axis=0)], 2.5)
+    assert_array_greater_equal(X_trans.max(axis=0), 3.8)
+    assert_array_greater(X_trans[X > X[:20].max(axis=0)], 3.8)
+    X_trans_inv = scaler.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_trans_inv)
+
+    # check truncation
+    scaler = MinMaxScaler(feature_range=(2.5, 3.8), truncate=True)
+    scaler.fit(X[:20])
+    orig_min = X[:20].min(axis=0)
+    orig_max = X[:20].max(axis=0)
+    X_trans = scaler.transform(X)
+    assert_array_almost_equal(X_trans.min(axis=0), 2.5)
+    assert_array_almost_equal(X_trans[X < orig_min], 2.5)
+    assert_array_almost_equal(X_trans.max(axis=0), 3.8)
+    assert_array_almost_equal(X_trans[X > orig_max], 3.8)
+    X_trans_inv = scaler.inverse_transform(X_trans)
+    assert_array_almost_equal(X_trans_inv,
+                              np.maximum(orig_min, np.minimum(X, orig_max)))
 
     # raises on invalid range
     scaler = MinMaxScaler(feature_range=(2, 1))

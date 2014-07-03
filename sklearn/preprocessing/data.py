@@ -169,6 +169,12 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         Set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array).
 
+    truncate : boolean, optional, default is False
+        If True, :meth:`transform` will truncate any inputs that lie outside
+        the min/max of the values passed to :meth:`fit` to lie on the ends
+        of feature_range. Normally, the transform of these points will be
+        outside feature_range.
+
     Attributes
     ----------
     min_ : ndarray, shape (n_features,)
@@ -178,9 +184,10 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         Per feature relative scaling of the data.
     """
 
-    def __init__(self, feature_range=(0, 1), copy=True):
+    def __init__(self, feature_range=(0, 1), copy=True, truncate=False):
         self.feature_range = feature_range
         self.copy = copy
+        self.truncate = truncate
 
     def fit(self, X, y=None):
         """Compute the minimum and maximum to be used for later scaling.
@@ -221,10 +228,16 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         X = check_array(X, copy=self.copy, ensure_2d=False)
         X *= self.scale_
         X += self.min_
+        if self.truncate:
+            np.maximum(self.feature_range[0], X, out=X)
+            np.minimum(self.feature_range[1], X, out=X)
         return X
 
     def inverse_transform(self, X):
         """Undo the scaling of X according to feature_range.
+
+        Note that if truncate is true, any truncated points will not
+        be restored exactly.
 
         Parameters
         ----------
