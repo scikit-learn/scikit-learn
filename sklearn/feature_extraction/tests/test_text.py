@@ -256,22 +256,22 @@ def test_countvectorizer_custom_vocabulary():
     # Try a few of the supported types.
     for typ in [dict, list, iter, partial(defaultdict, int)]:
         v = typ(vocab)
-        vect = CountVectorizer(vocabulary=v, n_jobs=1)
+        vect = CountVectorizer(vocabulary=v)
         vect.fit(JUNK_FOOD_DOCS)
         if isinstance(v, Mapping):
             assert_equal(vect.vocabulary_, vocab)
         else:
             assert_equal(set(vect.vocabulary_), terms)
-        X = vect.transform(JUNK_FOOD_DOCS)
+        X = vect.transform(JUNK_FOOD_DOCS, n_jobs=1)
         assert_equal(X.shape[1], len(terms))
 
 
 def test_countvectorizer_custom_vocabulary_pipeline():
     what_we_like = ["pizza", "beer"]
     pipe = Pipeline([
-        ('count', CountVectorizer(vocabulary=what_we_like, n_jobs=1)),
+        ('count', CountVectorizer(vocabulary=what_we_like)),
         ('tfidf', TfidfTransformer())])
-    X = pipe.fit_transform(ALL_FOOD_DOCS)
+    X = pipe.fit_transform(ALL_FOOD_DOCS, count__n_jobs=1)
     assert_equal(set(pipe.named_steps['count'].vocabulary_),
                  set(what_we_like))
     assert_equal(X.shape[1], len(what_we_like))
@@ -280,7 +280,7 @@ def test_countvectorizer_custom_vocabulary_pipeline():
 def test_countvectorizer_custom_vocabulary_repeated_indices():
     vocab = {"pizza": 0, "beer": 0}
     try:
-        CountVectorizer(vocabulary=vocab, n_jobs=1)
+        CountVectorizer(vocabulary=vocab)
     except ValueError as e:
         assert_in("vocabulary contains repeated indices", str(e).lower())
 
@@ -288,13 +288,13 @@ def test_countvectorizer_custom_vocabulary_repeated_indices():
 def test_countvectorizer_custom_vocabulary_gap_index():
     vocab = {"pizza": 1, "beer": 2}
     try:
-        CountVectorizer(vocabulary=vocab, n_jobs=1)
+        CountVectorizer(vocabulary=vocab)
     except ValueError as e:
         assert_in("doesn't contain index", str(e).lower())
 
 
 def test_countvectorizer_stop_words():
-    cv = CountVectorizer(n_jobs=1)
+    cv = CountVectorizer()
     cv.set_params(stop_words='english')
     assert_equal(cv.get_stop_words(), ENGLISH_STOP_WORDS)
     cv.set_params(stop_words='_bad_str_stop_')
@@ -308,8 +308,8 @@ def test_countvectorizer_stop_words():
 
 def test_countvectorizer_empty_vocabulary():
     assert_raise_message(ValueError, 'empty vocabulary',
-                         CountVectorizer, vocabulary=[], n_jobs=1)
-    v = CountVectorizer(max_df=1.0, stop_words='english', n_jobs=1)
+                         CountVectorizer, vocabulary=[])
+    v = CountVectorizer(max_df=1.0, stop_words='english')
     assert_raise_message(ValueError, 'empty vocabulary',
                          v.fit, ['to be or not to be',
                                  'and me too',
@@ -317,9 +317,9 @@ def test_countvectorizer_empty_vocabulary():
 
 
 def _test_fit_countvectorizer_twice(n):
-    cv = CountVectorizer(n_jobs=n)
-    X1 = cv.fit_transform(ALL_FOOD_DOCS[:5])
-    X2 = cv.fit_transform(ALL_FOOD_DOCS[5:])
+    cv = CountVectorizer()
+    X1 = cv.fit_transform(ALL_FOOD_DOCS[:5], n_jobs=n)
+    X2 = cv.fit_transform(ALL_FOOD_DOCS[5:], n_jobs=n)
     assert_not_equal(X1.shape[1], X2.shape[1])
 
 
@@ -396,25 +396,25 @@ def test_vectorizer():
     n_train = len(ALL_FOOD_DOCS) - 1
 
     # test without vocabulary
-    v1 = CountVectorizer(max_df=0.5, n_jobs=1)
-    counts_train = v1.fit_transform(train_data)
+    v1 = CountVectorizer(max_df=0.5)
+    counts_train = v1.fit_transform(train_data, n_jobs=1)
     assert_equal(counts_train[0, v1.vocabulary_["pizza"]], 2)
 
     # build a vectorizer v1 with the same vocabulary as the one fitted by v1
-    v2 = CountVectorizer(vocabulary=v1.vocabulary_, n_jobs=1)
+    v2 = CountVectorizer(vocabulary=v1.vocabulary_)
 
     # Test the multiprocess version
     train_data = iter(ALL_FOOD_DOCS[:-1])
-    v1m = CountVectorizer(max_df=0.5, n_jobs=2)
-    counts_train = v1m.fit_transform(train_data)
+    v1m = CountVectorizer(max_df=0.5)
+    counts_train = v1m.fit_transform(train_data, n_jobs=2)
     assert_equal(counts_train[0, v1m.vocabulary_["pizza"]], 2)
 
     # build a vectorizer v1 with the same vocabulary as the one fitted by v1
-    v2m = CountVectorizer(vocabulary=v1m.vocabulary_, n_jobs=2)
+    v2m = CountVectorizer(vocabulary=v1m.vocabulary_)
 
     # compare that the two vectorizer give the same output on the test sample
-    for v in (v1, v2, v1m, v2m):
-        counts_test = v.transform(test_data)
+    for v, n_jobs in ((v1. 1), (v2, 1), (v1m, 2), (v2m, 2)):
+        counts_test = v.transform(test_data, n_jobs=n_jobs)
 
         vocabulary = v.vocabulary_
         assert_equal(counts_test[0, vocabulary["salad"]], 1)

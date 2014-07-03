@@ -620,7 +620,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     Notes
     -----
-    When using n_jobs != 1 in any of the transform function, the analyzer
+    When using n_jobs != 1 in any of the fit or transform method, the analyzer
     function should be pickleable. That means you can't pass lambda functions
     as the analyzer if you want to use the multiprocessing feature.
 
@@ -779,7 +779,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                                  " only contain stop words")
         return vocabulary, X
 
-    def fit(self, raw_documents, y=None):
+    def fit(self, raw_documents, y=None, n_jobs=1):
         """Learn a vocabulary dictionary of all tokens in the raw documents.
 
         Parameters
@@ -791,7 +791,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         -------
         self
         """
-        self.fit_transform(raw_documents)
+        self.fit_transform(raw_documents, n_jobs=n_jobs)
         return self
 
     def fit_transform(self, raw_documents, y=None, n_jobs=1):
@@ -876,7 +876,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             raise ValueError("Vocabulary wasn't fitted or is empty!")
 
         # use the same matrix-building strategy as fit_transform
-        _, X = self._count_vocab(raw_documents, fixed_vocab=True, n_jobs=n_jobs)
+        _, X = self._count_vocab(raw_documents, fixed_vocab=True,
+                                 n_jobs=n_jobs)
         if self.binary:
             X.data.fill(1)
         return X
@@ -1259,7 +1260,7 @@ class TfidfVectorizer(CountVectorizer):
     def idf_(self):
         return self._tfidf.idf_
 
-    def fit(self, raw_documents, y=None):
+    def fit(self, raw_documents, y=None, n_jobs=1):
         """Learn vocabulary and idf from training set.
 
         Parameters
@@ -1271,7 +1272,8 @@ class TfidfVectorizer(CountVectorizer):
         -------
         self : TfidfVectorizer
         """
-        X = super(TfidfVectorizer, self).fit_transform(raw_documents)
+        X = super(TfidfVectorizer, self).fit_transform(raw_documents,
+                                                       n_jobs=n_jobs)
         self._tfidf.fit(X)
         return self
 
@@ -1322,5 +1324,6 @@ class TfidfVectorizer(CountVectorizer):
         X : sparse matrix, [n_samples, n_features]
             Tf-idf-weighted document-term matrix.
         """
-        X = super(TfidfVectorizer, self).transform(raw_documents, n_jobs=n_jobs)
+        X = super(TfidfVectorizer, self).transform(raw_documents,
+                                                   n_jobs=n_jobs)
         return self._tfidf.transform(X, copy=False)
