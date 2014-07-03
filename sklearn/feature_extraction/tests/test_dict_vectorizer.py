@@ -7,7 +7,8 @@ import scipy.sparse as sp
 
 from numpy.testing import assert_array_equal
 from sklearn.utils.testing import (assert_equal, assert_in,
-                                   assert_false, assert_true)
+                                   assert_false, assert_true,
+                                   assert_raise_message)
 
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_selection import SelectKBest, chi2
@@ -83,10 +84,8 @@ def test_unseen_or_no_features():
             X = X.toarray()
         assert_array_equal(X, np.zeros((1, 2)))
 
-        try:
-            v.transform([])
-        except ValueError as e:
-            assert_in("empty", str(e))
+        if sparse:
+            assert_raise_message(ValueError, 'empty', v.transform, [])
 
 
 def test_deterministic_vocabulary():
@@ -102,3 +101,9 @@ def test_deterministic_vocabulary():
     v_2 = DictVectorizer().fit([d_shuffled])
 
     assert_equal(v_1.vocabulary_, v_2.vocabulary_)
+
+
+def test_empty_vocabulary():
+    d = DictVectorizer()
+    assert_raise_message(ValueError, 'empty vocabulary', d.fit, [{}])
+    assert_raise_message(ValueError, 'empty vocabulary', d.fit_transform, [{}])

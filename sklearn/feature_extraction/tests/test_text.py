@@ -9,6 +9,7 @@ from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import _batch_iter
 
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 
@@ -28,7 +29,7 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_raises
 from sklearn.utils.testing import (assert_in, assert_less, assert_greater,
-                                   assert_warns_message)
+                                   assert_warns_message, assert_raise_message)
 
 from collections import defaultdict, Mapping
 from functools import partial
@@ -70,6 +71,24 @@ def split_tokenize(s):
 
 def lazy_analyze(s):
     return ['the_ultimate_feature']
+
+
+def test_batch_iter():
+    a_list = list(range(10))
+    an_iter = iter(range(10))
+    result = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9]]
+    assert_equal(list(_batch_iter(a_list, 3)), result)
+    assert_equal(list(_batch_iter(an_iter, 3)), result)
+
+    a_list = list(range(10))
+    an_iter = iter(range(10))
+    result = [[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]]
+    assert_equal(list(_batch_iter(a_list, 5)), result)
+    assert_equal(list(_batch_iter(an_iter, 5)), result)
+
+    result = []
+    assert_equal(list(_batch_iter(list(), 5)), result)
+    assert_equal(list(_batch_iter(iter(list()), 5)), result)
 
 
 def test_strip_accents():
@@ -238,12 +257,12 @@ def test_countvectorizer_custom_vocabulary():
     for typ in [dict, list, iter, partial(defaultdict, int)]:
         v = typ(vocab)
         vect = CountVectorizer(vocabulary=v)
-        vect.fit(JUNK_FOOD_DOCS)
+        vect.fit(JUNK_FOOD_DOCS, n_jobs=1)
         if isinstance(v, Mapping):
             assert_equal(vect.vocabulary_, vocab)
         else:
             assert_equal(set(vect.vocabulary_), terms)
-        X = vect.transform(JUNK_FOOD_DOCS)
+        X = vect.transform(JUNK_FOOD_DOCS, n_jobs=1)
         assert_equal(X.shape[1], len(terms))
 
 
@@ -252,13 +271,13 @@ def test_countvectorizer_custom_vocabulary_pipeline():
     pipe = Pipeline([
         ('count', CountVectorizer(vocabulary=what_we_like)),
         ('tfidf', TfidfTransformer())])
-    X = pipe.fit_transform(ALL_FOOD_DOCS)
+    X = pipe.fit_transform(ALL_FOOD_DOCS, count__n_jobs=1)
     assert_equal(set(pipe.named_steps['count'].vocabulary_),
                  set(what_we_like))
     assert_equal(X.shape[1], len(what_we_like))
 
 
-def test_countvectorizer_custom_vocabulary_repeated_indeces():
+def test_countvectorizer_custom_vocabulary_repeated_indices():
     vocab = {"pizza": 0, "beer": 0}
     try:
         CountVectorizer(vocabulary=vocab)
@@ -288,26 +307,25 @@ def test_countvectorizer_stop_words():
 
 
 def test_countvectorizer_empty_vocabulary():
-    try:
-        CountVectorizer(vocabulary=[])
-        assert False, "we shouldn't get here"
-    except ValueError as e:
-        assert_in("empty vocabulary", str(e).lower())
+    assert_raise_message(ValueError, 'empty vocabulary',
+                         CountVectorizer, vocabulary=[])
+    v = CountVectorizer(max_df=1.0, stop_words='english')
+    assert_raise_message(ValueError, 'empty vocabulary',
+                         v.fit, ['to be or not to be',
+                                 'and me too',
+                                 'and so do you'])
 
-    try:
-        v = CountVectorizer(max_df=1.0, stop_words="english")
-        # fit on stopwords only
-        v.fit(["to be or not to be", "and me too", "and so do you"])
-        assert False, "we shouldn't get here"
-    except ValueError as e:
-        assert_in("empty vocabulary", str(e).lower())
+
+def _test_fit_countvectorizer_twice(n):
+    cv = CountVectorizer()
+    X1 = cv.fit_transform(ALL_FOOD_DOCS[:5], n_jobs=n)
+    X2 = cv.fit_transform(ALL_FOOD_DOCS[5:], n_jobs=n)
+    assert_not_equal(X1.shape[1], X2.shape[1])
 
 
 def test_fit_countvectorizer_twice():
-    cv = CountVectorizer()
-    X1 = cv.fit_transform(ALL_FOOD_DOCS[:5])
-    X2 = cv.fit_transform(ALL_FOOD_DOCS[5:])
-    assert_not_equal(X1.shape[1], X2.shape[1])
+    _test_fit_countvectorizer_twice(1)
+    _test_fit_countvectorizer_twice(2)
 
 
 def test_tf_idf_smoothing():
@@ -348,15 +366,16 @@ def test_tfidf_no_smoothing():
          [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=False, norm='l2')
 
+    # First we need to verify that numpy here provides div 0 warnings
     with warnings.catch_warnings(record=True) as w:
         1. / np.array([0.])
         numpy_provides_div0_warning = len(w) == 1
 
+    if not numpy_provides_div0_warning:
+        raise SkipTest("Numpy does not provide div 0 warnings.")
     in_warning_message = 'divide by zero'
     tfidf = assert_warns_message(RuntimeWarning, in_warning_message,
                                  tr.fit_transform, X).toarray()
-    if not numpy_provides_div0_warning:
-        raise SkipTest("Numpy does not provide div 0 warnings.")
 
 
 def test_sublinear_tf():
@@ -378,19 +397,24 @@ def test_vectorizer():
 
     # test without vocabulary
     v1 = CountVectorizer(max_df=0.5)
-    counts_train = v1.fit_transform(train_data)
-    if hasattr(counts_train, 'tocsr'):
-        counts_train = counts_train.tocsr()
+    counts_train = v1.fit_transform(train_data, n_jobs=1)
     assert_equal(counts_train[0, v1.vocabulary_["pizza"]], 2)
 
     # build a vectorizer v1 with the same vocabulary as the one fitted by v1
     v2 = CountVectorizer(vocabulary=v1.vocabulary_)
 
+    # Test the multiprocess version
+    train_data = iter(ALL_FOOD_DOCS[:-1])
+    v1m = CountVectorizer(max_df=0.5)
+    counts_train = v1m.fit_transform(train_data, n_jobs=2)
+    assert_equal(counts_train[0, v1m.vocabulary_["pizza"]], 2)
+
+    # build a vectorizer v1 with the same vocabulary as the one fitted by v1
+    v2m = CountVectorizer(vocabulary=v1m.vocabulary_)
+
     # compare that the two vectorizer give the same output on the test sample
-    for v in (v1, v2):
-        counts_test = v.transform(test_data)
-        if hasattr(counts_test, 'tocsr'):
-            counts_test = counts_test.tocsr()
+    for v, n_jobs in ((v1, 1), (v2, 1), (v1m, 2), (v2m, 2)):
+        counts_test = v.transform(test_data, n_jobs=n_jobs)
 
         vocabulary = v.vocabulary_
         assert_equal(counts_test[0, vocabulary["salad"]], 1)
@@ -530,7 +554,7 @@ def test_feature_names():
     # test for Value error on unfitted/empty vocabulary
     assert_raises(ValueError, cv.get_feature_names)
 
-    X = cv.fit_transform(ALL_FOOD_DOCS)
+    X = cv.fit_transform(ALL_FOOD_DOCS, n_jobs=1)
     n_samples, n_features = X.shape
     assert_equal(len(cv.vocabulary_), n_features)
 
@@ -544,7 +568,7 @@ def test_feature_names():
         assert_equal(idx, cv.vocabulary_.get(name))
 
 
-def test_vectorizer_max_features():
+def _test_vectorizer_max_features(n):
     vec_factories = (
         CountVectorizer,
         TfidfVectorizer,
@@ -557,9 +581,14 @@ def test_vectorizer_max_features():
     for vec_factory in vec_factories:
         # test bounded number of extracted features
         vectorizer = vec_factory(max_df=0.6, max_features=4)
-        vectorizer.fit(ALL_FOOD_DOCS)
+        vectorizer.fit(ALL_FOOD_DOCS, n_jobs=n)
         assert_equal(set(vectorizer.vocabulary_), expected_vocabulary)
         assert_equal(vectorizer.stop_words_, expected_stop_words)
+
+
+def test_vectorizer_max_features():
+    _test_vectorizer_max_features(1)
+    _test_vectorizer_max_features(2)
 
 
 def test_count_vectorizer_max_features():
@@ -568,43 +597,48 @@ def test_count_vectorizer_max_features():
     cv_1 = CountVectorizer(max_features=1)
     cv_3 = CountVectorizer(max_features=3)
     cv_None = CountVectorizer(max_features=None)
+    cv_3m = CountVectorizer(max_features=3)
 
-    counts_1 = cv_1.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
-    counts_3 = cv_3.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
-    counts_None = cv_None.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
+    counts_1 = cv_1.fit_transform(JUNK_FOOD_DOCS, n_jobs=1).sum(axis=0)
+    counts_3 = cv_3.fit_transform(JUNK_FOOD_DOCS, n_jobs=1).sum(axis=0)
+    counts_None = cv_None.fit_transform(JUNK_FOOD_DOCS, n_jobs=1).sum(axis=0)
+    counts_3m = cv_3m.fit_transform(JUNK_FOOD_DOCS, n_jobs=2).sum(axis=0)
 
     features_1 = cv_1.get_feature_names()
     features_3 = cv_3.get_feature_names()
     features_None = cv_None.get_feature_names()
+    features_3m = cv_3m.get_feature_names()
 
     # The most common feature is "the", with frequency 7.
     assert_equal(7, counts_1.max())
     assert_equal(7, counts_3.max())
     assert_equal(7, counts_None.max())
+    assert_equal(7, counts_3m.max())
 
     # The most common feature should be the same
     assert_equal("the", features_1[np.argmax(counts_1)])
     assert_equal("the", features_3[np.argmax(counts_3)])
     assert_equal("the", features_None[np.argmax(counts_None)])
+    assert_equal("the", features_3m[np.argmax(counts_3m)])
 
 
 def test_vectorizer_max_df():
     test_data = ['abc', 'dea', 'eat']
     vect = CountVectorizer(analyzer='char', max_df=1.0)
-    vect.fit(test_data)
+    vect.fit(test_data, n_jobs=1)
     assert_true('a' in vect.vocabulary_.keys())
     assert_equal(len(vect.vocabulary_.keys()), 6)
     assert_equal(len(vect.stop_words_), 0)
 
     vect.max_df = 0.5  # 0.5 * 3 documents -> max_doc_count == 1.5
-    vect.fit(test_data)
+    vect.fit(test_data, n_jobs=1)
     assert_true('a' not in vect.vocabulary_.keys())  # {ae} ignored
     assert_equal(len(vect.vocabulary_.keys()), 4)    # {bcdt} remain
     assert_true('a' in vect.stop_words_)
     assert_equal(len(vect.stop_words_), 2)
 
     vect.max_df = 1
-    vect.fit(test_data)
+    vect.fit(test_data, n_jobs=1)
     assert_true('a' not in vect.vocabulary_.keys())  # {ae} ignored
     assert_equal(len(vect.vocabulary_.keys()), 4)    # {bcdt} remain
     assert_true('a' in vect.stop_words_)
@@ -614,20 +648,20 @@ def test_vectorizer_max_df():
 def test_vectorizer_min_df():
     test_data = ['abc', 'dea', 'eat']
     vect = CountVectorizer(analyzer='char', min_df=1)
-    vect.fit(test_data)
+    vect.fit(test_data, n_jobs=1)
     assert_true('a' in vect.vocabulary_.keys())
     assert_equal(len(vect.vocabulary_.keys()), 6)
     assert_equal(len(vect.stop_words_), 0)
 
     vect.min_df = 2
-    vect.fit(test_data)
+    vect.fit(test_data, n_jobs=1)
     assert_true('c' not in vect.vocabulary_.keys())  # {bcdt} ignored
     assert_equal(len(vect.vocabulary_.keys()), 2)    # {ae} remain
     assert_true('c' in vect.stop_words_)
     assert_equal(len(vect.stop_words_), 4)
 
     vect.min_df = 0.8  # 0.8 * 3 documents -> min_doc_count == 2.4
-    vect.fit(test_data)
+    vect.fit(test_data, n_jobs=1)
     assert_true('c' not in vect.vocabulary_.keys())  # {bcdet} ignored
     assert_equal(len(vect.vocabulary_.keys()), 1)    # {a} remains
     assert_true('c' in vect.stop_words_)
@@ -686,7 +720,7 @@ def test_vectorizer_inverse_transform():
     # raw documents
     data = ALL_FOOD_DOCS
     for vectorizer in (TfidfVectorizer(), CountVectorizer()):
-        transformed_data = vectorizer.fit_transform(data)
+        transformed_data = vectorizer.fit_transform(data, n_jobs=1)
         inversed_data = vectorizer.inverse_transform(transformed_data)
         analyze = vectorizer.build_analyzer()
         for doc, inversed_terms in zip(data, inversed_data):
@@ -722,9 +756,14 @@ def test_count_vectorizer_pipeline_grid_selection():
         'svc__loss': ('l1', 'l2')
     }
 
+    fit_params = {
+        'vect__n_jobs': 1
+    }
+
     # find the best parameters for both the feature extraction and the
     # classifier
-    grid_search = GridSearchCV(pipeline, parameters, n_jobs=1)
+    grid_search = GridSearchCV(pipeline, parameters, n_jobs=1,
+                               fit_params=fit_params)
 
     # cross-validation doesn't work if the length of the data is not known,
     # hence use lists instead of iterators
@@ -761,9 +800,14 @@ def test_vectorizer_pipeline_grid_selection():
         'svc__loss': ('l1', 'l2'),
     }
 
+    fit_params = {
+        'vect__n_jobs': 1
+    }
+
     # find the best parameters for both the feature extraction and the
     # classifier
-    grid_search = GridSearchCV(pipeline, parameters, n_jobs=1)
+    grid_search = GridSearchCV(pipeline, parameters, n_jobs=1,
+                               fit_params=fit_params)
 
     # cross-validation doesn't work if the length of the data is not known,
     # hence use lists instead of iterators
@@ -800,7 +844,7 @@ def test_vectorizer_unicode():
         "\x8f.")
 
     vect = CountVectorizer()
-    X_counted = vect.fit_transform([document])
+    X_counted = vect.fit_transform([document], n_jobs=1)
     assert_equal(X_counted.shape, (1, 15))
 
     vect = HashingVectorizer(norm=None, non_negative=True)
