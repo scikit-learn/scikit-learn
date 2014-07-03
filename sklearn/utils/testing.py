@@ -15,6 +15,7 @@ import warnings
 import sys
 import re
 import platform
+import operator
 
 import scipy as sp
 import scipy.io
@@ -45,6 +46,7 @@ from numpy.testing import assert_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_less
+from numpy.testing.utils import assert_array_compare
 import numpy as np
 
 from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
@@ -53,7 +55,9 @@ from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "raises", "with_setup", "assert_true",
            "assert_false", "assert_almost_equal", "assert_array_equal",
-           "assert_array_almost_equal", "assert_array_less",
+           "assert_array_almost_equal",
+           "assert_array_less", "assert_array_less_equal",
+           "assert_array_greater", "assert_array_greater_equal",
            "assert_less", "assert_less_equal",
            "assert_greater", "assert_greater_equal"]
 
@@ -118,6 +122,23 @@ def assert_greater_equal(a, b, msg=None):
     if msg is not None:
         message += ": " + msg
     assert a >= b, message
+
+
+# like numpy.testing.assert_array_less, since numpy doesn't have those
+def assert_array_greater(x, y, err_msg='', verbose=True):
+    assert_array_compare(operator.__gt__, x, y, err_msg=err_msg,
+                         verbose=verbose,
+                         header='Arrays are not greater-ordered')
+
+def assert_array_greater_equal(x, y, err_msg='', verbose=True):
+    assert_array_compare(operator.__ge__, x, y, err_msg=err_msg,
+                         verbose=verbose,
+                         header='Arrays are not greater-or-equal-ordered')
+
+def assert_array_less_equal(x, y, err_msg='', verbose=True):
+    assert_array_compare(operator.__le__, x, y, err_msg=err_msg,
+                         verbose=verbose,
+                         header='Arrays are not less-or-equal-ordered')
 
 
 # To remove when we support numpy 1.7
