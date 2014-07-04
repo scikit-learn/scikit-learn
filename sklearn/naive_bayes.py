@@ -159,27 +159,7 @@ class GaussianNB(BaseNB):
         self : object
             Returns self.
         """
-
-        X, y = check_arrays(X, y, sparse_format='dense')
-        y = column_or_1d(y, warn=True)
-
-        n_samples, n_features = X.shape
-
-        self.classes_ = unique_y = np.unique(y)
-        n_classes = unique_y.shape[0]
-
-        self.theta_ = np.zeros((n_classes, n_features))
-        self.sigma_ = np.zeros((n_classes, n_features))
-        self.class_prior_ = np.zeros(n_classes)
-        self.class_count_ = np.zeros(n_classes)
-        epsilon = 1e-9
-        for i, y_i in enumerate(unique_y):
-            Xi = X[y == y_i, :]
-            self.theta_[i, :] = np.mean(Xi, axis=0)
-            self.sigma_[i, :] = np.var(Xi, axis=0) + epsilon
-            self.class_count_[i] = Xi.shape[0]
-        self.class_prior_[:] = self.class_count_ / n_samples
-        return self
+        return self.partial_fit(X, y, np.unique(y), _refit=True)
 
     @staticmethod
     def _update_mean_variance(n_past, mu, var, X):
@@ -235,7 +215,7 @@ class GaussianNB(BaseNB):
 
         return total_sum / n_total, total_ssd / n_total
 
-    def partial_fit(self, X, y, classes=None):
+    def partial_fit(self, X, y, classes=None, _refit=False):
         """Incremental fit on a batch of samples.
 
         This method is expected to be called several times consecutively
@@ -265,6 +245,10 @@ class GaussianNB(BaseNB):
             Must be provided at the first call to partial_fit, can be omitted
             in subsequent calls.
 
+        _refit: boolean
+            If true, act as though this were the first time we called
+            partial_fit (ie, throw away any past fitting and start over).
+
         Returns
         -------
         self : object
@@ -274,7 +258,7 @@ class GaussianNB(BaseNB):
         y = column_or_1d(y, warn=True)
         epsilon = 1e-9
 
-        if _check_partial_fit_first_call(self, classes):
+        if _check_partial_fit_first_call(self, classes) or _refit:
             # This is the first call to partial_fit:
             # initialize various cumulative counters
             n_features = X.shape[1]
