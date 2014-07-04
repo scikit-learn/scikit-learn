@@ -285,7 +285,7 @@ def check_sample_weight_multiclass(cls):
     clf = cls().fit(X, y, sample_weight=sample_weight)
     assert_array_equal(clf.predict(X), [0, 1, 1, 2])
 
-    # Check wample weight using the partial_fit method
+    # Check sample weight using the partial_fit method
     clf = cls()
     clf.partial_fit(X[:2], y[:2], classes=[0, 1, 2],
                     sample_weight=sample_weight[:2])

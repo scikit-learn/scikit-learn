@@ -227,6 +227,9 @@ Changelog
    - Shuffle option for :class:`cross_validation.StratifiedKFold`.
      By `Jeffrey Blackburne`_.
 
+   - Incremental learning (``partial_fit``) for Gaussian Naive Bayes by
+     Imran Haque.
+
 
 API changes summary
 -------------------
