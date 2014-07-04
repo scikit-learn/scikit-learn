@@ -310,8 +310,8 @@ def type_of_target(y):
 def _check_partial_fit_first_call(clf, classes=None):
     """Private helper function for factorizing common classes param logic
 
-    Estimator that implement the ``partial_fit`` API need to be provided with
-    the list of possible classes at the first call to partial fit.and
+    Estimators that implement the ``partial_fit`` API need to be provided with
+    the list of possible classes at the first call to partial_fit.
 
     Subsequent calls to partial_fit should check that ``classes`` is still
     consistent with a previous value of ``clf.classes_`` when provided.
