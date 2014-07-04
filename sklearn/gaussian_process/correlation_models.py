@@ -291,6 +291,82 @@ class SquaredExponential(StationaryCorrelation):
                              % n_features)
 
 
+class Matern_1_5(SquaredExponential):
+    """ Matern correlation model for nu=1.5.
+
+    Sample paths are once differentiable. Given by::
+
+        r(theta, dx) = (1 + np.sqrt(3*activ))*exp(-np.sqrt(3*activ))
+    where activ=dx.T * M * dx and M is a covariance matrix of size n*n.
+
+    See Rasmussen and Williams 2006, pp84 for details regarding the different
+    variants of the Matern kernel.
+    """
+
+    def _compute_corr(self, theta, d, n_features):
+        """ Correlation for given pairwise, component-wise L1-differences.
+
+        Parameters
+        ----------
+        theta : array_like, shape=(1,) [isotropic]
+                                  (n_features,) [anisotropic] or
+                                  (k*n_features,) [factor analysis distance]
+            An array encoding the autocorrelation parameter(s).
+
+        d : array_like, shape=(n_eval, n_features)
+            An array with the pairwise, component-wise L1-differences of x
+            and x' at which the correlation model should be evaluated.
+
+        Returns
+        -------
+        r : array_like, shape=(n_eval, )
+            An array containing the values of the autocorrelation model.
+        """
+        d = np.asarray(d, dtype=np.float)
+        activ = self._quadratic_activation(theta, d, n_features)
+        tmp = np.sqrt(3 * activ)  # temporary variable for preventing
+                                  # recomputation
+        return (1 + tmp) * np.exp(-tmp)
+
+
+class Matern_2_5(SquaredExponential):
+    """ Matern correlation model for nu=2.5.
+
+    Sample paths are twice differentiable. Given by::
+
+       r(theta, dx) = (1 + np.sqrt(5*activ) + 5/3*activ)*exp(-np.sqrt(5*activ))
+    where activ=dx.T * M * dx and M is a covariance matrix of size n*n.
+
+    See Rasmussen and Williams 2006, pp84 for details regarding the different
+    variants of the Matern kernel.
+    """
+
+    def _compute_corr(self, theta, d, n_features):
+        """ Correlation for given pairwise, component-wise L1-differences.
+
+        Parameters
+        ----------
+        theta : array_like, shape=(1,) [isotropic]
+                                  (n_features,) [anisotropic] or
+                                  (k*n_features,) [factor analysis distance]
+            An array encoding the autocorrelation parameter(s).
+
+        d : array_like, shape=(n_eval, n_features)
+            An array with the pairwise, component-wise L1-differences of x
+            and x' at which the correlation model should be evaluated.
+
+        Returns
+        -------
+        r : array_like, shape=(n_eval, )
+            An array containing the values of the autocorrelation model.
+        """
+        d = np.asarray(d, dtype=np.float)
+        activ = self._quadratic_activation(theta, d, n_features)
+        tmp = np.sqrt(5 * activ)  # temporary variable for preventing
+                                  # recomputation
+        return (1 + tmp + 5.0 / 3.0 * activ) * np.exp(-tmp)
+
+
 class GeneralizedExponential(StationaryCorrelation):
     """ Generalized exponential correlation model.
 

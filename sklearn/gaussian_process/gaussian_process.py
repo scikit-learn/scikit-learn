@@ -176,6 +176,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
     _correlation_types = {
         'absolute_exponential': correlation.AbsoluteExponential,
         'squared_exponential': correlation.SquaredExponential,
+        'matern_1.5': correlation.Matern_1_5,
+        'matern_2.5': correlation.Matern_2_5,
         'generalized_exponential': correlation.GeneralizedExponential,
         'cubic': correlation.Cubic,
         'linear': correlation.Linear}
@@ -682,7 +684,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                                            np.log10(self.thetaU))
                 except ValueError:
                     print("Optimization failed. Try increasing the ``nugget``")
-                    raise ve
+                    raise
 
                 optimal_theta = 10. ** log10_optimal_theta
                 optimal_rlf_value, optimal_par = \
