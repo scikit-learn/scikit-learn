@@ -89,7 +89,6 @@ class StationaryCorrelation(with_metaclass(ABCMeta, object)):
         # componentwise distances between locations x and x' at which the
         # correlation model should be evaluated.
         self.D, self.ij = l1_cross_distances(self.X)
-        self.D = np.abs(np.asarray(self.D, dtype=np.float))
         if (np.min(np.sum(self.D, axis=1)) == 0.
            and not isinstance(self.corr, PureNugget)):
             raise Exception("Multiple input features cannot have the same"
@@ -197,6 +196,8 @@ class AbsoluteExponential(StationaryCorrelation):
         r : array_like, shape=(n_eval, )
             An array containing the values of the autocorrelation model.
         """
+        d = np.asarray(d, dtype=np.float)
+        d = np.abs(d)
         if theta.size == 1:
             return np.exp(- theta[0] * np.sum(d, axis=1))
         elif theta.size != n_features:
@@ -234,6 +235,7 @@ class SquaredExponential(StationaryCorrelation):
         r : array_like, shape=(n_eval, )
             An array containing the values of the autocorrelation model.
         """
+        d = np.asarray(d, dtype=np.float)
         if theta.size == 1:
             return np.exp(-theta[0] * np.sum(d ** 2, axis=1))
         elif theta.size != n_features:
@@ -273,6 +275,7 @@ class GeneralizedExponential(StationaryCorrelation):
         r : array_like, shape=(n_eval, )
             An array containing the values of the autocorrelation model.
         """
+        d = np.asarray(d, dtype=np.float)
         lth = theta.size
         if n_features > 1 and lth == 2:
             theta = np.hstack([np.repeat(theta[0], n_features), theta[1]])
@@ -317,6 +320,7 @@ class PureNugget(StationaryCorrelation):
             An array with shape (n_eval, ) with the values of the
             autocorrelation model.
         """
+        d = np.asarray(d, dtype=np.float)
         n_eval = d.shape[0]
         r = np.zeros(n_eval)
         r[np.all(d == 0., axis=1)] = 1.
@@ -353,6 +357,7 @@ class Cubic(StationaryCorrelation):
         r : array_like, shape=(n_eval, )
             An array containing the values of the autocorrelation model.
         """
+        d = np.asarray(d, dtype=np.float)
         lth = theta.size
         if lth == 1:
             td = np.abs(d) * theta
@@ -395,6 +400,7 @@ class Linear(StationaryCorrelation):
         r : array_like, shape=(n_eval, )
             An array containing the values of the autocorrelation model.
         """
+        d = np.asarray(d, dtype=np.float)
         lth = theta.size
         if lth == 1:
             td = np.abs(d) * theta
