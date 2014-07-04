@@ -15,7 +15,6 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 
 from ..utils import array2d
-from ..metrics.pairwise import manhattan_distances
 from ..externals.six import with_metaclass
 
 MACHINE_EPSILON = np.finfo(np.double).eps
@@ -118,8 +117,10 @@ class StationaryCorrelation(with_metaclass(ABCMeta, object)):
         """
         theta = np.asarray(theta, dtype=np.float)
         if X is not None:
-            # Get pairwise componentwise L1-distances to the input training set
-            d = manhattan_distances(X, Y=self.X, sum_over_features=False)
+            # Get pairwise componentwise L1-differences to the input training
+            # set
+            d = X[:, np.newaxis, :] - self.X[np.newaxis, :, :]
+            d = d.reshape((-1, X.shape[1]))
         else:
             # No external datapoints given; auto-correlation of training set
             # is used instead
