@@ -165,7 +165,7 @@ def test_consistency_path():
             lr = LogisticRegression(C=C, fit_intercept=False, tol=1e-16)
             lr.fit(X, Y1)
             lr_coef = lr.coef_.ravel()
-            assert_array_almost_equal(lr_coef, coefs[i], decimal=1)
+            assert_array_almost_equal(lr_coef, coefs[i], decimal=3)
 
     # test for fit_intercept=True
     for method in ('lbfgs', 'newton-cg', 'liblinear'):
@@ -218,9 +218,10 @@ def test_logistic_loss_and_grad():
 
 
 def test_logistic_loss_grad_hess():
+    rng = np.random.RandomState(0)
     n_samples, n_features = 50, 5
-    X_ref = np.random.randn(n_samples, n_features)
-    y = np.sign(X_ref.dot(5 * np.random.randn(n_features)))
+    X_ref = rng.randn(n_samples, n_features)
+    y = np.sign(X_ref.dot(5 * rng.randn(n_features)))
     X_ref -= X_ref.mean()
     X_ref /= X_ref.std()
     X_sp = X_ref.copy()
@@ -270,13 +271,13 @@ def test_logistic_loss_grad_hess():
 def test_logistic_cv():
     """test for LogisticRegressionCV object"""
     n_samples, n_features = 50, 5
-    np.random.seed(0)
-    X_ref = np.random.randn(n_samples, n_features)
-    y = np.sign(X_ref.dot(5 * np.random.randn(n_features)))
+    rng = np.random.RandomState(0)
+    X_ref = rng.randn(n_samples, n_features)
+    y = np.sign(X_ref.dot(5 * rng.randn(n_features)))
     X_ref -= X_ref.mean()
     X_ref /= X_ref.std()
     lr_cv = LogisticRegressionCV(Cs=[1.], fit_intercept=False,
-        solver='liblinear')
+                                 solver='liblinear')
     lr_cv.fit(X_ref, y)
     lr = LogisticRegression(C=1., fit_intercept=False)
     lr.fit(X_ref, y)
@@ -285,7 +286,7 @@ def test_logistic_cv():
 
 def test_logistic_cv_sparse():
     X, y = make_classification(n_samples=50, n_features=5,
-                               random_state=np.random.RandomState(0))
+                               random_state=0)
     X[X < 1.0] = 0.0
     csr = sp.csr_matrix(X)
 
@@ -302,7 +303,7 @@ def test_logistic_cv_sparse():
 def test_intercept_logistic_helper():
     n_samples, n_features = 10, 5
     X, y = make_classification(n_samples=n_samples, n_features=n_features,
-                               random_state=np.random.RandomState(0))
+                               random_state=0)
 
     # Fit intercept case.
     alpha = 1.
@@ -317,14 +318,14 @@ def test_intercept_logistic_helper():
 
     # In the fit_intercept=False case, the feature vector of ones is
     # penalized. This should be taken care of.
-    assert_almost_equal(loss_interp + 0.5 * (w[-1]**2), loss)
+    assert_almost_equal(loss_interp + 0.5 * (w[-1] ** 2), loss)
 
     # Check gradient.
     assert_array_almost_equal(grad_interp[:n_features], grad[:n_features])
     assert_almost_equal(grad_interp[-1] + alpha * w[-1], grad[-1])
 
-    np.random.seed(0)
-    grad = np.random.rand(n_features + 1)
+    rng = np.random.RandomState(0)
+    grad = rng.rand(n_features + 1)
     hess_interp = hess_interp(grad)
     hess = hess(grad)
     assert_array_almost_equal(hess_interp[:n_features], hess[:n_features])

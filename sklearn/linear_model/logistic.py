@@ -18,6 +18,7 @@ from ..preprocessing import LabelEncoder
 from ..svm.base import BaseLibLinear
 from ..utils import atleast2d_or_csc, check_arrays
 from ..utils.extmath import log_logistic, safe_sparse_dot
+from ..utils.validation import as_float_array
 from ..utils.fixes import expit
 from ..externals.joblib import Parallel, delayed
 from ..cross_validation import check_cv
@@ -28,7 +29,7 @@ from ..metrics import SCORERS
 
 # .. some helper functions for logistic_regression_path ..
 def _intercept_dot(w, X, y):
-    """Computes y * np.dot(w, X).
+    """Computes y * np.dot(X, w).
 
     It takes into consideration if the intercept should be fit or not.
 
@@ -51,6 +52,7 @@ def _intercept_dot(w, X, y):
     z = safe_sparse_dot(X, w)
     if c is not None:
         z += c
+
     return w, c, y*z
 
 
@@ -70,6 +72,14 @@ def _logistic_loss_and_grad(w, X, y, alpha):
 
     alpha : float
         Regularization parameter. alpha is equal to 1 / C.
+
+    Returns
+    -------
+    out: float
+        Logistic loss.
+
+    grad: ndarray, shape (n_features,) or (n_features + 1,)
+        Logistic gradient.
     """
     _, n_features = X.shape
     grad = np.empty_like(w)
@@ -104,6 +114,11 @@ def _logistic_loss(w, X, y, alpha):
 
     alpha : float
         Regularization parameter. alpha is equal to 1 / C.
+
+    Returns
+    -------
+    out: float
+        Logistic loss.
     """
     w, c, yz = _intercept_dot(w, X, y)
 
@@ -128,6 +143,18 @@ def _logistic_loss_grad_hess(w, X, y, alpha):
 
     alpha : float
         Regularization parameter. alpha is equal to 1 / C.
+
+    Returns
+    -------
+    out: float
+        Logistic loss.
+
+    grad: ndarray, shape (n_features,) or (n_features + 1,)
+        Logistic gradient.
+
+    Hs: callable
+        Function that takes the gradient as a parameter and returns the
+        matrix product of the Hessian and gradient.
     """
     n_samples, n_features = X.shape
     grad = np.empty_like(w)
@@ -217,10 +244,10 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     solver : {'lbfgs', 'newton-cg', 'liblinear'}
         Numerical solver to use.
 
-    coef: array-lime, shape (n_features,)
+    coef: array-like, shape (n_features,) default None
         Initialization value for coefficients of logistic regression.
 
-    copy: boolean
+    copy: bool
         Whether or not to produce a copy of the data. Setting this to
         True will be useful in cases, when logistic_regression_path
         is called repeatedly with the same data, as y is modified
@@ -254,6 +281,9 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     mask = (y == pos_class)
     y[mask] = 1
     y[~mask] = -1
+
+    # To take care of object dtypes
+    y = as_float_array(y, copy=False)
 
     if fit_intercept:
         w0 = np.zeros(X.shape[1] + 1)
@@ -325,9 +355,10 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         The class with respect to which we perform a one-vs-all fit.
         If None, then it is assumed that the given problem is binary.
 
-    Cs: list of floats, ints
+    Cs: list of floats | int
         Each of the values in Cs describes the inverse of
-        regularization strength and must be a positive float.
+        regularization strength. If Cs is as an int, then a grid of Cs
+        values are chosen in a logarithmic scale between 1e-4 and 1e4.
         If not provided, then a fixed set of values for Cs are used.
 
     scoring : callable
@@ -369,6 +400,12 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         mask = (y_test == pos_class)
         y_test[mask] = 1
         y_test[~mask] = -1
+
+    # To deal with object dtypes, we need to convert into an array of floats.
+    X_train = as_float_array(X_train, copy=False)
+    y_train = as_float_array(y_train, copy=False)
+    X_test = as_float_array(X_test, copy=False)
+    y_test = as_float_array(y_test, copy=False)
 
     coefs, Cs = logistic_regression_path(X_train, y_train, Cs=Cs,
                                          fit_intercept=fit_intercept,
@@ -532,14 +569,15 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
                            _LearntSelectorMixin):
     """Logistic Regression CV (aka logit, MaxEnt) classifier.
 
-    This class implements L2 regularized logistic regression using and
-    LBFGS optimizer.
+    This class implements L2 regularized logistic regression using liblinear,
+    newton-cg or LBFGS optimizer.
 
     Parameters
     ----------
-    Cs: list of floats, ints
+    Cs: list of floats | int
         Each of the values in Cs describes the inverse of regularization
-        strength and must be a positive float.
+        strength. If Cs is as an int, then a grid of Cs values are chosen
+        in a logarithmic scale between 1e-4 and 1e4.
         Like in support vector machines, smaller values specify stronger
         regularization.
 
@@ -564,14 +602,14 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
     tol: float, optional
         Tolerance for stopping criteria.
 
-    max_iter: integer, optional
+    max_iter: int, optional
         Maximum number of iterations of the optimization algorithm.
 
-    n_jobs : integer, optional
+    n_jobs : int, optional
         Number of CPU cores used during the cross-validation loop. If given
         a value of -1, all cores are used.
 
-    verbose : bool or integer
+    verbose : bool | int
         Amount of verbosity.
 
     refit : bool
@@ -597,7 +635,7 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
         and is of shape(1,) when the problem is binary.
 
     `Cs_` : array
-        Array of C i.e inverse of regularization parameter values used
+        Array of C i.e. inverse of regularization parameter values used
         for cross-validation.
 
     `coefs_paths_` : array, shape (n_folds, len(Cs_), n_features) or
