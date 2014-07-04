@@ -31,7 +31,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
             'constant', 'linear', 'quadratic'
 
-    corr : string or callable, optional
+    corr : string or instance of StationaryCorrelation, optional
         A stationary autocorrelation function returning the autocorrelation
         between two points x and x'.
         Default assumes a squared-exponential autocorrelation model.
