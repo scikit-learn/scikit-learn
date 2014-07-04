@@ -286,6 +286,17 @@ class SquaredExponential(StationaryCorrelation):
             return theta[0] * np.sum(d ** 2, axis=1)
         elif theta.size == n_features:  # anisotropic but diagonal case (ARD)
             return np.sum(theta.reshape(1, n_features) * d ** 2, axis=1)
+        elif theta.size % n_features == 0:
+            # Factor analysis case: M = lambda*lambda.T + diag(l)
+            theta = theta.reshape((1, theta.size))
+            M = np.diag(theta[0, :n_features])  # the diagonal matrix part l
+            # The low-rank matrix contribution which allows accounting for
+            # correlations in the feature dimensions
+            # NOTE: these components of theta are passed through a log-function
+            #       to allow negative values in Lambda
+            Lambda = np.log10(theta[0, n_features:].reshape((n_features, -1)))
+            M += Lambda.dot(Lambda.T)
+            return np.sum(d.dot(M) * d, -1)
         else:
             raise ValueError("Length of theta must be 1 or a multiple of %s."
                              % n_features)
