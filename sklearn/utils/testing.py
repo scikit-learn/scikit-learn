@@ -8,6 +8,7 @@
 #          Arnaud Joly
 #          Denis Engemann
 # License: BSD 3 clause
+import os
 import inspect
 import pkgutil
 import warnings
@@ -594,3 +595,11 @@ def clean_warning_registry():
     for mod in sys.modules.copy().values():
         if hasattr(mod, reg):
             getattr(mod, reg).clear()
+
+
+def check_skip_network():
+    if int(os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', 0)):
+        raise SkipTest("Text tutorial requires large dataset download")
+
+
+with_network = with_setup(check_skip_network)
