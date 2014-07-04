@@ -12,7 +12,6 @@ import numpy as np
 
 from sklearn.gaussian_process import GaussianProcess
 from sklearn.gaussian_process import regression_models as regression
-from sklearn.gaussian_process import correlation_models as correlation
 
 
 f = lambda x: x * np.sin(x)
@@ -70,8 +69,8 @@ def test_2d(regr=regression.constant, corr="squared_exponential",
 
     assert_true(np.allclose(y_pred, y) and np.allclose(MSE, 0.))
 
-    assert_true(np.all(gp.theta_ >= thetaL)) # Lower bounds of hyperparameters
-    assert_true(np.all(gp.theta_ <= thetaU)) # Upper bounds of hyperparameters
+    assert_true(np.all(gp.theta_ >= thetaL))  # Lower bounds of hyperparameters
+    assert_true(np.all(gp.theta_ <= thetaU))  # Upper bounds of hyperparameters
 
 
 def test_2d_2d(regr=regression.constant, corr="squared_exponential",
