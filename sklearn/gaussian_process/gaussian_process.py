@@ -257,7 +257,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             y_std = np.ones(1)
 
         # Instantiate correlation model
-        self.corr = self.corr(X, self.nugget)
+        self.corr_ = self.corr(X, self.nugget)
 
         # Regression matrix and parameters
         F = self.regr(X)
@@ -393,7 +393,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
             # Get regression function and correlation
             f = self.regr(X)
-            r = self.corr(self.theta_, X)
+            r = self.corr_(self.theta_, X)
 
             # Scaled predictor
             y_ = np.dot(f, self.beta) + np.dot(r, self.gamma)
@@ -537,7 +537,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             F = self.regr(self.X)
 
         # Determine (auto-)correlation of training data
-        R = self.corr(theta)
+        R = self.corr_(theta)
 
         # Cholesky decomposition of R
         try:
@@ -699,7 +699,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
             # Backup of the given atrributes
             theta0, thetaL, thetaU = self.theta0, self.thetaL, self.thetaU
-            corr = self.corr
+            corr = self.corr_
             verbose = self.verbose
 
             # This will iterate over fmin_cobyla optimizer
@@ -726,19 +726,19 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 self.thetaL = array2d(thetaL[0, i])
                 self.thetaU = array2d(thetaU[0, i])
 
-                def corr_cut(t, d):
+                def corr_cut(t, X=None):
                     return corr(array2d(np.hstack([optimal_theta[0][0:i],
                                                    t[0],
                                                    optimal_theta[0][(i + 1)::]]
-                                                  )), d)
+                                                  )), X)
 
-                self.corr = corr_cut
+                self.corr_ = corr_cut
                 optimal_theta[0, i], optimal_rlf_value, optimal_par = \
                     self._arg_max_reduced_likelihood_function()
 
             # Restore the given atrributes
             self.theta0, self.thetaL, self.thetaU = theta0, thetaL, thetaU
-            self.corr = corr
+            self.corr_ = corr
             self.optimizer = 'Welch'
             self.verbose = verbose
 
