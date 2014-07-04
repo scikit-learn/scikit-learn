@@ -270,7 +270,7 @@ class GaussianNB(BaseNB):
             Must be provided at the first call to partial_fit, can be omitted
             in subsequent calls.
 
-        _refit: boolean
+        _refit: bool
             If true, act as though this were the first time we called
             _partial_fit (ie, throw away any past fitting and start over).
 
