@@ -21,9 +21,9 @@ from ..externals.six import with_metaclass
 MACHINE_EPSILON = np.finfo(np.double).eps
 
 
-def l1_cross_distances(X):
+def l1_cross_differences(X):
     """
-    Computes the nonzero componentwise L1 cross-distances between the vectors
+    Computes the nonzero componentwise differences between the vectors
     in X.
 
     Parameters
@@ -36,7 +36,7 @@ def l1_cross_distances(X):
     -------
 
     D: array with shape (n_samples * (n_samples - 1) / 2, n_features)
-        The array of componentwise L1 cross-distances.
+        The array of componentwise differences.
 
     ij: arrays with shape (n_samples * (n_samples - 1) / 2, 2)
         The indices i and j of the vectors in X associated to the cross-
@@ -44,18 +44,18 @@ def l1_cross_distances(X):
     """
     X = array2d(X)
     n_samples, n_features = X.shape
-    n_nonzero_cross_dist = n_samples * (n_samples - 1) // 2
-    ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int)
-    D = np.zeros((n_nonzero_cross_dist, n_features))
+    n_nonzero_cross_diff = n_samples * (n_samples - 1) // 2
+    ij = np.zeros((n_nonzero_cross_diff, 2), dtype=np.int)
+    D = np.zeros((n_nonzero_cross_diff, n_features))
     ll_1 = 0
     for k in range(n_samples - 1):
         ll_0 = ll_1
         ll_1 = ll_0 + n_samples - k - 1
         ij[ll_0:ll_1, 0] = k
         ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
-        D[ll_0:ll_1] = np.abs(X[k] - X[(k + 1):n_samples])
+        D[ll_0:ll_1] = X[k] - X[(k + 1):n_samples]
 
-    return D, ij
+    return D, ij.astype(np.int)
 
 
 class StationaryCorrelation(with_metaclass(ABCMeta, object)):
@@ -88,7 +88,7 @@ class StationaryCorrelation(with_metaclass(ABCMeta, object)):
         # Calculate array with shape (n_eval, n_features) giving the
         # componentwise distances between locations x and x' at which the
         # correlation model should be evaluated.
-        self.D, self.ij = l1_cross_distances(self.X)
+        self.D, self.ij = l1_cross_differences(self.X)
         if (np.min(np.sum(self.D, axis=1)) == 0.
            and not isinstance(self.corr, PureNugget)):
             raise Exception("Multiple input features cannot have the same"
@@ -222,9 +222,10 @@ class SquaredExponential(StationaryCorrelation):
 
         Parameters
         ----------
-        theta : array_like, shape=(1,) or (n_features,)
-            An array with shape 1 (isotropic) or n_features (anisotropic)
-            giving the autocorrelation parameter(s).
+        theta : array_like, shape=(1,) [isotropic]
+                                  (n_features,) [anisotropic] or
+                                  (k*n_features,) [factor analysis distance]
+            An array encoding the autocorrelation parameter(s).
 
         d : array_like, shape=(n_eval, n_features)
             An array with the pairwise, component-wise L1-differences of x
@@ -236,13 +237,57 @@ class SquaredExponential(StationaryCorrelation):
             An array containing the values of the autocorrelation model.
         """
         d = np.asarray(d, dtype=np.float)
-        if theta.size == 1:
-            return np.exp(-theta[0] * np.sum(d ** 2, axis=1))
-        elif theta.size != n_features:
-            raise ValueError("Length of theta must be 1 or %s" % n_features)
+        return np.exp(-self._quadratic_activation(theta, d, n_features))
+
+    def _quadratic_activation(self, theta, d, n_features):
+        """ Utility function for computing quadratic activation.
+
+        Computes the activation activ=d.T * M * d where M is a covariance
+        matrix of size n*n. The hyperparameters theta specify
+         * an isotropic covariance matrix, i.e., M = theta * I with I being the
+           identity, if theta has shape 1
+         * an automatic relevance determination model if theta has shape n,
+           in which the characteristic length scales of each dimension are
+           learned separately:  M = diag(theta)
+         * a factor analysis distance model if theta has shape k*n for k> 1,
+           in which a low-rank approximation of the full matrix M is learned.
+           This low-rank approximation approximates the covariance matrix as
+           low-rank matrix plus a diagonal matrix:
+           M = Lambda * Lambda.T + diag(l),
+           where Lambda is a n*(k-1) matrix and l specifies the diagonal
+           matrix.
+
+        Parameters
+        ----------
+        theta : array_like, shape=(1,) [isotropic]
+                                  (n_features,) [anisotropic] or
+                                  (k*n_features,) [factor analysis distance]
+            An array encoding the autocorrelation parameter(s). In the
+            case of the factor analysis distance, M is approximated by
+            M = Lambda * Lambda.T + diag(l), where l is encoded in the last n
+            entries of theta and Lambda is encoded row-wise in the first
+            entries of theta. Note that Lambda may contain negative entries
+            while theta is strictly positive; because of this, the entries of
+            Lambda are set to the logarithm with basis 10 of the corresponding
+            entries in theta.
+
+        array_like, shape=(n_eval, n_features)
+            An array giving the componentwise differences of x and x' at
+            which the quadratic activation should be evaluated.
+
+        Returns
+        -------
+        a : array_like, shape=(n_eval, )
+            An array with the activation values for the respective
+            componentwise differences d.
+        """
+        if theta.size == 1:  # case where M is isotropic: M = diag(theta[0])
+            return theta[0] * np.sum(d ** 2, axis=1)
+        elif theta.size == n_features:  # anisotropic but diagonal case (ARD)
+            return np.sum(theta.reshape(1, n_features) * d ** 2, axis=1)
         else:
-            return np.exp(-np.sum(theta.reshape(1, n_features) * d ** 2,
-                          axis=1))
+            raise ValueError("Length of theta must be 1 or a multiple of %s."
+                             % n_features)
 
 
 class GeneralizedExponential(StationaryCorrelation):
