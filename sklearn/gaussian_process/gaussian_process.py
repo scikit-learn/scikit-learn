@@ -257,7 +257,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             y_std = np.ones(1)
 
         # Instantiate correlation model
-        self.corr = self.corr(X, self.nugget, self.storage_mode)
+        self.corr = self.corr(X, self.nugget)
 
         # Regression matrix and parameters
         F = self.regr(X)

@@ -10,10 +10,15 @@
 The built-in correlation models submodule for the gaussian_process module.
 """
 
+from abc import ABCMeta, abstractmethod
+
 import numpy as np
 
 from ..utils import array2d
 from ..metrics.pairwise import manhattan_distances
+from ..externals.six import with_metaclass
+
+MACHINE_EPSILON = np.finfo(np.double).eps
 
 
 def l1_cross_distances(X):
@@ -53,9 +58,29 @@ def l1_cross_distances(X):
     return D, ij
 
 
-class StationaryCorrelation(object):
+class StationaryCorrelation(with_metaclass(ABCMeta, object)):
+    """ Base-class for stationary correlation models for Gaussian Processes.
 
-    def __init__(self, X, nugget, storage_mode='full'):  # TODO: Storage mode
+    Stationary correlation models dependent only on the relative distance
+    and not on the absolute positions of the respective datapoints. We can thus
+    work internally solely on these distances.
+
+    Parameters
+    ----------
+    X : array_like, shape=(n_samples, n_features)
+        An array of training datapoints at which observations were made, i.e.,
+        where the outputs y are known
+    nugget : double or ndarray, optional
+        The Gaussian Process nugget parameter
+        The nugget is added to the diagonal of the assumed training covariance;
+        in this way it acts as a Tikhonov regularization in the problem.  In
+        the special case of the squared exponential correlation function, the
+        nugget mathematically represents the variance of the input values.
+        Default assumes a nugget close to machine precision for the sake of
+        robustness (nugget = 10. * MACHINE_EPSILON).
+
+    """
+    def __init__(self, X, nugget=10. * MACHINE_EPSILON):
         self.X = X
         self.nugget = nugget
         self.n_samples = X.shape[0]
@@ -65,18 +90,40 @@ class StationaryCorrelation(object):
         # correlation model should be evaluated.
         self.D, self.ij = l1_cross_distances(self.X)
         self.D = np.abs(np.asarray(self.D, dtype=np.float))
-        # TODO:
-#           if (np.min(np.sum(self.D, axis=1)) == 0.
-#                    and self.corr != correlation.pure_nugget):
-#                raise Exception("Multiple input features cannot have the same"
-#                                " value.")
+        if (np.min(np.sum(self.D, axis=1)) == 0.
+           and not isinstance(self.corr, PureNugget)):
+            raise Exception("Multiple input features cannot have the same"
+                            " value.")
 
     def __call__(self, theta, X=None):
+        """ Compute correlation for given correlation parameter(s) theta.
+
+        Parameters
+        ----------
+        theta : array_like
+            An array with giving the autocorrelation parameter(s).
+            Dimensionality depends on the specific correlation model; often
+            shape (1,) corresponds to an isotropic correlation model and shape
+            (n_features,) to a anisotropic one.
+
+        X : array_like, shape(n_eval, n_features)
+            An array containing the n_eval query points whose correlation with
+            the training datapoints shall be computed. If None, autocorrelation
+            of the training datapoints is computed instead.
+
+        Returns
+        -------
+        r : array_like, shape=(n_eval, n_samples) if X != None
+                              (n_samples, n_samples) if X == None
+            An array containing the values of the correlation model.
+        """
         theta = np.asarray(theta, dtype=np.float)
         if X is not None:
             # Get pairwise componentwise L1-distances to the input training set
             d = manhattan_distances(X, Y=self.X, sum_over_features=False)
         else:
+            # No external datapoints given; auto-correlation of training set
+            # is used instead
             d = self.D
 
         if d.ndim > 1:
@@ -84,15 +131,41 @@ class StationaryCorrelation(object):
         else:
             n_features = 1
 
+        # Compute the correlation for the respective correlation model (handled
+        # by subclass)
         r = self._compute_corr(theta, d, n_features)
 
         if X is not None:
+            # Convert to 2d matrix
             return r.reshape(-1, self.n_samples)
         else:
+            # Auto-correlation computed only for upper triangular part of
+            # matrix. Fill diagonal with 1+nugget and the lower triangular
+            # by exploiting symmetry of matrix
             R = np.eye(self.n_samples) * (1. + self.nugget)
             R[self.ij[:, 0], self.ij[:, 1]] = r
             R[self.ij[:, 1], self.ij[:, 0]] = r
             return R
+
+    @abstractmethod
+    def _compute_corr(self, theta, d, n_features):
+        """ Correlation for given pairwise, component-wise L1-differences.
+
+        Parameters
+        ----------
+        theta : array_like, shape=(1,) or (n_features,)
+            An array with shape 1 (isotropic) or n_features (anisotropic)
+            giving the autocorrelation parameter(s).
+
+        d : array_like, shape=(n_eval, n_features)
+            An array with the pairwise, component-wise L1-differences of x
+            and x' at which the correlation model should be evaluated.
+
+        Returns
+        -------
+        r : array_like, shape=(n_eval, )
+            An array containing the values of the autocorrelation model.
+        """
 
 
 class AbsoluteExponential(StationaryCorrelation):
