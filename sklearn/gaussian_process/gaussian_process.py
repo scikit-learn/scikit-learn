@@ -305,6 +305,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             self.theta_ = self.theta0
             self.reduced_likelihood_function_value_, par = \
                 self.reduced_likelihood_function()
+            self.reduced_likelihood_function_value_ *= -1
             if np.isinf(self.reduced_likelihood_function_value_):
                 raise Exception("Bad point. Try increasing theta0.")
 
