@@ -10,49 +10,11 @@ import numpy as np
 from scipy import linalg, optimize, rand
 
 from ..base import BaseEstimator, RegressorMixin
-from ..metrics.pairwise import manhattan_distances
 from ..utils import array2d, check_random_state, check_arrays
 from . import regression_models as regression
 from . import correlation_models as correlation
 
 MACHINE_EPSILON = np.finfo(np.double).eps
-
-
-def l1_cross_distances(X):
-    """
-    Computes the nonzero componentwise L1 cross-distances between the vectors
-    in X.
-
-    Parameters
-    ----------
-
-    X: array_like
-        An array with shape (n_samples, n_features)
-
-    Returns
-    -------
-
-    D: array with shape (n_samples * (n_samples - 1) / 2, n_features)
-        The array of componentwise L1 cross-distances.
-
-    ij: arrays with shape (n_samples * (n_samples - 1) / 2, 2)
-        The indices i and j of the vectors in X associated to the cross-
-        distances in D: D[k] = np.abs(X[ij[k, 0]] - Y[ij[k, 1]]).
-    """
-    X = array2d(X)
-    n_samples, n_features = X.shape
-    n_nonzero_cross_dist = n_samples * (n_samples - 1) // 2
-    ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int)
-    D = np.zeros((n_nonzero_cross_dist, n_features))
-    ll_1 = 0
-    for k in range(n_samples - 1):
-        ll_0 = ll_1
-        ll_1 = ll_0 + n_samples - k - 1
-        ij[ll_0:ll_1, 0] = k
-        ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
-        D[ll_0:ll_1] = np.abs(X[k] - X[(k + 1):n_samples])
-
-    return D, ij
 
 
 class GaussianProcess(BaseEstimator, RegressorMixin):
@@ -207,11 +169,11 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         'quadratic': regression.quadratic}
 
     _correlation_types = {
-        'absolute_exponential': correlation.absolute_exponential,
-        'squared_exponential': correlation.squared_exponential,
-        'generalized_exponential': correlation.generalized_exponential,
-        'cubic': correlation.cubic,
-        'linear': correlation.linear}
+        'absolute_exponential': correlation.AbsoluteExponential,
+        'squared_exponential': correlation.SquaredExponential,
+        'generalized_exponential': correlation.GeneralizedExponential,
+        'cubic': correlation.Cubic,
+        'linear': correlation.Linear}
 
     _optimizer_types = [
         'fmin_cobyla',
@@ -294,12 +256,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             y_mean = np.zeros(1)
             y_std = np.ones(1)
 
-        # Calculate matrix of distances D between samples
-        D, ij = l1_cross_distances(X)
-        if (np.min(np.sum(D, axis=1)) == 0.
-                and self.corr != correlation.pure_nugget):
-            raise Exception("Multiple input features cannot have the same"
-                            " value.")
+        # Instantiate correlation model
+        self.corr = self.corr(X, self.nugget, self.storage_mode)
 
         # Regression matrix and parameters
         F = self.regr(X)
@@ -323,8 +281,6 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         # Set attributes
         self.X = X
         self.y = y
-        self.D = D
-        self.ij = ij
         self.F = F
         self.X_mean, self.X_std = X_mean, X_std
         self.y_mean, self.y_std = y_mean, y_std
@@ -365,8 +321,6 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             if self.verbose:
                 print("Light storage mode specified. "
                       "Flushing autocorrelation matrix...")
-            self.D = None
-            self.ij = None
             self.F = None
             self.C = None
             self.Ft = None
@@ -437,11 +391,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             if eval_MSE:
                 MSE = np.zeros(n_eval)
 
-            # Get pairwise componentwise L1-distances to the input training set
-            dx = manhattan_distances(X, Y=self.X, sum_over_features=False)
             # Get regression function and correlation
             f = self.regr(X)
-            r = self.corr(self.theta_, dx).reshape(n_eval, n_samples)
+            r = self.corr(self.theta_, X)
 
             # Scaled predictor
             y_ = np.dot(f, self.beta) + np.dot(r, self.gamma)
@@ -579,23 +531,13 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Retrieve data
         n_samples = self.X.shape[0]
-        D = self.D
-        ij = self.ij
         F = self.F
 
-        if D is None:
-            # Light storage mode (need to recompute D, ij and F)
-            D, ij = l1_cross_distances(self.X)
-            if (np.min(np.sum(D, axis=1)) == 0.
-                    and self.corr != correlation.pure_nugget):
-                raise Exception("Multiple X are not allowed")
+        if F is None:
             F = self.regr(self.X)
 
-        # Set up R
-        r = self.corr(theta, D)
-        R = np.eye(n_samples) * (1. + self.nugget)
-        R[ij[:, 0], ij[:, 1]] = r
-        R[ij[:, 1], ij[:, 0]] = r
+        # Determine (auto-)correlation of training data
+        R = self.corr(theta)
 
         # Cholesky decomposition of R
         try:
