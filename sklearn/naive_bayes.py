@@ -159,27 +159,7 @@ class GaussianNB(BaseNB):
         self : object
             Returns self.
         """
-
-        X, y = check_arrays(X, y, sparse_format='dense')
-        y = column_or_1d(y, warn=True)
-
-        n_samples, n_features = X.shape
-
-        self.classes_ = unique_y = np.unique(y)
-        n_classes = unique_y.shape[0]
-
-        self.theta_ = np.zeros((n_classes, n_features))
-        self.sigma_ = np.zeros((n_classes, n_features))
-        self.class_prior_ = np.zeros(n_classes)
-        self.class_count_ = np.zeros(n_classes)
-        epsilon = 1e-9
-        for i, y_i in enumerate(unique_y):
-            Xi = X[y == y_i, :]
-            self.theta_[i, :] = np.mean(Xi, axis=0)
-            self.sigma_[i, :] = np.var(Xi, axis=0) + epsilon
-            self.class_count_[i] = Xi.shape[0]
-        self.class_prior_[:] = self.class_count_ / n_samples
-        return self
+        return self._partial_fit(X, y, np.unique(y), _refit=True)
 
     @staticmethod
     def _update_mean_variance(n_past, mu, var, X):
@@ -270,9 +250,42 @@ class GaussianNB(BaseNB):
         self : object
             Returns self.
         """
+        return self._partial_fit(X, y, classes, _refit=False)
+
+    def _partial_fit(self, X, y, classes=None, _refit=False):
+        """Actual implementation of Gaussian NB fitting.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        y : array-like, shape (n_samples,)
+            Target values.
+
+        classes : array-like, shape (n_classes,)
+            List of all the classes that can possibly appear in the y vector.
+
+            Must be provided at the first call to partial_fit, can be omitted
+            in subsequent calls.
+
+        _refit: bool
+            If true, act as though this were the first time we called
+            _partial_fit (ie, throw away any past fitting and start over).
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+
         X, y = check_arrays(X, y, sparse_format='dense')
         y = column_or_1d(y, warn=True)
         epsilon = 1e-9
+
+        if _refit:
+            self.classes_ = None
 
         if _check_partial_fit_first_call(self, classes):
             # This is the first call to partial_fit:
