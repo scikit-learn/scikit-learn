@@ -13,15 +13,10 @@
 #
 # Licence: BSD 3 clause
 
-#include <stdlib.h>
-
 from libc.stdlib cimport calloc, free, realloc, malloc
 from libc.string cimport memcpy, memset
 from libc.math cimport log as ln
 from cpython cimport Py_INCREF, PyObject
-from libcpp.set cimport set as set_
-from libcpp.map cimport map as map_
-from libcpp.pair cimport pair
 
 from sklearn.tree._utils cimport Stack, StackRecord
 from sklearn.tree._utils cimport PriorityHeap, PriorityHeapRecord
@@ -90,10 +85,10 @@ NODE_DTYPE = np.dtype({
 })
 
 cdef int is_left_var(DTYPE_t x, int split,
-                     map_[DTYPE_t, SIZE_t] categories) nogil:
+                     int* categories) nogil:
     """Return whether the category belong to the left branch, according to a
     split"""
-    cdef int i = categories[x]
+    cdef int i = categories[int(x)]
     return (split >> i) & 1
 
 
@@ -1077,12 +1072,15 @@ cdef class BestSplitter(Splitter):
 
         cdef SplitRecord best, current
 
-        cdef int n_categorical = 0 #TODO
-        cdef int n_categories
+        cdef int n_categorical = 0  # How many categorical features #TODO
+        cdef int n_categories       # How many categories are in the column
         cdef DTYPE_t category
-        cdef int* outcome_by_cat
-        cdef set_[DTYPE_t] set_categories
-        cdef map_[DTYPE_t, SIZE_t] categories
+        cdef int* outcome_by_cat    # What are the outcomes associated to a cat
+        cdef SIZE_t* categories     # The link between a category and
+                                    # 1..n_categories
+        cdef SIZE_t* categories_tmp
+        cdef SIZE_t max_categories
+        cdef SIZE_t current_item
 
         cdef SIZE_t f_i = n_features
         cdef SIZE_t c_i = n_features - n_categorical
@@ -1097,8 +1095,6 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t n_total_constants = n_known_constants
         cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
-
-        cdef pair[DTYPE_t, SIZE_t] cat_pair
 
         _init_split(&best, end)
 
@@ -1179,16 +1175,31 @@ cdef class BestSplitter(Splitter):
                     features[f_i], features[f_j] = features[f_j], features[f_i]
 
                     # We find the categories that are in the data
-                    set_categories.clear()
+                    # As a reminder, Xf is composed of integers
+                    max_categories = 0
+                    categories = <int *>malloc(sizeof(int))
                     for p in xrange(start, end):
-                        set_categories.insert(Xf[p])
-                    n_categories = set_categories.size()
-                    i = 0
-                    for category in set_categories:
-                        cat_pair.first = category
-                        cat_pair.second = i
-                        categories.insert(cat_pair)
-                        i += 1
+                        current_item = int(Xf[p])
+                        if current_item > max_categories:
+                            # We resize the array
+                            categories_tmp = <int *>malloc(
+                                sizeof(int) * current_item)
+                            memcpy(categories_tmp, categories,
+                                   sizeof(int) * max_categories)
+                            for i in xrange(max_categories+1, current_item):
+                                categories_tmp[i] = 0
+                            free(categories)
+                            categories = categories_tmp
+                            max_categories = current_item
+                        categories[current_item] = 1
+                    # Now we can create a mapping between the categories that
+                    # are in the data and 1...n_categories
+                    n_categories = 0
+                    current_item = 0
+                    for i in xrange(0, max_categories):
+                        if categories[i] > 0:
+                            categories[i] = n_categories
+                            n_categories += 1
 
                     # First we count the outcomes per category, so we don't
                     # have to iterate through all the data after that
@@ -1198,7 +1209,7 @@ cdef class BestSplitter(Splitter):
                         sizeof(int) * n_features * n_categories)
                     p = start
                     while p < end:
-                        i = categories[Xf[p]]
+                        i = categories[int(Xf[p])]
                         outcome_by_cat[p + i * n_features] += 1
                         p += 1
                     # We test all the combinations of categories. Not efficient
