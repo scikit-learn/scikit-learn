@@ -621,12 +621,13 @@ class ElasticNet(LinearModel, RegressorMixin):
     positive: bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
-    random_state: int, RandomState instance, or None (default)
+    random_state : int, RandomState instance, or None (default)
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when shuffle is set to True.
 
-    shuffle: bool, default False
-        If set to True, a random coefficient is updated every iteration.
+    shuffle : bool, default False
+        If set to True, a random coefficient is updated every iteration
+        rather than looping over features sequentially.
 
     Attributes
     ----------
@@ -741,7 +742,7 @@ class ElasticNet(LinearModel, RegressorMixin):
                           precompute=precompute, Xy=this_Xy,
                           fit_intercept=False, normalize=False, copy_X=True,
                           verbose=False, tol=self.tol, positive=self.positive,
-                          X_mean=X_mean, X_std=X_std,
+                          X_mean=X_mean, X_std=X_std, return_n_iter=True,
                           coef_init=coef_[k], max_iter=self.max_iter,
                           random_state=self.random_state,
                           shuffle=self.shuffle)
@@ -837,12 +838,13 @@ class Lasso(ElasticNet):
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
-    random_state: int, RandomState instance, or None (default)
+    random_state : int, RandomState instance, or None (default)
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when shuffle is set to True.
 
-    shuffle: bool, default False
-        If set to True, a random coefficient is updated every iteration.
+    shuffle : bool, default False
+        If set to True, a random coefficient is updated every iteration
+        rather than looping over features sequentially.
 
     Attributes
     ----------
@@ -1253,12 +1255,13 @@ class LassoCV(LinearModelCV, RegressorMixin):
     positive : bool, optional
         If positive, restrict regression coefficients to be positive
 
-    random_state: int, RandomState instance, or None (default)
+    random_state : int, RandomState instance, or None (default)
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when shuffle is set to True.
 
-    shuffle: bool, default False
-        If set to True, a random coefficient is updated every iteration.
+    shuffle : bool, default False
+        If set to True, a random coefficient is updated every iteration
+        rather than looping over features sequentially.
 
     Attributes
     ----------
@@ -1376,12 +1379,13 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
-    random_state: int, RandomState instance, or None (default)
+    random_state : int, RandomState instance, or None (default)
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when shuffle is set to True.
 
-    shuffle: bool, default False
-        If set to True, a random coefficient is updated every iteration.
+    shuffle : bool, default False
+        If set to True, a random coefficient is updated every iteration
+        rather than looping over features sequentially.
 
     Attributes
     ----------
@@ -1516,12 +1520,13 @@ class MultiTaskElasticNet(Lasso):
         When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
-    random_state: int, RandomState instance, or None (default)
+    random_state : int, RandomState instance, or None (default)
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when shuffle is set to True.
 
-    shuffle: bool, default False
-        If set to True, a random coefficient is updated every iteration.
+    shuffle : bool, default False
+        If set to True, a random coefficient is updated every iteration
+        rather than looping over features sequentially.
 
     Attributes
     ----------
@@ -1685,12 +1690,13 @@ class MultiTaskLasso(MultiTaskElasticNet):
         When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
-    random_state: int, RandomState instance, or None (default)
+    random_state : int, RandomState instance, or None (default)
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when shuffle is set to True.
 
-    shuffle: bool, default False
-        If set to True, a random coefficient is updated every iteration.
+    shuffle : bool, default False
+        If set to True, a random coefficient is updated every iteration
+        rather than looping over features sequentially.
 
     Attributes
     ----------
@@ -1813,12 +1819,13 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         all the CPUs. Note that this is used only if multiple values for
         l1_ratio are given.
 
-    random_state: int, RandomState instance, or None (default)
+    random_state : int, RandomState instance, or None (default)
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when shuffle is set to True.
 
-    shuffle: bool, default False
-        If set to True, a random coefficient is updated every iteration.
+    shuffle : bool, default False
+        If set to True, a random coefficient is updated every iteration
+        rather than looping over features sequentially.
 
     Attributes
     ----------
@@ -1957,12 +1964,13 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
         all the CPUs. Note that this is used only if multiple values for
         l1_ratio are given.
 
-    random_state: int, RandomState instance, or None (default)
+    random_state : int, RandomState instance, or None (default)
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when shuffle is set to True.
 
-    shuffle: bool, default False
-        If set to True, a random coefficient is updated every iteration.
+    shuffle : bool, default False
+        If set to True, a random coefficient is updated every iteration
+        rather than looping over features sequentially.
 
     Attributes
     ----------
