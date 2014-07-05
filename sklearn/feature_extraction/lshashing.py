@@ -29,7 +29,7 @@ class BaseHash(with_metaclass(ABCMeta)):
     hash_size: int
         Length of the hash
 
-    seed: float, optional (defualt=1)
+    random_state: float, optional (defualt=1)
         Seed to initialize pseudo random hash functions.
 
     """
