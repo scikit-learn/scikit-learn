@@ -65,6 +65,8 @@ def test_polynomial_features():
     X_poly = interact.fit_transform(X)
     assert_array_almost_equal(X_poly, P2[:, [0, 1, 2, 4]])
 
+    assert_raises(ValueError, interact.transform, X[:, 1:])
+
 
 def test_scaler_1d():
     """Test scaling of dataset along single axis"""
@@ -91,6 +93,9 @@ def test_scaler_1d():
     X_scaled = scale(X)
     assert_array_almost_equal(X_scaled.mean(axis=0), 0.0)
     assert_array_almost_equal(X_scaled.std(axis=0), 1.0)
+
+    X = np.ones(5)
+    assert_array_equal(scale(X, with_mean=False), X)
 
 
 def test_scaler_2d_arrays():
@@ -511,8 +516,12 @@ def test_normalizer_l2():
         assert_almost_equal(la.norm(X_norm[3]), 0.0)
 
 
-def test_normalize_errors():
-    """Check that invalid arguments yield ValueError"""
+def test_normalize():
+    """Test normalize function"""
+    # Only tests functionality not used by the tests for Normalizer.
+    X = np.random.RandomState(37).randn(3, 2)
+    assert_array_equal(normalize(X, copy=False),
+                       normalize(X.T, axis=0, copy=False).T)
     assert_raises(ValueError, normalize, [[0]], axis=2)
     assert_raises(ValueError, normalize, [[0]], norm='l3')
 
