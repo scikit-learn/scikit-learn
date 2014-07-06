@@ -62,7 +62,7 @@ of each option, see `Nearest Neighbor Algorithms`_.
     .. warning::
 
         Regarding the Nearest Neighbors algorithms, if two
-        neighbors, neighbor `k+1` and `k`, have identical distances but
+        neighbors, neighbor :math:`k+1` and :math:`k`, have identical distances
         but different labels, the results will depend on the ordering of the
         training data.
 
@@ -367,7 +367,7 @@ depends on a number of factors:
     to precisely characterise.  For small :math:`D` (less than 20 or so)
     the cost is approximately :math:`O[D\log(N)]`, and the KD tree
     query can be very efficient.
-    For larger :math:`D`, the cost increases to nearly `O[DN]`, and
+    For larger :math:`D`, the cost increases to nearly :math:`O[DN]`, and
     the overhead due to the tree
     structure can lead to queries which are slower than brute force.
 
@@ -485,10 +485,10 @@ methods that do not make this assumption. Usage of the default
 Nearest Shrunken Centroid
 -------------------------
 
-The :class:`NearestCentroid` classifier has a `shrink_threshold` parameter,
+The :class:`NearestCentroid` classifier has a ``shrink_threshold`` parameter,
 which implements the nearest shrunken centroid classifier. In effect, the value
 of each feature for each centroid is divided by the within-class variance of
-that feature. The feature values are then reduced by `shrink_threshold`. Most
+that feature. The feature values are then reduced by ``shrink_threshold``. Most
 notably, if a particular feature value crosses zero, it is set
 to zero. In effect, this removes the feature from affecting the classification.
 This is useful, for example, for removing noisy features.

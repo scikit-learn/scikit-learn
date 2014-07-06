@@ -62,8 +62,7 @@ algorithms. The simplest clustering algorithm is
     There is absolutely no guarantee of recovering a ground truth. First,
     choosing the right number of clusters is hard. Second, the algorithm
     is sensitive to initialization, and can fall into local minima,
-    although in the `sklearn` package we play many tricks to mitigate this
-    issue.
+    although scikit-learn employs several tricks to mitigate this issue.
 
     .. list-table::
         :class: centered
@@ -155,14 +154,14 @@ A :ref:`hierarchical_clustering` method is a type of cluster analysis
 that aims to build a hierarchy of clusters. In general, the various approaches
 of this technique are either:
 
-  * **Agglomerative** - `bottom-up` approaches: each observation starts in its
+  * **Agglomerative** - bottom-up approaches: each observation starts in its
     own cluster, and clusters are iterativelly merged in such a way to
     minimize a *linkage* criterion. This approach is particularly interesting
     when the clusters of interest are made of only a few observations. When
     the number of clusters is large, it is much more computationally efficient
     than k-means.
 
-  * **Divisive** - `top-down` approaches: all observations start in one
+  * **Divisive** - top-down approaches: all observations start in one
     cluster, which is iteratively split as one moves down the hierarchy.
     For estimating large numbers of clusters, this approach is both slow (due
     to all observations starting as one cluster, which it splits recursively)
@@ -222,9 +221,9 @@ transposed data.
    >>> X_approx = agglo.inverse_transform(X_reduced)
    >>> images_approx = np.reshape(X_approx, images.shape)
 
-.. topic:: `transform` and `inverse_transform` methods
+.. topic:: ``transform`` and ``inverse_transform`` methods
 
-   Some estimators expose a `transform` method, for instance to reduce
+   Some estimators expose a ``transform`` method, for instance to reduce
    the dimensionality of the dataset.
 
 Decompositions: from a signal to components and loadings

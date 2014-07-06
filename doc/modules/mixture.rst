@@ -29,7 +29,7 @@ mixture models as generalizing k-means clustering to incorporate
 information about the covariance structure of the data as well as the
 centers of the latent Gaussians.
 
-The `scikit-learn` implements different classes to estimate Gaussian
+Scikit-learn implements different classes to estimate Gaussian
 mixture models, that correspond to different estimation strategies,
 detailed below.
 
@@ -190,7 +190,7 @@ much so as to render usage unpractical.
 
 Due to its Bayesian nature, the variational algorithm needs more
 hyper-parameters than expectation-maximization, the most
-important of these being the concentration parameter `alpha`. Specifying
+important of these being the concentration parameter ``alpha``. Specifying
 a high value of alpha leads more often to uniformly-sized mixture
 components, while specifying small (between 0 and 1) values will lead
 to some mixture components getting almost all the points while most

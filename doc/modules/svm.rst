@@ -175,8 +175,8 @@ Consider a three class problem with with class 0 having three support vectors
 :math:`v^{0}_1, v^{1}_1` and :math:`v^{0}_1, v^{1}_1` respectively.  For each
 support vector :math:`v^{j}_i`, there are two dual coefficients.  Let's call
 the coefficient of support vector :math:`v^{j}_i` in the classifier between
-classes `i` and `k` :math:`\alpha^{j}_{i,k}`.  Then ``dual_coef_`` looks like
-this:
+classes :math:`i` and :math:`k` :math:`\alpha^{j}_{i,k}`.
+Then ``dual_coef_`` looks like this:
 
 +------------------------+------------------------+------------------+
 |:math:`\alpha^{0}_{0,1}`|:math:`\alpha^{0}_{0,2}`|Coefficients      |
@@ -365,7 +365,7 @@ Tips on Practical Use
     :class:`NuSVR`, if the data passed to certain methods is not C-ordered
     contiguous, and double precision, it will be copied before calling the
     underlying C implementation. You can check whether a give numpy array is
-    C-contiguous by inspecting its `flags` attribute.
+    C-contiguous by inspecting its ``flags`` attribute.
 
     For :class:`LinearSVC` (and :class:`LogisticRegression
     <sklearn.linear_model.LogisticRegression>`) any input passed as a numpy
@@ -424,14 +424,14 @@ The *kernel function* can be any of the following:
 
   * linear: :math:`\langle x, x'\rangle`.
 
-  * polynomial: :math:`(\gamma \langle x, x'\rangle + r)^d`. `d` is specified by
-    keyword ``degree``, `r` by ``coef0``.
+  * polynomial: :math:`(\gamma \langle x, x'\rangle + r)^d`.
+    :math:`d` is specified by keyword ``degree``, :math:`r` by ``coef0``.
 
   * rbf: :math:`\exp(-\gamma |x-x'|^2)`. :math:`\gamma` is
     specified by keyword ``gamma``, must be greater than 0.
 
-  * sigmoid (:math:`\tanh(\gamma \langle x,x'\rangle + r)`), where `r` is specified by
-    ``coef0``.
+  * sigmoid (:math:`\tanh(\gamma \langle x,x'\rangle + r)`),
+    where :math:`r` is specified by ``coef0``.
 
 Different kernels are specified by keyword kernel at initialization::
 
@@ -486,7 +486,7 @@ Using the Gram matrix
 ~~~~~~~~~~~~~~~~~~~~~
 
 Set ``kernel='precomputed'`` and pass the Gram matrix instead of X in the fit
-method. At the moment, the kernel values between `all` training vectors and the
+method. At the moment, the kernel values between *all* training vectors and the
 test vectors must be provided.
 
     >>> import numpy as np
@@ -569,10 +569,10 @@ Its dual is
    & 0 \leq \alpha_i \leq C, i=1, ..., l
 
 where :math:`e` is the vector of all ones, :math:`C > 0` is the upper bound,
-:math:`Q` is an `n` by `n` positive semidefinite matrix, :math:`Q_{ij} \equiv
-K(x_i, x_j)` and :math:`\phi (x_i)^T \phi (x)` is the kernel. Here training
-vectors are mapped into a higher (maybe infinite) dimensional space by the
-function :math:`\phi`.
+:math:`Q` is an :math:`n` by :math:`n` positive semidefinite matrix,
+:math:`Q_{ij} \equiv K(x_i, x_j)` and :math:`\phi (x_i)^T \phi (x)`
+is the kernel. Here training vectors are mapped into a higher (maybe infinite)
+dimensional space by the function :math:`\phi`.
 
 
 The decision function is:
@@ -587,9 +587,9 @@ The decision function is:
 
 .. TODO multiclass case ?/
 
-This parameters can be accessed through the members `dual_coef\_`
-which holds the product :math:`y_i \alpha_i`, `support_vectors\_` which
-holds the support vectors, and `intercept\_` which holds the independent
+This parameters can be accessed through the members ``dual_coef_`
+which holds the product :math:`y_i \alpha_i`, ``support_vectors_`` which
+holds the support vectors, and ``intercept_`` which holds the independent
 term :math:`-\rho` :
 
 .. topic:: References:
@@ -614,8 +614,8 @@ support vectors and training errors. The parameter :math:`\nu \in (0,
 1]` is an upper bound on the fraction of training errors and a lower
 bound of the fraction of support vectors.
 
-It can be shown that the `\nu`-SVC formulation is a reparametrization
-of the `C`-SVC and therefore mathematically equivalent.
+It can be shown that the :math:`\nu`-SVC formulation is a reparametrization
+of the :math:`C`-SVC and therefore mathematically equivalent.
 
 
 Implementation details

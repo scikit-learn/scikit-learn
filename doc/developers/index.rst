@@ -100,8 +100,8 @@ email to the mailing list in order to get more visibility.
 .. note::
 
   In the above setup, your ``origin`` remote repository points to
-  YourLogin/scikit-learn.git. If you wish to `fetch/merge` from the main
-  repository instead of your `forked` one, you will need to add another remote
+  YourLogin/scikit-learn.git. If you wish to fetch/merge from the main
+  repository instead of your forked one, you will need to add another remote
   to use instead of ``origin``. If we choose the name ``upstream`` for it, the
   command will be::
 
@@ -242,7 +242,7 @@ Finally, any math and equations, followed by references,
 can be added to further the documentation. Not starting the
 documentation with the maths makes it more friendly towards
 users that are just interested in what the feature will do, as
-opposed to how it works `under the hood`.
+opposed to how it works "under the hood".
 
 
 .. warning:: **Sphinx version**
@@ -372,7 +372,7 @@ In addition, we add the following guidelines:
       that is implemented in ``sklearn.foo.bar.baz``,
       the test should import it from ``sklearn.foo``.
 
-    * **Please don't use `import *` in any case**. It is considered harmful
+    * **Please don't use ``import *`` in any case**. It is considered harmful
       by the `official Python recommendations
       <http://docs.python.org/howto/doanddont.html#from-module-import>`_.
       It makes the code harder to read as the origin of symbols is no
@@ -396,7 +396,7 @@ Input validation
 
 The module :mod:`sklearn.utils` contains various functions for doing input
 validation and conversion. Sometimes, ``np.asarray`` suffices for validation;
-do `not` use ``np.asanyarray`` or ``np.atleast_2d``, since those let NumPy's
+do *not* use ``np.asanyarray`` or ``np.atleast_2d``, since those let NumPy's
 ``np.matrix`` through, which has a different API
 (e.g., ``*`` means dot product on ``np.matrix``,
 but Hadamard product on ``np.ndarray``).
@@ -634,14 +634,14 @@ an estimator without passing any arguments to it. The arguments should all
 correspond to hyperparameters describing the model or the optimisation
 problem the estimator tries to solve. These initial arguments (or parameters)
 are always remembered by the estimator.
-Also note that they should not be documented under the `Attributes` section,
-but rather under the `Parameters` section for that estimator.
+Also note that they should not be documented under the "Attributes" section,
+but rather under the "Parameters" section for that estimator.
 
 In addition, **every keyword argument accepted by ``__init__`` should
 correspond to an attribute on the instance**. Scikit-learn relies on this to
 find the relevant attributes to set on an estimator when doing model selection.
 
-To summarize, a `__init__` should look like::
+To summarize, an ``__init__`` should look like::
 
     def __init__(self, param1=1, param2=2):
         self.param1 = param1
@@ -722,8 +722,8 @@ Estimated Attributes
 
 Attributes that have been estimated from the data must always have a name
 ending with trailing underscore, for example the coefficients of
-some regression estimator would be stored in a `coef_` attribute after
-`fit()` has been called.
+some regression estimator would be stored in a ``coef_`` attribute after
+``fit`` has been called.
 
 The last-mentioned attributes are expected to be overridden when
 you call ``fit`` a second time without taking any previous value into

@@ -117,7 +117,8 @@ SGD supports the following penalties:
 
   * ``penalty="l2"``: L2 norm penalty on ``coef_``.
   * ``penalty="l1"``: L1 norm penalty on ``coef_``.
-  * ``penalty="elasticnet"``: Convex combination of L2 and L1; `(1 - l1_ratio) * L2 + l1_ratio * L1`.
+  * ``penalty="elasticnet"``: Convex combination of L2 and L1;
+    ``(1 - l1_ratio) * L2 + l1_ratio * L1``.
 
 The default setting is ``penalty="l2"``. The L1 penalty leads to sparse
 solutions, driving most coefficients to zero. The Elastic Net solves
@@ -127,8 +128,8 @@ of L1 and L2 penalty.
 
 :class:`SGDClassifier` supports multi-class classification by combining
 multiple binary classifiers in a "one versus all" (OVA) scheme. For each
-of the `K` classes, a binary classifier is learned that discriminates
-between that and all other `K-1` classes. At testing time, we compute the
+of the :math:`K` classes, a binary classifier is learned that discriminates
+between that and all other :math:`K-1` classes. At testing time, we compute the
 confidence score (i.e. the signed distances to the hyperplane) for each
 classifier and choose the class with the highest confidence. The Figure
 below illustrates the OVA approach on the iris dataset.  The dashed

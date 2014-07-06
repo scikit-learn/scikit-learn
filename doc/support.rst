@@ -67,7 +67,7 @@ Don't forget to include:
 To help developers fix your bug faster, please link to a https://gist.github.com
 holding a standalone minimalistic python script that reproduces your bug and
 optionally a minimalistic subsample of your dataset (for instance exported
-as CSV files using `numpy.savetxt`).
+as CSV files using ``numpy.savetxt``).
 
 Note: gists are git cloneable repositories and thus you can use git to
 push datafiles to them.

@@ -159,13 +159,13 @@ One-Vs-One
 
 :class:`OneVsOneClassifier` constructs one classifier per pair of classes.
 At prediction time, the class which received the most votes is selected.
-Since it requires to fit `n_classes * (n_classes - 1) / 2` classifiers,
+Since it requires to fit ``n_classes * (n_classes - 1) / 2`` classifiers,
 this method is usually slower than one-vs-the-rest, due to its
 O(n_classes^2) complexity. However, this method may be advantageous for
 algorithms such as kernel algorithms which don't scale well with
-`n_samples`. This is because each individual learning problem only involves
+``n_samples``. This is because each individual learning problem only involves
 a small subset of the data whereas, with one-vs-the-rest, the complete
-dataset is used `n_classes` times.
+dataset is used ``n_classes`` times.
 
 Multiclass learning
 -------------------
@@ -206,7 +206,7 @@ At fitting time, one binary classifier per bit in the code book is fitted.
 At prediction time, the classifiers are used to project new points in the
 class space and the class closest to the points is chosen.
 
-In :class:`OutputCodeClassifier`, the `code_size` attribute allows the user to
+In :class:`OutputCodeClassifier`, the ``code_size`` attribute allows the user to
 control the number of classifiers which will be used. It is a percentage of the
 total number of classes.
 
