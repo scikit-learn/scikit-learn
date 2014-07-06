@@ -79,6 +79,11 @@ def test_kernel_density_sampling(n_samples=100, n_features=3):
         kde = KernelDensity(bandwidth, kernel=kernel).fit(X)
         assert_raises(NotImplementedError, kde.sample, 100)
 
+    # non-regression test: used to return a scalar
+    X = np.random.random((4, 1))
+    kde = KernelDensity(kernel="gaussian").fit(X)
+    assert_equal(kde.sample().shape, (1, 1))
+
 
 def test_kde_algorithm_metric_choice():
     """Smoke test for various metrics and algorithms"""
