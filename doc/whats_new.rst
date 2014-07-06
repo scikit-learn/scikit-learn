@@ -299,7 +299,7 @@ API changes summary
      one non constant features in the split. This bug fix will affect
      computational and generalization performance of those algorithms in the
      presence of constant features. To get back previous generalization
-     performance, you should modify the value of `max_features`.
+     performance, you should modify the value of ``max_features``.
      By `Arnaud Joly`_.
 
    - Fix wrong maximal number of features drawn (``max_features``) at each split
@@ -434,8 +434,8 @@ Changelog
    - A bug that caused :class:`ensemble.AdaBoostClassifier`'s to output
      incorrect probabilities has been fixed.
 
-   - Feature selectors now share a mixin providing consistent `transform`,
-     `inverse_transform` and `get_support` methods. By `Joel Nothman`_.
+   - Feature selectors now share a mixin providing consistent ``transform``,
+     ``inverse_transform`` and ``get_support`` methods. By `Joel Nothman`_.
 
    - A fitted :class:`grid_search.GridSearchCV` or
      :class:`grid_search.RandomizedSearchCV` can now generally be pickled.
@@ -534,8 +534,8 @@ API changes summary
 
    - The :func:`auc_score` was renamed :func:`roc_auc_score`.
 
-   - Testing scikit-learn with `sklearn.test()` is deprecated. Use
-     `nosetest sklearn` from the command line.
+   - Testing scikit-learn with ``sklearn.test()`` is deprecated. Use
+     ``nosetests sklearn`` from the command line.
 
    - Feature importances in :class:`tree.DecisionTreeClassifier`,
      :class:`tree.DecisionTreeRegressor` and all derived ensemble estimators
@@ -546,7 +546,7 @@ API changes summary
    - :class:`linear_model.lasso_path` and
      :class:`linear_model.enet_path` can return its results in the same
      format as that of :class:`linear_model.lars_path`. This is done by
-     setting the `return_models` parameter to `False`. By
+     setting the ``return_models`` parameter to ``False``. By
      `Jaques Grobler`_ and `Alexandre Gramfort`_
 
    - :class:`grid_search.IterGrid` was renamed to
@@ -874,8 +874,8 @@ Changelog
    - Fix of longstanding bug in :class:`naive_bayes.BernoulliNB` fixed by
      Shaun Jackman.
 
-   - Implement `predict_proba` in :class:`multiclass.OneVsRestClassifier`, by
-     Andrew Winterman.
+   - Implemented ``predict_proba`` in :class:`multiclass.OneVsRestClassifier`,
+     by Andrew Winterman.
 
    - Improve consistency in gradient boosting: estimators
      :class:`ensemble.GradientBoostingRegressor` and
@@ -1250,12 +1250,12 @@ API changes summary
 
    - Grid of alphas used for fitting :class:`linear_model.LassoCV` and
      :class:`linear_model.ElasticNetCV` is now stored
-     in the attribute `alphas_` rather than overriding the init parameter
-     `alphas`.
+     in the attribute ``alphas_`` rather than overriding the init parameter
+     ``alphas``.
 
    - Linear models when alpha is estimated by cross-validation store
-     the estimated value in the `alpha_` attribute rather than just
-     `alpha` or `best_alpha`.
+     the estimated value in the ``alpha_`` attribute rather than just
+     ``alpha`` or ``best_alpha``.
 
    - :class:`ensemble.GradientBoostingClassifier` now supports
      :meth:`ensemble.GradientBoostingClassifier.staged_predict_proba`, and
@@ -1374,10 +1374,10 @@ Other changes
 
    - Merged dense and sparse implementations of :ref:`sgd` module and
      exposed utility extension types for sequential
-     datasets `seq_dataset` and weight vectors `weight_vector`
+     datasets ``seq_dataset`` and weight vectors ``weight_vector``
      by `Peter Prettenhofer`_.
 
-   - Added `partial_fit` (support for online/minibatch learning) and
+   - Added ``partial_fit`` (support for online/minibatch learning) and
      warm_start to the :ref:`sgd` module by `Mathieu Blondel`_.
 
    - Dense and sparse implementations of :ref:`svm` classes and
@@ -1390,16 +1390,16 @@ Other changes
      and :func:`metrics.pairwise.pairwise_kernels` for parallel computation,
      by `Mathieu Blondel`_.
 
-   - :ref:`k_means` can now be run in parallel, using the `n_jobs` argument
+   - :ref:`k_means` can now be run in parallel, using the ``n_jobs`` argument
      to either :ref:`k_means` or :class:`KMeans`, by `Robert Layton`_.
 
    - Improved :ref:`cross_validation` and :ref:`grid_search` documentation
      and introduced the new :func:`cross_validation.train_test_split`
      helper function by `Olivier Grisel`_
 
-   - :class:`svm.SVC` members `coef_` and `intercept_` changed sign for consistency
-     with `decision_function`; for ``kernel==linear``, `coef_` was fixed
-     in the the one-vs-one case, by `Andreas Müller`_.
+   - :class:`svm.SVC` members ``coef_`` and ``intercept_`` changed sign for
+     consistency with ``decision_function``; for ``kernel==linear``,
+     ``coef_`` was fixed in the the one-vs-one case, by `Andreas Müller`_.
 
    - Performance improvements to efficient leave-one-out cross-validated
      Ridge regression, esp. for the ``n_samples > n_features`` case, in
@@ -1422,7 +1422,7 @@ API changes summary
    - :class:`covariance.EllipticEnvelop` is now deprecated - Please use :class:`covariance.EllipticEnvelope`
      instead.
 
-   - `NeighborsClassifier` and `NeighborsRegressor` are gone in the module
+   - ``NeighborsClassifier`` and ``NeighborsRegressor`` are gone in the module
      :ref:`neighbors`. Use the classes :class:`KNeighborsClassifier`,
      :class:`RadiusNeighborsClassifier`, :class:`KNeighborsRegressor`
      and/or :class:`RadiusNeighborsRegressor` instead.
@@ -1433,15 +1433,15 @@ API changes summary
      parameters must be passed to an object when initialising it and not through
      ``fit``. Now ``fit`` will only accept the data as an input parameter.
 
-   - methods `rvs` and `decode` in :class:`GMM` module are now deprecated.
-     `sample` and `score` or `predict` should be used instead.
+   - methods ``rvs`` and ``decode`` in :class:`GMM` module are now deprecated.
+     ``sample`` and ``score`` or ``predict`` should be used instead.
 
-   - attribute `_scores` and `_pvalues` in univariate feature selection
+   - attribute ``_scores`` and ``_pvalues`` in univariate feature selection
      objects are now deprecated.
-     `scores_` or `pvalues_` should be used instead.
+     ``scores_`` or ``pvalues_`` should be used instead.
 
    - In :class:`LogisticRegression`, :class:`LinearSVC`, :class:`SVC` and
-     :class:`NuSVC`, the `class_weight` parameter is now an initialization
+     :class:`NuSVC`, the ``class_weight`` parameter is now an initialization
      parameter, not a parameter to fit. This makes grid searches
      over this parameter possible.
 
@@ -1449,9 +1449,10 @@ API changes summary
      consistent with the Olivetti faces dataset. Use ``images`` and
      ``pairs`` attribute to access the natural images shapes instead.
 
-   - In :class:`svm.LinearSVC`, the meaning of the `multi_class` parameter changed.
-     Options now are 'ovr' and 'crammer_singer', with 'ovr' being the default.
-     This does not change the default behavior but hopefully is less confusing.
+   - In :class:`svm.LinearSVC`, the meaning of the ``multi_class`` parameter
+     changed.  Options now are ``'ovr'`` and ``'crammer_singer'``, with
+     ``'ovr'`` being the default.  This does not change the default behavior
+     but hopefully is less confusing.
 
    - Class :class:`feature_selection.text.Vectorizer` is deprecated and
      replaced by :class:`feature_selection.text.TfidfVectorizer`.
@@ -1463,7 +1464,7 @@ API changes summary
      :class:`feature_selection.text.CountVectorizer`, in particular the
      following parameters are now used:
 
-       - ``analyzer`` can be `'word'` or `'char'` to switch the default
+       - ``analyzer`` can be ``'word'`` or ``'char'`` to switch the default
          analysis scheme, or use a specific python callable (as previously).
 
        - ``tokenizer`` and ``preprocessor`` have been introduced to make it
@@ -1483,8 +1484,8 @@ API changes summary
      from :class:`feature_selection.text.CountVectorizer` to make grid
      search trivial.
 
-   - methods `rvs` in :class:`_BaseHMM` module are now deprecated.
-     `sample` should be used instead.
+   - methods ``rvs`` in :class:`_BaseHMM` module are now deprecated.
+     ``sample`` should be used instead.
 
    - Beam pruning option in :class:`_BaseHMM` module is removed since it is
      difficult to be Cythonized. If you are interested, you can look in the
@@ -1818,7 +1819,7 @@ Changelog
    - Text feature extraction optimizations by Lars Buitinck
 
    - Chi-Square feature selection
-     (:func:`feature_selection.univariate_selection.chi2`) by `Lars Buitinck`.
+     (:func:`feature_selection.univariate_selection.chi2`) by `Lars Buitinck`_.
 
    - :ref:`sample_generators` module refactoring by `Gilles Louppe`_
 
@@ -2030,7 +2031,8 @@ Some other modules benefited from significant improvements or cleanups.
 
   - Add attribute converged to Gaussian Mixture Models by Vincent Schut.
 
-  - Implement `transform`, `predict_log_proba` in :class:`lda.LDA` by `Mathieu Blondel`_.
+  - Implemented ``transform``, ``predict_log_proba`` in :class:`lda.LDA`
+    By `Mathieu Blondel`_.
 
   - Refactoring in the :ref:`svm` module and bug fixes by `Fabian Pedregosa`_,
     `Gael Varoquaux`_ and Amit Aides.

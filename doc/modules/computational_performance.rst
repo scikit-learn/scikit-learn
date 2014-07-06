@@ -72,11 +72,12 @@ Influence of the Number of Features
 -----------------------------------
 
 Obviously when the number of features increases so does the memory
-consumption of each example. Indeed, for a matrix of `M` instances with `N`
-features, the space complexity is in `O(N.M)`. From a computing perspective
-it also means that the number of basic operations (e.g. multiplications for
-vector-matrix products in linear models) increases too. Here is a graph of
-the evolution of the prediction latency with the number of features:
+consumption of each example. Indeed, for a matrix of :math:`M` instances
+with :math:`N` features, the space complexity is in :math:`O(NM)`.
+From a computing perspective it also means that the number of basic operations
+(e.g., multiplications for vector-matrix products in linear models) increases
+too. Here is a graph of the evolution of the prediction latency with the
+number of features:
 
 .. |influence_of_n_features_on_latency| image::  ../auto_examples/applications/images/plot_prediction_latency_3.png
     :target: ../auto_examples/applications/plot_prediction_latency.html

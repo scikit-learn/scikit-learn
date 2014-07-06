@@ -216,9 +216,10 @@ Leave-One-Out - LOO
 
 :class:`LeaveOneOut` (or LOO) is a simple cross-validation. Each learning
 set is created by taking all the samples except one, the test set being
-the sample left out. Thus, for `n` samples, we have `n` different learning
-sets and `n` different tests set. This cross-validation procedure does
-not waste much data as only one sample is removed from the learning set::
+the sample left out. Thus, for :math:`n` samples, we have :math:`n` different
+training sets and :math:`n` different tests set. This cross-validation
+procedure does not waste much data as only one sample is removed from the
+training set::
 
   >>> from sklearn.cross_validation import LeaveOneOut
 
@@ -232,16 +233,18 @@ not waste much data as only one sample is removed from the learning set::
 
 
 Potential users of LOO for model selection should weigh a few known caveats. 
-When compared with *k*-fold cross validation, one builds *n* models from *n* 
-samples instead of *k* models, where *n > k*. Moreover, each is trained on *n - 1* 
-samples rather than *(k-1)n / k*. In both ways, assuming *k* is not too large 
-and *k < n*, LOO is more computationally expensive than *k*-fold cross validation.
+When compared with :math:`k`-fold cross validation, one builds :math:`n` models
+from :math:`n` samples instead of :math:`k` models, where :math:`n > k`.
+Moreover, each is trained on :math:`n - 1` samples rather than
+:math:`(k-1)n / k`. In both ways, assuming :math:`k` is not too large
+and :math:`k < n`, LOO is more computationally expensive than :math:`k`-fold
+cross validation.
 
-In terms of accuracy, LOO often results in high variance as an estimator for the 
-test error. Intuitively, since *n - 1* of 
-the *n* samples are used to build each model, models constructed from folds are 
-virtually identical to each other and to the model built from the entire training 
-set. 
+In terms of accuracy, LOO often results in high variance as an estimator for the
+test error. Intuitively, since :math:`n - 1` of
+the :math:`n` samples are used to build each model, models constructed from
+folds are virtually identical to each other and to the model built from the
+entire training set.
 
 However, if the learning curve is steep for the training size in question, 
 then 5- or 10- fold cross validation can overestimate the generalization error.
@@ -319,7 +322,7 @@ for cross-validation against time-based splits.
 
 .. warning::
 
-  Contrary to :class:`StratifiedKFold`, **the `labels` of
+  Contrary to :class:`StratifiedKFold`, **the ``labels`` of
   :class:`LeaveOneLabelOut` should not encode the target class to predict**:
   the goal of :class:`StratifiedKFold` is to rebalance dataset classes across
   the train / test split to ensure that the train and test folds have

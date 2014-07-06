@@ -431,7 +431,7 @@ stress, is then defined by :math:`sum_{i < j} d_{ij}(X) - \hat{d}_{ij}(X)`
 Metric MDS
 ----------
 
-The simplest metric :class:`MDS` model, called `absolute MDS`, disparities are defined by
+The simplest metric :class:`MDS` model, called *absolute MDS*, disparities are defined by
 :math:`\hat{d}_{ij} = S_{ij}`. With absolute MDS, the value :math:`S_{ij}`
 should then correspond exactly to the distance between point :math:`i` and
 :math:`j` in the embedding point.

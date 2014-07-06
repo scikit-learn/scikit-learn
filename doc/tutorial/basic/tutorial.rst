@@ -7,7 +7,7 @@ An introduction to machine learning with scikit-learn
 
     In this section, we introduce the `machine learning 
     <http://en.wikipedia.org/wiki/Machine_learning>`_
-    vocabulary that we use through-out `scikit-learn` and give a 
+    vocabulary that we use throughout scikit-learn and give a
     simple learning example.
 
 
@@ -80,7 +80,7 @@ datasets for classification and the `boston house prices dataset
 <http://archive.ics.uci.edu/ml/datasets/Housing>`_ for regression.
 
 In the following, we start a Python interpreter from our shell and then
-load the `iris` and `digits` datasets.  Our notational convention is that
+load the ``iris`` and ``digits`` datasets.  Our notational convention is that
 ``$`` denotes the shell prompt while ``>>>`` denotes the Python
 interpreter prompt::
 
@@ -108,7 +108,7 @@ access to the features that can be used to classify the digits samples::
    [  0.   0.   2. ...,  12.   0.   0.]
    [  0.   0.  10. ...,  12.   1.   0.]]
 
-and `digits.target` gives the ground truth for the digit dataset, that
+and ``digits.target`` gives the ground truth for the digit dataset, that
 is the number corresponding to each digit image that we are trying to
 learn::
 
@@ -117,9 +117,9 @@ learn::
 
 .. topic:: Shape of the data arrays
 
-    The data is always a 2D array, `n_samples, n_features`, although
+    The data is always a 2D array, shape ``(n_samples, n_features)``, although
     the original data may have had a different shape. In the case of the
-    digits, each original sample is an image of shape `8, 8` and can be
+    digits, each original sample is an image of shape ``(8, 8)`` and can be
     accessed using::
 
       >>> digits.images[0]
@@ -135,7 +135,7 @@ learn::
     The :ref:`simple example on this dataset
     <example_plot_digits_classification.py>` illustrates how starting
     from the original problem one can shape the data for consumption in
-    the `scikit-learn`.
+    scikit-learn.
 
 
 Learning and predicting
@@ -147,8 +147,8 @@ possible classes (the digits zero through nine) on which we *fit* an
 `estimator <http://en.wikipedia.org/wiki/Estimator>`_ to be able to *predict*
 the classes to which unseen samples belong.
 
-In `scikit-learn`, an estimator for classification is a Python object that
-implements the methods `fit(X, y)` and `predict(T)`.
+In scikit-learn, an estimator for classification is a Python object that
+implements the methods ``fit(X, y)`` and ``predict(T)``.
 
 An example of an estimator is the class ``sklearn.svm.SVC`` that
 implements `support vector classification
@@ -167,8 +167,8 @@ box::
   such as :ref:`grid search <grid_search>` and :ref:`cross validation
   <cross_validation>`.
 
-We call our estimator instance `clf` as it is a classifier. It now must
-be fitted to the model, that is, it must `learn` from the model. This is
+We call our estimator instance ``clf``, as it is a classifier. It now must
+be fitted to the model, that is, it must *learn* from the model. This is
 done by passing our training set to the ``fit`` method. As a training
 set, let us use all the images of our dataset apart from the last
 one. We select this training set with the ``[:-1]`` Python syntax,
@@ -181,7 +181,7 @@ the last entry of ``digits.data``::
     random_state=None, shrinking=True, tol=0.001, verbose=False)
 
 Now you can predict new values, in particular, we can ask to the
-classifier what is the digit of our last image in the `digits` dataset,
+classifier what is the digit of our last image in the ``digits`` dataset,
 which we have not used to train the classifier::
 
   >>> clf.predict(digits.data[-1])
@@ -242,7 +242,7 @@ with::
 .. note::
 
    joblib.dump returns a list of filenames. Each individual numpy array
-   contained in the `clf` object is serialized as a separate file on the
+   contained in the ``clf`` object is serialized as a separate file on the
    filesystem. All files are required in the same folder when reloading the
    model with joblib.load.
 

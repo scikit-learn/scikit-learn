@@ -19,11 +19,11 @@ Exact PCA and probabilistic interpretation
 
 PCA is used to decompose a multivariate dataset in a set of successive
 orthogonal components that explain a maximum amount of the variance. In
-scikit-learn, :class:`PCA` is implemented as a `transformer` object
-that learns n components in its `fit` method, and can be used on new data
-to project it on these components.
+scikit-learn, :class:`PCA` is implemented as a *transformer* object
+that learns :math:`n` components in its ``fit`` method, and can be used on new
+data to project it on these components.
 
-The optional parameter `whiten=True` parameter make it possible to
+The optional parameter ``whiten=True`` parameter make it possible to
 project the data onto the singular space while scaling each component
 to unit variance. This is often useful if the models down-stream make
 strong assumptions on the isotropy of the signal: this is for example
@@ -101,7 +101,7 @@ less than 1s:
 
 :class:`RandomizedPCA` can hence be used as a drop in replacement for
 :class:`PCA` with the exception that we need to give it the size of
-the lower-dimensional space `n_components` as a mandatory input parameter.
+the lower-dimensional space ``n_components`` as a mandatory input parameter.
 
 If we note :math:`n_{max} = max(n_{samples}, n_{features})` and
 :math:`n_{min} = min(n_{samples}, n_{features})`, the time complexity
@@ -118,9 +118,9 @@ Furthermore :class:`RandomizedPCA` is able to work with
 the dimensionality of features extracted from text documents for
 instance.
 
-Note: the implementation of `inverse_transform` in :class:`RandomizedPCA`
-is not the exact inverse transform of `transform` even when
-`whiten=False` (default).
+Note: the implementation of ``inverse_transform`` in :class:`RandomizedPCA`
+is not the exact inverse transform of ``transform`` even when
+``whiten=False`` (default).
 
 
 .. topic:: Examples:
@@ -145,7 +145,7 @@ Kernel PCA
 dimensionality reduction through the use of kernels. It has many
 applications including denoising, compression and structured prediction
 (kernel dependency estimation). :class:`KernelPCA` supports both
-`transform` and `inverse_transform`.
+``transform`` and ``inverse_transform``.
 
 .. figure:: ../auto_examples/decomposition/images/plot_kernel_pca_1.png
     :target: ../auto_examples/decomposition/plot_kernel_pca.html
@@ -192,9 +192,9 @@ there is no notion of vertical adjacency except during the human-friendly
 visualization as 64x64 pixel images. The fact that the components shown below
 appear local is the effect of the inherent structure of the data, which makes
 such local patterns minimize reconstruction error. There exist sparsity-inducing
-norms that take into account adjacency and different kinds of structure; see see
-[Jen09]_ for a review of such methods. For more details on how to use Sparse PCA,
-see the `Examples` section below.
+norms that take into account adjacency and different kinds of structure; see
+[Jen09]_ for a review of such methods.
+For more details on how to use Sparse PCA, see the Examples section, below.
 
 
 .. |spca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_5.png
@@ -218,13 +218,13 @@ problem solved is a PCA problem (dictionary learning) with an
 The sparsity-inducing :math:`\ell_1` norm also prevents learning
 components from noise when few training samples are available. The degree
 of penalization (and thus sparsity) can be adjusted through the
-hyperparameter `alpha`. Small values lead to a gently regularized
+hyperparameter ``alpha``. Small values lead to a gently regularized
 factorization, while larger values shrink many coefficients to zero.
 
 .. note::
 
   While in the spirit of an online algorithm, the class
-  :class:`MiniBatchSparsePCA` does not implement `partial_fit` because
+  :class:`MiniBatchSparsePCA` does not implement ``partial_fit`` because
   the algorithm is online along the features direction, not the samples
   direction.
 
@@ -335,11 +335,11 @@ Sparse coding with a precomputed dictionary
 The :class:`SparseCoder` object is an estimator that can be used to transform signals
 into sparse linear combination of atoms from a fixed, precomputed dictionary
 such as a discrete wavelet basis. This object therefore does not
-implement a `fit` method. The transformation amounts
+implement a ``fit`` method. The transformation amounts
 to a sparse coding problem: finding a representation of the data as a linear
 combination of as few dictionary atoms as possible. All variations of
 dictionary learning implement the following transform methods, controllable via
-the `transform_method` initialization parameter:
+the ``transform_method`` initialization parameter:
 
 * Orthogonal matching pursuit (:ref:`omp`)
 
@@ -356,16 +356,17 @@ They have been shown useful in literature for classification tasks. For image
 reconstruction tasks, orthogonal matching pursuit yields the most accurate,
 unbiased reconstruction.
 
-The dictionary learning objects offer, via the `split_code` parameter, the
+The dictionary learning objects offer, via the ``split_code`` parameter, the
 possibility to separate the positive and negative values in the results of
 sparse coding. This is useful when dictionary learning is used for extracting
 features that will be used for supervised learning, because it allows the
 learning algorithm to assign different weights to negative loadings of a
 particular atom, from to the corresponding positive loading.
 
-The split code for a single sample has length `2 * n_components`
+The split code for a single sample has length ``2 * n_components``
 and is constructed using the following rule: First, the regular code of length
-`n_components` is computed. Then, the first `n_components` entries of the split_code are
+``n_components`` is computed. Then, the first ``n_components`` entries of the
+``split_code`` are
 filled with the positive part of the regular code vector. The second half of
 the split code is filled with the negative part of the code vector, only with
 a positive sign. Therefore, the split_code is non-negative.
@@ -450,7 +451,7 @@ mini-batches and optimizes in an online manner by cycling over the mini-batches
 for the specified number of iterations. However, at the moment it does not
 implement a stopping condition.
 
-The estimator also implements `partial_fit`, which updates the dictionary by
+The estimator also implements ``partial_fit``, which updates the dictionary by
 iterating only once over a mini-batch. This can be used for online learning
 when the data is not readily available from the start, or for when the data
 does not fit into the memory.
@@ -467,8 +468,8 @@ does not fit into the memory.
    Note that when using dictionary learning to extract a representation
    (e.g. for sparse coding) clustering can be a good proxy to learn the
    dictionary. For instance the :class:`MiniBatchKMeans` estimator is
-   computationally efficient and implements on-line learning
-   `partial_fit` method.
+   computationally efficient and implements on-line learning with a
+   ``partial_fit`` method.
 
     Example: :ref:`example_cluster_plot_dict_face_patches.py`
 
@@ -485,10 +486,10 @@ In unsupervised learning we only have a dataset :math:`X = \{x_1, x_2, \dots, x_
 
 .. math:: x_i = W h_i + \mu + \epsilon
 
-The vector :math:`h_i` is called `latent` because it is unobserved. :math:`\epsilon` is
+The vector :math:`h_i` is called "latent" because it is unobserved. :math:`\epsilon` is
 considered a noise term distributed according to a Gaussian with mean 0 and
 covariance :math:`\Psi` (i.e. :math:`\epsilon \sim \mathcal{N}(0, \Psi)`), :math:`\mu` is some
-arbitrary offset vector. Such a model is called `generative` as it describes
+arbitrary offset vector. Such a model is called "generative" as it describes
 how :math:`x_i` is generated from :math:`h_i`. If we use all the :math:`x_i`'s as columns to form
 a matrix :math:`\mathbf{X}` and all the :math:`h_i`'s as columns of a matrix :math:`\mathbf{H}`
 then we can write (with suitably defined :math:`\mathbf{M}` and :math:`\mathbf{E}`):
@@ -496,7 +497,7 @@ then we can write (with suitably defined :math:`\mathbf{M}` and :math:`\mathbf{E
 .. math::
     \mathbf{X} = W \mathbf{H} + \mathbf{M} + \mathbf{E}
 
-In other words, we `decomposed` matrix :math:`\mathbf{X}`.
+In other words, we *decomposed* matrix :math:`\mathbf{X}`.
 
 If :math:`h_i` is given, the above equation automatically implies the following
 probabilistic interpretation:
@@ -521,14 +522,14 @@ structure of the error covariance :math:`\Psi`:
 
 * :math:`\Psi = diag(\psi_1, \psi_2, \dots, \psi_n)`: This model is called Factor
   Analysis, a classical statistical model. The matrix W is sometimes called
-  `factor loading matrix`.
+  the "factor loading matrix".
 
 Both model essentially estimate a Gaussian with a low-rank covariance matrix.
 Because both models are probabilistic they can be integrated in more complex
 models, e.g. Mixture of Factor Analysers. One gets very different models (e.g.
 :class:`FastICA`) if non-Gaussian priors on the latent variables are assumed.
 
-Factor Analysis `can` produce similar components (the columns of its loading
+Factor analysis *can* produce similar components (the columns of its loading
 matrix) to :class:`PCA`. However, one can not make any general statements
 about these components (e.g. whether they are orthogonal):
 
@@ -661,7 +662,7 @@ to random perturbations less than the mean of the data divided by 100) are
 recommended in the dense case.
 
 :class:`NMF` can also be initialized with random non-negative matrices, by
-passing an integer seed or a `RandomState` to :attr:`init`.
+passing an integer seed or a ``RandomState`` to :attr:`init`.
 
 In :class:`NMF`, sparseness can be enforced by setting the attribute
 :attr:`sparseness` to ``"data"`` or ``"components"``. Sparse components lead to
