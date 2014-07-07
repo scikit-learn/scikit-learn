@@ -42,6 +42,8 @@ from .base import MetaEstimatorMixin
 from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
+from .utils.multiclass import type_of_target
+from .utils.multiclass import unique_labels
 from .externals.joblib import Parallel
 from .externals.joblib import delayed
 
@@ -86,7 +88,11 @@ def fit_ovr(estimator, X, y, n_jobs=1):
     """Fit a one-vs-the-rest strategy."""
     _check_estimator(estimator)
 
-    lb = LabelBinarizer(sparse_output=True)
+    if (type_of_target(y).startswith("multiclass") and 
+        len(unique_labels(y)) >=3):
+        lb = LabelBinarizer(sparse_output=True)
+    else:
+        lb = LabelBinarizer(sparse_output=True)
 
     Y = lb.fit_transform(y)
 
