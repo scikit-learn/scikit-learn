@@ -89,7 +89,7 @@ def fit_ovr(estimator, X, y, n_jobs=1):
     _check_estimator(estimator)
 
     if (type_of_target(y).startswith("multiclass") and 
-        len(unique_labels(y)) >=3):
+        len(unique_labels(y)) == 3):
         lb = LabelBinarizer(sparse_output=False)
     else:
         lb = LabelBinarizer(sparse_output=True)
