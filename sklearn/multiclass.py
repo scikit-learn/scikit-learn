@@ -112,7 +112,7 @@ def fit_ovr(estimator, X, y, n_jobs=1):
 
 
 def _get_col(Y, i):
-    """Y is CSC matrix, i is the column index. Returns the dense column."""
+    """Y is CSC matrix, i is the column. Returns a dense binary column."""
     c = np.zeros(Y.shape[0], dtype=int)
     c[Y.indices[Y.indptr[i]:Y.indptr[i+1]]] = Y.data[Y.indptr[i]:Y.indptr[i+1]]
     return c
