@@ -87,9 +87,7 @@ def _check_estimator(estimator):
 def fit_ovr(estimator, X, y, n_jobs=1):
     """Fit a one-vs-the-rest strategy."""
     _check_estimator(estimator)
-    sparse_putput = (type_of_target(y).startswith("multiclass") and 
-                     len(unique_labels(y)) == 3)
-    lb = LabelBinarizer(sparse_output=sparse_putput)
+    lb = LabelBinarizer(sparse_output=True)
     Y = lb.fit_transform(y)
 
     if sp.issparse(Y):
@@ -103,8 +101,14 @@ def fit_ovr(estimator, X, y, n_jobs=1):
                                           column,
                                           classes=["not %s" % i, i])
                                          for i, column in enumerate(columns))
-
     return estimators, lb
+
+
+def _get_col(Y, i):
+    """Y is CSC matrix, i is the column. Returns a dense binary column."""
+    c = np.zeros(Y.shape[0], dtype=int)
+    c[Y.indices[Y.indptr[i]:Y.indptr[i+1]]] = Y.data[Y.indptr[i]:Y.indptr[i+1]]
+    return c
 
 
 def predict_ovr(estimators, label_binarizer, X):
