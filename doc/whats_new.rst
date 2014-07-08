@@ -230,6 +230,9 @@ Changelog
    - Incremental learning (``partial_fit``) for Gaussian Naive Bayes by
      Imran Haque.
 
+   - Speed up of the sample generator
+     :func:`datasets.make_multilabel_classification`. By `Joel Nothman`_.
+
 
 API changes summary
 -------------------
