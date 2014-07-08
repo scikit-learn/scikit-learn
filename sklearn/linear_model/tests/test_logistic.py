@@ -382,3 +382,30 @@ def test_ova_iris():
     assert_array_equal(clf.scores_[2], clf1.scores_[2])
     assert_array_equal(clf.intercept_[2:], clf1.intercept_)
     assert_array_equal(clf.coef_[2][np.newaxis, :], clf1.coef_)
+
+
+def test_logreg_newton_lbfgs():
+    X, y = make_classification(n_features=50, n_informative=10, random_state=0)
+    clf_n = LogisticRegression(solver='newton-cg', fit_intercept=False)
+    clf_n.fit(X, y)
+    clf_lbf = LogisticRegression(solver='lbfgs', fit_intercept=False)
+    clf_lbf.fit(X, y)
+    clf_lib = LogisticRegression(fit_intercept=False)
+    clf_lib.fit(X, y)
+    assert_array_almost_equal(clf_n.coef_, clf_lib.coef_, decimal=3)
+    assert_array_almost_equal(clf_lib.coef_, clf_lbf.coef_, decimal=3)
+    assert_array_almost_equal(clf_n.coef_, clf_lbf.coef_, decimal=3)
+
+
+def test_logreg_newton_lbfgs_multitask():
+    X, y = make_classification(n_features=50, n_informative=10,
+                               n_classes=3, random_state=0)
+    clf_n = LogisticRegression(solver='newton-cg', fit_intercept=False)
+    clf_n.fit(X, y)
+    clf_lbf = LogisticRegression(solver='lbfgs', fit_intercept=False)
+    clf_lbf.fit(X, y)
+    clf_lib = LogisticRegression(fit_intercept=False)
+    clf_lib.fit(X, y)
+    assert_array_almost_equal(clf_n.coef_, clf_lib.coef_, decimal=3)
+    assert_array_almost_equal(clf_lib.coef_, clf_lbf.coef_, decimal=3)
+    assert_array_almost_equal(clf_n.coef_, clf_lbf.coef_, decimal=3)

@@ -230,7 +230,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         Whether to fit an intercept for the model. In this case the shape of
         the returned array is (n_cs, n_features + 1).
 
-    max_iter : integer
+    max_iter : int
         Maximum number of iterations for the solver.
 
     tol : float
@@ -446,7 +446,8 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
     Parameters
     ----------
     penalty : string, 'l1' or 'l2'
-        Used to specify the norm used in the penalization.
+        Used to specify the norm used in the penalization. The newton-cg and
+        lbfgs solvers support only l2 penalties.
 
     dual : boolean
         Dual or primal formulation. Dual formulation is only
@@ -479,9 +480,16 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
         The 'auto' mode selects weights inversely proportional to class
         frequencies in the training set.
 
+    max_iter : int
+        Useful only for the newton-cg and lbfgs solvers. Maximum number of
+        iterations taken for the solvers to converge.
+
     random_state: int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
         shuffling the data.
+
+    solver: {'newton-cg', 'lbfgs', 'liblinear'}
+        Algorithm to use in the optimization problem.
 
     tol: float, optional
         Tolerance for stopping criteria.
@@ -521,12 +529,13 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
-                 random_state=None):
+                 random_state=None, solver='liblinear', max_iter=100):
 
         super(LogisticRegression, self).__init__(
             penalty=penalty, dual=dual, loss='lr', tol=tol, C=C,
             fit_intercept=fit_intercept, intercept_scaling=intercept_scaling,
-            class_weight=class_weight, random_state=random_state)
+            class_weight=class_weight, random_state=random_state,
+            solver=solver, max_iter=max_iter)
 
     def predict_proba(self, X):
         """Probability estimates.

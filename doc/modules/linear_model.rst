@@ -649,10 +649,10 @@ rather than regression. Logistic regression is also known in the literature as
 logit regression, maximum-entropy classification (MaxEnt)
 or the log-linear classifier. In this model, the probabilities describing the possible outcomes of a single trial are modeled using a `logistic function <http://en.wikipedia.org/wiki/Logistic_function>`_.
 
-The implementation of logistic regression in scikit-learn can be accessed from 
-class :class:`LogisticRegression`. This 
+The implementation of logistic regression in scikit-learn can be accessed from
+class :class:`LogisticRegression`. This
 implementation can fit a multiclass (one-vs-rest) logistic regression with optional
-L2 or L1 regularization. 
+L2 or L1 regularization.
 
 As an optimization problem, binary class L2 penalized logistic regression minimizes
 the following cost function:
@@ -663,6 +663,12 @@ Similarly, L1 regularized logistic regression solves the following optimization 
 
 .. math:: \underset{w, c}{min\,} \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
 
+The solvers implemented for Logistic Regression are liblinear (which is a
+wrapper around the C++ library, LIBLINEAR), newton-cg and lbfgs.
+
+The liblinear solver can be used to do L1 or L2 penalized
+logistic regression. The lbfgs and newton-cg solvers and do only L1 penalized
+regression and are found to converge faster for high dimensional data.
 L1 penalization yields sparse predicting weights.
 For L1 penalization :func:`sklearn.svm.l1_min_c` allows to calculate
 the lower bound for C in order to get a non "null" (all feature weights to
