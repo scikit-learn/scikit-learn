@@ -1,6 +1,7 @@
 from itertools import product
 
 import numpy as np
+import scipy.sparse as sp
 from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
                           dok_matrix, lil_matrix)
 
@@ -416,6 +417,59 @@ def test_KNeighborsClassifier_multioutput():
 
         for proba_mo, proba_so in zip(y_pred_proba_mo, y_pred_proba_so):
             assert_array_almost_equal(proba_mo, proba_so)
+
+def test_KNeighborsClassifier_multioutput_sparse():
+    """Test k-NN classifier on multioutput data with sparse taget"""
+    rng = check_random_state(0)
+    n_features = 5
+    n_samples = 50
+    n_output = 3
+
+    X = rng.rand(n_samples, n_features)
+    y = rng.randint(0, 3, (n_samples, n_output))
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    y_train = csc_matrix(y_train)
+
+    weights = [None, 'uniform', 'distance', _weight_func]
+
+    for algorithm, weights in product(ALGORITHMS, weights):
+        # Stack single output prediction
+        y_pred_so = []
+        y_pred_proba_so = []
+        for o in range(n_output):
+            knn = neighbors.KNeighborsClassifier(weights=weights,
+                                                 algorithm=algorithm)
+            knn.fit(X_train, y_train.getcol(o).toarray().ravel())
+            y_pred_so.append(knn.predict(X_test))
+            y_pred_proba_so.append(knn.predict_proba(X_test))
+
+        y_pred_so = np.vstack(y_pred_so).T
+        assert_equal(y_pred_so.shape, y_test.shape)
+        assert_equal(len(y_pred_proba_so), n_output)
+
+        # Multioutput prediction
+        knn_mo = neighbors.KNeighborsClassifier(weights=weights,
+                                                algorithm=algorithm)
+        knn_mo.fit(X_train, y_train)
+        y_pred_mo = knn_mo.predict(X_test)
+
+        # XXX Desify the y_pre_mo output which is supposed to be sparse
+        print y_train.toarray()
+        print y_pred_mo
+        print y_pred_so
+
+        assert_equal(y_pred_mo.shape, y_test.shape)
+        assert_true(sp.issparse(y_pred_mo))
+        assert_array_almost_equal(y_pred_mo.toarray(), y_pred_so)
+
+        # Check proba
+        y_pred_proba_mo = knn_mo.predict_proba(X_test)
+        assert_equal(len(y_pred_proba_mo), n_output)
+
+        for proba_mo, proba_so in zip(y_pred_proba_mo, y_pred_proba_so):
+            assert_array_almost_equal(proba_mo, proba_so)
+
 
 
 def test_kneighbors_regressor(n_samples=40,

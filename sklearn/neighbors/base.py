@@ -10,6 +10,7 @@ import warnings
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
+import scipy.sparse as sp
 from scipy.sparse import csr_matrix, issparse
 
 from .ball_tree import BallTree
@@ -137,6 +138,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         self._fit_method = None
 
     def _fit(self, X):
+        print "XXX Here in NeighborsBase _fit"
         self.effective_metric_ = self.metric
         self.effective_metric_kwds_ = self.metric_kwds
 
@@ -600,6 +602,7 @@ class SupervisedIntegerMixin(object):
             Target values of shape = [n_samples] or [n_samples, n_outputs]
 
         """
+        print "XXX Here in SupervisedIntegerMixin fit"
         if not isinstance(X, (KDTree, BallTree)):
             X, y = check_X_y(X, y, "csr", multi_output=True)
 
@@ -611,19 +614,51 @@ class SupervisedIntegerMixin(object):
                               DataConversionWarning, stacklevel=2)
 
             self.outputs_2d_ = False
+            # XXX why is this neccesary? revise for sparse
             y = y.reshape((-1, 1))
         else:
             self.outputs_2d_ = True
 
-        self.classes_ = []
-        self._y = np.empty(y.shape, dtype=np.int)
-        for k in range(self._y.shape[1]):
-            classes, self._y[:, k] = np.unique(y[:, k], return_inverse=True)
-            self.classes_.append(classes)
+        if not sp.issparse(y):
+            # XXX current
+            self.classes_ = []
+            self._y = np.empty(y.shape, dtype=np.int)
+            for k in range(self._y.shape[1]):
+                classes, self._y[:, k] = np.unique(y[:, k], return_inverse=True)
+                self.classes_.append(classes)
 
-        if not self.outputs_2d_:
-            self.classes_ = self.classes_[0]
-            self._y = self._y.ravel()
+            if not self.outputs_2d_:
+                self.classes_ = self.classes_[0]
+                self._y = self._y.ravel()
+        else:
+            # XXX sparse support
+            y = sp.csc_matrix(y)
+
+            data = np.array([])
+            self.classes_ = []
+            for k in range(y.shape[1]):
+                k_col = y.getcol(k)
+                classes =  np.unique(k_col.data)
+                if not k_col.nnz == y.shape[0]:
+                    classes = np.insert(classes,0,0)
+                self.classes_.append(classes)
+
+                data_k = [np.where(classes==e)[0][0] for e in k_col.data]
+                print "classes", classes
+                print "data_k", data_k
+                print "k_col.data", k_col.data
+                data = np.append(data,data_k)
+
+
+            _y = sp.csc_matrix((data, y.indices, y.indptr),shape=y.shape,dtype=int)
+
+            # XXX this is included only until predict is revised for sparse support
+            self._y = _y.toarray()
+
+            if not self.outputs_2d_:
+                # XXX include sparse support here
+                self.classes_ = self.classes_[0]
+                self._y = self._y.ravel()
 
         return self._fit(X)
 
