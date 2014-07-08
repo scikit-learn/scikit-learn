@@ -2574,7 +2574,6 @@ def test_averaging_multilabel_all_ones():
 
 @ignore_warnings
 def check_sample_weight_invariance(name, metric, y1, y2):
-
     rng = np.random.RandomState(0)
     sample_weight = rng.randint(1, 10, size=len(y1))
 
@@ -2639,6 +2638,8 @@ def check_sample_weight_invariance(name, metric, y1, y2):
 
 
 def test_sample_weight_invariance():
+    random_state = check_random_state(0)
+
     # binary output
     y1, y2, _ = make_prediction(binary=True)
     for name in ALL_METRICS:
@@ -2659,36 +2660,45 @@ def test_sample_weight_invariance():
 
 
     # multilabel sequence
-    _, ya = make_multilabel_classification(
-        n_features=1, n_classes=3,
-        random_state=0, n_samples=10)
-    _, yb = make_multilabel_classification(
-        n_features=1, n_classes=3,
-        random_state=1, n_samples=10)
-    y1 = ya + yb
-    y2 = ya + ya
+    y_true = 2 * [(1, 2, ), (1, ), (0, ), (0, 1), (1, 2)]
+    y_pred = 2 * [(0, 2, ), (2, ), (0, ), (2, ), (1,)]
+    y_score = random_state.randn(10, 3)
+
 
     for name in MULTILABELS_METRICS:
         if name in METRICS_WITHOUT_SAMPLE_WEIGHT:
             continue
         metric = ALL_METRICS[name]
-        yield (check_sample_weight_invariance, name, metric, y1, y2)
+
+        if name in THRESHOLDED_METRICS:
+            yield (check_sample_weight_invariance, name, metric, y_true,
+                   y_score)
+        else:
+            yield (check_sample_weight_invariance, name, metric, y_true,
+                   y_pred)
 
     # multilabel indicator
     _, ya = make_multilabel_classification(
-        n_features=1, n_classes=6,
-        random_state=0, n_samples=10,
-        return_indicator=True)
+        n_features=1, n_classes=20,
+        random_state=0, n_samples=100,
+        return_indicator=True, allow_unlabeled=False)
     _, yb = make_multilabel_classification(
-        n_features=1, n_classes=6,
-        random_state=1, n_samples=10,
-        return_indicator=True)
-    y1 = np.vstack([ya, yb])
-    y2 = np.vstack([ya, ya])
+        n_features=1, n_classes=20,
+        random_state=1, n_samples=100,
+        return_indicator=True, allow_unlabeled=False)
+    y_true = np.vstack([ya, yb])
+    y_pred = np.vstack([ya, ya])
+    y_score = random_state.randint(1, 4, size=y_true.shape)
+
     for name in (MULTILABELS_METRICS + THRESHOLDED_MULTILABEL_METRICS +
                  MULTIOUTPUT_METRICS):
         if name in METRICS_WITHOUT_SAMPLE_WEIGHT:
             continue
 
         metric = ALL_METRICS[name]
-        yield (check_sample_weight_invariance, name, metric, y1, y2)
+        if name in THRESHOLDED_METRICS:
+            yield (check_sample_weight_invariance, name, metric, y_true,
+                   y_score)
+        else:
+            yield (check_sample_weight_invariance, name, metric, y_true,
+                   y_pred)

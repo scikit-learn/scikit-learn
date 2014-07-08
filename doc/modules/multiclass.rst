@@ -94,14 +94,13 @@ format.
   >>> X, Y = make_multilabel_classification(n_samples=5, random_state=0,
   ...                                       return_indicator=False)
   >>> Y
-  ([0, 1, 2], [4, 1, 0, 2], [4, 0, 1], [1, 0], [3, 2])
+  [[2, 3, 4], [2], [0, 1, 3], [0, 1, 2, 3, 4], [0, 1, 2]]
   >>> MultiLabelBinarizer().fit_transform(Y)
-  array([[1, 1, 1, 0, 0],
-         [1, 1, 1, 0, 1],
-         [1, 1, 0, 0, 1],
-         [1, 1, 0, 0, 0],
-         [0, 0, 1, 1, 0]])
-
+  array([[0, 0, 1, 1, 1],
+         [0, 0, 1, 0, 0],
+         [1, 1, 0, 1, 0],
+         [1, 1, 1, 1, 1],
+         [1, 1, 1, 0, 0]])
 
 One-Vs-The-Rest
 ===============
