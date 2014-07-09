@@ -100,7 +100,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         Default assumes a nugget close to machine precision for the sake of
         robustness (nugget = 10. * MACHINE_EPSILON).
 
-    optimizer : string, optional
+    optimizer : string or callable, optional
         A string specifying the optimization algorithm to be used.
         Default uses 'fmin_cobyla' algorithm from scipy.optimize.
         Available optimizers are::
@@ -110,6 +110,11 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         'Welch' optimizer is dued to Welch et al., see reference [WBSWM1992]_.
         It consists in iterating over several one-dimensional optimizations
         instead of running one single multi-dimensional optimization.
+        If a callable is passed, it is assumed that this callable handles the
+        optimization iternally. It must accept the an objective function,
+        the start position x0 of the optimization, as well as the lower
+        and upper boundaries of the search space (xL and xU) as parameters.
+        It is expected to return the optimal parameters x_best.
 
     random_start : int, optional
         The number of times the Maximum Likelihood Estimation should be
@@ -620,9 +625,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         """
 
         # Initialize output
-        best_optimal_theta = []
-        best_optimal_rlf_value = []
-        best_optimal_par = []
+        best_optimal_theta = None
+        best_optimal_rlf_value = -np.inf
+        best_optimal_par = None
 
         if self.verbose:
             print("The chosen optimizer is: " + str(self.optimizer))
@@ -635,21 +640,21 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         if self.optimizer == 'Welch' and self.theta0.size == 1:
             self.optimizer = 'fmin_cobyla'
 
-        if self.optimizer == 'fmin_cobyla':
+        if self.optimizer != 'Welch':
 
             def minus_reduced_likelihood_function(log10t):
                 return - self.reduced_likelihood_function(
                     theta=10. ** log10t)[0]
 
-            constraints = []
-            for i in range(self.theta0.size):
-                constraints.append(lambda log10t, i=i:
-                                   log10t[i] - np.log10(self.thetaL[i]))
-                constraints.append(lambda log10t, i=i:
-                                   np.log10(self.thetaU[i]) - log10t[i])
+            if self.optimizer == 'fmin_cobyla':
+                constraints = []
+                for i in range(self.theta0.size):
+                    constraints.append(lambda log10t, i=i:
+                                       log10t[i] - np.log10(self.thetaL[i]))
+                    constraints.append(lambda log10t, i=i:
+                                       np.log10(self.thetaU[i]) - log10t[i])
 
             for k in range(self.random_start):
-
                 if k == 0:
                     # Use specified starting point as first guess
                     theta0 = self.theta0
@@ -661,13 +666,21 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                         * np.log10(self.thetaU / self.thetaL)
                     theta0 = 10. ** log10theta0
 
-                # Run Cobyla
+                # Run Optimizer
                 try:
-                    log10_optimal_theta = \
-                        optimize.fmin_cobyla(minus_reduced_likelihood_function,
-                                             np.log10(theta0), constraints,
-                                             iprint=0)
-                except ValueError as ve:
+                    if self.optimizer == 'fmin_cobyla':
+                        log10_optimal_theta = \
+                            optimize.fmin_cobyla(
+                                minus_reduced_likelihood_function,
+                                np.log10(theta0), constraints,
+                                iprint=0)
+                    else:
+                        log10_optimal_theta = \
+                            self.optimizer(minus_reduced_likelihood_function,
+                                           np.log10(theta0),
+                                           np.log10(self.thetaL),
+                                           np.log10(self.thetaU))
+                except ValueError:
                     print("Optimization failed. Try increasing the ``nugget``")
                     raise ve
 
@@ -819,7 +832,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                              "or array of length n_samples.")
 
         # Check optimizer
-        if not self.optimizer in self._optimizer_types:
+        if not (self.optimizer in self._optimizer_types
+                or hasattr(self.optimizer, '__call__')) :
             raise ValueError("optimizer should be one of %s"
                              % self._optimizer_types)
 
