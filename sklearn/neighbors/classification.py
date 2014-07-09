@@ -181,15 +181,14 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         n_samples = X.shape[0]
         weights = _get_weights(neigh_dist, self.weights)
 
-        _y = sp.csc_matrix(_y) # XXX Remove when sparse matrix comes from fit in one continous pass
+        if not self.sparse_target_input_:
+            _y = sp.csc_matrix(_y) # XXX Remove when sparse matrix comes from fit in one continous pass
 
         data = np.array([], dtype=classes_[0].dtype)
         indices = np.array([])
         indptr = np.array([0])
         for k, classes_k in enumerate(classes_):
             neigh_lbls_k = _y[neigh_ind,k]
-            print "neigh_lbls_k", neigh_lbls_k.toarray().T
-            print "current", _y.toarray()[neigh_ind,k]
             if weights is None:
                 # XXX make a sparse mode function, do not densify neigh_lbls_k
                 mode, _ = stats.mode(neigh_lbls_k.toarray().T, axis=1)
@@ -201,16 +200,14 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
             # XXX Changes appends to concats
             data = np.append(data, mode.data)
-            #print "data", data
-            print "mode", mode.data
             indices = np.append(indices, mode.indices)
             indptr = np.append(indptr, len(indices))
 
         y_pred = sp.csc_matrix((data, indices, indptr), (n_samples, n_outputs), dtype=np.intp)
-        print classes_[0].dtype
 
-        y_pred = y_pred.toarray() # XXX remove this
-        y_pred = classes_k[y_pred] # XXX remove this for sparse cases, sparse matricies cant have str data
+        if not self.sparse_target_input_:
+            y_pred = y_pred.toarray() # XXX remove this
+            y_pred = classes_k[y_pred] # XXX remove this for sparse cases, sparse matricies cant have str data
 
         if not self.outputs_2d_:
             y_pred = y_pred.ravel()
@@ -238,6 +235,11 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         classes_ = self.classes_
         _y = self._y
+
+        # XXX temporary patch
+        if self.sparse_target_input_:
+            _y = _y.toarray()
+
         if not self.outputs_2d_:
             _y = self._y.reshape((-1, 1))
             classes_ = [self.classes_]

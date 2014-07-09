@@ -455,10 +455,6 @@ def test_KNeighborsClassifier_multioutput_sparse():
         y_pred_mo = knn_mo.predict(X_test)
 
         # XXX Desify the y_pre_mo output which is supposed to be sparse
-        print y_train.toarray()
-        print y_pred_mo
-        print y_pred_so
-
         assert_equal(y_pred_mo.shape, y_test.shape)
         assert_true(sp.issparse(y_pred_mo))
         assert_array_almost_equal(y_pred_mo.toarray(), y_pred_so)

@@ -138,7 +138,6 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         self._fit_method = None
 
     def _fit(self, X):
-        print "XXX Here in NeighborsBase _fit"
         self.effective_metric_ = self.metric
         self.effective_metric_kwds_ = self.metric_kwds
 
@@ -602,7 +601,6 @@ class SupervisedIntegerMixin(object):
             Target values of shape = [n_samples] or [n_samples, n_outputs]
 
         """
-        print "XXX Here in SupervisedIntegerMixin fit"
         if not isinstance(X, (KDTree, BallTree)):
             X, y = check_X_y(X, y, "csr", multi_output=True)
 
@@ -618,6 +616,8 @@ class SupervisedIntegerMixin(object):
             y = y.reshape((-1, 1))
         else:
             self.outputs_2d_ = True
+
+        self.sparse_target_input_ = sp.issparse(y)
 
         if not sp.issparse(y):
             # XXX current
@@ -644,21 +644,20 @@ class SupervisedIntegerMixin(object):
                 self.classes_.append(classes)
 
                 data_k = [np.where(classes==e)[0][0] for e in k_col.data]
-                print "classes", classes
-                print "data_k", data_k
-                print "k_col.data", k_col.data
                 data = np.append(data,data_k)
-
 
             _y = sp.csc_matrix((data, y.indices, y.indptr),shape=y.shape,dtype=int)
 
+            self._y = _y
+
             # XXX this is included only until predict is revised for sparse support
-            self._y = _y.toarray()
+            #self._y = _y.toarray()
 
             if not self.outputs_2d_:
                 # XXX include sparse support here
                 self.classes_ = self.classes_[0]
                 self._y = self._y.ravel()
+
 
         return self._fit(X)
 
