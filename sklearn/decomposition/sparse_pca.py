@@ -66,6 +66,9 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     `error_` : array
         Vector of errors at each iteration.
 
+    `n_iter_` : int
+        Number of iterations run.
+
     See also
     --------
     PCA
@@ -109,13 +112,15 @@ class SparsePCA(BaseEstimator, TransformerMixin):
             n_components = self.n_components
         code_init = self.V_init.T if self.V_init is not None else None
         dict_init = self.U_init.T if self.U_init is not None else None
-        Vt, _, E = dict_learning(X.T, n_components, self.alpha,
-                                 tol=self.tol, max_iter=self.max_iter,
-                                 method=self.method, n_jobs=self.n_jobs,
-                                 verbose=self.verbose,
-                                 random_state=random_state,
-                                 code_init=code_init,
-                                 dict_init=dict_init)
+        Vt, _, E, self.n_iter_ = dict_learning(X.T, n_components, self.alpha,
+                                               tol=self.tol,
+                                               max_iter=self.max_iter,
+                                               method=self.method,
+                                               n_jobs=self.n_jobs,
+                                               verbose=self.verbose,
+                                               random_state=random_state,
+                                               code_init=code_init,
+                                               dict_init=dict_init)
         self.components_ = Vt.T
         self.error_ = E
         return self
@@ -211,6 +216,9 @@ class MiniBatchSparsePCA(SparsePCA):
     `error_` : array
         Vector of errors at each iteration.
 
+    `n_iter_` : int
+        Number of iterations run.
+
     See also
     --------
     PCA
@@ -253,13 +261,15 @@ class MiniBatchSparsePCA(SparsePCA):
             n_components = X.shape[1]
         else:
             n_components = self.n_components
-        Vt, _ = dict_learning_online(X.T, n_components, alpha=self.alpha,
-                                     n_iter=self.n_iter, return_code=True,
-                                     dict_init=None, verbose=self.verbose,
-                                     callback=self.callback,
-                                     batch_size=self.batch_size,
-                                     shuffle=self.shuffle,
-                                     n_jobs=self.n_jobs, method=self.method,
-                                     random_state=random_state)
+        Vt, _, self.n_iter_ = dict_learning_online(
+            X.T, n_components, alpha=self.alpha,
+            n_iter=self.n_iter, return_code=True,
+            dict_init=None, verbose=self.verbose,
+            callback=self.callback,
+            batch_size=self.batch_size,
+            shuffle=self.shuffle,
+            n_jobs=self.n_jobs, method=self.method,
+            random_state=random_state
+            )
         self.components_ = Vt.T
         return self

@@ -67,7 +67,7 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
             break
         x_weights_old = x_weights
         ite += 1
-    return x_weights, y_weights
+    return x_weights, y_weights, ite
 
 
 def _svd_cross_product(X, Y):
@@ -181,6 +181,10 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
     coefs: array, [p, q]
         The coefficients of the linear model: Y = X coefs + Err
 
+    `n_iter_` : array-like
+        List of the number of iterations of the NIPALS inner loop across all
+        components. Useful only if the algorithm is nipals.
+
     References
     ----------
 
@@ -264,15 +268,18 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         self.y_weights_ = np.zeros((q, self.n_components))
         self.x_loadings_ = np.zeros((p, self.n_components))
         self.y_loadings_ = np.zeros((q, self.n_components))
+        self.n_iter_ = []
 
         # NIPALS algo: outer loop, over components
         for k in range(self.n_components):
             #1) weights estimation (inner loop)
             # -----------------------------------
             if self.algorithm == "nipals":
-                x_weights, y_weights = _nipals_twoblocks_inner_loop(
-                    X=Xk, Y=Yk, mode=self.mode, max_iter=self.max_iter,
-                    tol=self.tol, norm_y_weights=self.norm_y_weights)
+                x_weights, y_weights, n_iter_ = \
+                    _nipals_twoblocks_inner_loop(
+                        X=Xk, Y=Yk, mode=self.mode, max_iter=self.max_iter,
+                        tol=self.tol, norm_y_weights=self.norm_y_weights)
+                self.n_iter_.append(n_iter_)
             elif self.algorithm == "svd":
                 x_weights, y_weights = _svd_cross_product(X=Xk, Y=Yk)
             # compute scores

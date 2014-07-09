@@ -66,7 +66,7 @@ def _ica_def(X, tol, g, fun_args, max_iter, w_init):
         w = w_init[j, :].copy()
         w /= np.sqrt((w ** 2).sum())
 
-        for _ in moves.xrange(max_iter):
+        for i in moves.xrange(max_iter):
             gwtx, g_wtx = g(fast_dot(w.T, X), fun_args)
 
             w1 = (X * gwtx).mean(axis=1) - g_wtx.mean() * w
@@ -82,7 +82,7 @@ def _ica_def(X, tol, g, fun_args, max_iter, w_init):
 
         W[j, :] = w
 
-    return W
+    return W, i + 1
 
 
 def _ica_par(X, tol, g, fun_args, max_iter, w_init):
@@ -109,7 +109,7 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
                       ' You might want' +
                       ' to increase the number of iterations.')
 
-    return W
+    return W, ii + 1
 
 
 # Some standard non-linear functions.
@@ -313,9 +313,9 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
               'w_init': w_init}
 
     if algorithm == 'parallel':
-        W = _ica_par(X1, **kwargs)
+        W, n_iter = _ica_par(X1, **kwargs)
     elif algorithm == 'deflation':
-        W = _ica_def(X1, **kwargs)
+        W, n_iter = _ica_def(X1, **kwargs)
     else:
         raise ValueError('Invalid algorithm: must be either `parallel` or'
                          ' `deflation`.')
@@ -327,18 +327,18 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         else:
             S = None
         if return_X_mean:
-            return K, W, S, X_mean
+            return K, W, S, X_mean, n_iter
         else:
-            return K, W, S
+            return K, W, S, n_iter
     else:
         if compute_sources:
             S = fast_dot(W, X).T
         else:
             S = None
         if return_X_mean:
-            return None, W, S, None
+            return None, W, S, None, n_iter
         else:
-            return None, W, S
+            return None, W, S, n_iter
 
 
 class FastICA(BaseEstimator, TransformerMixin):
@@ -397,6 +397,9 @@ class FastICA(BaseEstimator, TransformerMixin):
         deprecated and will be removed in 0.16. Use `fit_transform` instead and
         store the result.
 
+    `n_iter_`: int
+        Number of iterations run.
+
     Notes
     -----
     Implementation based on
@@ -437,7 +440,7 @@ class FastICA(BaseEstimator, TransformerMixin):
             X_new : array-like, shape (n_samples, n_components)
         """
         fun_args = {} if self.fun_args is None else self.fun_args
-        whitening, unmixing, sources, X_mean = fastica(
+        whitening, unmixing, sources, X_mean, self.n_iter_ = fastica(
             X=X, n_components=self.n_components, algorithm=self.algorithm,
             whiten=self.whiten, fun=self.fun, fun_args=fun_args,
             max_iter=self.max_iter, tol=self.tol, w_init=self.w_init,

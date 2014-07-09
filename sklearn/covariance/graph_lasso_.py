@@ -131,6 +131,9 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
         The list of values of the objective function and the dual gap at
         each iteration. Returned only if return_costs is True.
 
+    iters: int
+        Number of iterations.
+
     See Also
     --------
     GraphLasso, GraphLassoCV
@@ -152,9 +155,9 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
             cost = - 2. * log_likelihood(emp_cov, precision_)
             cost += n_features * np.log(2 * np.pi)
             d_gap = np.sum(emp_cov * precision_) - n_features
-            return emp_cov, precision_, (cost, d_gap)
+            return emp_cov, precision_, (cost, d_gap), 0
         else:
-            return emp_cov, linalg.inv(emp_cov)
+            return emp_cov, linalg.inv(emp_cov), 0
     if cov_init is None:
         covariance_ = emp_cov.copy()
     else:
@@ -192,7 +195,7 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                             max_iter, tol)
                     else:
                         # Use LARS
-                        _, _, coefs = lars_path(
+                        _, _, coefs, _ = lars_path(
                             sub_covariance, row, Xy=row, Gram=sub_covariance,
                             alpha_min=alpha / (n_features - 1), copy_Gram=True,
                             method='lars')
@@ -230,8 +233,8 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                   + '. The system is too ill-conditioned for this solver',)
         raise e
     if return_costs:
-        return covariance_, precision_, costs
-    return covariance_, precision_
+        return covariance_, precision_, costs, i + 1
+    return covariance_, precision_, i + 1
 
 
 class GraphLasso(EmpiricalCovariance):
@@ -270,6 +273,9 @@ class GraphLasso(EmpiricalCovariance):
     `precision_` : array-like, shape (n_features, n_features)
         Estimated pseudo inverse matrix.
 
+    `n_iter_` : int
+        Number of iterations run.
+
     See Also
     --------
     graph_lasso, GraphLassoCV
@@ -294,7 +300,7 @@ class GraphLasso(EmpiricalCovariance):
             self.location_ = X.mean(0)
         emp_cov = empirical_covariance(
             X, assume_centered=self.assume_centered)
-        self.covariance_, self.precision_ = graph_lasso(
+        self.covariance_, self.precision_, self.n_iter_ = graph_lasso(
             emp_cov, alpha=self.alpha, mode=self.mode, tol=self.tol,
             max_iter=self.max_iter, verbose=self.verbose,)
         return self
@@ -359,7 +365,7 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
     for alpha in alphas:
         try:
             # Capture the errors, and move on
-            covariance_, precision_ = graph_lasso(
+            covariance_, precision_, _ = graph_lasso(
                 emp_cov, alpha=alpha, cov_init=covariance_, mode=mode, tol=tol,
                 max_iter=max_iter, verbose=inner_verbose)
             covariances_.append(covariance_)
@@ -442,6 +448,9 @@ class GraphLassoCV(GraphLasso):
 
     `grid_scores`: 2D numpy.ndarray (n_alphas, n_folds)
         Log-likelihood score on left-out data across folds.
+
+    `n_iter_` : int
+        Number of iterations run for the optimal alpha.
 
     See Also
     --------
@@ -590,7 +599,7 @@ class GraphLassoCV(GraphLasso):
         self.cv_alphas_ = alphas
 
         # Finally fit the model with the selected alpha
-        self.covariance_, self.precision_ = graph_lasso(
+        self.covariance_, self.precision_, self.n_iter_ = graph_lasso(
             emp_cov, alpha=best_alpha, mode=self.mode, tol=self.tol,
             max_iter=self.max_iter, verbose=inner_verbose)
         return self

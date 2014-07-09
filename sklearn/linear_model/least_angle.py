@@ -433,9 +433,9 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         alphas = alphas[:n_iter + 1]
         coefs = coefs[:n_iter + 1]
 
-        return alphas, active, coefs.T
+        return alphas, active, coefs.T, n_iter
     else:
-        return alpha, active, coef
+        return alpha, active, coef, n_iter
 
 
 ###############################################################################
@@ -501,6 +501,10 @@ class Lars(LinearModel, RegressorMixin):
 
     ``intercept_`` : float | array, shape (n_targets,)
         Independent term in decision function.
+
+    ``n_iter_`` : array-like
+        A list of the number of iterations taken by lars_path to find the
+        grid of alphas across all targets.
 
     Examples
     --------
@@ -595,6 +599,7 @@ class Lars(LinearModel, RegressorMixin):
             Gram = self._get_gram()
 
         self.alphas_ = []
+        self.n_iter_ = []
 
         if self.fit_path:
             self.coef_ = []
@@ -602,13 +607,14 @@ class Lars(LinearModel, RegressorMixin):
             self.coef_path_ = []
             for k in xrange(n_targets):
                 this_Xy = None if Xy is None else Xy[:, k]
-                alphas, active, coef_path = lars_path(
+                alphas, active, coef_path, n_iter_ = lars_path(
                     X, y[:, k], Gram=Gram, Xy=this_Xy, copy_X=self.copy_X,
                     copy_Gram=True, alpha_min=alpha, method=self.method,
                     verbose=max(0, self.verbose - 1), max_iter=max_iter,
                     eps=self.eps, return_path=True)
                 self.alphas_.append(alphas)
                 self.active_.append(active)
+                self.n_iter_.append(n_iter_)
                 self.coef_path_.append(coef_path)
                 self.coef_.append(coef_path[:, -1])
 
@@ -620,12 +626,13 @@ class Lars(LinearModel, RegressorMixin):
             self.coef_ = np.empty((n_targets, n_features))
             for k in xrange(n_targets):
                 this_Xy = None if Xy is None else Xy[:, k]
-                alphas, _, self.coef_[k] = lars_path(
+                alphas, _, self.coef_[k], n_iter_ = lars_path(
                     X, y[:, k], Gram=Gram, Xy=this_Xy, copy_X=self.copy_X,
                     copy_Gram=True, alpha_min=alpha, method=self.method,
                     verbose=max(0, self.verbose - 1), max_iter=max_iter,
                     eps=self.eps, return_path=False)
                 self.alphas_.append(alphas)
+                self.n_iter_.append(n_iter_)
             if n_targets == 1:
                 self.alphas_ = self.alphas_[0]
         self._set_intercept(X_mean, y_mean, X_std)
@@ -829,7 +836,7 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
         nonzeros = np.flatnonzero(norms)
         X_train[:, nonzeros] /= norms[nonzeros]
 
-    alphas, active, coefs = lars_path(
+    alphas, active, coefs, _ = lars_path(
         X_train, y_train, Gram=Gram, copy_X=False, copy_Gram=False,
         method=method, verbose=max(0, verbose - 1), max_iter=max_iter, eps=eps)
     if normalize:
@@ -906,6 +913,9 @@ class LarsCV(Lars):
     ``cv_mse_path_`` : array, shape (n_folds, n_cv_alphas)
         the mean square error on left-out for each fold along the path
         (alpha values given by ``cv_alphas``)
+
+    ``n_iter_`` : int
+        the number of iterations run by Lars with the estimated alpha.
 
     See also
     --------
@@ -1079,6 +1089,9 @@ class LassoLarsCV(LarsCV):
         the mean square error on left-out for each fold along the path
         (alpha values given by ``cv_alphas``)
 
+    ``n_iter_`` : int
+        the number of iterations run by Lars with the estimated alpha.
+
     Notes
     -----
 
@@ -1159,6 +1172,10 @@ class LassoLarsIC(LassoLars):
     ``alpha_`` : float
         the alpha parameter chosen by the information criterion
 
+    ``n_iter_`` : int
+        number of iterations run by lars_path to find the grid of
+        alphas.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -1224,7 +1241,7 @@ class LassoLarsIC(LassoLars):
 
         Gram = self._get_gram()
 
-        alphas_, active_, coef_path_ = lars_path(
+        alphas_, active_, coef_path_, self.n_iter_ = lars_path(
             X, y, Gram=Gram, copy_X=copy_X, copy_Gram=True, alpha_min=0.0,
             method='lasso', verbose=self.verbose, max_iter=max_iter,
             eps=self.eps)

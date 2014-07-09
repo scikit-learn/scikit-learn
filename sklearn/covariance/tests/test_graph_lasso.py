@@ -29,8 +29,8 @@ def test_graph_lasso(random_state=0):
     for alpha in (0., .01, .1):
         covs = dict()
         for method in ('cd', 'lars'):
-            cov_, _, costs = graph_lasso(emp_cov, alpha=alpha,
-                                         return_costs=True)
+            cov_, _, costs, _ = graph_lasso(emp_cov, alpha=alpha,
+                                            return_costs=True)
             covs[method] = cov_
             costs, dual_gap = np.array(costs).T
             # Check that the costs always decrease (doesn't hold if alpha == 0)
