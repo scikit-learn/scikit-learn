@@ -708,9 +708,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             # Initialize under isotropy assumption
             if verbose:
                 print("Initialize under isotropy assumption...")
-            self.theta0 = array2d(self.theta0.min())
-            self.thetaL = array2d(self.thetaL.min())
-            self.thetaU = array2d(self.thetaU.max())
+            self.theta0 = np.atleast_1d(self.theta0.min())
+            self.thetaL = np.atleast_1d(self.thetaL.min())
+            self.thetaU = np.atleast_1d(self.thetaU.max())
             theta_iso, optimal_rlf_value_iso, par_iso = \
                 self._arg_max_reduced_likelihood_function()
             optimal_theta = theta_iso + np.zeros(theta0.shape)
@@ -721,18 +721,18 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             for i in self.random_state.permutation(theta0.size):
                 if verbose:
                     print("Proceeding along dimension %d..." % (i + 1))
-                self.theta0 = array2d(theta_iso)
-                self.thetaL = array2d(thetaL[0, i])
-                self.thetaU = array2d(thetaU[0, i])
+                self.theta0 = np.atleast_1d(theta_iso)
+                self.thetaL = np.atleast_1d(thetaL[i])
+                self.thetaU = np.atleast_1d(thetaU[i])
 
                 def corr_cut(t, X=None):
-                    return corr(array2d(np.hstack([optimal_theta[0][0:i],
-                                                   t[0],
-                                                   optimal_theta[0][(i + 1)::]]
-                                                  )), X)
+                    return corr(np.hstack([optimal_theta[0:i],
+                                           t[0],
+                                           optimal_theta[(i + 1)::]]
+                                          ), X)
 
                 self.corr_ = corr_cut
-                optimal_theta[0, i], optimal_rlf_value, optimal_par = \
+                optimal_theta[i], optimal_rlf_value, optimal_par = \
                     self._arg_max_reduced_likelihood_function()
 
             # Restore the given atrributes
