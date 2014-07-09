@@ -686,8 +686,11 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         X = check_array(X, accept_sparse='csr', dtype=np.float64, order="C")
 
-        self.class_weight_ = compute_class_weight(self.class_weight,
-                                                  self.classes_, y)
+        if not isinstance(self.class_weight, np.ndarray):
+            self.class_weight_ = compute_class_weight(self.class_weight,
+                                                      self.classes_, y)
+        else:
+            self.class_weight_ = self.class_weight
 
         if X.shape[0] != y_ind.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n"
@@ -764,7 +767,7 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
                     fit_intercept=self.fit_intercept,
                     tol=self.tol, verbose=self.verbose,
                     solver=self.solver, copy=True,
-                    max_iter=self.max_iter)
+                    max_iter=self.max_iter, class_weight=self.class_weight_)
 
                 coef_ = coef_[0]
                 if self.fit_intercept:

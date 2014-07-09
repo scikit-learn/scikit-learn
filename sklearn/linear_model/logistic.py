@@ -16,7 +16,7 @@ from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..preprocessing import LabelEncoder
 from ..svm.base import BaseLibLinear
-from ..utils import atleast2d_or_csc, check_arrays
+from ..utils import atleast2d_or_csc, check_arrays, compute_class_weight
 from ..utils.extmath import log_logistic, safe_sparse_dot
 from ..utils.validation import as_float_array
 from ..utils.fixes import expit
@@ -56,7 +56,7 @@ def _intercept_dot(w, X, y):
     return w, c, y*z
 
 
-def _logistic_loss_and_grad(w, X, y, alpha):
+def _logistic_loss_and_grad(w, X, y, alpha, sample_weight=None):
     """Computes the logistic loss and gradient.
 
     Parameters
@@ -86,11 +86,14 @@ def _logistic_loss_and_grad(w, X, y, alpha):
 
     w, c, yz = _intercept_dot(w, X, y)
 
+    if sample_weight is None:
+        sample_weight = np.ones(y.shape[0])
+
     # Logistic loss is the negative of the log of the logistic function.
-    out = -np.sum(log_logistic(yz)) + .5 * alpha * np.dot(w, w)
+    out = -np.sum(sample_weight * log_logistic(yz)) + .5 * alpha * np.dot(w, w)
 
     z = expit(yz)
-    z0 = (z - 1) * y
+    z0 = sample_weight * (z - 1) * y
 
     grad[:n_features] = safe_sparse_dot(X.T, z0) + alpha * w
     if c is not None:
@@ -98,7 +101,7 @@ def _logistic_loss_and_grad(w, X, y, alpha):
     return out, grad
 
 
-def _logistic_loss(w, X, y, alpha):
+def _logistic_loss(w, X, y, alpha, sample_weight=None):
     """Computes the logistic loss.
 
     Parameters
@@ -122,12 +125,15 @@ def _logistic_loss(w, X, y, alpha):
     """
     w, c, yz = _intercept_dot(w, X, y)
 
+    if sample_weight is None:
+        sample_weight = np.ones(y.shape[0])
+
     # Logistic loss is the negative of the log of the logistic function.
-    out = -np.sum(log_logistic(yz)) + .5 * alpha * np.dot(w, w)
+    out = -np.sum(sample_weight * log_logistic(yz)) + .5 * alpha * np.dot(w, w)
     return out
 
 
-def _logistic_loss_grad_hess(w, X, y, alpha):
+def _logistic_loss_grad_hess(w, X, y, alpha, sample_weight=None):
     """Computes the logistic loss, gradient and the Hessian.
 
     Parameters
@@ -161,17 +167,21 @@ def _logistic_loss_grad_hess(w, X, y, alpha):
 
     w, c, yz = _intercept_dot(w, X, y)
 
+    if sample_weight is None:
+        sample_weight = np.ones(y.shape[0])
+
     # Logistic loss is the negative of the log of the logistic function.
-    out = -np.sum(log_logistic(yz)) + .5 * alpha * np.dot(w, w)
+    out = -np.sum(sample_weight * log_logistic(yz)) + .5 * alpha * np.dot(w, w)
 
     z = expit(yz)
-    z0 = (z - 1) * y
+    z0 = sample_weight * (z - 1) * y
+
     grad[:n_features] = safe_sparse_dot(X.T, z0) + alpha * w
     if c is not None:
         grad[-1] = np.sum(z0)
 
     # The mat-vec product of the Hessian
-    d = z * (1 - z)
+    d = sample_weight * z * (1 - z)
     if sparse.issparse(X):
         dX = safe_sparse_dot(sparse.dia_matrix((d, 0),
                              shape=(n_samples, n_samples)), X)
@@ -200,7 +210,8 @@ def _logistic_loss_grad_hess(w, X, y, alpha):
 
 def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              max_iter=100, tol=1e-4, verbose=0,
-                             solver='liblinear', coef=None, copy=False):
+                             solver='liblinear', coef=None, copy=False,
+                             class_weight=None):
     """Compute a Logistic Regression model for a list of regularization
     parameters.
 
@@ -253,6 +264,11 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         is called repeatedly with the same data, as y is modified
         along the path.
 
+    class_weight : ndarray, None
+        Provide a array of weights corresponding to each class, as obtained
+        from the output of compute_class_weight. It None, then all classes
+        are assumed to have weight one.
+
     Returns
     -------
     coefs: ndarray, shape (n_cs, n_features) or (n_cs, n_features + 1)
@@ -270,9 +286,9 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     X = atleast2d_or_csc(X, dtype=np.float64)
     X, y = check_arrays(X, y, copy=copy)
+    n_classes = np.unique(y)
 
     if pos_class is None:
-        n_classes = np.unique(y)
         if not (n_classes.size == 2):
             raise ValueError('To fit OvA, use the pos_class argument')
         # np.unique(y) gives labels in sorted order.
@@ -284,6 +300,12 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     # To take care of object dtypes
     y = as_float_array(y, copy=False)
+
+    if class_weight is None:
+        class_weight = np.ones(len(n_classes))
+
+    le = LabelEncoder()
+    sample_weight = class_weight[le.fit_transform(y)]
 
     if fit_intercept:
         w0 = np.zeros(X.shape[1] + 1)
@@ -303,21 +325,22 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             try:
                 out = optimize.fmin_l_bfgs_b(
                     func, w0, fprime=None,
-                    args=(X, y, 1. / C),
+                    args=(X, y, 1. / C, sample_weight),
                     iprint=verbose > 0, pgtol=tol, maxiter=max_iter)
             except TypeError:
                 # old scipy doesn't have maxiter
                 out = optimize.fmin_l_bfgs_b(
                     func, w0, fprime=None,
-                    args=(X, y, 1. / C),
+                    args=(X, y, 1. / C, sample_weight),
                     iprint=verbose > 0, pgtol=tol)
             w0 = out[0]
         elif solver == 'newton-cg':
             grad = lambda x, *args: _logistic_loss_and_grad(x, *args)[1]
             w0 = newton_cg(_logistic_loss_grad_hess, _logistic_loss, grad,
-                           w0, args=(X, y, 1./C), maxiter=max_iter)
+                           w0, args=(X, y, 1./C, sample_weight), maxiter=max_iter)
         elif solver == 'liblinear':
-            lr = LogisticRegression(C=C, fit_intercept=fit_intercept, tol=tol)
+            lr = LogisticRegression(C=C, fit_intercept=fit_intercept, tol=tol,
+                                    class_weight=class_weight)
             lr.fit(X, y)
             if fit_intercept:
                 w0 = np.concatenate([lr.coef_.ravel(), lr.intercept_])
@@ -333,7 +356,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 # helper function for LogisticCV
 def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
                           scoring=None, fit_intercept=False,
-                          max_iter=100, tol=1e-4,
+                          max_iter=100, tol=1e-4, class_weight=None,
                           verbose=0, method='liblinear'):
     """Computes scores across logistic_regression_path
 
@@ -376,6 +399,11 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     tol : float
         Tolerance for stopping criteria.
 
+    class_weight : ndarray, None
+        Provide a array of weights corresponding to each class, as obtained
+        from the output of compute_class_weight. It None, then all classes
+        are assumed to have weight one.
+
     verbose : int
         Amount of verbosity
 
@@ -411,6 +439,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
                                          fit_intercept=fit_intercept,
                                          solver=method,
                                          max_iter=max_iter,
+                                         class_weight=class_weight,
                                          tol=tol, verbose=verbose)
 
     scores = list()
@@ -594,6 +623,12 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
         Specifies if a constant (a.k.a. bias or intercept) should be
         added the decision function.
 
+    class_weight : {dict, 'auto'}, optional
+        Over-/undersamples the samples of each class according to the given
+        weights. If not given, all classes are supposed to have weight one.
+        The 'auto' mode selects weights inversely proportional to class
+        frequencies in the training set.
+
     cv : integer or cross-validation generator
         The default cross-validation generator used is Stratified K-Folds.
         If an integer is provided, then it is the number of folds used.
@@ -613,6 +648,12 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
 
     max_iter: int, optional
         Maximum number of iterations of the optimization algorithm.
+
+    class_weight : {dict, 'auto'}, optional
+        Over-/undersamples the samples of each class according to the given
+        weights. If not given, all classes are supposed to have weight one.
+        The 'auto' mode selects weights inversely proportional to class
+        frequencies in the training set.
 
     n_jobs : int, optional
         Number of CPU cores used during the cross-validation loop. If given
@@ -672,7 +713,7 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
     """
 
     def __init__(self, Cs=10, fit_intercept=True, cv=None, scoring=None,
-                 solver='newton-cg', tol=1e-4, max_iter=100,
+                 solver='newton-cg', tol=1e-4, max_iter=100, class_weight=None,
                  n_jobs=1, verbose=False, refit=True):
         self.Cs = Cs
         self.fit_intercept = fit_intercept
@@ -680,6 +721,7 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
         self.scoring = scoring
         self.tol = tol
         self.max_iter = max_iter
+        self.class_weight = class_weight
         self.n_jobs = n_jobs
         self.verbose = verbose
         self.solver = solver
@@ -712,6 +754,9 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
         self.classes_ = labels = np.unique(y)
         n_classes = len(labels)
 
+        self.class_weight_ = compute_class_weight(
+            self.class_weight, self.classes_, y)
+
         if n_classes == 2:
             # OvA in case of binary problems is as good as fitting
             # the higher label
@@ -726,6 +771,7 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
                                            method=self.solver,
                                            max_iter=self.max_iter,
                                            tol=self.tol,
+                                           class_weight=self.class_weight_,
                                            verbose=max(0, self.verbose - 1),
                                            scoring=self.scoring)
             for label in labels
@@ -758,6 +804,7 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
                     X, y, pos_class=label, Cs=[C_], solver=self.solver,
                     fit_intercept=self.fit_intercept, coef=coef_init,
                     max_iter=self.max_iter, tol=self.tol, copy=True,
+                    class_weight=self.class_weight_,
                     verbose=max(0, self.verbose - 1))
                 w = w[0]
 
