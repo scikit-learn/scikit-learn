@@ -268,7 +268,7 @@ class PCA(BaseEstimator, TransformerMixin):
         """
         X = array2d(X)
         n_samples, n_features = X.shape
-        X = as_float_array(X, copy=self.copy)
+        X = as_float_array(X, copy=self.copy, keep_complex=True)
         # Center data
         self.mean_ = np.mean(X, axis=0)
         X -= self.mean_
@@ -336,7 +336,7 @@ class PCA(BaseEstimator, TransformerMixin):
         if self.whiten:
             components_ = components_ * np.sqrt(exp_var[:, np.newaxis])
         exp_var_diff = np.maximum(exp_var - self.noise_variance_, 0.)
-        cov = np.dot(components_.T * exp_var_diff, components_)
+        cov = np.dot(components_.T.conj * exp_var_diff, components_)
         cov.flat[::len(cov) + 1] += self.noise_variance_  # modify diag inplace
         return cov
 
@@ -365,9 +365,10 @@ class PCA(BaseEstimator, TransformerMixin):
         if self.whiten:
             components_ = components_ * np.sqrt(exp_var[:, np.newaxis])
         exp_var_diff = np.maximum(exp_var - self.noise_variance_, 0.)
-        precision = np.dot(components_, components_.T) / self.noise_variance_
+        precision = np.dot(components_,
+                           components_.T.conj) / self.noise_variance_
         precision.flat[::len(precision) + 1] += 1. / exp_var_diff
-        precision = np.dot(components_.T,
+        precision = np.dot(components_.T.conj,
                            np.dot(linalg.inv(precision), components_))
         precision /= -(self.noise_variance_ ** 2)
         precision.flat[::len(precision) + 1] += 1. / self.noise_variance_
@@ -393,7 +394,7 @@ class PCA(BaseEstimator, TransformerMixin):
         X = array2d(X)
         if self.mean_ is not None:
             X = X - self.mean_
-        X_transformed = fast_dot(X, self.components_.T)
+        X_transformed = fast_dot(X, self.components_.T.conj)
         return X_transformed
 
     def inverse_transform(self, X):

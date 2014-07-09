@@ -79,7 +79,7 @@ def safe_asarray(X, dtype=None, order=None, copy=False, force_all_finite=True):
     return X
 
 
-def as_float_array(X, copy=True, force_all_finite=True):
+def as_float_array(X, copy=True, force_all_finite=True, keep_complex=False):
     """Converts an array-like to an array of floats
 
     The new dtype will be np.float32 or np.float64, depending on the original
@@ -94,18 +94,31 @@ def as_float_array(X, copy=True, force_all_finite=True):
         If True, a copy of X will be created. If False, a copy may still be
         returned if X's dtype is not a floating point type.
 
+    keep_complex : bool, optional
+        If True, if X is complex then the imaginary part will be kept.
+        Otherwise if X is complex then only the real part will be used and a
+        ComplexWarning will be raised.
+
     Returns
     -------
     XT : {array, sparse matrix}
         An array of type np.float
     """
+    if keep_complex:
+        allowed_dtypes = [np.float32, np.float64, np.complex64, np.complex128]
+    else:
+        allowed_dtypes = [np.float32, np.float64]
     if isinstance(X, np.matrix) or (not isinstance(X, np.ndarray)
                                     and not sp.issparse(X)):
-        return safe_asarray(X, dtype=np.float64, copy=copy,
-                            force_all_finite=force_all_finite)
-    elif sp.issparse(X) and X.dtype in [np.float32, np.float64]:
+        if keep_complex and np.iscomplex(X):
+            return safe_asarray(X, dtype=np.complex128, copy=copy,
+                                force_all_finite=force_all_finite)
+        else:
+            return safe_asarray(X, dtype=np.float64, copy=copy,
+                                force_all_finite=force_all_finite)
+    elif sp.issparse(X) and X.dtype in allowed_dtypes:
         return X.copy() if copy else X
-    elif X.dtype in [np.float32, np.float64]:  # is numpy array
+    elif X.dtype in allowed_dtypes:  # is numpy array
         return X.copy('F' if X.flags['F_CONTIGUOUS'] else 'C') if copy else X
     else:
         return X.astype(np.float32 if X.dtype == np.int32 else np.float64)
