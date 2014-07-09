@@ -31,7 +31,7 @@ new observations can then be sorted as inliers or outliers with a
 
     estimator.predict(X_test)
 
-Inliers are labeled 0, while outliers are labeled 1.
+Inliers are labeled 1, while outliers are labeled -1.
 
 Novelty Detection
 =================
