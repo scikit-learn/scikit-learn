@@ -305,7 +305,6 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             self.theta_ = self.theta0
             self.reduced_likelihood_function_value_, par = \
                 self.reduced_likelihood_function()
-            self.reduced_likelihood_function_value_ *= -1
             if np.isinf(self.reduced_likelihood_function_value_):
                 raise Exception("Bad point. Try increasing theta0.")
 
@@ -673,9 +672,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                     raise ve
 
                 optimal_theta = 10. ** log10_optimal_theta
-                optimal_minus_rlf_value, optimal_par = \
+                optimal_rlf_value, optimal_par = \
                     self.reduced_likelihood_function(theta=optimal_theta)
-                optimal_rlf_value = - optimal_minus_rlf_value
 
                 # Compare the new optimizer to the best previous one
                 if k > 0:
