@@ -147,7 +147,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
     Notes
     -----
-    The presentation implementation is based on a translation of the DACE
+    The present implementation is based on a translation of the DACE
     Matlab toolbox, see reference [NLNS2002]_.
 
     References
@@ -527,7 +527,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             theta = self.theta_
 
         # Initialize output
-        reduced_likelihood_function_value = - np.inf
+        reduced_likelihood_function_value = -np.inf
         par = {}
 
         # Retrieve data
@@ -645,9 +645,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             constraints = []
             for i in range(self.theta0.size):
                 constraints.append(lambda log10t, i=i:
-                                   log10t[i] - np.log10(self.thetaL[0, i]))
+                                   log10t[i] - np.log10(self.thetaL[i]))
                 constraints.append(lambda log10t, i=i:
-                                   np.log10(self.thetaU[0, i]) - log10t[i])
+                                   np.log10(self.thetaU[i]) - log10t[i])
 
             for k in range(self.random_start):
 
@@ -784,12 +784,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                              "'light', %s was given." % self.storage_mode)
 
         # Check correlation parameters
-        self.theta0 = array2d(self.theta0)
+        self.theta0 = np.atleast_1d(self.theta0)
         lth = self.theta0.size
 
         if self.thetaL is not None and self.thetaU is not None:
-            self.thetaL = array2d(self.thetaL)
-            self.thetaU = array2d(self.thetaU)
+            self.thetaL = np.atleast_1d(self.thetaL)
+            self.thetaU = np.atleast_1d(self.thetaU)
             if self.thetaL.size != lth or self.thetaU.size != lth:
                 raise ValueError("theta0, thetaL and thetaU must have the "
                                  "same length.")
