@@ -86,12 +86,12 @@ def test_fastica_simple(add_noise=False):
     whitening = [True, False]
     for algo, nl, whiten in itertools.product(algos, nls, whitening):
         if whiten:
-            k_, mixing_, s_ = fastica(m.T, fun=nl, algorithm=algo)
+            k_, mixing_, s_, _ = fastica(m.T, fun=nl, algorithm=algo)
             assert_raises(ValueError, fastica, m.T, fun=np.tanh,
                           algorithm=algo)
         else:
             X = PCA(n_components=2, whiten=True).fit_transform(m.T)
-            k_, mixing_, s_ = fastica(X, fun=nl, algorithm=algo, whiten=False)
+            k_, mixing_, s_, _ = fastica(X, fun=nl, algorithm=algo, whiten=False)
             assert_raises(ValueError, fastica, X, fun=np.tanh,
                           algorithm=algo)
         s_ = s_.T
@@ -117,7 +117,7 @@ def test_fastica_simple(add_noise=False):
             assert_almost_equal(np.dot(s2_, s2) / n_samples, 1, decimal=1)
 
     # Test FastICA class
-    _, _, sources_fun = fastica(m.T, fun=nl, algorithm=algo, random_state=0)
+    _, _, sources_fun, _ = fastica(m.T, fun=nl, algorithm=algo, random_state=0)
     ica = FastICA(fun=nl, algorithm=algo, random_state=0)
     sources = ica.fit_transform(m.T)
     assert_equal(ica.components_.shape, (2, 2))
@@ -167,7 +167,7 @@ def test_non_square_fastica(add_noise=False):
 
     center_and_norm(m)
 
-    k_, mixing_, s_ = fastica(m.T, n_components=2, random_state=rng)
+    k_, mixing_, s_, _ = fastica(m.T, n_components=2, random_state=rng)
     s_ = s_.T
 
     # Check that the mixing model described in the docstring holds:

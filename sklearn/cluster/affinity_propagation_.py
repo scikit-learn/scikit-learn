@@ -60,6 +60,9 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     labels : array, shape (n_samples,)
         cluster labels for each point
 
+    iters: int
+        number of iterations run.
+
     Notes
     -----
     See examples/cluster/plot_affinity_propagation.py for an example.
@@ -168,7 +171,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
         cluster_centers_indices = None
         labels.fill(np.nan)
 
-    return cluster_centers_indices, labels
+    return cluster_centers_indices, labels, it + 1
 
 
 ###############################################################################
@@ -221,6 +224,9 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
     `affinity_matrix_` : array, shape (n_samples, n_samples)
         Stores the affinity matrix used in ``fit``.
 
+    `n_iter_` : int
+        Number of iterations taken to converge.
+
     Notes
     -----
     See examples/cluster/plot_affinity_propagation.py for an example.
@@ -272,10 +278,11 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
                              "'euclidean'. Got %s instead"
                              % str(self.affinity))
 
-        self.cluster_centers_indices_, self.labels_ = affinity_propagation(
-            self.affinity_matrix_, self.preference, max_iter=self.max_iter,
-            convergence_iter=self.convergence_iter, damping=self.damping,
-            copy=self.copy, verbose=self.verbose)
+        self.cluster_centers_indices_, self.labels_, self.n_iter_ = \
+            affinity_propagation(
+                self.affinity_matrix_, self.preference, max_iter=self.max_iter,
+                convergence_iter=self.convergence_iter, damping=self.damping,
+                copy=self.copy, verbose=self.verbose)
 
         if self.affinity != "precomputed":
             self.cluster_centers_ = X[self.cluster_centers_indices_].copy()

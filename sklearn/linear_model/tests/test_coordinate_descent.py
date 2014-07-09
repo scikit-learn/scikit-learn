@@ -214,7 +214,7 @@ def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
 
     # Use lars_path and lasso_path(new output) with 1D linear interpolation
     # to compute the the same path
-    alphas_lars, _, coef_path_lars = lars_path(X, y, method='lasso')
+    alphas_lars, _, coef_path_lars, _ = lars_path(X, y, method='lasso')
     coef_path_cont_lars = interpolate.interp1d(alphas_lars[::-1],
                                                coef_path_lars[:, ::-1])
     alphas_lasso2, coef_path_lasso2, _ = lasso_path(X, y, alphas=alphas,

@@ -314,6 +314,9 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         the training data and the reconstructed data from
         the fit produced by the model. ``|| X - WH ||_2``
 
+    ``n_iter_`` : int
+        Number of iterations run.
+
     Examples
     --------
 
@@ -533,6 +536,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
             warnings.warn("Iteration limit reached during fit. Solving for W exactly.")
             return self.transform(X)
 
+        self.n_iter_ = n_iter
         return W
 
     def fit(self, X, y=None, **params):

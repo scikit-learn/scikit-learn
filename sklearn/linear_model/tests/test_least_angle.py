@@ -31,7 +31,7 @@ def test_simple():
     try:
         sys.stdout = StringIO()
 
-        alphas_, active, coef_path_ = linear_model.lars_path(
+        alphas_, active, coef_path_, _ = linear_model.lars_path(
             diabetes.data, diabetes.target, method="lar", verbose=10)
 
         sys.stdout = old_stdout
@@ -57,7 +57,7 @@ def test_simple_precomputed():
     """
 
     G = np.dot(diabetes.data.T, diabetes.data)
-    alphas_, active, coef_path_ = linear_model.lars_path(
+    alphas_, active, coef_path_, _ = linear_model.lars_path(
         diabetes.data, diabetes.target, Gram=G, method="lar")
 
     for i, coef_ in enumerate(coef_path_.T):
@@ -104,7 +104,8 @@ def test_lasso_gives_lstsq_solution():
     Test that Lars Lasso gives least square solution at the end
     of the path
     """
-    alphas_, active, coef_path_ = linear_model.lars_path(X, y, method="lasso")
+    alphas_, active, coef_path_, _ = linear_model.lars_path(
+        X, y, method="lasso")
     coef_lstsq = np.linalg.lstsq(X, y)[0]
     assert_array_almost_equal(coef_lstsq, coef_path_[:, -1])
 
@@ -117,7 +118,7 @@ def test_collinearity():
     y = np.array([1., 0., 0])
 
     f = ignore_warnings
-    _, _, coef_path_ = f(linear_model.lars_path)(X, y, alpha_min=0.01)
+    _, _, coef_path_, _ = f(linear_model.lars_path)(X, y, alpha_min=0.01)
     assert_true(not np.isnan(coef_path_).any())
     residual = np.dot(X, coef_path_[:, -1]) - y
     assert_less((residual ** 2).sum(), 1.)  # just make sure it's bounded
@@ -125,10 +126,9 @@ def test_collinearity():
     n_samples = 10
     X = np.random.rand(n_samples, 5)
     y = np.zeros(n_samples)
-    _, _, coef_path_ = linear_model.lars_path(X, y, Gram='auto', copy_X=False,
-                                              copy_Gram=False, alpha_min=0.,
-                                              method='lasso', verbose=0,
-                                              max_iter=500)
+    _, _, coef_path_, _= linear_model.lars_path(
+        X, y, Gram='auto', copy_X=False, copy_Gram=False, alpha_min=0.,
+        method='lasso', verbose=0, max_iter=500)
     assert_array_almost_equal(coef_path_, np.zeros_like(coef_path_))
 
 
@@ -137,9 +137,9 @@ def test_no_path():
     Test that the ``return_path=False`` option returns the correct output
     """
 
-    alphas_, active_, coef_path_ = linear_model.lars_path(
+    alphas_, active_, coef_path_, _ = linear_model.lars_path(
         diabetes.data, diabetes.target, method="lar")
-    alpha_, active, coef = linear_model.lars_path(
+    alpha_, active, coef, _ = linear_model.lars_path(
         diabetes.data, diabetes.target, method="lar", return_path=False)
 
     assert_array_almost_equal(coef, coef_path_[:, -1])
@@ -153,9 +153,9 @@ def test_no_path_precomputed():
 
     G = np.dot(diabetes.data.T, diabetes.data)
 
-    alphas_, active_, coef_path_ = linear_model.lars_path(
+    alphas_, active_, coef_path_, _ = linear_model.lars_path(
         diabetes.data, diabetes.target, method="lar", Gram=G)
-    alpha_, active, coef = linear_model.lars_path(
+    alpha_, active, coef, _ = linear_model.lars_path(
         diabetes.data, diabetes.target, method="lar", Gram=G,
         return_path=False)
 
@@ -171,10 +171,10 @@ def test_no_path_all_precomputed():
     G = np.dot(X.T, X)
     Xy = np.dot(X.T, y)
 
-    alphas_, active_, coef_path_ = linear_model.lars_path(
+    alphas_, active_, coef_path_, _ = linear_model.lars_path(
         X, y, method="lasso", Gram=G, Xy=Xy, alpha_min=0.9)
     print("---")
-    alpha_, active, coef = linear_model.lars_path(
+    alpha_, active, coef, _ = linear_model.lars_path(
         X, y, method="lasso", Gram=G, Xy=Xy, alpha_min=0.9, return_path=False)
 
     assert_array_almost_equal(coef, coef_path_[:, -1])
@@ -189,8 +189,8 @@ def test_singular_matrix():
     y1 = np.array([1, 1])
     in_warn_message = 'Dropping a regressor'
     f = assert_warns_message
-    alphas, active, coef_path = f(ConvergenceWarning, in_warn_message,
-                                  linear_model.lars_path, X1, y1)
+    alphas, active, coef_path, _ = f(ConvergenceWarning, in_warn_message,
+                                     linear_model.lars_path, X1, y1)
     assert_array_almost_equal(coef_path.T, [[0, 0], [1, 0]])
 
 
@@ -228,7 +228,7 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
     """
     X = 3 * diabetes.data
 
-    alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso')
+    alphas, _, lasso_path, _ = linear_model.lars_path(X, y, method='lasso')
     lasso_cd = linear_model.Lasso(fit_intercept=False, tol=1e-8)
     for c, a in zip(lasso_path.T, alphas):
         if a == 0:
@@ -248,7 +248,7 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
 
     # same test, with normalized data
     X = diabetes.data
-    alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso')
+    alphas, _, lasso_path, _ = linear_model.lars_path(X, y, method='lasso')
     lasso_cd = linear_model.Lasso(fit_intercept=False, normalize=True,
                                   tol=1e-8)
     for c, a in zip(lasso_path.T, alphas):
@@ -268,8 +268,8 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
     """
     alphas_min = [10, 0.9, 1e-4]
     for alphas_min in alphas_min:
-        alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso',
-                                                       alpha_min=0.9)
+        alphas, _, lasso_path, _ = linear_model.lars_path(
+            X, y, method='lasso', alpha_min=0.9)
         lasso_cd = linear_model.Lasso(fit_intercept=False, tol=1e-8)
         lasso_cd.alpha = alphas[-1]
         lasso_cd.fit(X, y)
@@ -279,8 +279,8 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
     alphas_min = [10, 0.9, 1e-4]
     # same test, with normalization
     for alphas_min in alphas_min:
-        alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso',
-                                                       alpha_min=0.9)
+        alphas, _, lasso_path, _ = linear_model.lars_path(
+            X, y, method='lasso', alpha_min=0.9)
         lasso_cd = linear_model.Lasso(fit_intercept=True, normalize=True,
                                       tol=1e-8)
         lasso_cd.alpha = alphas[-1]
@@ -327,9 +327,10 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
 
     def in_warn_message(msg):
         return 'Early stopping' in msg or 'Dropping a regressor' in msg
-    lars_alphas, _, lars_coef = f(ConvergenceWarning,
-                                  in_warn_message,
-                                  linear_model.lars_path, X, y, method='lasso')
+    lars_alphas, _, lars_coef, _ = f(ConvergenceWarning,
+                                     in_warn_message,
+                                     linear_model.lars_path,
+                                     X, y, method='lasso')
 
     with ignore_warnings():
         _, lasso_coef2, _ = linear_model.lasso_path(X, y,

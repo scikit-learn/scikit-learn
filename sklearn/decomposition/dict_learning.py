@@ -395,6 +395,9 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
     errors: array
         Vector of errors at each iteration.
 
+    n_iter : int
+        Number of iterations run.
+
     See also
     --------
     dict_learning_online
@@ -445,6 +448,9 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
     if verbose == 1:
         print('[dict_learning]', end=' ')
 
+    # Count the number of iterations.
+    ii = -1
+
     for ii in range(max_iter):
         dt = (time.time() - t0)
         if verbose == 1:
@@ -481,7 +487,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
         if ii % 5 == 0 and callback is not None:
             callback(locals())
 
-    return code, dictionary, errors
+    return code, dictionary, errors, ii + 1
 
 
 def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
@@ -630,6 +636,9 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         A = inner_stats[0].copy()
         B = inner_stats[1].copy()
 
+    # In case n_iter is zero
+    ii = iter_offset - 1
+
     for ii, this_X in zip(range(iter_offset, iter_offset + n_iter), batches):
         dt = (time.time() - t0)
         if verbose == 1:
@@ -666,7 +675,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
             callback(locals())
 
     if return_inner_stats:
-        return dictionary.T, (A, B)
+        return dictionary.T, (A, B), ii - iter_offset + 1
     if return_code:
         if verbose > 1:
             print('Learning code...', end=' ')
@@ -677,9 +686,9 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         if verbose > 1:
             dt = (time.time() - t0)
             print('done (total time: % 3is, % 4.1fmn)' % (dt, dt / 60))
-        return code, dictionary.T
+        return code, dictionary.T, ii - iter_offset + 1
 
-    return dictionary.T
+    return dictionary.T, ii - iter_offset + 1
 
 
 class SparseCodingMixin(TransformerMixin):
@@ -905,6 +914,9 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     `error_` : array
         vector of errors at each iteration
 
+    `n_iter_` : int
+        Number of iterations run.
+
     Notes
     -----
     **References:**
@@ -958,14 +970,16 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         else:
             n_components = self.n_components
 
-        V, U, E = dict_learning(X, n_components, self.alpha,
-                                tol=self.tol, max_iter=self.max_iter,
-                                method=self.fit_algorithm,
-                                n_jobs=self.n_jobs,
-                                code_init=self.code_init,
-                                dict_init=self.dict_init,
-                                verbose=self.verbose,
-                                random_state=random_state)
+        V, U, E, self.n_iter_ = dict_learning(
+            X, n_components, self.alpha,
+            tol=self.tol, max_iter=self.max_iter,
+            method=self.fit_algorithm,
+            n_jobs=self.n_jobs,
+            code_init=self.code_init,
+            dict_init=self.dict_init,
+            verbose=self.verbose,
+            random_state=random_state
+            )
         self.components_ = U
         self.error_ = E
         return self
@@ -1063,7 +1077,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         A (n_components, n_components) is the dictionary covariance matrix.
         B (n_features, n_components) is the data approximation matrix
 
-
+    `n_iter_` : int
+        Number of iterations run.
 
     Notes
     -----
@@ -1120,16 +1135,15 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         else:
             n_components = self.n_components
 
-        U, (A, B) = dict_learning_online(X, n_components, self.alpha,
-                                         n_iter=self.n_iter, return_code=False,
-                                         method=self.fit_algorithm,
-                                         n_jobs=self.n_jobs,
-                                         dict_init=self.dict_init,
-                                         batch_size=self.batch_size,
-                                         shuffle=self.shuffle,
-                                         verbose=self.verbose,
-                                         random_state=random_state,
-                                         return_inner_stats=True)
+        U, (A, B), self.n_iter_ = dict_learning_online(
+            X, n_components, self.alpha,
+            n_iter=self.n_iter, return_code=False,
+            method=self.fit_algorithm,
+            n_jobs=self.n_jobs, dict_init=self.dict_init,
+            batch_size=self.batch_size, shuffle=self.shuffle,
+            verbose=self.verbose, random_state=random_state,
+            return_inner_stats=True
+            )
         self.components_ = U
         # Keep track of the state of the algorithm to be able to do
         # some online fitting (partial_fit)
@@ -1167,18 +1181,15 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         inner_stats = getattr(self, 'inner_stats_', None)
         if iter_offset is None:
             iter_offset = getattr(self, 'iter_offset_', 0)
-        U, (A, B) = dict_learning_online(X, self.n_components, self.alpha,
-                                         n_iter=self.n_iter,
-                                         method=self.fit_algorithm,
-                                         n_jobs=self.n_jobs,
-                                         dict_init=dict_init,
-                                         batch_size=len(X), shuffle=False,
-                                         verbose=self.verbose,
-                                         return_code=False,
-                                         iter_offset=iter_offset,
-                                         random_state=self.random_state_,
-                                         return_inner_stats=True,
-                                         inner_stats=inner_stats)
+        U, (A, B), self.n_iter_ = dict_learning_online(
+            X, self.n_components, self.alpha,
+            n_iter=self.n_iter, method=self.fit_algorithm,
+            n_jobs=self.n_jobs, dict_init=dict_init,
+            batch_size=len(X), shuffle=False,
+            verbose=self.verbose, return_code=False,
+            iter_offset=iter_offset, random_state=self.random_state_,
+            return_inner_stats=True, inner_stats=inner_stats
+            )
         self.components_ = U
 
         # Keep track of the state of the algorithm to be able to do
