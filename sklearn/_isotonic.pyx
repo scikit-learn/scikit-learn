@@ -16,9 +16,9 @@ np.import_array()
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def _isotonic_regression(np.ndarray[DOUBLE, ndim=1] y,
-                         np.ndarray[DOUBLE, ndim=1] weight,
-                         np.ndarray[DOUBLE, ndim=1] solution):
+def _isotonic_regression(DOUBLE[::1] y,
+                         DOUBLE[::1] weight,
+                         DOUBLE[::1] solution):
     cdef:
         DOUBLE numerator, denominator
         Py_ssize_t i, pooled, n, k
