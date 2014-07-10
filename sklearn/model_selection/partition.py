@@ -25,41 +25,6 @@ from sklearn.externals.six import with_metaclass
 from sklearn.externals.six.moves import zip
 
 
-class _PartitionTestGenerator(object):
-    def __init__(self, mask_generator, y, n=None, indices=None):
-        self._mask_generator = mask_generator
-        if indices is None:
-            indices = True
-        else:
-            warnings.warn("The indices parameter is deprecated and will be "
-                          "removed (assumed True) in 0.17", DeprecationWarning,
-                          stacklevel=1)
-        if y is None:
-            if n is None:
-                raise ValueError("Must supply y or n parameters")
-            if abs(n - int(n)) >= np.finfo('f').eps:
-                raise ValueError("n must be an integer")
-            self._n = int(n)
-            self._indices = indices
-        else:
-            self._n = len(y) # TODO: Check for dict of arrays or DataFrame
-            self._indices = True
-        self._y = y
-
-
-    def __iter__(self):
-        indices = self._indices
-        if indices:
-            ind = np.arange(self._n)
-        for test_index in self._mask_generator._iter_test_masks(self._y):
-            train_index = np.logical_not(test_index)
-            if indices:
-                train_index = ind[train_index]
-                test_index = ind[test_index]
-            yield train_index, test_index
-
-
-
 class _PartitionIterator(with_metaclass(ABCMeta)):
     """Base class for CV iterators where train_mask = ~test_mask
 
@@ -97,23 +62,21 @@ class _PartitionIterator(with_metaclass(ABCMeta)):
 
     def __iter__(self):
         #TODO: deprecation warning
-        y = None
-        self._pre_split_check(y)
-        for train, test in _PartitionTestGenerator(self, y, n=self.n, indices=self.indices):
-            yield train, test
-#        indices = self._indices
-#        if indices:
-#            ind = np.arange(self.n)
-#        for test_index in self._iter_test_masks():
-#            train_index = np.logical_not(test_index)
-#            if indices:
-#                train_index = ind[train_index]
-#                test_index = ind[test_index]
-#            yield train_index, test_index
+        if self.n is None:
+            raise ValueError("Cannot iterate dataless CV iterator")
+        return self.split(None)
 
     def split(self, y):
         self._pre_split_check(y)
-        return _PartitionTestGenerator(self, y, indices=self.indices)
+        indices = self._indices
+        if indices:
+            ind = np.arange(self._sample_size(y))
+        for test_index in self._iter_test_masks(y):
+            train_index = np.logical_not(test_index)
+            if indices:
+                train_index = ind[train_index]
+                test_index = ind[test_index]
+            yield train_index, test_index
 
     def _pre_split_check(self, y):
         pass
