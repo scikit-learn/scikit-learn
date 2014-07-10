@@ -463,6 +463,20 @@ def test_min_samples_leaf():
             assert_greater(np.min(leaf_count), 4,
                            "Failed with {0}".format(name))
 
+    for max_leaf_nodes in (None, 1000):
+        for name, TreeEstimator in ALL_TREES.items():
+            est = TreeEstimator(min_samples_leaf=0.1,
+                                min_samples_split=0.01,
+                                max_leaf_nodes=max_leaf_nodes,
+                                random_state=0)
+            est.fit(X, y)
+            out = est.tree_.apply(X)
+            node_counts = np.bincount(out)
+            # drop inner nodes
+            leaf_count = node_counts[node_counts != 0]
+            assert_greater(np.min(leaf_count), 4,
+                           "Failed with {0}".format(name))
+
 
 def test_min_weight_fraction_leaf():
     """Test if leaves contain at least min_weight_fraction_leaf of the
