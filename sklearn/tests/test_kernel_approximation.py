@@ -285,6 +285,24 @@ def test_scalability_to_one():
     print 'scaled: ', (norm_by_transpose) * scale
     print 'scaled matrix:', np.linalg.norm(HGPHB * scale, axis=1)
 
+def test_V_is_gaussian():
+    fastfood = Fastfood(1, 500)
+    d = 512
+    fastfood.d = d
+
+    B, G, P, S = fastfood.create_vectors()
+    HGPHB = fastfood.create_gaussian_iid_matrix(B, G, P)
+
+    V = fastfood.create_approximation_matrix(S, HGPHB)
+
+    means = np.mean(V, axis=1)
+    deviations = np.std(V, axis=1)
+    print 'means of rows in V', means[0:9]
+    print 'deviations of rows in V', deviations[0:9]
+
+    assert_array_almost_equal(means, np.zeros(means.shape[0]), decimal=1)
+    assert_array_almost_equal(deviations, np.power(fastfood.sigma, -2)*np.ones(means.shape[0]), decimal=1)
+
 
 def test_fastfood():
     """test that Fastfood approximates kernel on random data"""
@@ -292,7 +310,7 @@ def test_fastfood():
     gamma = 10.
     kernel = rbf_kernel(X, Y, gamma=gamma)
 
-    sigma = np.sqrt(1 / ((2 * gamma))) * 6
+    sigma = np.sqrt(1 / (2 * gamma))
 
     # approximate kernel mapping
     ff_transform = Fastfood(sigma, n_components=2048, random_state=42)
@@ -311,10 +329,11 @@ def test_fastfood_performance_to_rks():
     """test that Fastfood approximates kernel on random data"""
     # compute exact kernel
     gamma = 10.
+    sigma = np.sqrt(1 / (2 * gamma))
 
     fastfood_start = datetime.datetime.utcnow()
     # Fastfood: approximate kernel mapping
-    rbf_transform = Fastfood(sigma=np.sqrt(1/(2*gamma)), n_components=2000, random_state=42)
+    rbf_transform = Fastfood(sigma=sigma, n_components=1000, random_state=42)
     X_trans_fastfood = rbf_transform.fit_transform(X)
     Y_trans_fastfood = rbf_transform.transform(Y)
     fastfood_end = datetime.datetime.utcnow()

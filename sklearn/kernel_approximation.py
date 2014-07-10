@@ -522,7 +522,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
 
     def scaling_vector(self, d, g):
         s = np.linalg.norm(self.rng.normal(size=(d, d)), axis=0)
-        return s * (1 / np.sqrt(np.linalg.norm(g)))
+        return s * (1 / np.linalg.norm(g))
 
     def create_vectors(self):
         """ Create G, B, P and S. """
@@ -562,7 +562,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
         HGPHB = np.dot(HGP, HB)
         return HGPHB
 
-    def create_approximation_matix(self, S, HGPHB):
+    def create_approximation_matrix(self, S, HGPHB):
         """ Create V from HGPHB and S """
         SHGPHB = np.dot(np.diag(S), HGPHB)
         return 1 / (self.sigma * np.sqrt(self.d)) * SHGPHB
@@ -579,12 +579,12 @@ class Fastfood(BaseEstimator, TransformerMixin):
         implementations.
         """
         # the fast hadamard transform
-        return fht.fht2(X, axes=0, normalized=False)
+        # return fht.fht2(X, axes=0, normalized=False)
 
         # full multiplication with explicit hadamard matrix
         #H = (1 / (X.shape[0] * np.sqrt(2))) * hadamard(X.shape[0])
-        #H = hadamard(X.shape[0])
-        #return np.dot(H, X)
+        H = hadamard(X.shape[0])
+        return np.dot(H, X)
 
     def fit(self, X, y=None):
 
@@ -605,7 +605,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
         for i in range(self.times_to_stack_v):
             B, G, P, S = self.vectors[i]
             HGPHB = Fastfood.create_gaussian_iid_matrix(B, G, P)
-            v = self.create_approximation_matix(S, HGPHB)
+            v = self.create_approximation_matrix(S, HGPHB)
             to_stack.append(v)
         V_stacked = np.vstack(to_stack)
 
