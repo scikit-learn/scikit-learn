@@ -1,3 +1,4 @@
+import timeit
 import numpy as np
 from scipy.sparse import csr_matrix
 import datetime
@@ -285,7 +286,9 @@ def test_scalability_to_one():
     print 'scaled: ', (norm_by_transpose) * scale
     print 'scaled matrix:', np.linalg.norm(HGPHB * scale, axis=1)
 
+
 def test_V_is_gaussian():
+    """test that V is a gaussian N(0,sigma^-2I_d)"""
     fastfood = Fastfood(1, 500)
     d = 512
     fastfood.d = d
@@ -304,29 +307,42 @@ def test_V_is_gaussian():
     assert_array_almost_equal(deviations, np.power(fastfood.sigma, -2)*np.ones(means.shape[0]), decimal=1)
 
 
+def test_compare_performance_of_scaling_matrix_generation():
+    """comparison between scaling generation methods"""
+    fastfood = Fastfood(1, 500)
+    d = 512
+    fastfood.d = d
+
+    B, G, P, S = fastfood.create_vectors()
+
+    timeit.timeit("Fastfood.scaling_vector_vectorized(self, d , G)")
+    timeit.timeit("Fastfood.scaling_vector(self, d , G)")
+    assert False
+
+
 def test_fastfood():
     """test that Fastfood approximates kernel on random data"""
     # compute exact kernel
     gamma = 10.
     kernel = rbf_kernel(X, Y, gamma=gamma)
 
-    sigma = np.sqrt(1 / (2 * gamma))
+    sigma = np.sqrt(1 / (2 * gamma))*2
 
     # approximate kernel mapping
-    ff_transform = Fastfood(sigma, n_components=2048, random_state=42)
+    ff_transform = Fastfood(sigma, n_components=1000, random_state=42)
 
     X_trans = ff_transform.fit_transform(X)
     Y_trans = ff_transform.transform(Y)
     #print X_trans, Y_trans
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
-    print 'approximation:', kernel_approx[1:10, 1:10]
-    print 'true kernel:', kernel[1:10, 1:10]
-
-    assert_array_almost_equal(kernel, kernel_approx, 1)
+    print 'approximation:', kernel_approx[1:5, 1:5]
+    print 'true kernel:', kernel[1:5, 1:5]
+    assert False
+    assert_array_almost_equal(kernel, kernel_approx, decimal=1)
 
 def test_fastfood_performance_to_rks():
-    """test that Fastfood approximates kernel on random data"""
+    """compares the performance of Fastfood and RKS"""
     # compute exact kernel
     gamma = 10.
     sigma = np.sqrt(1 / (2 * gamma))
@@ -350,7 +366,7 @@ def test_fastfood_performance_to_rks():
     rks_spent_time =rks_end- rks_start
     print "Timimg fastfood:", fastfood_spent_time,rks_spent_time
 
-    assert_greater(rks_spent_time,fastfood_spent_time)
+    assert_greater(rks_spent_time, fastfood_spent_time)
     #kernel_approx = np.dot(X_trans_rks, Y_trans_rks.T)
 
 

@@ -520,9 +520,21 @@ class Fastfood(BaseEstimator, TransformerMixin):
     def binary_vector(self, d):
         return self.rng.choice([-1, 1], size=d)
 
-    def scaling_vector(self, d, g):
+    def scaling_vector_vectorized(self, d, g):
         s = np.linalg.norm(self.rng.normal(size=(d, d)), axis=0)
         return s * (1 / np.linalg.norm(g))
+
+    # scaling_vector_iterative_time_consuming_but_lower_space_complexity
+    def scaling_vector(self, d, g):
+        inverse_of_norm_of_G = 1 / np.linalg.norm(g)
+        s = np.zeros(d)
+        for i in range(d):
+            length = 0
+            for j in range(d):
+                random_number = self.rng.randn()
+                length += random_number*random_number
+            s[i] = np.sqrt(length)*inverse_of_norm_of_G
+        return s
 
     def create_vectors(self):
         """ Create G, B, P and S. """
