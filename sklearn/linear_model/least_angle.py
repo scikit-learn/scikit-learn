@@ -16,12 +16,14 @@ import warnings
 from distutils.version import LooseVersion
 
 import numpy as np
-from scipy import linalg, interpolate
+from scipy import linalg, interpolate, sparse
 from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import array2d, arrayfuncs, as_float_array, check_arrays
+from ..utils import (array2d, arrayfuncs, as_float_array, check_arrays,
+                     atleast2d_or_csr)
+from ..utils.extmath import safe_sparse_dot
 from ..cross_validation import _check_cv as check_cv
 from ..utils import ConvergenceWarning
 from ..externals.joblib import Parallel, delayed
@@ -127,6 +129,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     n_features = X.shape[1]
     n_samples = y.size
     max_features = min(max_iter, n_features)
+    X_sparse = sparse.issparse(X)
 
     if return_path:
         coefs = np.zeros((max_features + 1, n_features))
@@ -150,8 +153,9 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     # Once we support only scipy > 0.12 we can use check_finite=False and
     # go back to "empty"
     L = np.zeros((max_features, max_features), dtype=X.dtype)
-    swap, nrm2 = linalg.get_blas_funcs(('swap', 'nrm2'), (X,))
-    solve_cholesky, = get_lapack_funcs(('potrs',), (X,))
+    if not X_sparse:
+        swap, nrm2 = linalg.get_blas_funcs(('swap', 'nrm2'), (X,))
+        solve_cholesky, = get_lapack_funcs(('potrs',), (X,))
 
     if Gram is None:
         if copy_X:
@@ -162,12 +166,12 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     elif Gram == 'auto':
         Gram = None
         if X.shape[0] > X.shape[1]:
-            Gram = np.dot(X.T, X)
+            Gram = safe_sparse_dot(X.T, X)
     elif copy_Gram:
             Gram = Gram.copy()
 
     if Xy is None:
-        Cov = np.dot(X.T, y)
+        Cov = safe_sparse_dot(X.T, y)
     else:
         Cov = Xy.copy()
 
@@ -1216,8 +1220,8 @@ class LassoLarsIC(LassoLars):
             returns an instance of self.
         """
         self.fit_path = True
-        X = array2d(X)
-        y = np.asarray(y)
+        X, y = check_arrays(X, y)
+        X = atleast2d_or_csr(X)
 
         X, y, Xmean, ymean, Xstd = LinearModel._center_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X)
