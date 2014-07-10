@@ -239,7 +239,7 @@ def assert_no_warnings(func, *args, **kw):
 
 
 def ignore_warning_class(warning_class, fn):
-    """Decorator to catch and hide warnings without visual nesting"""
+    """Wraps function fn and ignore any warnings of type warning_class."""
     @wraps(fn)
     def wrapper(*args, **kwargs):
         # very important to avoid uncontrolled state propagation
