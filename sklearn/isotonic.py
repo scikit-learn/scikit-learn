@@ -71,7 +71,7 @@ def check_increasing(x, y):
 
 
 def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
-                        weight=None, increasing=True):
+                        increasing=True):
     """Solve the isotonic regression model::
 
         min sum w[i] (y[i] - y_[i]) ** 2
@@ -112,12 +112,6 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
     "Active set algorithms for isotonic regression; A unifying framework"
     by Michael J. Best and Nilotpal Chakravarti, section 3.
     """
-    if weight is not None:
-        warnings.warn("'weight' was renamed to 'sample_weight' and will "
-                      "be removed in 0.16.",
-                      DeprecationWarning)
-        sample_weight = weight
-
     y = np.asarray(y, dtype=np.float)
     if sample_weight is None:
         sample_weight = np.ones(len(y), dtype=y.dtype)
@@ -258,7 +252,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         return order_inv
 
-    def fit(self, X, y, sample_weight=None, weight=None):
+    def fit(self, X, y, sample_weight=None):
         """Fit the model using X, y as training data.
 
         Parameters
@@ -283,12 +277,6 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         X is stored for future use, as `transform` needs X to interpolate
         new input data.
         """
-        if weight is not None:
-            warnings.warn("'weight' was renamed to 'sample_weight' and will "
-                          "be removed in 0.16.",
-                          DeprecationWarning)
-            sample_weight = weight
-
         # Build y_
         order_inv = self._build_y(X, y, sample_weight)
 
@@ -328,7 +316,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             T = np.clip(T, self.X_min_, self.X_max_)
         return self.f_(T)
 
-    def fit_transform(self, X, y, sample_weight=None, weight=None):
+    def fit_transform(self, X, y, sample_weight=None):
         """Fit model and transform y by linear interpolation.
 
         Parameters
@@ -354,12 +342,6 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         for future use, as `transform` needs X to interpolate new input
         data.
         """
-        if weight is not None:
-            warnings.warn("'weight' was renamed to 'sample_weight' and will "
-                          "be removed in 0.16.",
-                          DeprecationWarning)
-            sample_weight = weight
-
         # Build y_
         order_inv = self._build_y(X, y, sample_weight)
 

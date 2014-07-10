@@ -290,8 +290,7 @@ reasonable (please see  the :ref:`reference documentation
 
   >>> vectorizer = CountVectorizer(min_df=1)
   >>> vectorizer                     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  CountVectorizer(analyzer=...'word', binary=False, charset=None,
-          charset_error=None, decode_error=...'strict',
+  CountVectorizer(analyzer=...'word', binary=False, decode_error=...'strict',
           dtype=<... 'numpy.int64'>, encoding=...'utf-8', input=...'content',
           lowercase=True, max_df=1.0, max_features=None, min_df=1,
           ngram_range=(1, 1), preprocessor=None, stop_words=None,

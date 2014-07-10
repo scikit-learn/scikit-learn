@@ -392,11 +392,6 @@ class FastICA(BaseEstimator, TransformerMixin):
     `mixing_` : array, shape (n_features, n_components)
         The mixing matrix.
 
-    `sources_` : 2D array, shape (n_samples, n_components)
-        The estimated latent sources of the data. This attribute is
-        deprecated and will be removed in 0.16. Use `fit_transform` instead and
-        store the result.
-
     Notes
     -----
     Implementation based on
@@ -453,9 +448,6 @@ class FastICA(BaseEstimator, TransformerMixin):
 
         self.mixing_ = linalg.pinv(self.components_)
 
-        if compute_sources:
-            self.__sources = sources
-
         return sources
 
     def fit_transform(self, X, y=None):
@@ -486,7 +478,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         self
         """
-        self._fit(X, compute_sources=True)  # will become False in 0.16
+        self._fit(X, compute_sources=False)
         return self
 
     def transform(self, X, y=None, copy=True):
@@ -510,22 +502,6 @@ class FastICA(BaseEstimator, TransformerMixin):
             X -= self.mean_
 
         return fast_dot(X, self.components_.T)
-
-    @deprecated('To be removed in 0.16. Use the `mixing_` attribute.')
-    def get_mixing_matrix(self):
-        """Compute the mixing matrix.
-
-        Returns
-        -------
-        mixing_matrix : array, shape (n_features, n_components)
-        """
-        return self.mixing_
-
-    @property
-    @deprecated('To be removed in 0.16.  Use `fit_transform` and store the '
-                'output instead.')
-    def sources_(self):
-        return self.__sources
 
     def inverse_transform(self, X, copy=True):
         """Transform the sources back to the mixed data (apply mixing matrix).

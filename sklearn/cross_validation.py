@@ -675,17 +675,13 @@ class Bootstrap(object):
     indices = True
 
     def __init__(self, n, n_iter=3, train_size=.5, test_size=None,
-                 random_state=None, n_bootstraps=None):
+                 random_state=None):
         # See, e.g., http://youtu.be/BzHz0J9a6k0?t=9m38s for a motivation
         # behind this deprecation
         warnings.warn("Bootstrap will no longer be supported as a " +
                       "cross-validation method as of version 0.15 and " +
                       "will be removed in 0.17", DeprecationWarning)
         self.n = n
-        if n_bootstraps is not None:  # pragma: no cover
-            warnings.warn("n_bootstraps was renamed to n_iter and will "
-                          "be removed in 0.16.", DeprecationWarning)
-            n_iter = n_bootstraps
         self.n_iter = n_iter
         if (isinstance(train_size, numbers.Real) and train_size >= 0.0
                 and train_size <= 1.0):
@@ -749,7 +745,7 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
     def __init__(self, n, n_iter=10, test_size=0.1, train_size=None,
-                 indices=None, random_state=None, n_iterations=None):
+                 indices=None, random_state=None):
         if indices is None:
             indices = True
         else:
@@ -757,10 +753,6 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
                           "removed (assumed True) in 0.17", DeprecationWarning)
         self.n = n
         self.n_iter = n_iter
-        if n_iterations is not None:  # pragma: no cover
-            warnings.warn("n_iterations was renamed to n_iter for consistency "
-                          " and will be removed in 0.16.")
-            self.n_iter = n_iterations
         self.test_size = test_size
         self.train_size = train_size
         self.random_state = random_state
@@ -998,11 +990,9 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     """
 
     def __init__(self, y, n_iter=10, test_size=0.1, train_size=None,
-                 indices=None, random_state=None, n_iterations=None):
-
+                 indices=None, random_state=None):
         super(StratifiedShuffleSplit, self).__init__(
-            len(y), n_iter, test_size, train_size, indices, random_state,
-            n_iterations)
+            len(y), n_iter, test_size, train_size, indices, random_state)
         self.y = np.array(y)
         self.classes, self.y_indices = np.unique(y, return_inverse=True)
         n_cls = self.classes.shape[0]
