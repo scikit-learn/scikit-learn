@@ -827,7 +827,7 @@ class Lasso(ElasticNet):
     ``intercept_`` : float | array, shape = (n_targets,)
         independent term in decision function.
 
-    ``n_iter_`` : array-like, shape (n_targets,)
+    ``n_iter_`` : int | array-like, shape (n_targets,)
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance.
 

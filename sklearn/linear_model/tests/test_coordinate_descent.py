@@ -6,6 +6,7 @@ from sys import version_info
 
 import numpy as np
 from scipy import interpolate, sparse
+from copy import deepcopy
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -486,6 +487,27 @@ def test_warm_start_convergence():
     model.fit(X, y)
     n_iter_warm_start = model.n_iter_
     assert_equal(n_iter_warm_start, 1)
+
+
+def test_warm_start_convergence_with_regularizer_decrement():
+    X, y, _, _ = build_dataset(200, 200)
+    # Train a model to converge on a lightly regularized problem
+    final_alpha = 1e-5
+    low_reg_model = ElasticNet(alpha=final_alpha).fit(X, y)
+
+    # Fitting a new model on more regularized version of the same problem.
+    # Fitting with high regularization is easier so the it should
+    # converge faster.
+    high_reg_model = ElasticNet(alpha=final_alpha * 100).fit(X, y)
+    assert_greater(low_reg_model.n_iter_, high_reg_model.n_iter_)
+
+    # Fit the solution to the original, less regularized version of the
+    # problem but from the solution of the highly regularized variant of
+    # the problem as a better starting point. This should also converge
+    # faster than the original model that starts from zero.
+    warm_low_reg_model = deepcopy(high_reg_model)
+    warm_low_reg_model.set_params(warm_start=True, alpha=final_alpha)
+    assert_greater(low_reg_model.n_iter_, warm_low_reg_model.n_iter_)
 
 
 if __name__ == '__main__':
