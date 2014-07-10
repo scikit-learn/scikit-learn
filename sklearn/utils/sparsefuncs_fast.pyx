@@ -301,25 +301,27 @@ def assign_rows_csr(X,
 @cython.wraparound(False)
 @cython.cdivision(True)
 def csr_row_mode(X):
-    """Mode of each row in CSR matrix X."""
+    """L2 norm of each row in CSR matrix X."""
     cdef:
         unsigned int n_samples = X.shape[0]
         unsigned int n_features = X.shape[1]
-        np.ndarray[DOUBLE, ndim=1, mode="c"] norms
-        np.ndarray[DOUBLE, ndim=1, mode="c"] data
+        np.ndarray[np.float64_t, ndim=2, mode="c"] modes
+        np.ndarray[np.float64_t, ndim=1, mode="c"] data
         np.ndarray[int, ndim=1, mode="c"] indices = X.indices
         np.ndarray[int, ndim=1, mode="c"] indptr = X.indptr
 
-        np.npy_intp i, j, mode
+        np.npy_intp i, j
+        np.npy_int mode
 
-    modes = np.zeros(n_samples, dtype=X.data.dtype)
-    data = np.asarray(X.data, dtype=X.data.data)     # might copy!
-
-    # Sort then find the longest repeating sequence
+    # XXX these need to be dtype=X.data.dtype
+    modes = np.zeros((n_samples,1), dtype=np.float64)
+    data = np.asarray(X.data, dtype=np.float64)     # might copy!
 
     for i in range(n_samples):
-        nonz_mode, count = stats.mode(data[indptr[i]:indptr[i + 1]])
-        mode = nonz_mode[0] if indptr[i] - indptr[i + 1] < count[0] else 0
-        modes[i] = mode
-
+        nnz = indptr[i + 1] - indptr[i]
+        if nnz > 0:
+            nonz_mode, count = stats.mode(data[indptr[i]:indptr[i + 1]])
+        else:
+            nonz_mode, count = (["NaN"], [0])
+        modes[i] = nonz_mode[0] if n_features - (nnz) < count[0] else 0
     return modes

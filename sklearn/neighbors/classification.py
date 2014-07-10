@@ -12,6 +12,7 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import stats
 from ..utils.extmath import weighted_mode
+from ..utils.sparsefuncs_fast import csr_row_mode
 
 from .base import \
     _check_weights, _get_weights, \
@@ -190,8 +191,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         for k, classes_k in enumerate(classes_):
             neigh_lbls_k = _y[neigh_ind,k]
             if weights is None:
-                # XXX make a sparse mode function, do not densify neigh_lbls_k
-                mode, _ = stats.mode(neigh_lbls_k.toarray().T, axis=1)
+                mode = csr_row_mode(sp.csr_matrix(neigh_lbls_k.T))
                 mode = sp.csc_matrix(mode ,dtype=np.intp)
             else:
                 # XXX make a sparse weighted_mode function, do not densify neigh_lbls_k
