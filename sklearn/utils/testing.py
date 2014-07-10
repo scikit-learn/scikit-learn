@@ -238,6 +238,15 @@ def assert_no_warnings(func, *args, **kw):
     return result
 
 
+def ignore_warning_class(warning_class, func, *args, **kw):
+    """Returns the result of func and ignores warnings of type warning_class"""
+    clean_warning_registry()
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', category=warning_class)
+        result = func(*args, **kw)
+    return result
+
+
 def ignore_warnings(obj=None):
     """ Context manager and decorator to ignore warnings
 
@@ -579,6 +588,7 @@ def if_not_mac_os(versions=('10.7', '10.8', '10.9'),
     """
     mac_version, _, _ = platform.mac_ver()
     skip = '.'.join(mac_version.split('.')[:2]) in versions
+
     def decorator(func):
         if skip:
             @wraps(func)
