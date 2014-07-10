@@ -63,23 +63,28 @@ class StationaryCorrelation(with_metaclass(ABCMeta, object)):
     Stationary correlation models dependent only on the relative distance
     and not on the absolute positions of the respective datapoints. We can thus
     work internally solely on these distances.
-
-    Parameters
-    ----------
-    X : array_like, shape=(n_samples, n_features)
-        An array of training datapoints at which observations were made, i.e.,
-        where the outputs y are known
-    nugget : double or ndarray, optional
-        The Gaussian Process nugget parameter
-        The nugget is added to the diagonal of the assumed training covariance;
-        in this way it acts as a Tikhonov regularization in the problem.  In
-        the special case of the squared exponential correlation function, the
-        nugget mathematically represents the variance of the input values.
-        Default assumes a nugget close to machine precision for the sake of
-        robustness (nugget = 10. * MACHINE_EPSILON).
-
     """
-    def __init__(self, X, nugget=10. * MACHINE_EPSILON):
+    def __init__(self):
+        pass
+
+    def fit(self, X, nugget=10. * MACHINE_EPSILON):
+        """ Fits the correlation model for training data X
+
+        Parameters
+        ----------
+        X : array_like, shape=(n_samples, n_features)
+            An array of training datapoints at which observations were made,
+            i.e., where the outputs y are known
+        nugget : double or ndarray, optional
+            The Gaussian Process nugget parameter
+            The nugget is added to the diagonal of the assumed training
+            covariance; in this way it acts as a Tikhonov regularization in
+            the problem.  In the special case of the squared exponential
+            correlation function, the nugget mathematically represents the
+            variance of the input values. Default assumes a nugget close to
+            machine precision for the sake of robustness
+            (nugget = 10. * MACHINE_EPSILON).
+        """
         self.X = X
         self.nugget = nugget
         self.n_samples = X.shape[0]

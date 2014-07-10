@@ -263,8 +263,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             y_mean = np.zeros(1)
             y_std = np.ones(1)
 
-        # Instantiate correlation model
-        self.corr_ = self.corr(X, self.nugget)
+        # Fit correlation model
+        self.corr.fit(X, self.nugget)
 
         # Regression matrix and parameters
         F = self.regr(X)
@@ -400,7 +400,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
             # Get regression function and correlation
             f = self.regr(X)
-            r = self.corr_(self.theta_, X)
+            r = self.corr(self.theta_, X)
 
             # Scaled predictor
             y_ = np.dot(f, self.beta) + np.dot(r, self.gamma)
@@ -544,7 +544,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             F = self.regr(self.X)
 
         # Determine (auto-)correlation of training data
-        R = self.corr_(theta)
+        R = self.corr(theta)
 
         # Cholesky decomposition of R
         try:
@@ -674,7 +674,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                         log10_optimal_theta = \
                             optimize.fmin_cobyla(
                                 minus_reduced_likelihood_function,
-                                np.log10(theta0), constraints,
+                                x0=np.log10(theta0), cons=constraints,
                                 iprint=0)
                     else:
                         log10_optimal_theta = \
@@ -713,7 +713,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
             # Backup of the given atrributes
             theta0, thetaL, thetaU = self.theta0, self.thetaL, self.thetaU
-            corr = self.corr_
+            corr = self.corr
             verbose = self.verbose
 
             # This will iterate over fmin_cobyla optimizer
@@ -746,13 +746,13 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                                            optimal_theta[(i + 1)::]]
                                           ), X)
 
-                self.corr_ = corr_cut
+                self.corr = corr_cut
                 optimal_theta[i], optimal_rlf_value, optimal_par = \
                     self._arg_max_reduced_likelihood_function()
 
             # Restore the given atrributes
             self.theta0, self.thetaL, self.thetaU = theta0, thetaL, thetaU
-            self.corr_ = corr
+            self.corr = corr
             self.optimizer = 'Welch'
             self.verbose = verbose
 
@@ -785,7 +785,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         # Check correlation model
         if not callable(self.corr):
             if self.corr in self._correlation_types:
-                self.corr = self._correlation_types[self.corr]
+                self.corr = self._correlation_types[self.corr]()
             else:
                 raise ValueError("corr should be one of %s or callable, "
                                  "%s was given."
