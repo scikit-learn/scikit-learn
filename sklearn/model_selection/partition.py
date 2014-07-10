@@ -150,8 +150,8 @@ class LeaveOneOut(_PartitionIterator):
     domain-specific stratification of the dataset.
     """
 
-    def _iter_test_indices(self):
-        return range(self.n)
+    def _iter_test_indices(self, y):
+        return range(self._sample_size(y))
 
     def __repr__(self):
         return '%s.%s(n=%i)' % (
@@ -161,6 +161,7 @@ class LeaveOneOut(_PartitionIterator):
         )
 
     def __len__(self):
+        # TODO: remove?
         return self.n
 
 
@@ -208,12 +209,14 @@ class LeavePOut(_PartitionIterator):
     TRAIN: [0 1] TEST: [2 3]
     """
 
-    def __init__(self, n, p, indices=None):
+    def __init__(self, n=None, p=None, indices=None):
         super(LeavePOut, self).__init__(n, indices)
+        if p is None:
+            raise ValueError("LeavePOut: must supply p")
         self.p = p
 
-    def _iter_test_indices(self):
-        for comb in combinations(range(self.n), self.p):
+    def _iter_test_indices(self, y):
+        for comb in combinations(range(self._sample_size(y)), self.p):
             yield np.array(comb)
 
     def __repr__(self):
@@ -225,6 +228,7 @@ class LeavePOut(_PartitionIterator):
         )
 
     def __len__(self):
+        # TODO: remove?
         return int(factorial(self.n) / factorial(self.n - self.p)
                    / factorial(self.p))
 
@@ -512,16 +516,20 @@ class LeaveOneLabelOut(_PartitionIterator):
 
     """
 
-    def __init__(self, labels, indices=None):
-        super(LeaveOneLabelOut, self).__init__(len(labels), indices)
-        # We make a copy of labels to avoid side-effects during iteration
-        self.labels = np.array(labels, copy=True)
-        self.unique_labels = np.unique(labels)
-        self.n_unique_labels = len(self.unique_labels)
+    def __init__(self, labels=None, indices=None):
+        n = None if labels is None else len(labels)
+        super(LeaveOneLabelOut, self).__init__(n, indices)
+        self.labels = labels
 
-    def _iter_test_masks(self):
-        for i in self.unique_labels:
-            yield self.labels == i
+    def _iter_test_masks(self, y):
+        labels = self.labels if y is None else y
+        # We make a copy of labels to avoid side-effects during iteration
+        labels = np.array(labels, copy=True)
+        unique_labels = np.unique(labels)
+        n_unique_labels = len(unique_labels)
+        for i in unique_labels:
+            print("yielding", labels == i)
+            yield labels == i
 
     def __repr__(self):
         return '%s.%s(labels=%s)' % (
@@ -531,6 +539,7 @@ class LeaveOneLabelOut(_PartitionIterator):
         )
 
     def __len__(self):
+        # TODO: remove?
         return self.n_unique_labels
 
 
@@ -585,21 +594,27 @@ class LeavePLabelOut(_PartitionIterator):
      [5 6]] [1] [2 1]
     """
 
-    def __init__(self, labels, p, indices=None):
-        # We make a copy of labels to avoid side-effects during iteration
-        super(LeavePLabelOut, self).__init__(len(labels), indices)
-        self.labels = np.array(labels, copy=True)
-        self.unique_labels = np.unique(labels)
-        self.n_unique_labels = len(self.unique_labels)
-        self.p = p
+    def __init__(self, labels=None, p=None, indices=None):
+        n = None if labels is None else len(labels)
+        super(LeavePLabelOut, self).__init__(n, indices)
+        if p is None:
+            raise ValueError("LeavePLabelOut: must supply p")
 
-    def _iter_test_masks(self):
-        comb = combinations(range(self.n_unique_labels), self.p)
+        self.p = p
+        self.labels = labels
+
+    def _iter_test_masks(self, y):
+        labels = self.labels if y is None else y
+        # We make a copy of labels to avoid side-effects during iteration
+        labels = np.array(labels, copy=True)
+        unique_labels = np.unique(labels)
+        n_unique_labels = len(unique_labels)
+        comb = combinations(range(n_unique_labels), self.p)
         for idx in comb:
-            test_index = self._empty_mask()
+            test_index = self._empty_mask(labels)
             idx = np.array(idx)
-            for l in self.unique_labels[idx]:
-                test_index[self.labels == l] = True
+            for l in unique_labels[idx]:
+                test_index[labels == l] = True
             yield test_index
 
     def __repr__(self):
