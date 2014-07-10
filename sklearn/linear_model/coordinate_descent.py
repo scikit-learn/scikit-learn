@@ -583,7 +583,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         Whether the intercept should be estimated or not. If ``False``, the
         data is assumed to be already centered.
 
-    normalize : boolean, optional, default False0
+    normalize : boolean, optional, default False
         If ``True``, the regressors X will be normalized before regression.
 
     precompute : True | False | 'auto' | array-like

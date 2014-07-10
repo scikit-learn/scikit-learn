@@ -6,6 +6,7 @@ from sys import version_info
 
 import numpy as np
 from scipy import interpolate, sparse
+from copy import deepcopy
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -465,6 +466,16 @@ def test_precompute_invalid_argument():
     for clf in [ElasticNetCV(precompute="invalid"),
                 LassoCV(precompute="invalid")]:
         assert_raises(ValueError, clf.fit, X, y)
+
+
+def test_warm_start_convergence():
+    X, y, _, _ = build_dataset()
+    cold_model = ElasticNet(alpha=1e-3, tol=1e-5, max_iter=2000)
+    cold_model.fit(X, y)
+    warm_model = deepcopy(cold_model).set_params(warm_start=True)
+    warm_model.fit(X, y)
+    assert_greater(cold_model.n_iter_, warm_model.n_iter_)
+    assert_greater(warm_model.n_iter_, 1)
 
 
 if __name__ == '__main__':
