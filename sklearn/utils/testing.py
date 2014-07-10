@@ -238,13 +238,18 @@ def assert_no_warnings(func, *args, **kw):
     return result
 
 
-def ignore_warning_class(warning_class, func, *args, **kw):
-    """Returns the result of func and ignores warnings of type warning_class"""
-    clean_warning_registry()
-    with warnings.catch_warnings():
-        warnings.filterwarnings('ignore', category=warning_class)
-        result = func(*args, **kw)
-    return result
+def ignore_warning_class(warning_class, fn):
+    """Decorator to catch and hide warnings without visual nesting"""
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        # very important to avoid uncontrolled state propagation
+        clean_warning_registry()
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=warning_class)
+            return fn(*args, **kwargs)
+            w[:] = []
+
+    return wrapper
 
 
 def ignore_warnings(obj=None):

@@ -114,8 +114,8 @@ def test_ovr_always_present():
 
     [[int(i >= 5), 2, 3] for i in range(10)]
     ovr = OneVsRestClassifier(LogisticRegression())
-    assert_warns(UserWarning, ignore_warning_class, sp.SparseEfficiencyWarning,
-                 ovr.fit, X, y)
+    assert_warns(UserWarning, ignore_warning_class(sp.SparseEfficiencyWarning,
+                 ovr.fit), X, y)
     y_pred = ovr.predict(X)
     assert_array_equal(np.array(y_pred), np.array(y))
     y_pred = ovr.decision_function(X)
@@ -127,8 +127,8 @@ def test_ovr_always_present():
     y = np.zeros((10, 2))
     y[5:, 0] = 1  # variable label
     ovr = OneVsRestClassifier(LogisticRegression())
-    assert_warns(UserWarning, ignore_warning_class, sp.SparseEfficiencyWarning,
-                 ovr.fit, X, y)
+    assert_warns(UserWarning, ignore_warning_class(sp.SparseEfficiencyWarning,
+                 ovr.fit), X, y)
     y_pred = ovr.predict_proba(X)
     assert_array_equal(y_pred[:, -1], np.zeros(X.shape[0]))
 
