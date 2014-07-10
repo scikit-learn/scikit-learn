@@ -44,15 +44,12 @@ def _intercept_dot(w, X, y):
     y : ndarray, shape (n_samples,)
         Array of labels
     """
-    c = None
+    c = 0.
     if w.size == X.shape[1] + 1:
         c = w[-1]
         w = w[:-1]
 
-    z = safe_sparse_dot(X, w)
-    if c is not None:
-        z += c
-
+    z = safe_sparse_dot(X, w) + c
     return w, c, y*z
 
 
@@ -72,6 +69,10 @@ def _logistic_loss_and_grad(w, X, y, alpha, sample_weight=None):
 
     alpha : float
         Regularization parameter. alpha is equal to 1 / C.
+
+    sample_weight: ndarray, shape (n_samples,) optional
+        Array of weights that are assigned to individual samples.
+        If not provided, then each sample is given unit weight.
 
     Returns
     -------
@@ -96,7 +97,9 @@ def _logistic_loss_and_grad(w, X, y, alpha, sample_weight=None):
     z0 = sample_weight * (z - 1) * y
 
     grad[:n_features] = safe_sparse_dot(X.T, z0) + alpha * w
-    if c is not None:
+
+    # Case where we fit the intercept.
+    if grad.shape[0] > n_features:
         grad[-1] = z0.sum()
     return out, grad
 
@@ -117,6 +120,10 @@ def _logistic_loss(w, X, y, alpha, sample_weight=None):
 
     alpha : float
         Regularization parameter. alpha is equal to 1 / C.
+
+    sample_weight: ndarray, shape (n_samples,) optional
+        Array of weights that are assigned to individual samples.
+        If not provided, then each sample is given unit weight.
 
     Returns
     -------
@@ -150,6 +157,10 @@ def _logistic_loss_grad_hess(w, X, y, alpha, sample_weight=None):
     alpha : float
         Regularization parameter. alpha is equal to 1 / C.
 
+    sample_weight: ndarray, shape (n_samples,) optional
+        Array of weights that are assigned to individual samples.
+        If not provided, then each sample is given unit weight.
+
     Returns
     -------
     out: float
@@ -177,8 +188,10 @@ def _logistic_loss_grad_hess(w, X, y, alpha, sample_weight=None):
     z0 = sample_weight * (z - 1) * y
 
     grad[:n_features] = safe_sparse_dot(X.T, z0) + alpha * w
-    if c is not None:
-        grad[-1] = np.sum(z0)
+
+    # Case where we fit the intercept.
+    if grad.shape[0] > n_features:
+        grad[-1] = z0.sum()
 
     # The mat-vec product of the Hessian
     d = sample_weight * z * (1 - z)
@@ -199,7 +212,8 @@ def _logistic_loss_grad_hess(w, X, y, alpha, sample_weight=None):
         ret[:n_features] = X.T.dot(dX.dot(s[:n_features]))
         ret[:n_features] += alpha * s[:n_features]
 
-        if c is not None:
+        # For the fit intercept case.
+        if s.shape[0] > n_features:
             ret[:n_features] += s[-1] * dd_intercept
             ret[-1] = dd_intercept.dot(s[:n_features])
             ret[-1] += d.sum() * s[-1]
@@ -210,7 +224,7 @@ def _logistic_loss_grad_hess(w, X, y, alpha, sample_weight=None):
 
 def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              max_iter=100, tol=1e-4, verbose=0,
-                             solver='liblinear', coef=None, copy=False,
+                             solver='liblinear', coef=None, copy=True,
                              class_weight=None):
     """Compute a Logistic Regression model for a list of regularization
     parameters.
@@ -255,10 +269,10 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     solver : {'lbfgs', 'newton-cg', 'liblinear'}
         Numerical solver to use.
 
-    coef: array-like, shape (n_features,) default None
+    coef: array-like, shape (n_features,), default None
         Initialization value for coefficients of logistic regression.
 
-    copy: bool
+    copy: bool, default True
         Whether or not to produce a copy of the data. Setting this to
         True will be useful in cases, when logistic_regression_path
         is called repeatedly with the same data, as y is modified
@@ -440,6 +454,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
                                          solver=method,
                                          max_iter=max_iter,
                                          class_weight=class_weight,
+                                         copy=False,
                                          tol=tol, verbose=verbose)
 
     scores = list()
@@ -803,7 +818,7 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
                 w, _ = logistic_regression_path(
                     X, y, pos_class=label, Cs=[C_], solver=self.solver,
                     fit_intercept=self.fit_intercept, coef=coef_init,
-                    max_iter=self.max_iter, tol=self.tol, copy=True,
+                    max_iter=self.max_iter, tol=self.tol,
                     class_weight=self.class_weight_,
                     verbose=max(0, self.verbose - 1))
                 w = w[0]

@@ -666,10 +666,10 @@ Similarly, L1 regularized logistic regression solves the following optimization 
 The solvers implemented for Logistic Regression are liblinear (which is a
 wrapper around the C++ library, LIBLINEAR), newton-cg and lbfgs.
 
-The liblinear solver can be used to do L1 or L2 penalized
-logistic regression. The lbfgs and newton-cg solvers and do only L1 penalized
-regression and are found to converge faster for high dimensional data.
-L1 penalization yields sparse predicting weights.
+The lbfgs and newton-cg solvers only support L2 penalization and are found
+to converge faster for some high dimensional data. L1 penalization yields
+sparse predicting weights.
+
 For L1 penalization :func:`sklearn.svm.l1_min_c` allows to calculate
 the lower bound for C in order to get a non "null" (all feature weights to
 zero) model.
