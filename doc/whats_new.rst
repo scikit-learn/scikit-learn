@@ -2554,7 +2554,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Johannes Schönberger: https://github.com/ahojnnes
 
-.. _Manoj Kumar: https://github.com/Manoj-Kumar-S
+.. _Manoj Kumar: https://manojbits.wordpress.com
 
 .. _Andrew Tulloch: http://tullo.ch
 
