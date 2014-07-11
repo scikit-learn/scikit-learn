@@ -239,7 +239,7 @@ data.
     * :ref:`example_mixture_plot_gmm_sin.py` shows using :class:`GMM` and
       :class:`DPGMM` to fit a sine wave
 
-Pros and cons of class :class:`DPGMM`: Diriclet process mixture model
+Pros and cons of class :class:`DPGMM`: Dirichlet process mixture model
 ----------------------------------------------------------------------
 
 Pros
