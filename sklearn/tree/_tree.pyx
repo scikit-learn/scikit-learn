@@ -1214,6 +1214,8 @@ cdef class BestSplitter(Splitter):
                         p += 1
                     # We test all the combinations of categories. Not efficient
                     # if there is many dummies.
+                    # TODO linear time algo for binary classification and reg
+                    # TODO sample splits otherwise if n_categories>=8
                     for split_categories in xrange(2**(n_categories-1)):
                         # The first category is always in the right branch.
                         # It doesn't change anything because of symmetry
