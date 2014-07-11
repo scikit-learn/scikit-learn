@@ -233,12 +233,16 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             min_weight_leaf = 0.
 
         if isinstance(self.min_samples_leaf, float):
+            if self.min_samples_leaf > 1:
+                raise ValueError("The float min_samples_leaf must be less than 1.0")
             min_samples_leaf = int(np.ceil(self.min_samples_leaf * n_samples))
         else:
             min_samples_leaf = self.min_samples_leaf
 
         # Set min_samples_split sensibly
         if isinstance(self.min_samples_split, float):
+            if self.min_samples_split > 1:
+                raise ValueError("The float min_samples_split must be less than 1.0")
             min_samples_split = int(np.ceil(self.min_samples_split * n_samples))
         else:
             min_samples_split = self.min_samples_split

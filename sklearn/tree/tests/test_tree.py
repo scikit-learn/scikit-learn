@@ -400,6 +400,8 @@ def test_error():
     for name, TreeEstimator in ALL_TREES.items():
         # Invalid values for parameters
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=-1).fit, X, y)
+        assert_raises(ValueError, TreeEstimator(min_samples_leaf=0.0).fit, X, y)
+        assert_raises(ValueError, TreeEstimator(min_samples_leaf=1.5).fit, X, y)
         assert_raises(ValueError,
                       TreeEstimator(min_weight_fraction_leaf=-1).fit,
                       X, y)
@@ -407,6 +409,10 @@ def test_error():
                       TreeEstimator(min_weight_fraction_leaf=0.51).fit,
                       X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_split=-1).fit,
+                      X, y)
+        assert_raises(ValueError, TreeEstimator(min_samples_split=0.0).fit,
+                      X, y)
+        assert_raises(ValueError, TreeEstimator(min_samples_split=-1.5).fit,
                       X, y)
         assert_raises(ValueError, TreeEstimator(max_depth=-1).fit, X, y)
         assert_raises(ValueError, TreeEstimator(max_features=42).fit, X, y)
@@ -443,6 +449,39 @@ def test_error():
         assert_raises(ValueError, clf.predict, Xt)
 
 
+def test_min_samples_split():
+    """Test min_samples_split parameter"""
+    X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
+    y = iris.target
+
+    # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
+    # by setting max_leaf_nodes
+    for max_leaf_nodes in (None, 1000):
+        for name, TreeEstimator in ALL_TREES.items():
+            est = TreeEstimator(min_samples_split=10,
+                                max_leaf_nodes=max_leaf_nodes,
+                                random_state=0)
+            est.fit(X, y)
+            # count samples on nodes, -1 means it is a leaf
+            node_samples = est.tree_.n_node_samples[est.tree_.children_left != -1]
+
+            assert_greater(np.min(node_samples), 9,
+                           "Failed with {0}".format(name))
+
+    for max_leaf_nodes in (None, 1000):
+        for name, TreeEstimator in ALL_TREES.items():
+            est = TreeEstimator(min_samples_split=0.2,
+                                max_leaf_nodes=max_leaf_nodes,
+                                random_state=0)
+            est.fit(X, y)
+            # count samples on nodes, -1 means it is a leaf
+            node_samples = est.tree_.n_node_samples[est.tree_.children_left != -1]
+
+            assert_greater(np.min(node_samples), 9,
+                           "Failed with {0}".format(name))
+
+
+
 def test_min_samples_leaf():
     """Test if leaves contain more than leaf_count training examples"""
     X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
@@ -466,7 +505,6 @@ def test_min_samples_leaf():
     for max_leaf_nodes in (None, 1000):
         for name, TreeEstimator in ALL_TREES.items():
             est = TreeEstimator(min_samples_leaf=0.1,
-                                min_samples_split=0.01,
                                 max_leaf_nodes=max_leaf_nodes,
                                 random_state=0)
             est.fit(X, y)

@@ -992,11 +992,20 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         of the input variables.
         Ignored if ``max_samples_leaf`` is not None.
 
-    min_samples_split : integer, optional (default=2)
-        The minimum number of samples required to split an internal node.
+    min_samples_split : int, float, optional (default=2)
+        The minimum number of samples required to split an internal node:
+          - If int, then consider `min_samples_split` as the minimum number.
+          - If float, then `min_samples_split` is a percentage and
+            `int(min_samples_split * n_samples)` are the minimum
+            number of samples for each split.
 
-    min_samples_leaf : integer, optional (default=1)
-        The minimum number of samples required to be at a leaf node.
+    min_samples_leaf : int, float, optional (default=1)
+        The minimum number of samples required to be at a leaf node:
+          - If int, then consider `min_samples_leaf` as the minimum number.
+          - If float, then `min_samples_leaf` is a percentage and
+            `int(min_samples_leaf * n_samples)` are the minimum
+            number of samples for each node.
+
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the input samples required to be at a
@@ -1260,11 +1269,19 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         for best performance; the best value depends on the interaction
         of the input variables.
 
-    min_samples_split : integer, optional (default=2)
-        The minimum number of samples required to split an internal node.
+    min_samples_split : int, float, optional (default=2)
+        The minimum number of samples required to split an internal node:
+          - If int, then consider `min_samples_split` as the minimum number.
+          - If float, then `min_samples_split` is a percentage and
+            `int(min_samples_split * n_samples)` are the minimum
+            number of samples for each split.
 
-    min_samples_leaf : integer, optional (default=1)
-        The minimum number of samples required to be at a leaf node.
+    min_samples_leaf : int, float, optional (default=1)
+        The minimum number of samples required to be at a leaf node:
+          - If int, then consider `min_samples_leaf` as the minimum number.
+          - If float, then `min_samples_leaf` is a percentage and
+            `int(min_samples_leaf * n_samples)` are the minimum
+            number of samples for each node.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the input samples required to be at a

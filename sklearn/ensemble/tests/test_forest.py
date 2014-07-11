@@ -548,6 +548,35 @@ def test_max_leaf_nodes_max_depth():
         yield check_max_leaf_nodes_max_depth, name, X, y
 
 
+def check_min_samples_split(name, X, y):
+    """Test min_samples_split parameter"""
+    ForestEstimator = FOREST_ESTIMATORS[name]
+
+    # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
+    # by setting max_leaf_nodes
+    for max_leaf_nodes in (None, 1000):
+        est = ForestEstimator(min_samples_split=10,
+                              max_leaf_nodes=max_leaf_nodes,
+                              random_state=0)
+        est.fit(X, y)
+        node_idx = est.estimators_[0].tree_.children_left != -1
+        node_samples = est.estimators_[0].tree_.n_node_samples[node_idx]
+
+        assert_greater(np.min(node_samples), 9,
+                       "Failed with {0}".format(name))
+
+    for max_leaf_nodes in (None, 1000):
+        est = ForestEstimator(min_samples_split=0.1,
+                              max_leaf_nodes=max_leaf_nodes,
+                              random_state=0)
+        est.fit(X, y)
+        node_idx = est.estimators_[0].tree_.children_left != -1
+        node_samples = est.estimators_[0].tree_.n_node_samples[node_idx]
+
+        assert_greater(np.min(node_samples), 9,
+                       "Failed with {0}".format(name))
+
+
 def check_min_samples_leaf(name, X, y):
     """Test if leaves contain more than leaf_count training examples"""
     ForestEstimator = FOREST_ESTIMATORS[name]
@@ -556,6 +585,18 @@ def check_min_samples_leaf(name, X, y):
     # by setting max_leaf_nodes
     for max_leaf_nodes in (None, 1000):
         est = ForestEstimator(min_samples_leaf=5,
+                              max_leaf_nodes=max_leaf_nodes,
+                              random_state=0)
+        est.fit(X, y)
+        out = est.estimators_[0].tree_.apply(X)
+        node_counts = np.bincount(out)
+        # drop inner nodes
+        leaf_count = node_counts[node_counts != 0]
+        assert_greater(np.min(leaf_count), 4,
+                       "Failed with {0}".format(name))
+
+    for max_leaf_nodes in (None, 1000):
+        est = ForestEstimator(min_samples_leaf=0.05,
                               max_leaf_nodes=max_leaf_nodes,
                               random_state=0)
         est.fit(X, y)
