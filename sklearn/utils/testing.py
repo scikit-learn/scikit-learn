@@ -154,10 +154,12 @@ def assert_warns(warning_class, func, *args, **kw):
         if not len(w) > 0:
             raise AssertionError("No warning raised when calling %s"
                                  % func.__name__)
+        found = False
+        for W in w:
+            found = found or W.category is warning_class
 
-        if not w[0].category is warning_class:
-            raise AssertionError("First warning for %s is not a "
-                                 "%s( is %s)"
+        if not found:
+            raise AssertionError("%s did not give warning: %s( is %s)"
                                  % (func.__name__, warning_class, w[0]))
 
     return result
@@ -236,20 +238,6 @@ def assert_no_warnings(func, *args, **kw):
             raise AssertionError("Got warnings when calling %s: %s"
                                  % (func.__name__, w))
     return result
-
-
-def ignore_warning_class(warning_class, fn):
-    """Wraps function fn and ignore any warnings of type warning_class."""
-    @wraps(fn)
-    def wrapper(*args, **kwargs):
-        # very important to avoid uncontrolled state propagation
-        clean_warning_registry()
-        with warnings.catch_warnings():
-            warnings.filterwarnings('ignore', category=warning_class)
-            return fn(*args, **kwargs)
-            w[:] = []
-
-    return wrapper
 
 
 def ignore_warnings(obj=None):
