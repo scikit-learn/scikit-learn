@@ -344,7 +344,7 @@ The objective function to minimize is:
 
 where;
 
-.. math:: ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+.. math:: ||W||_{2 1} = \sum_i \sqrt{\sum_j w_{ij}^2}
 
 
 The implementation in the class :class:`MultiTaskLasso` uses coordinate descent as
