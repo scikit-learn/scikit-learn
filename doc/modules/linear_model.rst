@@ -653,11 +653,11 @@ The :class:`LogisticRegression` class can be used to do L1 or L2 penalized
 logistic regression. Binary class L2 penalized logistic regression can be 
 formulated as the solution to the optimization problem
 
-.. math:: \underset{w}{min\,} \frac{1}{2}w^T w + C \sum_{i=1}^n \log(\exp(- y_i X_i w) + 1) 
+.. math:: \underset{w, c}{min\,} \frac{1}{2}w^T w + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) 
 
 Similarly, L1 regularized logistic regression solves the following optimization problem
 
-.. math:: \underset{w}{min\,} \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i X_i w) + 1) 
+.. math:: \underset{w, c}{min\,} \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) 
 
 L1 penalization yields sparse predicting weights.
 For L1 penalization :func:`sklearn.svm.l1_min_c` allows to calculate
