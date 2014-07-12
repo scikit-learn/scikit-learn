@@ -84,9 +84,9 @@ polluting ones, called "outliers". Yet, in the case of outlier
 detection, we don't have a clean data set representing the population
 of regular observations that can be used to train any tool.
 
-Fitting an elliptic envelop
------------------------------
 
+Fitting an elliptic envelope
+----------------------------
 
 One common way of performing outlier detection is to assume that the
 regular data come from a known distribution (e.g. data are Gaussian
@@ -123,7 +123,7 @@ This strategy is illustrated below.
     ..  [RD1999] Rousseeuw, P.J., Van Driessen, K. "A fast algorithm for the minimum
         covariance determinant estimator" Technometrics 41(3), 212 (1999)
      
-One-class SVM versus elliptic envelop
+One-class SVM versus elliptic envelope
 --------------------------------------
 
 Strictly-speaking, the One-class SVM is not an outlier-detection method,
@@ -150,7 +150,7 @@ multiple modes.
    :target: ../auto_examples/covariance/plot_outlier_detection.html
    :scale: 50%
 
-.. list-table:: **Comparing One-class SVM approach, and elliptic envelopp**
+.. list-table:: **Comparing One-class SVM approach, and elliptic envelope**
    :widths: 40 60
 
    *
