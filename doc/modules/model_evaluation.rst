@@ -33,12 +33,12 @@ value of those metrics for random predictions.
 
 .. _scoring_parameter:
 
-The `scoring` parameter: defining model evaluation rules
+The ``scoring`` parameter: defining model evaluation rules
 =========================================================
 
 Model selection and evaluation using tools, such as
 :class:`grid_search.GridSearchCV` and
-:func:`cross_validation.cross_val_score`, take a `scoring` parameter that
+:func:`cross_validation.cross_val_score`, take a ``scoring`` parameter that
 controls what metric they apply to estimators evaluated.
 
 Common cases: predefined values
@@ -602,7 +602,7 @@ To make this more explicit, consider the following notation:
 * :math:`P(A, B) := \frac{\left| A \cap B \right|}{\left|A\right|}`
 * :math:`R(A, B) := \frac{\left| A \cap B \right|}{\left|B\right|}`
   (Conventions vary on handling :math:`B = \emptyset`; this implementation uses
-  :math:`R(A, B):=0`, and similar for `P`.)
+  :math:`R(A, B):=0`, and similar for :math:`P`.)
 * :math:`F_\beta(A, B) := \left(1 + \beta^2\right) \frac{P(A, B) \times R(A, B)}{\beta^2 P(A, B) + R(A, B)}`
 
 Then the metrics are defined as:
@@ -681,29 +681,35 @@ as well as some variants of expectation-maximization,
 and can be used to evaluate the probability outputs (``predict_proba``)
 of a classifier, rather than its discrete predictions.
 
-For binary classification with a true label :math:`y_t \in \{0,1\}`
-and a probability estimate :math:`y_p = P(y_t = 1)`,
+For binary classification with a true label :math:`y \in \{0,1\}`
+and a probability estimate :math:`p = \operatorname{Pr}(y = 1)`,
 the log loss per sample is the negative log-likelihood
 of the classifier given the true label:
 
 .. math::
 
-    L_{\log}(y_t, y_p) = -\log P(y_t|y_p) = -(y_t \log y_p + (1 - y_t) \log (1 - y_p))
+    L_{\log}(y, p) = -\log \operatorname{Pr}(y|p) = -(y \log p) + (1 - y) \log (1 - p))
 
 This extends to the multiclass case as follows.
 Let the true labels for a set of samples
-be encoded as a 1-of-K binary indicator matrix :math:`T`,
-i.e. :math:`t_{i,k} = 1` if sample :math:`i` has label :math:`k`
+be encoded as a 1-of-K binary indicator matrix :math:`Y`,
+i.e. :math:`y_{i,k} = 1` if sample :math:`i` has label :math:`k`
 taken from a set of :math:`K` labels.
-Let :math:`Y` be a matrix of probability estimates,
-with :math:`y_{i,k} = P(t_{i,k} = 1)`.
-Then the total log loss of the whole set is
+Let :math:`P` be a matrix of probability estimates,
+with :math:`p_{i,k} = \operatorname{Pr}(t_{i,k} = 1)`.
+Then the log loss of the whole set is
 
 .. math::
 
-    L_{\log}(T, Y) = -\log P(T|Y) = - \sum_i \sum_j t_{i,k} \log y_{i,k}
+    L_{\log}(Y, P) = -\log \operatorname{Pr}(Y|P) = - \frac{1}{N} \sum_{i=0}^{N-1} \sum_{k=0}^{K-1} y_{i,k} \log p_{i,k}
 
-The function :func:`log_loss` computes either total or mean log loss
+To see how this generalizes the binary log loss given above,
+note that in the binary case,
+:math:`p_{i,0} = 1 - p_{i,1}` and :math:`y_{i,0} = 1 - y_{i,1}`,
+so expanding the inner sum over :math:`y_{i,k} \in \{0,1\}`
+gives the binary log loss.
+
+The function :func:`log_loss` computes log loss
 given a list of ground-truth labels and a probability matrix,
 as returned by an estimator's ``predict_proba`` method.
 
@@ -1072,15 +1078,15 @@ When doing supervised learning, a simple sanity check consists in comparing
 one's estimator against simple rules of thumb. :class:`DummyClassifier`
 implements three such simple strategies for classification:
 
-- `stratified` generates randomly predictions by respecting the training
+- ``stratified`` generates randomly predictions by respecting the training
   set's class distribution,
-- `most_frequent` always predicts the most frequent label in the training set,
-- `uniform` generates predictions uniformly at random.
-- `constant` always predicts a constant label that is provided by the user.
+- ``most_frequent`` always predicts the most frequent label in the training set,
+- ``uniform`` generates predictions uniformly at random.
+- ``constant`` always predicts a constant label that is provided by the user.
    A major motivation of this method is F1-scoring when the positive class
    is in the minority.
 
-Note that with all these strategies, the `predict` method completely ignores
+Note that with all these strategies, the ``predict`` method completely ignores
 the input data!
 
 To illustrate :class:`DummyClassifier`, first let's create an imbalanced
@@ -1093,7 +1099,7 @@ dataset::
   >>> y[y != 1] = -1
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-Next, let's compare the accuracy of `SVC` and `most_frequent`::
+Next, let's compare the accuracy of ``SVC`` and ``most_frequent``::
 
   >>> from sklearn.dummy import DummyClassifier
   >>> from sklearn.svm import SVC
@@ -1106,7 +1112,7 @@ Next, let's compare the accuracy of `SVC` and `most_frequent`::
   >>> clf.score(X_test, y_test)  # doctest: +ELLIPSIS
   0.57...
 
-We see that `SVC` doesn't do much better than a dummy classifier. Now, let's
+We see that ``SVC`` doesn't do much better than a dummy classifier. Now, let's
 change the kernel::
 
   >>> clf = SVC(kernel='rbf', C=1).fit(X_train, y_train)
@@ -1127,9 +1133,9 @@ from class imbalance, etc...
 
 :class:`DummyRegressor` also implements three simple rules of thumb for regression:
 
-- `mean` always predicts the mean of the training targets.
-- `median` always predicts the median of the training targests.
-- `constant` always predicts a constant value that is provided by the user.
+- ``mean`` always predicts the mean of the training targets.
+- ``median`` always predicts the median of the training targests.
+- ``constant`` always predicts a constant value that is provided by the user.
 
-In all these strategies, the `predict` method completely ignores
+In all these strategies, the ``predict`` method completely ignores
 the input data.

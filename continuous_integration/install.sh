@@ -46,3 +46,4 @@ fi
 if [[ "$COVERAGE" == "true" ]]; then
     pip install coverage coveralls
 fi
+pip install nose-exclude

@@ -9,14 +9,14 @@ Supervised learning: predicting an output variable from high-dimensional observa
 
    :ref:`Supervised learning <supervised-learning>`
    consists in learning the link between two
-   datasets: the observed data `X` and an external variable `y` that we
-   are trying to predict, usually called `target` or `labels`. Most often,
-   `y` is a 1D array of length `n_samples`.
+   datasets: the observed data ``X`` and an external variable ``y`` that we
+   are trying to predict, usually called "target" or "labels". Most often,
+   ``y`` is a 1D array of length ``n_samples``.
 
    All supervised `estimators <http://en.wikipedia.org/wiki/Estimator>`_
-   in the `scikit-learn` implement a `fit(X, y)`
-   method to fit the model and a `predict(X)` method that, given
-   unlabeled observations `X`, returns the predicted labels `y`.
+   in scikit-learn implement a ``fit(X, y)`` method to fit the model
+   and a ``predict(X)`` method that, given unlabeled observations ``X``,
+   returns the predicted labels ``y``.
 
 .. topic:: Vocabulary: classification and regression
 
@@ -26,12 +26,12 @@ Supervised learning: predicting an output variable from high-dimensional observa
    is to predict a continuous target variable, it is said to be a
    **regression** task.
 
-   In the `scikit-learn` for classification tasks, `y` is a vector of
-   integers.
+   When doing classification in scikit-learn, ``y`` is a vector of integers
+   or strings.
 
-   Note: See the :ref:`Introduction to machine learning with Scikit-learn
+   Note: See the :ref:`Introduction to machine learning with scikit-learn
    Tutorial <introduction>` for a quick run-through on the basic machine
-   learning vocabulary used within Scikit-learn.
+   learning vocabulary used within scikit-learn.
 
 Nearest neighbor and the curse of dimensionality
 =================================================
@@ -107,23 +107,24 @@ The curse of dimensionality
 -------------------------------
 
 For an estimator to be effective, you need the distance between neighboring
-points to be less than some value `d`, which depends on the problem.
-In one dimension, this requires on average `n ~ 1/d` points.
-In the context of the above `KNN` example, if the data is described by just
-one feature with values ranging from 0 to 1 and with `n` training observations,
-then new data will be no further away than `1/n`.
+points to be less than some value :math:`d`, which depends on the problem.
+In one dimension, this requires on average :math:`n ~ 1/d` points.
+In the context of the above :math:`k`-NN example, if the data is described by
+just one feature with values ranging from 0 to 1 and with :math:`n` training
+observations, then new data will be no further away than :math:`1/n`.
 Therefore, the nearest neighbor decision rule will be efficient as soon as
-`1/n` is small compared to the scale of between-class feature variations.
+:math:`1/n` is small compared to the scale of between-class feature variations.
 
-If the number of features is `p`, you now require `n ~ 1/d^p` points.
-Let's say that we require 10 points in one dimension: Now `10^p` points
-are required in `p` dimensions to pave the `[0, 1]` space.
-As `p` becomes large, the number of training points required for a good
+If the number of features is :math:`p`, you now require :math:`n ~ 1/d^p`
+points.  Let's say that we require 10 points in one dimension: now :math:`10^p`
+points are required in :math:`p` dimensions to pave the :math:`[0, 1]` space.
+As :math:`p` becomes large, the number of training points required for a good
 estimator grows exponentially.
 
 For example, if each point is just a single number (8 bytes), then an
-effective `KNN` estimator in a paltry `p~20` dimensions would require more training
-data than the current estimated size of the entire internet! (±1000 Exabytes or so).
+effective :math:`k`-NN estimator in a paltry :math:`p~20` dimensions would
+require more training data than the current estimated size of the entire
+internet (±1000 Exabytes or so).
 
 This is called the
 `curse of dimensionality  <http://en.wikipedia.org/wiki/Curse_of_dimensionality>`_
@@ -246,9 +247,9 @@ regression:
     ...    pl.scatter(this_X, y, s=3) # doctest: +SKIP
 
 This is an example of **bias/variance tradeoff**: the larger the ridge
-`alpha` parameter, the higher the bias and the lower the variance.
+``alpha`` parameter, the higher the bias and the lower the variance.
 
-We can choose `alpha` to minimize left out error, this time using the
+We can choose ``alpha`` to minimize left out error, this time using the
 diabetes dataset rather than our synthetic data::
 
     >>> alphas = np.logspace(-4, -1, 6)
@@ -304,8 +305,7 @@ Sparsity
 
 
 We can see that, although feature 2 has a strong coefficient on the full
-model, it conveys little information on `y` when considered with feature
-1.
+model, it conveys little information on ``y`` when considered with feature 1.
 
 To improve the conditioning of the problem (i.e. mitigating the
 :ref:`curse_of_dimensionality`), it would be interesting to select only the
@@ -314,7 +314,7 @@ regression will decrease their contribution, but not set them to zero. Another
 penalization approach, called :ref:`lasso` (least absolute shrinkage and
 selection operator), can set some coefficients to zero. Such methods are
 called **sparse method** and sparsity can be seen as an
-application of Occam's razor: `prefer simpler models`.
+application of Occam's razor: *prefer simpler models*.
 
 ::
 
@@ -336,13 +336,13 @@ application of Occam's razor: `prefer simpler models`.
 .. topic:: **Different algorithms for the same problem**
 
     Different algorithms can be used to solve the same mathematical
-    problem. For instance the `Lasso` object in the `scikit-learn`
+    problem. For instance the ``Lasso`` object in scikit-learn
     solves the lasso regression problem using a
     `coordinate decent <http://en.wikipedia.org/wiki/Coordinate_descent>`_ method,
-    that is efficient on large datasets. However, the `scikit-learn` also
-    provides the :class:`LassoLars` object using the *LARS* which is very
-    efficient for problems in which the weight vector estimated is very
-    sparse, (i.e. problems with very few observations).
+    that is efficient on large datasets. However, scikit-learn also
+    provides the :class:`LassoLars` object using the *LARS* algorthm,
+    which is very efficient for problems in which the weight vector estimated
+    is very sparse (i.e. problems with very few observations).
 
 .. _clf_tut:
 
@@ -387,11 +387,11 @@ This is known as :class:`LogisticRegression`.
 
 .. topic:: Shrinkage and sparsity with logistic regression
 
-   The `C` parameter controls the amount of regularization in the
-   :class:`LogisticRegression` object: a large value for `C` results in
+   The ``C`` parameter controls the amount of regularization in the
+   :class:`LogisticRegression` object: a large value for ``C`` results in
    less regularization.
-   `penalty="l2"` gives :ref:`shrinkage` (i.e. non-sparse coefficients), while
-   `penalty="l1"` gives :ref:`sparsity`.
+   ``penalty="l2"`` gives :ref:`shrinkage` (i.e. non-sparse coefficients), while
+   ``penalty="l1"`` gives :ref:`sparsity`.
 
 .. topic:: **Exercise**
    :class: green
@@ -415,10 +415,10 @@ Linear SVMs
 
 :ref:`svm` belong to the discriminant model family: they try to find a combination of
 samples to build a plane maximizing the margin between the two classes.
-Regularization is set by the `C` parameter: a small value for `C` means the margin
+Regularization is set by the ``C`` parameter: a small value for ``C`` means the margin
 is calculated using many or all of the observations around the separating line
 (more regularization);
-a large value for `C` means the margin is calculated on observations close to
+a large value for ``C`` means the margin is calculated on observations close to
 the separating line (less regularization).
 
 .. currentmodule :: sklearn.svm
@@ -545,7 +545,7 @@ creating a decision energy by positioning *kernels* on observations:
 .. topic:: **Interactive example**
 
    See the :ref:`SVM GUI <example_applications_svm_gui.py>` to download
-   `svm_gui.py`; add data points of both classes with right and left button,
+   ``svm_gui.py``; add data points of both classes with right and left button,
    fit the model and change parameters and data.
 
 .. image:: ../../auto_examples/datasets/images/plot_iris_dataset_1.png
@@ -563,12 +563,10 @@ creating a decision energy by positioning *kernels* on observations:
    **Warning**: the classes are ordered, do not leave out the last 10%,
    you would be testing on only one class.
 
-   **Hint**: You can use the `decision_function` method on a grid to get
+   **Hint**: You can use the ``decision_function`` method on a grid to get
    intuitions.
 
    .. literalinclude:: ../../auto_examples/exercises/plot_iris_exercise.py
        :lines: 15-22
 
    Solution: :download:`../../auto_examples/exercises/plot_iris_exercise.py`
-
-

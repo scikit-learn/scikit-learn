@@ -127,7 +127,7 @@ One-class SVM versus elliptic envelop
 --------------------------------------
 
 Strictly-speaking, the One-class SVM is not an outlier-detection method,
-but a novelty-detection method: it's training set should not be
+but a novelty-detection method: its training set should not be
 contaminated by outliers as it may fit them. That said, outlier detection
 in high-dimension, or without any assumptions on the distribution of the
 inlying data is very challenging, and a One-class SVM gives useful

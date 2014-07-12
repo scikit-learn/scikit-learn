@@ -7,6 +7,7 @@ import warnings
 
 from sklearn import datasets
 from sklearn import svm
+from sklearn import ensemble
 
 from sklearn.preprocessing import LabelBinarizer, MultiLabelBinarizer
 from sklearn.datasets import make_multilabel_classification
@@ -464,6 +465,31 @@ def test_roc_returns_consistency():
     assert_array_almost_equal(tpr, tpr_correct, decimal=2)
     assert_equal(fpr.shape, tpr.shape)
     assert_equal(fpr.shape, thresholds.shape)
+
+
+def test_roc_nonrepeating_thresholds():
+    """Test to ensure that we don't return spurious repeating thresholds.
+
+    Duplicated thresholds can arise due to machine precision issues.
+    """
+    dataset = datasets.load_digits()
+    X = dataset['data']
+    y = dataset['target']
+
+    # This random forest classifier can only return probabilities
+    # significant to two decimal places
+    clf = ensemble.RandomForestClassifier(n_estimators=100, random_state=0)
+
+    # How well can the classifier predict whether a digit is less than 5?
+    # This task contributes floating point roundoff errors to the probabilities
+    train, test = slice(None, None, 2), slice(1, None, 2)
+    probas_pred = clf.fit(X[train], y[train]).predict_proba(X[test])
+    y_score = probas_pred[:, :5].sum(axis=1)  # roundoff errors begin here
+    y_true = [yy < 5 for yy in y[test]]
+
+    # Check for repeating values in the thresholds
+    fpr, tpr, thresholds = roc_curve(y_true, y_score)
+    assert_equal(thresholds.size, np.unique(np.round(thresholds, 2)).size)
 
 
 def test_roc_curve_multi():
@@ -1071,12 +1097,12 @@ def test_multilabel_classification_report():
     expected_report = """\
              precision    recall  f1-score   support
 
-          0       0.39      0.73      0.51        15
-          1       0.57      0.75      0.65        28
-          2       0.33      0.11      0.17        18
-          3       0.44      0.50      0.47        24
+          0       0.50      0.67      0.57        24
+          1       0.51      0.74      0.61        27
+          2       0.29      0.08      0.12        26
+          3       0.52      0.56      0.54        27
 
-avg / total       0.45      0.54      0.47        85
+avg / total       0.45      0.51      0.46       104
 """
 
     lb = MultiLabelBinarizer()
@@ -2548,7 +2574,6 @@ def test_averaging_multilabel_all_ones():
 
 @ignore_warnings
 def check_sample_weight_invariance(name, metric, y1, y2):
-
     rng = np.random.RandomState(0)
     sample_weight = rng.randint(1, 10, size=len(y1))
 
@@ -2613,6 +2638,8 @@ def check_sample_weight_invariance(name, metric, y1, y2):
 
 
 def test_sample_weight_invariance():
+    random_state = check_random_state(0)
+
     # binary output
     y1, y2, _ = make_prediction(binary=True)
     for name in ALL_METRICS:
@@ -2633,36 +2660,45 @@ def test_sample_weight_invariance():
 
 
     # multilabel sequence
-    _, ya = make_multilabel_classification(
-        n_features=1, n_classes=3,
-        random_state=0, n_samples=10)
-    _, yb = make_multilabel_classification(
-        n_features=1, n_classes=3,
-        random_state=1, n_samples=10)
-    y1 = ya + yb
-    y2 = ya + ya
+    y_true = 2 * [(1, 2, ), (1, ), (0, ), (0, 1), (1, 2)]
+    y_pred = 2 * [(0, 2, ), (2, ), (0, ), (2, ), (1,)]
+    y_score = random_state.randn(10, 3)
+
 
     for name in MULTILABELS_METRICS:
         if name in METRICS_WITHOUT_SAMPLE_WEIGHT:
             continue
         metric = ALL_METRICS[name]
-        yield (check_sample_weight_invariance, name, metric, y1, y2)
+
+        if name in THRESHOLDED_METRICS:
+            yield (check_sample_weight_invariance, name, metric, y_true,
+                   y_score)
+        else:
+            yield (check_sample_weight_invariance, name, metric, y_true,
+                   y_pred)
 
     # multilabel indicator
     _, ya = make_multilabel_classification(
-        n_features=1, n_classes=6,
-        random_state=0, n_samples=10,
-        return_indicator=True)
+        n_features=1, n_classes=20,
+        random_state=0, n_samples=100,
+        return_indicator=True, allow_unlabeled=False)
     _, yb = make_multilabel_classification(
-        n_features=1, n_classes=6,
-        random_state=1, n_samples=10,
-        return_indicator=True)
-    y1 = np.vstack([ya, yb])
-    y2 = np.vstack([ya, ya])
+        n_features=1, n_classes=20,
+        random_state=1, n_samples=100,
+        return_indicator=True, allow_unlabeled=False)
+    y_true = np.vstack([ya, yb])
+    y_pred = np.vstack([ya, ya])
+    y_score = random_state.randint(1, 4, size=y_true.shape)
+
     for name in (MULTILABELS_METRICS + THRESHOLDED_MULTILABEL_METRICS +
                  MULTIOUTPUT_METRICS):
         if name in METRICS_WITHOUT_SAMPLE_WEIGHT:
             continue
 
         metric = ALL_METRICS[name]
-        yield (check_sample_weight_invariance, name, metric, y1, y2)
+        if name in THRESHOLDED_METRICS:
+            yield (check_sample_weight_invariance, name, metric, y_true,
+                   y_score)
+        else:
+            yield (check_sample_weight_invariance, name, metric, y_true,
+                   y_pred)

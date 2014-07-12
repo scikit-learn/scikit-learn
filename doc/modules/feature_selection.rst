@@ -51,9 +51,9 @@ Univariate feature selection
 Univariate feature selection works by selecting the best features based on
 univariate statistical tests. It can be seen as a preprocessing step
 to an estimator. Scikit-learn exposes feature selection routines
-as objects that implement the `transform` method:
+as objects that implement the ``transform`` method:
 
- * :class:`SelectKBest` removes all but the `k` highest scoring features
+ * :class:`SelectKBest` removes all but the :math:`k` highest scoring features
 
  * :class:`SelectPercentile` removes all but a user-specified highest scoring
    percentage of features
@@ -140,7 +140,7 @@ Selecting non-zero coefficients
 :ref:`Linear models <linear_model>` penalized with the L1 norm have
 sparse solutions: many of their estimated coefficients are zero. When the goal
 is to reduce the dimensionality of the data to use with another classifier,
-they expose a `transform` method to select the non-zero coefficient. In
+they expose a ``transform`` method to select the non-zero coefficient. In
 particular, sparse estimators useful for this purpose are the
 :class:`linear_model.Lasso` for regression, and
 of :class:`linear_model.LogisticRegression` and :class:`svm.LinearSVC`
@@ -188,7 +188,7 @@ alpha parameter, the fewer features selected.
    (:class:`LassoLarsIC`) tends, on the opposite, to set high values of
    alpha.
 
-   **Reference** Richard G. Baraniuk `Compressive Sensing`, IEEE Signal
+   **Reference** Richard G. Baraniuk "Compressive Sensing", IEEE Signal
    Processing Magazine [120] July 2007
    http://dsp.rice.edu/files/cs/baraniukCSlecture07.pdf
 

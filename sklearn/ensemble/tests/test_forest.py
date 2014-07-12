@@ -19,6 +19,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_less, assert_greater
+from sklearn.utils.testing import assert_greater_equal
 
 from sklearn import datasets
 from sklearn.decomposition import TruncatedSVD
@@ -216,6 +217,7 @@ def test_importances():
     for name in FOREST_CLASSIFIERS:
         yield check_importance, name, X, y
 
+
 def check_oob_score(name, X, y, n_estimators=20):
     """Check that oob prediction is a good estimation of the generalization
        error."""
@@ -231,6 +233,7 @@ def check_oob_score(name, X, y, n_estimators=20):
         assert_greater(test_score, est.oob_score_)
         assert_greater(est.oob_score_, .8)
 
+
 def test_oob_score():
     yield check_oob_score, "RandomForestClassifier", iris.data, iris.target
     yield (check_oob_score, "RandomForestRegressor", boston.data,
@@ -239,6 +242,7 @@ def test_oob_score():
     # non-contiguous targets in classification
     yield (check_oob_score, "RandomForestClassifier", iris.data,
            iris.target * 2 + 1)
+
 
 def check_gridsearch(name):
     forest = FOREST_CLASSIFIERS[name]()
@@ -523,6 +527,70 @@ def test_max_leaf_nodes_max_depth():
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     for name in FOREST_ESTIMATORS:
         yield check_max_leaf_nodes_max_depth, name, X, y
+
+
+def check_min_samples_leaf(name, X, y):
+    """Test if leaves contain more than leaf_count training examples"""
+    ForestEstimator = FOREST_ESTIMATORS[name]
+
+    # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
+    # by setting max_leaf_nodes
+    for max_leaf_nodes in (None, 1000):
+        est = ForestEstimator(min_samples_leaf=5,
+                              max_leaf_nodes=max_leaf_nodes,
+                              random_state=0)
+        est.fit(X, y)
+        out = est.estimators_[0].tree_.apply(X)
+        node_counts = np.bincount(out)
+        # drop inner nodes
+        leaf_count = node_counts[node_counts != 0]
+        assert_greater(np.min(leaf_count), 4,
+                       "Failed with {0}".format(name))
+
+
+def test_min_samples_leaf():
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    X = X.astype(np.float32)
+    for name in FOREST_ESTIMATORS:
+        yield check_min_samples_leaf, name, X, y
+
+
+def check_min_weight_fraction_leaf(name, X, y):
+    """Test if leaves contain at least min_weight_fraction_leaf of the
+    training set"""
+    ForestEstimator = FOREST_ESTIMATORS[name]
+    rng = np.random.RandomState(0)
+    weights = rng.rand(X.shape[0])
+    total_weight = np.sum(weights)
+
+    # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
+    # by setting max_leaf_nodes
+    for max_leaf_nodes in (None, 1000):
+        for frac in np.linspace(0, 0.5, 6):
+            est = ForestEstimator(min_weight_fraction_leaf=frac,
+                                  max_leaf_nodes=max_leaf_nodes,
+                                  random_state=0)
+            if isinstance(est, (RandomForestClassifier,
+                                RandomForestRegressor)):
+                est.bootstrap = False
+            est.fit(X, y, sample_weight=weights)
+            out = est.estimators_[0].tree_.apply(X)
+            node_weights = np.bincount(out, weights=weights)
+            # drop inner nodes
+            leaf_weights = node_weights[node_weights != 0]
+            assert_greater_equal(
+                np.min(leaf_weights),
+                total_weight * est.min_weight_fraction_leaf,
+                "Failed with {0} "
+                "min_weight_fraction_leaf={1}".format(
+                    name, est.min_weight_fraction_leaf))
+
+
+def test_min_weight_fraction_leaf():
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    X = X.astype(np.float32)
+    for name in FOREST_ESTIMATORS:
+        yield check_min_weight_fraction_leaf, name, X, y
 
 
 if __name__ == "__main__":

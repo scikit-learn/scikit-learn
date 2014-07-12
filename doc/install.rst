@@ -239,9 +239,9 @@ Arch Linux
 ----------
 
 Arch Linux's package is provided through the `official repositories
-<https://www.archlinux.org/packages/?q=scikit-learn>`_ as `python-scikit-learn`
-for Python 3 and `python2-scikit-learn` for Python 2. It can be installed
-by typing the following command:
+<https://www.archlinux.org/packages/?q=scikit-learn>`_ as
+``python-scikit-learn`` for Python 3 and ``python2-scikit-learn`` for Python 2.
+It can be installed by typing the following command:
 
 .. code-block:: none
 
@@ -266,9 +266,9 @@ scikit-learn is available via `pkgsrc-wip <http://pkgsrc-wip.sourceforge.net/>`_
 Fedora
 ------
 
-The Fedora package is called `python-scikit-learn` for the Python 2 version
-and `python3-scikit-learn` for the Python 3 version. Both versions can
-be installed using `yum`::
+The Fedora package is called ``python-scikit-learn`` for the Python 2 version
+and ``python3-scikit-learn`` for the Python 3 version. Both versions can
+be installed using ``yum``::
 
     $ sudo yum install python-scikit-learn
 
@@ -295,7 +295,13 @@ Testing requires having the `nose
 installation, the package can be tested by executing *from outside* the
 source directory::
 
-    nosetests sklearn --exe
+   $ nosetests -v sklearn
+
+Under Windows, it is recommended to use the following command (adjust the path
+to the ``python.exe`` program) as using the ``nosetests.exe`` program can badly
+interact with tests that use ``multiprocessing``::
+
+   C:\Python34\python.exe -c "import nose; nose.main()" -v sklearn
 
 This should give you a lot of output (and some warnings) but
 eventually should finish with a message similar to::
