@@ -36,13 +36,13 @@ def _intercept_dot(w, X, y):
     Parameters
     ----------
     w : ndarray, shape (n_features,) or (n_features + 1,)
-        Coefficient vector
+        Coefficient vector.
 
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
-        Training data
+        Training data.
 
     y : ndarray, shape (n_samples,)
-        Array of labels
+        Array of labels.
     """
     c = 0.
     if w.size == X.shape[1] + 1:
@@ -59,10 +59,10 @@ def _logistic_loss_and_grad(w, X, y, alpha, sample_weight=None):
     Parameters
     ----------
     w : ndarray, shape (n_features,) or (n_features + 1,)
-        Coefficient vector
+        Coefficient vector.
 
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
-        Training data
+        Training data.
 
     y : ndarray, shape (n_samples,)
         Array of labels.
@@ -110,10 +110,10 @@ def _logistic_loss(w, X, y, alpha, sample_weight=None):
     Parameters
     ----------
     w : ndarray, shape (n_features,) or (n_features + 1,)
-        Coefficient vector
+        Coefficient vector.
 
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
-        Training data
+        Training data.
 
     y : ndarray, shape (n_samples,)
         Array of labels.
@@ -146,10 +146,10 @@ def _logistic_loss_grad_hess(w, X, y, alpha, sample_weight=None):
     Parameters
     ----------
     w : ndarray, shape (n_features,) or (n_features + 1,)
-        Coefficient vector
+        Coefficient vector.
 
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
-        Training data
+        Training data.
 
     y : ndarray, shape (n_samples,)
         Array of labels.
@@ -227,7 +227,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              solver='liblinear', coef=None, copy=True,
                              class_weight=None):
     """Compute a Logistic Regression model for a list of regularization
-    parameters.
+    parameters using l2 regularization.
 
     This is an implementation that uses the result of the previous model
     to speed up computations along the set of solutions, making it faster
@@ -236,10 +236,10 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     Parameters
     ----------
     X : array-like or sparse matrix, shape (n_samples, n_features)
-        Input data
+        Input data.
 
     y : array-like, shape (n_samples,)
-        Input data, target values
+        Input data, target values.
 
     Cs : array-like or integer of shape (n_cs,)
         List of values for the regularization parameter or integer specifying
@@ -380,13 +380,13 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         Training data.
 
     y : array-like, shape (n_samples,) or (n_samples, n_targets)
-        Target labels
+        Target labels.
 
     train : list of indices
-        The indices of the train set
+        The indices of the train set.
 
     test : list of indices
-        The indices of the test set
+        The indices of the test set.
 
     pos_class: int, None
         The class with respect to which we perform a one-vs-all fit.
@@ -419,7 +419,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         are assumed to have weight one.
 
     verbose : int
-        Amount of verbosity
+        Amount of verbosity.
 
     method : {'lbfgs', 'newton-cg', 'liblinear'}
         Decides which solver to use.
@@ -516,7 +516,7 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
         Note! the synthetic feature weight is subject to l1/l2 regularization
         as all other features.
         To lessen the effect of regularization on synthetic feature weight
-        (and therefore on the intercept) intercept_scaling has to be increased
+        (and therefore on the intercept) intercept_scaling has to be increased.
 
     class_weight : {dict, 'auto'}, optional
         Over-/undersamples the samples of each class according to the given

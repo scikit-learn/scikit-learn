@@ -663,8 +663,9 @@ Similarly, L1 regularized logistic regression solves the following optimization 
 
 .. math:: \underset{w, c}{min\,} \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
 
-The solvers implemented for Logistic Regression are liblinear (which is a
-wrapper around the C++ library, LIBLINEAR), newton-cg and lbfgs.
+The solvers implemented in the class :class:`LogisticRegression`
+are "liblinear" (which is a wrapper around the C++ library,
+LIBLINEAR), "newton-cg" and "lbfgs".
 
 The lbfgs and newton-cg solvers only support L2 penalization and are found
 to converge faster for some high dimensional data. L1 penalization yields
