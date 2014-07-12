@@ -212,12 +212,13 @@ be found in the `Additional plugins <http://code.google.com/p/pythonxy/wiki/Addi
 page.
 
 
-Enthought Python distribution
+Canopy and Anaconda
 -----------------------------
 
-The `Enthought Python Distribution
-<http://www.enthought.com/products/epd.php>`_ already ships a recent
-version.
+`Canopy
+<http://www.enthought.com/products/canopy>`_ and `Anaconda
+<https://store.continuum.io/cshop/anaconda/>`_ ships a recent
+version, in addition to a large set of scientific python library.
 
 
 MacPorts
