@@ -612,7 +612,6 @@ class SupervisedIntegerMixin(object):
                               DataConversionWarning, stacklevel=2)
 
             self.outputs_2d_ = False
-            # XXX why is this neccesary? revise for sparse
             y = y.reshape((-1, 1))
         else:
             self.outputs_2d_ = True
@@ -620,7 +619,6 @@ class SupervisedIntegerMixin(object):
         self.sparse_target_input_ = sp.issparse(y)
 
         if not sp.issparse(y):
-            # XXX current
             self.classes_ = []
             self._y = np.empty(y.shape, dtype=np.int)
             for k in range(self._y.shape[1]):
@@ -631,7 +629,6 @@ class SupervisedIntegerMixin(object):
                 self.classes_ = self.classes_[0]
                 self._y = self._y.ravel()
         else:
-            # XXX sparse support
             y = sp.csc_matrix(y)
 
             data = np.array([])
@@ -650,11 +647,8 @@ class SupervisedIntegerMixin(object):
 
             self._y = _y
 
-            # XXX this is included only until predict is revised for sparse support
-            #self._y = _y.toarray()
-
             if not self.outputs_2d_:
-                # XXX include sparse support here
+                # XXX include sparse support here, write a test
                 self.classes_ = self.classes_[0]
                 self._y = self._y.ravel()
 
