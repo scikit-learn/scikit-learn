@@ -252,6 +252,11 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         if y.ndim == 1:
             y = y[:, None]
 
+        n_samples, _ = X.shape
+        if n_samples != y.shape[0]:
+            raise ValueError("Number of samples of X (%d) and y (%d) "
+                             "do not match." % (n_samples, y.shape[0]))
+
         for self.n_trials_ in range(1, self.max_trials + 1):
 
             # choose random sample set
