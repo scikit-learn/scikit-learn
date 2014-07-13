@@ -143,23 +143,8 @@ def fetch_species_distributions(data_home=None,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    Notes
-    ------
-
-    This dataset represents the geographic distribution of species.
-    The dataset is provided by Phillips et. al. (2006).
-
-    The two species are:
-
-    - `"Bradypus variegatus"
-      <http://www.iucnredlist.org/apps/redlist/details/3038/0>`_ ,
-      the Brown-throated Sloth.
-
-    - `"Microryzomys minutus"
-      <http://www.iucnredlist.org/apps/redlist/details/13408/0>`_ ,
-      also known as the Forest Small Rice Rat, a rodent that lives in Peru,
-      Colombia, Ecuador, Peru, and Venezuela.
-
+    Returns
+    --------
     The data is returned as a Bunch object with the following attributes:
 
     coverages : array, shape = [14, 1592, 1212]
@@ -185,6 +170,23 @@ def fetch_species_distributions(data_home=None,
 
     grid_size : float
         The spacing between points of the grid, in degrees
+
+    Notes
+    ------
+
+    This dataset represents the geographic distribution of species.
+    The dataset is provided by Phillips et. al. (2006).
+
+    The two species are:
+
+    - `"Bradypus variegatus"
+      <http://www.iucnredlist.org/apps/redlist/details/3038/0>`_ ,
+      the Brown-throated Sloth.
+
+    - `"Microryzomys minutus"
+      <http://www.iucnredlist.org/apps/redlist/details/13408/0>`_ ,
+      also known as the Forest Small Rice Rat, a rodent that lives in Peru,
+      Colombia, Ecuador, Peru, and Venezuela.
 
     References
     ----------
