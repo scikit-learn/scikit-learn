@@ -7,7 +7,9 @@ Locality Sensitive Hashing Forest for Approximate Nearest Neighbor Search
 import numpy as np
 from ..base import BaseEstimator
 from ..utils.validation import safe_asarray
-from ..feature_extraction.lshashing import RandomProjections
+from ..utils import check_random_state
+
+from ..random_projection import GaussianRandomProjection
 
 __all__ = ["LSHForest"]
 
@@ -106,7 +108,7 @@ class LSHForest(BaseEstimator):
     Attributes
     ----------
 
-    `hash_functions`: list of arrays
+    `hash_functions_`: list of arrays
         Randomly generated LS hash function g(p,x) for each tree.
 
 
@@ -155,26 +157,53 @@ class LSHForest(BaseEstimator):
         self.n_neighbors = n_neighbors
         self.lower_bound = lower_bound
 
-    def _select_hashing_algorithm(self, n_dim, hash_size):
-        """ Selectes the LSH algorithm """
-        if n_dim is None or hash_size is None:
-            raise ValueError("n_dim or hash_size cannot be None.")
+    def _generate_hash_function(self):
+        """
+        Fits a `GaussianRandomProjections` with `n_components=hash_size
+        and n_features=n_dim.
+        """
+        random_state = check_random_state(self.random_state)
+        grp = GaussianRandomProjection(n_components=self.max_label_length,
+                                       random_state=random_state.randint(0,
+                                                                         10))
+        X = np.zeros((2, self._n_dim), dtype=float)
+        grp.fit(X)
+        return grp
 
-        if self.hashing_algorithm == 'random_projections':
-            return RandomProjections(n_dim=n_dim,
-                                     hash_size=hash_size,
-                                     random_state=self.random_state)
-        else:
-            raise ValueError("Unknown hashing algorithm: %s"
-                             % (self.hashing_algorithm))
+    def _do_hash(self, input_array=None):
+        """
+        Does hashing on an array of data points.
+        This creates a binary hash by getting the dot product of
+        input_point and hash_function then transforming the projection
+        into a binary string array based on the sign(positive/negative)
+        of the projection.
+
+        Parameters
+        ----------
+
+        input_array: array_like, shape (n_samples, n_features)
+            A matrix of dimensions (n_samples, n_features), which is being
+            hashed.
+        """
+        if input_array is None:
+            raise ValueError("input_array cannot be None.")
+
+        grp = self._generate_hash_function()
+        res = grp.transform(input_array)
+
+        bin_hashes = np.empty(res.shape[0],
+                              dtype='|S'+str(self.max_label_length))
+        for i in range(res.shape[0]):
+            bin_hashes[i] = "".join(map(str, np.array(res[i] > 0, dtype=int)))
+
+        return bin_hashes, grp.components_
 
     def _create_tree(self):
         """
         Builds a single tree (in this case creates a sorted array of
         binary hashes).
         """
-        binary_hashes, hash_function = self._hash_generator.do_hash(
-            self._input_array)
+        binary_hashes, hash_function = self._do_hash(self._input_array)
 
         return (np.argsort(binary_hashes),
                 np.sort(binary_hashes), hash_function)
@@ -198,10 +227,7 @@ class LSHForest(BaseEstimator):
             raise ValueError("X cannot be None")
 
         self._input_array = safe_asarray(X)
-        n_dim = self._input_array.shape[1]
-
-        self._hash_generator = self._select_hashing_algorithm(
-            n_dim, self.max_label_length)
+        self._n_dim = self._input_array.shape[1]
 
         # Creates a g(p,x) for each tree
         self.hash_functions_ = []
