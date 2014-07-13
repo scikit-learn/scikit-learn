@@ -145,7 +145,8 @@ def csc_mean_variance_axis0(X):
     cdef double diff
 
     # means[j] contains the mean of feature j
-    cdef np.ndarray[DOUBLE, ndim=1] means = np.zeros(n_features, dtype=X.dtype)
+    cdef np.ndarray[DOUBLE, ndim=1] means = np.zeros(n_features,
+                                                     dtype=np.float64)
 
     # variances[j] contains the variance of feature j
     cdef np.ndarray[DOUBLE, ndim=1] variances = np.zeros_like(means)
