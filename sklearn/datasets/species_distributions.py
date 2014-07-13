@@ -187,7 +187,7 @@ def fetch_species_distributions(data_home=None,
       <http://www.iucnredlist.org/apps/redlist/details/13408/0>`_ ,
       also known as the Forest Small Rice Rat, a rodent that lives in Peru,
       Colombia, Ecuador, Peru, and Venezuela.
-    
+
     References
     ----------
 

@@ -67,17 +67,17 @@ def fetch_covtype(data_home=None, download_if_missing=True,
 
     Returns
     -------
-    The data is returned as a Bunch object with the following attributes:
+    dataset : dict-like object with the following attributes:
 
-    data : numpy array of shape (581012, 54)
+    dataset.data : numpy array of shape (581012, 54)
         Each row corresponds to the 54 features in the dataset.
-        
-    target : numpy array of shape (581012,)
+
+    dataset.target : numpy array of shape (581012,)
         Each value corresponds to one of the 7 forest covertypes with values
         ranging between 1 to 7.
 
-    DESCR : string
-        Description of the Forest Covertype Dataset.
+    dataset.DESCR : string
+        Description of the forest covertype dataset.
 
     """
 
