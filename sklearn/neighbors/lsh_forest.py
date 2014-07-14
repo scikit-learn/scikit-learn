@@ -8,9 +8,9 @@ import numpy as np
 import itertools
 from ..base import BaseEstimator
 from ..utils.validation import safe_asarray
-from sklearn.utils import check_random_state
+from ..utils import check_random_state
 
-from sklearn.random_projection import GaussianRandomProjection
+from ..random_projection import GaussianRandomProjection
 
 __all__ = ["LSHForest"]
 
@@ -37,7 +37,7 @@ def _find_longest_prefix_match(bit_string_array, query, hash_size,
     hi = hash_size
     lo = 0
 
-    if _find_matching_indices(bit_string_array, query, left_masks[hi-1],
+    if _find_matching_indices(bit_string_array, query, left_masks[hi],
                               right_masks[hi]).shape[0] > 0:
         return hi
 
@@ -105,7 +105,7 @@ class LSHForest(BaseEstimator):
         lowerest hash length to be searched when candidate selection is
         performed for nearest neighbors.
 
-    random_state: float, optional(default = 0)
+    random_state: float, optional(default = 1)
         A random value to initialize random number generator.
 
     Attributes
@@ -134,7 +134,7 @@ class LSHForest(BaseEstimator):
       >>> lshf = LSHForest()
       >>> lshf.fit(X)
       LSHForest(c=50, hashing_algorithm='random_projections', lower_bound=4,
-           max_label_length=32, n_neighbors=1, n_trees=10, seed=None)
+           max_label_length=32, n_neighbors=1, n_trees=10, random_state=None)
 
       >>> lshf.kneighbors(X[:5], n_neighbors=3, return_distance=True)
       (array([[0, 1, 2],
@@ -188,9 +188,6 @@ class LSHForest(BaseEstimator):
             A matrix of dimensions (n_samples, n_features), which is being
             hashed.
         """
-        if input_array is None:
-            raise ValueError("input_array cannot be None.")
-
         grp = self._generate_hash_function()
         res = np.array(grp.transform(input_array) > 0, dtype=int)
 
@@ -288,10 +285,6 @@ class LSHForest(BaseEstimator):
         returns self.m number of neighbors and the distances
         for a given query.
         """
-        if query is None:
-            raise ValueError("query cannot be None.")
-        query = np.array(query)
-
         bin_queries = []
 
         # descend phase
@@ -345,6 +338,9 @@ class LSHForest(BaseEstimator):
         return_distance: boolean, optional (default = False)
             Returns the distances of neighbors if set to True.
         """
+        if X is None:
+            raise ValueError("X cannot be None.")
+
         if n_neighbors is not None:
             self.n_neighbors = n_neighbors
         X = safe_asarray(X)
@@ -362,7 +358,11 @@ class LSHForest(BaseEstimator):
                 neighs, dists = self._query(X[i], self.n_neighbors)
                 neighbors.append(neighs)
                 distances.append(dists)
-            return np.array(neighbors), np.array(distances)
+
+            if return_distance:
+                return np.array(neighbors), np.array(distances)
+            else:
+                return np.array(neighbors)
 
     def insert(self, item):
         """
@@ -374,6 +374,10 @@ class LSHForest(BaseEstimator):
         item: array_like, shape (n_features, )
             New data point to be inserted into the LSH Forest.
         """
+        if not hasattr(self, 'hash_functions_'):
+            raise ValueError("estimator should be fitted before"
+                             " inserting.")
+
         item = safe_asarray(item)
 
         if item.ndim != 1:
@@ -383,6 +387,11 @@ class LSHForest(BaseEstimator):
                              " fitted array does not match.")
 
         input_array_shape = self._input_array.shape[0]
+        trees = np.empty((self.n_trees, input_array_shape + 1),
+                         dtype=int)
+        original_incides = np.empty((self.n_trees,
+                                     input_array_shape + 1),
+                                    dtype=int)
         for i in range(self.n_trees):
             projections = np.array(np.dot(self.hash_functions_[i],
                                           item) > 0, dtype=int)
@@ -392,10 +401,14 @@ class LSHForest(BaseEstimator):
             # gets the position to be added in the tree.
             position = self._trees[i].searchsorted(bin_query)
             # adds the hashed value into the tree.
-            self._trees[i].itemset(position, bin_query)
+            trees[i] = np.insert(self._trees[i],
+                                 position, bin_query)
             # add the entry into the original_indices.
-            self._original_indices[i].itemset(position,
-                                              input_array_shape)
+            original_incides[i] = np.insert(self._original_indices[i],
+                                            position,
+                                            input_array_shape)
+        self._trees = trees
+        self._original_indices = original_incides
 
         # adds the entry into the input_array.
         self._input_array = np.row_stack((self._input_array, item))
