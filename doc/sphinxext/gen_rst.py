@@ -988,7 +988,8 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
             print(" - time elapsed : %.2g sec" % time_elapsed)
         else:
             figure_list = [f[len(image_dir):]
-                           for f in glob.glob(image_path.replace("%03d", '*'))]
+                           for f in glob.glob(image_path.replace("%03d",
+                                                '[0-9][0-9][0-9]'))]
         figure_list.sort()
 
         # generate thumb file
