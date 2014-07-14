@@ -840,6 +840,9 @@ def test_regressors_train():
 
 
 def check_regressors_train(name, Regressor, X, y):
+    if name == 'OrthogonalMatchingPursuitCV':
+        # FIXME: This test is unstable on Travis, see issue #3190.
+        check_skip_travis()
     rnd = np.random.RandomState(0)
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
@@ -883,6 +886,9 @@ def test_regressor_pickle():
 
 
 def check_regressors_pickle(name, Regressor, X, y):
+    if name == 'OrthogonalMatchingPursuitCV':
+        # FIXME: This test is unstable on Travis, see issue #3190.
+        check_skip_travis()
     rnd = np.random.RandomState(0)
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
