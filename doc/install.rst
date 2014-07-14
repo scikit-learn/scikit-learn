@@ -1,8 +1,8 @@
 .. _installation-instructions:
 
-=========================
-Installing `scikit-learn`
-=========================
+=======================
+Installing scikit-learn
+=======================
 
 There are different ways to get scikit-learn installed:
 
@@ -45,9 +45,9 @@ Windows
 First you need to install `numpy <http://numpy.scipy.org/>`_ and `scipy
 <http://www.scipy.org/>`_ from their own official installers.
 
-`Wheel packages (.whl files) for scikit-learn
- <https://pypi.python.org/pypi/scikit-learn/>`_ can be installed with the
-`pip <http://pip.readthedocs.org/en/latest/installing.html>`_ utility.
+Wheel packages (.whl files) for scikit-learn from `PyPI
+<https://pypi.python.org/pypi/scikit-learn/>`_ can be installed with the `pip
+<http://pip.readthedocs.org/en/latest/installing.html>`_ utility.
 Open a console and type the following to install or upgrade scikit-learn to the
 latest stable release::
 
@@ -57,7 +57,7 @@ If there are no binary packages matching your Python version you might
 to try to install scikit-learn and its dependencies from `Christoph Gohlke
 Unofficial Windows installers
 <http://www.lfd.uci.edu/~gohlke/pythonlibs/#scikit-learn>`_
-or from a :ref:`Python distribution <install_by_distribution>`_ instead.
+or from a :ref:`Python distribution <install_by_distribution>` instead.
 
 
 Mac OSX
@@ -71,7 +71,7 @@ Scikit-learn and its dependencies are all available as wheel packages for OSX::
 Linux
 -----
 
-At this time, scikit-learn does not provide official binary packages for Linux
+At this time scikit-learn does not provide official binary packages for Linux
 so you have to build from source.
 
 
@@ -134,12 +134,20 @@ Building scikit-learn with pip
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This is usually the fastest way to install or upgrade to the latest stable
-release.
+release::
 
-    pip install -U scikit-learn
+    pip install --user --install-option="--prefix=" -U scikit-learn
 
+The ``--user --install-option="--prefix="`` flags ask pip to install
+scikit-learn in the ``$HOME/.local`` folder to install Python packages without
+root permission. Those flags should make pip ignore any old version of
+scikit-learn previously installed on the system while benefitting from system
+packages for numpy and scipy. Those dependencies can be long and complex to
+build correctly from source.
 
-Note that you might need root privileges to run these commands.
+The ``--install-option="--prefix="`` flag in particular might be required if
+the system Python has ``distutils.cfg`` configuration with a predefined
+``prefix=`` entry.
 
 
 From source package
@@ -262,7 +270,6 @@ or::
     $ sudo yum install python3-scikit-learn
 
 
-
 Building on windows
 ===================
 
@@ -336,7 +343,7 @@ Finally you can build scikit-learn in the same ``cmd`` console::
     python setup.py install
 
 Replace ``v7.0`` by the ``v7.1`` in the above commands to do the same for
-Python 3.
+Python 3 instead of Python 2.
 
 Replace ``/x64`` by ``/x86``  to build for 32-bit Python instead of 64-bit
 Python.
@@ -345,7 +352,7 @@ Python.
 Building binary packages and installers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The `.whl` package and `.exe` installers can be built with::
+The ``.whl`` package and ``.exe`` installers can be built with::
 
     pip install wheel
     python setup.py bdist_wheel bdist_wininst -b doc/logos/scikit-learn-logo.bmp
@@ -391,13 +398,13 @@ Testing requires having the `nose
 installation, the package can be tested by executing *from outside* the
 source directory::
 
-   $ nosetests -v sklearn
+    $ nosetests -v sklearn
 
 Under Windows, it is recommended to use the following command (adjust the path
 to the ``python.exe`` program) as using the ``nosetests.exe`` program can badly
 interact with tests that use ``multiprocessing``::
 
-   C:\Python34\python.exe -c "import nose; nose.main()" -v sklearn
+    C:\Python34\python.exe -c "import nose; nose.main()" -v sklearn
 
 This should give you a lot of output (and some warnings) but
 eventually should finish with a message similar to::
