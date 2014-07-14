@@ -2620,9 +2620,9 @@ def check_sample_weight_invariance(name, metric, y1, y2):
                                    sample_weight=sample_weight_subset)
     weighted_score_zeroed = metric(y1, y2,
                                    sample_weight=sample_weight_zeroed)
-    assert_equal(
+    assert_almost_equal(
         weighted_score_subset, weighted_score_zeroed,
-        msg="Zeroing weights does not give the same result as "
+        err_msg="Zeroing weights does not give the same result as "
             "removing the corresponding samples (%f != %f) for %s" % (
                 weighted_score_zeroed, weighted_score_subset, name))
 
