@@ -332,10 +332,10 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
                                   linear_model.lars_path, X, y, method='lasso')
 
     with ignore_warnings():
-        _, lasso_coef2, _, _ = linear_model.lasso_path(X, y,
-                                                       alphas=lars_alphas,
-                                                       tol=1e-6,
-                                                       fit_intercept=False)
+        _, lasso_coef2, _ = linear_model.lasso_path(X, y,
+                                                    alphas=lars_alphas,
+                                                    tol=1e-6,
+                                                    fit_intercept=False)
 
         lasso_coef = np.zeros((w.shape[0], len(lars_alphas)))
         iter_models = enumerate(linear_model.lasso_path(X, y,

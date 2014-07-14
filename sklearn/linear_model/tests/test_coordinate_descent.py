@@ -8,6 +8,7 @@ import numpy as np
 from scipy import interpolate, sparse
 from copy import deepcopy
 
+from sklearn.datasets import load_boston
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
@@ -216,9 +217,9 @@ def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
     alphas_lars, _, coef_path_lars = lars_path(X, y, method='lasso')
     coef_path_cont_lars = interpolate.interp1d(alphas_lars[::-1],
                                                coef_path_lars[:, ::-1])
-    alphas_lasso2, coef_path_lasso2, _, _ = lasso_path(X, y, alphas=alphas,
-                                                       fit_intercept=False,
-                                                       return_models=False)
+    alphas_lasso2, coef_path_lasso2, _ = lasso_path(X, y, alphas=alphas,
+                                                    fit_intercept=False,
+                                                    return_models=False)
     coef_path_cont_lasso = interpolate.interp1d(alphas_lasso2[::-1],
                                                 coef_path_lasso2[:, ::-1])
 
@@ -490,7 +491,9 @@ def test_warm_start_convergence():
 
 
 def test_warm_start_convergence_with_regularizer_decrement():
-    X, y, _, _ = build_dataset(200, 200)
+    boston = load_boston()
+    X, y = boston.data, boston.target
+
     # Train a model to converge on a lightly regularized problem
     final_alpha = 1e-5
     low_reg_model = ElasticNet(alpha=final_alpha).fit(X, y)
@@ -498,7 +501,7 @@ def test_warm_start_convergence_with_regularizer_decrement():
     # Fitting a new model on more regularized version of the same problem.
     # Fitting with high regularization is easier so the it should
     # converge faster.
-    high_reg_model = ElasticNet(alpha=final_alpha * 100).fit(X, y)
+    high_reg_model = ElasticNet(alpha=final_alpha * 10).fit(X, y)
     assert_greater(low_reg_model.n_iter_, high_reg_model.n_iter_)
 
     # Fit the solution to the original, less regularized version of the

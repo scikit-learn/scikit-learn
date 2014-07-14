@@ -105,7 +105,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
 def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                precompute='auto', Xy=None, fit_intercept=None,
                normalize=None, copy_X=True, coef_init=None,
-               verbose=False, return_models=False,
+               verbose=False, return_models=False, return_n_iter=False,
                **params):
     """Compute Lasso path with coordinate descent
 
@@ -234,8 +234,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     >>> X = np.array([[1, 2, 3.1], [2.3, 5.4, 4.3]]).T
     >>> y = np.array([1, 2, 3.1])
     >>> # Use lasso_path to compute a coefficient path
-    >>> _, coef_path, _, _ = lasso_path(X, y, alphas=[5., 1., .5],
-    ...                                 fit_intercept=False)
+    >>> _, coef_path, _ = lasso_path(X, y, alphas=[5., 1., .5],
+    ...                               fit_intercept=False)
     >>> print(coef_path)
     [[ 0.          0.          0.46874778]
      [ 0.2159048   0.4425765   0.23689075]]
@@ -271,7 +271,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, fit_intercept=True,
               normalize=False, copy_X=True, coef_init=None,
-              verbose=False, return_models=False,
+              verbose=False, return_models=False, return_n_iter=False,
               **params):
     """Compute elastic net path with coordinate descent
 
@@ -354,6 +354,9 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     params : kwargs
         keyword arguments passed to the coordinate descent solver.
+
+    return_n_iter : bool
+        whether to return the number of iterations or not.
 
     Returns
     -------
@@ -531,8 +534,10 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     if return_models:
         return models
-    else:
+    elif return_n_iter:
         return alphas, coefs, dual_gaps, n_iters
+    else:
+        return alphas, coefs, dual_gaps
 
 
 ###############################################################################
@@ -721,7 +726,7 @@ class ElasticNet(LinearModel, RegressorMixin):
                           precompute=precompute, Xy=this_Xy,
                           fit_intercept=False, normalize=False, copy_X=True,
                           verbose=False, tol=self.tol, positive=self.positive,
-                          X_mean=X_mean, X_std=X_std,
+                          X_mean=X_mean, X_std=X_std, return_n_iter=True,
                           coef_init=coef_[k], max_iter=self.max_iter)
             coef_[k] = this_coef[:, 0]
             dual_gaps_[k] = this_dual_gap[0]
@@ -952,7 +957,7 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
     # Do the ordering and type casting here, as if it is done in the path,
     # X is copied and a reference is kept here
     X_train = atleast2d_or_csc(X_train, dtype=dtype, order=X_order)
-    alphas, coefs, _, _ = path(X_train, y_train, **path_params)
+    alphas, coefs, _ = path(X_train, y_train, **path_params)
     del X_train, y_train
 
     if y.ndim == 1:
