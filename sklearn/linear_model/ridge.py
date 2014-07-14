@@ -119,6 +119,13 @@ def ridge_path(X_train, Y_train, alphas, X_test=None, solver="eigen"):
     solver : str, {'eigen'}, (default 'eigen')
         The solver to use for ridge_path.
 
+    Returns
+    -------
+    coef or predictions : ndarray
+        shape = (n_penalties, n_features, n_targets) (coef) or
+                (n_penalties, n_samples, n_targets) (predictions)
+        If X_test is provided, predictions are returned, otherwise coef.
+
     Notes
     -----
     This solver does not fit the intercept.
