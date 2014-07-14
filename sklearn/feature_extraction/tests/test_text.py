@@ -868,6 +868,11 @@ def test_non_unique_vocab():
     assert_raises(ValueError, CountVectorizer, vocabulary=vocab)
 
 
+def test_hashingvectorizer_nan_in_docs():
+    hv = HashingVectorizer()
+    assert_raises(ValueError, hv.fit_transform, ['hello world', np.nan, 'hello hello'])
+
+
 def test_tfidfvectorizer_binary():
     # Non-regression test: TfidfVectorizer used to ignore its "binary" param.
     v = TfidfVectorizer(binary=True, use_idf=False, norm=None)
