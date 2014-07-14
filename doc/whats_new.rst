@@ -1,9 +1,40 @@
 .. currentmodule:: sklearn
 
+.. _changes_0_16:
+
+0.16
+====
+
+
+Changelog
+---------
+
+New features
+............
+
+
+   - Incremental fit for :class:`GaussianNB <naive_bayes.GaussianNB>`.
+
+
+Enhancements
+............
+
+
+Documentation improvements
+...........................
+
+
+Bug fixes
+.........
+
+API changes summary
+-------------------
+
+
 .. _changes_0_15:
 
 0.15
-=====
+====
 
 Highlights
 -----------
@@ -14,7 +45,6 @@ Highlights
      trees) that also benefit better from parallel computing.
 
    - Incremental fit to :class:`BernoulliRBM <neural_network.BernoulliRBM>`
-     :class:`GaussianNB <naive_bayes.GaussianNB>`
 
    - Added :class:`cluster.AgglomerativeClustering` for hierarchical
      agglomerative clustering with average linkage, complete linkage and

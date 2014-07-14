@@ -68,7 +68,7 @@ copyright = u('2010 - 2014, scikit-learn developers (BSD License)')
 # built documents.
 #
 # The short X.Y version.
-version = '0.15-git'
+version = '0.16-git'
 # The full version, including alpha/beta/rc tags.
 import sklearn
 release = sklearn.__version__
