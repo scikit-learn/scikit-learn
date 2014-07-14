@@ -3,27 +3,73 @@
 .. _changes_0_15:
 
 0.15
-=====
+====
+
+Highlights
+-----------
+
+   - Many speed and memory improvements all across the code
+
+   - Huge speed and memory improvements to random forests (and extra
+     trees) that also benefit better from parallel computing.
+
+   - Incremental fit to :class:`BernoulliRBM <neural_network.BernoulliRBM>`
+
+   - Added :class:`cluster.AgglomerativeClustering` for hierarchical
+     agglomerative clustering with average linkage, complete linkage and
+     ward strategies.
+
+   - Added :class:`linear_model.RANSACRegressor` for robust regression
+     models.
+
 
 Changelog
 ---------
-   - The ``img_to_graph`` and ``grid_tograph`` functions in
-     :mod:`sklearn.feature_extraction.image` now return ``np.ndarray``
-     instead of ``np.matrix`` when ``return_as=np.ndarray``.  See the
-     Notes section for more information on compatibility.
 
-   - The :ref:`Working With Text Data <text_data_tutorial>` tutorial
-     has now been worked in to the main documentation's tutorial section.
-     Includes exercises and skeletons for tutorial presentation.
-     Original tutorial created by several authors including
-     `Olivier Grisel`_, Lars Buitinck and many others.
-     Tutorial integration into the scikit-learn documentation
-     by `Jaques Grobler`_
+New features
+............
 
    - Added :class:`ensemble.BaggingClassifier` and
      :class:`ensemble.BaggingRegressor` meta-estimators for ensembling
      any kind of base estimator. See the :ref:`Bagging <bagging>` section of
      the user guide for details and examples. By `Gilles Louppe`_.
+
+   - New unsupervised feature selection algorithm
+     :class:`feature_selection.VarianceThreshold`, by `Lars Buitinck`_.
+
+   - Added :class:`linear_model.RANSACRegressor` meta-estimator for the robust
+     fitting of regression models. By Johannes Schönberger.
+
+   - Added :class:`cluster.AgglomerativeClustering` for hierarchical
+     agglomerative clustering with average linkage, complete linkage and
+     ward strategies, by  `Nelle Varoquaux`_ and `Gael Varoquaux`_.
+
+   - Shorthand constructors :func:`pipeline.make_pipeline` and
+     :func:`pipeline.make_union` were added by `Lars Buitinck`_.
+
+   - Shuffle option for :class:`cross_validation.StratifiedKFold`.
+     By `Jeffrey Blackburne`_.
+
+   - Incremental learning (``partial_fit``) for Gaussian Naive Bayes by
+     Imran Haque.
+
+   - Added ``partial_fit`` to :class:`BernoulliRBM
+     <neural_network.BernoulliRBM>`
+     By `Danny Sullivan`_.
+
+   - Added :func:`learning_curve <learning_curve.learning_curve>` utility to
+     chart performance with respect to training size. See
+     :ref:`example_plot_learning_curve.py`. By Alexander Fabisch.
+
+   - Add positive option in :class:`LassoCV <linear_model.LassoCV>` and
+     :class:`ElasticNetCV <linear_model.ElasticNetCV>`.
+     By Brian Wignall and `Alexandre Gramfort`_.
+
+   - Added :class:`linear_model.MultiTaskElasticNetCV` and
+     :class:`linear_model.MultiTaskLassoCV`. By `Manoj Kumar`_.
+
+Enhancements
+............
 
    - Add sparse input support to :class:`ensemble.AdaBoostClassifier` and
      :class:`ensemble.AdaBoostRegressor` meta-estimators.
@@ -47,6 +93,11 @@ Changelog
      to speed improvement of the tree, forest and gradient boosting tree
      modules. By `Arnaud Joly`_
 
+   - The ``img_to_graph`` and ``grid_tograph`` functions in
+     :mod:`sklearn.feature_extraction.image` now return ``np.ndarray``
+     instead of ``np.matrix`` when ``return_as=np.ndarray``.  See the
+     Notes section for more information on compatibility.
+
    - Changed the internal storage of decision trees to use a struct array.
      This fixed some small bugs, while improving code and providing a small
      speed gain. By `Joel Nothman`_.
@@ -65,13 +116,6 @@ Changelog
      a ``monitor`` fit argument to inspect the estimator during training, and
      refactoring of the verbose code. By `Peter Prettenhofer`_.
 
-   - Fixed bug in :class:`gradient_boosting.GradientBoostingRegressor` with
-     ``loss='huber'``: ``gamma`` might have not been initialized.
-
-   - Fixed feature importances as computed with a forest of randomized trees
-     when fit with ``sample_weight != None`` and/or with ``bootstrap=True``.
-     By `Gilles Louppe`_.
-
    - Faster :class:`sklearn.ensemble.ExtraTrees` by caching feature values.
      By `Arnaud Joly`_.
 
@@ -79,6 +123,10 @@ Changelog
      random forest, extra trees or gradient tree boosting (with depth based
      growing strategy) by avoiding trying to split on found constant features
      in the sample subset. By `Arnaud Joly`_.
+
+   - Add ``min_weight_fraction_leaf`` pre-pruning parameter to tree-based
+     methods: the minimum weighted fraction of the input samples required to be
+      at a leaf node. By `Noel Dawe`_.
 
    - Added :func:`metrics.pairwise_distances_argmin_min`, by Philippe Gervais.
 
@@ -90,9 +138,6 @@ Changelog
      In particular, they should take less memory with older NumPy versions
      (prior to 1.7.2).
 
-   - New unsupervised feature selection algorithm
-     :class:`feature_selection.VarianceThreshold`, by `Lars Buitinck`_.
-
    - Precision-recall and ROC examples now use train_test_split, and have more
      explanation of why these metrics are useful. By `Kyle Kastner`_
 
@@ -101,7 +146,7 @@ Changelog
      scale up gracefully to large datasets. By `Lars Buitinck`_.
 
    - Added svd_method option with default value to "randomized" to
-     :class:`decomposition.factor_analysis.FactorAnalysis` to save memory and
+     :class:`decomposition.FactorAnalysis` to save memory and
      significantly speedup computation by `Denis Engemann`_, and
      `Alexandre Gramfort`_.
 
@@ -118,16 +163,6 @@ Changelog
      `Lars Buitinck`_. In particular, the k-means algorithm no longer
      needs a temporary data structure the size of its input.
 
-   - Added :class:`linear_model.RANSACRegressor` meta-estimator for the robust
-     fitting of regression models. By Johannes Schönberger.
-
-   - Added :ref:`Computational Performance <computational_performance>`
-     documentation. Discussion and examples of prediction latency / throughput
-     and different factors that have influence over speed. Additional tips for
-     building faster models and choosing a relevant compromise between speed
-     and predictive power.
-     By `Eustache Diemert`_.
-
    - :class:`dummy.DummyClassifier` can now be used to predict a constant
      output value. By `Manoj Kumar`_.
 
@@ -135,49 +170,9 @@ Changelog
      to predict the mean, the median of the training set or a constant
      output value. By `Maheshakya Wijewardena`_.
 
-   - Fixed bug in :class:`decomposition.MiniBatchDictionaryLearning` :
-     ``partial_fit`` was not working properly.
-
    - Multi-label classification output in multilabel indicator format
      is now supported by :func:`metrics.roc_auc_score` and
      :func:`metrics.average_precision_score` by `Arnaud Joly`_.
-
-   - Fixed bug in :class:`linear_model.stochastic_gradient` :
-     ``l1_ratio`` was used as ``(1.0 - l1_ratio)`` .
-
-   - Fixed bug in :class:`multiclass.OneVsOneClassifier` with string
-     labels
-
-   - Shorthand constructors :func:`pipeline.make_pipeline` and
-     :func:`pipeline.make_union` were added by `Lars Buitinck`_.
-
-   - Added :func:`learning_curve <learning_curve.learning_curve>` utility to
-     chart performance with respect to training size. See
-     :ref:`example_plot_learning_curve.py`. By Alexander Fabisch.
-
-   - Add positive option in :class:`LassoCV <linear_model.LassoCV>` and
-     :class:`ElasticNetCV <linear_model.ElasticNetCV>`.
-     By Brian Wignall and `Alexandre Gramfort`_.
-
-   - Fixed a bug in :class:`LassoCV <linear_model.LassoCV>` and
-     :class:`ElasticNetCV <linear_model.ElasticNetCV>`: they would not
-     pre-compute the Gram matrix with ``precompute=True`` or
-     ``precompute="auto"`` and ``n_samples > n_features``. By `Manoj Kumar`_.
-
-   - Fixed a race condition in parallel processing with
-     ``pre_dispatch != "all"`` (for instance in ``cross_val_score``).
-     By `Olivier Grisel`_.
-
-   - Added :class:`linear_model.MultiTaskElasticNetCV` and
-     :class:`linear_model.MultiTaskLassoCV`. By `Manoj Kumar`_.
-
-   - Added :class:`cluster.AgglomerativeClustering` for hierarchical
-     agglomerative clustering with average linkage, complete linkage and
-     ward strategies, by  `Nelle Varoquaux`_ and `Gael Varoquaux`_.
-
-   - Fixed incorrect estimation of the degrees of freedom in
-     :func:`feature_selection.f_regression` when variates are not centered.
-     By `Virgile Fritsch`_.
 
    - Significant performance improvements (more than 100x speedup for
      large problems) in :class:`isotonic.IsotonicRegression` by
@@ -186,14 +181,6 @@ Changelog
    - Speed and memory usage improvements to the SGD algorithm for linear
      models: it now uses threads, not separate processes, when ``n_jobs>1``.
      By `Lars Buitinck`_.
-
-   - Added ``partial_fit`` to :class:`BernoulliRBM
-     <neural_network.BernoulliRBM>`
-     By `Danny Sullivan`_.
-
-   - Raise error in :class:`cluster.FeatureAgglomeration` and
-     :class:`cluster.WardAgglomeration` when no samples are given,
-     rather than returning meaningless clustering.
 
    - Grid search and cross validation allow NaNs in the input arrays so that
      preprocessors such as :class:`preprocessing.Imputer
@@ -220,9 +207,62 @@ Changelog
      :func:`metrics.r2_score`.
      By `Noel Dawe`_.
 
-   - Shuffle option for :class:`cross_validation.StratifiedKFold`.
-     By `Jeffrey Blackburne`_.
+   - Speed up of the sample generator
+     :func:`datasets.make_multilabel_classification`. By `Joel Nothman`_.
 
+Documentation improvements
+...........................
+
+   - The :ref:`Working With Text Data <text_data_tutorial>` tutorial
+     has now been worked in to the main documentation's tutorial section.
+     Includes exercises and skeletons for tutorial presentation.
+     Original tutorial created by several authors including
+     `Olivier Grisel`_, Lars Buitinck and many others.
+     Tutorial integration into the scikit-learn documentation
+     by `Jaques Grobler`_
+
+   - Added :ref:`Computational Performance <computational_performance>`
+     documentation. Discussion and examples of prediction latency / throughput
+     and different factors that have influence over speed. Additional tips for
+     building faster models and choosing a relevant compromise between speed
+     and predictive power.
+     By `Eustache Diemert`_.
+
+Bug fixes
+.........
+
+   - Fixed bug in :class:`decomposition.MiniBatchDictionaryLearning` :
+     ``partial_fit`` was not working properly.
+
+   - Fixed bug in :class:`linear_model.stochastic_gradient` :
+     ``l1_ratio`` was used as ``(1.0 - l1_ratio)`` .
+
+   - Fixed bug in :class:`multiclass.OneVsOneClassifier` with string
+     labels
+
+   - Fixed a bug in :class:`LassoCV <linear_model.LassoCV>` and
+     :class:`ElasticNetCV <linear_model.ElasticNetCV>`: they would not
+     pre-compute the Gram matrix with ``precompute=True`` or
+     ``precompute="auto"`` and ``n_samples > n_features``. By `Manoj Kumar`_.
+
+   - Fixed incorrect estimation of the degrees of freedom in
+     :func:`feature_selection.f_regression` when variates are not centered.
+     By `Virgile Fritsch`_.
+
+   - Fixed a race condition in parallel processing with
+     ``pre_dispatch != "all"`` (for instance in ``cross_val_score``).
+     By `Olivier Grisel`_.
+
+   - Raise error in :class:`cluster.FeatureAgglomeration` and
+     :class:`cluster.WardAgglomeration` when no samples are given,
+     rather than returning meaningless clustering.
+
+   - Fixed bug in :class:`gradient_boosting.GradientBoostingRegressor` with
+     ``loss='huber'``: ``gamma`` might have not been initialized.
+
+   - Fixed feature importances as computed with a forest of randomized trees
+     when fit with ``sample_weight != None`` and/or with ``bootstrap=True``.
+     By `Gilles Louppe`_.
 
 API changes summary
 -------------------
@@ -292,7 +332,7 @@ API changes summary
      one non constant features in the split. This bug fix will affect
      computational and generalization performance of those algorithms in the
      presence of constant features. To get back previous generalization
-     performance, you should modify the value of `max_features`.
+     performance, you should modify the value of ``max_features``.
      By `Arnaud Joly`_.
 
    - Fix wrong maximal number of features drawn (``max_features``) at each split
@@ -427,8 +467,8 @@ Changelog
    - A bug that caused :class:`ensemble.AdaBoostClassifier`'s to output
      incorrect probabilities has been fixed.
 
-   - Feature selectors now share a mixin providing consistent `transform`,
-     `inverse_transform` and `get_support` methods. By `Joel Nothman`_.
+   - Feature selectors now share a mixin providing consistent ``transform``,
+     ``inverse_transform`` and ``get_support`` methods. By `Joel Nothman`_.
 
    - A fitted :class:`grid_search.GridSearchCV` or
      :class:`grid_search.RandomizedSearchCV` can now generally be pickled.
@@ -527,8 +567,8 @@ API changes summary
 
    - The :func:`auc_score` was renamed :func:`roc_auc_score`.
 
-   - Testing scikit-learn with `sklearn.test()` is deprecated. Use
-     `nosetest sklearn` from the command line.
+   - Testing scikit-learn with ``sklearn.test()`` is deprecated. Use
+     ``nosetests sklearn`` from the command line.
 
    - Feature importances in :class:`tree.DecisionTreeClassifier`,
      :class:`tree.DecisionTreeRegressor` and all derived ensemble estimators
@@ -539,7 +579,7 @@ API changes summary
    - :class:`linear_model.lasso_path` and
      :class:`linear_model.enet_path` can return its results in the same
      format as that of :class:`linear_model.lars_path`. This is done by
-     setting the `return_models` parameter to `False`. By
+     setting the ``return_models`` parameter to ``False``. By
      `Jaques Grobler`_ and `Alexandre Gramfort`_
 
    - :class:`grid_search.IterGrid` was renamed to
@@ -867,8 +907,8 @@ Changelog
    - Fix of longstanding bug in :class:`naive_bayes.BernoulliNB` fixed by
      Shaun Jackman.
 
-   - Implement `predict_proba` in :class:`multiclass.OneVsRestClassifier`, by
-     Andrew Winterman.
+   - Implemented ``predict_proba`` in :class:`multiclass.OneVsRestClassifier`,
+     by Andrew Winterman.
 
    - Improve consistency in gradient boosting: estimators
      :class:`ensemble.GradientBoostingRegressor` and
@@ -1243,12 +1283,12 @@ API changes summary
 
    - Grid of alphas used for fitting :class:`linear_model.LassoCV` and
      :class:`linear_model.ElasticNetCV` is now stored
-     in the attribute `alphas_` rather than overriding the init parameter
-     `alphas`.
+     in the attribute ``alphas_`` rather than overriding the init parameter
+     ``alphas``.
 
    - Linear models when alpha is estimated by cross-validation store
-     the estimated value in the `alpha_` attribute rather than just
-     `alpha` or `best_alpha`.
+     the estimated value in the ``alpha_`` attribute rather than just
+     ``alpha`` or ``best_alpha``.
 
    - :class:`ensemble.GradientBoostingClassifier` now supports
      :meth:`ensemble.GradientBoostingClassifier.staged_predict_proba`, and
@@ -1367,10 +1407,10 @@ Other changes
 
    - Merged dense and sparse implementations of :ref:`sgd` module and
      exposed utility extension types for sequential
-     datasets `seq_dataset` and weight vectors `weight_vector`
+     datasets ``seq_dataset`` and weight vectors ``weight_vector``
      by `Peter Prettenhofer`_.
 
-   - Added `partial_fit` (support for online/minibatch learning) and
+   - Added ``partial_fit`` (support for online/minibatch learning) and
      warm_start to the :ref:`sgd` module by `Mathieu Blondel`_.
 
    - Dense and sparse implementations of :ref:`svm` classes and
@@ -1383,16 +1423,16 @@ Other changes
      and :func:`metrics.pairwise.pairwise_kernels` for parallel computation,
      by `Mathieu Blondel`_.
 
-   - :ref:`k_means` can now be run in parallel, using the `n_jobs` argument
+   - :ref:`k_means` can now be run in parallel, using the ``n_jobs`` argument
      to either :ref:`k_means` or :class:`KMeans`, by `Robert Layton`_.
 
    - Improved :ref:`cross_validation` and :ref:`grid_search` documentation
      and introduced the new :func:`cross_validation.train_test_split`
      helper function by `Olivier Grisel`_
 
-   - :class:`svm.SVC` members `coef_` and `intercept_` changed sign for consistency
-     with `decision_function`; for ``kernel==linear``, `coef_` was fixed
-     in the the one-vs-one case, by `Andreas Müller`_.
+   - :class:`svm.SVC` members ``coef_`` and ``intercept_`` changed sign for
+     consistency with ``decision_function``; for ``kernel==linear``,
+     ``coef_`` was fixed in the the one-vs-one case, by `Andreas Müller`_.
 
    - Performance improvements to efficient leave-one-out cross-validated
      Ridge regression, esp. for the ``n_samples > n_features`` case, in
@@ -1415,7 +1455,7 @@ API changes summary
    - :class:`covariance.EllipticEnvelop` is now deprecated - Please use :class:`covariance.EllipticEnvelope`
      instead.
 
-   - `NeighborsClassifier` and `NeighborsRegressor` are gone in the module
+   - ``NeighborsClassifier`` and ``NeighborsRegressor`` are gone in the module
      :ref:`neighbors`. Use the classes :class:`KNeighborsClassifier`,
      :class:`RadiusNeighborsClassifier`, :class:`KNeighborsRegressor`
      and/or :class:`RadiusNeighborsRegressor` instead.
@@ -1426,15 +1466,15 @@ API changes summary
      parameters must be passed to an object when initialising it and not through
      ``fit``. Now ``fit`` will only accept the data as an input parameter.
 
-   - methods `rvs` and `decode` in :class:`GMM` module are now deprecated.
-     `sample` and `score` or `predict` should be used instead.
+   - methods ``rvs`` and ``decode`` in :class:`GMM` module are now deprecated.
+     ``sample`` and ``score`` or ``predict`` should be used instead.
 
-   - attribute `_scores` and `_pvalues` in univariate feature selection
+   - attribute ``_scores`` and ``_pvalues`` in univariate feature selection
      objects are now deprecated.
-     `scores_` or `pvalues_` should be used instead.
+     ``scores_`` or ``pvalues_`` should be used instead.
 
    - In :class:`LogisticRegression`, :class:`LinearSVC`, :class:`SVC` and
-     :class:`NuSVC`, the `class_weight` parameter is now an initialization
+     :class:`NuSVC`, the ``class_weight`` parameter is now an initialization
      parameter, not a parameter to fit. This makes grid searches
      over this parameter possible.
 
@@ -1442,9 +1482,10 @@ API changes summary
      consistent with the Olivetti faces dataset. Use ``images`` and
      ``pairs`` attribute to access the natural images shapes instead.
 
-   - In :class:`svm.LinearSVC`, the meaning of the `multi_class` parameter changed.
-     Options now are 'ovr' and 'crammer_singer', with 'ovr' being the default.
-     This does not change the default behavior but hopefully is less confusing.
+   - In :class:`svm.LinearSVC`, the meaning of the ``multi_class`` parameter
+     changed.  Options now are ``'ovr'`` and ``'crammer_singer'``, with
+     ``'ovr'`` being the default.  This does not change the default behavior
+     but hopefully is less confusing.
 
    - Class :class:`feature_selection.text.Vectorizer` is deprecated and
      replaced by :class:`feature_selection.text.TfidfVectorizer`.
@@ -1456,7 +1497,7 @@ API changes summary
      :class:`feature_selection.text.CountVectorizer`, in particular the
      following parameters are now used:
 
-       - ``analyzer`` can be `'word'` or `'char'` to switch the default
+       - ``analyzer`` can be ``'word'`` or ``'char'`` to switch the default
          analysis scheme, or use a specific python callable (as previously).
 
        - ``tokenizer`` and ``preprocessor`` have been introduced to make it
@@ -1476,8 +1517,8 @@ API changes summary
      from :class:`feature_selection.text.CountVectorizer` to make grid
      search trivial.
 
-   - methods `rvs` in :class:`_BaseHMM` module are now deprecated.
-     `sample` should be used instead.
+   - methods ``rvs`` in :class:`_BaseHMM` module are now deprecated.
+     ``sample`` should be used instead.
 
    - Beam pruning option in :class:`_BaseHMM` module is removed since it is
      difficult to be Cythonized. If you are interested, you can look in the
@@ -1811,7 +1852,7 @@ Changelog
    - Text feature extraction optimizations by Lars Buitinck
 
    - Chi-Square feature selection
-     (:func:`feature_selection.univariate_selection.chi2`) by `Lars Buitinck`.
+     (:func:`feature_selection.univariate_selection.chi2`) by `Lars Buitinck`_.
 
    - :ref:`sample_generators` module refactoring by `Gilles Louppe`_
 
@@ -2023,7 +2064,8 @@ Some other modules benefited from significant improvements or cleanups.
 
   - Add attribute converged to Gaussian Mixture Models by Vincent Schut.
 
-  - Implement `transform`, `predict_log_proba` in :class:`lda.LDA` by `Mathieu Blondel`_.
+  - Implemented ``transform``, ``predict_log_proba`` in :class:`lda.LDA`
+    By `Mathieu Blondel`_.
 
   - Refactoring in the :ref:`svm` module and bug fixes by `Fabian Pedregosa`_,
     `Gael Varoquaux`_ and Amit Aides.
@@ -2542,7 +2584,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Johannes Schönberger: https://github.com/ahojnnes
 
-.. _Manoj Kumar: https://github.com/Manoj-Kumar-S
+.. _Manoj Kumar: https://manojbits.wordpress.com
 
 .. _Andrew Tulloch: http://tullo.ch
 
