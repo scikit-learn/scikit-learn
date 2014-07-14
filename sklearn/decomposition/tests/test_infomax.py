@@ -103,7 +103,7 @@ def test_infomax_simple(add_noise=False):
 
 
 def test_non_square_infomax(add_noise=False):
-    """ Test the infomax algorithm on very simple data.
+    """ Test the infomax algorithm on rectangular data.
     """
     rng = np.random.RandomState(0)
 
@@ -148,7 +148,7 @@ def test_non_square_infomax(add_noise=False):
 
 
 def test_fit_transform():
-    """Test FastICA.fit_transform"""
+    """Test InfomaxICA.fit_transform"""
     rng = np.random.RandomState(0)
     X = rng.random_sample((100, 10))
     for whiten, n_components in [[True, 5], [False, 10]]:
@@ -169,7 +169,7 @@ def test_fit_transform():
 
 
 def test_inverse_transform():
-    """Test FastICA.inverse_transform"""
+    """Test InfomaxICA.inverse_transform"""
     n_features = 10
     n_samples = 100
     n1, n2 = 5, 10
