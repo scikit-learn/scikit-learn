@@ -29,6 +29,134 @@ from ..externals import six
 from ..metrics.scorer import check_scoring
 
 
+def _precomp_kernel_ridge_path_eigen(v_train, V_train, Y_train, alphas,
+                                     gramX_test=None):
+    VTY = V_train.T.dot(Y_train)
+    v_alpha = 1. / (v_train[np.newaxis, :, np.newaxis] +
+                    alphas[:, np.newaxis])
+    # should probably be done inplace
+    v_alpha_VTY = v_alpha * VTY[np.newaxis]
+
+    if gramX_test is None:
+        dual_coef = V_train.dot(v_alpha_VTY).transpose(1, 0, 2)
+        output = dual_coef
+    else:
+        predictions = (gramX_test.dot(V_train)).dot(
+            v_alpha_VTY).transpose(1, 0, 2)
+        output = predictions
+
+    return output
+
+
+def precomp_kernel_ridge_path_eigen(gramX_train, Y_train, alphas,
+                                    gramX_test=None):
+    v, V = np.linalg.eigh(gramX_train)
+    return _precomp_kernel_ridge_path_eigen(v, V, Y_train, alphas,
+                                            gramX_test)
+
+
+def _linear_kernel(X, Y):
+    return X.dot(Y.T)
+
+
+def kernel_ridge_path_eigen(X_train, Y_train, alphas, X_test,
+                            kernel=_linear_kernel):
+    gramX_train = kernel(X_train, X_train)
+    gramX_test = None
+    if X_test is not None:
+        gramX_test = kernel(X_test, X_train)
+
+    return precomp_kernel_ridge_path_eigen(gramX_train, Y_train, alphas,
+                                           gramX_test)
+
+
+def _feature_ridge_path_eigen(v_train, V_train, XTY, alphas, X_test=None):
+
+    VTXTY = V_train.T.dot(XTY)  # under some circumstances it may be better
+                                # to do (V.T.dot(X.T)).dot(Y)
+    inv_v_alpha = 1. / (v_train[np.newaxis, :, np.newaxis] +
+                        alphas[:, np.newaxis])
+
+    coef = V_train.dot(inv_v_alpha * VTXTY[np.newaxis]).transpose(1, 0, 2)
+
+    if X_test is None:
+        return X_test.dot(coef).transpose(1, 0, 2)
+    else:
+        return coef
+
+
+def feature_ridge_path_eigen(X_train, Y_train, alphas, X_test=None):
+
+    XTY = X_train.T.dot(Y_train)
+    v, V = np.linalg.eigh(X_train.T.dot(X_train))
+
+    return _feature_ridge_path_eigen(v, V, XTY, alphas, X_test)
+
+
+def ridge_path(X_train, Y_train, alphas, X_test=None, solver="eigen"):
+    """Perform Ridge regression along a regularization path
+
+    Parameters
+    ----------
+
+    X_train : ndarray
+        shape = (n_samples, n_features)
+        Training data
+
+    Y_train : ndarray
+        shape = (n_samples, n_targets) or (n_samples,)
+        Training targets
+
+    alphas : ndarray
+        shape=(n_penalties, n_targets) or (n_penalties, 1)
+        Penalties on regularization path. Can be global or per target
+
+    X_test : ndarray, optional
+        shape=(n_test_samples, n_features)
+        Test set. If specified, ridge_path returns predictions on X_test,
+        otherwise it returns coefficients.
+
+    solver : str, {'eigen'}, (default 'eigen')
+        The solver to use for ridge_path.
+
+    Notes
+    -----
+    This solver does not fit the intercept.
+"""
+
+    n_samples, n_features = X_train.shape
+    n_samples_, n_targets = Y_train.shape
+
+    if n_samples != n_samples_:
+        raise ValueError(
+            ("Number of samples in X_train (%d) and Y_train (%d) must"
+            " correspond.") % (n_samples, n_samples_))
+
+    alphas = np.atleast_1d(alphas)
+    if alphas.ndim == 1:
+        if len(alphas) == n_targets:
+            raise ValueError(
+                ("You have specified as many penalties as targets (%d). If"
+                 " you want these to act as individual penalties, please"
+                 " shape them as (1, n_targets) == (1, %d). If you wish"
+                 " every penalty to be used on every target, please shape"
+                 " alphas as (n_penalties, 1) == (%d, 1)") %
+                (n_targets, n_targets, n_targets))
+        else:
+            alphas = alphas[:, np.newaxis]
+
+    if solver not in ['eigen']:
+        raise NotImplementedError("Solver %s not implemented" % solver)
+
+    if n_samples < n_features:
+        # A kernelized implementation is more efficient, because it works
+        # in the dual space (the sample axis).
+        path = kernel_ridge_path_eigen(X_train, Y_train, alphas, X_test)
+    else:
+        path = feature_ridge_path_eigen(X_train, Y_train, alphas, X_test)
+
+
+
 def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3):
     n_samples, n_features = X.shape
     X1 = sp_linalg.aslinearoperator(X)
