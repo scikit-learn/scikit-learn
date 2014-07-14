@@ -72,8 +72,8 @@ def test_random_weights():
 
     mode, score = weighted_mode(x, w, axis=1)
 
-    np.testing.assert_array_equal(mode, mode_result)
-    np.testing.assert_array_almost_equal(score.ravel(), w[:, :5].sum(1))
+    assert_array_equal(mode, mode_result)
+    assert_array_almost_equal(score.ravel(), w[:, :5].sum(1))
 
 
 def test_logsumexp():
