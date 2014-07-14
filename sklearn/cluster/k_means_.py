@@ -852,7 +852,8 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
 
     random_reassign : boolean, optional
         If True, centers with very low counts are
-        randomly-reassigned to observations in dense areas.
+        randomly-reassigned to observations locations that are badly
+        represented by the current clusters.
 
     reassignment_ratio : float, optional
         Control the fraction of the maximum number of counts for a
@@ -888,8 +889,7 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
         n_reassigns = to_reassign.sum()
         if n_reassigns:
             # Pick new clusters amongst observations with probability
-            # proportional to their closeness to their center.
-            # Flip the ordering of the distances.
+            # proportional to their distance to their center.
             distances += 1e-10
             distances /= distances.sum()
 
