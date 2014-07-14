@@ -283,6 +283,16 @@ def test_logistic_cv():
     lr.fit(X_ref, y)
     assert_array_almost_equal(lr.coef_, lr_cv.coef_)
 
+    assert_array_equal(lr_cv.coef_.shape, (1, n_features))
+    assert_array_equal(lr_cv.classes_, [-1, 1])
+    assert_equal(len(lr_cv.classes_), 2)
+
+    coefs_paths = np.asarray(list(lr_cv.coefs_paths_.values()))
+    assert_array_equal(coefs_paths.shape, (1, 3, 1, n_features))
+    assert_array_equal(lr_cv.Cs_.shape, (1, ))
+    scores = np.asarray(list(lr_cv.scores_.values()))
+    assert_array_equal(scores.shape, (1, 3, 1))
+
 
 def test_logistic_cv_sparse():
     X, y = make_classification(n_samples=50, n_features=5,
@@ -290,14 +300,13 @@ def test_logistic_cv_sparse():
     X[X < 1.0] = 0.0
     csr = sp.csr_matrix(X)
 
-    for fit_intercept in [True, False]:
-        clf = LogisticRegressionCV(fit_intercept=fit_intercept)
-        clf.fit(X, y)
-        clfs = LogisticRegressionCV(fit_intercept=fit_intercept)
-        clfs.fit(csr, y)
-        assert_array_almost_equal(clfs.coef_, clf.coef_)
-        assert_array_almost_equal(clfs.intercept_, clf.intercept_)
-        assert_equal(clfs.C_, clf.C_)
+    clf = LogisticRegressionCV(fit_intercept=True)
+    clf.fit(X, y)
+    clfs = LogisticRegressionCV(fit_intercept=True)
+    clfs.fit(csr, y)
+    assert_array_almost_equal(clfs.coef_, clf.coef_)
+    assert_array_almost_equal(clfs.intercept_, clf.intercept_)
+    assert_equal(clfs.C_, clf.C_)
 
 
 def test_intercept_logistic_helper():
@@ -332,43 +341,10 @@ def test_intercept_logistic_helper():
     assert_almost_equal(hess_interp[-1] + alpha * grad[-1], hess[-1])
 
 
-def test_multiclass():
-    X, y = make_classification(n_samples=10, n_features=20, n_informative=10,
-                               n_classes=3)
-    clf = LogisticRegressionCV(cv=3)
-    clf.fit(X, y)
-
-    assert_array_equal(clf.coef_.shape, (3, 20))
-    assert_array_equal(clf.classes_, [0, 1, 2])
-    assert_equal(len(clf.classes_), 3)
-
-    coefs_paths = np.asarray(list(clf.coefs_paths_.values()))
-    assert_array_equal(coefs_paths.shape, (3, 3, 10, 20 + 1))
-    assert_array_equal(clf.Cs_.shape, (10, ))
-    scores = np.asarray(list(clf.scores_.values()))
-    assert_array_equal(scores.shape, (3, 3, 10))
-
-
-def test_shape_attributes_logregcv():
-    n_samples, n_features = 10, 20
-    clf = LogisticRegressionCV(cv=3)
-    X, y = make_classification(n_samples=n_samples, n_features=n_features)
-    clf.fit(X, y)
-
-    assert_array_equal(clf.coef_.shape, (1, n_features))
-    assert_array_equal(clf.classes_, [0, 1])
-    assert_equal(len(clf.classes_), 2)
-
-    coefs_paths = np.asarray(list(clf.coefs_paths_.values()))
-    assert_array_equal(coefs_paths.shape, (1, 3, 10, n_features + 1))
-    assert_array_equal(clf.Cs_.shape, (10, ))
-    scores = np.asarray(list(clf.scores_.values()))
-    assert_array_equal(scores.shape, (1, 3, 10))
-
-
 def test_ova_iris():
     # Test that our OvA implementation is correct using the iris dataset.
     train, target = iris.data, iris.target
+    n_samples, n_features = train.shape
 
     # Use pre-defined fold as folds generated for different y
     cv = StratifiedKFold(target, 3)
@@ -382,6 +358,17 @@ def test_ova_iris():
     assert_array_equal(clf.scores_[2], clf1.scores_[2])
     assert_array_equal(clf.intercept_[2:], clf1.intercept_)
     assert_array_equal(clf.coef_[2][np.newaxis, :], clf1.coef_)
+
+    # Test the shape of various attributes.
+    assert_array_equal(clf.coef_.shape, (3, n_features))
+    assert_array_equal(clf.classes_, [0, 1, 2])
+    assert_equal(len(clf.classes_), 3)
+
+    coefs_paths = np.asarray(list(clf.coefs_paths_.values()))
+    assert_array_equal(coefs_paths.shape, (3, 3, 10, n_features + 1))
+    assert_array_equal(clf.Cs_.shape, (10, ))
+    scores = np.asarray(list(clf.scores_.values()))
+    assert_array_equal(scores.shape, (3, 3, 10))
 
 
 def test_logreg_newton_lbfgs():

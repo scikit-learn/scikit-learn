@@ -17,8 +17,10 @@ import numpy as np
 import warnings
 from scipy.optimize.linesearch import line_search_wolfe2, line_search_wolfe1
 
+
 class _LineSearchError(RuntimeError):
     pass
+
 
 def _line_search_wolfe12(f, fprime, xk, pk, gfk, old_fval, old_old_fval,
                          **kwargs):
@@ -47,15 +49,40 @@ def _line_search_wolfe12(f, fprime, xk, pk, gfk, old_fval, old_old_fval,
 
     return ret
 
+
 def newton_cg(func_grad_hess, func, grad, x0, args=(), xtol=1e-5, eps=1e-4,
-              maxiter=100, disp=False):
+              maxiter=100):
     """
     Minimization of scalar function of one or more variables using the
     Newton-CG algorithm.
 
-    func: callable
+    Parameters
+    ----------
+    func_grad_hess : callable
         Should return the value of the function, the gradient, and a
-        callable returning the matvec product of the Hessian
+        callable returning the matvec product of the Hessian.
+
+    func : callable
+        Should return the value of the function.
+
+    grad : callable
+        Should return the function value and the gradient. This is used
+        by the linesearch functions.
+
+    x0 : float
+        Initial guess.
+
+    args: tuple, optional
+        Arguments passed to func_grad_hess, func and grad.
+
+    xtol : float
+        Tolerance.
+
+    eps : float, optional
+        If fhess is approximated, use this value for the step size.
+
+    maxiter : int
+        Number of iterations.
     """
     avextol = xtol
 
@@ -68,7 +95,14 @@ def newton_cg(func_grad_hess, func, grad, x0, args=(), xtol=1e-5, eps=1e-4,
     old_old_fval = None
 
     # Outer loop: our Newton iteration
-    while (np.sum(np.abs(update)) > xtol) and (k < maxiter):
+    while np.sum(np.abs(update)) > xtol:
+
+        # Early stopping
+        if k > maxiter:
+            warnings.warn("newton-cg failed to converge. Increase the "
+                          "number of iterations.")
+            break
+
         # Compute a search direction pk by applying the CG method to
         #  del2 f(xk) p = - fgrad f(xk) starting from 0.
         fval, fgrad, fhess_p = func_grad_hess(xk, *args)

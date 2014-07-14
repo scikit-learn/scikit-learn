@@ -8,6 +8,7 @@ Logistic Regression
 #         Manoj Kumar <manojkumarsivaraj334@gmail.com>
 
 import numbers
+import warnings
 
 import numpy as np
 from scipy import optimize, sparse
@@ -21,7 +22,7 @@ from ..utils.extmath import log_logistic, safe_sparse_dot
 from ..utils.validation import as_float_array
 from ..utils.fixes import expit
 from ..externals.joblib import Parallel, delayed
-from ..cross_validation import check_cv
+from ..cross_validation import _check_cv
 from ..utils.optimize import newton_cg
 from ..externals import six
 from ..metrics import SCORERS
@@ -225,9 +226,9 @@ def _logistic_loss_grad_hess(w, X, y, alpha, sample_weight=None):
 def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              max_iter=100, tol=1e-4, verbose=0,
                              solver='liblinear', coef=None, copy=True,
-                             class_weight=None):
+                             class_weight=None, dual=False, penalty='l2'):
     """Compute a Logistic Regression model for a list of regularization
-    parameters using l2 regularization.
+    parameters.
 
     This is an implementation that uses the result of the previous model
     to speed up computations along the set of solutions, making it faster
@@ -251,7 +252,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         The class with respect to which we perform a one-vs-all fit.
         If None, then it is assumed that the given problem is binary.
 
-    fit_intercept : boolean
+    fit_intercept : bool
         Whether to fit an intercept for the model. In this case the shape of
         the returned array is (n_cs, n_features + 1).
 
@@ -283,12 +284,24 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         from the output of compute_class_weight. It None, then all classes
         are assumed to have weight one.
 
+    dual : bool
+        Dual or primal formulation. Dual formulation is only implemented for
+        l2 penalty with liblinear solver. Prefer dual=False when
+        n_samples > n_features.
+
+    penalty : str, 'l1' or 'l2'
+        Used to specify the norm used in the penalization. The newton-cg and
+        lbfgs solvers support only l2 penalties.
+
     Returns
     -------
-    coefs: ndarray, shape (n_cs, n_features) or (n_cs, n_features + 1)
+    coefs : ndarray, shape (n_cs, n_features) or (n_cs, n_features + 1)
         List of coefficients for the Logistic Regression model. If
         fit_intercept is set to True then the second dimension will be
         n_features + 1, where the last item represents the intercept.
+
+    Cs : ndarray
+        Grid of Cs used for cross-validation.
 
     Notes
     -----
@@ -348,13 +361,19 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                     args=(X, y, 1. / C, sample_weight),
                     iprint=verbose > 0, pgtol=tol)
             w0 = out[0]
+            if out[2]["warnflag"] == 1:
+                warnings.warn("lbfgs failed to converge. Increase the number "
+                              "of iterations.")
+
         elif solver == 'newton-cg':
             grad = lambda x, *args: _logistic_loss_and_grad(x, *args)[1]
             w0 = newton_cg(_logistic_loss_grad_hess, _logistic_loss, grad,
-                           w0, args=(X, y, 1./C, sample_weight), maxiter=max_iter)
+                           w0, args=(X, y, 1. /C, sample_weight),
+                           maxiter=max_iter, xtol=tol)
         elif solver == 'liblinear':
             lr = LogisticRegression(C=C, fit_intercept=fit_intercept, tol=tol,
-                                    class_weight=class_weight)
+                                    class_weight=class_weight, dual=dual,
+                                    penalty=penalty)
             lr.fit(X, y)
             if fit_intercept:
                 w0 = np.concatenate([lr.coef_.ravel(), lr.intercept_])
@@ -364,14 +383,15 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             raise ValueError("solver must be one of {'liblinear', 'lbfgs', "
                              "'newton-cg'}, got '%s' instead" % solver)
         coefs.append(w0)
-    return coefs, Cs
+    return coefs, np.array(Cs)
 
 
 # helper function for LogisticCV
 def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
                           scoring=None, fit_intercept=False,
                           max_iter=100, tol=1e-4, class_weight=None,
-                          verbose=0, method='liblinear'):
+                          verbose=0, method='liblinear', penalty='l2',
+                          dual=False):
     """Computes scores across logistic_regression_path
 
     Parameters
@@ -423,6 +443,15 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
 
     method : {'lbfgs', 'newton-cg', 'liblinear'}
         Decides which solver to use.
+
+    penalty : str, 'l1' or 'l2'
+        Used to specify the norm used in the penalization. The newton-cg and
+        lbfgs solvers support only l2 penalties.
+
+    dual : bool
+        Dual or primal formulation. Dual formulation is only implemented for
+        l2 penalty with liblinear solver. Prefer dual=False when
+        n_samples > n_features.
     """
 
     log_reg = LogisticRegression(fit_intercept=fit_intercept)
@@ -455,7 +484,8 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
                                          max_iter=max_iter,
                                          class_weight=class_weight,
                                          copy=False,
-                                         tol=tol, verbose=verbose)
+                                         tol=tol, verbose=verbose,
+                                         dual=dual, penalty=penalty)
 
     scores = list()
 
@@ -482,20 +512,25 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
     In the multiclass case, the training algorithm uses a one-vs.-all (OvA)
     scheme, rather than the "true" multinomial LR.
 
-    This class implements L1 and L2 regularized logistic regression using the
-    `liblinear` library. It can handle both dense and sparse input. Use
-    C-ordered arrays or CSR matrices containing 64-bit floats for optimal
-    performance; any other input format will be converted (and copied).
+    This class implements regularized logistic regression using the
+    `liblinear` library, newton-cg and lbfgs solvers. It can handle both
+    dense and sparse input. Use C-ordered arrays or CSR matrices containing
+    64-bit floats for optimal performance; any other input format will be
+    converted (and copied).
+
+    The newton-cg and lbfgs solvers support only L2 regularization with primal
+    formulation. The liblinear solver supports both L1 and L2 regularization,
+    with a dual formulation only for the L2 penalty.
 
     Parameters
     ----------
-    penalty : string, 'l1' or 'l2'
+    penalty : str, 'l1' or 'l2'
         Used to specify the norm used in the penalization. The newton-cg and
         lbfgs solvers support only l2 penalties.
 
-    dual : boolean
-        Dual or primal formulation. Dual formulation is only
-        implemented for l2 penalty. Prefer dual=False when
+    dual : bool
+        Dual or primal formulation. Dual formulation is only implemented for
+        l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
     C : float, optional (default=1.0)
@@ -622,8 +657,10 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
                            _LearntSelectorMixin):
     """Logistic Regression CV (aka logit, MaxEnt) classifier.
 
-    This class implements L2 regularized logistic regression using liblinear,
-    newton-cg or LBFGS optimizer.
+    This class implements logistic regression using liblinear, newton-cg or
+    LBFGS optimizer. The newton-cg and lbfgs solvers support only L2
+    regularization with primal formulation. The liblinear solver supports both
+    L1 and L2 regularization, with a dual formulation only for the L2 penalty.
 
     Parameters
     ----------
@@ -649,6 +686,15 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
         If an integer is provided, then it is the number of folds used.
         See the module :mod:`sklearn.cross_validation` module for the
         list of possible cross-validation objects.
+
+    penalty : str, 'l1' or 'l2'
+        Used to specify the norm used in the penalization. The newton-cg and
+        lbfgs solvers support only l2 penalties.
+
+    dual : bool
+        Dual or primal formulation. Dual formulation is only implemented for
+        l2 penalty with liblinear solver. Prefer dual=False when
+        n_samples > n_features.
 
     scoring: callabale
         Scoring function to use as cross-validation criteria. For a list of
@@ -727,12 +773,15 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
 
     """
 
-    def __init__(self, Cs=10, fit_intercept=True, cv=None, scoring=None,
-                 solver='newton-cg', tol=1e-4, max_iter=100, class_weight=None,
-                 n_jobs=1, verbose=False, refit=True):
+    def __init__(self, Cs=10, fit_intercept=True, cv=None, dual=False,
+                 penalty='l2', scoring=None, solver='newton-cg', tol=1e-4,
+                 max_iter=100, class_weight=None, n_jobs=1, verbose=False,
+                 refit=True):
         self.Cs = Cs
         self.fit_intercept = fit_intercept
         self.cv = cv
+        self.dual = dual
+        self.penalty = penalty
         self.scoring = scoring
         self.tol = tol
         self.max_iter = max_iter
@@ -759,11 +808,19 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
         self : object
             Returns self.
         """
+        if self.solver != 'liblinear':
+            if self.penalty != 'l2':
+                raise ValueError("newton-cg and lbfgs solvers support only "
+                                 "l2 penalties.")
+            if self.dual:
+                raise ValueError("newton-cg and lbfgs solvers support only "
+                                 "the primal form.")
+
         X = atleast2d_or_csc(X, dtype=np.float64)
         X, y = check_arrays(X, y, copy=False)
 
         # init cross-validation generator
-        cv = check_cv(self.cv, X, y, classifier=True)
+        cv = _check_cv(self.cv, X, y, classifier=True)
         folds = list(cv)
 
         self.classes_ = labels = np.unique(y)
@@ -783,6 +840,8 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
                                            pos_class=label,
                                            Cs=self.Cs,
                                            fit_intercept=self.fit_intercept,
+                                           penalty=self.penalty,
+                                           dual=self.dual,
                                            method=self.solver,
                                            max_iter=self.max_iter,
                                            tol=self.tol,

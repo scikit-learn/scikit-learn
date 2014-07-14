@@ -678,6 +678,14 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
         # and hence BaseLibLinear.
         from ..linear_model import logistic_regression_path
 
+        if self.solver != 'liblinear':
+            if self.penalty != 'l2':
+                raise ValueError("newton-cg and lbfgs solvers support only "
+                                 "l2 penalties.")
+            if self.dual:
+                raise ValueError("newton-cg and lbfgs solvers support only "
+                                 "the primal form.")
+
         self._enc = LabelEncoder()
         y_ind = self._enc.fit_transform(y)
         if len(self.classes_) < 2:
