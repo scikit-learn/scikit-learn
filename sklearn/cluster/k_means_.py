@@ -851,9 +851,8 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
         number generator.
 
     random_reassign : boolean, optional
-        If True, centers with very low counts are
-        randomly-reassigned to observations locations that are badly
-        represented by the current clusters.
+        If True, centers with very low counts are randomly reassigned
+        to observations.
 
     reassignment_ratio : float, optional
         Control the fraction of the maximum number of counts for a
@@ -888,18 +887,11 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
             to_reassign[indices_dont_reassign] = False
         n_reassigns = to_reassign.sum()
         if n_reassigns:
-            # Pick new clusters amongst observations with probability
-            # proportional to their distance to their center.
-            distances += 1e-10
-            distances /= distances.sum()
-
-            new_centers = choice(X.shape[0], replace=False, p=distances,
-                                 size=n_reassigns)
+            # Pick new clusters amongst observations with uniform probability
+            new_centers = choice(X.shape[0], replace=False, size=n_reassigns)
             if verbose:
-                n_reassigns = to_reassign.sum()
-                if n_reassigns:
-                    print("[MiniBatchKMeans] Reassigning %i cluster centers."
-                          % n_reassigns)
+                print("[MiniBatchKMeans] Reassigning %i cluster centers."
+                        % n_reassigns)
 
             if sp.issparse(X) and not sp.issparse(centers):
                 assign_rows_csr(X, new_centers, np.where(to_reassign)[0],
