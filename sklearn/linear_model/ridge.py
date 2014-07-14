@@ -80,9 +80,9 @@ def _feature_ridge_path_eigen(v_train, V_train, XTY, alphas, X_test=None):
     coef = V_train.dot(inv_v_alpha * VTXTY[np.newaxis]).transpose(1, 0, 2)
 
     if X_test is None:
-        return X_test.dot(coef).transpose(1, 0, 2)
-    else:
         return coef
+    else:
+        return X_test.dot(coef).transpose(1, 0, 2)
 
 
 def feature_ridge_path_eigen(X_train, Y_train, alphas, X_test=None):
@@ -131,6 +131,9 @@ def ridge_path(X_train, Y_train, alphas, X_test=None, solver="eigen"):
     This solver does not fit the intercept.
 """
 
+    y_raveled = Y_train.ndim == 1
+    Y_train = np.atleast_2d(Y_train.T).T
+
     n_samples, n_features = X_train.shape
     n_samples_, n_targets = Y_train.shape
 
@@ -158,11 +161,22 @@ def ridge_path(X_train, Y_train, alphas, X_test=None, solver="eigen"):
     if n_samples < n_features:
         # A kernelized implementation is more efficient, because it works
         # in the dual space (the sample axis).
-        path = kernel_ridge_path_eigen(X_train, Y_train, alphas, X_test)
+        dual_path_or_predictions = kernel_ridge_path_eigen(
+            X_train, Y_train, alphas, X_test, kernel=_linear_kernel)
+        if X_test is None:
+            primal_path = X_train.T.dot(
+                dual_path_or_predictions).transpose(1, 0, 2)
+            path = primal_path
+        else:
+            prediction_path = dual_path_or_predictions
+            path = prediction_path
     else:
         path = feature_ridge_path_eigen(X_train, Y_train, alphas, X_test)
 
-    return path
+    if y_raveled:
+        return path[:, :, 0]
+    else:
+        return path
 
 
 def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3):
@@ -438,7 +452,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     if alpha.size == 1 and n_targets > 1:
         alpha = np.repeat(alpha, n_targets)
 
-    if solver not in ('sparse_cg', 'cholesky', 'svd', 'lsqr'):
+    if solver not in ('sparse_cg', 'cholesky', 'svd', 'lsqr', 'eigen'):
         raise ValueError('Solver %s not understood' % solver)
 
     if solver == 'sparse_cg':
@@ -469,6 +483,8 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     if solver == 'svd':
         coef = _solve_svd(X, y, alpha)
 
+    if solver == 'eigen':
+        coef = ridge_path(X, y, np.atleast_2d(alpha), solver='eigen')[0].T
     if ravel:
         # When y was passed as a 1d-array, we flatten the coefficients.
         coef = coef.ravel()
