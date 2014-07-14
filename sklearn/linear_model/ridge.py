@@ -362,7 +362,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         Individual weights for each sample. If sample_weight is set, then
         the solver will automatically be set to 'cholesky'
 
-    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg'}
+    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'eigen'}
         Solver to use in the computational routines:
 
         - 'auto' chooses the solver automatically based on the type of data.
@@ -383,6 +383,9 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         - 'lsqr' uses the dedicated regularized least-squares routine
           scipy.sparse.linalg.lsqr. It is the fatest but may not be available
           in old scipy versions. It also uses an iterative procedure.
+
+        - 'eigen' uses an eigenvalue decomposition of X.T.dot(X) or 
+          X.dot(X.T) to compute the Ridge coefficients
 
         All three solvers support both dense and sparse data.
 
@@ -582,6 +585,9 @@ class Ridge(_BaseRidge, RegressorMixin):
         - 'lsqr' uses the dedicated regularized least-squares routine
           scipy.sparse.linalg.lsqr. It is the fatest but may not be available
           in old scipy versions. It also uses an iterative procedure.
+
+        - 'eigen' uses an eigenvalue decomposition of X.T.dot(X) or 
+          X.dot(X.T) to compute the Ridge coefficients
 
         All three solvers support both dense and sparse data.
 
