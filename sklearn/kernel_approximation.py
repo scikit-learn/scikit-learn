@@ -14,6 +14,7 @@ import numpy as np
 import scipy.sparse as sp
 import fht as fht
 from scipy.linalg import svd, hadamard
+from scipy.stats import chi
 
 from .base import BaseEstimator
 from .base import TransformerMixin
@@ -525,7 +526,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
         return s * (1 / np.linalg.norm(g))
 
     # scaling_vector_iterative_time_consuming_but_lower_space_complexity
-    def scaling_vector(self, d, g):
+    def scaling_vector_loop(self, d, g):
         inverse_of_norm_of_G = 1 / np.linalg.norm(g)
         s = np.zeros(d)
         for i in range(d):
@@ -535,6 +536,14 @@ class Fastfood(BaseEstimator, TransformerMixin):
                 length += random_number*random_number
             s[i] = np.sqrt(length)*inverse_of_norm_of_G
         return s
+
+    # scaling_vector_iterative_time_consuming_but_lower_space_complexity
+    def scaling_vector_chi(self, d, g):
+        inverse_of_norm_of_G = 1 / np.linalg.norm(g)
+        return chi.rvs(d, size=d)*inverse_of_norm_of_G
+
+    def scaling_vector(self, d, g):
+        return Fastfood.scaling_vector_chi(self, d, g)
 
     def create_vectors(self):
         """ Create G, B, P and S. """

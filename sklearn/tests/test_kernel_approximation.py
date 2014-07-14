@@ -310,14 +310,30 @@ def test_V_is_gaussian():
 def test_compare_performance_of_scaling_matrix_generation():
     """comparison between scaling generation methods"""
     fastfood = Fastfood(1, 500)
-    d = 512
+    d = 2**12
     fastfood.d = d
 
     B, G, P, S = fastfood.create_vectors()
 
-    timeit.timeit("Fastfood.scaling_vector_vectorized(self, d , G)")
-    timeit.timeit("Fastfood.scaling_vector(self, d , G)")
-    assert False
+    start = datetime.datetime.utcnow()
+    fastfood.scaling_vector_vectorized(d, G)
+    end = datetime.datetime.utcnow()
+    spent_time_vectorized = end - start
+
+    start = datetime.datetime.utcnow()
+    fastfood.scaling_vector(d, G)
+    end = datetime.datetime.utcnow()
+    spent_time_loop = end - start
+
+    start = datetime.datetime.utcnow()
+    fastfood.scaling_vector_chi(d, G)
+    end = datetime.datetime.utcnow()
+    spent_time_chi = end - start
+
+    print "Timimg vectorized: ", spent_time_vectorized, "Timing loop: ", spent_time_loop,"Timing chi: ", spent_time_chi
+
+    assert_greater(spent_time_loop, spent_time_vectorized)
+    assert_greater(spent_time_vectorized, spent_time_chi)
 
 
 def test_fastfood():
@@ -346,10 +362,11 @@ def test_fastfood_performance_to_rks():
     # compute exact kernel
     gamma = 10.
     sigma = np.sqrt(1 / (2 * gamma))
+    number_of_features_to_generate = 2000
 
     fastfood_start = datetime.datetime.utcnow()
     # Fastfood: approximate kernel mapping
-    rbf_transform = Fastfood(sigma=sigma, n_components=1000, random_state=42)
+    rbf_transform = Fastfood(sigma=sigma, n_components=number_of_features_to_generate, random_state=42)
     X_trans_fastfood = rbf_transform.fit_transform(X)
     Y_trans_fastfood = rbf_transform.transform(Y)
     fastfood_end = datetime.datetime.utcnow()
@@ -359,12 +376,12 @@ def test_fastfood_performance_to_rks():
 
     rks_start = datetime.datetime.utcnow()
     # Random Kitchens Sinks: approximate kernel mapping
-    rks_rbf_transform = RBFSampler(gamma=gamma, n_components=2000, random_state=42)
+    rks_rbf_transform = RBFSampler(gamma=gamma, n_components=number_of_features_to_generate, random_state=42)
     X_trans_rks = rks_rbf_transform.fit_transform(X)
     Y_trans_rks = rks_rbf_transform.transform(Y)
     rks_end = datetime.datetime.utcnow()
     rks_spent_time =rks_end- rks_start
-    print "Timimg fastfood:", fastfood_spent_time,rks_spent_time
+    print "Timimg fastfood: ", fastfood_spent_time, "Timimg rks: ", rks_spent_time
 
     assert_greater(rks_spent_time, fastfood_spent_time)
     #kernel_approx = np.dot(X_trans_rks, Y_trans_rks.T)
