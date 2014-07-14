@@ -162,6 +162,7 @@ def ridge_path(X_train, Y_train, alphas, X_test=None, solver="eigen"):
     else:
         path = feature_ridge_path_eigen(X_train, Y_train, alphas, X_test)
 
+    return path
 
 
 def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3):
