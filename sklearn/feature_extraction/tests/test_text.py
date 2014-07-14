@@ -28,7 +28,7 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_raises
 from sklearn.utils.testing import (assert_in, assert_less, assert_greater,
-                                   assert_warns_message)
+                                   assert_warns_message, assert_raise_message)
 
 from collections import defaultdict, Mapping
 from functools import partial
@@ -869,9 +869,14 @@ def test_non_unique_vocab():
 
 
 def test_hashingvectorizer_nan_in_docs():
-    hv = HashingVectorizer()
-    assert_raises(ValueError, hv.fit_transform, ['hello world', np.nan,
-                                                 'hello hello'])
+    message = "np.nan is an invalid document, expected byte or unicode string."
+    exception = ValueError
+
+    def func():
+        hv = HashingVectorizer()
+        hv.fit_transform(['hello world', np.nan, 'hello hello'])
+
+    assert_raise_message(exception, message, func)
 
 
 def test_tfidfvectorizer_binary():
