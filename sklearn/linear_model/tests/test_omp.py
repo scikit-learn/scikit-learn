@@ -189,6 +189,7 @@ def test_omp_path():
 
 
 def test_omp_cv():
+    # FIXME: This test is unstable on Travis, see issue #3190 for more detail.
     check_skip_travis()
     y_ = y[:, 0]
     gamma_ = gamma[:, 0]
