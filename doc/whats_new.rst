@@ -388,7 +388,7 @@ API changes summary
 People
 ------
 
-List of contributors for release 0.14 by number of commits.
+List of contributors for release 0.15 by number of commits.
 
    312	Olivier Grisel
    275	Lars Buitinck
