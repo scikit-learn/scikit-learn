@@ -602,4 +602,10 @@ def check_skip_network():
         raise SkipTest("Text tutorial requires large dataset download")
 
 
+def check_skip_travis():
+    """Skip test if being run on Travis."""
+    if os.environ.get('TRAVIS') == "true":
+        raise SkipTest("This test needs to be skipped on Travis")
+
 with_network = with_setup(check_skip_network)
+with_travis = with_setup(check_skip_travis)
