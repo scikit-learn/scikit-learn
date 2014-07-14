@@ -11,6 +11,7 @@ from ..utils.validation import safe_asarray
 from sklearn.utils import check_random_state
 
 from sklearn.random_projection import GaussianRandomProjection
+
 __all__ = ["LSHForest"]
 
 
@@ -133,7 +134,7 @@ class LSHForest(BaseEstimator):
       >>> lshf = LSHForest()
       >>> lshf.fit(X)
       LSHForest(c=50, hashing_algorithm='random_projections', lower_bound=4,
-           max_label_length=32, n_neighbors=None, n_trees=10, seed=None)
+           max_label_length=32, n_neighbors=1, n_trees=10, seed=None)
 
       >>> lshf.kneighbors(X[:5], n_neighbors=3, return_distance=True)
       (array([[0, 1, 2],
