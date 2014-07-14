@@ -216,9 +216,9 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Data.
 
-        y : array-like, shape = [n_samples] or [n_samples, n_classes]
-            Multi-class targets. An indicator matrix turns on multilabel
-            classification.
+        y : {array-like, sparse matrix}, shape = [n_samples] or
+            [n_samples, n_classes] Multi-class targets. An indicator matrix
+            turns on multilabel classification.
 
         Returns
         -------
@@ -268,7 +268,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Returns
         -------
-        T : array-like, shape = [n_samples, n_classes]
+        T : {array-like, sparse matrix}, shape = [n_samples, n_classes]
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in `self.classes_`.
         """
@@ -426,7 +426,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Data.
 
-        y : numpy array of shape [n_samples]
+        y : {array-like, sparse matrix}, shape [n_samples]
             Multi-class targets.
 
         Returns
@@ -447,7 +447,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Returns
         -------
-        y : numpy array of shape [n_samples]
+        y : {array-like, sparse matrix}, shape [n_samples]
             Predicted multi-class targets.
         """
         if not hasattr(self, "estimators_"):
