@@ -316,7 +316,8 @@ def test_y_mean_attribute_regressor():
     # when strategy = 'mean'
     est = DummyRegressor(strategy='mean')
     est.fit(X, y)
-    assert_equal(est.y_mean_, np.mean(y))
+
+    assert_equal(est.constant_, np.mean(y))
 
 
 def test_unknown_strategey_regressor():

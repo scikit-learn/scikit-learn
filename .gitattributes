@@ -10,6 +10,7 @@
 /sklearn/linear_model/sgd_fast.c -diff
 /sklearn/metrics/pairwise_fast.c -diff
 /sklearn/neighbors/ball_tree.c -diff
+/sklearn/neighbors/kd_tree.c -diff
 /sklearn/svm/liblinear.c -diff
 /sklearn/svm/libsvm.c -diff
 /sklearn/svm/libsvm_sparse.c -diff

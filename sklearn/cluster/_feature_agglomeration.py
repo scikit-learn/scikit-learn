@@ -10,6 +10,8 @@ import numpy as np
 from ..base import TransformerMixin
 from ..utils import array2d
 
+import warnings
+
 
 ###############################################################################
 # Mixin class for feature agglomeration.

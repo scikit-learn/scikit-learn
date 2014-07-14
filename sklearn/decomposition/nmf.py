@@ -12,7 +12,6 @@ from __future__ import division
 
 from math import sqrt
 import warnings
-import numbers
 
 import numpy as np
 import scipy.sparse as sp

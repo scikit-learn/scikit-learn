@@ -295,7 +295,7 @@ def test_lasso_lars_path_length():
     lasso.fit(X, y)
     lasso2 = linear_model.LassoLars(alpha=lasso.alphas_[2])
     lasso2.fit(X, y)
-    np.testing.assert_array_equal(lasso.alphas_[:3], lasso2.alphas_)
+    assert_array_almost_equal(lasso.alphas_[:3], lasso2.alphas_)
     # Also check that the sequence of alphas is always decreasing
     assert_true(np.all(np.diff(lasso.alphas_) < 0))
 

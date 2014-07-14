@@ -21,21 +21,22 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
     Parameters
     ----------
-    strategy: str
+    strategy : str
         Strategy to use to generate predictions.
-            * "stratified": generates predictions by respecting the training
-              set's class distribution.
-            * "most_frequent": always predicts the most frequent label in the
-              training set.
-            * "uniform": generates predictions uniformly at random.
-            * "constant": always predicts a constant label that is provided by
-              the user. This is useful for metrics that evaluate a non-majority
-              class
 
-    random_state: int seed, RandomState instance, or None (default)
+        * "stratified": generates predictions by respecting the training
+          set's class distribution.
+        * "most_frequent": always predicts the most frequent label in the
+          training set.
+        * "uniform": generates predictions uniformly at random.
+        * "constant": always predicts a constant label that is provided by
+          the user. This is useful for metrics that evaluate a non-majority
+          class
+
+    random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use.
 
-    constant: int or str or array of shape = [n_outputs]
+    constant : int or str or array of shape = [n_outputs]
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
 
@@ -286,20 +287,21 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
     Parameters
     ----------
-    strategy: str
+    strategy : str
         Strategy to use to generate predictions.
-            * "mean": always predicts the mean of the training set
-            * "median": always predicts the median of the training set
-            * "constant": always predicts a constant value that is provided by
-              the user.
 
-    constant: int or float or array of shape = [n_outputs]
+        * "mean": always predicts the mean of the training set
+        * "median": always predicts the median of the training set
+        * "constant": always predicts a constant value that is provided by
+          the user.
+
+    constant : int or float or array of shape = [n_outputs]
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
 
     Attributes
     ----------
-    `constant_' : float or array of shape [n_outputs]
+    `constant_` : float or array of shape [n_outputs]
         Mean or median of the training targets or constant value given the by
         the user.
 

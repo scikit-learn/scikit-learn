@@ -681,7 +681,7 @@ class MinCovDet(EmpiricalCovariance):
             location_reweighted = data[mask].mean(0)
         covariance_reweighted = self._nonrobust_covariance(
             data[mask], assume_centered=self.assume_centered)
-        support_reweighted = np.zeros(n_samples).astype(bool)
+        support_reweighted = np.zeros(n_samples, dtype=bool)
         support_reweighted[mask] = True
         self._set_covariance(covariance_reweighted)
         self.location_ = location_reweighted
