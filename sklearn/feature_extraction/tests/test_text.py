@@ -869,6 +869,8 @@ def test_non_unique_vocab():
 
 
 def test_hashingvectorizer_nan_in_docs():
+    # np.nan can appear when using pandas to load text fields from a csv file
+    # with missing values.
     message = "np.nan is an invalid document, expected byte or unicode string."
     exception = ValueError
 
