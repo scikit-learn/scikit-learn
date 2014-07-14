@@ -15,27 +15,24 @@ See http://scikit-learn.org for complete documentation.
 import sys
 import re
 import warnings
-__version__ = '0.15-git'
 
 # Make sure that DeprecationWarning within this package always gets printed
 warnings.filterwarnings('always', category=DeprecationWarning,
                         module='^{0}\.'.format(re.escape(__name__)))
 
 try:
-    # This variable is injected in the __builtins__ by the build
-    # process. It used to enable importing subpackages of sklearn when
-    # the binaries are not built
-    __SKLEARN_SETUP__
+    # This builtins variable is defined by setup.py when building the project.
+    in_setup = __SKLEARN_SETUP__
 except NameError:
-    __SKLEARN_SETUP__ = False
+    in_setup = False
 
-if __SKLEARN_SETUP__:
-    sys.stderr.write('Partial import of sklearn during the build process.\n')
-    # We are not importing the rest of the scikit during the build
-    # process, as it may not be compiled yet
-else:
+if not in_setup:
+    # Trigger the build check only when run once the build is actually
+    # complete.
     from . import __check_build
     from .base import clone
+    from .version import full_version as __version__
+
 
     def test(*args, **kwargs):
         import warnings
