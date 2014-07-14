@@ -842,7 +842,7 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
 
     distances : array, dtype float64, shape (n_samples), optional
         If not None, should be a pre-allocated array that will be used to store
-        the distances of each sample to it's closest center.
+        the distances of each sample to its closest center.
         May not be None when random_reassign is True.
 
     random_state : integer or numpy.RandomState, optional
@@ -857,7 +857,7 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
     reassignment_ratio : float, optional
         Control the fraction of the maximum number of counts for a
         center to be reassigned. A higher value means that low count
-        centers are more easily reassigned, which means that the
+        centers are more likely to be reassigned, which means that the
         model will take longer to converge, but should converge in a
         better clustering.
 
