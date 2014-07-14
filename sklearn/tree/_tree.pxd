@@ -44,15 +44,18 @@ cdef class Criterion:
     cdef double weighted_n_left          # Weighted number of samples in the left node
     cdef double weighted_n_right         # Weighted number of samples in the right node
 
+    cdef bint is_categorical            # Whether the variable considered is categorical
+
     # The criterion object is maintained such that left and right collected
     # statistics correspond to samples[start:pos] and samples[pos:end].
 
     # Methods
     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
                    double weighted_n_samples, SIZE_t* samples, SIZE_t start,
-                   SIZE_t end) nogil
+                   SIZE_t end, bint is_categorical) nogil
     cdef void reset(self) nogil
     cdef void update(self, SIZE_t new_pos) nogil
+    cdef void update_factors(self, int categorical_split) nogil
     cdef double node_impurity(self) nogil
     cdef void children_impurity(self, double* impurity_left,
                                 double* impurity_right) nogil
@@ -109,6 +112,8 @@ cdef class Splitter:
     cdef DOUBLE_t* y
     cdef SIZE_t y_stride
     cdef DOUBLE_t* sample_weight
+
+    cdef bint is_categorical            # Whether the variable considered is categorical
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,

@@ -99,9 +99,10 @@ cdef int is_left_var(DTYPE_t x, int split,
 cdef class Criterion:
     """Interface for impurity criteria."""
 
-    cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
-                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
-                   SIZE_t end) nogil:
+    cdef void init(self, DOUBLE_t* y, SIZE_t y_stride,
+                   DOUBLE_t* sample_weight, double weighted_n_samples,
+                   SIZE_t* samples, SIZE_t start, SIZE_t end,
+                   bint is_categorical) nogil:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
         pass
@@ -113,6 +114,10 @@ cdef class Criterion:
     cdef void update(self, SIZE_t new_pos) nogil:
         """Update the collected statistics by moving samples[pos:new_pos] from
            the right child to the left child."""
+        pass
+
+    cdef void update_factors(self, int categorical_split) nogil:
+        """Update the collected statistics by defining the categorical split"""
         pass
 
     cdef double node_impurity(self) nogil:
@@ -227,7 +232,8 @@ cdef class ClassificationCriterion(Criterion):
 
     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride,
                    DOUBLE_t* sample_weight, double weighted_n_samples,
-                   SIZE_t* samples, SIZE_t start, SIZE_t end) nogil:
+                   SIZE_t* samples, SIZE_t start, SIZE_t end,
+                   bint is_categorical) nogil:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
         # Initialize fields
@@ -345,6 +351,10 @@ cdef class ClassificationCriterion(Criterion):
         self.weighted_n_right -= diff_w
 
         self.pos = new_pos
+
+    cdef void update_factors(self, int categorical_split) nogil:
+        """Update the collected statistics by defining the categorical split"""
+        pass #TODO
 
     cdef double node_impurity(self) nogil:
         pass
@@ -652,9 +662,10 @@ cdef class RegressionCriterion(Criterion):
     def __setstate__(self, d):
         pass
 
-    cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
-                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
-                   SIZE_t end) nogil:
+    cdef void init(self, DOUBLE_t* y, SIZE_t y_stride,
+                   DOUBLE_t* sample_weight, double weighted_n_samples,
+                   SIZE_t* samples, SIZE_t start, SIZE_t end,
+                   bint is_categorical) nogil:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
         # Initialize fields
@@ -823,6 +834,10 @@ cdef class RegressionCriterion(Criterion):
 
         self.pos = new_pos
 
+    cdef void update_factors(self, int categorical_split) nogil:
+        """Update the collected statistics by defining the categorical split"""
+        pass #TODO
+
     cdef double node_impurity(self) nogil:
         pass
 
@@ -926,7 +941,8 @@ cdef class Splitter:
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf,
                   double min_weight_leaf,
-                  object random_state):
+                  object random_state,
+                  bint is_categorical):
         self.criterion = criterion
 
         self.samples = NULL
@@ -946,6 +962,7 @@ cdef class Splitter:
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_leaf = min_weight_leaf
         self.random_state = random_state
+        self.is_categorical = is_categorical
 
     def __dealloc__(self):
         """Destructor."""
@@ -1021,7 +1038,8 @@ cdef class Splitter:
                             self.weighted_n_samples,
                             self.samples,
                             start,
-                            end)
+                            end,
+                            self.is_categorical)
 
         weighted_n_node_samples[0] = self.criterion.weighted_n_node_samples
 
@@ -1046,7 +1064,8 @@ cdef class BestSplitter(Splitter):
                                self.max_features,
                                self.min_samples_leaf,
                                self.min_weight_leaf,
-                               self.random_state), self.__getstate__())
+                               self.random_state,
+                               self.is_categorical), self.__getstate__())
 
     cdef void node_split(self, double impurity, SplitRecord* split,
                          SIZE_t* n_constant_features) nogil:
@@ -1203,8 +1222,6 @@ cdef class BestSplitter(Splitter):
 
                     # First we count the outcomes per category, so we don't
                     # have to iterate through all the data after that
-                    #safe_realloc(&outcome_by_cat,
-                    #             self.n_features * self.n_categories)
                     outcome_by_cat = <int *>malloc(
                         sizeof(int) * n_features * n_categories)
                     p = start
@@ -1461,7 +1478,8 @@ cdef class RandomSplitter(Splitter):
                                  self.max_features,
                                  self.min_samples_leaf,
                                  self.min_weight_leaf,
-                                 self.random_state), self.__getstate__())
+                                 self.random_state,
+                                 self.is_categorical), self.__getstate__())
 
     cdef void node_split(self, double impurity, SplitRecord* split,
                          SIZE_t* n_constant_features) nogil:
@@ -1671,7 +1689,8 @@ cdef class PresortBestSplitter(Splitter):
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf,
                   double min_weight_leaf,
-                  object random_state):
+                  object random_state,
+                  bint is_categorical):
         # Initialize pointers
         self.X_old = NULL
         self.X_argsorted_ptr = NULL
@@ -1687,7 +1706,8 @@ cdef class PresortBestSplitter(Splitter):
                                       self.max_features,
                                       self.min_samples_leaf,
                                       self.min_weight_leaf,
-                                      self.random_state), self.__getstate__())
+                                      self.random_state,
+                                      self.is_categorical), self.__getstate__())
 
     cdef void init(self,
                    np.ndarray[DTYPE_t, ndim=2] X,
