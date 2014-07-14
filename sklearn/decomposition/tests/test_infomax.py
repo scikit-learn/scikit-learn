@@ -70,8 +70,8 @@ def test_infomax_simple(add_noise=False):
             X = RandomizedPCA(n_components=2, whiten=True).fit_transform(m.T)
             k_, mixing_, s_ = infomax(X, extended=extended, whiten=False)
 
-        center_and_norm(s_)
         s_ = s_.T
+        center_and_norm(s_)
         s1_, s2_ = s_
         # Check to see if the sources have been estimated
         # in the wrong order
