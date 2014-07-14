@@ -12,8 +12,16 @@ python -c "import scipy; print('scipy %s' % scipy.__version__)"
 python setup.py build_ext --inplace
 
 if [[ "$COVERAGE" == "true" ]]; then
-    make test-coverage
+    CONVERAGE_FLAGS="--with-coverage"
 else
-    make test-code
+    CONVERAGE_FLAGS=""
 fi
-make test-doc
+
+# Disable joblib tests that use multiprocessing on travis as they tend to cause
+# random crashes when calling `os.fork()`:
+#   OSError: [Errno 12] Cannot allocate memory
+nosetests -s -v $CONVERAGE_FLAGS --with-noseexclude \
+  --exclude-test-file=continuous_integration/exclude_joblib_mp.txt \
+  sklearn
+
+make test-doc test-sphinxext

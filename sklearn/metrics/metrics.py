@@ -35,6 +35,7 @@ from ..utils import deprecated
 from ..utils import column_or_1d
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
+from ..utils.fixes import isclose
 
 
 ###############################################################################
@@ -312,6 +313,7 @@ def average_precision_score(y_true, y_score, average="macro",
     Note: this implementation is restricted to the binary classification task
     or multilabel classification task.
 
+    Parameters
     ----------
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
         True binary labels in binary label indicators.
@@ -579,7 +581,8 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
     """
     def _binary_roc_auc_score(y_true, y_score, sample_weight=None):
         if len(np.unique(y_true)) != 2:
-            raise ValueError("ROC AUC score is not defined")
+            raise ValueError("Only one class present in y_true. ROC AUC score "
+                             "is not defined in that case.")
 
         fpr, tpr, tresholds = roc_curve(y_true, y_score,
                                         sample_weight=sample_weight)
@@ -723,7 +726,10 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     # y_score typically has many tied values. Here we extract
     # the indices associated with the distinct values. We also
     # concatenate a value for the end of the curve.
-    distinct_value_indices = np.where(np.diff(y_score))[0]
+    # We need to use isclose to avoid spurious repeated thresholds
+    # stemming from floating point roundoff errors.
+    distinct_value_indices = np.where(np.logical_not(isclose(
+        np.diff(y_score), 0)))[0]
     threshold_idxs = np.r_[distinct_value_indices, y_true.size - 1]
 
     # accumulate the true positives with decreasing threshold
@@ -1070,7 +1076,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
 
     normalize : bool, optional (default=True)
         If true, return the mean loss per sample.
-        Otherwise, return the total loss.
+        Otherwise, return the sum of the per-sample losses.
 
     Returns
     -------

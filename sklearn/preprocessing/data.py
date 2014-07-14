@@ -401,10 +401,12 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     ----------
     degree : integer
         The degree of the polynomial features. Default = 2.
+
     interaction_only : boolean, default = False
         If true, only interaction features are produced: features that are
         products of at most ``degree`` *distinct* input features (so not
         ``x[1] ** 2``, ``x[0] * x[2] ** 3``, etc.).
+
     include_bias : boolean
         If True (default), then include a bias column, the feature in which
         all polynomial powers are zero (i.e. a column of ones - acts as an
@@ -440,8 +442,8 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     polynomially in the number of features of the input array, and
     exponentially in the degree. High degrees can cause overfitting.
 
-    See :ref:`examples/plot_polynomial_regression.py
-    <example_plot_polynomial_regression.py>`
+    See :ref:`examples/linear_model/plot_polynomial_regression.py
+    <example_linear_model_plot_polynomial_regression.py>`
     """
     def __init__(self, degree=2, interaction_only=False, include_bias=True):
         self.degree = degree

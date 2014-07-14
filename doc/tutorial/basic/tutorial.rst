@@ -189,7 +189,7 @@ which we have not used to train the classifier::
 
 The corresponding image is the following:
 
-.. image:: ../../auto_examples/datasets/images/plot_digits_last_image_1.png
+.. image:: ../../auto_examples/datasets/images/plot_digits_last_image_001.png
     :target: ../../auto_examples/datasets/plot_digits_last_image.html
     :align: center
     :scale: 50
@@ -233,4 +233,20 @@ and not to a string::
 
   >>> from sklearn.externals import joblib
   >>> joblib.dump(clf, 'filename.pkl') # doctest: +SKIP
+  
+Later you can load back the pickled model (possibly in another Python process)
+with::
+  
+  >>> clf = joblib.load('filename.pkl') # doctest:+SKIP
+
+.. note::
+
+   joblib.dump returns a list of filenames. Each individual numpy array
+   contained in the `clf` object is serialized as a separate file on the
+   filesystem. All files are required in the same folder when reloading the
+   model with joblib.load.
+
+Note that pickle has some security and maintainability issues. Please refer to
+section :ref:`model_persistence` for more detailed information about model
+persistence with scikit-learn.
 

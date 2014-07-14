@@ -22,7 +22,7 @@ Here is sketch of a system designed to achieve this goal:
   3. an incremental algorithm
 
 Streaming instances
-------------------
+-------------------
 Basically, 1. may be a reader that yields instances from files on a
 hard drive, a database, from a network stream etc. However, 
 details on how to achieve this are beyond the scope of this documentation.
@@ -95,7 +95,7 @@ systems and demonstrates most of the notions discussed above.
 Furthermore, it also shows the evolution of the performance of different
 algorithms with the number of processed examples.
 
-.. |accuracy_over_time| image::  ../auto_examples/applications/images/plot_out_of_core_classification_1.png
+.. |accuracy_over_time| image::  ../auto_examples/applications/images/plot_out_of_core_classification_001.png
     :target: ../auto_examples/applications/plot_out_of_core_classification.html
     :scale: 80
 
@@ -107,7 +107,7 @@ algorithms, `MultinomialNB` is the most expensive, but its overhead can be
 mitigated by increasing the size of the mini-batches (exercise: change 
 `minibatch_size` to 100 and 10000 in the program and compare). 
 
-.. |computation_time| image::  ../auto_examples/applications/images/plot_out_of_core_classification_3.png
+.. |computation_time| image::  ../auto_examples/applications/images/plot_out_of_core_classification_003.png
     :target: ../auto_examples/applications/plot_out_of_core_classification.html
     :scale: 80
 

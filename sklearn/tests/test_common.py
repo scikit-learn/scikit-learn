@@ -852,6 +852,7 @@ def check_regressors_train(name, Regressor, X, y):
         y_ = y_.T
     else:
         y_ = y
+    set_random_state(regressor)
     regressor.fit(X, y_)
     regressor.predict(X)
 

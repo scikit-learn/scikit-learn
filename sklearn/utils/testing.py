@@ -14,6 +14,7 @@ import warnings
 import sys
 import re
 import platform
+import os
 
 import scipy as sp
 import scipy.io
@@ -578,3 +579,16 @@ def clean_warning_registry():
     for mod in sys.modules.copy().values():
         if hasattr(mod, reg):
             getattr(mod, reg).clear()
+
+def check_skip_network():
+    if int(os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', 0)):
+        raise SkipTest("Text tutorial requires large dataset download")
+
+
+def check_skip_travis():
+    """Skip test if being run on Travis."""
+    if os.environ.get('TRAVIS') == "true":
+        raise SkipTest("This test needs to be skipped on Travis")
+
+with_network = with_setup(check_skip_network)
+with_travis = with_setup(check_skip_travis)

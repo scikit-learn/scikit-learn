@@ -10,6 +10,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import check_skip_travis
 
 
 from sklearn.linear_model import (orthogonal_mp, orthogonal_mp_gram,
@@ -188,6 +189,7 @@ def test_omp_path():
 
 
 def test_omp_cv():
+    check_skip_travis()
     y_ = y[:, 0]
     gamma_ = gamma[:, 0]
     ompcv = OrthogonalMatchingPursuitCV(normalize=True, fit_intercept=False,

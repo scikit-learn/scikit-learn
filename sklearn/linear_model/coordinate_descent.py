@@ -157,11 +157,11 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     fit_intercept : bool
         Fit or not an intercept.
-        WARNING : will be deprecated in 0.16
+        WARNING : deprecated, will be removed in 0.16.
 
     normalize : boolean, optional, default False
         If ``True``, the regressors X will be normalized before regression.
-        WARNING : will be deprecated in 0.16
+        WARNING : deprecated, will be removed in 0.16.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -325,11 +325,11 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     fit_intercept : bool
         Fit or not an intercept.
-        WARNING : will be deprecated in 0.16
+        WARNING : deprecated, will be removed in 0.16.
 
     normalize : boolean, optional, default False
         If ``True``, the regressors X will be normalized before regression.
-        WARNING : will be deprecated in 0.16
+        WARNING : deprecated, will be removed in 0.16.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -1098,7 +1098,8 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                                          dtype=np.float64)
                 for this_l1_ratio, this_alphas in zip(l1_ratios, alphas)
                 for train, test in folds)
-        mse_paths = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(jobs)
+        mse_paths = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
+                             backend="threading")(jobs)
         mse_paths = np.reshape(mse_paths, (n_l1_ratio, len(folds), -1))
         mean_mse = np.mean(mse_paths, axis=1)
         self.mse_path_ = np.squeeze(np.rollaxis(mse_paths, 2, 1))
@@ -1299,7 +1300,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         all the CPUs. Note that this is used only if multiple values for
         l1_ratio are given.
 
-    positive: bool, optional
+    positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
     Attributes
@@ -1483,9 +1484,9 @@ class MultiTaskElasticNet(Lasso):
 
         Parameters
         -----------
-        X: ndarray, shape = (n_samples, n_features)
+        X : ndarray, shape = (n_samples, n_features)
             Data
-        y: ndarray, shape = (n_samples, n_tasks)
+        y : ndarray, shape = (n_samples, n_tasks)
             Target
 
         Notes
@@ -1512,6 +1513,10 @@ class MultiTaskElasticNet(Lasso):
 
         n_samples, n_features = X.shape
         _, n_tasks = y.shape
+
+        if n_samples != y.shape[0]:
+            raise ValueError("X and y have inconsistent dimensions (%d != %d)"
+                             % (n_samples, y.shape[0]))
 
         X, y, X_mean, y_mean, X_std = center_data(
             X, y, self.fit_intercept, self.normalize, copy=False)

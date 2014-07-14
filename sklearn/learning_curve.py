@@ -4,14 +4,17 @@
 #
 # License: BSD 3 clause
 
-import numpy as np
 import warnings
+
+import numpy as np
+
 from .base import is_classifier, clone
 from .cross_validation import _check_cv
-from .utils import check_arrays
 from .externals.joblib import Parallel, delayed
 from .cross_validation import _safe_split, _score, _fit_and_score
 from .metrics.scorer import check_scoring
+from .utils import check_arrays
+from .utils.fixes import astype
 
 
 def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
@@ -175,8 +178,8 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
                              "must be within (0, 1], but is within [%f, %f]."
                              % (n_min_required_samples,
                                 n_max_required_samples))
-        train_sizes_abs = (train_sizes_abs
-                           * n_max_training_samples).astype(np.int)
+        train_sizes_abs = astype(train_sizes_abs * n_max_training_samples,
+                                 dtype=np.int, copy=False)
         train_sizes_abs = np.clip(train_sizes_abs, 1,
                                   n_max_training_samples)
     else:

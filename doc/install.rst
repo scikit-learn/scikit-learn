@@ -212,12 +212,13 @@ be found in the `Additional plugins <http://code.google.com/p/pythonxy/wiki/Addi
 page.
 
 
-Enthought Python distribution
+Canopy and Anaconda
 -----------------------------
 
-The `Enthought Python Distribution
-<http://www.enthought.com/products/epd.php>`_ already ships a recent
-version.
+`Canopy
+<http://www.enthought.com/products/canopy>`_ and `Anaconda
+<https://store.continuum.io/cshop/anaconda/>`_ ships a recent
+version, in addition to a large set of scientific python library.
 
 
 MacPorts
@@ -236,7 +237,7 @@ or::
 
 
 Arch Linux
----------
+----------
 
 Arch Linux's package is provided through the `official repositories
 <https://www.archlinux.org/packages/?q=scikit-learn>`_ as `python-scikit-learn`
@@ -295,7 +296,13 @@ Testing requires having the `nose
 installation, the package can be tested by executing *from outside* the
 source directory::
 
-    nosetests sklearn --exe
+   $ nosetests -v sklearn
+
+Under Windows, it is recommended to use the following command (adjust the path
+to the ``python.exe`` program) as using the ``nosetests.exe`` program can badly
+interact with tests that use ``multiprocessing``::
+
+   C:\Python34\python.exe -c "import nose; nose.main()" -v sklearn
 
 This should give you a lot of output (and some warnings) but
 eventually should finish with a message similar to::
