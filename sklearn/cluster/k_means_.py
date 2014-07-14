@@ -896,7 +896,8 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
                         % n_reassigns)
 
             if sp.issparse(X) and not sp.issparse(centers):
-                assign_rows_csr(X, new_centers,
+                assign_rows_csr(X,
+                                astype(new_centers, np.intp),
                                 astype(np.where(to_reassign)[0], np.intp),
                                 centers)
             else:
