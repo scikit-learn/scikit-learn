@@ -870,7 +870,8 @@ def test_non_unique_vocab():
 
 def test_hashingvectorizer_nan_in_docs():
     hv = HashingVectorizer()
-    assert_raises(ValueError, hv.fit_transform, ['hello world', np.nan, 'hello hello'])
+    assert_raises(ValueError, hv.fit_transform, ['hello world', np.nan,
+                                                 'hello hello'])
 
 
 def test_tfidfvectorizer_binary():
