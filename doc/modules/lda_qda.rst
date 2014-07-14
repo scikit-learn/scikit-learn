@@ -16,7 +16,7 @@ can be easily computed, are inherently multiclass,
 and have proven to work well in practice.
 Also there are no parameters to tune for these algorithms.
 
-.. |ldaqda| image:: ../auto_examples/images/plot_lda_qda_1.png
+.. |ldaqda| image:: ../auto_examples/images/plot_lda_qda_001.png
         :target: ../auto_examples/plot_lda_qda.html
         :scale: 80
 
