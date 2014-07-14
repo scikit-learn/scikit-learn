@@ -30,11 +30,6 @@ quadratic boundaries and is therefore more flexible.
 
     :ref:`example_classification_plot_lda_qda.py`: Comparison of LDA and QDA on synthetic data.
 
-.. topic:: References:
-
-     .. [3] "The Elements of Statistical Learning", Hastie T., Tibshirani R.,
-        Friedman J., 2008.
-
 
 Dimensionality reduction using LDA
 ==================================
@@ -64,3 +59,33 @@ This leads to a linear decision surface, as can be seen by comparing the the log
 
 In the case of QDA, there are no assumptions on the covariance matrices of the Gaussians,
 leading to a quadratic decision surface.
+
+
+Shrinkage
+=========
+
+Shrinkage is a tool to improve estimation of covariance matrices in situations
+where the number of training samples is small compared to the number of
+features. In this scenario, the empirical sample covariance is a poor estimator.
+Shrinkage LDA can be used by setting the ``use_covariance`` parameter of the
+:class:`lda.LDA` class to 'ledoit_wolf'. This automatically determines the
+optimal shrinkage parameter in an analytic way following the lemma introduced by
+Ledoit and Wolf.
+
+.. |shrinkage| image:: ../auto_examples/classification/images/plot_lda_001.png
+        :target: ../auto_examples/classification/plot_lda.html
+        :scale: 75
+
+.. centered:: |shrinkage|
+
+
+.. topic:: Examples:
+
+    :ref:`example_classification_plot_lda.py`: Comparison of LDA classifiers with and without shrinkage.
+
+.. topic:: References:
+
+    Hastie T, Tibshirani R, Friedman J. The Elements of Statistical Learning. Springer, 2009.
+
+    Ledoit O, Wolf M. Honey, I Shrunk the Sample Covariance Matrix. The Journal of Portfolio
+    Management 30(4), 110-119, 2004.
