@@ -59,8 +59,8 @@ def test_print_time():
         print_time(unicode('Foo'))
         printed_text = sys.stderr.getvalue()
         # Use regexps to be robust to time variations
-        match = r"Foo: 0\..s, 0\.0min\nFoo: 0\..s, 0.0min\nFoo: " + \
-                r".\..s, 0.0min\n"
+        match = r"Foo: 0\..s, 0\..min\nFoo: 0\..s, 0..min\nFoo: " + \
+                r".\..s, 0..min\n"
         if not re.match(match, printed_text):
             raise AssertionError('Excepted %s, got %s' %
                                     (match, printed_text))

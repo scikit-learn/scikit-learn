@@ -60,7 +60,7 @@ def bulk_benchmark_estimator(estimator, X_test, n_bulk_repeats, verbose):
         start = time.time()
         estimator.predict(X_test)
         runtimes[i] = time.time() - start
-    runtimes = np.array(map(lambda x: x / float(n_instances), runtimes))
+    runtimes = np.array(list(map(lambda x: x / float(n_instances), runtimes)))
     if verbose:
         print("bulk_benchmark runtimes:", min(runtimes), scoreatpercentile(
             runtimes, 50), max(runtimes))
@@ -206,7 +206,7 @@ def n_feature_influence(estimators, n_train, n_test, n_features, percentile):
     for n in n_features:
         print("benchmarking with %d features" % n)
         X_train, y_train, X_test, y_test = generate_dataset(n_train, n_test, n)
-        for cls_name, estimator in estimators.iteritems():
+        for cls_name, estimator in estimators.items():
             estimator.fit(X_train, y_train)
             gc.collect()
             runtimes = bulk_benchmark_estimator(estimator, X_test, 30, False)
@@ -218,8 +218,8 @@ def n_feature_influence(estimators, n_train, n_test, n_features, percentile):
 def plot_n_features_influence(percentiles, percentile):
     fig, ax1 = plt.subplots(figsize=(10, 6))
     colors = ['r', 'g', 'b']
-    for i, cls_name in enumerate(percentiles.iterkeys()):
-        x = np.array(sorted([n for n in percentiles[cls_name].iterkeys()]))
+    for i, cls_name in enumerate(percentiles.keys()):
+        x = np.array(sorted([n for n in percentiles[cls_name].keys()]))
         y = np.array([percentiles[cls_name][n] for n in x])
         plt.plot(x, y, color=colors[i], )
     ax1.yaxis.grid(True, linestyle='-', which='major', color='lightgrey',
@@ -228,7 +228,6 @@ def plot_n_features_influence(percentiles, percentile):
     ax1.set_title('Evolution of Prediction Time with #Features')
     ax1.set_xlabel('#Features')
     ax1.set_ylabel('Prediction Time at %d%%-ile (us)' % percentile)
-    ax1.legend()
     plt.show()
 
 
@@ -267,7 +266,6 @@ def plot_benchmark_throughput(throughputs, configuration):
     ax.set_ylabel('Throughput (predictions/sec)')
     ax.set_title('Prediction Throughput for different estimators (%d '
                  'features)' % configuration['n_features'])
-    ax.legend()
     plt.show()
 
 

@@ -3,8 +3,6 @@ from io import BytesIO
 import numpy as np
 import scipy.sparse
 
-import warnings
-
 from sklearn.datasets import load_digits
 from sklearn.cross_validation import cross_val_score
 
