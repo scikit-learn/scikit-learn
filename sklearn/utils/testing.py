@@ -154,13 +154,12 @@ def assert_warns(warning_class, func, *args, **kw):
         if not len(w) > 0:
             raise AssertionError("No warning raised when calling %s"
                                  % func.__name__)
-        found = False
-        for W in w:
-            found = found or W.category is warning_class
+
+        found = any(warning.category is warning_class for warning in w)
 
         if not found:
             raise AssertionError("%s did not give warning: %s( is %s)"
-                                 % (func.__name__, warning_class, w[0]))
+                                 % (func.__name__, warning_class, w))
 
     return result
 
