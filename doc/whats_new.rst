@@ -147,7 +147,7 @@ Enhancements
      scale up gracefully to large datasets. By `Lars Buitinck`_.
 
    - Added svd_method option with default value to "randomized" to
-     :class:`decomposition.factor_analysis.FactorAnalysis` to save memory and
+     :class:`decomposition.FactorAnalysis` to save memory and
      significantly speedup computation by `Denis Engemann`_, and
      `Alexandre Gramfort`_.
 
