@@ -89,7 +89,7 @@ def test_infomax_simple(add_noise=False):
             assert_almost_equal(np.dot(s2_, s2) / n_samples, 1, decimal=1)
 
         # Test FastICA class
-        _, _, sources_fun = infomax(m.T, extneded=extended, whiten=whiten,
+        _, _, sources_fun = infomax(m.T, extended=extended, whiten=whiten,
                                     random_state=0)
         ica = InfomaxICA(extended=extended, whiten=whiten, random_state=0)
         sources = ica.fit_transform(m.T)
@@ -126,9 +126,10 @@ def test_non_square_infomax(add_noise=False):
 
     center_and_norm(m)
 
-    k_, mixing_, s_ = infomax(m.T, n_components=2, random_state=rng)
-    s = s_.T
+    k_, mixing_, s_ = infomax(m.T, n_components=2, extended=True,
+                              random_state=rng)
     # Check that the mixing model described in the docstring holds:
+    s_ = s_.T
     assert_almost_equal(s_, np.dot(np.dot(mixing_, k_), m))
 
     center_and_norm(s_)

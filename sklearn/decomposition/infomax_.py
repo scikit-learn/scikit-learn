@@ -11,8 +11,7 @@ import math
 from scipy.stats import kurtosis
 
 from ..base import BaseEstimator, TransformerMixin
-from ..externals import six
-from ..externals.six import moves
+from . import RandomizedPCA
 from ..utils import array2d, as_float_array, check_random_state
 from ..utils.extmath import fast_dot
 
@@ -146,7 +145,7 @@ def infomax(X, n_components=None, weights=None, l_rate=None, block=None,
 
     # check data shape
     n_samples, n_features = X.shape
-    X = array2d(X, copy=whiten).T
+    X = array2d(X, copy=whiten)
 
     if not whiten and n_components is not None:
         n_components = None
@@ -159,25 +158,17 @@ def infomax(X, n_components=None, weights=None, l_rate=None, block=None,
         print("n_components is too large: it will be set to %s" % n_components)
 
     if whiten:
-        # Centering the columns (ie the variables)
-        X_mean = X.mean(axis=-1)
-        X -= X_mean[:, np.newaxis]
-
-        # Whitening and preprocessing by PCA
-        u, d, _ = linalg.svd(X, full_matrices=False)
-
-        del _
-        prewhitening = (u / d).T[:n_components]  # see (6.33) p.140
-        del u, d
-        X1 = np.dot(prewhitening, X)
-        # see (13.6) p.267 Here X1 is white and data
-        # in X has been projected onto a subspace by PCA
-        X1 *= np.sqrt(n_features)
+        pca = RandomizedPCA(n_components=n_components, whiten=True,
+                            copy=True, random_state=random_state)
+        X1 = pca.fit_transform(X)
+        X_mean = pca.mean_
+        prewhitening = pca.components_
+        exp_var = pca.explained_variance_
+        prewhitening *= np.sqrt(exp_var[:, None])
     else:
         # X must be casted to floats to avoid typing issues with numpy
         # 2.0 and the line below
         X1 = as_float_array(X, copy=False)  # copy has been taken care of
-    X1 = X1.T
     n_features = n_components
     n_features_square = n_features ** 2
     # check input parameter
@@ -196,7 +187,7 @@ def infomax(X, n_components=None, weights=None, l_rate=None, block=None,
     # initialize training
     if weights is None:
         # initialize weights as identity matrix
-        weights = np.identity(n_components, dtype=np.float64)
+        weights = np.identity(n_features, dtype=np.float64)
 
     BI = block * np.identity(n_features, dtype=np.float64)
     bias = np.zeros((n_features, 1), dtype=np.float64)
@@ -358,9 +349,11 @@ def infomax(X, n_components=None, weights=None, l_rate=None, block=None,
 
     del X1
     weights = weights.T
-    if whiten:
+    if whiten is True:
+        weights /= np.sqrt(exp_var)[None, :]
         if compute_sources:
-            sources = fast_dot(fast_dot(weights, prewhitening), X).T
+            X -= X_mean
+            sources = fast_dot(weights, fast_dot(prewhitening, X.T)).T
         else:
             sources = None
         if return_X_mean:
@@ -369,7 +362,7 @@ def infomax(X, n_components=None, weights=None, l_rate=None, block=None,
             return prewhitening, weights, sources
     else:
         if compute_sources:
-            sources = fast_dot(weights, X).T
+            sources = fast_dot(weights, X.T).T
         else:
             sources = None
         if return_X_mean:
