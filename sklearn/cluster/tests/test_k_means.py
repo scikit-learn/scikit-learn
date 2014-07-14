@@ -312,15 +312,49 @@ def test_minibatch_k_means_perfect_init_sparse_csr():
     _check_fitted_model(mb_k_means)
 
 
+def test_minibatch_sensible_reassign_fit():
+    # check if identical initial clusters are reassigned
+    # also a regression test for when there are more desired reassignments than
+    # samples.
+    zeroed_X, true_labels = make_blobs(n_samples=100, centers=5,
+                                       cluster_std=1., random_state=42)
+    zeroed_X[::2, :] = 0
+    mb_k_means = MiniBatchKMeans(n_clusters=20, batch_size=10, random_state=42,
+                                 verbose=10, init="random")
+    mb_k_means.fit(zeroed_X)
+    # there should not be too many exact zero cluster centers
+    assert_greater(mb_k_means.cluster_centers_.any(axis=1).sum(), 10)
+
+    # do the same with batch-size > X.shape[0] (regression test)
+    mb_k_means = MiniBatchKMeans(n_clusters=20, batch_size=201,
+                                 random_state=42, verbose=10, init="random")
+    mb_k_means.fit(zeroed_X)
+    # there should not be too many exact zero cluster centers
+    assert_greater(mb_k_means.cluster_centers_.any(axis=1).sum(), 10)
+
+
+def test_minibatch_sensible_reassign_partial_fit():
+    zeroed_X, true_labels = make_blobs(n_samples=n_samples, centers=5,
+                                       cluster_std=1., random_state=42)
+    zeroed_X[::2, :] = 0
+    mb_k_means = MiniBatchKMeans(n_clusters=20, random_state=42, verbose=10,
+                                 init="random")
+    for i in range(100):
+        mb_k_means.partial_fit(zeroed_X)
+    # there should not be too many exact zero cluster centers
+    assert_greater(mb_k_means.cluster_centers_.any(axis=1).sum(), 10)
+
+
 def test_minibatch_reassign():
     # Give a perfect initialization, but a large reassignment_ratio,
     # as a result all the centers should be reassigned and the model
     # should not longer be good
     for this_X in (X, X_csr):
-        mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, batch_size=1,
+        mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, batch_size=100,
                                      random_state=42)
         mb_k_means.fit(this_X)
-        centers_before = mb_k_means.cluster_centers_.copy()
+
+        score_before = mb_k_means.score(this_X)
         try:
             old_stdout = sys.stdout
             sys.stdout = StringIO()
@@ -329,32 +363,30 @@ def test_minibatch_reassign():
                              mb_k_means.cluster_centers_,
                              mb_k_means.counts_,
                              np.zeros(X.shape[1], np.double),
-                             False, distances=np.zeros(n_clusters),
+                             False, distances=np.zeros(X.shape[0]),
                              random_reassign=True, random_state=42,
                              reassignment_ratio=1, verbose=True)
         finally:
             sys.stdout = old_stdout
-        centers_after = mb_k_means.cluster_centers_.copy()
-        # Check that all the centers have moved
-        assert_greater(((centers_before - centers_after) ** 2)
-                       .sum(axis=1).min(), .2)
+        assert_greater(score_before, mb_k_means.score(this_X))
 
     # Give a perfect initialization, with a small reassignment_ratio,
     # no center should be reassigned
     for this_X in (X, X_csr):
-        mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, batch_size=1,
+        mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, batch_size=100,
                                      init=centers.copy(),
                                      random_state=42, n_init=1)
         mb_k_means.fit(this_X)
-        centers_before = mb_k_means.cluster_centers_.copy()
+        clusters_before = mb_k_means.cluster_centers_
         # Turn on verbosity to smoke test the display code
         _mini_batch_step(this_X, (X ** 2).sum(axis=1),
                          mb_k_means.cluster_centers_,
                          mb_k_means.counts_,
                          np.zeros(X.shape[1], np.double),
-                         False, distances=np.zeros(n_clusters),
+                         False, distances=np.zeros(X.shape[0]),
                          random_reassign=True, random_state=42,
                          reassignment_ratio=1e-15)
+        assert_array_almost_equal(clusters_before, mb_k_means.cluster_centers_)
 
 
 def test_minibatch_with_many_reassignments():
