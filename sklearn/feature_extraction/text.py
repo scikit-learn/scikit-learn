@@ -249,7 +249,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     - it is very low memory scalable to large datasets as there is no need to
       store a vocabulary dictionary in memory
 
-    - it is fast to pickle and un-pickle has it holds no state besides the
+    - it is fast to pickle and un-pickle as it holds no state besides the
       constructor parameters
 
     - it can be used in a streaming (partial fit) or parallel pipeline as there
@@ -426,7 +426,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         ----------
         X : iterable over raw text documents, length = n_samples
             Samples. Each sample must be a text document (either bytes or
-            unicode strings, filen ame or file object depending on the
+            unicode strings, file name or file object depending on the
             constructor argument) which will be tokenized and hashed.
 
         y : (ignored)
