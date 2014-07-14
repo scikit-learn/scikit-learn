@@ -8,9 +8,9 @@ import numpy as np
 import itertools
 from ..base import BaseEstimator
 from ..utils.validation import safe_asarray
-from sklearn.utils import check_random_state
+from ..utils import check_random_state
 
-from sklearn.random_projection import GaussianRandomProjection
+from ..random_projection import GaussianRandomProjection
 
 __all__ = ["LSHForest"]
 
@@ -105,7 +105,7 @@ class LSHForest(BaseEstimator):
         lowerest hash length to be searched when candidate selection is
         performed for nearest neighbors.
 
-    random_state: float, optional(default = 0)
+    random_state: float, optional(default = 1)
         A random value to initialize random number generator.
 
     Attributes
@@ -134,7 +134,7 @@ class LSHForest(BaseEstimator):
       >>> lshf = LSHForest()
       >>> lshf.fit(X)
       LSHForest(c=50, hashing_algorithm='random_projections', lower_bound=4,
-           max_label_length=32, n_neighbors=1, n_trees=10, seed=None)
+           max_label_length=32, n_neighbors=1, n_trees=10, random_state=None)
 
       >>> lshf.kneighbors(X[:5], n_neighbors=3, return_distance=True)
       (array([[0, 1, 2],
