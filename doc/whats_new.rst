@@ -157,7 +157,7 @@ Enhancements
 
    - Add ``min_weight_fraction_leaf`` pre-pruning parameter to tree-based
      methods: the minimum weighted fraction of the input samples required to be
-      at a leaf node. By `Noel Dawe`_.
+     at a leaf node. By `Noel Dawe`_.
 
    - Added :func:`metrics.pairwise_distances_argmin_min`, by Philippe Gervais.
 
