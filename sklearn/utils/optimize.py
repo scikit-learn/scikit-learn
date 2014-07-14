@@ -50,7 +50,7 @@ def _line_search_wolfe12(f, fprime, xk, pk, gfk, old_fval, old_old_fval,
     return ret
 
 
-def newton_cg(func_grad_hess, func, grad, x0, args=(), xtol=1e-5, eps=1e-4,
+def newton_cg(func_grad_hess, func, grad, x0, args=(), eps=1e-4, tol=1e-4,
               maxiter=100):
     """
     Minimization of scalar function of one or more variables using the
@@ -75,38 +75,40 @@ def newton_cg(func_grad_hess, func, grad, x0, args=(), xtol=1e-5, eps=1e-4,
     args: tuple, optional
         Arguments passed to func_grad_hess, func and grad.
 
-    xtol : float
-        Tolerance.
+    tol : float
+        Stopping criterion. The iteration will stop when
+        ``max{|g_i | i = 1, ..., n} <= tol``
+        where ``g_i`` is the i-th component of the gradient.
 
     eps : float, optional
         If fhess is approximated, use this value for the step size.
 
     maxiter : int
         Number of iterations.
-    """
-    avextol = xtol
 
+    Returns
+    -------
+    xk : float
+        Estimated minimum.
+    """
     x0 = np.asarray(x0).flatten()
-    xtol = len(x0) * avextol
-    update = [2 * xtol]
     xk = x0
-    k = 0
+    k = 1
     old_fval = func(x0, *args)
     old_old_fval = None
 
     # Outer loop: our Newton iteration
-    while np.sum(np.abs(update)) > xtol:
-
-        # Early stopping
-        if k > maxiter:
-            warnings.warn("newton-cg failed to converge. Increase the "
-                          "number of iterations.")
-            break
+    while k <= maxiter:
 
         # Compute a search direction pk by applying the CG method to
         #  del2 f(xk) p = - fgrad f(xk) starting from 0.
         fval, fgrad, fhess_p = func_grad_hess(xk, *args)
-        maggrad = np.sum(np.abs(fgrad))
+
+        absgrad = np.abs(fgrad)
+        if np.max(absgrad) < tol:
+            break
+
+        maggrad = np.sum(absgrad)
         eta = min([0.5, np.sqrt(maggrad)])
         termcond = eta * maggrad
         xsupi = np.zeros(len(x0), dtype=x0.dtype)
@@ -151,6 +153,9 @@ def newton_cg(func_grad_hess, func, grad, x0, args=(), xtol=1e-5, eps=1e-4,
         xk = xk + update        # upcast if necessary
         k += 1
 
+    if k > maxiter:
+        warnings.warn("newton-cg failed to converge. Increase the "
+                      "number of iterations.")
     return xk
 
 

@@ -367,9 +367,9 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
         elif solver == 'newton-cg':
             grad = lambda x, *args: _logistic_loss_and_grad(x, *args)[1]
-            w0 = newton_cg(_logistic_loss_grad_hess, _logistic_loss, grad,
-                           w0, args=(X, y, 1. /C, sample_weight),
-                           maxiter=max_iter, xtol=tol)
+            w0 = newton_cg(_logistic_loss_grad_hess, _logistic_loss, grad, w0,
+                           args=(X, y, 1. / C, sample_weight),
+                           maxiter=max_iter, tol=tol)
         elif solver == 'liblinear':
             lr = LogisticRegression(C=C, fit_intercept=fit_intercept, tol=tol,
                                     class_weight=class_weight, dual=dual,
@@ -452,6 +452,19 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         Dual or primal formulation. Dual formulation is only implemented for
         l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
+
+    Returns
+    -------
+    coefs : ndarray, shape (n_cs, n_features) or (n_cs, n_features + 1)
+        List of coefficients for the Logistic Regression model. If
+        fit_intercept is set to True then the second dimension will be
+        n_features + 1, where the last item represents the intercept.
+
+    Cs : ndarray
+        Grid of Cs used for cross-validation.
+
+    scores : ndarray, shape (n_cs,)
+        Scores obtained for each Cs.
     """
 
     log_reg = LogisticRegression(fit_intercept=fit_intercept)
