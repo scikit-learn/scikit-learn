@@ -109,6 +109,10 @@ class VectorizerMixin(object):
 
         if isinstance(doc, bytes):
             doc = doc.decode(self.encoding, self.decode_error)
+
+        if doc is np.nan:
+            raise ValueError("np.nan is an invalid document, expected byte or unicode string.")
+
         return doc
 
     def _word_ngrams(self, tokens, stop_words=None):
