@@ -8,7 +8,6 @@ from .dict_vectorizer import DictVectorizer
 from .hashing import FeatureHasher
 from .image import img_to_graph, grid_to_graph
 from . import text
-from .lshashing import RandomProjections
 
 __all__ = ['DictVectorizer', 'image', 'img_to_graph', 'grid_to_graph', 'text',
-           'FeatureHasher', 'RandomProjections']
+           'FeatureHasher']
