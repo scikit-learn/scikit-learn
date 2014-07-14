@@ -38,7 +38,8 @@ except ImportError:
         See sklearn.utils.extmath.log_logistic for the log of this function.
         """
         if out is None:
-            out = np.copy(x)
+            out = np.empty(np.atleast_1d(x).shape, dtype=np.float64)
+        out[:] = x
 
         # 1 / (1 + exp(-x)) = (1 + tanh(x / 2)) / 2
         # This way of computing the logistic is both fast and stable.
@@ -47,7 +48,7 @@ except ImportError:
         out += 1
         out *= .5
 
-        return out
+        return out.reshape(np.shape(x))
 
 
 # little danse to see if np.copy has an 'order' keyword argument
