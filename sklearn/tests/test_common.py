@@ -31,6 +31,7 @@ from sklearn.utils.testing import meta_estimators
 from sklearn.utils.testing import set_random_state
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import check_skip_travis
 
 import sklearn
 from sklearn.base import (clone, ClassifierMixin, RegressorMixin,
@@ -794,6 +795,9 @@ def test_regressors_int():
     for name, Regressor in regressors:
         if name in dont_test or name in ('CCA'):
             continue
+        elif name in ('OrthogonalMatchingPursuitCV'):
+            # FIXME: This test is unstable on Travis, see issue #3190.
+            check_skip_travis()
         yield (check_regressors_int, name, Regressor, X,
                multioutput_estimator_convert_y_2d(name, y))
 
