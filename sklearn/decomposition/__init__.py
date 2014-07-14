@@ -10,6 +10,7 @@ from .kernel_pca import KernelPCA
 from .sparse_pca import SparsePCA, MiniBatchSparsePCA
 from .truncated_svd import TruncatedSVD
 from .fastica_ import FastICA, fastica
+from .infomax_ import InfomaxICA, infomax
 from .dict_learning import (dict_learning, dict_learning_online, sparse_encode,
                             DictionaryLearning, MiniBatchDictionaryLearning,
                             SparseCoder)
@@ -18,6 +19,7 @@ from ..utils.extmath import randomized_svd
 
 __all__ = ['DictionaryLearning',
            'FastICA',
+           'InfomaxICA'
            'KernelPCA',
            'MiniBatchDictionaryLearning',
            'MiniBatchSparsePCA',
