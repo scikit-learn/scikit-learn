@@ -14,6 +14,7 @@ import traceback
 import inspect
 import pickle
 import pkgutil
+import struct
 
 import numpy as np
 from scipy import sparse
@@ -198,7 +199,22 @@ def test_transformers():
         yield check_transformer, name, Transformer, X, y
 
 
+def _is_32bit_windows():
+    """Detect if process is 32bit Python running on Windows."""
+    return sys.platform == 'win32' and struct.calcsize('P') * 8 == 32
+
+
 def check_transformer(name, Transformer, X, y):
+    if (name in ('CCA', 'LocallyLinearEmbedding', 'KernelPCA')
+        and _is_32bit_windows()):
+        # Those transformers yield non-deterministic output on Windows
+        # with a 32bit Python. The same transformers are stable with 32bit
+        # Python on other platforms or 64bit Python under Windows.
+        # FIXME: try to isolate a minimalistic reproduction case only depending
+        # on numpy & scipy
+        msg = name + ' is non deterministic on 32bit Python for Windows'
+        raise SkipTest(msg)
+
     n_samples, n_features = X.shape
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
