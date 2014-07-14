@@ -136,8 +136,14 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         Specified theta OR the best set of autocorrelation parameters (the \
         sought maximizer of the reduced likelihood function).
 
-    `reduced_likelihood_function_value_`: array
-        The optimal reduced likelihood function value.
+    `reduced_likelihood_function_value_`: array (DEPRECATED)
+        The optimal reduced likelihood function value.  Will be removed in the
+        future since the internal choice of the parameters is now based on the
+        posterior.
+
+    `posterior_function_value_`: array
+        The optimal (average log) posterior value found during optimization
+        of theta.
 
     Examples
     --------
@@ -298,9 +304,13 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             if self.verbose:
                 print("Performing Maximum Likelihood Estimation of the "
                       "autocorrelation parameters...")
-            self.theta_, self.reduced_likelihood_function_value_, par = \
-                self._arg_max_reduced_likelihood_function()
-            if np.isinf(self.reduced_likelihood_function_value_):
+            self.theta_, self.posterior_function_value_, par = \
+                self._arg_max_posterior()
+            # compute reduced_likelihood_function_value_ for backward
+            # compatibility
+            self.reduced_likelihood_function_value_, _ = \
+                self.reduced_likelihood_function()
+            if np.isinf(self.posterior_function_value_):
                 raise Exception("Bad parameter region. "
                                 "Try increasing upper bound")
 
@@ -312,7 +322,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             self.theta_ = self.theta0
             self.reduced_likelihood_function_value_, par = \
                 self.reduced_likelihood_function()
-            if np.isinf(self.reduced_likelihood_function_value_):
+            self.posterior_function_value_ = \
+                self.reduced_likelihood_function_value_ \
+                + self.corr.log_prior(self.theta_)
+            if np.isinf(self.posterior_function_value_):
                 raise Exception("Bad point. Try increasing theta0.")
 
         self.beta = par['beta']
@@ -420,8 +433,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                         print("This GaussianProcess used 'light' storage mode "
                               "at instantiation. Need to recompute "
                               "autocorrelation matrix...")
-                    reduced_likelihood_function_value, par = \
-                        self.reduced_likelihood_function()
+                    _, par = self.reduced_likelihood_function()
                     self.C = par['C']
                     self.Ft = par['Ft']
                     self.G = par['G']
@@ -602,11 +614,11 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         return reduced_likelihood_function_value, par
 
-    def _arg_max_reduced_likelihood_function(self):
+    def _arg_max_posterior(self):
         """
         This function estimates the autocorrelation parameters theta as the
-        maximizer of the reduced likelihood function.
-        (Minimization of the opposite reduced likelihood function is used for
+        maximizer of the posterior function.
+        (Minimization of the opposite posterior function is used for
         convenience)
 
         Parameters
@@ -617,18 +629,17 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         -------
         optimal_theta : array_like
             The best set of autocorrelation parameters (the sought maximizer of
-            the reduced likelihood function).
+            the posterior function).
 
-        optimal_reduced_likelihood_function_value : double
-            The optimal reduced likelihood function value.
+        best_optimal_posterior_value : double
+            The optimal (log average) posterior value.
 
         optimal_par : dict
-            The BLUP parameters associated to thetaOpt.
+            The BLUP parameters associated to optimal_theta.
         """
-
         # Initialize output
         best_optimal_theta = None
-        best_optimal_rlf_value = -np.inf
+        best_optimal_posterior_value = -np.inf
         best_optimal_par = None
 
         if self.verbose:
@@ -644,9 +655,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         if self.optimizer != 'Welch':
 
-            def minus_reduced_likelihood_function(log10t):
-                return - self.reduced_likelihood_function(
-                    theta=10. ** log10t)[0]
+            def minus_average_log_posterior(log10t):
+                theta = 10. ** log10t
+                log_likelihood_avg = \
+                    self.reduced_likelihood_function(theta=theta)[0]
+                log_prior_avg = self.corr.log_prior(theta)
+                return -(log_likelihood_avg + log_prior_avg)
 
             if self.optimizer == 'fmin_cobyla':
                 constraints = []
@@ -673,12 +687,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                     if self.optimizer == 'fmin_cobyla':
                         log10_optimal_theta = \
                             optimize.fmin_cobyla(
-                                minus_reduced_likelihood_function,
+                                minus_average_log_posterior,
                                 x0=np.log10(theta0), cons=constraints,
                                 iprint=0)
                     else:
                         log10_optimal_theta = \
-                            self.optimizer(minus_reduced_likelihood_function,
+                            self.optimizer(minus_average_log_posterior,
                                            np.log10(theta0),
                                            np.log10(self.thetaL),
                                            np.log10(self.thetaU))
@@ -687,17 +701,18 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                     raise
 
                 optimal_theta = 10. ** log10_optimal_theta
-                optimal_rlf_value, optimal_par = \
+                optimal_posterior_value, optimal_par = \
                     self.reduced_likelihood_function(theta=optimal_theta)
+                optimal_posterior_value += self.corr.log_prior(optimal_theta)
 
                 # Compare the new optimizer to the best previous one
                 if k > 0:
-                    if optimal_rlf_value > best_optimal_rlf_value:
-                        best_optimal_rlf_value = optimal_rlf_value
+                    if optimal_posterior_value > best_optimal_posterior_value:
+                        best_optimal_posterior_value = optimal_posterior_value
                         best_optimal_par = optimal_par
                         best_optimal_theta = optimal_theta
                 else:
-                    best_optimal_rlf_value = optimal_rlf_value
+                    best_optimal_posterior_value = optimal_posterior_value
                     best_optimal_par = optimal_par
                     best_optimal_theta = optimal_theta
                 if self.verbose and self.random_start > 1:
@@ -705,12 +720,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                         percent_completed = (20 * k) / self.random_start
                         print("%s completed" % (5 * percent_completed))
 
-            optimal_rlf_value = best_optimal_rlf_value
+            optimal_posterior_value = best_optimal_posterior_value
             optimal_par = best_optimal_par
             optimal_theta = best_optimal_theta
-
         elif self.optimizer == 'Welch':
-
             # Backup of the given atrributes
             theta0, thetaL, thetaU = self.theta0, self.thetaL, self.thetaU
             corr = self.corr
@@ -726,8 +739,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             self.theta0 = np.atleast_1d(self.theta0.min())
             self.thetaL = np.atleast_1d(self.thetaL.min())
             self.thetaU = np.atleast_1d(self.thetaU.max())
-            theta_iso, optimal_rlf_value_iso, par_iso = \
-                self._arg_max_reduced_likelihood_function()
+            theta_iso, optimal_posterior_value_iso, par_iso = \
+                self._arg_max_posterior()
             optimal_theta = theta_iso + np.zeros(theta0.shape)
 
             # Iterate over all dimensions of theta allowing for anisotropy
@@ -747,22 +760,20 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                                           ), X)
 
                 self.corr = corr_cut
-                optimal_theta[i], optimal_rlf_value, optimal_par = \
-                    self._arg_max_reduced_likelihood_function()
+                optimal_theta[i], optimal_posterior_value, optimal_par = \
+                    self._arg_max_posterior()
 
             # Restore the given atrributes
             self.theta0, self.thetaL, self.thetaU = theta0, thetaL, thetaU
             self.corr = corr
             self.optimizer = 'Welch'
             self.verbose = verbose
-
         else:
-
             raise NotImplementedError("This optimizer ('%s') is not "
                                       "implemented yet. Please contribute!"
                                       % self.optimizer)
 
-        return optimal_theta, optimal_rlf_value, optimal_par
+        return optimal_theta, optimal_posterior_value, optimal_par
 
     def _check_params(self, n_samples=None):
 

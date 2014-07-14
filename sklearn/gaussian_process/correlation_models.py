@@ -152,6 +152,27 @@ class StationaryCorrelation(with_metaclass(ABCMeta, object)):
             R[self.ij[:, 1], self.ij[:, 0]] = r
             return R
 
+    def log_prior(self, theta):
+        """ Returns the (log) prior probability of parameters theta.
+
+        The prior is assumed to be uniform over the parameter space.
+        NOTE: The returned quantity is an improper prior as its integral over
+              the parameter space is not equal to 1.
+
+        Parameters
+        ----------
+        theta : array_like, shape=(1,) or (n_features,)
+            An array with shape 1 (isotropic) or n_features (anisotropic)
+            giving the autocorrelation parameter(s).
+
+        Returns
+        -------
+        log_p : float
+            The (log) prior probability of parameters theta. An improper
+            probability.
+        """
+        return 0
+
     @abstractmethod
     def _compute_corr(self, theta, d, n_features):
         """ Correlation for given pairwise, component-wise L1-differences.
