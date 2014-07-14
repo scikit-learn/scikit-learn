@@ -5,25 +5,72 @@
 0.15
 =====
 
+Highlights
+-----------
+
+   - Many speed and memory improvements all across the code
+
+   - Huge speed and memory improvements to random forests (and extra
+     trees) that also benefit better from parallel computing.
+
+   - Incremental fit to :class:`BernoulliRBM <neural_network.BernoulliRBM>`
+     :class:`GaussianNB <naive_bayes.GaussianNB>`
+
+   - Added :class:`cluster.AgglomerativeClustering` for hierarchical
+     agglomerative clustering with average linkage, complete linkage and
+     ward strategies.
+
+   - Added :class:`linear_model.RANSACRegressor` for robust regression
+     models.
+
+
 Changelog
 ---------
-   - The ``img_to_graph`` and ``grid_tograph`` functions in
-     :mod:`sklearn.feature_extraction.image` now return ``np.ndarray``
-     instead of ``np.matrix`` when ``return_as=np.ndarray``.  See the
-     Notes section for more information on compatibility.
 
-   - The :ref:`Working With Text Data <text_data_tutorial>` tutorial
-     has now been worked in to the main documentation's tutorial section.
-     Includes exercises and skeletons for tutorial presentation.
-     Original tutorial created by several authors including
-     `Olivier Grisel`_, Lars Buitinck and many others.
-     Tutorial integration into the scikit-learn documentation
-     by `Jaques Grobler`_
+New features
+............
 
    - Added :class:`ensemble.BaggingClassifier` and
      :class:`ensemble.BaggingRegressor` meta-estimators for ensembling
      any kind of base estimator. See the :ref:`Bagging <bagging>` section of
      the user guide for details and examples. By `Gilles Louppe`_.
+
+   - New unsupervised feature selection algorithm
+     :class:`feature_selection.VarianceThreshold`, by `Lars Buitinck`_.
+
+   - Added :class:`linear_model.RANSACRegressor` meta-estimator for the robust
+     fitting of regression models. By Johannes Schönberger.
+
+   - Added :class:`cluster.AgglomerativeClustering` for hierarchical
+     agglomerative clustering with average linkage, complete linkage and
+     ward strategies, by  `Nelle Varoquaux`_ and `Gael Varoquaux`_.
+
+   - Shorthand constructors :func:`pipeline.make_pipeline` and
+     :func:`pipeline.make_union` were added by `Lars Buitinck`_.
+
+   - Shuffle option for :class:`cross_validation.StratifiedKFold`.
+     By `Jeffrey Blackburne`_.
+
+   - Incremental learning (``partial_fit``) for Gaussian Naive Bayes by
+     Imran Haque.
+
+   - Added ``partial_fit`` to :class:`BernoulliRBM
+     <neural_network.BernoulliRBM>`
+     By `Danny Sullivan`_.
+
+   - Added :func:`learning_curve <learning_curve.learning_curve>` utility to
+     chart performance with respect to training size. See
+     :ref:`example_plot_learning_curve.py`. By Alexander Fabisch.
+
+   - Add positive option in :class:`LassoCV <linear_model.LassoCV>` and
+     :class:`ElasticNetCV <linear_model.ElasticNetCV>`.
+     By Brian Wignall and `Alexandre Gramfort`_.
+
+   - Added :class:`linear_model.MultiTaskElasticNetCV` and
+     :class:`linear_model.MultiTaskLassoCV`. By `Manoj Kumar`_.
+
+Enhancements
+............
 
    - Add sparse input support to :class:`ensemble.AdaBoostClassifier` and
      :class:`ensemble.AdaBoostRegressor` meta-estimators.
@@ -47,6 +94,11 @@ Changelog
      to speed improvement of the tree, forest and gradient boosting tree
      modules. By `Arnaud Joly`_
 
+   - The ``img_to_graph`` and ``grid_tograph`` functions in
+     :mod:`sklearn.feature_extraction.image` now return ``np.ndarray``
+     instead of ``np.matrix`` when ``return_as=np.ndarray``.  See the
+     Notes section for more information on compatibility.
+
    - Changed the internal storage of decision trees to use a struct array.
      This fixed some small bugs, while improving code and providing a small
      speed gain. By `Joel Nothman`_.
@@ -64,13 +116,6 @@ Changelog
      a ``max_leaf_nodes`` argument to fit GBM style trees,
      a ``monitor`` fit argument to inspect the estimator during training, and
      refactoring of the verbose code. By `Peter Prettenhofer`_.
-
-   - Fixed bug in :class:`gradient_boosting.GradientBoostingRegressor` with
-     ``loss='huber'``: ``gamma`` might have not been initialized.
-
-   - Fixed feature importances as computed with a forest of randomized trees
-     when fit with ``sample_weight != None`` and/or with ``bootstrap=True``.
-     By `Gilles Louppe`_.
 
    - Faster :class:`sklearn.ensemble.ExtraTrees` by caching feature values.
      By `Arnaud Joly`_.
@@ -93,9 +138,6 @@ Changelog
      library by `Denis Engemann`_, and `Alexandre Gramfort`_.
      In particular, they should take less memory with older NumPy versions
      (prior to 1.7.2).
-
-   - New unsupervised feature selection algorithm
-     :class:`feature_selection.VarianceThreshold`, by `Lars Buitinck`_.
 
    - Precision-recall and ROC examples now use train_test_split, and have more
      explanation of why these metrics are useful. By `Kyle Kastner`_
@@ -122,16 +164,6 @@ Changelog
      `Lars Buitinck`_. In particular, the k-means algorithm no longer
      needs a temporary data structure the size of its input.
 
-   - Added :class:`linear_model.RANSACRegressor` meta-estimator for the robust
-     fitting of regression models. By Johannes Schönberger.
-
-   - Added :ref:`Computational Performance <computational_performance>`
-     documentation. Discussion and examples of prediction latency / throughput
-     and different factors that have influence over speed. Additional tips for
-     building faster models and choosing a relevant compromise between speed
-     and predictive power.
-     By `Eustache Diemert`_.
-
    - :class:`dummy.DummyClassifier` can now be used to predict a constant
      output value. By `Manoj Kumar`_.
 
@@ -139,49 +171,9 @@ Changelog
      to predict the mean, the median of the training set or a constant
      output value. By `Maheshakya Wijewardena`_.
 
-   - Fixed bug in :class:`decomposition.MiniBatchDictionaryLearning` :
-     ``partial_fit`` was not working properly.
-
    - Multi-label classification output in multilabel indicator format
      is now supported by :func:`metrics.roc_auc_score` and
      :func:`metrics.average_precision_score` by `Arnaud Joly`_.
-
-   - Fixed bug in :class:`linear_model.stochastic_gradient` :
-     ``l1_ratio`` was used as ``(1.0 - l1_ratio)`` .
-
-   - Fixed bug in :class:`multiclass.OneVsOneClassifier` with string
-     labels
-
-   - Shorthand constructors :func:`pipeline.make_pipeline` and
-     :func:`pipeline.make_union` were added by `Lars Buitinck`_.
-
-   - Added :func:`learning_curve <learning_curve.learning_curve>` utility to
-     chart performance with respect to training size. See
-     :ref:`example_plot_learning_curve.py`. By Alexander Fabisch.
-
-   - Add positive option in :class:`LassoCV <linear_model.LassoCV>` and
-     :class:`ElasticNetCV <linear_model.ElasticNetCV>`.
-     By Brian Wignall and `Alexandre Gramfort`_.
-
-   - Fixed a bug in :class:`LassoCV <linear_model.LassoCV>` and
-     :class:`ElasticNetCV <linear_model.ElasticNetCV>`: they would not
-     pre-compute the Gram matrix with ``precompute=True`` or
-     ``precompute="auto"`` and ``n_samples > n_features``. By `Manoj Kumar`_.
-
-   - Fixed a race condition in parallel processing with
-     ``pre_dispatch != "all"`` (for instance in ``cross_val_score``).
-     By `Olivier Grisel`_.
-
-   - Added :class:`linear_model.MultiTaskElasticNetCV` and
-     :class:`linear_model.MultiTaskLassoCV`. By `Manoj Kumar`_.
-
-   - Added :class:`cluster.AgglomerativeClustering` for hierarchical
-     agglomerative clustering with average linkage, complete linkage and
-     ward strategies, by  `Nelle Varoquaux`_ and `Gael Varoquaux`_.
-
-   - Fixed incorrect estimation of the degrees of freedom in
-     :func:`feature_selection.f_regression` when variates are not centered.
-     By `Virgile Fritsch`_.
 
    - Significant performance improvements (more than 100x speedup for
      large problems) in :class:`isotonic.IsotonicRegression` by
@@ -190,14 +182,6 @@ Changelog
    - Speed and memory usage improvements to the SGD algorithm for linear
      models: it now uses threads, not separate processes, when ``n_jobs>1``.
      By `Lars Buitinck`_.
-
-   - Added ``partial_fit`` to :class:`BernoulliRBM
-     <neural_network.BernoulliRBM>`
-     By `Danny Sullivan`_.
-
-   - Raise error in :class:`cluster.FeatureAgglomeration` and
-     :class:`cluster.WardAgglomeration` when no samples are given,
-     rather than returning meaningless clustering.
 
    - Grid search and cross validation allow NaNs in the input arrays so that
      preprocessors such as :class:`preprocessing.Imputer
@@ -224,15 +208,62 @@ Changelog
      :func:`metrics.r2_score`.
      By `Noel Dawe`_.
 
-   - Shuffle option for :class:`cross_validation.StratifiedKFold`.
-     By `Jeffrey Blackburne`_.
-
-   - Incremental learning (``partial_fit``) for Gaussian Naive Bayes by
-     Imran Haque.
-
    - Speed up of the sample generator
      :func:`datasets.make_multilabel_classification`. By `Joel Nothman`_.
 
+Documentation improvements
+...........................
+
+   - The :ref:`Working With Text Data <text_data_tutorial>` tutorial
+     has now been worked in to the main documentation's tutorial section.
+     Includes exercises and skeletons for tutorial presentation.
+     Original tutorial created by several authors including
+     `Olivier Grisel`_, Lars Buitinck and many others.
+     Tutorial integration into the scikit-learn documentation
+     by `Jaques Grobler`_
+
+   - Added :ref:`Computational Performance <computational_performance>`
+     documentation. Discussion and examples of prediction latency / throughput
+     and different factors that have influence over speed. Additional tips for
+     building faster models and choosing a relevant compromise between speed
+     and predictive power.
+     By `Eustache Diemert`_.
+
+Bug fixes
+.........
+
+   - Fixed bug in :class:`decomposition.MiniBatchDictionaryLearning` :
+     ``partial_fit`` was not working properly.
+
+   - Fixed bug in :class:`linear_model.stochastic_gradient` :
+     ``l1_ratio`` was used as ``(1.0 - l1_ratio)`` .
+
+   - Fixed bug in :class:`multiclass.OneVsOneClassifier` with string
+     labels
+
+   - Fixed a bug in :class:`LassoCV <linear_model.LassoCV>` and
+     :class:`ElasticNetCV <linear_model.ElasticNetCV>`: they would not
+     pre-compute the Gram matrix with ``precompute=True`` or
+     ``precompute="auto"`` and ``n_samples > n_features``. By `Manoj Kumar`_.
+
+   - Fixed incorrect estimation of the degrees of freedom in
+     :func:`feature_selection.f_regression` when variates are not centered.
+     By `Virgile Fritsch`_.
+
+   - Fixed a race condition in parallel processing with
+     ``pre_dispatch != "all"`` (for instance in ``cross_val_score``).
+     By `Olivier Grisel`_.
+
+   - Raise error in :class:`cluster.FeatureAgglomeration` and
+     :class:`cluster.WardAgglomeration` when no samples are given,
+     rather than returning meaningless clustering.
+
+   - Fixed bug in :class:`gradient_boosting.GradientBoostingRegressor` with
+     ``loss='huber'``: ``gamma`` might have not been initialized.
+
+   - Fixed feature importances as computed with a forest of randomized trees
+     when fit with ``sample_weight != None`` and/or with ``bootstrap=True``.
+     By `Gilles Louppe`_.
 
 API changes summary
 -------------------
