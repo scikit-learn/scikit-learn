@@ -793,16 +793,16 @@ def test_regressors_int():
     rnd = np.random.RandomState(0)
     y = rnd.randint(3, size=X.shape[0])
     for name, Regressor in regressors:
-        if name in dont_test or name in ('CCA'):
+        if name in dont_test or name == 'CCA':
             continue
-        elif name in ('OrthogonalMatchingPursuitCV'):
-            # FIXME: This test is unstable on Travis, see issue #3190.
-            check_skip_travis()
         yield (check_regressors_int, name, Regressor, X,
                multioutput_estimator_convert_y_2d(name, y))
 
 
 def check_regressors_int(name, Regressor, X, y):
+    if name == 'OrthogonalMatchingPursuitCV':
+        # FIXME: This test is unstable on Travis, see issue #3190.
+        check_skip_travis()
     rnd = np.random.RandomState(0)
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
