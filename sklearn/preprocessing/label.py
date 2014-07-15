@@ -116,6 +116,12 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         -------
         self : returns an instance of self.
         """
+        # Check new_labels parameter
+        if self.new_labels not in ["update", "nan", "raise", "label"]:
+            # Raise on invalid argument.
+                raise ValueError("Value of argument `new_labels`={0} "
+                                 "is unknown.".format(self.new_labels))
+
         y = column_or_1d(y, warn=True)
         _check_numpy_unicode_bug(y)
         self.classes_ = np.unique(y)
@@ -133,6 +139,12 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         -------
         y : array-like of shape [n_samples]
         """
+        # Check new_labels parameter
+        if self.new_labels not in ["update", "nan", "raise", "label"]:
+            # Raise on invalid argument.
+                raise ValueError("Value of argument `new_labels`={0} "
+                                 "is unknown.".format(self.new_labels))
+
         y = column_or_1d(y, warn=True)
         _check_numpy_unicode_bug(y)
         self.classes_, y = np.unique(y, return_inverse=True)
