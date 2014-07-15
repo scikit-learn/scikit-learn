@@ -20,6 +20,27 @@ from sklearn.metrics import euclidean_distances
 from sklearn.neighbors import LSHForest
 
 
+mask_length = 7
+left_masks = np.array([int('000000', 2), int('100000', 2),
+                       int('110000', 2), int('111000', 2),
+                       int('111100', 2), int('111110', 2),
+                       int('111111', 2)])
+right_masks = np.array([int('111111', 2), int('011111', 2),
+                        int('001111', 2), int('000111', 2),
+                        int('000011', 2), int('000001', 2),
+                        int('000000', 2)])
+
+test_strings = np.array(['000001', '001010', '001101',
+                         '001110', '001111', '100001',
+                         '101001', '101010'])
+
+test_array = np.zeros(test_strings.shape[0], dtype=int)
+for i in range(test_array.shape[0]):
+    test_array[i] = int(test_strings[i], 2)
+
+test_value = int('001110', 2)
+
+
 def test_neighbors_accuracy_with_c():
     """Accuracy increases as `c` increases."""
     c_values = np.array([10, 50, 250])
