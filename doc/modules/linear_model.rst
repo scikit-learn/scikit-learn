@@ -647,22 +647,31 @@ Logistic regression
 Logistic regression, despite its name, is a linear model for classification
 rather than regression. Logistic regression is also known in the literature as
 logit regression, maximum-entropy classification (MaxEnt)
-or the log-linear classifier.
+or the log-linear classifier. In this model, the probabilities describing the possible outcomes of a single trial are modeled using a `logistic function <http://en.wikipedia.org/wiki/Logistic_function>`_.
 
-The :class:`LogisticRegression` class can be used to do L1 or L2 penalized
-logistic regression. Binary class L2 penalized logistic regression can be 
-formulated as the solution to the optimization problem
+The implementation of logistic regression in scikit-learn can be accessed from 
+class :class:`LogisticRegression`. This 
+implementation can fit a multiclass (one-vs-rest) logistic regression with optional
+L2 or L1 regularization. 
 
-.. math:: \underset{w, c}{min\,} \frac{1}{2}w^T w + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) 
+As an optimization problem, binary class L2 penalized logistic regression minimizes
+the following cost function:
+
+.. math:: \underset{w, c}{min\,} \frac{1}{2}w^T w + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
 
 Similarly, L1 regularized logistic regression solves the following optimization problem
 
-.. math:: \underset{w, c}{min\,} \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) 
+.. math:: \underset{w, c}{min\,} \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
 
 L1 penalization yields sparse predicting weights.
 For L1 penalization :func:`sklearn.svm.l1_min_c` allows to calculate
 the lower bound for C in order to get a non "null" (all feature weights to
 zero) model.
+
+The implementation of Logistic Regression relies on the excellent
+`LIBLINEAR library <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_,
+which is shipped with scikit-learn.
+
 
 .. topic:: Examples:
 
@@ -675,6 +684,7 @@ zero) model.
    A logistic regression with L1 penalty yields sparse models, and can
    thus be used to perform feature selection, as detailed in
    :ref:`l1_feature_selection`.
+
 
 Stochastic Gradient Descent - SGD
 =================================
