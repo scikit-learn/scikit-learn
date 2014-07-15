@@ -118,7 +118,8 @@ def fit_ovr(estimator, X, y, n_jobs=1):
                                          (estimator,
                                           X,
                                           column,
-                                          classes=["not %s" % i, i])
+                                          classes=["not %s" % i,
+                                                   lb.classes_[i]])
                                          for i, column in enumerate(columns))
     return estimators, lb
 
