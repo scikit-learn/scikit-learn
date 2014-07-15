@@ -186,8 +186,14 @@ def test_label_encoder_new_label_update():
                        [0, 0, 2])
     assert_array_equal(le.inverse_transform([2, 1, 0]),
                        ["c", "b", "a"])
-    assert_array_equal(le.transform(["_", "b", "c", "d"]),
-                       [3, 1, 2, 4])
+    assert_array_equal(le.transform(["b", "c", "_"]),
+                       [1, 2, 3])
+    assert_array_equal(le.classes_, ["a", "b", "c", "_"])
+    print(le.classes_)
+    assert_array_equal(le.transform(["_", "z", "a"]),
+                       [3, 4, 0])
+    assert_array_equal(le.classes_, ["a", "b", "c", "_", "z"])
+
 
 
 def test_label_encoder_new_label_nan():
