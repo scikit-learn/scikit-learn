@@ -252,13 +252,7 @@ def test_label_encoder_new_label_replace():
 def test_label_encoder_new_label_arg():
     """Test LabelEncoder's  new_labels argument handling"""
     le = LabelEncoder(new_labels="xyz")
-    le.fit(["a", "b", "b", "c"])
-    assert_array_equal(le.classes_, ["a", "b", "c"])
-    assert_array_equal(le.transform(["a", "a", "c"]),
-                       [0, 0, 2])
-    assert_array_equal(le.inverse_transform([2, 1, 0]),
-                       ["c", "b", "a"])
-    assert_raises(ValueError, le.transform, ["c", "d"])
+    assert_raises(ValueError, le.fit, ["a", "b", "b", "c"])
 
 
 def test_label_encoder_fit_transform():
