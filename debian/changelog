@@ -1,9 +1,9 @@
-scikit-learn (0.15.0~b2+git14-g720d450-1) experimental; urgency=medium
+scikit-learn (0.15.0-1) unstable; urgency=medium
 
-  * Fresh beta of upcoming upstream release
+  * Fresh upstream release
   * Build-depend on libatlas3-base
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 14 Jul 2014 12:45:40 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 15 Jul 2014 08:39:08 -0400
 
 scikit-learn (0.14.1-3) unstable; urgency=medium
 
