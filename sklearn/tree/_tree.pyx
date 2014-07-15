@@ -1222,13 +1222,8 @@ cdef class BestSplitter(Splitter):
 
                     # First we count the outcomes per category, so we don't
                     # have to iterate through all the data after that
-                    outcome_by_cat = <int *>malloc(
-                        sizeof(int) * n_features * n_categories)
-                    p = start
-                    while p < end:
-                        i = categories[int(Xf[p])]
-                        outcome_by_cat[p + i * n_features] += 1
-                        p += 1
+
+                    self.criterion.reset()
                     # We test all the combinations of categories. Not efficient
                     # if there is many dummies.
                     # TODO linear time algo for binary classification and reg
@@ -1238,6 +1233,27 @@ cdef class BestSplitter(Splitter):
                         # It doesn't change anything because of symmetry
                         # TODO how to calculate the impurities using
                         # outcome_by_cat ?
+                        self.criterion.update_factors(split_categories)
+
+                        # Reject if min_weight_leaf is not satisfied
+                        if ((self.criterion.weighted_n_left < min_weight_leaf) or
+                                (self.criterion.weighted_n_right < min_weight_leaf)):
+                            continue
+
+                        current.improvement = self.criterion.impurity_improvement(impurity)
+
+                        if current.improvement > best.improvement:
+                            self.criterion.children_impurity(&current.impurity_left,
+                                                             &current.impurity_right)
+                            best.impurity_left = current.impurity_left
+                            best.impurity_right = current.impurity_right
+                            best.improvement = current.improvement
+                            best.split_categories = split_categories
+                            best.feature = current.feature
+
+                            best = current  # copy
+                            best.split_type = CATEGORICAL
+
                         current.impurity_left = 0
                         current.impurity_right = 0
                         current.improvement = 0
