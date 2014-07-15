@@ -621,7 +621,7 @@ SVDD
 ----
 
 Given vectors :math:`x_1, \cdots, x_l`, :class:`SVDD` build the smallest sphere
-around them. Solvng the problem:
+around them solvng the problem:
 
 .. math:: 
     
@@ -630,7 +630,7 @@ around them. Solvng the problem:
     \textrm {subject to } & \|x_i - a\| \leq R^2 + \xi_i\\
     & \xi_i \geq 0, i=1, ..., n
 
-This problem isnot convex, but it can be refolmulated as convex one:
+This problem is not convex, but it can be refolmulated as convex one:
 
 .. math:: 
     

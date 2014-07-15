@@ -19,7 +19,7 @@ structure of the observations. Although the robust covariance estimate is
 able to focus on the main mode of the data distribution, it sticks to the
 assumption that the data should be Gaussian distributed, yielding some biased
 estimation of the data structure, but yet accurate to some extent.
-The One-Class SVM algorithm and Support Vector Data Discription
+The One-Class SVM algorithm and Support Vector Data Description
 
 First example
 -------------
