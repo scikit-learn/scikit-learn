@@ -467,7 +467,7 @@ def test_label_binarize_binary():
 
     yield check_binarized_results, y, classes, pos_label, neg_label, expected
 
-    # Binary case where sparse_output = True will no result in a Value Error
+    # Binary case where sparse_output = True will not result in a ValueError
     y = [0, 1, 0]
     classes = [0, 1]
     pos_label = 3

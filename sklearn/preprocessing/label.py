@@ -201,6 +201,13 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     `classes_` : array of shape [n_class]
         Holds the label for each class.
 
+    `y_type_` : str,
+        Represents the type of the target data as evaluated by
+        utils.multiclass.type_of_target. Possible type are 'continuous',
+        'continuous-multioutput', 'binary', 'multiclass',
+        'mutliclass-multioutput', 'multilabel-sequences',
+        'multilabel-indicator', and 'unknown'.
+
     `multilabel_` : boolean
         True if the transformer was fitted on a multilabel rather than a
         multiclass set of labels. The multilabel_ attribute is deprecated
