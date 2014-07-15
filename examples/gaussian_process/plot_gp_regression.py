@@ -18,10 +18,10 @@ The figures illustrate the interpolating property of the Gaussian Process
 model as well as its probabilistic nature in the form of a pointwise 95%
 confidence interval.
 
-Note that the parameter ``nugget`` is applied as a Tikhonov regularization
-of the assumed covariance between the training points.  In the special case
-of the squared euclidean correlation model, nugget is mathematically equivalent
-to a normalized variance:  That is
+Note that the learned parameter ``nugget`` is applied as a Tikhonov
+regularization of the assumed covariance between the training points. In the
+special case of the squared euclidean correlation model, nugget is
+mathematically equivalent to a normalized variance:  That is
 
 .. math::
    \mathrm{nugget}_i = \left[\frac{\sigma_i}{y_i}\right]^2
@@ -99,7 +99,7 @@ x = np.atleast_2d(np.linspace(0, 10, 1000)).T
 # Instanciate a Gaussian Process model
 gp = GaussianProcess(corr='squared_exponential', theta0=1e-1,
                      thetaL=1e-3, thetaU=1,
-                     nugget=(dy / y) ** 2,
+                     learn_nugget=True, nuggetU=10.0,
                      random_start=100)
 
 # Fit to data using Maximum Likelihood Estimation of the parameters

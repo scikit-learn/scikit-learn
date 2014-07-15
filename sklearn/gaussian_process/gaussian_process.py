@@ -2,6 +2,8 @@
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 #         (mostly translation, see implementation details)
+#         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
+#         optional learning of the nugget
 # Licence: BSD 3 clause
 
 from __future__ import print_function
@@ -10,7 +12,7 @@ import numpy as np
 from scipy import linalg, optimize, rand
 
 from ..base import BaseEstimator, RegressorMixin
-from ..metrics.pairwise import manhattan_distances
+from ..metrics.pairwise import check_pairwise_arrays
 from ..utils import array2d, check_random_state, check_arrays
 from . import regression_models as regression
 from . import correlation_models as correlation
@@ -18,9 +20,9 @@ from . import correlation_models as correlation
 MACHINE_EPSILON = np.finfo(np.double).eps
 
 
-def l1_cross_distances(X):
+def l1_cross_differences(X):
     """
-    Computes the nonzero componentwise L1 cross-distances between the vectors
+    Computes the nonzero componentwise differences between the vectors
     in X.
 
     Parameters
@@ -33,7 +35,7 @@ def l1_cross_distances(X):
     -------
 
     D: array with shape (n_samples * (n_samples - 1) / 2, n_features)
-        The array of componentwise L1 cross-distances.
+        The array of componentwise differences.
 
     ij: arrays with shape (n_samples * (n_samples - 1) / 2, 2)
         The indices i and j of the vectors in X associated to the cross-
@@ -50,7 +52,7 @@ def l1_cross_distances(X):
         ll_1 = ll_0 + n_samples - k - 1
         ij[ll_0:ll_1, 0] = k
         ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
-        D[ll_0:ll_1] = np.abs(X[k] - X[(k + 1):n_samples])
+        D[ll_0:ll_1] = X[k] - X[(k + 1):n_samples]
 
     return D, ij
 
@@ -134,9 +136,24 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         The nugget is added to the diagonal of the assumed training covariance;
         in this way it acts as a Tikhonov regularization in the problem.  In
         the special case of the squared exponential correlation function, the
-        nugget mathematically represents the variance of the input values.
-        Default assumes a nugget close to machine precision for the sake of
-        robustness (nugget = 10. * MACHINE_EPSILON).
+        nugget mathematically represents the variance of the input values. If
+        learn_nugget is True, the nugget specifies only the starting point of
+        the optimization. Default assumes a nugget close to machine precision
+        for the sake of robustness (nugget = 10. * MACHINE_EPSILON).
+
+    learn_nugget : bool, optional
+        If true, the magnitude of the nugget effect is estimated along with the
+        hyperparameters theta. The magnitude of the nugget effect is optimized
+        within the range [10. * MACHINE_EPSILON, nuggetU] with starting
+        at the value passed via the parameter nugget. Note: only the
+        optimization of a global nugget effect is supported but not the
+        optimization of a per-datapoint nugget.
+        Defaults to False.
+
+    nuggetU : float, optional
+        An upper bound on the nugget effect, i.e., the noise level. Only
+        relevant if learn_nugget is true.
+        Defaults to 1.0.
 
     optimizer : string, optional
         A string specifying the optimization algorithm to be used.
@@ -209,6 +226,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
     _correlation_types = {
         'absolute_exponential': correlation.absolute_exponential,
         'squared_exponential': correlation.squared_exponential,
+        'matern_1.5': correlation.matern_1_5,
+        'matern_2.5': correlation.matern_2_5,
         'generalized_exponential': correlation.generalized_exponential,
         'cubic': correlation.cubic,
         'linear': correlation.linear}
@@ -221,7 +240,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                  storage_mode='full', verbose=False, theta0=1e-1,
                  thetaL=None, thetaU=None, optimizer='fmin_cobyla',
                  random_start=1, normalize=True,
-                 nugget=10. * MACHINE_EPSILON, random_state=None):
+                 nugget=10. * MACHINE_EPSILON, learn_nugget=False,
+                 nuggetU=1.0, random_state=None):
 
         self.regr = regr
         self.corr = corr
@@ -233,6 +253,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         self.thetaU = thetaU
         self.normalize = normalize
         self.nugget = nugget
+        self.learn_nugget = learn_nugget
+        self.nuggetU = nuggetU
         self.optimizer = optimizer
         self.random_start = random_start
         self.random_state = random_state
@@ -294,8 +316,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             y_mean = np.zeros(1)
             y_std = np.ones(1)
 
-        # Calculate matrix of distances D between samples
-        D, ij = l1_cross_distances(X)
+        # Calculate matrix of differences D between samples
+        D, ij = l1_cross_differences(X)
         if (np.min(np.sum(D, axis=1)) == 0.
                 and self.corr != correlation.pure_nugget):
             raise Exception("Multiple input features cannot have the same"
@@ -437,8 +459,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             if eval_MSE:
                 MSE = np.zeros(n_eval)
 
-            # Get pairwise componentwise L1-distances to the input training set
-            dx = manhattan_distances(X, Y=self.X, sum_over_features=False)
+            # Get pairwise componentwise differences to the input training set
+            X, Y = check_pairwise_arrays(X, Y=self.X)
+            dx = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
+            dx = dx.reshape((-1, X.shape[1]))
             # Get regression function and correlation
             f = self.regr(X)
             r = self.corr(self.theta_, dx).reshape(n_eval, n_samples)
@@ -568,6 +592,11 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 G
                         QR decomposition of the matrix Ft.
         """
+        if self.learn_nugget:
+            nugget = theta[-1]
+            theta = theta[:-1]
+        else:
+            nugget = self.nugget
 
         if theta is None:
             # Use built-in autocorrelation parameters
@@ -585,7 +614,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         if D is None:
             # Light storage mode (need to recompute D, ij and F)
-            D, ij = l1_cross_distances(self.X)
+            D, ij = l1_cross_differences(self.X)
             if (np.min(np.sum(D, axis=1)) == 0.
                     and self.corr != correlation.pure_nugget):
                 raise Exception("Multiple X are not allowed")
@@ -593,7 +622,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Set up R
         r = self.corr(theta, D)
-        R = np.eye(n_samples) * (1. + self.nugget)
+        R = np.eye(n_samples) * (1. + nugget)
         R[ij[:, 0], ij[:, 1]] = r
         R[ij[:, 1], ij[:, 0]] = r
 
@@ -689,6 +718,14 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         percent_completed = 0.
 
+        if self.learn_nugget:
+            # Add a further dimension to theta which corresponds to the
+            # estimation of the internal nugget (noise level)
+            self.theta0 = array2d(np.hstack((self.theta0[0], self.nugget)))
+            self.thetaL = \
+                array2d(np.hstack((self.thetaL[0], 10 * MACHINE_EPSILON)))
+            self.thetaU = array2d(np.hstack((self.thetaU[0], self.nuggetU)))
+
         # Force optimizer to fmin_cobyla if the model is meant to be isotropic
         if self.optimizer == 'Welch' and self.theta0.size == 1:
             self.optimizer = 'fmin_cobyla'
@@ -724,10 +761,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                     log10_optimal_theta = \
                         optimize.fmin_cobyla(minus_reduced_likelihood_function,
                                              np.log10(theta0), constraints,
-                                             iprint=0)
-                except ValueError as ve:
+                                             iprint=0)[0]
+                except ValueError:
                     print("Optimization failed. Try increasing the ``nugget``")
-                    raise ve
+                    raise
 
                 optimal_theta = 10. ** log10_optimal_theta
                 optimal_minus_rlf_value, optimal_par = \
@@ -751,7 +788,13 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
             optimal_rlf_value = best_optimal_rlf_value
             optimal_par = best_optimal_par
-            optimal_theta = best_optimal_theta
+            if self.learn_nugget:
+                # chop off last element of theta corresponding to
+                # the nugget
+                optimal_theta = best_optimal_theta[:-1]
+                self.nugget = best_optimal_theta[-1]
+            else:
+                optimal_theta = best_optimal_theta
 
         elif self.optimizer == 'Welch':
 
