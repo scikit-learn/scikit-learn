@@ -73,6 +73,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                  min_weight_fraction_leaf,
                  max_features,
                  max_leaf_nodes,
+                 categorical_features,
                  random_state):
         self.criterion = criterion
         self.splitter = splitter
@@ -83,11 +84,13 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.max_features = max_features
         self.random_state = random_state
         self.max_leaf_nodes = max_leaf_nodes
+        self.categorical_features = categorical_features
 
         self.n_features_ = None
         self.n_outputs_ = None
         self.classes_ = None
         self.n_classes_ = None
+        self.categorical_dicts = None
 
         self.tree_ = None
         self.max_features_ = None
@@ -236,6 +239,43 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                 raise ValueError("Number of weights=%d does not match "
                                  "number of samples=%d" %
                                  (len(sample_weight), n_samples))
+
+        n_features = X.shape[1]
+        # We parse the argument categorical_features to a mask
+        if not self.categorical_features or self.categorical_features == "None":
+            categorical_mask = np.zeros(n_features, dtype=bool)
+            has_categorical = True
+        elif self.categorical_features == "all":
+            categorical_mask = np.ones(n_features, dtype=bool)
+            has_categorical = True
+        else:
+            try:
+                self.categorical_features = list(self.categorical_features)
+            except TypeError:
+                raise ValueError("categorical_features not recognized. Must "
+                                 "be 'None', 'all', a mask or a list")
+            if len(self.categorical_features) == n_features:
+                categorical_mask = self.categorical_features
+                has_categorical = sum(self.categorical_features) > 0
+            else:
+                categorical_mask = np.zeros(n_features, dtype=bool)
+                categorical_mask[np.asarray(self.categorical_features)] = True
+                has_categorical = len(categorical_mask) > 0
+        # We transform the categorical features to 0...n
+        self.categorical_dicts = [
+            dict((e, i) for (i, e) in enumerate(set(X[:, feature])))
+            if categorical_mask[feature] else None
+            for feature in xrange(n_features) ]
+        if has_categorical:
+            X = np.copy(X)
+            for feature in xrange(n_features):
+                if categorical_mask[feature]:
+                    hashing = self.categorical_dicts[feature]
+                    if len(hashing) > 32:
+                        raise ValueError(
+                            "Too many factors for feature {}. 32 maximum, "
+                            "found {}".format(feature, len(hashing)))
+                    X[:, feature] = [hashing[e] for e in X[:, feature]]
 
         # Set min_weight_leaf from min_weight_fraction_leaf
         if self.min_weight_fraction_leaf != 0. and sample_weight is not None:
@@ -418,6 +458,13 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
 
+    categorical_features: array of indices or mask
+        Specify what features are treated as categorical.
+        - 'None' (default): All features are treated as not categorical.
+        - 'all': All features are treated as categorical.
+        - array of indices: Array of categorical feature indices.
+        - mask: Array of length n_features and with dtype=bool.
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -489,7 +536,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                  random_state=None,
                  min_density=None,
                  compute_importances=None,
-                 max_leaf_nodes=None):
+                 max_leaf_nodes=None,
+                 categorical_features=None):
         super(DecisionTreeClassifier, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -499,7 +547,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
-            random_state=random_state)
+            random_state=random_state,
+            categorical_features=categorical_features)
 
         if min_density is not None:
             warn("The min_density parameter is deprecated as of version 0.14 "
@@ -641,6 +690,13 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
 
+    categorical_features: array of indices or mask
+        Specify what features are treated as categorical.
+        - 'None' (default): All features are treated as not categorical.
+        - 'all': All features are treated as categorical.
+        - array of indices: Array of categorical feature indices.
+        - mask: Array of length n_features and with dtype=bool.
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -704,7 +760,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                  random_state=None,
                  min_density=None,
                  compute_importances=None,
-                 max_leaf_nodes=None):
+                 max_leaf_nodes=None,
+                 categorical_features=None):
         super(DecisionTreeRegressor, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -714,7 +771,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
-            random_state=random_state)
+            random_state=random_state,
+            categorical_features=categorical_features)
 
         if min_density is not None:
             warn("The min_density parameter is deprecated as of version 0.14 "

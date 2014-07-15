@@ -74,6 +74,8 @@ cdef struct SplitRecord:
     double improvement     # Impurity improvement given parent node.
     double impurity_left   # Impurity of the left split.
     double impurity_right  # Impurity of the right split.
+    int split_type         # Type of split: continuous or categorical
+    int split_categories   # If categorical, the categories of the left leaf
 
 
 cdef class Splitter:

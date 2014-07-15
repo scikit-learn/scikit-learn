@@ -13,7 +13,7 @@
 #
 # Licence: BSD 3 clause
 
-from libc.stdlib cimport calloc, free, realloc
+from libc.stdlib cimport calloc, free, realloc, malloc
 from libc.string cimport memcpy, memset
 from libc.math cimport log as ln
 from cpython cimport Py_INCREF, PyObject
@@ -63,6 +63,10 @@ cdef enum:
     # particularly tiny on Windows/MSVC.
     RAND_R_MAX = 0x7FFFFFFF
 
+
+cdef int CONTINUOUS = 0
+cdef int CATEGORICAL = 1
+
 # Repeat struct definition for numpy
 NODE_DTYPE = np.dtype({
     'names': ['left_child', 'right_child', 'feature', 'threshold', 'impurity',
@@ -79,6 +83,13 @@ NODE_DTYPE = np.dtype({
         <Py_ssize_t> &(<Node*> NULL).weighted_n_node_samples
     ]
 })
+
+cdef int is_left_var(DTYPE_t x, int split,
+                     int* categories) nogil:
+    """Return whether the category belong to the left branch, according to a
+    split"""
+    cdef int i = categories[int(x)]
+    return (split >> i) & 1
 
 
 # =============================================================================
@@ -1061,8 +1072,19 @@ cdef class BestSplitter(Splitter):
 
         cdef SplitRecord best, current
 
+        cdef int n_categorical = 0  # How many categorical features #TODO
+        cdef int n_categories       # How many categories are in the column
+        cdef DTYPE_t category
+        cdef int* outcome_by_cat    # What are the outcomes associated to a cat
+        cdef SIZE_t* categories     # The link between a category and
+                                    # 1..n_categories
+        cdef SIZE_t* categories_tmp
+        cdef SIZE_t max_categories
+        cdef SIZE_t current_item
+
         cdef SIZE_t f_i = n_features
-        cdef SIZE_t f_j, p, tmp
+        cdef SIZE_t c_i = n_features - n_categorical
+        cdef SIZE_t f_j, p, tmp, right_p, i
         cdef SIZE_t n_visited_features = 0
         # Number of features discovered to be constant during the split search
         cdef SIZE_t n_found_constants = 0
@@ -1093,18 +1115,24 @@ cdef class BestSplitter(Splitter):
 
             n_visited_features += 1
 
+            # TODO
             # Loop invariant: elements of features in
             # - [:n_drawn_constant[ holds drawn and known constant features;
             # - [n_drawn_constant:n_known_constant[ holds known constant
             #   features that haven't been drawn yet;
             # - [n_known_constant:n_total_constant[ holds newly found constant
             #   features;
-            # - [n_total_constant:f_i[ holds features that haven't been drawn
-            #   yet and aren't constant apriori.
-            # - [f_i:n_features[ holds features that have been drawn
-            #   and aren't constant.
+            # - [n_total_constant:c_i[ holds features that haven't been drawn
+            #   yet and aren't constant apriori and are continuous
+            # - [c_i:f_i[ holds features that haven't been drawn
+            #   yet  and aren't constant apriori and are categorical
+            # - [f_i:n_features_continuous[ holds features that have been drawn
+            #   and aren't constant and are continuous.
+            # - [n_features_continuous:n_features[ holds features that have been
+            #   drawn and aren't constant and are continuous
 
             # Draw a feature at random
+            # f_j is in the interval [n_drawn_constant, f_i - n_found_constants[
             f_j = rand_int(f_i - n_drawn_constants - n_found_constants,
                            random_state) + n_drawn_constants
 
@@ -1134,13 +1162,81 @@ cdef class BestSplitter(Splitter):
                 sort(Xf + start, samples + start, end - start)
 
                 if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
+                    # If f_j is constant so we add it to the constants features
                     features[f_j] = features[n_total_constants]
                     features[n_total_constants] = current.feature
 
                     n_found_constants += 1
                     n_total_constants += 1
 
+                elif f_j >= c_i:
+                    # f_j is categorical and not constant
+                    f_i -= 1
+                    features[f_i], features[f_j] = features[f_j], features[f_i]
+
+                    # We find the categories that are in the data
+                    # As a reminder, Xf is composed of integers
+                    max_categories = 0
+                    categories = <int *>malloc(sizeof(int))
+                    for p in xrange(start, end):
+                        current_item = int(Xf[p])
+                        if current_item > max_categories:
+                            # We resize the array
+                            categories_tmp = <int *>malloc(
+                                sizeof(int) * current_item)
+                            memcpy(categories_tmp, categories,
+                                   sizeof(int) * max_categories)
+                            for i in xrange(max_categories+1, current_item):
+                                categories_tmp[i] = 0
+                            free(categories)
+                            categories = categories_tmp
+                            max_categories = current_item
+                        categories[current_item] = 1
+                    # Now we can create a mapping between the categories that
+                    # are in the data and 1...n_categories
+                    n_categories = 0
+                    current_item = 0
+                    for i in xrange(0, max_categories):
+                        if categories[i] > 0:
+                            categories[i] = n_categories
+                            n_categories += 1
+
+                    # First we count the outcomes per category, so we don't
+                    # have to iterate through all the data after that
+                    #safe_realloc(&outcome_by_cat,
+                    #             self.n_features * self.n_categories)
+                    outcome_by_cat = <int *>malloc(
+                        sizeof(int) * n_features * n_categories)
+                    p = start
+                    while p < end:
+                        i = categories[int(Xf[p])]
+                        outcome_by_cat[p + i * n_features] += 1
+                        p += 1
+                    # We test all the combinations of categories. Not efficient
+                    # if there is many dummies.
+                    for split_categories in xrange(2**(n_categories-1)):
+                        # The first category is always in the right branch.
+                        # It doesn't change anything because of symmetry
+                        # TODO how to calculate the impurities using
+                        # outcome_by_cat ?
+                        current.impurity_left = 0
+                        current.impurity_right = 0
+                        current.improvement = 0
+                        # Example loop through categories
+                        # for i in xrange(n_categories):
+                        #    category = categories[i] #TODO check
+                        #    is_left = (split >> i) & 1
+                        if current.improvement > best.improvement:
+                            best.impurity_left = current.impurity_left
+                            best.impurity_right = current.impurity_right
+                            best.improvement = current.improvement
+                            best.feature = current.feature
+                            best.split_categories = split_categories
+                            best.split_type = CATEGORICAL
+                    free(outcome_by_cat)
+
                 else:
+                    # f_j is continuous and not constant
                     f_i -= 1
                     features[f_i], features[f_j] = features[f_j], features[f_i]
 
@@ -1179,15 +1275,22 @@ cdef class BestSplitter(Splitter):
                             if current.improvement > best.improvement:
                                 self.criterion.children_impurity(&current.impurity_left,
                                                                  &current.impurity_right)
+                                best.impurity_left = current.impurity_left
+                                best.impurity_right = current.impurity_right
+                                best.improvement = current.improvement
+                                best.pos = current.pos
+                                best.feature = current.feature
+
                                 current.threshold = (Xf[p - 1] + Xf[p]) / 2.0
 
                                 if current.threshold == Xf[p]:
                                     current.threshold = Xf[p - 1]
 
                                 best = current  # copy
+                                best.split_type = CONTINUOUS
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
-        if best.pos < end:
+        if best.split_type == CONTINUOUS and best.pos < end:
             partition_end = end
             p = start
 
@@ -1202,6 +1305,27 @@ cdef class BestSplitter(Splitter):
                     tmp = samples[partition_end]
                     samples[partition_end] = samples[p]
                     samples[p] = tmp
+
+        # Reorganize into samples[start:best.pos] + samples[best.pos:end]
+        if best.split_type == CATEGORICAL:
+            p = start
+            right_p = end
+            while p < right_p:
+                if is_left_var(
+                    X[X_sample_stride * samples[p] +
+                                    X_fx_stride * best.feature],
+                    best.split_categories, categories):
+                        p += 1
+                else:
+                    while not is_left_var(
+                        X[X_sample_stride * samples[right_p] +
+                                        X_fx_stride * best.feature],
+                        best.split_categories, categories) and p < right_p:
+                            right_p -= 1
+                    tmp = samples[right_p]
+                    samples[right_p] = samples[p]
+                    samples[p] = tmp
+                    p += 1
 
         # Respect invariant for constant features: the original order of
         # element in features[:n_known_constants] must be preserved for sibling
