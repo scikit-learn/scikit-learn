@@ -973,7 +973,7 @@ class _RidgeGCV(LinearModel):
 
 class _BaseRidgeCV(LinearModel):
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]),
-                 fit_intercept=True, normalize=False, scoring=None,
+                 fit_intercept=True, normalize=False,
                  scoring=None, cv=None, gcv_mode=None,
                  store_cv_values=False, solver=None, copyX=True):
         self.alphas = alphas
@@ -1023,8 +1023,6 @@ class _BaseRidgeCV(LinearModel):
                 scorer = check_scoring(self,
                                        scoring=self.scoring,
                                        allow_none=True,
-                                       loss_func=self.loss_func,
-                                       score_func=self.score_func,
                                        score_overrides_loss=True)
 
                 alphas = np.atleast_2d(np.array(self.alphas).T).T
