@@ -197,7 +197,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
         alpha[0] = C / n_samples
         if alpha[0] <= alpha_min:  # early stopping
-            if not alpha[0] == alpha_min:
+            if not (abs(alpha[0] - alpha_min) < tiny):
                 # interpolation factor 0 <= ss < 1
                 if n_iter > 0:
                     # In the first iteration, all alphas are zero, the formula

@@ -14,6 +14,7 @@ import traceback
 import inspect
 import pickle
 import pkgutil
+import struct
 
 import numpy as np
 from scipy import sparse
@@ -31,6 +32,7 @@ from sklearn.utils.testing import meta_estimators
 from sklearn.utils.testing import set_random_state
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import check_skip_travis
 
 import sklearn
 from sklearn.base import (clone, ClassifierMixin, RegressorMixin,
@@ -198,7 +200,22 @@ def test_transformers():
         yield check_transformer, name, Transformer, X, y
 
 
+def _is_32bit_windows():
+    """Detect if process is 32bit Python running on Windows."""
+    return sys.platform == 'win32' and struct.calcsize('P') * 8 == 32
+
+
 def check_transformer(name, Transformer, X, y):
+    if (name in ('CCA', 'LocallyLinearEmbedding', 'KernelPCA')
+        and _is_32bit_windows()):
+        # Those transformers yield non-deterministic output on Windows
+        # with a 32bit Python. The same transformers are stable with 32bit
+        # Python on other platforms or 64bit Python under Windows.
+        # FIXME: try to isolate a minimalistic reproduction case only depending
+        # on numpy & scipy
+        msg = name + ' is non deterministic on 32bit Python for Windows'
+        raise SkipTest(msg)
+
     n_samples, n_features = X.shape
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
@@ -794,6 +811,9 @@ def test_regressors_int():
     for name, Regressor in regressors:
         if name in dont_test or name in ('CCA'):
             continue
+        elif name in ('OrthogonalMatchingPursuitCV'):
+            # FIXME: This test is unstable on Travis, see issue #3190.
+            check_skip_travis()
         yield (check_regressors_int, name, Regressor, X,
                multioutput_estimator_convert_y_2d(name, y))
 
@@ -836,6 +856,9 @@ def test_regressors_train():
 
 
 def check_regressors_train(name, Regressor, X, y):
+    if name == 'OrthogonalMatchingPursuitCV':
+        # FIXME: This test is unstable on Travis, see issue #3190.
+        check_skip_travis()
     rnd = np.random.RandomState(0)
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
@@ -879,6 +902,9 @@ def test_regressor_pickle():
 
 
 def check_regressors_pickle(name, Regressor, X, y):
+    if name == 'OrthogonalMatchingPursuitCV':
+        # FIXME: This test is unstable on Travis, see issue #3190.
+        check_skip_travis()
     rnd = np.random.RandomState(0)
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
