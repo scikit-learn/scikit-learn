@@ -21,7 +21,7 @@ from .coordinate_descent import (Lasso, ElasticNet, LassoCV, ElasticNetCV,
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 from .stochastic_gradient import SGDClassifier, SGDRegressor
 from .ridge import (Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV,
-                    ridge_regression)
+                    ridge_regression, ridge_path)
 from .logistic import (LogisticRegression, LogisticRegressionCV,
                        logistic_regression_path)
 from .omp import (orthogonal_mp, orthogonal_mp_gram, OrthogonalMatchingPursuit,
@@ -76,5 +76,6 @@ __all__ = ['ARDRegression',
            'logistic_regression_path',
            'orthogonal_mp',
            'orthogonal_mp_gram',
+           'ridge_path',
            'ridge_regression',
            'RANSACRegressor']
