@@ -3,7 +3,7 @@ Testing for the Locality Sensitive Hashing Forest
 module (sklearn.neighbors.LSHForest).
 """
 
-# Author: Gilles Louppe
+# Author: Maheshakya Wijewardena
 
 import numpy as np
 
@@ -20,27 +20,6 @@ from sklearn.metrics import euclidean_distances
 from sklearn.neighbors import LSHForest
 
 
-mask_length = 7
-left_masks = np.array([int('000000', 2), int('100000', 2),
-                       int('110000', 2), int('111000', 2),
-                       int('111100', 2), int('111110', 2),
-                       int('111111', 2)])
-right_masks = np.array([int('111111', 2), int('011111', 2),
-                        int('001111', 2), int('000111', 2),
-                        int('000011', 2), int('000001', 2),
-                        int('000000', 2)])
-
-test_strings = np.array(['000001', '001010', '001101',
-                         '001110', '001111', '100001',
-                         '101001', '101010'])
-
-test_array = np.zeros(test_strings.shape[0], dtype=int)
-for i in range(test_array.shape[0]):
-    test_array[i] = int(test_strings[i], 2)
-
-test_value = int('001110', 2)
-
-
 def test_neighbors_accuracy_with_c():
     """Accuracy increases as `c` increases."""
     c_values = np.array([10, 50, 250])
@@ -51,8 +30,8 @@ def test_neighbors_accuracy_with_c():
     accuracies = np.zeros(c_values.shape[0], dtype=float)
     X = np.random.rand(samples, dim)
 
-    for i in range(c_values.shape[0]):
-        lshf = LSHForest(c=c_values[i])
+    for i, c in enumerate(c_values):
+        lshf = LSHForest(c=c)
         lshf.fit(X)
         for j in range(n_iter):
             point = X[np.random.randint(0, samples)]
@@ -82,8 +61,8 @@ def test_neighbors_accuracy_with_n_trees():
     accuracies = np.zeros(n_trees.shape[0], dtype=float)
     X = np.random.rand(samples, dim)
 
-    for i in range(n_trees.shape[0]):
-        lshf = LSHForest(c=500, n_trees=n_trees[i])
+    for i, t in enumerate(n_trees):        
+        lshf = LSHForest(c = 500, n_trees=t)
         lshf.fit(X)
         for j in range(n_iter):
             point = X[np.random.randint(0, samples)]
@@ -101,6 +80,23 @@ def test_neighbors_accuracy_with_n_trees():
     # Sorted accuracies should be equal to original accuracies
     assert_array_equal(accuracies, np.sort(accuracies),
                        err_msg="Accuracies are not non-decreasing.")
+
+
+def test_kneighbors():
+    samples = 1000
+    dim = 50
+    n_iter = 100
+    X = np.random.rand(1000, 50)
+
+    lshf = LSHForest(lower_bound=0)
+    lshf.fit(X)
+
+    for i in range(n_iter):
+        n_neighbors = np.random.randint(0, samples)
+        point = X[np.random.randint(0, samples)]
+        neighbors = lshf.kneighbors(point, n_neighbors=n_neighbors,
+                                    return_distance=False)
+        assert_equal(neighbors.shape[1], n_neighbors)
 
 
 if __name__ == "__main__":

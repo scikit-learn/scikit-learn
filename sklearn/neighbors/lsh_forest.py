@@ -37,7 +37,7 @@ def _find_longest_prefix_match(bit_string_array, query, hash_size,
     hi = hash_size
     lo = 0
 
-    if _find_matching_indices(bit_string_array, query, left_masks[hi-1],
+    if _find_matching_indices(bit_string_array, query, left_masks[hi],
                               right_masks[hi]).shape[0] > 0:
         return hi
 
