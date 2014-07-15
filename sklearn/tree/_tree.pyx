@@ -2535,25 +2535,30 @@ ctypedef fused realloc_ptr:
     (SIZE_t*)
     (unsigned char*)
 
-cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t n) except *:
+cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) except *:
     # sizeof(realloc_ptr[0]) would be more like idiomatic C, but causes Cython
     # 0.20.1 to crash.
-    n *= sizeof(p[0][0])
-    cdef realloc_ptr tmp = <realloc_ptr>realloc(p[0], n)
+    cdef size_t nbytes = nelems * sizeof(p[0][0])
+    if nbytes / sizeof(p[0][0]) != nelems:
+        # Overflow in the multiplication
+        raise MemoryError("could not allocate (%d * %d) bytes"
+                          % (nelems, sizeof(p[0][0])))
+    cdef realloc_ptr tmp = <realloc_ptr>realloc(p[0], nbytes)
     if tmp == NULL:
-        raise MemoryError("could not allocate %d bytes" % n)
+        raise MemoryError("could not allocate %d bytes" % nbytes)
 
     p[0] = tmp
     return tmp  # for convenience
 
 
 def _realloc_test():
-    # Helper for tests. Should raise an exception.
-    cdef unsigned char* p = NULL
-    safe_realloc(&p, <size_t>(-1))
+    # Helper for tests. Tries to allocate <size_t>(-1) / 2 * sizeof(size_t)
+    # bytes, which will always overflow.
+    cdef SIZE_t* p = NULL
+    safe_realloc(&p, <size_t>(-1) / 2)
     if p != NULL:
         free(p)
-        assert False, "we just allocated %d bytes!" % <size_t>(-1)
+        assert False
 
 
 # rand_r replacement using a 32bit XorShift generator
