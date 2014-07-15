@@ -104,20 +104,16 @@ def ridge_path(X_train, Y_train, alphas, X_test=None, solver="eigen"):
     Parameters
     ----------
 
-    X_train : ndarray
-        shape = (n_samples, n_features)
+    X_train : ndarray, shape = (n_samples, n_features)
         Training data
 
-    Y_train : ndarray
-        shape = (n_samples, n_targets) or (n_samples,)
+    Y_train : ndarray, shape = (n_samples, n_targets) or (n_samples,)
         Training targets
 
-    alphas : ndarray
-        shape=(n_penalties, n_targets) or (n_penalties, 1)
+    alphas : ndarray, shape=(n_penalties, n_targets) or (n_penalties, 1)
         Penalties on regularization path. Can be global or per target
 
-    X_test : ndarray, optional
-        shape=(n_test_samples, n_features)
+    X_test : ndarray, shape=(n_test_samples, n_features), optional
         Test set. If specified, ridge_path returns predictions on X_test,
         otherwise it returns coefficients. Recommended if only predictions
         are of interest, especially in the n_samples << n_features case,
