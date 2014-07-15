@@ -101,8 +101,7 @@ def test_ovr_fit_predict_sparse():
 
 
 def test_ovr_always_present():
-    """Test that ovr works with classes that are always present or absent.
-    """
+    """Test that ovr works with classes that are always present or absent."""
     # Note: tests is the case where _ConstantPredictor is utilised
     X = np.ones((10, 2))
     X[:5, :] = 0
@@ -145,7 +144,7 @@ def test_ovr_multiclass():
 
     for base_clf in (MultinomialNB(), LinearSVC(random_state=0),
                      LinearRegression(), Ridge(),
-                     ElasticNet(), Lasso(alpha=0.5)):
+                     ElasticNet()):
 
         clf = OneVsRestClassifier(base_clf).fit(X, y)
         assert_equal(set(clf.classes_), classes)

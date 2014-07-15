@@ -44,6 +44,7 @@ from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
 from .utils.multiclass import type_of_target
 from .utils.multiclass import unique_labels
+from .utils.validation import _num_samples
 from .externals.joblib import Parallel
 from .externals.joblib import delayed
 
@@ -87,10 +88,14 @@ def _check_estimator(estimator):
 def fit_ovr(estimator, X, y, n_jobs=1):
     """Fit a one-vs-the-rest strategy."""
     _check_estimator(estimator)
+    # A sparse LabelBinarizer, with sparse_output=True, has been shown to
+    # outpreform or match a dense label binarizer in all cases and has also
+    # resulted in less or equal memory consumption in the fit_ovr function
+    # overall.
     lb = LabelBinarizer(sparse_output=True)
     Y = lb.fit_transform(y)
     Y = Y.tocsc()
-    columns = (Y.getcol(i).toarray().ravel() for i in range(Y.shape[1]))
+    columns = (col.toarray().ravel() for col in Y.T)
     estimators = Parallel(n_jobs=n_jobs)(delayed(_fit_binary)
                                          (estimator,
                                           X,
@@ -115,7 +120,7 @@ def predict_ovr(estimators, label_binarizer, X):
             argmaxima[maxima == pred] = i
         return label_binarizer.classes_[np.array(argmaxima.T)]
     else:
-        n_samples = X.shape[0] if sp.issparse(X) else len(X)
+        n_samples = _num_samples(X)
         indices = array.array('i')
         indptr = array.array('i', [0])
         for e in estimators:
