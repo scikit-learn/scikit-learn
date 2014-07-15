@@ -694,11 +694,9 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         X = check_array(X, accept_sparse='csr', dtype=np.float64, order="C")
 
-        if not isinstance(self.class_weight, np.ndarray):
-            self.class_weight_ = compute_class_weight(self.class_weight,
-                                                      self.classes_, y)
-        else:
-            self.class_weight_ = self.class_weight
+        # Used in the liblinear solver.
+        self.class_weight_ = compute_class_weight(self.class_weight,
+                                                  self.classes_, y)
 
         if X.shape[0] != y_ind.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n"
@@ -707,7 +705,7 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         if self.solver not in ['liblinear', 'newton-cg', 'lbfgs']:
             raise ValueError("Logistic Regression supports only liblinear,"
-                "newton-cg and lbfgs solvers.")
+                             " newton-cg and lbfgs solvers.")
 
         if self.solver == 'liblinear':
             liblinear.set_verbosity_wrap(self.verbose)
@@ -775,7 +773,7 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
                     fit_intercept=self.fit_intercept,
                     tol=self.tol, verbose=self.verbose,
                     solver=self.solver, copy=True,
-                    max_iter=self.max_iter, class_weight=self.class_weight_)
+                    max_iter=self.max_iter, class_weight=self.class_weight)
 
                 coef_ = coef_[0]
                 if self.fit_intercept:

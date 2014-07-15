@@ -279,10 +279,11 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         is called repeatedly with the same data, as y is modified
         along the path.
 
-    class_weight : ndarray, None
-        Provide a array of weights corresponding to each class, as obtained
-        from the output of compute_class_weight. It None, then all classes
-        are assumed to have weight one.
+    class_weight : {dict, 'auto'}, optional
+        Over-/undersamples the samples of each class according to the given
+        weights. If not given, all classes are supposed to have weight one.
+        The 'auto' mode selects weights inversely proportional to class
+        frequencies in the training set.
 
     dual : bool
         Dual or primal formulation. Dual formulation is only implemented for
@@ -305,7 +306,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     Notes
     -----
-    You might get slighly different results with the solver trust-ncg than
+    You might get slighly different results with the solver liblinear than
     with the others since this uses LIBLINEAR which penalizes the intercept.
     """
     if isinstance(Cs, numbers.Integral):
@@ -316,10 +317,19 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     n_classes = np.unique(y)
 
     if pos_class is None:
-        if not (n_classes.size == 2):
+        if (n_classes.size > 2):
             raise ValueError('To fit OvA, use the pos_class argument')
         # np.unique(y) gives labels in sorted order.
         pos_class = n_classes[1]
+
+    # If class_weights is a dict (provided by the user), the weights
+    # are assigned to the original labels. If it is "auto", then
+    # the class_weights are assigned after masking the labels with a OvA.
+    sample_weight = np.ones(X.shape[0])
+    le = LabelEncoder()
+    if isinstance(class_weight, dict):
+        class_weight = compute_class_weight(class_weight, n_classes, y)
+        sample_weight = class_weight[le.fit_transform(y)]
 
     mask = (y == pos_class)
     y[mask] = 1
@@ -327,12 +337,9 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     # To take care of object dtypes
     y = as_float_array(y, copy=False)
-
-    if class_weight is None:
-        class_weight = np.ones(len(n_classes))
-
-    le = LabelEncoder()
-    sample_weight = class_weight[le.fit_transform(y)]
+    if class_weight == "auto":
+        class_weight = compute_class_weight(class_weight, [-1, 1], y)
+        sample_weight = class_weight[le.fit_transform(y)]
 
     if fit_intercept:
         w0 = np.zeros(X.shape[1] + 1)
@@ -391,7 +398,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
                           scoring=None, fit_intercept=False,
                           max_iter=100, tol=1e-4, class_weight=None,
                           verbose=0, method='liblinear', penalty='l2',
-                          dual=False):
+                          dual=False, copy=True):
     """Computes scores across logistic_regression_path
 
     Parameters
@@ -433,10 +440,11 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     tol : float
         Tolerance for stopping criteria.
 
-    class_weight : ndarray, None
-        Provide a array of weights corresponding to each class, as obtained
-        from the output of compute_class_weight. It None, then all classes
-        are assumed to have weight one.
+    class_weight : {dict, 'auto'}, optional
+        Over-/undersamples the samples of each class according to the given
+        weights. If not given, all classes are supposed to have weight one.
+        The 'auto' mode selects weights inversely proportional to class
+        frequencies in the training set.
 
     verbose : int
         Amount of verbosity.
@@ -477,18 +485,11 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     y_test = y[test]
 
     if pos_class is not None:
-        # In order to avoid a copy in y, mask test and train separately
-        mask = (y_train == pos_class)
-        y_train[mask] = 1
-        y_train[~mask] = -1
         mask = (y_test == pos_class)
         y_test[mask] = 1
         y_test[~mask] = -1
 
     # To deal with object dtypes, we need to convert into an array of floats.
-    X_train = as_float_array(X_train, copy=False)
-    y_train = as_float_array(y_train, copy=False)
-    X_test = as_float_array(X_test, copy=False)
     y_test = as_float_array(y_test, copy=False)
 
     coefs, Cs = logistic_regression_path(X_train, y_train, Cs=Cs,
@@ -496,7 +497,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
                                          solver=method,
                                          max_iter=max_iter,
                                          class_weight=class_weight,
-                                         copy=False,
+                                         copy=copy, pos_class=pos_class,
                                          tol=tol, verbose=verbose,
                                          dual=dual, penalty=penalty)
 
@@ -839,14 +840,19 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
         self.classes_ = labels = np.unique(y)
         n_classes = len(labels)
 
-        self.class_weight_ = compute_class_weight(
-            self.class_weight, self.classes_, y)
+        if n_classes < 2:
+            raise ValueError("Number of classes have to be greater than one.")
 
         if n_classes == 2:
             # OvA in case of binary problems is as good as fitting
             # the higher label
             n_classes = 1
             labels = labels[1:]
+
+        if self.class_weight and not(isinstance(self.class_weight, dict) or
+                                     self.class_weight == 'auto'):
+            raise ValueError("class_weight provided should be a "
+                             "dict or 'auto'")
 
         fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
             delayed(_log_reg_scoring_path)(X, y, train, test,
@@ -858,7 +864,7 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
                                            method=self.solver,
                                            max_iter=self.max_iter,
                                            tol=self.tol,
-                                           class_weight=self.class_weight_,
+                                           class_weight=self.class_weight,
                                            verbose=max(0, self.verbose - 1),
                                            scoring=self.scoring)
             for label in labels
@@ -891,7 +897,7 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
                     X, y, pos_class=label, Cs=[C_], solver=self.solver,
                     fit_intercept=self.fit_intercept, coef=coef_init,
                     max_iter=self.max_iter, tol=self.tol,
-                    class_weight=self.class_weight_,
+                    class_weight=self.class_weight,
                     verbose=max(0, self.verbose - 1))
                 w = w[0]
 
