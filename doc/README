@@ -60,3 +60,15 @@ Warning: Permanently added 'web.sourceforge.net,216.34.181.57' (RSA) to the list
 jsmith,fooproject@web.sourceforge.net's password:
 sending incremental file list
 ...
+
+
+Development documentation automated build
+-----------------------------------------
+
+A Rackspace cloud server named 'docbuilder' is continuously building the master branch
+to update the http://scikit-learn.org/dev tree of the website.
+
+The configuration of this server is managed at:
+
+  http://github.com/scikit-learn/sklearn-docbuilder
+
