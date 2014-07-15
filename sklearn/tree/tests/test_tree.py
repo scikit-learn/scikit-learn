@@ -401,7 +401,6 @@ def test_error():
         # Invalid values for parameters
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=-1).fit, X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=0.0).fit, X, y)
-        assert_raises(ValueError, TreeEstimator(min_samples_leaf=1.5).fit, X, y)
         assert_raises(ValueError,
                       TreeEstimator(min_weight_fraction_leaf=-1).fit,
                       X, y)
@@ -411,8 +410,6 @@ def test_error():
         assert_raises(ValueError, TreeEstimator(min_samples_split=-1).fit,
                       X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_split=0.0).fit,
-                      X, y)
-        assert_raises(ValueError, TreeEstimator(min_samples_split=-1.5).fit,
                       X, y)
         assert_raises(ValueError, TreeEstimator(max_depth=-1).fit, X, y)
         assert_raises(ValueError, TreeEstimator(max_features=42).fit, X, y)

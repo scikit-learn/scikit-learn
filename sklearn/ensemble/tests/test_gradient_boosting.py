@@ -81,15 +81,11 @@ def test_parameter_checks():
                   GradientBoostingClassifier(min_samples_split=0.0).fit, X, y)
     assert_raises(ValueError,
                   GradientBoostingClassifier(min_samples_split=-1.0).fit, X, y)
-    assert_raises(ValueError,
-                  GradientBoostingClassifier(min_samples_split=1.5).fit, X, y)
 
     assert_raises(ValueError,
                   GradientBoostingClassifier(min_samples_leaf=0).fit, X, y)
     assert_raises(ValueError,
                   GradientBoostingClassifier(min_samples_leaf=-1.).fit, X, y)
-    assert_raises(ValueError,
-                  GradientBoostingClassifier(min_samples_leaf=1.5).fit, X, y)
 
     assert_raises(ValueError,
                   GradientBoostingClassifier(min_weight_fraction_leaf=-1.).fit,

@@ -165,6 +165,18 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         max_leaf_nodes = (-1 if self.max_leaf_nodes is None
                           else self.max_leaf_nodes)
 
+        min_samples_leaf = (int(np.ceil(self.min_samples_leaf * n_samples))
+                            if isinstance(self.min_samples_leaf, float)
+                            else self.min_samples_leaf)
+
+        # Set min_samples_split sensibly
+        min_samples_split = (int(np.ceil(self.min_samples_split * n_samples))
+                             if isinstance(self.min_samples_split, float)
+                             else self.min_samples_split)
+
+        min_samples_split = max(min_samples_split,
+                                2 * self.min_samples_leaf)
+
         if isinstance(self.max_features, six.string_types):
             if self.max_features == "auto":
                 if is_classification:
@@ -231,23 +243,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                np.sum(sample_weight))
         else:
             min_weight_leaf = 0.
-
-        if isinstance(self.min_samples_leaf, float):
-            if self.min_samples_leaf > 1:
-                raise ValueError("The float min_samples_leaf must be less than 1.0")
-            min_samples_leaf = int(np.ceil(self.min_samples_leaf * n_samples))
-        else:
-            min_samples_leaf = self.min_samples_leaf
-
-        # Set min_samples_split sensibly
-        if isinstance(self.min_samples_split, float):
-            if self.min_samples_split > 1:
-                raise ValueError("The float min_samples_split must be less than 1.0")
-            min_samples_split = int(np.ceil(self.min_samples_split * n_samples))
-        else:
-            min_samples_split = self.min_samples_split
-        min_samples_split = max(min_samples_split,
-                                2 * self.min_samples_leaf)
 
         # Build tree
         criterion = self.criterion
