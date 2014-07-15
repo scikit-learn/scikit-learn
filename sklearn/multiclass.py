@@ -86,7 +86,25 @@ def _check_estimator(estimator):
 
 
 def fit_ovr(estimator, X, y, n_jobs=1):
-    """Fit a one-vs-the-rest strategy."""
+    """Fit a list of estimators using a one-vs-the-rest strategy.
+
+    Parameters
+    ----------
+    estimator : estimator object
+        An estimator object implementing `fit` and one of `decision_function`
+        or `predict_proba`.
+
+    X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        Data.
+
+    y : {array-like, sparse matrix}, shape = [n_samples] or
+        [n_samples, n_classes] Multi-class targets. An indicator matrix
+        turns on multilabel classification.
+
+    Returns
+    -------
+    self
+    """
     _check_estimator(estimator)
     # A sparse LabelBinarizer, with sparse_output=True, has been shown to
     # outpreform or match a dense label binarizer in all cases and has also
@@ -106,7 +124,31 @@ def fit_ovr(estimator, X, y, n_jobs=1):
 
 
 def predict_ovr(estimators, label_binarizer, X):
-    """Make predictions using the one-vs-the-rest strategy."""
+    """Predict multi-class targets using the one vs rest strategy.
+
+    Parameters
+    ----------
+    estimators : list of `n_classes` estimators, Estimators used for
+        predictions. The list must be homogeneous with respect to the type of
+        estimators. fit_ovr supplies this list as part of its output.
+
+    label_binarizer : LabelBinarizer object, Object used to transform
+        multiclass labels to binary labels and vice-versa. fit_ovr supplies
+        this object as part of its output.
+
+    X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        Data.
+
+    Returns
+    -------
+    y : {array-like, sparse matrix}, shape = [n_samples] or
+        [n_samples, n_classes]. Predicted multi-class targets.
+    """
+    e_types = set([type(e) for e in estimators if not
+                   isinstance(e, _ConstantPredictor)])
+    if len(e_types) > 1:
+        raise ValueError("List of estimators must contain estimators of the"
+                         " same type but contains types {0}".format(e_types))
     e = estimators[0]
     thresh = 0 if hasattr(e, "decision_function") and is_classifier(e) else .5
 
@@ -247,8 +289,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Returns
         -------
-        y : array-like, shape = [n_samples]
-            Predicted multi-class targets.
+            y : {array-like, sparse matrix}, shape = [n_samples] or
+                [n_samples, n_classes]. Predicted multi-class targets.
         """
         self._check_is_fitted()
 

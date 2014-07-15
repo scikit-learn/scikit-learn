@@ -14,9 +14,12 @@ from sklearn.utils.testing import assert_greater
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
+from sklearn.multiclass import predict_ovr
 
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
+
+from sklearn.preprocessing import LabelBinarizer
 
 from sklearn.svm import LinearSVC
 from sklearn.naive_bayes import MultinomialNB
@@ -40,6 +43,9 @@ n_classes = 3
 def test_ovr_exceptions():
     ovr = OneVsRestClassifier(LinearSVC(random_state=0))
     assert_raises(ValueError, ovr.predict, [])
+
+    assert_raises(ValueError, predict_ovr, [LinearSVC(), MultinomialNB()],
+                  LabelBinarizer(), [])
 
 
 def test_ovr_fit_predict():
