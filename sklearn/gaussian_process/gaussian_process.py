@@ -111,7 +111,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         It consists in iterating over several one-dimensional optimizations
         instead of running one single multi-dimensional optimization.
         If a callable is passed, it is assumed that this callable handles the
-        optimization iternally. It must accept the an objective function,
+        optimization internally. It must accept an objective function,
         the start position x0 of the optimization, as well as the lower
         and upper boundaries of the search space (xL and xU) as parameters.
         It is expected to return the optimal parameters x_best.
@@ -846,7 +846,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Check optimizer
         if not (self.optimizer in self._optimizer_types
-                or hasattr(self.optimizer, '__call__')) :
+                or hasattr(self.optimizer, '__call__')):
             raise ValueError("optimizer should be one of %s"
                              % self._optimizer_types)
 
