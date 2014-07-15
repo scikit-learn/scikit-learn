@@ -168,40 +168,53 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         _check_numpy_unicode_bug(classes)
         if len(np.intersect1d(classes, self.classes_)) < len(classes):
             diff = np.setdiff1d(classes, self.classes_)
+            # Create copy of array and return
+            y = np.array(y)
 
             # If we are mapping new labels, get "new" ID and change in copy.
             if self.new_labels == "update":
+                # Setup out
+                out = np.zeros(y.shape, dtype=int)
+
+                #  Find entries with new labels
+                missing_mask = np.in1d(y, diff)
+                new_class_values = np.sort(diff)
+
+                # Populate return array properly and return
+                out[~missing_mask] = np.searchsorted(self.classes_,
+                                                   y[~missing_mask])
+                out[missing_mask] = np.searchsorted(new_class_values,
+                                                   y[missing_mask]) + len(self.classes_)
+
                 # Update the class list with new labels
-                self.classes_ = np.append(self.classes_, np.sort(diff))
+                self.classes_ = np.append(self.classes_, new_class_values)
 
                 # Return mapped encoding
-                return np.searchsorted(self.classes_, y)
+                return out
             elif self.new_labels == "nan":
-                # Create copy of array and return
-                y_array = np.array(y)
-                z = np.zeros(y_array.shape, dtype=float)
+                # Setup out
+                out = np.zeros(y.shape, dtype=float)
 
                 # Find entries with new labels
                 missing_mask = np.in1d(y, diff)
 
                 # Populate return array properly and return
-                z[-missing_mask] = np.searchsorted(self.classes_,
-                                                   y_array[-missing_mask])
-                z[missing_mask] = np.nan
-                return z
+                out[~missing_mask] = np.searchsorted(self.classes_,
+                                                   y[~missing_mask])
+                out[missing_mask] = np.nan
+                return out
             elif self.new_labels == "label":
-                # Create copy of array and return
-                y_array = np.array(y)
-                z = np.zeros(y_array.shape, dtype=int)
+                # Setup out
+                out = np.zeros(y.shape, dtype=int)
 
                 # Find entries with new labels
                 missing_mask = np.in1d(y, diff)
 
                 # Populate return array properly and return
-                z[-missing_mask] = np.searchsorted(self.classes_,
-                                                   y_array[-missing_mask])
-                z[missing_mask] = self.new_label_class
-                return z
+                out[~missing_mask] = np.searchsorted(self.classes_,
+                                                   y[~missing_mask])
+                out[missing_mask] = self.new_label_class
+                return out
             elif self.new_labels == "raise":
                 # Return ValueError, original behavior.
                 raise ValueError("y contains new labels: %s" % str(diff))
