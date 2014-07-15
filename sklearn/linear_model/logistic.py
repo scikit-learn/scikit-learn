@@ -19,11 +19,11 @@ from ..preprocessing import LabelEncoder
 from ..svm.base import BaseLibLinear
 from ..utils import atleast2d_or_csc, check_arrays, compute_class_weight
 from ..utils.extmath import log_logistic, safe_sparse_dot
+from ..utils.optimize import newton_cg
 from ..utils.validation import as_float_array
 from ..utils.fixes import expit
 from ..externals.joblib import Parallel, delayed
 from ..cross_validation import _check_cv
-from ..utils.optimize import newton_cg
 from ..externals import six
 from ..metrics import SCORERS
 
