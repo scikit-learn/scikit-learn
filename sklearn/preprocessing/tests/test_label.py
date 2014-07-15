@@ -225,7 +225,7 @@ def test_label_encoder_errors():
     assert_raises(ValueError, le.inverse_transform, [])
 
 
-def test_sparse_output_mutlilabel_binarizer():
+def test_sparse_output_multilabel_binarizer():
     # test input as iterable of iterables
     inputs = [
         lambda: [(2, 3), (1,), (1, 2)],
@@ -265,7 +265,7 @@ def test_sparse_output_mutlilabel_binarizer():
                                        [1, 1, 0]])))
 
 
-def test_mutlilabel_binarizer():
+def test_multilabel_binarizer():
     # test input as iterable of iterables
     inputs = [
         lambda: [(2, 3), (1,), (1, 2)],
@@ -292,7 +292,7 @@ def test_mutlilabel_binarizer():
         assert_equal(mlb.inverse_transform(got), inverse)
 
 
-def test_mutlilabel_binarizer_empty_sample():
+def test_multilabel_binarizer_empty_sample():
     mlb = MultiLabelBinarizer()
     y = [[1, 2], [1], []]
     Y = np.array([[1, 1],
@@ -301,7 +301,7 @@ def test_mutlilabel_binarizer_empty_sample():
     assert_array_equal(mlb.fit_transform(y), Y)
 
 
-def test_mutlilabel_binarizer_unknown_class():
+def test_multilabel_binarizer_unknown_class():
     mlb = MultiLabelBinarizer()
     y = [[1, 2]]
     assert_raises(KeyError, mlb.fit(y).transform, [[0]])
@@ -310,7 +310,7 @@ def test_mutlilabel_binarizer_unknown_class():
     assert_raises(KeyError, mlb.fit_transform, [[0]])
 
 
-def test_mutlilabel_binarizer_given_classes():
+def test_multilabel_binarizer_given_classes():
     inp = [(2, 3), (1,), (1, 2)]
     indicator_mat = np.array([[0, 1, 1],
                               [1, 0, 0],
@@ -337,7 +337,7 @@ def test_mutlilabel_binarizer_given_classes():
     assert_array_equal(mlb.fit(inp).transform(inp), indicator_mat)
 
 
-def test_mutlilabel_binarizer_same_length_sequence():
+def test_multilabel_binarizer_same_length_sequence():
     """Ensure sequences of the same length are not interpreted as a 2-d array
     """
     inp = [[1], [0], [2]]
@@ -355,7 +355,7 @@ def test_mutlilabel_binarizer_same_length_sequence():
     assert_array_equal(mlb.inverse_transform(indicator_mat), inp)
 
 
-def test_mutlilabel_binarizer_non_integer_labels():
+def test_multilabel_binarizer_non_integer_labels():
     tuple_classes = np.empty(3, dtype=object)
     tuple_classes[:] = [(1,), (2,), (3,)]
     inputs = [
@@ -383,7 +383,7 @@ def test_mutlilabel_binarizer_non_integer_labels():
     assert_raises(TypeError, mlb.fit_transform, [({}), ({}, {'a': 'b'})])
 
 
-def test_mutlilabel_binarizer_non_unique():
+def test_multilabel_binarizer_non_unique():
     inp = [(1, 1, 1, 0)]
     indicator_mat = np.array([[1, 1]])
     mlb = MultiLabelBinarizer()

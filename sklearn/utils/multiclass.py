@@ -53,7 +53,7 @@ def unique_labels(*ys):
         - mix of label indicator matrices of different sizes
         - mix of string and integer labels
 
-    At the moment, we also don't allow "mutliclass-multioutput" input type.
+    At the moment, we also don't allow "multiclass-multioutput" input type.
 
     Parameters
     ----------
@@ -238,7 +238,7 @@ def type_of_target(y):
           vector.
         * 'multiclass': `y` contains more than two discrete values, is not a
           sequence of sequences, and is 1d or a column vector.
-        * 'mutliclass-multioutput': `y` is a 2d array that contains more
+        * 'multiclass-multioutput': `y` is a 2d array that contains more
           than two discrete values, is not a sequence of sequences, and both
           dimensions are of size > 1.
         * 'multilabel-sequences': `y` is a sequence of sequences, a 1d
