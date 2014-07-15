@@ -64,22 +64,22 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         An array with shape (n_features, ) or (1, ).
         The parameters in the autocorrelation model.
         If thetaL and thetaU are also specified, theta0 is considered as
-        the starting point for the maximum likelihood estimation of the
+        the starting point for the maximum a posterior estimation of the
         best set of parameters.
         Default assumes isotropic autocorrelation model with theta0 = 1e-1.
 
     thetaL : double array_like, optional
         An array with shape matching theta0's.
         Lower bound on the autocorrelation parameters for maximum
-        likelihood estimation.
-        Default is None, so that it skips maximum likelihood estimation and
+        a posterior estimation.
+        Default is None, so that it skips maximum a posterior estimation and
         it uses theta0.
 
     thetaU : double array_like, optional
         An array with shape matching theta0's.
         Upper bound on the autocorrelation parameters for maximum
-        likelihood estimation.
-        Default is None, so that it skips maximum likelihood estimation and
+        a posterior estimation.
+        Default is None, so that it skips maximum a posterior estimation and
         it uses theta0.
 
     normalize : boolean, optional
@@ -87,7 +87,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         means and standard deviations estimated from the n_samples
         observations provided.
         Default is normalize = True so that data is normalized to ease
-        maximum likelihood estimation.
+        maximum a posterior estimation.
 
     nugget : double or ndarray, optional
         Introduce a nugget effect to allow smooth predictions from noisy
@@ -134,7 +134,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
     ----------
     `theta_`: array
         Specified theta OR the best set of autocorrelation parameters (the \
-        sought maximizer of the reduced likelihood function).
+        sought maximizer of the posterior function).
 
     `reduced_likelihood_function_value_`: array (DEPRECATED)
         The optimal reduced likelihood function value.  Will be removed in the
@@ -300,9 +300,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Determine Gaussian Process model parameters
         if self.thetaL is not None and self.thetaU is not None:
-            # Maximum Likelihood Estimation of the parameters
+            # Maximum a Posterior estimation of the parameters
             if self.verbose:
-                print("Performing Maximum Likelihood Estimation of the "
+                print("Performing Maximum a Posterior estimation of the "
                       "autocorrelation parameters...")
             self.theta_, self.posterior_function_value_, par = \
                 self._arg_max_posterior()
