@@ -1,6 +1,6 @@
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Olivier Grisel <olivier.grisel@ensta.org>
+# Mathieu Blondel <mathieu@mblondel.org>
+# Olivier Grisel <olivier.grisel@ensta.org>
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Hamzeh Alsalhi <ha258@cornell.edu>
@@ -105,6 +105,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     ['tokyo', 'tokyo', 'paris']
 
     """
+
     def __init__(self, new_labels="raise", new_label_class=-1):
         """Constructor"""
         self.new_labels = new_labels
@@ -129,8 +130,8 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         # Check new_labels parameter
         if self.new_labels not in ["update", "nan", "raise", "label"]:
             # Raise on invalid argument.
-                raise ValueError("Value of argument `new_labels`={0} "
-                                 "is unknown.".format(self.new_labels))
+            raise ValueError("Value of argument `new_labels`={0} "
+                             "is unknown.".format(self.new_labels))
 
         y = column_or_1d(y, warn=True)
         _check_numpy_unicode_bug(y)
@@ -152,8 +153,8 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         # Check new_labels parameter
         if self.new_labels not in ["update", "nan", "raise", "label"]:
             # Raise on invalid argument.
-                raise ValueError("Value of argument `new_labels`={0} "
-                                 "is unknown.".format(self.new_labels))
+            raise ValueError("Value of argument `new_labels`={0} "
+                             "is unknown.".format(self.new_labels))
 
         y = column_or_1d(y, warn=True)
         _check_numpy_unicode_bug(y)
@@ -192,9 +193,10 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
                 # Populate return array properly and return
                 out[~missing_mask] = np.searchsorted(self.classes_,
-                                                   y[~missing_mask])
+                                                     y[~missing_mask])
                 out[missing_mask] = np.searchsorted(new_class_values,
-                                                   y[missing_mask]) + len(self.classes_)
+                                                    y[missing_mask]) + \
+                    len(self.classes_)
 
                 # Update the class list with new labels
                 self.classes_ = np.append(self.classes_, new_class_values)
@@ -210,7 +212,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
                 # Populate return array properly and return
                 out[~missing_mask] = np.searchsorted(self.classes_,
-                                                   y[~missing_mask])
+                                                     y[~missing_mask])
                 out[missing_mask] = np.nan
                 return out
             elif self.new_labels == "label":
@@ -222,7 +224,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
                 # Populate return array properly and return
                 out[~missing_mask] = np.searchsorted(self.classes_,
-                                                   y[~missing_mask])
+                                                     y[~missing_mask])
                 out[missing_mask] = self.new_label_class
                 return out
             elif self.new_labels == "raise":

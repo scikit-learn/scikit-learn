@@ -228,7 +228,6 @@ def test_label_encoder_new_label_update():
     assert_array_equal(le.classes_, ["a", "b", "c", "_", "z"])
 
 
-
 def test_label_encoder_new_label_nan():
     """Test LabelEncoder's transform on new labels"""
     le = LabelEncoder(new_labels="nan")
