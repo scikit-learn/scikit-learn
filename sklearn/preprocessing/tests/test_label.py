@@ -219,8 +219,8 @@ def test_label_encoder_new_label_update():
                        [0, 0, 2])
     assert_array_equal(le.inverse_transform([2, 1, 0]),
                        ["c", "b", "a"])
-    assert_array_equal(le.transform(["b", "c", "d"]),
-                       [1, 2, 3])
+    assert_array_equal(le.transform(["_", "b", "c", "d"]),
+                       [3, 1, 2, 4])
 
 
 def test_label_encoder_new_label_nan():
@@ -232,8 +232,8 @@ def test_label_encoder_new_label_nan():
                        [0, 0, 2])
     assert_array_equal(le.inverse_transform([2, 1, 0]),
                        ["c", "b", "a"])
-    assert_array_equal(le.transform(["b", "c", "d"]),
-                       [1, 2, np.nan])
+    assert_array_equal(le.transform(["_", "b", "c", "d"]),
+                       [np.nan, 1, 2, np.nan])
 
 
 def test_label_encoder_new_label_replace():
