@@ -69,15 +69,14 @@ def test_ovr_fit_predict_sparse():
                    sp.lil_matrix]:
         base_clf = MultinomialNB(alpha=1)
 
-        make_mlb = datasets.make_multilabel_classification
-        X, Y = make_mlb(n_samples=100,
-                        n_features=20,
-                        n_classes=5,
-                        n_labels=3,
-                        length=50,
-                        allow_unlabeled=True,
-                        return_indicator=True,
-                        random_state=0)
+        X, Y = datasets.make_multilabel_classification(n_samples=100,
+                                                       n_features=20,
+                                                       n_classes=5,
+                                                       n_labels=3,
+                                                       length=50,
+                                                       allow_unlabeled=True,
+                                                       return_indicator=True,
+                                                       random_state=0)
 
         X_train, Y_train = X[:80], Y[:80]
         X_test, Y_test = X[80:], Y[80:]
