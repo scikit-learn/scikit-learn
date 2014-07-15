@@ -431,7 +431,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Data.
 
-        y : {array-like, sparse matrix}, shape [n_samples]
+        y : numpy array of shape [n_samples]
             Multi-class targets.
 
         Returns
@@ -452,7 +452,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Returns
         -------
-        y : {array-like, sparse matrix}, shape [n_samples]
+        y : numpy array of shape [n_samples]
             Predicted multi-class targets.
         """
         if not hasattr(self, "estimators_"):
