@@ -30,68 +30,66 @@ from ..metrics.scorer import check_scoring
 from ..cross_validation import check_cv
 
 
-def _precomp_kernel_ridge_path_eigen(v_train, V_train, Y_train, alphas,
-                                     gramX_test=None):
-    VTY = V_train.T.dot(Y_train)
-    v_alpha = 1. / (v_train[np.newaxis, :, np.newaxis] +
-                    alphas[:, np.newaxis])
+def _precomp_kernel_ridge_path_eigen(gramX_train, Y_train, alphas,
+                                     gramX_test=None,
+                                     eig_val_thresh=1e-15):
+    eig_val_train, eig_vect_train = linalg.eigh(gramX_train)
+
+    VTY = eig_vect_train.T.dot(Y_train)
+    v_alpha = (eig_val_train[np.newaxis, :, np.newaxis] +
+               alphas[:, np.newaxis])
+    v_alpha_inv = np.zeros_like(v_alpha)
+    passes_threshold = v_alpha > eig_val_thresh
+    v_alpha_inv[passes_threshold] = 1. / v_alpha[passes_threshold]
     # should probably be done inplace
-    v_alpha_VTY = v_alpha * VTY[np.newaxis]
+    v_alpha_VTY = v_alpha_inv * VTY[np.newaxis]
 
     if gramX_test is None:
-        dual_coef = V_train.dot(v_alpha_VTY).transpose(1, 0, 2)
+        dual_coef = eig_vect_train.dot(v_alpha_VTY).transpose(1, 0, 2)
         output = dual_coef
     else:
-        predictions = (gramX_test.dot(V_train)).dot(
+        predictions = (gramX_test.dot(eig_vect_train)).dot(
             v_alpha_VTY).transpose(1, 0, 2)
         output = predictions
 
     return output
 
 
-def precomp_kernel_ridge_path_eigen(gramX_train, Y_train, alphas,
-                                    gramX_test=None):
-    v, V = np.linalg.eigh(gramX_train)
-    return _precomp_kernel_ridge_path_eigen(v, V, Y_train, alphas,
-                                            gramX_test)
-
-
 def _linear_kernel(X, Y):
     return X.dot(Y.T)
 
 
-def kernel_ridge_path_eigen(X_train, Y_train, alphas, X_test,
+def _kernel_ridge_path_eigen(X_train, Y_train, alphas, X_test,
                             kernel=_linear_kernel):
     gramX_train = kernel(X_train, X_train)
     gramX_test = None
     if X_test is not None:
         gramX_test = kernel(X_test, X_train)
 
-    return precomp_kernel_ridge_path_eigen(gramX_train, Y_train, alphas,
+    return _precomp_kernel_ridge_path_eigen(gramX_train, Y_train, alphas,
                                            gramX_test)
 
 
-def _feature_ridge_path_eigen(v_train, V_train, XTY, alphas, X_test=None):
+def _feature_ridge_path_eigen(X_train, Y_train, alphas, X_test=None,
+                              eig_val_thresh=1e-15):
 
-    VTXTY = V_train.T.dot(XTY)  # under some circumstances it may be better
-                                # to do (V.T.dot(X.T)).dot(Y)
-    inv_v_alpha = 1. / (v_train[np.newaxis, :, np.newaxis] +
+    XTY = X_train.T.dot(Y_train)
+    eig_val_train, eig_vect_train = linalg.eigh(X_train.T.dot(X_train))
+    VTXTY = eig_vect_train.T.dot(XTY)  # under some circumstances it may be
+                                       # better to do (V.T.dot(X.T)).dot(Y)
+
+    v_alpha = (eig_val_train[np.newaxis, :, np.newaxis] +
                         alphas[:, np.newaxis])
-
-    coef = V_train.dot(inv_v_alpha * VTXTY[np.newaxis]).transpose(1, 0, 2)
+    v_alpha_inv = np.zeros_like(v_alpha)
+    passes_threshold = v_alpha > eig_val_thresh
+    v_alpha_inv[passes_threshold] = 1. / v_alpha[passes_threshold]
+    coef = eig_vect_train.dot(
+        v_alpha_inv * VTXTY[np.newaxis]).transpose(1, 0, 2)
 
     if X_test is None:
         return coef
     else:
         return X_test.dot(coef).transpose(1, 0, 2)
-
-
-def feature_ridge_path_eigen(X_train, Y_train, alphas, X_test=None):
-
-    XTY = X_train.T.dot(Y_train)
-    v, V = np.linalg.eigh(X_train.T.dot(X_train))
-
-    return _feature_ridge_path_eigen(v, V, XTY, alphas, X_test)
 
 
 def _multi_r2(y_true, y_pred):
@@ -121,7 +119,10 @@ def ridge_path(X_train, Y_train, alphas, X_test=None, solver="eigen"):
     X_test : ndarray, optional
         shape=(n_test_samples, n_features)
         Test set. If specified, ridge_path returns predictions on X_test,
-        otherwise it returns coefficients.
+        otherwise it returns coefficients. Recommended if only predictions
+        are of interest, especially in the n_samples << n_features case,
+        since it bypasses the calculation of the feature coefficients,
+        which can result in a memory and speed gain if n_features is large.
 
     solver : str, {'eigen'}, (default 'eigen')
         The solver to use for ridge_path.
@@ -130,6 +131,7 @@ def ridge_path(X_train, Y_train, alphas, X_test=None, solver="eigen"):
     -------
     coef or predictions : ndarray
         shape = (n_penalties, n_features, n_targets) (coef) or
+                (n_penalties, n_features) (coef if only one target) or
                 (n_penalties, n_samples, n_targets) (predictions)
         If X_test is provided, predictions are returned, otherwise coef.
 
@@ -168,7 +170,7 @@ def ridge_path(X_train, Y_train, alphas, X_test=None, solver="eigen"):
     if n_samples < n_features:
         # A kernelized implementation is more efficient, because it works
         # in the dual space (the sample axis).
-        dual_path_or_predictions = kernel_ridge_path_eigen(
+        dual_path_or_predictions = _kernel_ridge_path_eigen(
             X_train, Y_train, alphas, X_test, kernel=_linear_kernel)
         if X_test is None:
             primal_path = X_train.T.dot(
@@ -178,7 +180,7 @@ def ridge_path(X_train, Y_train, alphas, X_test=None, solver="eigen"):
             prediction_path = dual_path_or_predictions[0]
             path = prediction_path
     else:
-        path = feature_ridge_path_eigen(X_train, Y_train, alphas, X_test)
+        path = _feature_ridge_path_eigen(X_train, Y_train, alphas, X_test)
 
     if y_raveled:
         return path[:, :, 0]
