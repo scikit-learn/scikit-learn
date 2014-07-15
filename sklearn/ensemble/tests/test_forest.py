@@ -565,7 +565,6 @@ def check_min_samples_split(name, X, y):
         assert_greater(np.min(node_samples), 9,
                        "Failed with {0}".format(name))
 
-    for max_leaf_nodes in (None, 1000):
         est = ForestEstimator(min_samples_split=0.1,
                               max_leaf_nodes=max_leaf_nodes,
                               random_state=0)
@@ -575,6 +574,13 @@ def check_min_samples_split(name, X, y):
 
         assert_greater(np.min(node_samples), 9,
                        "Failed with {0}".format(name))
+
+
+def test_min_samples_split():
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    X = X.astype(np.float32)
+    for name in FOREST_ESTIMATORS:
+        yield check_min_samples_split, name, X, y
 
 
 def check_min_samples_leaf(name, X, y):
