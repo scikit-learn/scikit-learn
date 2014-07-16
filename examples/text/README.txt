@@ -3,4 +3,4 @@
 Working with text documents
 ----------------------------
 
-Examples concerning the :mod:`sklearn.feature_extraction.text` package.
+Examples concerning the :mod:`sklearn.feature_extraction.text` module.

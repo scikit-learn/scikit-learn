@@ -114,7 +114,7 @@ its ``coef_`` member::
 .. topic:: Examples:
 
    * :ref:`example_linear_model_plot_ridge_path.py`
-   * :ref:`example_document_classification_20newsgroups.py`
+   * :ref:`example_text_document_classification_20newsgroups.py`
 
 
 Ridge Complexity

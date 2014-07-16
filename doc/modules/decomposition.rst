@@ -312,7 +312,7 @@ compensating for LSA's erroneous assumptions about textual data.
 
 .. topic:: Examples:
 
-   * :ref:`example_document_clustering.py`
+   * :ref:`example_text_document_clustering.py`
 
 .. topic:: References:
 
