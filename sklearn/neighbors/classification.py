@@ -149,19 +149,21 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         weights = _get_weights(neigh_dist, self.weights)
 
         if not self.sparse_target_input_:
-            _y = sp.csc_matrix(_y) # XXX Remove when sparse matrix comes from fit in one continous pass
+            # XXX Remove when sparse matrix comes from fit
+            _y = sp.csc_matrix(_y)
 
         data = np.array([], dtype=classes_[0].dtype)
         indices = np.array([])
         indptr = np.array([0])
         for k, classes_k in enumerate(classes_):
-            neigh_lbls_k = _y[neigh_ind,k]
+            neigh_lbls_k = _y[neigh_ind, k]
             if weights is None:
                 mode = csr_row_mode(sp.csr_matrix(neigh_lbls_k.T))
-                mode = sp.csc_matrix(mode ,dtype=np.intp)
+                mode = sp.csc_matrix(mode, dtype=np.intp)
             else:
-                # XXX make a sparse weighted_mode function, do not densify neigh_lbls_k
-                mode, _ = weighted_mode(neigh_lbls_k.toarray().T, weights, axis=1)
+                # XXX make a sparse function, do not densify neigh_lbls_k
+                mode, _ = weighted_mode(neigh_lbls_k.toarray().T, weights,
+                                        axis=1)
                 mode = sp.csc_matrix(mode, dtype=np.intp)
 
             # XXX Changes appends to concats
@@ -169,11 +171,13 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             indices = np.append(indices, mode.indices)
             indptr = np.append(indptr, len(indices))
 
-        y_pred = sp.csc_matrix((data, indices, indptr), (n_samples, n_outputs), dtype=np.intp)
+        y_pred = sp.csc_matrix((data, indices, indptr), (n_samples, n_outputs),
+                               dtype=np.intp)
 
         if not self.sparse_target_input_:
-            y_pred = y_pred.toarray() # XXX remove this
-            y_pred = classes_k[y_pred] # XXX remove this for sparse cases, sparse matricies cant have str data
+            y_pred = y_pred.toarray()  # XXX remove this
+            # XXX remove this for sparse, sparse matricies cant have str data
+            y_pred = classes_k[y_pred]
 
         if not self.outputs_2d_:
             y_pred = y_pred.ravel()
