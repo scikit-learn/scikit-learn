@@ -534,6 +534,18 @@ def test_cross_val_score():
     assert_raises(ValueError, cval.cross_val_score, clf, X_3d, y)
 
 
+def test_cross_val_score_mask():
+    # test that cross_val_score works with boolean masks
+    svm = SVC(kernel="linear")
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    cv_indices = cval.KFold(len(y), 5, indices=True)
+    scores_indices = cval.cross_val_score(svm, X, y, cv=cv_indices)
+    cv_masks = cval.KFold(len(y), 5, indices=False)
+    scores_masks = cval.cross_val_score(svm, X, y, cv=cv_masks)
+    assert_array_equal(scores_indices, scores_masks)
+
+
 def test_cross_val_score_precomputed():
     # test for svm with precomputed kernel
     svm = SVC(kernel="precomputed")
