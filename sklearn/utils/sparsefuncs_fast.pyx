@@ -301,7 +301,7 @@ def assign_rows_csr(X,
 @cython.wraparound(False)
 @cython.cdivision(True)
 def csr_row_mode(X):
-    """L2 norm of each row in CSR matrix X."""
+    """Most frequent element of each row in CSR matrix X."""
     cdef:
         unsigned int n_samples = X.shape[0]
         unsigned int n_features = X.shape[1]

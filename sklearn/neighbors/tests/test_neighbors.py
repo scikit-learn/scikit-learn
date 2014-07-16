@@ -210,7 +210,6 @@ def test_kneighbors_classifier_predict_proba():
     assert_array_almost_equal(real_prob, y_prob)
 
 
-
 def test_radius_neighbors_classifier(n_samples=40,
                                      n_features=5,
                                      n_test_pts=10,
@@ -418,7 +417,8 @@ def test_KNeighborsClassifier_multioutput():
         for proba_mo, proba_so in zip(y_pred_proba_mo, y_pred_proba_so):
             assert_array_almost_equal(proba_mo, proba_so)
 
-def test_KNeighborsClassifier_multioutput_sparse():
+
+def test_neighbors_classifier_multioutput_sparse():
     """Test k-NN classifier on multioutput data with sparse taget"""
     rng = check_random_state(0)
     n_features = 5
@@ -465,7 +465,6 @@ def test_KNeighborsClassifier_multioutput_sparse():
 
         for proba_mo, proba_so in zip(y_pred_proba_mo, y_pred_proba_so):
             assert_array_almost_equal(proba_mo, proba_so)
-
 
 
 def test_kneighbors_regressor(n_samples=40,
