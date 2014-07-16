@@ -509,7 +509,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                 solver = 'svd'
 
     if solver == 'svd':
-        coef = _solve_svd(X, y, alpha)
+        coef = ridge_path(X, y, np.atleast_2d(alpha), solver='svd')[0].T
 
     if solver == 'eigen':
         coef = ridge_path(X, y, np.atleast_2d(alpha), solver='eigen')[0].T
