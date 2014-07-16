@@ -269,11 +269,13 @@ def check_arrays(*arrays, **options):
                 elif hasattr(array, 'data'):
                     array.data = np.asarray(array.data, dtype=dtype)
                 elif array.dtype != dtype:
+                    # Cast on the required dtype
                     array = array.astype(dtype)
                 if not allow_nans:
                     if hasattr(array, 'data'):
                         _assert_all_finite(array.data)
                     else:
+                        # DOK sparse matrices
                         _assert_all_finite(array.values())
             else:
                 if check_ccontiguous:
