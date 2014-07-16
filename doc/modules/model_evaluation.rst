@@ -34,7 +34,7 @@ value of those metrics for random predictions.
 .. _scoring_parameter:
 
 The ``scoring`` parameter: defining model evaluation rules
-=========================================================
+==========================================================
 
 Model selection and evaluation using tools, such as
 :class:`grid_search.GridSearchCV` and
