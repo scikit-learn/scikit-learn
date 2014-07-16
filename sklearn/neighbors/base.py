@@ -622,28 +622,31 @@ class SupervisedIntegerMixin(object):
             self.classes_ = []
             self._y = np.empty(y.shape, dtype=np.int)
             for k in range(self._y.shape[1]):
-                classes, self._y[:, k] = np.unique(y[:, k], return_inverse=True)
+                classes, self._y[:, k] = np.unique(y[:, k],
+                                                   return_inverse=True)
                 self.classes_.append(classes)
 
             if not self.outputs_2d_:
                 self.classes_ = self.classes_[0]
                 self._y = self._y.ravel()
         else:
-            y = sp.csc_matrix(y)
+            y = y.tocsc()
+            y.eliminate_zeros()
 
             data = np.array([])
             self.classes_ = []
             for k in range(y.shape[1]):
                 k_col = y.getcol(k)
-                classes =  np.unique(k_col.data)
+                classes = np.unique(k_col.data)
                 if not k_col.nnz == y.shape[0]:
-                    classes = np.insert(classes,0,0)
+                    classes = np.insert(classes, 0, 0)
                 self.classes_.append(classes)
 
-                data_k = [np.where(classes==e)[0][0] for e in k_col.data]
-                data = np.append(data,data_k)
+                data_k = [np.where(classes == e)[0][0] for e in k_col.data]
+                data = np.append(data, data_k)
 
-            _y = sp.csc_matrix((data, y.indices, y.indptr),shape=y.shape,dtype=int)
+            _y = sp.csc_matrix((data, y.indices, y.indptr), shape=y.shape,
+                               dtype=int)
 
             self._y = _y
 
@@ -651,7 +654,6 @@ class SupervisedIntegerMixin(object):
                 # XXX include sparse support here, write a test
                 self.classes_ = self.classes_[0]
                 self._y = self._y.ravel()
-
 
         return self._fit(X)
 
