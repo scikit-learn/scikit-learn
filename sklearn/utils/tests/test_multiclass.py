@@ -26,7 +26,8 @@ from sklearn.utils.multiclass import is_sequence_of_sequences
 from sklearn.utils.multiclass import type_of_target
 
 class NotAnArray(object):
-    " An object that is convertable to an array"
+    """An object that is convertable to an array. This is useful to
+    simulate a Pandas timeseries."""
 
     def __init__(self, data):
         self.data = data

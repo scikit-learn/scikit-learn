@@ -159,6 +159,7 @@ class GaussianNB(BaseNB):
         self : object
             Returns self.
         """
+        X, y = check_arrays(X, y)
         return self._partial_fit(X, y, np.unique(y), _refit=True)
 
     @staticmethod
