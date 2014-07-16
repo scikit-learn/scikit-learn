@@ -42,14 +42,20 @@ from sklearn.pipeline import Pipeline
 class MockListClassifier(BaseEstimator):
     """Dummy classifier to test the cross-validation.
 
-    Checks that GridSearchCV didn't convert X to array.
+    Checks that GridSearchCV didn't convert X or Y to array.
     """
-    def __init__(self, foo_param=0):
+    def __init__(self, foo_param=0, check_y_is_list=False, check_X_is_list=True):
         self.foo_param = foo_param
+        self.check_y_is_list = check_y_is_list
+        self.check_X_is_list = check_X_is_list
 
     def fit(self, X, Y):
         assert_true(len(X) == len(Y))
-        assert_true(isinstance(X, list))
+        if self.check_X_is_list:
+            assert_true(isinstance(X, list))
+        if self.check_y_is_list:
+            assert_true(isinstance(Y, list))
+
         return self
 
     def predict(self, T):
@@ -513,6 +519,9 @@ def test_cross_val_score():
     clf = MockListClassifier()
     scores = cval.cross_val_score(clf, X.tolist(), y.tolist())
 
+    clf = MockListClassifier(check_X_is_list=False, check_y_is_list=True)
+    scores = cval.cross_val_score(clf, X, y.tolist())
+
     assert_raises(ValueError, cval.cross_val_score, clf, X, y,
                   scoring="sklearn")
 
@@ -523,6 +532,18 @@ def test_cross_val_score():
 
     clf = MockClassifier(allow_nd=False)
     assert_raises(ValueError, cval.cross_val_score, clf, X_3d, y)
+
+
+def test_cross_val_score_mask():
+    # test that cross_val_score works with boolean masks
+    svm = SVC(kernel="linear")
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    cv_indices = cval.KFold(len(y), 5, indices=True)
+    scores_indices = cval.cross_val_score(svm, X, y, cv=cv_indices)
+    cv_masks = cval.KFold(len(y), 5, indices=False)
+    scores_masks = cval.cross_val_score(svm, X, y, cv=cv_masks)
+    assert_array_equal(scores_indices, scores_masks)
 
 
 def test_cross_val_score_precomputed():
@@ -596,7 +617,7 @@ def test_train_test_split():
     X = np.arange(100).reshape((10, 10))
     X_s = coo_matrix(X)
     y = range(10)
-    split = cval.train_test_split(X, X_s, y)
+    split = cval.train_test_split(X, X_s, y, allow_lists=False)
     X_train, X_test, X_s_train, X_s_test, y_train, y_test = split
     assert_array_equal(X_train, X_s_train.toarray())
     assert_array_equal(X_test, X_s_test.toarray())
@@ -605,6 +626,11 @@ def test_train_test_split():
     split = cval.train_test_split(X, y, test_size=None, train_size=.5)
     X_train, X_test, y_train, y_test = split
     assert_equal(len(y_test), len(y_train))
+
+    split = cval.train_test_split(X, X_s, y)
+    X_train, X_test, X_s_train, X_s_test, y_train, y_test = split
+    assert_true(isinstance(y_train, list))
+    assert_true(isinstance(y_test, list))
 
 
 def test_cross_val_score_with_score_func_classification():
@@ -911,7 +937,7 @@ def test_train_test_split_allow_nans():
     X = np.arange(200, dtype=np.float64).reshape(10, -1)
     X[2, :] = np.nan
     y = np.repeat([0, 1], X.shape[0]/2)
-    split = cval.train_test_split(X, y, test_size=0.2, random_state=42)
+    cval.train_test_split(X, y, test_size=0.2, random_state=42)
 
 
 def test_permutation_test_score_allow_nans():
