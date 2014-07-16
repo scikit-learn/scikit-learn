@@ -308,6 +308,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         self : returns an instance of self.
         """
         self.y_type_ = type_of_target(y)
+        if 'multioutput' in self.y_type_:
+            raise ValueError("Multioutput target data is not supported with "
+                             "label binarization")
+
         self.sparse_input_ = sp.issparse(y)
         self.classes_ = unique_labels(y)
         return self
@@ -469,6 +473,9 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
         pos_label = -neg_label
 
     y_type = type_of_target(y)
+    if 'multioutput' in y_type:
+        raise ValueError("Multioutput target data is not supported with label "
+                         "binarization")
 
     n_samples = y.shape[0] if sp.issparse(y) else len(y)
     n_classes = len(classes)

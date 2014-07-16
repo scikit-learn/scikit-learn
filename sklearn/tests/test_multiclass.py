@@ -15,6 +15,7 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
 from sklearn.multiclass import predict_ovr
+from sklearn.multiclass import fit_ovr
 
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
@@ -46,6 +47,14 @@ def test_ovr_exceptions():
 
     assert_raises(ValueError, predict_ovr, [LinearSVC(), MultinomialNB()],
                   LabelBinarizer(), [])
+
+    # Fail on multioutput data
+    assert_raises(ValueError, fit_ovr, MultinomialNB(),
+                  np.array([[1, 0], [0, 1]]),
+                  np.array([[1, 2], [3, 1]]))
+    assert_raises(ValueError, fit_ovr, MultinomialNB(),
+                  np.array([[1, 0], [0, 1]]),
+                  np.array([[1.5, 2.4], [3.1, 0.8]]))
 
 
 def test_ovr_fit_predict():
@@ -138,7 +147,6 @@ def test_ovr_multiclass():
     # Toy dataset where features correspond directly to labels.
     X = np.array([[0, 0, 5], [0, 5, 0], [3, 0, 0], [0, 0, 6], [6, 0, 0]])
     y = ["eggs", "spam", "ham", "eggs", "ham"]
-    # y = [[1, 2], [1], [0, 1, 2], [0, 2], [0]]
     Y = np.array([[0, 0, 1],
                   [0, 1, 0],
                   [1, 0, 0],
@@ -160,6 +168,33 @@ def test_ovr_multiclass():
         clf = OneVsRestClassifier(base_clf).fit(X, Y)
         y_pred = clf.predict([[0, 0, 4]])[0]
         assert_array_equal(y_pred, [0, 0, 1])
+
+
+def test_ovr_binary():
+    # Toy dataset where features correspond directly to labels.
+    X = np.array([[0, 0, 5], [0, 5, 0], [3, 0, 0], [0, 0, 6], [6, 0, 0]])
+    y = ["eggs", "spam", "spam", "eggs", "spam"]
+    Y = np.array([[0],
+                  [1],
+                  [1],
+                  [0],
+                  [1]])
+
+    classes = set("eggs spam".split())
+
+    for base_clf in (MultinomialNB(), LinearSVC(random_state=0),
+                     LinearRegression(), Ridge(),
+                     ElasticNet()):
+
+        clf = OneVsRestClassifier(base_clf).fit(X, y)
+        assert_equal(set(clf.classes_), classes)
+        y_pred = clf.predict(np.array([[0, 0, 4]]))[0]
+        assert_equal(set(y_pred), set("eggs"))
+
+        # test input as label indicator matrix
+        clf = OneVsRestClassifier(base_clf).fit(X, Y)
+        y_pred = clf.predict([[3, 0, 0]])[0]
+        assert_equal(y_pred, 1)
 
 
 def test_ovr_multilabel():

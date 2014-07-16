@@ -194,6 +194,11 @@ def test_label_binarizer_errors():
                   y=np.array([[1, 2, 3], [2, 1, 3]]), output_type="binary",
                   classes=[1, 2, 3], threshold=0)
 
+    # Fail on multioutput data
+    assert_raises(ValueError, LabelBinarizer().fit, np.array([[1, 3], [2, 1]]))
+    assert_raises(ValueError, label_binarize, np.array([[1, 3], [2, 1]]),
+                  [1, 2, 3])
+
 
 def test_label_encoder():
     """Test LabelEncoder's transform and inverse_transform methods"""
