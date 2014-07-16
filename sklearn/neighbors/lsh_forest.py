@@ -281,10 +281,6 @@ class LSHForest(BaseEstimator):
         returns self.m number of neighbors and the distances
         for a given query.
         """
-        if query is None:
-            raise ValueError("query cannot be None.")
-        query = np.array(query)
-
         bin_queries = []
 
         # descend phase
@@ -338,6 +334,9 @@ class LSHForest(BaseEstimator):
         return_distance: boolean, optional (default = False)
             Returns the distances of neighbors if set to True.
         """
+        if X is None:
+            raise ValueError("X cannot be None.")
+
         if n_neighbors is not None:
             self.n_neighbors = n_neighbors
         X = safe_asarray(X)

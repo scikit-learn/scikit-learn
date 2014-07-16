@@ -86,7 +86,7 @@ def test_kneighbors():
     samples = 1000
     dim = 50
     n_iter = 100
-    X = np.random.rand(1000, 50)
+    X = np.random.rand(samples, dim)
 
     lshf = LSHForest(lower_bound=0)
     lshf.fit(X)
@@ -94,16 +94,20 @@ def test_kneighbors():
     for i in range(n_iter):
         n_neighbors = np.random.randint(0, samples)
         point = X[np.random.randint(0, samples)]
-        neighbors = lshf.kneighbors(point, n_neighbors=n_neighbors,
+        neighbors = lshf.kneighbors(point, n_neighbors=n_neighbors, 
                                     return_distance=False)
+        # Desired number of neighbors should be returned.
         assert_equal(neighbors.shape[1], n_neighbors)
+
+    # Test whether a value error is raised when X=None
+    assert_raises(ValueError, lshf.kneighbors, None)
 
 
 def test_distances():
     samples = 1000
     dim = 50
     n_iter = 100
-    X = np.random.rand(1000, 50)
+    X = np.random.rand(samples, dim)
 
     lshf = LSHForest()
     lshf.fit(X)
@@ -113,7 +117,37 @@ def test_distances():
         point = X[np.random.randint(0, samples)]
         neighbors = lshf.kneighbors(point, n_neighbors=n_neighbors,
                                     return_distance=True)
+        # Returned distances should be in sorted order.
         assert_array_equal(neighbors[1][0], np.sort(neighbors[1][0]))
+
+
+def test_fit():
+    samples = 1000
+    dim = 50
+    n_trees = 5
+    X = np.random.rand(samples, dim)
+
+    lshf = LSHForest(n_trees=n_trees)
+
+    # Test whether a value error is raised when X=None
+    assert_raises(ValueError, lshf.fit, None)
+
+    lshf.fit(X)
+
+    # _input_array = X
+    assert_array_equal(X, lshf._input_array)
+
+    # A hash function g(p) for each tree
+    assert_equal(n_trees, lshf.hash_functions_.shape[0])
+
+    # Hash length = 32
+    assert_equal(32, lshf.hash_functions_.shape[1])
+
+    # Number of trees in the forest
+    assert_equal(n_trees, lshf._trees.shape[0])
+
+    # Each tree has entries for every data point
+    assert_equal(samples, lshf._trees.shape[1])
 
 
 if __name__ == "__main__":
