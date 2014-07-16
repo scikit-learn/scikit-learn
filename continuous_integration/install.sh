@@ -18,9 +18,25 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     # Use the miniconda installer for faster download / install of conda
     # itself
-    wget http://repo.continuum.io/miniconda/Miniconda-2.2.2-Linux-x86_64.sh \
+    if [[ "$ARCH" == "32" ]]; then
+        SUFFIX="x86"
+    else
+        SUFFIX="x86_64"
+    fi
+    wget http://repo.continuum.io/miniconda/Miniconda-2.2.2-Linux-$SUFFIX.sh \
         -O miniconda.sh
-    chmod +x miniconda.sh && ./miniconda.sh -b
+    chmod +x miniconda.sh
+
+    if [[ "$ARCH" == "32" ]]; then
+        # Install 32-bit runtime and tell miniconda that we are fine running
+        # Python 32-bit on a 64-bit VM
+        echo "lsb_release -a:"
+        lsb_release -a
+        sudo apt-get install ia32-libs
+        echo "yes" | ./miniconda.sh -b
+    else
+        ./miniconda.sh -b
+    fi
     export PATH=/home/travis/anaconda/bin:$PATH
     conda update --yes conda
 
