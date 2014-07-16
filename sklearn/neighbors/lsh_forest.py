@@ -188,9 +188,6 @@ class LSHForest(BaseEstimator):
             A matrix of dimensions (n_samples, n_features), which is being
             hashed.
         """
-        if input_array is None:
-            raise ValueError("input_array cannot be None.")
-
         grp = self._generate_hash_function()
         res = np.array(grp.transform(input_array) > 0, dtype=int)
 

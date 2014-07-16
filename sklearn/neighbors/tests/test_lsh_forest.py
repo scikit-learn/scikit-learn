@@ -61,8 +61,8 @@ def test_neighbors_accuracy_with_n_trees():
     accuracies = np.zeros(n_trees.shape[0], dtype=float)
     X = np.random.rand(samples, dim)
 
-    for i, t in enumerate(n_trees):        
-        lshf = LSHForest(c = 500, n_trees=t)
+    for i, t in enumerate(n_trees):
+        lshf = LSHForest(c=500, n_trees=t)
         lshf.fit(X)
         for j in range(n_iter):
             point = X[np.random.randint(0, samples)]
@@ -97,6 +97,23 @@ def test_kneighbors():
         neighbors = lshf.kneighbors(point, n_neighbors=n_neighbors,
                                     return_distance=False)
         assert_equal(neighbors.shape[1], n_neighbors)
+
+
+def test_distances():
+    samples = 1000
+    dim = 50
+    n_iter = 100
+    X = np.random.rand(1000, 50)
+
+    lshf = LSHForest()
+    lshf.fit(X)
+
+    for i in range(n_iter):
+        n_neighbors = np.random.randint(0, samples)
+        point = X[np.random.randint(0, samples)]
+        neighbors = lshf.kneighbors(point, n_neighbors=n_neighbors,
+                                    return_distance=True)
+        assert_array_equal(neighbors[1][0], np.sort(neighbors[1][0]))
 
 
 if __name__ == "__main__":
