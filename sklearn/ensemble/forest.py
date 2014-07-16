@@ -1381,7 +1381,7 @@ class RandomTreesEmbedding(BaseForest):
             warn("The min_density parameter is deprecated as of version 0.14 "
                  "and will be removed in 0.16.", DeprecationWarning)
 
-    def _set_oob_score(*args):
+    def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by tree embedding")
 
     def fit(self, X, y=None, sample_weight=None):
