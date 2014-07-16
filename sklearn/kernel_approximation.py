@@ -557,11 +557,6 @@ class Fastfood(BaseEstimator, TransformerMixin):
 
     @staticmethod
     def enforce_dimensionality_constraints(d, n):
-        if n < d:
-            # warn that this makes no sense for the rbf kernel, because we want to generate more than d features 
-            raise ValueError("Warning:\n"
-                             "n = %s makes no sense for the rbf kernel, "
-                             "because we want to generate more than d features!" % n)
         if not (Fastfood.is_number_power_of_two(d)):
             # find d that fulfills 2^l
             d = np.power(2, np.floor(np.log2(d)) + 1)
