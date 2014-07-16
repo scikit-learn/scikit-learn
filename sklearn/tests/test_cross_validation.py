@@ -44,16 +44,16 @@ class MockListClassifier(BaseEstimator):
 
     Checks that GridSearchCV didn't convert X or Y to array.
     """
-    def __init__(self, foo_param=0, check_y=False, check_X=True):
+    def __init__(self, foo_param=0, check_y_is_list=False, check_X_is_list=True):
         self.foo_param = foo_param
-        self.check_y = check_y
-        self.check_X = check_X
+        self.check_y_is_list = check_y_is_list
+        self.check_X_is_list = check_X_is_list
 
     def fit(self, X, Y):
         assert_true(len(X) == len(Y))
-        if self.check_X:
+        if self.check_X_is_list:
             assert_true(isinstance(X, list))
-        if self.check_y:
+        if self.check_y_is_list:
             assert_true(isinstance(Y, list))
 
         return self
@@ -519,7 +519,7 @@ def test_cross_val_score():
     clf = MockListClassifier()
     scores = cval.cross_val_score(clf, X.tolist(), y.tolist())
 
-    clf = MockListClassifier(check_X=False, check_y=True)
+    clf = MockListClassifier(check_X_is_list=False, check_y_is_list=True)
     scores = cval.cross_val_score(clf, X, y.tolist())
 
     assert_raises(ValueError, cval.cross_val_score, clf, X, y,
