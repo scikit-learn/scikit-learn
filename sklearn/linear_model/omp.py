@@ -15,7 +15,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
 from ..utils import array2d, as_float_array, check_arrays
-from ..cross_validation import _check_cv as check_cv
+from ..model_selection.partition import _check_cv as check_cv
 from ..externals.joblib import Parallel, delayed
 
 import scipy

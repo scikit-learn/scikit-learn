@@ -19,6 +19,7 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn import cross_validation as cval
+from sklearn.model_selection.validate import _safe_split
 from sklearn.base import BaseEstimator
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_digits
@@ -885,12 +886,12 @@ def test_safe_split_with_precomputed_kernel():
     cv = cval.ShuffleSplit(X.shape[0], test_size=0.25, random_state=0)
     tr, te = list(cv)[0]
 
-    X_tr, y_tr = cval._safe_split(clf, X, y, tr)
-    K_tr, y_tr2 = cval._safe_split(clfp, K, y, tr)
+    X_tr, y_tr = _safe_split(clf, X, y, tr)
+    K_tr, y_tr2 = _safe_split(clfp, K, y, tr)
     assert_array_almost_equal(K_tr, np.dot(X_tr, X_tr.T))
 
-    X_te, y_te = cval._safe_split(clf, X, y, te, tr)
-    K_te, y_te2 = cval._safe_split(clfp, K, y, te, tr)
+    X_te, y_te = _safe_split(clf, X, y, te, tr)
+    K_te, y_te2 = _safe_split(clfp, K, y, te, tr)
     assert_array_almost_equal(K_te, np.dot(X_te, X_tr.T))
 
 

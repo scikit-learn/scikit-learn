@@ -12,8 +12,8 @@ from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..base import is_classifier
-from ..cross_validation import _check_cv as check_cv
-from ..cross_validation import _safe_split, _score
+from ..model_selection.partition import _check_cv as check_cv
+from ..model_selection.validate import _safe_split, _score
 from .base import SelectorMixin
 from ..metrics.scorer import check_scoring
 
