@@ -251,7 +251,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                     # return if we reached desired tolerance
                     break
 
-    return w, gap, tol
+    return w, gap, tol, n_iter + 1
 
 
 @cython.boundscheck(False)
@@ -439,7 +439,7 @@ def sparse_enet_coordinate_descent(double[:] w,
                     # return if we reached desired tolerance
                     break
 
-    return w, gap, tol
+    return w, gap, tol, n_iter + 1
 
 
 @cython.boundscheck(False)
@@ -571,7 +571,7 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
                     # return if we reached desired tolerance
                     break
 
-    return np.asarray(w), gap, tol
+    return np.asarray(w), gap, tol, n_iter + 1
 
 
 @cython.boundscheck(False)
@@ -745,4 +745,4 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
                     # return if we reached desired tolerance
                     break
 
-    return np.asarray(W), gap, tol
+    return np.asarray(W), gap, tol, n_iter + 1

@@ -6,7 +6,9 @@ from sys import version_info
 
 import numpy as np
 from scipy import interpolate, sparse
+from copy import deepcopy
 
+from sklearn.datasets import load_boston
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
@@ -465,6 +467,52 @@ def test_precompute_invalid_argument():
     for clf in [ElasticNetCV(precompute="invalid"),
                 LassoCV(precompute="invalid")]:
         assert_raises(ValueError, clf.fit, X, y)
+
+
+def test_warm_start_convergence():
+    X, y, _, _ = build_dataset()
+    model = ElasticNet(alpha=1e-3, tol=1e-3).fit(X, y)
+    n_iter_reference = model.n_iter_
+
+    # This dataset is not trivial enough for the model to converge in one pass.
+    assert_greater(n_iter_reference, 2)
+
+    # Check that n_iter_ is invariant to multiple calls to fit
+    # when warm_start=False, all else being equal.
+    model.fit(X, y)
+    n_iter_cold_start = model.n_iter_
+    assert_equal(n_iter_cold_start, n_iter_reference)
+
+    # Fit the same model again, using a warm start: the optimizer just performs
+    # a single pass before checking that it has already converged
+    model.set_params(warm_start=True)
+    model.fit(X, y)
+    n_iter_warm_start = model.n_iter_
+    assert_equal(n_iter_warm_start, 1)
+
+
+def test_warm_start_convergence_with_regularizer_decrement():
+    boston = load_boston()
+    X, y = boston.data, boston.target
+
+    # Train a model to converge on a lightly regularized problem
+    final_alpha = 1e-5
+    low_reg_model = ElasticNet(alpha=final_alpha).fit(X, y)
+
+    # Fitting a new model on a more regularized version of the same problem.
+    # Fitting with high regularization is easier it should converge faster
+    # in general.
+    high_reg_model = ElasticNet(alpha=final_alpha * 10).fit(X, y)
+    assert_greater(low_reg_model.n_iter_, high_reg_model.n_iter_)
+
+    # Fit the solution to the original, less regularized version of the
+    # problem but from the solution of the highly regularized variant of
+    # the problem as a better starting point. This should also converge
+    # faster than the original model that starts from zero.
+    warm_low_reg_model = deepcopy(high_reg_model)
+    warm_low_reg_model.set_params(warm_start=True, alpha=final_alpha)
+    warm_low_reg_model.fit(X, y)
+    assert_greater(low_reg_model.n_iter_, warm_low_reg_model.n_iter_)
 
 
 if __name__ == '__main__':
