@@ -55,6 +55,15 @@ dont_test = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
              'RandomTreesEmbedding', 'FeatureHasher', 'DummyClassifier',
              'DummyRegressor', 'TruncatedSVD', 'PolynomialFeatures']
 
+class NotAnArray(object):
+    " An object that is convertable to an array"
+
+    def __init__(self, data):
+        self.data = data
+
+    def __array__(self, dtype=None):
+        return self.data
+
 
 def multioutput_estimator_convert_y_2d(name, y):
     # Estimators in mono_output_task_error raise ValueError if y is of 1-D
@@ -787,13 +796,13 @@ def check_classifiers_pickle(name, Classifier, X, y):
 BOSTON = None
 
 
-def _boston_subset():
+def _boston_subset(n_samples=200):
     global BOSTON
     if BOSTON is None:
         boston = load_boston()
         X, y = boston.data, boston.target
         X, y = shuffle(X, y, random_state=0)
-        X, y = X[:200], y[:200]
+        X, y = X[:n_samples], y[:n_samples]
         X = StandardScaler().fit_transform(X)
         BOSTON = X, y
     return BOSTON
@@ -1213,3 +1222,50 @@ def check_sparsify_binary_classifier(name, Estimator, X, y):
     assert_true(sparse.issparse(est.coef_))
     pred = est.predict(X)
     assert_array_equal(pred, pred_orig)
+
+
+def check_estimators_not_an_array(name, Estimator, X, y):
+    if name in ('CCA', '_PLS', 'PLSCanonical', 'PLSRegression'):
+        raise SkipTest
+    # catch deprecation warnings
+    with warnings.catch_warnings(record=True):
+        # separate estimators to control random seeds
+        regressor_1 = Estimator()
+        regressor_2 = Estimator()
+    set_random_state(regressor_1)
+    set_random_state(regressor_2)
+
+    y_ = NotAnArray(np.asarray(y))
+
+    # fit
+    regressor_1.fit(X, y_)
+    pred1 = regressor_1.predict(X)
+    regressor_2.fit(X, y)
+    pred2 = regressor_2.predict(X)
+    assert_array_almost_equal(pred1, pred2, 2, name)
+
+
+def test_regressors_not_an_array():
+    regressors = all_estimators(type_filter='regressor')
+    X, y = _boston_subset(n_samples=50)
+    X = StandardScaler().fit_transform(X)
+
+    for name, Regressor in regressors:
+        if name in dont_test:
+            continue
+        yield (check_estimators_not_an_array, name, Regressor, X,
+               multioutput_estimator_convert_y_2d(name, y))
+
+
+def test_classifiers_not_an_array():
+    classifiers = all_estimators(type_filter='classifier')
+    X = np.array([[3, 0], [0, 1], [0, 2], [1, 1], [1, 2], [2, 1]])
+    y = [1, 1, 1, 2, 2, 2]
+
+    for name, Classifier in classifiers:
+        if name in dont_test:
+            continue
+        yield (check_estimators_not_an_array, name, Classifier, X,
+               multioutput_estimator_convert_y_2d(name, y))
+
+
