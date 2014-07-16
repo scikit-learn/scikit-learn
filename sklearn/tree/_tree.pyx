@@ -1105,8 +1105,8 @@ cdef class BestSplitter(Splitter):
             #   and aren't constant.
 
             # Draw a feature at random
-            f_j = rand_int(f_i - n_drawn_constants - n_found_constants,
-                           random_state) + n_drawn_constants
+            f_j = rand_int(n_drawn_constants, f_i - n_found_constants,
+                           random_state)
 
             if f_j < n_known_constants:
                 # f_j in the interval [n_drawn_constants, n_known_constants[
@@ -1406,8 +1406,8 @@ cdef class RandomSplitter(Splitter):
             #   and aren't constant.
 
             # Draw a feature at random
-            f_j = rand_int(f_i - n_drawn_constants - n_found_constants,
-                           random_state) + n_drawn_constants
+            f_j = rand_int(n_drawn_constants, f_i - n_found_constants,
+                           random_state)
 
             if f_j < n_known_constants:
                 # f_j in the interval [n_drawn_constants, n_known_constants[
@@ -1452,10 +1452,9 @@ cdef class RandomSplitter(Splitter):
                     features[f_i], features[f_j] = features[f_j], features[f_i]
 
                     # Draw a random threshold
-                    current.threshold = (min_feature_value +
-                                         rand_double(random_state) *
-                                         (max_feature_value -
-                                          min_feature_value))
+                    current.threshold = rand_uniform(min_feature_value,
+                                                     max_feature_value,
+                                                     random_state)
 
                     if current.threshold == max_feature_value:
                         current.threshold = min_feature_value
@@ -1661,8 +1660,8 @@ cdef class PresortBestSplitter(Splitter):
             #   and aren't constant.
 
             # Draw a feature at random
-            f_j = rand_int(f_i - n_drawn_constants - n_found_constants,
-                           random_state) + n_drawn_constants
+            f_j = rand_int(n_drawn_constants, f_i - n_found_constants,
+                           random_state)
 
             if f_j < n_known_constants:
                 # f_j is in [n_drawn_constants, n_known_constants[
@@ -2576,13 +2575,16 @@ cdef inline np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size):
     shape[0] = <np.npy_intp> size
     return np.PyArray_SimpleNewFromData(1, shape, np.NPY_INTP, data)
 
-cdef inline SIZE_t rand_int(SIZE_t end, UINT32_t* random_state) nogil:
+cdef inline SIZE_t rand_int(SIZE_t low, SIZE_t high,
+                            UINT32_t* random_state) nogil:
     """Generate a random integer in [0; end)."""
-    return our_rand_r(random_state) % end
+    return low + our_rand_r(random_state) % (high - low)
 
-cdef inline double rand_double(UINT32_t* random_state) nogil:
+cdef inline double rand_uniform(double low, double high,
+                                UINT32_t* random_state) nogil:
     """Generate a random double in [0; 1)."""
-    return <double> our_rand_r(random_state) / <double> RAND_R_MAX
+    return ((high - low) * <double> our_rand_r(random_state) /
+            <double> RAND_R_MAX) + low
 
 cdef inline double log(double x) nogil:
     return ln(x) / ln(2.0)
