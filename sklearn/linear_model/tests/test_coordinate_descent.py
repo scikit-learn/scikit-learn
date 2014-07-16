@@ -477,12 +477,13 @@ def test_warm_start_convergence():
     # This dataset is not trivial enough for the model to converge in one pass.
     assert_greater(n_iter_reference, 2)
 
-    # Fit the same model again, using a cold start
+    # Check that n_iter_ is invariant to multiple calls to fit
+    # when warm_start=False, all else being equal.
     model.fit(X, y)
     n_iter_cold_start = model.n_iter_
     assert_equal(n_iter_cold_start, n_iter_reference)
 
-    # Fit the same model again, using a warm start: the optimizer just perform
+    # Fit the same model again, using a warm start: the optimizer just performs
     # a single pass before checking that it has already converged
     model.set_params(warm_start=True)
     model.fit(X, y)
@@ -498,9 +499,9 @@ def test_warm_start_convergence_with_regularizer_decrement():
     final_alpha = 1e-5
     low_reg_model = ElasticNet(alpha=final_alpha).fit(X, y)
 
-    # Fitting a new model on more regularized version of the same problem.
-    # Fitting with high regularization is easier so the it should
-    # converge faster.
+    # Fitting a new model on a more regularized version of the same problem.
+    # Fitting with high regularization is easier it should converge faster
+    # in general.
     high_reg_model = ElasticNet(alpha=final_alpha * 10).fit(X, y)
     assert_greater(low_reg_model.n_iter_, high_reg_model.n_iter_)
 
@@ -510,6 +511,7 @@ def test_warm_start_convergence_with_regularizer_decrement():
     # faster than the original model that starts from zero.
     warm_low_reg_model = deepcopy(high_reg_model)
     warm_low_reg_model.set_params(warm_start=True, alpha=final_alpha)
+    warm_low_reg_model.fit(X, y)
     assert_greater(low_reg_model.n_iter_, warm_low_reg_model.n_iter_)
 
 
