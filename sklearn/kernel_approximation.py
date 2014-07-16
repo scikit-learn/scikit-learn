@@ -515,8 +515,12 @@ class Fastfood(BaseEstimator, TransformerMixin):
     def random_gauss_vector(self, d):
         return self.rng.normal(size=d)
 
-    def permutation_matrix(self, d):
+    def permutation_matrix_old(self, d):
         return self.rng.permutation(np.identity(d))
+
+    def permutation_matrix(self, d):
+        p = self.rng.permutation(d)
+        return p
 
     def binary_vector(self, d):
         return self.rng.choice([-1, 1], size=d)
@@ -573,30 +577,44 @@ class Fastfood(BaseEstimator, TransformerMixin):
         """ Create HGPHB from B, G and P"""
 
         HB = Fastfood.hadamard(np.diag(B))
-        GP = np.dot(np.diag(G), P)
+        #GP = np.dot(np.diag(G), P)
+        GP = np.take(np.diag(G), P, axis=0)
         HGP = Fastfood.hadamard(GP)
         HGPHB = np.dot(HGP, HB)
         return HGPHB
 
     @staticmethod
-    def create_gaussian_iid_matrix_implicit(B, G, P, X):
-        """ Create HGPHB from B, G and P"""
-        
+    def create_gaussian_iid_matrix_fast(B, G, P, x):
+        """ Create mapping of a specific x from B, G and P"""
+        Bx = B*x
+        HBx = fht.fht1(Bx, normalized=False)
+        #print HBx.shape
+        PHBx = np.take(HBx, P)
+        #print PHBx.shape
 
-        HB = Fastfood.hadamard(np.diag(B))
-        GP = np.dot(np.diag(G), P)
-        HGP = Fastfood.hadamard(GP)
-        HGPHB = np.dot(HGP, HB)
-        return HGPHB
+        GPHBx = G*PHBx
+        #print GPHBx.shape
+        HGPHBx = fht.fht1(GPHBx, normalized=False)
+        return HGPHBx
+
 
     def create_approximation_matrix(self, S, HGPHB):
         """ Create V from HGPHB and S """
         SHGPHB = np.dot(np.diag(S), HGPHB)
         return 1 / (self.sigma * np.sqrt(self.d)) * SHGPHB
 
+    def create_approximation_matrix_fast(self, S, x):
+        """ Create V from HGPHB and S """
+        SHGPHBx = S*x
+        return 1 / (self.sigma * np.sqrt(self.d)) * SHGPHBx
+
     @staticmethod
     def phi(V, X):
         return (1 / np.sqrt(V.shape[0])) * np.cos(np.dot(V, X.T))
+
+    @staticmethod
+    def phi_fast(X):
+        return (1 / np.sqrt(X.shape[0])) * np.cos(X)
 
     @staticmethod
     def hadamard(X):
@@ -606,11 +624,11 @@ class Fastfood(BaseEstimator, TransformerMixin):
         implementations.
         """
         # the fast hadamard transform
-        # return fht.fht2(X, axes=0, normalized=False)
+        return fht.fht2(X, axes=0, normalized=False)
 
         # full multiplication with explicit hadamard matrix
         #H = (1 / (X.shape[0] * np.sqrt(2))) * hadamard(X.shape[0])
-        H = hadamard(X.shape[0])
+        #H = hadamard(X.shape[0])
         return np.dot(H, X)
 
     def fit(self, X, y=None):
@@ -642,16 +660,22 @@ class Fastfood(BaseEstimator, TransformerMixin):
         return Fastfood.phi(V_stacked , X_padded).T
 
     def transform_fast(self, X):
-    
-        to_stack = []
-        for i in range(self.times_to_stack_v):
-            B, G, P, S = self.vectors[i]
-            HGPHB = Fastfood.create_gaussian_iid_matrix(B, G, P)
-            v = self.create_approximation_matrix(S, HGPHB)
-            to_stack.append(v)
-        V_stacked = np.vstack(to_stack)
-    
         X_padded = np.pad(X, ((0, 0), (0, self.number_of_features_to_pad_with_zeros)), 'constant')
+<<<<<<< HEAD
     
         #print self.n, self.d, V.shape, X.shape, X_padded.shape, Fastfood.phi(V, X_padded).shape
         return Fastfood.phi(V_stacked , X_padded).T
+=======
+        mapped_examples = []
+        for i in range(X_padded.shape[0]):
+            example = []
+            for j in range(self.times_to_stack_v):
+                B, G, P, S = self.vectors[j]
+                HGPHBx = Fastfood.create_gaussian_iid_matrix_fast(B, G, P, X_padded[i, :])
+                v = self.create_approximation_matrix_fast(S, HGPHBx)
+                example.append(v)
+            mapped_examples.append(np.hstack(example))
+        mapped_examples_as_matrix = np.vstack(mapped_examples)
+
+        return Fastfood.phi_fast(mapped_examples_as_matrix).T
+>>>>>>> - made transform fast by introducing a loop over the examples and map each one by one into featurespace without having the mapping matrix V ever represented explicitly
