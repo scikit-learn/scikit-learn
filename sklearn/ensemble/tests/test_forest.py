@@ -20,6 +20,8 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_less, assert_greater
 from sklearn.utils.testing import assert_greater_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_warns
 
 from sklearn import datasets
 from sklearn.decomposition import TruncatedSVD
@@ -221,8 +223,9 @@ def test_importances():
 def check_oob_score(name, X, y, n_estimators=20):
     """Check that oob prediction is a good estimation of the generalization
        error."""
+    # Proper behavior
     est = FOREST_ESTIMATORS[name](oob_score=True, random_state=0,
-                                  n_estimators=n_estimators)
+                                  n_estimators=n_estimators, bootstrap=True)
     n_samples = X.shape[0]
     est.fit(X[:n_samples // 2, :], y[:n_samples // 2])
     test_score = est.score(X[n_samples // 2:, :], y[n_samples // 2:])
@@ -233,15 +236,50 @@ def check_oob_score(name, X, y, n_estimators=20):
         assert_greater(test_score, est.oob_score_)
         assert_greater(est.oob_score_, .8)
 
+    # Check warning if not enough estimators
+    with np.errstate(divide="ignore", invalid="ignore"):
+        est = FOREST_ESTIMATORS[name](oob_score=True, random_state=0,
+                                      n_estimators=1, bootstrap=True)
+        assert_warns(UserWarning, est.fit, X, y)
+
 
 def test_oob_score():
-    yield check_oob_score, "RandomForestClassifier", iris.data, iris.target
-    yield (check_oob_score, "RandomForestRegressor", boston.data,
-           boston.target, 50)
+    for name in FOREST_CLASSIFIERS:
+        yield check_oob_score, name, iris.data, iris.target
 
-    # non-contiguous targets in classification
-    yield (check_oob_score, "RandomForestClassifier", iris.data,
-           iris.target * 2 + 1)
+        # non-contiguous targets in classification
+        yield check_oob_score, name, iris.data, iris.target * 2 + 1
+
+    for name in FOREST_REGRESSORS:
+        yield check_oob_score, name, boston.data, boston.target, 50
+
+
+def check_oob_score_raise_error(name):
+    ForestEstimator = FOREST_ESTIMATORS[name]
+
+    if name in FOREST_TRANSFORMERS:
+        for oob_score in [True, False]:
+            assert_raises(TypeError, ForestEstimator, oob_score=oob_score)
+
+        assert_raises(NotImplementedError, ForestEstimator()._set_oob_score,
+                      X, y)
+
+    else:
+        # Unfitted /  no bootstrap / no oob_score
+        for oob_score, bootstrap in [(True, False), (False, True),
+                                     (False, False)]:
+            est = ForestEstimator(oob_score=oob_score, bootstrap=bootstrap,
+                                  random_state=0)
+            assert_false(hasattr(est, "oob_score_"))
+
+        # No bootstrap
+        assert_raises(ValueError, ForestEstimator(oob_score=True,
+                                                  bootstrap=False).fit, X, y)
+
+
+def test_oob_score_raise_error():
+    for name in FOREST_ESTIMATORS:
+        yield check_oob_score_raise_error, name
 
 
 def check_gridsearch(name):
@@ -302,8 +340,17 @@ def test_pickle():
         yield check_pickle, name,  boston.data[::2], boston.target[::2]
 
 
-def check_multioutput(name,  X_train, X_test, y_train, y_test):
+def check_multioutput(name):
     """Check estimators on multi-output problems."""
+
+    X_train = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [-2, 1],
+               [-1, 1], [-1, 2], [2, -1], [1, -1], [1, -2]]
+
+    y_train = [[-1, 0], [-1, 0], [-1, 0], [1, 1], [1, 1], [1, 1], [-1, 2],
+               [-1, 2], [-1, 2], [1, 3], [1, 3], [1, 3]]
+    X_test = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
+    y_test = [[-1, 0], [1, 1], [-1, 2], [1, 3]]
+
     est = FOREST_ESTIMATORS[name](random_state=0, bootstrap=False)
     y_pred = est.fit(X_train, y_train).predict(X_test)
     assert_array_almost_equal(y_pred, y_test)
@@ -322,40 +369,11 @@ def check_multioutput(name,  X_train, X_test, y_train, y_test):
 
 
 def test_multioutput():
-    X_train = [[-2, -1],
-               [-1, -1],
-               [-1, -2],
-               [1, 1],
-               [1, 2],
-               [2, 1],
-               [-2, 1],
-               [-1, 1],
-               [-1, 2],
-               [2, -1],
-               [1, -1],
-               [1, -2]]
-
-    y_train = [[-1, 0],
-               [-1, 0],
-               [-1, 0],
-               [1, 1],
-               [1, 1],
-               [1, 1],
-               [-1, 2],
-               [-1, 2],
-               [-1, 2],
-               [1, 3],
-               [1, 3],
-               [1, 3]]
-
-    X_test = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
-    y_test = [[-1, 0], [1, 1], [-1, 2], [1, 3]]
-
     for name in FOREST_CLASSIFIERS:
-        yield check_multioutput, name, X_train, X_test, y_train, y_test
+        yield check_multioutput, name
 
     for name in FOREST_REGRESSORS:
-        yield check_multioutput, name, X_train, X_test, y_train, y_test
+        yield check_multioutput, name
 
 
 def check_classes_shape(name):
@@ -591,6 +609,65 @@ def test_min_weight_fraction_leaf():
     X = X.astype(np.float32)
     for name in FOREST_ESTIMATORS:
         yield check_min_weight_fraction_leaf, name, X, y
+
+
+def check_memory_layout(name, dtype):
+    """Check that it works no matter the memory layout"""
+
+    est = FOREST_ESTIMATORS[name](random_state=0, bootstrap=False)
+
+    # Nothing
+    X = np.asarray(iris.data, dtype=dtype)
+    y = iris.target
+    assert_array_equal(est.fit(X, y).predict(X), y)
+
+    # C-order
+    X = np.asarray(iris.data, order="C", dtype=dtype)
+    y = iris.target
+    assert_array_equal(est.fit(X, y).predict(X), y)
+
+    # F-order
+    X = np.asarray(iris.data, order="F", dtype=dtype)
+    y = iris.target
+    assert_array_equal(est.fit(X, y).predict(X), y)
+
+    # Contiguous
+    X = np.ascontiguousarray(iris.data, dtype=dtype)
+    y = iris.target
+    assert_array_equal(est.fit(X, y).predict(X), y)
+
+    # Strided
+    X = np.asarray(iris.data[::3], dtype=dtype)
+    y = iris.target[::3]
+    assert_array_equal(est.fit(X, y).predict(X), y)
+
+
+def test_memory_layout():
+    for name, dtype in product(FOREST_CLASSIFIERS, [np.float64, np.float32]):
+        yield check_memory_layout, name, dtype
+
+    for name, dtype in product(FOREST_REGRESSORS, [np.float64, np.float32]):
+        yield check_memory_layout, name, dtype
+
+
+def check_1d_input(name, X, X_2d, y):
+    ForestEstimator = FOREST_ESTIMATORS[name]
+    assert_raises(ValueError, ForestEstimator(random_state=0).fit, X, y)
+
+    est = ForestEstimator(random_state=0)
+    est.fit(X_2d, y)
+
+    if name in FOREST_CLASSIFIERS or name in FOREST_REGRESSORS:
+        assert_raises(ValueError, est.predict, X)
+
+
+def test_1d_input():
+    X = iris.data[:, 0].ravel()
+    X_2d = iris.data[:, 0].reshape((-1, 1))
+    y = iris.target
+
+    for name in FOREST_ESTIMATORS:
+        yield check_1d_input, name, X, X_2d, y
 
 
 if __name__ == "__main__":
