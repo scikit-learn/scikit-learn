@@ -25,6 +25,16 @@ from sklearn.utils.multiclass import is_multilabel
 from sklearn.utils.multiclass import is_sequence_of_sequences
 from sklearn.utils.multiclass import type_of_target
 
+class NotAnArray(object):
+    " An object that is convertable to an array"
+
+    def __init__(self, data):
+        self.data = data
+
+    def __array__(self):
+        return self.data
+
+
 EXAMPLES = {
     'multilabel-indicator': [
         # valid when the data is formated as sparse or dense, identified
@@ -41,6 +51,7 @@ EXAMPLES = {
         # Only valid when data is dense
         np.array([[-1, 1], [1, -1]]),
         np.array([[-3, 3], [3, -3]]),
+        NotAnArray(np.array([[-3, 3], [3, -3]])),
     ],
     'multilabel-sequences': [
         [[0, 1]],
@@ -52,6 +63,7 @@ EXAMPLES = {
         [[]],
         [()],
         np.array([[], [1, 2]], dtype='object'),
+        NotAnArray(np.array([[], [1, 2]], dtype='object')),
     ],
     'multiclass': [
         [1, 0, 2, 2, 1, 4, 2, 4, 4, 4],
@@ -61,6 +73,7 @@ EXAMPLES = {
         np.array([1, 0, 2], dtype=np.float),
         np.array([1, 0, 2], dtype=np.float32),
         np.array([[1], [0], [2]]),
+        NotAnArray(np.array([1, 0, 2])),
         [0, 1, 2],
         ['a', 'b', 'c'],
         np.array([u'a', u'b', u'c']),
@@ -77,6 +90,7 @@ EXAMPLES = {
         np.array([[u'a', u'b'], [u'c', u'd']]),
         np.array([[u'a', u'b'], [u'c', u'd']], dtype=object),
         np.array([[1, 0, 2]]),
+        NotAnArray(np.array([[1, 0, 2]])),
     ],
     'binary': [
         [0, 1],
@@ -90,6 +104,7 @@ EXAMPLES = {
         np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=np.float),
         np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=np.float32),
         np.array([[0], [1]]),
+        NotAnArray(np.array([[0], [1]])),
         [1, -1],
         [3, 5],
         ['a'],
@@ -124,6 +139,7 @@ EXAMPLES = {
         [{0: 'a', 1: 'b'}, {0: 'a'}],
     ]
 }
+
 
 NON_ARRAY_LIKE_EXAMPLES = [
     set([1, 2, 3]),
@@ -263,10 +279,10 @@ def test_is_label_indicator_matrix():
                 sparse_assert_, sparse_exp = assert_false, 'False'
 
             if (issparse(example) or
-                (isinstance(example, np.ndarray) and
-                 example.ndim == 2 and
-                 example.dtype.kind in 'biuf' and
-                 example.shape[1] > 0)):
+                (hasattr(example, '__array__') and
+                 np.asarray(example).ndim == 2 and
+                 np.asarray(example).dtype.kind in 'biuf' and
+                 np.asarray(example).shape[1] > 0)):
                     examples_sparse = [sparse_matrix(example)
                                        for sparse_matrix in [coo_matrix,
                                                              csc_matrix,
