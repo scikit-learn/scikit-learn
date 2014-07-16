@@ -366,6 +366,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
             self.classes_ = None
 
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
+        y, = check_arrays(y)
         n_samples, n_features = X.shape
 
         # labels can be encoded as float, int, or string literals

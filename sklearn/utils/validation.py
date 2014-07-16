@@ -36,6 +36,7 @@ warnings.simplefilter('ignore', NonBLASDotWarning)
 
 def _assert_all_finite(X):
     """Like assert_all_finite, but only for ndarray."""
+    X = np.asanyarray(X)
     if (X.dtype.char in np.typecodes['AllFloat'] and not np.isfinite(X.sum())
             and not np.isfinite(X).all()):
         raise ValueError("Input contains NaN, infinity"
@@ -167,7 +168,10 @@ def atleast2d_or_csr(X, dtype=None, order=None, copy=False,
 def _num_samples(x):
     """Return number of samples in array-like x."""
     if not hasattr(x, '__len__') and not hasattr(x, 'shape'):
-        raise TypeError("Expected sequence or array-like, got %r" % x)
+        if hasattr(x, '__array__'):
+            x = np.asarray(x)
+        else:
+            raise TypeError("Expected sequence or array-like, got %r" % x)
     return x.shape[0] if hasattr(x, 'shape') else len(x)
 
 
@@ -261,10 +265,15 @@ def check_arrays(*arrays, **options):
                                     'convert to a dense numpy array.')
                 if check_ccontiguous:
                     array.data = np.ascontiguousarray(array.data, dtype=dtype)
-                else:
+                elif hasattr(array, 'data'):
                     array.data = np.asarray(array.data, dtype=dtype)
+                elif array.dtype != dtype:
+                    array = array.astype(dtype)
                 if not allow_nans:
-                    _assert_all_finite(array.data)
+                    if hasattr(array, 'data'):
+                        _assert_all_finite(array.data)
+                    else:
+                        _assert_all_finite(array.values())
             else:
                 if check_ccontiguous:
                     array = np.ascontiguousarray(array, dtype=dtype)

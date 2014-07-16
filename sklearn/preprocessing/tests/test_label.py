@@ -9,7 +9,6 @@ from scipy.sparse import lil_matrix
 
 from sklearn.utils.multiclass import type_of_target
 
-from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
@@ -28,7 +27,6 @@ from sklearn.preprocessing.label import _inverse_binarize_thresholding
 from sklearn.preprocessing.label import _inverse_binarize_multiclass
 
 from sklearn import datasets
-from sklearn.linear_model.stochastic_gradient import SGDClassifier
 
 iris = datasets.load_iris()
 
