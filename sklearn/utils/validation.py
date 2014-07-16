@@ -253,7 +253,8 @@ def check_arrays(*arrays, **options):
             raise ValueError("Found array with dim %d. Expected %d"
                              % (size, n_samples))
 
-        if not allow_lists or hasattr(array, "shape"):
+        if (not allow_lists or hasattr(array, "__array__")
+                or hasattr(array, "shape")):
             if sp.issparse(array):
                 if sparse_format == 'csr':
                     array = array.tocsr()
