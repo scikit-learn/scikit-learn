@@ -11,10 +11,10 @@
 import numpy as np
 import scipy.sparse as sp
 from scipy import stats
-from ..utils.extmath import weighted_mode
-from ..utils.sparsefuncs_fast import csr_row_mode
+from sklearn.utils.extmath import weighted_mode
+from sklearn.utils.sparsefuncs_fast import csr_row_mode
 
-from .base import \
+from sklearn.neighbors.base import \
     _check_weights, _get_weights, \
     NeighborsBase, KNeighborsMixin,\
     RadiusNeighborsMixin, SupervisedIntegerMixin
@@ -148,7 +148,6 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         n_samples = X.shape[0]
         weights = _get_weights(neigh_dist, self.weights)
 
-        print type(_y)
         if not self.sparse_target_input_:
             _y = sp.csc_matrix(_y) # XXX Remove when sparse matrix comes from fit in one continous pass
 
