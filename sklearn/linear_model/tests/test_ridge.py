@@ -678,27 +678,28 @@ def test_raises_value_error_if_solver_not_supported():
     assert_raise_message(exception, message, func)
 
 
-def test_ridge_cv_eigen_solver():
+def test_ridge_cv_path_solvers():
 
     alphas = np.logspace(-3, 3, 10)
     cv = KFold(len(y_diabetes), 2)
-    ridge_cv = RidgeCV(alphas=alphas, solver=None, cv=cv,
+
+    for solver in ['eigen', 'svd']:
+        ridge_cv = RidgeCV(alphas=alphas, solver=None, cv=cv,
                        fit_intercept=False)
-    ridge_cv_eigen = RidgeCV(alphas=alphas, solver='eigen', cv=cv,
-                             fit_intercept=False)
+        ridge_cv_path = RidgeCV(alphas=alphas, solver=solver, cv=cv,
+                                fit_intercept=False)
 
-    ridge_cv.fit(X_diabetes, y_diabetes)
-    ridge_cv_eigen.fit(X_diabetes, y_diabetes[:, np.newaxis])
+        ridge_cv.fit(X_diabetes, y_diabetes)
+        ridge_cv_path.fit(X_diabetes, y_diabetes[:, np.newaxis])
+        assert_array_almost_equal(ridge_cv.coef_, ridge_cv_path.coef_[0])
 
-    assert_array_almost_equal(ridge_cv.coef_, ridge_cv_eigen.coef_[0])
+        ridge_cv.fit_intercept = True
+        ridge_cv_path.fit_intercept = True
 
-    ridge_cv.fit_intercept = True
-    ridge_cv_eigen.fit_intercept = True
+        ridge_cv.fit(X_diabetes, y_diabetes)
+        ridge_cv_path.fit(X_diabetes, y_diabetes[:, np.newaxis])
 
-    ridge_cv.fit(X_diabetes, y_diabetes)
-    ridge_cv_eigen.fit(X_diabetes, y_diabetes[:, np.newaxis])
-
-    assert_array_almost_equal(ridge_cv.coef_, ridge_cv_eigen.coef_[0])
+        assert_array_almost_equal(ridge_cv.coef_, ridge_cv_path.coef_[0])
 
 
 def make_noisy_forward_data(

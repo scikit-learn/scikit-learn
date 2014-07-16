@@ -1025,7 +1025,7 @@ class _BaseRidgeCV(LinearModel):
             self.coef_ = estimator.coef_
             self.intercept_ = estimator.intercept_
         else:
-            if self.solver == 'eigen':
+            if self.solver in ['eigen', 'svd']:
                 cv = check_cv(self.cv)
                 scorer = check_scoring(self,
                                        scoring=self.scoring,
@@ -1058,7 +1058,7 @@ class _BaseRidgeCV(LinearModel):
                     predictions = ridge_path(
                         X_train, y_train, alphas,
                         (X[test] - X_train_mean) / X_train_std,
-                        solver='eigen') + y_train_mean[np.newaxis]
+                        solver=self.solver) + y_train_mean[np.newaxis]
                     for score, prediction in zip(scores, predictions):
                         score[:] = scorer(
                             identity_estimator, y[test], prediction)
@@ -1075,7 +1075,7 @@ class _BaseRidgeCV(LinearModel):
                     copy=self.copyX, sample_weight=sample_weight)
                 self.coef_ = ridge_path(X, y,
                                         np.atleast_2d(self.best_alphas_),
-                                        solver='eigen')[0].T
+                                        solver=self.solver)[0].T
                 self._set_intercept(X_mean, y_mean, X_std)
             else:
                 # do the old grid search
