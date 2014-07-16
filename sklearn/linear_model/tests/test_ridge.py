@@ -12,6 +12,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils import check_random_state
 
 from sklearn import datasets
 from sklearn.metrics import mean_squared_error
@@ -27,6 +28,7 @@ from sklearn.linear_model.ridge import RidgeClassifier
 from sklearn.linear_model.ridge import RidgeClassifierCV
 from sklearn.linear_model.ridge import _solve_cholesky
 from sklearn.linear_model.ridge import _solve_cholesky_kernel
+from sklearn.linear_model.ridge import ridge_path
 
 from sklearn.cross_validation import KFold
 
@@ -697,3 +699,50 @@ def test_ridge_cv_eigen_solver():
     ridge_cv_eigen.fit(X_diabetes, y_diabetes[:, np.newaxis])
 
     assert_array_almost_equal(ridge_cv.coef_, ridge_cv_eigen.coef_[0])
+
+
+def make_noisy_forward_data(
+    n_samples=100,
+    n_features=200,
+    n_targets=10,
+    train_frac=.8, 
+    random_state=42):
+    rng = check_random_state(random_state)
+    n_train = int(train_frac * n_samples)
+    train = slice(None, n_train)
+    test = slice(n_train, None)
+    X = rng.randn(n_samples, n_features)
+    W = rng.randn(n_features, n_targets)
+    Y_clean = X.dot(W)
+    noise_levels = rng.randn(n_targets) ** 2
+    noise = rng.randn(*Y_clean.shape) * noise_levels * Y_clean.std(0)
+    Y = Y_clean + noise
+    return X, Y, W, train, test
+
+
+def test_ridge_path():
+
+    n_sampless, n_featuress, n_targetss = [100, 200], [200, 100], [10, 10]
+    for n_samples, n_features, n_targets in zip(n_sampless,
+                                                n_featuress,
+                                                n_targetss):
+        X, Y, W, train, test = make_noisy_forward_data(
+            n_samples, n_features, n_targets)
+        alphas = np.logspace(-3, 3, 9)[:, np.newaxis]
+
+        predictions_cholesky = np.array([Ridge(
+                    solver='cholesky', alpha=alpha, fit_intercept=False).fit(
+                    X[train], Y[train]).predict(X[test])
+                                         for alpha in alphas])
+
+        predictions_eigen_path = ridge_path(X[train], Y[train], alphas,
+                                            X[test], solver='eigen')
+
+        predictions_svd_path = ridge_path(X[train], Y[train], alphas,
+                                          X[test], solver='svd')
+
+        assert_array_almost_equal(predictions_cholesky,
+                                  predictions_eigen_path)
+        assert_array_almost_equal(predictions_cholesky,
+                                  predictions_svd_path)
+

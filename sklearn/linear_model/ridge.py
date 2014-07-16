@@ -30,6 +30,23 @@ from ..metrics.scorer import check_scoring
 from ..cross_validation import check_cv
 
 
+def _ridge_path_svd(X_train, Y_train, alphas,
+                    X_test=None, sg_val_thresh=1e-15):
+
+    U, S, VT = linalg.svd(X_train, full_matrices=False)
+    nnzmax = np.where(S > sg_val_thresh)[0].max() + 1
+    UTY = U.T[:nnzmax].dot(Y_train)
+    s_alpha = S[np.newaxis, :nnzmax, np.newaxis] / (
+        S[np.newaxis, :nnzmax, np.newaxis] ** 2 + alphas[:, np.newaxis])
+    s_alpha_UTY = s_alpha * UTY[np.newaxis]  # possibly inplace
+    if X_test is not None:
+        dekernelize = X_test.dot(VT[:nnzmax].T)
+    else:
+        dekernelize = VT[:nnzmax].T
+    output = dekernelize.dot(s_alpha_UTY).transpose(1, 0, 2)
+    return output
+
+
 def _precomp_kernel_ridge_path_eigen(gramX_train, Y_train, alphas,
                                      gramX_test=None,
                                      eig_val_thresh=1e-15):
@@ -160,23 +177,26 @@ def ridge_path(X_train, Y_train, alphas, X_test=None, solver="eigen"):
         else:
             alphas = alphas[:, np.newaxis]
 
-    if solver not in ['eigen']:
+    if solver not in ['eigen', 'svd']:
         raise NotImplementedError("Solver %s not implemented" % solver)
 
-    if n_samples < n_features:
-        # A kernelized implementation is more efficient, because it works
-        # in the dual space (the sample axis).
-        dual_path_or_predictions = _kernel_ridge_path_eigen(
-            X_train, Y_train, alphas, X_test, kernel=_linear_kernel)
-        if X_test is None:
-            primal_path = X_train.T.dot(
-                dual_path_or_predictions).transpose(1, 0, 2)
-            path = primal_path
+    if solver == 'eigen':
+        if n_samples < n_features:
+            # A kernelized implementation is more efficient, because it
+            # work in the dual space (the sample axis).
+            dual_path_or_predictions = _kernel_ridge_path_eigen(
+                X_train, Y_train, alphas, X_test, kernel=_linear_kernel)
+            if X_test is None:
+                primal_path = X_train.T.dot(
+                    dual_path_or_predictions).transpose(1, 0, 2)
+                path = primal_path
+            else:
+                prediction_path = dual_path_or_predictions
+                path = prediction_path
         else:
-            prediction_path = dual_path_or_predictions[0]
-            path = prediction_path
-    else:
-        path = _feature_ridge_path_eigen(X_train, Y_train, alphas, X_test)
+            path = _feature_ridge_path_eigen(X_train, Y_train, alphas, X_test)
+    elif solver == 'svd':
+        path = _ridge_path_svd(X_train, Y_train, alphas, X_test)
 
     if y_raveled:
         return path[:, :, 0]
