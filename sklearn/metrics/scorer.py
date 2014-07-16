@@ -84,8 +84,10 @@ class _PredictScorer(_BaseScorer):
             return self._sign * self._score_func(y_true, y_pred,
                                                  sample_weight=sample_weight,
                                                  **self._kwargs)
-        return self._sign * self._score_func(y_true, y_pred, **self._kwargs)
-
+        else:
+            return self._sign * self._score_func(y_true, y_pred,
+                                                 **self._kwargs)
+                
 
 class _ProbaScorer(_BaseScorer):
     def __call__(self, clf, X, y, sample_weight=None):
@@ -117,7 +119,8 @@ class _ProbaScorer(_BaseScorer):
             return self._sign * self._score_func(y, y_pred,
                                                  sample_weight=sample_weight,
                                                  **self._kwargs)
-        return self._sign * self._score_func(y, y_pred, **self._kwargs)
+        else:
+            return self._sign * self._score_func(y, y_pred, **self._kwargs)
 
     def _factory_args(self):
         return ", needs_proba=True"
@@ -173,7 +176,8 @@ class _ThresholdScorer(_BaseScorer):
             return self._sign * self._score_func(y, y_pred,
                                                  sample_weight=sample_weight,
                                                  **self._kwargs)
-        return self._sign * self._score_func(y, y_pred, **self._kwargs)
+        else:
+            return self._sign * self._score_func(y, y_pred, **self._kwargs)
 
     def _factory_args(self):
         return ", needs_threshold=True"
