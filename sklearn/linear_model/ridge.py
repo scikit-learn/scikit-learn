@@ -340,17 +340,6 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None):
         return dual_coefs.T
 
 
-def _solve_svd(X, y, alpha):
-    U, s, Vt = linalg.svd(X, full_matrices=False)
-    idx = s > 1e-15  # same default value as scipy.linalg.pinv
-    s_nnz = s[idx][:, np.newaxis]
-    UTy = np.dot(U.T, y)
-    d = np.zeros((s.size, alpha.size))
-    d[idx] = s_nnz / (s_nnz ** 2 + alpha)
-    d_UT_y = d * UTy
-    return np.dot(Vt.T, d_UT_y).T
-
-
 def _deprecate_dense_cholesky(solver):
     if solver == 'dense_cholesky':
         warnings.warn(DeprecationWarning("The name 'dense_cholesky' is "
