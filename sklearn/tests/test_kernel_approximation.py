@@ -28,8 +28,8 @@ from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
 
 # generate data
 rng = np.random.RandomState(0)
-X = rng.random_sample(size=(300, 60))
-Y = rng.random_sample(size=(300, 60))
+X = rng.random_sample(size=(300, 50))
+Y = rng.random_sample(size=(300, 50))
 X /= X.sum(axis=1)[:, np.newaxis]
 Y /= Y.sum(axis=1)[:, np.newaxis]
 
@@ -321,7 +321,7 @@ def test_compare_performance_of_scaling_matrix_generation():
     spent_time_vectorized = end - start
 
     start = datetime.datetime.utcnow()
-    fastfood.scaling_vector(d, G)
+    fastfood.scaling_vector_loop(d, G)
     end = datetime.datetime.utcnow()
     spent_time_loop = end - start
 
@@ -342,7 +342,7 @@ def test_fastfood():
     gamma = 10.
     kernel = rbf_kernel(X, Y, gamma=gamma)
 
-    sigma = np.sqrt(1 / (2 * gamma))*2
+    sigma = np.sqrt(1 / (2 * gamma))
 
     # approximate kernel mapping
     ff_transform = Fastfood(sigma, n_components=1000, random_state=42)
@@ -359,7 +359,13 @@ def test_fastfood():
 
 def test_fastfood_performance_to_rks():
     """compares the performance of Fastfood and RKS"""
-    # compute exact kernel
+    #generate data
+    X = rng.random_sample(size=(300, 1024))
+    Y = rng.random_sample(size=(300, 1024))
+    X /= X.sum(axis=1)[:, np.newaxis]
+    Y /= Y.sum(axis=1)[:, np.newaxis]
+
+    # calculate feature maps
     gamma = 10.
     sigma = np.sqrt(1 / (2 * gamma))
     number_of_features_to_generate = 2000

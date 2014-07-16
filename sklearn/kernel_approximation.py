@@ -583,6 +583,17 @@ class Fastfood(BaseEstimator, TransformerMixin):
         HGPHB = np.dot(HGP, HB)
         return HGPHB
 
+    @staticmethod
+    def create_gaussian_iid_matrix_implicit(B, G, P, X):
+        """ Create HGPHB from B, G and P"""
+        
+
+        HB = Fastfood.hadamard(np.diag(B))
+        GP = np.dot(np.diag(G), P)
+        HGP = Fastfood.hadamard(GP)
+        HGPHB = np.dot(HGP, HB)
+        return HGPHB
+
     def create_approximation_matrix(self, S, HGPHB):
         """ Create V from HGPHB and S """
         SHGPHB = np.dot(np.diag(S), HGPHB)
@@ -632,5 +643,20 @@ class Fastfood(BaseEstimator, TransformerMixin):
 
         X_padded = np.pad(X, ((0, 0), (0, self.number_of_features_to_pad_with_zeros)), 'constant')
 
+        #print self.n, self.d, V.shape, X.shape, X_padded.shape, Fastfood.phi(V, X_padded).shape
+        return Fastfood.phi(V_stacked , X_padded).T
+
+    def transform_fast(self, X):
+    
+        to_stack = []
+        for i in range(self.times_to_stack_v):
+            B, G, P, S = self.vectors[i]
+            HGPHB = Fastfood.create_gaussian_iid_matrix(B, G, P)
+            v = self.create_approximation_matrix(S, HGPHB)
+            to_stack.append(v)
+        V_stacked = np.vstack(to_stack)
+    
+        X_padded = np.pad(X, ((0, 0), (0, self.number_of_features_to_pad_with_zeros)), 'constant')
+    
         #print self.n, self.d, V.shape, X.shape, X_padded.shape, Fastfood.phi(V, X_padded).shape
         return Fastfood.phi(V_stacked , X_padded).T
