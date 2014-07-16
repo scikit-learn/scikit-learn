@@ -7,7 +7,7 @@
 import numpy as np
 
 from ..base import BaseEstimator, MetaEstimatorMixin, RegressorMixin, clone
-from ..utils import check_random_state, atleast2d_or_csr
+from ..utils import check_random_state, atleast2d_or_csr, check_arrays
 from ..utils.random import sample_without_replacement
 from .base import LinearRegression
 
@@ -193,6 +193,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
             `max_trials` randomly chosen sub-samples.
 
         """
+        X, y = check_arrays(X, y)
         if self.base_estimator is not None:
             base_estimator = clone(self.base_estimator)
         else:

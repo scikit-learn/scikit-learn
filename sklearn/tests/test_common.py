@@ -1236,10 +1236,11 @@ def check_estimators_not_an_array(name, Estimator, X, y):
     set_random_state(regressor_2)
 
     y_ = NotAnArray(np.asarray(y))
+    X_ = NotAnArray(np.asarray(X))
 
     # fit
-    regressor_1.fit(X, y_)
-    pred1 = regressor_1.predict(X)
+    regressor_1.fit(X_, y_)
+    pred1 = regressor_1.predict(X_)
     regressor_2.fit(X, y)
     pred2 = regressor_2.predict(X)
     assert_array_almost_equal(pred1, pred2, 2, name)
