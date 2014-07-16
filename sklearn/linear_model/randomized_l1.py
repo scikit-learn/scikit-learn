@@ -129,6 +129,7 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
     def transform(self, X):
         """Transform a new matrix using the selected features"""
         mask = self.get_support()
+        X, = check_arrays(X)
         if len(mask) != X.shape[1]:
             raise ValueError("X has a different shape than during fitting.")
         return safe_asarray(X)[:, safe_mask(X, mask)]

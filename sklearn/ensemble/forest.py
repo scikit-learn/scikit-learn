@@ -416,6 +416,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes.
         """
+        X, = check_arrays(X)
         n_samples = len(X)
         proba = self.predict_proba(X)
 

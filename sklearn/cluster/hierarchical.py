@@ -18,7 +18,7 @@ from ..base import BaseEstimator, ClusterMixin
 from ..externals.joblib import Memory
 from ..externals import six
 from ..metrics.pairwise import paired_distances, pairwise_distances
-from ..utils import array2d, safe_asarray
+from ..utils import array2d, safe_asarray, check_arrays
 from ..utils.sparsetools import connected_components
 
 from . import _hierarchical
@@ -838,4 +838,5 @@ class WardAgglomeration(AgglomerationTransform, Ward):
         -------
         self
         """
+        X, = check_arrays(X)
         return Ward.fit(self, X.T, **params)

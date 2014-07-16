@@ -224,7 +224,7 @@ def check_transformer(name, Transformer, X, y):
         msg = name + ' is non deterministic on 32bit Python'
         raise SkipTest(msg)
 
-    n_samples, n_features = X.shape
+    n_samples, n_features = np.asarray(X).shape
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
         transformer = Transformer()
@@ -294,7 +294,9 @@ def check_transformer(name, Transformer, X, y):
                 % Transformer)
 
         # raises error on malformed input for transform
-        assert_raises(ValueError, transformer.transform, X.T)
+        if hasattr(X, 'T'):
+            # If it's not an array, it does not have a 'T' property
+            assert_raises(ValueError, transformer.transform, X.T)
 
 
 def test_transformers_sparse_data():
@@ -1268,5 +1270,33 @@ def test_classifiers_not_an_array():
             continue
         yield (check_estimators_not_an_array, name, Classifier, X,
                multioutput_estimator_convert_y_2d(name, y))
+
+
+def test_transformers_not_an_array():
+    # test if transformers do something sensible on training set
+    # also test all shapes / shape errors
+    transformers = all_estimators(type_filter='transformer')
+    X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
+                      random_state=0, n_features=2, cluster_std=0.1)
+    X = StandardScaler().fit_transform(X)
+    # We need to make sure that we have non negative data, for things
+    # like NMF
+    X -= X.min() - .1
+
+    for name, Transformer in transformers:
+        # XXX: some transformers are transforming the input
+        # data. This is a bug that we'll fix later. Right now we copy
+        # the data each time
+        this_X = NotAnArray(X.copy())
+        this_y = NotAnArray(np.asarray(y))
+        if name in dont_test:
+            continue
+        # these don't actually fit the data:
+        if name in ['AdditiveChi2Sampler', 'Binarizer', 'Normalizer']:
+            continue
+        # And these wan't multivariate output
+        if name in ('PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD'):
+            continue
+        yield check_transformer, name, Transformer, this_X, this_y
 
 

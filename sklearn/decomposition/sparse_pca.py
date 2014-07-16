@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from ..utils import check_random_state, array2d
+from ..utils import check_random_state, array2d, check_arrays
 from ..linear_model import ridge_regression
 from ..base import BaseEstimator, TransformerMixin
 from .dict_learning import dict_learning, dict_learning_online
@@ -145,6 +145,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         X_new array, shape (n_samples, n_components)
             Transformed data.
         """
+        X, = check_arrays(X)
         ridge_alpha = self.ridge_alpha if ridge_alpha is None else ridge_alpha
         U = ridge_regression(self.components_.T, X.T, ridge_alpha,
                              solver='cholesky')
