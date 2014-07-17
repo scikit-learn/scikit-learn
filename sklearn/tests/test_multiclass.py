@@ -174,11 +174,7 @@ def test_ovr_binary():
     # Toy dataset where features correspond directly to labels.
     X = np.array([[0, 0, 5], [0, 5, 0], [3, 0, 0], [0, 0, 6], [6, 0, 0]])
     y = ["eggs", "spam", "spam", "eggs", "spam"]
-    Y = np.array([[0],
-                  [1],
-                  [1],
-                  [0],
-                  [1]])
+    Y = np.array([[0, 1, 1, 0, 1]]).T
 
     classes = set("eggs spam".split())
 
