@@ -199,7 +199,7 @@ matrix format as defined in `scipy.sparse.csr_matrix
 
 .. topic:: Examples:
 
- - :ref:`example_document_classification_20newsgroups.py`
+ - :ref:`example_text_document_classification_20newsgroups.py`
 
 Complexity
 ==========

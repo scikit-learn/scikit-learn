@@ -134,7 +134,7 @@ which is fast to train and achieves a decent F-score::
   >>> metrics.f1_score(newsgroups_test.target, pred)
   0.88251152461278892
 
-(The example :ref:`example_document_classification_20newsgroups.py` shuffles
+(The example :ref:`example_text_document_classification_20newsgroups.py` shuffles
 the training and test data, instead of segmenting by time, and in that case
 multinomial Naive Bayes gets a much higher F-score of 0.88. Are you suspicious
 yet of what's going on inside this classifier?)
@@ -200,7 +200,7 @@ It loses even more if we also strip this metadata from the training data:
   0.73160869205141166
 
 Some other classifiers cope better with this harder version of the task. Try
-running :ref:`example_grid_search_text_feature_extraction.py` with and without
+running :ref:`example_model_selection_grid_search_text_feature_extraction.py` with and without
 the ``--filter`` option to compare the results.
 
 .. topic:: Recommendation
@@ -212,6 +212,6 @@ the ``--filter`` option to compare the results.
 
 .. topic:: Examples
 
-   * :ref:`example_grid_search_text_feature_extraction.py`
+   * :ref:`example_model_selection_grid_search_text_feature_extraction.py`
 
-   * :ref:`example_document_classification_20newsgroups.py`
+   * :ref:`example_text_document_classification_20newsgroups.py`

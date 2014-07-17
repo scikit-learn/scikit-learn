@@ -8,7 +8,7 @@ a digit classification task.
 
 .. note::
 
-    See also :ref:`example_plot_rfe_with_cross_validation.py`
+    See also :ref:`example_feature_selection_plot_rfe_with_cross_validation.py`
 
 """
 print(__doc__)

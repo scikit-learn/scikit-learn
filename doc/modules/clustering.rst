@@ -256,7 +256,7 @@ small, as shown in the example and cited reference.
  * :ref:`example_cluster_plot_mini_batch_kmeans.py`: Comparison of KMeans and
    MiniBatchKMeans
 
- * :ref:`example_document_clustering.py`: Document clustering using sparse
+ * :ref:`example_text_document_clustering.py`: Document clustering using sparse
    MiniBatchKMeans
 
  * :ref:`example_cluster_plot_dict_face_patches.py`

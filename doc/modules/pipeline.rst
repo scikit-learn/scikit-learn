@@ -85,8 +85,8 @@ This is particularly important for doing grid searches::
 
 .. topic:: Examples:
 
- * :ref:`example_feature_selection_pipeline.py`
- * :ref:`example_grid_search_text_feature_extraction.py`
+ * :ref:`example_feature_selection_feature_selection_pipeline.py`
+ * :ref:`example_model_selection_grid_search_text_feature_extraction.py`
  * :ref:`example_plot_digits_pipe.py`
  * :ref:`example_plot_kernel_approximation.py`
  * :ref:`example_svm_plot_svm_anova.py`
