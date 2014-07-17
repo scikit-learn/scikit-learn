@@ -49,7 +49,44 @@ def _ridge_path_svd(X_train, Y_train, alphas,
 
 def _precomp_kernel_ridge_path_eigen(gramX_train, Y_train, alphas,
                                      gramX_test=None,
+                                     mode='normal',
                                      eig_val_thresh=1e-15):
+    """Precomputed kernel ridge without intercept.
+
+    Parameters
+    ----------
+
+    gramX_train: ndarray, shape=(n_samples, n_samples)
+        Kernel Gram matrix of the training data
+
+    Y_train: ndarray, shape=(n_samples, n_targets)
+        Target variables for regression
+
+    alphas: ndarray, shape=(n_penalties, n_targets) or (n_penalties, 1)
+        L2 penalties for ridge regression, several per target possible
+
+    gramX_test: ndarray, shape=(n_test_samples, n_train_samples)
+        Kernel similarities of test samples with the train samples
+
+    mode: str, {'normal', 'looe', 'loov'}, default 'normal'
+        Indicates the desired output.
+
+        - 'normal' yields ridge coefficients or predictions
+        - 'looe' yields a vector of leave one out residuals on the train
+          set. A warning is raised if gramX_test is passed, because this is
+          not used here.
+        - 'loov' yields a vector of leave one out predictions
+
+    eig_val_thresh: float, default 1e-15
+        Threshold for eigenvalues of the Gram matrix. Any eigenvalue under
+        eig_val_thresh will be set to zero. This is done to avoid explosion
+        of the inverse at very low penalties
+
+    """
+    if gramX_test is not None and mode in ['looe', 'loov']:
+        raise ValueError("gramX_test provided in loo mode. Remove X_test "
+                         "or change mode.")
+
     eig_val_train, eig_vect_train = linalg.eigh(gramX_train)
 
     VTY = eig_vect_train.T.dot(Y_train)
@@ -63,7 +100,19 @@ def _precomp_kernel_ridge_path_eigen(gramX_train, Y_train, alphas,
 
     if gramX_test is None:
         dual_coef = eig_vect_train.dot(v_alpha_VTY).transpose(1, 0, 2)
-        output = dual_coef
+        if mode == 'normal':
+            output = dual_coef
+        elif mode in ['looe', 'loov']:
+            diag_rescale = (eig_vect_train ** 2).dot(
+                v_alpha_inv).transpose(1, 0, 2)
+            dual_coef /= diag_rescale
+            looe = dual_coef
+            output = looe
+            if mode == 'loov':
+                loov = Y_train[np.newaxis] - looe
+                output = loov
+        else:
+            raise ValueError("mode not understood")
     else:
         predictions = (gramX_test.dot(eig_vect_train)).dot(
             v_alpha_VTY).transpose(1, 0, 2)
