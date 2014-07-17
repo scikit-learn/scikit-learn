@@ -171,7 +171,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
 
     Parameters
     -----------
-    affinity: array-like or sparse matrix, shape: (n_samples, n_samples)
+    affinity : array-like or sparse matrix, shape: (n_samples, n_samples)
         The affinity matrix describing the relationship of the samples to
         embed. **Must be symmetric**.
 
@@ -180,23 +180,23 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
           - heat kernel of the pairwise distance matrix of the samples,
           - symmetric k-nearest neighbours connectivity matrix of the samples.
 
-    n_clusters: integer, optional
+    n_clusters : integer, optional
         Number of clusters to extract.
 
-    n_components: integer, optional, default is k
+    n_components : integer, optional, default is k
         Number of eigen vectors to use for the spectral embedding
 
-    eigen_solver: {None, 'arpack', 'lobpcg', or 'amg'}
+    eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities
 
-    random_state: int seed, RandomState instance, or None (default)
+    random_state : int seed, RandomState instance, or None (default)
         A pseudo random number generator used for the initialization
         of the lobpcg eigen vectors decomposition when eigen_solver == 'amg'
         and by the K-Means initialization.
 
-    n_init: int, optional, default: 10
+    n_init : int, optional, default: 10
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
@@ -216,7 +216,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
 
     Returns
     -------
-    labels: array of integers, shape: n_samples
+    labels : array of integers, shape: n_samples
         The labels of the clusters.
 
     References
@@ -300,7 +300,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         increase with similarity) should be used. This property is not checked
         by the clustering algorithm.
 
-    gamma: float
+    gamma : float
         Scaling factor of RBF, polynomial, exponential chi^2 and
         sigmoid affinity kernel. Ignored for
         ``affinity='nearest_neighbors'``.
@@ -312,11 +312,11 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         Zero coefficient for polynomial and sigmoid kernels.
         Ignored by other kernels.
 
-    n_neighbors: integer
+    n_neighbors : integer
         Number of neighbors to use when constructing the affinity matrix using
         the nearest neighbors method. Ignored for ``affinity='rbf'``.
 
-    eigen_solver: {None, 'arpack', 'lobpcg', or 'amg'}
+    eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities

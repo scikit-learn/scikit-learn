@@ -78,7 +78,9 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
 
     See also
     --------
-    LinearSVC
+    SGDClassifier: incrementally trained logistic regression (when given
+        the parameter ``loss="log"``).
+    sklearn.svm.LinearSVC: learns SVM models using the same algorithm.
 
     Notes
     -----

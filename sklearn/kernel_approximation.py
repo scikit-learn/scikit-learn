@@ -252,7 +252,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
                 raise ValueError("If sample_steps is not in [1, 2, 3],"
                                  " you need to provide sample_interval")
         else:
-            self.sample_interval_ = self.interval
+            self.sample_interval_ = self.sample_interval
         return self
 
     def transform(self, X, y=None):
@@ -432,6 +432,8 @@ class Nystroem(BaseEstimator, TransformerMixin):
         """
 
         rnd = check_random_state(self.random_state)
+        if not sp.issparse(X):
+            X = np.asarray(X)
         n_samples = X.shape[0]
 
         # get basis vectors

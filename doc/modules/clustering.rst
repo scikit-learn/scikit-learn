@@ -76,11 +76,18 @@ Overview of clustering methods
      - Few clusters, even cluster size, non-flat geometry
      - Graph distance (e.g. nearest-neighbor graph)
 
-   * - :ref:`Hierarchical clustering <hierarchical_clustering>`
+   * - :ref:`Ward hierarchical clustering <hierarchical_clustering>`
      - number of clusters
      - Large `n_samples` and `n_clusters`
      - Many clusters, possibly connectivity constraints
      - Distances between points
+
+   * - :ref:`Agglomerative clustering <hierarchical_clustering>`
+     - number of clusters, linkage type, distance
+     - Large `n_samples` and `n_clusters`
+     - Many clusters, possibly connectivity constraints, non Euclidean
+       distances
+     - Any pairwise distance
 
    * - :ref:`DBSCAN <dbscan>`
      - neighborhood size
@@ -111,15 +118,37 @@ K-means
 
 The :class:`KMeans` algorithm clusters data by trying to separate samples
 in n groups of equal variance, minimizing a criterion known as the
-'inertia' of the groups. This algorithm requires the number of clusters to
-be specified. It scales well to large number of samples and has been used
-across a large range of application areas in many different fields. It is
-also equivalent to the expectation-maximization algorithm when setting the
-covariance matrix to be diagonal, equal and small. The K-means algorithm
-aims to choose centroids :math:`C` that minimise the within cluster sum of
-squares objective function with a dataset :math:`X` with :math:`n` samples:
+`inertia<inertia>` or within-cluster sum-of-squares.
+This algorithm requires the number of clusters to be specified.
+It scales well to large number of samples and has been used
+across a large range of application areas in many different fields.
 
-.. math:: J(X, C) = \sum_{i=0}^{n}\min_{\mu_j \in C}(||x_j - \mu_i||^2)
+The k-means algorithm divides a set of :math:`N` samples :math:`X`:
+into :math:`K` disjoint clusters :math:`C`,
+each described by the mean :math:`\mu_j` of the samples in the cluster.
+The means are commonly called the cluster "centroids";
+note that they are not, in general, points from :math:`X`,
+although they live in the same space.
+The K-means algorithm aims to choose centroids
+that minimise the *inertia*, or within-cluster sum of squared criterion:
+
+.. math:: \sum_{i=0}^{n}\min_{\mu_j \in C}(||x_j - \mu_i||^2)
+
+Inertia, or the within-cluster sum of squares criterion,
+can be recognized as a measure of how internally coherent clusters are.
+It suffers from various drawbacks:
+
+- Inertia makes the assumption that clusters are convex and isotropic,
+  which is not always the case. It responds poorly to elongated clusters,
+  or manifolds with irregular shapes.
+
+- Inertia is not a normalized metric: we just know that lower values are
+  better and zero is optimal. But in very high-dimensional spaces, Euclidean
+  distances tend to become inflated
+  (this is an instance of the so-called "curse of dimensionality").
+  Running a dimensionality reduction algorithm such as `PCA<PCA>`
+  prior to k-means clustering can alleviate this problem
+  and speed up the computations.
 
 K-means is often referred to as Lloyd's algorithm. In basic terms, the
 algorithm has three steps. The first step chooses the initial centroids, with
@@ -137,7 +166,10 @@ until the centroids do not move significantly.
    :align: right
    :scale: 35
 
-The algorithm can be understood through the concept of `Voronoi diagrams
+K-means is equivalent to the expectation-maximization algorithm
+with a small, all-equal, diagonal covariance matrix.
+
+The algorithm can also be understood through the concept of `Voronoi diagrams
 <https://en.wikipedia.org/wiki/Voronoi_diagram>`_. First the Voronoi diagram of
 the points is calculated using the current centroids. Each segment in the
 Voronoi diagram becomes a separate cluster. Secondly, the centroids are updated
@@ -471,35 +503,80 @@ Hierarchical clustering
 =======================
 
 Hierarchical clustering is a general family of clustering algorithms that
-build nested clusters by merging them successively. This hierarchy of
-clusters represented as a tree (or dendrogram). The root of the tree is
-the unique cluster that gathers all the samples, the leaves being the
+build nested clusters by merging or splitting them successively. This
+hierarchy of clusters is represented as a tree (or dendrogram). The root of the
+tree is the unique cluster that gathers all the samples, the leaves being the
 clusters with only one sample. See the `Wikipedia page
-<http://en.wikipedia.org/wiki/Hierarchical_clustering>`_ for more
-details.
+<http://en.wikipedia.org/wiki/Hierarchical_clustering>`_ for more details.
 
-The :class:`Ward` object performs a hierarchical clustering based on
-the Ward algorithm, that is a variance-minimizing approach. At each
-step, it minimizes the sum of squared differences within all clusters
-(inertia criterion).
+The :class:`AgglomerativeClustering` object performs a hierarchical clustering
+using a bottom up approach: each observation starts in its own cluster, and
+clusters are successively merged together. The linkage criteria determines the
+metric used for the merge strategy:
 
-This algorithm can scale to large number of samples when it is used jointly
-with an connectivity matrix, but can be computationally expensive when no
-connectivity constraints are added between samples: it considers at each step
-all the possible merges.
+- **Ward** minimizes the sum of squared differences within all clusters. It is a
+  variance-minimizing approach and in this sense is similar to the k-means
+  objective function but tackled with an agglomerative hierarchical
+  approach.
+- **Maximum** or **complete linkage** minimizes the maximum distance between
+  observations of pairs of clusters.
+- **Average linkage** minimizes the average of the distances between all
+  observations of pairs of clusters.
+
+:class:`AgglomerativeClustering` can also scale to large number of samples
+when it is used jointly with a connectivity matrix, but is computationally
+expensive when no connectivity constraints are added between samples: it
+considers at each step all the possible merges.
+
+.. topic:: :class:`FeatureAgglomeration`
+
+   The :class:`FeatureAgglomeration` uses agglomerative clustering to
+   group together features that look very similar, thus decreasing the
+   number of features. It is a dimensionality reduction tool, see
+   :ref:`data_reduction`.
+
+Different linkage type: Ward, complete and average linkage
+-----------------------------------------------------------
+
+:class:`AgglomerativeClustering` supports Ward, average, and complete
+linkage strategies.
+
+.. image:: ../auto_examples/cluster/images/plot_digits_linkage_1.png
+    :target: ../auto_examples/cluster/plot_digits_linkage.html
+    :scale: 43
+
+.. image:: ../auto_examples/cluster/images/plot_digits_linkage_2.png
+    :target: ../auto_examples/cluster/plot_digits_linkage.html
+    :scale: 43
+
+.. image:: ../auto_examples/cluster/images/plot_digits_linkage_3.png
+    :target: ../auto_examples/cluster/plot_digits_linkage.html
+    :scale: 43
+
+
+Agglomerative cluster has a "rich get richer" behavior that leads to
+uneven cluster sizes. In this regard, complete linkage is the worst
+strategy, and Ward gives the most regular sizes. However, the affinity
+(or distance used in clustering) cannot be varied with Ward, thus for non
+Euclidean metrics, average linkage is a good alternative.
+
+.. topic:: Examples:
+
+ * :ref:`example_cluster_plot_digits_linkage.py`: exploration of the
+   different linkage strategies in a real dataset.
 
 
 Adding connectivity constraints
 -------------------------------
 
-An interesting aspect of the :class:`Ward` object is that connectivity
-constraints can be added to this algorithm (only adjacent clusters can be
-merged together), through an connectivity matrix that defines for each
-sample the neighboring samples following a given structure of the data. For
-instance, in the swiss-roll example below, the connectivity constraints
-forbid the merging of points that are not adjacent on the swiss roll, and
-thus avoid forming clusters that extend across overlapping folds of the
-roll.
+An interesting aspect of :class:`AgglomerativeClustering` is that
+connectivity constraints can be added to this algorithm (only adjacent
+clusters can be merged together), through a connectivity matrix that defines
+for each sample the neighboring samples following a given structure of the
+data. For instance, in the swiss-roll example below, the connectivity
+constraints forbid the merging of points that are not adjacent on the swiss
+roll, and thus avoid forming clusters that extend across overlapping folds of
+the roll.
 
 .. |unstructured| image:: ../auto_examples/cluster/images/plot_ward_structured_vs_unstructured_1.png
         :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
@@ -511,16 +588,19 @@ roll.
 
 .. centered:: |unstructured| |structured|
 
+These constraint are useful to impose a certain local structure, but they
+also make the algorithm faster, especially when the number of the samples
+is high.
 
 The connectivity constraints are imposed via an connectivity matrix: a
 scipy sparse matrix that has elements only at the intersection of a row
 and a column with indices of the dataset that should be connected. This
-matrix can be constructed from a-priori information, for instance if you
-wish to cluster web pages, but only merging pages with a link pointing
+matrix can be constructed from a-priori information: for instance, you
+may wish to cluster web pages by only merging pages with a link pointing
 from one to another. It can also be learned from the data, for instance
 using :func:`sklearn.neighbors.kneighbors_graph` to restrict
-merging to nearest neighbors as in the :ref:`swiss roll
-<example_cluster_plot_ward_structured_vs_unstructured.py>` example, or
+merging to nearest neighbors as in :ref:`this example
+<example_cluster_plot_agglomerative_clustering.py>`, or
 using :func:`sklearn.feature_extraction.image.grid_to_graph` to
 enable only merging of neighboring pixels on an image, as in the
 :ref:`Lena <example_cluster_plot_lena_ward_segmentation.py>` example.
@@ -537,6 +617,71 @@ enable only merging of neighboring pixels on an image, as in the
  * :ref:`example_cluster_plot_feature_agglomeration_vs_univariate_selection.py`:
    Example of dimensionality reduction with feature agglomeration based on
    Ward hierarchical clustering.
+
+ * :ref:`example_cluster_plot_agglomerative_clustering.py`
+
+.. warning:: **Connectivity constraints with average and complete linkage**
+
+    Connectivity constraints and complete or average linkage can enhance
+    the 'rich getting richer' aspect of agglomerative clustering,
+    particularly so if they are built with
+    :func:`sklearn.neighbors.kneighbors_graph`. In the limit of a small
+    number of clusters, they tend to give a few macroscopically occupied
+    clusters and almost empty ones. (see the discussion in
+    :ref:`example_cluster_plot_agglomerative_clustering.py`).
+
+.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_1.png
+    :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
+    :scale: 38
+
+.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_2.png
+    :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
+    :scale: 38
+
+.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_3.png
+    :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
+    :scale: 38
+
+.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_4.png
+    :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
+    :scale: 38
+
+
+Varying the metric
+-------------------
+
+Average and complete linkage can be used with a variety of distances (or
+affinities), in particular Euclidean distance (*l2*), Manhattan distance
+(or Cityblock, or *l1*), cosine distance, or any precomputed affinity
+matrix.
+
+* *l1* distance is often good for sparse features, or sparse noise: ie
+  many of the features are zero, as in text mining using occurences of
+  rare words.
+
+* *cosine* distance is interesting because it is invariant to global
+  scalings of the signal.
+
+The guidelines for choosing a metric is to use one that maximizes the
+distance between samples in different classes, and minimizes that within
+each class.
+
+.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_metrics_5.png
+    :target: ../auto_examples/cluster/plot_agglomerative_clustering_metrics.html
+    :scale: 32
+
+.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_metrics_6.png
+    :target: ../auto_examples/cluster/plot_agglomerative_clustering_metrics.html
+    :scale: 32
+
+.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_metrics_7.png
+    :target: ../auto_examples/cluster/plot_agglomerative_clustering_metrics.html
+    :scale: 32
+
+.. topic:: Examples:
+
+ * :ref:`example_cluster_plot_agglomerative_clustering_metrics.py`
+
 
 .. _dbscan:
 
@@ -632,33 +777,6 @@ belong to the same class are more similar that members of different
 classes according to some similarity metric.
 
 .. currentmodule:: sklearn.metrics
-
-Inertia
--------
-
-Presentation and usage
-~~~~~~~~~~~~~~~~~~~~~~
-
-TODO: factorize inertia computation out of kmeans and then write me!
-
-
-Advantages
-~~~~~~~~~~
-
-- No need for the ground truth knowledge of the "real" classes.
-
-Drawbacks
-~~~~~~~~~
-
-- Inertia makes the assumption that clusters are convex and isotropic
-  which is not always the case especially of the clusters are manifolds
-  with weird shapes: for instance inertia is a useless metrics to evaluate
-  clustering algorithm that tries to identify nested circles on a 2D plane.
-
-- Inertia is not a normalized metrics: we just know that lower values are
-  better and bounded by zero. One potential solution would be to adjust
-  inertia for random clustering (assuming the number of ground truth classes
-  is known).
 
 
 Adjusted Rand index

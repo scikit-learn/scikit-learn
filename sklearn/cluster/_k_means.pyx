@@ -15,7 +15,7 @@ cimport numpy as np
 cimport cython
 
 from ..utils.extmath import norm
-from sklearn.utils.sparsefuncs cimport add_row_csr
+from sklearn.utils.sparsefuncs_fast cimport add_row_csr
 
 ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INT

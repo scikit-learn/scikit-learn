@@ -95,17 +95,23 @@ def test_boston():
 
 def test_staged_predict():
     """Check staged predictions."""
+    rng = np.random.RandomState(0)
+    iris_weights = rng.randint(10, size=iris.target.shape)
+    boston_weights = rng.randint(10, size=boston.target.shape)
+
     # AdaBoost classification
     for alg in ['SAMME', 'SAMME.R']:
         clf = AdaBoostClassifier(algorithm=alg, n_estimators=10)
-        clf.fit(iris.data, iris.target)
+        clf.fit(iris.data, iris.target, sample_weight=iris_weights)
 
         predictions = clf.predict(iris.data)
         staged_predictions = [p for p in clf.staged_predict(iris.data)]
         proba = clf.predict_proba(iris.data)
         staged_probas = [p for p in clf.staged_predict_proba(iris.data)]
-        score = clf.score(iris.data, iris.target)
-        staged_scores = [s for s in clf.staged_score(iris.data, iris.target)]
+        score = clf.score(iris.data, iris.target, sample_weight=iris_weights)
+        staged_scores = [
+            s for s in clf.staged_score(
+                iris.data, iris.target, sample_weight=iris_weights)]
 
         assert_equal(len(staged_predictions), 10)
         assert_array_almost_equal(predictions, staged_predictions[-1])
@@ -116,12 +122,14 @@ def test_staged_predict():
 
     # AdaBoost regression
     clf = AdaBoostRegressor(n_estimators=10, random_state=0)
-    clf.fit(boston.data, boston.target)
+    clf.fit(boston.data, boston.target, sample_weight=boston_weights)
 
     predictions = clf.predict(boston.data)
     staged_predictions = [p for p in clf.staged_predict(boston.data)]
-    score = clf.score(boston.data, boston.target)
-    staged_scores = [s for s in clf.staged_score(boston.data, boston.target)]
+    score = clf.score(boston.data, boston.target, sample_weight=boston_weights)
+    staged_scores = [
+        s for s in clf.staged_score(
+            boston.data, boston.target, sample_weight=boston_weights)]
 
     assert_equal(len(staged_predictions), 10)
     assert_array_almost_equal(predictions, staged_predictions[-1])

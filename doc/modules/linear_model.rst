@@ -213,7 +213,7 @@ computes the coefficients along the full path of possible values.
 Setting regularization parameter
 --------------------------------
 
-The `alpha` parameter control the degree of sparsity of the coefficients
+The `alpha` parameter controls the degree of sparsity of the coefficients
 estimated.
 
 Using cross-validation
@@ -268,11 +268,11 @@ They also tend to break when the problem is badly conditioned
 
 Elastic Net
 ===========
-:class:`ElasticNet` is a linear model trained with L1 and L2 prior as
-regularizer. This combination allows for learning a sparse model where
+:class:`ElasticNet` is a linear regression model trained with L1 and L2 prior
+as regularizer. This combination allows for learning a sparse model where
 few of the weights are non-zero like :class:`Lasso`, while still maintaining
-the regularization properties of :class:`Ridge`. We control this tradeoff
-using the `l1_ratio` parameter.
+the regularization properties of :class:`Ridge`. We control the convex
+combination of L1 and L2 using the `l1_ratio` parameter.
 
 Elastic-net is useful when there are multiple features which are
 correlated with one another. Lasso is likely to pick one of these

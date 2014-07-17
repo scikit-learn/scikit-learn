@@ -13,6 +13,7 @@ import pkgutil
 import warnings
 import sys
 import re
+import platform
 
 import scipy as sp
 import scipy.io
@@ -551,6 +552,23 @@ def if_matplotlib(func):
         else:
             return func(*args, **kwargs)
     return run_test
+
+
+def if_not_mac_os(versions=('10.7', '10.8', '10.9'),
+                  message='Multi-process bug in Mac OS X >= 10.7 '
+                          '(see issue #636)'):
+    """Test decorator that skips test if OS is Mac OS X and its
+    major version is one of ``versions``.
+    """
+    mac_version, _, _ = platform.mac_ver()
+    skip = '.'.join(mac_version.split('.')[:2]) in versions
+    def decorator(func):
+        if skip:
+            @wraps(func)
+            def func(*args, **kwargs):
+                raise SkipTest(message)
+        return func
+    return decorator
 
 
 def clean_warning_registry():

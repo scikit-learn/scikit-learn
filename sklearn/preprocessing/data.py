@@ -20,9 +20,9 @@ from ..utils import atleast2d_or_csr
 from ..utils import safe_asarray
 from ..utils import warn_if_not_float
 from ..utils.extmath import row_norms
-from ..utils.sparsefuncs import inplace_csr_row_normalize_l1
-from ..utils.sparsefuncs import inplace_csr_row_normalize_l2
-from ..utils.sparsefuncs import inplace_csr_column_scale
+from ..utils.sparsefuncs_fast import inplace_csr_row_normalize_l1
+from ..utils.sparsefuncs_fast import inplace_csr_row_normalize_l2
+from ..utils.sparsefuncs_fast import inplace_csr_column_scale
 from ..utils.sparsefuncs import mean_variance_axis0
 
 zip = six.moves.zip
@@ -34,7 +34,6 @@ __all__ = [
     'MinMaxScaler',
     'Normalizer',
     'OneHotEncoder',
-    'Scaler',
     'StandardScaler',
     'add_dummy_feature',
     'binarize',
@@ -387,13 +386,6 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             if self.with_mean:
                 X += self.mean_
         return X
-
-
-class Scaler(StandardScaler):
-    def __init__(self, copy=True, with_mean=True, with_std=True):
-        warnings.warn("Scaler was renamed to StandardScaler. The old name "
-                      " will be removed in 0.15.", DeprecationWarning)
-        super(Scaler, self).__init__(copy, with_mean, with_std)
 
 
 class PolynomialFeatures(BaseEstimator, TransformerMixin):

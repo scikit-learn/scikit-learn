@@ -444,3 +444,97 @@ Ferenc Huszar - Senior Data Scientist at Peerindex
 .. raw:: html
 
    </span>
+
+
+`DataRobot <http://www.datarobot.com>`_
+------------------------------------
+
+.. raw:: html
+
+    <div class="logo">
+
+.. image:: images/datarobot.png
+    :target: http://www.datarobot.com
+
+.. raw:: html
+
+    </div>
+
+DataRobot is building next generation predictive analytics software to make data scientists more productive, and scikit-learn is an integral part of our system. The variety of machine learning techniques in combination with the solid implementations that scikit-learn offers makes it a one-stop-shopping library for machine learning in Python. Moreover, its consistent API, well-tested code and permissive licensing allow us to use it in a production environment. Scikit-learn has literally saved us years of work we would have had to do ourselves to bring our product to market.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Jeremy Achin, CEO & Co-founder DataRobot Inc.
+
+.. raw:: html
+
+   </span>
+
+
+`OkCupid <https://www.okcupid.com/>`_
+--------------------------------------
+
+.. raw:: html
+
+    <div class="logo">
+
+.. image:: images/okcupid.png
+    :target: https://www.okcupid.com
+
+.. raw:: html
+
+    </div>
+
+We're using scikit-learn at OkCupid to evaluate and improve our matchmaking
+system. The range of features it has, especially preprocessing utilities, means
+we can use it for a wide variety of projects, and it's performant enough to
+handle the volume of data that we need to sort through. The documentation is
+really thorough, as well, which makes the library quite easy to use.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+David Koh - Senior Data Scientist at OkCupid
+
+.. raw:: html
+
+   </span>
+   
+
+`Lovely <https://www.livelovely.com/>`_
+--------------------------------------
+
+.. raw:: html
+
+    <div class="logo">
+
+.. image:: images/lovely.png
+    :target: https://www.livelovely.com
+
+.. raw:: html
+
+    </div>
+
+At Lovely, we strive to deliver the best apartment marketplace, with respect to
+our users and our listings. From understanding user behavior, improving data
+quality, and detecting fraud, scikit-learn is a regular tool for gathering
+insights, predictive modeling and improving our product. The easy-to-read
+documentation and intuitive architecture of the API makes machine learning both
+explorable and accessible to a wide range of python developers. I'm constantly
+recommending that more developers and scientists try scikit-learn.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Simon Frid - Data Scientist, Lead at Lovely
+
+.. raw:: html
+
+   </span>
+
+
+

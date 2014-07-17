@@ -14,6 +14,7 @@ from ..utils import array2d
 from ..utils import atleast2d_or_csr
 from ..utils import atleast2d_or_csc
 from ..utils import as_float_array
+from ..utils.fixes import astype
 
 from ..externals import six
 
@@ -33,42 +34,32 @@ def _get_mask(X, value_to_mask):
         return X == value_to_mask
 
 
-def _get_median(negative_elements, n_zeros, positive_elements):
-    """Compute the median of the array formed by negative_elements,
-       n_zeros zeros and positive_elements. This function is used
-       to support sparse matrices."""
-    negative_elements = np.sort(negative_elements, kind='heapsort')
-    positive_elements = np.sort(positive_elements, kind='heapsort')
+def _get_median(data, n_zeros):
+    """Compute the median of data with n_zeros additional zeros.
 
-    n_elems = len(negative_elements) + n_zeros + len(positive_elements)
+    This function is used to support sparse matrices; it modifies data in-place
+    """
+    n_elems = len(data) + n_zeros
     if not n_elems:
         return np.nan
+    n_negative = np.count_nonzero(data < 0)
+    middle, is_odd = divmod(n_elems, 2)
+    data.sort()
 
-    median_position = (n_elems - 1) / 2.0
+    if is_odd:
+        return _get_elem_at_rank(middle, data, n_negative, n_zeros)
 
-    if round(median_position) == median_position:
-        median = _get_elem_at_rank(negative_elements, n_zeros,
-                                   positive_elements, median_position)
-    else:
-        a = _get_elem_at_rank(negative_elements, n_zeros,
-                              positive_elements, math.floor(median_position))
-        b = _get_elem_at_rank(negative_elements, n_zeros,
-                              positive_elements, math.ceil(median_position))
-        median = (a + b) / 2.0
-
-    return median
+    return (_get_elem_at_rank(middle - 1, data, n_negative, n_zeros) +
+            _get_elem_at_rank(middle, data, n_negative, n_zeros)) / 2.
 
 
-def _get_elem_at_rank(negative_elements, n_zeros, positive_elements, k):
-    """Compute the kth largest element of the array formed by
-       negative_elements, n_zeros zeros and positive_elements."""
-    len_neg = len(negative_elements)
-    if k < len_neg:
-        return negative_elements[k]
-    elif k >= len_neg + n_zeros:
-        return positive_elements[k - len_neg - n_zeros]
-    else:
+def _get_elem_at_rank(rank, data, n_negative, n_zeros):
+    """Find the value in data augmented with n_zeros for the given rank"""
+    if rank < n_negative:
+        return data[rank]
+    if rank - n_negative < n_zeros:
         return 0
+    return data[rank - n_zeros]
 
 
 def _most_frequent(array, extra_value, n_repeat):
@@ -104,7 +95,7 @@ class Imputer(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    missing_values : integer or string, optional (default="NaN")
+    missing_values : integer or "NaN", optional (default="NaN")
         The placeholder for the missing values. All occurrences of
         `missing_values` will be imputed. For missing values encoded as np.nan,
         use the string value "NaN".
@@ -137,8 +128,8 @@ class Imputer(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `statistics_` : array of shape (n_features,) or (n_samples,)
-        The statistics along the imputation axis.
+    `statistics_` : array of shape (n_features,)
+        The imputation fill value for each feature if axis == 0.
 
     Notes
     -----
@@ -211,7 +202,7 @@ class Imputer(BaseEstimator, TransformerMixin):
 
         # Count the zeros
         if missing_values == 0:
-            n_zeros_axis = np.zeros(X.shape[not axis])
+            n_zeros_axis = np.zeros(X.shape[not axis], dtype=int)
         else:
             n_zeros_axis = X.shape[axis] - np.diff(X.indptr)
 
@@ -257,19 +248,15 @@ class Imputer(BaseEstimator, TransformerMixin):
             mask_valids = np.hsplit(np.logical_not(mask_missing_values),
                                     X.indptr[1:-1])
 
-            columns = [col[mask.astype(np.bool)]
+            # astype necessary for bug in numpy.hsplit before v1.9
+            columns = [col[astype(mask, bool, copy=False)]
                        for col, mask in zip(columns_all, mask_valids)]
 
             # Median
             if strategy == "median":
                 median = np.empty(len(columns))
                 for i, column in enumerate(columns):
-
-                    negatives = column[column < 0]
-                    positives = column[column > 0]
-                    median[i] = _get_median(negatives,
-                                            n_zeros_axis[i],
-                                            positives)
+                    median[i] = _get_median(column, n_zeros_axis[i])
 
                 return median
 

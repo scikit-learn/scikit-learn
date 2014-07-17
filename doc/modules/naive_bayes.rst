@@ -52,7 +52,7 @@ make regarding the distribution of :math:`P(x_i \mid y)`.
 
 In spite of their apparently over-simplified assumptions, naive Bayes
 classifiers have worked quite well in many real-world situations, famously
-document classification and spam filtering. They requires a small amount
+document classification and spam filtering. They require a small amount
 of training data to estimate the necessary parameters. (For theoretical
 reasons why naive Bayes works well, and on which types of data it does, see
 the references below.)

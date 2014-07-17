@@ -62,7 +62,9 @@ Classes
    :template: class.rst
 
    cluster.AffinityPropagation
+   cluster.AgglomerativeClustering
    cluster.DBSCAN
+   cluster.FeatureAgglomeration
    cluster.KMeans
    cluster.MiniBatchKMeans
    cluster.MeanShift
@@ -446,6 +448,7 @@ From text
    :toctree: generated/
    :template: class.rst
 
+   feature_selection.GenericUnivariateSelect
    feature_selection.SelectPercentile
    feature_selection.SelectKBest
    feature_selection.SelectFpr

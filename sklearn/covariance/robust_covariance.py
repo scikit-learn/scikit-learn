@@ -23,6 +23,8 @@ from ..utils import check_random_state
 #   (A Fast Algorithm for the Minimum Covariance Determinant Estimator,
 #   1999, American Statistical Association and the American Society
 #   for Quality, TECHNOMETRICS)
+# XXX Is this really a public function? It's not listed in the docs or
+# exported by sklearn.covariance. Deprecate?
 def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
            verbose=False, cov_computation_method=empirical_covariance,
            random_state=None):
@@ -76,16 +78,24 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         Society for Quality, TECHNOMETRICS
 
     """
+    X = np.asarray(X)
     random_state = check_random_state(random_state)
+    return _c_step(X, n_support, remaining_iterations=remaining_iterations,
+                   initial_estimates=initial_estimates, verbose=verbose,
+                   cov_computation_method=cov_computation_method,
+                   random_state=random_state)
+
+
+def _c_step(X, n_support, random_state, remaining_iterations=30,
+            initial_estimates=None, verbose=False,
+            cov_computation_method=empirical_covariance):
     n_samples, n_features = X.shape
 
     # Initialisation
+    support = np.zeros(n_samples, dtype=bool)
     if initial_estimates is None:
         # compute initial robust estimates from a random subset
-        support = np.zeros(n_samples).astype(bool)
         support[random_state.permutation(n_samples)[:n_support]] = True
-        location = X[support].mean(0)
-        covariance = cov_computation_method(X[support])
     else:
         # get initial robust estimates from the function parameters
         location = initial_estimates[0]
@@ -95,14 +105,15 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         X_centered = X - location
         dist = (np.dot(X_centered, precision) * X_centered).sum(1)
         # compute new estimates
-        support = np.zeros(n_samples).astype(bool)
         support[np.argsort(dist)[:n_support]] = True
-        location = X[support].mean(0)
-        covariance = cov_computation_method(X[support])
-    previous_det = np.inf
+
+    X_support = X[support]
+    location = X_support.mean(0)
+    covariance = cov_computation_method(X_support)
 
     # Iterative procedure for Minimum Covariance Determinant computation
     det = fast_logdet(covariance)
+    previous_det = np.inf
     while (det < previous_det) and (remaining_iterations > 0):
         # save old estimates values
         previous_location = location
@@ -114,10 +125,11 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         X_centered = X - location
         dist = (np.dot(X_centered, precision) * X_centered).sum(axis=1)
         # compute new estimates
-        support = np.zeros(n_samples).astype(bool)
+        support = np.zeros(n_samples, dtype=bool)
         support[np.argsort(dist)[:n_support]] = True
-        location = X[support].mean(axis=0)
-        covariance = cov_computation_method(X[support])
+        X_support = X[support]
+        location = X_support.mean(axis=0)
+        covariance = cov_computation_method(X_support)
         det = fast_logdet(covariance)
         # update remaining iterations for early stopping
         remaining_iterations -= 1
@@ -150,7 +162,6 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
     if remaining_iterations == 0:
         if verbose:
             print('Maximum number of iterations reached')
-        det = fast_logdet(covariance)
         results = location, covariance, det, support, dist
 
     return results
@@ -247,7 +258,7 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         # perform `n_trials` computations from random initial supports
         for j in range(n_trials):
             all_estimates.append(
-                c_step(
+                _c_step(
                     X, n_support, remaining_iterations=n_iter, verbose=verbose,
                     cov_computation_method=cov_computation_method,
                     random_state=random_state))
@@ -255,7 +266,7 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         # perform computations from every given initial estimates
         for j in range(n_trials):
             initial_estimates = (estimates_list[0][j], estimates_list[1][j])
-            all_estimates.append(c_step(
+            all_estimates.append(_c_step(
                 X, n_support, remaining_iterations=n_iter,
                 initial_estimates=initial_estimates, verbose=verbose,
                 cov_computation_method=cov_computation_method,
@@ -361,7 +372,7 @@ def fast_mcd(X, support_fraction=None,
                               + X_sorted[halves_start]).mean()
             support = np.zeros(n_samples, dtype=bool)
             X_centered = X - location
-            support[np.argsort(np.abs(X - location), 0)[:n_support]] = True
+            support[np.argsort(np.abs(X_centered), 0)[:n_support]] = True
             covariance = np.asarray([[np.var(X[support])]])
             location = np.array([location])
             # get precision matrix in an optimized way

@@ -46,7 +46,7 @@ DEF PA2 = 5
 cdef class LossFunction:
     """Base class for convex loss functions"""
 
-    cpdef double loss(self, double p, double y):
+    cdef double loss(self, double p, double y) nogil:
         """Evaluate the loss function.
 
         Parameters
@@ -61,9 +61,9 @@ cdef class LossFunction:
         double
             The loss evaluated at `p` and `y`.
         """
-        raise NotImplementedError()
+        return 0.
 
-    cpdef double dloss(self, double p, double y):
+    def dloss(self, double p, double y):
         """Evaluate the derivative of the loss function with respect to
         the prediction `p`.
 
@@ -78,27 +78,32 @@ cdef class LossFunction:
         double
             The derivative of the loss function with regards to `p`.
         """
-        raise NotImplementedError()
+        return self._dloss(p, y)
+
+    cdef double _dloss(self, double p, double y) nogil:
+        # Implementation of dloss; separate function because cpdef and nogil
+        # can't be combined.
+        return 0.
 
 
 cdef class Regression(LossFunction):
     """Base class for loss functions for regression"""
 
-    cpdef double loss(self, double p, double y):
-        raise NotImplementedError()
+    cdef double loss(self, double p, double y) nogil:
+        return 0.
 
-    cpdef double dloss(self, double p, double y):
-        raise NotImplementedError()
+    cdef double _dloss(self, double p, double y) nogil:
+        return 0.
 
 
 cdef class Classification(LossFunction):
     """Base class for loss functions for classification"""
 
-    cpdef double loss(self, double p, double y):
-        raise NotImplementedError()
+    cdef double loss(self, double p, double y) nogil:
+        return 0.
 
-    cpdef double dloss(self, double p, double y):
-        raise NotImplementedError()
+    cdef double _dloss(self, double p, double y) nogil:
+        return 0.
 
 
 cdef class ModifiedHuber(Classification):
@@ -109,7 +114,7 @@ cdef class ModifiedHuber(Classification):
     See T. Zhang 'Solving Large Scale Linear Prediction Problems Using
     Stochastic Gradient Descent', ICML'04.
     """
-    cpdef double loss(self, double p, double y):
+    cdef double loss(self, double p, double y) nogil:
         cdef double z = p * y
         if z >= 1.0:
             return 0.0
@@ -118,7 +123,7 @@ cdef class ModifiedHuber(Classification):
         else:
             return -4.0 * z
 
-    cpdef double dloss(self, double p, double y):
+    cdef double _dloss(self, double p, double y) nogil:
         cdef double z = p * y
         if z >= 1.0:
             return 0.0
@@ -147,13 +152,13 @@ cdef class Hinge(Classification):
     def __init__(self, double threshold=1.0):
         self.threshold = threshold
 
-    cpdef double loss(self, double p, double y):
+    cdef double loss(self, double p, double y) nogil:
         cdef double z = p * y
         if z <= self.threshold:
             return (self.threshold - z)
         return 0.0
 
-    cpdef double dloss(self, double p, double y):
+    cdef double _dloss(self, double p, double y) nogil:
         cdef double z = p * y
         if z <= self.threshold:
             return -y
@@ -179,13 +184,13 @@ cdef class SquaredHinge(LossFunction):
     def __init__(self, double threshold=1.0):
         self.threshold = threshold
 
-    cpdef double loss(self, double p, double y):
+    cdef double loss(self, double p, double y) nogil:
         cdef double z = self.threshold - p * y
         if z > 0:
             return z * z
         return 0.0
 
-    cpdef double dloss(self, double p, double y):
+    cdef double _dloss(self, double p, double y) nogil:
         cdef double z = self.threshold - p * y
         if z > 0:
             return -2 * y * z
@@ -198,7 +203,7 @@ cdef class SquaredHinge(LossFunction):
 cdef class Log(Classification):
     """Logistic regression loss for binary classification with y in {-1, 1}"""
 
-    cpdef double loss(self, double p, double y):
+    cdef double loss(self, double p, double y) nogil:
         cdef double z = p * y
         # approximately equal and saves the computation of the log
         if z > 18:
@@ -207,7 +212,7 @@ cdef class Log(Classification):
             return -z
         return log(1.0 + exp(-z))
 
-    cpdef double dloss(self, double p, double y):
+    cdef double _dloss(self, double p, double y) nogil:
         cdef double z = p * y
         # approximately equal and saves the computation of the log
         if z > 18.0:
@@ -222,10 +227,10 @@ cdef class Log(Classification):
 
 cdef class SquaredLoss(Regression):
     """Squared loss traditional used in linear regression."""
-    cpdef double loss(self, double p, double y):
+    cdef double loss(self, double p, double y) nogil:
         return 0.5 * (p - y) * (p - y)
 
-    cpdef double dloss(self, double p, double y):
+    cdef double _dloss(self, double p, double y) nogil:
         return p - y
 
     def __reduce__(self):
@@ -246,17 +251,17 @@ cdef class Huber(Regression):
     def __init__(self, double c):
         self.c = c
 
-    cpdef double loss(self, double p, double y):
+    cdef double loss(self, double p, double y) nogil:
         cdef double r = p - y
-        cdef double abs_r = abs(r)
+        cdef double abs_r = fabs(r)
         if abs_r <= self.c:
             return 0.5 * r * r
         else:
             return self.c * abs_r - (0.5 * self.c * self.c)
 
-    cpdef double dloss(self, double p, double y):
+    cdef double _dloss(self, double p, double y) nogil:
         cdef double r = p - y
-        cdef double abs_r = abs(r)
+        cdef double abs_r = fabs(r)
         if abs_r <= self.c:
             return r
         elif r > 0.0:
@@ -279,11 +284,11 @@ cdef class EpsilonInsensitive(Regression):
     def __init__(self, double epsilon):
         self.epsilon = epsilon
 
-    cpdef double loss(self, double p, double y):
-        cdef double ret = abs(y - p) - self.epsilon
+    cdef double loss(self, double p, double y) nogil:
+        cdef double ret = fabs(y - p) - self.epsilon
         return ret if ret > 0 else 0
 
-    cpdef double dloss(self, double p, double y):
+    cdef double _dloss(self, double p, double y) nogil:
         if y - p > self.epsilon:
             return -1
         elif p - y > self.epsilon:
@@ -306,11 +311,11 @@ cdef class SquaredEpsilonInsensitive(Regression):
     def __init__(self, double epsilon):
         self.epsilon = epsilon
 
-    cpdef double loss(self, double p, double y):
-        cdef double ret = abs(y - p) - self.epsilon
+    cdef double loss(self, double p, double y) nogil:
+        cdef double ret = fabs(y - p) - self.epsilon
         return ret * ret if ret > 0 else 0
 
-    cpdef double dloss(self, double p, double y):
+    cdef double _dloss(self, double p, double y) nogil:
         cdef double z
         z = y - p
         if z > self.epsilon:
@@ -332,7 +337,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
               double l1_ratio,
               SequentialDataset dataset,
               int n_iter, int fit_intercept,
-              int verbose, int shuffle, seed,
+              int verbose, bint shuffle, np.uint32_t seed,
               double weight_pos, double weight_neg,
               int learning_rate, double eta0,
               double power_t,
@@ -365,15 +370,14 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         Whether or not to fit the intercept (1 or 0).
     verbose : int
         Print verbose output; 0 for quite.
-    shuffle : int
+    shuffle : boolean
         Whether to shuffle the training data before each epoch.
     weight_pos : float
         The weight of the positive class.
     weight_neg : float
         The weight of the negative class.
-    seed : int or RandomState object
-        The seed of the pseudo random number generator to use when
-        shuffling the data
+    seed : np.uint32_t
+        Seed of the pseudorandom number generator used to shuffle the data.
     learning_rate : int
         The learning rate:
         (1) constant, eta = eta0
@@ -408,7 +412,8 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef double *x_data_ptr = NULL
     cdef int *x_ind_ptr = NULL
 
-    # helper variable
+    # helper variables
+    cdef bint infinity = False
     cdef int xnnz
     cdef double eta = 0.0
     cdef double p = 0.0
@@ -438,86 +443,92 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     eta = eta0
 
     t_start = time()
-    for epoch in range(n_iter):
-        if verbose > 0:
-            print("-- Epoch %d" % (epoch + 1))
-        if shuffle:
-            dataset.shuffle(seed)
-        for i in range(n_samples):
-            dataset.next( & x_data_ptr, & x_ind_ptr, & xnnz, & y,
-                         & sample_weight)
-
-            p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
-
-            if learning_rate == OPTIMAL:
-                eta = 1.0 / (alpha * t)
-            elif learning_rate == INVSCALING:
-                eta = eta0 / pow(t, power_t)
-
+    with nogil:
+        for epoch in range(n_iter):
             if verbose > 0:
-                sumloss += loss.loss(p, y)
+                with gil:
+                    print("-- Epoch %d" % (epoch + 1))
+            if shuffle:
+                dataset.shuffle(seed)
+            for i in range(n_samples):
+                dataset.next(&x_data_ptr, &x_ind_ptr, &xnnz, &y, &sample_weight)
 
-            if y > 0.0:
-                class_weight = weight_pos
-            else:
-                class_weight = weight_neg
+                p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
 
-            if learning_rate == PA1:
-                update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
-                if update == 0:
-                    continue
-                update = min(C, loss.loss(p, y) / update)
-            elif learning_rate == PA2:
-                update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
-                update = loss.loss(p, y) / (update + 0.5 / C)
-            else:
-                update = -eta * loss.dloss(p, y)
+                if learning_rate == OPTIMAL:
+                    eta = 1.0 / (alpha * t)
+                elif learning_rate == INVSCALING:
+                    eta = eta0 / pow(t, power_t)
 
-            if learning_rate >= PA1:
-                if is_hinge:
-                    # classification
-                    update *= y
-                elif y - p < 0:
-                    # regression
-                    update *= -1
+                if verbose > 0:
+                    sumloss += loss.loss(p, y)
 
-            update *= class_weight * sample_weight
+                if y > 0.0:
+                    class_weight = weight_pos
+                else:
+                    class_weight = weight_neg
 
-            if penalty_type >= L2:
-                w.scale(1.0 - ((1.0 - l1_ratio) * eta * alpha))
-            if update != 0.0:
-                w.add(x_data_ptr, x_ind_ptr, xnnz, update)
-                if fit_intercept == 1:
-                    intercept += update * intercept_decay
+                if learning_rate == PA1:
+                    update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
+                    if update == 0:
+                        continue
+                    update = min(C, loss.loss(p, y) / update)
+                elif learning_rate == PA2:
+                    update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
+                    update = loss.loss(p, y) / (update + 0.5 / C)
+                else:
+                    update = -eta * loss._dloss(p, y)
 
-            if penalty_type == L1 or penalty_type == ELASTICNET:
-                u += (l1_ratio * eta * alpha)
-                l1penalty(w, q_data_ptr, x_ind_ptr, xnnz, u)
-            t += 1
-            count += 1
+                if learning_rate >= PA1:
+                    if is_hinge:
+                        # classification
+                        update *= y
+                    elif y - p < 0:
+                        # regression
+                        update *= -1
 
-        # report epoch information
-        if verbose > 0:
-            print("Norm: %.2f, NNZs: %d, "
-            "Bias: %.6f, T: %d, Avg. loss: %.6f" % (w.norm(),
-                                                    weights.nonzero()[0].shape[0],
-                                                    intercept, count,
-                                                    sumloss / count))
-            print("Total training time: %.2f seconds." % (time() - t_start))
+                update *= class_weight * sample_weight
 
-        # floating-point under-/overflow check.
-        if (not isfinite(intercept)
-            or any_nonfinite(<double *>weights.data, n_features)):
-            raise ValueError("floating-point under-/overflow occurred.")
+                if penalty_type >= L2:
+                    w.scale(1.0 - ((1.0 - l1_ratio) * eta * alpha))
+                if update != 0.0:
+                    w.add(x_data_ptr, x_ind_ptr, xnnz, update)
+                    if fit_intercept == 1:
+                        intercept += update * intercept_decay
+
+                if penalty_type == L1 or penalty_type == ELASTICNET:
+                    u += (l1_ratio * eta * alpha)
+                    l1penalty(w, q_data_ptr, x_ind_ptr, xnnz, u)
+                t += 1
+                count += 1
+
+            # report epoch information
+            if verbose > 0:
+                with gil:
+                    print("Norm: %.2f, NNZs: %d, "
+                          "Bias: %.6f, T: %d, Avg. loss: %.6f"
+                          % (w.norm(), weights.nonzero()[0].shape[0],
+                             intercept, count, sumloss / count))
+                    print("Total training time: %.2f seconds."
+                          % (time() - t_start))
+
+            # floating-point under-/overflow check.
+            if (not isfinite(intercept)
+                or any_nonfinite(<double *>weights.data, n_features)):
+                infinity = True
+                break
+
+    if infinity:
+        raise ValueError(("Floating-point under-/overflow occurred at epoch"
+                          " #%d. Scaling input data with StandardScaler or"
+                          " MinMaxScaler might help.") % (epoch + 1))
 
     w.reset_wscale()
 
     return weights, intercept
 
 
-cdef bint any_nonfinite(double *w, int n):
-    cdef int i
-
+cdef bint any_nonfinite(double *w, int n) nogil:
     for i in range(n):
         if not isfinite(w[i]):
             return True

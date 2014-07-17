@@ -14,6 +14,10 @@ detail.
 """
 print(__doc__)
 
+# Author: Noel Dawe <noel.dawe@gmail.com>
+#
+# License: BSD 3 clause
+
 import numpy as np
 import matplotlib.pyplot as plt
 

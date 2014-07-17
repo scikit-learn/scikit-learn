@@ -184,11 +184,6 @@ Backports
 - :func:`fixes.expit`: Logistic sigmoid function. Replacement for SciPy 0.10's
   ``scipy.special.expit``.
 
-- :func:`arrayfuncs.solve_triangular`
-  (Back-ported from scipy v0.9)  Used in ``sklearn.linear_model.omp``,
-  independent back-ports in ``sklearn.mixture.gmm`` and
-  :mod:`sklearn.gaussian_process`.
-
 - :func:`sparsetools.connected_components`
   (backported from ``scipy.sparse.connected_components`` in scipy 0.12).
   Used in ``sklearn.cluster.hierarchical``, as well as in tests for

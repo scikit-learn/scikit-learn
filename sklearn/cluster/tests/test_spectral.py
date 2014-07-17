@@ -52,25 +52,6 @@ def test_spectral_clustering():
                 assert_array_equal(model_copy.labels_, model.labels_)
 
 
-def test_spectral_lobpcg_mode():
-    # Test the lobpcg mode of SpectralClustering
-    # We need a fairly big data matrix, as lobpcg does not work with
-    # small data matrices
-    centers = np.array([
-        [0., 0.],
-        [10., 10.],
-    ])
-    X, true_labels = make_blobs(n_samples=100, centers=centers,
-                                cluster_std=.1, random_state=42)
-    D = pairwise_distances(X)  # Distance matrix
-    S = np.max(D) - D  # Similarity matrix
-    labels = spectral_clustering(S, n_clusters=len(centers),
-                                 random_state=0, eigen_solver="lobpcg")
-    # We don't care too much that it's good, just that it *worked*.
-    # There does have to be some lower limit on the performance though.
-    assert_greater(np.mean(labels == true_labels), .3)
-
-
 def test_spectral_amg_mode():
     # Test the amg mode of SpectralClustering
     centers = np.array([

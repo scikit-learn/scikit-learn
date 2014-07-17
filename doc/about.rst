@@ -31,6 +31,13 @@ citations to the following paper:
     year={2011}
    }
 
+Artwork
+-------
+
+High quality PNG and SVG logos are available in the `doc/logos/ <https://github.com/scikit-learn/scikit-learn/tree/master/doc/logos>`_ source directory.
+
+.. image:: images/scikit-learn-logo-notext.png
+   :align: center
 
 Funding
 -------
@@ -41,6 +48,8 @@ time in the period 2010-2012. It also hosts coding sprints and other
 events.
 
 .. image:: images/inria-logo.jpg
+   :align: center
+
 
 `Google <http://code.google.com/opensource/>`_ sponsored David
 Cournapeau with a Summer of Code Scholarship in the summer of 2007,

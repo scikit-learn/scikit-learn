@@ -16,8 +16,8 @@ def test_expit():
 
     # Simulate our previous Cython implementation, based on
     #http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression
-    assert_almost_equal(expit(100.), 1. / (1. + np.exp(-100.)), decimal=16)
-    assert_almost_equal(expit(-100.), np.exp(-100.) / (1. + np.exp(-100.)),
+    assert_almost_equal(expit(1000.), 1. / (1. + np.exp(-1000.)), decimal=16)
+    assert_almost_equal(expit(-1000.), np.exp(-1000.) / (1. + np.exp(-1000.)),
                         decimal=16)
 
 

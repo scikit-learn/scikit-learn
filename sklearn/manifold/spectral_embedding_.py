@@ -310,8 +310,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         return embedding[:n_components].T
 
 
-class SpectralEmbedding(BaseEstimator, TransformerMixin):
-    """Spectral Embedding for Non-linear Dimensionality Reduction.
+class SpectralEmbedding(BaseEstimator):
+    """Spectral embedding for non-linear dimensionality reduction.
 
     Forms an affinity matrix given by the specified function and
     applies spectral decomposition to the corresponding graph laplacian.

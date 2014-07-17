@@ -1146,5 +1146,11 @@ classification, it probably means that something went wrong: features are not
 helpful, a hyper parameter is not correctly tuned, the classifier is suffering
 from class imbalance, etc...
 
-:class:`DummyRegressor` implements a simple rule of thumb for regression:
-always predict the mean of the training targets.
+:class:`DummyRegressor` also implements three simple rules of thumb for regression:
+
+- `mean` always predicts the mean of the training targets.
+- `median` always predicts the median of the training targests.
+- `constant` always predicts a constant value that is provided by the user.
+
+In all these strategies, the `predict` method completely ignores
+the input data.

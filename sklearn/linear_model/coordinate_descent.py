@@ -21,6 +21,7 @@ from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..utils.extmath import safe_sparse_dot
+from ..utils import ConvergenceWarning
 
 from . import cd_fast
 
@@ -45,7 +46,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
         Xy = np.dot(X.T, y) that can be precomputed.
 
     l1_ratio : float
-        The ElasticNet mixing parameter, with ``0 <= l1_ratio <= 1``.
+        The elastic net mixing parameter, with ``0 <= l1_ratio <= 1``.
         For ``l1_ratio = 0`` the penalty is an L2 penalty. ``For
         l1_ratio = 1`` it is an L1 penalty.  For ``0 < l1_ratio <
         1``, the penalty is a combination of L1 and L2.
@@ -266,9 +267,9 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               normalize=False, copy_X=True, coef_init=None,
               verbose=False, return_models=False,
               **params):
-    """Compute Elastic-Net path with coordinate descent
+    """Compute elastic net path with coordinate descent
 
-    The Elastic Net optimization function varies for mono and multi-outputs.
+    The elastic net optimization function varies for mono and multi-outputs.
 
     For mono-output tasks it is::
 
@@ -299,7 +300,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         Target values
 
     l1_ratio : float, optional
-        float between 0 and 1 passed to ElasticNet (scaling between
+        float between 0 and 1 passed to elastic net (scaling between
         l1 and l2 penalties). ``l1_ratio=1`` corresponds to the Lasso
 
     eps : float
@@ -478,7 +479,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         if dual_gap_ > eps_:
             warnings.warn('Objective did not converge.' +
                           ' You might want' +
-                          ' to increase the number of iterations')
+                          ' to increase the number of iterations',
+                          ConvergenceWarning)
 
         if return_models:
             if not multi_output:
@@ -516,7 +518,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
 
 class ElasticNet(LinearModel, RegressorMixin):
-    """Linear Model trained with L1 and L2 prior as regularizer
+    """Linear regression with combined L1 and L2 priors as regularizer.
 
     Minimizes the objective function::
 
@@ -568,10 +570,10 @@ class ElasticNet(LinearModel, RegressorMixin):
         matrix can also be passed as argument. For sparse input
         this option is always ``True`` to preserve sparsity.
 
-    max_iter: int, optional
+    max_iter : int, optional
         The maximum number of iterations
 
-    copy_X : boolean, optional, default False
+    copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
 
     tol: float, optional
@@ -603,6 +605,12 @@ class ElasticNet(LinearModel, RegressorMixin):
     -----
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
+
+    See also
+    --------
+    SGDRegressor: implements elastic net regression with incremental training.
+    SGDClassifier: implements logistic regression with elastic net penalty
+        (``SGDClassifier(loss="log", penalty="elasticnet")``).
     """
     path = staticmethod(enet_path)
 
@@ -760,7 +768,7 @@ class Lasso(ElasticNet):
         matrix can also be passed as argument. For sparse input
         this option is always ``True`` to preserve sparsity.
 
-    max_iter: int, optional
+    max_iter : int, optional
         The maximum number of iterations
 
     tol : float, optional

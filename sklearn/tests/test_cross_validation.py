@@ -30,8 +30,13 @@ from sklearn.metrics import fbeta_score
 from sklearn.metrics import make_scorer
 
 from sklearn.externals import six
+from sklearn.externals.six.moves import zip
+
 from sklearn.linear_model import Ridge
 from sklearn.svm import SVC
+
+from sklearn.preprocessing import Imputer
+from sklearn.pipeline import Pipeline
 
 
 class MockListClassifier(BaseEstimator):
@@ -479,9 +484,9 @@ def test_cross_val_score():
         scores = cval.cross_val_score(clf, X_sparse, X)
         assert_array_equal(scores, clf.score(X_sparse, X))
 
-    # test with X as list
+    # test with X and y as list
     clf = MockListClassifier()
-    scores = cval.cross_val_score(clf, X.tolist(), y)
+    scores = cval.cross_val_score(clf, X.tolist(), y.tolist())
 
     assert_raises(ValueError, cval.cross_val_score, clf, X, y,
                   scoring="sklearn")
@@ -830,3 +835,55 @@ def test_cross_indices_exception():
     assert_raises(ValueError, cval.check_cv, skf, X, y)
     assert_raises(ValueError, cval.check_cv, lolo, X, y)
     assert_raises(ValueError, cval.check_cv, lopo, X, y)
+
+
+def test_safe_split_with_precomputed_kernel():
+    clf = SVC()
+    clfp = SVC(kernel="precomputed")
+
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    K = np.dot(X, X.T)
+
+    cv = cval.ShuffleSplit(X.shape[0], test_size=0.25, random_state=0)
+    tr, te = list(cv)[0]
+
+    X_tr, y_tr = cval._safe_split(clf, X, y, tr)
+    K_tr, y_tr2 = cval._safe_split(clfp, K, y, tr)
+    assert_array_almost_equal(K_tr, np.dot(X_tr, X_tr.T))
+
+    X_te, y_te = cval._safe_split(clf, X, y, te, tr)
+    K_te, y_te2 = cval._safe_split(clfp, K, y, te, tr)
+    assert_array_almost_equal(K_te, np.dot(X_te, X_tr.T))
+
+
+def test_cross_val_score_allow_nans():
+    # Check that cross_val_score allows input data with NaNs
+    X = np.arange(200, dtype=np.float64).reshape(10, -1)
+    X[2, :] = np.nan
+    y = np.repeat([0, 1], X.shape[0]/2)
+    p = Pipeline([
+        ('imputer', Imputer(strategy='mean', missing_values='NaN')),
+        ('classifier', MockClassifier()),
+    ])
+    cval.cross_val_score(p, X, y, cv=5)
+
+
+def test_train_test_split_allow_nans():
+    # Check that train_test_split allows input data with NaNs
+    X = np.arange(200, dtype=np.float64).reshape(10, -1)
+    X[2, :] = np.nan
+    y = np.repeat([0, 1], X.shape[0]/2)
+    split = cval.train_test_split(X, y, test_size=0.2, random_state=42)
+
+
+def test_permutation_test_score_allow_nans():
+    # Check that permutation_test_score allows input data with NaNs
+    X = np.arange(200, dtype=np.float64).reshape(10, -1)
+    X[2, :] = np.nan
+    y = np.repeat([0, 1], X.shape[0]/2)
+    p = Pipeline([
+        ('imputer', Imputer(strategy='mean', missing_values='NaN')),
+        ('classifier', MockClassifier()),
+    ])
+    cval.permutation_test_score(p, X, y, cv=5)

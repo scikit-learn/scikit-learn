@@ -27,7 +27,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         Default: "linear"
 
     degree : int, default=3
-        Degree for poly, rbf and sigmoid kernels. Ignored by other kernels.
+        Degree for poly kernels. Ignored by other kernels.
 
     gamma : float, optional
         Kernel coefficient for rbf and poly kernels. Default: 1/n_features.

@@ -163,27 +163,26 @@ class BaseEstimator(object):
     @classmethod
     def _get_param_names(cls):
         """Get parameter names for the estimator"""
-        try:
-            # fetch the constructor or the original constructor before
-            # deprecation wrapping if any
-            init = getattr(cls.__init__, 'deprecated_original', cls.__init__)
+        # fetch the constructor or the original constructor before
+        # deprecation wrapping if any
+        init = getattr(cls.__init__, 'deprecated_original', cls.__init__)
+        if init is object.__init__:
+            # No explicit constructor to introspect
+            return []
 
-            # introspect the constructor arguments to find the model parameters
-            # to represent
-            args, varargs, kw, default = inspect.getargspec(init)
-            if not varargs is None:
-                raise RuntimeError("scikit-learn estimators should always "
-                                   "specify their parameters in the signature"
-                                   " of their __init__ (no varargs)."
-                                   " %s doesn't follow this convention."
-                                   % (cls, ))
-            # Remove 'self'
-            # XXX: This is going to fail if the init is a staticmethod, but
-            # who would do this?
-            args.pop(0)
-        except TypeError:
-            # No explicit __init__
-            args = []
+        # introspect the constructor arguments to find the model parameters
+        # to represent
+        args, varargs, kw, default = inspect.getargspec(init)
+        if varargs is not None:
+            raise RuntimeError("scikit-learn estimators should always "
+                               "specify their parameters in the signature"
+                               " of their __init__ (no varargs)."
+                               " %s doesn't follow this convention."
+                               % (cls, ))
+        # Remove 'self'
+        # XXX: This is going to fail if the init is a staticmethod, but
+        # who would do this?
+        args.pop(0)
         args.sort()
         return args
 
@@ -268,7 +267,7 @@ class BaseEstimator(object):
 class ClassifierMixin(object):
     """Mixin class for all classifiers in scikit-learn."""
 
-    def score(self, X, y):
+    def score(self, X, y, sample_weight=None):
         """Returns the mean accuracy on the given test data and labels.
 
         Parameters
@@ -279,6 +278,9 @@ class ClassifierMixin(object):
         y : array-like, shape = (n_samples,)
             True labels for X.
 
+        sample_weight : array-like, shape = [n_samples], optional
+            Sample weights.
+
         Returns
         -------
         score : float
@@ -286,14 +288,14 @@ class ClassifierMixin(object):
 
         """
         from .metrics import accuracy_score
-        return accuracy_score(y, self.predict(X))
+        return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
 
 ###############################################################################
 class RegressorMixin(object):
     """Mixin class for all regression estimators in scikit-learn."""
 
-    def score(self, X, y):
+    def score(self, X, y, sample_weight=None):
         """Returns the coefficient of determination R^2 of the prediction.
 
         The coefficient R^2 is defined as (1 - u/v), where u is the regression
@@ -309,6 +311,9 @@ class RegressorMixin(object):
         y : array-like, shape = (n_samples,)
             True values for X.
 
+        sample_weight : array-like, shape = [n_samples], optional
+            Sample weights.
+
         Returns
         -------
         score : float
@@ -316,7 +321,7 @@ class RegressorMixin(object):
         """
 
         from .metrics import r2_score
-        return r2_score(y, self.predict(X))
+        return r2_score(y, self.predict(X), sample_weight=sample_weight)
 
 
 ###############################################################################

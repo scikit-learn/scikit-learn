@@ -19,7 +19,8 @@ import scipy.sparse as sp
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import euclidean_distances
 from ..utils.extmath import row_norms
-from ..utils.sparsefuncs import assign_rows_csr, mean_variance_axis0
+from ..utils.sparsefuncs_fast import assign_rows_csr
+from ..utils.sparsefuncs import mean_variance_axis0
 from ..utils import check_arrays
 from ..utils import check_random_state
 from ..utils import atleast2d_or_csr

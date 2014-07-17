@@ -27,6 +27,9 @@ np_version = tuple(np_version)
 
 try:
     from scipy.special import expit     # SciPy >= 0.10
+    with np.errstate(invalid='ignore', over='ignore'):
+        if np.isnan(expit(1000)):       # SciPy < 0.14
+            raise ImportError("no stable expit in scipy.special")
 except ImportError:
     def expit(x, out=None):
         """Logistic sigmoid function, ``1 / (1 + exp(-x))``.
@@ -57,7 +60,8 @@ else:
     safe_copy = np.copy
 
 try:
-    if (not np.allclose(np.divide(.4, 1), np.divide(.4, 1, dtype=np.float))
+    if (not np.allclose(np.divide(.4, 1, casting="unsafe"),
+                        np.divide(.4, 1, casting="unsafe", dtype=np.float))
             or not np.allclose(np.divide(.4, 1), .4)):
         raise TypeError('Divide not working with dtype: '
                         'https://github.com/numpy/numpy/issues/3484')
@@ -81,3 +85,15 @@ except TypeError:
         if out_orig is None and np.isscalar(x1):
             out = np.asscalar(out)
         return out
+
+
+try:
+    np.array(5).astype(float, copy=False)
+except TypeError:
+    # Compat where astype accepted no copy argument
+    def astype(array, dtype, copy=True):
+        if array.dtype == dtype:
+            return array
+        return array.astype(dtype)
+else:
+    astype = np.ndarray.astype

@@ -19,6 +19,7 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.externals.six import PY3
+from sklearn.externals.six.moves import zip
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
@@ -523,7 +524,7 @@ def test_clustering():
     X, y = shuffle(X, y, random_state=7)
     X = StandardScaler().fit_transform(X)
     for name, Alg in clustering:
-        if name == 'WardAgglomeration':
+        if name in ('WardAgglomeration', "FeatureAgglomeration"):
             # this is clustering on the features
             # let's not test that here.
             continue

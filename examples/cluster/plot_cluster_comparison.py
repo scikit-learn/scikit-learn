@@ -46,7 +46,7 @@ no_structure = np.random.rand(n_samples, 2), None
 colors = np.array([x for x in 'bgrcmykbgrcmykbgrcmykbgrcmyk'])
 colors = np.hstack([colors] * 20)
 
-pl.figure(figsize=(14, 9.5))
+pl.figure(figsize=(17, 9.5))
 pl.subplots_adjust(left=.001, right=.999, bottom=.001, top=.96, wspace=.05,
                    hspace=.01)
 
@@ -72,7 +72,8 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
     # create clustering estimators
     ms = cluster.MeanShift(bandwidth=bandwidth, bin_seeding=True)
     two_means = cluster.MiniBatchKMeans(n_clusters=2)
-    ward_five = cluster.Ward(n_clusters=2, connectivity=connectivity)
+    ward = cluster.AgglomerativeClustering(n_clusters=2,
+                    linkage='ward', connectivity=connectivity)
     spectral = cluster.SpectralClustering(n_clusters=2,
                                           eigen_solver='arpack',
                                           affinity="nearest_neighbors")
@@ -80,8 +81,19 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
     affinity_propagation = cluster.AffinityPropagation(damping=.9,
                                                        preference=-200)
 
-    for algorithm in [two_means, affinity_propagation, ms, spectral,
-                      ward_five, dbscan]:
+    average_linkage = cluster.AgglomerativeClustering(linkage="average",
+                            affinity="cityblock", n_clusters=2,
+                            connectivity=connectivity)
+
+    for name, algorithm in [
+                            ('MiniBatchKMeans', two_means),
+                            ('AffinityPropagation', affinity_propagation),
+                            ('MeanShift', ms),
+                            ('SpectralClustering', spectral),
+                            ('Ward', ward),
+                            ('AgglomerativeClustering', average_linkage),
+                            ('DBSCAN', dbscan)
+                           ]:
         # predict cluster memberships
         t0 = time.time()
         algorithm.fit(X)
@@ -92,9 +104,9 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
             y_pred = algorithm.predict(X)
 
         # plot
-        pl.subplot(4, 6, plot_num)
+        pl.subplot(4, 7, plot_num)
         if i_dataset == 0:
-            pl.title(str(algorithm).split('(')[0], size=18)
+            pl.title(name, size=18)
         pl.scatter(X[:, 0], X[:, 1], color=colors[y_pred].tolist(), s=10)
 
         if hasattr(algorithm, 'cluster_centers_'):
