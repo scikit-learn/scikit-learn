@@ -569,15 +569,9 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
         y = np.asarray(y)
         n_features = X.shape[1]
 
-        precompute = self.precompute
-
-        copy_Gram = True
-        copy_X = True
-        Xy = None
-
         X, y, X_mean, y_mean, X_std, Gram, Xy = \
-            _pre_fit(X, y, Xy, precompute, self.normalize, self.fit_intercept,
-                     copy=copy_X)
+            _pre_fit(X, y, None, self.precompute, self.normalize,
+                     self.fit_intercept, copy=True)
 
         if y.ndim == 1:
             y = y[:, np.newaxis]
@@ -591,12 +585,14 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
 
         if Gram is False:
             self.coef_ = orthogonal_mp(X, y, self.n_nonzero_coefs_, self.tol,
-                                       precompute=False, copy_X=copy_X).T
+                                       precompute=False, copy_X=True).T
         else:
             norms_sq = np.sum(y ** 2, axis=0) if self.tol is not None else None
-            self.coef_ = orthogonal_mp_gram(Gram, Xy, self.n_nonzero_coefs_,
-                                            self.tol, norms_sq,
-                                            copy_Gram, True).T
+
+            self.coef_ = orthogonal_mp_gram(
+                Gram, Xy=Xy, n_nonzero_coefs=self.n_nonzero_coefs_,
+                tol=self.tol, norms_squared=norms_sq,
+                copy_Gram=True, copy_Xy=True).T
 
         self._set_intercept(X_mean, y_mean, X_std)
         return self
