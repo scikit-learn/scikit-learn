@@ -1256,7 +1256,7 @@ def test_regressors_data_not_an_array():
     for name, Regressor in regressors:
         if name in dont_test:
             continue
-        yield (check_estimators_not_an_array, name, Regressor, X,
+        yield (check_estimators_data_not_an_array, name, Regressor, X,
                multioutput_estimator_convert_y_2d(name, y))
 
 
@@ -1268,7 +1268,7 @@ def test_classifiers_data_not_an_array():
     for name, Classifier in classifiers:
         if name in dont_test:
             continue
-        yield (check_estimators_not_an_array, name, Classifier, X,
+        yield (check_estimators_data_not_an_array, name, Classifier, X,
                multioutput_estimator_convert_y_2d(name, y))
 
 
