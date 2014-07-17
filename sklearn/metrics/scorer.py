@@ -176,8 +176,8 @@ def _passthrough_scorer(estimator, *args, **kwargs):
     return estimator.score(*args, **kwargs)
 
 
-def check_scoring(estimator, scoring=None, allow_none=False, loss_func=None,
-                  score_func=None, score_overrides_loss=False):
+def check_scoring(estimator, scoring=None, allow_none=False,
+                  score_overrides_loss=False):
     """Determine scorer from user options.
 
     A TypeError will be thrown if the estimator cannot be scored.
@@ -202,32 +202,12 @@ def check_scoring(estimator, scoring=None, allow_none=False, loss_func=None,
         A scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
     """
-    has_scoring = not (scoring is None and loss_func is None and
-                       score_func is None)
+    has_scoring = scoring is not None
     if not hasattr(estimator, 'fit'):
         raise TypeError("estimator should a be an estimator implementing "
                         "'fit' method, %r was passed" % estimator)
     elif hasattr(estimator, 'predict') and has_scoring:
-        scorer = None
-        if loss_func is not None or score_func is not None:
-            if loss_func is not None:
-                warn("Passing a loss function is "
-                     "deprecated and will be removed in 0.15. "
-                     "Either use strings or score objects. "
-                     "The relevant new parameter is called ''scoring''. ",
-                     category=DeprecationWarning, stacklevel=2)
-                scorer = make_scorer(loss_func, greater_is_better=False)
-            if score_func is not None:
-                warn("Passing function as ``score_func`` is "
-                     "deprecated and will be removed in 0.15. "
-                     "Either use strings or score objects. "
-                     "The relevant new parameter is called ''scoring''.",
-                     category=DeprecationWarning, stacklevel=2)
-                if loss_func is None or score_overrides_loss:
-                    scorer = make_scorer(score_func)
-        else:
-            scorer = get_scorer(scoring)
-        return scorer
+        return get_scorer(scoring)
     elif hasattr(estimator, 'score'):
         return _passthrough_scorer
     elif not has_scoring:
