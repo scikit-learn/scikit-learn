@@ -298,12 +298,11 @@ class RFECV(RFE, MetaEstimatorMixin):
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
     def __init__(self, estimator, step=1, cv=None, scoring=None,
-                 loss_func=None, estimator_params={}, verbose=0):
+                 estimator_params={}, verbose=0):
         self.estimator = estimator
         self.step = step
         self.cv = cv
         self.scoring = scoring
-        self.loss_func = loss_func
         self.estimator_params = estimator_params
         self.verbose = verbose
 
@@ -328,8 +327,7 @@ class RFECV(RFE, MetaEstimatorMixin):
                   verbose=self.verbose - 1)
 
         cv = check_cv(self.cv, X, y, is_classifier(self.estimator))
-        scorer = check_scoring(self.estimator, scoring=self.scoring,
-                               loss_func=self.loss_func)
+        scorer = check_scoring(self.estimator, scoring=self.scoring)
         scores = np.zeros(X.shape[1])
 
         # Cross-validation

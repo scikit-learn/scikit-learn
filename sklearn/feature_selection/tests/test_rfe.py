@@ -15,6 +15,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.metrics.scorer import SCORERS
+from sklearn.metrics import make_scorer
 
 
 def test_rfe_set_params():
@@ -88,8 +89,9 @@ def test_rfecv():
     assert_array_equal(X_r_sparse.toarray(), iris.data)
 
     # Test using a customized loss function
+    scoring = make_scorer(zero_one_loss, greater_is_better=False)
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=5,
-                  loss_func=zero_one_loss)
+                  scoring=scoring)
     ignore_warnings(rfecv.fit)(X, y)
     X_r = rfecv.transform(X)
     assert_array_equal(X_r, iris.data)

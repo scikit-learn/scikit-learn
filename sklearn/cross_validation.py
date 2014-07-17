@@ -1076,8 +1076,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
 
 def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
-                    verbose=0, fit_params=None, score_func=None,
-                    pre_dispatch='2*n_jobs'):
+                    verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
     """Evaluate a score by cross-validation
 
     Parameters
@@ -1138,7 +1137,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
                         allow_nans=True, allow_nd=True)
 
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
-    scorer = check_scoring(estimator, score_func=score_func, scoring=scoring)
+    scorer = check_scoring(estimator, scoring=scoring)
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
@@ -1375,7 +1374,7 @@ def _check_cv(cv, X=None, y=None, classifier=False, warn_mask=False):
     return cv
 
 
-def permutation_test_score(estimator, X, y, score_func=None, cv=None,
+def permutation_test_score(estimator, X, y, cv=None,
                            n_permutations=100, n_jobs=1, labels=None,
                            random_state=0, verbose=0, scoring=None):
     """Evaluate the significance of a cross-validated score with permutations
@@ -1429,8 +1428,8 @@ def permutation_test_score(estimator, X, y, score_func=None, cv=None,
         The scores obtained for each permutations.
 
     pvalue : float
-        The returned value equals p-value if `score_func` returns bigger
-        numbers for better scores (e.g., accuracy_score). If `score_func` is
+        The returned value equals p-value if `scoring` returns bigger
+        numbers for better scores (e.g., accuracy_score). If `scoring` is
         rather a loss function (i.e. when lower is better such as with
         `mean_squared_error`) then this is actually the complement of the
         p-value:  1 - p-value.
@@ -1446,7 +1445,7 @@ def permutation_test_score(estimator, X, y, score_func=None, cv=None,
     """
     X, y = check_arrays(X, y, sparse_format='csr', allow_nans=True)
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
-    scorer = check_scoring(estimator, scoring=scoring, score_func=score_func)
+    scorer = check_scoring(estimator, scoring=scoring)
     random_state = check_random_state(random_state)
 
     # We clone the estimator to make sure that all the folds are

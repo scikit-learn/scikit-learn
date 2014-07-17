@@ -366,43 +366,6 @@ def test_grid_search_sparse_scoring():
     assert_array_equal(y_pred, y_pred3)
 
 
-def test_deprecated_score_func():
-    # test that old deprecated way of passing a score / loss function is still
-    # supported
-    X, y = make_classification(n_samples=200, n_features=100, random_state=0)
-    clf = LinearSVC(random_state=0)
-    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, scoring="f1")
-    cv.fit(X[:180], y[:180])
-    y_pred = cv.predict(X[180:])
-    C = cv.best_estimator_.C
-
-    clf = LinearSVC(random_state=0)
-    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, score_func=f1_score)
-    with warnings.catch_warnings(record=True):
-        # catch deprecation warning
-        cv.fit(X[:180], y[:180])
-    y_pred_func = cv.predict(X[180:])
-    C_func = cv.best_estimator_.C
-
-    assert_array_equal(y_pred, y_pred_func)
-    assert_equal(C, C_func)
-
-    # test loss where greater is worse
-    def f1_loss(y_true_, y_pred_):
-        return -f1_score(y_true_, y_pred_)
-
-    clf = LinearSVC(random_state=0)
-    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, loss_func=f1_loss)
-    with warnings.catch_warnings(record=True):
-        # catch deprecation warning
-        cv.fit(X[:180], y[:180])
-    y_pred_loss = cv.predict(X[180:])
-    C_loss = cv.best_estimator_.C
-
-    assert_array_equal(y_pred, y_pred_loss)
-    assert_equal(C, C_loss)
-
-
 def test_grid_search_precomputed_kernel():
     """Test that grid search works when the input features are given in the
     form of a precomputed kernel matrix """

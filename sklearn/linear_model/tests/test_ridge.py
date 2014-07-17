@@ -16,6 +16,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn import datasets
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics.scorer import SCORERS
+from sklearn.metrics import make_scorer
 
 from sklearn.linear_model.base import LinearRegression
 from sklearn.linear_model.ridge import ridge_regression
@@ -322,13 +323,15 @@ def _test_ridge_loo(filter_):
 
     # check that we get same best alpha with custom loss_func
     f = ignore_warnings
-    ridge_gcv2 = RidgeCV(fit_intercept=False, loss_func=mean_squared_error)
+    scoring = make_scorer(mean_squared_error, greater_is_better=False)
+    ridge_gcv2 = RidgeCV(fit_intercept=False, scoring=scoring)
     f(ridge_gcv2.fit)(filter_(X_diabetes), y_diabetes)
     assert_equal(ridge_gcv2.alpha_, alpha_)
 
     # check that we get same best alpha with custom score_func
     func = lambda x, y: -mean_squared_error(x, y)
-    ridge_gcv3 = RidgeCV(fit_intercept=False, score_func=func)
+    scoring = make_scorer(func)
+    ridge_gcv3 = RidgeCV(fit_intercept=False, scoring=scoring)
     f(ridge_gcv3.fit)(filter_(X_diabetes), y_diabetes)
     assert_equal(ridge_gcv3.alpha_, alpha_)
 

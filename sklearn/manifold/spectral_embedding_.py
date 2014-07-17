@@ -119,8 +119,7 @@ def _set_diag(laplacian, value):
 
 def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
                        random_state=None, eigen_tol=0.0,
-                       norm_laplacian=True, drop_first=True,
-                       mode=None):
+                       norm_laplacian=True, drop_first=True):
     """Project the sample on the first eigen vectors of the graph Laplacian.
 
     The adjacency matrix is used to compute a normalized graph Laplacian
@@ -189,15 +188,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     try:
         from pyamg import smoothed_aggregation_solver
     except ImportError:
-        if eigen_solver == "amg" or mode == "amg":
+        if eigen_solver == "amg":
             raise ValueError("The eigen_solver was set to 'amg', but pyamg is "
                              "not available.")
-
-    if not mode is None:
-        warnings.warn("'mode' was renamed to eigen_solver "
-                      "and will be removed in 0.15.",
-                      DeprecationWarning)
-        eigen_solver = mode
 
     if eigen_solver is None:
         eigen_solver = 'arpack'
