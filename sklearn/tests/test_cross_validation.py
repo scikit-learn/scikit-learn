@@ -25,7 +25,6 @@ from sklearn.datasets import load_digits
 from sklearn.datasets import load_iris
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import explained_variance_score
-from sklearn.metrics import fbeta_score
 from sklearn.metrics import make_scorer
 
 from sklearn.externals import six
@@ -689,47 +688,43 @@ def test_permutation_score():
     cv = cval.StratifiedKFold(y, 2)
 
     score, scores, pvalue = cval.permutation_test_score(
-        svm, X, y, cv=cv, scoring="accuracy")
+        svm, X, y, n_permutations=30, cv=cv, scoring="accuracy")
     assert_greater(score, 0.9)
     assert_almost_equal(pvalue, 0.0, 1)
 
     score_label, _, pvalue_label = cval.permutation_test_score(
-        svm, X, y, cv=cv, scoring="accuracy", labels=np.ones(y.size),
-        random_state=0)
+        svm, X, y, n_permutations=30, cv=cv, scoring="accuracy",
+        labels=np.ones(y.size), random_state=0)
     assert_true(score_label == score)
     assert_true(pvalue_label == pvalue)
-
-    # test with custom scoring object
-    scorer = make_scorer(fbeta_score, beta=2)
-    score_label, _, pvalue_label = cval.permutation_test_score(
-        svm, X, y, scoring=scorer, cv=cv, labels=np.ones(y.size),
-        random_state=0)
-    assert_almost_equal(score_label, .97, 2)
-    assert_almost_equal(pvalue_label, 0.01, 3)
 
     # check that we obtain the same results with a sparse representation
     svm_sparse = SVC(kernel='linear')
     cv_sparse = cval.StratifiedKFold(y, 2)
     score_label, _, pvalue_label = cval.permutation_test_score(
-        svm_sparse, X_sparse, y, cv=cv_sparse,
+        svm_sparse, X_sparse, y, n_permutations=30, cv=cv_sparse,
         scoring="accuracy", labels=np.ones(y.size), random_state=0)
 
     assert_true(score_label == score)
     assert_true(pvalue_label == pvalue)
 
+    # test with custom scoring object
+    def custom_score(y_true, y_pred):
+        return (((y_true == y_pred).sum() - (y_true != y_pred).sum())
+                / y_true.shape[0])
+
+    scorer = make_scorer(custom_score)
+    score, _, pvalue = cval.permutation_test_score(
+        svm, X, y, n_permutations=100, scoring=scorer, cv=cv, random_state=0)
+    assert_almost_equal(score, .93, 2)
+    assert_almost_equal(pvalue, 0.01, 3)
+
     # set random y
     y = np.mod(np.arange(len(y)), 3)
 
-    score, scores, pvalue = cval.permutation_test_score(svm, X, y, cv=cv,
-                                                        scoring="accuracy")
+    score, scores, pvalue = cval.permutation_test_score(
+        svm, X, y, n_permutations=30, cv=cv, scoring="accuracy")
 
-    assert_less(score, 0.5)
-    assert_greater(pvalue, 0.2)
-
-    # test with deprecated interface
-    with warnings.catch_warnings(record=True):
-        score, scores, pvalue = cval.permutation_test_score(
-            svm, X, y, scoring=make_scorer(accuracy_score), cv=cv)
     assert_less(score, 0.5)
     assert_greater(pvalue, 0.2)
 
