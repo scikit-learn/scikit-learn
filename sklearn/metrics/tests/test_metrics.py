@@ -1083,12 +1083,11 @@ avg / total       0.51      0.53      0.47        75
         assert_equal(report, expected_report)
 
 
+@ignore_warnings  # sequence of sequences is deprecated
 def test_multilabel_classification_report():
-
     n_classes = 4
     n_samples = 50
-    # using sequence of sequences is deprecated, but still tested
-    make_ml = ignore_warnings(make_multilabel_classification)
+    make_ml = make_multilabel_classification
     _, y_true_ll = make_ml(n_features=1, n_classes=n_classes, random_state=0,
                            n_samples=n_samples)
     _, y_pred_ll = make_ml(n_features=1, n_classes=n_classes, random_state=1,
@@ -1720,24 +1719,25 @@ def test_multilabel_representation_invariance():
                                     "format and dense binary indicator "
                                     "format." % name)
 
-        # Check invariance with redundant labels with list of labels
-        assert_almost_equal(metric(y1, y2_redundant), measure,
-                            err_msg="%s failed rendundant label invariance"
-                                    % name)
+        with ignore_warnings():  # sequence of sequences is deprecated
+            # Check invariance with redundant labels with list of labels
+            assert_almost_equal(metric(y1, y2_redundant), measure,
+                                err_msg="%s failed rendundant label invariance"
+                                        % name)
 
-        assert_almost_equal(metric(y1_redundant, y2_redundant), measure,
-                            err_msg="%s failed rendundant label invariance"
-                                    % name)
+            assert_almost_equal(metric(y1_redundant, y2_redundant), measure,
+                                err_msg="%s failed rendundant label invariance"
+                                        % name)
 
-        assert_almost_equal(metric(y1_redundant, y2), measure,
-                            err_msg="%s failed rendundant label invariance"
-                                    % name)
+            assert_almost_equal(metric(y1_redundant, y2), measure,
+                                err_msg="%s failed rendundant label invariance"
+                                        % name)
 
-        # Check shuffling invariance with list of labels
-        assert_almost_equal(metric(y1_shuffle, y2_shuffle), measure,
-                            err_msg="%s failed shuffling invariance "
-                                    "with list of list of labels format."
-                                    % name)
+            # Check shuffling invariance with list of labels
+            assert_almost_equal(metric(y1_shuffle, y2_shuffle), measure,
+                                err_msg="%s failed shuffling invariance "
+                                        "with list of list of labels format."
+                                        % name)
 
         # Check shuffling invariance with dense binary indicator matrix
         assert_almost_equal(metric(y1_shuffle_binary_indicator,
@@ -1746,9 +1746,10 @@ def test_multilabel_representation_invariance():
                                     " with dense binary indicator format."
                                     % name)
 
-        # Check raises error with mix input representation
-        assert_raises(ValueError, metric, y1, y2_binary_indicator)
-        assert_raises(ValueError, metric, y1_binary_indicator, y2)
+        with ignore_warnings():  # sequence of sequences is deprecated
+            # Check raises error with mix input representation
+            assert_raises(ValueError, metric, y1, y2_binary_indicator)
+            assert_raises(ValueError, metric, y1_binary_indicator, y2)
 
 
 def test_multilabel_zero_one_loss_subset():
@@ -1764,15 +1765,16 @@ def test_multilabel_zero_one_loss_subset():
     assert_equal(zero_one_loss(y1, np.zeros(y1.shape)), 1)
     assert_equal(zero_one_loss(y2, np.zeros(y1.shape)), 1)
 
-    # List of tuple of label
-    y1 = [(1, 2,), (0, 2,)]
-    y2 = [(2,), (0, 2,)]
+    with ignore_warnings():  # sequence of sequences is deprecated
+        # List of tuple of label
+        y1 = [(1, 2,), (0, 2,)]
+        y2 = [(2,), (0, 2,)]
 
-    assert_equal(zero_one_loss(y1, y2), 0.5)
-    assert_equal(zero_one_loss(y1, y1), 0)
-    assert_equal(zero_one_loss(y2, y2), 0)
-    assert_equal(zero_one_loss(y2, [(), ()]), 1)
-    assert_equal(zero_one_loss(y2, [tuple(), (10, )]), 1)
+        assert_equal(zero_one_loss(y1, y2), 0.5)
+        assert_equal(zero_one_loss(y1, y1), 0)
+        assert_equal(zero_one_loss(y2, y2), 0)
+        assert_equal(zero_one_loss(y2, [(), ()]), 1)
+        assert_equal(zero_one_loss(y2, [tuple(), (10, )]), 1)
 
 
 def test_multilabel_hamming_loss():
@@ -1788,17 +1790,18 @@ def test_multilabel_hamming_loss():
     assert_equal(hamming_loss(y1, np.zeros(y1.shape)), 4 / 6)
     assert_equal(hamming_loss(y2, np.zeros(y1.shape)), 0.5)
 
-    # List of tuple of label
-    y1 = [(1, 2,), (0, 2,)]
-    y2 = [(2,), (0, 2,)]
+    with ignore_warnings():  # sequence of sequences is deprecated
+        # List of tuple of label
+        y1 = [(1, 2,), (0, 2,)]
+        y2 = [(2,), (0, 2,)]
 
-    assert_equal(hamming_loss(y1, y2), 1 / 6)
-    assert_equal(hamming_loss(y1, y1), 0)
-    assert_equal(hamming_loss(y2, y2), 0)
-    assert_equal(hamming_loss(y2, [(), ()]), 0.75)
-    assert_equal(hamming_loss(y1, [tuple(), (10, )]), 0.625)
-    assert_almost_equal(hamming_loss(y2, [tuple(), (10, )],
-                                     classes=np.arange(11)), 0.1818, 2)
+        assert_equal(hamming_loss(y1, y2), 1 / 6)
+        assert_equal(hamming_loss(y1, y1), 0)
+        assert_equal(hamming_loss(y2, y2), 0)
+        assert_equal(hamming_loss(y2, [(), ()]), 0.75)
+        assert_equal(hamming_loss(y1, [tuple(), (10, )]), 0.625)
+        assert_almost_equal(hamming_loss(y2, [tuple(), (10, )],
+                                         classes=np.arange(11)), 0.1818, 2)
 
 
 def test_multilabel_accuracy_score_subset_accuracy():
@@ -1814,18 +1817,19 @@ def test_multilabel_accuracy_score_subset_accuracy():
     assert_equal(accuracy_score(y1, np.zeros(y1.shape)), 0)
     assert_equal(accuracy_score(y2, np.zeros(y1.shape)), 0)
 
-    # List of tuple of label
-    y1 = [(1, 2,), (0, 2,)]
-    y2 = [(2,), (0, 2,)]
+    with ignore_warnings():  # sequence of sequences is deprecated
+        # List of tuple of label
+        y1 = [(1, 2,), (0, 2,)]
+        y2 = [(2,), (0, 2,)]
 
-    assert_equal(accuracy_score(y1, y2), 0.5)
-    assert_equal(accuracy_score(y1, y1), 1)
-    assert_equal(accuracy_score(y2, y2), 1)
-    assert_equal(accuracy_score(y2, [(), ()]), 0)
-    assert_equal(accuracy_score(y1, y2, normalize=False), 1)
-    assert_equal(accuracy_score(y1, y1, normalize=False), 2)
-    assert_equal(accuracy_score(y2, y2, normalize=False), 2)
-    assert_equal(accuracy_score(y2, [(), ()], normalize=False), 0)
+        assert_equal(accuracy_score(y1, y2), 0.5)
+        assert_equal(accuracy_score(y1, y1), 1)
+        assert_equal(accuracy_score(y2, y2), 1)
+        assert_equal(accuracy_score(y2, [(), ()]), 0)
+        assert_equal(accuracy_score(y1, y2, normalize=False), 1)
+        assert_equal(accuracy_score(y1, y1, normalize=False), 2)
+        assert_equal(accuracy_score(y2, y2, normalize=False), 2)
+        assert_equal(accuracy_score(y2, [(), ()], normalize=False), 0)
 
 
 def test_multilabel_jaccard_similarity_score():
@@ -1844,27 +1848,28 @@ def test_multilabel_jaccard_similarity_score():
     assert_equal(jaccard_similarity_score(y1, np.zeros(y1.shape)), 0)
     assert_equal(jaccard_similarity_score(y2, np.zeros(y1.shape)), 0)
 
-   # List of tuple of label
-    y1 = [(1, 2,), (0, 2,)]
-    y2 = [(2,), (0, 2,)]
+    with ignore_warnings():  # sequence of sequences is deprecated
+        # List of tuple of label
+        y1 = [(1, 2,), (0, 2,)]
+        y2 = [(2,), (0, 2,)]
 
-    assert_equal(jaccard_similarity_score(y1, y2), 0.75)
-    assert_equal(jaccard_similarity_score(y1, y1), 1)
-    assert_equal(jaccard_similarity_score(y2, y2), 1)
-    assert_equal(jaccard_similarity_score(y2, [(), ()]), 0)
+        assert_equal(jaccard_similarity_score(y1, y2), 0.75)
+        assert_equal(jaccard_similarity_score(y1, y1), 1)
+        assert_equal(jaccard_similarity_score(y2, y2), 1)
+        assert_equal(jaccard_similarity_score(y2, [(), ()]), 0)
 
-    # |y3 inter y4 | = [0, 1, 1]
-    # |y3 union y4 | = [2, 1, 3]
-    y3 = [(0,), (1,), (3,)]
-    y4 = [(4,), (4,), (5, 6)]
-    assert_almost_equal(jaccard_similarity_score(y3, y4), 0)
+        # |y3 inter y4 | = [0, 1, 1]
+        # |y3 union y4 | = [2, 1, 3]
+        y3 = [(0,), (1,), (3,)]
+        y4 = [(4,), (4,), (5, 6)]
+        assert_almost_equal(jaccard_similarity_score(y3, y4), 0)
 
-    # |y5 inter y6 | = [0, 1, 1]
-    # |y5 union y6 | = [2, 1, 3]
-    y5 = [(0,), (1,), (2, 3)]
-    y6 = [(1,), (1,), (2, 0)]
+        # |y5 inter y6 | = [0, 1, 1]
+        # |y5 union y6 | = [2, 1, 3]
+        y5 = [(0,), (1,), (2, 3)]
+        y6 = [(1,), (1,), (2, 0)]
 
-    assert_almost_equal(jaccard_similarity_score(y5, y6), (1 + 1 / 3) / 3)
+        assert_almost_equal(jaccard_similarity_score(y5, y6), (1 + 1 / 3) / 3)
 
 
 def test_normalize_option_binary_classification():
@@ -1923,7 +1928,8 @@ def test_normalize_option_multilabel_classification():
                                normalize=True)
         assert_greater(measure, 0,
                        msg="We failed to test correctly the normalize option")
-        assert_almost_equal(metrics(y_true, y_pred, normalize=False)
+        assert_almost_equal(ignore_warnings(metrics)(y_true, y_pred,
+                                                     normalize=False)
                             / n_samples, measure,
                             err_msg="Failed with %s" % name)
 
@@ -2298,6 +2304,7 @@ def test_fscore_warnings():
                          'being set to 0.0 due to no true samples.')
 
 
+@ignore_warnings  # sequence of sequences is deprecated
 def test__check_clf_targets():
     """Check that _check_clf_targets correctly merges target types, squeezes
     output and fails if input lengths differ."""
