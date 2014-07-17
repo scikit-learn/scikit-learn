@@ -30,15 +30,15 @@ for C in C_s:
     scores_std.append(np.std(this_scores))
 
 # Do the plotting
-import pylab as pl
-pl.figure(1, figsize=(4, 3))
-pl.clf()
-pl.semilogx(C_s, scores)
-pl.semilogx(C_s, np.array(scores) + np.array(scores_std), 'b--')
-pl.semilogx(C_s, np.array(scores) - np.array(scores_std), 'b--')
-locs, labels = pl.yticks()
-pl.yticks(locs, list(map(lambda x: "%g" % x, locs)))
-pl.ylabel('CV score')
-pl.xlabel('Parameter C')
-pl.ylim(0, 1.1)
-pl.show()
+import matplotlib.pyplot as plt
+plt.figure(1, figsize=(4, 3))
+plt.clf()
+plt.semilogx(C_s, scores)
+plt.semilogx(C_s, np.array(scores) + np.array(scores_std), 'b--')
+plt.semilogx(C_s, np.array(scores) - np.array(scores_std), 'b--')
+locs, labels = plt.yticks()
+plt.yticks(locs, list(map(lambda x: "%g" % x, locs)))
+plt.ylabel('CV score')
+plt.xlabel('Parameter C')
+plt.ylim(0, 1.1)
+plt.show()

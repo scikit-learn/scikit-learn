@@ -64,6 +64,18 @@ cdef class Criterion:
 # Splitter
 # =============================================================================
 
+cdef struct SplitRecord:
+    # Data to track sample split
+    SIZE_t feature         # Which feature to split on.
+    SIZE_t pos             # Split samples array at the given position,
+                           # i.e. count of samples below threshold for feature.
+                           # pos is >= end if the node is a leaf.
+    double threshold       # Threshold to split at.
+    double improvement     # Impurity improvement given parent node.
+    double impurity_left   # Impurity of the left split.
+    double impurity_right  # Impurity of the right split.
+
+
 cdef class Splitter:
     # The splitter searches in the input space for a feature and a threshold
     # to split the samples samples[start:end].
@@ -74,6 +86,7 @@ cdef class Splitter:
     cdef public Criterion criterion      # Impurity criterion
     cdef public SIZE_t max_features      # Number of features to test
     cdef public SIZE_t min_samples_leaf  # Min samples in a leaf
+    cdef public double min_weight_leaf   # Minimum weight in a leaf
 
     cdef object random_state             # Random state
     cdef UINT32_t rand_r_state           # sklearn_rand_r random number state
@@ -119,12 +132,7 @@ cdef class Splitter:
 
     cdef void node_split(self,
                          double impurity,   # Impurity of the node
-                         SIZE_t* pos,       # Set to >= end if the node is a leaf
-                         SIZE_t* feature,
-                         double* threshold,
-                         double* impurity_left,
-                         double* impurity_right,
-                         double* impurity_improvement,
+                         SplitRecord* split,
                          SIZE_t* n_constant_features) nogil
 
     cdef void node_value(self, double* dest) nogil
@@ -199,6 +207,7 @@ cdef class TreeBuilder:
 
     cdef SIZE_t min_samples_split   # Minimum number of samples in an internal node
     cdef SIZE_t min_samples_leaf    # Minimum number of samples in a leaf
+    cdef double min_weight_leaf     # Minimum weight in a leaf
     cdef SIZE_t max_depth           # Maximal tree depth
 
     cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,

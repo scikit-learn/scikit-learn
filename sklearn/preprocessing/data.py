@@ -4,9 +4,8 @@
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 # License: BSD 3 clause
 
+from itertools import chain, combinations
 import numbers
-import warnings
-import itertools
 
 import numpy as np
 from scipy import sparse
@@ -20,13 +19,15 @@ from ..utils import atleast2d_or_csr
 from ..utils import safe_asarray
 from ..utils import warn_if_not_float
 from ..utils.extmath import row_norms
+from ..utils.fixes import combinations_with_replacement as combinations_w_r
 from ..utils.sparsefuncs_fast import inplace_csr_row_normalize_l1
 from ..utils.sparsefuncs_fast import inplace_csr_row_normalize_l2
-from ..utils.sparsefuncs_fast import inplace_csr_column_scale
+from ..utils.sparsefuncs import inplace_column_scale
 from ..utils.sparsefuncs import mean_variance_axis0
 
 zip = six.moves.zip
 map = six.moves.map
+range = six.moves.range
 
 __all__ = [
     'Binarizer',
@@ -129,7 +130,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
             X = X.copy()
         _, var = mean_variance_axis0(X)
         var[var == 0.0] = 1.0
-        inplace_csr_column_scale(X, 1 / np.sqrt(var))
+        inplace_column_scale(X, 1 / np.sqrt(var))
     else:
         X = np.asarray(X)
         warn_if_not_float(X, estimator='The scale function')
@@ -203,7 +204,10 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         data_min = np.min(X, axis=0)
         data_range = np.max(X, axis=0) - data_min
         # Do not scale constant features
-        data_range[data_range == 0.0] = 1.0
+        if isinstance(data_range, np.ndarray):
+            data_range[data_range == 0.0] = 1.0
+        elif data_range == 0.:
+            data_range = 1.
         self.scale_ = (feature_range[1] - feature_range[0]) / data_range
         self.min_ = feature_range[0] - data_min * self.scale_
         self.data_range = data_range
@@ -348,7 +352,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                     "Cannot center sparse matrices: pass `with_mean=False` "
                     "instead. See docstring for motivation and alternatives.")
             if self.std_ is not None:
-                inplace_csr_column_scale(X, 1 / self.std_)
+                inplace_column_scale(X, 1 / self.std_)
         else:
             if self.with_mean:
                 X -= self.mean_
@@ -376,7 +380,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             if copy:
                 X = X.copy()
             if self.std_ is not None:
-                inplace_csr_column_scale(X, self.std_)
+                inplace_column_scale(X, self.std_)
         else:
             X = np.asarray(X)
             if copy:
@@ -389,7 +393,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
 
 class PolynomialFeatures(BaseEstimator, TransformerMixin):
-    """Generate polynomial (interaction) features.
+    """Generate polynomial and interaction features.
 
     Generate a new feature matrix consisting of all polynomial combinations
     of the features with degree less than or equal to the specified degree.
@@ -400,7 +404,13 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     ----------
     degree : integer
         The degree of the polynomial features. Default = 2.
-    include_bias : integer
+
+    interaction_only : boolean, default = False
+        If true, only interaction features are produced: features that are
+        products of at most ``degree`` *distinct* input features (so not
+        ``x[1] ** 2``, ``x[0] * x[2] ** 3``, etc.).
+
+    include_bias : boolean
         If True (default), then include a bias column, the feature in which
         all polynomial powers are zero (i.e. a column of ones - acts as an
         intercept term in a linear model).
@@ -417,6 +427,11 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     array([[ 1,  0,  1,  0,  0,  1],
            [ 1,  2,  3,  4,  6,  9],
            [ 1,  4,  5, 16, 20, 25]])
+    >>> poly = PolynomialFeatures(interaction_only=True)
+    >>> poly.fit_transform(X)
+    array([[ 1,  0,  1,  0],
+           [ 1,  2,  3,  6],
+           [ 1,  4,  5, 20]])
 
     Attributes
     ----------
@@ -427,36 +442,34 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     Notes
     -----
     Be aware that the number of features in the output array scales
-    exponentially in the number of features of the input array, so this
-    is not suitable for higher-dimensional data.
+    polynomially in the number of features of the input array, and
+    exponentially in the degree. High degrees can cause overfitting.
 
-    See :ref:`examples/plot_polynomial_regression.py
-    <example_plot_polynomial_regression.py>`
+    See :ref:`examples/linear_model/plot_polynomial_regression.py
+    <example_linear_model_plot_polynomial_regression.py>`
     """
-    def __init__(self, degree=2, include_bias=True):
+    def __init__(self, degree=2, interaction_only=False, include_bias=True):
         self.degree = degree
+        self.interaction_only = interaction_only
         self.include_bias = include_bias
 
     @staticmethod
-    def _power_matrix(n_features, degree, include_bias):
+    def _power_matrix(n_features, degree, interaction_only, include_bias):
         """Compute the matrix of polynomial powers"""
-        # Find permutations/combinations which add to degree or less
-        deg_min = 0 if include_bias else 1
-        powers = itertools.product(*(range(degree + 1)
-                                     for i in range(n_features)))
-        powers = np.array([c for c in powers if deg_min <= sum(c) <= degree])
-
-        # sort so that the order of the powers makes sense
-        i = np.lexsort(np.vstack([powers.T, powers.sum(1)]))
-        return powers[i]
+        comb = (combinations if interaction_only else combinations_w_r)
+        start = int(not include_bias)
+        combn = chain.from_iterable(comb(range(n_features), i)
+                                    for i in range(start, degree + 1))
+        powers = np.vstack(np.bincount(c, minlength=n_features) for c in combn)
+        return powers
 
     def fit(self, X, y=None):
         """
         Compute the polynomial feature combinations
         """
         n_samples, n_features = array2d(X).shape
-        self.powers_ = self._power_matrix(n_features,
-                                          self.degree,
+        self.powers_ = self._power_matrix(n_features, self.degree,
+                                          self.interaction_only,
                                           self.include_bias)
         return self
 
@@ -484,7 +497,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
 
 
 def normalize(X, norm='l2', axis=1, copy=True):
-    """Normalize a dataset along any axis
+    """Scale input vectors individually to unit norm (vector length).
 
     Parameters
     ----------
@@ -548,7 +561,7 @@ def normalize(X, norm='l2', axis=1, copy=True):
 
 
 class Normalizer(BaseEstimator, TransformerMixin):
-    """Normalize samples individually to unit norm
+    """Normalize samples individually to unit norm.
 
     Each sample (i.e. each row of the data matrix) with at least one
     non zero component is rescaled independently of other samples so

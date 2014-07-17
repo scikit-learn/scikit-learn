@@ -186,6 +186,7 @@ class Isomap(BaseEstimator, TransformerMixin):
         -------
         X_new: array-like, shape (n_samples, n_components)
         """
+        X, = check_arrays(X)
         distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
 
         #Create the graph of shortest distances from X to self.training_data_

@@ -69,7 +69,8 @@ def csr_mean_variance_axis0(X):
     cdef unsigned int n_samples = X.shape[0]
     cdef unsigned int n_features = X.shape[1]
 
-    cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
+    cdef np.ndarray[DOUBLE, ndim=1, mode="c"] X_data
+    X_data = np.asarray(X.data, dtype=np.float64)     # might copy!
     cdef np.ndarray[int, ndim=1] X_indices = X.indices
 
     cdef unsigned int i
@@ -78,7 +79,8 @@ def csr_mean_variance_axis0(X):
     cdef double diff
 
     # means[j] contains the mean of feature j
-    cdef np.ndarray[DOUBLE, ndim=1] means = np.zeros(n_features)
+    cdef np.ndarray[DOUBLE, ndim=1] means = np.zeros(n_features,
+                                                     dtype=np.float64)
 
     # variances[j] contains the variance of feature j
     cdef np.ndarray[DOUBLE, ndim=1] variances = np.zeros_like(means)
@@ -90,7 +92,7 @@ def csr_mean_variance_axis0(X):
     for i in xrange(non_zero):
         col_ind = X_indices[i]
         means[col_ind] += X_data[i]
-    
+
     means /= n_samples
 
     for i in xrange(non_zero):
@@ -104,6 +106,70 @@ def csr_mean_variance_axis0(X):
         variances[i] /= n_samples
 
     return means, variances
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def csc_mean_variance_axis0(X):
+    """Compute mean and variance along axis 0 on a CSC matrix
+
+    Parameters
+    ----------
+    X: CSC sparse matrix, shape (n_samples, n_features)
+        Input data.
+
+    Returns
+    -------
+
+    means: float array with shape (n_features,)
+        Feature-wise means
+
+    variances: float array with shape (n_features,)
+        Feature-wise variances
+
+    """
+    cdef unsigned int n_samples = X.shape[0]
+    cdef unsigned int n_features = X.shape[1]
+
+    cdef np.ndarray[DOUBLE, ndim=1] X_data
+    X_data = np.asarray(X.data, dtype=np.float64)     # might copy!
+    cdef np.ndarray[int, ndim=1] X_indices = X.indices
+    cdef np.ndarray[int, ndim=1] X_indptr = X.indptr
+
+    cdef unsigned int i
+    cdef unsigned int j
+    cdef unsigned int counts
+    cdef unsigned int startptr
+    cdef unsigned int endptr
+    cdef double diff
+
+    # means[j] contains the mean of feature j
+    cdef np.ndarray[DOUBLE, ndim=1] means = np.zeros(n_features,
+                                                     dtype=np.float64)
+
+    # variances[j] contains the variance of feature j
+    cdef np.ndarray[DOUBLE, ndim=1] variances = np.zeros_like(means)
+
+    for i in xrange(n_features):
+
+        startptr = X_indptr[i]
+        endptr = X_indptr[i + 1]
+        counts = endptr - startptr
+
+        for j in xrange(startptr, endptr):
+            means[i] += X_data[j]
+        means[i] /= n_samples
+
+        for j in xrange(startptr, endptr):
+            diff = X_data[j] - means[i]
+            variances[i] += diff * diff
+
+        variances[i] += (n_samples - counts) * means[i] * means[i]
+        variances[i] /= n_samples
+
+    return means, variances
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -175,124 +241,6 @@ def inplace_csr_row_normalize_l2(X):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-@cython.cdivision(True)
-def inplace_csr_column_scale(X, np.ndarray[DOUBLE, ndim=1] scale):
-    """Inplace column scaling of a CSR matrix.
-
-    Scale each feature of the data matrix by multiplying with specific scale
-    provided by the caller assuming a (n_samples, n_features) shape.
-
-    Parameters
-    ----------
-    X: CSR matrix with shape (n_samples, n_features)
-        Matrix to normalize using the variance of the features.
-
-    scale: float array with shape (n_features,)
-        Array of precomputed feature-wise values to use for scaling.
-    """
-    cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
-    cdef np.ndarray[int, ndim=1] X_indices = X.indices
-
-    cdef unsigned int i
-    cdef unsigned non_zero = len(X_indices)
-
-    for i in xrange(non_zero):
-        X_data[i] *= scale[X_indices[i]]
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-def csc_mean_variance_axis0(X):
-    """Compute mean and variance along axis 0 on a CSC matrix
-
-    Parameters
-    ----------
-    X: CSC sparse matrix, shape (n_samples, n_features)
-        Input data.
-
-    Returns
-    -------
-
-    means: float array with shape (n_features,)
-        Feature-wise means
-
-    variances: float array with shape (n_features,)
-        Feature-wise variances
-
-    """
-    cdef unsigned int n_samples = X.shape[0]
-    cdef unsigned int n_features = X.shape[1]
-
-    cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
-    cdef np.ndarray[int, ndim=1] X_indices = X.indices
-    cdef np.ndarray[int, ndim=1] X_indptr = X.indptr
-
-    cdef unsigned int i
-    cdef unsigned int j
-    cdef unsigned int counts
-    cdef unsigned int startptr
-    cdef unsigned int endptr
-    cdef double diff
-
-    # means[j] contains the mean of feature j
-    cdef np.ndarray[DOUBLE, ndim=1] means = np.zeros(n_features)
-
-    # variances[j] contains the variance of feature j
-    cdef np.ndarray[DOUBLE, ndim=1] variances = np.zeros_like(means)
-
-    for i in xrange(n_features):
-
-        startptr = X_indptr[i]
-        endptr = X_indptr[i + 1]
-        counts = endptr - startptr
-
-        for j in xrange(startptr, endptr):
-            means[i] += X_data[j]
-        means[i] /= n_samples
-
-        for j in xrange(startptr, endptr):
-            diff = X_data[j] - means[i]
-            variances[i] += diff * diff
-
-        variances[i] += (n_samples - counts) * means[i] * means[i]
-        variances[i] /= n_samples
-
-    return means, variances
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-def inplace_csc_column_scale(X, np.ndarray[DOUBLE, ndim=1] scale):
-    """Inplace column scaling of a CSC matrix.
-
-    Scale each feature of the data matrix by multiplying with specific scale
-    provided by the caller assuming a (n_samples, n_features) shape.
-
-    Parameters
-    ----------
-    X: CSC matrix with shape (n_samples, n_features)
-        Matrix to normalize using the variance of the features.
-
-    scale: float array with shape (n_features,)
-        Array of precomputed feature-wise values to use for scaling.
-    """
-    cdef unsigned int n_samples = X.shape[0]
-    cdef unsigned int n_features = X.shape[1]
-
-    cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
-    cdef np.ndarray[int, ndim=1] X_indices = X.indices
-    cdef np.ndarray[int, ndim=1] X_indptr = X.indptr
-
-    cdef unsigned int i, j
-    for i in xrange(n_features):
-        for j in xrange(X_indptr[i], X_indptr[i + 1]):
-            X_data[j] *= scale[i]
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef void add_row_csr(np.ndarray[np.float64_t, ndim=1] data,
                       np.ndarray[int, ndim=1] indices,
                       np.ndarray[int, ndim=1] indptr,
@@ -316,8 +264,8 @@ def assign_rows_csr(X,
                     np.ndarray[np.float64_t, ndim=2, mode="c"] out):
     """Densify selected rows of a CSR matrix into a preallocated array.
 
-    Like out[out_rows] = X[X_rows].toarray() but without copying. Only supported for
-    dtype=np.float64.
+    Like out[out_rows] = X[X_rows].toarray() but without copying.
+    Only supported for dtype=np.float64.
 
     Parameters
     ----------

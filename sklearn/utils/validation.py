@@ -36,6 +36,7 @@ warnings.simplefilter('ignore', NonBLASDotWarning)
 
 def _assert_all_finite(X):
     """Like assert_all_finite, but only for ndarray."""
+    X = np.asanyarray(X)
     if (X.dtype.char in np.typecodes['AllFloat'] and not np.isfinite(X.sum())
             and not np.isfinite(X).all()):
         raise ValueError("Input contains NaN, infinity"
@@ -167,7 +168,10 @@ def atleast2d_or_csr(X, dtype=None, order=None, copy=False,
 def _num_samples(x):
     """Return number of samples in array-like x."""
     if not hasattr(x, '__len__') and not hasattr(x, 'shape'):
-        raise TypeError("Expected sequence or array-like, got %r" % x)
+        if hasattr(x, '__array__'):
+            x = np.asarray(x)
+        else:
+            raise TypeError("Expected sequence or array-like, got %r" % x)
     return x.shape[0] if hasattr(x, 'shape') else len(x)
 
 
@@ -214,6 +218,9 @@ def check_arrays(*arrays, **options):
 
     allow_nans : boolean, False by default
         Allows nans in the arrays
+
+    allow_nd : boolean, False by default
+        Allows arrays of more than 2 dimensions.
     """
     sparse_format = options.pop('sparse_format', None)
     if sparse_format not in (None, 'csr', 'csc', 'dense'):
@@ -223,6 +230,7 @@ def check_arrays(*arrays, **options):
     dtype = options.pop('dtype', None)
     allow_lists = options.pop('allow_lists', False)
     allow_nans = options.pop('allow_nans', False)
+    allow_nd = options.pop('allow_nd', False)
 
     if options:
         raise TypeError("Unexpected keyword arguments: %r" % options.keys())
@@ -245,7 +253,8 @@ def check_arrays(*arrays, **options):
             raise ValueError("Found array with dim %d. Expected %d"
                              % (size, n_samples))
 
-        if not allow_lists or hasattr(array, "shape"):
+        if (not allow_lists or hasattr(array, "__array__")
+                or hasattr(array, "shape")):
             if sp.issparse(array):
                 if sparse_format == 'csr':
                     array = array.tocsr()
@@ -257,10 +266,17 @@ def check_arrays(*arrays, **options):
                                     'convert to a dense numpy array.')
                 if check_ccontiguous:
                     array.data = np.ascontiguousarray(array.data, dtype=dtype)
-                else:
+                elif hasattr(array, 'data'):
                     array.data = np.asarray(array.data, dtype=dtype)
+                elif array.dtype != dtype:
+                    # Cast on the required dtype
+                    array = array.astype(dtype)
                 if not allow_nans:
-                    _assert_all_finite(array.data)
+                    if hasattr(array, 'data'):
+                        _assert_all_finite(array.data)
+                    else:
+                        # DOK sparse matrices
+                        _assert_all_finite(array.values())
             else:
                 if check_ccontiguous:
                     array = np.ascontiguousarray(array, dtype=dtype)
@@ -269,7 +285,7 @@ def check_arrays(*arrays, **options):
                 if not allow_nans:
                     _assert_all_finite(array)
 
-            if array.ndim >= 3:
+            if not allow_nd and array.ndim >= 3:
                 raise ValueError("Found array with dim %d. Expected <= 2" %
                                  array.ndim)
 

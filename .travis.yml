@@ -10,9 +10,12 @@ env:
       NUMPY_VERSION="1.6.2" SCIPY_VERSION="0.11.0"
     # This environment tests the newest supported anaconda env
     - DISTRIB="conda" PYTHON_VERSION="3.4" INSTALL_MKL="true"
-      NUMPY_VERSION="1.8.1" SCIPY_VERSION="0.13.3"
+      NUMPY_VERSION="1.8.1" SCIPY_VERSION="0.14.0"
 install: source continuous_integration/install.sh
 script: bash continuous_integration/test_script.sh
 after_success:
-    - if [[ "$COVERAGE" == "true" ]]; then coveralls; fi
+    # Ignore coveralls failures as the coveralls server is not very reliable
+    # but we don't want travis to report a failure in the github UI just
+    # because the coverage report failed to be published.
+    - if [[ "$COVERAGE" == "true" ]]; then coveralls || echo "failed"; fi
 cache: apt

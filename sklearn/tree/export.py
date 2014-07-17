@@ -115,20 +115,22 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
                 out_file.write('%d -> %d ;\n' % (parent, node_id))
 
     own_file = False
-    if isinstance(out_file, six.string_types):
-        if six.PY3:
-            out_file = open(out_file, "w", encoding="utf-8")
+    try:
+        if isinstance(out_file, six.string_types):
+            if six.PY3:
+                out_file = open(out_file, "w", encoding="utf-8")
+            else:
+                out_file = open(out_file, "wb")
+            own_file = True
+
+        out_file.write("digraph Tree {\n")
+
+        if isinstance(decision_tree, _tree.Tree):
+            recurse(decision_tree, 0, criterion="impurity")
         else:
-            out_file = open(out_file, "wb")
-        own_file = True
+            recurse(decision_tree.tree_, 0, criterion=decision_tree.criterion)
+        out_file.write("}")
 
-    out_file.write("digraph Tree {\n")
-
-    if isinstance(decision_tree, _tree.Tree):
-        recurse(decision_tree, 0, criterion="impurity")
-    else:
-        recurse(decision_tree.tree_, 0, criterion=decision_tree.criterion)
-    out_file.write("}")
-
-    if own_file:
-        out_file.close()
+    finally:
+        if own_file:
+            out_file.close()

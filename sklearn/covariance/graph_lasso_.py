@@ -187,7 +187,7 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                         # Use coordinate descent
                         coefs = -(precision_[indices != idx, idx]
                                   / (precision_[idx, idx] + 1000 * eps))
-                        coefs, _, _ = cd_fast.enet_coordinate_descent_gram(
+                        coefs, _, _, _ = cd_fast.enet_coordinate_descent_gram(
                             coefs, alpha, 0, sub_covariance, row, row,
                             max_iter, tol)
                     else:

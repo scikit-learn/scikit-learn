@@ -8,6 +8,7 @@
 #          Arnaud Joly
 #          Denis Engemann
 # License: BSD 3 clause
+import os
 import inspect
 import pkgutil
 import warnings
@@ -52,7 +53,9 @@ from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "raises", "with_setup", "assert_true",
            "assert_false", "assert_almost_equal", "assert_array_equal",
-           "assert_array_almost_equal", "assert_array_less"]
+           "assert_array_almost_equal", "assert_array_less",
+           "assert_less", "assert_less_equal",
+           "assert_greater", "assert_greater_equal"]
 
 
 try:
@@ -101,6 +104,20 @@ def _assert_greater(a, b, msg=None):
     if msg is not None:
         message += ": " + msg
     assert a > b, message
+
+
+def assert_less_equal(a, b, msg=None):
+    message = "%r is not lower than or equal to %r" % (a, b)
+    if msg is not None:
+        message += ": " + msg
+    assert a <= b, message
+
+
+def assert_greater_equal(a, b, msg=None):
+    message = "%r is not greater than or equal to %r" % (a, b)
+    if msg is not None:
+        message += ": " + msg
+    assert a >= b, message
 
 
 # To remove when we support numpy 1.7
@@ -572,9 +589,23 @@ def if_not_mac_os(versions=('10.7', '10.8', '10.9'),
 
 
 def clean_warning_registry():
-    """Safe way to reset warniings """
+    """Safe way to reset warnings """
     warnings.resetwarnings()
     reg = "__warningregistry__"
-    for mod in sys.modules.values():
+    for mod in sys.modules.copy().values():
         if hasattr(mod, reg):
             getattr(mod, reg).clear()
+
+
+def check_skip_network():
+    if int(os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', 0)):
+        raise SkipTest("Text tutorial requires large dataset download")
+
+
+def check_skip_travis():
+    """Skip test if being run on Travis."""
+    if os.environ.get('TRAVIS') == "true":
+        raise SkipTest("This test needs to be skipped on Travis")
+
+with_network = with_setup(check_skip_network)
+with_travis = with_setup(check_skip_travis)

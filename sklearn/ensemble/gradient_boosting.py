@@ -520,7 +520,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
     @abstractmethod
     def __init__(self, loss, learning_rate, n_estimators, min_samples_split,
-                 min_samples_leaf, max_depth, init, subsample, max_features,
+                 min_samples_leaf, min_weight_fraction_leaf,
+                 max_depth, init, subsample, max_features,
                  random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
                  warm_start=False):
 
@@ -529,6 +530,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         self.loss = loss
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
+        self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.subsample = subsample
         self.max_features = max_features
         self.max_depth = max_depth
@@ -560,6 +562,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                 max_depth=self.max_depth,
                 min_samples_split=self.min_samples_split,
                 min_samples_leaf=self.min_samples_leaf,
+                min_weight_fraction_leaf=self.min_weight_fraction_leaf,
                 max_features=self.max_features,
                 max_leaf_nodes=self.max_leaf_nodes,
                 random_state=random_state)
@@ -812,6 +815,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         splitter = PresortBestSplitter(criterion,
                                        self.max_features_,
                                        self.min_samples_leaf,
+                                       self.min_weight_fraction_leaf,
                                        random_state)
 
         if self.verbose:
@@ -987,6 +991,10 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     min_samples_leaf : integer, optional (default=1)
         The minimum number of samples required to be at a leaf node.
 
+    min_weight_fraction_leaf : float, optional (default=0.)
+        The minimum weighted fraction of the input samples required to be at a
+        leaf node.
+
     subsample : float, optional (default=1.0)
         The fraction of samples to be used for fitting the individual base
         learners. If smaller than 1.0 this results in Stochastic Gradient
@@ -1083,14 +1091,16 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     _SUPPORTED_LOSS = ('deviance', 'mdeviance', 'bdeviance')
 
     def __init__(self, loss='deviance', learning_rate=0.1, n_estimators=100,
-                 subsample=1.0, min_samples_split=2, min_samples_leaf=1,
+                 subsample=1.0, min_samples_split=2,
+                 min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  max_depth=3, init=None, random_state=None,
                  max_features=None, verbose=0,
                  max_leaf_nodes=None, warm_start=False):
 
         super(GradientBoostingClassifier, self).__init__(
             loss, learning_rate, n_estimators, min_samples_split,
-            min_samples_leaf, max_depth, init, subsample, max_features,
+            min_samples_leaf, min_weight_fraction_leaf,
+            max_depth, init, subsample, max_features,
             random_state, verbose=verbose, max_leaf_nodes=max_leaf_nodes,
             warm_start=warm_start)
 
@@ -1249,6 +1259,10 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     min_samples_leaf : integer, optional (default=1)
         The minimum number of samples required to be at a leaf node.
 
+    min_weight_fraction_leaf : float, optional (default=0.)
+        The minimum weighted fraction of the input samples required to be at a
+        leaf node.
+
     subsample : float, optional (default=1.0)
         The fraction of samples to be used for fitting the individual base
         learners. If smaller than 1.0 this results in Stochastic Gradient
@@ -1349,14 +1363,16 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     _SUPPORTED_LOSS = ('ls', 'lad', 'huber', 'quantile')
 
     def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
-                 subsample=1.0, min_samples_split=2, min_samples_leaf=1,
+                 subsample=1.0, min_samples_split=2,
+                 min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  max_depth=3, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
                  warm_start=False):
 
         super(GradientBoostingRegressor, self).__init__(
             loss, learning_rate, n_estimators, min_samples_split,
-            min_samples_leaf, max_depth, init, subsample, max_features,
+            min_samples_leaf, min_weight_fraction_leaf,
+            max_depth, init, subsample, max_features,
             random_state, alpha, verbose, max_leaf_nodes=max_leaf_nodes,
             warm_start=warm_start)
 

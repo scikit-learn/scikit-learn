@@ -45,6 +45,14 @@ def test_sample_gaussian():
     assert_true(np.allclose(samples.mean(axis), mu, atol=1.3))
     assert_true(np.allclose(np.cov(samples), cv, atol=2.5))
 
+    # Numerical stability check: in SciPy 0.12.0 at least, eigh may return
+    # tiny negative values in its second return value.
+    from sklearn.mixture import sample_gaussian
+    x = sample_gaussian([0, 0], [[4, 3], [1, .1]],
+                        covariance_type='full', random_state=42)
+    print(x)
+    assert_true(np.isfinite(x).all())
+
 
 def _naive_lmvnpdf_diag(X, mu, cv):
     # slow and naive implementation of lmvnpdf

@@ -18,7 +18,7 @@ labeled points and a large amount of unlabeled points.
 .. topic:: Unlabeled entries in `y`
 
     It is important to assign an identifier to unlabeled points along with the
-    labeled data when training the model with the `fit` method. The identifier
+    labeled data when training the model with the ``fit`` method. The identifier
     that this implementation uses is the integer value :math:`-1`.
 
 .. _label_propagation:
@@ -37,7 +37,7 @@ A few features available in this model:
 :class:`LabelPropagation` and :class:`LabelSpreading`. Both work by
 constructing a similarity graph over all items in the input dataset. 
 
-.. figure:: ../auto_examples/semi_supervised/images/plot_label_propagation_structure_1.png
+.. figure:: ../auto_examples/semi_supervised/images/plot_label_propagation_structure_001.png
     :target: ../auto_examples/semi_supervised/plot_label_propagation_structure.html
     :align: center
     :scale: 60%

@@ -215,14 +215,14 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     distances *= -2
     distances += XX
     distances += YY
-    np.maximum(distances, 0, distances)
+    np.maximum(distances, 0, out=distances)
 
     if X is Y:
         # Ensure that distances between vectors and themselves are set to 0.0.
         # This may not be the case due to floating point rounding errors.
         distances.flat[::distances.shape[0] + 1] = 0.0
 
-    return distances if squared else np.sqrt(distances)
+    return distances if squared else np.sqrt(distances, out=distances)
 
 
 def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
@@ -268,12 +268,13 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
         Valid values for metric are:
 
         - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-        'manhattan']
+          'manhattan']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
-        'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-        'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
-        'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
+          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
+          'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
+          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
+
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
@@ -393,12 +394,13 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
         Valid values for metric are:
 
         - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-        'manhattan']
+          'manhattan']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
-        'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-        'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
-        'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
+          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
+          'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
+          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
+
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
@@ -994,20 +996,17 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
     If Y is given (default is None), then the returned matrix is the pairwise
     distance between the arrays from both X and Y.
 
-    Please note that support for sparse matrices is currently limited to
-    'euclidean', 'l2' and 'cosine'.
-
     Valid values for metric are:
 
-    - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-      'manhattan']
+    - From scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
+      'manhattan']. These metrics support sparse matrix inputs.
 
-    - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
+    - From scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
       'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',
       'matching', 'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
       'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
       See the documentation for scipy.spatial.distance for details on these
-      metrics.
+      metrics. These metrics do not support sparse matrix inputs.
 
     Note that in the case of 'cityblock', 'cosine' and 'euclidean' (which are
     valid scipy.spatial.distance metrics), the scikit-learn implementation

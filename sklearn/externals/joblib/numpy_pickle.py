@@ -156,7 +156,8 @@ class ZNDArrayWrapper(NDArrayWrapper):
         # arrays
         filename = os.path.join(unpickler._dirname, self.filename)
         array = unpickler.np.core.multiarray._reconstruct(*self.init_args)
-        data = read_zfile(open(filename, 'rb'))
+        with open(filename, 'rb') as f:
+            data = read_zfile(f)
         state = self.state + (data,)
         array.__setstate__(state)
         return array
@@ -209,10 +210,8 @@ class NumpyPickler(Pickler):
             # numerics in a z-file
             _, init_args, state = array.__reduce__()
             # the last entry of 'state' is the data itself
-            zfile = open(filename, 'wb')
-            write_zfile(zfile, state[-1],
-                                compress=self.compress)
-            zfile.close()
+            with open(filename, 'wb') as zfile:
+                write_zfile(zfile, state[-1], compress=self.compress)
             state = state[:-1]
             container = ZNDArrayWrapper(os.path.basename(filename),
                                             init_args, state)
@@ -250,10 +249,8 @@ class NumpyPickler(Pickler):
 
     def close(self):
         if self.compress:
-            zfile = open(self._filename, 'wb')
-            write_zfile(zfile,
-                        self.file.getvalue(), self.compress)
-            zfile.close()
+            with open(self._filename, 'wb') as zfile:
+                write_zfile(zfile, self.file.getvalue(), self.compress)
 
 
 class NumpyUnpickler(Unpickler):
@@ -408,25 +405,24 @@ def load(filename, mmap_mode=None):
     object might not match the original pickled object. Note that if the
     file was saved with compression, the arrays cannot be memmaped.
     """
-    file_handle = open(filename, 'rb')
-    # We are careful to open the file handle early and keep it open to
-    # avoid race-conditions on renames. That said, if data are stored in
-    # companion files, moving the directory will create a race when
-    # joblib tries to access the companion files.
-    if _read_magic(file_handle) == _ZFILE_PREFIX:
-        if mmap_mode is not None:
-            warnings.warn('file "%(filename)s" appears to be a zip, '
-                    'ignoring mmap_mode "%(mmap_mode)s" flag passed'
-                    % locals(), Warning, stacklevel=2)
-        unpickler = ZipNumpyUnpickler(filename, file_handle=file_handle)
-    else:
-        unpickler = NumpyUnpickler(filename,
-                                   file_handle=file_handle,
-                                   mmap_mode=mmap_mode)
+    with open(filename, 'rb') as file_handle:
+        # We are careful to open the file handle early and keep it open to
+        # avoid race-conditions on renames. That said, if data are stored in
+        # companion files, moving the directory will create a race when
+        # joblib tries to access the companion files.
+        if _read_magic(file_handle) == _ZFILE_PREFIX:
+            if mmap_mode is not None:
+                warnings.warn('file "%(filename)s" appears to be a zip, '
+                              'ignoring mmap_mode "%(mmap_mode)s" flag passed'
+                              % locals(), Warning, stacklevel=2)
+            unpickler = ZipNumpyUnpickler(filename, file_handle=file_handle)
+        else:
+            unpickler = NumpyUnpickler(filename, file_handle=file_handle,
+                                       mmap_mode=mmap_mode)
 
-    try:
-        obj = unpickler.load()
-    finally:
-        if hasattr(unpickler, 'file_handle'):
-            unpickler.file_handle.close()
-    return obj
+        try:
+            obj = unpickler.load()
+        finally:
+            if hasattr(unpickler, 'file_handle'):
+                unpickler.file_handle.close()
+        return obj

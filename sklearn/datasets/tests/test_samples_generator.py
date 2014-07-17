@@ -13,6 +13,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_warns
 
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
@@ -131,11 +132,11 @@ def test_make_classification_informative_features():
                   n_clusters_per_class=2)
 
 
-def test_make_multilabel_classification():
+def test_make_multilabel_classification_return_sequences():
     for allow_unlabeled, min_length in zip((True, False), (0, 1)):
-        X, Y = make_multilabel_classification(n_samples=100, n_features=20,
-                                              n_classes=3, random_state=0,
-                                              allow_unlabeled=allow_unlabeled)
+        X, Y = assert_warns(DeprecationWarning, make_multilabel_classification,
+                            n_samples=100, n_features=20, n_classes=3,
+                            random_state=0, allow_unlabeled=allow_unlabeled)
         assert_equal(X.shape, (100, 20), "X shape mismatch")
         if not allow_unlabeled:
             assert_equal(max([max(y) for y in Y]), 2)
@@ -259,7 +260,7 @@ def test_make_sparse_coded_signal():
     assert_equal(X.shape, (8, 5), "X shape mismatch")
     for col in X.T:
         assert_equal(len(np.flatnonzero(col)), 3, 'Non-zero coefs mismatch')
-    assert_array_equal(np.dot(D, X), Y)
+    assert_array_almost_equal(np.dot(D, X), Y)
     assert_array_almost_equal(np.sqrt((D ** 2).sum(axis=0)),
                               np.ones(D.shape[1]))
 
@@ -288,8 +289,8 @@ def test_make_swiss_roll():
 
     assert_equal(X.shape, (5, 3), "X shape mismatch")
     assert_equal(t.shape, (5,), "t shape mismatch")
-    assert_array_equal(X[:, 0], t * np.cos(t))
-    assert_array_equal(X[:, 2], t * np.sin(t))
+    assert_array_almost_equal(X[:, 0], t * np.cos(t))
+    assert_array_almost_equal(X[:, 2], t * np.sin(t))
 
 
 def test_make_s_curve():
@@ -297,8 +298,8 @@ def test_make_s_curve():
 
     assert_equal(X.shape, (5, 3), "X shape mismatch")
     assert_equal(t.shape, (5,), "t shape mismatch")
-    assert_array_equal(X[:, 0], np.sin(t))
-    assert_array_equal(X[:, 2], np.sign(t) * (np.cos(t) - 1))
+    assert_array_almost_equal(X[:, 0], np.sin(t))
+    assert_array_almost_equal(X[:, 2], np.sign(t) * (np.cos(t) - 1))
 
 
 def test_make_biclusters():
@@ -313,7 +314,7 @@ def test_make_biclusters():
 
     X2, _, _ = make_biclusters(shape=(100, 100), n_clusters=4,
                                shuffle=True, random_state=0)
-    assert_array_equal(X, X2)
+    assert_array_almost_equal(X, X2)
 
 
 def test_make_checkerboard():

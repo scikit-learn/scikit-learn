@@ -45,8 +45,9 @@ Radial Basis Function Kernel
 ----------------------------
 
 The :class:`RBFSampler` constructs an approximate mapping for the radial basis
-function kernel. This transformation can be used to explicitly model a kernel map,
-prior to applying a linear algorithm, for example a linear SVM::
+function kernel, also known as *Random Kitchen Sinks* [RR2007]_. This
+transformation can be used to explicitly model a kernel map, prior to applying
+a linear algorithm, for example a linear SVM::
 
     >>> from sklearn.kernel_approximation import RBFSampler
     >>> from sklearn.linear_model import SGDClassifier
@@ -70,8 +71,8 @@ inherent randomness of the process, results may vary between different calls to
 the ``fit`` function.
 
 The ``fit`` function takes two arguments:
-`n_components`, which is the target dimensionality of the feature transform,
-and `gamma`, the parameter of the RBF-kernel.  A higher `n_components` will
+``n_components``, which is the target dimensionality of the feature transform,
+and ``gamma``, the parameter of the RBF-kernel.  A higher ``n_components`` will
 result in a better approximation of the kernel and will yield results more
 similar to those produced by a kernel SVM. Note that "fitting" the feature
 function does not actually depend on the data given to the ``fit`` function.
@@ -82,7 +83,7 @@ For a given value of ``n_components`` :class:`RBFSampler` is often less accurate
 as :class:`Nystroem`. :class:`RBFSampler` is cheaper to compute, though, making
 use of larger feature spaces more efficient.
 
-.. figure:: ../auto_examples/images/plot_kernel_approximation_2.png
+.. figure:: ../auto_examples/images/plot_kernel_approximation_002.png
     :target: ../auto_examples/plot_kernel_approximation.html
     :scale: 50%
     :align: center
@@ -114,11 +115,11 @@ the Fourier transform in regular intervals, instead of approximating
 using Monte Carlo sampling.
 
 The class :class:`AdditiveChi2Sampler` implements this component wise
-deterministic sampling. Each component is sampled `n` times, yielding
-`2n+1` dimensions per input dimension (the multiple of two stems
+deterministic sampling. Each component is sampled :math:`n` times, yielding
+:math:`2n+1` dimensions per input dimension (the multiple of two stems
 from the real and complex part of the Fourier transform).
-In the literature, `n` is usually chosen to be `1` or `2`, transforming
-the dataset to size `n_samples x 5 * n_features` (in the case of `n=2`).
+In the literature, :math:`n` is usually chosen to be 1 or 2, transforming
+the dataset to size ``n_samples * 5 * n_features`` (in the case of :math:`n=2`).
 
 The approximate feature map provided by :class:`AdditiveChi2Sampler` can be combined
 with the approximate feature map provided by :class:`RBFSampler` to yield an approximate
@@ -142,7 +143,7 @@ approximation of the feature map.
 
 The usage of the :class:`SkewedChi2Sampler` is the same as the usage described
 above for the :class:`RBFSampler`. The only difference is in the free
-parameter, that is called `c`.
+parameter, that is called :math:`c`.
 For a motivation for this mapping and the mathematical details see [LS2010]_.
 
 
@@ -151,22 +152,22 @@ Mathematical Details
 
 Kernel methods like support vector machines or kernelized
 PCA rely on a property of reproducing kernel Hilbert spaces.
-For any positive definite kernel function `k` (a so called Mercer kernel),
+For any positive definite kernel function :math:`k` (a so called Mercer kernel),
 it is guaranteed that there exists a mapping :math:`\phi`
 into a Hilbert space :math:`\mathcal{H}`, such that
 
 .. math::
 
-        k(x,y) = < \phi(x), \phi(y)>
+        k(x,y) = \langle \phi(x), \phi(y) \rangle
 
-Where :math:`< \cdot, \cdot >` denotes the inner product in the
+Where :math:`\langle \cdot, \cdot \rangle` denotes the inner product in the
 Hilbert space.
 
 If an algorithm, such as a linear support vector machine or PCA,
 relies only on the scalar product of data points :math:`x_i`, one may use
 the value of :math:`k(x_i, x_j)`, which corresponds to applying the algorithm
 to the mapped data points :math:`\phi(x_i)`.
-The advantage of using `k` is that the mapping :math:`\phi` never has
+The advantage of using :math:`k` is that the mapping :math:`\phi` never has
 to be calculated explicitly, allowing for arbitrary large
 features (even infinite).
 

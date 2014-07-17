@@ -11,9 +11,15 @@ python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"
 python setup.py build_ext --inplace
 
+# Skip tests that require large downloads over the network to save bandwith
+# usage as travis workers are stateless and therefore traditional local
+# disk caching does not work.
+export SKLEARN_SKIP_NETWORK_TESTS=1
+
 if [[ "$COVERAGE" == "true" ]]; then
-    export WITH_COVERAGE="--with-coverage"
+    make test-coverage
 else
-    export WITH_COVERAGE=""
+    make test
 fi
-nosetests -s -v $WITH_COVERAGE sklearn
+
+make test-doc test-sphinxext

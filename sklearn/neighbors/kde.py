@@ -200,7 +200,7 @@ class KernelDensity(BaseEstimator):
         i = rng.randint(data.shape[0], size=n_samples)
 
         if self.kernel == 'gaussian':
-            return rng.normal(data[i], self.bandwidth)
+            return np.atleast_2d(rng.normal(data[i], self.bandwidth))
 
         elif self.kernel == 'tophat':
             # we first draw points from a d-dimensional normal distribution,

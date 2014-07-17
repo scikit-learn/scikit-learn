@@ -129,7 +129,7 @@ Efficient Random Sampling
 =========================
 
 - :func:`random.sample_without_replacement`: implements efficient algorithms
-  for sampling `n_samples` integers from a population of size `n_population`
+  for sampling ``n_samples`` integers from a population of size ``n_population``
   without replacement.
 
 
@@ -189,6 +189,11 @@ Backports
   Used in ``sklearn.cluster.hierarchical``, as well as in tests for
   :mod:`sklearn.feature_extraction`.
 
+- :func:`fixes.isclose`
+  (backported from ``numpy.isclose`` in numpy 1.8.1).
+  In versions before 1.7, this function was not available in
+  numpy. Used in ``sklearn.metrics``.
+
 
 ARPACK
 ------
@@ -244,7 +249,7 @@ Multiclass and multilabel utility function
   a classification output is in label indicator matrix format.
 
 - :func:`multiclass.unique_labels`: Helper function to extract an ordered
-  array of unique labels from a list of labels.
+  array of unique labels from different formats of target.
 
 
 Helper Functions
@@ -267,7 +272,7 @@ Hash Functions
 ==============
 
 - :func:`murmurhash3_32` provides a python wrapper for the
-  `MurmurHash3_x86_32` C++ non cryptographic hash function. This hash
+  ``MurmurHash3_x86_32`` C++ non cryptographic hash function. This hash
   function is suitable for implementing lookup tables, Bloom filters,
   Count Min Sketch, feature hashing and implicitly defined sparse
   random projections::

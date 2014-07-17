@@ -22,7 +22,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .base import is_classifier, clone
-from .utils import check_arrays, check_random_state, safe_mask
+from .utils import check_arrays, check_random_state, safe_indexing
 from .utils.validation import _num_samples
 from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
@@ -234,7 +234,7 @@ class _BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
     """Base class to validate KFold approaches"""
 
     @abstractmethod
-    def __init__(self, n, n_folds, indices):
+    def __init__(self, n, n_folds, indices, shuffle, random_state):
         super(_BaseKFold, self).__init__(n, indices)
 
         if abs(n_folds - int(n_folds)) >= np.finfo('f').eps:
@@ -250,6 +250,12 @@ class _BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
             raise ValueError(
                 ("Cannot have number of folds n_folds={0} greater"
                  " than the number of samples: {1}.").format(n_folds, n))
+
+        if not isinstance(shuffle, bool):
+            raise TypeError("shuffle must be True or False;"
+                            " got {0}".format(shuffle))
+        self.shuffle = shuffle
+        self.random_state = random_state
 
 
 class KFold(_BaseKFold):
@@ -272,8 +278,9 @@ class KFold(_BaseKFold):
     shuffle : boolean, optional
         Whether to shuffle the data before splitting into batches.
 
-    random_state : int or RandomState
-            Pseudo number generator state used for random sampling.
+    random_state : None, int or RandomState
+        Pseudo-random number generator state used for random
+        sampling. If None, use default numpy RNG for shuffling
 
     Examples
     --------
@@ -283,8 +290,9 @@ class KFold(_BaseKFold):
     >>> kf = cross_validation.KFold(4, n_folds=2)
     >>> len(kf)
     2
-    >>> print(kf)
-    sklearn.cross_validation.KFold(n=4, n_folds=2)
+    >>> print(kf)  # doctest: +NORMALIZE_WHITESPACE
+    sklearn.cross_validation.KFold(n=4, n_folds=2, shuffle=False,
+                                   random_state=None)
     >>> for train_index, test_index in kf:
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -306,11 +314,11 @@ class KFold(_BaseKFold):
 
     def __init__(self, n, n_folds=3, indices=None, shuffle=False,
                  random_state=None):
-        super(KFold, self).__init__(n, n_folds, indices)
-        random_state = check_random_state(random_state)
+        super(KFold, self).__init__(n, n_folds, indices, shuffle, random_state)
         self.idxs = np.arange(n)
         if shuffle:
-            random_state.shuffle(self.idxs)
+            rng = check_random_state(self.random_state)
+            rng.shuffle(self.idxs)
 
     def _iter_test_indices(self):
         n = self.n
@@ -324,11 +332,13 @@ class KFold(_BaseKFold):
             current = stop
 
     def __repr__(self):
-        return '%s.%s(n=%i, n_folds=%i)' % (
+        return '%s.%s(n=%i, n_folds=%i, shuffle=%s, random_state=%s)' % (
             self.__class__.__module__,
             self.__class__.__name__,
             self.n,
             self.n_folds,
+            self.shuffle,
+            self.random_state,
         )
 
     def __len__(self):
@@ -340,7 +350,7 @@ class StratifiedKFold(_BaseKFold):
 
     Provides train/test indices to split data in train test sets.
 
-    This cross-validation object is a variation of KFold, which
+    This cross-validation object is a variation of KFold that
     returns stratified folds. The folds are made by preserving
     the percentage of samples for each class.
 
@@ -352,6 +362,14 @@ class StratifiedKFold(_BaseKFold):
     n_folds : int, default=3
         Number of folds. Must be at least 2.
 
+    shuffle : boolean, optional
+        Whether to shuffle each stratification of the data before splitting
+        into batches.
+
+    random_state : None, int or RandomState
+        Pseudo-random number generator state used for random
+        sampling. If None, use default numpy RNG for shuffling
+
     Examples
     --------
     >>> from sklearn import cross_validation
@@ -360,8 +378,9 @@ class StratifiedKFold(_BaseKFold):
     >>> skf = cross_validation.StratifiedKFold(y, n_folds=2)
     >>> len(skf)
     2
-    >>> print(skf)
-    sklearn.cross_validation.StratifiedKFold(labels=[0 0 1 1], n_folds=2)
+    >>> print(skf)  # doctest: +NORMALIZE_WHITESPACE
+    sklearn.cross_validation.StratifiedKFold(labels=[0 0 1 1], n_folds=2,
+                                             shuffle=False, random_state=None)
     >>> for train_index, test_index in skf:
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -373,10 +392,13 @@ class StratifiedKFold(_BaseKFold):
     -----
     All the folds have size trunc(n_samples / n_folds), the last one has the
     complementary.
+
     """
 
-    def __init__(self, y, n_folds=3, indices=None):
-        super(StratifiedKFold, self).__init__(len(y), n_folds, indices)
+    def __init__(self, y, n_folds=3, indices=None, shuffle=False,
+                 random_state=None):
+        super(StratifiedKFold, self).__init__(
+            len(y), n_folds, indices, shuffle, random_state)
         y = np.asarray(y)
         n_samples = y.shape[0]
         unique_labels, y_inversed = np.unique(y, return_inverse=True)
@@ -389,11 +411,18 @@ class StratifiedKFold(_BaseKFold):
                           " be less than n_folds=%d."
                           % (min_labels, self.n_folds)), Warning)
 
+        # don't want to use the same seed in each label's shuffle
+        if self.shuffle:
+            rng = check_random_state(self.random_state)
+        else:
+            rng = self.random_state
+
         # pre-assign each sample to a test fold index using individual KFold
         # splitting strategies for each label so as to respect the
         # balance of labels
-        per_label_cvs = [KFold(max(c, self.n_folds), self.n_folds)
-                         for c in label_counts]
+        per_label_cvs = [
+            KFold(max(c, self.n_folds), self.n_folds, shuffle=self.shuffle,
+                  random_state=rng) for c in label_counts]
         test_folds = np.zeros(n_samples, dtype=np.int)
         for test_fold_idx, per_label_splits in enumerate(zip(*per_label_cvs)):
             for label, (_, test_split) in zip(unique_labels, per_label_splits):
@@ -416,11 +445,13 @@ class StratifiedKFold(_BaseKFold):
             yield self.test_folds == i
 
     def __repr__(self):
-        return '%s.%s(labels=%s, n_folds=%i)' % (
+        return '%s.%s(labels=%s, n_folds=%i, shuffle=%s, random_state=%s)' % (
             self.__class__.__module__,
             self.__class__.__name__,
             self.y,
             self.n_folds,
+            self.shuffle,
+            self.random_state,
         )
 
     def __len__(self):
@@ -645,6 +676,11 @@ class Bootstrap(object):
 
     def __init__(self, n, n_iter=3, train_size=.5, test_size=None,
                  random_state=None, n_bootstraps=None):
+        # See, e.g., http://youtu.be/BzHz0J9a6k0?t=9m38s for a motivation
+        # behind this deprecation
+        warnings.warn("Bootstrap will no longer be supported as a " +
+                      "cross-validation method as of version 0.15 and " +
+                      "will be removed in 0.17", DeprecationWarning)
         self.n = n
         if n_bootstraps is not None:  # pragma: no cover
             warnings.warn("n_bootstraps was renamed to n_iter and will "
@@ -671,9 +707,10 @@ class Bootstrap(object):
             self.test_size = self.n - self.train_size
         else:
             raise ValueError("Invalid value for test_size: %r" % test_size)
-        if self.test_size > n:
-            raise ValueError("test_size=%d should not be larger than n=%d" %
-                             (self.test_size, n))
+        if self.test_size > n - self.train_size:
+            raise ValueError(("test_size + train_size=%d, should not be " +
+                              "larger than n=%d") %
+                             (self.test_size + self.train_size, n))
 
         self.random_state = random_state
 
@@ -1039,8 +1076,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
 
 def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
-                    verbose=0, fit_params=None, score_func=None,
-                    pre_dispatch='2*n_jobs'):
+                    verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
     """Evaluate a score by cross-validation
 
     Parameters
@@ -1048,8 +1084,8 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     estimator : estimator object implementing 'fit'
         The object to use to fit the data.
 
-    X : array-like of shape at least 2D
-        The data to fit.
+    X : array-like
+        The data to fit. Can be, for example a list, or an array at least 2d.
 
     y : array-like, optional, default: None
         The target variable to try to predict in the case of
@@ -1098,12 +1134,10 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
         Array of scores of the estimator for each run of the cross validation.
     """
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True,
-                        allow_nans=True)
-    if y is not None:
-        y = np.asarray(y)
+                        allow_nans=True, allow_nd=True)
 
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
-    scorer = check_scoring(estimator, score_func=score_func, scoring=scoring)
+    scorer = check_scoring(estimator, scoring=scoring)
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
@@ -1159,11 +1193,11 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
 
     Returns
     -------
+    train_score : float, optional
+        Score on training set, returned only if `return_train_score` is `True`.
+
     test_score : float
         Score on test set.
-
-    train_score : float, optional
-        Score on training set.
 
     n_test_samples : int
         Number of test samples.
@@ -1241,10 +1275,10 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
             else:
                 X_subset = X[np.ix_(indices, train_indices)]
         else:
-            X_subset = X[safe_mask(X, indices)]
+            X_subset = safe_indexing(X, indices)
 
     if y is not None:
-        y_subset = y[safe_mask(y, indices)]
+        y_subset = safe_indexing(y, indices)
     else:
         y_subset = None
 
@@ -1340,7 +1374,7 @@ def _check_cv(cv, X=None, y=None, classifier=False, warn_mask=False):
     return cv
 
 
-def permutation_test_score(estimator, X, y, score_func=None, cv=None,
+def permutation_test_score(estimator, X, y, cv=None,
                            n_permutations=100, n_jobs=1, labels=None,
                            random_state=0, verbose=0, scoring=None):
     """Evaluate the significance of a cross-validated score with permutations
@@ -1394,8 +1428,8 @@ def permutation_test_score(estimator, X, y, score_func=None, cv=None,
         The scores obtained for each permutations.
 
     pvalue : float
-        The returned value equals p-value if `score_func` returns bigger
-        numbers for better scores (e.g., accuracy_score). If `score_func` is
+        The returned value equals p-value if `scoring` returns bigger
+        numbers for better scores (e.g., accuracy_score). If `scoring` is
         rather a loss function (i.e. when lower is better such as with
         `mean_squared_error`) then this is actually the complement of the
         p-value:  1 - p-value.
@@ -1411,7 +1445,7 @@ def permutation_test_score(estimator, X, y, score_func=None, cv=None,
     """
     X, y = check_arrays(X, y, sparse_format='csr', allow_nans=True)
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
-    scorer = check_scoring(estimator, scoring=scoring, score_func=score_func)
+    scorer = check_scoring(estimator, scoring=scoring)
     random_state = check_random_state(random_state)
 
     # We clone the estimator to make sure that all the folds are
@@ -1490,12 +1524,12 @@ def train_test_split(*arrays, **options):
            [0, 1],
            [6, 7]])
     >>> b_train
-    array([2, 0, 3])
+    [2, 0, 3]
     >>> a_test
     array([[2, 3],
            [8, 9]])
     >>> b_test
-    array([1, 4])
+    [1, 4]
 
     """
     n_arrays = len(arrays)
@@ -1507,18 +1541,21 @@ def train_test_split(*arrays, **options):
     random_state = options.pop('random_state', None)
     options['sparse_format'] = 'csr'
     options['allow_nans'] = True
+    if not "allow_lists" in options:
+        options["allow_lists"] = True
 
     if test_size is None and train_size is None:
         test_size = 0.25
 
     arrays = check_arrays(*arrays, **options)
-    n_samples = arrays[0].shape[0]
+    n_samples = _num_samples(arrays[0])
     cv = ShuffleSplit(n_samples, test_size=test_size,
                       train_size=train_size,
                       random_state=random_state)
 
     train, test = next(iter(cv))
-    return list(chain.from_iterable((a[train], a[test]) for a in arrays))
+    return list(chain.from_iterable((safe_indexing(a, train),
+                                     safe_indexing(a, test)) for a in arrays))
 
 
 train_test_split.__test__ = False  # to avoid a pb with nosetests

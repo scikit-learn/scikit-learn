@@ -35,6 +35,7 @@ from ..utils import deprecated
 from ..utils import column_or_1d
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
+from ..utils.fixes import isclose
 
 
 ###############################################################################
@@ -101,9 +102,9 @@ def _check_clf_targets(y_true, y_pred):
         The type of the true target data, as output by
         ``utils.multiclass.type_of_target``
 
-    y_true : array or indicator matrix or sequence of sequences
+    y_true : array or indicator matrix
 
-    y_pred : array or indicator matrix or sequence of sequences
+    y_pred : array or indicator matrix
     """
     y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
     type_true = type_of_target(y_true)
@@ -312,9 +313,10 @@ def average_precision_score(y_true, y_score, average="macro",
     Note: this implementation is restricted to the binary classification task
     or multilabel classification task.
 
+    Parameters
     ----------
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
-        True binary labels in binary indicator format.
+        True binary labels in binary label indicators.
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
@@ -426,7 +428,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
     Parameters
     ----------
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
-        True binary labels in binary indicator format.
+        True binary labels in binary label indicators.
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
@@ -527,7 +529,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
     Parameters
     ----------
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
-        True binary labels in binary indicator format.
+        True binary labels in binary label indicators.
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
@@ -579,7 +581,8 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
     """
     def _binary_roc_auc_score(y_true, y_score, sample_weight=None):
         if len(np.unique(y_true)) != 2:
-            raise ValueError("ROC AUC score is not defined")
+            raise ValueError("Only one class present in y_true. ROC AUC score "
+                             "is not defined in that case.")
 
         fpr, tpr, tresholds = roc_curve(y_true, y_score,
                                         sample_weight=sample_weight)
@@ -723,7 +726,10 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     # y_score typically has many tied values. Here we extract
     # the indices associated with the distinct values. We also
     # concatenate a value for the end of the curve.
-    distinct_value_indices = np.where(np.diff(y_score))[0]
+    # We need to use isclose to avoid spurious repeated thresholds
+    # stemming from floating point roundoff errors.
+    distinct_value_indices = np.where(np.logical_not(isclose(
+        np.diff(y_score), 0)))[0]
     threshold_idxs = np.r_[distinct_value_indices, y_true.size - 1]
 
     # accumulate the true positives with decreasing threshold
@@ -799,6 +805,7 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
 
     """
     fps, tps, thresholds = _binary_clf_curve(y_true, probas_pred,
+                                             pos_label=pos_label,
                                              sample_weight=sample_weight)
 
     precision = tps / (tps + fps)
@@ -969,12 +976,9 @@ def confusion_matrix(y_true, y_pred, labels=None):
     y_pred = y_pred[ind]
     y_true = y_true[ind]
 
-    CM = np.asarray(
-        coo_matrix(
-            (np.ones(y_true.shape[0], dtype=np.int), (y_true, y_pred)),
-            shape=(n_labels, n_labels)
-        ).todense()
-    )
+    CM = coo_matrix((np.ones(y_true.shape[0], dtype=np.int), (y_true, y_pred)),
+                    shape=(n_labels, n_labels)
+                    ).toarray()
 
     return CM
 
@@ -988,10 +992,10 @@ def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
 
     Parameters
     ----------
-    y_true : array-like or list of labels or label indicator matrix
+    y_true : array-like or label indicator matrix
         Ground truth (correct) labels.
 
-    y_pred : array-like or list of labels or label indicator matrix
+    y_pred : array-like or label indicator matrix
         Predicted labels, as returned by a classifier.
 
     normalize : bool, optional (default=True)
@@ -1027,17 +1031,10 @@ def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
     >>> zero_one_loss(y_true, y_pred, normalize=False)
     1
 
-    In the multilabel case with binary indicator format:
+    In the multilabel case with binary label indicators:
 
-    >>> zero_one_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.ones((2, 2)))
+    >>> zero_one_loss(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
     0.5
-
-    and with a list of labels format:
-
-    >>> zero_one_loss([(1, ), (3, )], [(1, 2), tuple()])
-    1.0
-
-
     """
     score = accuracy_score(y_true, y_pred,
                            normalize=normalize,
@@ -1066,7 +1063,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
 
     Parameters
     ----------
-    y_true : array-like or list of labels or label indicator matrix
+    y_true : array-like or label indicator matrix
         Ground truth (correct) labels for n_samples samples.
 
     y_pred : array-like of float, shape = (n_samples, n_classes)
@@ -1079,7 +1076,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
 
     normalize : bool, optional (default=True)
         If true, return the mean loss per sample.
-        Otherwise, return the total loss.
+        Otherwise, return the sum of the per-sample losses.
 
     Returns
     -------
@@ -1141,10 +1138,10 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True):
 
     Parameters
     ----------
-    y_true : array-like or list of labels or label indicator matrix
+    y_true : array-like or label indicator matrix
         Ground truth (correct) labels.
 
-    y_pred : array-like or list of labels or label indicator matrix
+    y_pred : array-like or label indicator matrix
         Predicted labels, as returned by a classifier.
 
     normalize : bool, optional (default=True)
@@ -1189,17 +1186,11 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True):
     >>> jaccard_similarity_score(y_true, y_pred, normalize=False)
     2
 
-    In the multilabel case with binary indicator format:
+    In the multilabel case with binary label indicators:
 
-    >>> jaccard_similarity_score(np.array([[0.0, 1.0], [1.0, 1.0]]),\
+    >>> jaccard_similarity_score(np.array([[0, 1], [1, 1]]),\
         np.ones((2, 2)))
     0.75
-
-    and with a list of labels format:
-
-    >>> jaccard_similarity_score([(1, ), (3, )], [(1, 2), tuple()])
-    0.25
-
     """
 
     # Compute accuracy for each possible representation
@@ -1254,10 +1245,10 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
 
     Parameters
     ----------
-    y_true : array-like or list of labels or label indicator matrix
+    y_true : array-like or label indicator matrix
         Ground truth (correct) labels.
 
-    y_pred : array-like or list of labels or label indicator matrix
+    y_pred : array-like or label indicator matrix
         Predicted labels, as returned by a classifier.
 
     normalize : bool, optional (default=True)
@@ -1297,16 +1288,9 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     >>> accuracy_score(y_true, y_pred, normalize=False)
     2
 
-    In the multilabel case with binary indicator format:
-
-    >>> accuracy_score(np.array([[0.0, 1.0], [1.0, 1.0]]), np.ones((2, 2)))
+    In the multilabel case with binary label indicators:
+    >>> accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
     0.5
-
-    and with a list of labels format:
-
-    >>> accuracy_score([(1, ), (3, )], [(1, 2), tuple()])
-    0.0
-
     """
 
     # Compute accuracy for each possible representation
@@ -1345,10 +1329,10 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted',
 
     Parameters
     ----------
-    y_true : array-like or list of labels or label indicator matrix
+    y_true : array-like or label indicator matrix
         Ground truth (correct) target values.
 
-    y_pred : array-like or list of labels or label indicator matrix
+    y_pred : array-like or label indicator matrix
         Estimated targets as returned by a classifier.
 
     labels : array
@@ -1428,10 +1412,10 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
 
     Parameters
     ----------
-    y_true : array-like or list of labels or label indicator matrix
+    y_true : array-like or label indicator matrix
         Ground truth (correct) target values.
 
-    y_pred : array-like or list of labels or label indicator matrix
+    y_pred : array-like or label indicator matrix
         Estimated targets as returned by a classifier.
 
     beta: float
@@ -1587,10 +1571,10 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     Parameters
     ----------
-    y_true : array-like or list of labels or label indicator matrix
+    y_true : array-like or label indicator matrix
         Ground truth (correct) target values.
 
-    y_pred : array-like or list of labels or label indicator matrix
+    y_pred : array-like or label indicator matrix
         Estimated targets as returned by a classifier.
 
     beta : float, 1.0 by default
@@ -1832,10 +1816,10 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
 
     Parameters
     ----------
-    y_true : array-like or list of labels or label indicator matrix
+    y_true : array-like or label indicator matrix
         Ground truth (correct) target values.
 
-    y_pred : array-like or list of labels or label indicator matrix
+    y_pred : array-like or label indicator matrix
         Estimated targets as returned by a classifier.
 
     labels : array
@@ -1914,10 +1898,10 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted',
 
     Parameters
     ----------
-    y_true : array-like or list of labels or label indicator matrix
+    y_true : array-like or label indicator matrix
         Ground truth (correct) target values.
 
-    y_pred : array-like or list of labels or label indicator matrix
+    y_pred : array-like or label indicator matrix
         Estimated targets as returned by a classifier.
 
     labels : array
@@ -1989,10 +1973,10 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     Parameters
     ----------
-    y_true : array-like or list of labels or label indicator matrix
+    y_true : array-like or label indicator matrix
         Ground truth (correct) target values.
 
-    y_pred : array-like or list of labels or label indicator matrix
+    y_pred : array-like or label indicator matrix
         Estimated targets as returned by a classifier.
 
     labels : array, shape = [n_labels]
@@ -2083,10 +2067,10 @@ def hamming_loss(y_true, y_pred, classes=None):
 
     Parameters
     ----------
-    y_true : array-like or list of labels or label indicator matrix
+    y_true : array-like or label indicator matrix
         Ground truth (correct) labels.
 
-    y_pred : array-like or list of labels or label indicator matrix
+    y_pred : array-like or label indicator matrix
         Predicted labels, as returned by a classifier.
 
     classes : array, shape = [n_labels], optional
@@ -2134,16 +2118,10 @@ def hamming_loss(y_true, y_pred, classes=None):
     >>> hamming_loss(y_true, y_pred)
     0.25
 
-    In the multilabel case with binary indicator format:
+    In the multilabel case with binary label indicators:
 
-    >>> hamming_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
+    >>> hamming_loss(np.array([[0, 1], [1, 1]]), np.zeros((2, 2)))
     0.75
-
-    and with a list of labels format:
-
-    >>> hamming_loss([(1, 2), (3, )], [(1, 2), tuple()])  # doctest: +ELLIPSIS
-    0.166...
-
     """
     y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
 

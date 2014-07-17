@@ -14,6 +14,7 @@ that uses a custom alternative to SimpleQueue.
 # License: BSD 3 clause
 
 from mmap import mmap
+import errno
 import os
 import stat
 import sys
@@ -33,7 +34,7 @@ except ImportError:
 from pickle import HIGHEST_PROTOCOL
 from io import BytesIO
 
-from ._multiprocessing import mp, assert_spawning
+from ._multiprocessing_helpers import mp, assert_spawning
 # We need the class definition to derive from it not the multiprocessing.Pool
 # factory function
 from multiprocessing.pool import Pool
@@ -84,16 +85,23 @@ def has_shareable_memory(a):
     return _get_backing_memmap(a) is not None
 
 
-def strided_from_memmap(filename, dtype, mode, offset, order, shape, strides):
+def _strided_from_memmap(filename, dtype, mode, offset, order, shape, strides,
+                         total_buffer_len):
     """Reconstruct an array view on a memmory mapped file"""
     if mode == 'w+':
         # Do not zero the original data when unpickling
         mode = 'r+'
-    m = np.memmap(filename, dtype=dtype, shape=shape, mode=mode, offset=offset,
-                  order=order)
+
     if strides is None:
-        return m
-    return as_strided(m, strides=strides)
+        # Simple, contiguous memmap
+        return np.memmap(filename, dtype=dtype, shape=shape, mode=mode,
+                         offset=offset, order=order)
+    else:
+        # For non-contiguous data, memmap the total enclosing buffer and then
+        # extract the non-contiguous view with the stride-tricks API
+        base = np.memmap(filename, dtype=dtype, shape=total_buffer_len,
+                         mode=mode, offset=offset, order=order)
+        return as_strided(base, shape=shape, strides=strides)
 
 
 def _reduce_memmap_backed(a, m):
@@ -104,7 +112,7 @@ def _reduce_memmap_backed(a, m):
     attribute ancestry of a. ``m.base`` should be the real python mmap object.
     """
     # offset that comes from the striding differences between a and m
-    a_start = np.byte_bounds(a)[0]
+    a_start, a_end = np.byte_bounds(a)
     m_start = np.byte_bounds(m)[0]
     offset = a_start - m_start
 
@@ -118,13 +126,18 @@ def _reduce_memmap_backed(a, m):
         # Fortran
         order = 'C'
 
-    # If array is a contiguous view, no need to pass the strides
     if a.flags['F_CONTIGUOUS'] or a.flags['C_CONTIGUOUS']:
+        # If the array is a contiguous view, no need to pass the strides
         strides = None
+        total_buffer_len = None
     else:
+        # Compute the total number of items to map from which the strided
+        # view will be extracted.
         strides = a.strides
-    return (strided_from_memmap,
-            (m.filename, a.dtype, m.mode, offset, order, a.shape, strides))
+        total_buffer_len = (a_end - a_start) // a.itemsize
+    return (_strided_from_memmap,
+            (m.filename, a.dtype, m.mode, offset, order, a.shape, strides,
+             total_buffer_len))
 
 
 def reduce_memmap(a):
@@ -194,8 +207,7 @@ class ArrayMemmapReducer(object):
                 os.makedirs(self._temp_folder)
                 os.chmod(self._temp_folder, FOLDER_PERMISSIONS)
             except OSError as e:
-                if e.errno != 17:
-                    # Errno 17 corresponds to 'Directory exists'
+                if e.errno != errno.EEXIST:
                     raise e
 
             # Find a unique, concurrent safe filename for writing the
@@ -479,7 +491,7 @@ class MemmapingPool(PicklingPool):
     """
 
     def __init__(self, processes=None, temp_folder=None, max_nbytes=1e6,
-                 mmap_mode='c', forward_reducers=None, backward_reducers=None,
+                 mmap_mode='r', forward_reducers=None, backward_reducers=None,
                  verbose=0, context_id=None, prewarm=False, **kwargs):
         if forward_reducers is None:
             forward_reducers = dict()
@@ -490,33 +502,35 @@ class MemmapingPool(PicklingPool):
         # pool instance (do not create in advance to spare FS write access if
         # no array is to be dumped):
         use_shared_mem = False
+        pool_folder_name = "joblib_memmaping_pool_%d_%d" % (
+            os.getpid(), id(self))
         if temp_folder is None:
             temp_folder = os.environ.get('JOBLIB_TEMP_FOLDER', None)
         if temp_folder is None:
             if os.path.exists(SYSTEM_SHARED_MEM_FS):
                 try:
-                    joblib_folder = os.path.join(
-                        SYSTEM_SHARED_MEM_FS, 'joblib')
-                    if not os.path.exists(joblib_folder):
-                        os.makedirs(joblib_folder)
+                    temp_folder = SYSTEM_SHARED_MEM_FS
+                    pool_folder = os.path.join(temp_folder, pool_folder_name)
+                    if not os.path.exists(pool_folder):
+                        os.makedirs(pool_folder)
                     use_shared_mem = True
                 except IOError:
-                    # Missing rights in the the /dev/shm partition, ignore
-                    pass
+                    # Missing rights in the the /dev/shm partition,
+                    # fallback to regular temp folder.
+                    temp_folder = None
         if temp_folder is None:
             # Fallback to the default tmp folder, typically /tmp
             temp_folder = tempfile.gettempdir()
         temp_folder = os.path.abspath(os.path.expanduser(temp_folder))
-        self._temp_folder = temp_folder = os.path.join(
-            temp_folder, "joblib_memmaping_pool_%d_%d" % (
-                os.getpid(), id(self)))
+        pool_folder = os.path.join(temp_folder, pool_folder_name)
+        self._temp_folder = pool_folder
 
         # Register the garbage collector at program exit in case caller forgets
         # to call terminate explicitly: note we do not pass any reference to
         # self to ensure that this callback won't prevent garbage collection of
         # the pool instance and related file handler resources such as POSIX
         # semaphores and pipes
-        atexit.register(lambda: delete_folder(temp_folder))
+        atexit.register(lambda: delete_folder(pool_folder))
 
         if np is not None:
             # Register smart numpy.ndarray reducers that detects memmap backed
@@ -525,7 +539,7 @@ class MemmapingPool(PicklingPool):
             if prewarm == "auto":
                 prewarm = not use_shared_mem
             forward_reduce_ndarray = ArrayMemmapReducer(
-                max_nbytes, temp_folder, mmap_mode, verbose,
+                max_nbytes, pool_folder, mmap_mode, verbose,
                 context_id=context_id, prewarm=prewarm)
             forward_reducers[np.ndarray] = forward_reduce_ndarray
             forward_reducers[np.memmap] = reduce_memmap
@@ -535,7 +549,7 @@ class MemmapingPool(PicklingPool):
             # to avoid confusing the caller and make it tricky to collect the
             # temporary folder
             backward_reduce_ndarray = ArrayMemmapReducer(
-                None, temp_folder, mmap_mode, verbose)
+                None, pool_folder, mmap_mode, verbose)
             backward_reducers[np.ndarray] = backward_reduce_ndarray
             backward_reducers[np.memmap] = reduce_memmap
 

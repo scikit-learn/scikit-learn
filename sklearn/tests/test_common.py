@@ -14,6 +14,7 @@ import traceback
 import inspect
 import pickle
 import pkgutil
+import struct
 
 import numpy as np
 from scipy import sparse
@@ -31,6 +32,7 @@ from sklearn.utils.testing import meta_estimators
 from sklearn.utils.testing import set_random_state
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import check_skip_travis
 
 import sklearn
 from sklearn.base import (clone, ClassifierMixin, RegressorMixin,
@@ -48,10 +50,19 @@ from sklearn.cross_validation import train_test_split
 from sklearn.utils.validation import DataConversionWarning
 
 dont_test = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
-             'LabelBinarizer', 'LabelEncoder', 'TfidfTransformer',
-             'IsotonicRegression', 'OneHotEncoder',
+             'LabelBinarizer', 'LabelEncoder', 'MultiLabelBinarizer',
+             'TfidfTransformer', 'IsotonicRegression', 'OneHotEncoder',
              'RandomTreesEmbedding', 'FeatureHasher', 'DummyClassifier',
              'DummyRegressor', 'TruncatedSVD', 'PolynomialFeatures']
+
+class NotAnArray(object):
+    " An object that is convertable to an array"
+
+    def __init__(self, data):
+        self.data = data
+
+    def __array__(self, dtype=None):
+        return self.data
 
 
 def multioutput_estimator_convert_y_2d(name, y):
@@ -198,8 +209,22 @@ def test_transformers():
         yield check_transformer, name, Transformer, X, y
 
 
+def _is_32bit():
+    """Detect if process is 32bit Python."""
+    return struct.calcsize('P') * 8 == 32
+
+
 def check_transformer(name, Transformer, X, y):
-    n_samples, n_features = X.shape
+    if name in ('CCA', 'LocallyLinearEmbedding', 'KernelPCA') and _is_32bit():
+        # Those transformers yield non-deterministic output when executed on
+        # a 32bit Python. The same transformers are stable on 64bit Python.
+        # FIXME: try to isolate a minimalistic reproduction case only depending
+        # on numpy & scipy and/or maybe generate a test dataset that does not
+        # cause such unstable behaviors.
+        msg = name + ' is non deterministic on 32bit Python'
+        raise SkipTest(msg)
+
+    n_samples, n_features = np.asarray(X).shape
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
         transformer = Transformer()
@@ -252,20 +277,26 @@ def check_transformer(name, Transformer, X, y):
             for x_pred, x_pred2, x_pred3 in zip(X_pred, X_pred2, X_pred3):
                 assert_array_almost_equal(
                     x_pred, x_pred2, 2,
-                    "fit_transform not correct in %s" % Transformer)
+                    "fit_transform and transform outcomes not consistent in %s"
+                    % Transformer)
                 assert_array_almost_equal(
-                    x_pred3, x_pred2, 2,
-                    "fit_transform not correct in %s" % Transformer)
+                    x_pred, x_pred3, 2,
+                    "consecutive fit_transform outcomes not consistent in %s"
+                    % Transformer)
         else:
             assert_array_almost_equal(
                 X_pred, X_pred2, 2,
-                "fit_transform not correct in %s" % Transformer)
+                "fit_transform and transform outcomes not consistent in %s"
+                % Transformer)
             assert_array_almost_equal(
-                X_pred3, X_pred2, 2,
-                "fit_transform not correct in %s" % Transformer)
+                X_pred, X_pred3, 2,
+                "consecutive fit_transform outcomes not consistent in %s"
+                % Transformer)
 
         # raises error on malformed input for transform
-        assert_raises(ValueError, transformer.transform, X.T)
+        if hasattr(X, 'T'):
+            # If it's not an array, it does not have a 'T' property
+            assert_raises(ValueError, transformer.transform, X.T)
 
 
 def test_transformers_sparse_data():
@@ -359,6 +390,8 @@ def check_estimators_nan_inf(name, Estimator, X_train, X_train_finite, y):
             # than the number of features.
             # So we impose a smaller number (avoid "auto" mode)
             estimator = Estimator(n_components=1)
+        elif name == "SelectKBest":
+            estimator = Estimator(k=1)
 
         set_random_state(estimator, 1)
         # try to fit
@@ -437,8 +470,15 @@ def check_transformer_pickle(name, Transformer, X, y):
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
         transformer = Transformer()
+
     if not hasattr(transformer, 'transform'):
         return
+
+    if 'n_iter' in transformer.get_params():
+        # Make sure that the fit runs fast: we are not interested in
+        # convergence quality in this test.
+        transformer.set_params(n_iter=5)
+
     set_random_state(transformer)
     if hasattr(transformer, 'compute_importances'):
         transformer.compute_importances = True
@@ -765,13 +805,13 @@ def check_classifiers_pickle(name, Classifier, X, y):
 BOSTON = None
 
 
-def _boston_subset():
+def _boston_subset(n_samples=200):
     global BOSTON
     if BOSTON is None:
         boston = load_boston()
         X, y = boston.data, boston.target
         X, y = shuffle(X, y, random_state=0)
-        X, y = X[:200], y[:200]
+        X, y = X[:n_samples], y[:n_samples]
         X = StandardScaler().fit_transform(X)
         BOSTON = X, y
     return BOSTON
@@ -786,13 +826,16 @@ def test_regressors_int():
     rnd = np.random.RandomState(0)
     y = rnd.randint(3, size=X.shape[0])
     for name, Regressor in regressors:
-        if name in dont_test or name in ('CCA'):
+        if name in dont_test or name == 'CCA':
             continue
         yield (check_regressors_int, name, Regressor, X,
                multioutput_estimator_convert_y_2d(name, y))
 
 
 def check_regressors_int(name, Regressor, X, y):
+    if name == 'OrthogonalMatchingPursuitCV':
+        # FIXME: This test is unstable on Travis, see issue #3190.
+        check_skip_travis()
     rnd = np.random.RandomState(0)
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
@@ -830,6 +873,9 @@ def test_regressors_train():
 
 
 def check_regressors_train(name, Regressor, X, y):
+    if name == 'OrthogonalMatchingPursuitCV':
+        # FIXME: This test is unstable on Travis, see issue #3190.
+        check_skip_travis()
     rnd = np.random.RandomState(0)
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
@@ -846,6 +892,7 @@ def check_regressors_train(name, Regressor, X, y):
         y_ = y_.T
     else:
         y_ = y
+    set_random_state(regressor)
     regressor.fit(X, y_)
     regressor.predict(X)
 
@@ -872,6 +919,9 @@ def test_regressor_pickle():
 
 
 def check_regressors_pickle(name, Regressor, X, y):
+    if name == 'OrthogonalMatchingPursuitCV':
+        # FIXME: This test is unstable on Travis, see issue #3190.
+        check_skip_travis()
     rnd = np.random.RandomState(0)
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
@@ -1039,6 +1089,7 @@ def test_estimators_overwrite_params():
                 # FIXME!
                 # in particular GaussianProcess!
                 continue
+
             yield (check_estimators_overwrite_params, name, Estimator, X,
                    multioutput_estimator_convert_y_2d(name, y))
 
@@ -1061,6 +1112,8 @@ def check_estimators_overwrite_params(name, Estimator, X, y):
         # than the number of features.
         # So we impose a smaller number (avoid "auto" mode)
         estimator = Estimator(n_components=1)
+    elif name == "SelectKBest":
+        estimator = Estimator(k=1)
 
     set_random_state(estimator)
 
@@ -1178,3 +1231,79 @@ def check_sparsify_binary_classifier(name, Estimator, X, y):
     assert_true(sparse.issparse(est.coef_))
     pred = est.predict(X)
     assert_array_equal(pred, pred_orig)
+
+
+def check_estimators_data_not_an_array(name, Estimator, X, y):
+    if name in ('CCA', '_PLS', 'PLSCanonical', 'PLSRegression'):
+        raise SkipTest
+    # catch deprecation warnings
+    with warnings.catch_warnings(record=True):
+        # separate estimators to control random seeds
+        estimator_1 = Estimator()
+        estimator_2 = Estimator()
+    set_random_state(estimator_1)
+    set_random_state(estimator_2)
+
+    y_ = NotAnArray(np.asarray(y))
+    X_ = NotAnArray(np.asarray(X))
+
+    # fit
+    estimator_1.fit(X_, y_)
+    pred1 = estimator_1.predict(X_)
+    estimator_2.fit(X, y)
+    pred2 = estimator_2.predict(X)
+    assert_array_almost_equal(pred1, pred2, 2, name)
+
+
+def test_regressors_data_not_an_array():
+    regressors = all_estimators(type_filter='regressor')
+    X, y = _boston_subset(n_samples=50)
+    X = StandardScaler().fit_transform(X)
+
+    for name, Regressor in regressors:
+        if name in dont_test:
+            continue
+        yield (check_estimators_data_not_an_array, name, Regressor, X,
+               multioutput_estimator_convert_y_2d(name, y))
+
+
+def test_classifiers_data_not_an_array():
+    classifiers = all_estimators(type_filter='classifier')
+    X = np.array([[3, 0], [0, 1], [0, 2], [1, 1], [1, 2], [2, 1]])
+    y = [1, 1, 1, 2, 2, 2]
+
+    for name, Classifier in classifiers:
+        if name in dont_test:
+            continue
+        yield (check_estimators_data_not_an_array, name, Classifier, X,
+               multioutput_estimator_convert_y_2d(name, y))
+
+
+def test_transformers_data_not_an_array():
+    # test if transformers do something sensible on training set
+    # also test all shapes / shape errors
+    transformers = all_estimators(type_filter='transformer')
+    X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
+                      random_state=0, n_features=2, cluster_std=0.1)
+    X = StandardScaler().fit_transform(X)
+    # We need to make sure that we have non negative data, for things
+    # like NMF
+    X -= X.min() - .1
+
+    for name, Transformer in transformers:
+        # XXX: some transformers are transforming the input
+        # data. This is a bug that we'll fix later. Right now we copy
+        # the data each time
+        this_X = NotAnArray(X.copy())
+        this_y = NotAnArray(np.asarray(y))
+        if name in dont_test:
+            continue
+        # these don't actually fit the data:
+        if name in ['AdditiveChi2Sampler', 'Binarizer', 'Normalizer']:
+            continue
+        # And these wan't multivariate output
+        if name in ('PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD'):
+            continue
+        yield check_transformer, name, Transformer, this_X, this_y
+
+

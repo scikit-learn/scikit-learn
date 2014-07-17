@@ -416,6 +416,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes.
         """
+        X, = check_arrays(X)
         n_samples = len(X)
         proba = self.predict_proba(X)
 
@@ -637,14 +638,15 @@ class RandomForestClassifier(ForestClassifier):
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
-          - If int, then consider `max_features` features at each split.
-          - If float, then `max_features` is a percentage and
-            `int(max_features * n_features)` features are considered at each
-            split.
-          - If "auto", then `max_features=sqrt(n_features)`.
-          - If "sqrt", then `max_features=sqrt(n_features)`.
-          - If "log2", then `max_features=log2(n_features)`.
-          - If None, then `max_features=n_features`.
+
+        - If int, then consider `max_features` features at each split.
+        - If float, then `max_features` is a percentage and
+          `int(max_features * n_features)` features are considered at each
+          split.
+        - If "auto", then `max_features=sqrt(n_features)`.
+        - If "sqrt", then `max_features=sqrt(n_features)`.
+        - If "log2", then `max_features=log2(n_features)`.
+        - If None, then `max_features=n_features`.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -666,6 +668,11 @@ class RandomForestClassifier(ForestClassifier):
         The minimum number of samples in newly created leaves.  A split is
         discarded if after the split, one of the leaves would contain less then
         ``min_samples_leaf`` samples.
+        Note: this parameter is tree-specific.
+
+    min_weight_fraction_leaf : float, optional (default=0.)
+        The minimum weighted fraction of the input samples required to be at a
+        leaf node.
         Note: this parameter is tree-specific.
 
     max_leaf_nodes : int or None, optional (default=None)
@@ -735,6 +742,7 @@ class RandomForestClassifier(ForestClassifier):
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
                  max_features="auto",
                  max_leaf_nodes=None,
                  bootstrap=True,
@@ -748,8 +756,9 @@ class RandomForestClassifier(ForestClassifier):
             base_estimator=DecisionTreeClassifier(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
-                              "min_samples_leaf", "max_features",
-                              "max_leaf_nodes", "random_state"),
+                              "min_samples_leaf", "min_weight_fraction_leaf",
+                              "max_features", "max_leaf_nodes",
+                              "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -760,6 +769,7 @@ class RandomForestClassifier(ForestClassifier):
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
+        self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
 
@@ -794,14 +804,15 @@ class RandomForestRegressor(ForestRegressor):
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
-          - If int, then consider `max_features` features at each split.
-          - If float, then `max_features` is a percentage and
-            `int(max_features * n_features)` features are considered at each
-            split.
-          - If "auto", then `max_features=n_features`.
-          - If "sqrt", then `max_features=sqrt(n_features)`.
-          - If "log2", then `max_features=log2(n_features)`.
-          - If None, then `max_features=n_features`.
+
+        - If int, then consider `max_features` features at each split.
+        - If float, then `max_features` is a percentage and
+          `int(max_features * n_features)` features are considered at each
+          split.
+        - If "auto", then `max_features=n_features`.
+        - If "sqrt", then `max_features=sqrt(n_features)`.
+        - If "log2", then `max_features=log2(n_features)`.
+        - If None, then `max_features=n_features`.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -823,6 +834,11 @@ class RandomForestRegressor(ForestRegressor):
         The minimum number of samples in newly created leaves.  A split is
         discarded if after the split, one of the leaves would contain less then
         ``min_samples_leaf`` samples.
+        Note: this parameter is tree-specific.
+
+    min_weight_fraction_leaf : float, optional (default=0.)
+        The minimum weighted fraction of the input samples required to be at a
+        leaf node.
         Note: this parameter is tree-specific.
 
     max_leaf_nodes : int or None, optional (default=None)
@@ -881,6 +897,7 @@ class RandomForestRegressor(ForestRegressor):
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
                  max_features="auto",
                  max_leaf_nodes=None,
                  bootstrap=True,
@@ -894,8 +911,9 @@ class RandomForestRegressor(ForestRegressor):
             base_estimator=DecisionTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
-                              "min_samples_leaf", "max_features",
-                              "max_leaf_nodes", "random_state"),
+                              "min_samples_leaf", "min_weight_fraction_leaf",
+                              "max_features", "max_leaf_nodes",
+                              "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -906,6 +924,7 @@ class RandomForestRegressor(ForestRegressor):
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
+        self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
 
@@ -941,14 +960,15 @@ class ExtraTreesClassifier(ForestClassifier):
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
-          - If int, then consider `max_features` features at each split.
-          - If float, then `max_features` is a percentage and
-            `int(max_features * n_features)` features are considered at each
-            split.
-          - If "auto", then `max_features=sqrt(n_features)`.
-          - If "sqrt", then `max_features=sqrt(n_features)`.
-          - If "log2", then `max_features=log2(n_features)`.
-          - If None, then `max_features=n_features`.
+
+        - If int, then consider `max_features` features at each split.
+        - If float, then `max_features` is a percentage and
+          `int(max_features * n_features)` features are considered at each
+          split.
+        - If "auto", then `max_features=sqrt(n_features)`.
+        - If "sqrt", then `max_features=sqrt(n_features)`.
+        - If "log2", then `max_features=log2(n_features)`.
+        - If None, then `max_features=n_features`.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -970,6 +990,11 @@ class ExtraTreesClassifier(ForestClassifier):
         The minimum number of samples in newly created leaves.  A split is
         discarded if after the split, one of the leaves would contain less then
         ``min_samples_leaf`` samples.
+        Note: this parameter is tree-specific.
+
+    min_weight_fraction_leaf : float, optional (default=0.)
+        The minimum weighted fraction of the input samples required to be at a
+        leaf node.
         Note: this parameter is tree-specific.
 
     max_leaf_nodes : int or None, optional (default=None)
@@ -1042,6 +1067,7 @@ class ExtraTreesClassifier(ForestClassifier):
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
                  max_features="auto",
                  max_leaf_nodes=None,
                  bootstrap=False,
@@ -1055,8 +1081,8 @@ class ExtraTreesClassifier(ForestClassifier):
             base_estimator=ExtraTreeClassifier(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
-                              "min_samples_leaf", "max_features",
-                              "max_leaf_nodes", "random_state"),
+                              "min_samples_leaf", "min_weight_fraction_leaf",
+                              "max_features", "max_leaf_nodes", "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -1067,6 +1093,7 @@ class ExtraTreesClassifier(ForestClassifier):
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
+        self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
 
@@ -1102,14 +1129,15 @@ class ExtraTreesRegressor(ForestRegressor):
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
-          - If int, then consider `max_features` features at each split.
-          - If float, then `max_features` is a percentage and
-            `int(max_features * n_features)` features are considered at each
-            split.
-          - If "auto", then `max_features=n_features`.
-          - If "sqrt", then `max_features=sqrt(n_features)`.
-          - If "log2", then `max_features=log2(n_features)`.
-          - If None, then `max_features=n_features`.
+
+        - If int, then consider `max_features` features at each split.
+        - If float, then `max_features` is a percentage and
+          `int(max_features * n_features)` features are considered at each
+          split.
+        - If "auto", then `max_features=n_features`.
+        - If "sqrt", then `max_features=sqrt(n_features)`.
+        - If "log2", then `max_features=log2(n_features)`.
+        - If None, then `max_features=n_features`.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -1131,6 +1159,11 @@ class ExtraTreesRegressor(ForestRegressor):
         The minimum number of samples in newly created leaves.  A split is
         discarded if after the split, one of the leaves would contain less then
         ``min_samples_leaf`` samples.
+        Note: this parameter is tree-specific.
+
+    min_weight_fraction_leaf : float, optional (default=0.)
+        The minimum weighted fraction of the input samples required to be at a
+        leaf node.
         Note: this parameter is tree-specific.
 
     max_leaf_nodes : int or None, optional (default=None)
@@ -1192,6 +1225,7 @@ class ExtraTreesRegressor(ForestRegressor):
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
                  max_features="auto",
                  max_leaf_nodes=None,
                  bootstrap=False,
@@ -1205,8 +1239,9 @@ class ExtraTreesRegressor(ForestRegressor):
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
-                              "min_samples_leaf", "max_features",
-                              "max_leaf_nodes", "random_state"),
+                              "min_samples_leaf", "min_weight_fraction_leaf",
+                              "max_features", "max_leaf_nodes",
+                              "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -1217,6 +1252,7 @@ class ExtraTreesRegressor(ForestRegressor):
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
+        self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
 
@@ -1264,12 +1300,21 @@ class RandomTreesEmbedding(BaseForest):
         ``min_samples_leaf`` samples.
         Note: this parameter is tree-specific.
 
+    min_weight_fraction_leaf : float, optional (default=0.)
+        The minimum weighted fraction of the input samples required to be at a
+        leaf node.
+        Note: this parameter is tree-specific.
+
     max_leaf_nodes : int or None, optional (default=None)
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
         Note: this parameter is tree-specific.
+
+    sparse_output: bool, optional (default=True)
+        Whether or not to return a sparse CSR matrix, as default behavior,
+        or to return a dense array compatible with dense pipeline operators.
 
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
@@ -1304,7 +1349,9 @@ class RandomTreesEmbedding(BaseForest):
                  max_depth=5,
                  min_samples_split=2,
                  min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
                  max_leaf_nodes=None,
+                 sparse_output=True,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
@@ -1313,8 +1360,9 @@ class RandomTreesEmbedding(BaseForest):
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
-                              "min_samples_leaf", "max_features",
-                              "max_leaf_nodes", "random_state"),
+                              "min_samples_leaf", "min_weight_fraction_leaf",
+                              "max_features", "max_leaf_nodes",
+                              "random_state"),
             bootstrap=False,
             oob_score=False,
             n_jobs=n_jobs,
@@ -1325,28 +1373,35 @@ class RandomTreesEmbedding(BaseForest):
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
+        self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_features = 1
         self.max_leaf_nodes = max_leaf_nodes
+        self.sparse_output = sparse_output
 
         if min_density is not None:
             warn("The min_density parameter is deprecated as of version 0.14 "
                  "and will be removed in 0.16.", DeprecationWarning)
 
-    def _set_oob_score(*args):
+    def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by tree embedding")
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_weight=None):
         """Fit estimator.
 
         Parameters
         ----------
         X : array-like, shape=(n_samples, n_features)
             Input data used to build forests.
+
+        Returns
+        -------
+        self : object
+            Returns self.
         """
-        self.fit_transform(X, y)
+        self.fit_transform(X, y, sample_weight=sample_weight)
         return self
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, sample_weight=None):
         """Fit estimator and transform dataset.
 
         Parameters
@@ -1362,8 +1417,9 @@ class RandomTreesEmbedding(BaseForest):
         X = safe_asarray(X)
         rnd = check_random_state(self.random_state)
         y = rnd.uniform(size=X.shape[0])
-        super(RandomTreesEmbedding, self).fit(X, y)
-        self.one_hot_encoder_ = OneHotEncoder()
+        super(RandomTreesEmbedding, self).fit(X, y,
+                                              sample_weight=sample_weight)
+        self.one_hot_encoder_ = OneHotEncoder(sparse=self.sparse_output)
         return self.one_hot_encoder_.fit_transform(self.apply(X))
 
     def transform(self, X):

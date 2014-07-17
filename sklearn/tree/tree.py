@@ -70,6 +70,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                  max_depth,
                  min_samples_split,
                  min_samples_leaf,
+                 min_weight_fraction_leaf,
                  max_features,
                  max_leaf_nodes,
                  random_state):
@@ -78,6 +79,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
+        self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_features = max_features
         self.random_state = random_state
         self.max_leaf_nodes = max_leaf_nodes
@@ -90,8 +92,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.tree_ = None
         self.max_features_ = None
 
-    def fit(self, X, y, sample_mask=None, X_argsorted=None, check_input=True,
-            sample_weight=None):
+    def fit(self, X, y, sample_weight=None, check_input=True, sample_mask=None,
+            X_argsorted=None):
         """Build a decision tree from the training set (X, y).
 
         Parameters
@@ -194,7 +196,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         elif isinstance(self.max_features, (numbers.Integral, np.integer)):
             max_features = self.max_features
         else:  # float
-            max_features = int(self.max_features * self.n_features_)
+            if self.max_features > 0.0:
+                max_features = max(1, int(self.max_features * self.n_features_))
+            else:
+                max_features = 0
 
         self.max_features_ = max_features
 
@@ -205,6 +210,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             raise ValueError("min_samples_split must be greater than zero.")
         if self.min_samples_leaf <= 0:
             raise ValueError("min_samples_leaf must be greater than zero.")
+        if not 0 <= self.min_weight_fraction_leaf <= 0.5:
+            raise ValueError("min_weight_fraction_leaf must in [0, 0.5]")
         if max_depth <= 0:
             raise ValueError("max_depth must be greater than zero. ")
         if not (0 < max_features <= self.n_features_):
@@ -230,6 +237,13 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                  "number of samples=%d" %
                                  (len(sample_weight), n_samples))
 
+        # Set min_weight_leaf from min_weight_fraction_leaf
+        if self.min_weight_fraction_leaf != 0. and sample_weight is not None:
+            min_weight_leaf = (self.min_weight_fraction_leaf *
+                               np.sum(sample_weight))
+        else:
+            min_weight_leaf = 0.
+
         # Set min_samples_split sensibly
         min_samples_split = max(self.min_samples_split,
                                 2 * self.min_samples_leaf)
@@ -248,6 +262,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             splitter = SPLITTERS[self.splitter](criterion,
                                                 self.max_features_,
                                                 self.min_samples_leaf,
+                                                min_weight_leaf,
                                                 random_state)
 
         self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
@@ -255,10 +270,14 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
         if max_leaf_nodes < 0:
             builder = DepthFirstTreeBuilder(splitter, min_samples_split,
-                                            self.min_samples_leaf, max_depth)
+                                            self.min_samples_leaf,
+                                            min_weight_leaf,
+                                            max_depth)
         else:
             builder = BestFirstTreeBuilder(splitter, min_samples_split,
-                                           self.min_samples_leaf, max_depth,
+                                           self.min_samples_leaf,
+                                           min_weight_leaf,
+                                           max_depth,
                                            max_leaf_nodes)
 
         builder.build(self.tree_, X, y, sample_weight)
@@ -389,6 +408,10 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     min_samples_leaf : int, optional (default=1)
         The minimum number of samples required to be at a leaf node.
 
+    min_weight_fraction_leaf : float, optional (default=0.)
+        The minimum weighted fraction of the input samples required to be at a
+        leaf node.
+
     max_leaf_nodes : int or None, optional (default=None)
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
@@ -461,6 +484,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
                  max_features=None,
                  random_state=None,
                  min_density=None,
@@ -472,6 +496,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             max_depth=max_depth,
             min_samples_split=min_samples_split,
             min_samples_leaf=min_samples_leaf,
+            min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
             random_state=random_state)
@@ -606,6 +631,10 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     min_samples_leaf : int, optional (default=1)
         The minimum number of samples required to be at a leaf node.
 
+    min_weight_fraction_leaf : float, optional (default=0.)
+        The minimum weighted fraction of the input samples required to be at a
+        leaf node.
+
     max_leaf_nodes : int or None, optional (default=None)
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
@@ -670,6 +699,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
                  max_features=None,
                  random_state=None,
                  min_density=None,
@@ -681,6 +711,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
             max_depth=max_depth,
             min_samples_split=min_samples_split,
             min_samples_leaf=min_samples_leaf,
+            min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
             random_state=random_state)
@@ -725,6 +756,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
                  max_features="auto",
                  random_state=None,
                  min_density=None,
@@ -736,6 +768,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             max_depth=max_depth,
             min_samples_split=min_samples_split,
             min_samples_leaf=min_samples_leaf,
+            min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
             random_state=random_state)
@@ -780,6 +813,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
                  max_features="auto",
                  random_state=None,
                  min_density=None,
@@ -791,6 +825,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             max_depth=max_depth,
             min_samples_split=min_samples_split,
             min_samples_leaf=min_samples_leaf,
+            min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
             random_state=random_state)

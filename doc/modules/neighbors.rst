@@ -62,7 +62,7 @@ of each option, see `Nearest Neighbor Algorithms`_.
     .. warning::
 
         Regarding the Nearest Neighbors algorithms, if two
-        neighbors, neighbor `k+1` and `k`, have identical distances but
+        neighbors, neighbor :math:`k+1` and :math:`k`, have identical distances
         but different labels, the results will depend on the ordering of the
         training data.
 
@@ -184,11 +184,11 @@ distance can be supplied which is used to compute the weights.
 
 
 
-.. |classification_1| image:: ../auto_examples/neighbors/images/plot_classification_1.png
+.. |classification_1| image:: ../auto_examples/neighbors/images/plot_classification_001.png
    :target: ../auto_examples/neighbors/plot_classification.html
    :scale: 50
 
-.. |classification_2| image:: ../auto_examples/neighbors/images/plot_classification_2.png
+.. |classification_2| image:: ../auto_examples/neighbors/images/plot_classification_002.png
    :target: ../auto_examples/neighbors/plot_classification.html
    :scale: 50
 
@@ -227,7 +227,7 @@ weights proportional to the inverse of the distance from the query point.
 Alternatively, a user-defined function of the distance can be supplied,
 which will be used to compute the weights.
 
-.. figure:: ../auto_examples/neighbors/images/plot_regression_1.png
+.. figure:: ../auto_examples/neighbors/images/plot_regression_001.png
    :target: ../auto_examples/neighbors/plot_regression.html
    :align: center
    :scale: 75
@@ -237,7 +237,7 @@ The use of multi-output nearest neighbors for regression is demonstrated in
 X are the pixels of the upper half of faces and the outputs Y are the pixels of
 the lower half of those faces.
 
-.. figure:: ../auto_examples/images/plot_multioutput_face_completion_1.png
+.. figure:: ../auto_examples/images/plot_multioutput_face_completion_001.png
    :target: ../auto_examples/plot_multioutput_face_completion.html
    :scale: 75
    :align: center
@@ -367,7 +367,7 @@ depends on a number of factors:
     to precisely characterise.  For small :math:`D` (less than 20 or so)
     the cost is approximately :math:`O[D\log(N)]`, and the KD tree
     query can be very efficient.
-    For larger :math:`D`, the cost increases to nearly `O[DN]`, and
+    For larger :math:`D`, the cost increases to nearly :math:`O[DN]`, and
     the overhead due to the tree
     structure can lead to queries which are slower than brute force.
 
@@ -485,10 +485,10 @@ methods that do not make this assumption. Usage of the default
 Nearest Shrunken Centroid
 -------------------------
 
-The :class:`NearestCentroid` classifier has a `shrink_threshold` parameter,
+The :class:`NearestCentroid` classifier has a ``shrink_threshold`` parameter,
 which implements the nearest shrunken centroid classifier. In effect, the value
 of each feature for each centroid is divided by the within-class variance of
-that feature. The feature values are then reduced by `shrink_threshold`. Most
+that feature. The feature values are then reduced by ``shrink_threshold``. Most
 notably, if a particular feature value crosses zero, it is set
 to zero. In effect, this removes the feature from affecting the classification.
 This is useful, for example, for removing noisy features.
@@ -496,11 +496,11 @@ This is useful, for example, for removing noisy features.
 In the example below, using a small shrink threshold increases the accuracy of
 the model from 0.81 to 0.82.
 
-.. |nearest_centroid_1| image:: ../auto_examples/neighbors/images/plot_nearest_centroid_1.png
+.. |nearest_centroid_1| image:: ../auto_examples/neighbors/images/plot_nearest_centroid_001.png
    :target: ../auto_examples/neighbors/plot_classification.html
    :scale: 50
 
-.. |nearest_centroid_2| image:: ../auto_examples/neighbors/images/plot_nearest_centroid_2.png
+.. |nearest_centroid_2| image:: ../auto_examples/neighbors/images/plot_nearest_centroid_002.png
    :target: ../auto_examples/neighbors/plot_classification.html
    :scale: 50
 

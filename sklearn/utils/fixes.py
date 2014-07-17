@@ -13,6 +13,7 @@ at which the fixe is no longer needed.
 import inspect
 
 import numpy as np
+import scipy.sparse as sp
 
 
 np_version = []
@@ -37,7 +38,8 @@ except ImportError:
         See sklearn.utils.extmath.log_logistic for the log of this function.
         """
         if out is None:
-            out = np.copy(x)
+            out = np.empty(np.atleast_1d(x).shape, dtype=np.float64)
+        out[:] = x
 
         # 1 / (1 + exp(-x)) = (1 + tanh(x / 2)) / 2
         # This way of computing the logistic is both fast and stable.
@@ -46,7 +48,7 @@ except ImportError:
         out += 1
         out *= .5
 
-        return out
+        return out.reshape(np.shape(x))
 
 
 # little danse to see if np.copy has an 'order' keyword argument
@@ -97,3 +99,144 @@ except TypeError:
         return array.astype(dtype)
 else:
     astype = np.ndarray.astype
+
+
+try:
+    sp.csr_matrix([1.0, 2.0, 3.0]).max(axis=0)
+except (TypeError, AttributeError):
+    # in scipy < 14.0, sparse matrix min/max doesn't accept an `axis` argument
+    # the following code is taken from the scipy 0.14 codebase
+
+    def _minor_reduce(X, ufunc):
+        major_index = np.flatnonzero(np.diff(X.indptr))
+        if X.data.size == 0 and major_index.size == 0:
+            # Numpy < 1.8.0 don't handle empty arrays in reduceat
+            value = np.zeros_like(X.data)
+        else:
+            value = ufunc.reduceat(X.data, X.indptr[major_index])
+        return major_index, value
+
+    def _min_or_max_axis(X, axis, min_or_max):
+        N = X.shape[axis]
+        if N == 0:
+            raise ValueError("zero-size array to reduction operation")
+        M = X.shape[1 - axis]
+        mat = X.tocsc() if axis == 0 else X.tocsr()
+        mat.sum_duplicates()
+        major_index, value = _minor_reduce(mat, min_or_max)
+        not_full = np.diff(mat.indptr)[major_index] < N
+        value[not_full] = min_or_max(value[not_full], 0)
+        mask = value != 0
+        major_index = np.compress(mask, major_index)
+        value = np.compress(mask, value)
+
+        from scipy.sparse import coo_matrix
+        if axis == 0:
+            res = coo_matrix((value, (np.zeros(len(value)), major_index)),
+                             dtype=X.dtype, shape=(1, M))
+        else:
+            res = coo_matrix((value, (major_index, np.zeros(len(value)))),
+                             dtype=X.dtype, shape=(M, 1))
+        return res.A.ravel()
+
+    def _sparse_min_or_max(X, axis, min_or_max):
+        if axis is None:
+            if 0 in X.shape:
+                raise ValueError("zero-size array to reduction operation")
+            zero = X.dtype.type(0)
+            if X.nnz == 0:
+                return zero
+            m = min_or_max.reduce(X.data.ravel())
+            if X.nnz != np.product(X.shape):
+                m = min_or_max(zero, m)
+            return m
+        if axis < 0:
+            axis += 2
+        if (axis == 0) or (axis == 1):
+            return _min_or_max_axis(X, axis, min_or_max)
+        else:
+            raise ValueError("invalid axis, use 0 for rows, or 1 for columns")
+
+    def sparse_min_max(X, axis):
+        return (_sparse_min_or_max(X, axis, np.minimum),
+                _sparse_min_or_max(X, axis, np.maximum))
+
+else:
+    def sparse_min_max(X, axis):
+        return (X.min(axis=axis).toarray().ravel(),
+                X.max(axis=axis).toarray().ravel())
+
+
+try:
+    from numpy import argpartition
+except ImportError:
+    # numpy.argpartition was introduced in v 1.8.0
+    def argpartition(a, kth, axis=-1, kind='introselect', order=None):
+        return np.argsort(a, axis=axis, order=order)
+
+
+try:
+    from itertools import combinations_with_replacement
+except ImportError:
+    # Backport of itertools.combinations_with_replacement for Python 2.6,
+    # from Python 3.4 documentation (http://tinyurl.com/comb-w-r), copyright
+    # Python Software Foundation (https://docs.python.org/3/license.html)
+    def combinations_with_replacement(iterable, r):
+        # combinations_with_replacement('ABC', 2) --> AA AB AC BB BC CC
+        pool = tuple(iterable)
+        n = len(pool)
+        if not n and r:
+            return
+        indices = [0] * r
+        yield tuple(pool[i] for i in indices)
+        while True:
+            for i in reversed(range(r)):
+                if indices[i] != n - 1:
+                    break
+            else:
+                return
+            indices[i:] = [indices[i] + 1] * (r - i)
+            yield tuple(pool[i] for i in indices)
+
+
+try:
+    from numpy import isclose
+except ImportError:
+    def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
+        """
+        Returns a boolean array where two arrays are element-wise equal within
+        a tolerance.
+
+        This function was added to numpy v1.7.0, and the version you are
+        running has been backported from numpy v1.8.1. See its documentation
+        for more details.
+        """
+        def within_tol(x, y, atol, rtol):
+            with np.errstate(invalid='ignore'):
+                result = np.less_equal(abs(x-y), atol + rtol * abs(y))
+            if np.isscalar(a) and np.isscalar(b):
+                result = bool(result)
+            return result
+
+        x = np.array(a, copy=False, subok=True, ndmin=1)
+        y = np.array(b, copy=False, subok=True, ndmin=1)
+        xfin = np.isfinite(x)
+        yfin = np.isfinite(y)
+        if all(xfin) and all(yfin):
+            return within_tol(x, y, atol, rtol)
+        else:
+            finite = xfin & yfin
+            cond = np.zeros_like(finite, subok=True)
+            # Since we're using boolean indexing, x & y must be the same shape.
+            # Ideally, we'd just do x, y = broadcast_arrays(x, y). It's in
+            # lib.stride_tricks, though, so we can't import it here.
+            x = x * np.ones_like(cond)
+            y = y * np.ones_like(cond)
+            # Avoid subtraction with infinite/nan values...
+            cond[finite] = within_tol(x[finite], y[finite], atol, rtol)
+            # Check for equality of infinite values...
+            cond[~finite] = (x[~finite] == y[~finite])
+            if equal_nan:
+                # Make NaN == NaN
+                cond[np.isnan(x) & np.isnan(y)] = True
+            return cond

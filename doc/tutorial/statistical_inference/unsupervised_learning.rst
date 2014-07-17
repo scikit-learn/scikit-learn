@@ -24,7 +24,7 @@ Note that there exist a lot of different clustering criteria and associated
 algorithms. The simplest clustering algorithm is 
 :ref:`k_means`.
 
-.. image:: ../../auto_examples/cluster/images/plot_cluster_iris_2.png
+.. image:: ../../auto_examples/cluster/images/plot_cluster_iris_002.png
     :target: ../../auto_examples/cluster/plot_cluster_iris.html
     :scale: 70
     :align: right
@@ -45,15 +45,15 @@ algorithms. The simplest clustering algorithm is
     >>> print(y_iris[::10])
     [0 0 0 0 0 1 1 1 1 1 2 2 2 2 2]
 
-.. |k_means_iris_bad_init| image:: ../../auto_examples/cluster/images/plot_cluster_iris_3.png
+.. |k_means_iris_bad_init| image:: ../../auto_examples/cluster/images/plot_cluster_iris_003.png
    :target: ../../auto_examples/cluster/plot_cluster_iris.html
    :scale: 63
 
-.. |k_means_iris_8| image:: ../../auto_examples/cluster/images/plot_cluster_iris_1.png
+.. |k_means_iris_8| image:: ../../auto_examples/cluster/images/plot_cluster_iris_001.png
    :target: ../../auto_examples/cluster/plot_cluster_iris.html
    :scale: 63
 
-.. |cluster_iris_truth| image:: ../../auto_examples/cluster/images/plot_cluster_iris_4.png
+.. |cluster_iris_truth| image:: ../../auto_examples/cluster/images/plot_cluster_iris_004.png
    :target: ../../auto_examples/cluster/plot_cluster_iris.html
    :scale: 63
 
@@ -62,8 +62,7 @@ algorithms. The simplest clustering algorithm is
     There is absolutely no guarantee of recovering a ground truth. First,
     choosing the right number of clusters is hard. Second, the algorithm
     is sensitive to initialization, and can fall into local minima,
-    although in the `sklearn` package we play many tricks to mitigate this
-    issue.
+    although scikit-learn employs several tricks to mitigate this issue.
 
     .. list-table::
         :class: centered
@@ -86,19 +85,19 @@ algorithms. The simplest clustering algorithm is
 
     **Don't over-interpret clustering results**
 
-.. |lena| image:: ../../auto_examples/cluster/images/plot_lena_compress_1.png
+.. |lena| image:: ../../auto_examples/cluster/images/plot_lena_compress_001.png
    :target: ../../auto_examples/cluster/plot_lena_compress.html
    :scale: 60
 
-.. |lena_regular| image:: ../../auto_examples/cluster/images/plot_lena_compress_2.png
+.. |lena_regular| image:: ../../auto_examples/cluster/images/plot_lena_compress_002.png
    :target: ../../auto_examples/cluster/plot_lena_compress.html
    :scale: 60
 
-.. |lena_compressed| image:: ../../auto_examples/cluster/images/plot_lena_compress_3.png
+.. |lena_compressed| image:: ../../auto_examples/cluster/images/plot_lena_compress_003.png
    :target: ../../auto_examples/cluster/plot_lena_compress.html
    :scale: 60
 
-.. |lena_histogram| image:: ../../auto_examples/cluster/images/plot_lena_compress_4.png
+.. |lena_histogram| image:: ../../auto_examples/cluster/images/plot_lena_compress_004.png
    :target: ../../auto_examples/cluster/plot_lena_compress.html
    :scale: 60
 
@@ -155,14 +154,14 @@ A :ref:`hierarchical_clustering` method is a type of cluster analysis
 that aims to build a hierarchy of clusters. In general, the various approaches
 of this technique are either:
 
-  * **Agglomerative** - `bottom-up` approaches: each observation starts in its
+  * **Agglomerative** - bottom-up approaches: each observation starts in its
     own cluster, and clusters are iterativelly merged in such a way to
     minimize a *linkage* criterion. This approach is particularly interesting
     when the clusters of interest are made of only a few observations. When
     the number of clusters is large, it is much more computationally efficient
     than k-means.
 
-  * **Divisive** - `top-down` approaches: all observations start in one
+  * **Divisive** - top-down approaches: all observations start in one
     cluster, which is iteratively split as one moves down the hierarchy.
     For estimating large numbers of clusters, this approach is both slow (due
     to all observations starting as one cluster, which it splits recursively)
@@ -178,7 +177,7 @@ This can be useful, for instance, to retrieve connected regions (sometimes
 also referred to as connected components) when
 clustering an image:
 
-.. image:: ../../auto_examples/cluster/images/plot_lena_ward_segmentation_1.png
+.. image:: ../../auto_examples/cluster/images/plot_lena_ward_segmentation_001.png
     :target: ../../auto_examples/cluster/plot_lena_ward_segmentation.html
     :scale: 40
     :align: right
@@ -201,7 +200,7 @@ features: **feature agglomeration**. This approach can be implemented by
 clustering in the feature direction, in other words clustering the
 transposed data.
 
-.. image:: ../../auto_examples/cluster/images/plot_digits_agglomeration_1.png
+.. image:: ../../auto_examples/cluster/images/plot_digits_agglomeration_001.png
     :target: ../../auto_examples/cluster/plot_digits_agglomeration.html
     :align: right
     :scale: 57
@@ -222,9 +221,9 @@ transposed data.
    >>> X_approx = agglo.inverse_transform(X_reduced)
    >>> images_approx = np.reshape(X_approx, images.shape)
 
-.. topic:: `transform` and `inverse_transform` methods
+.. topic:: ``transform`` and ``inverse_transform`` methods
 
-   Some estimators expose a `transform` method, for instance to reduce
+   Some estimators expose a ``transform`` method, for instance to reduce
    the dimensionality of the dataset.
 
 Decompositions: from a signal to components and loadings
@@ -243,11 +242,11 @@ Principal component analysis: PCA
 :ref:`PCA` selects the successive components that
 explain the maximum variance in the signal.
 
-.. |pca_3d_axis| image:: ../../auto_examples/decomposition/images/plot_pca_3d_1.png
+.. |pca_3d_axis| image:: ../../auto_examples/decomposition/images/plot_pca_3d_001.png
    :target: ../../auto_examples/decomposition/plot_pca_3d.html
    :scale: 70
 
-.. |pca_3d_aligned| image:: ../../auto_examples/decomposition/images/plot_pca_3d_2.png
+.. |pca_3d_aligned| image:: ../../auto_examples/decomposition/images/plot_pca_3d_002.png
    :target: ../../auto_examples/decomposition/plot_pca_3d.html
    :scale: 70
 
@@ -295,7 +294,7 @@ Independent Component Analysis: ICA
 a maximum amount of independent information. It is able to recover
 **non-Gaussian** independent signals:
 
-.. image:: ../../auto_examples/decomposition/images/plot_ica_blind_source_separation_1.png
+.. image:: ../../auto_examples/decomposition/images/plot_ica_blind_source_separation_001.png
    :target: ../../auto_examples/decomposition/plot_ica_blind_source_separation.html
    :scale: 70
    :align: center

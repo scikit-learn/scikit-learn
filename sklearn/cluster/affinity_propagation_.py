@@ -174,7 +174,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
 ###############################################################################
 
 class AffinityPropagation(BaseEstimator, ClusterMixin):
-    """Perform Affinity Propagation Clustering of data
+    """Perform Affinity Propagation Clustering of data.
 
     Parameters
     ----------
@@ -186,7 +186,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         of estimated clusters that stops the convergence.
 
     max_iter : int, optional, default: 200
-        Maximum number of iterations
+        Maximum number of iterations.
 
     copy : boolean, optional, default: True
         Make a copy of input data.
@@ -213,7 +213,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         Indices of cluster centers
 
     `cluster_centers_` : array, shape (n_clusters, n_features)
-        Cluster centers (if affinity != ``precomputed'').
+        Cluster centers (if affinity != ``precomputed``).
 
     `labels_` : array, shape (n_samples,)
         Labels of each point
@@ -249,7 +249,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
 
     @property
     def _pairwise(self):
-        return self.affinity is "precomputed"
+        return self.affinity == "precomputed"
 
     def fit(self, X):
         """ Create affinity matrix from negative euclidean distances, then
@@ -263,9 +263,9 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
             similarities / affinities.
         """
 
-        if self.affinity is "precomputed":
+        if self.affinity == "precomputed":
             self.affinity_matrix_ = X
-        elif self.affinity is "euclidean":
+        elif self.affinity == "euclidean":
             self.affinity_matrix_ = -euclidean_distances(X, squared=True)
         else:
             raise ValueError("Affinity must be 'precomputed' or "

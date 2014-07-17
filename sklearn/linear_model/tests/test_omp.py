@@ -10,6 +10,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import check_skip_travis
 
 
 from sklearn.linear_model import (orthogonal_mp, orthogonal_mp_gram,
@@ -115,32 +116,15 @@ def test_estimator():
 
     omp.set_params(fit_intercept=False, normalize=False)
 
-    assert_warns(DeprecationWarning, omp.fit, X, y[:, 0], Gram=G, Xy=Xy[:, 0])
+    omp.fit(X, y[:, 0])
     assert_equal(omp.coef_.shape, (n_features,))
     assert_equal(omp.intercept_, 0)
     assert_true(np.count_nonzero(omp.coef_) <= n_nonzero_coefs)
 
-    assert_warns(DeprecationWarning, omp.fit, X, y, Gram=G, Xy=Xy)
+    omp.fit(X, y)
     assert_equal(omp.coef_.shape, (n_targets, n_features))
     assert_equal(omp.intercept_, 0)
     assert_true(np.count_nonzero(omp.coef_) <= n_targets * n_nonzero_coefs)
-
-
-def test_scaling_with_gram():
-    omp1 = OrthogonalMatchingPursuit(n_nonzero_coefs=1,
-                                     fit_intercept=False, normalize=False)
-    omp2 = OrthogonalMatchingPursuit(n_nonzero_coefs=1,
-                                     fit_intercept=True, normalize=False)
-    omp3 = OrthogonalMatchingPursuit(n_nonzero_coefs=1,
-                                     fit_intercept=False, normalize=True)
-
-    f, w = assert_warns, DeprecationWarning
-    f(w, omp1.fit, X, y, Gram=G)
-    f(w, omp1.fit, X, y, Gram=G, Xy=Xy)
-    f(w, omp2.fit, X, y, Gram=G)
-    f(w, omp2.fit, X, y, Gram=G, Xy=Xy)
-    f(w, omp3.fit, X, y, Gram=G)
-    f(w, omp3.fit, X, y, Gram=G, Xy=Xy)
 
 
 def test_identical_regressors():
@@ -188,6 +172,8 @@ def test_omp_path():
 
 
 def test_omp_cv():
+    # FIXME: This test is unstable on Travis, see issue #3190 for more detail.
+    check_skip_travis()
     y_ = y[:, 0]
     gamma_ = gamma[:, 0]
     ompcv = OrthogonalMatchingPursuitCV(normalize=True, fit_intercept=False,
