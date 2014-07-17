@@ -94,13 +94,20 @@ def test_kneighbors():
     for i in range(n_iter):
         n_neighbors = np.random.randint(0, samples)
         point = X[np.random.randint(0, samples)]
-        neighbors = lshf.kneighbors(point, n_neighbors=n_neighbors, 
+        neighbors = lshf.kneighbors(point, n_neighbors=n_neighbors,
                                     return_distance=False)
         # Desired number of neighbors should be returned.
         assert_equal(neighbors.shape[1], n_neighbors)
 
     # Test whether a value error is raised when X=None
     assert_raises(ValueError, lshf.kneighbors, None)
+
+    # Multiple points
+    n_points = 10
+    points = X[np.random.randint(0, samples, n_points)]
+    neighbors = lshf.kneighbors(points, n_neighbors=1,
+                                return_distance=False)
+    assert_equal(neighbors.shape[0], n_points)
 
 
 def test_distances():
@@ -115,10 +122,11 @@ def test_distances():
     for i in range(n_iter):
         n_neighbors = np.random.randint(0, samples)
         point = X[np.random.randint(0, samples)]
-        neighbors = lshf.kneighbors(point, n_neighbors=n_neighbors,
-                                    return_distance=True)
+        neighbors, distances = lshf.kneighbors(point,
+                                               n_neighbors=n_neighbors,
+                                               return_distance=True)
         # Returned distances should be in sorted order.
-        assert_array_equal(neighbors[1][0], np.sort(neighbors[1][0]))
+        assert_array_equal(distances[0], np.sort(distances[0]))
 
 
 def test_fit():
@@ -136,18 +144,46 @@ def test_fit():
 
     # _input_array = X
     assert_array_equal(X, lshf._input_array)
-
     # A hash function g(p) for each tree
     assert_equal(n_trees, lshf.hash_functions_.shape[0])
-
     # Hash length = 32
     assert_equal(32, lshf.hash_functions_.shape[1])
-
     # Number of trees in the forest
     assert_equal(n_trees, lshf._trees.shape[0])
-
     # Each tree has entries for every data point
     assert_equal(samples, lshf._trees.shape[1])
+    # Original indices after sorting the hashes
+    assert_equal(n_trees, lshf._original_indices.shape[0])
+    # Each set of original indices in a tree has entries for every data point
+    assert_equal(samples, lshf._original_indices.shape[1])
+
+
+def test_insert():
+    samples = 1000
+    dim = 50
+    X = np.random.rand(samples, dim)
+
+    lshf = LSHForest()
+    # Test unfitted estimator
+    assert_raises(ValueError, lshf.insert, X[0])
+
+    lshf.fit(X)
+
+    # Insert wrong dimension
+    assert_raises(ValueError, lshf.insert,
+                  np.random.randn(dim-1))
+    # Insert 2D array
+    assert_raises(ValueError, lshf.insert,
+                  np.random.randn(dim, 2))
+
+    lshf.insert(np.random.randn(dim))
+
+    # size of _input_array = samples + 1 after insertion
+    assert_equal(lshf._input_array.shape[0], samples+1)
+    # size of _original_indices[1] = samples + 1
+    assert_equal(lshf._original_indices.shape[1], samples+1)
+    # size of _trees[1] = samples + 1
+    assert_equal(lshf._trees.shape[1], samples+1)
 
 
 if __name__ == "__main__":

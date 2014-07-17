@@ -354,7 +354,11 @@ class LSHForest(BaseEstimator):
                 neighs, dists = self._query(X[i], self.n_neighbors)
                 neighbors.append(neighs)
                 distances.append(dists)
-            return np.array(neighbors), np.array(distances)
+
+            if return_distance:
+                return np.array(neighbors), np.array(distances)
+            else:
+                return np.array(neighbors)
 
     def insert(self, item):
         """
@@ -366,6 +370,10 @@ class LSHForest(BaseEstimator):
         item: array_like, shape (n_features, )
             New data point to be inserted into the LSH Forest.
         """
+        if not hasattr(self, 'hash_functions_'):
+            raise ValueError("estimator should be fitted before"
+                             " inserting.")
+
         item = safe_asarray(item)
 
         if item.ndim != 1:
@@ -375,6 +383,11 @@ class LSHForest(BaseEstimator):
                              " fitted array does not match.")
 
         input_array_shape = self._input_array.shape[0]
+        trees = np.empty((self.n_trees, input_array_shape + 1),
+                         dtype=int)
+        original_incides = np.empty((self.n_trees,
+                                     input_array_shape + 1),
+                                    dtype=int)
         for i in range(self.n_trees):
             projections = np.array(np.dot(self.hash_functions_[i],
                                           item) > 0, dtype=int)
@@ -384,10 +397,14 @@ class LSHForest(BaseEstimator):
             # gets the position to be added in the tree.
             position = self._trees[i].searchsorted(bin_query)
             # adds the hashed value into the tree.
-            self._trees[i].itemset(position, bin_query)
+            trees[i] = np.insert(self._trees[i],
+                                 position, bin_query)
             # add the entry into the original_indices.
-            self._original_indices[i].itemset(position,
-                                              input_array_shape)
+            original_incides[i] = np.insert(self._original_indices[i],
+                                            position,
+                                            input_array_shape)
+        self._trees = trees
+        self._original_indices = original_incides
 
         # adds the entry into the input_array.
         self._input_array = np.row_stack((self._input_array, item))
