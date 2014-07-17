@@ -141,7 +141,7 @@ def _parallel_predict_regression(trees, X):
 
 
 def _parallel_apply(tree, X):
-    """Private helper function for parallizing calls to apply in a forest."""
+    """Private helper function for parallelizing calls to apply in a forest."""
     return tree.tree_.apply(X)
 
 
@@ -255,7 +255,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
                              " if bootstrap=True")
 
         # Assign chunk of trees to jobs
-        n_jobs, n_trees, starts = _partition_estimators(self)
+        n_jobs, n_trees, starts = _partition_estimators(
+            n_estimators=self.n_estimators, n_jobs=self.n_jobs)
         trees = []
 
         for i in range(self.n_estimators):
@@ -460,7 +461,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             X = check_array(X, dtype=DTYPE)
 
         # Assign chunk of trees to jobs
-        n_jobs, n_trees, starts = _partition_estimators(self)
+        n_jobs, n_trees, starts = _partition_estimators(
+            n_estimators=self.n_estimators, n_jobs=self.n_jobs)
 
         # Parallel loop
         all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose,
@@ -570,7 +572,8 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             X = check_array(X, dtype=DTYPE)
 
         # Assign chunk of trees to jobs
-        n_jobs, n_trees, starts = _partition_estimators(self)
+        n_jobs, n_trees, starts = _partition_estimators(
+            n_estimators=self.n_estimators, n_jobs=self.n_jobs)
 
         # Parallel loop
         all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose,
