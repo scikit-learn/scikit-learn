@@ -71,7 +71,7 @@ def _logistic_loss_and_grad(w, X, y, alpha, sample_weight=None):
     alpha : float
         Regularization parameter. alpha is equal to 1 / C.
 
-    sample_weight: ndarray, shape (n_samples,) optional
+    sample_weight : ndarray, shape (n_samples,) optional
         Array of weights that are assigned to individual samples.
         If not provided, then each sample is given unit weight.
 
@@ -122,7 +122,7 @@ def _logistic_loss(w, X, y, alpha, sample_weight=None):
     alpha : float
         Regularization parameter. alpha is equal to 1 / C.
 
-    sample_weight: ndarray, shape (n_samples,) optional
+    sample_weight : ndarray, shape (n_samples,) optional
         Array of weights that are assigned to individual samples.
         If not provided, then each sample is given unit weight.
 
@@ -158,7 +158,7 @@ def _logistic_loss_grad_hess(w, X, y, alpha, sample_weight=None):
     alpha : float
         Regularization parameter. alpha is equal to 1 / C.
 
-    sample_weight: ndarray, shape (n_samples,) optional
+    sample_weight : ndarray, shape (n_samples,) optional
         Array of weights that are assigned to individual samples.
         If not provided, then each sample is given unit weight.
 
@@ -327,9 +327,23 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     # the class_weights are assigned after masking the labels with a OvA.
     sample_weight = np.ones(X.shape[0])
     le = LabelEncoder()
+
     if isinstance(class_weight, dict):
-        class_weight = compute_class_weight(class_weight, n_classes, y)
-        sample_weight = class_weight[le.fit_transform(y)]
+        if solver == "liblinear":
+            if n_classes.size == 2:
+                # Reconstruct the weights with keys 1 and -1
+                temp = {}
+                temp[1] = class_weight[pos_class]
+                temp[-1] = class_weight[n_classes[0]]
+                class_weight = temp.copy()
+            else:
+                raise ValueError("In LogisticRegressionCV the liblinear solver "
+                                 "cannot handle multiclass with class_weight "
+                                 "of type dict. Use the lbfgs, newton-cg "
+                                 "solvers or set class_weight='auto'")
+        else:
+            class_weight_ = compute_class_weight(class_weight, n_classes, y)
+            sample_weight = class_weight_[le.fit_transform(y)]
 
     mask = (y == pos_class)
     y[mask] = 1
@@ -338,8 +352,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     # To take care of object dtypes
     y = as_float_array(y, copy=False)
     if class_weight == "auto":
-        class_weight = compute_class_weight(class_weight, [-1, 1], y)
-        sample_weight = class_weight[le.fit_transform(y)]
+        class_weight_ = compute_class_weight(class_weight, [-1, 1], y)
+        sample_weight = class_weight_[le.fit_transform(y)]
 
     if fit_intercept:
         w0 = np.zeros(X.shape[1] + 1)
