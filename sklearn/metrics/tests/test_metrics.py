@@ -2622,9 +2622,9 @@ def check_sample_weight_invariance(name, metric, y1, y2):
                                    sample_weight=sample_weight_zeroed)
     assert_almost_equal(
         weighted_score_subset, weighted_score_zeroed,
-        err_msg="Zeroing weights does not give the same result as "
-            "removing the corresponding samples (%f != %f) for %s" % (
-                weighted_score_zeroed, weighted_score_subset, name))
+        err_msg=("Zeroing weights does not give the same result as "
+                 "removing the corresponding samples (%f != %f) for %s" %
+                 (weighted_score_zeroed, weighted_score_subset, name)))
 
     if not name.startswith('unnormalized'):
         # check that the score is invariant under scaling of the weights by a
@@ -2658,12 +2658,10 @@ def test_sample_weight_invariance():
         metric = ALL_METRICS[name]
         yield check_sample_weight_invariance, name, metric, y1, y2
 
-
     # multilabel sequence
     y_true = 2 * [(1, 2, ), (1, ), (0, ), (0, 1), (1, 2)]
     y_pred = 2 * [(0, 2, ), (2, ), (0, ), (2, ), (1,)]
     y_score = random_state.randn(10, 3)
-
 
     for name in MULTILABELS_METRICS:
         if name in METRICS_WITHOUT_SAMPLE_WEIGHT:
