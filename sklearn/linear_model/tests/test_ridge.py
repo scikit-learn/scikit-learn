@@ -105,8 +105,7 @@ def test_ridge_singular():
     X = np.concatenate((X, X), axis=0)
 
     ridge = Ridge(alpha=0)
-    ridge.fit(X, y)
-    assert_greater(ridge.score(X, y), 0.9)
+    assert_raises(linalg.LinAlgError, ridge.fit, X, y)
 
 
 def test_ridge_sample_weights():

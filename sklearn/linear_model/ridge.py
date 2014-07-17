@@ -165,6 +165,28 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None):
         return dual_coefs.T
 
 
+def _solve_cholesky_auto(X, y, alpha, sample_weight=None):
+    n_samples, n_features = X.shape
+
+    if n_features > n_samples:
+        K = safe_sparse_dot(X, X.T, dense_output=True)
+        try:
+            dual_coef = _solve_cholesky_kernel(K, y, alpha, sample_weight)
+
+            coef = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
+        except linalg.LinAlgError:
+            raise linalg.LinAlgError("Singular matrix. "
+                                     "Try solver='svd' instead.")
+    else:
+        try:
+            coef = _solve_cholesky(X, y, alpha, sample_weight)
+        except linalg.LinAlgError:
+            raise linalg.LinAlgError("Singular matrix. "
+                                     "Try solver='svd' instead.")
+
+    return coef
+
+
 def _solve_svd(X, y, alpha):
     U, s, Vt = linalg.svd(X, full_matrices=False)
     idx = s > 1e-15  # same default value as scipy.linalg.pinv
@@ -185,6 +207,68 @@ def _deprecate_dense_cholesky(solver):
         solver = 'cholesky'
 
     return solver
+
+
+def _resolve_solver(solver, X, sample_weight):
+    has_sw = sample_weight is not None
+
+    if solver == 'auto':
+        # cholesky if it's a dense array and cg in
+        # any other case
+        if not sparse.issparse(X) or has_sw:
+            solver = 'cholesky'
+        else:
+            solver = 'sparse_cg'
+
+    if has_sw:
+        if solver != "cholesky":
+            warnings.warn("sample_weight and class_weight not"
+                          " supported in %s, fall back to "
+                          "cholesky." % solver)
+            solver = 'cholesky'
+
+    return solver
+
+
+def _check_y(y):
+    if y.ndim > 2:
+        raise ValueError("Target y has the wrong shape %s" % str(y.shape))
+
+    ravel = False
+    if y.ndim == 1:
+        y = y.reshape(-1, 1)
+        ravel = True
+
+    return y, ravel
+
+
+def _check_X_y(X, y):
+    n_samples, n_features = X.shape
+    n_samples_, n_targets = y.shape
+    if n_samples != n_samples_:
+        raise ValueError("Number of samples in X and y does not correspond:"
+                         " %d != %d" % (n_samples, n_samples_))
+
+
+def _check_alpha(alpha, y):
+    n_targets = y.shape[1]
+    # There should be either 1 or n_targets penalties
+    alpha = safe_asarray(alpha).ravel()
+    if alpha.size not in [1, n_targets]:
+        raise ValueError("Number of targets and number of penalties "
+                         "do not correspond: %d != %d"
+                         % (alpha.size, n_targets))
+
+    if alpha.size == 1 and n_targets > 1:
+        alpha = np.repeat(alpha, n_targets)
+
+    return alpha
+
+
+def _check_sw(sample_weight):
+    if sample_weight is not None:
+        if np.atleast_1d(sample_weight).ndim > 1:
+            raise ValueError("Sample weights must be 1D array or scalar")
 
 
 def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
@@ -250,58 +334,15 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     This function won't compute the intercept.
     """
 
-    n_samples, n_features = X.shape
-
-    if y.ndim > 2:
-        raise ValueError("Target y has the wrong shape %s" % str(y.shape))
-
-    ravel = False
-    if y.ndim == 1:
-        y = y.reshape(-1, 1)
-        ravel = True
-
-    n_samples_, n_targets = y.shape
-
-    if n_samples != n_samples_:
-        raise ValueError("Number of samples in X and y does not correspond:"
-                         " %d != %d" % (n_samples, n_samples_))
-
-    has_sw = sample_weight is not None
+    y, ravel = _check_y(y)
+    _check_X_y(X, y)
 
     solver = _deprecate_dense_cholesky(solver)
+    solver = _resolve_solver(solver, X, sample_weight)
 
-    if solver == 'auto':
-        # cholesky if it's a dense array and cg in
-        # any other case
-        if not sparse.issparse(X) or has_sw:
-            solver = 'cholesky'
-        else:
-            solver = 'sparse_cg'
+    _check_sw(sample_weight)
 
-    elif solver == 'lsqr' and not hasattr(sp_linalg, 'lsqr'):
-        warnings.warn("""lsqr not available on this machine, falling back
-                      to sparse_cg.""")
-        solver = 'sparse_cg'
-
-    if has_sw:
-        if np.atleast_1d(sample_weight).ndim > 1:
-            raise ValueError("Sample weights must be 1D array or scalar")
-
-        if solver != "cholesky":
-            warnings.warn("sample_weight and class_weight not"
-                          " supported in %s, fall back to "
-                          "cholesky." % solver)
-            solver = 'cholesky'
-
-    # There should be either 1 or n_targets penalties
-    alpha = safe_asarray(alpha).ravel()
-    if alpha.size not in [1, n_targets]:
-        raise ValueError("Number of targets and number of penalties "
-                         "do not correspond: %d != %d"
-                         % (alpha.size, n_targets))
-
-    if alpha.size == 1 and n_targets > 1:
-        alpha = np.repeat(alpha, n_targets)
+    alpha = _check_alpha(alpha, y)
 
     if solver not in ('sparse_cg', 'cholesky', 'svd', 'lsqr'):
         raise ValueError('Solver %s not understood' % solver)
@@ -313,25 +354,9 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         coef = _solve_lsqr(X, y, alpha, max_iter, tol)
 
     elif solver == 'cholesky':
-        if n_features > n_samples:
-            K = safe_sparse_dot(X, X.T, dense_output=True)
-            try:
-                dual_coef = _solve_cholesky_kernel(K, y, alpha,
-                                                         sample_weight)
+        coef = _solve_cholesky_auto(X, y, alpha, sample_weight)
 
-                coef = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
-            except linalg.LinAlgError:
-                # use SVD solver if matrix is singular
-                solver = 'svd'
-
-        else:
-            try:
-                coef = _solve_cholesky(X, y, alpha, sample_weight)
-            except linalg.LinAlgError:
-                # use SVD solver if matrix is singular
-                solver = 'svd'
-
-    if solver == 'svd':
+    elif solver == 'svd':
         coef = _solve_svd(X, y, alpha)
 
     if ravel:
@@ -357,6 +382,7 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
     def fit(self, X, y, sample_weight=None):
         X = safe_asarray(X, dtype=np.float)
         y = np.asarray(y, dtype=np.float)
+        n_samples, n_features = X.shape
 
         if ((sample_weight is not None) and
             np.atleast_1d(sample_weight).ndim > 1):
@@ -367,6 +393,8 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
             sample_weight=sample_weight)
 
         solver = _deprecate_dense_cholesky(self.solver)
+        solver = _resolve_solver(solver, X, sample_weight)
+        self.solver_ = solver
 
         self.coef_ = ridge_regression(X, y,
                                       alpha=self.alpha,
