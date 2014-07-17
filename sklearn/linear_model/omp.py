@@ -557,17 +557,13 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
     decomposition.sparse_encode
 
     """
-    def __init__(self, copy_X=None, copy_Gram=None, copy_Xy=None,
-                 n_nonzero_coefs=None, tol=None, fit_intercept=True,
+    def __init__(self, n_nonzero_coefs=None, tol=None, fit_intercept=True,
                  normalize=True, precompute='auto'):
         self.n_nonzero_coefs = n_nonzero_coefs
         self.tol = tol
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.precompute = precompute
-        self.copy_Gram = copy_Gram
-        self.copy_Xy = copy_Xy
-        self.copy_X = copy_X
 
     def fit(self, X, y, Gram=None, Xy=None):
         """Fit the model using X, y as training data.
@@ -601,32 +597,9 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
 
         precompute = self.precompute
 
-        if self.copy_Gram is not None:
-            warnings.warn("copy_Gram will be removed in 0.15."
-                          " Use the orthogonal_mp function for"
-                          " low level memory control.",
-                          DeprecationWarning, stacklevel=2)
-            copy_Gram = self.copy_Gram
-        else:
-            copy_Gram = True
-
-        if self.copy_Xy is not None:
-            warnings.warn("copy_Xy will be removed in 0.15."
-                          " Use the orthogonal_mp function for"
-                          " low level memory control.",
-                          DeprecationWarning, stacklevel=2)
-            copy_Xy = self.copy_Xy
-        else:
-            copy_Xy = True
-
-        if self.copy_X is not None:
-            warnings.warn("copy_X will be removed in 0.15."
-                          " Use the orthogonal_mp function for"
-                          " low level memory control.",
-                          DeprecationWarning, stacklevel=2)
-            copy_X = self.copy_X
-        else:
-            copy_X = True
+        copy_Gram = True
+        copy_Xy = True
+        copy_X = True
 
         if Gram is not None:
             warnings.warn("Gram will be removed in 0.15."
@@ -856,7 +829,6 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         best_n_nonzero_coefs = np.argmin(mse_folds.mean(axis=0)) + 1
         self.n_nonzero_coefs_ = best_n_nonzero_coefs
         omp = OrthogonalMatchingPursuit(n_nonzero_coefs=best_n_nonzero_coefs,
-                                        copy_X=None,
                                         fit_intercept=self.fit_intercept,
                                         normalize=self.normalize)
         omp.fit(X, y)
