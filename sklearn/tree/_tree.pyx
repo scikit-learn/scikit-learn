@@ -1231,8 +1231,7 @@ cdef class BestSplitter(Splitter):
                     for split_categories in xrange(2**(n_categories-1)):
                         # The first category is always in the right branch.
                         # It doesn't change anything because of symmetry
-                        # TODO how to calculate the impurities using
-                        # outcome_by_cat ?
+                        
                         self.criterion.update_factors(split_categories)
 
                         # Reject if min_weight_leaf is not satisfied
