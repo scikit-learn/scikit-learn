@@ -17,16 +17,9 @@ python setup.py build_ext --inplace
 export SKLEARN_SKIP_NETWORK_TESTS=1
 
 if [[ "$COVERAGE" == "true" ]]; then
-    CONVERAGE_FLAGS="--with-coverage"
+    make test-coverage
 else
-    CONVERAGE_FLAGS=""
+    make test
 fi
-
-# Disable joblib tests that use multiprocessing on travis as they tend to cause
-# random crashes when calling `os.fork()`:
-#   OSError: [Errno 12] Cannot allocate memory
-nosetests -s -v $CONVERAGE_FLAGS --with-noseexclude \
-  --exclude-test-file=continuous_integration/exclude_joblib_mp.txt \
-  sklearn
 
 make test-doc test-sphinxext
