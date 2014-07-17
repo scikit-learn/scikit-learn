@@ -88,9 +88,9 @@ def test_ridge():
 
 def test_primal_dual_relationship():
     y = y_diabetes.reshape(-1, 1)
-    coef = _solve_cholesky(X_diabetes, y, alpha=[1e-2])
+    coef = _solve_cholesky(X_diabetes, y, alpha=[1e-2])[0]
     K = np.dot(X_diabetes, X_diabetes.T)
-    dual_coef = _solve_cholesky_kernel(K, y, alpha=[1e-2])
+    dual_coef = _solve_cholesky_kernel(K, y, alpha=[1e-2])[0]
     coef2 = np.dot(X_diabetes.T, dual_coef).T
     assert_array_almost_equal(coef, coef2)
 
@@ -555,10 +555,10 @@ def test_ridge_sample_weights_in_feature_space():
         sample_weights = 1. + (rng.randn(n_samples) ** 2) * 10
 
         coef_sample_space = _solve_cholesky_kernel(K, Y_noisy, alpha,
-                                         sample_weight=sample_weights)
+                                         sample_weight=sample_weights)[0]
 
         coef_feature_space = _solve_cholesky(X, Y_noisy, alpha,
-                                         sample_weight=sample_weights)
+                                         sample_weight=sample_weights)[0]
 
         assert_array_almost_equal(X.T.dot(coef_sample_space),
                                   coef_feature_space.T)
@@ -741,3 +741,62 @@ def test_raises_value_error_if_solver_not_supported():
         ridge_regression(X, y, alpha=1., solver=wrong_solver)
 
     assert_raise_message(exception, message, func)
+
+
+def test_ret_std_exceptions():
+    X, y = datasets.make_regression(n_samples=50, n_features=5, random_state=0)
+
+    ridge = Ridge(alpha=1.0, solver="cholesky").fit(X, y)
+    assert_raises(ValueError, ridge.predict, X, ret_std=True)
+
+
+def test_ret_std():
+    X, y = datasets.make_regression(n_samples=50, n_features=5, random_state=0)
+
+    ridge = Ridge(alpha=100.0, with_std=True, solver="cholesky").fit(X, y)
+    pred, std = ridge.predict(X, ret_std=True)
+
+    # Naive computation using "inv".
+    A = np.dot(X.T, X) + np.eye(X.shape[1]) * ridge.alpha
+    Ainv = linalg.inv(A)
+    var = [1 + np.dot(np.dot(X[i], Ainv), X[i]) for i in
+           xrange(X.shape[0])]
+
+    assert_array_almost_equal(std, np.sqrt(var), 2)
+
+    # Naive computation using "inv" in the dual.
+    K = np.dot(X, X.T) / ridge.alpha
+    A = K + np.eye(X.shape[0])
+    Ainv = linalg.inv(A)
+    var = [K[i, i] + 1 - np.dot(np.dot(K[i], Ainv), K[i]) for i in
+           xrange(X.shape[0])]
+    assert_array_almost_equal(std, np.sqrt(var), 2)
+
+
+def test_ret_std_dual():
+    X, y = datasets.make_regression(n_samples=10, n_features=50, random_state=0)
+
+    ridge = Ridge(alpha=100.0, with_std=True, solver="cholesky").fit(X, y)
+
+    # Doesn't work yet.
+    #pred, std = ridge.predict(X, ret_std=True)
+
+    # Computation using Cholesky decomposition in the dual.
+    K = np.dot(X, X.T) / ridge.alpha
+    C = K + np.eye(X.shape[0])
+    L = linalg.cholesky(C, lower=True)
+    V = linalg.solve_triangular(L, K.T, lower=True)
+    v = np.sum(V * V, axis=0)
+    X_sqnorms = np.sum(X * X, axis=1) / ridge.alpha
+    #X_sqnorms = K.flat[::X.shape[0] + 1]
+    var = X_sqnorms + 1 - v
+    std = np.sqrt(var)
+
+    # Naive computation using "inv" in the dual.
+    K = np.dot(X, X.T) / ridge.alpha
+    A = K + np.eye(X.shape[0])
+    Ainv = linalg.inv(A)
+    var = [K[i, i] + 1 - np.dot(np.dot(K[i], Ainv), K[i]) for i in
+           xrange(X.shape[0])]
+
+    assert_array_almost_equal(std, np.sqrt(var), 2)

@@ -85,6 +85,12 @@ def _solve_lsqr(X, y, alpha, max_iter=None, tol=1e-3):
     return coefs
 
 
+def _solve_system_cholesky(A, b):
+    L = linalg.cholesky(A, lower=True)
+    z = linalg.solve_triangular(L, b, lower=True)
+    return linalg.solve_triangular(L.T, z), L
+
+
 def _solve_cholesky(X, y, alpha, sample_weight=None):
     # w = inv(X^t X + alpha*Id) * X.T y
     n_samples, n_features = X.shape
@@ -107,16 +113,22 @@ def _solve_cholesky(X, y, alpha, sample_weight=None):
 
     if one_alpha:
         A.flat[::n_features + 1] += alpha[0]
-        return linalg.solve(A, Xy, sym_pos=True,
-                            overwrite_a=True).T
+        #return linalg.solve(A, Xy, sym_pos=True,
+                            #overwrite_a=True).T
+        coef, L = _solve_system_cholesky(A, Xy)
+        return coef.T, L
     else:
         coefs = np.empty([n_targets, n_features])
+        L = []
         for coef, target, current_alpha in zip(coefs, Xy.T, alpha):
             A.flat[::n_features + 1] += current_alpha
-            coef[:] = linalg.solve(A, target, sym_pos=True,
-                                   overwrite_a=False).ravel()
+            #coef[:] = linalg.solve(A, target, sym_pos=True,
+                                   #overwrite_a=False).ravel()
+            _coef, l = _solve_system_cholesky(A, target)
+            coef[:] = _coef.ravel()
+            L.append(l)
             A.flat[::n_features + 1] -= current_alpha
-        return coefs
+        return coefs, L
 
 
 def _solve_cholesky_kernel(K, y, alpha, sample_weight=None):
@@ -137,7 +149,8 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None):
         # Only one penalty, we can solve multi-target problems in one time.
         K.flat[::n_samples + 1] += alpha[0]
 
-        dual_coef = linalg.solve(K, y, sym_pos=True, overwrite_a=True)
+        #dual_coef = linalg.solve(K, y, sym_pos=True, overwrite_a=True)
+        dual_coef, L = _solve_system_cholesky(K, y)
 
         # K is expensive to compute and store in memory so change it back in
         # case it was user-given.
@@ -146,23 +159,27 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None):
         if has_sw:
             dual_coef *= sw[:, np.newaxis]
 
-        return dual_coef
+        return dual_coef, L
     else:
         # One penalty per target. We need to solve each target separately.
         dual_coefs = np.empty([n_targets, n_samples])
+        L = []
 
         for dual_coef, target, current_alpha in zip(dual_coefs, y.T, alpha):
             K.flat[::n_samples + 1] += current_alpha
 
-            dual_coef[:] = linalg.solve(K, target, sym_pos=True,
-                                        overwrite_a=False).ravel()
+            #dual_coef[:] = linalg.solve(K, target, sym_pos=True,
+                                        #overwrite_a=False).ravel()
+            _dual_coef, l = _solve_system_cholesky(K, target)
+            dual_coef[:] = _dual_coef.ravel()
+            L.append(l)
 
             K.flat[::n_samples + 1] -= current_alpha
 
         if has_sw:
             dual_coefs *= sw[np.newaxis, :]
 
-        return dual_coefs.T
+        return dual_coefs.T, L
 
 
 def _solve_cholesky_auto(X, y, alpha, sample_weight=None):
@@ -171,7 +188,7 @@ def _solve_cholesky_auto(X, y, alpha, sample_weight=None):
     if n_features > n_samples:
         K = safe_sparse_dot(X, X.T, dense_output=True)
         try:
-            dual_coef = _solve_cholesky_kernel(K, y, alpha, sample_weight)
+            dual_coef, L = _solve_cholesky_kernel(K, y, alpha, sample_weight)
 
             coef = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
         except linalg.LinAlgError:
@@ -179,12 +196,12 @@ def _solve_cholesky_auto(X, y, alpha, sample_weight=None):
                                      "Try solver='svd' instead.")
     else:
         try:
-            coef = _solve_cholesky(X, y, alpha, sample_weight)
+            coef, L = _solve_cholesky(X, y, alpha, sample_weight)
         except linalg.LinAlgError:
             raise linalg.LinAlgError("Singular matrix. "
                                      "Try solver='svd' instead.")
 
-    return coef
+    return coef, L
 
 
 def _solve_svd(X, y, alpha):
@@ -354,7 +371,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         coef = _solve_lsqr(X, y, alpha, max_iter, tol)
 
     elif solver == 'cholesky':
-        coef = _solve_cholesky_auto(X, y, alpha, sample_weight)
+        coef = _solve_cholesky_auto(X, y, alpha, sample_weight)[0]
 
     elif solver == 'svd':
         coef = _solve_svd(X, y, alpha)
@@ -370,7 +387,8 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
 
     @abstractmethod
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
-                 copy_X=True, max_iter=None, tol=1e-3, solver="auto"):
+                 copy_X=True, max_iter=None, tol=1e-3, solver="auto",
+                 with_std=False):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -378,6 +396,7 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
         self.max_iter = max_iter
         self.tol = tol
         self.solver = solver
+        self.with_std = with_std
 
     def fit(self, X, y, sample_weight=None):
         X = safe_asarray(X, dtype=np.float)
@@ -396,14 +415,70 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
         solver = _resolve_solver(solver, X, sample_weight)
         self.solver_ = solver
 
-        self.coef_ = ridge_regression(X, y,
-                                      alpha=self.alpha,
-                                      sample_weight=sample_weight,
-                                      max_iter=self.max_iter,
-                                      tol=self.tol,
-                                      solver=solver)
+        if self.with_std and solver != "cholesky":
+            raise ValueError("In order to use with_std, solver should be "
+                             "'cholesky'.")
+
+        if solver == "cholesky":
+            y, ravel = _check_y(y)
+            _check_X_y(X, y)
+            _check_sw(sample_weight)
+            alpha = _check_alpha(self.alpha, y)
+            coef, L = _solve_cholesky_auto(X, y, alpha, sample_weight)
+
+            if ravel:
+                coef = coef.ravel()
+
+            self.coef_ = coef
+
+            if self.with_std:
+                self.L_ = L
+
+                if n_features > n_samples:
+                    self.X_fit_ = X
+        else:
+            self.coef_ = ridge_regression(X, y,
+                                          alpha=self.alpha,
+                                          sample_weight=sample_weight,
+                                          max_iter=self.max_iter,
+                                          tol=self.tol,
+                                          solver=solver)
         self._set_intercept(X_mean, y_mean, X_std)
         return self
+
+
+    def _predict_var(self, X):
+        if not self.with_std:
+            raise ValueError("ret_std can only be used if constructor "
+                             "option with_std is set to True.")
+
+
+        if hasattr(self, "X_fit_"):
+            # Dual case
+            K = np.dot(X, self.X_fit_.T)
+            V = linalg.solve_triangular(self.L_, K.T, lower=True)
+            X_sqnorms = np.sum(X * X, axis=1)
+            var = X_sqnorms + 1 - np.sum(V * V, axis=0)
+        else:
+            # Primal case
+            if sparse.issparse(X):
+                raise ValueError("ret_std can only be used with dense arrays "
+                                 " if n_samples > n_features.")
+
+            V = linalg.solve_triangular(self.L_, X.T, lower=True)
+            var = 1 + np.sum(V * V, axis=0)
+
+        return var
+
+    def predict(self, X, ret_std=False):
+        X = safe_asarray(X)
+        pred = safe_sparse_dot(X, self.coef_.T,
+                               dense_output=True) + self.intercept_
+
+        if ret_std:
+            return pred, np.sqrt(self._predict_var(X))
+        else:
+            return pred
 
 
 class Ridge(_BaseRidge, RegressorMixin):
@@ -489,10 +564,12 @@ class Ridge(_BaseRidge, RegressorMixin):
           normalize=False, solver='auto', tol=0.001)
     """
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
-                 copy_X=True, max_iter=None, tol=1e-3, solver="auto"):
+                 copy_X=True, max_iter=None, tol=1e-3, solver="auto",
+                 with_std=False):
         super(Ridge, self).__init__(alpha=alpha, fit_intercept=fit_intercept,
                                     normalize=normalize, copy_X=copy_X,
-                                    max_iter=max_iter, tol=tol, solver=solver)
+                                    max_iter=max_iter, tol=tol, solver=solver,
+                                    with_std=with_std)
 
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model
