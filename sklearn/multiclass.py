@@ -293,8 +293,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Returns
         -------
-            y : {array-like, sparse matrix}, shape = [n_samples] or
-                [n_samples, n_classes]. Predicted multi-class targets.
+        y : {array-like, sparse matrix}, shape = [n_samples] or
+            [n_samples, n_classes]. Predicted multi-class targets.
         """
         self._check_is_fitted()
 
