@@ -510,23 +510,6 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
         very large. Note that if you already have such matrices, you can pass
         them directly to the fit method.
 
-    copy_X : bool, optional
-        Whether the design matrix X must be copied by the algorithm. A false
-        value is only helpful if X is already Fortran-ordered, otherwise a
-        copy is made anyway.
-        WARNING : will be deprecated in 0.15
-
-    copy_Gram : bool, optional
-        Whether the gram matrix must be copied by the algorithm. A false
-        value is only helpful if X is already Fortran-ordered, otherwise a
-        copy is made anyway.
-        WARNING : will be deprecated in 0.15
-
-    copy_Xy : bool, optional
-        Whether the covariance vector Xy must be copied by the algorithm.
-        If False, it may be overwritten.
-        WARNING : will be deprecated in 0.15
-
     Attributes
     ----------
     `coef_` : array, shape (n_features,) or (n_features, n_targets)
