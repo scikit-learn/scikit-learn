@@ -565,7 +565,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
         self.normalize = normalize
         self.precompute = precompute
 
-    def fit(self, X, y, Gram=None, Xy=None):
+    def fit(self, X, y):
         """Fit the model using X, y as training data.
 
         Parameters
@@ -575,15 +575,6 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
 
         y : array-like, shape (n_samples,) or (n_samples, n_targets)
             Target values.
-
-        Gram : array-like, shape (n_features, n_features) (optional)
-            Gram matrix of the input data: X.T * X
-            WARNING : will be deprecated in 0.15
-
-        Xy : array-like, shape (n_features,) or (n_features, n_targets)
-            (optional)
-            Input targets multiplied by X: X.T * y
-            WARNING : will be deprecated in 0.15
 
 
         Returns
@@ -598,35 +589,8 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
         precompute = self.precompute
 
         copy_Gram = True
-        copy_Xy = True
         copy_X = True
-
-        if Gram is not None:
-            warnings.warn("Gram will be removed in 0.15."
-                          " Use the orthogonal_mp function for"
-                          " low level memory control.",
-                          DeprecationWarning, stacklevel=2)
-
-        if Xy is not None:
-            warnings.warn("Xy will be removed in 0.15."
-                          " Use the orthogonal_mp function for"
-                          " low level memory control.",
-                          DeprecationWarning, stacklevel=2)
-
-        if (Gram is not None or Xy is not None) and (self.fit_intercept
-                                                     or self.normalize):
-            warnings.warn('Mean subtraction (fit_intercept) and normalization '
-                          'cannot be applied on precomputed Gram and Xy '
-                          'matrices. Your precomputed values are ignored and '
-                          'recomputed. To avoid this, do the scaling yourself '
-                          'and call with fit_intercept and normalize set to '
-                          'False.', RuntimeWarning, stacklevel=2)
-            Gram, Xy = None, None
-
-        if Gram is not None:
-            precompute = Gram
-            if Xy is not None and copy_Xy:
-                Xy = Xy.copy()
+        Xy = None
 
         X, y, X_mean, y_mean, X_std, Gram, Xy = \
             _pre_fit(X, y, Xy, precompute, self.normalize, self.fit_intercept,
