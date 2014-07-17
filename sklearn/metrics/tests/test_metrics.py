@@ -1419,11 +1419,6 @@ def test_losses_at_limits():
     assert_almost_equal(r2_score([0., 1], [0., 1]), 1.00, 2)
 
 
-def test_r2_one_case_error():
-    # test whether r2_score raises error given one point
-    assert_raises(ValueError, r2_score, [0], [0])
-
-
 @ignore_warnings
 def test_symmetry():
     """Test the symmetry of score and loss functions"""
@@ -2314,11 +2309,11 @@ def test_prf_warnings():
         # single postive label
         msg = ('Precision and F-score are ill-defined and '
                'being set to 0.0 due to no predicted samples.')
-        my_assert(w, msg, f, [1, 1], [-1, -1], average='macro')
+        my_assert(w, msg, f, [1, 1], [-1, -1], labels=[1], average='macro')
 
         msg = ('Recall and F-score are ill-defined and '
                'being set to 0.0 due to no true samples.')
-        my_assert(w, msg, f, [-1, -1], [1, 1], average='macro')
+        my_assert(w, msg, f, [-1, -1], [1, 1], labels=[1], average='macro')
 
 
 def test_recall_warnings():
