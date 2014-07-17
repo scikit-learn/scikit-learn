@@ -470,8 +470,15 @@ def check_transformer_pickle(name, Transformer, X, y):
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
         transformer = Transformer()
+
     if not hasattr(transformer, 'transform'):
         return
+
+    if 'n_iter' in transformer.get_params():
+        # Make sure that the fit runs fast: we are not interested in
+        # convergence quality in this test.
+        transformer.set_params(n_iter=5)
+
     set_random_state(transformer)
     if hasattr(transformer, 'compute_importances'):
         transformer.compute_importances = True

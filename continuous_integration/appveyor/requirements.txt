@@ -7,5 +7,4 @@
 numpy
 scipy
 nose
-nose-exclude
 wheel

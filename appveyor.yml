@@ -49,12 +49,11 @@ build: false
 test_script:
   # Change to a non-source folder to make sure we run the tests on the
   # installed library.
-  - "SET PROJECT_DIR=%CD%"
   - "cd C:\\"
 
   # Skip joblib tests that require multiprocessing as they are prone to random
   # slow down
-  - "python -c \"import nose; nose.main()\" -v -s --with-noseexclude --exclude-test-file=%PROJECT_DIR%/continuous_integration/exclude_joblib_mp.txt sklearn"
+  - "python -c \"import nose; nose.main()\" -v -s sklearn"
 
 artifacts:
   # Archive the generated wheel package in the ci.appveyor.com build report.
