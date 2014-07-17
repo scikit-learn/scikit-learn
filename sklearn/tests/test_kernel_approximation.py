@@ -304,6 +304,7 @@ def test_V_is_gaussian():
     assert_array_almost_equal(means, np.zeros(means.shape[0]), decimal=1)
     assert_array_almost_equal(deviations, np.power(fastfood.sigma, -2)*np.ones(means.shape[0]), decimal=1)
 
+########     Performance Analysis    #################
 
 def test_compare_performance_of_scaling_matrix_generation():
     """comparison between scaling generation methods"""
@@ -340,7 +341,7 @@ def test_fastfood():
     gamma = 10.
     kernel = rbf_kernel(X, Y, gamma=gamma)
 
-    sigma = np.sqrt(1 / (2 * gamma))*2
+    sigma = np.sqrt(1 / (2 * gamma))
 
     # approximate kernel mapping
     ff_transform = Fastfood(sigma, n_components=1000, random_state=42)
@@ -361,7 +362,7 @@ def test_fastfood_fast():
     gamma = 10.
     kernel = rbf_kernel(X, Y, gamma=gamma)
     
-    sigma = np.sqrt(1 / (2 * gamma))*2
+    sigma = np.sqrt(1 / (2 * gamma))
     
     # approximate kernel mapping
     ff_transform = Fastfood(sigma, n_components=1000, random_state=42)
@@ -378,24 +379,32 @@ def test_fastfood_fast():
     assert_array_almost_equal(kernel, kernel_approx, decimal=1)
 
 
-def test_fastfood_performance_to_rks():
+def test_fastfood_performance_comparison_between_methods():
     """compares the performance of Fastfood and RKS"""
     #generate data
-    X = rng.random_sample(size=(1000, 2000))
-    Y = rng.random_sample(size=(1000, 000))
+    X = rng.random_sample(size=(5000, 1000))
+    Y = rng.random_sample(size=(5000, 1000))
     X /= X.sum(axis=1)[:, np.newaxis]
     Y /= Y.sum(axis=1)[:, np.newaxis]
 
     # calculate feature maps
     gamma = 10.
-    sigma = np.sqrt(1 / (2 * gamma))*2
+    sigma = np.sqrt(1 / (2 * gamma))
     number_of_features_to_generate = 1000
+
+
+    exact_start = datetime.datetime.utcnow()
+    # original rbf kernel method: 
+    rbf_kernel(X, X, gamma=gamma)
+    rbf_kernel(X, Y, gamma=gamma)
+    exact_end = datetime.datetime.utcnow()
+    exact_spent_time = exact_end- exact_start
 
     fastfood_start = datetime.datetime.utcnow()
     # Fastfood: approximate kernel mapping
     rbf_transform = Fastfood(sigma=sigma, n_components=number_of_features_to_generate, random_state=42)
-    #X_trans_fastfood = rbf_transform.fit_transform(X)
-    #Y_trans_fastfood = rbf_transform.transform(Y)
+    X_trans_fastfood = rbf_transform.fit_transform(X)
+    Y_trans_fastfood = rbf_transform.transform(Y)
     fastfood_end = datetime.datetime.utcnow()
     fastfood_spent_time =fastfood_end- fastfood_start
     #print X_trans, Y_trans
@@ -404,8 +413,8 @@ def test_fastfood_performance_to_rks():
     fastfood_fast_one_step_start = datetime.datetime.utcnow()
     # Fastfood: approximate kernel mapping
     rbf_transform = Fastfood(sigma=sigma, n_components=number_of_features_to_generate, random_state=42)
-    X_trans_fastfood_fast_one_step = rbf_transform.fit(X).transform_fast_one_step(X)
-    Y_trans_fastfood_fast_one_step = rbf_transform.transform_fast_one_step(Y)
+    #X_trans_fastfood_fast_one_step = rbf_transform.fit(X).transform_fast_one_step(X)
+    #Y_trans_fastfood_fast_one_step = rbf_transform.transform_fast_one_step(Y)
     fastfood_fast_one_step_end = datetime.datetime.utcnow()
     fastfood_fast_one_step_spent_time =fastfood_fast_one_step_end- fastfood_fast_one_step_start
     #print X_trans, Y_trans
@@ -428,6 +437,7 @@ def test_fastfood_performance_to_rks():
     Y_trans_rks = rks_rbf_transform.transform(Y)
     rks_end = datetime.datetime.utcnow()
     rks_spent_time =rks_end- rks_start
+    print "Timimg exact rbf: \t\t", exact_spent_time
     print "Timimg fastfood: \t\t", fastfood_spent_time
     print "Timimg fastfood fast one step: \t" ,fastfood_fast_one_step_spent_time
     print "Timimg fastfood fast: \t\t", fastfood_fast_spent_time

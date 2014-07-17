@@ -576,7 +576,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
     @staticmethod
     def approx_fourier_transformation(result):
         return fht.fht1(result, normalized=False)
-        # return dct(result, norm=None)
+        #return dct(result, norm=None)
 
     @staticmethod
     def hadamard(X):
@@ -587,6 +587,9 @@ class Fastfood(BaseEstimator, TransformerMixin):
         """
         # the fast hadamard transform
         return fht.fht2(X, axes=0, normalized=False)
+
+        # the fast cosine transform, yields other mappings :-(
+        # return dct(X.astype(float), norm=None)
 
         # full multiplication with explicit hadamard matrix
         #H = (1 / (X.shape[0] * np.sqrt(2))) * hadamard(X.shape[0])
@@ -632,17 +635,17 @@ class Fastfood(BaseEstimator, TransformerMixin):
 
     def create_approximation_matrix_fast(self, S, x):
         """ Create V from HGPHB and S """
-        SHGPHBx = S*x
-        return 1 / (self.sigma * np.sqrt(self.d)) * SHGPHBx
+        return 1 / (self.sigma * np.sqrt(self.d)) * S*x
 
     @staticmethod
     def phi(V, X):
-        return (1 / np.sqrt(V.shape[0])) * np.cos(np.dot(V, X.T))
+        X_mapped = np.dot(V, X.T)
+        return (1 / np.sqrt(V.shape[0])) * np.vstack([np.cos(X_mapped), np.sin(X_mapped)])
 
     @staticmethod
     def phi_fast(X):
-        return (1 / np.sqrt(X.shape[0])) * np.cos(X)
-
+        return (1 / np.sqrt(X.shape[0])) * np.vstack([np.cos(X), np.sin(X)])
+    
     def fit(self, X, y=None):
 
         d_orig = X.shape[1]
@@ -656,6 +659,10 @@ class Fastfood(BaseEstimator, TransformerMixin):
 
         return self
 
+    def pad_with_zeros(self, X):
+        X_padded = np.pad(X, ((0, 0), (0, self.number_of_features_to_pad_with_zeros)), 'constant')
+        return X_padded
+
     def transform(self, X):
 
         to_stack = []
@@ -666,13 +673,11 @@ class Fastfood(BaseEstimator, TransformerMixin):
             to_stack.append(v)
         V_stacked = np.vstack(to_stack)
 
-        X_padded = np.pad(X, ((0, 0), (0, self.number_of_features_to_pad_with_zeros)), 'constant')
-
-        #print self.n, self.d, V.shape, X.shape, X_padded.shape, Fastfood.phi(V, X_padded).shape
+        X_padded = self.pad_with_zeros(X)
         return Fastfood.phi(V_stacked, X_padded).T
 
     def transform_fast(self, X):
-        X_padded = np.pad(X, ((0, 0), (0, self.number_of_features_to_pad_with_zeros)), 'constant')
+        X_padded = self.pad_with_zeros(X)
         mapped_examples = []
         for i in range(X_padded.shape[0]):
             example = []
@@ -680,14 +685,14 @@ class Fastfood(BaseEstimator, TransformerMixin):
                 B, G, P, S = self.vectors[j]
                 HGPHBx = Fastfood.create_gaussian_iid_matrix_fast(B, G, P, X_padded[i, :])
                 v = self.create_approximation_matrix_fast(S, HGPHBx)
-                example.append(v)
-            mapped_examples.append(np.hstack(example))
-        mapped_examples_as_matrix = np.vstack(mapped_examples)
-
+                example = np.append(example, v)
+            stacked_example = np.vstack(example)
+            mapped_examples.append(stacked_example)
+        mapped_examples_as_matrix = np.hstack(mapped_examples)
         return Fastfood.phi_fast(mapped_examples_as_matrix).T
 
     def transform_fast_one_step(self, X):
-        X_padded = np.pad(X, ((0, 0), (0, self.number_of_features_to_pad_with_zeros)), 'constant')
+        X_padded = self.pad_with_zeros(X)
         examples = []
         for j in range(self.times_to_stack_v):
             B, G, P, S = self.vectors[j]
