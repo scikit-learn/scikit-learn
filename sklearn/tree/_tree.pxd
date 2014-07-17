@@ -55,7 +55,7 @@ cdef class Criterion:
                    SIZE_t end, bint is_categorical) nogil
     cdef void reset(self) nogil
     cdef void update(self, SIZE_t new_pos) nogil
-    cdef void update_factors(self, PARTITION_t categorical_split) nogil
+    cdef void update_factors(self, PARTITION_t partition) nogil
     cdef double node_impurity(self) nogil
     cdef void children_impurity(self, double* impurity_left,
                                 double* impurity_right) nogil
@@ -78,7 +78,7 @@ cdef struct SplitRecord:
     double impurity_left   # Impurity of the left split.
     double impurity_right  # Impurity of the right split.
     int split_type         # Type of split: continuous or categorical
-    PARTITION_t split_categories # If categorical, the categories of the left leaf
+    PARTITION_t partition  # If categorical, the categories of the left leaf
 
 
 cdef class Splitter:

@@ -116,7 +116,7 @@ cdef class Criterion:
            the right child to the left child."""
         pass
 
-    cdef void update_factors(self, PARTITION_t categorical_split) nogil:
+    cdef void update_factors(self, PARTITION_t partition) nogil:
         """Update the collected statistics by defining the categorical split"""
         pass
 
@@ -352,7 +352,7 @@ cdef class ClassificationCriterion(Criterion):
 
         self.pos = new_pos
 
-    cdef void update_factors(self, PARTITION_t categorical_split) nogil:
+    cdef void update_factors(self, PARTITION_t partition) nogil:
         """Update the collected statistics by defining the categorical split"""
         pass #TODO
 
@@ -834,7 +834,7 @@ cdef class RegressionCriterion(Criterion):
 
         self.pos = new_pos
 
-    cdef void update_factors(self, PARTITION_t categorical_split) nogil:
+    cdef void update_factors(self, PARTITION_t partition) nogil:
         """Update the collected statistics by defining the categorical split"""
         pass #TODO
 
@@ -1099,7 +1099,7 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t* categories_tmp
         cdef SIZE_t max_categories
         cdef SIZE_t current_item
-        cdef PARTITION_t split_categories
+        cdef PARTITION_t partition
 
         cdef SIZE_t f_i = n_features
         cdef SIZE_t c_i = n_features - n_categorical
@@ -1228,11 +1228,11 @@ cdef class BestSplitter(Splitter):
                     # if there is many dummies.
                     # TODO linear time algo for binary classification and reg
                     # TODO sample splits otherwise if n_categories>=8
-                    for split_categories in xrange(2**(n_categories-1)):
+                    for partition in xrange(2**(n_categories-1)):
                         # The first category is always in the right branch.
                         # It doesn't change anything because of symmetry
 
-                        self.criterion.update_factors(split_categories)
+                        self.criterion.update_factors(partition)
 
                         # Reject if min_weight_leaf is not satisfied
                         if ((self.criterion.weighted_n_left < min_weight_leaf) or
@@ -1247,7 +1247,7 @@ cdef class BestSplitter(Splitter):
                             best.impurity_left = current.impurity_left
                             best.impurity_right = current.impurity_right
                             best.improvement = current.improvement
-                            best.split_categories = split_categories
+                            best.partition = partition
                             best.feature = current.feature
 
                             best = current  # copy
@@ -1265,7 +1265,7 @@ cdef class BestSplitter(Splitter):
                             best.impurity_right = current.impurity_right
                             best.improvement = current.improvement
                             best.feature = current.feature
-                            best.split_categories = split_categories
+                            best.partition = partition
                             best.split_type = CATEGORICAL
 
                 else:
@@ -1347,13 +1347,13 @@ cdef class BestSplitter(Splitter):
                 if is_left_var(
                     X[X_sample_stride * samples[p] +
                                     X_fx_stride * best.feature],
-                    best.split_categories, categories):
+                    best.partition, categories):
                         p += 1
                 else:
                     while not is_left_var(
                         X[X_sample_stride * samples[right_p] +
                                         X_fx_stride * best.feature],
-                        best.split_categories, categories) and p < right_p:
+                        best.partition, categories) and p < right_p:
                             right_p -= 1
                     tmp = samples[right_p]
                     samples[right_p] = samples[p]
