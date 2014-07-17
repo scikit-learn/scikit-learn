@@ -106,7 +106,7 @@ def _check_clf_targets(y_true, y_pred):
 
     y_pred : array or indicator matrix
     """
-    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
+    y_true, y_pred = check_arrays(y_true, y_pred, force_arrays=False)
     type_true = type_of_target(y_true)
     type_pred = type_of_target(y_pred)
 

@@ -146,7 +146,10 @@ def safe_indexing(X, indices):
     indices : array-like, list
         Indices according to which X will be subsampled.
     """
-    if hasattr(X, "shape"):
+    if hasattr(X, "iloc"):
+        # Pandas Dataframes and Series
+        return X.iloc[indices]
+    elif hasattr(X, "shape"):
         return X[indices]
     else:
         return [X[idx] for idx in indices]
