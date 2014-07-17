@@ -1335,17 +1335,17 @@ def f1_score(y_true, y_pred, labels='compat', pos_label='!deprecated',
     y_pred : array-like or label indicator matrix
         Estimated targets as returned by a classifier.
 
-    labels : array
-        Integer array of labels.
-
-    pos_label : str or int, 1 by default
-        If ``average`` is not ``None`` and the classification target is binary,
-        only this class's scores will be returned.
+    labels : array-like of integers or strings (optional)
+        Specifies the order of results returned if `average` is `None`, and
+        otherwise the set of labels to take into account when averaging.
+        When `labels` is None, all labels in `y_true` and `y_pred` are used in
+        sorted order. By default, binary classification is handled specially
+        for backwards compatibility, but this feature will be removed in
+        release 0.17.
 
     average : string, [None, 'micro', 'macro', 'samples', 'weighted' (default)]
         If ``None``, the scores for each class are returned. Otherwise,
-        unless ``pos_label`` is given in binary classification, this
-        determines the type of averaging performed on the data:
+        this determines the type of averaging performed on the data:
 
         ``'micro'``:
             Calculate metrics globally by counting the total true positives,
@@ -1368,7 +1368,7 @@ def f1_score(y_true, y_pred, labels='compat', pos_label='!deprecated',
 
     Returns
     -------
-    f1_score : float or array of float, shape = [n_unique_labels]
+    f1_score : float or array of float, shape = [len(labels)]
         F1 score of the positive class in binary classification or weighted
         average of the F1 scores of each class for the multiclass task.
 
@@ -1421,17 +1421,17 @@ def fbeta_score(y_true, y_pred, beta, labels='compat', pos_label='!deprecated',
     beta: float
         Weight of precision in harmonic mean.
 
-    labels : array
-        Integer array of labels.
-
-    pos_label : str or int, 1 by default
-        If ``average`` is not ``None`` and the classification target is binary,
-        only this class's scores will be returned.
+    labels : array-like of integers or strings (optional)
+        Specifies the order of results returned if `average` is `None`, and
+        otherwise the set of labels to take into account when averaging.
+        When `labels` is None, all labels in `y_true` and `y_pred` are used in
+        sorted order. By default, binary classification is handled specially
+        for backwards compatibility, but this feature will be removed in
+        release 0.17.
 
     average : string, [None, 'micro', 'macro', 'samples', 'weighted' (default)]
         If ``None``, the scores for each class are returned. Otherwise,
-        unless ``pos_label`` is given in binary classification, this
-        determines the type of averaging performed on the data:
+        this determines the type of averaging performed on the data:
 
         ``'micro'``:
             Calculate metrics globally by counting the total true positives,
@@ -1455,7 +1455,7 @@ def fbeta_score(y_true, y_pred, beta, labels='compat', pos_label='!deprecated',
     Returns
     -------
     fbeta_score : float (if average is not None) or array of float, shape =\
-        [n_unique_labels]
+        [len(labels)]
         F-beta score of the positive class in binary classification or weighted
         average of the F-beta score of each class for the multiclass task.
 
@@ -1582,7 +1582,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels='compat',
         When `labels` is None, all labels in `y_true` and `y_pred` are used in
         sorted order. By default, binary classification is handled specially
         for backwards compatibility, but this feature will be removed in
-        release 0.16.
+        release 0.17.
 
     average : string, [None (default), 'micro', 'macro', 'samples', 'weighted']
         If ``None``, the scores for each class are returned. Otherwise,
@@ -1614,16 +1614,16 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels='compat',
     Returns
     -------
     precision: float (if average is not None) or array of float, shape =\
-        len(labels)
+        [len(labels)]
 
     recall: float (if average is not None) or array of float, , shape =\
-        len(labels)
+        [len(labels)]
 
     fbeta_score: float (if average is not None) or array of float, shape =\
-        len(labels)
+        [len(labels)]
 
     support: int (if average is not None) or array of int, shape =\
-        len(labels)
+        [len(labels)]
         The number of occurrences of each label in ``y_true``.
 
     References
@@ -1838,17 +1838,17 @@ def precision_score(y_true, y_pred, labels='compat', pos_label='!deprecated',
     y_pred : array-like or label indicator matrix
         Estimated targets as returned by a classifier.
 
-    labels : array
-        Integer array of labels.
-
-    pos_label : str or int, 1 by default
-        If ``average`` is not ``None`` and the classification target is binary,
-        only this class's scores will be returned.
+    labels : array-like of integers or strings (optional)
+        Specifies the order of results returned if `average` is `None`, and
+        otherwise the set of labels to take into account when averaging.
+        When `labels` is None, all labels in `y_true` and `y_pred` are used in
+        sorted order. By default, binary classification is handled specially
+        for backwards compatibility, but this feature will be removed in
+        release 0.17.
 
     average : string, [None, 'micro', 'macro', 'samples', 'weighted' (default)]
         If ``None``, the scores for each class are returned. Otherwise,
-        unless ``pos_label`` is given in binary classification, this
-        determines the type of averaging performed on the data:
+        this determines the type of averaging performed on the data:
 
         ``'micro'``:
             Calculate metrics globally by counting the total true positives,
@@ -1872,7 +1872,7 @@ def precision_score(y_true, y_pred, labels='compat', pos_label='!deprecated',
     Returns
     -------
     precision : float (if average is not None) or array of float, shape =\
-        [n_unique_labels]
+        [len(labels)]
         Precision of the positive class in binary classification or weighted
         average of the precision of each class for the multiclass task.
 
@@ -1920,17 +1920,17 @@ def recall_score(y_true, y_pred, labels='compat', pos_label='!deprecated',
     y_pred : array-like or label indicator matrix
         Estimated targets as returned by a classifier.
 
-    labels : array
-        Integer array of labels.
-
-    pos_label : str or int, 1 by default
-        If ``average`` is not ``None`` and the classification target is binary,
-        only this class's scores will be returned.
+    labels : array-like of integers or strings (optional)
+        Specifies the order of results returned if `average` is `None`, and
+        otherwise the set of labels to take into account when averaging.
+        When `labels` is None, all labels in `y_true` and `y_pred` are used in
+        sorted order. By default, binary classification is handled specially
+        for backwards compatibility, but this feature will be removed in
+        release 0.17.
 
     average : string, [None, 'micro', 'macro', 'samples', 'weighted' (default)]
         If ``None``, the scores for each class are returned. Otherwise,
-        unless ``pos_label`` is given in binary classification, this
-        determines the type of averaging performed on the data:
+        this determines the type of averaging performed on the data:
 
         ``'micro'``:
             Calculate metrics globally by counting the total true positives,
@@ -1954,7 +1954,7 @@ def recall_score(y_true, y_pred, labels='compat', pos_label='!deprecated',
     Returns
     -------
     recall : float (if average is not None) or array of float, shape =\
-        [n_unique_labels]
+        [len(labels)]
         Recall of the positive class in binary classification or weighted
         average of the recall of each class for the multiclass task.
 
