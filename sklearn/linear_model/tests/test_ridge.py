@@ -29,9 +29,10 @@ from sklearn.linear_model.ridge import RidgeClassifierCV
 from sklearn.linear_model.ridge import _solve_cholesky
 from sklearn.linear_model.ridge import _solve_cholesky_kernel
 from sklearn.linear_model.ridge import ridge_path
+from sklearn.linear_model.ridge import _precomp_kernel_ridge_path_eigen
 
 from sklearn.cross_validation import KFold
-
+from sklearn.cross_validation import LeaveOneOut
 
 diabetes = datasets.load_diabetes()
 X_diabetes, y_diabetes = diabetes.data, diabetes.target
@@ -706,8 +707,10 @@ def make_noisy_forward_data(
     n_samples=100,
     n_features=200,
     n_targets=10,
-    train_frac=.8, 
+    train_frac=.8,
     random_state=42):
+    """Creates a simple, dense, noisy forward linear model with multiple
+    output."""
     rng = check_random_state(random_state)
     n_train = int(train_frac * n_samples)
     train = slice(None, n_train)
@@ -747,3 +750,26 @@ def test_ridge_path():
         assert_array_almost_equal(predictions_cholesky,
                                   predictions_svd_path)
 
+
+def test__precomp_kernel_ridge_path_eigen_loov():
+
+    n_samples, n_features, n_targets = 20, 40, 10
+    X, Y, W, _, _ = make_noisy_forward_data(
+            n_samples, n_features, n_targets)
+
+    alphas = np.logspace(-3, 3, 9)
+    gramX = X.dot(X.T)
+    cv = LeaveOneOut(n_samples)
+
+    loov = _precomp_kernel_ridge_path_eigen(gramX, Y, alphas[:, np.newaxis],
+                                            mode='loov')
+
+    loov_normal = [
+        _precomp_kernel_ridge_path_eigen(
+            gramX[train[:, np.newaxis], train], Y[train], 
+            alphas[:, np.newaxis],
+            gramX[test[:, np.newaxis], train])
+        for train, test in cv]
+
+    assert_array_almost_equal(
+        loov, np.array(loov_normal).squeeze().transpose(1, 0, 2))
