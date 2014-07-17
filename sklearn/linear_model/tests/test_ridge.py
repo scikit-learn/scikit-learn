@@ -762,7 +762,7 @@ def test__precomp_kernel_ridge_path_eigen_loov():
     cv = LeaveOneOut(n_samples)
 
     loov = _precomp_kernel_ridge_path_eigen(gramX, Y, alphas[:, np.newaxis],
-                                            mode='loov')
+                                            mode='loov')[0]
 
     loov_normal = [
         _precomp_kernel_ridge_path_eigen(
@@ -773,3 +773,16 @@ def test__precomp_kernel_ridge_path_eigen_loov():
 
     assert_array_almost_equal(
         loov, np.array(loov_normal).squeeze().transpose(1, 0, 2))
+
+
+def test_ridge_svd_tall():
+    """Make sure the SVD approach also works for tall matrices"""
+
+    n_samples, n_features, n_targets = 20, 5, 2
+    X, Y, W, _, _ = make_noisy_forward_data(
+        n_samples, n_features, n_targets)
+
+    coef_svd = Ridge(alpha=1, solver='svd').fit(X, Y).coef_
+    coef_cholesky = Ridge(alpha=1, solver='cholesky').fit(X, Y).coef_
+
+    assert_array_almost_equal(coef_svd, coef_cholesky)

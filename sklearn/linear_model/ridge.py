@@ -105,12 +105,11 @@ def _precomp_kernel_ridge_path_eigen(gramX_train, Y_train, alphas,
         elif mode in ['looe', 'loov']:
             diag_rescale = (eig_vect_train ** 2).dot(
                 v_alpha_inv).transpose(1, 0, 2)
-            dual_coef /= diag_rescale
-            looe = dual_coef
-            output = looe
+            looe = dual_coef / diag_rescale
+            output = looe, dual_coef
             if mode == 'loov':
                 loov = Y_train[np.newaxis] - looe
-                output = loov
+                output = loov, dual_coef
         else:
             raise ValueError("mode not understood")
     else:
@@ -126,14 +125,15 @@ def _linear_kernel(X, Y):
 
 
 def _kernel_ridge_path_eigen(X_train, Y_train, alphas, X_test,
-                            kernel=_linear_kernel):
+                             kernel=_linear_kernel,
+                             mode='normal'):
     gramX_train = kernel(X_train, X_train)
     gramX_test = None
     if X_test is not None:
         gramX_test = kernel(X_test, X_train)
 
     return _precomp_kernel_ridge_path_eigen(gramX_train, Y_train, alphas,
-                                           gramX_test)
+                                           gramX_test, mode=mode)
 
 
 def _feature_ridge_path_eigen(X_train, Y_train, alphas, X_test=None,
@@ -186,7 +186,7 @@ def ridge_path(X_train, Y_train, alphas, X_test=None, solver="eigen"):
         since it bypasses the calculation of the feature coefficients,
         which can result in a memory and speed gain if n_features is large.
 
-    solver : str, {'eigen'}, (default 'eigen')
+    solver : str, {'eigen', 'svd'}, (default 'eigen')
         The solver to use for ridge_path.
 
     Returns
