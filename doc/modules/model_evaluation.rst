@@ -907,36 +907,33 @@ Multilabel ranking metrics
 
 .. currentmodule:: sklearn.metrics
 
-In multilabel learning, each sample can have any number of relevant labels
+In multilabel learning, each sample can have any number of ground truth labels
 associated with it. The goal is to give high scores and better rank to
-relevant labels. The :mod:`sklearn.metrics` currently implements
-the label ranking average precision.
+the ground truth labels.
 
 Label ranking average precision
 ...............................
 The :func:`label_ranking_average_precision_score` function
-implements the label ranking average precision (AP). This metric is linked to
+implements the label ranking average precision (LRAP). This metric is linked to
 the :func:`average_precision_score` function, but is based on the notion of
 label ranking instead of precision and recall.
 
-This metric will yield better score if you are able to give better rank
+Label ranking average precision (LRAP) is the average over each ground truth
+label assigned to each sample, of the ratio of true vs. total labels with lower
+score. This metric will yield better score if you are able to give better rank
 to the labels associated to each sample. The obtained score is always strictly
 greater than 0 and the best value is 1. If there is exactly one relevant
 label per sample, label ranking average precision is equivalent to the `mean
 reciprocal rank <http://en.wikipedia.org/wiki/Mean_reciprocal_rank>`.
 
-It averages over each
-sample and each relevant label :math:`r` the ratio between the number of
-relevant labels with higher or equal score to the label :math:`r` and the rank
-of the label, i.e. the number of labels with higher or equal score. Given
-a binary indicator matrix of the relevant labels
+Formally, given a binary indicator matrix of the ground truth labels
 :math:`y \in \mathcal{R}^{n_\text{samples} \times n_\text{labels}}` and the
 score associated to each label
 :math:`\hat{f} \in \mathcal{R}^{n_\text{samples} \times n_\text{labels}}`,
 the average precision is defined as
 
 .. math::
-  AP(y, \hat{f}) = \frac{1}{n_{\text{samples}}}
+  LRAP(y, \hat{f}) = \frac{1}{n_{\text{samples}}}
     \sum_{i=0}^{n_{\text{samples}} - 1} \frac{1}{|y_i|}
     \sum_{j:y_{ij} = 1} \frac{|\mathcal{L}_{ij}|}{\text{rank}_{ij}}
 
@@ -944,8 +941,6 @@ the average precision is defined as
 with :math:`\mathcal{L}_{ij} = \left\{k: y_{ik} = 1, \hat{f}_{ik} \geq \hat{f}_{ij} \right\}`,
 :math:`\text{rank}_{ij} = \left|\left\{k: \hat{f}_{ik} \geq \hat{f}_{ij} \right\}\right|`
 and :math:`|\cdot|` is the l0 norm or the cardinality of the set.
-
-
 
 Here a small example of usage of this function::
 

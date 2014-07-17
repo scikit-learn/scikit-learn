@@ -2148,12 +2148,9 @@ def hamming_loss(y_true, y_pred, classes=None):
 def label_ranking_average_precision_score(y_true, y_score):
     """Compute ranking-based average precision
 
-    For each sample, ranking-based average precision averages over
-    each relevant label r: the number of relevant labels with scores higher or
-    equal to the label r divided by the the number of labels with scores
-    higher or equal to the label r. The final score is obtained by averaging
-    over the samples. A label with higher score is thus considered as having
-    better rank.
+    Label ranking average precision (LRAP) is the average over each ground
+    truth label assigned to each sample, of the ratio of true vs. total
+    labels with lower score.
 
     This metric is used in multilabel ranking problem, where the goal
     is to give better rank to the labels associated to each sample.
