@@ -11,6 +11,7 @@ from __builtin__ import staticmethod
 import warnings
 
 import numpy as np
+from scipy.fftpack import dct
 import scipy.sparse as sp
 import fht as fht
 from scipy.linalg import svd, hadamard
@@ -573,6 +574,26 @@ class Fastfood(BaseEstimator, TransformerMixin):
         return int(d), int(n), times_to_stack_v
 
     @staticmethod
+    def approx_fourier_transformation(result):
+        return fht.fht1(result, normalized=False)
+        # return dct(result, norm=None)
+
+    @staticmethod
+    def hadamard(X):
+        """ Abstraction for the hadamard transform.
+
+        Doing this in a single function should eas testing different
+        implementations.
+        """
+        # the fast hadamard transform
+        return fht.fht2(X, axes=0, normalized=False)
+
+        # full multiplication with explicit hadamard matrix
+        #H = (1 / (X.shape[0] * np.sqrt(2))) * hadamard(X.shape[0])
+        #H = hadamard(X.shape[0])
+        # return np.dot(H, X)
+
+    @staticmethod
     def create_gaussian_iid_matrix(B, G, P):
         """ Create HGPHB from B, G and P"""
 
@@ -586,17 +607,23 @@ class Fastfood(BaseEstimator, TransformerMixin):
     @staticmethod
     def create_gaussian_iid_matrix_fast(B, G, P, x):
         """ Create mapping of a specific x from B, G and P"""
-        Bx = B*x
-        HBx = fht.fht1(Bx, normalized=False)
-        #print HBx.shape
-        PHBx = np.take(HBx, P)
-        #print PHBx.shape
+        result = B*x
+        result = Fastfood.approx_fourier_transformation(result)
+        result = np.take(result, P)
+        result = G*result
+        result = Fastfood.approx_fourier_transformation(result)
+        return result
 
-        GPHBx = G*PHBx
-        #print GPHBx.shape
-        HGPHBx = fht.fht1(GPHBx, normalized=False)
-        return HGPHBx
+    @staticmethod
+    def create_gaussian_iid_matrix_fast_one_step(B, G, P, X):
+        """ Create mapping of a specific x from B, G and P"""
+        result = np.dot(np.diag(B), X)
+        result = Fastfood.hadamard(result)
+        result = np.take(result, P, axis=0)
+        result = np.dot(np.diag(G), result)
+        result = Fastfood.hadamard(result)
 
+        return result
 
     def create_approximation_matrix(self, S, HGPHB):
         """ Create V from HGPHB and S """
@@ -615,21 +642,6 @@ class Fastfood(BaseEstimator, TransformerMixin):
     @staticmethod
     def phi_fast(X):
         return (1 / np.sqrt(X.shape[0])) * np.cos(X)
-
-    @staticmethod
-    def hadamard(X):
-        """ Abstraction for the hadamard transform.
-
-        Doing this in a single function should eas testing different
-        implementations.
-        """
-        # the fast hadamard transform
-        return fht.fht2(X, axes=0, normalized=False)
-
-        # full multiplication with explicit hadamard matrix
-        #H = (1 / (X.shape[0] * np.sqrt(2))) * hadamard(X.shape[0])
-        #H = hadamard(X.shape[0])
-        return np.dot(H, X)
 
     def fit(self, X, y=None):
 
@@ -657,15 +669,10 @@ class Fastfood(BaseEstimator, TransformerMixin):
         X_padded = np.pad(X, ((0, 0), (0, self.number_of_features_to_pad_with_zeros)), 'constant')
 
         #print self.n, self.d, V.shape, X.shape, X_padded.shape, Fastfood.phi(V, X_padded).shape
-        return Fastfood.phi(V_stacked , X_padded).T
+        return Fastfood.phi(V_stacked, X_padded).T
 
     def transform_fast(self, X):
         X_padded = np.pad(X, ((0, 0), (0, self.number_of_features_to_pad_with_zeros)), 'constant')
-<<<<<<< HEAD
-    
-        #print self.n, self.d, V.shape, X.shape, X_padded.shape, Fastfood.phi(V, X_padded).shape
-        return Fastfood.phi(V_stacked , X_padded).T
-=======
         mapped_examples = []
         for i in range(X_padded.shape[0]):
             example = []
@@ -678,4 +685,15 @@ class Fastfood(BaseEstimator, TransformerMixin):
         mapped_examples_as_matrix = np.vstack(mapped_examples)
 
         return Fastfood.phi_fast(mapped_examples_as_matrix).T
->>>>>>> - made transform fast by introducing a loop over the examples and map each one by one into featurespace without having the mapping matrix V ever represented explicitly
+
+    def transform_fast_one_step(self, X):
+        X_padded = np.pad(X, ((0, 0), (0, self.number_of_features_to_pad_with_zeros)), 'constant')
+        examples = []
+        for j in range(self.times_to_stack_v):
+            B, G, P, S = self.vectors[j]
+            HGPHBx = Fastfood.create_gaussian_iid_matrix_fast_one_step(B, G, P, X_padded.T)
+            v = self.create_approximation_matrix(S, HGPHBx)
+            examples.append(v)
+        mapped_examples_as_matrix = np.hstack(examples)
+
+        return Fastfood.phi_fast(mapped_examples_as_matrix).T
