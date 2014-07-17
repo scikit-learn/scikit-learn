@@ -114,7 +114,7 @@ def fit_ovr(estimator, X, y, n_jobs=1):
     Y = lb.fit_transform(y)
     Y = Y.tocsc()
     columns = (col.toarray().ravel() for col in Y.T)
-    # In cases where indivdual estimators are very fast to train setting
+    # In cases where individual estimators are very fast to train setting
     # n_jobs > 1 in can results in slower performance due to the overhead
     # of spawning threads.
     estimators = Parallel(n_jobs=n_jobs)(delayed(_fit_binary)
