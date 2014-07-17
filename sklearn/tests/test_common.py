@@ -1226,29 +1226,29 @@ def check_sparsify_binary_classifier(name, Estimator, X, y):
     assert_array_equal(pred, pred_orig)
 
 
-def check_estimators_not_an_array(name, Estimator, X, y):
+def check_estimators_data_not_an_array(name, Estimator, X, y):
     if name in ('CCA', '_PLS', 'PLSCanonical', 'PLSRegression'):
         raise SkipTest
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
         # separate estimators to control random seeds
-        regressor_1 = Estimator()
-        regressor_2 = Estimator()
-    set_random_state(regressor_1)
-    set_random_state(regressor_2)
+        estimator_1 = Estimator()
+        estimator_2 = Estimator()
+    set_random_state(estimator_1)
+    set_random_state(estimator_2)
 
     y_ = NotAnArray(np.asarray(y))
     X_ = NotAnArray(np.asarray(X))
 
     # fit
-    regressor_1.fit(X_, y_)
-    pred1 = regressor_1.predict(X_)
-    regressor_2.fit(X, y)
-    pred2 = regressor_2.predict(X)
+    estimator_1.fit(X_, y_)
+    pred1 = estimator_1.predict(X_)
+    estimator_2.fit(X, y)
+    pred2 = estimator_2.predict(X)
     assert_array_almost_equal(pred1, pred2, 2, name)
 
 
-def test_regressors_not_an_array():
+def test_regressors_data_not_an_array():
     regressors = all_estimators(type_filter='regressor')
     X, y = _boston_subset(n_samples=50)
     X = StandardScaler().fit_transform(X)
@@ -1260,7 +1260,7 @@ def test_regressors_not_an_array():
                multioutput_estimator_convert_y_2d(name, y))
 
 
-def test_classifiers_not_an_array():
+def test_classifiers_data_not_an_array():
     classifiers = all_estimators(type_filter='classifier')
     X = np.array([[3, 0], [0, 1], [0, 2], [1, 1], [1, 2], [2, 1]])
     y = [1, 1, 1, 2, 2, 2]
@@ -1272,7 +1272,7 @@ def test_classifiers_not_an_array():
                multioutput_estimator_convert_y_2d(name, y))
 
 
-def test_transformers_not_an_array():
+def test_transformers_data_not_an_array():
     # test if transformers do something sensible on training set
     # also test all shapes / shape errors
     transformers = all_estimators(type_filter='transformer')
