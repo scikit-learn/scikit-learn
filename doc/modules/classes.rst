@@ -930,6 +930,7 @@ See the :ref:`metrics` section of the user guide for further details.
     multiclass.OneVsRestClassifier
     multiclass.OneVsOneClassifier
     multiclass.OutputCodeClassifier
+    multiclass.LabelPowerSetClassifier
 
 .. _naive_bayes_ref:
 

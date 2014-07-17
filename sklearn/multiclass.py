@@ -2,10 +2,11 @@
 Multiclass and multilabel classification strategies
 ===================================================
 
-This module implements multiclass learning algorithms:
-    - one-vs-the-rest / one-vs-all
+This module implements multiclass and multilabel learning algorithms:
+    - one-vs-the-rest / one-vs-all / binary relevance
     - one-vs-one
     - error correcting output codes
+    - label power set
 
 The estimators provided in this module are meta-estimators: they require a base
 estimator to be provided in their constructor. For example, it is possible to
@@ -29,7 +30,8 @@ case.
 """
 
 # Author: Mathieu Blondel <mathieu@mblondel.org>
-# Author: Hamzeh Alsalhi <93hamsal@gmail.com>
+#         Hamzeh Alsalhi <93hamsal@gmail.com>
+#         Arnaud Joly <arnaud.v.joly@gmail.com>
 #
 # License: BSD 3 clause
 
@@ -47,6 +49,7 @@ from .utils.validation import _num_samples
 from .utils.validation import check_consistent_length
 from .utils.validation import check_is_fitted
 from .utils import deprecated
+from .utils.extmath import safe_sparse_dot
 from .externals.joblib import Parallel
 from .externals.joblib import delayed
 
@@ -242,11 +245,11 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     classes_ : array, shape = [`n_classes`]
         Class labels.
-    label_binarizer_ : LabelBinarizer object
+
+    `label_binarizer_` : LabelBinarizer object
         Object used to transform multiclass labels to binary labels and
         vice-versa.
-    multilabel_ : boolean
-        Whether a OneVsRestClassifier is a multilabel classifier.
+
     """
 
     def __init__(self, estimator, n_jobs=1):
@@ -793,3 +796,100 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         Y = np.array([_predict_binary(e, X) for e in self.estimators_]).T
         pred = euclidean_distances(Y, self.code_book_).argmin(axis=1)
         return self.classes_[pred]
+
+
+class LabelPowerSetClassifier(BaseEstimator, ClassifierMixin,
+                              MetaEstimatorMixin):
+    """Label power set multi-label classification strategy
+
+    Label power set is a problem transformation method. The multi-label
+    classification task is transformed into a multi-class classification
+    task: each label set presents in the training set
+    is associated to a class. The underlying estimator will learn to predict
+    the class associated to each label set.
+
+    The maximum number of classes is bounded by the number of samples and
+    the number of possible label sets in the training set. Thus leading
+    to a maximum of O(min(2^n_labels, n_samples)) generated classes.
+    This method suffers from the combinatorial explosion of possible label sets.
+    However, this strategy may take into account the correlation between the
+    labels unlike one-vs-the-rest (binary relevance).
+
+    Parameters
+    ----------
+    estimator : classifier estimator object
+        A multi-class estimator object implementing a `fit` and a `predict`
+        method.
+
+    Attributes
+    ----------
+    `label_binarizer_` : LabelBinarizer object
+        Object used to transform the classification task into a multilabel
+        classification task.
+
+    References
+    ----------
+
+    .. [1] Tsoumakas, G., & Katakis, I. (2007). "Multi-label classification:
+           An overview." International Journal of Data Warehousing and Mining
+           (IJDWM), 3(3), 1-13.
+
+    """
+    def __init__(self, estimator):
+        self.estimator = estimator
+        self.label_binarizer_ = None
+
+    def fit(self, X, y):
+        """Fit underlying estimators.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Input training data.
+
+        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
+            Output training target in label indicator format
+
+        Returns
+        -------
+        self
+        """
+        # Binarize y
+        self.label_binarizer_ = LabelBinarizer(sparse_output=True)
+        y_binary = self.label_binarizer_.fit_transform(y)
+
+        # Code in the label power set
+        encoding_matrix = np.exp2(np.arange(y_binary.shape[1])).T
+        y_coded = safe_sparse_dot(y_binary, encoding_matrix, dense_output=True)
+
+        self.estimator.fit(X, y_coded)
+
+    def predict(self, X):
+        """Predict targets using the underlying estimator.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Input data.
+
+        Returns
+        -------
+        y : (sparse) array-like, shape = [n_samples] or [n_samples, n_outputs]
+            Predicted multilabel target.
+        """
+        y_coded = self.estimator.predict(X)
+        binary_code_size = len(self.label_binarizer_.classes_)
+
+        if self.label_binarizer_.y_type_ == "binary":
+            binary_code_size = 1
+
+        shifting_vector =  2 ** np.arange(binary_code_size)
+
+        # Shift the binary representation of a class
+        y_shifted = y_coded.reshape((-1, 1)) // shifting_vector
+        y_shifted = y_shifted.astype(np.int)
+
+        # Decode y by checking the appropriate bit
+        y_decoded = np.bitwise_and(0x1, y_shifted)
+
+        return self.label_binarizer_.inverse_transform(y_decoded)

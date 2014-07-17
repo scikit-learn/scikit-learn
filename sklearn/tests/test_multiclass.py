@@ -1,18 +1,21 @@
 import numpy as np
 import scipy.sparse as sp
 
+from sklearn.cross_validation import train_test_split
+from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_greater
+
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
+from sklearn.multiclass import LabelPowerSetClassifier
 
 from sklearn.multiclass import fit_ovr
 from sklearn.multiclass import fit_ovo
@@ -616,3 +619,47 @@ def test_deprecated():
             assert_almost_equal(predict_func(estimators_, classes_or_lb,
                                              codebook, X_test),
                                 meta_est.predict(X_test))
+
+
+def test_lps_binary():
+    X, Y = datasets.make_classification(n_samples=50,
+                                        n_features=20,
+                                        random_state=0)
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, random_state=0)
+
+    lps = LabelPowerSetClassifier(LinearSVC(random_state=0))
+    lps.fit(X_train, Y_train)
+    out_lps = lps.predict(X_test)
+
+    svc = LinearSVC(random_state=0)
+    svc.fit(X_train, Y_train)
+    out_svc = svc.predict(X_test)
+
+    assert_equal(out_lps.shape, Y_test.shape)
+    assert_array_equal(out_lps, out_svc)
+
+
+def test_lps_multiclass():
+    lp = LabelPowerSetClassifier(LinearSVC(random_state=0))
+    lp.fit(iris.data, iris.target)
+    out_lp = lp.predict(iris.data)
+
+    svc = LinearSVC(random_state=0)
+    svc.fit(iris.data, iris.target)
+    out_svc = svc.predict(iris.data)
+
+    assert_array_equal(out_lp, out_svc)
+
+
+def test_lps_multilabel():
+    X, Y = datasets.make_multilabel_classification(n_samples=50,
+                                                   n_features=20,
+                                                   random_state=0,
+                                                   return_indicator=True)
+
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, random_state=0)
+
+    lps = LabelPowerSetClassifier(LinearSVC(random_state=0))
+    lps.fit(X_train, Y_train)
+    out_lps = lps.predict(X_test)
+    assert_equal(out_lps.shape, Y_test.shape)

@@ -33,7 +33,7 @@ by decomposing such problems into binary classification problems.
     several joint classification tasks. This is a generalization
     of the multi-label classification task, where the set of classification
     problem is restricted to binary classification, and of the multi-class
-    classification task. *The output format is a 2d numpy array or sparse 
+    classification task. *The output format is a 2d numpy array or sparse
     matrix.*
 
     The set of labels can be different for each output variable.
@@ -110,8 +110,9 @@ format.
 One-Vs-The-Rest
 ===============
 
-This strategy, also known as **one-vs-all**, is implemented in
-:class:`OneVsRestClassifier`.  The strategy consists in fitting one classifier
+This strategy, also known as **one-vs-all** or as **binary relevance**, is
+implemented in :class:`OneVsRestClassifier`.  The strategy consists in fitting
+one classifier
 per class. For each classifier, the class is fitted against all the other
 classes. In addition to its computational efficiency (only `n_classes`
 classifiers are needed), one advantage of this approach is its
@@ -143,9 +144,8 @@ Multilabel learning
 -------------------
 
 :class:`OneVsRestClassifier` also supports multilabel classification.
-To use this feature, feed the classifier an indicator matrix, in which cell
-[i, j] indicates the presence of label j in sample i.
-
+To use this feature, feed the classifier with a binary indicator matrix.
+In this context, one-versus-rest is also called binary relevance.
 
 .. figure:: ../auto_examples/images/plot_multilabel_001.png
     :target: ../auto_examples/plot_multilabel.html
@@ -276,3 +276,34 @@ Below is an example of multiclass learning using Output-Codes::
     .. [3] "The Elements of Statistical Learning",
         Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
         2008.
+
+
+Label power set
+===============
+
+:class:`LabelPowerSetClassifier` is a multilabel problem transformation method:
+each label set of the training is associated to one class. Once the output is
+tranformed, the :class:`LabelPowerSetClassifier`fits one classifier on the
+multi-class task. At prediction time, the classifier predicts the most relevant
+class which is translated to the corresponding label set. Since the number of
+generated classes is equal to ``O(min(2^n_labels), n_samples)``, this method
+suffers from the combinatorial explosion of possible label sets and overfit
+over the data. Nevertheless, this allows to take into account the label
+correlation contrarily to One-Vs-The-Rest.
+
+Below is an example of multi-label learning using
+:class:`LabelPowerSetClassifier`:
+
+  >>> from sklearn.datasets import make_multilabel_classification
+  >>> from sklearn.multiclass import LabelPowerSetClassifier
+  >>> from sklearn.svm import LinearSVC
+  >>> from sklearn.cross_validation import train_test_split
+  >>> from sklearn.metrics import jaccard_similarity_score
+  >>> X, y = make_multilabel_classification(return_indicator=True,
+  ...                                       n_samples=200, random_state=0)
+  >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+  >>> classifier = LabelPowerSetClassifier(LinearSVC(random_state=1))
+  >>> classifier.fit(X_train, y_train)
+  >>> y_pred = classifier.predict(X_test)
+  >>> jaccard_similarity_score(y_test, y_pred)  # doctest: +ELLIPSIS
+  0.45...
