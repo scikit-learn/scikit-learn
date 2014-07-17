@@ -124,7 +124,7 @@ def _linear_kernel(X, Y):
     return X.dot(Y.T)
 
 
-def _kernel_ridge_path_eigen(X_train, Y_train, alphas, X_test,
+def _kernel_ridge_path_eigen(X_train, Y_train, alphas, X_test=None,
                              kernel=_linear_kernel,
                              mode='normal'):
     gramX_train = kernel(X_train, X_train)
@@ -985,16 +985,27 @@ class _RidgeGCV(LinearModel):
                                score_overrides_loss=True)
         error = scorer is None
 
-        for i, alpha in enumerate(self.alphas):
-            weighted_alpha = (sample_weight * alpha
-                              if sample_weight is not None
-                              else alpha)
-            if error:
-                out, c = _errors(weighted_alpha, y, v, Q, QT_y)
-            else:
-                out, c = _values(weighted_alpha, y, v, Q, QT_y)
-            cv_values[:, i] = out.ravel()
-            C.append(c)
+        if gcv_mode == 'eigen' and not with_sw and not sparse.issparse(X):
+            alphas = np.atleast_2d(self.alphas.T).T
+            mode = 'looe' if error else 'loov'
+            out, C = _kernel_ridge_path_eigen(X, y, alphas, mode=mode)
+            if mode == 'looe':
+                out = out ** 2
+
+            # Since this object wants to choose a global penalty, we need
+            # to reshape this. I wholeheartedly disagree with this.
+            cv_values = out.transpose(1, 2, 0).reshape(-1, alphas.shape[0])
+        else:
+            for i, alpha in enumerate(self.alphas):
+                weighted_alpha = (sample_weight * alpha
+                                  if sample_weight is not None
+                                  else alpha)
+                if error:
+                    out, c = _errors(weighted_alpha, y, v, Q, QT_y)
+                else:
+                    out, c = _values(weighted_alpha, y, v, Q, QT_y)
+                cv_values[:, i] = out.ravel()
+                C.append(c)
 
         if error:
             best = cv_values.mean(axis=0).argmin()

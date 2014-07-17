@@ -786,3 +786,24 @@ def test_ridge_svd_tall():
     coef_cholesky = Ridge(alpha=1, solver='cholesky').fit(X, Y).coef_
 
     assert_array_almost_equal(coef_svd, coef_cholesky)
+
+
+def test_ridge_gcv_looe_on_dense_data():
+
+    n_samples, n_features, n_targets = 50, 10, 2
+    X, Y, W, _, _ = make_noisy_forward_data(n_samples, n_features, n_targets)
+
+    alphas = np.logspace(-3, 3, 9)
+
+    sample_weights = np.ones(len(X))
+
+    # adding sample weights will go to the old branch, without it will go
+    # to the new branch
+
+    old_coef = _RidgeGCV(alphas=alphas, gcv_mode="eigen").fit(
+        X, Y, sample_weight=sample_weights).coef_
+
+    new_coef = _RidgeGCV(alphas=alphas, gcv_mode="eigen").fit(X, Y).coef_
+
+    assert_array_almost_equal(old_coef, new_coef)
+
