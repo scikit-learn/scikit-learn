@@ -1094,7 +1094,6 @@ cdef class BestSplitter(Splitter):
         cdef int n_categorical = 0  # How many categorical features #TODO
         cdef int n_categories       # How many categories are in the column
         cdef DTYPE_t category
-        cdef int* outcome_by_cat    # What are the outcomes associated to a cat
         cdef SIZE_t* categories     # The link between a category and
                                     # 1..n_categories
         cdef SIZE_t* categories_tmp
@@ -1267,7 +1266,6 @@ cdef class BestSplitter(Splitter):
                             best.feature = current.feature
                             best.split_categories = split_categories
                             best.split_type = CATEGORICAL
-                    free(outcome_by_cat)
 
                 else:
                     # f_j is continuous and not constant
