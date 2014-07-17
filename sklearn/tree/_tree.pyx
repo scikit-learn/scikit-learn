@@ -116,7 +116,7 @@ cdef class Criterion:
            the right child to the left child."""
         pass
 
-    cdef void update_factors(self, int categorical_split) nogil:
+    cdef void update_factors(self, PARTITION_t categorical_split) nogil:
         """Update the collected statistics by defining the categorical split"""
         pass
 
@@ -352,7 +352,7 @@ cdef class ClassificationCriterion(Criterion):
 
         self.pos = new_pos
 
-    cdef void update_factors(self, int categorical_split) nogil:
+    cdef void update_factors(self, PARTITION_t categorical_split) nogil:
         """Update the collected statistics by defining the categorical split"""
         pass #TODO
 
@@ -834,7 +834,7 @@ cdef class RegressionCriterion(Criterion):
 
         self.pos = new_pos
 
-    cdef void update_factors(self, int categorical_split) nogil:
+    cdef void update_factors(self, PARTITION_t categorical_split) nogil:
         """Update the collected statistics by defining the categorical split"""
         pass #TODO
 
@@ -1099,6 +1099,7 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t* categories_tmp
         cdef SIZE_t max_categories
         cdef SIZE_t current_item
+        cdef PARTITION_t split_categories
 
         cdef SIZE_t f_i = n_features
         cdef SIZE_t c_i = n_features - n_categorical
@@ -1230,7 +1231,7 @@ cdef class BestSplitter(Splitter):
                     for split_categories in xrange(2**(n_categories-1)):
                         # The first category is always in the right branch.
                         # It doesn't change anything because of symmetry
-                        
+
                         self.criterion.update_factors(split_categories)
 
                         # Reject if min_weight_leaf is not satisfied
