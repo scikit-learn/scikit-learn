@@ -251,7 +251,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
 
 
 def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
-                  copy_X=True, return_path=False, precompute_gram=None):
+                  copy_X=True, return_path=False):
     """Orthogonal Matching Pursuit (OMP)
 
     Solves n_targets Orthogonal Matching Pursuit problems.
@@ -321,14 +321,6 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
     http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
     """
-    if precompute_gram is not None:
-        warnings.warn("precompute_gram will be removed in 0.15."
-                      " Use the precompute parameter.",
-                      DeprecationWarning, stacklevel=2)
-        precompute = precompute_gram
-
-    del precompute_gram
-
     X = array2d(X, order='F', copy=copy_X)
     copy_X = False
     y = np.asarray(y)
@@ -567,13 +559,12 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
     """
     def __init__(self, copy_X=None, copy_Gram=None, copy_Xy=None,
                  n_nonzero_coefs=None, tol=None, fit_intercept=True,
-                 normalize=True, precompute='auto', precompute_gram=None):
+                 normalize=True, precompute='auto'):
         self.n_nonzero_coefs = n_nonzero_coefs
         self.tol = tol
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.precompute = precompute
-        self.precompute_gram = precompute_gram
         self.copy_Gram = copy_Gram
         self.copy_Xy = copy_Xy
         self.copy_X = copy_X
@@ -608,13 +599,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
         y = np.asarray(y)
         n_features = X.shape[1]
 
-        if self.precompute_gram is not None:
-            warnings.warn("precompute_gram will be removed in 0.15."
-                          " Use the precompute parameter.",
-                          DeprecationWarning, stacklevel=2)
-            precompute = self.precompute_gram
-        else:
-            precompute = self.precompute
+        precompute = self.precompute
 
         if self.copy_Gram is not None:
             warnings.warn("copy_Gram will be removed in 0.15."
