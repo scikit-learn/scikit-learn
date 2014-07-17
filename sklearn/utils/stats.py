@@ -1,7 +1,6 @@
 import numpy as np
 from scipy.stats import rankdata as _sp_rankdata
 
-
 # To remove when we support scipy 0.13
 try:
     _sp_rankdata([1.], 'max')

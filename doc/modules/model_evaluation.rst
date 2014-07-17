@@ -915,11 +915,9 @@ the label ranking average precision.
 Label ranking average precision
 ...............................
 The :func:`label_ranking_average_precision_score` function
-implements the label ranking average precision (AP), which is also simply
-called mean average precision. This metric is linked to the
-:func:`average_precision_score` function, but is based on the notion of label
-ranking instead of precision and recall.
-
+implements the label ranking average precision (AP). This metric is linked to
+the :func:`average_precision_score` function, but is based on the notion of
+label ranking instead of precision and recall.
 
 This metric will yield better score if you are able to give better rank
 to the labels associated to each sample. The obtained score is always strictly
