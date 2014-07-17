@@ -907,7 +907,8 @@ Multilabel ranking metrics
 
 .. currentmodule:: sklearn.metrics
 
-The goal in multilabel ranking is to give high scores and better rank to
+In multilabel learning, each sample can have any number of relevant labels
+associated with it. The goal is to give high scores and better rank to
 relevant labels. The :mod:`sklearn.metrics` currently implements
 the label ranking average precision.
 
@@ -915,13 +916,14 @@ Label ranking average precision
 ...............................
 The :func:`label_ranking_average_precision_score` function
 implements the label ranking average precision (AP), which is also simply
-called mean average precision. This metric is linked to the :func:`average_precision_score` function, but is based on the notion of label
+called mean average precision. This metric is linked to the
+:func:`average_precision_score` function, but is based on the notion of label
 ranking instead of precision and recall.
 
 
-This metrics will yield better score if you are able to give better rank
+This metric will yield better score if you are able to give better rank
 to the labels associated to each sample. The obtained score is always strictly
-greater than 0 and the best value is one. If there is exactly one relevant
+greater than 0 and the best value is 1. If there is exactly one relevant
 label per sample, label ranking average precision is equivalent to the `mean
 reciprocal rank <http://en.wikipedia.org/wiki/Mean_reciprocal_rank>`.
 

@@ -2148,18 +2148,18 @@ def hamming_loss(y_true, y_pred, classes=None):
 def label_ranking_average_precision_score(y_true, y_score):
     """Compute ranking-based average precision
 
-    For each sample, ranking-based average precision average over
+    For each sample, ranking-based average precision averages over
     each relevant label r: the number of relevant labels with scores higher or
     equal to the label r divided by the the number of labels with scores
     higher or equal to the label r. The final score is obtained by averaging
     over the samples. A label with higher score is thus considered as having
     better rank.
 
-    This metrics is used in multilabel ranking problem, where the goal
+    This metric is used in multilabel ranking problem, where the goal
     is to give better rank to the labels associated to each sample.
 
     The obtained score is always strictly greater than 0 and
-    the best value is one.
+    the best value is 1.
 
     Parameters
     ----------
