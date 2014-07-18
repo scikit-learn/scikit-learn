@@ -148,8 +148,8 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         n_samples = X.shape[0]
         weights = _get_weights(neigh_dist, self.weights)
 
+        # XXX Unnecessary if fit is changed to give sparse matrix in all cases
         if not self.sparse_target_input_:
-            # XXX Remove when sparse matrix comes from fit
             _y = sp.csc_matrix(_y)
 
         data = np.array([], dtype=classes_[0].dtype)
@@ -174,9 +174,9 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         y_pred = sp.csc_matrix((data, indices, indptr), (n_samples, n_outputs),
                                dtype=np.intp)
 
+        # XXX Unnecessary if fit is changed to give sparse matrix in all cases
         if not self.sparse_target_input_:
-            y_pred = y_pred.toarray()  # XXX remove this
-            # XXX remove this for sparse, sparse matricies cant have str data
+            y_pred = y_pred.toarray()
             y_pred = classes_k[y_pred]
 
         if not self.outputs_2d_:
