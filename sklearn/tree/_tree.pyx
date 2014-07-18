@@ -1181,6 +1181,8 @@ cdef class BestSplitter(Splitter):
 
         cdef DTYPE_t* X = self.X
         cdef DTYPE_t* Xf = self.feature_values
+        cdef SIZE_t* Xi
+        cdef DTYPE_t* y
         cdef SIZE_t X_sample_stride = self.X_sample_stride
         cdef SIZE_t X_fx_stride = self.X_fx_stride
         cdef SIZE_t max_features = self.max_features
@@ -1214,6 +1216,7 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t n_total_constants = n_known_constants
         cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
+        cdef bint is_constant
 
         _init_split(&best, end)
 
@@ -1270,35 +1273,36 @@ cdef class BestSplitter(Splitter):
 
                 current.feature = features[f_j]
 
-                # Sort samples along that feature; first copy the feature
-                # values for the active samples into Xf, s.t.
-                # Xf[i] == X[samples[i], j], so the sort uses the cache more
-                # effectively.
-                for p in range(start, end):
-                    Xf[p] = X[X_sample_stride * samples[p] +
-                              X_fx_stride * current.feature]
+                if f_j >= c_i:
+                    # f_j is categorical
+                
+                    Xi = <SIZE_t*>malloc(sizeof(SIZE_t) * (end-start+1))
+                    y = <DTYPE_t*>malloc(sizeof(DTYPE_t) * (end-start+1))
+                    is_constant = True
+                    for p in range(start, end):
+                        Xi[p] = int(X[X_sample_stride * samples[p] +
+                                      X_fx_stride * current.feature])
+                        y[p] = self.y[p]
+                        if Xi[p] != Xi[0]:
+                            is_constant = False
+    
+                    if is_constant:
+                        # If f_j is constant so we add it to the constants features
+                        features[f_j] = features[n_total_constants]
+                        features[n_total_constants] = current.feature
+    
+                        n_found_constants += 1
+                        n_total_constants += 1
+                        continue
 
-                sort(Xf + start, samples + start, end - start)
-
-                if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
-                    # If f_j is constant so we add it to the constants features
-                    features[f_j] = features[n_total_constants]
-                    features[n_total_constants] = current.feature
-
-                    n_found_constants += 1
-                    n_total_constants += 1
-
-                elif f_j >= c_i:
-                    # f_j is categorical and not constant
                     f_i -= 1
                     features[f_i], features[f_j] = features[f_j], features[f_i]
 
                     # We find the categories that are in the data
-                    # As a reminder, Xf is composed of integers
                     max_categories = 0
                     categories = <int *>malloc(sizeof(int))
                     for p in xrange(start, end):
-                        current_item = int(Xf[p])
+                        current_item = Xi[p]
                         if current_item > max_categories:
                             # We resize the array
                             categories_tmp = <int *>malloc(
@@ -1332,17 +1336,17 @@ cdef class BestSplitter(Splitter):
                         # In this case, the best split is c_j1...c_jk and
                         # c_j(k+1)...c_jn, with the categories c_i are
                         # reorganized with mean(y[c_ji]) <= mean( y[c_j(i+1)])
-                        sort(y + start, Xf + start, end - start)
+                        sort(y + start, Xi + start, end - start)
                         category = -1
                         partition = 0x0
                         p = start - 1
                         while p < end:
                             p += 1
                             while (p + 1 < end and
-                                   int(Xf[p + 1]) == category):
+                                   Xi[p + 1] == category):
                                 p += 1
                             if p < end:
-                                partition |= 1 << int(Xf[p])
+                                partition |= 1 << Xi[p]
                                 # Reject if min_samples_leaf is not guaranteed
                                 if (((p - start) < min_samples_leaf) or
                                         ((end - p) < min_samples_leaf)):
@@ -1406,8 +1410,31 @@ cdef class BestSplitter(Splitter):
                             best.partition = partition
                             best.split_type = CATEGORICAL
 
+                    free(Xi)
+                    free(y)
+
                 else:
-                    # f_j is continuous and not constant
+                    # f_j is continuous
+
+                    # Sort samples along that feature; first copy the feature
+                    # values for the active samples into Xf, s.t.
+                    # Xf[i] == X[samples[i], j], so the sort uses the cache more
+                    # effectively.
+                    for p in range(start, end):
+                        Xf[p] = X[X_sample_stride * samples[p] +
+                                  X_fx_stride * current.feature]
+
+                    sort(Xf + start, samples + start, end - start)
+
+                    if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
+                        # If f_j is constant so we add it to the constants features
+                        features[f_j] = features[n_total_constants]
+                        features[n_total_constants] = current.feature
+
+                        n_found_constants += 1
+                        n_total_constants += 1
+                        continue
+
                     f_i -= 1
                     features[f_i], features[f_j] = features[f_j], features[f_i]
 
