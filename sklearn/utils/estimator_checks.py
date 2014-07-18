@@ -113,6 +113,7 @@ def check_transformer(name, Transformer):
     X = StandardScaler().fit_transform(X)
     X -= X.min()
     _check_transformer(name, Transformer, X, y)
+    _check_transformer(name, Transformer, X.tolist(), y.tolist())
 
 
 def check_transformer_data_not_an_array(name, Transformer):
@@ -414,6 +415,8 @@ def check_clustering(name, Alg):
 
     # fit
     alg.fit(X)
+    # with lists
+    alg.fit(X.tolist())
 
     assert_equal(alg.labels_.shape, (n_samples,))
     pred = alg.labels_
@@ -484,6 +487,8 @@ def check_classifiers_train(name, Classifier):
 
         # fit
         classifier.fit(X, y)
+        # with lists
+        classifier.fit(X.tolist(), y.tolist())
         assert_true(hasattr(classifier, "classes_"))
         y_pred = classifier.predict(X)
         assert_equal(y_pred.shape, (n_samples,))
@@ -669,6 +674,7 @@ def check_regressors_train(name, Regressor):
         y_ = y
     set_random_state(regressor)
     regressor.fit(X, y_)
+    regressor.fit(X.tolist(), y_.tolist())
     regressor.predict(X)
 
       # TODO: find out why PLS and CCA fail. RANSAC is random
