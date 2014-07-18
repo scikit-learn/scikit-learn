@@ -401,6 +401,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         scores_sd = (scores_sd / self.n_estimators -
                      scores**2) / (self.n_estimators - 1)
         np.sqrt(scores_sd, scores_sd)
+        scores_sd = np.where(scores_sd < np.finfo(np.double).eps,
+                             np.finfo(np.double).eps, scores_sd, )
         scores /= scores_sd
         self.oob_feature_importances_ = scores / np.sum(scores)
 
@@ -678,6 +680,8 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
         scores_sd = (scores_sd / self.n_estimators -
                      scores**2) / (self.n_estimators - 1)
         np.sqrt(scores_sd, scores_sd)
+        scores_sd = np.where(scores_sd < np.finfo(np.double).eps,
+                             np.finfo(np.double).eps, scores_sd)
         scores /= scores_sd
         self.oob_feature_importances_ = scores / np.sum(scores)
 
