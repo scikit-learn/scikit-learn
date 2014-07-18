@@ -12,6 +12,7 @@ from .utils import check_random_state
 from .utils.validation import safe_asarray
 from sklearn.utils import deprecated
 from scipy import stats
+from .utils import weighted_quantiles
 
 
 class DummyClassifier(BaseEstimator, ClassifierMixin):
@@ -338,7 +339,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             return self.constant_
         raise AttributeError
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the random regressor.
 
         Parameters
@@ -349,6 +350,9 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             Target values.
+
+        sample_weight : array-like of shape = [n_samples], optional
+            Sample weights.
 
         Returns
         -------
@@ -365,10 +369,16 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         self.output_2d_ = (y.ndim == 2)
 
         if self.strategy == "mean":
-            self.constant_ = np.reshape(np.mean(y, axis=0), (1, -1))
+            self.constant_ = np.reshape(np.average(y, axis=0,
+                                                   weights=sample_weight),
+                                        (1, -1))
 
         elif self.strategy == "median":
-            self.constant_ = np.reshape(np.median(y, axis=0), (1, -1))
+            if not sample_weight:
+                self.constant_ = np.reshape(np.median(y, axis=0), (1, -1))
+            else:
+                self.constant_ = np.reshape(
+                    weighted_quantiles(y, sample_weight, 0.5), (1, -1))
 
         elif self.strategy == "constant":
             if self.constant is None:
@@ -389,9 +399,14 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
                 raise ValueError("`alpha` must be in (0, 1.0) but was %r"
                                  % self.alpha)
             else:
-                self.constant_ = np.reshape(
-                    stats.scoreatpercentile(y, self.alpha * 100.0, axis=0),
-                                           (1, -1))
+                if not sample_weight:
+                    self.constant_ = np.reshape(
+                        stats.scoreatpercentile(y, self.alpha * 100.0, axis=0),
+                        (1, -1))
+                else:
+                    self.constant_ = np.reshape(
+                        weighted_quantiles(y, sample_weight, self.alpha),
+                        (1, -1))
 
         self.n_outputs_ = np.size(self.constant_)  # y.shape[1] is not safe
         return self
