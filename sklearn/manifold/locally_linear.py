@@ -304,7 +304,7 @@ def locally_linear_embedding(
             M.flat[::M.shape[0] + 1] += 1  # W = W - I = W - I
 
     elif method == 'hessian':
-        dp = n_components * (n_components + 1) / 2
+        dp = n_components * (n_components + 1) // 2
 
         if n_neighbors <= n_components + dp:
             raise ValueError("for method='hessian', n_neighbors must be "
