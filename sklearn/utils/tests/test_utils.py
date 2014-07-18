@@ -5,7 +5,8 @@ import scipy.sparse as sp
 from scipy.linalg import pinv2
 
 from sklearn.utils.testing import (assert_equal, assert_raises, assert_true,
-                                   assert_almost_equal, assert_array_equal)
+                                   assert_almost_equal, assert_array_equal,
+                                   SkipTest)
 
 from sklearn.utils import check_random_state
 from sklearn.utils import deprecated
@@ -14,6 +15,7 @@ from sklearn.utils import safe_mask
 from sklearn.utils import column_or_1d
 from sklearn.utils import safe_indexing
 from sklearn.utils.extmath import pinvh
+from sklearn.utils.mocking import MockDataFrame
 
 
 def test_make_rng():
@@ -151,3 +153,25 @@ def test_safe_indexing():
     X_arrays = safe_indexing(np.array(X), inds)
     assert_array_equal(np.array(X_inds), X_arrays)
     assert_array_equal(np.array(X_inds), np.array(X)[inds])
+
+
+def test_safe_indexing_pandas():
+    try:
+        import pandas as pd
+    except ImportError:
+        raise SkipTest("Pandas not found")
+    X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    X_df = pd.DataFrame(X)
+    inds = np.array([1, 2])
+    X_df_indexed = safe_indexing(X_df, inds)
+    X_indexed = safe_indexing(X_df, inds)
+    assert_array_equal(np.array(X_df_indexed), X_indexed)
+
+
+def test_safe_indexing_mock_pandas():
+    X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    X_df = MockDataFrame(X)
+    inds = np.array([1, 2])
+    X_df_indexed = safe_indexing(X_df, inds)
+    X_indexed = safe_indexing(X_df, inds)
+    assert_array_equal(np.array(X_df_indexed), X_indexed)

@@ -29,6 +29,11 @@ Bug fixes
 
 API changes summary
 -------------------
+    
+    - :class:`GridSearchCV <grid_search.GridSearchCV>` and
+      :func:`cross_val_score <cross_validation.cross_val_score>` and other
+      meta-estimators don't convert pandas DataFrames into arrays any more,
+      allowing DataFrame specific operations in custom estimators.
 
 
 .. _changes_0_15:

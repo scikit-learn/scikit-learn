@@ -184,17 +184,17 @@ def check_arrays(*arrays, **options):
     It is possible to enforce certain properties, such as dtype, continguity
     and sparse matrix format (if a sparse matrix is passed).
 
-    Converting lists to arrays can be disabled by setting ``allow_lists=True``.
-    Lists can then contain arbitrary objects and are not checked for dtype,
-    finiteness or anything else but length. Arrays are still checked
-    and possibly converted.
+    Converting lists to arrays can be disabled by setting ``force_arrays=False``.
+    Lists or pandas dataframes can then contain arbitrary objects and are not
+    checked for dtype, finiteness or anything else but length. Arrays are still
+    checked and possibly converted.
 
 
     Parameters
     ----------
     *arrays : sequence of arrays or scipy.sparse matrices with same shape[0]
         Python lists or tuples occurring in arrays are converted to 1D numpy
-        arrays, unless allow_lists is specified.
+        arrays, unless force_arrays=False is specified.
 
     sparse_format : 'csr', 'csc' or 'dense', None by default
         If not None, any scipy.sparse matrix is converted to
@@ -212,7 +212,7 @@ def check_arrays(*arrays, **options):
     dtype : a numpy dtype instance, None by default
         Enforce a specific dtype.
 
-    allow_lists : bool
+    force_arrays : bool, default=True
         Allow lists of arbitrary objects as input, just check their length.
         Disables
 
@@ -228,7 +228,7 @@ def check_arrays(*arrays, **options):
     copy = options.pop('copy', False)
     check_ccontiguous = options.pop('check_ccontiguous', False)
     dtype = options.pop('dtype', None)
-    allow_lists = options.pop('allow_lists', False)
+    force_arrays = options.pop('force_arrays', True)
     allow_nans = options.pop('allow_nans', False)
     allow_nd = options.pop('allow_nd', False)
 
@@ -253,7 +253,7 @@ def check_arrays(*arrays, **options):
             raise ValueError("Found array with dim %d. Expected %d"
                              % (size, n_samples))
 
-        if (not allow_lists or hasattr(array, "__array__")
+        if (force_arrays or hasattr(array, "__array__")
                 or hasattr(array, "shape")):
             if sp.issparse(array):
                 if sparse_format == 'csr':
@@ -280,12 +280,12 @@ def check_arrays(*arrays, **options):
             else:
                 if check_ccontiguous:
                     array = np.ascontiguousarray(array, dtype=dtype)
-                else:
+                elif dtype is not None or force_arrays:
                     array = np.asarray(array, dtype=dtype)
                 if not allow_nans:
                     _assert_all_finite(array)
 
-            if not allow_nd and array.ndim >= 3:
+            if force_arrays and not allow_nd and array.ndim >= 3:
                 raise ValueError("Found array with dim %d. Expected <= 2" %
                                  array.ndim)
 

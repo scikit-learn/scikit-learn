@@ -21,6 +21,7 @@ from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
 from scipy.stats import distributions
 
@@ -73,49 +74,6 @@ class MockClassifier(object):
 
     def set_params(self, **params):
         self.foo_param = params['foo_param']
-        return self
-
-
-class MockListClassifier(object):
-    """Dummy classifier to test the cross-validation.
-
-    Checks that GridSearchCV didn't convert X (or y) to array.
-    """
-    def __init__(self, foo_param=0, check_y_is_list=False,
-                 check_X_is_list=True):
-        self.foo_param = foo_param
-        self.check_y_is_list = check_y_is_list
-        self.check_X_is_list = check_X_is_list
-
-    def fit(self, X, Y):
-        assert_true(len(X) == len(Y))
-        if self.check_X_is_list:
-            assert_true(isinstance(X, list))
-        if self.check_y_is_list:
-            assert_true(isinstance(Y, list))
-
-        return self
-
-    def predict(self, T):
-        return T.shape[0]
-
-    def score(self, X=None, Y=None):
-        if self.foo_param > 1:
-            score = 1.
-        else:
-            score = 0.
-        return score
-
-    def get_params(self, deep=False):
-        return {'foo_param': self.foo_param, 'check_X_is_list': self.check_X_is_list,
-                'check_y_is_list': self.check_y_is_list}
-
-    def set_params(self, **params):
-        self.foo_param = params['foo_param']
-        if "check_y_is_list" in params:
-            self.check_y = params["check_y_is_list"]
-        if "check_X_is_list" in params:
-            self.check_X = params["check_X_is_list"]
         return self
 
 
@@ -446,7 +404,7 @@ def test_X_as_list():
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
 
-    clf = MockListClassifier()
+    clf = CheckingClassifier(check_X=lambda x: isinstance(x, list))
     cv = KFold(n=len(X), n_folds=3)
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
     grid_search.fit(X.tolist(), y).score(X, y)
@@ -458,11 +416,36 @@ def test_y_as_list():
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
 
-    clf = MockListClassifier(check_X_is_list=False, check_y_is_list=True)
+    clf = CheckingClassifier(check_y=lambda x: isinstance(x, list))
     cv = KFold(n=len(X), n_folds=3)
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
     grid_search.fit(X, y.tolist()).score(X, y)
     assert_true(hasattr(grid_search, "grid_scores_"))
+
+
+def test_pandas_input():
+    # check cross_val_score doesn't destroy pandas dataframe
+    types = [(MockDataFrame, MockDataFrame)]
+    try:
+        from pandas import Series, DataFrame
+        types.append((DataFrame, Series))
+    except ImportError:
+        pass
+
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+
+    for InputFeatureType, TargetType in types:
+        # X dataframe, y series
+        X_df, y_ser = InputFeatureType(X), TargetType(y)
+        check_df = lambda x: isinstance(x, InputFeatureType)
+        check_series = lambda x: isinstance(x, TargetType)
+        clf = CheckingClassifier(check_X=check_df, check_y=check_series)
+
+        grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]})
+        grid_search.fit(X_df, y_ser).score(X_df, y_ser)
+        grid_search.predict(X_df)
+        assert_true(hasattr(grid_search, "grid_scores_"))
 
 
 def test_unsupervised_grid_search():
