@@ -1326,7 +1326,45 @@ cdef class BestSplitter(Splitter):
                     self.criterion.reset()
                     # We test all the combinations of categories. Not efficient
                     # if there is many dummies.
-                    # TODO linear time algo for binary classification and reg
+
+                    if self.y_stride == 1 and self.criterion.n_outputs == 1:
+                        # We are doing regression or binomial classification
+                        # In this case, the best split is c_j1...c_jk and
+                        # c_j(k+1)...c_jn, with the categories c_i are
+                        # reorganized with mean(y[c_ji]) <= mean( y[c_j(i+1)])
+                        sort(y + start, Xf + start, end - start)
+                        category = -1
+                        partition = 0x0
+                        p = start - 1
+                        while p < end:
+                            p += 1
+                            while (p + 1 < end and
+                                   int(Xf[p + 1]) == category):
+                                p += 1
+                            if p < end:
+                                partition |= 1 << int(Xf[p])
+                                # Reject if min_samples_leaf is not guaranteed
+                                if (((p - start) < min_samples_leaf) or
+                                        ((end - p) < min_samples_leaf)):
+                                    continue
+
+                                self.criterion.update(p)
+
+                                # Reject if min_weight_leaf is not satisfied
+                                if ((self.criterion.weighted_n_left < min_weight_leaf) or
+                                        (self.criterion.weighted_n_right < min_weight_leaf)):
+                                    continue
+
+                                current.improvement = self.criterion.impurity_improvement(impurity)
+
+                                if current.improvement > best.improvement:
+                                    self.criterion.children_impurity(&current.impurity_left,
+                                                                     &current.impurity_right)
+                                    current.partition = partition #copy
+                                    current.split_type = CATEGORICAL
+                                    best = current  # copy
+                        return # We don't use the multi-output fallback
+
                     # TODO sample splits otherwise if n_categories>=8
                     for partition in xrange(2**(n_categories-1)):
                         # The first category is always in the right branch.
