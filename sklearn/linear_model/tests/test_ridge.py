@@ -30,6 +30,7 @@ from sklearn.linear_model.ridge import _solve_cholesky
 from sklearn.linear_model.ridge import _solve_cholesky_kernel
 from sklearn.linear_model.ridge import ridge_path
 from sklearn.linear_model.ridge import _precomp_kernel_ridge_path_eigen
+from sklearn.linear_model.ridge import _kernel_ridge_path_eigen
 
 from sklearn.cross_validation import KFold
 from sklearn.cross_validation import LeaveOneOut
@@ -806,4 +807,34 @@ def test_ridge_gcv_looe_on_dense_data():
     new_coef = _RidgeGCV(alphas=alphas, gcv_mode="eigen").fit(X, Y).coef_
 
     assert_array_almost_equal(old_coef, new_coef)
+
+
+def test_ridge_gcv_with_sample_weights():
+
+    n_samples, n_features, n_targets = 20, 5, 7
+    X, Y, W, _, _ = make_noisy_forward_data(n_samples, n_features, n_targets)
+    alphas = np.logspace(-3, 3, 9)
+
+    rng = np.random.RandomState(42)
+    sample_weights = rng.randn(n_samples) ** 2
+
+    cv = LeaveOneOut(n_samples)
+    cv_predictions = np.array([[
+        Ridge(solver='cholesky', alpha=alpha, fit_intercept=False).fit(
+            X[train], Y[train], sample_weight=sample_weights[train]
+            ).predict(X[test])
+        for train, test in cv] for alpha in alphas]).squeeze()
+
+    cv_errors = Y[np.newaxis] - cv_predictions.reshape(
+        len(alphas), n_samples, n_targets)
+
+    ridge_gcv = _RidgeGCV(alphas=alphas, store_cv_values=True,
+                          gcv_mode='eigen', fit_intercept=False)
+    # emulate the sample weight stuff from _RidgeGCV
+    ridge_gcv.fit(X, Y, sample_weight=sample_weights)
+    loo_predictions = ridge_gcv.cv_values_
+
+
+    assert_array_almost_equal(cv_errors ** 2,
+                              loo_predictions.transpose(2, 0, 1))
 
