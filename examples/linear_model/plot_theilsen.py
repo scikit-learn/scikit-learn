@@ -74,7 +74,7 @@ for name, estimator in estimators:
             label='%s (fit time: %.2fs)' % (name, elapsed_time))
 
 pl.axis('tight')
-pl.legend(loc=2)
+pl.legend(loc='upper left')
 
 
 ##############################################################################
@@ -103,5 +103,5 @@ for name, estimator in estimators:
             label='%s (fit time: %.2fs)' % (name, elapsed_time))
 
 pl.axis('tight')
-pl.legend(loc=2)
+pl.legend(loc='upper left')
 pl.show()
