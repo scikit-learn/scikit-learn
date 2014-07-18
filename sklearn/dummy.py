@@ -302,7 +302,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         * "median": always predicts the median of the training set
         * "constant": always predicts a constant value that is provided by
           the user.
-        * "percentile": always predict the percentile of the training set,
+        * "quantile": always predict the quantile of the training set,
           the value is provided by the user.
 
     constant : int or float or array of shape = [n_outputs]
@@ -310,7 +310,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         parameter is useful only for the "constant" strategy.
 
     alpha : float, optional.
-        The parameter of the percentile strategy, ranging from 0 to 1.
+        The parameter for the quantile strategy, ranging from 0 to 1.
         For instance, alpha = 0.5 will calculate the median.
 
     Attributes
@@ -356,10 +356,10 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             Returns self.
         """
 
-        if self.strategy not in ("mean", "median", "constant", "percentile"):
+        if self.strategy not in ("mean", "median", "constant", "quantile"):
             raise ValueError("Unknown strategy type: %s, "
                              "expected 'mean', 'median', 'constant'"
-                             "or 'percentile'" % self.strategy)
+                             "or 'quantile'" % self.strategy)
 
         y = check_array(y, accept_sparse='csr', ensure_2d=False)
         self.output_2d_ = (y.ndim == 2)
@@ -386,13 +386,13 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
             self.constant_ = np.reshape(self.constant, (1, -1))
 
-        elif self.strategy == "percentile":
+        elif self.strategy == "quantile":
             if not 0 < self.alpha < 1.0:
                 raise ValueError("`alpha` must be in (0, 1.0) but was %r"
                                  % self.alpha)
             else:
                 self.constant_ = np.reshape(
-                    stats.scoreatpercentile(y, self.alpha * 100.0, axis=0),
+                    stats.scoreatquantile(y, self.alpha * 100.0, axis=0),
                                            (1, -1))
 
         self.n_outputs_ = np.size(self.constant_)  # y.shape[1] is not safe
