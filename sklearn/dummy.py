@@ -303,7 +303,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         * "constant": always predicts a constant value that is provided by
           the user.
         * "percentile": always predict the percentile of the training set,
-          the value is provded by the user.
+          the value is provided by the user.
 
     constant : int or float or array of shape = [n_outputs]
         The explicit constant as predicted by the "constant" strategy. This
@@ -356,10 +356,10 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             Returns self.
         """
 
-        if self.strategy not in ("mean", "median", "constant", "quantile"):
+        if self.strategy not in ("mean", "median", "constant", "percentile"):
             raise ValueError("Unknown strategy type: %s, "
                              "expected 'mean', 'median', 'constant'"
-                             "or 'quantile'" % self.strategy)
+                             "or 'percentile'" % self.strategy)
 
         y = check_array(y, accept_sparse='csr', ensure_2d=False)
         self.output_2d_ = (y.ndim == 2)
