@@ -302,10 +302,16 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         * "median": always predicts the median of the training set
         * "constant": always predicts a constant value that is provided by
           the user.
+        * "percentile": always predict the percentile of the training set,
+          the value is provded by the user.
 
     constant : int or float or array of shape = [n_outputs]
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
+
+    alpha : float, optional.
+        The parameter of the percentile strategy, ranging from 0 to 1.
+        For instance, alpha = 0.5 will calculate the median.
 
     Attributes
     ----------
@@ -380,11 +386,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
             self.constant_ = np.reshape(self.constant, (1, -1))
 
-        elif self.strategy == "quantile":
-            if not self.alpha:
-                raise TypeError("`alpha` value has to be specified "
-                                "when the quantile strategy is used.")
-            elif not 0 < self.alpha < 1.0:
+        elif self.strategy == "percentile":
+            if not 0 < self.alpha < 1.0:
                 raise ValueError("`alpha` must be in (0, 1.0) but was %r"
                                  % self.alpha)
             else:
