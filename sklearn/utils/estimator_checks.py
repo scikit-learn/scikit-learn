@@ -30,6 +30,7 @@ from sklearn.lda import LDA
 from sklearn.svm.base import BaseLibSVM
 
 from sklearn.utils.validation import DataConversionWarning
+from sklearn.cross_validation import train_test_split
 
 from sklearn.utils import shuffle
 from sklearn.preprocessing import StandardScaler
@@ -76,6 +77,7 @@ def check_regressors_classifiers_sparse_data(name, Estimator):
     # catch deprecation warnings
     with warnings.catch_warnings():
         estimator = Estimator()
+    set_fast_parameters(estimator)
     # fit and predict
     try:
         estimator.fit(X, y)
@@ -147,9 +149,7 @@ def _check_transformer(name, Transformer, X, y):
     elif name == "KernelPCA":
         transformer.remove_zero_eig = False
 
-    if "n_iter" in transformer.get_params():
-        # speed up some estimators
-        transformer.set_params(n_iter=5)
+    set_fast_parameters(transformer)
 
     # fit
 
@@ -220,9 +220,7 @@ def check_transformer_sparse_data(name, Transformer):
         else:
             transformer = Transformer()
 
-    if "n_iter" in transformer.get_params():
-        # speed up some estimators
-        transformer.set_params(n_iter=5)
+    set_fast_parameters(transformer)
 
     # fit
     try:
@@ -270,6 +268,8 @@ def check_estimators_nan_inf(name, Estimator):
                 estimator = Estimator(n_components=1)
             elif name == "SelectKBest":
                 estimator = Estimator(k=1)
+
+            set_fast_parameters(estimator)
 
             set_random_state(estimator, 1)
             # try to fit
@@ -328,6 +328,25 @@ def check_estimators_nan_inf(name, Estimator):
                     raise AssertionError(error_string_transform, Estimator)
 
 
+def set_fast_parameters(estimator):
+    # speed up some estimators
+    params = estimator.get_params()
+    if "n_iter" in params:
+        estimator.set_params(n_iter=5)
+    if "max_iter" in params:
+        #NMF
+        estimator.set_params(max_iter=min(5, estimator.max_iter))
+    if "n_resampling" in params:
+        #randomized lasso
+        estimator.set_params(n_resampling=5)
+    if "n_estimators" in params:
+        # especially gradient boosting with default 100
+        estimator.set_params(n_estimators=min(5, estimator.n_estimators))
+    if "max_trials" in params:
+        # RANSAC
+        estimator.set_params(max_trials=10)
+
+
 def check_transformer_pickle(name, Transformer):
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
@@ -354,9 +373,7 @@ def check_transformer_pickle(name, Transformer):
         # So we impose a smaller number (avoid "auto" mode)
         transformer.n_components = 1
 
-    if "n_iter" in transformer.get_params():
-        # speed up some estimators
-        transformer.set_params(n_iter=5)
+    set_fast_parameters(transformer)
 
     # fit
     if name in CROSS_DECOMPOSITION:
@@ -416,6 +433,7 @@ def check_classifiers_one_label(name, Classifier):
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
         classifier = Classifier()
+        set_fast_parameters(classifier)
         # try to fit
         try:
             classifier.fit(X_train, y)
@@ -452,6 +470,7 @@ def check_classifiers_train(name, Classifier):
         n_samples, n_features = X.shape
         with warnings.catch_warnings(record=True):
             classifier = Classifier()
+        set_fast_parameters(classifier)
         # raises error on malformed input for fit
         assert_raises(ValueError, classifier.fit, X, y[:-1])
 
@@ -508,6 +527,7 @@ def check_classifiers_input_shapes(name, Classifier):
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
         classifier = Classifier()
+    set_fast_parameters(classifier)
     set_random_state(classifier)
     # fit
     classifier.fit(X, y)
@@ -541,11 +561,9 @@ def check_classifiers_classes(name, Classifier):
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
             classifier = Classifier()
+        set_fast_parameters(classifier)
         # fit
-        try:
-            classifier.fit(X, y_)
-        except Exception as e:
-            print(e)
+        classifier.fit(X, y_)
 
         y_pred = classifier.predict(X)
         # training set performance
@@ -570,6 +588,7 @@ def check_classifiers_pickle(name, Classifier):
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
         classifier = Classifier()
+    set_fast_parameters(classifier)
     # raises error on malformed input for fit
     assert_raises(ValueError, classifier.fit, X, y[:-1])
 
@@ -598,6 +617,8 @@ def check_regressors_int(name, Regressor):
         # separate estimators to control random seeds
         regressor_1 = Regressor()
         regressor_2 = Regressor()
+    set_fast_parameters(regressor_1)
+    set_fast_parameters(regressor_2)
     set_random_state(regressor_1)
     set_random_state(regressor_2)
 
@@ -626,6 +647,7 @@ def check_regressors_train(name, Regressor):
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
         regressor = Regressor()
+    set_fast_parameters(regressor)
     if not hasattr(regressor, 'alphas') and hasattr(regressor, 'alpha'):
         # linear regressors need to set alpha, but not generalized CV ones
         regressor.alpha = 0.01
@@ -660,6 +682,7 @@ def check_regressors_pickle(name, Regressor):
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
         regressor = Regressor()
+    set_fast_parameters(regressor)
     if not hasattr(regressor, 'alphas') and hasattr(regressor, 'alpha'):
         # linear regressors need to set alpha, but not generalized CV ones
         regressor.alpha = 0.01
@@ -678,24 +701,28 @@ def check_regressors_pickle(name, Regressor):
     assert_array_almost_equal(pickled_y_pred, y_pred)
 
 
-def check_class_weight_classifiers(name, Classifier, X_train, y_train, X_test,
-                                   y_test):
-    n_centers = len(np.unique(y_train))
+def check_class_weight_classifiers(name, Classifier):
+    for n_centers in [2, 3]:
+        # create a very noisy dataset
+        X, y = make_blobs(centers=n_centers, random_state=0, cluster_std=20)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.5,
+                                                            random_state=0)
+        n_centers = len(np.unique(y_train))
 
-    if n_centers == 2:
-        class_weight = {0: 1000, 1: 0.0001}
-    else:
-        class_weight = {0: 1000, 1: 0.0001, 2: 0.0001}
+        if n_centers == 2:
+            class_weight = {0: 1000, 1: 0.0001}
+        else:
+            class_weight = {0: 1000, 1: 0.0001, 2: 0.0001}
 
-    with warnings.catch_warnings(record=True):
-        classifier = Classifier(class_weight=class_weight)
-    if hasattr(classifier, "n_iter"):
-        classifier.set_params(n_iter=100)
+        with warnings.catch_warnings(record=True):
+            classifier = Classifier(class_weight=class_weight)
+        if hasattr(classifier, "n_iter"):
+            classifier.set_params(n_iter=100)
 
-    set_random_state(classifier)
-    classifier.fit(X_train, y_train)
-    y_pred = classifier.predict(X_test)
-    assert_greater(np.mean(y_pred == 0), 0.9)
+        set_random_state(classifier)
+        classifier.fit(X_train, y_train)
+        y_pred = classifier.predict(X_test)
+        assert_greater(np.mean(y_pred == 0), 0.9)
 
 
 def check_class_weight_auto_classifiers(name, Classifier, X_train, y_train,
@@ -723,23 +750,25 @@ def check_estimators_overwrite_params(name, Estimator):
     X -= X.min()
     with warnings.catch_warnings(record=True):
         # catch deprecation warnings
-        estimator = Estimator()
+        if name in ['GaussianRandomProjection',
+                    'SparseRandomProjection']:
+            # Due to the jl lemma and very few samples, the number
+            # of components of the random matrix projection will be
+            # greater
+            # than the number of features.
+            # So we impose a smaller number (avoid "auto" mode)
+            estimator = Estimator(n_components=1)
+        elif name == "SelectKBest":
+            estimator = Estimator(k=1)
+        else:
+            estimator = Estimator()
 
     if hasattr(estimator, 'batch_size'):
         # FIXME
         # for MiniBatchDictLearning
         estimator.batch_size = 1
 
-    if name in ['GaussianRandomProjection',
-                'SparseRandomProjection']:
-        # Due to the jl lemma and very few samples, the number
-        # of components of the random matrix projection will be
-        # greater
-        # than the number of features.
-        # So we impose a smaller number (avoid "auto" mode)
-        estimator = Estimator(n_components=1)
-    elif name == "SelectKBest":
-        estimator = Estimator(k=1)
+    set_fast_parameters(estimator)
 
     set_random_state(estimator)
 
@@ -832,6 +861,8 @@ def check_estimators_data_not_an_array(name, Estimator, X, y):
         # separate estimators to control random seeds
         estimator_1 = Estimator()
         estimator_2 = Estimator()
+    set_fast_parameters(estimator_1)
+    set_fast_parameters(estimator_2)
     set_random_state(estimator_1)
     set_random_state(estimator_2)
 

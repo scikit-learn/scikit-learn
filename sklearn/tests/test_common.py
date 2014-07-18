@@ -23,7 +23,7 @@ import sklearn
 from sklearn.base import (ClassifierMixin, RegressorMixin,
                           TransformerMixin, ClusterMixin)
 from sklearn.preprocessing import StandardScaler
-from sklearn.datasets import (make_blobs, make_classification)
+from sklearn.datasets import make_classification
 
 from sklearn.cross_validation import train_test_split
 from sklearn.utils.estimator_checks import (
@@ -204,19 +204,15 @@ def test_class_weight_classifiers():
         classifiers = [c for c in classifiers
                        if 'class_weight' in c[1]().get_params().keys()]
 
-    for n_centers in [2, 3]:
-        # create a very noisy dataset
-        X, y = make_blobs(centers=n_centers, random_state=0, cluster_std=20)
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.5,
-                                                            random_state=0)
-        for name, Classifier in classifiers:
-            if (name != "NuSVC" and
-                # the sparse version has a parameter that doesn't do anything
-                    not name.endswith("NB")):
-                    # NaiveBayes classifiers have a somewhat different interface.
-                    # FIXME SOON!
-                yield (check_class_weight_classifiers, name, Classifier, X_train,
-                       y_train, X_test, y_test)
+    for name, Classifier in classifiers:
+        if name == "NuSVC":
+            # the sparse version has a parameter that doesn't do anything
+            continue
+        if name.endswith("NB"):
+            # NaiveBayes classifiers have a somewhat different interface.
+            # FIXME SOON!
+            continue
+        yield check_class_weight_classifiers, name, Classifier
 
 
 def test_class_weight_auto_classifies():
