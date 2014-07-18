@@ -147,6 +147,19 @@ cdef class Splitter:
     cdef double node_impurity(self) nogil
 
 
+
+cdef class BestSplitter(Splitter):
+    cdef void _categorical_feature_split(self, SIZE_t* Xi, DTYPE_t* y,
+                                         SplitRecord* current,
+                                         SplitRecord* best,
+                                         SIZE_t* categories,
+                                         double impurity) nogil
+
+    cdef void _continuous_feature_split(self, DTYPE_t* Xf,
+                                         SplitRecord* current,
+                                         SplitRecord* best,
+                                         double impurity) nogil
+
 # =============================================================================
 # Tree
 # =============================================================================

@@ -1186,22 +1186,16 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t X_sample_stride = self.X_sample_stride
         cdef SIZE_t X_fx_stride = self.X_fx_stride
         cdef SIZE_t max_features = self.max_features
-        cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
-        cdef double weighted_n_samples = self.weighted_n_samples
         cdef UINT32_t* random_state = &self.rand_r_state
 
         cdef SplitRecord best, current
 
         cdef int n_categorical = 0  # How many categorical features #TODO
-        cdef int n_categories       # How many categories are in the column
         cdef DTYPE_t category
         cdef SIZE_t* categories     # The link between a category and
                                     # 1..n_categories
         cdef SIZE_t* categories_tmp
-        cdef SIZE_t max_categories
-        cdef SIZE_t current_item
-        cdef PARTITION_t partition
 
         cdef SIZE_t f_i = n_features
         cdef SIZE_t c_i = n_features - n_categorical
@@ -1298,117 +1292,9 @@ cdef class BestSplitter(Splitter):
                     f_i -= 1
                     features[f_i], features[f_j] = features[f_j], features[f_i]
 
-                    # We find the categories that are in the data
-                    max_categories = 0
-                    categories = <int *>malloc(sizeof(int))
-                    for p in xrange(start, end):
-                        current_item = Xi[p]
-                        if current_item > max_categories:
-                            # We resize the array
-                            categories_tmp = <int *>malloc(
-                                sizeof(int) * current_item)
-                            memcpy(categories_tmp, categories,
-                                   sizeof(int) * max_categories)
-                            for i in xrange(max_categories+1, current_item):
-                                categories_tmp[i] = 0
-                            free(categories)
-                            categories = categories_tmp
-                            max_categories = current_item
-                        categories[current_item] = 1
-                    # Now we can create a mapping between the categories that
-                    # are in the data and 1...n_categories
-                    n_categories = 0
-                    current_item = 0
-                    for i in xrange(0, max_categories):
-                        if categories[i] > 0:
-                            categories[i] = n_categories
-                            n_categories += 1
-
-                    # First we count the outcomes per category, so we don't
-                    # have to iterate through all the data after that
-
-                    self.criterion.reset()
-                    # We test all the combinations of categories. Not efficient
-                    # if there is many dummies.
-
-                    if self.y_stride == 1 and self.criterion.n_outputs == 1:
-                        # We are doing regression or binomial classification
-                        # In this case, the best split is c_j1...c_jk and
-                        # c_j(k+1)...c_jn, with the categories c_i are
-                        # reorganized with mean(y[c_ji]) <= mean( y[c_j(i+1)])
-                        sort(y + start, Xi + start, end - start)
-                        category = -1
-                        partition = 0x0
-                        p = start - 1
-                        while p < end:
-                            p += 1
-                            while (p + 1 < end and
-                                   Xi[p + 1] == category):
-                                p += 1
-                            if p < end:
-                                partition |= 1 << Xi[p]
-                                # Reject if min_samples_leaf is not guaranteed
-                                if (((p - start) < min_samples_leaf) or
-                                        ((end - p) < min_samples_leaf)):
-                                    continue
-
-                                self.criterion.update(p)
-
-                                # Reject if min_weight_leaf is not satisfied
-                                if ((self.criterion.weighted_n_left < min_weight_leaf) or
-                                        (self.criterion.weighted_n_right < min_weight_leaf)):
-                                    continue
-
-                                current.improvement = self.criterion.impurity_improvement(impurity)
-
-                                if current.improvement > best.improvement:
-                                    self.criterion.children_impurity(&current.impurity_left,
-                                                                     &current.impurity_right)
-                                    current.partition = partition #copy
-                                    current.split_type = CATEGORICAL
-                                    best = current  # copy
-                        return # We don't use the multi-output fallback
-
-                    # TODO sample splits otherwise if n_categories>=8
-                    for partition in xrange(2**(n_categories-1)):
-                        # The first category is always in the right branch.
-                        # It doesn't change anything because of symmetry
-
-                        self.criterion.update_factors(partition)
-
-                        # Reject if min_weight_leaf is not satisfied
-                        if ((self.criterion.weighted_n_left < min_weight_leaf) or
-                                (self.criterion.weighted_n_right < min_weight_leaf)):
-                            continue
-
-                        current.improvement = self.criterion.impurity_improvement(impurity)
-
-                        if current.improvement > best.improvement:
-                            self.criterion.children_impurity(&current.impurity_left,
-                                                             &current.impurity_right)
-                            best.impurity_left = current.impurity_left
-                            best.impurity_right = current.impurity_right
-                            best.improvement = current.improvement
-                            best.partition = partition
-                            best.feature = current.feature
-
-                            best = current  # copy
-                            best.split_type = CATEGORICAL
-
-                        current.impurity_left = 0
-                        current.impurity_right = 0
-                        current.improvement = 0
-                        # Example loop through categories
-                        # for i in xrange(n_categories):
-                        #    category = categories[i] #TODO check
-                        #    is_left = (split >> i) & 1
-                        if current.improvement > best.improvement:
-                            best.impurity_left = current.impurity_left
-                            best.impurity_right = current.impurity_right
-                            best.improvement = current.improvement
-                            best.feature = current.feature
-                            best.partition = partition
-                            best.split_type = CATEGORICAL
+                    categories = <int *>malloc(sizeof(int)) # TODO
+                    self._categorical_feature_split(Xi, y, &current, &best,
+                                                    categories, impurity)
 
                     free(Xi)
                     free(y)
@@ -1438,54 +1324,7 @@ cdef class BestSplitter(Splitter):
                     f_i -= 1
                     features[f_i], features[f_j] = features[f_j], features[f_i]
 
-                    # Evaluate all splits
-                    self.criterion.reset()
-                    p = start
-
-                    while p < end:
-                        while (p + 1 < end and
-                               Xf[p + 1] <= Xf[p] + FEATURE_THRESHOLD):
-                            p += 1
-
-                        # (p + 1 >= end) or (X[samples[p + 1], current.feature] >
-                        #                    X[samples[p], current.feature])
-                        p += 1
-                        # (p >= end) or (X[samples[p], current.feature] >
-                        #                X[samples[p - 1], current.feature])
-
-                        if p < end:
-                            current.pos = p
-
-                            # Reject if min_samples_leaf is not guaranteed
-                            if (((current.pos - start) < min_samples_leaf) or
-                                    ((end - current.pos) < min_samples_leaf)):
-                                continue
-
-                            self.criterion.update(current.pos)
-
-                            # Reject if min_weight_leaf is not satisfied
-                            if ((self.criterion.weighted_n_left < min_weight_leaf) or
-                                    (self.criterion.weighted_n_right < min_weight_leaf)):
-                                continue
-
-                            current.improvement = self.criterion.impurity_improvement(impurity)
-
-                            if current.improvement > best.improvement:
-                                self.criterion.children_impurity(&current.impurity_left,
-                                                                 &current.impurity_right)
-                                best.impurity_left = current.impurity_left
-                                best.impurity_right = current.impurity_right
-                                best.improvement = current.improvement
-                                best.pos = current.pos
-                                best.feature = current.feature
-
-                                current.threshold = (Xf[p - 1] + Xf[p]) / 2.0
-
-                                if current.threshold == Xf[p]:
-                                    current.threshold = Xf[p - 1]
-
-                                best = current  # copy
-                                best.split_type = CONTINUOUS
+                    self._continuous_feature_split(Xf, &current, &best, impurity)
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
         if best.split_type == CONTINUOUS and best.pos < end:
@@ -1539,6 +1378,180 @@ cdef class BestSplitter(Splitter):
         split[0] = best
         n_constant_features[0] = n_total_constants
 
+    cdef void _categorical_feature_split(self, SIZE_t* Xi, DTYPE_t* y,
+                                         SplitRecord* current,
+                                         SplitRecord* best,
+                                         SIZE_t* categories,
+                                         double impurity) nogil:
+        cdef SIZE_t max_categories = 0
+        cdef SIZE_t current_item
+        cdef int n_categories       # How many categories are in the column
+        cdef PARTITION_t partition
+        cdef SIZE_t p
+
+        # We find the categories that are in the data
+        for p in xrange(self.start, self.end):
+            current_item = Xi[p]
+            if current_item > max_categories:
+                # We resize the array
+                categories_tmp = <int *>malloc(
+                    sizeof(int) * current_item)
+                memcpy(categories_tmp, categories,
+                       sizeof(int) * max_categories)
+                for i in xrange(max_categories+1, current_item):
+                    categories_tmp[i] = 0
+                free(categories)
+                categories = categories_tmp
+                max_categories = current_item
+            categories[current_item] = 1
+        # Now we can create a mapping between the categories that
+        # are in the data and 1...n_categories
+        n_categories = 0
+        for i in xrange(0, max_categories):
+            if categories[i] > 0:
+                categories[i] = n_categories
+                n_categories += 1
+
+        # First we count the outcomes per category, so we don't
+        # have to iterate through all the data after that
+
+        self.criterion.reset()
+        # We test all the combinations of categories. Not efficient
+        # if there is many dummies.
+
+        if self.y_stride == 1 and self.criterion.n_outputs == 1:
+            # We are doing regression or binomial classification
+            # In this case, the best split is c_j1...c_jk and
+            # c_j(k+1)...c_jn, with the categories c_i are
+            # reorganized with mean(y[c_ji]) <= mean( y[c_j(i+1)])
+            sort(y + self.start, Xi + self.start, self.end - self.start)
+            category = -1
+            partition = 0x0
+            p = self.start - 1
+            while p < self.end:
+                p += 1
+                while (p + 1 < self.end and
+                       Xi[p + 1] == category):
+                    p += 1
+                if p < self.end:
+                    partition |= 1 << Xi[p]
+                    # Reject if min_samples_leaf is not guaranteed
+                    if (((p - self.start) < self.min_samples_leaf) or
+                            ((self.end - p) < self.min_samples_leaf)):
+                        continue
+
+                    self.criterion.update(p)
+
+                    # Reject if min_weight_leaf is not satisfied
+                    if ((self.criterion.weighted_n_left < self.min_weight_leaf) or
+                            (self.criterion.weighted_n_right < self.min_weight_leaf)):
+                        continue
+
+                    current.improvement = self.criterion.impurity_improvement(impurity)
+
+                    if current.improvement > best.improvement:
+                        self.criterion.children_impurity(&current.impurity_left,
+                                                         &current.impurity_right)
+                        current.partition = partition #copy
+                        current.split_type = CATEGORICAL
+                        best = current  # copy
+            return # We don't use the multi-output fallback
+
+        # TODO sample splits otherwise if n_categories>=8
+        for partition in xrange(2**(n_categories-1)):
+            # The first category is always in the right branch.
+            # It doesn't change anything because of symmetry
+
+            self.criterion.update_factors(partition)
+
+            # Reject if min_weight_leaf is not satisfied
+            if ((self.criterion.weighted_n_left < self.min_weight_leaf) or
+                    (self.criterion.weighted_n_right < self.min_weight_leaf)):
+                continue
+
+            current.improvement = self.criterion.impurity_improvement(impurity)
+
+            if current.improvement > best.improvement:
+                self.criterion.children_impurity(&current.impurity_left,
+                                                 &current.impurity_right)
+                best.impurity_left = current.impurity_left
+                best.impurity_right = current.impurity_right
+                best.improvement = current.improvement
+                best.partition = partition
+                best.feature = current.feature
+
+                best = current  # copy
+                best.split_type = CATEGORICAL
+
+            current.impurity_left = 0
+            current.impurity_right = 0
+            current.improvement = 0
+            # Example loop through categories
+            # for i in xrange(n_categories):
+            #    category = categories[i] #TODO check
+            #    is_left = (split >> i) & 1
+            if current.improvement > best.improvement:
+                best.impurity_left = current.impurity_left
+                best.impurity_right = current.impurity_right
+                best.improvement = current.improvement
+                best.feature = current.feature
+                best.partition = partition
+                best.split_type = CATEGORICAL
+
+    cdef void _continuous_feature_split(self, DTYPE_t* Xf,
+                                         SplitRecord* current,
+                                         SplitRecord* best,
+                                         double impurity) nogil:
+        cdef SIZE_t p
+
+        # Evaluate all splits
+        self.criterion.reset()
+        p = self.start
+
+        while p < self.end:
+            while (p + 1 < self.end and
+                   Xf[p + 1] <= Xf[p] + FEATURE_THRESHOLD):
+                p += 1
+
+            # (p + 1 >= end) or (X[samples[p + 1], current.feature] >
+            #                    X[samples[p], current.feature])
+            p += 1
+            # (p >= end) or (X[samples[p], current.feature] >
+            #                X[samples[p - 1], current.feature])
+
+            if p < self.end:
+                current.pos = p
+
+                # Reject if min_samples_leaf is not guaranteed
+                if (((current.pos - self.start) < self.min_samples_leaf) or
+                        ((self.end - current.pos) < self.min_samples_leaf)):
+                    continue
+
+                self.criterion.update(current.pos)
+
+                # Reject if min_weight_leaf is not satisfied
+                if ((self.criterion.weighted_n_left < self.min_weight_leaf) or
+                        (self.criterion.weighted_n_right < self.min_weight_leaf)):
+                    continue
+
+                current.improvement = self.criterion.impurity_improvement(impurity)
+
+                if current.improvement > best.improvement:
+                    self.criterion.children_impurity(&current.impurity_left,
+                                                     &current.impurity_right)
+                    best.impurity_left = current.impurity_left
+                    best.impurity_right = current.impurity_right
+                    best.improvement = current.improvement
+                    best.pos = current.pos
+                    best.feature = current.feature
+
+                    current.threshold = (Xf[p - 1] + Xf[p]) / 2.0
+
+                    if current.threshold == Xf[p]:
+                        current.threshold = Xf[p - 1]
+
+                    best = current  # copy
+                    best.split_type = CONTINUOUS
 
 # Sort n-element arrays pointed to by Xf and samples, simultaneously,
 # by the values in Xf. Algorithm: Introsort (Musser, SP&E, 1997).
