@@ -98,7 +98,7 @@ def test_transformers():
         if name not in ['AdditiveChi2Sampler', 'Binarizer', 'Normalizer',
                         'PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']:
             yield check_transformer_data_not_an_array, name, Transformer
-        # these don't actually fit the data:
+        # these don't actually fit the data, so don't raise errors
         if name not in ['AdditiveChi2Sampler', 'Binarizer', 'Normalizer']:
             # basic tests
             yield check_transformer, name, Transformer
@@ -138,13 +138,10 @@ def test_classifiers():
         yield check_classifier_data_not_an_array, name, Classifier
         # test classifiers trained on a single label always return this label
         yield check_classifiers_one_label, name, Classifier
-        if name not in ['MultinomialNB', 'BernoulliNB']:
-            # TODO also test these!
-            # test arbitrary class labels
-            yield check_classifiers_classes, name, Classifier
-            yield check_classifiers_pickle, name, Classifier
-            # basic consistency testing
-            yield check_classifiers_train, name, Classifier
+        yield check_classifiers_classes, name, Classifier
+        yield check_classifiers_pickle, name, Classifier
+        # basic consistency testing
+        yield check_classifiers_train, name, Classifier
         if (name not in ["MultinomialNB", "LabelPropagation", "LabelSpreading"]
             # TODO some complication with -1 label
                 and name not in ["DecisionTreeClassifier", "ExtraTreeClassifier"]):
