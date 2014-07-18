@@ -26,9 +26,6 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from numpy.core.umath_tests import inner1d
 
-from scipy.sparse import coo_matrix
-from scipy.sparse import issparse
-
 from .base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin
 from ..externals import six
@@ -37,8 +34,7 @@ from .forest import BaseForest
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..tree.tree import BaseDecisionTree
 from ..tree._tree import DTYPE
-from ..utils import array2d, check_arrays, check_random_state, column_or_1d
-from ..utils import safe_asarray
+from ..utils import check_array, check_X_y, check_random_state
 from ..metrics import accuracy_score, r2_score
 
 __all__ = [
@@ -98,20 +94,13 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         if self.learning_rate <= 0:
             raise ValueError("learning_rate must be greater than zero")
 
-        # Check data
-        if isinstance(X, coo_matrix):
-            X = X.tocsr()
-        X = safe_asarray(X)
-
-        if (X.ndim != 2 and not issparse(X)):
-            X = array2d(X)
-
         if(self.base_estimator is None or
            isinstance(self.base_estimator, (BaseDecisionTree, BaseForest))):
-            X, = check_arrays(X, dtype=DTYPE)
-        X, y = check_arrays(X, y, check_ccontiguous=True)
+            dtype = DTYPE
+        else:
+            dtype = None
 
-        y = column_or_1d(y, warn=True)
+        X, y = check_X_y(X, y, ['csr', 'csc'], dtype=dtype, order='C')
 
         if sample_weight is None:
             # Initialize weights to 1 / n_samples
@@ -642,7 +631,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             class in ``classes_``, respectively.
         """
         self._check_fitted()
-        X = safe_asarray(X)
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
         n_classes = self.n_classes_
         classes = self.classes_[:, np.newaxis]
@@ -686,7 +675,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             class in ``classes_``, respectively.
         """
         self._check_fitted()
-        X = safe_asarray(X)
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
         n_classes = self.n_classes_
         classes = self.classes_[:, np.newaxis]
@@ -736,7 +725,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             outputs is the same of that of the `classes_` attribute.
         """
         n_classes = self.n_classes_
-        X = safe_asarray(X)
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
         if self.algorithm == 'SAMME.R':
             # The weights are all 1. for SAMME.R
@@ -1070,7 +1059,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             The predicted regression values.
         """
         self._check_fitted()
-        X = safe_asarray(X)
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
         return self._get_median_predict(X, len(self.estimators_))
 
@@ -1096,7 +1085,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             The predicted regression values.
         """
         self._check_fitted()
-        X = safe_asarray(X)
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
         for i, _ in enumerate(self.estimators_, 1):
             yield self._get_median_predict(X, limit=i)

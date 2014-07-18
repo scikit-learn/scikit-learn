@@ -118,7 +118,7 @@ def test_f_regression_center():
     F-score with variates centering and F-score without variates centering.
     """
     # Create toy example
-    X = np.arange(-5, 6)  # X has zero mean
+    X = np.arange(-5, 6).reshape(-1, 1)  # X has zero mean
     n_samples = X.size
     Y = np.ones(n_samples)
     Y[::2] *= -1.

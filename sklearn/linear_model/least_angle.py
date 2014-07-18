@@ -21,7 +21,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import array2d, arrayfuncs, as_float_array, check_arrays
+from ..utils import arrayfuncs, as_float_array, check_array, check_X_y
 from ..cross_validation import _check_cv as check_cv
 from ..utils import ConvergenceWarning
 from ..externals.joblib import Parallel, delayed
@@ -564,7 +564,7 @@ class Lars(LinearModel, RegressorMixin):
         self : object
             returns an instance of self.
         """
-        X = array2d(X)
+        X = check_array(X)
         y = np.asarray(y)
         n_features = X.shape[1]
 
@@ -946,8 +946,7 @@ class LarsCV(Lars):
             returns an instance of self.
         """
         self.fit_path = True
-        X = array2d(X)
-        X, y = check_arrays(X, y)
+        X, y = check_X_y(X, y)
 
         # init cross-validation generator
         cv = check_cv(self.cv, X, y, classifier=False)
@@ -1216,7 +1215,7 @@ class LassoLarsIC(LassoLars):
             returns an instance of self.
         """
         self.fit_path = True
-        X = array2d(X)
+        X = check_array(X)
         y = np.asarray(y)
 
         X, y, Xmean, ymean, Xstd = LinearModel._center_data(

@@ -7,7 +7,7 @@
 """Recursive feature elimination for feature ranking"""
 
 import numpy as np
-from ..utils import check_arrays, safe_sqr
+from ..utils import check_X_y, safe_sqr
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
@@ -117,7 +117,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         y : array-like, shape = [n_samples]
             The target values.
         """
-        X, y = check_arrays(X, y, sparse_format="csc")
+        X, y = check_X_y(X, y, "csc")
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
@@ -320,7 +320,7 @@ class RFECV(RFE, MetaEstimatorMixin):
             Target values (integers for classification, real numbers for
             regression).
         """
-        X, y = check_arrays(X, y, sparse_format="csr")
+        X, y = check_X_y(X, y, "csr")
         # Initialization
         rfe = RFE(estimator=self.estimator, n_features_to_select=1,
                   step=self.step, estimator_params=self.estimator_params,

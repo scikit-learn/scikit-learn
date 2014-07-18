@@ -33,20 +33,16 @@ from glob import glob
 import itertools
 import os.path
 import re
-try:
-    from html.parser import HTMLParser
-    PY2 = False
-except ImportError:
-    from sgmllib import SGMLParser as HTMLParser
-    PY2 = True
 import tarfile
 import time
-import urllib
 
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 
+from sklearn.externals import six
+from sklearn.externals.six.moves import html_parser
+from sklearn.externals.six.moves import urllib
 from sklearn.datasets import get_data_home
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.linear_model.stochastic_gradient import SGDClassifier
@@ -65,15 +61,15 @@ def _not_in_sphinx():
 ###############################################################################
 
 
-class ReutersParser(HTMLParser):
+class ReutersParser(html_parser.HTMLParser):
     """Utility class to parse a SGML file and yield documents one at a time."""
 
     def __init__(self, verbose=0, encoding='latin-1'):
-        HTMLParser.__init__(self, verbose)
+        html_parser.HTMLParser.__init__(self, verbose)
         self._reset()
         self.encoding = encoding
 
-        if not PY2:
+        if not six.PY2:
             # In Python 3 need to be defined explicitly
             def handle_starttag(tag, attrs):
                 method = 'start_' + tag
@@ -180,8 +176,8 @@ def stream_reuters_documents(data_path=None):
                       end='')
 
         archive_path = os.path.join(data_path, ARCHIVE_FILENAME)
-        urllib.urlretrieve(DOWNLOAD_URL, filename=archive_path,
-                           reporthook=progress)
+        urllib.request.urlretrieve(DOWNLOAD_URL, filename=archive_path,
+                                   reporthook=progress)
         if _not_in_sphinx():
             print('\r', end='')
         print("untarring Reuters dataset...")

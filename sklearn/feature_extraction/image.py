@@ -15,7 +15,7 @@ import numpy as np
 from scipy import sparse
 from numpy.lib.stride_tricks import as_strided
 
-from ..utils import array2d, check_random_state
+from ..utils import check_array, check_random_state
 from ..utils.fixes import astype
 from ..base import BaseEstimator
 
@@ -281,7 +281,7 @@ def extract_patches(arr, patch_shape=8, extraction_step=1):
     slices = [slice(None, None, st) for st in extraction_step]
     indexing_strides = arr[slices].strides
 
-    patch_indices_shape = ((np.array(arr.shape) - np.array(patch_shape)) /
+    patch_indices_shape = ((np.array(arr.shape) - np.array(patch_shape)) //
                            np.array(extraction_step)) + 1
 
     shape = tuple(list(patch_indices_shape) + list(patch_shape))
@@ -349,7 +349,7 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     i_h, i_w = image.shape[:2]
     p_h, p_w = patch_size
 
-    image = array2d(image)
+    image = check_array(image, allow_nd=True)
     image = image.reshape((i_h, i_w, -1))
     n_colors = image.shape[-1]
 
@@ -472,7 +472,7 @@ class PatchExtractor(BaseEstimator):
         X = np.reshape(X, (n_images, i_h, i_w, -1))
         n_channels = X.shape[-1]
         if self.patch_size is None:
-            patch_size = i_h / 10, i_w / 10
+            patch_size = i_h // 10, i_w // 10
         else:
             patch_size = self.patch_size
 

@@ -7,7 +7,7 @@
 import numpy as np
 
 from ..base import BaseEstimator, MetaEstimatorMixin, RegressorMixin, clone
-from ..utils import check_random_state, atleast2d_or_csr, check_arrays
+from ..utils import check_random_state, check_array, check_consistent_length
 from ..utils.random import sample_without_replacement
 from .base import LinearRegression
 
@@ -193,7 +193,12 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
             `max_trials` randomly chosen sub-samples.
 
         """
-        X, y = check_arrays(X, y)
+        X = check_array(X, accept_sparse='csr')
+        y = check_array(y, ensure_2d=False)
+        if y.ndim == 1:
+            y = y.reshape(-1, 1)
+        check_consistent_length(X, y)
+
         if self.base_estimator is not None:
             base_estimator = clone(self.base_estimator)
         else:
@@ -247,16 +252,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         n_samples = X.shape[0]
         sample_idxs = np.arange(n_samples)
 
-        X = atleast2d_or_csr(X)
-        y = np.asarray(y)
-
-        if y.ndim == 1:
-            y = y[:, None]
-
         n_samples, _ = X.shape
-        if n_samples != y.shape[0]:
-            raise ValueError("Number of samples of X (%d) and y (%d) "
-                             "do not match." % (n_samples, y.shape[0]))
 
         for self.n_trials_ in range(1, self.max_trials + 1):
 

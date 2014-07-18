@@ -15,7 +15,7 @@ from scipy import linalg
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..externals.six import moves
-from ..utils import array2d, as_float_array, check_random_state, deprecated
+from ..utils import check_array, as_float_array, check_random_state, deprecated
 from ..utils.extmath import fast_dot
 
 __all__ = ['fastica', 'FastICA']
@@ -243,7 +243,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     fun_args = {} if fun_args is None else fun_args
     # make interface compatible with other decompositions
     # a copy is required only for non whitened data
-    X = array2d(X, copy=whiten).T
+    X = check_array(X, copy=whiten).T
 
     alpha = fun_args.get('alpha', 1.0)
     if not 1 <= alpha <= 2:
@@ -505,7 +505,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        X = array2d(X, copy=copy)
+        X = check_array(X, copy=copy)
         if self.whiten:
             X -= self.mean_
 

@@ -309,6 +309,7 @@ class MeanShift(BaseEstimator, ClusterMixin):
         X : array-like, shape=[n_samples, n_features]
             Samples to cluster.
         """
+        X = np.asarray(X)
         self.cluster_centers_, self.labels_ = \
             mean_shift(X, bandwidth=self.bandwidth, seeds=self.seeds,
                        min_bin_freq=self.min_bin_freq,

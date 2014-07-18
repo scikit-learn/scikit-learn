@@ -9,7 +9,8 @@ import numpy as np
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .externals.six.moves import xrange
 from .utils import check_random_state
-from .utils.validation import safe_asarray
+from .utils.validation import check_array
+from .utils.fixes import scoreatpercentile
 from sklearn.utils import deprecated
 
 
@@ -150,7 +151,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         if not hasattr(self, "classes_"):
             raise ValueError("DummyClassifier not fitted.")
 
-        X = safe_asarray(X)
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         # numpy random_state expects Python int and not long as size argument
         # under Windows
         n_samples = int(X.shape[0])
@@ -215,7 +216,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         if not hasattr(self, "classes_"):
             raise ValueError("DummyClassifier not fitted.")
 
-        X = safe_asarray(X)
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         # numpy random_state expects Python int and not long as size argument
         # under Windows
         n_samples = int(X.shape[0])
@@ -299,10 +300,16 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         * "median": always predicts the median of the training set
         * "constant": always predicts a constant value that is provided by
           the user.
+        * "quantile": always predict the quantile of the training set,
+          the value is provided by the user.
 
     constant : int or float or array of shape = [n_outputs]
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
+
+    quantile : float, optional.
+        The parameter for the quantile strategy, ranging from 0 to 1.
+        For instance, quantile = 0.5 will calculate the median.
 
     Attributes
     ----------
@@ -317,9 +324,10 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         True if the output at fit is 2d, else false.
     """
 
-    def __init__(self, strategy="mean", constant=None):
+    def __init__(self, strategy="mean", constant=None, quantile=0.5):
         self.strategy = strategy
         self.constant = constant
+        self.quantile = quantile
 
     @property
     @deprecated('This will be removed in version 0.17')
@@ -346,12 +354,12 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             Returns self.
         """
 
-        if self.strategy not in ("mean", "median", "constant"):
+        if self.strategy not in ("mean", "median", "constant", "quantile"):
             raise ValueError("Unknown strategy type: %s, "
-                             "expected 'mean', 'median' or 'constant'"
-                             % self.strategy)
+                             "expected 'mean', 'median', 'constant'"
+                             "or 'quantile'" % self.strategy)
 
-        y = safe_asarray(y)
+        y = check_array(y, accept_sparse='csr', ensure_2d=False)
         self.output_2d_ = (y.ndim == 2)
 
         if self.strategy == "mean":
@@ -365,7 +373,9 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
                 raise TypeError("Constant target value has to be specified "
                                 "when the constant strategy is used.")
 
-            self.constant = safe_asarray(self.constant)
+            self.constant = check_array(self.constant,
+                                        accept_sparse=['csr', 'csc', 'coo'],
+                                        ensure_2d=False)
 
             if self.output_2d_ and self.constant.shape[0] != y.shape[1]:
                 raise ValueError(
@@ -373,6 +383,15 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
                     "shape (%d, 1)." % y.shape[1])
 
             self.constant_ = np.reshape(self.constant, (1, -1))
+
+        elif self.strategy == "quantile":
+            if not 0 < self.quantile < 1.0:
+                raise ValueError("`quantile` must be in (0, 1.0) but was %r"
+                                 % self.quantile)
+            else:
+                self.constant_ = np.reshape(
+                    scoreatpercentile(y, self.quantile * 100.0, axis=0),
+                    (1, -1))
 
         self.n_outputs_ = np.size(self.constant_)  # y.shape[1] is not safe
         return self
@@ -395,7 +414,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         if not hasattr(self, "constant_"):
             raise ValueError("DummyRegressor not fitted.")
 
-        X = safe_asarray(X)
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         n_samples = X.shape[0]
 
         y = np.ones((n_samples, 1)) * self.constant_

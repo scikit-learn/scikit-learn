@@ -14,8 +14,7 @@ from ..externals.joblib import Parallel, delayed
 from .base import LinearClassifierMixin, SparseCoefMixin
 from ..base import BaseEstimator, RegressorMixin
 from ..feature_selection.from_model import _LearntSelectorMixin
-from ..utils import (atleast2d_or_csr, check_arrays, check_random_state,
-                     column_or_1d)
+from ..utils import (check_array, check_random_state, check_X_y)
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..externals import six
@@ -317,8 +316,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                      loss, learning_rate, n_iter,
                      classes, sample_weight,
                      coef_init, intercept_init):
-        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
-        y = column_or_1d(y, warn=True)
+        X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C")
 
         n_samples, n_features = X.shape
         _check_fit_data(X, y)
@@ -365,8 +363,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         if hasattr(self, "classes_"):
             self.classes_ = None
 
-        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
-        y, = check_arrays(y)
+        X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C")
         n_samples, n_features = X.shape
 
         # labels can be encoded as float, int, or string literals
@@ -779,9 +776,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
     def _partial_fit(self, X, y, alpha, C, loss, learning_rate,
                      n_iter, sample_weight,
                      coef_init, intercept_init):
-        X, y = check_arrays(X, y, sparse_format="csr", copy=False,
-                            check_ccontiguous=True, dtype=np.float64)
-        y = column_or_1d(y, warn=True)
+        X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
+        y = y.astype(np.float64)
 
         n_samples, n_features = X.shape
         _check_fit_data(X, y)
@@ -888,7 +884,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         array, shape = [n_samples]
            Predicted target values per element in X.
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
         scores = safe_sparse_dot(X, self.coef_.T,
                                  dense_output=True) + self.intercept_
         return scores.ravel()

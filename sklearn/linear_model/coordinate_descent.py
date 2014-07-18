@@ -15,7 +15,7 @@ from scipy import sparse
 from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
 from .base import center_data, sparse_center_data
-from ..utils import array2d, atleast2d_or_csc
+from ..utils import check_array
 from ..cross_validation import _check_cv as check_cv
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
@@ -73,8 +73,8 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
     if Xy is None:
         X_sparse = sparse.isspmatrix(X)
         sparse_center = X_sparse and (fit_intercept or normalize)
-        X = atleast2d_or_csc(X, copy=(copy_X and fit_intercept and not
-                                      X_sparse))
+        X = check_array(X, 'csc',
+                        copy=(copy_X and fit_intercept and not X_sparse))
         if not X_sparse:
             # X can be touched inplace thanks to the above line
             X, y, _, _, _ = center_data(X, y, fit_intercept,
@@ -427,8 +427,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     if fit_intercept is None:
         fit_intercept = True
 
-    X = atleast2d_or_csc(X, dtype=np.float64, order='F',
-                         copy=copy_X and fit_intercept)
+    X = check_array(X, 'csc', dtype=np.float64, order='F', copy=copy_X and
+                    fit_intercept)
     n_samples, n_features = X.shape
 
     multi_output = False
@@ -495,7 +495,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol, positive)
         else:
             raise ValueError("Precompute should be one of True, False, "
-                            "'auto' or array-like")
+                             "'auto' or array-like")
         coef_, dual_gap_, eps_, n_iter_ = model
         coefs[..., i] = coef_
         dual_gaps[i] = dual_gap_
@@ -686,8 +686,8 @@ class ElasticNet(LinearModel, RegressorMixin):
             warnings.warn("With alpha=0, this algorithm does not converge "
                           "well. You are advised to use the LinearRegression "
                           "estimator", stacklevel=2)
-        X = atleast2d_or_csc(X, dtype=np.float64, order='F',
-                             copy=self.copy_X and self.fit_intercept)
+        X = check_array(X, 'csc', dtype=np.float64, order='F', copy=self.copy_X
+                        and self.fit_intercept)
         # From now on X can be touched inplace
         y = np.asarray(y, dtype=np.float64)
 
@@ -956,7 +956,7 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
 
     # Do the ordering and type casting here, as if it is done in the path,
     # X is copied and a reference is kept here
-    X_train = atleast2d_or_csc(X_train, dtype=dtype, order=X_order)
+    X_train = check_array(X_train, 'csc', dtype=dtype, order=X_order)
     alphas, coefs, _ = path(X_train, y_train, **path_params)
     del X_train, y_train
 
@@ -1063,7 +1063,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
             # Let us not impose fortran ordering or float64 so far: it is
             # not useful for the cross-validation loop and will be done
             # by the model fitting itself
-            X = atleast2d_or_csc(X, copy=False)
+            X = check_array(X, 'csc', copy=False)
             if sparse.isspmatrix(X):
                 if not np.may_share_memory(reference_to_old_X.data, X.data):
                     # X is a sparse matrix and has been copied
@@ -1073,8 +1073,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                 copy_X = False
             del reference_to_old_X
         else:
-            X = atleast2d_or_csc(X, dtype=np.float64, order='F',
-                                 copy=copy_X)
+            X = check_array(X, 'csc', dtype=np.float64, order='F', copy=copy_X)
             copy_X = False
 
         if X.shape[0] != y.shape[0]:
@@ -1546,8 +1545,8 @@ class MultiTaskElasticNet(Lasso):
         initial data in memory directly using that format.
         """
         # X and y must be of type float64
-        X = array2d(X, dtype=np.float64, order='F',
-                    copy=self.copy_X and self.fit_intercept)
+        X = check_array(X, dtype=np.float64, order='F',
+                        copy=self.copy_X and self.fit_intercept)
         y = np.asarray(y, dtype=np.float64)
 
         if hasattr(self, 'l1_ratio'):

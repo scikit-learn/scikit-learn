@@ -61,7 +61,7 @@ from ..base import BaseEstimator, ClassifierMixin
 from ..metrics.pairwise import rbf_kernel
 from ..utils.graph import graph_laplacian
 from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_arrays
+from ..utils.validation import check_X_y
 from ..externals import six
 from ..neighbors.unsupervised import NearestNeighbors
 
@@ -206,7 +206,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         -------
         self : returns an instance of self.
         """
-        X, y = check_arrays(X, y)
+        X, y = check_X_y(X, y)
         self.X_ = X
 
         # actual graph construction (implementations should override this)

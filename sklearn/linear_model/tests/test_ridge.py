@@ -100,9 +100,9 @@ def test_ridge_singular():
     # test on a singular matrix
     rng = np.random.RandomState(0)
     n_samples, n_features = 6, 6
-    y = rng.randn(n_samples / 2)
+    y = rng.randn(n_samples // 2)
     y = np.concatenate((y, y))
-    X = rng.randn(n_samples / 2, n_features)
+    X = rng.randn(n_samples // 2, n_features)
     X = np.concatenate((X, X), axis=0)
 
     ridge = Ridge(alpha=0)

@@ -17,7 +17,7 @@ from numpy.lib.stride_tricks import as_strided
 from ..base import BaseEstimator, TransformerMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals.six.moves import zip
-from ..utils import array2d, check_random_state, gen_even_slices
+from ..utils import check_array, check_random_state, gen_even_slices
 from ..utils.extmath import randomized_svd, row_norms
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
@@ -214,8 +214,8 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     sklearn.linear_model.Lasso
     SparseCoder
     """
-    dictionary = array2d(dictionary)
-    X = array2d(X)
+    dictionary = check_array(dictionary)
+    X = check_array(X)
     n_samples, n_features = X.shape
     n_components = dictionary.shape[0]
 
@@ -716,7 +716,7 @@ class SparseCodingMixin(TransformerMixin):
 
         """
         # XXX : kwargs is not documented
-        X = array2d(X)
+        X = check_array(X)
         n_samples, n_features = X.shape
 
         code = sparse_encode(
@@ -952,7 +952,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
             Returns the object itself
         """
         random_state = check_random_state(self.random_state)
-        X = array2d(X)
+        X = check_array(X)
         if self.n_components is None:
             n_components = X.shape[1]
         else:
@@ -1114,7 +1114,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             Returns the instance itself.
         """
         random_state = check_random_state(self.random_state)
-        X = array2d(X)
+        X = check_array(X)
         if self.n_components is None:
             n_components = X.shape[1]
         else:
@@ -1159,7 +1159,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         """
         if not hasattr(self, 'random_state_'):
             self.random_state_ = check_random_state(self.random_state)
-        X = array2d(X)
+        X = check_array(X)
         if hasattr(self, 'components_'):
             dict_init = self.components_
         else:

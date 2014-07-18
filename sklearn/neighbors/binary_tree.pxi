@@ -155,7 +155,7 @@ from sklearn.utils.lgamma cimport lgamma
 
 import numpy as np
 import warnings
-from ..utils import array2d
+from ..utils import check_array
 
 from typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
 from typedefs import DTYPE, ITYPE
@@ -1292,7 +1292,7 @@ cdef class BinaryTree:
             [ 0.          0.19662693  0.29473397]
         """
         # XXX: we should allow X to be a pre-built tree.
-        X = array2d(X, dtype=DTYPE, order='C')
+        X = check_array(X, dtype=DTYPE, order='C')
 
         if X.shape[X.ndim - 1] != self.data.shape[1]:
             raise ValueError("query data dimension must "
@@ -1439,7 +1439,7 @@ cdef class BinaryTree:
         cdef DTYPE_t* pt
 
         # validate X and prepare for query
-        X = array2d(X, dtype=DTYPE, order='C')
+        X = check_array(X, dtype=DTYPE, order='C')
 
         if X.shape[X.ndim - 1] != self.data.shape[1]:
             raise ValueError("query data dimension must "
@@ -1589,7 +1589,7 @@ cdef class BinaryTree:
         cdef DTYPE_t log_knorm = _log_kernel_norm(h_c, n_features, kernel_c)
 
         # validate X and prepare for query
-        X = array2d(X, dtype=DTYPE, order='C')
+        X = check_array(X, dtype=DTYPE, order='C')
 
         if X.shape[X.ndim - 1] != n_features:
             raise ValueError("query data dimension must "
@@ -1692,7 +1692,7 @@ cdef class BinaryTree:
         cdef ITYPE_t i
 
         # validate X and prepare for query
-        X = array2d(X, dtype=DTYPE, order='C')
+        X = check_array(X, dtype=DTYPE, order='C')
 
         if X.shape[X.ndim - 1] != self.data.shape[1]:
             raise ValueError("query data dimension must "
