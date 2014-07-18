@@ -1061,10 +1061,11 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    cv : cross-validation generator, optional, default: None
-        A cross-validation generator. If None, a 3-fold cross
-        validation is used or 3-fold stratified cross-validation
-        when y is supplied and estimator is a classifier.
+    cv : cross-validation generator or int, optional, default: None
+        A cross-validation generator to use. If int, determines
+        the number of folds in StratifiedKFold if y is binary
+        or multiclass and estimator is a classifier, or the number
+        of folds in KFold otherwise. If None, it is equivalent to cv=3.
 
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
@@ -1161,8 +1162,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
     Returns
     -------
     train_score : float, optional
-        Score on training set, returned only if `return_train_score` is `True`. 
-        
+        Score on training set, returned only if `return_train_score` is `True`.
+
     test_score : float
         Score on test set.
 
