@@ -334,8 +334,9 @@ def set_fast_parameters(estimator):
     if "n_iter" in params:
         estimator.set_params(n_iter=5)
     if "max_iter" in params:
-        #NMF
-        estimator.set_params(max_iter=min(5, estimator.max_iter))
+        # NMF
+        if estimator.max_iter is not None:
+            estimator.set_params(max_iter=min(5, estimator.max_iter))
     if "n_resampling" in params:
         #randomized lasso
         estimator.set_params(n_resampling=5)
@@ -345,6 +346,9 @@ def set_fast_parameters(estimator):
     if "max_trials" in params:
         # RANSAC
         estimator.set_params(max_trials=10)
+    if "n_init" in params:
+        # K-Means
+        estimator.set_params(n_init=2)
 
 
 def check_transformer_pickle(name, Transformer):
@@ -393,21 +397,23 @@ def check_transformer_pickle(name, Transformer):
 
 
 def check_clustering(name, Alg):
-    iris = load_iris()
-    X, y = iris.data, iris.target
+    X, y = make_blobs(n_samples=50, random_state=1)
     X, y = shuffle(X, y, random_state=7)
     X = StandardScaler().fit_transform(X)
     n_samples, n_features = X.shape
     # catch deprecation and neighbors warnings
     with warnings.catch_warnings(record=True):
         alg = Alg()
-        if hasattr(alg, "n_clusters"):
-            alg.set_params(n_clusters=3)
-        set_random_state(alg)
-        if name == 'AffinityPropagation':
-            alg.set_params(preference=-100)
-        # fit
-        alg.fit(X)
+    set_fast_parameters(alg)
+    if hasattr(alg, "n_clusters"):
+        alg.set_params(n_clusters=3)
+    set_random_state(alg)
+    if name == 'AffinityPropagation':
+        alg.set_params(preference=-100)
+        alg.set_params(max_iter=100)
+
+    # fit
+    alg.fit(X)
 
     assert_equal(alg.labels_.shape, (n_samples,))
     pred = alg.labels_
@@ -470,6 +476,8 @@ def check_classifiers_train(name, Classifier):
         n_samples, n_features = X.shape
         with warnings.catch_warnings(record=True):
             classifier = Classifier()
+        if name in ['BernoulliNB', 'MultinomialNB']:
+            X -= X.min()
         set_fast_parameters(classifier)
         # raises error on malformed input for fit
         assert_raises(ValueError, classifier.fit, X, y[:-1])
@@ -480,7 +488,8 @@ def check_classifiers_train(name, Classifier):
         y_pred = classifier.predict(X)
         assert_equal(y_pred.shape, (n_samples,))
         # training set performance
-        assert_greater(accuracy_score(y, y_pred), 0.85)
+        if name not in ['BernoulliNB', 'MultinomialNB']:
+            assert_greater(accuracy_score(y, y_pred), 0.85)
 
         # raises error on malformed input for predict
         assert_raises(ValueError, classifier.predict, X.T)
@@ -544,11 +553,13 @@ def check_classifiers_input_shapes(name, Classifier):
 
 
 def check_classifiers_classes(name, Classifier):
-    iris = load_iris()
-    X, y = iris.data, iris.target
-    X, y = shuffle(X, y, random_state=1)
+    X, y = make_blobs(n_samples=30, random_state=0)
+    X, y = shuffle(X, y, random_state=7)
     X = StandardScaler().fit_transform(X)
-    y_names = iris.target_names[y]
+    # We need to make sure that we have non negative data, for things
+    # like NMF
+    X -= X.min() - .1
+    y_names = np.array(["one", "two", "three"])[y]
 
     for y_names in [y_names, y_names.astype('O')]:
         if name in ["LabelPropagation", "LabelSpreading"]:
@@ -561,6 +572,8 @@ def check_classifiers_classes(name, Classifier):
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
             classifier = Classifier()
+        if name == 'BernoulliNB':
+            classifier.set_params(binarize=X.mean())
         set_fast_parameters(classifier)
         # fit
         classifier.fit(X, y_)
@@ -568,13 +581,6 @@ def check_classifiers_classes(name, Classifier):
         y_pred = classifier.predict(X)
         # training set performance
         assert_array_equal(np.unique(y_), np.unique(y_pred))
-        accuracy = accuracy_score(y_, y_pred)
-        assert_greater(accuracy, 0.78,
-                       "accuracy %f of %s not greater than 0.78"
-                       % (accuracy, name))
-        #assert_array_equal(
-            #clf.classes_, classes,
-            #"Unexpected classes_ attribute for %r" % clf)
         if np.any(classifier.classes_ != classes):
             print("Unexpected classes_ attribute for %r: "
                   "expected %s, got %s" %
@@ -584,7 +590,8 @@ def check_classifiers_classes(name, Classifier):
 def check_classifiers_pickle(name, Classifier):
     X, y = make_blobs(random_state=0)
     X, y = shuffle(X, y, random_state=7)
-    X = StandardScaler().fit_transform(X)
+    X -= X.min()
+
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
         classifier = Classifier()
@@ -787,6 +794,7 @@ def check_cluster_overwrite_params(name, Clustering):
     with warnings.catch_warnings(record=True):
         # catch deprecation warnings
         clustering = Clustering()
+    set_fast_parameters(clustering)
     params = clustering.get_params()
     clustering.fit(X)
     new_params = clustering.get_params()
