@@ -1,5 +1,4 @@
 import numpy as np
-import warnings
 import scipy.sparse as sp
 
 from sklearn.utils.testing import assert_array_equal
@@ -431,7 +430,10 @@ def test_ovo_ties():
     # for the rest, there is no tie and the prediction is the argmax
     assert_array_equal(np.argmax(votes[1:], axis=1), ovo_prediction[1:])
     # for the tie, the prediction is the class with the highest score
-    assert_equal(ovo_prediction[0], 1)
+    assert_equal(ovo_prediction[0], 0)
+    # in the zero-one classifier, the score for 0 is greater than the score for
+    # one.
+    assert_greater(scores[0][0], scores[0][1])
     # score for one is greater than score for zero
     assert_greater(scores[2, 0] - scores[0, 0], scores[0, 0] + scores[1, 0])
     # score for one is greater than score for two
@@ -448,7 +450,7 @@ def test_ovo_ties2():
         y = (y_ref + i) % 3
         multi_clf = OneVsOneClassifier(Perceptron())
         ovo_prediction = multi_clf.fit(X, y).predict(X)
-        assert_equal(ovo_prediction[0], (1 + i) % 3)
+        assert_equal(ovo_prediction[0], i % 3)
 
 
 def test_ovo_string_y():
