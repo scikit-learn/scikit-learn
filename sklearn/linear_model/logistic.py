@@ -20,7 +20,7 @@ from ..svm.base import BaseLibLinear
 from ..utils import atleast2d_or_csc, check_arrays, compute_class_weight
 from ..utils.extmath import log_logistic, safe_sparse_dot
 from ..utils.optimize import newton_cg
-from ..utils.validation import as_float_array
+from ..utils.validation import as_float_array, DataConversionWarning
 from ..utils.fixes import expit
 from ..externals.joblib import Parallel, delayed
 from ..cross_validation import _check_cv
@@ -846,6 +846,15 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
 
         X = atleast2d_or_csc(X, dtype=np.float64)
         X, y = check_arrays(X, y, copy=False)
+
+        if y.ndim == 2 and y.shape[1] == 1:
+            warnings.warn(
+                "A column-vector y was passed when a 1d array was"
+                " expected. Please change the shape of y to "
+                "(n_samples, ), for example using ravel().",
+                DataConversionWarning
+                )
+            y = np.ravel(y)
 
         # init cross-validation generator
         cv = _check_cv(self.cv, X, y, classifier=True)

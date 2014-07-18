@@ -132,9 +132,6 @@ def test_inconsistent_input():
 
 def test_write_parameters():
     """Test that we can write to coef_ and intercept_"""
-    #rng = np.random.RandomState(0)
-    #X = rng.random_sample((5, 10))
-    #y = np.ones(X.shape[0])
     clf = LogisticRegression(random_state=0)
     clf.fit(X, Y1)
     clf.coef_[:] = 0
