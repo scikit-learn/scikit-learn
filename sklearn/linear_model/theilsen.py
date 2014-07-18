@@ -309,9 +309,9 @@ class TheilSen(LinearModel, RegressorMixin):
 
         if self.fit_intercept:
             self.intercept_ = coefs[0]
-            self.coef_ = coefs[1:]
+            self.coef_ = np.array(coefs[1:])
         else:
             self.intercept_ = 0.
-            self.coef_ = coefs
+            self.coef_ = np.array(coefs)
 
         return self
