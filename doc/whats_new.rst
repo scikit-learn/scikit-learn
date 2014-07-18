@@ -14,6 +14,8 @@ New features
 
 
    - Incremental fit for :class:`GaussianNB <naive_bayes.GaussianNB>`.
+   - Add ``sample_weight`` support to :class:`dummy.DummyClassifier`. By
+     `Arnaud Joly`_.
 
 
 Enhancements
