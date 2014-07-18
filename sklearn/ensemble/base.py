@@ -53,7 +53,12 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
         self.estimators_ = []
 
     def _validate_estimator(self, default=None):
-        """Check the estimator and set the `base_estimator_` attribute."""
+        """Check the estimator and the n_estimator attribute, set the
+        `base_estimator_` attribute."""
+        if self.n_estimators <= 0:
+            raise ValueError("n_estimators must be greater than zero, "
+                             "got {0}.".format(self.n_estimators))
+
         if self.base_estimator is not None:
             self.base_estimator_ = self.base_estimator
         else:
