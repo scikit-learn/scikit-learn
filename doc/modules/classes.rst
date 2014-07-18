@@ -897,17 +897,6 @@ Pairwise metrics
     multiclass.OneVsOneClassifier
     multiclass.OutputCodeClassifier
 
-.. autosummary::
-    :toctree: generated
-    :template: function.rst
-
-    multiclass.fit_ovr
-    multiclass.predict_ovr
-    multiclass.fit_ovo
-    multiclass.predict_ovo
-    multiclass.fit_ecoc
-    multiclass.predict_ecoc
-
 .. _naive_bayes_ref:
 
 :mod:`sklearn.naive_bayes`: Naive Bayes

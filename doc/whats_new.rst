@@ -41,6 +41,11 @@ API changes summary
       meta-estimators don't convert pandas DataFrames into arrays any more,
       allowing DataFrame specific operations in custom estimators.
 
+    - :func:`multiclass.fit_ovr`, :func:`multiclass.predict_ovr`,
+      :func:`predict_proba_ovr`,
+      :func:`multiclass.fit_ovo`, :func:`multiclass.predict_ovo`,
+      :func:`multiclass.fit_ecoc` and :func:`multiclass.predict_ecoc`
+      are deprecated. Use the underlying estimators instead.
 
 .. _changes_0_15:
 
