@@ -12,7 +12,6 @@ from .utils import check_random_state
 from .utils.validation import check_array
 from .utils.fixes import scoreatpercentile_axis
 from sklearn.utils import deprecated
-from scipy import stats
 
 
 class DummyClassifier(BaseEstimator, ClassifierMixin):
@@ -301,24 +300,15 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         * "median": always predicts the median of the training set
         * "constant": always predicts a constant value that is provided by
           the user.
-<<<<<<< HEAD
         * "quantile": always predict the quantile of the training set,
           the value is provided by the user.
-=======
-        * "percentile": always predict the percentile of the training set,
-          the value is provded by the user.
->>>>>>> replaced quantile by percentile, added docstrings
 
     constant : int or float or array of shape = [n_outputs]
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
 
     alpha : float, optional.
-<<<<<<< HEAD
         The parameter for the quantile strategy, ranging from 0 to 1.
-=======
-        The parameter of the percentile strategy, ranging from 0 to 1.
->>>>>>> replaced quantile by percentile, added docstrings
         For instance, alpha = 0.5 will calculate the median.
 
     Attributes
@@ -364,10 +354,10 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             Returns self.
         """
 
-        if self.strategy not in ("mean", "median", "constant", "quantile"):
+        if self.strategy not in ("mean", "median", "constant", "percentile"):
             raise ValueError("Unknown strategy type: %s, "
                              "expected 'mean', 'median', 'constant'"
-                             "or 'quantile'" % self.strategy)
+                             "or 'percentile'" % self.strategy)
 
         y = check_array(y, accept_sparse='csr', ensure_2d=False)
         self.output_2d_ = (y.ndim == 2)
