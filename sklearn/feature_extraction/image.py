@@ -472,7 +472,7 @@ class PatchExtractor(BaseEstimator):
         X = np.reshape(X, (n_images, i_h, i_w, -1))
         n_channels = X.shape[-1]
         if self.patch_size is None:
-            patch_size = i_h / 10, i_w / 10
+            patch_size = i_h // 10, i_w // 10
         else:
             patch_size = self.patch_size
 
