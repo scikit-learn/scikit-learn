@@ -29,6 +29,7 @@ case.
 """
 
 # Author: Mathieu Blondel <mathieu@mblondel.org>
+# Author: Hamzeh Alsalhi <93hamsal@gmail.com>
 #
 # License: BSD 3 clause
 
@@ -42,8 +43,6 @@ from .base import MetaEstimatorMixin
 from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
-from .utils.multiclass import type_of_target
-from .utils.multiclass import unique_labels
 from .utils.validation import _num_samples
 from .externals.joblib import Parallel
 from .externals.joblib import delayed
@@ -94,12 +93,12 @@ def fit_ovr(estimator, X, y, n_jobs=1):
         An estimator object implementing `fit` and one of `decision_function`
         or `predict_proba`.
 
-    X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+    X : (sparse) array-like, shape = [n_samples, n_features]
         Data.
 
-    y : {array-like, sparse matrix}, shape = [n_samples] or
-        [n_samples, n_classes] Multi-class targets. An indicator matrix
-        turns on multilabel classification.
+    y : (sparse) array-like, shape = [n_samples] or [n_samples, n_classes]
+        Multi-class targets. An indicator matrix turns on multilabel
+        classification.
 
     Returns
     -------
@@ -116,7 +115,7 @@ def fit_ovr(estimator, X, y, n_jobs=1):
     columns = (col.toarray().ravel() for col in Y.T)
     # In cases where individual estimators are very fast to train setting
     # n_jobs > 1 in can results in slower performance due to the overhead
-    # of spawning threads.
+    # of spawning threads.  See joblib issue #112.
     estimators = Parallel(n_jobs=n_jobs)(delayed(_fit_binary)
                                          (estimator,
                                           X,
@@ -140,13 +139,13 @@ def predict_ovr(estimators, label_binarizer, X):
         multiclass labels to binary labels and vice-versa. fit_ovr supplies
         this object as part of its output.
 
-    X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+    X : (sparse) array-like, shape = [n_samples, n_features]
         Data.
 
     Returns
     -------
-    y : {array-like, sparse matrix}, shape = [n_samples] or
-        [n_samples, n_classes]. Predicted multi-class targets.
+    y : (sparse) array-like, shape = [n_samples] or [n_samples, n_classes].
+        Predicted multi-class targets.
     """
     e_types = set([type(e) for e in estimators if not
                    isinstance(e, _ConstantPredictor)])
@@ -264,12 +263,12 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : (sparse) array-like, shape = [n_samples, n_features]
             Data.
 
-        y : {array-like, sparse matrix}, shape = [n_samples] or
-            [n_samples, n_classes] Multi-class targets. An indicator matrix
-            turns on multilabel classification.
+        y : (sparse) array-like, shape = [n_samples] or [n_samples, n_classes]
+            Multi-class targets. An indicator matrix turns on multilabel
+            classification.
 
         Returns
         -------
@@ -288,13 +287,13 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : (sparse) array-like, shape = [n_samples, n_features]
             Data.
 
         Returns
         -------
-        y : {array-like, sparse matrix}, shape = [n_samples] or
-            [n_samples, n_classes]. Predicted multi-class targets.
+        y : (sparse) array-like, shape = [n_samples] or [n_samples, n_classes].
+            Predicted multi-class targets.
         """
         self._check_is_fitted()
 
@@ -319,7 +318,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Returns
         -------
-        T : {array-like, sparse matrix}, shape = [n_samples, n_classes]
+        T : (sparse) array-like, shape = [n_samples, n_classes]
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in `self.classes_`.
         """
@@ -474,7 +473,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : (sparse) array-like, shape = [n_samples, n_features]
             Data.
 
         y : numpy array of shape [n_samples]
@@ -493,7 +492,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : (sparse) array-like, shape = [n_samples, n_features]
             Data.
 
         Returns
@@ -533,7 +532,7 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None, n_jobs=1):
     classes : numpy array of shape [n_classes]
         Array containing labels.
 
-    `code_book_`: numpy array of shape [n_classes, code_size]
+    `code_book_` : numpy array of shape [n_classes, code_size]
         Binary array containing the code of each class.
     """
     _check_estimator(estimator)
@@ -650,7 +649,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : (sparse) array-like, shape = [n_samples, n_features]
             Data.
 
         y : numpy array of shape [n_samples]
@@ -670,7 +669,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : (sparse) array-like, shape = [n_samples, n_features]
             Data.
 
         Returns
