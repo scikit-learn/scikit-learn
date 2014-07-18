@@ -354,7 +354,47 @@ cdef class ClassificationCriterion(Criterion):
 
     cdef void update_factors(self, PARTITION_t partition) nogil:
         """Update the collected statistics by defining the categorical split"""
-        pass #TODO
+        cdef DOUBLE_t* y = self.y
+        cdef SIZE_t y_stride = self.y_stride
+        cdef DOUBLE_t* sample_weight = self.sample_weight
+        cdef SIZE_t n_outputs = self.n_outputs
+        cdef SIZE_t* samples = self.samples
+        cdef SIZE_t label_count_stride = self.label_count_stride
+        cdef double* label_count_left = self.label_count_left
+        cdef double* label_count_right = self.label_count_right
+        cdef SIZE_t start = self.start
+        cdef SIZE_t end = self.end
+        cdef int left_leaf
+
+        cdef SIZE_t i
+        cdef SIZE_t k
+        cdef SIZE_t label_index
+        cdef DOUBLE_t w = 1.0
+        cdef DOUBLE_t diff_w = 0.0
+
+        for label_index in xrange(self.n_outputs):
+            label_count_left[label_index] = 0
+            label_count_right[label_index] = 0
+
+        for p in range(start, end):
+            i = samples[p]
+
+            if sample_weight != NULL:
+                w = sample_weight[i]
+
+            for k in range(n_outputs):
+                label_index = (k * label_count_stride +
+                               <SIZE_t> y[i * y_stride + k])
+                left_leaf = (partition >> i) & 0x1
+                if left_leaf:
+                    label_count_left[label_index] += w
+                    diff_w += w
+                else:
+                    label_count_right[label_index] -= w
+                    diff_w -= w
+
+        self.weighted_n_left += diff_w
+        self.weighted_n_right -= diff_w
 
     cdef double node_impurity(self) nogil:
         pass
@@ -836,7 +876,67 @@ cdef class RegressionCriterion(Criterion):
 
     cdef void update_factors(self, PARTITION_t partition) nogil:
         """Update the collected statistics by defining the categorical split"""
-        pass #TODO
+        cdef DOUBLE_t* y = self.y
+        cdef SIZE_t y_stride = self.y_stride
+        cdef DOUBLE_t* sample_weight = self.sample_weight
+
+        cdef SIZE_t* samples = self.samples
+        cdef SIZE_t pos = self.pos
+
+        cdef SIZE_t n_outputs = self.n_outputs
+        cdef double* mean_left = self.mean_left
+        cdef double* mean_right = self.mean_right
+        cdef double* sq_sum_left = self.sq_sum_left
+        cdef double* sq_sum_right = self.sq_sum_right
+        cdef double* var_left = self.var_left
+        cdef double* var_right = self.var_right
+        cdef double* sum_left = self.sum_left
+        cdef double* sum_right = self.sum_right
+
+        cdef double weighted_n_left = self.weighted_n_left
+        cdef double weighted_n_right = self.weighted_n_right
+
+        cdef SIZE_t start = self.start
+        cdef SIZE_t end = self.end
+        cdef int left_leaf
+
+        cdef SIZE_t i
+        cdef SIZE_t p
+        cdef SIZE_t k
+        cdef DOUBLE_t w = 1.0
+        cdef DOUBLE_t diff_w = 0.0
+        cdef DOUBLE_t y_ik, w_y_ik
+
+        for p in range(start, end):
+            i = samples[p]
+
+            if sample_weight != NULL:
+                w = sample_weight[i]
+
+            for k in range(n_outputs):
+                left_leaf = (partition >> i) & 0x1
+                y_ik = y[i * y_stride + k]
+                w_y_ik = w * y_ik
+
+                if left_leaf:
+                    sum_left[k] += w_y_ik
+                    sq_sum_left[k] += w_y_ik * y_ik
+                else:
+                    sum_right[k] += w_y_ik
+                    sq_sum_right[k] += w_y_ik * y_ik
+
+            diff_w += w
+
+        weighted_n_left += diff_w
+        weighted_n_right -= diff_w
+
+        for k in range(n_outputs):
+            mean_left[k] = sum_left[k] / weighted_n_left
+            mean_right[k] = sum_right[k] / weighted_n_right
+            var_left[k] = (sq_sum_left[k] / weighted_n_left -
+                           mean_left[k] * mean_left[k])
+            var_right[k] = (sq_sum_right[k] / weighted_n_right -
+                            mean_right[k] * mean_right[k])
 
     cdef double node_impurity(self) nogil:
         pass
