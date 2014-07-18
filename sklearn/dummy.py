@@ -354,10 +354,10 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             Returns self.
         """
 
-        if self.strategy not in ("mean", "median", "constant", "percentile"):
+        if self.strategy not in ("mean", "median", "constant", "quantile"):
             raise ValueError("Unknown strategy type: %s, "
                              "expected 'mean', 'median', 'constant'"
-                             "or 'percentile'" % self.strategy)
+                             "or 'quantile'" % self.strategy)
 
         y = check_array(y, accept_sparse='csr', ensure_2d=False)
         self.output_2d_ = (y.ndim == 2)
