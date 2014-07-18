@@ -69,9 +69,6 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
     `coef_` : array, shape = [n_classes, n_features]
         Coefficient of the features in the decision function.
 
-        `coef_` is readonly property derived from `raw_coef_` that \
-        follows the internal memory layout of liblinear.
-
     `intercept_` : array, shape = [n_classes]
         Intercept (a.k.a. bias) added to the decision function.
         If `fit_intercept` is set to False, the intercept is set to zero.
