@@ -2199,17 +2199,16 @@ def label_ranking_average_precision_score(y_true, y_score):
     for i in range(n_samples):
         relevant = y_true[i].nonzero()[0]
 
-        # No relevant label, so we will have to sum over zero element
-        # and divide by 0. But lim_{x->0} x/x = 1.
-        # If all labels are relevant, the score is also equal to 1.
         if (relevant.size == 0 or relevant.size == n_labels):
+            # If all labels are relevant or unrelevant, the score is also
+            # equal to 1. The label ranking has no meaning.
             out += 1.
             continue
 
-        score = - y_score[i]
+        scores_i = - y_score[i]
         true_mask = y_true[i].astype(bool)
-        rank = rankdata(score, 'max')[true_mask]
-        L = rankdata(score[true_mask], 'max')
+        rank = rankdata(scores_i, 'max')[true_mask]
+        L = rankdata(scores_i[true_mask], 'max')
         out += np.divide(L, rank, dtype=float).mean()
 
     return out / n_samples
