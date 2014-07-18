@@ -390,7 +390,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
                                  % self.alpha)
             else:
                 self.constant_ = np.reshape(
-                    stats.scoreatquantile(y, self.alpha * 100.0, axis=0),
+                    stats.scoreatpercentile(y, self.alpha * 100.0, axis=0),
                                            (1, -1))
 
         self.n_outputs_ = np.size(self.constant_)  # y.shape[1] is not safe
