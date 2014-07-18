@@ -88,7 +88,6 @@ def _precomp_kernel_ridge_path_eigen(gramX_train, Y_train, alphas,
                          "or change mode.")
 
     eig_val_train, eig_vect_train = linalg.eigh(gramX_train)
-
     VTY = eig_vect_train.T.dot(Y_train)
     v_alpha = (eig_val_train[np.newaxis, :, np.newaxis] +
                alphas[:, np.newaxis])
@@ -121,7 +120,7 @@ def _precomp_kernel_ridge_path_eigen(gramX_train, Y_train, alphas,
 
 
 def _linear_kernel(X, Y):
-    return X.dot(Y.T)
+    return safe_sparse_dot(X, Y.T, dense_output=True)
 
 
 def _kernel_ridge_path_eigen(X_train, Y_train, alphas, X_test=None,
@@ -188,6 +187,7 @@ def ridge_path(X_train, Y_train, alphas, X_test=None, solver="eigen"):
 
     solver : str, {'eigen', 'svd'}, (default 'eigen')
         The solver to use for ridge_path.
+
 
     Returns
     -------
@@ -985,9 +985,11 @@ class _RidgeGCV(LinearModel):
                                score_overrides_loss=True)
         error = scorer is None
 
-        if gcv_mode == 'eigen' and not with_sw and not sparse.issparse(X):
+        if gcv_mode == 'eigen' and not with_sw:
             alphas = np.atleast_2d(self.alphas.T).T
             mode = 'looe' if error else 'loov'
+            y_is_raveled = y.ndim == 1
+            y = np.atleast_2d(y.T).T
             out, C = _kernel_ridge_path_eigen(X, y, alphas, mode=mode)
             if mode == 'looe':
                 out = out ** 2
@@ -995,6 +997,8 @@ class _RidgeGCV(LinearModel):
             # Since this object wants to choose a global penalty, we need
             # to reshape this. I wholeheartedly disagree with this.
             cv_values = out.transpose(1, 2, 0).reshape(-1, alphas.shape[0])
+            if y_is_raveled:
+                C = C[:, :, 0]
         else:
             for i, alpha in enumerate(self.alphas):
                 weighted_alpha = (sample_weight * alpha
