@@ -8,13 +8,19 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
-
+from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_greater
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
-from sklearn.multiclass import predict_ovr
+
 from sklearn.multiclass import fit_ovr
+from sklearn.multiclass import fit_ovo
+from sklearn.multiclass import fit_ecoc
+from sklearn.multiclass import predict_ovr
+from sklearn.multiclass import predict_ovo
+from sklearn.multiclass import predict_ecoc
+from sklearn.multiclass import predict_proba_ovr
 
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
@@ -44,14 +50,15 @@ def test_ovr_exceptions():
     ovr = OneVsRestClassifier(LinearSVC(random_state=0))
     assert_raises(ValueError, ovr.predict, [])
 
-    assert_raises(ValueError, predict_ovr, [LinearSVC(), MultinomialNB()],
-                  LabelBinarizer(), [])
+    with ignore_warnings():
+        assert_raises(ValueError, predict_ovr, [LinearSVC(), MultinomialNB()],
+                      LabelBinarizer(), [])
 
     # Fail on multioutput data
-    assert_raises(ValueError, fit_ovr, MultinomialNB(),
+    assert_raises(ValueError, OneVsRestClassifier(MultinomialNB()).fit,
                   np.array([[1, 0], [0, 1]]),
                   np.array([[1, 2], [3, 1]]))
-    assert_raises(ValueError, fit_ovr, MultinomialNB(),
+    assert_raises(ValueError, OneVsRestClassifier(MultinomialNB()).fit,
                   np.array([[1, 0], [0, 1]]),
                   np.array([[1.5, 2.4], [3.1, 0.8]]))
 
@@ -193,7 +200,7 @@ def test_ovr_binary():
         y_pred = clf.predict([[3, 0, 0]])[0]
         assert_equal(y_pred, 1)
 
-
+@ignore_warnings
 def test_ovr_multilabel():
     # Toy dataset where features correspond directly to labels.
     X = np.array([[0, 4, 5], [0, 5, 0], [3, 3, 3], [4, 0, 6], [6, 0, 0]])
@@ -490,6 +497,47 @@ def test_ecoc_gridsearch():
     cv.fit(iris.data, iris.target)
     best_C = cv.best_estimator_.estimators_[0].C
     assert_true(best_C in Cs)
+
+@ignore_warnings
+def test_deprecated():
+    base_estimator = DecisionTreeClassifier(random_state=0)
+    X, Y = iris.data, iris.target
+    X_train, Y_train = X[:80], Y[:80]
+    X_test, Y_test = X[80:], Y[80:]
+
+    all_metas = [
+        (OneVsRestClassifier, fit_ovr, predict_ovr, predict_proba_ovr),
+        (OneVsOneClassifier, fit_ovo, predict_ovo, None),
+        (OutputCodeClassifier, fit_ecoc, predict_ecoc, None),
+    ]
+
+    for MetaEst, fit_func, predict_func, proba_func in all_metas:
+        try:
+            meta_est = MetaEst(base_estimator,
+                               random_state=0).fit(X_train, Y_train)
+
+            fitted_return = fit_func(base_estimator, X_train, Y_train,
+                                     random_state=0)
+        except TypeError:
+            meta_est = MetaEst(base_estimator).fit(X_train, Y_train)
+            fitted_return = fit_func(base_estimator, X_train, Y_train)
+
+
+        if len(fitted_return) == 2:
+            estimators_, classes_or_lb = fitted_return
+            assert_almost_equal(predict_func(estimators_, classes_or_lb, X_test),
+                                meta_est.predict(X_test))
+
+            if proba_func is not None:
+                assert_almost_equal(proba_func(estimators_, X_test,
+                                               is_multilabel=False),
+                                    meta_est.predict_proba(X_test))
+
+        else:
+            estimators_, classes_or_lb, codebook = fitted_return
+            assert_almost_equal(predict_func(estimators_, classes_or_lb,
+                                             codebook, X_test),
+                                meta_est.predict(X_test))
 
 
 if __name__ == "__main__":
