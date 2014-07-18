@@ -2,11 +2,11 @@ import warnings
 import numpy as np
 
 from sklearn.base import clone
-from sklearn.externals.six.moves import xrange
-from sklearn.utils.testing import (assert_array_equal,
-                                   assert_equal,
-                                   assert_almost_equal,
-                                   assert_raises)
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_raises
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
 
@@ -29,7 +29,7 @@ def _check_predict_proba(clf, X, y):
         proba = [proba]
         log_proba = [log_proba]
 
-    for k in xrange(n_outputs):
+    for k in range(n_outputs):
         assert_equal(proba[k].shape[0], n_samples)
         assert_equal(proba[k].shape[1], len(np.unique(y[:, k])))
         assert_array_equal(proba[k].sum(axis=1), np.ones(len(X)))
@@ -136,7 +136,7 @@ def test_stratified_strategy_multioutput():
     X = [[0]] * 500
     y_pred = clf.predict(X)
 
-    for k in xrange(y.shape[1]):
+    for k in range(y.shape[1]):
         p = np.bincount(y_pred[:, k]) / float(len(X))
         assert_almost_equal(p[1], 3. / 5, decimal=1)
         assert_almost_equal(p[2], 2. / 5, decimal=1)
@@ -171,7 +171,7 @@ def test_uniform_strategy_multioutput():
     X = [[0]] * 500
     y_pred = clf.predict(X)
 
-    for k in xrange(y.shape[1]):
+    for k in range(y.shape[1]):
         p = np.bincount(y_pred[:, k]) / float(len(X))
         assert_almost_equal(p[1], 0.5, decimal=1)
         assert_almost_equal(p[2], 0.5, decimal=1)
@@ -388,3 +388,12 @@ def test_constant_strategy_exceptions():
     clf = DummyClassifier(strategy="constant", random_state=0,
                           constant=[2, 0])
     assert_raises(ValueError, clf.fit, X, y)
+
+
+def test_classification_sample_weight():
+    X = [[0], [0], [1]]
+    y = [0, 1, 0]
+    sample_weight = [0.1, 1., 0.1]
+
+    clf = DummyClassifier().fit(X, y, sample_weight)
+    assert_array_almost_equal(clf.class_prior_, [0.2 / 1.2, 1. / 1.2])
