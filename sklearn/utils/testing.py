@@ -454,16 +454,23 @@ def uninstall_mldata_mock():
 
 
 # Meta estimators need another estimator to be instantiated.
-meta_estimators = ["OneVsOneClassifier",
+META_ESTIMATORS = ["OneVsOneClassifier",
                    "OutputCodeClassifier", "OneVsRestClassifier", "RFE",
                    "RFECV", "BaseEnsemble"]
 # estimators that there is no way to default-construct sensibly
-other = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV"]
+OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV"]
+
+# some trange ones
+DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
+             'LabelBinarizer', 'LabelEncoder', 'MultiLabelBinarizer',
+             'TfidfTransformer', 'IsotonicRegression', 'OneHotEncoder',
+             'RandomTreesEmbedding', 'FeatureHasher', 'DummyClassifier',
+             'DummyRegressor', 'TruncatedSVD', 'PolynomialFeatures']
 
 
 def all_estimators(include_meta_estimators=False, include_other=False,
-                   type_filter=None):
-    """Get a list of all estimators from sklearn.
+                   type_filter=None, include_dont_test=False):
+    """Get a list of all  from sklearn.
 
     This function crawls the module and gets all classes that inherit
     from BaseEstimator. Classes that are defined in test-modules are not
@@ -482,6 +489,9 @@ def all_estimators(include_meta_estimators=False, include_other=False,
         Wether to include meta-estimators that are somehow special and can
         not be default-constructed sensibly. These are currently
         Pipeline, FeatureUnion and GridSearchCV
+
+    include_dont_test : boolean, default=False
+        Whether to include "special" label estimator or test processors.
 
     type_filter : string or None, default=None
         Which kind of estimators should be returned. If None, no filter is
@@ -521,11 +531,14 @@ def all_estimators(include_meta_estimators=False, include_other=False,
     # get rid of abstract base classes
     estimators = [c for c in estimators if not is_abstract(c[1])]
 
+    if not include_dont_test:
+        estimators = [c for c in estimators if not c[0] in DONT_TEST]
+
     if not include_other:
-        estimators = [c for c in estimators if not c[0] in other]
+        estimators = [c for c in estimators if not c[0] in OTHER]
     # possibly get rid of meta estimators
     if not include_meta_estimators:
-        estimators = [c for c in estimators if not c[0] in meta_estimators]
+        estimators = [c for c in estimators if not c[0] in META_ESTIMATORS]
 
     if type_filter == 'classifier':
         estimators = [est for est in estimators
