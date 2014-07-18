@@ -12,6 +12,7 @@ from .utils import check_random_state
 from .utils.validation import check_array
 from .utils.fixes import scoreatpercentile_axis
 from sklearn.utils import deprecated
+from scipy import stats
 
 
 class DummyClassifier(BaseEstimator, ClassifierMixin):
