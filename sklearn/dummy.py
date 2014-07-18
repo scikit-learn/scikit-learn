@@ -11,9 +11,11 @@ from .externals.six.moves import xrange
 from .utils import check_random_state
 from .utils.validation import safe_asarray
 from sklearn.utils import deprecated
+from scipy import stats
 
 
 class DummyClassifier(BaseEstimator, ClassifierMixin):
+
     """
     DummyClassifier is a classifier that makes predictions using simple rules.
 
@@ -283,6 +285,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
 
 class DummyRegressor(BaseEstimator, RegressorMixin):
+
     """
     DummyRegressor is a regressor that makes predictions using
     simple rules.
@@ -317,9 +320,10 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         True if the output at fit is 2d, else false.
     """
 
-    def __init__(self, strategy="mean", constant=None):
+    def __init__(self, strategy="mean", constant=None, alpha=None):
         self.strategy = strategy
         self.constant = constant
+        self.alpha = alpha
 
     @property
     @deprecated('This will be removed in version 0.17')
@@ -346,10 +350,10 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             Returns self.
         """
 
-        if self.strategy not in ("mean", "median", "constant"):
+        if self.strategy not in ("mean", "median", "constant", "quantile"):
             raise ValueError("Unknown strategy type: %s, "
-                             "expected 'mean', 'median' or 'constant'"
-                             % self.strategy)
+                             "expected 'mean', 'median', 'constant'"
+                             "or 'quantile'" % self.strategy)
 
         y = safe_asarray(y)
         self.output_2d_ = (y.ndim == 2)
@@ -373,6 +377,18 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
                     "shape (%d, 1)." % y.shape[1])
 
             self.constant_ = np.reshape(self.constant, (1, -1))
+
+        elif self.strategy == "quantile":
+            if not self.alpha:
+                raise TypeError("`alpha` value has to be specified "
+                                "when the quantile strategy is used.")
+            elif not 0 < self.alpha < 1.0:
+                raise ValueError("`alpha` must be in (0, 1.0) but was %r"
+                                 % self.alpha)
+            else:
+                self.constant_ = np.reshape(
+                    stats.scoreatpercentile(y, self.alpha * 100.0, axis=0),
+                                           (1, -1))
 
         self.n_outputs_ = np.size(self.constant_)  # y.shape[1] is not safe
         return self
