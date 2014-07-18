@@ -78,6 +78,9 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             Target values.
 
+        sample_weight : array-like of shape = [n_samples], optional
+            Sample weights.
+
         Returns
         -------
         self : object
