@@ -159,7 +159,7 @@ def _lse(weights, X, y, indices, start, intercept):
 
 
 class TheilSen(LinearModel, RegressorMixin):
-    """Theil-Sen Estimator for a multiple linear regression model.
+    """Theil-Sen Estimator: robust multivariate regression model.
 
     Parameters
     ----------

@@ -744,15 +744,90 @@ For classification, :class:`PassiveAggressiveClassifier` can be used with
    <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>`_
    K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
 
- .. _ransac_regression:
 
-Robustness to outliers: RANSAC
-==============================
+Robustness regression: outliers and modeling errors
+=====================================================
 
-RANSAC (RANdom SAmple Consensus) is an iterative algorithm for the robust
-estimation of parameters from a subset of inliers from the complete data set.
+Robust regression is interested in fitting a regression model in the
+presence of corrupt data: either outliers, or error in the model.
 
-It is an iterative method to estimate the parameters of a mathematical model.
+.. figure:: ../auto_examples/linear_model/images/plot_theilsen_001.png
+   :target: ../auto_examples/linear_model/plot_theilsen.html
+   :scale: 50%
+   :align: center
+
+Different scenario and useful concepts
+----------------------------------------
+
+There are different things to keep in mind when dealing with data
+corrupted by outliers:
+
+.. |y_outliers| image:: ../auto_examples/linear_model/images/plot_robust_fit_003.png
+   :target: ../auto_examples/linear_model/plot_robust_fit.html
+   :scale: 60%
+
+.. |X_outliers| image:: ../auto_examples/linear_model/images/plot_robust_fit_002.png
+   :target: ../auto_examples/linear_model/plot_robust_fit.html
+   :scale: 60%
+
+.. |large_y_outliers| image:: ../auto_examples/linear_model/images/plot_robust_fit_005.png
+   :target: ../auto_examples/linear_model/plot_robust_fit.html
+   :scale: 60%
+
+* **Outliers in X or in y**?
+
+  ==================================== ====================================
+  Outliers in the y direction          Outliers in the X direction
+  ==================================== ====================================
+  |y_outliers|                         |X_outliers|
+  ==================================== ====================================
+
+* **Fraction of outliers versus amplitude of error**
+
+  The number of outlying points matters, but also how much they are
+  outliers.
+
+  ==================================== ====================================
+  Small outliers                       Large outliers
+  ==================================== ====================================
+  |y_outliers|                         |large_y_outliers|
+  ==================================== ====================================
+
+An important notion of robust fitting is that of breakdown point: the
+fraction of data that can be outlying for the fit to start missing the
+inlying data.
+
+Note that in general, robust fitting in high-dimensional setting (large
+`n_features`) is very hard. The robust models here will probably not work
+in these settings.
+
+
+.. topic:: **Trade-offs: which estimator?**
+
+   Scikit-learn provides 2 robust regression estimators:
+   :ref:`RANSAC <ransac_regression>` and
+   :ref:`Theil Sen <theil_sen_regression>`
+
+   * :ref:`RANSAC <ransac_regression>` is faster, and scales much better
+     with the number of samples
+
+   * :ref:`RANSAC <ransac_regression>` will deal better with large
+     outliers in the y direction (most common situation)
+
+  * :ref:`Theil Sen <theil_sen_regression>` will cope better with
+    medium-size outliers in the X direction, but this property will
+    disappear in large dimensional settings.
+
+ When in doubt, use :ref:`RANSAC <ransac_regression>`
+
+.. _ransac_regression:
+
+RANSAC: RANdom SAmple Consensus
+--------------------------------
+
+RANSAC (RANdom SAmple Consensus) fits a model from random subsets of
+inliers from the complete data set.
+
 RANSAC is a non-deterministic algorithm producing only a reasonable result with
 a certain probability, which is dependent on the number of iterations (see
 `max_trials` parameter). It is typically used for linear and non-linear
@@ -768,6 +843,9 @@ estimated only from the determined inliers.
    :target: ../auto_examples/linear_model/plot_ransac.html
    :align: center
    :scale: 50%
+
+Details of the algorithm
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 Each iteration performs the following steps:
 
@@ -798,6 +876,7 @@ performance.
 .. topic:: Examples:
 
   * :ref:`example_linear_model_plot_ransac.py`
+  * :ref:`example_linear_model_plot_robust_fit.py`
 
 .. topic:: References:
 
@@ -810,6 +889,68 @@ performance.
    <http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf>`_
    Sunglok Choi, Taemin Kim and Wonpil Yu - BMVC (2009)
 
+.. _theil_sen_regression:
+
+Theil-Sen estimator: generalized-median-based estimator
+--------------------------------------------------------
+
+The :class:`TheilSen` estimator uses a generalization of the median in multiple
+dimensions. It is thus robust to multivariate outliers. Note however that
+the robustness of the estimator decreases quickly with the dimensionality
+of the problem. It looses it's robustness properties and becomes no
+better than an ordinary least squares in high dimension.
+
+.. topic:: Examples:
+
+  * :ref:`example_linear_model_plot_thielsen.py`
+  * :ref:`example_linear_model_plot_robust_fit.py`
+
+.. topic:: References:
+
+ * http://en.wikipedia.org/wiki/Theil%E2%80%93Sen_estimator
+
+Theoretical considerations
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:class:`TheilSen` is comparable to the :ref:`Ordinary Least Squares (OLS)
+<ordinary_least_squares>` in terms of asymptotic efficiency and as an
+unbiased estimator. In contrast to OLS, Theil-Sen is a non-parametric
+method which means it makes no assumption about the underlying
+distribution of the data. Since Theil-Sen is a median-based estimator, it
+is more robust against corrupted data aka outliers. In univariate
+setting, Theil-Sen has a breakdown point of about 29.3% in case of a
+simple linear regression which means that it can tolerate arbitrary
+corrupted data of up to 29.3%.
+
+.. figure:: ../auto_examples/linear_model/images/plot_theilsen_001.png
+   :target: ../auto_examples/linear_model/plot_theilsen.html
+   :align: center
+   :scale: 50%
+
+The implementation of :class:`TheilSen` in scikit-learn follows a
+generalization to a multivariate linear regression model [#f1]_ using the
+spatial median which is a generalization of the median to multiple
+dimensions [#f2]_.
+
+In terms of time and space complexity, Theil-Sen scales according to
+
+.. math::
+    \binom{n_{samples}}{n_{subsamples}}
+
+which makes it infeasible to be applied exhaustively to problems with a
+large number of samples and features. Therefore, the magnitude of a
+subpopulation can be chosen to limit the time and space complexity by
+considering only a random subset of all possible combinations.
+
+.. topic:: Examples:
+
+  * :ref:`example_linear_model_plot_theilsen.py`
+
+.. topic:: References:
+
+    .. [#f1] Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang: `Theil-Sen Estimators in a Multiple Linear Regression Model. <http://www.math.iupui.edu/~hpeng/MTSE_0908.pdf>`_
+
+    .. [#f2] T. Kärkkäinen and S. Äyrämö: `On Computation of Spatial Median for Robust Data Mining. <http://users.jyu.fi/~samiayr/pdf/ayramo_eurogen05.pdf>`_
 
 .. _polynomial_regression:
 
@@ -924,69 +1065,4 @@ This way, we can solve the XOR problem with a linear classifier::
     1.0
 
 
-.. _theil_sen_regression:
 
-Theil-Sen Regression
-====================
-
-:class:`TheilSen` is comparable to the :ref:`Ordinary Least Squares (OLS)
-<ordinary_least_squares>` in terms of asymptotic efficiency and as
-an unbiased estimator. In contrast to OLS, Theil-Sen is a
-non-parametric method which means it makes no assumption about the underlying
-distribution of the data. Since Theil-Sen is a median-based estimator, it is
-more robust against corrupted data aka outliers.
-Theil-Sen has a breakdown point of about 29.3% in case of a simple linear
-regression which means that it can tolerate arbitrary corrupted data of up to
-29.3% in the two-dimensional case.
-
-.. figure:: ../auto_examples/linear_model/images/plot_theilsen_1.png
-   :target: ../auto_examples/linear_model/plot_theilsen.html
-   :align: center
-   :scale: 50%
-
-The original Theil-Sen regression was defined for a simple linear
-regression model in 1968. This implementation follows a more recent
-generalization to a multiple linear regression model [#f1]_ using the spatial
-median which is a generalization of the median to multiple dimensions [#f2]_.
-
-In terms of time and space complexity, Theil-Sen scales according to
-
-.. math::
-    \binom{n_{samples}}{n_{subsamples}}
-
-which makes it infeasible to be applied exhaustively to problems with a
-large number of samples and features. Therefore, the magnitude of a
-subpopulation can be chosen to limit the time and space complexity by
-considering only a random subset of all possible combinations.
-
-Besides Theil-Sen, there is the :ref:`RANSAC (RANdom SAmple Consensus)
-<ransac_regression>` method which is also a robust method but follows a
-different approach in order to deal with outliers.
-Depending on the given data and the definition of outliers,
-the Theil-Sen regression might be superior or inferior to RANSAC. The figure
-below demonstrates a dataset including outliers with respect to the x-axis
-which perturb RANSAC.
-An advantage of Theil-Sen over RANSAC are its parameters. While the
-parameters of RANSAC strongly depend on the given data and therefore should
-be chosen with care, the parameters of Theil-Sen depend only
-on the problem size and not on the data itself. Since RANSAC is
-computationally more efficient than Theil-Sen, a general recommendation is
-to use Theil-Sen only for small problems and RANSAC for medium to large
-problems in terms of sample and feature size. Nevertheless, Theil-Sen is also
-applicable to larger problems with the drawback of losing some of its
-mathematical properties since it can work on a random subset.
-
-.. figure:: ../auto_examples/linear_model/images/plot_theilsen_2.png
-   :target: ../auto_examples/linear_model/plot_theilsen.html
-   :align: center
-   :scale: 50%
-
-.. topic:: Examples:
-
-  * :ref:`example_linear_model_plot_theilsen.py`
-
-.. topic:: References:
-
-    .. [#f1] Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang: `Theil-Sen Estimators in a Multiple Linear Regression Model. <http://www.math.iupui.edu/~hpeng/MTSE_0908.pdf>`_
-
-    .. [#f2] T. Kärkkäinen and S. Äyrämö: `On Computation of Spatial Median for Robust Data Mining. <http://users.jyu.fi/~samiayr/pdf/ayramo_eurogen05.pdf>`_
