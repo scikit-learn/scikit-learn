@@ -53,7 +53,6 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         - If ``"raise"``, then raise ValueError.
         - If ``"update"``, then re-map the new labels to
           classes ``[N, ..., N+m-1]``, where ``m`` is the number of new labels.
-        - If ``"nan"``, then re-map the new labels to ``numpy.nan``.
         - If ``"label"``, then use the value of ``new_label_class``.
 
     new_label_class : integer, optional (default: -1)
@@ -118,7 +117,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         self : returns an instance of self.
         """
         # Check new_labels parameter
-        if self.new_labels not in ["update", "nan", "raise", "label"]:
+        if self.new_labels not in ["update", "raise", "label"]:
             # Raise on invalid argument.
             raise ValueError("Value of argument `new_labels`={0} "
                              "is unknown.".format(self.new_labels))
@@ -141,7 +140,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y : array-like of shape [n_samples]
         """
         # Check new_labels parameter
-        if self.new_labels not in ["update", "nan", "raise", "label"]:
+        if self.new_labels not in ["update", "raise", "label"]:
             # Raise on invalid argument.
             raise ValueError("Value of argument `new_labels`={0} "
                              "is unknown.".format(self.new_labels))
@@ -192,18 +191,6 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
                 self.classes_ = np.append(self.classes_, new_class_values)
 
                 # Return mapped encoding
-                return out
-            elif self.new_labels == "nan":
-                # Setup out
-                out = np.zeros(y.shape, dtype=float)
-
-                # Find entries with new labels
-                missing_mask = np.in1d(y, diff)
-
-                # Populate return array properly and return
-                out[~missing_mask] = np.searchsorted(self.classes_,
-                                                     y[~missing_mask])
-                out[missing_mask] = np.nan
                 return out
             elif self.new_labels == "label":
                 # Setup out
