@@ -54,6 +54,7 @@ def _boston_subset(n_samples=200):
         BOSTON = X, y
     return BOSTON
 
+
 def set_fast_parameters(estimator):
     # speed up some estimators
     params = estimator.get_params()
@@ -64,7 +65,7 @@ def set_fast_parameters(estimator):
         if estimator.max_iter is not None:
             estimator.set_params(max_iter=min(5, estimator.max_iter))
     if "n_resampling" in params:
-        #randomized lasso
+        # randomized lasso
         estimator.set_params(n_resampling=5)
     if "n_estimators" in params:
         # especially gradient boosting with default 100
@@ -494,7 +495,8 @@ def check_classifiers_train(name, Classifier):
             assert_equal(y_prob.shape, (n_samples, n_classes))
             assert_array_equal(np.argmax(y_prob, axis=1), y_pred)
             # check that probas for all classes sum to one
-            assert_array_almost_equal(np.sum(y_prob, axis=1), np.ones(n_samples))
+            assert_array_almost_equal(np.sum(y_prob, axis=1),
+                                      np.ones(n_samples))
             # raises error on malformed input
             assert_raises(ValueError, classifier.predict_proba, X.T)
             # raises error on malformed input for predict_proba
