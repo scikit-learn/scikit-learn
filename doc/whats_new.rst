@@ -26,8 +26,12 @@ Enhancements
 ............
 
 
+   - Add support for sample weights in scorer objects.  Metrics with sample
+     weight support will automatically benefit from it.
+
+
 Documentation improvements
-...........................
+..........................
 
 
 Bug fixes
