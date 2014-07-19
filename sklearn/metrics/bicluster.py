@@ -5,6 +5,8 @@ import numpy as np
 from sklearn.utils.linear_assignment_ import linear_assignment
 from sklearn.utils.validation import check_arrays
 
+__all__ = ["consensus_score"]
+
 
 def _check_rows_and_columns(a, b):
     """Unpacks the row and column arrays and checks their shape."""

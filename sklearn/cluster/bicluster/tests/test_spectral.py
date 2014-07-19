@@ -18,7 +18,7 @@ from sklearn.cluster.bicluster.spectral import _scale_normalize
 from sklearn.cluster.bicluster.spectral import _bistochastic_normalize
 from sklearn.cluster.bicluster.spectral import _log_normalize
 
-from sklearn.metrics.cluster.bicluster import consensus_score
+from sklearn.metrics import consensus_score
 
 from sklearn.datasets import make_biclusters, make_checkerboard
 

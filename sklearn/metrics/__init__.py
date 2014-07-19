@@ -28,6 +28,7 @@ from .metrics import (accuracy_score,
                       roc_curve,
                       zero_one_loss)
 
+from .bicluster import consensus_score
 
 # Deprecated in 0.16
 from .metrics import auc_score
@@ -44,8 +45,7 @@ from .cluster import (adjusted_rand_score,
                       normalized_mutual_info_score,
                       silhouette_score,
                       silhouette_samples,
-                      v_measure_score,
-                      consensus_score)
+                      v_measure_score)
 
 from .pairwise import (euclidean_distances,
                        pairwise_distances,
