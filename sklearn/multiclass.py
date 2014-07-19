@@ -893,3 +893,31 @@ class LabelPowerSetClassifier(BaseEstimator, ClassifierMixin,
         y_decoded = np.bitwise_and(0x1, y_shifted)
 
         return self.label_binarizer_.inverse_transform(y_decoded)
+
+
+    def predict_proba(self, X):
+        """Predict class probabilities of the input samples X.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        p : array of shape = [n_samples, n_classes], or a list of n_outputs
+            such arrays if n_outputs > 1.
+            The class probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
+        """
+        y_coded_proba = self.estimator.predict_proba(X)
+        binary_code_size = len(self.label_binarizer_.classes_)
+
+        if self.label_binarizer_.y_type_ == "binary":
+            binary_code_size = 1
+
+        p = []
+        for j in range(n_labels):
+            pass
+
+        #np.array(list(product([0, 1], repeat=4)))

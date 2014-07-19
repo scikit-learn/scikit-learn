@@ -637,18 +637,21 @@ def test_lps_binary():
 
     assert_equal(out_lps.shape, Y_test.shape)
     assert_array_equal(out_lps, out_svc)
+    assert_equal(len(lps.label_binarizer_.classes_), 2)
+
 
 
 def test_lps_multiclass():
-    lp = LabelPowerSetClassifier(LinearSVC(random_state=0))
-    lp.fit(iris.data, iris.target)
-    out_lp = lp.predict(iris.data)
+    lps = LabelPowerSetClassifier(LinearSVC(random_state=0))
+    lps.fit(iris.data, iris.target)
+    out_lp = lps.predict(iris.data)
 
     svc = LinearSVC(random_state=0)
     svc.fit(iris.data, iris.target)
     out_svc = svc.predict(iris.data)
 
     assert_array_equal(out_lp, out_svc)
+    assert_equal(len(lps.label_binarizer_.classes_), 3)
 
 
 def test_lps_multilabel():
