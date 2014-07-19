@@ -4,6 +4,7 @@
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 # License: BSD 3 clause
 
+import operator
 import numpy as np
 
 from ..base import BaseEstimator, TransformerMixin
@@ -53,17 +54,18 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         - If ``"raise"``, then raise ValueError.
         - If ``"update"``, then re-map the new labels to
           classes ``[N, ..., N+m-1]``, where ``m`` is the number of new labels.
-        - If ``"label"``, then use the value of ``new_label_class``.
-
-    new_label_class : integer, optional (default: -1)
-        If ``new_labels="label"``, then this value will be assigned to
-        as the class for any new labels that are encountered.
-
+        - If an integer value is passed, then use re-label with this value.
+          N.B. that default values are in [0, 1, ...], so caution should be
+          taken if a non-negative value is passed to not accidentally
+          intersect.
 
     Attributes
     ----------
     `classes_` : array of shape (n_class,)
         Holds the label for each class.
+
+    `new_label_mapping_` : dictionary
+        Stores the mapping for classes not seen during original ``fit``.
 
     Examples
     --------
@@ -95,14 +97,33 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, new_labels="raise", new_label_class=-1):
+    def __init__(self, new_labels="raise"):
         """Constructor"""
         self.new_labels = new_labels
-        self.new_label_class = new_label_class
+        self.new_label_mapping_ = {}
 
     def _check_fitted(self):
         if not hasattr(self, "classes_"):
             raise ValueError("LabelEncoder was not fitted yet.")
+
+    def get_classes(self):
+        """Get classes that have been observed by the encoder.  Note that this
+        method returns classes seen both at original ``fit`` time (i.e.,
+        ``self.classes_``) and classes seen after ``fit`` (i.e.,
+        ``self.new_label_mapping_.keys()``) for applicable values of
+        ``new_labels``.
+
+        Returns
+        -------
+        classes : array-like of shape [n_classes]
+        """
+        # If we've seen updates, include them in the order they were added.
+        if len(self.new_label_mapping_) > 0:
+            sorted_new, _ = zip(*sorted(self.new_label_mapping_.iteritems(),
+                                        key=operator.itemgetter(1)))
+            return np.append(self.classes_, sorted_new)
+        else:
+            return self.classes_
 
     def fit(self, y):
         """Fit label encoder
@@ -117,10 +138,12 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         self : returns an instance of self.
         """
         # Check new_labels parameter
-        if self.new_labels not in ["update", "raise", "label"]:
+        if self.new_labels not in ["update", "raise"] and \
+                type(self.new_labels) not in [int]:
             # Raise on invalid argument.
             raise ValueError("Value of argument `new_labels`={0} "
-                             "is unknown.".format(self.new_labels))
+                             "is unknown and not integer."
+                             .format(self.new_labels))
 
         y = column_or_1d(y, warn=True)
         _check_numpy_unicode_bug(y)
@@ -140,10 +163,12 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y : array-like of shape [n_samples]
         """
         # Check new_labels parameter
-        if self.new_labels not in ["update", "raise", "label"]:
+        if self.new_labels not in ["update", "raise"] and \
+                type(self.new_labels) not in [int]:
             # Raise on invalid argument.
             raise ValueError("Value of argument `new_labels`={0} "
-                             "is unknown.".format(self.new_labels))
+                             "is unknown and not integer."
+                             .format(self.new_labels))
 
         y = column_or_1d(y, warn=True)
         _check_numpy_unicode_bug(y)
@@ -166,47 +191,42 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
         classes = np.unique(y)
         _check_numpy_unicode_bug(classes)
-        if len(np.intersect1d(classes, self.classes_)) < len(classes):
-            diff = np.setdiff1d(classes, self.classes_)
+        if len(np.intersect1d(classes, self.get_classes())) < len(classes):
+            # Get the new classes
+            diff_fit = np.setdiff1d(classes, self.classes_)
+            diff_new = np.setdiff1d(classes, self.get_classes())
+
             # Create copy of array and return
             y = np.array(y)
 
             # If we are mapping new labels, get "new" ID and change in copy.
             if self.new_labels == "update":
-                # Setup out
-                out = np.zeros(y.shape, dtype=int)
-
-                #  Find entries with new labels
-                missing_mask = np.in1d(y, diff)
-                new_class_values = np.sort(diff)
-
-                # Populate return array properly and return
-                out[~missing_mask] = np.searchsorted(self.classes_,
-                                                     y[~missing_mask])
-                out[missing_mask] = np.searchsorted(new_class_values,
-                                                    y[missing_mask]) + \
-                    len(self.classes_)
-
-                # Update the class list with new labels
-                self.classes_ = np.append(self.classes_, new_class_values)
-
-                # Return mapped encoding
-                return out
-            elif self.new_labels == "label":
-                # Setup out
-                out = np.zeros(y.shape, dtype=int)
+                # Update the new label mapping
+                next_label = len(self.get_classes())
+                self.new_label_mapping_.update(dict(zip(diff_new,
+                                                        range(next_label,
+                                                              next_label +
+                                                              len(diff_new)))))
 
                 # Find entries with new labels
-                missing_mask = np.in1d(y, diff)
+                missing_mask = np.in1d(y, diff_fit)
 
-                # Populate return array properly and return
-                out[~missing_mask] = np.searchsorted(self.classes_,
-                                                     y[~missing_mask])
-                out[missing_mask] = self.new_label_class
+                # Populate return array properly by mask and return
+                out = np.searchsorted(self.classes_, y)
+                out[missing_mask] = [self.new_label_mapping_[value]
+                                     for value in y[missing_mask]]
+                return out
+            elif type(self.new_labels) in [int]:
+                # Find entries with new labels
+                missing_mask = np.in1d(y, diff_fit)
+
+                # Populate return array properly by mask and return
+                out = np.searchsorted(self.classes_, y)
+                out[missing_mask] = self.new_labels
                 return out
             elif self.new_labels == "raise":
                 # Return ValueError, original behavior.
-                raise ValueError("y contains new labels: %s" % str(diff))
+                raise ValueError("y contains new labels: %s" % str(diff_fit))
             else:
                 # Raise on invalid argument.
                 raise ValueError("Value of argument `new_labels`={0} "
