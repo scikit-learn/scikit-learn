@@ -7,7 +7,6 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
@@ -270,13 +269,12 @@ def test_scorer_sample_weight():
             ignored = scorer(estimator[name], X_test[10:], y_test[10:])
             unweighted = scorer(estimator[name], X_test, y_test)
             assert_not_equal(weighted, unweighted,
-                             "scorer {0} behaves identically when called with "
-                             "sample weights: {1} vs {2}".format(name,
-                                                                 weighted,
-                                                                 unweighted))
-            assert_equal(weighted, ignored,
-                         "scorer {0} behaves differently when ignoring "
-                         "samples and setting sample_weight to 0: "
+                             msg="scorer {0} behaves identically when "
+                             "called with sample weights: {1} vs "
+                             "{2}".format(name, weighted, unweighted))
+            assert_almost_equal(weighted, ignored,
+                         err_msg="scorer {0} behaves differently when "
+                         "ignoring samples and setting sample_weight to 0: "
                          "{1} vs {2}".format(name, weighted, ignored))
 
         except TypeError as e:
