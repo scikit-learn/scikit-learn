@@ -377,7 +377,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         # In binary case, we need to flip the sign of coef, intercept and
         # decision function.
         if self._impl in ['c_svc', 'nu_svc'] and len(self.classes_) == 2:
-            return -dec_func
+            return -dec_func.ravel()
 
         return dec_func
 
