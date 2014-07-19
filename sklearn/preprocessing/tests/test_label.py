@@ -228,19 +228,6 @@ def test_label_encoder_new_label_update():
     assert_array_equal(le.classes_, ["a", "b", "c", "_", "z"])
 
 
-def test_label_encoder_new_label_nan():
-    """Test LabelEncoder's transform on new labels"""
-    le = LabelEncoder(new_labels="nan")
-    le.fit(["a", "b", "b", "c"])
-    assert_array_equal(le.classes_, ["a", "b", "c"])
-    assert_array_equal(le.transform(["a", "a", "c"]),
-                       [0, 0, 2])
-    assert_array_equal(le.inverse_transform([2, 1, 0]),
-                       ["c", "b", "a"])
-    assert_array_equal(le.transform(["_", "b", "c", "d"]),
-                       [np.nan, 1, 2, np.nan])
-
-
 def test_label_encoder_new_label_replace():
     """Test LabelEncoder's transform on new labels"""
     le = LabelEncoder(new_labels="label", new_label_class=-2)
