@@ -838,3 +838,28 @@ def test_ridge_gcv_with_sample_weights():
     assert_array_almost_equal(cv_errors ** 2,
                               loo_predictions.transpose(2, 0, 1))
 
+
+def test_kernel_ridge_path_with_sample_weights():
+    n_samples, n_features, n_targets = 20, 5, 7
+    X, Y, W, _, _ = make_noisy_forward_data(n_samples, n_features, n_targets)
+    alphas = np.logspace(-3, 3, 9)[:, np.newaxis] * \
+        np.arange(1, n_targets + 1)
+
+    rng = np.random.RandomState(42)
+    sample_weights = np.ones(n_samples)  # rng.randn(n_samples) ** 2
+
+    cv = LeaveOneOut(n_samples)
+    cv_predictions = np.array([[
+        Ridge(solver='cholesky', alpha=alpha, fit_intercept=False).fit(
+            X[train], Y[train], sample_weight=sample_weights[train]
+            ).predict(X[test])
+        for train, test in cv] for alpha in alphas]).squeeze()
+
+    cv_errors = Y[np.newaxis] - cv_predictions.reshape(
+        len(alphas), n_samples, n_targets)
+
+
+    ridge_path_gcv_errors = _kernel_ridge_path_eigen(X, Y, alphas,
+                                                     mode='looe')[0]
+
+    assert_array_almost_equal(cv_errors, ridge_path_gcv_errors)

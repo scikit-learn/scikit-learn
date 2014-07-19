@@ -49,8 +49,10 @@ def _ridge_path_svd(X_train, Y_train, alphas,
 
 def _precomp_kernel_ridge_path_eigen(gramX_train, Y_train, alphas,
                                      gramX_test=None,
+                                     sample_weight=None,
                                      mode='normal',
-                                     eig_val_thresh=1e-15):
+                                     eig_val_thresh=1e-15,
+                                     copy=True):
     """Precomputed kernel ridge without intercept.
 
     Parameters
@@ -67,6 +69,9 @@ def _precomp_kernel_ridge_path_eigen(gramX_train, Y_train, alphas,
 
     gramX_test: ndarray, shape=(n_test_samples, n_train_samples)
         Kernel similarities of test samples with the train samples
+
+    sample_weight: ndarray or None, shape=(n_samples,), default None
+        Weights for each sample
 
     mode: str, {'normal', 'looe', 'loov'}, default 'normal'
         Indicates the desired output.
@@ -87,6 +92,16 @@ def _precomp_kernel_ridge_path_eigen(gramX_train, Y_train, alphas,
         raise ValueError("gramX_test provided in loo mode. Remove X_test "
                          "or change mode.")
 
+    if sample_weight is not None:
+        sqrt_sw = np.sqrt(sample_weight.ravel())
+        if copy:
+            gramX_train = (gramX_train * sqrt_sw[:, np.newaxis]) * sqrt_sw
+            Y_train = sqrt_sw[:, np.newaxis] * Y_train
+        else:
+            gramX_train *= sqrt_sw[:, np.newaxis]
+            gramX_train *= sqrt_sw
+            Y_train *= sqrt_sw[:, np.newaxis]
+
     eig_val_train, eig_vect_train = linalg.eigh(gramX_train)
     VTY = eig_vect_train.T.dot(Y_train)
     v_alpha = (eig_val_train[np.newaxis, :, np.newaxis] +
@@ -99,6 +114,8 @@ def _precomp_kernel_ridge_path_eigen(gramX_train, Y_train, alphas,
 
     if gramX_test is None:
         dual_coef = eig_vect_train.dot(v_alpha_VTY).transpose(1, 0, 2)
+        if sample_weight is not None:
+            dual_coef *= sqrt_sw[:, np.newaxis]
         if mode == 'normal':
             output = dual_coef
         elif mode in ['looe', 'loov']:
@@ -112,8 +129,12 @@ def _precomp_kernel_ridge_path_eigen(gramX_train, Y_train, alphas,
         else:
             raise ValueError("mode not understood")
     else:
-        predictions = (gramX_test.dot(eig_vect_train)).dot(
-            v_alpha_VTY).transpose(1, 0, 2)
+        if sample_weight is not None:
+            predict_mat = gramX_test.dot(
+                sqrt_sw[:, np.newaxis] * eig_vect_train)
+        else:
+            predict_mat = gramX_test.dot(eig_vect_train)
+        predictions = predict_mat.dot(v_alpha_VTY).transpose(1, 0, 2)
         output = predictions
 
     return output
@@ -124,6 +145,7 @@ def _linear_kernel(X, Y):
 
 
 def _kernel_ridge_path_eigen(X_train, Y_train, alphas, X_test=None,
+                             sample_weight=None,
                              kernel=_linear_kernel,
                              mode='normal'):
     gramX_train = kernel(X_train, X_train)
@@ -131,8 +153,10 @@ def _kernel_ridge_path_eigen(X_train, Y_train, alphas, X_test=None,
     if X_test is not None:
         gramX_test = kernel(X_test, X_train)
 
-    return _precomp_kernel_ridge_path_eigen(gramX_train, Y_train, alphas,
-                                           gramX_test, mode=mode)
+    return _precomp_kernel_ridge_path_eigen(
+        gramX_train, Y_train, alphas,
+        gramX_test, sample_weight=sample_weight,
+        mode=mode, copy=True)
 
 
 def _feature_ridge_path_eigen(X_train, Y_train, alphas, X_test=None,
@@ -999,6 +1023,7 @@ class _RidgeGCV(LinearModel):
             cv_values = out.transpose(1, 2, 0).reshape(-1, alphas.shape[0])
             if y_is_raveled:
                 C = C[:, :, 0]
+
         else:
             for i, alpha in enumerate(self.alphas):
                 weighted_alpha = (sample_weight * alpha
@@ -1008,6 +1033,8 @@ class _RidgeGCV(LinearModel):
                     out, c = _errors(weighted_alpha, y, v, Q, QT_y)
                 else:
                     out, c = _values(weighted_alpha, y, v, Q, QT_y)
+                # if y.ndim > 1 and y.shape[1] > 1:
+                #     stop
                 cv_values[:, i] = out.ravel()
                 C.append(c)
 
