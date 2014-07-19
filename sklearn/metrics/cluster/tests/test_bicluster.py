@@ -4,8 +4,8 @@ import numpy as np
 
 from sklearn.utils.testing import assert_equal
 
-from sklearn.metrics.bicluster import _jaccard
-from sklearn.metrics.bicluster import consensus_score
+from sklearn.metrics.cluster.bicluster import _jaccard
+from sklearn.metrics import consensus_score
 
 
 def test_jaccard():
