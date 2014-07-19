@@ -271,7 +271,7 @@ class ClassifierMixin(object):
         """Returns the mean accuracy on the given test data and labels.
 
         In multi-label classification, this is the subset accuracy
-        which is a harsh metric since you require for each samples that
+        which is a harsh metric since you require for each sample that
         each label set be correctly predicted.
 
         Parameters
@@ -279,7 +279,7 @@ class ClassifierMixin(object):
         X : array-like, shape = (n_samples, n_features)
             Test samples.
 
-        y : array-like, shape = (n_samples, n_labels)
+        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
             True labels for X.
 
         sample_weight : array-like, shape = [n_samples], optional
@@ -312,7 +312,7 @@ class RegressorMixin(object):
         X : array-like, shape = (n_samples, n_features)
             Test samples.
 
-        y : array-like, shape = (n_samples, n_outputs)
+        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
             True values for X.
 
         sample_weight : array-like, shape = [n_samples], optional
