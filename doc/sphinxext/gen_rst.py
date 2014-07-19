@@ -640,12 +640,12 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery, seen_bac
                 seen = backref in seen_backrefs
                 with open(include_path, 'a' if seen else 'w') as ex_file:
                     if not seen:
-                        ex_file.write(dedent('''
-
-                                                Examples using ``%s``
-                                                -----------
-
-                                                ''' % backref))
+                        # heading
+                        print(file=ex_file)
+                        print('Examples using ``%s``' % backref, file=ex_file)
+                        print('-----------------%s--' % ('-' * len(backref)),
+                              file=ex_file)
+                        print(file=ex_file)
                     rel_dir = os.path.join('../../auto_examples', dir)
                     ex_file.write(_thumbnail_div(dir, rel_dir, fname, snippet))
                     seen_backrefs.add(backref)
