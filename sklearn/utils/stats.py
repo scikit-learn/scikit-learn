@@ -17,7 +17,7 @@ def _rankdata(a, method="average"):
         The method used to assign ranks to tied elements.
         The options are 'max'.
 
-            ‘max’: The maximum of the ranks that would have been assigned
+            'max': The maximum of the ranks that would have been assigned
                   to all the tied values is assigned to each value.
     Returns
     -------
