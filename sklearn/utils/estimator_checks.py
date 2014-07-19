@@ -170,8 +170,6 @@ def _check_transformer(name, Transformer, X, y):
     with warnings.catch_warnings(record=True):
         transformer = Transformer()
     set_random_state(transformer)
-    if hasattr(transformer, 'compute_importances'):
-        transformer.compute_importances = True
 
     if name == "KernelPCA":
         transformer.remove_zero_eig = False
@@ -348,9 +346,6 @@ def check_transformer_pickle(name, Transformer):
     if not hasattr(transformer, 'transform'):
         return
     set_random_state(transformer)
-    if hasattr(transformer, 'compute_importances'):
-        transformer.compute_importances = True
-
     set_fast_parameters(transformer)
 
     # fit
