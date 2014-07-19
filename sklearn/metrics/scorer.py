@@ -19,7 +19,6 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 # License: Simplified BSD
 
 from abc import ABCMeta, abstractmethod
-from warnings import warn
 
 import numpy as np
 

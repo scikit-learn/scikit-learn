@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 The :mod:`sklearn.metrics.pairwise` submodule implements utilities to evaluate
 pairwise distances, paired distances or affinity of sets of samples.
