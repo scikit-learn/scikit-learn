@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-"""Utilities to evaluate the predictive performance of models in regression
+"""Metrics to assess performance on regression task
 
 Functions named as ``*_score`` return a scalar value to maximize: the higher
 the better
@@ -12,7 +11,7 @@ the lower the better
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 #          Arnaud Joly <a.joly@ulg.ac.be>
-#          Jochen Wersdörfer <jochen@wersdoerfer.de>
+#          Jochen Wersdorfer <jochen@wersdoerfer.de>
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Noel Dawe <noel@dawe.me>

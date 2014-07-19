@@ -1,4 +1,4 @@
-"""Utilities to evaluate the predictive performance of models
+"""Metrics to assess performance on classification task given scores
 
 Functions named as ``*_score`` return a scalar value to maximize: the higher
 the better
