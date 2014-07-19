@@ -1133,7 +1133,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     scores : array of float, shape=(len(list(cv)),)
         Array of scores of the estimator for each run of the cross validation.
     """
-    X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True,
+    X, y = check_arrays(X, y, sparse_format='csr', force_arrays=False,
                         allow_nans=True, allow_nd=True)
 
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
@@ -1541,8 +1541,8 @@ def train_test_split(*arrays, **options):
     random_state = options.pop('random_state', None)
     options['sparse_format'] = 'csr'
     options['allow_nans'] = True
-    if not "allow_lists" in options:
-        options["allow_lists"] = True
+    if not "force_arrays" in options:
+        options["force_arrays"] = False
 
     if test_size is None and train_size is None:
         test_size = 0.25

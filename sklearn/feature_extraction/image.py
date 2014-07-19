@@ -281,7 +281,7 @@ def extract_patches(arr, patch_shape=8, extraction_step=1):
     slices = [slice(None, None, st) for st in extraction_step]
     indexing_strides = arr[slices].strides
 
-    patch_indices_shape = ((np.array(arr.shape) - np.array(patch_shape)) /
+    patch_indices_shape = ((np.array(arr.shape) - np.array(patch_shape)) //
                            np.array(extraction_step)) + 1
 
     shape = tuple(list(patch_indices_shape) + list(patch_shape))
@@ -472,7 +472,7 @@ class PatchExtractor(BaseEstimator):
         X = np.reshape(X, (n_images, i_h, i_w, -1))
         n_channels = X.shape[-1]
         if self.patch_size is None:
-            patch_size = i_h / 10, i_w / 10
+            patch_size = i_h // 10, i_w // 10
         else:
             patch_size = self.patch_size
 

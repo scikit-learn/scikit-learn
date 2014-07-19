@@ -33,7 +33,8 @@ by decomposing such problems into binary classification problems.
     several joint classification tasks. This is a generalization
     of the multi-label classification task, where the set of classification
     problem is restricted to binary classification, and of the multi-class
-    classification task. *The output format is a 2d numpy array.*
+    classification task. *The output format is a 2d numpy array or sparse 
+    matrix.*
 
     The set of labels can be different for each output variable.
     For instance a sample could be assigned "pear" for an output variable that

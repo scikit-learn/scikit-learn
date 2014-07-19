@@ -530,7 +530,8 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         self.components_ = H
 
         if n_iter == self.max_iter:
-            warnings.warn("Iteration limit reached during fit")
+            warnings.warn("Iteration limit reached during fit. Solving for W exactly.")
+            return self.transform(X)
 
         return W
 

@@ -192,6 +192,11 @@ def test_label_binarizer_errors():
                   y=np.array([[1, 2, 3], [2, 1, 3]]), output_type="binary",
                   classes=[1, 2, 3], threshold=0)
 
+    # Fail on multioutput data
+    assert_raises(ValueError, LabelBinarizer().fit, np.array([[1, 3], [2, 1]]))
+    assert_raises(ValueError, label_binarize, np.array([[1, 3], [2, 1]]),
+                  [1, 2, 3])
+
 
 def test_label_encoder():
     """Test LabelEncoder's transform and inverse_transform methods"""
@@ -462,6 +467,15 @@ def test_label_binarize_binary():
     pos_label = 2
     neg_label = -1
     expected = np.array([[2, -1], [-1, 2], [2, -1]])[:, 1].reshape((-1, 1))
+
+    yield check_binarized_results, y, classes, pos_label, neg_label, expected
+
+    # Binary case where sparse_output = True will not result in a ValueError
+    y = [0, 1, 0]
+    classes = [0, 1]
+    pos_label = 3
+    neg_label = 0
+    expected = np.array([[3, 0], [0, 3], [3, 0]])[:, 1].reshape((-1, 1))
 
     yield check_binarized_results, y, classes, pos_label, neg_label, expected
 

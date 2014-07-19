@@ -343,7 +343,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.scorer_ = check_scoring(self.estimator, scoring=self.scoring)
 
         n_samples = _num_samples(X)
-        X, y = check_arrays(X, y, allow_lists=True, sparse_format='csr',
+        X, y = check_arrays(X, y, force_arrays=False, sparse_format='csr',
                             allow_nans=True)
 
         if y is not None:

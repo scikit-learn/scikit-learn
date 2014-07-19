@@ -220,6 +220,6 @@ def test_check_arrays():
     assert_true(Y_.flags['C_CONTIGUOUS'])
     assert_false(Y_.flags['F_CONTIGUOUS'])
 
-    # check that lists are passed through if allow_lists is true
-    X_, Y_ = check_arrays(X, Y, allow_lists=True)
+    # check that lists are passed through if force_arrays is true
+    X_, Y_ = check_arrays(X, Y, force_arrays=False)
     assert_true(isinstance(X_, list))

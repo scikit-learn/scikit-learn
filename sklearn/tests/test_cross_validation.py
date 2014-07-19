@@ -17,6 +17,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
 from sklearn import cross_validation as cval
 from sklearn.base import BaseEstimator
@@ -35,36 +36,6 @@ from sklearn.svm import SVC
 
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
-
-
-class MockListClassifier(BaseEstimator):
-    """Dummy classifier to test the cross-validation.
-
-    Checks that GridSearchCV didn't convert X or Y to array.
-    """
-    def __init__(self, foo_param=0, check_y_is_list=False, check_X_is_list=True):
-        self.foo_param = foo_param
-        self.check_y_is_list = check_y_is_list
-        self.check_X_is_list = check_X_is_list
-
-    def fit(self, X, Y):
-        assert_true(len(X) == len(Y))
-        if self.check_X_is_list:
-            assert_true(isinstance(X, list))
-        if self.check_y_is_list:
-            assert_true(isinstance(Y, list))
-
-        return self
-
-    def predict(self, T):
-        return T.shape[0]
-
-    def score(self, X=None, Y=None):
-        if self.foo_param > 1:
-            score = 1.
-        else:
-            score = 0.
-        return score
 
 
 class MockClassifier(BaseEstimator):
@@ -514,10 +485,11 @@ def test_cross_val_score():
         assert_array_equal(scores, clf.score(X_sparse, X))
 
     # test with X and y as list
-    clf = MockListClassifier()
+    list_check = lambda x: isinstance(x, list)
+    clf = CheckingClassifier(check_X=list_check)
     scores = cval.cross_val_score(clf, X.tolist(), y.tolist())
 
-    clf = MockListClassifier(check_X_is_list=False, check_y_is_list=True)
+    clf = CheckingClassifier(check_y=list_check)
     scores = cval.cross_val_score(clf, X, y.tolist())
 
     assert_raises(ValueError, cval.cross_val_score, clf, X, y,
@@ -530,6 +502,23 @@ def test_cross_val_score():
 
     clf = MockClassifier(allow_nd=False)
     assert_raises(ValueError, cval.cross_val_score, clf, X_3d, y)
+
+
+def test_cross_val_score_pandas():
+    # check cross_val_score doesn't destroy pandas dataframe
+    types = [(MockDataFrame, MockDataFrame)]
+    try:
+        from pandas import Series, DataFrame
+        types.append((Series, DataFrame))
+    except ImportError:
+        pass
+    for TargetType, InputFeatureType in types:
+        # X dataframe, y series
+        X_df, y_ser = InputFeatureType(X), TargetType(y)
+        check_df = lambda x: isinstance(x, InputFeatureType)
+        check_series = lambda x: isinstance(x, TargetType)
+        clf = CheckingClassifier(check_X=check_df, check_y=check_series)
+        cval.cross_val_score(clf, X_df, y_ser)
 
 
 def test_cross_val_score_mask():
@@ -616,7 +605,7 @@ def test_train_test_split():
     X = np.arange(100).reshape((10, 10))
     X_s = coo_matrix(X)
     y = range(10)
-    split = cval.train_test_split(X, X_s, y, allow_lists=False)
+    split = cval.train_test_split(X, X_s, y, force_arrays=True)
     X_train, X_test, X_s_train, X_s_test, y_train, y_test = split
     assert_array_equal(X_train, X_s_train.toarray())
     assert_array_equal(X_test, X_s_test.toarray())
@@ -630,6 +619,33 @@ def test_train_test_split():
     X_train, X_test, X_s_train, X_s_test, y_train, y_test = split
     assert_true(isinstance(y_train, list))
     assert_true(isinstance(y_test, list))
+
+
+def train_test_split_pandas():
+    # check cross_val_score doesn't destroy pandas dataframe
+    types = [MockDataFrame]
+    try:
+        from pandas import DataFrame
+        types.append(DataFrame)
+    except ImportError:
+        pass
+    for InputFeatureType in types:
+        # X dataframe
+        X_df = InputFeatureType(X)
+        X_train, X_test = cval.train_test_split(X_df)
+        assert_true(isinstance(X_train, InputFeatureType))
+        assert_true(isinstance(X_test, InputFeatureType))
+
+
+def train_test_split_mock_pandas():
+    # X mock dataframe
+    X_df = MockDataFrame(X)
+    X_train, X_test = cval.train_test_split(X_df)
+    assert_true(isinstance(X_train, MockDataFrame))
+    assert_true(isinstance(X_test, MockDataFrame))
+    X_train_array, X_test_array = cval.train_test_split(X_df, force_arrays=True)
+    assert_true(isinstance(X_train_array, np.ndarray))
+    assert_true(isinstance(X_test_array, np.ndarray))
 
 
 def test_cross_val_score_with_score_func_classification():
@@ -833,6 +849,7 @@ def test_cross_val_generator_mask_indices_same():
             assert_array_equal(np.where(train_mask)[0], train_ind)
             assert_array_equal(np.where(test_mask)[0], test_ind)
 
+
 @ignore_warnings
 def test_bootstrap_errors():
     assert_raises(ValueError, cval.Bootstrap, 10, train_size=100)
@@ -841,6 +858,7 @@ def test_bootstrap_errors():
     assert_raises(ValueError, cval.Bootstrap, 10, test_size=1.1)
     assert_raises(ValueError, cval.Bootstrap, 10, train_size=0.6,
                   test_size=0.5)
+
 
 @ignore_warnings
 def test_bootstrap_test_sizes():

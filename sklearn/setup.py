@@ -51,8 +51,6 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('metrics/tests')
     config.add_subpackage('metrics/cluster')
     config.add_subpackage('metrics/cluster/tests')
-    config.add_subpackage('metrics/cluster/bicluster')
-    config.add_subpackage('metrics/cluster/bicluster/tests')
 
     # add cython extension module for hmm
     config.add_extension(

@@ -201,6 +201,13 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     `classes_` : array of shape [n_class]
         Holds the label for each class.
 
+    `y_type_` : str,
+        Represents the type of the target data as evaluated by
+        utils.multiclass.type_of_target. Possible type are 'continuous',
+        'continuous-multioutput', 'binary', 'multiclass',
+        'mutliclass-multioutput', 'multilabel-sequences',
+        'multilabel-indicator', and 'unknown'.
+
     `multilabel_` : boolean
         True if the transformer was fitted on a multilabel rather than a
         multiclass set of labels. The multilabel_ attribute is deprecated
@@ -301,6 +308,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         self : returns an instance of self.
         """
         self.y_type_ = type_of_target(y)
+        if 'multioutput' in self.y_type_:
+            raise ValueError("Multioutput target data is not supported with "
+                             "label binarization")
+
         self.sparse_input_ = sp.issparse(y)
         self.classes_ = unique_labels(y)
         return self
@@ -440,7 +451,9 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
     LabelBinarizer : class used to wrap the functionality of label_binarize and
         allow for fitting to classes independently of the transform operation
     """
-    y, = check_arrays(y, allow_lists=True)
+    if not isinstance(y, list):
+        # XXX Workaround that will be removed when list of list format is dropped
+        y, = check_arrays(y)
     if neg_label >= pos_label:
         raise ValueError("neg_label={0} must be strictly less than "
                          "pos_label={1}.".format(neg_label, pos_label))
@@ -463,6 +476,9 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
         pos_label = -neg_label
 
     y_type = type_of_target(y)
+    if 'multioutput' in y_type:
+        raise ValueError("Multioutput target data is not supported with label "
+                         "binarization")
 
     n_samples = y.shape[0] if sp.issparse(y) else len(y)
     n_classes = len(classes)
@@ -518,6 +534,8 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
 
         if pos_switch:
             Y[Y == pos_label] = 0
+    else:
+        Y.data = astype(Y.data, int, copy=False)
 
     # preserve label ordering
     if np.any(classes != sorted_class):
@@ -525,7 +543,10 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
         Y = Y[:, indices]
 
     if y_type == "binary":
-        Y = Y[:, -1].reshape((-1, 1))
+        if sparse_output:
+            Y = Y.getcol(-1)
+        else:
+            Y = Y[:, -1].reshape((-1, 1))
 
     return Y
 
@@ -601,6 +622,8 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold):
 
     # Inverse transform data
     if output_type == "binary":
+        if sp.issparse(y):
+            y = y.toarray()
         if y.ndim == 2 and y.shape[1] == 2:
             return classes[y[:, 1]]
         else:

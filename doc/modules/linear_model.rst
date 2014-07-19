@@ -902,7 +902,7 @@ better than an ordinary least squares in high dimension.
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_plot_thielsen.py`
+  * :ref:`example_linear_model_plot_theilsen.py`
   * :ref:`example_linear_model_plot_robust_fit.py`
 
 .. topic:: References:

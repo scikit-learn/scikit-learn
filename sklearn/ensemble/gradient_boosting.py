@@ -778,7 +778,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                                  % (self.n_estimators,
                                     self.estimators_.shape[0]))
             begin_at_stage = self.estimators_.shape[0]
-            y_pred = self.decision_function(X)
+            y_pred = self._decision_function(X)
             self._resize_state()
 
         # fit the boosting stages
@@ -872,6 +872,13 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         score = self.init_.predict(X).astype(np.float64)
         return score
 
+    def _decision_function(self, X):
+        # for use in inner loop, not raveling the output in single-class case,
+        # not doing input validation.
+        score = self._init_decision_function(X)
+        predict_stages(self.estimators_, X, self.learning_rate, score)
+        return score
+
     def decision_function(self, X):
         """Compute the decision function of ``X``.
 
@@ -882,15 +889,16 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         Returns
         -------
-        score : array, shape = [n_samples, k]
+        score : array, shape = [n_samples, n_classes] or [n_samples]
             The decision function of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
-            Regression and binary classification are special cases with
-            ``k == 1``, otherwise ``k==n_classes``.
+            Regression and binary classification produce an array of shape
+            [n_samples].
         """
         X = array2d(X, dtype=DTYPE, order="C")
-        score = self._init_decision_function(X)
-        predict_stages(self.estimators_, X, self.learning_rate, score)
+        score = self._decision_function(X)
+        if score.shape[1] == 1:
+            return score.ravel()
         return score
 
     def staged_decision_function(self, X):
