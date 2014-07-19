@@ -14,7 +14,11 @@ New features
 
 
    - Incremental fit for :class:`GaussianNB <naive_bayes.GaussianNB>`.
+
    - Add ``sample_weight`` support to :class:`dummy.DummyClassifier`. By
+     `Arnaud Joly`_.
+
+   - Add the :func:`metrics.label_ranking_average_precision_score` metrics. By
      `Arnaud Joly`_.
 
 
@@ -31,7 +35,7 @@ Bug fixes
 
 API changes summary
 -------------------
-    
+
     - :class:`GridSearchCV <grid_search.GridSearchCV>` and
       :func:`cross_val_score <cross_validation.cross_val_score>` and other
       meta-estimators don't convert pandas DataFrames into arrays any more,
