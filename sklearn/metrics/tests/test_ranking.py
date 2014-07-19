@@ -867,14 +867,14 @@ def check_alternative_lrap_implementation(lrap_score, n_classes=5,
         y_score = y_score.toarray()
     score_lrap = label_ranking_average_precision_score(y_true, y_score)
     score_my_lrap = _my_lrap(y_true, y_score)
-    assert_equal(score_lrap, score_my_lrap)
+    assert_almost_equal(score_lrap, score_my_lrap)
 
     # Uniform score
     random_state = check_random_state(random_state)
     y_score = random_state.uniform(size=(n_samples, n_classes))
     score_lrap = label_ranking_average_precision_score(y_true, y_score)
     score_my_lrap = _my_lrap(y_true, y_score)
-    assert_equal(score_lrap, score_my_lrap)
+    assert_almost_equal(score_lrap, score_my_lrap)
 
 
 def test_label_ranking_avp():
