@@ -27,6 +27,8 @@ from sklearn.base import (clone, ClusterMixin)
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
 from sklearn.lda import LDA
+from sklearn.random_projection import BaseRandomProjection
+from sklearn.feature_selection import SelectKBest
 from sklearn.svm.base import BaseLibSVM
 
 from sklearn.utils.validation import DataConversionWarning
@@ -51,6 +53,41 @@ def _boston_subset(n_samples=200):
         X = StandardScaler().fit_transform(X)
         BOSTON = X, y
     return BOSTON
+
+
+def set_fast_parameters(estimator):
+    # speed up some estimators
+    params = estimator.get_params()
+    if "n_iter" in params:
+        estimator.set_params(n_iter=5)
+    if "max_iter" in params:
+        # NMF
+        if estimator.max_iter is not None:
+            estimator.set_params(max_iter=min(5, estimator.max_iter))
+    if "n_resampling" in params:
+        # randomized lasso
+        estimator.set_params(n_resampling=5)
+    if "n_estimators" in params:
+        # especially gradient boosting with default 100
+        estimator.set_params(n_estimators=min(5, estimator.n_estimators))
+    if "max_trials" in params:
+        # RANSAC
+        estimator.set_params(max_trials=10)
+    if "n_init" in params:
+        # K-Means
+        estimator.set_params(n_init=2)
+
+    if isinstance(estimator, BaseRandomProjection):
+        # Due to the jl lemma and often very few samples, the number
+        # of components of the random matrix projection will be probably
+        # greater than the number of features.
+        # So we impose a smaller number (avoid "auto" mode)
+        estimator.set_params(n_components=1)
+
+    if isinstance(estimator, SelectKBest):
+        # SelectKBest has a default of k=10
+        # which is more feature than we have in most case.
+        estimator.set_params(k=1)
 
 
 class NotAnArray(object):
@@ -134,20 +171,8 @@ def _check_transformer(name, Transformer, X, y):
     with warnings.catch_warnings(record=True):
         transformer = Transformer()
     set_random_state(transformer)
-    if hasattr(transformer, 'compute_importances'):
-        transformer.compute_importances = True
 
-    if name == 'SelectKBest':
-        # SelectKBest has a default of k=10
-        # which is more feature than we have.
-        transformer.k = 1
-    elif name in ['GaussianRandomProjection', 'SparseRandomProjection']:
-        # Due to the jl lemma and very few samples, the number
-        # of components of the random matrix projection will be greater
-        # than the number of features.
-        # So we impose a smaller number (avoid "auto" mode)
-        transformer.n_components = 1
-    elif name == "KernelPCA":
+    if name == "KernelPCA":
         transformer.remove_zero_eig = False
 
     set_fast_parameters(transformer)
@@ -211,13 +236,6 @@ def check_transformer_sparse_data(name, Transformer):
     with warnings.catch_warnings(record=True):
         if name in ['Scaler', 'StandardScaler']:
             transformer = Transformer(with_mean=False)
-        elif name in ['GaussianRandomProjection',
-                      'SparseRandomProjection']:
-            # Due to the jl lemma and very few samples, the number
-            # of components of the random matrix projection will be greater
-            # than the number of features.
-            # So we impose a smaller number (avoid "auto" mode)
-            transformer = Transformer(n_components=np.int(X.shape[1] / 4))
         else:
             transformer = Transformer()
 
@@ -259,19 +277,7 @@ def check_estimators_nan_inf(name, Estimator):
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
             estimator = Estimator()
-            if name in ['GaussianRandomProjection',
-                        'SparseRandomProjection']:
-                # Due to the jl lemma and very few samples, the number
-                # of components of the random matrix projection will be
-                # greater
-                # than the number of features.
-                # So we impose a smaller number (avoid "auto" mode)
-                estimator = Estimator(n_components=1)
-            elif name == "SelectKBest":
-                estimator = Estimator(k=1)
-
             set_fast_parameters(estimator)
-
             set_random_state(estimator, 1)
             # try to fit
             try:
@@ -329,29 +335,6 @@ def check_estimators_nan_inf(name, Estimator):
                     raise AssertionError(error_string_transform, Estimator)
 
 
-def set_fast_parameters(estimator):
-    # speed up some estimators
-    params = estimator.get_params()
-    if "n_iter" in params:
-        estimator.set_params(n_iter=5)
-    if "max_iter" in params:
-        # NMF
-        if estimator.max_iter is not None:
-            estimator.set_params(max_iter=min(5, estimator.max_iter))
-    if "n_resampling" in params:
-        #randomized lasso
-        estimator.set_params(n_resampling=5)
-    if "n_estimators" in params:
-        # especially gradient boosting with default 100
-        estimator.set_params(n_estimators=min(5, estimator.n_estimators))
-    if "max_trials" in params:
-        # RANSAC
-        estimator.set_params(max_trials=10)
-    if "n_init" in params:
-        # K-Means
-        estimator.set_params(n_init=2)
-
-
 def check_transformer_pickle(name, Transformer):
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
@@ -364,20 +347,6 @@ def check_transformer_pickle(name, Transformer):
     if not hasattr(transformer, 'transform'):
         return
     set_random_state(transformer)
-    if hasattr(transformer, 'compute_importances'):
-        transformer.compute_importances = True
-
-    if name == "SelectKBest":
-        # SelectKBest has a default of k=10
-        # which is more feature than we have.
-        transformer.k = 1
-    elif name in ['GaussianRandomProjection', 'SparseRandomProjection']:
-        # Due to the jl lemma and very few samples, the number
-        # of components of the random matrix projection will be greater
-        # than the number of features.
-        # So we impose a smaller number (avoid "auto" mode)
-        transformer.n_components = 1
-
     set_fast_parameters(transformer)
 
     # fit
@@ -526,7 +495,8 @@ def check_classifiers_train(name, Classifier):
             assert_equal(y_prob.shape, (n_samples, n_classes))
             assert_array_equal(np.argmax(y_prob, axis=1), y_pred)
             # check that probas for all classes sum to one
-            assert_array_almost_equal(np.sum(y_prob, axis=1), np.ones(n_samples))
+            assert_array_almost_equal(np.sum(y_prob, axis=1),
+                                      np.ones(n_samples))
             # raises error on malformed input
             assert_raises(ValueError, classifier.predict_proba, X.T)
             # raises error on malformed input for predict_proba
@@ -763,18 +733,7 @@ def check_estimators_overwrite_params(name, Estimator):
     X -= X.min()
     with warnings.catch_warnings(record=True):
         # catch deprecation warnings
-        if name in ['GaussianRandomProjection',
-                    'SparseRandomProjection']:
-            # Due to the jl lemma and very few samples, the number
-            # of components of the random matrix projection will be
-            # greater
-            # than the number of features.
-            # So we impose a smaller number (avoid "auto" mode)
-            estimator = Estimator(n_components=1)
-        elif name == "SelectKBest":
-            estimator = Estimator(k=1)
-        else:
-            estimator = Estimator()
+        estimator = Estimator()
 
     if hasattr(estimator, 'batch_size'):
         # FIXME
