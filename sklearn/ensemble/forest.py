@@ -53,7 +53,8 @@ from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
 from ..tree._tree import DTYPE, DOUBLE
-from ..utils import array2d, check_random_state, check_arrays, safe_asarray
+from ..utils import (array2d, check_random_state, check_arrays, safe_asarray,
+                     shuffle)
 from ..utils.validation import DataConversionWarning
 
 from .base import BaseEnsemble, _partition_estimators
@@ -160,6 +161,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
                  estimator_params=tuple(),
                  bootstrap=False,
                  oob_score=False,
+                 oob_feature_importances=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0):
@@ -170,6 +172,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         self.bootstrap = bootstrap
         self.oob_score = oob_score
+        self.oob_feature_importances = oob_feature_importances
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.verbose = verbose
@@ -252,6 +255,10 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             raise ValueError("Out of bag estimation only available"
                              " if bootstrap=True")
 
+        if not self.bootstrap and self.oob_feature_importances:
+            raise ValueError("Out of bag feature importances are only "
+                             " available if bootstrap=True")
+
         # Assign chunk of trees to jobs
         n_jobs, n_trees, starts = _partition_estimators(self)
         trees = []
@@ -283,6 +290,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         if self.oob_score:
             self._set_oob_score(X, y)
+        if self.oob_feature_importances:
+            self._set_oob_feature_importances(X, y)
 
         # Decapsulate classes_ attributes
         if hasattr(self, "classes_") and self.n_outputs_ == 1:
@@ -294,6 +303,12 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
     @abstractmethod
     def _set_oob_score(self, X, y):
         """Calculate out of bag predictions and score."""
+
+    @abstractmethod
+    def _set_oob_feature_importances(self, X, y):
+        """Calculate out of bag feature importances based on
+        permuting each feature and testing on out of bag data
+        """
 
     def _validate_y(self, y):
         # Default implementation
@@ -331,6 +346,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
                  estimator_params=tuple(),
                  bootstrap=False,
                  oob_score=False,
+                 oob_feature_importances=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0):
@@ -341,9 +357,54 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             estimator_params=estimator_params,
             bootstrap=bootstrap,
             oob_score=oob_score,
+            oob_feature_importances=oob_feature_importances,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose)
+
+    def _set_oob_feature_importances(self, X, y):
+        n_samples, n_features = X.shape
+        random_state = check_random_state(self.random_state)
+
+        scores = np.zeros(n_features)
+        scores_sd = np.zeros(n_features)
+
+        for estimator in self.estimators_:
+            mask = np.ones(n_samples, dtype=np.bool)
+            mask[estimator.indices_] = False
+            n_oob_samples = np.sum(mask)
+
+            prediction = estimator.predict_proba(X[mask, :])
+            if self.n_outputs_ == 1:
+                prediction = [prediction]
+
+            for j in xrange(n_features):
+                feature_j = X[mask, j].copy()
+                X[mask, j] = shuffle(feature_j, random_state=random_state)
+                p_prediction = estimator.predict_proba(X[mask, :])
+
+                if self.n_outputs_ == 1:
+                    p_prediction = [p_prediction]
+
+                for k in xrange(self.n_outputs_):
+                    acc = np.sum(y[mask, k] ==
+                                 np.argmax(prediction[k], axis=1), axis=0)
+                    p_acc = np.sum(y[mask, k] ==
+                                   np.argmax(p_prediction[k], axis=1), axis=0)
+                    delta = (acc - p_acc) / n_oob_samples
+                    scores[j] += delta
+                    scores_sd[j] += delta * delta
+
+                X[mask, j] = feature_j
+
+        scores /= self.n_estimators
+        scores_sd = (scores_sd / self.n_estimators -
+                     scores**2) / (self.n_estimators - 1)
+        np.sqrt(scores_sd, scores_sd)
+        scores_sd = np.where(scores_sd < np.finfo(np.double).eps,
+                             np.finfo(np.double).eps, scores_sd, )
+        scores /= scores_sd
+        self.oob_feature_importances_ = scores / np.sum(scores)
 
     def _set_oob_score(self, X, y):
         n_classes_ = self.n_classes_
@@ -532,6 +593,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
                  estimator_params=tuple(),
                  bootstrap=False,
                  oob_score=False,
+                 oob_feature_importances=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0):
@@ -541,6 +603,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             estimator_params=estimator_params,
             bootstrap=bootstrap,
             oob_score=oob_score,
+            oob_feature_importances=oob_feature_importances,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose)
@@ -579,6 +642,48 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
         y_hat = sum(all_y_hat) / len(self.estimators_)
 
         return y_hat
+
+    def _set_oob_feature_importances(self, X, y):
+        n_samples, n_features = X.shape
+        random_state = check_random_state(self.random_state)
+
+        scores = np.zeros(n_features)
+        scores_sd = np.zeros(n_features)
+
+        for estimator in self.estimators_:
+            mask = np.ones(n_samples, dtype=np.bool)
+            mask[estimator.indices_] = False
+            n_oob_samples = np.sum(mask)
+
+            prediction = estimator.predict(X[mask, :])
+            if self.n_outputs_ == 1:
+                prediction = prediction[np.newaxis, :]
+
+            for j in xrange(n_features):
+                feature_j = X[mask, j].copy()
+                X[mask, j] = shuffle(feature_j, random_state=random_state)
+                p_prediction = estimator.predict(X[mask, :])
+
+                if self.n_outputs_ == 1:
+                    p_prediction = p_prediction[np.newaxis, :]
+
+                for k in xrange(self.n_outputs_):
+                    acc = r2_score(y[mask, k], prediction[k])
+                    p_acc = r2_score(y[mask, k], p_prediction[k])
+                    delta = (acc - p_acc) / n_oob_samples
+                    scores[j] += delta
+                    scores_sd[j] += delta * delta
+
+                X[mask, j] = feature_j
+
+        scores /= self.n_estimators
+        scores_sd = (scores_sd / self.n_estimators -
+                     scores**2) / (self.n_estimators - 1)
+        np.sqrt(scores_sd, scores_sd)
+        scores_sd = np.where(scores_sd < np.finfo(np.double).eps,
+                             np.finfo(np.double).eps, scores_sd)
+        scores /= scores_sd
+        self.oob_feature_importances_ = scores / np.sum(scores)
 
     def _set_oob_score(self, X, y):
         n_samples = y.shape[0]
@@ -689,6 +794,13 @@ class RandomForestClassifier(ForestClassifier):
         Whether to use out-of-bag samples to estimate
         the generalization error.
 
+    oob_feature_importances : bool, optional (default=False)
+        Whether to use out-of-bag samples to estimate feature importances.
+        Feature importances are assessed by comparing the predictive
+        performance of each tree using the original feature values with the
+        performance where the feature was randomly permuted.
+        This process is repeated for all features.
+
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
         If -1, then the number of jobs is set to the number of cores.
@@ -727,6 +839,10 @@ class RandomForestClassifier(ForestClassifier):
         was never left out during the bootstrap. In this case,
         `oob_decision_function_` might contain NaN.
 
+    `oob_feature_importances_` : array of shape = [n_features]
+        The feature importances on the out-of-bag samples for each tree
+        (the higher, the more important the feature).
+
     References
     ----------
 
@@ -747,6 +863,7 @@ class RandomForestClassifier(ForestClassifier):
                  max_leaf_nodes=None,
                  bootstrap=True,
                  oob_score=False,
+                 oob_feature_importances=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
@@ -761,6 +878,7 @@ class RandomForestClassifier(ForestClassifier):
                               "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
+            oob_feature_importances=oob_feature_importances,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose)
@@ -855,6 +973,13 @@ class RandomForestRegressor(ForestRegressor):
         whether to use out-of-bag samples to estimate
         the generalization error.
 
+    oob_feature_importances : bool, optional (default=False)
+        Whether to use out-of-bag samples to estimate feature importances.
+        Feature importances are assessed by comparing the predictive
+        performance of each tree using the original feature values with the
+        performance where the feature was randomly permuted.
+        This process is repeated for all features.
+
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
         If -1, then the number of jobs is set to the number of cores.
@@ -882,6 +1007,10 @@ class RandomForestRegressor(ForestRegressor):
     `oob_prediction_` : array of shape = [n_samples]
         Prediction computed with out-of-bag estimate on the training set.
 
+    `oob_feature_importances_` : array of shape = [n_features]
+        The feature importances on the out-of-bag samples for each tree
+        (the higher, the more important the feature).
+
     References
     ----------
 
@@ -902,6 +1031,7 @@ class RandomForestRegressor(ForestRegressor):
                  max_leaf_nodes=None,
                  bootstrap=True,
                  oob_score=False,
+                 oob_feature_importances=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
@@ -916,6 +1046,7 @@ class RandomForestRegressor(ForestRegressor):
                               "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
+            oob_feature_importances=oob_feature_importances,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose)
@@ -1072,6 +1203,7 @@ class ExtraTreesClassifier(ForestClassifier):
                  max_leaf_nodes=None,
                  bootstrap=False,
                  oob_score=False,
+                 oob_feature_importances=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
@@ -1085,6 +1217,7 @@ class ExtraTreesClassifier(ForestClassifier):
                               "max_features", "max_leaf_nodes", "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
+            oob_feature_importances=oob_feature_importances,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose)
@@ -1230,6 +1363,7 @@ class ExtraTreesRegressor(ForestRegressor):
                  max_leaf_nodes=None,
                  bootstrap=False,
                  oob_score=False,
+                 oob_feature_importances=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
@@ -1244,6 +1378,7 @@ class ExtraTreesRegressor(ForestRegressor):
                               "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
+            oob_feature_importances=oob_feature_importances,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose)
@@ -1365,6 +1500,7 @@ class RandomTreesEmbedding(BaseForest):
                               "random_state"),
             bootstrap=False,
             oob_score=False,
+            oob_feature_importances=False,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose)
@@ -1381,6 +1517,9 @@ class RandomTreesEmbedding(BaseForest):
         if min_density is not None:
             warn("The min_density parameter is deprecated as of version 0.14 "
                  "and will be removed in 0.16.", DeprecationWarning)
+
+    def _set_oob_feature_importances(self, X, y):
+        raise NotImplementedError("OOB feature importances are not supported by tree embedding")
 
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by tree embedding")

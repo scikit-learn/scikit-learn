@@ -220,6 +220,93 @@ def test_importances():
         yield check_importance, name, X, y
 
 
+def check_oob_importances(name, X, y, coef):
+    ForestEstimator = FOREST_ESTIMATORS[name]
+
+    clf = ForestEstimator(n_estimators=10, random_state=0,
+                          oob_feature_importances=True, bootstrap=True)
+    clf.fit(X, y)
+    importances = clf.oob_feature_importances_
+    n_important = np.sum(importances > 0.1)
+    assert_equal(importances.shape[0], 10)
+    assert_equal(n_important, 3)
+
+    if coef is not None:
+        true_idx = np.argwhere(coef != 0)
+        pred_idx = np.argwhere(importances > 0.1)
+        assert_array_equal(true_idx, pred_idx)
+
+
+def test_oob_importances():
+    X, y = datasets.make_classification(n_samples=1000, n_features=10,
+                                        n_informative=3, n_redundant=0,
+                                        n_repeated=0, shuffle=False,
+                                        random_state=0)
+
+    for name in FOREST_CLASSIFIERS:
+        yield check_oob_importances, name, X, y, None
+
+    X, y, coef = datasets.make_regression(n_samples=1000, n_features=10,
+                                          n_informative=3, shuffle=False,
+                                          random_state=2, coef=True)
+
+    for name in FOREST_REGRESSORS:
+        yield check_oob_importances, name, X, y, coef
+
+
+def check_oob_importances_multi_class(name, X, y):
+    ForestEstimator = FOREST_ESTIMATORS[name]
+
+    clf = ForestEstimator(n_estimators=10, random_state=0,
+                          oob_feature_importances=True, bootstrap=True)
+    clf.fit(X, y)
+    importances = clf.oob_feature_importances_
+    n_important = np.sum(importances > 0.1)
+    assert_equal(importances.shape[0], 20)
+    assert_equal(n_important, 4)
+
+
+def test_oob_importances_multi_class():
+    X, y = datasets.make_classification(n_samples=1000, n_features=20,
+                                        n_informative=4, n_redundant=0,
+                                        n_repeated=0, shuffle=False,
+                                        n_classes=5,
+                                        random_state=0)
+
+    for name in FOREST_CLASSIFIERS:
+        yield check_oob_importances_multi_class, name, X, y
+
+
+def check_oob_importances_raise_error(name):
+    ForestEstimator = FOREST_ESTIMATORS[name]
+
+    if name in FOREST_TRANSFORMERS:
+        for oob_feat_imp in [True, False]:
+            assert_raises(TypeError, ForestEstimator,
+                          oob_feature_importances=oob_feat_imp)
+
+        assert_raises(NotImplementedError,
+                      ForestEstimator()._set_oob_feature_importances,
+                      X, y)
+
+    else:
+        # Unfitted /  no bootstrap / no oob_score
+        for oob_feat_imp, bootstrap in [(True, False), (False, True),
+                                        (False, False)]:
+            est = ForestEstimator(oob_feature_importances=oob_feat_imp,
+                                  bootstrap=bootstrap, random_state=0)
+            assert_false(hasattr(est, "oob_feature_importances_"))
+
+        # No bootstrap
+        assert_raises(ValueError, ForestEstimator(oob_feature_importances=True,
+                                                  bootstrap=False).fit, X, y)
+
+
+def test_oob_importances_raise_error():
+    for name in FOREST_ESTIMATORS:
+        yield check_oob_importances_raise_error, name
+
+
 def check_oob_score(name, X, y, n_estimators=20):
     """Check that oob prediction is a good estimation of the generalization
        error."""
