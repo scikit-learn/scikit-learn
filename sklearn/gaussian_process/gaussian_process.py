@@ -10,49 +10,11 @@ import numpy as np
 from scipy import linalg, optimize, rand
 
 from ..base import BaseEstimator, RegressorMixin
-from ..metrics.pairwise import manhattan_distances
 from ..utils import array2d, check_random_state, check_arrays
 from . import regression_models as regression
 from . import correlation_models as correlation
 
 MACHINE_EPSILON = np.finfo(np.double).eps
-
-
-def l1_cross_distances(X):
-    """
-    Computes the nonzero componentwise L1 cross-distances between the vectors
-    in X.
-
-    Parameters
-    ----------
-
-    X: array_like
-        An array with shape (n_samples, n_features)
-
-    Returns
-    -------
-
-    D: array with shape (n_samples * (n_samples - 1) / 2, n_features)
-        The array of componentwise L1 cross-distances.
-
-    ij: arrays with shape (n_samples * (n_samples - 1) / 2, 2)
-        The indices i and j of the vectors in X associated to the cross-
-        distances in D: D[k] = np.abs(X[ij[k, 0]] - Y[ij[k, 1]]).
-    """
-    X = array2d(X)
-    n_samples, n_features = X.shape
-    n_nonzero_cross_dist = n_samples * (n_samples - 1) // 2
-    ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int)
-    D = np.zeros((n_nonzero_cross_dist, n_features))
-    ll_1 = 0
-    for k in range(n_samples - 1):
-        ll_0 = ll_1
-        ll_1 = ll_0 + n_samples - k - 1
-        ij[ll_0:ll_1, 0] = k
-        ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
-        D[ll_0:ll_1] = np.abs(X[k] - X[(k + 1):n_samples])
-
-    return D, ij
 
 
 class GaussianProcess(BaseEstimator, RegressorMixin):
@@ -69,7 +31,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
             'constant', 'linear', 'quadratic'
 
-    corr : string or callable, optional
+    corr : string or instance of StationaryCorrelation, optional
         A stationary autocorrelation function returning the autocorrelation
         between two points x and x'.
         Default assumes a squared-exponential autocorrelation model.
@@ -102,22 +64,22 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         An array with shape (n_features, ) or (1, ).
         The parameters in the autocorrelation model.
         If thetaL and thetaU are also specified, theta0 is considered as
-        the starting point for the maximum likelihood estimation of the
+        the starting point for the maximum a posterior estimation of the
         best set of parameters.
         Default assumes isotropic autocorrelation model with theta0 = 1e-1.
 
     thetaL : double array_like, optional
         An array with shape matching theta0's.
         Lower bound on the autocorrelation parameters for maximum
-        likelihood estimation.
-        Default is None, so that it skips maximum likelihood estimation and
+        a posterior estimation.
+        Default is None, so that it skips maximum a posterior estimation and
         it uses theta0.
 
     thetaU : double array_like, optional
         An array with shape matching theta0's.
         Upper bound on the autocorrelation parameters for maximum
-        likelihood estimation.
-        Default is None, so that it skips maximum likelihood estimation and
+        a posterior estimation.
+        Default is None, so that it skips maximum a posterior estimation and
         it uses theta0.
 
     normalize : boolean, optional
@@ -125,7 +87,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         means and standard deviations estimated from the n_samples
         observations provided.
         Default is normalize = True so that data is normalized to ease
-        maximum likelihood estimation.
+        maximum a posterior estimation.
 
     nugget : double or ndarray, optional
         Introduce a nugget effect to allow smooth predictions from noisy
@@ -138,7 +100,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         Default assumes a nugget close to machine precision for the sake of
         robustness (nugget = 10. * MACHINE_EPSILON).
 
-    optimizer : string, optional
+    optimizer : string or callable, optional
         A string specifying the optimization algorithm to be used.
         Default uses 'fmin_cobyla' algorithm from scipy.optimize.
         Available optimizers are::
@@ -148,6 +110,11 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         'Welch' optimizer is dued to Welch et al., see reference [WBSWM1992]_.
         It consists in iterating over several one-dimensional optimizations
         instead of running one single multi-dimensional optimization.
+        If a callable is passed, it is assumed that this callable handles the
+        optimization internally. It must accept an objective function,
+        the start position x0 of the optimization, as well as the lower
+        and upper boundaries of the search space (xL and xU) as parameters.
+        It is expected to return the optimal parameters x_best.
 
     random_start : int, optional
         The number of times the Maximum Likelihood Estimation should be
@@ -167,10 +134,16 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
     ----------
     `theta_`: array
         Specified theta OR the best set of autocorrelation parameters (the \
-        sought maximizer of the reduced likelihood function).
+        sought maximizer of the posterior function).
 
-    `reduced_likelihood_function_value_`: array
-        The optimal reduced likelihood function value.
+    `reduced_likelihood_function_value_`: array (DEPRECATED)
+        The optimal reduced likelihood function value.  Will be removed in the
+        future since the internal choice of the parameters is now based on the
+        posterior.
+
+    `posterior_function_value_`: array
+        The optimal (average log) posterior value found during optimization
+        of theta.
 
     Examples
     --------
@@ -185,7 +158,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
     Notes
     -----
-    The presentation implementation is based on a translation of the DACE
+    The present implementation is based on a translation of the DACE
     Matlab toolbox, see reference [NLNS2002]_.
 
     References
@@ -207,11 +180,13 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         'quadratic': regression.quadratic}
 
     _correlation_types = {
-        'absolute_exponential': correlation.absolute_exponential,
-        'squared_exponential': correlation.squared_exponential,
-        'generalized_exponential': correlation.generalized_exponential,
-        'cubic': correlation.cubic,
-        'linear': correlation.linear}
+        'absolute_exponential': correlation.AbsoluteExponential,
+        'squared_exponential': correlation.SquaredExponential,
+        'matern_1.5': correlation.Matern_1_5,
+        'matern_2.5': correlation.Matern_2_5,
+        'generalized_exponential': correlation.GeneralizedExponential,
+        'cubic': correlation.Cubic,
+        'linear': correlation.Linear}
 
     _optimizer_types = [
         'fmin_cobyla',
@@ -294,12 +269,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             y_mean = np.zeros(1)
             y_std = np.ones(1)
 
-        # Calculate matrix of distances D between samples
-        D, ij = l1_cross_distances(X)
-        if (np.min(np.sum(D, axis=1)) == 0.
-                and self.corr != correlation.pure_nugget):
-            raise Exception("Multiple input features cannot have the same"
-                            " value.")
+        # Fit correlation model
+        self.corr.fit(X, self.nugget)
 
         # Regression matrix and parameters
         F = self.regr(X)
@@ -323,21 +294,23 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         # Set attributes
         self.X = X
         self.y = y
-        self.D = D
-        self.ij = ij
         self.F = F
         self.X_mean, self.X_std = X_mean, X_std
         self.y_mean, self.y_std = y_mean, y_std
 
         # Determine Gaussian Process model parameters
         if self.thetaL is not None and self.thetaU is not None:
-            # Maximum Likelihood Estimation of the parameters
+            # Maximum a Posterior estimation of the parameters
             if self.verbose:
-                print("Performing Maximum Likelihood Estimation of the "
+                print("Performing Maximum a Posterior estimation of the "
                       "autocorrelation parameters...")
-            self.theta_, self.reduced_likelihood_function_value_, par = \
-                self._arg_max_reduced_likelihood_function()
-            if np.isinf(self.reduced_likelihood_function_value_):
+            self.theta_, self.posterior_function_value_, par = \
+                self._arg_max_posterior()
+            # compute reduced_likelihood_function_value_ for backward
+            # compatibility
+            self.reduced_likelihood_function_value_, _ = \
+                self.reduced_likelihood_function()
+            if np.isinf(self.posterior_function_value_):
                 raise Exception("Bad parameter region. "
                                 "Try increasing upper bound")
 
@@ -349,7 +322,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             self.theta_ = self.theta0
             self.reduced_likelihood_function_value_, par = \
                 self.reduced_likelihood_function()
-            if np.isinf(self.reduced_likelihood_function_value_):
+            self.posterior_function_value_ = \
+                self.reduced_likelihood_function_value_ \
+                + self.corr.log_prior(self.theta_)
+            if np.isinf(self.posterior_function_value_):
                 raise Exception("Bad point. Try increasing theta0.")
 
         self.beta = par['beta']
@@ -365,8 +341,6 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             if self.verbose:
                 print("Light storage mode specified. "
                       "Flushing autocorrelation matrix...")
-            self.D = None
-            self.ij = None
             self.F = None
             self.C = None
             self.Ft = None
@@ -437,11 +411,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             if eval_MSE:
                 MSE = np.zeros(n_eval)
 
-            # Get pairwise componentwise L1-distances to the input training set
-            dx = manhattan_distances(X, Y=self.X, sum_over_features=False)
             # Get regression function and correlation
             f = self.regr(X)
-            r = self.corr(self.theta_, dx).reshape(n_eval, n_samples)
+            r = self.corr(self.theta_, X)
 
             # Scaled predictor
             y_ = np.dot(f, self.beta) + np.dot(r, self.gamma)
@@ -461,8 +433,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                         print("This GaussianProcess used 'light' storage mode "
                               "at instantiation. Need to recompute "
                               "autocorrelation matrix...")
-                    reduced_likelihood_function_value, par = \
-                        self.reduced_likelihood_function()
+                    _, par = self.reduced_likelihood_function()
                     self.C = par['C']
                     self.Ft = par['Ft']
                     self.G = par['G']
@@ -574,28 +545,18 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             theta = self.theta_
 
         # Initialize output
-        reduced_likelihood_function_value = - np.inf
+        reduced_likelihood_function_value = -np.inf
         par = {}
 
         # Retrieve data
         n_samples = self.X.shape[0]
-        D = self.D
-        ij = self.ij
         F = self.F
 
-        if D is None:
-            # Light storage mode (need to recompute D, ij and F)
-            D, ij = l1_cross_distances(self.X)
-            if (np.min(np.sum(D, axis=1)) == 0.
-                    and self.corr != correlation.pure_nugget):
-                raise Exception("Multiple X are not allowed")
+        if F is None:
             F = self.regr(self.X)
 
-        # Set up R
-        r = self.corr(theta, D)
-        R = np.eye(n_samples) * (1. + self.nugget)
-        R[ij[:, 0], ij[:, 1]] = r
-        R[ij[:, 1], ij[:, 0]] = r
+        # Determine (auto-)correlation of training data
+        R = self.corr(theta)
 
         # Cholesky decomposition of R
         try:
@@ -653,11 +614,11 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         return reduced_likelihood_function_value, par
 
-    def _arg_max_reduced_likelihood_function(self):
+    def _arg_max_posterior(self):
         """
         This function estimates the autocorrelation parameters theta as the
-        maximizer of the reduced likelihood function.
-        (Minimization of the opposite reduced likelihood function is used for
+        maximizer of the posterior function.
+        (Minimization of the opposite posterior function is used for
         convenience)
 
         Parameters
@@ -668,19 +629,18 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         -------
         optimal_theta : array_like
             The best set of autocorrelation parameters (the sought maximizer of
-            the reduced likelihood function).
+            the posterior function).
 
-        optimal_reduced_likelihood_function_value : double
-            The optimal reduced likelihood function value.
+        best_optimal_posterior_value : double
+            The optimal (log average) posterior value.
 
         optimal_par : dict
-            The BLUP parameters associated to thetaOpt.
+            The BLUP parameters associated to optimal_theta.
         """
-
         # Initialize output
-        best_optimal_theta = []
-        best_optimal_rlf_value = []
-        best_optimal_par = []
+        best_optimal_theta = None
+        best_optimal_posterior_value = -np.inf
+        best_optimal_par = None
 
         if self.verbose:
             print("The chosen optimizer is: " + str(self.optimizer))
@@ -693,21 +653,24 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         if self.optimizer == 'Welch' and self.theta0.size == 1:
             self.optimizer = 'fmin_cobyla'
 
-        if self.optimizer == 'fmin_cobyla':
+        if self.optimizer != 'Welch':
 
-            def minus_reduced_likelihood_function(log10t):
-                return - self.reduced_likelihood_function(
-                    theta=10. ** log10t)[0]
+            def minus_average_log_posterior(log10t):
+                theta = 10. ** log10t
+                log_likelihood_avg = \
+                    self.reduced_likelihood_function(theta=theta)[0]
+                log_prior_avg = self.corr.log_prior(theta)
+                return -(log_likelihood_avg + log_prior_avg)
 
-            constraints = []
-            for i in range(self.theta0.size):
-                constraints.append(lambda log10t, i=i:
-                                   log10t[i] - np.log10(self.thetaL[0, i]))
-                constraints.append(lambda log10t, i=i:
-                                   np.log10(self.thetaU[0, i]) - log10t[i])
+            if self.optimizer == 'fmin_cobyla':
+                constraints = []
+                for i in range(self.theta0.size):
+                    constraints.append(lambda log10t, i=i:
+                                       log10t[i] - np.log10(self.thetaL[i]))
+                    constraints.append(lambda log10t, i=i:
+                                       np.log10(self.thetaU[i]) - log10t[i])
 
             for k in range(self.random_start):
-
                 if k == 0:
                     # Use specified starting point as first guess
                     theta0 = self.theta0
@@ -719,29 +682,37 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                         * np.log10(self.thetaU / self.thetaL)
                     theta0 = 10. ** log10theta0
 
-                # Run Cobyla
+                # Run Optimizer
                 try:
-                    log10_optimal_theta = \
-                        optimize.fmin_cobyla(minus_reduced_likelihood_function,
-                                             np.log10(theta0), constraints,
-                                             iprint=0)
-                except ValueError as ve:
+                    if self.optimizer == 'fmin_cobyla':
+                        log10_optimal_theta = \
+                            optimize.fmin_cobyla(
+                                minus_average_log_posterior,
+                                x0=np.log10(theta0), cons=constraints,
+                                iprint=0)
+                    else:
+                        log10_optimal_theta = \
+                            self.optimizer(minus_average_log_posterior,
+                                           np.log10(theta0),
+                                           np.log10(self.thetaL),
+                                           np.log10(self.thetaU))
+                except ValueError:
                     print("Optimization failed. Try increasing the ``nugget``")
-                    raise ve
+                    raise
 
                 optimal_theta = 10. ** log10_optimal_theta
-                optimal_minus_rlf_value, optimal_par = \
+                optimal_posterior_value, optimal_par = \
                     self.reduced_likelihood_function(theta=optimal_theta)
-                optimal_rlf_value = - optimal_minus_rlf_value
+                optimal_posterior_value += self.corr.log_prior(optimal_theta)
 
                 # Compare the new optimizer to the best previous one
                 if k > 0:
-                    if optimal_rlf_value > best_optimal_rlf_value:
-                        best_optimal_rlf_value = optimal_rlf_value
+                    if optimal_posterior_value > best_optimal_posterior_value:
+                        best_optimal_posterior_value = optimal_posterior_value
                         best_optimal_par = optimal_par
                         best_optimal_theta = optimal_theta
                 else:
-                    best_optimal_rlf_value = optimal_rlf_value
+                    best_optimal_posterior_value = optimal_posterior_value
                     best_optimal_par = optimal_par
                     best_optimal_theta = optimal_theta
                 if self.verbose and self.random_start > 1:
@@ -749,12 +720,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                         percent_completed = (20 * k) / self.random_start
                         print("%s completed" % (5 * percent_completed))
 
-            optimal_rlf_value = best_optimal_rlf_value
+            optimal_posterior_value = best_optimal_posterior_value
             optimal_par = best_optimal_par
             optimal_theta = best_optimal_theta
-
         elif self.optimizer == 'Welch':
-
             # Backup of the given atrributes
             theta0, thetaL, thetaU = self.theta0, self.thetaL, self.thetaU
             corr = self.corr
@@ -767,11 +736,11 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             # Initialize under isotropy assumption
             if verbose:
                 print("Initialize under isotropy assumption...")
-            self.theta0 = array2d(self.theta0.min())
-            self.thetaL = array2d(self.thetaL.min())
-            self.thetaU = array2d(self.thetaU.max())
-            theta_iso, optimal_rlf_value_iso, par_iso = \
-                self._arg_max_reduced_likelihood_function()
+            self.theta0 = np.atleast_1d(self.theta0.min())
+            self.thetaL = np.atleast_1d(self.thetaL.min())
+            self.thetaU = np.atleast_1d(self.thetaU.max())
+            theta_iso, optimal_posterior_value_iso, par_iso = \
+                self._arg_max_posterior()
             optimal_theta = theta_iso + np.zeros(theta0.shape)
 
             # Iterate over all dimensions of theta allowing for anisotropy
@@ -780,33 +749,31 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             for i in self.random_state.permutation(theta0.size):
                 if verbose:
                     print("Proceeding along dimension %d..." % (i + 1))
-                self.theta0 = array2d(theta_iso)
-                self.thetaL = array2d(thetaL[0, i])
-                self.thetaU = array2d(thetaU[0, i])
+                self.theta0 = np.atleast_1d(theta_iso)
+                self.thetaL = np.atleast_1d(thetaL[i])
+                self.thetaU = np.atleast_1d(thetaU[i])
 
-                def corr_cut(t, d):
-                    return corr(array2d(np.hstack([optimal_theta[0][0:i],
-                                                   t[0],
-                                                   optimal_theta[0][(i + 1)::]]
-                                                  )), d)
+                def corr_cut(t, X=None):
+                    return corr(np.hstack([optimal_theta[0:i],
+                                           t[0],
+                                           optimal_theta[(i + 1)::]]
+                                          ), X)
 
                 self.corr = corr_cut
-                optimal_theta[0, i], optimal_rlf_value, optimal_par = \
-                    self._arg_max_reduced_likelihood_function()
+                optimal_theta[i], optimal_posterior_value, optimal_par = \
+                    self._arg_max_posterior()
 
             # Restore the given atrributes
             self.theta0, self.thetaL, self.thetaU = theta0, thetaL, thetaU
             self.corr = corr
             self.optimizer = 'Welch'
             self.verbose = verbose
-
         else:
-
             raise NotImplementedError("This optimizer ('%s') is not "
                                       "implemented yet. Please contribute!"
                                       % self.optimizer)
 
-        return optimal_theta, optimal_rlf_value, optimal_par
+        return optimal_theta, optimal_posterior_value, optimal_par
 
     def _check_params(self, n_samples=None):
 
@@ -829,7 +796,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         # Check correlation model
         if not callable(self.corr):
             if self.corr in self._correlation_types:
-                self.corr = self._correlation_types[self.corr]
+                self.corr = self._correlation_types[self.corr]()
             else:
                 raise ValueError("corr should be one of %s or callable, "
                                  "%s was given."
@@ -841,12 +808,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                              "'light', %s was given." % self.storage_mode)
 
         # Check correlation parameters
-        self.theta0 = array2d(self.theta0)
+        self.theta0 = np.atleast_1d(self.theta0)
         lth = self.theta0.size
 
         if self.thetaL is not None and self.thetaU is not None:
-            self.thetaL = array2d(self.thetaL)
-            self.thetaU = array2d(self.thetaU)
+            self.thetaL = np.atleast_1d(self.thetaL)
+            self.thetaU = np.atleast_1d(self.thetaU)
             if self.thetaL.size != lth or self.thetaU.size != lth:
                 raise ValueError("theta0, thetaL and thetaU must have the "
                                  "same length.")
@@ -878,7 +845,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                              "or array of length n_samples.")
 
         # Check optimizer
-        if not self.optimizer in self._optimizer_types:
+        if not (self.optimizer in self._optimizer_types
+                or hasattr(self.optimizer, '__call__')):
             raise ValueError("optimizer should be one of %s"
                              % self._optimizer_types)
 

@@ -12,7 +12,6 @@ import numpy as np
 
 from sklearn.gaussian_process import GaussianProcess
 from sklearn.gaussian_process import regression_models as regression
-from sklearn.gaussian_process import correlation_models as correlation
 
 
 f = lambda x: x * np.sin(x)
@@ -21,7 +20,7 @@ X2 = np.atleast_2d([2., 4., 5.5, 6.5, 7.5]).T
 y = f(X).ravel()
 
 
-def test_1d(regr=regression.constant, corr=correlation.squared_exponential,
+def test_1d(regr=regression.constant, corr="squared_exponential",
             random_start=10, beta0=None):
     """
     MLE estimation of a one-dimensional Gaussian Process model.
@@ -39,7 +38,7 @@ def test_1d(regr=regression.constant, corr=correlation.squared_exponential,
                 and np.allclose(MSE2, 0., atol=10))
 
 
-def test_2d(regr=regression.constant, corr=correlation.squared_exponential,
+def test_2d(regr=regression.constant, corr="squared_exponential",
             random_start=10, beta0=None):
     """
     MLE estimation of a two-dimensional Gaussian Process model accounting for
@@ -70,11 +69,11 @@ def test_2d(regr=regression.constant, corr=correlation.squared_exponential,
 
     assert_true(np.allclose(y_pred, y) and np.allclose(MSE, 0.))
 
-    assert_true(np.all(gp.theta_ >= thetaL)) # Lower bounds of hyperparameters
-    assert_true(np.all(gp.theta_ <= thetaU)) # Upper bounds of hyperparameters
+    assert_true(np.all(gp.theta_ >= thetaL))  # Lower bounds of hyperparameters
+    assert_true(np.all(gp.theta_ <= thetaU))  # Upper bounds of hyperparameters
 
 
-def test_2d_2d(regr=regression.constant, corr=correlation.squared_exponential,
+def test_2d_2d(regr=regression.constant, corr="squared_exponential",
                random_start=10, beta0=None):
     """
     MLE estimation of a two-dimensional Gaussian Process model accounting for
