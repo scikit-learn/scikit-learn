@@ -283,6 +283,7 @@ MULTILABELS_METRICS = [
 # Regression metrics with "multioutput-continuous" format support
 MULTIOUTPUT_METRICS = [
     "mean_absolute_error", "mean_squared_error", "r2_score",
+    "explained_variance_score"
 ]
 
 # Symmetric with respect to their input arguments y_true and y_pred
@@ -1632,7 +1633,7 @@ def test_multioutput_regression():
     assert_almost_equal(error, (1. / 3 + 2. / 3 + 2. / 3) / 4.)
 
     error = r2_score(y_true, y_pred)
-    assert_almost_equal(error, 1 - 5. / 2)
+    assert_almost_equal(error, -0.875)
 
 
 def test_multioutput_number_of_output_differ():
@@ -2409,7 +2410,8 @@ def test__check_reg_targets():
                                                             repeat=2):
 
         if type1 == type2 and n_out1 == n_out2:
-            y_type, y_check1, y_check2 = _check_reg_targets(y1, y2)
+            y_type, y_check1, y_check2, output_weights = \
+                _check_reg_targets(y1, y2, None)
             assert_equal(type1, y_type)
             if type1 == 'continuous':
                 assert_array_equal(y_check1, np.reshape(y1, (-1, 1)))
@@ -2418,7 +2420,7 @@ def test__check_reg_targets():
                 assert_array_equal(y_check1, y1)
                 assert_array_equal(y_check2, y2)
         else:
-            assert_raises(ValueError, _check_reg_targets, y1, y2)
+            assert_raises(ValueError, _check_reg_targets, y1, y2, None)
 
 
 def test_log_loss():
@@ -2707,3 +2709,66 @@ def test_sample_weight_invariance():
         else:
             yield (check_sample_weight_invariance, name, metric, y_true,
                    y_pred)
+
+def test_regression_multioutput_array():
+    y_true = [[1, 2], [2.5, -1], [4.5, 3], [5, 7]]
+    y_pred = [[1, 1], [2, -1], [5, 4], [5, 6.5]]
+
+    mse = mean_squared_error(y_true, y_pred, output_weights=None)
+    mae = mean_absolute_error(y_true, y_pred, output_weights=None)
+    r =  r2_score(y_true, y_pred, output_weights=None)
+    evs =  explained_variance_score(y_true, y_pred, output_weights=None)
+
+    assert_array_equal(mse, np.array([0.125, 0.5625]))
+    assert_array_equal(mae, np.array([0.25, 0.625]))
+    assert_array_almost_equal(r, np.array([0.95, 0.93]), decimal=2)
+    assert_array_almost_equal(evs, np.array([0.95, 0.93]), decimal=2)
+
+    # mean_absolute_error and mean_squared_error are equal because
+    # it is a binary problem.
+    y_true = [[0, 0]]*4
+    y_pred = [[1, 1]]*4
+    mse = mean_squared_error(y_true, y_pred, output_weights=None)
+    mae = mean_absolute_error(y_true, y_pred, output_weights=None)
+    r =  r2_score(y_true, y_pred, output_weights=None)
+    assert_array_equal(mse, np.array([1., 1.]))
+    assert_array_equal(mae, np.array([1., 1.]))
+    assert_array_almost_equal(r, np.array([0., 0.]))
+
+    r = r2_score([[0, -1], [0, 1]], [[2, 2], [1, 1]], output_weights=None)
+    assert_array_equal(r, np.array([0, -3.5]))
+    assert_equal(np.mean(r), r2_score([[0, -1], [0, 1]], [[2, 2], [1, 1]]))
+    evs = explained_variance_score([[0, -1], [0, 1]], [[2, 2], [1, 1]],
+        output_weights=None)
+    assert_array_equal(evs, np.array([0, -1.25]))
+
+    # Checking for the condition in which both numerator and denominator is
+    # zero.
+    y_true = [[1, 3], [-1, 2]]
+    y_pred = [[1, 4], [-1, 1]]
+    r =  r2_score(y_true, y_pred, output_weights=None)
+    assert_array_equal(r, np.array([1., -3.]))
+    assert_equal(np.mean(r), r2_score(y_true, y_pred))
+    evs =  explained_variance_score(y_true, y_pred, output_weights=None)
+    assert_array_equal(evs, np.array([1., -3.]))
+    assert_equal(np.mean(evs), explained_variance_score(y_true, y_pred))
+
+
+def test_regression_custom_weights():
+    y_true = [[1, 2], [2.5, -1], [4.5, 3], [5, 7]]
+    y_pred = [[1, 1], [2, -1], [5, 4], [5, 6.5]]
+
+    msew = mean_squared_error(y_true, y_pred, output_weights=[0.4, 0.6],
+                              sample_weight=None)
+    maew = mean_absolute_error(y_true, y_pred, output_weights=[0.4, 0.6],
+                               sample_weight=None)
+    rw =  r2_score(y_true, y_pred, output_weights=[0.4, 0.6],
+                   sample_weight=None)
+    evsw =  explained_variance_score(y_true, y_pred,
+                                     output_weights=[0.4, 0.6],
+                                     sample_weight=None)
+
+    assert_almost_equal(msew, 0.39, decimal=2)
+    assert_almost_equal(maew, 0.475, decimal=3)
+    assert_almost_equal(rw, 0.94, decimal=2)
+    assert_almost_equal(evsw, 0.94, decimal=2)

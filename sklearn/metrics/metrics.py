@@ -16,6 +16,8 @@ the lower the better
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Noel Dawe <noel@dawe.me>
+#          Manoj Kumar <manojkumarsivaraj334@gmail.com>
+#          Michael Eickenberg <michael.eickenberg@gmail.com>
 # License: BSD 3 clause
 
 from __future__ import division
@@ -33,6 +35,7 @@ from ..preprocessing import LabelEncoder
 from ..utils import check_arrays
 from ..utils import deprecated
 from ..utils import column_or_1d
+from ..utils import safe_asarray
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.fixes import isclose
@@ -41,7 +44,7 @@ from ..utils.fixes import isclose
 ###############################################################################
 # General utilities
 ###############################################################################
-def _check_reg_targets(y_true, y_pred):
+def _check_reg_targets(y_true, y_pred, output_weights):
     """Check that y_true and y_pred belong to the same regression task
 
     Parameters
@@ -49,6 +52,8 @@ def _check_reg_targets(y_true, y_pred):
     y_true : array-like,
 
     y_pred : array-like,
+
+    output_weights : array-like or string in ['uniform', 'variance'] or None
 
     Returns
     -------
@@ -61,6 +66,13 @@ def _check_reg_targets(y_true, y_pred):
 
     y_pred : array-like of shape = [n_samples, n_outputs]
         Estimated target values.
+
+    output_weights : array-like of shape = [n_outputs] 
+                     or string in ['uniform', 'variance'] or None
+        Custom output weights is output_weights is array-like. 'uniform' and
+        'variance' indicate specific weight vectors.
+        None indicates no agglomeration of scores across targets: Scores are
+        output separately per target.
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
 
@@ -74,9 +86,20 @@ def _check_reg_targets(y_true, y_pred):
         raise ValueError("y_true and y_pred have different number of output "
                          "({0}!={1})".format(y_true.shape[1], y_pred.shape[1]))
 
+    n_outputs = y_true.shape[1]
+    output_weights_options = (None, 'uniform', 'variance')
+    if output_weights not in output_weights_options:
+        output_weights = safe_asarray(output_weights)
+        if n_outputs == 1:
+            raise ValueError("Custom weights are useful only in "
+                             "multi-output cases.")
+        elif n_outputs != len(output_weights):
+            raise ValueError(("There must be equally many custom weights "
+                              "(%d) as outputs (%d).") % 
+                             (len(outputs), n_outputs))
     y_type = 'continuous' if y_true.shape[1] == 1 else 'continuous-multioutput'
 
-    return y_type, y_true, y_pred
+    return y_type, y_true, y_pred, output_weights
 
 
 def _check_clf_targets(y_true, y_pred):
@@ -133,7 +156,7 @@ def _check_clf_targets(y_true, y_pred):
     return y_type, y_true, y_pred
 
 
-def _average_and_variance(values, sample_weight=None):
+def _average_and_variance(values, sample_weight=None, axis=None):
     """
     Compute the (weighted) average and variance.
 
@@ -159,8 +182,22 @@ def _average_and_variance(values, sample_weight=None):
         sample_weight = np.asarray(sample_weight)
         if sample_weight.ndim == 1:
             sample_weight = sample_weight.reshape((-1, 1))
-    average = np.average(values, weights=sample_weight)
-    variance = np.average((values - average)**2, weights=sample_weight)
+    if axis is not None:
+        values = np.rollaxis(values, axis)
+        axis = 0
+    # if multi output but sample weight only specified in one column,
+    # then we need to broadcast it over outputs
+    if (sample_weight is not None and
+        values.shape[1] != sample_weight.shape[1]):
+        if sample_weight.shape[1] != 1:
+            raise ValueError("Sample weight shape and data shape "
+                             "do not correspond.")
+        sample_weight = sample_weight * np.ones([1, values.shape[1]])
+
+    average = np.average(values, weights=sample_weight, axis=axis)
+    variance = np.average((values - average)**2,
+                          weights=sample_weight,
+                          axis=axis)
     return average, variance
 
 
@@ -2147,7 +2184,9 @@ def hamming_loss(y_true, y_pred, classes=None):
 ###############################################################################
 # Regression metrics
 ###############################################################################
-def mean_absolute_error(y_true, y_pred, sample_weight=None):
+def mean_absolute_error(y_true, y_pred,
+                        output_weights='uniform',
+                        sample_weight=None):
     """Mean absolute error regression loss
 
     Parameters
@@ -2158,13 +2197,31 @@ def mean_absolute_error(y_true, y_pred, sample_weight=None):
     y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
         Estimated target values.
 
+    output_weights : string in ['uniform'] or None
+                     or array-like of shape [n_outputs]
+        Weights by which to average scores of outputs. Useful only if using
+        multiple outputs.
+
+        ``ndarray`` :
+            array containing weights for the weighted average.
+
+        ``'uniform'`` :
+            Scores of all outputs are averaged with uniform weight.
+
+        ``None`` :
+            No averaging is performed, an array of scores is returned.
+
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
-
     Returns
     -------
-    loss : float
-        A positive floating point value (the best value is 0.0).
+    loss : float or ndarray of shape [n_outputs]
+        If output_weights is None, then mean absolute error is returned for
+        each output separately.
+        If output_weights is 'uniform' or an ndarray of weights, then the
+        weighted average of all output scores is returned.
+
+        MAE output is non-negative floating point. The best value is 0.0.
 
     Examples
     --------
@@ -2177,14 +2234,29 @@ def mean_absolute_error(y_true, y_pred, sample_weight=None):
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> mean_absolute_error(y_true, y_pred)
     0.75
-
+    >>> mean_absolute_error(y_true, y_pred, output_weights=None)
+    array([ 0.5,  1. ])
+    >>> mean_absolute_error(y_true, y_pred, output_weights=[0.3, 0.7])
+    ... # doctest: +ELLIPSIS
+    0.849...
     """
-    y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
-    return np.average(np.abs(y_pred - y_true).mean(axis=1),
-                      weights=sample_weight)
+    y_type, y_true, y_pred, output_weights = _check_reg_targets(
+        y_true, y_pred, output_weights)
+    individual_errors = np.average(np.abs(y_pred - y_true),
+                                   weights=sample_weight, axis=0)
+
+    if output_weights == 'uniform':
+        error = np.average(individual_errors)
+    elif output_weights is None:
+        error = individual_errors
+    else:
+        error = np.average(individual_errors, weights=output_weights)
+    return error
 
 
-def mean_squared_error(y_true, y_pred, sample_weight=None):
+def mean_squared_error(y_true, y_pred,
+                       output_weights='uniform',
+                       sample_weight=None):
     """Mean squared error regression loss
 
     Parameters
@@ -2194,6 +2266,20 @@ def mean_squared_error(y_true, y_pred, sample_weight=None):
 
     y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
         Estimated target values.
+
+    output_weights : string in ['uniform'] or None
+                     or array-like of shape [n_outputs]
+        Weights by which to average scores of outputs. Useful only if using
+        multiple outputs.
+
+        ``ndarray`` :
+            array containing weights for the weighted average.
+
+        ``'uniform'`` :
+            Scores of all outputs are averaged with uniform weight.
+
+        ``None`` :
+            No averaging is performed, an array of scores is returned.
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
@@ -2214,17 +2300,34 @@ def mean_squared_error(y_true, y_pred, sample_weight=None):
     >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
     >>> mean_squared_error(y_true, y_pred)  # doctest: +ELLIPSIS
     0.708...
+    >>> mean_squared_error(y_true, y_pred, output_weights=None)
+    ... # doctest: +ELLIPSIS
+    array([ 0.416...,  1.        ])
+    >>> mean_squared_error(y_true, y_pred, output_weights=[0.3, 0.7])
+    ... # doctest: +ELLIPSIS
+    0.824...
 
     """
-    y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
-    return np.average(((y_pred - y_true) ** 2).mean(axis=1),
-                      weights=sample_weight)
+    y_type, y_true, y_pred, output_weights = _check_reg_targets(
+        y_true, y_pred, output_weights)
+    individual_errors = np.average((y_true - y_pred) ** 2, axis=0,
+                                   weights=sample_weight)
+    if output_weights == 'uniform':
+        error = np.average(individual_errors)
+    elif output_weights is None:
+        error = individual_errors
+    else:
+        error = np.average(individual_errors, weights=output_weights)
+
+    return error
 
 
 ###############################################################################
 # Regression score functions
 ###############################################################################
-def explained_variance_score(y_true, y_pred, sample_weight=None):
+def explained_variance_score(y_true, y_pred,
+                             output_weights='uniform',
+                             sample_weight=None):
     """Explained variance regression score function
 
     Best possible score is 1.0, lower values are worse.
@@ -2236,6 +2339,24 @@ def explained_variance_score(y_true, y_pred, sample_weight=None):
 
     y_pred : array-like
         Estimated target values.
+
+    output_weights : string in ['uniform', 'variance'] or None
+                     or array-like of shape [n_outputs]
+        Weights by which to average scores of outputs. Useful only if using
+        multiple outputs.
+
+        ``ndarray`` :
+            array containing weights for the weighted average.
+
+        ``'uniform'`` :
+            Scores of all outputs are averaged with uniform weight.
+
+        ``'variance'`` :
+            Scores of all outputs are averaged, weighted by the variances
+            of each individual output. This corresponds to a global explained
+
+        ``None`` :
+            No averaging is performed, an array of scores is returned.
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
@@ -2258,24 +2379,38 @@ def explained_variance_score(y_true, y_pred, sample_weight=None):
     0.957...
 
     """
-    y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
+    y_type, y_true, y_pred, output_weights = _check_reg_targets(
+        y_true, y_pred, output_weights)
 
-    if y_type != "continuous":
+    if y_type not in ["continuous", "continuous-multioutput"]:
         raise ValueError("{0} is not supported".format(y_type))
 
-    _, numerator = _average_and_variance(y_true - y_pred, sample_weight)
-    _, denominator = _average_and_variance(y_true, sample_weight)
-    if denominator == 0.0:
-        if numerator == 0.0:
-            return 1.0
-        else:
-            # arbitrary set to zero to avoid -inf scores, having a constant
-            # y_true is not interesting for scoring a regression anyway
-            return 0.0
-    return 1 - numerator / denominator
+    _, numerator = _average_and_variance(y_true - y_pred, sample_weight,
+                                         axis=0)
+    _, denominator = _average_and_variance(y_true, sample_weight,
+                                           axis=0)
+
+    nonzero_numerator = numerator != 0
+    nonzero_denominator = denominator != 0
+    valid_score = nonzero_numerator * nonzero_denominator
+    individual_scores = np.ones(y_true.shape[1])
+
+    individual_scores[valid_score] = 1 - (numerator[valid_score] /
+                                          denominator[valid_score])
+    individual_scores[nonzero_numerator * ~nonzero_denominator] = 0.
+    if output_weights == 'uniform':
+        score = np.average(individual_scores)
+    elif output_weights == 'variance':
+        score = np.average(individual_scores, weights=denominator)
+    elif output_weights == None:
+        score = individual_scores
+    else:
+        score = np.average(individual_scores, weights=output_weights)
+
+    return score
 
 
-def r2_score(y_true, y_pred, sample_weight=None):
+def r2_score(y_true, y_pred, output_weights='uniform', sample_weight=None):
     """R^2 (coefficient of determination) regression score function.
 
     Best possible score is 1.0, lower values are worse.
@@ -2287,6 +2422,21 @@ def r2_score(y_true, y_pred, sample_weight=None):
 
     y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
         Estimated target values.
+
+    output_weights : string in ['uniform', 'variance'] or None
+                     or array-like of shape [n_outputs]
+        Weights by which to average scores of outputs. Useful only if using
+        multiple outputs.
+
+        ``ndarray`` :
+            array containing weights for the weighted average.
+
+        ``'uniform'`` :
+            Scores of all outputs are averaged with uniform weight.
+
+        ``'variance'`` :
+            Scores of all outputs are averaged, weighted by the variances
+            of each individual output. This corresponds to a global explained
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
@@ -2321,7 +2471,8 @@ def r2_score(y_true, y_pred, sample_weight=None):
     0.938...
 
     """
-    y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
+    y_type, y_true, y_pred, output_weights = _check_reg_targets(
+        y_true, y_pred, output_weights=output_weights)
 
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
@@ -2329,16 +2480,28 @@ def r2_score(y_true, y_pred, sample_weight=None):
     else:
         weight = 1.
 
-    numerator = (weight * (y_true - y_pred) ** 2).sum(dtype=np.float64)
+    numerator = (weight * (y_true - y_pred) ** 2).sum(axis=0,
+                                                      dtype=np.float64)
     denominator = (weight * (y_true - np.average(
-        y_true, axis=0, weights=sample_weight)) ** 2).sum(dtype=np.float64)
+        y_true, axis=0, weights=sample_weight)) ** 2).sum(axis=0,
+                                                          dtype=np.float64)
 
-    if denominator == 0.0:
-        if numerator == 0.0:
-            return 1.0
-        else:
-            # arbitrary set to zero to avoid -inf scores, having a constant
-            # y_true is not interesting for scoring a regression anyway
-            return 0.0
+    nonzero_denominator = denominator != 0
+    nonzero_numerator = numerator != 0
+    valid_score = nonzero_denominator * nonzero_numerator
+    individual_scores = np.ones([y_true.shape[1]])
+    individual_scores[valid_score] = 1 - (numerator[valid_score] /
+                                          denominator[valid_score])
+    # arbitrary set to zero to avoid -inf scores, having a constant
+    # y_true is not interesting for scoring a regression anyway
+    individual_scores[nonzero_numerator * ~nonzero_denominator] = 0.
+    if output_weights == 'uniform':
+        score = np.average(individual_scores)
+    elif output_weights == 'variance':
+        score = np.average(individual_scores, weights=denominator)
+    elif output_weights is None:
+        score = individual_scores
+    else:
+        score = np.average(individual_scores, weights=output_weights)
 
-    return 1 - numerator / denominator
+    return score
