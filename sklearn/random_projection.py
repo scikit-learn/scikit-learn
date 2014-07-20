@@ -397,7 +397,7 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
             Projected array.
 
         """
-        X = check_array(X, ['csr', 'csc'])
+        X = check_array(X, accept_sparse=['csr', 'csc'])
 
         if self.components_ is None:
             raise ValueError('No random projection matrix had been fit.')

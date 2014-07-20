@@ -308,7 +308,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
         """
-        X = check_array(X, 'csr', copy=self.copy, ensure_2d=False)
+        X = check_array(X, accept_sparse='csr', copy=self.copy, ensure_2d=False)
         if warn_if_not_float(X, estimator=self):
             X = X.astype(np.float)
         if sparse.issparse(X):
@@ -339,7 +339,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             The data used to scale along the features axis.
         """
         copy = copy if copy is not None else self.copy
-        X = check_array(X, 'csr', copy=copy, ensure_2d=False)
+        X = check_array(X, accept_sparse='csr', copy=copy, ensure_2d=False)
         if warn_if_not_float(X, estimator=self):
             X = X.astype(np.float)
         if sparse.issparse(X):
@@ -604,7 +604,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
         This method is just there to implement the usual API and hence
         work in pipelines.
         """
-        X = check_array(X, 'csr')
+        X = check_array(X, accept_sparse='csr')
         return self
 
     def transform(self, X, y=None, copy=None):
@@ -617,7 +617,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
             in CSR format to avoid an un-necessary copy.
         """
         copy = copy if copy is not None else self.copy
-        X = check_array(X, 'csr')
+        X = check_array(X, accept_sparse='csr')
         return normalize(X, norm=self.norm, axis=1, copy=copy)
 
 
@@ -646,7 +646,7 @@ def binarize(X, threshold=0.0, copy=True):
     using the ``Transformer`` API (e.g. as part of a preprocessing
     :class:`sklearn.pipeline.Pipeline`)
     """
-    X = check_array(X, ['csr', 'csc'], copy=copy)
+    X = check_array(X, accept_sparse=['csr', 'csc'], copy=copy)
     if sparse.issparse(X):
         if threshold < 0:
             raise ValueError('Cannot binarize a sparse matrix with threshold '
@@ -708,7 +708,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
         This method is just there to implement the usual API and hence
         work in pipelines.
         """
-        check_array(X, 'csr')
+        check_array(X, accept_sparse='csr')
         return self
 
     def transform(self, X, y=None, copy=None):
@@ -807,7 +807,7 @@ def add_dummy_feature(X, value=1.0):
     array([[ 1.,  0.,  1.],
            [ 1.,  1.,  0.]])
     """
-    X = check_array(X, ['csc', 'csr', 'coo'])
+    X = check_array(X, accept_sparse=['csc', 'csr', 'coo'])
     n_samples, n_features = X.shape
     shape = (n_samples, n_features + 1)
     if sparse.issparse(X):
@@ -862,7 +862,7 @@ def _transform_selected(X, transform, selected="all", copy=True):
     if selected == "all":
         return transform(X)
 
-    X = check_array(X, 'csc', copy=copy)
+    X = check_array(X, accept_sparse='csc', copy=copy)
 
     if len(selected) == 0:
         return X

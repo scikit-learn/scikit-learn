@@ -540,7 +540,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             classes corresponds to that in the attribute `classes_`.
         """
         # Check data
-        X = check_array(X, ['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
         if self.n_features_ != X.shape[1]:
             raise ValueError("Number of features of the model must "
@@ -805,7 +805,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
             The predicted values.
         """
         # Check data
-        X = check_array(X, ['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
         # Parallel loop
         n_jobs, n_estimators, starts = _partition_estimators(self)

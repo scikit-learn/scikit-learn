@@ -193,7 +193,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
             `max_trials` randomly chosen sub-samples.
 
         """
-        X = check_array(X, 'csr')
+        X = check_array(X, accept_sparse='csr')
         y = check_array(y, ensure_2d=False)
         if y.ndim == 1:
             y = y.reshape(-1, 1)

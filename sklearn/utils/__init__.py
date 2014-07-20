@@ -239,7 +239,7 @@ def resample(*arrays, **options):
             max_n_samples, n_samples))
 
     check_consistent_length(*arrays)
-    arrays = [check_array(x, 'csr', ensure_2d=False) for x in arrays]
+    arrays = [check_array(x, accept_sparse='csr', ensure_2d=False) for x in arrays]
 
     if replace:
         indices = random_state.randint(0, n_samples, size=(max_n_samples,))
@@ -334,7 +334,7 @@ def safe_sqr(X, copy=True):
     -------
     X ** 2 : element wise square
     """
-    X = check_array(X, ['csr', 'csc', 'coo'])
+    X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
     if issparse(X):
         if copy:
             X = X.copy()

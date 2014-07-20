@@ -86,10 +86,10 @@ def check_pairwise_arrays(X, Y):
 
     """
     if Y is X or Y is None:
-        X = Y = check_array(X, 'csr')
+        X = Y = check_array(X, accept_sparse='csr')
     else:
-        X = check_array(X, 'csr')
-        Y = check_array(Y, 'csr')
+        X = check_array(X, accept_sparse='csr')
+        Y = check_array(Y, accept_sparse='csr')
     if X.shape[1] != Y.shape[1]:
         raise ValueError("Incompatible dimension for X and Y matrices: "
                          "X.shape[1] == %d while Y.shape[1] == %d" % (

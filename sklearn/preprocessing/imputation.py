@@ -176,7 +176,8 @@ class Imputer(BaseEstimator, TransformerMixin):
         # transform(X), the imputation data will be computed in transform()
         # when the imputation is done per sample (i.e., when axis=1).
         if self.axis == 0:
-            X = check_array(X, 'csc', dtype=np.float64, force_all_finite=False)
+            X = check_array(X, accept_sparse='csc', dtype=np.float64,
+                            force_all_finite=False)
 
             if sparse.issparse(X):
                 self.statistics_ = self._sparse_fit(X,
@@ -337,7 +338,8 @@ class Imputer(BaseEstimator, TransformerMixin):
         # transform(X), the imputation data need to be recomputed
         # when the imputation is done per sample
         if self.axis == 1:
-            X = check_array(X, 'csr', force_all_finite=False, copy=False)
+            X = check_array(X, accept_sparse='csr', force_all_finite=False,
+                            copy=False)
 
             if sparse.issparse(X):
                 statistics = self._sparse_fit(X,
@@ -351,7 +353,8 @@ class Imputer(BaseEstimator, TransformerMixin):
                                              self.missing_values,
                                              self.axis)
         else:
-            X = check_array(X, 'csc', force_all_finite=False, copy=False)
+            X = check_array(X, accept_sparse='csc', force_all_finite=False,
+                            copy=False)
             statistics = self.statistics_
 
         # Delete the invalid rows/columns

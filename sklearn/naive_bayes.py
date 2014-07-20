@@ -392,7 +392,7 @@ class BaseDiscreteNB(BaseNB):
         self : object
             Returns self.
         """
-        X = check_array(X, 'csr', dtype=np.float64)
+        X = check_array(X, accept_sparse='csr', dtype=np.float64)
         _, n_features = X.shape
 
         if _check_partial_fit_first_call(self, classes):
@@ -589,7 +589,7 @@ class MultinomialNB(BaseDiscreteNB):
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
-        X = check_array(X, 'csr')
+        X = check_array(X, accept_sparse='csr')
         return (safe_sparse_dot(X, self.feature_log_prob_.T)
                 + self.class_log_prior_)
 
@@ -689,7 +689,7 @@ class BernoulliNB(BaseDiscreteNB):
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
 
-        X = check_array(X, 'csr')
+        X = check_array(X, accept_sparse='csr')
 
         if self.binarize is not None:
             X = binarize(X, threshold=self.binarize)

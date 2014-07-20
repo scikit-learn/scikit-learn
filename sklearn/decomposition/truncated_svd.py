@@ -201,7 +201,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         X_new : array, shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
-        X = check_array(X, 'csr')
+        X = check_array(X, accept_sparse='csr')
         return safe_sparse_dot(X, self.components_.T)
 
     def inverse_transform(self, X):

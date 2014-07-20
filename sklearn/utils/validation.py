@@ -139,7 +139,7 @@ def indexable(*iterables):
     return result
 
 
-def _ensure_sparse_format(spmatrix, allowed_sparse, dtype, order, copy,
+def _ensure_sparse_format(spmatrix, accept_sparse, dtype, order, copy,
                           force_all_finite):
     """Convert a sparse matrix to a given format.
 
@@ -150,7 +150,7 @@ def _ensure_sparse_format(spmatrix, allowed_sparse, dtype, order, copy,
     spmatrix : scipy sparse matrix
         Input to validate and convert.
 
-    allowed_sparse : string, list of string or None (default=None)
+    accept_sparse : string, list of string or None (default=None)
         String[s] representing allowed sparse matrix formats ('csc',
         'csr', 'coo', 'dok', 'bsr', 'lil', 'dia'). None means that sparse
         matrix input will raise an error.  If the input is sparse but not in
@@ -171,14 +171,14 @@ def _ensure_sparse_format(spmatrix, allowed_sparse, dtype, order, copy,
     spmatrix_converted : scipy sparse matrix.
         Matrix that is ensured to have an allowed type.
     """
-    if allowed_sparse is None:
+    if accept_sparse is None:
         raise TypeError('A sparse matrix was passed, but dense '
                         'data is required. Use X.toarray() to '
                         'convert to a dense numpy array.')
     sparse_type = spmatrix.format
     if dtype is None:
         dtype = spmatrix.dtype
-    if sparse_type in allowed_sparse:
+    if sparse_type in accept_sparse:
         # correct type
         if dtype == spmatrix.dtype:
             # correct dtype
@@ -189,7 +189,7 @@ def _ensure_sparse_format(spmatrix, allowed_sparse, dtype, order, copy,
             spmatrix = spmatrix.astype(dtype)
     else:
         # create new
-        spmatrix = spmatrix.asformat(allowed_sparse[0]).astype(dtype)
+        spmatrix = spmatrix.asformat(accept_sparse[0]).astype(dtype)
     if force_all_finite:
         if not hasattr(spmatrix, "data"):
             warnings.warn("Can't check %s sparse matrix for nan or inf."
@@ -201,7 +201,7 @@ def _ensure_sparse_format(spmatrix, allowed_sparse, dtype, order, copy,
     return spmatrix
 
 
-def check_array(array, allowed_sparse=None, dtype=None, order=None, copy=False,
+def check_array(array, accept_sparse=None, dtype=None, order=None, copy=False,
                 force_all_finite=True, ensure_2d=True, allow_nd=False):
     """Input validation on an array, list, sparse matrix or similar.
 
@@ -212,7 +212,7 @@ def check_array(array, allowed_sparse=None, dtype=None, order=None, copy=False,
     array : object
         Input object to check / convert.
 
-    allowed_sparse : string, list of string or None (default=None)
+    accept_sparse : string, list of string or None (default=None)
         String[s] representing allowed sparse matrix formats, such as 'csc',
         'csr', etc.  None means that sparse matrix input will raise an error.
         If the input is sparse but not in the allowed format, it will be
@@ -239,11 +239,11 @@ def check_array(array, allowed_sparse=None, dtype=None, order=None, copy=False,
     X_converted : object
         The converted and validated X.
     """
-    if isinstance(allowed_sparse, str):
-        allowed_sparse = [allowed_sparse]
+    if isinstance(accept_sparse, str):
+        accept_sparse = [accept_sparse]
 
     if sp.issparse(array):
-        array = _ensure_sparse_format(array, allowed_sparse, dtype, order,
+        array = _ensure_sparse_format(array, accept_sparse, dtype, order,
                                       copy, force_all_finite)
     else:
         if ensure_2d:
@@ -258,7 +258,7 @@ def check_array(array, allowed_sparse=None, dtype=None, order=None, copy=False,
     return array
 
 
-def check_X_y(X, y, allowed_sparse=None, dtype=None, order=None, copy=False,
+def check_X_y(X, y, accept_sparse=None, dtype=None, order=None, copy=False,
               force_all_finite=True, ensure_2d=True, allow_nd=False,
               multi_output=False):
     """Input validation for standard estimators.
@@ -275,7 +275,7 @@ def check_X_y(X, y, allowed_sparse=None, dtype=None, order=None, copy=False,
     y : nd-array, list or sparse matrix
         Labels.
 
-    allowed_sparse : string, list of string or None (default=None)
+    accept_sparse : string, list of string or None (default=None)
         String[s] representing allowed sparse matrix formats, such as 'csc',
         'csr', etc.  None means that sparse matrix input will raise an error.
         If the input is sparse but not in the allowed format, it will be
@@ -302,7 +302,7 @@ def check_X_y(X, y, allowed_sparse=None, dtype=None, order=None, copy=False,
     X_converted : object
         The converted and validated X.
     """
-    X = check_array(X, allowed_sparse, dtype, order, copy, force_all_finite,
+    X = check_array(X, accept_sparse, dtype, order, copy, force_all_finite,
                     ensure_2d, allow_nd)
     if multi_output:
         y = check_array(y, 'csr', force_all_finite=True, ensure_2d=False)

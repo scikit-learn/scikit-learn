@@ -631,7 +631,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             class in ``classes_``, respectively.
         """
         self._check_fitted()
-        X = check_array(X, ['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
         n_classes = self.n_classes_
         classes = self.classes_[:, np.newaxis]
@@ -675,7 +675,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             class in ``classes_``, respectively.
         """
         self._check_fitted()
-        X = check_array(X, ['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
         n_classes = self.n_classes_
         classes = self.classes_[:, np.newaxis]
@@ -725,7 +725,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             outputs is the same of that of the `classes_` attribute.
         """
         n_classes = self.n_classes_
-        X = check_array(X, ['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
         if self.algorithm == 'SAMME.R':
             # The weights are all 1. for SAMME.R
@@ -1059,7 +1059,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             The predicted regression values.
         """
         self._check_fitted()
-        X = check_array(X, ['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
         return self._get_median_predict(X, len(self.estimators_))
 
@@ -1085,7 +1085,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             The predicted regression values.
         """
         self._check_fitted()
-        X = check_array(X, ['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
         for i, _ in enumerate(self.estimators_, 1):
             yield self._get_median_predict(X, limit=i)

@@ -356,7 +356,7 @@ def dump_svmlight_file(X, y, f, zero_based=True, comment=None, query_id=None):
         raise ValueError("expected y of shape (n_samples,), got %r"
                          % (y.shape,))
 
-    Xval = check_array(X, 'csr')
+    Xval = check_array(X, accept_sparse='csr')
     if Xval.shape[0] != y.shape[0]:
         raise ValueError("X.shape[0] and y.shape[0] should be the same, got"
                          " %r and %r instead." % (Xval.shape[0], y.shape[0]))

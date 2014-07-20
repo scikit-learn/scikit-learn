@@ -174,7 +174,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             self._fit_method = 'kd_tree'
             return self
 
-        X = check_array(X, 'csr')
+        X = check_array(X, accept_sparse='csr')
 
         n_samples = X.shape[0]
         if n_samples == 0:
@@ -279,7 +279,7 @@ class KNeighborsMixin(object):
         if self._fit_method is None:
             raise ValueError("must fit neighbors before querying")
 
-        X = check_array(X, 'csr')
+        X = check_array(X, accept_sparse='csr')
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
@@ -354,7 +354,7 @@ class KNeighborsMixin(object):
         --------
         NearestNeighbors.radius_neighbors_graph
         """
-        X = check_array(X, ['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
@@ -442,7 +442,7 @@ class RadiusNeighborsMixin(object):
         if self._fit_method is None:
             raise ValueError("must fit neighbors before querying")
 
-        X = check_array(X, 'csr')
+        X = check_array(X, accept_sparse='csr')
 
         if radius is None:
             radius = self.radius
@@ -534,7 +534,7 @@ class RadiusNeighborsMixin(object):
         --------
         kneighbors_graph
         """
-        X = check_array(X, ['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
         if radius is None:
             radius = self.radius

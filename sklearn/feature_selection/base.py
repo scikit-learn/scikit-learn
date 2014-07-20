@@ -71,11 +71,11 @@ class SelectorMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
         X_r : array of shape [n_samples, n_selected_features]
             The input samples with only the selected features.
         """
-        X = check_array(X, 'csr')
+        X = check_array(X, accept_sparse='csr')
         mask = self.get_support()
         if len(mask) != X.shape[1]:
             raise ValueError("X has a different shape than during fitting.")
-        return check_array(X, 'csr')[:, safe_mask(X, mask)]
+        return check_array(X, accept_sparse='csr')[:, safe_mask(X, mask)]
 
     def inverse_transform(self, X):
         """

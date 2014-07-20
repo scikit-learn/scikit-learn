@@ -687,14 +687,14 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
     def _check_fit_data(self, X):
         """Verify that the number of samples given is larger than k"""
-        X = check_array(X, 'csr', dtype=np.float64)
+        X = check_array(X, accept_sparse='csr', dtype=np.float64)
         if X.shape[0] < self.n_clusters:
             raise ValueError("n_samples=%d should be >= n_clusters=%d" % (
                 X.shape[0], self.n_clusters))
         return X
 
     def _check_test_data(self, X):
-        X = check_array(X, 'csr')
+        X = check_array(X, accept_sparse='csr')
         n_samples, n_features = X.shape
         expected_n_features = self.cluster_centers_.shape[1]
         if not n_features == expected_n_features:
@@ -1131,7 +1131,7 @@ class MiniBatchKMeans(KMeans):
             Coordinates of the data points to cluster
         """
         random_state = check_random_state(self.random_state)
-        X = check_array(X, "csr", order='C', dtype=np.float64)
+        X = check_array(X, accept_sparse="csr", order='C', dtype=np.float64)
         n_samples, n_features = X.shape
         if n_samples < self.n_clusters:
             raise ValueError("Number of samples smaller than number "
@@ -1291,7 +1291,7 @@ class MiniBatchKMeans(KMeans):
             Coordinates of the data points to cluster.
         """
 
-        X = check_array(X, "csr")
+        X = check_array(X, accept_sparse="csr")
         n_samples, n_features = X.shape
         if hasattr(self.init, '__array__'):
             self.init = np.ascontiguousarray(self.init, dtype=np.float64)

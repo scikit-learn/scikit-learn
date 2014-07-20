@@ -65,7 +65,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
             Returns the transformer.
         """
 
-        X = check_array(X, 'csr')
+        X = check_array(X, accept_sparse='csr')
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
 
@@ -89,7 +89,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        X = check_array(X, 'csr')
+        X = check_array(X, accept_sparse='csr')
         projection = safe_sparse_dot(X, self.random_weights_)
         projection += self.random_offset_
         np.cos(projection, projection)
@@ -238,7 +238,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
         """Set parameters."""
-        X = check_array(X, 'csr')
+        X = check_array(X, accept_sparse='csr')
         if self.sample_interval is None:
             # See reference, figure 2 c)
             if self.sample_steps == 1:
@@ -269,7 +269,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
             the type of the input X.
         """
 
-        X = check_array(X, 'csr')
+        X = check_array(X, accept_sparse='csr')
         sparse = sp.issparse(X)
 
         # check if X has negative values. Doesn't play well with np.log.

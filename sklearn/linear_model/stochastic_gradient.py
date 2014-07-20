@@ -884,7 +884,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         array, shape = [n_samples]
            Predicted target values per element in X.
         """
-        X = check_array(X, 'csr')
+        X = check_array(X, accept_sparse='csr')
         scores = safe_sparse_dot(X, self.coef_.T,
                                  dense_output=True) + self.intercept_
         return scores.ravel()

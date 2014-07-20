@@ -685,7 +685,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         -------
         self
         """
-        X = check_array(X, ['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         if not (len(X.shape) == 2 and X.shape[0] > 0):
             raise ValueError('At least one sample is required to fit the '
                 'model. A data matrix of shape %s was given.'

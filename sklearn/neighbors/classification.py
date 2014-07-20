@@ -141,7 +141,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         y : array of shape [n_samples] or [n_samples, n_outputs]
             Class labels for each data sample.
         """
-        X = check_array(X, 'csr')
+        X = check_array(X, accept_sparse='csr')
 
         neigh_dist, neigh_ind = self.kneighbors(X)
 
@@ -185,7 +185,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
-        X = check_array(X, 'csr')
+        X = check_array(X, accept_sparse='csr')
 
         neigh_dist, neigh_ind = self.kneighbors(X)
 
@@ -340,7 +340,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             Class labels for each data sample.
 
         """
-        X = check_array(X, 'csr')
+        X = check_array(X, accept_sparse='csr')
         n_samples = X.shape[0]
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)

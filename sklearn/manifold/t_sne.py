@@ -412,7 +412,7 @@ class TSNE(BaseEstimator):
             If the metric is 'precomputed' X must be a square distance
             matrix. Otherwise it contains a sample per row.
         """
-        X = check_array(X, ['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         random_state = check_random_state(self.random_state)
 
         if self.early_exaggeration < 1.0:

@@ -151,7 +151,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         be the distance matrix between the data to be predicted and
         ``self.centroids_``.
         """
-        X = check_array(X, 'csr')
+        X = check_array(X, accept_sparse='csr')
         if not hasattr(self, "centroids_"):
             raise AttributeError("Model has not been trained yet.")
         return self.classes_[pairwise_distances(

@@ -134,7 +134,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise TypeError("Sparse precomputed kernels are not supported.")
         self._sparse = sparse and not callable(self.kernel)
 
-        X = check_array(X, 'csr', dtype=np.float64, order='C')
+        X = check_array(X, accept_sparse='csr', dtype=np.float64, order='C')
         y = self._validate_targets(y)
 
         sample_weight = np.asarray([]
@@ -382,7 +382,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         return dec_func
 
     def _validate_for_predict(self, X):
-        X = check_array(X, 'csr', dtype=np.float64, order="C")
+        X = check_array(X, accept_sparse='csr', dtype=np.float64, order="C")
         if self._sparse and not sp.isspmatrix(X):
             X = sp.csr_matrix(X)
         if self._sparse:
@@ -676,7 +676,7 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("The number of classes has to be greater than"
                              " one.")
 
-        X = check_array(X, 'csr', dtype=np.float64, order="C")
+        X = check_array(X, accept_sparse='csr', dtype=np.float64, order="C")
 
         self.class_weight_ = compute_class_weight(self.class_weight,
                                                   self.classes_, y)

@@ -1537,14 +1537,14 @@ def train_test_split(*arrays, **options):
     random_state = options.pop('random_state', None)
     dtype = options.pop('dtype', None)
     if dtype is not None:
-        warnings.warn("dtype option is ignored and will be removed in 0.17.")
+        warnings.warn("dtype option is ignored and will be removed in 0.18.")
 
     force_arrays = options.pop('force_arrays', False)
     if options:
         raise TypeError("Invalid parameters passed: %s" % str(options))
     if force_arrays:
         warnings.warn("The force_arrays option is deprecated and will be "
-                      "removed in 0.17.", DeprecationWarning)
+                      "removed in 0.18.", DeprecationWarning)
         arrays = [check_array(x, 'csr', ensure_2d=False, force_all_finite=False)
                   if x is not None else x for x in arrays]
 

@@ -722,7 +722,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         """
         # XXX remove scipy.sparse support here in 0.16
-        X = check_array(X, 'csr')
+        X = check_array(X, accept_sparse='csr')
         if self.mean_ is not None:
             X = X - self.mean_
 
@@ -743,7 +743,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
 
         """
-        X = self._fit(check_array(X, 'csr'))
+        X = self._fit(check_array(X, accept_sparse='csr'))
         X = safe_sparse_dot(X, self.components_.T)
         return X
 

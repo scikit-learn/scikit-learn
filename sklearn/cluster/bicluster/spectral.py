@@ -120,7 +120,7 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
         X : array-like, shape (n_samples, n_features)
 
         """
-        X = check_array(X, 'csr', dtype=np.float64)
+        X = check_array(X, accept_sparse='csr', dtype=np.float64)
         check_array_ndim(X)
         self._check_parameters()
         self._fit(X)

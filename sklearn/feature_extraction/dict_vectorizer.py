@@ -164,7 +164,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         D : list of dict_type objects, length = n_samples
             Feature mappings for the samples in X.
         """
-        X = check_array(X, ['csr', 'csc'])     # COO matrix is not subscriptable
+        # COO matrix is not subscriptable
+        X = check_array(X, accept_sparse=['csr', 'csc'])
         n_samples = X.shape[0]
 
         names = self.feature_names_

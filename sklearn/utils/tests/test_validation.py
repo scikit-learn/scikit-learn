@@ -93,12 +93,12 @@ def test_ordering():
     assert_false(X.data.flags['C_CONTIGUOUS'])
 
     for copy in (True, False):
-        Y = check_array(X, 'csr', copy=copy, order='C')
+        Y = check_array(X, accept_sparse='csr', copy=copy, order='C')
         assert_true(Y.data.flags['C_CONTIGUOUS'])
 
 
 def test_check_array():
-    # allowed_sparse == None
+    # accept_sparse == None
     # raise error on sparse inputs
     X = [[1, 2], [3, 4]]
     X_csr = sp.csr_matrix(X)
@@ -162,21 +162,21 @@ def test_check_array():
     X_float = X_csc.astype(np.float)
 
     Xs = [X_csc, X_coo, X_dok, X_int, X_float]
-    allowed_sparses = [['csr', 'coo'], ['coo', 'dok']]
-    for X, dtype, allowed_sparse, copy in product(Xs, dtypes, allowed_sparses,
+    accept_sparses = [['csr', 'coo'], ['coo', 'dok']]
+    for X, dtype, accept_sparse, copy in product(Xs, dtypes, accept_sparses,
                                                   copys):
-        X_checked = check_array(X, dtype=dtype, allowed_sparse=allowed_sparse,
+        X_checked = check_array(X, dtype=dtype, accept_sparse=accept_sparse,
                                 copy=copy)
         if dtype is not None:
             assert_equal(X_checked.dtype, dtype)
         else:
             assert_equal(X_checked.dtype, X.dtype)
-        if X.format in allowed_sparse:
+        if X.format in accept_sparse:
             # no change if allowed
             assert_equal(X.format, X_checked.format)
         else:
             # got converted
-            assert_equal(X_checked.format, allowed_sparse[0])
+            assert_equal(X_checked.format, accept_sparse[0])
         if copy:
             assert_false(X is X_checked)
         else:

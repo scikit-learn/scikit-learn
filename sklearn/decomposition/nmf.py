@@ -473,7 +473,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         data: array, [n_samples, n_components]
             Transformed data
         """
-        X = check_array(X, 'csr')
+        X = check_array(X, accept_sparse='csr')
         check_non_negative(X, "NMF.fit")
 
         n_samples, n_features = X.shape
@@ -565,7 +565,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         data: array, [n_samples, n_components]
             Transformed data
         """
-        X = check_array(X, 'csc')
+        X = check_array(X, accept_sparse='csc')
         Wt = np.zeros((self.n_components_, X.shape[0]))
         check_non_negative(X, "ProjectedGradientNMF.transform")
 
