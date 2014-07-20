@@ -19,8 +19,8 @@ from .base import center_data
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..externals.joblib import Memory, Parallel, delayed
-from ..utils import (as_float_array, check_random_state, safe_asarray,
-                     check_arrays, safe_mask, ConvergenceWarning)
+from ..utils import (as_float_array, check_random_state, check_X_y,
+                     check_array, safe_mask, ConvergenceWarning)
 from .least_angle import lars_path, LassoLarsIC
 from .logistic import LogisticRegression
 
@@ -76,18 +76,18 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            training data.
+        X : array-like, sparse matrix shape = [n_samples, n_features]
+            Training data.
 
         y : array-like, shape = [n_samples]
-            target values.
+            Target values.
 
         Returns
         -------
         self : object
-            returns an instance of self.
+            Returns an instance of self.
         """
-        X, y = check_arrays(X, y)
+        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'])
         X = as_float_array(X, copy=False)
         n_samples, n_features = X.shape
 
@@ -129,10 +129,10 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
     def transform(self, X):
         """Transform a new matrix using the selected features"""
         mask = self.get_support()
-        X, = check_arrays(X)
+        X = check_array(X)
         if len(mask) != X.shape[1]:
             raise ValueError("X has a different shape than during fitting.")
-        return safe_asarray(X)[:, safe_mask(X, mask)]
+        return check_array(X)[:, safe_mask(X, mask)]
 
     def inverse_transform(self, X):
         """Transform a new matrix using the selected features"""

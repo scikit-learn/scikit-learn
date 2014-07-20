@@ -19,7 +19,8 @@ import numpy as np
 
 from ..externals.six import string_types
 
-from .validation import safe_asarray
+from .validation import check_array
+
 
 def _unique_multiclass(y):
     if hasattr(y, '__array__'):
@@ -35,7 +36,7 @@ def _unique_sequence_of_sequence(y):
 
 
 def _unique_indicator(y):
-    return np.arange(safe_asarray(y).shape[1])
+    return np.arange(check_array(y, ['csr', 'csc', 'coo']).shape[1])
 
 
 _FN_UNIQUE_LABELS = {
@@ -92,7 +93,7 @@ def unique_labels(*ys):
 
     # Check consistency for the indicator format
     if (label_type == "multilabel-indicator" and
-            len(set(safe_asarray(y).shape[1] for y in ys)) > 1):
+            len(set(check_array(y, ['csr', 'csc', 'coo']).shape[1] for y in ys)) > 1):
         raise ValueError("Multi-label binary indicator input with "
                          "different numbers of labels")
 

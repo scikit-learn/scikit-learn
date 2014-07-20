@@ -3,15 +3,18 @@ from __future__ import division
 import numpy as np
 
 from sklearn.utils.linear_assignment_ import linear_assignment
-from sklearn.utils.validation import check_arrays
+from sklearn.utils.validation import check_consistent_length, check_array
 
 __all__ = ["consensus_score"]
 
 
 def _check_rows_and_columns(a, b):
     """Unpacks the row and column arrays and checks their shape."""
-    a_rows, a_cols = check_arrays(*a)
-    b_rows, b_cols = check_arrays(*b)
+    check_consistent_length(*a)
+    check_consistent_length(*b)
+    checks = lambda(x): check_array(x, ensure_2d=False)
+    a_rows, a_cols = map(checks, a)
+    b_rows, b_cols = map(checks, b)
     return a_rows, a_cols, b_rows, b_cols
 
 

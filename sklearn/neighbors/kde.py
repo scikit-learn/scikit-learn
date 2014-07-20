@@ -7,7 +7,7 @@ Kernel Density Estimation
 import numpy as np
 from scipy.special import gammainc
 from ..base import BaseEstimator
-from ..utils import array2d, check_random_state
+from ..utils import check_array, check_random_state
 from ..utils.extmath import row_norms
 from .ball_tree import BallTree, DTYPE
 from .kd_tree import KDTree
@@ -120,7 +120,7 @@ class KernelDensity(BaseEstimator):
             corresponds to a single data point.
         """
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
-        X = array2d(X, order='C', dtype=DTYPE)
+        X = check_array(X, order='C', dtype=DTYPE)
 
         kwargs = self.metric_params
         if kwargs is None:
@@ -147,7 +147,7 @@ class KernelDensity(BaseEstimator):
         # The returned density is normalized to the number of points.
         # For it to be a probability, we must scale it.  For this reason
         # we'll also scale atol.
-        X = array2d(X, order='C', dtype=DTYPE)
+        X = check_array(X, order='C', dtype=DTYPE)
         N = self.tree_.data.shape[0]
         atol_N = self.atol * N
         log_density = self.tree_.kernel_density(

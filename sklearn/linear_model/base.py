@@ -25,7 +25,7 @@ from scipy.sparse.linalg import lsqr
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
-from ..utils import as_float_array, atleast2d_or_csr, safe_asarray
+from ..utils import as_float_array, check_array
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis0, inplace_column_scale
 
@@ -131,7 +131,7 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
         C : array, shape = (n_samples,)
             Returns predicted values.
         """
-        X = safe_asarray(X)
+        X = check_array(X, ['csr', 'csc', 'coo'])
         return safe_sparse_dot(X, self.coef_.T,
                                dense_output=True) + self.intercept_
 
@@ -188,7 +188,7 @@ class LinearClassifierMixin(ClassifierMixin):
             case, confidence score for self.classes_[1] where >0 means this
             class would be predicted.
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, 'csr')
 
         n_features = self.coef_.shape[1]
         if X.shape[1] != n_features:
@@ -348,7 +348,7 @@ class LinearRegression(LinearModel, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        X = safe_asarray(X)
+        X = check_array(X, ['csr', 'csc', 'coo'])
         y = np.asarray(y)
 
         X, y, X_mean, y_mean, X_std = self._center_data(

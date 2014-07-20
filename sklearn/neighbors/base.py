@@ -17,7 +17,7 @@ from .kd_tree import KDTree
 from ..base import BaseEstimator
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from ..utils import safe_asarray, atleast2d_or_csr, check_arrays
+from ..utils import check_X_y, check_array
 from ..utils.fixes import argpartition
 from ..utils.validation import DataConversionWarning
 from ..externals import six
@@ -174,7 +174,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             self._fit_method = 'kd_tree'
             return self
 
-        X = atleast2d_or_csr(X, copy=False)
+        X = check_array(X, 'csr')
 
         n_samples = X.shape[0]
         if n_samples == 0:
@@ -279,7 +279,7 @@ class KNeighborsMixin(object):
         if self._fit_method is None:
             raise ValueError("must fit neighbors before querying")
 
-        X = atleast2d_or_csr(X)
+        X = check_array(X, 'csr')
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
@@ -354,7 +354,7 @@ class KNeighborsMixin(object):
         --------
         NearestNeighbors.radius_neighbors_graph
         """
-        X = safe_asarray(X)
+        X = check_array(X, ['csr', 'csc', 'coo'])
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
@@ -442,7 +442,7 @@ class RadiusNeighborsMixin(object):
         if self._fit_method is None:
             raise ValueError("must fit neighbors before querying")
 
-        X = atleast2d_or_csr(X)
+        X = check_array(X, 'csr')
 
         if radius is None:
             radius = self.radius
@@ -534,7 +534,7 @@ class RadiusNeighborsMixin(object):
         --------
         kneighbors_graph
         """
-        X = safe_asarray(X)
+        X = check_array(X, ['csr', 'csc', 'coo'])
 
         if radius is None:
             radius = self.radius
@@ -582,7 +582,7 @@ class SupervisedFloatMixin(object):
              or [n_samples, n_outputs]
         """
         if not isinstance(X, (KDTree, BallTree)):
-            X, y = check_arrays(X, y, sparse_format="csr")
+            X, y = check_X_y(X, y, "csr", multi_output=True)
         self._y = y
         return self._fit(X)
 
@@ -601,7 +601,7 @@ class SupervisedIntegerMixin(object):
 
         """
         if not isinstance(X, (KDTree, BallTree)):
-            X, y = check_arrays(X, y, sparse_format="csr")
+            X, y = check_X_y(X, y, "csr", multi_output=True)
 
         if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
             if y.ndim != 1:

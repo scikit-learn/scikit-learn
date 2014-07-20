@@ -22,8 +22,8 @@ import numpy as np
 import scipy.sparse as sp
 
 from .base import is_classifier, clone
-from .utils import check_arrays, check_random_state, safe_indexing
-from .utils.validation import _num_samples
+from .utils import indexable, check_random_state, safe_indexing
+from .utils.validation import _num_samples, check_array
 from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
 from .externals.six.moves import zip
@@ -1133,8 +1133,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     scores : array of float, shape=(len(list(cv)),)
         Array of scores of the estimator for each run of the cross validation.
     """
-    X, y = check_arrays(X, y, sparse_format='csr', force_arrays=False,
-                        allow_nans=True, allow_nd=True)
+    X, y = indexable(X, y)
 
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
@@ -1443,7 +1442,7 @@ def permutation_test_score(estimator, X, y, cv=None,
         vol. 11
 
     """
-    X, y = check_arrays(X, y, sparse_format='csr', allow_nans=True)
+    X, y = indexable(X, y)
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
     random_state = check_random_state(random_state)
@@ -1467,7 +1466,7 @@ permutation_test_score.__test__ = False  # to avoid a pb with nosetests
 def train_test_split(*arrays, **options):
     """Split arrays or matrices into random train and test subsets
 
-    Quick utility that wraps calls to ``check_arrays`` and
+    Quick utility that wraps input validation and
     ``next(iter(ShuffleSplit(n_samples)))`` and application to input
     data into a single call for splitting (and optionally subsampling)
     data in a oneliner.
@@ -1493,9 +1492,6 @@ def train_test_split(*arrays, **options):
 
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
-
-    dtype : a numpy dtype instance, None by default
-        Enforce a specific dtype.
 
     Returns
     -------
@@ -1539,15 +1535,22 @@ def train_test_split(*arrays, **options):
     test_size = options.pop('test_size', None)
     train_size = options.pop('train_size', None)
     random_state = options.pop('random_state', None)
-    options['sparse_format'] = 'csr'
-    options['allow_nans'] = True
-    if not "force_arrays" in options:
-        options["force_arrays"] = False
+    dtype = options.pop('dtype', None)
+    if dtype is not None:
+        warnings.warn("dtype option is ignored and will be removed in 0.17.")
+
+    force_arrays = options.pop('force_arrays', False)
+    if options:
+        raise TypeError("Invalid parameters passed: %s" % str(options))
+    if force_arrays:
+        warnings.warn("The force_arrays option is deprecated and will be "
+                      "removed in 0.17.", DeprecationWarning)
+        arrays = [check_array(x, 'csr', ensure_2d=False, force_all_finite=False)
+                  if x is not None else x for x in arrays]
 
     if test_size is None and train_size is None:
         test_size = 0.25
-
-    arrays = check_arrays(*arrays, **options)
+    arrays = indexable(*arrays)
     n_samples = _num_samples(arrays[0])
     cv = ShuffleSplit(n_samples, test_size=test_size,
                       train_size=train_size,

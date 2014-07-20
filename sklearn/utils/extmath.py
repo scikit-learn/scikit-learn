@@ -20,7 +20,7 @@ from .fixes import np_version
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
-from .validation import array2d, NonBLASDotWarning
+from .validation import check_array, NonBLASDotWarning
 
 
 def norm(x):
@@ -86,9 +86,9 @@ def _impose_f_order(X):
     # important to access flags instead of calling np.isfortran,
     # this catches corner cases.
     if X.flags.c_contiguous:
-        return array2d(X.T, copy=False, order='F'), True
+        return check_array(X.T, copy=False, order='F'), True
     else:
-        return array2d(X, copy=False, order='F'), False
+        return check_array(X, copy=False, order='F'), False
 
 
 def _fast_dot(A, B):
@@ -560,7 +560,6 @@ def logistic_sigmoid(X, log=False, out=None):
     return fn(X, out)
 
 
-
 def log_logistic(X, out=None):
     """Compute the log of the logistic function, ``log(1 / (1 + e ** -x))``.
 
@@ -591,7 +590,7 @@ def log_logistic(X, out=None):
     http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression/
     """
     is_1d = X.ndim == 1
-    X = array2d(X, dtype=np.float)
+    X = check_array(X, dtype=np.float)
 
     n_samples, n_features = X.shape
 

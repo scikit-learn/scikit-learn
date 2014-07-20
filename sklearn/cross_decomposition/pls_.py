@@ -6,7 +6,7 @@ The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 # License: BSD 3 clause
 
 from ..base import BaseEstimator, RegressorMixin, TransformerMixin
-from ..utils import check_arrays
+from ..utils import check_array, check_consistent_length
 from ..externals import six
 
 import warnings
@@ -229,15 +229,9 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         """
 
         # copy since this will contains the residuals (deflated) matrices
-        X, Y = check_arrays(X, Y, dtype=np.float, copy=self.copy,
-                            sparse_format='dense')
-
-        if X.ndim != 2:
-            raise ValueError('X must be a 2D array')
-        if Y.ndim == 1:
-            Y = Y.reshape((Y.size, 1))
-        if Y.ndim != 2:
-            raise ValueError('Y must be a 1D or a 2D array')
+        check_consistent_length(X, Y)
+        X = check_array(X, dtype=np.float, copy=self.copy)
+        Y = check_array(Y, dtype=np.float, copy=self.copy)
 
         n = X.shape[0]
         p = X.shape[1]
@@ -727,19 +721,11 @@ class PLSSVD(BaseEstimator, TransformerMixin):
 
     def fit(self, X, Y):
         # copy since this will contains the centered data
-        X, Y = check_arrays(X, Y, dtype=np.float, copy=self.copy,
-                            sparse_format='dense')
+        check_consistent_length(X, Y)
+        X = check_array(X, dtype=np.float, copy=self.copy)
+        Y = check_array(Y, dtype=np.float, copy=self.copy)
 
-        n = X.shape[0]
         p = X.shape[1]
-
-        if X.ndim != 2:
-            raise ValueError('X must be a 2D array')
-
-        if n != Y.shape[0]:
-            raise ValueError(
-                'Incompatible shapes: X has %s samples, while Y '
-                'has %s' % (X.shape[0], Y.shape[0]))
 
         if self.n_components < 1 or self.n_components > p:
             raise ValueError('invalid number of components')

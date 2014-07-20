@@ -16,7 +16,7 @@ import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator
-from ..utils import array2d
+from ..utils import check_array
 from ..utils.extmath import fast_logdet, pinvh
 
 
@@ -122,7 +122,7 @@ class EmpiricalCovariance(BaseEstimator):
             is computed.
 
         """
-        covariance = array2d(covariance)
+        covariance = check_array(covariance)
         # set covariance
         self.covariance_ = covariance
         # set precision

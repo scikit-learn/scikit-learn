@@ -15,8 +15,7 @@ from scipy.linalg import svd
 
 from .base import BaseEstimator
 from .base import TransformerMixin
-from .utils import (array2d, atleast2d_or_csr, check_random_state,
-                    as_float_array)
+from .utils import check_array, check_random_state, as_float_array
 from .utils.extmath import safe_sparse_dot
 from .metrics.pairwise import pairwise_kernels
 
@@ -66,7 +65,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
             Returns the transformer.
         """
 
-        X = atleast2d_or_csr(X)
+        X = check_array(X, 'csr')
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
 
@@ -90,7 +89,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, 'csr')
         projection = safe_sparse_dot(X, self.random_weights_)
         projection += self.random_offset_
         np.cos(projection, projection)
@@ -150,7 +149,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
             Returns the transformer.
         """
 
-        X = array2d(X)
+        X = check_array(X)
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
         uniform = random_state.uniform(size=(n_features, self.n_components))
@@ -175,7 +174,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
         """
         X = as_float_array(X, copy=True)
-        X = array2d(X, copy=False)
+        X = check_array(X, copy=False)
         if (X < 0).any():
             raise ValueError("X may not contain entries smaller than zero.")
 
@@ -239,7 +238,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
         """Set parameters."""
-        X = atleast2d_or_csr(X)
+        X = check_array(X, 'csr')
         if self.sample_interval is None:
             # See reference, figure 2 c)
             if self.sample_steps == 1:
@@ -270,7 +269,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
             the type of the input X.
         """
 
-        X = atleast2d_or_csr(X)
+        X = check_array(X, 'csr')
         sparse = sp.issparse(X)
 
         # check if X has negative values. Doesn't play well with np.log.

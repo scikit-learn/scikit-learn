@@ -22,8 +22,7 @@ from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..feature_selection.from_model import _LearntSelectorMixin
-from ..utils import array2d, check_random_state
-from ..utils.validation import check_arrays
+from ..utils import check_array, check_random_state
 
 from ._tree import Criterion
 from ._tree import Splitter
@@ -136,7 +135,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         # Convert data
         if check_input:
-            X, = check_arrays(X, dtype=DTYPE, sparse_format="dense")
+            X = check_array(X, dtype=DTYPE)
 
         # Determine output settings
         n_samples, self.n_features_ = X.shape
@@ -306,7 +305,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             The predicted classes, or the predict values.
         """
         if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
-            X = array2d(X, dtype=DTYPE)
+            X = check_array(X, dtype=DTYPE)
 
         n_samples, n_features = X.shape
 
@@ -528,7 +527,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             classes corresponds to that in the attribute `classes_`.
         """
         if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
-            X = array2d(X, dtype=DTYPE)
+            X = check_array(X, dtype=DTYPE)
 
         n_samples, n_features = X.shape
 

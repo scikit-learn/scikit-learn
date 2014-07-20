@@ -11,7 +11,7 @@ import scipy.sparse as sp
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..externals.six.moves import xrange
-from ..utils import atleast2d_or_csr, tosequence
+from ..utils import check_array, tosequence
 
 
 def _tosequence(X):
@@ -164,7 +164,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         D : list of dict_type objects, length = n_samples
             Feature mappings for the samples in X.
         """
-        X = atleast2d_or_csr(X)     # COO matrix is not subscriptable
+        X = check_array(X, ['csr', 'csc'])     # COO matrix is not subscriptable
         n_samples = X.shape[0]
 
         names = self.feature_names_

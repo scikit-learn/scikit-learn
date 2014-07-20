@@ -401,10 +401,9 @@ do *not* use ``np.asanyarray`` or ``np.atleast_2d``, since those let NumPy's
 (e.g., ``*`` means dot product on ``np.matrix``,
 but Hadamard product on ``np.ndarray``).
 
-In other cases, be sure to call :func:`safe_asarray`, :func:`atleast2d_or_csr`,
-:func:`as_float_array` or :func:`array2d` on any array-like argument passed to a
-scikit-learn API function. The exact function to use depends mainly on whether
-``scipy.sparse`` matrices must be accepted.
+In other cases, be sure to call :func:`check_array` on any array-like argument
+passed to a scikit-learn API function. The exact parameters to use depends
+mainly on whether and which ``scipy.sparse`` matrices must be accepted.
 
 For more information, refer to the :ref:`developers-utils` page.
 
@@ -490,7 +489,7 @@ E.g., if the function ``zero_one`` is renamed to ``zero_one_loss``,
 we add the decorator ``deprecated`` (from ``sklearn.utils``)
 to ``zero_one`` and call ``zero_one_loss`` from that function::
 
-    from ..utils import check_arrays, deprecated
+    from ..utils import deprecated
 
     def zero_one_loss(y_true, y_pred, normalize=True):
         # actual implementation

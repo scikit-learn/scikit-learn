@@ -15,7 +15,7 @@ import numpy as np
 from .base import _get_weights, _check_weights, NeighborsBase, KNeighborsMixin
 from .base import RadiusNeighborsMixin, SupervisedFloatMixin
 from ..base import RegressorMixin
-from ..utils import atleast2d_or_csr
+from ..utils import check_array
 
 
 class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
@@ -139,7 +139,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         y : array of int, shape = [n_samples] or [n_samples, n_outputs]
             Target values
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, 'csr')
 
         neigh_dist, neigh_ind = self.kneighbors(X)
 
@@ -273,7 +273,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         y : array of int, shape = [n_samples] or [n_samples, n_outputs]
             Target values
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, 'csr')
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
 

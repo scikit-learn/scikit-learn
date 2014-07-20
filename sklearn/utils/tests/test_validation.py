@@ -7,43 +7,11 @@ import scipy.sparse as sp
 from nose.tools import assert_raises, assert_true, assert_false, assert_equal
 from itertools import product
 
-from sklearn.utils import (array2d, as_float_array, atleast2d_or_csr,
-                           atleast2d_or_csc, check_arrays, safe_asarray,
-                           check_array)
+from sklearn.utils import as_float_array, check_array
 
 from sklearn.utils.estimator_checks import NotAnArray
 
 from sklearn.random_projection import sparse_random_matrix
-
-
-def test_safe_asarray():
-    """Test that array dtype conversion works."""
-    # Test with sparse arrays
-    X = sp.csc_matrix(np.arange(4, dtype=np.float))
-    Y = safe_asarray(X)
-    assert_true(Y.dtype == np.float)
-    # Check that no copy has been performed
-    Y.data[0] = 7  # value not in original array
-    assert_equal(X.data[0], Y.data[0])
-
-    Y = safe_asarray(X, dtype=np.int)
-    assert_equal(Y.data.dtype, np.int)
-
-    # Test with dense arrays
-    X = np.arange(4, dtype=np.float)
-    Y = safe_asarray(X)
-    assert_true(Y.dtype == np.float)
-    # Check that no copy has been performed
-    Y[0] = 7
-    assert_equal(X[0], Y[0])
-
-    Y = safe_asarray(X, dtype=np.int)
-    assert_equal(Y.dtype, np.int)
-
-    # Non-regression: LIL and DOK used to fail for lack of a .data attribute
-    X = np.ones([2, 3])
-    safe_asarray(sp.dok_matrix(X))
-    safe_asarray(sp.lil_matrix(X), dtype=X.dtype)
 
 
 def test_as_float_array():
@@ -79,35 +47,6 @@ def test_as_float_array():
         assert_false(np.isnan(M).any())
 
 
-def test_atleast2d_or_sparse():
-    for typ in [sp.csr_matrix, sp.dok_matrix, sp.lil_matrix, sp.coo_matrix]:
-        X = typ(np.arange(9, dtype=float).reshape(3, 3))
-
-        Y = atleast2d_or_csr(X, copy=True)
-        assert_true(isinstance(Y, sp.csr_matrix))
-        Y.data[:] = 1
-        assert_array_equal(X.toarray().ravel(), np.arange(9))
-
-        Y = atleast2d_or_csc(X, copy=False)
-        Y.data[:] = 4
-        assert_true(np.all(X.data == 4)
-                    if isinstance(X, sp.csc_matrix)
-                    else np.all(X.toarray().ravel() == np.arange(9)))
-
-        Y = atleast2d_or_csr(X, dtype=np.float32)
-        assert_true(Y.dtype == np.float32)
-
-
-def test_check_arrays_exceptions():
-    """Check that invalid arguments raise appropriate exceptions"""
-    assert_raises(ValueError, check_arrays, [0], [0, 1])
-    assert_raises(TypeError, check_arrays, 0, [0, 1])
-    assert_raises(TypeError, check_arrays, [0], 0)
-    assert_raises(TypeError, check_arrays, [0, 1], [0, 1], meaning_of_life=42)
-    assert_raises(ValueError, check_arrays, [0], [0], sparse_format='fake')
-    assert_raises(ValueError, check_arrays, np.zeros((2, 3, 4)), [0])
-
-
 def test_np_matrix():
     """Confirm that input validation code does not return np.matrix"""
     X = np.arange(12).reshape(3, 4)
@@ -115,23 +54,6 @@ def test_np_matrix():
     assert_false(isinstance(as_float_array(X), np.matrix))
     assert_false(isinstance(as_float_array(np.matrix(X)), np.matrix))
     assert_false(isinstance(as_float_array(sp.csc_matrix(X)), np.matrix))
-
-    assert_false(isinstance(atleast2d_or_csr(X), np.matrix))
-    assert_false(isinstance(atleast2d_or_csr(np.matrix(X)), np.matrix))
-    assert_false(isinstance(atleast2d_or_csr(sp.csc_matrix(X)), np.matrix))
-
-    assert_false(isinstance(atleast2d_or_csc(X), np.matrix))
-    assert_false(isinstance(atleast2d_or_csc(np.matrix(X)), np.matrix))
-    assert_false(isinstance(atleast2d_or_csc(sp.csr_matrix(X)), np.matrix))
-
-    assert_false(isinstance(safe_asarray(X), np.matrix))
-    assert_false(isinstance(safe_asarray(np.matrix(X)), np.matrix))
-    assert_false(isinstance(safe_asarray(sp.lil_matrix(X)), np.matrix))
-
-    assert_true(atleast2d_or_csr(X, copy=False) is X)
-    assert_false(atleast2d_or_csr(X, copy=True) is X)
-    assert_true(atleast2d_or_csc(X, copy=False) is X)
-    assert_false(atleast2d_or_csc(X, copy=True) is X)
 
 
 def test_memmap():
@@ -143,7 +65,7 @@ def test_memmap():
         M = np.memmap(tmp, shape=100, dtype=np.float32)
         M[:] = 0
 
-        for f in (array2d, np.asarray, asflt, safe_asarray):
+        for f in (check_array, np.asarray, asflt):
             X = f(M)
             X[:] = 1
             assert_array_equal(X.ravel(), M)
@@ -158,75 +80,21 @@ def test_ordering():
     """
     X = np.ones((10, 5))
     for A in X, X.T:
-        for validator in (array2d, atleast2d_or_csr, atleast2d_or_csc):
-            for copy in (True, False):
-                B = validator(A, order='C', copy=copy)
-                assert_true(B.flags['C_CONTIGUOUS'])
-                B = validator(A, order='F', copy=copy)
-                assert_true(B.flags['F_CONTIGUOUS'])
-                if copy:
-                    assert_false(A is B)
+        for copy in (True, False):
+            B = check_array(A, order='C', copy=copy)
+            assert_true(B.flags['C_CONTIGUOUS'])
+            B = check_array(A, order='F', copy=copy)
+            assert_true(B.flags['F_CONTIGUOUS'])
+            if copy:
+                assert_false(A is B)
 
     X = sp.csr_matrix(X)
     X.data = X.data[::-1]
     assert_false(X.data.flags['C_CONTIGUOUS'])
 
-    for validator in (atleast2d_or_csc, atleast2d_or_csr):
-        for copy in (True, False):
-            Y = validator(X, copy=copy, order='C')
-            assert_true(Y.data.flags['C_CONTIGUOUS'])
-
-
-def test_check_arrays():
-    # check that error is raised on different length inputs
-    X = [0, 1]
-    Y = np.arange(3)
-    assert_raises(ValueError, check_arrays, X, Y)
-
-    # check error for sparse matrix and array
-    X = sp.csc_matrix(np.arange(4))
-    assert_raises(ValueError, check_arrays, X, Y)
-
-    # check they y=None pattern
-    X = [0, 1, 2]
-    X_, Y_, Z_ = check_arrays(X, Y, None)
-    assert_true(Z_ is None)
-
-    # check that lists are converted
-    X_, Y_ = check_arrays(X, Y)
-    assert_true(isinstance(X_, np.ndarray))
-    assert_true(isinstance(Y_, np.ndarray))
-
-    # check that Y was not copied:
-    assert_true(Y_ is Y)
-
-    # check copying
-    X_, Y_ = check_arrays(X, Y, copy=True)
-    assert_false(Y_ is Y)
-
-    # check forcing dtype
-    X_, Y_ = check_arrays(X, Y, dtype=np.int)
-    assert_equal(X_.dtype, np.int)
-    assert_equal(Y_.dtype, np.int)
-
-    X_, Y_ = check_arrays(X, Y, dtype=np.float)
-    assert_equal(X_.dtype, np.float)
-    assert_equal(Y_.dtype, np.float)
-
-    # test check_ccontiguous
-    Y = np.arange(6).reshape(3, 2).copy('F')
-    # if we don't specify it, it is not changed
-    X_, Y_ = check_arrays(X, Y)
-    assert_true(Y_.flags['F_CONTIGUOUS'])
-    assert_false(Y_.flags['C_CONTIGUOUS'])
-
-    X_, Y_ = check_arrays(X, Y, check_ccontiguous=True)
-    assert_true(Y_.flags['C_CONTIGUOUS'])
-    assert_false(Y_.flags['F_CONTIGUOUS'])
-
-    # check that lists are passed through if force_arrays is true
-    X_, Y_ = check_arrays(X, Y, force_arrays=False)
-    assert_true(isinstance(X_, list))
+    for copy in (True, False):
+        Y = check_array(X, 'csr', copy=copy, order='C')
+        assert_true(Y.data.flags['C_CONTIGUOUS'])
 
 
 def test_check_array():

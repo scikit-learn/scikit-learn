@@ -1,6 +1,5 @@
 import numpy as np
 
-from sklearn.utils import safe_asarray
 from sklearn.utils import deprecated
 
 
@@ -18,7 +17,7 @@ def _balance_weights(y):
     weights : array-like
         The sample weights.
     """
-    y = safe_asarray(y)
+    y = np.asarray(y)
     y = np.searchsorted(np.unique(y), y)
     bins = np.bincount(y)
 

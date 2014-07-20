@@ -18,7 +18,7 @@ from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
 from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_random_state, check_arrays, column_or_1d
+from ..utils import check_random_state, check_X_y, check_array, column_or_1d
 from ..utils.random import sample_without_replacement
 
 from .base import BaseEnsemble, _partition_estimators
@@ -244,7 +244,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         random_state = check_random_state(self.random_state)
 
         # Convert data
-        X, y = check_arrays(X, y)
+        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'])
 
         # Remap output
         n_samples, self.n_features_ = X.shape
@@ -540,7 +540,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             classes corresponds to that in the attribute `classes_`.
         """
         # Check data
-        X, = check_arrays(X)
+        X = check_array(X, ['csr', 'csc', 'coo'])
 
         if self.n_features_ != X.shape[1]:
             raise ValueError("Number of features of the model must "
@@ -585,7 +585,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         """
         if hasattr(self.base_estimator_, "predict_log_proba"):
             # Check data
-            X, = check_arrays(X)
+            X = check_array(X)
 
             if self.n_features_ != X.shape[1]:
                 raise ValueError("Number of features of the model must "
@@ -640,7 +640,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             raise NotImplementedError
 
         # Check data
-        X, = check_arrays(X)
+        X = check_array(X)
 
         if self.n_features_ != X.shape[1]:
             raise ValueError("Number of features of the model must "
@@ -805,7 +805,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
             The predicted values.
         """
         # Check data
-        X, = check_arrays(X)
+        X = check_array(X, ['csr', 'csc', 'coo'])
 
         # Parallel loop
         n_jobs, n_estimators, starts = _partition_estimators(self)
