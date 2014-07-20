@@ -269,7 +269,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         # of spawning threads.  See joblib issue #112.
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(delayed(_fit_binary)
              (self.estimator, X, column,
-              classes=["not %s" % i, self.label_binarizer_.classes_[i]])
+              classes=["not %s" % self.label_binarizer_.classes_[i],
+                       self.label_binarizer_.classes_[i]])
               for i, column in enumerate(columns))
 
         return self
