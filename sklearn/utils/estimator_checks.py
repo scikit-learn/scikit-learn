@@ -910,3 +910,39 @@ def multioutput_estimator_convert_y_2d(name, y):
                  'MultiTaskLasso', 'MultiTaskElasticNet']):
         return y[:, np.newaxis]
     return y
+
+
+def check_non_transformer_estimators_n_iter(name, Estimator, multi_output=False):
+    # Check if all iterative solvers, run for more than one iteratiom
+
+    iris = load_iris()
+    X, y_ = iris.data, iris.target
+
+    if multi_output:
+        y_ = y_[:, np.newaxis]
+
+    if name == 'AffinityPropagation':
+        Estimator.fit(X)
+    else:
+        Estimator.fit(X, y_)
+    assert_greater(Estimator.n_iter_, 1)
+
+
+def check_transformer_n_iter(name, Estimator):
+    if name in CROSS_DECOMPOSITION:
+        # Check using default data
+        X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
+        y_ = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
+
+    else:
+        X, y_ = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
+                          random_state=0, n_features=2, cluster_std=0.1)
+        X -= X.min() - 0.1
+    Estimator.fit(X, y_)
+
+    # These return a n_iter per component.
+    if name in CROSS_DECOMPOSITION:
+        for iter_ in Estimator.n_iter_:
+            assert_greater(iter_, 1)
+    else:
+        assert_greater(Estimator.n_iter_, 1)

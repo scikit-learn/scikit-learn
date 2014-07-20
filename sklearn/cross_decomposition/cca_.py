@@ -53,6 +53,10 @@ class CCA(_PLS):
     `y_rotations_` : array, [q, n_components]
         Y block to latents rotations.
 
+    `n_iter_` : array-like
+        Number of iterations of the NIPALS inner loop for each
+        component.
+
     Notes
     -----
     For each component k, find the weights u, v that maximizes
