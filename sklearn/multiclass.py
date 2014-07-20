@@ -36,8 +36,9 @@ case.
 # License: BSD 3 clause
 
 import array
-import numpy as np
 import warnings
+from itertools import product
+import numpy as np
 import scipy.sparse as sp
 
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
@@ -916,8 +917,19 @@ class LabelPowerSetClassifier(BaseEstimator, ClassifierMixin,
         if self.label_binarizer_.y_type_ == "binary":
             binary_code_size = 1
 
-        p = []
-        for j in range(n_labels):
-            pass
+        print binary_code_size
+        if len(y_coded_proba.shape) != binary_code_size:
+            # Make sure to have the empty label set
+            y_coded_proba = np.hstack([np.zeros((y_coded_proba.shape[0], 1)),
+                                       y_coded_proba])
 
-        #np.array(list(product([0, 1], repeat=4)))
+        mask_code = np.array(list(product([0, 1], repeat=binary_code_size))).T
+        y_proba = []
+        for k in range(binary_code_size):
+            print y_coded_proba.shape
+            print mask_code[k]
+            proba_k = y_coded_proba[:, mask_code[k]].sum(axis=0)
+            y_proba.append(np.hstack([1 - proba_k, proba_k]))
+
+        return y_proba
+

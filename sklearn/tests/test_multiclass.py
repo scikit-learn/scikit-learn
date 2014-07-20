@@ -640,7 +640,6 @@ def test_lps_binary():
     assert_equal(len(lps.label_binarizer_.classes_), 2)
 
 
-
 def test_lps_multiclass():
     lps = LabelPowerSetClassifier(LinearSVC(random_state=0))
     lps.fit(iris.data, iris.target)
@@ -654,15 +653,23 @@ def test_lps_multiclass():
     assert_equal(len(lps.label_binarizer_.classes_), 3)
 
 
-def test_lps_multilabel():
-    X, Y = datasets.make_multilabel_classification(n_samples=50,
+def test_lps_multilabel(n_samples=50):
+    X, Y = datasets.make_multilabel_classification(n_samples=n_samples,
                                                    n_features=20,
+                                                   n_classes=3,
                                                    random_state=0,
                                                    return_indicator=True)
 
     X_train, X_test, Y_train, Y_test = train_test_split(X, Y, random_state=0)
 
-    lps = LabelPowerSetClassifier(LinearSVC(random_state=0))
+    lps = LabelPowerSetClassifier(DecisionTreeClassifier(random_state=0,
+                                                         max_depth=3))
     lps.fit(X_train, Y_train)
     out_lps = lps.predict(X_test)
     assert_equal(out_lps.shape, Y_test.shape)
+
+    y_predict_proba = lps.predict_proba(X_test)
+    for proba_k in y_predict_proba:
+        assert_equal(proba_k.shape, (n_samples, 2))
+
+    assert False
