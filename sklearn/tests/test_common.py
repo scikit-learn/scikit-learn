@@ -51,6 +51,8 @@ from sklearn.utils.estimator_checks import (
     check_classifier_data_not_an_array,
     check_regressor_data_not_an_array,
     check_transformer_data_not_an_array,
+    check_transformer_n_iter,
+    check_non_transformer_estimators_n_iter,
     CROSS_DECOMPOSITION)
 
 
@@ -298,3 +300,48 @@ def test_sparsify_estimators():
             yield check_sparsify_multiclass_classifier, name, Classifier
         except:
             pass
+
+def test_non_transformer_estimators_n_iter():
+    # Test that all estimators of type which are non-transformer
+    # and which have an attribute of max_iter, return the attribute
+    # of n_iter greater than 1.
+    for est_type in ['regressor', 'classifier', 'cluster']:
+        regressors = all_estimators(type_filter=est_type)
+        for name, estimator in regressors:
+            # LassoLars stops early for the default alpha=1.0 for
+            # the iris dataset.
+            if name == 'LassoLars':
+                Estimator = estimator(alpha=0.)
+            else:
+                Estimator = estimator()
+            if hasattr(Estimator, "max_iter"):
+                # Multitask models related to ENet cannot handle
+                # if y is mono-output.
+                if 'Multi' in name:
+                    yield (check_non_transformer_estimators_n_iter, name,
+                           Estimator, True)
+
+                # Tested in test_transformer_n_iter
+                elif name in CROSS_DECOMPOSITION:
+                    continue
+
+                # These models are dependent on external solvers like
+                # libsvm and accessing the iter parameter is non-trivial.
+                elif name not in ['Ridge', 'SVR', 'NuSVR', 'NuSVC',
+                                  'OrthogonalMatchingPursuitCV',
+                                  'RidgeClassifier',
+                                  'SVC', 'RandomizedLasso']:
+                    yield (check_non_transformer_estimators_n_iter,
+                           name, Estimator)
+
+
+def test_transformer_n_iter():
+    transformers = all_estimators(type_filter='transformer')
+    for name, estimator in transformers:
+        Estimator = estimator()
+        if hasattr(Estimator, "max_iter"):
+            # Dependent on external solvers and hence accessing the iter
+            # param is non-trivial.
+            if name not in ['Isomap', 'KernelPCA', 'LocallyLinearEmbedding',
+                            'RandomizedLasso']:
+                yield check_transformer_n_iter, name, Estimator
