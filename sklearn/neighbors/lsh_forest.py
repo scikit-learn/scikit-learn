@@ -258,8 +258,11 @@ class LSHForest(BaseEstimator):
         self.cache_N = int(self.max_label_length/2)
         hashes = [x for x in itertools.product((0, 1),
                                                repeat=self.cache_N)]
-        self.cache = {tuple(x): int("".join([digits[y] for y in x]),
-                                    2) for x in hashes}
+
+        self.cache = {}
+        for item in hashes:
+            self.cache[tuple(item)] = int("".join([digits[y] for y in item]),
+                                          2)
 
         self.k = 2 ** self.cache_N
 
