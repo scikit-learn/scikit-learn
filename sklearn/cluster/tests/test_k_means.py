@@ -641,8 +641,8 @@ def test_k_means_function():
     old_stdout = sys.stdout
     sys.stdout = StringIO()
     try:
-        cluster_centers, labels, inertia, n_iter = k_means(
-            X, n_clusters=n_clusters, verbose=True)
+        cluster_centers, labels, inertia = k_means(X, n_clusters=n_clusters,
+                                                   verbose=True)
     finally:
         sys.stdout = old_stdout
     centers = cluster_centers

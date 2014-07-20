@@ -120,7 +120,9 @@ class SparsePCA(BaseEstimator, TransformerMixin):
                                                verbose=self.verbose,
                                                random_state=random_state,
                                                code_init=code_init,
-                                               dict_init=dict_init)
+                                               dict_init=dict_init,
+                                               return_n_iter=True
+                                               )
         self.components_ = Vt.T
         self.error_ = E
         return self
@@ -269,7 +271,8 @@ class MiniBatchSparsePCA(SparsePCA):
             batch_size=self.batch_size,
             shuffle=self.shuffle,
             n_jobs=self.n_jobs, method=self.method,
-            random_state=random_state
+            random_state=random_state,
+            return_n_iter=True
             )
         self.components_ = Vt.T
         return self

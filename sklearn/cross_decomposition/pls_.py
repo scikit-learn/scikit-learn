@@ -182,8 +182,8 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         The coefficients of the linear model: Y = X coefs + Err
 
     `n_iter_` : array-like
-        List of the number of iterations of the NIPALS inner loop across all
-        components. Useful only if the algorithm is nipals.
+        Number of iterations of the NIPALS inner loop for each
+        component. Not useful if the algorithm given is "svd".
 
     References
     ----------
@@ -502,6 +502,10 @@ class PLSRegression(_PLS):
     coefs: array, [p, q]
         The coefficients of the linear model: Y = X coefs + Err
 
+    `n_iter_` : array-like
+        Number of iterations of the NIPALS inner loop for each
+        component.
+
     Notes
     -----
     For each component k, find weights u, v that optimizes:
@@ -618,6 +622,10 @@ class PLSCanonical(_PLS):
 
     `y_rotations_` : array, shape = [q, n_components]
         Y block to latents rotations.
+
+    `n_iter_` : array-like
+        Number of iterations of the NIPALS inner loop for each
+        component. Not useful if the algorithm provided is "svd".
 
     Notes
     -----
