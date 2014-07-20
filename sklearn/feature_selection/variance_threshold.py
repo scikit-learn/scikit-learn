@@ -4,7 +4,7 @@
 import numpy as np
 from ..base import BaseEstimator
 from .base import SelectorMixin
-from ..utils import atleast2d_or_csr
+from ..utils import check_array
 from ..utils.sparsefuncs_fast import csr_mean_variance_axis0
 
 
@@ -58,7 +58,7 @@ class VarianceThreshold(BaseEstimator, SelectorMixin):
         -------
         self
         """
-        X = atleast2d_or_csr(X, dtype=np.float64)
+        X = check_array(X, 'csr', dtype=np.float64)
 
         if hasattr(X, "toarray"):   # sparse matrix
             _, self.variances_ = csr_mean_variance_axis0(X)

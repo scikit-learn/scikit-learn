@@ -25,7 +25,7 @@ from .cross_validation import _fit_and_score
 from .externals.joblib import Parallel, delayed
 from .externals import six
 from .utils import check_random_state
-from .utils.validation import _num_samples, check_arrays
+from .utils.validation import _num_samples, indexable
 from .metrics.scorer import check_scoring
 
 
@@ -343,8 +343,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.scorer_ = check_scoring(self.estimator, scoring=self.scoring)
 
         n_samples = _num_samples(X)
-        X, y = check_arrays(X, y, force_arrays=False, sparse_format='csr',
-                            allow_nans=True)
+        X, y = indexable(X, y)
 
         if y is not None:
             if len(y) != n_samples:

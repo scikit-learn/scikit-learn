@@ -18,7 +18,7 @@ import scipy.sparse as sp
 from scipy.optimize import nnls
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import atleast2d_or_csr, check_random_state, check_arrays
+from ..utils import check_random_state, check_array
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
 
 
@@ -473,7 +473,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         data: array, [n_samples, n_components]
             Transformed data
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
         check_non_negative(X, "NMF.fit")
 
         n_samples, n_features = X.shape
@@ -565,7 +565,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         data: array, [n_samples, n_components]
             Transformed data
         """
-        X, = check_arrays(X, sparse_format='csc')
+        X = check_array(X, accept_sparse='csc')
         Wt = np.zeros((self.n_components_, X.shape[0]))
         check_non_negative(X, "ProjectedGradientNMF.transform")
 

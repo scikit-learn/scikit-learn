@@ -27,7 +27,7 @@ from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals.six.moves import xrange
-from ..utils import array2d, check_arrays, check_random_state
+from ..utils import check_array, check_random_state
 from ..utils.extmath import fast_logdet, fast_dot, randomized_svd, squared_norm
 from ..utils import ConvergenceWarning
 
@@ -154,8 +154,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         -------
         self
         """
-        X = array2d(check_arrays(X, copy=self.copy, sparse_format='dense',
-                    dtype=np.float)[0])
+        X = check_array(X, copy=self.copy, dtype=np.float)
 
         n_samples, n_features = X.shape
         n_components = self.n_components
@@ -248,7 +247,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
             The latent variables of X.
         """
-        X = array2d(X)
+        X = check_array(X)
         Ih = np.eye(len(self.components_))
 
         X_transformed = X - self.mean_

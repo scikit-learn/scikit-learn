@@ -28,7 +28,7 @@ from scipy.spatial.distance import hamming as sp_hamming
 from ..externals.six.moves import zip
 from ..preprocessing import label_binarize
 from ..preprocessing import LabelEncoder
-from ..utils import check_arrays
+from ..utils import check_array, check_consistent_length
 from ..utils import column_or_1d
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
@@ -63,7 +63,7 @@ def _check_clf_targets(y_true, y_pred):
 
     y_pred : array or indicator matrix
     """
-    y_true, y_pred = check_arrays(y_true, y_pred, force_arrays=False)
+    check_consistent_length(y_true, y_pred)
     type_true = type_of_target(y_true)
     type_pred = type_of_target(y_pred)
 

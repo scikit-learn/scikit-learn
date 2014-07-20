@@ -7,7 +7,7 @@ import numpy as np
 from scipy import interpolate
 from scipy.stats import spearmanr
 from .base import BaseEstimator, TransformerMixin, RegressorMixin
-from .utils import as_float_array, check_arrays
+from .utils import as_float_array, check_array, check_consistent_length
 from ._isotonic import _isotonic_regression
 import warnings
 import math
@@ -239,8 +239,11 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
     def _build_y(self, X, y, sample_weight):
         """Build the y_ IsotonicRegression."""
-        X, y, sample_weight = check_arrays(X, y, sample_weight,
-                                           sparse_format='dense')
+        check_consistent_length(X, y, sample_weight)
+        X, y = [check_array(x, ensure_2d=False) for x in [X, y]]
+        if sample_weight is not None:
+            sample_weight = check_array(sample_weight, ensure_2d=False)
+
         y = as_float_array(y)
         self._check_fit_data(X, y, sample_weight)
 

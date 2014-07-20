@@ -13,7 +13,7 @@ from .cross_validation import _check_cv
 from .externals.joblib import Parallel, delayed
 from .cross_validation import _safe_split, _score, _fit_and_score
 from .metrics.scorer import check_scoring
-from .utils import check_arrays
+from .utils import indexable
 from .utils.fixes import astype
 
 
@@ -100,7 +100,7 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
         raise ValueError("An estimator must support the partial_fit interface "
                          "to exploit incremental learning")
 
-    X, y = check_arrays(X, y, sparse_format='csr', force_arrays=False)
+    X, y = indexable(X, y)
     # Make a list since we will be iterating multiple times over the folds
     cv = list(_check_cv(cv, X, y, classifier=is_classifier(estimator)))
     scorer = check_scoring(estimator, scoring=scoring)
@@ -287,7 +287,7 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
     See
     :ref:`examples/plot_validation_curve.py <example_plot_validation_curve.py>`
     """
-    X, y = check_arrays(X, y, sparse_format='csr', force_arrays=False)
+    X, y = indexable(X, y)
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
 

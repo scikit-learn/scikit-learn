@@ -9,7 +9,7 @@ from . import libsvm, liblinear
 from . import libsvm_sparse
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
-from ..utils import atleast2d_or_csr, array2d, check_random_state, column_or_1d
+from ..utils import check_array, check_random_state, column_or_1d
 from ..utils import ConvergenceWarning, compute_class_weight
 from ..utils.extmath import safe_sparse_dot
 from ..externals import six
@@ -134,7 +134,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise TypeError("Sparse precomputed kernels are not supported.")
         self._sparse = sparse and not callable(self.kernel)
 
-        X = atleast2d_or_csr(X, dtype=np.float64, order='C')
+        X = check_array(X, accept_sparse='csr', dtype=np.float64, order='C')
         y = self._validate_targets(y)
 
         sample_weight = np.asarray([]
@@ -288,7 +288,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         n_samples, n_features = X.shape
         X = self._compute_kernel(X)
         if X.ndim == 1:
-            X = array2d(X, order='C')
+            X = check_array(X, order='C')
 
         kernel = self.kernel
         if callable(self.kernel):
@@ -382,7 +382,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         return dec_func
 
     def _validate_for_predict(self, X):
-        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
+        X = check_array(X, accept_sparse='csr', dtype=np.float64, order="C")
         if self._sparse and not sp.isspmatrix(X):
             X = sp.csr_matrix(X)
         if self._sparse:
@@ -676,7 +676,7 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("The number of classes has to be greater than"
                              " one.")
 
-        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
+        X = check_array(X, accept_sparse='csr', dtype=np.float64, order="C")
 
         self.class_weight_ = compute_class_weight(self.class_weight,
                                                   self.classes_, y)

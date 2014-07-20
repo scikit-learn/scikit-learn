@@ -17,8 +17,8 @@ from scipy import sparse
 from scipy.special import gammaln
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import array2d, check_random_state, as_float_array
-from ..utils import atleast2d_or_csr, check_arrays
+from ..utils import check_random_state, as_float_array
+from ..utils import check_array
 from ..utils import deprecated
 from ..utils.sparsefuncs import mean_variance_axis0
 from ..utils.extmath import (fast_logdet, safe_sparse_dot, randomized_svd,
@@ -266,7 +266,7 @@ class PCA(BaseEstimator, TransformerMixin):
             The SVD of the input data, copied and centered when
             requested.
         """
-        X = array2d(X)
+        X = check_array(X)
         n_samples, n_features = X.shape
         X = as_float_array(X, copy=self.copy)
         # Center data
@@ -390,7 +390,7 @@ class PCA(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
 
         """
-        X = array2d(X)
+        X = check_array(X)
         if self.mean_ is not None:
             X = X - self.mean_
         X_transformed = fast_dot(X, self.components_.T)
@@ -434,7 +434,7 @@ class PCA(BaseEstimator, TransformerMixin):
         ll: array, shape (n_samples,)
             Log-likelihood of each sample under the current model
         """
-        X = array2d(X)
+        X = check_array(X)
         Xr = X - self.mean_
         n_features = X.shape[1]
         log_like = np.zeros(X.shape[0])
@@ -484,7 +484,7 @@ class ProbabilisticPCA(PCA):
         homoscedastic : bool, optional,
             If True, average variance across remaining dimensions
         """
-        X, = check_arrays(X)
+        X = check_array(X)
         PCA.fit(self, X)
 
         n_samples, n_features = X.shape
@@ -722,7 +722,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         """
         # XXX remove scipy.sparse support here in 0.16
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
         if self.mean_ is not None:
             X = X - self.mean_
 
@@ -743,7 +743,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
 
         """
-        X = self._fit(atleast2d_or_csr(X))
+        X = self._fit(check_array(X, accept_sparse='csr'))
         X = safe_sparse_dot(X, self.components_.T)
         return X
 

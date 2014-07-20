@@ -14,7 +14,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
-from ..utils import array2d, as_float_array, check_arrays
+from ..utils import as_float_array, check_array, check_X_y
 from ..cross_validation import _check_cv as check_cv
 from ..externals.joblib import Parallel, delayed
 
@@ -321,11 +321,11 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
     http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
     """
-    X = array2d(X, order='F', copy=copy_X)
+    X = check_array(X, order='F', copy=copy_X)
     copy_X = False
-    y = np.asarray(y)
     if y.ndim == 1:
-        y = y[:, np.newaxis]
+        y = y.reshape(-1, 1)
+    y = check_array(y)
     if y.shape[1] > 1:  # subsequent targets will be affected
         copy_X = True
     if n_nonzero_coefs is None and tol is None:
@@ -439,7 +439,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
     http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
     """
-    Gram = array2d(Gram, order='F', copy=copy_Gram)
+    Gram = check_array(Gram, order='F', copy=copy_Gram)
     Xy = np.asarray(Xy)
     if Xy.ndim > 1 and Xy.shape[1] > 1:
         # or subsequent target will be affected
@@ -565,7 +565,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
         self: object
             returns an instance of self.
         """
-        X = array2d(X)
+        X = check_array(X)
         y = np.asarray(y)
         n_features = X.shape[1]
 
@@ -754,8 +754,7 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         self : object
             returns an instance of self.
         """
-        X = array2d(X)
-        X, y = check_arrays(X, y)
+        X, y = check_X_y(X, y)
         cv = check_cv(self.cv, X, y, classifier=False)
         max_iter = (min(max(int(0.1 * X.shape[1]), 5), X.shape[1])
                     if not self.max_iter

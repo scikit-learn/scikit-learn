@@ -8,7 +8,7 @@ agglomeration.
 import numpy as np
 
 from ..base import TransformerMixin
-from ..utils import array2d
+from ..utils import check_array
 
 import warnings
 
@@ -48,7 +48,7 @@ class AgglomerationTransform(TransformerMixin):
                 "removed in 0.18. Pass it to the constructor instead.", DeprecationWarning)
         else:
             pooling_func = self.pooling_func
-        X = array2d(X)
+        X = check_array(X)
         nX = []
         if len(self.labels_) != X.shape[1]:
             raise ValueError("X has a different number of features than "

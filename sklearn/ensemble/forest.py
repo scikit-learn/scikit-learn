@@ -53,7 +53,7 @@ from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
 from ..tree._tree import DTYPE, DOUBLE
-from ..utils import array2d, check_random_state, check_arrays, safe_asarray
+from ..utils import check_random_state, check_array
 from ..utils.validation import DataConversionWarning
 
 from .base import BaseEnsemble, _partition_estimators
@@ -188,7 +188,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             For each datapoint x in X and for each tree in the forest,
             return the index of the leaf x ends up in.
         """
-        X = array2d(X, dtype=DTYPE)
+        X = check_array(X, dtype=DTYPE)
         results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                            backend="threading")(
             delayed(_parallel_apply)(tree, X) for tree in self.estimators_)
@@ -221,7 +221,9 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         random_state = check_random_state(self.random_state)
 
         # Convert data
-        X, = check_arrays(X, dtype=DTYPE, sparse_format="dense")
+        # ensure_2d=False because there are actually unit test checking we fail
+        # for 1d. FIXME make this consistent in the future.
+        X = check_array(X, dtype=DTYPE, ensure_2d=False)
 
         # Remap output
         n_samples, self.n_features_ = X.shape
@@ -416,7 +418,9 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes.
         """
-        X, = check_arrays(X)
+        # ensure_2d=False because there are actually unit test checking we fail
+        # for 1d.
+        X = check_array(X, ensure_2d=False)
         n_samples = len(X)
         proba = self.predict_proba(X)
 
@@ -453,7 +457,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         """
         # Check data
         if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
-            X = array2d(X, dtype=DTYPE)
+            X = check_array(X, dtype=DTYPE)
 
         # Assign chunk of trees to jobs
         n_jobs, n_trees, starts = _partition_estimators(self)
@@ -563,7 +567,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
         """
         # Check data
         if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
-            X = array2d(X, dtype=DTYPE)
+            X = check_array(X, dtype=DTYPE)
 
         # Assign chunk of trees to jobs
         n_jobs, n_trees, starts = _partition_estimators(self)
@@ -1414,7 +1418,9 @@ class RandomTreesEmbedding(BaseForest):
         X_transformed: sparse matrix, shape=(n_samples, n_out)
             Transformed dataset.
         """
-        X = safe_asarray(X)
+        # ensure_2d=False because there are actually unit test checking we fail
+        # for 1d.
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], ensure_2d=False)
         rnd = check_random_state(self.random_state)
         y = rnd.uniform(size=X.shape[0])
         super(RandomTreesEmbedding, self).fit(X, y,

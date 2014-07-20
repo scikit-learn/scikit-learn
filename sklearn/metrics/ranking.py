@@ -23,9 +23,9 @@ import warnings
 import numpy as np
 
 from ..preprocessing import LabelBinarizer
-from ..utils import check_arrays
+from ..utils import check_consistent_length
 from ..utils import deprecated
-from ..utils import column_or_1d
+from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.fixes import isclose
 from ..utils.stats import rankdata
@@ -74,7 +74,10 @@ def auc(x, y, reorder=False):
         Compute precision-recall pairs for different probability thresholds
 
     """
-    x, y = check_arrays(x, y)
+    check_consistent_length(x, y)
+    x = column_or_1d(x)
+    y = column_or_1d(y)
+
     if x.shape[0] < 2:
         raise ValueError('At least 2 points are needed to compute'
                          ' area under curve, but x.shape = %s' % x.shape)
@@ -145,7 +148,9 @@ def hinge_loss(y_true, pred_decision, pos_label=None, neg_label=None):
 
     """
     # TODO: multi-class hinge-loss
-    y_true, pred_decision = check_arrays(y_true, pred_decision)
+    check_consistent_length(y_true, pred_decision)
+    y_true = column_or_1d(y_true)
+    pred_decision = column_or_1d(pred_decision)
 
     # the rest of the code assumes that positive and negative labels
     # are encoded as +1 and -1 respectively
@@ -391,7 +396,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     thresholds : array, shape = [n_thresholds]
         Decreasing score values.
     """
-    y_true, y_score = check_arrays(y_true, y_score)
+    check_consistent_length(y_true, y_score)
     y_true = column_or_1d(y_true)
     y_score = column_or_1d(y_score)
     if sample_weight is not None:
@@ -679,7 +684,9 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
         Y = np.append(1 - Y, Y, axis=1)
 
     # Check if dimensions are consistent.
-    T, Y = check_arrays(T, Y)
+    check_consistent_length(T, Y)
+    T = check_array(T)
+    Y = check_array(Y)
     if T.shape[1] != Y.shape[1]:
         raise ValueError("y_true and y_pred have different number of classes "
                          "%d, %d" % (T.shape[1], Y.shape[1]))
@@ -727,7 +734,9 @@ def label_ranking_average_precision_score(y_true, y_score):
     0.416...
 
     """
-    y_true, y_score = check_arrays(y_true, y_score)
+    check_consistent_length(y_true, y_score)
+    y_true = check_array(y_true, ensure_2d=False)
+    y_score = check_array(y_score, ensure_2d=False)
 
     if y_true.shape != y_score.shape:
         raise ValueError("y_true and y_score have different shape")

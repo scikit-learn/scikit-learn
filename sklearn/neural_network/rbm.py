@@ -15,7 +15,7 @@ import scipy.sparse as sp
 from ..base import BaseEstimator
 from ..base import TransformerMixin
 from ..externals.six.moves import xrange
-from ..utils import atleast2d_or_csr, check_arrays
+from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import gen_even_slices
 from ..utils import issparse
@@ -116,7 +116,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         h : array, shape (n_samples, n_components)
             Latent representations of the data.
         """
-        X, = check_arrays(X, sparse_format='csr', dtype=np.float)
+        X = check_array(X, accept_sparse='csr', dtype=np.float)
         return self._mean_hiddens(X)
 
     def _mean_hiddens(self, v):
@@ -226,7 +226,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         self : BernoulliRBM
             The fitted model.
         """
-        X, = check_arrays(X, sparse_format='csr', dtype=np.float)
+        X = check_array(X, accept_sparse='csr', dtype=np.float)
         if not hasattr(self, 'random_state_'):
             self.random_state_ = check_random_state(self.random_state)
         if not hasattr(self, 'components_'):
@@ -295,7 +295,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         free energy on X, then on a randomly corrupted version of X, and
         returns the log of the logistic function of the difference.
         """
-        v = atleast2d_or_csr(X)
+        v = check_array(X, accept_sparse='csr')
         rng = check_random_state(self.random_state)
 
         # Randomly corrupt one feature in each sample in v.
@@ -325,7 +325,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         self : BernoulliRBM
             The fitted model.
         """
-        X, = check_arrays(X, sparse_format='csr', dtype=np.float)
+        X = check_array(X, accept_sparse='csr', dtype=np.float)
         n_samples = X.shape[0]
         rng = check_random_state(self.random_state)
 

@@ -19,7 +19,7 @@ from .base import \
     NeighborsBase, KNeighborsMixin,\
     RadiusNeighborsMixin, SupervisedIntegerMixin
 from ..base import ClassifierMixin
-from ..utils import atleast2d_or_csr
+from ..utils import check_array
 
 
 class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
@@ -141,7 +141,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         y : array of shape [n_samples] or [n_samples, n_outputs]
             Class labels for each data sample.
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
 
         neigh_dist, neigh_ind = self.kneighbors(X)
 
@@ -185,7 +185,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
 
         neigh_dist, neigh_ind = self.kneighbors(X)
 
@@ -340,7 +340,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             Class labels for each data sample.
 
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
         n_samples = X.shape[0]
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)

@@ -10,7 +10,7 @@ from sklearn import ensemble
 
 from sklearn.datasets import make_multilabel_classification
 from sklearn.random_projection import sparse_random_matrix
-from sklearn.utils.validation import check_arrays
+from sklearn.utils.validation import check_array, check_consistent_length
 from sklearn.utils.validation import check_random_state
 
 from sklearn.utils.testing import assert_raises
@@ -815,7 +815,9 @@ def check_lrap_without_tie_and_increasing_score(lrap_score):
 
 def _my_lrap(y_true, y_score):
     """Simple implementation of label ranking average precision"""
-    y_true, y_score = check_arrays(y_true, y_score)
+    check_consistent_length(y_true, y_score)
+    y_true = check_array(y_true)
+    y_score = check_array(y_score)
     n_samples, n_labels = y_true.shape
     score = np.empty((n_samples, ))
     for i in range(n_samples):

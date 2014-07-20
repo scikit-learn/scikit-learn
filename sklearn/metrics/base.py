@@ -16,7 +16,7 @@ from __future__ import division
 
 import numpy as np
 
-from ..utils import check_arrays
+from ..utils import check_array, check_consistent_length
 from ..utils.multiclass import type_of_target
 
 
@@ -75,7 +75,9 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
     if y_type == "binary":
         return binary_metric(y_true, y_score, sample_weight=sample_weight)
 
-    y_true, y_score = check_arrays(y_true, y_score)
+    check_consistent_length(y_true, y_score)
+    y_true = check_array(y_true)
+    y_score = check_array(y_score)
 
     not_average_axis = 1
     score_weight = sample_weight
