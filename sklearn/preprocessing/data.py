@@ -204,7 +204,10 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         data_min = np.min(X, axis=0)
         data_range = np.max(X, axis=0) - data_min
         # Do not scale constant features
-        data_range[data_range == 0.0] = 1.0
+        if isinstance(data_range, np.ndarray):
+            data_range[data_range == 0.0] = 1.0
+        elif data_range == 0.:
+            data_range = 1.
         self.scale_ = (feature_range[1] - feature_range[0]) / data_range
         self.min_ = feature_range[0] - data_min * self.scale_
         self.data_range = data_range
@@ -494,7 +497,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
 
 
 def normalize(X, norm='l2', axis=1, copy=True):
-    """Normalize a dataset along any axis
+    """Scale input vectors individually to unit norm (vector length).
 
     Parameters
     ----------
@@ -558,7 +561,7 @@ def normalize(X, norm='l2', axis=1, copy=True):
 
 
 class Normalizer(BaseEstimator, TransformerMixin):
-    """Normalize samples individually to unit norm
+    """Normalize samples individually to unit norm.
 
     Each sample (i.e. each row of the data matrix) with at least one
     non zero component is rescaled independently of other samples so

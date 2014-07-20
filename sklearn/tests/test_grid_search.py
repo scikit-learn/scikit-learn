@@ -21,6 +21,7 @@ from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
 from scipy.stats import distributions
 
@@ -60,37 +61,6 @@ class MockClassifier(object):
     predict_proba = predict
     decision_function = predict
     transform = predict
-
-    def score(self, X=None, Y=None):
-        if self.foo_param > 1:
-            score = 1.
-        else:
-            score = 0.
-        return score
-
-    def get_params(self, deep=False):
-        return {'foo_param': self.foo_param}
-
-    def set_params(self, **params):
-        self.foo_param = params['foo_param']
-        return self
-
-
-class MockListClassifier(object):
-    """Dummy classifier to test the cross-validation.
-
-    Checks that GridSearchCV didn't convert X to array.
-    """
-    def __init__(self, foo_param=0):
-        self.foo_param = foo_param
-
-    def fit(self, X, Y):
-        assert_true(len(X) == len(Y))
-        assert_true(isinstance(X, list))
-        return self
-
-    def predict(self, T):
-        return T.shape[0]
 
     def score(self, X=None, Y=None):
         if self.foo_param > 1:
@@ -354,43 +324,6 @@ def test_grid_search_sparse_scoring():
     assert_array_equal(y_pred, y_pred3)
 
 
-def test_deprecated_score_func():
-    # test that old deprecated way of passing a score / loss function is still
-    # supported
-    X, y = make_classification(n_samples=200, n_features=100, random_state=0)
-    clf = LinearSVC(random_state=0)
-    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, scoring="f1")
-    cv.fit(X[:180], y[:180])
-    y_pred = cv.predict(X[180:])
-    C = cv.best_estimator_.C
-
-    clf = LinearSVC(random_state=0)
-    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, score_func=f1_score)
-    with warnings.catch_warnings(record=True):
-        # catch deprecation warning
-        cv.fit(X[:180], y[:180])
-    y_pred_func = cv.predict(X[180:])
-    C_func = cv.best_estimator_.C
-
-    assert_array_equal(y_pred, y_pred_func)
-    assert_equal(C, C_func)
-
-    # test loss where greater is worse
-    def f1_loss(y_true_, y_pred_):
-        return -f1_score(y_true_, y_pred_)
-
-    clf = LinearSVC(random_state=0)
-    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, loss_func=f1_loss)
-    with warnings.catch_warnings(record=True):
-        # catch deprecation warning
-        cv.fit(X[:180], y[:180])
-    y_pred_loss = cv.predict(X[180:])
-    C_loss = cv.best_estimator_.C
-
-    assert_array_equal(y_pred, y_pred_loss)
-    assert_equal(C, C_loss)
-
-
 def test_grid_search_precomputed_kernel():
     """Test that grid search works when the input features are given in the
     form of a precomputed kernel matrix """
@@ -471,11 +404,48 @@ def test_X_as_list():
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
 
-    clf = MockListClassifier()
+    clf = CheckingClassifier(check_X=lambda x: isinstance(x, list))
     cv = KFold(n=len(X), n_folds=3)
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
     grid_search.fit(X.tolist(), y).score(X, y)
     assert_true(hasattr(grid_search, "grid_scores_"))
+
+
+def test_y_as_list():
+    """Pass y as list in GridSearchCV"""
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+
+    clf = CheckingClassifier(check_y=lambda x: isinstance(x, list))
+    cv = KFold(n=len(X), n_folds=3)
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
+    grid_search.fit(X, y.tolist()).score(X, y)
+    assert_true(hasattr(grid_search, "grid_scores_"))
+
+
+def test_pandas_input():
+    # check cross_val_score doesn't destroy pandas dataframe
+    types = [(MockDataFrame, MockDataFrame)]
+    try:
+        from pandas import Series, DataFrame
+        types.append((DataFrame, Series))
+    except ImportError:
+        pass
+
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+
+    for InputFeatureType, TargetType in types:
+        # X dataframe, y series
+        X_df, y_ser = InputFeatureType(X), TargetType(y)
+        check_df = lambda x: isinstance(x, InputFeatureType)
+        check_series = lambda x: isinstance(x, TargetType)
+        clf = CheckingClassifier(check_X=check_df, check_y=check_series)
+
+        grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]})
+        grid_search.fit(X_df, y_ser).score(X_df, y_ser)
+        grid_search.predict(X_df)
+        assert_true(hasattr(grid_search, "grid_scores_"))
 
 
 def test_unsupervised_grid_search():

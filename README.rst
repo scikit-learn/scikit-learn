@@ -102,9 +102,15 @@ Testing
 -------
 
 After installation, you can launch the test suite from outside the
-source directory (you will need to have nosetests installed)::
+source directory (you will need to have the ``nose`` package installed)::
 
-   $ nosetests --exe sklearn
+   $ nosetests -v sklearn
+
+Under Windows, it is recommended to use the following command (adjust the path
+to the ``python.exe`` program) as using the ``nosetests.exe`` program can badly
+interact with tests that use ``multiprocessing``::
+
+   C:\Python34\python.exe -c "import nose; nose.main()" -v sklearn
 
 See the web page http://scikit-learn.org/stable/install.html#testing
 for more information.

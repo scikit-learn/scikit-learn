@@ -245,6 +245,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         params: dict
             Overwrite keywords from __init__.
         """
+        X = np.asarray(X)
         clust = dbscan(X, **self.get_params())
         self.core_sample_indices_, self.labels_ = clust
         self.components_ = X[self.core_sample_indices_].copy()

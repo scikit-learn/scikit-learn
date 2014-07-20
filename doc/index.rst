@@ -253,16 +253,22 @@
                 <li><em>On-going development:</em>
                 <a href="whats_new.html"><em>What's new</em> (changelog)</a>
                 </li>
+                <li><em>July 2014.</em> scikit-learn 0.15.0 is available for download (<a href="whats_new.html">Changelog</a>).
+                </li>
+                <li><em>July 14-20th, 2014: international sprint.</em>
+                During this week-long sprint, we gathered 18 of the core
+                contributors in Paris.
+                We want to thank our sponsors:
+                <a href="http://www.campus-paris-saclay.fr/en/Idex-Paris-Saclay/Les-Lidex/Paris-Saclay-Center-for-Data-Science">
+                Paris-Saclay Center for Data Science</a>
+                & <a href="https://digicosme.lri.fr">Digicosme</a> and our
+                hosts <a href="http://lapaillasse.org">La Paillasse</a>,
+                <a href="http://www.criteo.com/">Criteo</a>,
+                <a href="http://www.inria.fr/">Inria</a>,
+                and <a href="http://www.tinyclues.com/">tinyclues</a>.
+                </li>
                 <li><em>August 2013.</em> scikit-learn 0.14 is available for download (<a href="whats_new.html">Changelog</a>).
                 </li>
-                <li><em>July 22-28th, 2013: international sprint.</em>
-                During this week-long sprint, we gathered most of the core
-                developers in Paris.
-                We want to thank our sponsors, our
-                hosts <a href="http://www.telecom-paristech.fr/">Télécom ParisTech</a>
-                and <a href="http://www.tinyclues.com/">tinyclues</a>, and
-                donations that helped fund this event.
-
                 </ul>
             </div>
 
@@ -270,7 +276,8 @@
             <div class="span4">
                 <h4>Community</h4>
                 <ul>
-		<li><em>About us</em> See <a href="about.html">authors</a> # scikit-learn</li>
+                <li><em>About us</em> See <a href="about.html">authors</a> # scikit-learn</li>
+                <li><em>More Machine Learning</em> Find <a href="related_projects.html">related projects</a></li>
                 <li><em>Questions?</em> See <a href="http://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a> # scikit-learn</li>
                 <li><em>Mailing list:</em> <a href="https://lists.sourceforge.net/lists/listinfo/scikit-learn-general">scikit-learn-general@lists.sourceforge.net</a></li>
                 <li><em>IRC:</em> #scikit-learn @ <a href="http://webchat.freenode.net/">freenode</a></li>
@@ -378,5 +385,3 @@
     <script>
       $('#testimonials_carousel').carousel()
     </script>
-
-

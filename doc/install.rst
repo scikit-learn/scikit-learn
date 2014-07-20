@@ -1,8 +1,8 @@
 .. _installation-instructions:
 
-=========================
-Installing `scikit-learn`
-=========================
+=======================
+Installing scikit-learn
+=======================
 
 There are different ways to get scikit-learn installed:
 
@@ -17,7 +17,7 @@ There are different ways to get scikit-learn installed:
     scikit-learn.
 
   * :ref:`Install the latest development version
-    <install_bleeding_edge>`.  This is best for users who want the
+    <install_bleeding_edge>`. This is best for users who want the
     latest-and-greatest features and aren't afraid of running
     brand-new code.
 
@@ -32,13 +32,54 @@ There are different ways to get scikit-learn installed:
 Installing an official release
 ==============================
 
+Scikit-learn requires:
 
-Getting the dependencies
-------------------------
+- Python (>= 2.6 or >= 3.3),
+- NumPy (>= 1.6.1),
+- SciPy (>= 0.9).
 
-Installing from source requires you to have installed Python (>= 2.6),
-NumPy (>= 1.6.1), SciPy (>= 0.9), setuptools, Python development headers
-and a working C++ compiler.
+
+Windows
+-------
+
+First you need to install `numpy <http://numpy.scipy.org/>`_ and `scipy
+<http://www.scipy.org/>`_ from their own official installers.
+
+Wheel packages (.whl files) for scikit-learn from `PyPI
+<https://pypi.python.org/pypi/scikit-learn/>`_ can be installed with the `pip
+<http://pip.readthedocs.org/en/latest/installing.html>`_ utility.
+Open a console and type the following to install or upgrade scikit-learn to the
+latest stable release::
+
+    pip install -U scikit-learn
+
+If there are no binary packages matching your Python version you might
+to try to install scikit-learn and its dependencies from `Christoph Gohlke
+Unofficial Windows installers
+<http://www.lfd.uci.edu/~gohlke/pythonlibs/#scikit-learn>`_
+or from a :ref:`Python distribution <install_by_distribution>` instead.
+
+
+Mac OSX
+-------
+
+Scikit-learn and its dependencies are all available as wheel packages for OSX::
+
+    pip install -U numpy scipy scikit-learn
+
+
+Linux
+-----
+
+At this time scikit-learn does not provide official binary packages for Linux
+so you have to build from source.
+
+
+Installing build dependencies
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Installing from source requires you to have installed the scikit-learn runtime
+dependencies, Python development headers and a working C/C++ compiler.
 Under Debian-based operating systems, which include Ubuntu,
 you can install all these requirements by issuing::
 
@@ -88,87 +129,35 @@ On Red Hat and clones (e.g. CentOS), install the dependencies using::
 
     sudo yum -y install gcc gcc-c++ numpy python-devel scipy
 
-Easy install
-~~~~~~~~~~~~
 
-This is usually the fastest way to install the latest stable
-release. If you have pip or easy_install, you can install or update
-with the command::
+Building scikit-learn with pip
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    pip install -U scikit-learn
+This is usually the fastest way to install or upgrade to the latest stable
+release::
 
-or::
+    pip install --user --install-option="--prefix=" -U scikit-learn
 
-    easy_install -U scikit-learn
+The ``--user`` flag ask pip to install scikit-learn in the ``$HOME/.local``
+folder therefore not requiring root permission. This flag should make pip
+ignore any old version of scikit-learn previously installed on the system while
+benefitting from system packages for numpy and scipy. Those dependencies can
+be long and complex to build correctly from source.
 
-for easy_install. Note that you might need root privileges to run
-these commands.
+The ``--install-option="--prefix="`` flag is only required if Python has a
+``distutils.cfg`` configuration with a predefined ``prefix=`` entry.
 
 
 From source package
 ~~~~~~~~~~~~~~~~~~~
 
-Download the package from http://pypi.python.org/pypi/scikit-learn/
+Download the source package from http://pypi.python.org/pypi/scikit-learn/
 , unpack the sources and cd into the source directory.
 
 This packages uses distutils, which is the default way of installing
 python modules. The install command is::
 
-  python setup.py install
-
-
-Windows installer
------------------
-
-You can download a Windows installer from `downloads
-<https://sourceforge.net/projects/scikit-learn/files/>`_ in the
-project's web page. Note that must also have installed the packages
-numpy and setuptools.
-
-This package is also expected to work with python(x,y) as of 2.6.5.5.
-
-.. topic:: **Installing on Windows 64-bit**
-
-   To install a 64-bit version of scikit-learn, you can download the
-   binaries from http://www.lfd.uci.edu/~gohlke/pythonlibs/#scikit-learn
-   Note that this will require a compatible version of numpy, scipy and
-   matplotlib. The easiest option is to also download them from the same
-   URL.
-
-Building on windows
--------------------
-
-To build scikit-learn on windows you will need a C/C++ compiler in
-addition to numpy, scipy and setuptools. At least
-`MinGW <http://www.mingw.org>`_ (a port of GCC to Windows OS) and
-Microsoft Visual C++ 2008 should work out of the box. To force the use
-of a particular compiler, write a file named ``setup.cfg`` in the
-source directory with the content::
-
-    [build_ext]
-    compiler=my_compiler
-
-    [build]
-    compiler=my_compiler
-
-where ``my_compiler`` should be one of ``mingw32`` or ``msvc``.
-
-When the appropriate compiler has been set, and assuming Python is
-in your PATH (see
-`Python FAQ for windows <http://docs.python.org/faq/windows.html>`_
-for more details), installation is done by
-executing the command::
-
     python setup.py install
-
-
-To build a precompiled package like the ones distributed at
-`the downloads section <https://sourceforge.net/projects/scikit-learn/files/>`_,
-the command to execute is::
-
-    python setup.py bdist_wininst -b doc/logos/scikit-learn-logo.bmp
-
-This will create an installable binary under directory ``dist/``.
 
 
 .. _install_by_distribution:
@@ -199,29 +188,31 @@ and can be installed using the following command::
 Additionally, backport builds of the most recent release of
 scikit-learn for existing releases of Debian and Ubuntu are available
 from the `NeuroDebian repository
-<http://neuro.debian.net/pkgs/python-sklearn.html>`__ .
+<http://neuro.debian.net/pkgs/python-sklearn.html>`_ .
 
 A quick-'n'-dirty way of rolling your own ``.deb`` package
 is to `use stdeb <https://github.com/scikit-learn/scikit-learn/wiki/Quick-packaging-for-Debian-Ubuntu>`_.
 
-Python(x,y)
------------
 
-The `Python(x,y) <http://pythonxy.com>`_ distributes scikit-learn as an additional plugin, which can
-be found in the `Additional plugins <http://code.google.com/p/pythonxy/wiki/AdditionalPlugins>`_
-page.
+Python(x,y) for Windows
+-----------------------
 
-
-Enthought Python distribution
------------------------------
-
-The `Enthought Python Distribution
-<http://www.enthought.com/products/epd.php>`_ already ships a recent
-version.
+The `Python(x,y) <https://code.google.com/p/pythonxy/>`_ project distributes
+scikit-learn as an additional plugin, which can be found in the `Additional
+plugins <http://code.google.com/p/pythonxy/wiki/AdditionalPlugins>`_ page.
 
 
-MacPorts
---------
+Canopy and Anaconda for all supported platforms
+-----------------------------------------------
+
+`Canopy
+<http://www.enthought.com/products/canopy>`_ and `Anaconda
+<https://store.continuum.io/cshop/anaconda/>`_ ships a recent
+version, in addition to a large set of scientific python library.
+
+
+MacPorts for Mac OSX
+--------------------
 
 The MacPorts package is named ``py<XY>-scikits-learn``,
 where ``XY`` denotes the Python version.
@@ -239,9 +230,9 @@ Arch Linux
 ----------
 
 Arch Linux's package is provided through the `official repositories
-<https://www.archlinux.org/packages/?q=scikit-learn>`_ as `python-scikit-learn`
-for Python 3 and `python2-scikit-learn` for Python 2. It can be installed
-by typing the following command:
+<https://www.archlinux.org/packages/?q=scikit-learn>`_ as
+``python-scikit-learn`` for Python 3 and ``python2-scikit-learn`` for Python 2.
+It can be installed by typing the following command:
 
 .. code-block:: none
 
@@ -266,9 +257,9 @@ scikit-learn is available via `pkgsrc-wip <http://pkgsrc-wip.sourceforge.net/>`_
 Fedora
 ------
 
-The Fedora package is called `python-scikit-learn` for the Python 2 version
-and `python3-scikit-learn` for the Python 3 version. Both versions can
-be installed using `yum`::
+The Fedora package is called ``python-scikit-learn`` for the Python 2 version
+and ``python3-scikit-learn`` for the Python 3 version. Both versions can
+be installed using ``yum``::
 
     $ sudo yum install python-scikit-learn
 
@@ -277,12 +268,119 @@ or::
     $ sudo yum install python3-scikit-learn
 
 
+Building on windows
+===================
+
+To build scikit-learn on Windows you need a working C/C++ compiler in
+addition to numpy, scipy and setuptools.
+
+Picking the right compiler depends on the version of Python (2 or 3)
+and the architecture of the Python interpreter, 32-bit or 64-bit.
+You can check the Python version by running the following in ``cmd`` or
+``powershell`` console::
+
+    python --version
+
+and the architecture with::
+
+    python -c "import struct; print(struct.calcsize('P') * 8)"
+
+The above commands assume that you have the Python installation folder in your
+PATH environment variable.
+
+
+32-bit Python
+~~~~~~~~~~~~~
+
+For 32-bit Python it is possible use the standalone installers for
+`Microsoft Visual C++ Express 2008 <http://go.microsoft.com/?linkid=7729279>`_
+for Python 2 or
+`Microsoft Visual C++ Express 2010 <http://go.microsoft.com/?linkid=9709949>`_
+or Python 3.
+
+Once installed you should be able to build scikit-learn without any
+particular configuration by running the following command in the scikit-learn
+folder::
+
+   python setup.py install
+
+
+64-bit Python
+~~~~~~~~~~~~~
+
+For the 64-bit architecture, you either need the full Visual Studio or
+the free Windows SDKs that can be downloaded from the links below.
+
+The Windows SDKs include the MSVC compilers both for 32 and 64-bit
+architectures. They come as a ``GRMSDKX_EN_DVD.iso`` file that can be mounted
+as a new drive with a ``setup.exe`` installer in it.
+
+- For Python 2 you need SDK **v7.0**: `MS Windows SDK for Windows 7 and .NET
+  Framework 3.5 SP1
+  <http://www.microsoft.com/en-us/download/details.aspx?id=18950>`_
+
+- For Python 3 you need SDK **v7.1**: `MS Windows SDK for Windows 7 and .NET
+  Framework 4
+  <https://www.microsoft.com/en-us/download/details.aspx?id=8442>`_
+
+Both SDKs can be installed in parallel on the same host. To use the Windows
+SDKs, you need to setup the environment of a ``cmd`` console launched with the
+following flags (at least for SDK v7.0)::
+
+    cmd /E:ON /V:ON /K
+
+Then configure the build environment with::
+
+    SET DISTUTILS_USE_SDK=1
+    SET MSSdk=1
+    "C:\Program Files\Microsoft SDKs\Windows\v7.0\Setup\WindowsSdkVer.exe" -q -version:v7.0
+    "C:\Program Files\Microsoft SDKs\Windows\v7.0\Bin\SetEnv.cmd" /x64 /release
+
+Finally you can build scikit-learn in the same ``cmd`` console::
+
+    python setup.py install
+
+Replace ``v7.0`` by the ``v7.1`` in the above commands to do the same for
+Python 3 instead of Python 2.
+
+Replace ``/x64`` by ``/x86``  to build for 32-bit Python instead of 64-bit
+Python.
+
+
+Building binary packages and installers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``.whl`` package and ``.exe`` installers can be built with::
+
+    pip install wheel
+    python setup.py bdist_wheel bdist_wininst -b doc/logos/scikit-learn-logo.bmp
+
+The resulting packages are generated in the ``dist/`` folder.
+
+
+Using an alternative compiler
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+It is possible to use `MinGW <http://www.mingw.org>`_ (a port of GCC to Windows
+OS) as an alternative to MSVC for 32-bit Python. Not that extensions built with
+mingw32 can be redistributed as reusable packages as they depend on GCC runtime
+libraries typically not installed on end-users environment.
+
+To force the use of a particular compiler, pass the ``--compiler`` flag to the
+build step::
+
+    python setup.py build --compiler=my_compiler install
+
+where ``my_compiler`` should be one of ``mingw32`` or ``msvc``.
+
+
 .. _install_bleeding_edge:
 
 Bleeding Edge
 =============
 
-See section :ref:`git_repo` on how to get the development version.
+See section :ref:`git_repo` on how to get the development version. Then follow
+the previous instructions to build from source depending on your platform.
 
 
 .. _testing:
@@ -290,33 +388,38 @@ See section :ref:`git_repo` on how to get the development version.
 Testing
 =======
 
+Testing scikit-learn once installed
+-----------------------------------
+
 Testing requires having the `nose
 <http://somethingaboutorange.com/mrl/projects/nose/>`_ library. After
 installation, the package can be tested by executing *from outside* the
 source directory::
 
-    nosetests sklearn --exe
+    $ nosetests -v sklearn
+
+Under Windows, it is recommended to use the following command (adjust the path
+to the ``python.exe`` program) as using the ``nosetests.exe`` program can badly
+interact with tests that use ``multiprocessing``::
+
+    C:\Python34\python.exe -c "import nose; nose.main()" -v sklearn
 
 This should give you a lot of output (and some warnings) but
 eventually should finish with a message similar to::
 
-           Ran 601 tests in 27.920s
-           OK (SKIP=2)
+    Ran 3246 tests in 260.618s
+    OK (SKIP=20)
 
 Otherwise, please consider posting an issue into the `bug tracker
 <https://github.com/scikit-learn/scikit-learn/issues>`_ or to the
-:ref:`mailing_lists`.
+:ref:`mailing_lists` including the traceback of the individual failures
+and errors.
 
-.. note:: **Alternative testing method**
 
-   If for some reason the recommended method is failing for you, please try
-   the alternate method::
+Testing scikit-learn from within the source folder
+--------------------------------------------------
 
-    python -c "import sklearn; sklearn.test()"
-
-   This method might display doctest failures because of nosetests issues.
-
-scikit-learn can also be tested without having the package
+Scikit-learn can also be tested without having the package
 installed. For this you must compile the sources inplace from the
 source directory::
 
@@ -324,7 +427,7 @@ source directory::
 
 Test can now be run using nosetests::
 
-    nosetests sklearn/
+    nosetests -v sklearn/
 
 This is automated by the commands::
 
@@ -333,3 +436,9 @@ This is automated by the commands::
 and::
 
     make test
+
+
+You can also install a symlink named ``site-packages/scikit-learn.egg-link``
+to the development folder of scikit-learn with::
+
+    pip install --editable .

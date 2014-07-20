@@ -1,0 +1,63 @@
+# AppVeyor.com is a Continuous Integration service to build and run tests under
+# Windows
+
+environment:
+  global:
+    # SDK v7.0 MSVC Express 2008's SetEnv.cmd script will fail if the
+    # /E:ON and /V:ON options are not enabled in the batch script intepreter
+    # See: http://stackoverflow.com/a/13751649/163740
+    CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\continuous_integration\\appveyor\\run_with_env.cmd"
+
+  matrix:
+    - PYTHON: "C:\\Python27_32"
+      PYTHON_VERSION: "2.7.8"
+      PYTHON_ARCH: "32"
+
+    - PYTHON: "C:\\Python27"
+      PYTHON_VERSION: "2.7.8"
+      PYTHON_ARCH: "64"
+
+    - PYTHON: "C:\\Python34_32"
+      PYTHON_VERSION: "3.4.1"
+      PYTHON_ARCH: "32"
+
+    - PYTHON: "C:\\Python34"
+      PYTHON_VERSION: "3.4.1"
+      PYTHON_ARCH: "64"
+
+install:
+  # Install Python (from the official .msi of http://python.org) and pip when
+  # not already installed.
+  - "powershell ./continuous_integration/appveyor/install.ps1"
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+
+  # Check that we have the expected version and architecture for Python
+  - "python --version"
+  - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
+
+  # Install the build and runtime dependencies of the project.
+  - "%CMD_IN_ENV% pip install -r continuous_integration/appveyor/requirements.txt"
+  - "%CMD_IN_ENV% python setup.py bdist_wheel bdist_wininst -b doc/logos/scikit-learn-logo.bmp"
+  - ps: "ls dist"
+
+  # Install the genreated wheel package to test it
+  - "pip install --pre --no-index --find-links dist/ scikit-learn"
+
+# Not a .NET project, we build scikit-learn in the install step instead
+build: false
+
+test_script:
+  # Change to a non-source folder to make sure we run the tests on the
+  # installed library.
+  - "cd C:\\"
+
+  # Skip joblib tests that require multiprocessing as they are prone to random
+  # slow down
+  - "python -c \"import nose; nose.main()\" -v -s sklearn"
+
+artifacts:
+  # Archive the generated wheel package in the ci.appveyor.com build report.
+  - path: dist\*
+
+#on_success:
+#  - TODO: upload the content of dist/*.whl to a public wheelhouse

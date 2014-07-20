@@ -25,7 +25,7 @@ each element of the label indicator matrix as a binary prediction
 .. note::
 
     See also :func:`sklearn.metrics.roc_auc_score`,
-             :ref:`example_plot_roc_crossval.py`.
+             :ref:`example_model_selection_plot_roc_crossval.py`.
 
 """
 print(__doc__)
@@ -73,8 +73,8 @@ for i in range(n_classes):
 fpr["micro"], tpr["micro"], _ = roc_curve(y_test.ravel(), y_score.ravel())
 roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
 
-# Plot of one ROC curve
-plt.clf()
+# Plot of a ROC curve for a specific class
+plt.figure()
 plt.plot(fpr[2], tpr[2], label='ROC curve (area = %0.2f)' % roc_auc[2])
 plt.plot([0, 1], [0, 1], 'k--')
 plt.xlim([0.0, 1.0])
@@ -86,7 +86,7 @@ plt.legend(loc="lower right")
 plt.show()
 
 # Plot ROC curve
-plt.clf()
+plt.figure()
 plt.plot(fpr["micro"], tpr["micro"],
          label='micro-average ROC curve (area = {0:0.2f})'
                ''.format(roc_auc["micro"]))

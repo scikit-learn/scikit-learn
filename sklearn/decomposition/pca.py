@@ -18,7 +18,7 @@ from scipy.special import gammaln
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import array2d, check_random_state, as_float_array
-from ..utils import atleast2d_or_csr
+from ..utils import atleast2d_or_csr, check_arrays
 from ..utils import deprecated
 from ..utils.sparsefuncs import mean_variance_axis0
 from ..utils.extmath import (fast_logdet, safe_sparse_dot, randomized_svd,
@@ -484,6 +484,7 @@ class ProbabilisticPCA(PCA):
         homoscedastic : bool, optional,
             If True, average variance across remaining dimensions
         """
+        X, = check_arrays(X)
         PCA.fit(self, X)
 
         n_samples, n_features = X.shape

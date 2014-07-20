@@ -571,7 +571,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         """
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
-        if not self._label_binarizer.multilabel_:
+        if not self._label_binarizer.y_type_.startswith('multilabel'):
             y = column_or_1d(y, warn=True)
 
         if self.class_weight:
@@ -631,15 +631,12 @@ class _RidgeGCV(LinearModel):
 
     def __init__(self, alphas=[0.1, 1.0, 10.0],
                  fit_intercept=True, normalize=False,
-                 scoring=None, score_func=None,
-                 loss_func=None, copy_X=True,
+                 scoring=None, copy_X=True,
                  gcv_mode=None, store_cv_values=False):
         self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.scoring = scoring
-        self.score_func = score_func
-        self.loss_func = loss_func
         self.copy_X = copy_X
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
@@ -767,8 +764,6 @@ class _RidgeGCV(LinearModel):
         C = []
 
         scorer = check_scoring(self, scoring=self.scoring, allow_none=True,
-                               loss_func=self.loss_func,
-                               score_func=self.score_func,
                                score_overrides_loss=True)
         error = scorer is None
 
@@ -817,14 +812,12 @@ class _RidgeGCV(LinearModel):
 class _BaseRidgeCV(LinearModel):
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]),
                  fit_intercept=True, normalize=False, scoring=None,
-                 score_func=None, loss_func=None, cv=None, gcv_mode=None,
+                 cv=None, gcv_mode=None,
                  store_cv_values=False):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.scoring = scoring
-        self.score_func = score_func
-        self.loss_func = loss_func
         self.cv = cv
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
@@ -852,8 +845,6 @@ class _BaseRidgeCV(LinearModel):
                                   fit_intercept=self.fit_intercept,
                                   normalize=self.normalize,
                                   scoring=self.scoring,
-                                  score_func=self.score_func,
-                                  loss_func=self.loss_func,
                                   gcv_mode=self.gcv_mode,
                                   store_cv_values=self.store_cv_values)
             estimator.fit(X, y, sample_weight=sample_weight)
@@ -1027,14 +1018,13 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     advantage of the multi-variate response support in Ridge.
     """
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
-                 normalize=False, scoring=None, score_func=None,
-                 loss_func=None, cv=None, class_weight=None):
+                 normalize=False, scoring=None, cv=None, class_weight=None):
         super(RidgeClassifierCV, self).__init__(
             alphas=alphas, fit_intercept=fit_intercept, normalize=normalize,
-            scoring=scoring, score_func=score_func, loss_func=loss_func, cv=cv)
+            scoring=scoring, cv=cv)
         self.class_weight = class_weight
 
-    def fit(self, X, y, sample_weight=None, class_weight=None):
+    def fit(self, X, y, sample_weight=None):
         """Fit the ridge classifier.
 
         Parameters
@@ -1049,32 +1039,19 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         sample_weight : float or numpy array of shape (n_samples,)
             Sample weight.
 
-        class_weight : dict, optional
-            Weights associated with classes in the form
-            ``{class_label : weight}``. If not given, all classes are
-            supposed to have weight one. This is parameter is
-            deprecated.
-
         Returns
         -------
         self : object
             Returns self.
         """
-        if class_weight is None:
-            class_weight = self.class_weight
-        else:
-            warnings.warn("'class_weight' is now an initialization parameter."
-                          " Using it in the 'fit' method is deprecated and "
-                          "will be removed in 0.15.", DeprecationWarning,
-                          stacklevel=2)
         if sample_weight is None:
             sample_weight = 1.
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
-        if not self._label_binarizer.multilabel_:
+        if not self._label_binarizer.y_type_.startswith('multilabel'):
             y = column_or_1d(y, warn=True)
-        cw = compute_class_weight(class_weight,
+        cw = compute_class_weight(self.class_weight,
                                   self.classes_, Y)
         # modify the sample weights with the corresponding class weight
         sample_weight *= cw[np.searchsorted(self.classes_, y)]

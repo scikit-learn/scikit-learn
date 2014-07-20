@@ -7,6 +7,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_not_equal
 
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
                              log_loss)
@@ -15,14 +16,23 @@ from sklearn.metrics.scorer import check_scoring
 from sklearn.metrics import make_scorer, SCORERS
 from sklearn.svm import LinearSVC
 from sklearn.cluster import KMeans
+from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import Ridge, LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.datasets import make_blobs
+from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
 from sklearn.datasets import load_diabetes
 from sklearn.cross_validation import train_test_split, cross_val_score
 from sklearn.grid_search import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
+
+
+REGRESSION_SCORERS = ['r2', 'mean_absolute_error', 'mean_squared_error']
+CLF_SCORERS = ['accuracy', 'f1', 'roc_auc', 'average_precision', 'precision',
+               'recall', 'log_loss',
+               'adjusted_rand_score'  # not really, but works
+               ]
 
 
 class EstimatorWithoutFit(object):
@@ -229,3 +239,45 @@ def test_raises_on_score_list():
     grid_search = GridSearchCV(clf, scoring=f1_scorer_no_average,
                                param_grid={'max_depth': [1, 2]})
     assert_raises(ValueError, grid_search.fit, X, y)
+
+
+def test_scorer_sample_weight():
+    """Test that scorers support sample_weight or raise sensible errors"""
+
+    # Unlike the metrics invariance test, in the scorer case it's harder
+    # to ensure that, on the classifier output, weighted and unweighted
+    # scores really should be unequal.
+    X, y = make_classification(random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    sample_weight = np.ones_like(y_test)
+    sample_weight[:10] = 0
+
+    # get sensible estimators for each metric
+    sensible_regr = DummyRegressor(strategy='median')
+    sensible_regr.fit(X_train, y_train)
+    sensible_clf = DecisionTreeClassifier()
+    sensible_clf.fit(X_train, y_train)
+    estimator = dict([(name, sensible_regr)
+                      for name in REGRESSION_SCORERS] +
+                     [(name, sensible_clf)
+                      for name in CLF_SCORERS])
+
+    for name, scorer in SCORERS.items():
+        try:
+            weighted = scorer(estimator[name], X_test, y_test,
+                              sample_weight=sample_weight)
+            ignored = scorer(estimator[name], X_test[10:], y_test[10:])
+            unweighted = scorer(estimator[name], X_test, y_test)
+            assert_not_equal(weighted, unweighted,
+                             msg="scorer {0} behaves identically when "
+                             "called with sample weights: {1} vs "
+                             "{2}".format(name, weighted, unweighted))
+            assert_almost_equal(weighted, ignored,
+                         err_msg="scorer {0} behaves differently when "
+                         "ignoring samples and setting sample_weight to 0: "
+                         "{1} vs {2}".format(name, weighted, ignored))
+
+        except TypeError as e:
+            assert_true("sample_weight" in str(e),
+                        "scorer {0} raises unhelpful exception when called "
+                        "with sample weights: {1}".format(name, str(e)))

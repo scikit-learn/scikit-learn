@@ -16,7 +16,7 @@ For instance, in the example below, decision trees learn from data to
 approximate a sine curve with a set of if-then-else decision rules. The deeper
 the tree, the more complex the decision rules and the fitter the model.
 
-.. figure:: ../auto_examples/tree/images/plot_tree_regression_1.png
+.. figure:: ../auto_examples/tree/images/plot_tree_regression_001.png
    :target: ../auto_examples/tree/plot_tree_regression.html
    :scale: 75
    :align: center
@@ -160,7 +160,7 @@ After being fitted, the model can then be used to predict new values::
     >>> clf.predict(iris.data[0, :])
     array([0])
 
-.. figure:: ../auto_examples/tree/images/plot_iris_1.png
+.. figure:: ../auto_examples/tree/images/plot_iris_001.png
    :target: ../auto_examples/tree/plot_iris.html
    :align: center
    :scale: 75
@@ -175,7 +175,7 @@ After being fitted, the model can then be used to predict new values::
 Regression
 ==========
 
-.. figure:: ../auto_examples/tree/images/plot_tree_regression_1.png
+.. figure:: ../auto_examples/tree/images/plot_tree_regression_001.png
    :target: ../auto_examples/tree/plot_tree_regression.html
    :scale: 75
    :align: center
@@ -240,7 +240,7 @@ The use of multi-output trees for regression is demonstrated in
 :ref:`example_tree_plot_tree_regression_multioutput.py`. In this example, the input
 X is a single real value and the outputs Y are the sine and cosine of X.
 
-.. figure:: ../auto_examples/tree/images/plot_tree_regression_multioutput_1.png
+.. figure:: ../auto_examples/tree/images/plot_tree_regression_multioutput_001.png
    :target: ../auto_examples/tree/plot_tree_regression_multioutput.html
    :scale: 75
    :align: center
@@ -250,7 +250,7 @@ The use of multi-output trees for classification is demonstrated in
 X are the pixels of the upper half of faces and the outputs Y are the pixels of
 the lower half of those faces.
 
-.. figure:: ../auto_examples/images/plot_multioutput_face_completion_1.png
+.. figure:: ../auto_examples/images/plot_multioutput_face_completion_001.png
    :target: ../auto_examples/plot_multioutput_face_completion.html
    :scale: 75
    :align: center
@@ -320,8 +320,19 @@ Tips on practical use
     create arbitrary small leaves, though ``min_samples_split`` is more common
     in the literature.
 
-  * Balance your dataset before training to prevent the tree from creating
-    a tree biased toward the classes that are dominant.
+  * Balance your dataset before training to prevent the tree from being biased
+    toward the classes that are dominant. Class balancing can be done by
+    sampling an equal number of samples from each class, or preferably by
+    normalizing the sum of the sample weights (``sample_weight``) for each
+    class to the same value. Also note that weight-based pre-pruning criteria,
+    such as ``min_weight_fraction_leaf``, will then be less biased toward
+    dominant classes than criteria that are not aware of the sample weights,
+    like ``min_samples_leaf``.
+
+  * If the samples are weighted, it will be easier to optimize the tree
+    structure using weight-based pre-pruning criterion such as
+    ``min_weight_fraction_leaf``, which ensure that leaf nodes contain at least
+    a fraction of the overall sum of the sample weights.
 
   * All decision trees use ``np.float32`` arrays internally.
     If training data is not in this format, a copy of the dataset will be made.

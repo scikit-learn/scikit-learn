@@ -21,8 +21,8 @@ the second estimator approximates it almost perfectly and the last estimator
 approximates the training data perfectly but does not fit the true function
 very well, i.e. it is very sensitive to varying training data (high variance).
 
-.. figure:: ../auto_examples/images/plot_underfitting_overfitting_1.png
-   :target: ../auto_examples/plot_underfitting_overfitting.html
+.. figure:: ../auto_examples/model_selection/images/plot_underfitting_overfitting_001.png
+   :target: ../auto_examples/model_selection/plot_underfitting_overfitting.html
    :align: center
    :scale: 50%
 
@@ -41,9 +41,9 @@ this reason, it is often helpful to use the tools described below.
 
 .. topic:: Examples:
 
-   * :ref:`example_linear_model_plot_polynomial_regression.py`
-   * :ref:`example_plot_validation_curve.py`
-   * :ref:`example_plot_learning_curve.py`
+   * :ref:`example_model_selection_plot_underfitting_overfitting.py`
+   * :ref:`example_model_selection_plot_validation_curve.py`
+   * :ref:`example_model_selection_plot_learning_curve.py`
 
 
 .. _validation_curve:
@@ -98,8 +98,8 @@ training score and a high validation score is usually not possible. All three
 cases can be found in the plot below where we vary the parameter
 :math:`\gamma` of an SVM on the digits dataset.
 
-.. figure:: ../auto_examples/images/plot_validation_curve_1.png
-   :target: ../auto_examples/plot_validation_curve.html
+.. figure:: ../auto_examples/model_selection/images/plot_validation_curve_001.png
+   :target: ../auto_examples/model_selection/plot_validation_curve.html
    :align: center
    :scale: 50%
 
@@ -118,8 +118,8 @@ size of the training set, we will not benefit much from more training data.
 In the following plot you can see an example: naive Bayes roughly converges
 to a low score.
 
-.. figure:: ../auto_examples/images/plot_learning_curve_1.png
-   :target: ../auto_examples/plot_learning_curve.html
+.. figure:: ../auto_examples/model_selection/images/plot_learning_curve_001.png
+   :target: ../auto_examples/model_selection/plot_learning_curve.html
    :align: center
    :scale: 50%
 
@@ -130,8 +130,8 @@ the maximum number of training samples, adding more training samples will
 most likely increase generalization. In the following plot you can see that
 the SVM could benefit from more training examples.
 
-.. figure:: ../auto_examples/images/plot_learning_curve_2.png
-   :target: ../auto_examples/plot_learning_curve.html
+.. figure:: ../auto_examples/model_selection/images/plot_learning_curve_002.png
+   :target: ../auto_examples/model_selection/plot_learning_curve.html
    :align: center
    :scale: 50%
 

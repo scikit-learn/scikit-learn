@@ -71,19 +71,19 @@ Here is a list of incremental estimators for different tasks:
       + :class:`sklearn.decomposition.MiniBatchDictionaryLearning`
       + :class:`sklearn.cluster.MiniBatchKMeans`
 
-For classification, a somewhat important thing to note is that although a 
+For classification, a somewhat important thing to note is that although a
 stateless feature extraction routine may be able to cope with new/unseen
-attributes, the incremental learner itself may be unable to cope with 
+attributes, the incremental learner itself may be unable to cope with
 new/unseen targets classes. In this case you have to pass all the possible
 classes to the first ``partial_fit`` call using the ``classes=`` parameter.
 
 Another aspect to consider when choosing a proper algorithm is that all of them
 don't put the same importance on each example over time. Namely, the
-`Perceptron` is still sensitive to badly labeled examples even after many 
-examples whereas the `SGD*` and `PassiveAggressive*` families are more robust 
-to this kind of artifacts. Conversely, the later also tend to give less 
-importance to remarkably different, yet properly labeled examples when they 
-come late in the stream as their learning rate decreases over time. 
+``Perceptron`` is still sensitive to badly labeled examples even after many
+examples whereas the ``SGD*`` and ``PassiveAggressive*`` families are more
+robust to this kind of artifacts. Conversely, the later also tend to give less
+importance to remarkably different, yet properly labeled examples when they
+come late in the stream as their learning rate decreases over time.
 
 Examples
 --------
@@ -95,7 +95,7 @@ systems and demonstrates most of the notions discussed above.
 Furthermore, it also shows the evolution of the performance of different
 algorithms with the number of processed examples.
 
-.. |accuracy_over_time| image::  ../auto_examples/applications/images/plot_out_of_core_classification_1.png
+.. |accuracy_over_time| image::  ../auto_examples/applications/images/plot_out_of_core_classification_001.png
     :target: ../auto_examples/applications/plot_out_of_core_classification.html
     :scale: 80
 
@@ -103,11 +103,11 @@ algorithms with the number of processed examples.
 
 Now looking at the computation time of the different parts, we see that the
 vectorization is much more expensive than learning itself. From the different
-algorithms, `MultinomialNB` is the most expensive, but its overhead can be 
+algorithms, ``MultinomialNB`` is the most expensive, but its overhead can be
 mitigated by increasing the size of the mini-batches (exercise: change 
-`minibatch_size` to 100 and 10000 in the program and compare). 
+``minibatch_size`` to 100 and 10000 in the program and compare).
 
-.. |computation_time| image::  ../auto_examples/applications/images/plot_out_of_core_classification_3.png
+.. |computation_time| image::  ../auto_examples/applications/images/plot_out_of_core_classification_003.png
     :target: ../auto_examples/applications/plot_out_of_core_classification.html
     :scale: 80
 

@@ -277,14 +277,12 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
     """Base class for hyper parameter search with cross-validation."""
 
     @abstractmethod
-    def __init__(self, estimator, scoring=None, loss_func=None,
-                 score_func=None, fit_params=None, n_jobs=1, iid=True,
+    def __init__(self, estimator, scoring=None,
+                 fit_params=None, n_jobs=1, iid=True,
                  refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs'):
 
         self.scoring = scoring
         self.estimator = estimator
-        self.loss_func = loss_func
-        self.score_func = score_func
         self.n_jobs = n_jobs
         self.fit_params = fit_params if fit_params is not None else {}
         self.iid = iid
@@ -342,12 +340,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         estimator = self.estimator
         cv = self.cv
-        self.scorer_ = check_scoring(self.estimator, scoring=self.scoring,
-                                     loss_func=self.loss_func,
-                                     score_func=self.score_func)
+        self.scorer_ = check_scoring(self.estimator, scoring=self.scoring)
 
         n_samples = _num_samples(X)
-        X, y = check_arrays(X, y, allow_lists=True, sparse_format='csr',
+        X, y = check_arrays(X, y, force_arrays=False, sparse_format='csr',
                             allow_nans=True)
 
         if y is not None:
@@ -355,7 +351,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 raise ValueError('Target variable (y) has a different number '
                                  'of samples (%i) than data (X: %i samples)'
                                  % (len(y), n_samples))
-            y = np.asarray(y)
         cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
 
         if self.verbose > 0:
@@ -510,8 +505,8 @@ class GridSearchCV(BaseSearchCV):
                          degree=..., gamma=..., kernel='rbf', max_iter=-1,
                          probability=False, random_state=None, shrinking=True,
                          tol=..., verbose=False),
-           fit_params={}, iid=..., loss_func=..., n_jobs=1,
-           param_grid=..., pre_dispatch=..., refit=..., score_func=...,
+           fit_params={}, iid=..., n_jobs=1,
+           param_grid=..., pre_dispatch=..., refit=...,
            scoring=..., verbose=...)
 
 
@@ -570,11 +565,11 @@ class GridSearchCV(BaseSearchCV):
 
     """
 
-    def __init__(self, estimator, param_grid, scoring=None, loss_func=None,
-                 score_func=None, fit_params=None, n_jobs=1, iid=True,
+    def __init__(self, estimator, param_grid, scoring=None,
+                 fit_params=None, n_jobs=1, iid=True,
                  refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs'):
         super(GridSearchCV, self).__init__(
-            estimator, scoring, loss_func, score_func, fit_params, n_jobs, iid,
+            estimator, scoring, fit_params, n_jobs, iid,
             refit, cv, verbose, pre_dispatch)
         self.param_grid = param_grid
         _check_param_grid(param_grid)

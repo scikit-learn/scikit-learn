@@ -33,12 +33,12 @@ value of those metrics for random predictions.
 
 .. _scoring_parameter:
 
-The `scoring` parameter: defining model evaluation rules
-=========================================================
+The ``scoring`` parameter: defining model evaluation rules
+==========================================================
 
 Model selection and evaluation using tools, such as
 :class:`grid_search.GridSearchCV` and
-:func:`cross_validation.cross_val_score`, take a `scoring` parameter that
+:func:`cross_validation.cross_val_score`, take a ``scoring`` parameter that
 controls what metric they apply to estimators evaluated.
 
 Common cases: predefined values
@@ -266,7 +266,7 @@ In the multilabel case with binary label indicators: ::
 
 .. topic:: Example:
 
-  * See :ref:`example_plot_permutation_test_for_classification.py`
+  * See :ref:`example_feature_selection_plot_permutation_test_for_classification.py`
     for an example of accuracy score usage using permutations of
     the dataset.
 
@@ -290,24 +290,24 @@ predicted to be in group :math:`j`. Here an example of such confusion matrix::
          [1, 0, 2]])
 
 Here a visual representation of such confusion matrix (this figure comes
-from the :ref:`example_plot_confusion_matrix.py` example):
+from the :ref:`example_model_selection_plot_confusion_matrix.py` example):
 
-.. image:: ../auto_examples/images/plot_confusion_matrix_1.png
-   :target: ../auto_examples/plot_confusion_matrix.html
+.. image:: ../auto_examples/model_selection/images/plot_confusion_matrix_001.png
+   :target: ../auto_examples/model_selection/plot_confusion_matrix.html
    :scale: 75
    :align: center
 
 .. topic:: Example:
 
-  * See :ref:`example_plot_confusion_matrix.py`
+  * See :ref:`example_model_selection_plot_confusion_matrix.py`
     for an example of confusion matrix usage to evaluate the quality of the
     output of a classifier.
 
-  * See :ref:`example_plot_digits_classification.py`
+  * See :ref:`example_classification_plot_digits_classification.py`
     for an example of confusion matrix usage in the classification of
     hand-written digits.
 
-  * See :ref:`example_document_classification_20newsgroups.py`
+  * See :ref:`example_text_document_classification_20newsgroups.py`
     for an example of confusion matrix usage in the classification of text
     documents.
 
@@ -335,15 +335,15 @@ and inferred labels::
 
 .. topic:: Example:
 
-  * See :ref:`example_plot_digits_classification.py`
+  * See :ref:`example_classification_plot_digits_classification.py`
     for an example of classification report usage in the classification of the
     hand-written digits.
 
-  * See :ref:`example_document_classification_20newsgroups.py`
+  * See :ref:`example_text_document_classification_20newsgroups.py`
     for an example of classification report usage in the classification of text
     documents.
 
-  * See :ref:`example_grid_search_digits.py`
+  * See :ref:`example_model_selection_grid_search_digits.py`
     for an example of classification report usage in parameter estimation using
     grid search with a nested cross-validation.
 
@@ -477,15 +477,15 @@ binary classification and multilabel indicator format.
 
 .. topic:: Examples:
 
-  * See :ref:`example_document_classification_20newsgroups.py`
+  * See :ref:`example_text_document_classification_20newsgroups.py`
     for an example of :func:`f1_score` usage with classification of text
     documents.
 
-  * See :ref:`example_grid_search_digits.py`
+  * See :ref:`example_model_selection_grid_search_digits.py`
     for an example of :func:`precision_score` and :func:`recall_score` usage
     in parameter estimation using grid search with a nested cross-validation.
 
-  * See :ref:`example_plot_precision_recall.py`
+  * See :ref:`example_model_selection_plot_precision_recall.py`
     for an example of precision-Recall metric to evaluate the quality of the
     output of a classifier with :func:`precision_recall_curve`.
 
@@ -602,7 +602,7 @@ To make this more explicit, consider the following notation:
 * :math:`P(A, B) := \frac{\left| A \cap B \right|}{\left|A\right|}`
 * :math:`R(A, B) := \frac{\left| A \cap B \right|}{\left|B\right|}`
   (Conventions vary on handling :math:`B = \emptyset`; this implementation uses
-  :math:`R(A, B):=0`, and similar for `P`.)
+  :math:`R(A, B):=0`, and similar for :math:`P`.)
 * :math:`F_\beta(A, B) := \left(1 + \beta^2\right) \frac{P(A, B) \times R(A, B)}{\beta^2 P(A, B) + R(A, B)}`
 
 Then the metrics are defined as:
@@ -794,8 +794,8 @@ Here a small example of how to use the :func:`roc_curve` function::
 
 The following figure shows an example of such ROC curve.
 
-.. image:: ../auto_examples/images/plot_roc_1.png
-   :target: ../auto_examples/plot_roc.html
+.. image:: ../auto_examples/model_selection/images/plot_roc_001.png
+   :target: ../auto_examples/model_selection/plot_roc.html
    :scale: 75
    :align: center
 
@@ -835,18 +835,18 @@ F1 score, ROC AUC doesn't require to optimize a threshold for each label. The
 if predicted outputs have been binarized.
 
 
-.. image:: ../auto_examples/images/plot_roc_2.png
-   :target: ../auto_examples/plot_roc.html
+.. image:: ../auto_examples/model_selection/images/plot_roc_002.png
+   :target: ../auto_examples/model_selection/plot_roc.html
    :scale: 75
    :align: center
 
 .. topic:: Examples:
 
-  * See :ref:`example_plot_roc.py`
+  * See :ref:`example_model_selection_plot_roc.py`
     for an example of receiver operating characteristic (ROC) metric to
     evaluate the quality of the output of a classifier.
 
-  * See :ref:`example_plot_roc_crossval.py`
+  * See :ref:`example_model_selection_plot_roc_crossval.py`
     for an example of receiver operating characteristic (ROC) metric to
     evaluate the quality of the output of a classifier using cross-validation.
 
@@ -895,9 +895,61 @@ In the multilabel case with binary label indicators: ::
 
 .. topic:: Example:
 
-  * See :ref:`example_plot_rfe_with_cross_validation.py`
+  * See :ref:`example_feature_selection_plot_rfe_with_cross_validation.py`
     for an example of the zero one loss usage to perform recursive feature
     elimination with cross-validation.
+
+
+.. _multilabel_ranking_metrics:
+
+Multilabel ranking metrics
+--------------------------
+
+.. currentmodule:: sklearn.metrics
+
+In multilabel learning, each sample can have any number of ground truth labels
+associated with it. The goal is to give high scores and better rank to
+the ground truth labels.
+
+Label ranking average precision
+...............................
+The :func:`label_ranking_average_precision_score` function
+implements the label ranking average precision (LRAP). This metric is linked to
+the :func:`average_precision_score` function, but is based on the notion of
+label ranking instead of precision and recall.
+
+Label ranking average precision (LRAP) is the average over each ground truth
+label assigned to each sample, of the ratio of true vs. total labels with lower
+score. This metric will yield better score if you are able to give better rank
+to the labels associated to each sample. The obtained score is always strictly
+greater than 0 and the best value is 1. If there is exactly one relevant
+label per sample, label ranking average precision is equivalent to the `mean
+reciprocal rank <http://en.wikipedia.org/wiki/Mean_reciprocal_rank>`.
+
+Formally, given a binary indicator matrix of the ground truth labels
+:math:`y \in \mathcal{R}^{n_\text{samples} \times n_\text{labels}}` and the
+score associated to each label
+:math:`\hat{f} \in \mathcal{R}^{n_\text{samples} \times n_\text{labels}}`,
+the average precision is defined as
+
+.. math::
+  LRAP(y, \hat{f}) = \frac{1}{n_{\text{samples}}}
+    \sum_{i=0}^{n_{\text{samples}} - 1} \frac{1}{|y_i|}
+    \sum_{j:y_{ij} = 1} \frac{|\mathcal{L}_{ij}|}{\text{rank}_{ij}}
+
+
+with :math:`\mathcal{L}_{ij} = \left\{k: y_{ik} = 1, \hat{f}_{ik} \geq \hat{f}_{ij} \right\}`,
+:math:`\text{rank}_{ij} = \left|\left\{k: \hat{f}_{ik} \geq \hat{f}_{ij} \right\}\right|`
+and :math:`|\cdot|` is the l0 norm or the cardinality of the set.
+
+Here a small example of usage of this function::
+
+    >>> import numpy as np
+    >>> from sklearn.metrics import label_ranking_average_precision_score
+    >>> y_true = np.array([[1, 0, 0], [0, 0, 1]])
+    >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
+    >>> label_ranking_average_precision_score(y_true, y_score) # doctest: +ELLIPSIS
+    0.416...
 
 
 .. _regression_metrics:
@@ -1078,15 +1130,15 @@ When doing supervised learning, a simple sanity check consists in comparing
 one's estimator against simple rules of thumb. :class:`DummyClassifier`
 implements three such simple strategies for classification:
 
-- `stratified` generates randomly predictions by respecting the training
+- ``stratified`` generates randomly predictions by respecting the training
   set's class distribution,
-- `most_frequent` always predicts the most frequent label in the training set,
-- `uniform` generates predictions uniformly at random.
-- `constant` always predicts a constant label that is provided by the user.
+- ``most_frequent`` always predicts the most frequent label in the training set,
+- ``uniform`` generates predictions uniformly at random.
+- ``constant`` always predicts a constant label that is provided by the user.
    A major motivation of this method is F1-scoring when the positive class
    is in the minority.
 
-Note that with all these strategies, the `predict` method completely ignores
+Note that with all these strategies, the ``predict`` method completely ignores
 the input data!
 
 To illustrate :class:`DummyClassifier`, first let's create an imbalanced
@@ -1099,7 +1151,7 @@ dataset::
   >>> y[y != 1] = -1
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-Next, let's compare the accuracy of `SVC` and `most_frequent`::
+Next, let's compare the accuracy of ``SVC`` and ``most_frequent``::
 
   >>> from sklearn.dummy import DummyClassifier
   >>> from sklearn.svm import SVC
@@ -1112,7 +1164,7 @@ Next, let's compare the accuracy of `SVC` and `most_frequent`::
   >>> clf.score(X_test, y_test)  # doctest: +ELLIPSIS
   0.57...
 
-We see that `SVC` doesn't do much better than a dummy classifier. Now, let's
+We see that ``SVC`` doesn't do much better than a dummy classifier. Now, let's
 change the kernel::
 
   >>> clf = SVC(kernel='rbf', C=1).fit(X_train, y_train)
@@ -1133,9 +1185,9 @@ from class imbalance, etc...
 
 :class:`DummyRegressor` also implements three simple rules of thumb for regression:
 
-- `mean` always predicts the mean of the training targets.
-- `median` always predicts the median of the training targests.
-- `constant` always predicts a constant value that is provided by the user.
+- ``mean`` always predicts the mean of the training targets.
+- ``median`` always predicts the median of the training targests.
+- ``constant`` always predicts a constant value that is provided by the user.
 
-In all these strategies, the `predict` method completely ignores
+In all these strategies, the ``predict`` method completely ignores
 the input data.

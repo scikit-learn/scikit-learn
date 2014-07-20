@@ -119,7 +119,7 @@ for interactively exploring the relevant part for the code.
 
 Suppose we want to profile the Non Negative Matrix Factorization module
 of the scikit. Let us setup a new IPython session and load the digits
-dataset and as in the :ref:`example_plot_digits_classification.py` example::
+dataset and as in the :ref:`example_classification_plot_digits_classification.py` example::
 
   In [1]: from sklearn.decomposition import NMF
 
@@ -360,8 +360,8 @@ directory::
          7     13.61 MB -152.59 MB       del b
          8     13.61 MB    0.00 MB       return a
 
-Another useful magic that ``memory_profiler`` defines is `%memit`, which is
-analogous to `%timeit`. It can be used as follows::
+Another useful magic that ``memory_profiler`` defines is ``%memit``, which is
+analogous to ``%timeit``. It can be used as follows::
 
     In [1]: import numpy as np
 

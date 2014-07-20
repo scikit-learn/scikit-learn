@@ -38,7 +38,8 @@ except ImportError:
         See sklearn.utils.extmath.log_logistic for the log of this function.
         """
         if out is None:
-            out = np.copy(x)
+            out = np.empty(np.atleast_1d(x).shape, dtype=np.float64)
+        out[:] = x
 
         # 1 / (1 + exp(-x)) = (1 + tanh(x / 2)) / 2
         # This way of computing the logistic is both fast and stable.
@@ -47,7 +48,7 @@ except ImportError:
         out += 1
         out *= .5
 
-        return out
+        return out.reshape(np.shape(x))
 
 
 # little danse to see if np.copy has an 'order' keyword argument
@@ -196,3 +197,46 @@ except ImportError:
                 return
             indices[i:] = [indices[i] + 1] * (r - i)
             yield tuple(pool[i] for i in indices)
+
+
+try:
+    from numpy import isclose
+except ImportError:
+    def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
+        """
+        Returns a boolean array where two arrays are element-wise equal within
+        a tolerance.
+
+        This function was added to numpy v1.7.0, and the version you are
+        running has been backported from numpy v1.8.1. See its documentation
+        for more details.
+        """
+        def within_tol(x, y, atol, rtol):
+            with np.errstate(invalid='ignore'):
+                result = np.less_equal(abs(x-y), atol + rtol * abs(y))
+            if np.isscalar(a) and np.isscalar(b):
+                result = bool(result)
+            return result
+
+        x = np.array(a, copy=False, subok=True, ndmin=1)
+        y = np.array(b, copy=False, subok=True, ndmin=1)
+        xfin = np.isfinite(x)
+        yfin = np.isfinite(y)
+        if all(xfin) and all(yfin):
+            return within_tol(x, y, atol, rtol)
+        else:
+            finite = xfin & yfin
+            cond = np.zeros_like(finite, subok=True)
+            # Since we're using boolean indexing, x & y must be the same shape.
+            # Ideally, we'd just do x, y = broadcast_arrays(x, y). It's in
+            # lib.stride_tricks, though, so we can't import it here.
+            x = x * np.ones_like(cond)
+            y = y * np.ones_like(cond)
+            # Avoid subtraction with infinite/nan values...
+            cond[finite] = within_tol(x[finite], y[finite], atol, rtol)
+            # Check for equality of infinite values...
+            cond[~finite] = (x[~finite] == y[~finite])
+            if equal_nan:
+                # Make NaN == NaN
+                cond[np.isnan(x) & np.isnan(y)] = True
+            return cond

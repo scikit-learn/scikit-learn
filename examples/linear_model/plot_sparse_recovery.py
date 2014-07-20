@@ -56,6 +56,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import auc, precision_recall_curve
 from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.utils.extmath import pinvh
+from sklearn.utils import ConvergenceWarning
 
 
 def mutual_incoherence(X_relevant, X_irelevant):
@@ -137,6 +138,7 @@ for conditioning in (1, 1e-4):
     # as it is specifically set up to be challenging.
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', UserWarning)
+        warnings.simplefilter('ignore', ConvergenceWarning)
         lars_cv = LassoLarsCV(cv=6).fit(X, y)
 
     # Run the RandomizedLasso: we use a paths going down to .1*alpha_max

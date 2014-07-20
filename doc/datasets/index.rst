@@ -81,7 +81,7 @@ and pipeline on 2D data.
    load_sample_images
    load_sample_image
 
-.. image:: ../auto_examples/cluster/images/plot_color_quantization_1.png
+.. image:: ../auto_examples/cluster/images/plot_color_quantization_001.png
    :target: ../auto_examples/cluster/plot_color_quantization.html
    :scale: 30
    :align: right
@@ -108,7 +108,7 @@ Sample generators
 In addition, scikit-learn includes various random sample generators that
 can be used to build artificial datasets of controlled size and complexity.
 
-.. image:: ../auto_examples/datasets/images/plot_random_dataset_1.png
+.. image:: ../auto_examples/datasets/images/plot_random_dataset_001.png
    :target: ../auto_examples/datasets/plot_random_dataset.html
    :scale: 50
    :align: center

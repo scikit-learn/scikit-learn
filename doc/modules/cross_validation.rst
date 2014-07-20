@@ -148,10 +148,10 @@ The available cross validation iterators are introduced in the following.
 
 .. topic:: Examples
 
-    * :ref:`example_plot_roc_crossval.py`,
-    * :ref:`example_plot_rfe_with_cross_validation.py`,
-    * :ref:`example_grid_search_digits.py`,
-    * :ref:`example_grid_search_text_feature_extraction.py`,
+    * :ref:`example_model_selection_plot_roc_crossval.py`,
+    * :ref:`example_feature_selection_plot_rfe_with_cross_validation.py`,
+    * :ref:`example_model_selection_grid_search_digits.py`,
+    * :ref:`example_model_selection_grid_search_text_feature_extraction.py`,
 
 
 Cross validation iterators
@@ -216,9 +216,10 @@ Leave-One-Out - LOO
 
 :class:`LeaveOneOut` (or LOO) is a simple cross-validation. Each learning
 set is created by taking all the samples except one, the test set being
-the sample left out. Thus, for `n` samples, we have `n` different learning
-sets and `n` different tests set. This cross-validation procedure does
-not waste much data as only one sample is removed from the learning set::
+the sample left out. Thus, for :math:`n` samples, we have :math:`n` different
+training sets and :math:`n` different tests set. This cross-validation
+procedure does not waste much data as only one sample is removed from the
+training set::
 
   >>> from sklearn.cross_validation import LeaveOneOut
 
@@ -232,16 +233,18 @@ not waste much data as only one sample is removed from the learning set::
 
 
 Potential users of LOO for model selection should weigh a few known caveats. 
-When compared with *k*-fold cross validation, one builds *n* models from *n* 
-samples instead of *k* models, where *n > k*. Moreover, each is trained on *n - 1* 
-samples rather than *(k-1)n / k*. In both ways, assuming *k* is not too large 
-and *k < n*, LOO is more computationally expensive than *k*-fold cross validation.
+When compared with :math:`k`-fold cross validation, one builds :math:`n` models
+from :math:`n` samples instead of :math:`k` models, where :math:`n > k`.
+Moreover, each is trained on :math:`n - 1` samples rather than
+:math:`(k-1)n / k`. In both ways, assuming :math:`k` is not too large
+and :math:`k < n`, LOO is more computationally expensive than :math:`k`-fold
+cross validation.
 
-In terms of accuracy, LOO often results in high variance as an estimator for the 
-test error. Intuitively, since *n - 1* of 
-the *n* samples are used to build each model, models constructed from folds are 
-virtually identical to each other and to the model built from the entire training 
-set. 
+In terms of accuracy, LOO often results in high variance as an estimator for the
+test error. Intuitively, since :math:`n - 1` of
+the :math:`n` samples are used to build each model, models constructed from
+folds are virtually identical to each other and to the model built from the
+entire training set.
 
 However, if the learning curve is steep for the training size in question, 
 then 5- or 10- fold cross validation can overestimate the generalization error.
@@ -319,7 +322,7 @@ for cross-validation against time-based splits.
 
 .. warning::
 
-  Contrary to :class:`StratifiedKFold`, **the `labels` of
+  Contrary to :class:`StratifiedKFold`, **the ``labels`` of
   :class:`LeaveOneLabelOut` should not encode the target class to predict**:
   the goal of :class:`StratifiedKFold` is to rebalance dataset classes across
   the train / test split to ensure that the train and test folds have
@@ -382,48 +385,32 @@ See also
 stratified splits, *i.e* which creates splits by preserving the same
 percentage for each target class as in the complete set.
 
-.. _Bootstrap:
-
-Bootstrapping cross-validation
-------------------------------
-
-:class:`Bootstrap`
-
-Bootstrapping_ is a general statistics technique that iterates the
-computation of an estimator on a resampled dataset.
-
-The :class:`Bootstrap` iterator will generate a user defined number
-of independent train / test dataset splits. Samples are then drawn
-(with replacement) on each side of the split. It furthermore possible
-to control the size of the train and test subset to make their union
-smaller than the total dataset if it is very large.
-
-.. note::
-
-  Contrary to other cross-validation strategies, bootstrapping
-  will allow some samples to occur several times in each splits.
-
-.. _Bootstrapping: http://en.wikipedia.org/wiki/Bootstrapping_%28statistics%29
-
-  >>> bs = cross_validation.Bootstrap(9, n_iter=3, random_state=0)
-  >>> for train_index, test_index in bs:
-  ...     print("%s %s" % (train_index, test_index))
-  ...
-  [1 8 7 7 8] [0 3 0 5]
-  [5 4 2 4 2] [6 7 1 0]
-  [4 7 0 1 1] [5 3 6 5]
-
 A note on shuffling
 ===================
 
-If the data ordering is not arbitrary (e.g. samples with the same label are contiguous), shuffling it first may be essential to getting a meaningful cross-validation result. However, the opposite may be true if the samples are not independent and identically distributed. For example if samples correspond to news articles, and are ordered by their time of publication, then shuffling the data will likely lead to a model that is overfit and an inflated validation score: it will be tested on samples that are artificially similar (close in time) to training samples.
+If the data ordering is not arbitrary (e.g. samples with the same label are
+contiguous), shuffling it first may be essential to get a meaningful cross-
+validation result. However, the opposite may be true if the samples are not
+independently and identically distributed. For example, if samples correspond
+to news articles, and are ordered by their time of publication, then shuffling
+the data will likely lead to a model that is overfit and an inflated validation
+score: it will be tested on samples that are artificially similar (close in
+time) to training samples.
 
-Some cross validation iterators, such as :class:`KFold`, have an inbuilt option to shuffle the data indices before splitting them. Note that:
+Some cross validation iterators, such as :class:`KFold`, have an inbuilt option
+to shuffle the data indices before splitting them. Note that:
 
 * This consumes less memory than shuffling the data directly.
-* By default no shuffling occurs, including for the (stratified) K fold cross-validation performed by specifying ``cv=some_integer`` to :func:`cross_val_score`, grid search, etc. Keep in mind that :func:`train_test_split` still returns a random split.
-* The ``random_state`` parameter defaults to ``None``, meaning that the shuffling will be different every time ``KFold(..., shuffle=True)`` is iterated. However, ``GridSearchCV`` will use the same shuffling for each set of parameters validated by a single call to its ``fit`` method.
-* To ensure results are repeatable (*on the same platform*), use a fixed value for ``random_state``.
+* By default no shuffling occurs, including for the (stratified) K fold cross-
+  validation performed by specifying ``cv=some_integer`` to
+  :func:`cross_val_score`, grid search, etc. Keep in mind that
+  :func:`train_test_split` still returns a random split.
+* The ``random_state`` parameter defaults to ``None``, meaning that the
+  shuffling will be different every time ``KFold(..., shuffle=True)`` is
+  iterated. However, ``GridSearchCV`` will use the same shuffling for each set
+  of parameters validated by a single call to its ``fit`` method.
+* To ensure results are repeatable (*on the same platform*), use a fixed value
+  for ``random_state``.
 
 Cross validation and model selection
 ====================================

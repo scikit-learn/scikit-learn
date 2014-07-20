@@ -7,7 +7,7 @@ Model selection: choosing estimators and their parameters
 Score, and cross-validated scores
 ==================================
 
-As we have seen, every estimator exposes a `score` method that can judge
+As we have seen, every estimator exposes a ``score`` method that can judge
 the quality of the fit (or the prediction) on new data. **Bigger is
 better**.
 
@@ -53,7 +53,7 @@ Cross-validation generators
 
 
 The code above to split data in train and test sets is tedious to write.
-The `sklearn` exposes cross-validation generators to generate list
+Scikit-learn exposes cross-validation generators to generate list
 of indices for this purpose::
 
     >>> from sklearn import cross_validation
@@ -71,7 +71,7 @@ The cross-validation can then be implemented easily::
     ...          for train, test in kfold]
     [0.93489148580968284, 0.95659432387312182, 0.93989983305509184]
 
-To compute the `score` method of an estimator, the sklearn exposes
+To compute the ``score`` method of an estimator, the sklearn exposes
 a helper function::
 
     >>> cross_validation.cross_val_score(svc, X_digits, y_digits, cv=kfold, n_jobs=-1)
@@ -110,14 +110,14 @@ of the computer.
 .. topic:: **Exercise**
    :class: green
 
-   .. image:: ../../auto_examples/exercises/images/plot_cv_digits_1.png
+   .. image:: ../../auto_examples/exercises/images/plot_cv_digits_001.png
         :target: ../../auto_examples/exercises/plot_cv_digits.html
         :align: right
         :scale: 90
 
    On the digits dataset, plot the cross-validation score of a :class:`SVC`
-   estimator with an linear kernel as a function of parameter `C` (use a
-   logarithmic grid of points, from `1` to `10`).
+   estimator with an linear kernel as a function of parameter ``C`` (use a
+   logarithmic grid of points, from 1 to 10).
 
    .. literalinclude:: ../../auto_examples/exercises/plot_cv_digits.py
        :lines: 13-23
@@ -168,14 +168,14 @@ a stratified 3-fold.
         array([ 0.935...,  0.958...,  0.937...])
 
     Two cross-validation loops are performed in parallel: one by the
-    :class:`GridSearchCV` estimator to set `gamma` and the other one by
-    `cross_val_score` to measure the prediction performance of the
+    :class:`GridSearchCV` estimator to set ``gamma`` and the other one by
+    ``cross_val_score`` to measure the prediction performance of the
     estimator. The resulting scores are unbiased estimates of the
     prediction score on new data.
 
 .. warning::
 
-    You cannot nest objects with parallel computing (n_jobs different
+    You cannot nest objects with parallel computing (``n_jobs`` different
     than 1).
 
 .. _cv_estimators_tut:

@@ -8,8 +8,10 @@ Generate samples of synthetic data sets.
 
 import numbers
 import warnings
+import array
 import numpy as np
 from scipy import linalg
+import scipy.sparse as sp
 
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import array2d, check_random_state
@@ -241,7 +243,8 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
 def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
                                    n_labels=2, length=50, allow_unlabeled=True,
-                                   return_indicator=False, random_state=None):
+                                   sparse=False, return_indicator=False,
+                                   random_state=None):
     """Generate a random multilabel classification problem.
 
     For each sample, the generative process is:
@@ -275,6 +278,9 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     allow_unlabeled : bool, optional (default=True)
         If ``True``, some instances might not belong to any class.
 
+    sparse : bool, optional (default=False)
+        If ``True``, return a sparse feature matrix
+
     return_indicator : bool, optional (default=False),
         If ``True``, return ``Y`` in the binary indicator format, else
         return a tuple of lists of labels.
@@ -287,7 +293,7 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
 
     Returns
     -------
-    X : array of shape [n_samples, n_features]
+    X : array or sparse CSR matrix of shape [n_samples, n_features]
         The generated samples.
 
     Y : tuple of lists or array of shape [n_samples, n_classes]
@@ -297,6 +303,7 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     generator = check_random_state(random_state)
     p_c = generator.rand(n_classes)
     p_c /= p_c.sum()
+    cumulative_p_c = np.cumsum(p_c)
     p_w_c = generator.rand(n_features, n_classes)
     p_w_c /= np.sum(p_w_c, axis=0)
 
@@ -304,39 +311,50 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
         _, n_classes = p_w_c.shape
 
         # pick a nonzero number of labels per document by rejection sampling
-        n = n_classes + 1
-        while (not allow_unlabeled and n == 0) or n > n_classes:
-            n = generator.poisson(n_labels)
+        y_size = n_classes + 1
+        while (not allow_unlabeled and y_size == 0) or y_size > n_classes:
+            y_size = generator.poisson(n_labels)
 
         # pick n classes
-        y = []
-        while len(y) != n:
+        y = set()
+        while len(y) != y_size:
             # pick a class with probability P(c)
-            c = generator.multinomial(1, p_c).argmax()
-
-            if not c in y:
-                y.append(c)
+            c = np.searchsorted(cumulative_p_c,
+                                generator.rand(y_size - len(y)))
+            y.update(c)
+        y = list(y)
 
         # pick a non-zero document length by rejection sampling
-        k = 0
-        while k == 0:
-            k = generator.poisson(length)
+        n_words = 0
+        while n_words == 0:
+            n_words = generator.poisson(length)
 
-        # generate a document of length k words
-        x = np.zeros(n_features, dtype=int)
-        for i in range(k):
-            if len(y) == 0:
-                # if sample does not belong to any class, generate noise word
-                w = generator.randint(n_features)
-            else:
-                # pick a class and generate an appropriate word
-                c = y[generator.randint(len(y))]
-                w = generator.multinomial(1, p_w_c[:, c]).argmax()
-            x[w] += 1
+        # generate a document of length n_words
+        if len(y) == 0:
+            # if sample does not belong to any class, generate noise word
+            words = generator.randint(n_features, size=n_words)
+            return words, y
 
-        return x, y
+        # sample words with replacement from selected classes
+        cumulative_p_w_sample = p_w_c.take(y, axis=1).sum(axis=1).cumsum()
+        cumulative_p_w_sample /= cumulative_p_w_sample[-1]
+        words = np.searchsorted(cumulative_p_w_sample, generator.rand(n_words))
+        return words, y
 
-    X, Y = zip(*[sample_example() for i in range(n_samples)])
+    X_indices = array.array('i')
+    X_indptr = array.array('i', [0])
+    Y = []
+    for i in range(n_samples):
+        words, y = sample_example()
+        X_indices.extend(words)
+        X_indptr.append(len(X_indices))
+        Y.append(y)
+    X_data = np.ones(len(X_indices), dtype=np.float64)
+    X = sp.csr_matrix((X_data, X_indices, X_indptr),
+                      shape=(n_samples, n_features))
+    X.sum_duplicates()
+    if not sparse:
+        X = X.toarray()
 
     if return_indicator:
         lb = MultiLabelBinarizer()
@@ -349,7 +367,7 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
                       '0.17.',
                       DeprecationWarning)
 
-    return np.array(X, dtype=np.float64), Y
+    return X, Y
 
 
 def make_hastie_10_2(n_samples=12000, random_state=None):

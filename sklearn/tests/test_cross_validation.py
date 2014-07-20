@@ -17,6 +17,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
 from sklearn import cross_validation as cval
 from sklearn.base import BaseEstimator
@@ -24,9 +25,7 @@ from sklearn.datasets import make_regression
 from sklearn.datasets import load_digits
 from sklearn.datasets import load_iris
 from sklearn.metrics import accuracy_score
-from sklearn.metrics import f1_score
 from sklearn.metrics import explained_variance_score
-from sklearn.metrics import fbeta_score
 from sklearn.metrics import make_scorer
 
 from sklearn.externals import six
@@ -37,30 +36,6 @@ from sklearn.svm import SVC
 
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
-
-
-class MockListClassifier(BaseEstimator):
-    """Dummy classifier to test the cross-validation.
-
-    Checks that GridSearchCV didn't convert X to array.
-    """
-    def __init__(self, foo_param=0):
-        self.foo_param = foo_param
-
-    def fit(self, X, Y):
-        assert_true(len(X) == len(Y))
-        assert_true(isinstance(X, list))
-        return self
-
-    def predict(self, T):
-        return T.shape[0]
-
-    def score(self, X=None, Y=None):
-        if self.foo_param > 1:
-            score = 1.
-        else:
-            score = 0.
-        return score
 
 
 class MockClassifier(BaseEstimator):
@@ -510,8 +485,12 @@ def test_cross_val_score():
         assert_array_equal(scores, clf.score(X_sparse, X))
 
     # test with X and y as list
-    clf = MockListClassifier()
+    list_check = lambda x: isinstance(x, list)
+    clf = CheckingClassifier(check_X=list_check)
     scores = cval.cross_val_score(clf, X.tolist(), y.tolist())
+
+    clf = CheckingClassifier(check_y=list_check)
+    scores = cval.cross_val_score(clf, X, y.tolist())
 
     assert_raises(ValueError, cval.cross_val_score, clf, X, y,
                   scoring="sklearn")
@@ -523,6 +502,35 @@ def test_cross_val_score():
 
     clf = MockClassifier(allow_nd=False)
     assert_raises(ValueError, cval.cross_val_score, clf, X_3d, y)
+
+
+def test_cross_val_score_pandas():
+    # check cross_val_score doesn't destroy pandas dataframe
+    types = [(MockDataFrame, MockDataFrame)]
+    try:
+        from pandas import Series, DataFrame
+        types.append((Series, DataFrame))
+    except ImportError:
+        pass
+    for TargetType, InputFeatureType in types:
+        # X dataframe, y series
+        X_df, y_ser = InputFeatureType(X), TargetType(y)
+        check_df = lambda x: isinstance(x, InputFeatureType)
+        check_series = lambda x: isinstance(x, TargetType)
+        clf = CheckingClassifier(check_X=check_df, check_y=check_series)
+        cval.cross_val_score(clf, X_df, y_ser)
+
+
+def test_cross_val_score_mask():
+    # test that cross_val_score works with boolean masks
+    svm = SVC(kernel="linear")
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    cv_indices = cval.KFold(len(y), 5, indices=True)
+    scores_indices = cval.cross_val_score(svm, X, y, cv=cv_indices)
+    cv_masks = cval.KFold(len(y), 5, indices=False)
+    scores_masks = cval.cross_val_score(svm, X, y, cv=cv_masks)
+    assert_array_equal(scores_indices, scores_masks)
 
 
 def test_cross_val_score_precomputed():
@@ -564,7 +572,8 @@ def test_cross_val_score_score_func():
         return 1.0
 
     with warnings.catch_warnings(record=True):
-        score = cval.cross_val_score(clf, X, y, score_func=score_func)
+        scoring = make_scorer(score_func)
+        score = cval.cross_val_score(clf, X, y, scoring=scoring)
     assert_array_equal(score, [1.0, 1.0, 1.0])
     assert len(_score_func_args) == 3
 
@@ -596,7 +605,7 @@ def test_train_test_split():
     X = np.arange(100).reshape((10, 10))
     X_s = coo_matrix(X)
     y = range(10)
-    split = cval.train_test_split(X, X_s, y)
+    split = cval.train_test_split(X, X_s, y, force_arrays=True)
     X_train, X_test, X_s_train, X_s_test, y_train, y_test = split
     assert_array_equal(X_train, X_s_train.toarray())
     assert_array_equal(X_test, X_s_test.toarray())
@@ -605,6 +614,38 @@ def test_train_test_split():
     split = cval.train_test_split(X, y, test_size=None, train_size=.5)
     X_train, X_test, y_train, y_test = split
     assert_equal(len(y_test), len(y_train))
+
+    split = cval.train_test_split(X, X_s, y)
+    X_train, X_test, X_s_train, X_s_test, y_train, y_test = split
+    assert_true(isinstance(y_train, list))
+    assert_true(isinstance(y_test, list))
+
+
+def train_test_split_pandas():
+    # check cross_val_score doesn't destroy pandas dataframe
+    types = [MockDataFrame]
+    try:
+        from pandas import DataFrame
+        types.append(DataFrame)
+    except ImportError:
+        pass
+    for InputFeatureType in types:
+        # X dataframe
+        X_df = InputFeatureType(X)
+        X_train, X_test = cval.train_test_split(X_df)
+        assert_true(isinstance(X_train, InputFeatureType))
+        assert_true(isinstance(X_test, InputFeatureType))
+
+
+def train_test_split_mock_pandas():
+    # X mock dataframe
+    X_df = MockDataFrame(X)
+    X_train, X_test = cval.train_test_split(X_df)
+    assert_true(isinstance(X_train, MockDataFrame))
+    assert_true(isinstance(X_test, MockDataFrame))
+    X_train_array, X_test_array = cval.train_test_split(X_df, force_arrays=True)
+    assert_true(isinstance(X_train_array, np.ndarray))
+    assert_true(isinstance(X_test_array, np.ndarray))
 
 
 def test_cross_val_score_with_score_func_classification():
@@ -625,11 +666,6 @@ def test_cross_val_score_with_score_func_classification():
     # score
     f1_scores = cval.cross_val_score(clf, iris.data, iris.target,
                                      scoring="f1", cv=5)
-    assert_array_almost_equal(f1_scores, [0.97, 1., 0.97, 0.97, 1.], 2)
-    # also test deprecated old way
-    with warnings.catch_warnings(record=True):
-        f1_scores = cval.cross_val_score(clf, iris.data, iris.target,
-                                         score_func=f1_score, cv=5)
     assert_array_almost_equal(f1_scores, [0.97, 1., 0.97, 0.97, 1.], 2)
 
 
@@ -654,9 +690,8 @@ def test_cross_val_score_with_score_func_regression():
     assert_array_almost_equal(mse_scores, expected_mse, 2)
 
     # Explained variance
-    with warnings.catch_warnings(record=True):
-        ev_scores = cval.cross_val_score(reg, X, y, cv=5,
-                                         score_func=explained_variance_score)
+    scoring = make_scorer(explained_variance_score)
+    ev_scores = cval.cross_val_score(reg, X, y, cv=5, scoring=scoring)
     assert_array_almost_equal(ev_scores, [0.94, 0.97, 0.97, 0.99, 0.92], 2)
 
 
@@ -669,47 +704,43 @@ def test_permutation_score():
     cv = cval.StratifiedKFold(y, 2)
 
     score, scores, pvalue = cval.permutation_test_score(
-        svm, X, y, cv=cv, scoring="accuracy")
+        svm, X, y, n_permutations=30, cv=cv, scoring="accuracy")
     assert_greater(score, 0.9)
     assert_almost_equal(pvalue, 0.0, 1)
 
     score_label, _, pvalue_label = cval.permutation_test_score(
-        svm, X, y, cv=cv, scoring="accuracy", labels=np.ones(y.size),
-        random_state=0)
+        svm, X, y, n_permutations=30, cv=cv, scoring="accuracy",
+        labels=np.ones(y.size), random_state=0)
     assert_true(score_label == score)
     assert_true(pvalue_label == pvalue)
-
-    # test with custom scoring object
-    scorer = make_scorer(fbeta_score, beta=2)
-    score_label, _, pvalue_label = cval.permutation_test_score(
-        svm, X, y, scoring=scorer, cv=cv, labels=np.ones(y.size),
-        random_state=0)
-    assert_almost_equal(score_label, .97, 2)
-    assert_almost_equal(pvalue_label, 0.01, 3)
 
     # check that we obtain the same results with a sparse representation
     svm_sparse = SVC(kernel='linear')
     cv_sparse = cval.StratifiedKFold(y, 2)
     score_label, _, pvalue_label = cval.permutation_test_score(
-        svm_sparse, X_sparse, y, cv=cv_sparse,
+        svm_sparse, X_sparse, y, n_permutations=30, cv=cv_sparse,
         scoring="accuracy", labels=np.ones(y.size), random_state=0)
 
     assert_true(score_label == score)
     assert_true(pvalue_label == pvalue)
 
+    # test with custom scoring object
+    def custom_score(y_true, y_pred):
+        return (((y_true == y_pred).sum() - (y_true != y_pred).sum())
+                / y_true.shape[0])
+
+    scorer = make_scorer(custom_score)
+    score, _, pvalue = cval.permutation_test_score(
+        svm, X, y, n_permutations=100, scoring=scorer, cv=cv, random_state=0)
+    assert_almost_equal(score, .93, 2)
+    assert_almost_equal(pvalue, 0.01, 3)
+
     # set random y
     y = np.mod(np.arange(len(y)), 3)
 
-    score, scores, pvalue = cval.permutation_test_score(svm, X, y, cv=cv,
-                                                        scoring="accuracy")
+    score, scores, pvalue = cval.permutation_test_score(
+        svm, X, y, n_permutations=30, cv=cv, scoring="accuracy")
 
-    assert_less(score, 0.5)
-    assert_greater(pvalue, 0.2)
-
-    # test with deprecated interface
-    with warnings.catch_warnings(record=True):
-        score, scores, pvalue = cval.permutation_test_score(
-            svm, X, y, score_func=accuracy_score, cv=cv)
     assert_less(score, 0.5)
     assert_greater(pvalue, 0.2)
 
@@ -757,7 +788,8 @@ def test_cross_val_generator_with_indices():
                         labels, indices=True)
     lopo = assert_warns(DeprecationWarning, cval.LeavePLabelOut,
                         labels, 2, indices=True)
-    b = cval.Bootstrap(2)  # only in index mode
+    # Bootstrap as a cross-validation is deprecated
+    b = assert_warns(DeprecationWarning, cval.Bootstrap, 2)
     ss = assert_warns(DeprecationWarning, cval.ShuffleSplit,
                       2, indices=True)
     for cv in [loo, lpo, kf, skf, lolo, lopo, b, ss]:
@@ -768,6 +800,7 @@ def test_cross_val_generator_with_indices():
             y_train, y_test = y[train], y[test]
 
 
+@ignore_warnings
 def test_cross_val_generator_with_default_indices():
     X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     y = np.array([1, 1, 2, 2])
@@ -817,13 +850,17 @@ def test_cross_val_generator_mask_indices_same():
             assert_array_equal(np.where(test_mask)[0], test_ind)
 
 
+@ignore_warnings
 def test_bootstrap_errors():
     assert_raises(ValueError, cval.Bootstrap, 10, train_size=100)
     assert_raises(ValueError, cval.Bootstrap, 10, test_size=100)
     assert_raises(ValueError, cval.Bootstrap, 10, train_size=1.1)
     assert_raises(ValueError, cval.Bootstrap, 10, test_size=1.1)
+    assert_raises(ValueError, cval.Bootstrap, 10, train_size=0.6,
+                  test_size=0.5)
 
 
+@ignore_warnings
 def test_bootstrap_test_sizes():
     assert_equal(cval.Bootstrap(10, test_size=0.2).test_size, 2)
     assert_equal(cval.Bootstrap(10, test_size=2).test_size, 2)
@@ -907,7 +944,7 @@ def test_train_test_split_allow_nans():
     X = np.arange(200, dtype=np.float64).reshape(10, -1)
     X[2, :] = np.nan
     y = np.repeat([0, 1], X.shape[0]/2)
-    split = cval.train_test_split(X, y, test_size=0.2, random_state=42)
+    cval.train_test_split(X, y, test_size=0.2, random_state=42)
 
 
 def test_permutation_test_score_allow_nans():

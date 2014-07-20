@@ -262,7 +262,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
             Data matrix or, if affinity is ``precomputed``, matrix of
             similarities / affinities.
         """
-
+        X = np.asarray(X)
         if self.affinity == "precomputed":
             self.affinity_matrix_ = X
         elif self.affinity == "euclidean":

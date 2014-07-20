@@ -181,7 +181,7 @@ in bias::
     >>> scores.mean() > 0.999
     True
 
-.. figure:: ../auto_examples/ensemble/images/plot_forest_iris_1.png
+.. figure:: ../auto_examples/ensemble/images/plot_forest_iris_001.png
     :target: ../auto_examples/ensemble/plot_forest_iris.html
     :align: center
     :scale: 75%
@@ -257,7 +257,7 @@ The following example shows a color-coded representation of the relative
 importances of each individual pixel for a face recognition task using
 a :class:`ExtraTreesClassifier` model.
 
-.. figure:: ../auto_examples/ensemble/images/plot_forest_importances_faces_1.png
+.. figure:: ../auto_examples/ensemble/images/plot_forest_importances_faces_001.png
    :target: ../auto_examples/ensemble/plot_forest_importances_faces.html
    :align: center
    :scale: 75
@@ -333,7 +333,7 @@ ever-increasing influence. Each subsequent weak learner is thereby forced to
 concentrate on the examples that are missed by the previous ones in the sequence
 [HTF]_.
 
-.. figure:: ../auto_examples/ensemble/images/plot_adaboost_hastie_10_2_1.png
+.. figure:: ../auto_examples/ensemble/images/plot_adaboost_hastie_10_2_001.png
    :target: ../auto_examples/ensemble/plot_adaboost_hastie_10_2.html
    :align: center
    :scale: 75
@@ -497,7 +497,7 @@ to determine the optimal number of trees (i.e. ``n_estimators``) by early stoppi
 The plot on the right shows the feature importances which can be obtained via
 the ``feature_importances_`` property.
 
-.. figure:: ../auto_examples/ensemble/images/plot_gradient_boosting_regression_1.png
+.. figure:: ../auto_examples/ensemble/images/plot_gradient_boosting_regression_001.png
    :target: ../auto_examples/ensemble/plot_gradient_boosting_regression.html
    :align: center
    :scale: 75
@@ -694,7 +694,7 @@ outperforms no-shrinkage. Subsampling with shrinkage can further increase
 the accuracy of the model. Subsampling without shrinkage, on the other hand,
 does poorly.
 
-.. figure:: ../auto_examples/ensemble/images/plot_gradient_boosting_regularization_1.png
+.. figure:: ../auto_examples/ensemble/images/plot_gradient_boosting_regularization_001.png
    :target: ../auto_examples/ensemble/plot_gradient_boosting_regularization.html
    :align: center
    :scale: 75
@@ -785,7 +785,7 @@ usually chosen among the most important features.
 The Figure below shows four one-way and one two-way partial dependence plots
 for the California housing dataset:
 
-.. figure:: ../auto_examples/ensemble/images/plot_partial_dependence_1.png
+.. figure:: ../auto_examples/ensemble/images/plot_partial_dependence_001.png
    :target: ../auto_examples/ensemble/plot_partial_dependence.html
    :align: center
    :scale: 70

@@ -20,7 +20,7 @@ def _isotonic_regression(np.ndarray[DOUBLE, ndim=1] y,
                          np.ndarray[DOUBLE, ndim=1] weight,
                          np.ndarray[DOUBLE, ndim=1] solution):
     cdef:
-        DOUBLE numerator, denominator
+        DOUBLE numerator, denominator, ratio
         Py_ssize_t i, pooled, n, k
 
     n = y.shape[0]
@@ -59,8 +59,9 @@ def _isotonic_regression(np.ndarray[DOUBLE, ndim=1] y,
                 for j in range(i, k + 1):
                     numerator += solution[j] * weight[j]
                     denominator += weight[j]
+                ratio = numerator / denominator
                 for j in range(i, k + 1):
-                    solution[j] = numerator / denominator
+                    solution[j] = ratio
                 pooled = 1
             i = k + 1
         # Check for convergence

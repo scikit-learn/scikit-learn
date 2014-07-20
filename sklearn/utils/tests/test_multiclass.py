@@ -4,6 +4,13 @@ from functools import partial
 from sklearn.externals.six.moves import xrange
 from sklearn.externals.six import iteritems
 
+from scipy.sparse import issparse
+from scipy.sparse import csc_matrix
+from scipy.sparse import csr_matrix
+from scipy.sparse import coo_matrix
+from scipy.sparse import dok_matrix
+from scipy.sparse import lil_matrix
+
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
@@ -18,19 +25,34 @@ from sklearn.utils.multiclass import is_multilabel
 from sklearn.utils.multiclass import is_sequence_of_sequences
 from sklearn.utils.multiclass import type_of_target
 
+class NotAnArray(object):
+    """An object that is convertable to an array. This is useful to
+    simulate a Pandas timeseries."""
+
+    def __init__(self, data):
+        self.data = data
+
+    def __array__(self):
+        return self.data
+
+
 EXAMPLES = {
     'multilabel-indicator': [
-        np.random.RandomState(42).randint(2, size=(10, 10)),
-        np.array([[0, 1], [1, 0]]),
-        np.array([[0, 1], [1, 0]], dtype=np.bool),
-        np.array([[0, 1], [1, 0]], dtype=np.int8),
-        np.array([[0, 1], [1, 0]], dtype=np.uint8),
-        np.array([[0, 1], [1, 0]], dtype=np.float),
-        np.array([[0, 1], [1, 0]], dtype=np.float32),
-        np.array([[0, 0], [0, 0]]),
+        # valid when the data is formated as sparse or dense, identified
+        # by CSR format when the testing takes place
+        csr_matrix(np.random.RandomState(42).randint(2, size=(10, 10))),
+        csr_matrix(np.array([[0, 1], [1, 0]])),
+        csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.bool)),
+        csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.int8)),
+        csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.uint8)),
+        csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.float)),
+        csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.float32)),
+        csr_matrix(np.array([[0, 0], [0, 0]])),
+        csr_matrix(np.array([[0, 1]])),
+        # Only valid when data is dense
         np.array([[-1, 1], [1, -1]]),
         np.array([[-3, 3], [3, -3]]),
-        np.array([[0, 1]]),
+        NotAnArray(np.array([[-3, 3], [3, -3]])),
     ],
     'multilabel-sequences': [
         [[0, 1]],
@@ -42,6 +64,7 @@ EXAMPLES = {
         [[]],
         [()],
         np.array([[], [1, 2]], dtype='object'),
+        NotAnArray(np.array([[], [1, 2]], dtype='object')),
     ],
     'multiclass': [
         [1, 0, 2, 2, 1, 4, 2, 4, 4, 4],
@@ -51,6 +74,7 @@ EXAMPLES = {
         np.array([1, 0, 2], dtype=np.float),
         np.array([1, 0, 2], dtype=np.float32),
         np.array([[1], [0], [2]]),
+        NotAnArray(np.array([1, 0, 2])),
         [0, 1, 2],
         ['a', 'b', 'c'],
         np.array([u'a', u'b', u'c']),
@@ -67,6 +91,7 @@ EXAMPLES = {
         np.array([[u'a', u'b'], [u'c', u'd']]),
         np.array([[u'a', u'b'], [u'c', u'd']], dtype=object),
         np.array([[1, 0, 2]]),
+        NotAnArray(np.array([[1, 0, 2]])),
     ],
     'binary': [
         [0, 1],
@@ -80,6 +105,7 @@ EXAMPLES = {
         np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=np.float),
         np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=np.float32),
         np.array([[0], [1]]),
+        NotAnArray(np.array([[0], [1]])),
         [1, -1],
         [3, 5],
         ['a'],
@@ -114,6 +140,7 @@ EXAMPLES = {
         [{0: 'a', 1: 'b'}, {0: 'a'}],
     ]
 }
+
 
 NON_ARRAY_LIKE_EXAMPLES = [
     set([1, 2, 3]),
@@ -196,14 +223,14 @@ def test_unique_labels_non_specific():
 
 @ignore_warnings
 def test_unique_labels_mixed_types():
-    #Mix of multilabel-indicator and multilabel-sequences
+    # Mix of multilabel-indicator and multilabel-sequences
     mix_multilabel_format = product(EXAMPLES["multilabel-indicator"],
                                     EXAMPLES["multilabel-sequences"])
     for y_multilabel, y_multiclass in mix_multilabel_format:
         assert_raises(ValueError, unique_labels, y_multiclass, y_multilabel)
         assert_raises(ValueError, unique_labels, y_multilabel, y_multiclass)
 
-    #Mix with binary or multiclass and multilabel
+    # Mix with binary or multiclass and multilabel
     mix_clf_format = product(EXAMPLES["multilabel-indicator"] +
                              EXAMPLES["multilabel-sequences"],
                              EXAMPLES["multiclass"] +
@@ -239,14 +266,43 @@ def test_is_multilabel():
 
 def test_is_label_indicator_matrix():
     for group, group_examples in iteritems(EXAMPLES):
-        if group == 'multilabel-indicator':
-            assert_, exp = assert_true, 'True'
+        if group in ['multilabel-indicator']:
+            dense_assert_, dense_exp = assert_true, 'True'
         else:
-            assert_, exp = assert_false, 'False'
+            dense_assert_, dense_exp = assert_false, 'False'
+
         for example in group_examples:
-            assert_(is_label_indicator_matrix(example),
-                    msg='is_label_indicator_matrix(%r) should be %s'
-                    % (example, exp))
+            # Only mark explicitly defined sparse examples as valid sparse
+            # multilabel-indicators
+            if group == 'multilabel-indicator' and issparse(example):
+                sparse_assert_, sparse_exp = assert_true, 'True'
+            else:
+                sparse_assert_, sparse_exp = assert_false, 'False'
+
+            if (issparse(example) or
+                (hasattr(example, '__array__') and
+                 np.asarray(example).ndim == 2 and
+                 np.asarray(example).dtype.kind in 'biuf' and
+                 np.asarray(example).shape[1] > 0)):
+                    examples_sparse = [sparse_matrix(example)
+                                       for sparse_matrix in [coo_matrix,
+                                                             csc_matrix,
+                                                             csr_matrix,
+                                                             dok_matrix,
+                                                             lil_matrix]]
+                    for exmpl_sparse in examples_sparse:
+                        sparse_assert_(is_label_indicator_matrix(exmpl_sparse),
+                                       msg=('is_label_indicator_matrix(%r)'
+                                       ' should be %s')
+                                       % (exmpl_sparse, sparse_exp))
+
+            # Densify sparse examples before testing
+            if issparse(example):
+                example = example.toarray()
+
+            dense_assert_(is_label_indicator_matrix(example),
+                          msg='is_label_indicator_matrix(%r) should be %s'
+                          % (example, dense_exp))
 
 
 def test_is_sequence_of_sequences():
@@ -274,3 +330,8 @@ def test_type_of_target():
 
     for example in NON_ARRAY_LIKE_EXAMPLES:
         assert_raises(ValueError, type_of_target, example)
+
+
+if __name__ == "__main__":
+    import nose
+    nose.runmodule()

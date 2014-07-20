@@ -366,6 +366,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
             self.classes_ = None
 
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
+        y, = check_arrays(y)
         n_samples, n_features = X.shape
 
         # labels can be encoded as float, int, or string literals
@@ -974,7 +975,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
     penalty : str, 'l2' or 'l1' or 'elasticnet'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
         which is the standard regularizer for linear SVM models. 'l1' and
-        'elasticnet' migh bring sparsity to the model (feature selection)
+        'elasticnet' might bring sparsity to the model (feature selection)
         not achievable with 'l2'.
 
     alpha : float

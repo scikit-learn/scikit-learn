@@ -377,7 +377,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         # In binary case, we need to flip the sign of coef, intercept and
         # decision function.
         if self._impl in ['c_svc', 'nu_svc'] and len(self.classes_) == 2:
-            return -dec_func
+            return -dec_func.ravel()
 
         return dec_func
 
@@ -694,23 +694,22 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         # LibLinear wants targets as doubles, even for classification
         y_ind = np.asarray(y_ind, dtype=np.float64).ravel()
-        self.raw_coef_ = liblinear.train_wrap(X, y_ind,
-                                              sp.isspmatrix(X),
-                                              self._get_solver_type(),
-                                              self.tol, self._get_bias(),
-                                              self.C,
-                                              self.class_weight_,
-                                              rnd.randint(np.iinfo('i').max))
+        raw_coef_ = liblinear.train_wrap(X, y_ind,
+                                         sp.isspmatrix(X),
+                                         self._get_solver_type(),
+                                         self.tol, self._get_bias(),
+                                         self.C, self.class_weight_,
+                                         rnd.randint(np.iinfo('i').max))
         # Regarding rnd.randint(..) in the above signature:
         # seed for srand in range [0..INT_MAX); due to limitations in Numpy
         # on 32-bit platforms, we can't get to the UINT_MAX limit that
         # srand supports
 
         if self.fit_intercept:
-            self.coef_ = self.raw_coef_[:, :-1]
-            self.intercept_ = self.intercept_scaling * self.raw_coef_[:, -1]
+            self.coef_ = raw_coef_[:, :-1]
+            self.intercept_ = self.intercept_scaling * raw_coef_[:, -1]
         else:
-            self.coef_ = self.raw_coef_
+            self.coef_ = raw_coef_
             self.intercept_ = 0.
 
         if self.multi_class == "crammer_singer" and len(self.classes_) == 2:

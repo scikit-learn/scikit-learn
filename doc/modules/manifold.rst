@@ -20,7 +20,7 @@ Manifold learning
 
 
 
-.. figure:: ../auto_examples/manifold/images/plot_compare_methods_1.png
+.. figure:: ../auto_examples/manifold/images/plot_compare_methods_001.png
    :target: ../auto_examples/manifold/plot_compare_methods.html
    :align: center
    :scale: 60
@@ -46,11 +46,11 @@ to be desired.  In a random projection, it is likely that the more
 interesting structure within the data will be lost.
 
 
-.. |digits_img| image:: ../auto_examples/manifold/images/plot_lle_digits_1.png
+.. |digits_img| image:: ../auto_examples/manifold/images/plot_lle_digits_001.png
     :target: ../auto_examples/manifold/plot_lle_digits.html
     :scale: 50
 
-.. |projected_img| image::  ../auto_examples/manifold/images/plot_lle_digits_2.png
+.. |projected_img| image::  ../auto_examples/manifold/images/plot_lle_digits_002.png
     :target: ../auto_examples/manifold/plot_lle_digits.html
     :scale: 50
 
@@ -66,11 +66,11 @@ These methods can be powerful, but often miss important non-linear
 structure in the data.
 
 
-.. |PCA_img| image:: ../auto_examples/manifold/images/plot_lle_digits_3.png
+.. |PCA_img| image:: ../auto_examples/manifold/images/plot_lle_digits_003.png
     :target: ../auto_examples/manifold/plot_lle_digits.html
     :scale: 50
 
-.. |LDA_img| image::  ../auto_examples/manifold/images/plot_lle_digits_4.png
+.. |LDA_img| image::  ../auto_examples/manifold/images/plot_lle_digits_004.png
     :target: ../auto_examples/manifold/plot_lle_digits.html
     :scale: 50
 
@@ -106,7 +106,7 @@ Isomap seeks a lower-dimensional embedding which maintains geodesic
 distances between all points.  Isomap can be performed with the object
 :class:`Isomap`.
 
-.. figure:: ../auto_examples/manifold/images/plot_lle_digits_5.png
+.. figure:: ../auto_examples/manifold/images/plot_lle_digits_005.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
    :scale: 50
@@ -162,7 +162,7 @@ Locally linear embedding can be performed with function
 :func:`locally_linear_embedding` or its object-oriented counterpart
 :class:`LocallyLinearEmbedding`.
 
-.. figure:: ../auto_examples/manifold/images/plot_lle_digits_6.png
+.. figure:: ../auto_examples/manifold/images/plot_lle_digits_006.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
    :scale: 50
@@ -216,7 +216,7 @@ linear embedding* (MLLE).  MLLE can be  performed with function
 :class:`LocallyLinearEmbedding`, with the keyword ``method = 'modified'``.
 It requires ``n_neighbors > n_components``.
 
-.. figure:: ../auto_examples/manifold/images/plot_lle_digits_7.png
+.. figure:: ../auto_examples/manifold/images/plot_lle_digits_007.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
    :scale: 50
@@ -266,7 +266,7 @@ for small output dimension.  HLLE can be  performed with function
 :class:`LocallyLinearEmbedding`, with the keyword ``method = 'hessian'``.
 It requires ``n_neighbors > n_components * (n_components + 3) / 2``.
 
-.. figure:: ../auto_examples/manifold/images/plot_lle_digits_8.png
+.. figure:: ../auto_examples/manifold/images/plot_lle_digits_008.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
    :scale: 50
@@ -358,7 +358,7 @@ tangent spaces to learn the embedding.  LTSA can be performed with function
 :func:`locally_linear_embedding` or its object-oriented counterpart
 :class:`LocallyLinearEmbedding`, with the keyword ``method = 'ltsa'``.
 
-.. figure:: ../auto_examples/manifold/images/plot_lle_digits_9.png
+.. figure:: ../auto_examples/manifold/images/plot_lle_digits_009.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
    :scale: 50
@@ -416,7 +416,7 @@ vision, the algorithms will try to preserve the order of the distances, and
 hence seek for a monotonic relationship between the distances in the embedded
 space and the similarities/dissimilarities.
 
-.. figure:: ../auto_examples/manifold/images/plot_lle_digits_10.png
+.. figure:: ../auto_examples/manifold/images/plot_lle_digits_010.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
    :scale: 50
@@ -431,7 +431,7 @@ stress, is then defined by :math:`sum_{i < j} d_{ij}(X) - \hat{d}_{ij}(X)`
 Metric MDS
 ----------
 
-The simplest metric :class:`MDS` model, called `absolute MDS`, disparities are defined by
+The simplest metric :class:`MDS` model, called *absolute MDS*, disparities are defined by
 :math:`\hat{d}_{ij} = S_{ij}`. With absolute MDS, the value :math:`S_{ij}`
 should then correspond exactly to the distance between point :math:`i` and
 :math:`j` in the embedding point.
@@ -451,7 +451,7 @@ A trivial solution to this problem is to set all the points on the origin. In
 order to avoid that, the disparities :math:`\hat{d}_{ij}` are normalized.
 
 
-.. figure:: ../auto_examples/manifold/images/plot_mds_1.png
+.. figure:: ../auto_examples/manifold/images/plot_mds_001.png
    :target: ../auto_examples/manifold/plot_mds.html
    :align: center
    :scale: 60
@@ -487,7 +487,7 @@ of the KL divergence. Hence, it is sometimes useful to try different seeds
 and select the embedding with the lowest KL divergence.
 
 
-.. figure:: ../auto_examples/manifold/images/plot_lle_digits_13.png
+.. figure:: ../auto_examples/manifold/images/plot_lle_digits_013.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
    :scale: 50

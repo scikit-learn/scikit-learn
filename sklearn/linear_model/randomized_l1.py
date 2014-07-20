@@ -8,6 +8,7 @@ sparse Logistic Regression
 # License: BSD 3 clause
 import itertools
 from abc import ABCMeta, abstractmethod
+import warnings
 
 import numpy as np
 from scipy.sparse import issparse
@@ -19,7 +20,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..externals.joblib import Memory, Parallel, delayed
 from ..utils import (as_float_array, check_random_state, safe_asarray,
-                     check_arrays, safe_mask)
+                     check_arrays, safe_mask, ConvergenceWarning)
 from .least_angle import lars_path, LassoLarsIC
 from .logistic import LogisticRegression
 
@@ -128,6 +129,7 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
     def transform(self, X):
         """Transform a new matrix using the selected features"""
         mask = self.get_support()
+        X, = check_arrays(X)
         if len(mask) != X.shape[1]:
             raise ValueError("X has a different shape than during fitting.")
         return safe_asarray(X)[:, safe_mask(X, mask)]
@@ -158,11 +160,13 @@ def _randomized_lasso(X, y, weights, mask, alpha=1., verbose=False,
     alpha = np.atleast_1d(np.asarray(alpha, dtype=np.float))
 
     X = (1 - weights) * X
-    alphas_, _, coef_ = lars_path(X, y,
-                                  Gram=precompute, copy_X=False,
-                                  copy_Gram=False, alpha_min=np.min(alpha),
-                                  method='lasso', verbose=verbose,
-                                  max_iter=max_iter, eps=eps)
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', ConvergenceWarning)
+        alphas_, _, coef_ = lars_path(X, y,
+                                      Gram=precompute, copy_X=False,
+                                      copy_Gram=False, alpha_min=np.min(alpha),
+                                      method='lasso', verbose=verbose,
+                                      max_iter=max_iter, eps=eps)
 
     if len(alpha) > 1:
         if len(alphas_) > 1:  # np.min(alpha) < alpha_min
@@ -504,8 +508,10 @@ def _lasso_stability_path(X, y, mask, weights, eps):
 
     alpha_max = np.max(np.abs(np.dot(X.T, y))) / X.shape[0]
     alpha_min = eps * alpha_max  # set for early stopping in path
-    alphas, _, coefs = lars_path(X, y, method='lasso', verbose=False,
-                                 alpha_min=alpha_min)
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', ConvergenceWarning)
+        alphas, _, coefs = lars_path(X, y, method='lasso', verbose=False,
+                                     alpha_min=alpha_min)
     # Scale alpha by alpha_max
     alphas /= alphas[0]
     # Sort alphas in assending order

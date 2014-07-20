@@ -2,6 +2,7 @@
 #         Arnaud Joly <a.joly@ulg.ac.be>
 #         Maheshakya Wijewardena<maheshakya.10@cse.mrt.ac.lk>
 # License: BSD 3 clause
+from __future__ import division
 
 import numpy as np
 
@@ -65,7 +66,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         self.random_state = random_state
         self.constant = constant
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the random classifier.
 
         Parameters
@@ -76,6 +77,9 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             Target values.
+
+        sample_weight : array-like of shape = [n_samples], optional
+            Sample weights.
 
         Returns
         -------
@@ -111,7 +115,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             classes, y_k = np.unique(y[:, k], return_inverse=True)
             self.classes_.append(classes)
             self.n_classes_.append(classes.shape[0])
-            self.class_prior_.append(np.bincount(y_k) / float(y_k.shape[0]))
+            class_prior = np.bincount(y_k, weights=sample_weight)
+            self.class_prior_.append(class_prior / class_prior.sum())
 
             # Checking in case of constant strategy if the constant provided
             # by the user is in y.

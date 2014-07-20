@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 The :mod:`sklearn.metrics.pairwise` submodule implements utilities to evaluate
 pairwise distances, paired distances or affinity of sets of samples.
@@ -268,12 +267,13 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
         Valid values for metric are:
 
         - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-        'manhattan']
+          'manhattan']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
-        'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-        'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
-        'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
+          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
+          'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
+          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
+
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
@@ -393,12 +393,13 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
         Valid values for metric are:
 
         - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-        'manhattan']
+          'manhattan']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
-        'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-        'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
-        'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
+          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
+          'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
+          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
+
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 

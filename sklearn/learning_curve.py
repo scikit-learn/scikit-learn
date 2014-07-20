@@ -100,7 +100,7 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
         raise ValueError("An estimator must support the partial_fit interface "
                          "to exploit incremental learning")
 
-    X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
+    X, y = check_arrays(X, y, sparse_format='csr', force_arrays=False)
     # Make a list since we will be iterating multiple times over the folds
     cv = list(_check_cv(cv, X, y, classifier=is_classifier(estimator)))
     scorer = check_scoring(estimator, scoring=scoring)
@@ -287,7 +287,7 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
     See
     :ref:`examples/plot_validation_curve.py <example_plot_validation_curve.py>`
     """
-    X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
+    X, y = check_arrays(X, y, sparse_format='csr', force_arrays=False)
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
 

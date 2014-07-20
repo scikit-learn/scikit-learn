@@ -11,15 +11,19 @@ from .murmurhash import murmurhash3_32
 from .validation import (as_float_array, check_arrays, safe_asarray,
                          assert_all_finite, array2d, atleast2d_or_csc,
                          atleast2d_or_csr, warn_if_not_float,
-                         check_random_state, column_or_1d)
+                         check_random_state, column_or_1d, check_array)
 from .class_weight import compute_class_weight
 from sklearn.utils.sparsetools import minimum_spanning_tree
 
 
 __all__ = ["murmurhash3_32", "as_float_array", "check_arrays", "safe_asarray",
-           "assert_all_finite", "array2d", "atleast2d_or_csc",
-           "atleast2d_or_csr", "warn_if_not_float", "check_random_state",
-           "compute_class_weight", "minimum_spanning_tree", "column_or_1d"]
+           "assert_all_finite", "array2d", "atleast2d_or_csc", "check_array",
+           "atleast2d_or_csr",
+           "warn_if_not_float",
+           "check_random_state",
+           "compute_class_weight",
+           "minimum_spanning_tree",
+           "column_or_1d", "safe_indexing"]
 
 
 class deprecated(object):
@@ -127,6 +131,28 @@ def safe_mask(X, mask):
         ind = np.arange(mask.shape[0])
         mask = ind[mask]
     return mask
+
+
+def safe_indexing(X, indices):
+    """Return items or rows from X using indices.
+
+    Allows simple indexing of lists or arrays.
+
+    Parameters
+    ----------
+    X : array-like, sparse-matrix, list.
+        Data from which to sample rows or items.
+
+    indices : array-like, list
+        Indices according to which X will be subsampled.
+    """
+    if hasattr(X, "iloc"):
+        # Pandas Dataframes and Series
+        return X.iloc[indices]
+    elif hasattr(X, "shape"):
+        return X[indices]
+    else:
+        return [X[idx] for idx in indices]
 
 
 def resample(*arrays, **options):
