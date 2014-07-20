@@ -256,8 +256,8 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
                               eigen_tol=eigen_tol, drop_first=False)
 
     if assign_labels == 'kmeans':
-        _, labels, _, _ = k_means(maps, n_clusters, random_state=random_state,
-                                  n_init=n_init)
+        _, labels, _ = k_means(maps, n_clusters, random_state=random_state,
+                               n_init=n_init)
     else:
         labels = discretize(maps, random_state=random_state)
 

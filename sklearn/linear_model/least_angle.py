@@ -36,7 +36,8 @@ if LooseVersion(scipy.__version__) >= LooseVersion('0.12'):
 def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
               alpha_min=0, method='lar', copy_X=True,
               eps=np.finfo(np.float).eps,
-              copy_Gram=True, verbose=0, return_path=True):
+              copy_Gram=True, verbose=0, return_path=True,
+              return_n_iter=False):
     """Compute Least Angle Regression or Lasso path using LARS algorithm [1]
 
     The optimization objective for the case method='lasso' is::
@@ -433,9 +434,15 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         alphas = alphas[:n_iter + 1]
         coefs = coefs[:n_iter + 1]
 
-        return alphas, active, coefs.T, n_iter
+        if return_n_iter:
+            return alphas, active, coefs.T, n_iter
+        else:
+            return alphas, active, coefs.T
     else:
-        return alpha, active, coef, n_iter
+        if return_n_iter:
+            return alpha, active, coef, n_iter
+        else:
+            return alpha, active, coef
 
 
 ###############################################################################
@@ -504,7 +511,7 @@ class Lars(LinearModel, RegressorMixin):
 
     ``n_iter_`` : array-like
         A list of the number of iterations taken by lars_path to find the
-        grid of alphas across all targets.
+        grid of alphas for each target.
 
     Examples
     --------
@@ -611,7 +618,8 @@ class Lars(LinearModel, RegressorMixin):
                     X, y[:, k], Gram=Gram, Xy=this_Xy, copy_X=self.copy_X,
                     copy_Gram=True, alpha_min=alpha, method=self.method,
                     verbose=max(0, self.verbose - 1), max_iter=max_iter,
-                    eps=self.eps, return_path=True)
+                    eps=self.eps, return_path=True,
+                    return_n_iter=True)
                 self.alphas_.append(alphas)
                 self.active_.append(active)
                 self.n_iter_.append(n_iter_)
@@ -622,6 +630,7 @@ class Lars(LinearModel, RegressorMixin):
                 self.alphas_, self.active_, self.coef_path_, self.coef_ = [
                     a[0] for a in (self.alphas_, self.active_, self.coef_path_,
                                    self.coef_)]
+                self.n_iter_ = self.n_iter_[0]
         else:
             self.coef_ = np.empty((n_targets, n_features))
             for k in xrange(n_targets):
@@ -630,11 +639,12 @@ class Lars(LinearModel, RegressorMixin):
                     X, y[:, k], Gram=Gram, Xy=this_Xy, copy_X=self.copy_X,
                     copy_Gram=True, alpha_min=alpha, method=self.method,
                     verbose=max(0, self.verbose - 1), max_iter=max_iter,
-                    eps=self.eps, return_path=False)
+                    eps=self.eps, return_path=False, return_n_iter=True)
                 self.alphas_.append(alphas)
                 self.n_iter_.append(n_iter_)
             if n_targets == 1:
                 self.alphas_ = self.alphas_[0]
+                self.n_iter_ = self.n_iter_[0]
         self._set_intercept(X_mean, y_mean, X_std)
         return self
 
@@ -713,6 +723,10 @@ class LassoLars(Lars):
 
     ``intercept_`` : float | array, shape (n_targets,)
         Independent term in decision function.
+
+    ``n_iter_`` : array-like
+        A list of the number of iterations taken by lars_path to find the
+        grid of alphas for each target.
 
     Examples
     --------
@@ -836,7 +850,7 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
         nonzeros = np.flatnonzero(norms)
         X_train[:, nonzeros] /= norms[nonzeros]
 
-    alphas, active, coefs, _ = lars_path(
+    alphas, active, coefs = lars_path(
         X_train, y_train, Gram=Gram, copy_X=False, copy_Gram=False,
         method=method, verbose=max(0, verbose - 1), max_iter=max_iter, eps=eps)
     if normalize:
@@ -915,7 +929,7 @@ class LarsCV(Lars):
         (alpha values given by ``cv_alphas``)
 
     ``n_iter_`` : int
-        the number of iterations run by Lars with the estimated alpha.
+        the number of iterations run by Lars with the optimal alpha.
 
     See also
     --------
@@ -1090,7 +1104,7 @@ class LassoLarsCV(LarsCV):
         (alpha values given by ``cv_alphas``)
 
     ``n_iter_`` : int
-        the number of iterations run by Lars with the estimated alpha.
+        the number of iterations run by Lars with the optimal alpha.
 
     Notes
     -----
@@ -1244,7 +1258,7 @@ class LassoLarsIC(LassoLars):
         alphas_, active_, coef_path_, self.n_iter_ = lars_path(
             X, y, Gram=Gram, copy_X=copy_X, copy_Gram=True, alpha_min=0.0,
             method='lasso', verbose=self.verbose, max_iter=max_iter,
-            eps=self.eps)
+            eps=self.eps, return_n_iter=True)
 
         n_samples = X.shape[0]
 

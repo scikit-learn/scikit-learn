@@ -149,7 +149,8 @@ def _tolerance(X, tol):
 
 def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
             n_init=10, max_iter=300, verbose=False,
-            tol=1e-4, random_state=None, copy_x=True, n_jobs=1):
+            tol=1e-4, random_state=None, copy_x=True, n_jobs=1,
+            return_n_iter=False):
     """K-means clustering algorithm.
 
     Parameters
@@ -212,6 +213,9 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
+    return_n_iter : bool, optional
+        Whether or not to return the number of iterations.
+
     Returns
     -------
     centroid : float ndarray with shape (k, n_features)
@@ -225,7 +229,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
         The final value of the inertia criterion (sum of squared distances to
         the closest centroid for all observations in the training set).
 
-    iters: int
+    best_n_iter: int
         Number of iterations corresponding to the best results.
 
     """
@@ -296,7 +300,10 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
             X += X_mean
         best_centers += X_mean
 
-    return best_centers, best_labels, best_inertia, best_n_iter
+    if return_n_iter:
+        return best_centers, best_labels, best_inertia, best_n_iter
+    else:
+        return best_centers, best_labels, best_inertia
 
 
 def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
@@ -359,7 +366,7 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
         The final value of the inertia criterion (sum of squared distances to
         the closest centroid for all observations in the training set).
 
-    iters: int
+    n_iter : int
         Number of iterations run.
     """
     random_state = check_random_state(random_state)
@@ -376,7 +383,7 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
     distances = np.zeros(shape=(X.shape[0],), dtype=np.float64)
 
     # iterations
-    for i in range(max_iter):
+    for n_iter in range(max_iter):
         centers_old = centers.copy()
         # labels assignment is also called the E-step of EM
         labels, inertia = \
@@ -392,7 +399,7 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
             centers = _k_means._centers_dense(X, labels, n_clusters, distances)
 
         if verbose:
-            print('Iteration %2d, inertia %.3f' % (i, inertia))
+            print('Iteration %2d, inertia %.3f' % (n_iter, inertia))
 
         if best_inertia is None or inertia < best_inertia:
             best_labels = labels.copy()
@@ -401,9 +408,9 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
 
         if np.sum((centers_old - centers) ** 2) <= tol:
             if verbose:
-                print("Converged at iteration %d" % i)
+                print("Converged at iteration %d" % n_iter)
             break
-    return best_labels, best_inertia, best_centers, i + 1
+    return best_labels, best_inertia, best_centers, n_iter + 1
 
 
 def _labels_inertia_precompute_dense(X, x_squared_norms, centers, distances):
@@ -734,8 +741,9 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         self.cluster_centers_, self.labels_, self.inertia_, self.n_iter_ = \
             k_means(
-                X, n_clusters=self.n_clusters, init=self.init, n_init=self.n_init,
-                max_iter=self.max_iter, verbose=self.verbose,
+                X, n_clusters=self.n_clusters, init=self.init,
+                n_init=self.n_init, max_iter=self.max_iter,
+                verbose=self.verbose, return_n_iter=True,
                 precompute_distances=self.precompute_distances,
                 tol=self.tol, random_state=random_state, copy_x=self.copy_x,
                 n_jobs=self.n_jobs)

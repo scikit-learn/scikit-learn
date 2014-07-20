@@ -16,7 +16,8 @@ from ..metrics import pairwise_distances_argmin
 
 
 def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
-                         damping=0.5, copy=True, verbose=False):
+                         damping=0.5, copy=True, verbose=False,
+                         return_n_iter=False):
     """Perform Affinity Propagation Clustering of data
 
     Parameters
@@ -51,6 +52,9 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     verbose : boolean, optional, default: False
         The verbosity level
 
+    return_n_iter : bool, default False
+        Whether or not to return the number of iterations.
+
     Returns
     -------
 
@@ -60,7 +64,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     labels : array, shape (n_samples,)
         cluster labels for each point
 
-    iters: int
+    n_iter : int
         number of iterations run.
 
     Notes
@@ -171,7 +175,10 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
         cluster_centers_indices = None
         labels.fill(np.nan)
 
-    return cluster_centers_indices, labels, it + 1
+    if return_n_iter:
+        return cluster_centers_indices, labels, it + 1
+    else:
+        return cluster_centers_indices, labels
 
 
 ###############################################################################
@@ -282,7 +289,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
             affinity_propagation(
                 self.affinity_matrix_, self.preference, max_iter=self.max_iter,
                 convergence_iter=self.convergence_iter, damping=self.damping,
-                copy=self.copy, verbose=self.verbose)
+                copy=self.copy, verbose=self.verbose, return_n_iter=True)
 
         if self.affinity != "precomputed":
             self.cluster_centers_ = X[self.cluster_centers_indices_].copy()

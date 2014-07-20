@@ -26,7 +26,7 @@ def test_affinity_propagation():
     S = -euclidean_distances(X, squared=True)
     preference = np.median(S) * 10
     # Compute Affinity Propagation
-    cluster_centers_indices, labels, _ = affinity_propagation(
+    cluster_centers_indices, labels = affinity_propagation(
         S, preference=preference)
 
     n_clusters_ = len(cluster_centers_indices)
@@ -48,8 +48,8 @@ def test_affinity_propagation():
     assert_equal(n_clusters, n_clusters_)
 
     # Test also with no copy
-    _, labels_no_copy, _ = affinity_propagation(S, preference=preference,
-                                                copy=False)
+    _, labels_no_copy = affinity_propagation(S, preference=preference,
+                                              copy=False)
     assert_array_equal(labels, labels_no_copy)
 
     # Test input validation

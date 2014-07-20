@@ -243,7 +243,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     >>> # Now use lars_path and 1D linear interpolation to compute the
     >>> # same path
     >>> from sklearn.linear_model import lars_path
-    >>> alphas, active, coef_path_lars, _ = lars_path(X, y, method='lasso')
+    >>> alphas, active, coef_path_lars = lars_path(X, y, method='lasso')
     >>> from scipy import interpolate
     >>> coef_path_continuous = interpolate.interp1d(alphas[::-1],
     ...                                             coef_path_lars[:, ::-1])

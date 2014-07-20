@@ -60,6 +60,7 @@ def _ica_def(X, tol, g, fun_args, max_iter, w_init):
 
     n_components = w_init.shape[0]
     W = np.zeros((n_components, n_components), dtype=X.dtype)
+    n_iter = []
 
     # j is the index of the extracted component
     for j in range(n_components):
@@ -80,9 +81,10 @@ def _ica_def(X, tol, g, fun_args, max_iter, w_init):
             if lim < tol:
                 break
 
+        n_iter.append(i + 1)
         W[j, :] = w
 
-    return W, i + 1
+    return W, max(n_iter)
 
 
 def _ica_par(X, tol, g, fun_args, max_iter, w_init):
@@ -139,7 +141,8 @@ def _cube(x, fun_args):
 
 def fastica(X, n_components=None, algorithm="parallel", whiten=True,
             fun="logcosh", fun_args=None, max_iter=200, tol=1e-04, w_init=None,
-            random_state=None, return_X_mean=False, compute_sources=True):
+            random_state=None, return_X_mean=False, compute_sources=True,
+            return_n_iter=False):
     """Perform Fast Independent Component Analysis.
 
     Parameters
@@ -199,6 +202,9 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         If False, sources are not computed, but only the rotation matrix.
         This can save memory when working with big data. Defaults to True.
 
+    return_n_iter : bool, optional
+        Whether or not to return the number of iterations.
+
     Returns
     -------
     K : array, shape (n_components, n_features) | None.
@@ -218,6 +224,11 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     X_mean : array, shape (n_features, )
         The mean over features. Returned only if return_X_mean is True.
+
+    n_iter : int
+        If the algorithm is "deflation", n_iter is the
+        maximum number of iterations run across all components. Else
+        they are just the number of iterations taken to converge.
 
     Notes
     -----
@@ -327,18 +338,31 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         else:
             S = None
         if return_X_mean:
-            return K, W, S, X_mean, n_iter
+            if return_n_iter:
+                return K, W, S, X_mean, n_iter
+            else:
+                return K, W, S, X_mean
         else:
-            return K, W, S, n_iter
+            if return_n_iter:
+                return K, W, S, n_iter
+            else:
+                return K, W, S
+
     else:
         if compute_sources:
             S = fast_dot(W, X).T
         else:
             S = None
         if return_X_mean:
-            return None, W, S, None, n_iter
+            if return_n_iter:
+                return None, W, S, None, n_iter
+            else:
+                return None, W, S, None
         else:
-            return None, W, S, n_iter
+            if return_n_iter:
+                return None, W, S, n_iter
+            else:
+                return None, W, S
 
 
 class FastICA(BaseEstimator, TransformerMixin):
@@ -398,7 +422,9 @@ class FastICA(BaseEstimator, TransformerMixin):
         store the result.
 
     `n_iter_`: int
-        Number of iterations run.
+        If the algorithm is "deflation", n_iter is the
+        maximum number of iterations run across all components. Else
+        they are just the number of iterations taken to converge.
 
     Notes
     -----
@@ -445,7 +471,7 @@ class FastICA(BaseEstimator, TransformerMixin):
             whiten=self.whiten, fun=self.fun, fun_args=fun_args,
             max_iter=self.max_iter, tol=self.tol, w_init=self.w_init,
             random_state=self.random_state, return_X_mean=True,
-            compute_sources=compute_sources)
+            compute_sources=compute_sources, return_n_iter=True)
 
         if self.whiten:
             self.components_ = np.dot(unmixing, whitening)
