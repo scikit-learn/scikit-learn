@@ -103,6 +103,10 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     coefs: array, shape (n_features, n_alphas + 1)
         Coefficients along the path
 
+    n_iter : int
+        Number of iterations run. Returned only if return_n_iter is set
+        to True.
+
     See also
     --------
     lasso_path

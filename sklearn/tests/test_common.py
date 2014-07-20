@@ -304,7 +304,7 @@ def test_sparsify_estimators():
 def test_non_transformer_estimators_n_iter():
     # Test that all estimators of type which are non-transformer
     # and which have an attribute of max_iter, return the attribute
-    # of n_iter greater than 1.
+    # of n_iter atleast 1.
     for est_type in ['regressor', 'classifier', 'cluster']:
         regressors = all_estimators(type_filter=est_type)
         for name, estimator in regressors:
@@ -328,7 +328,6 @@ def test_non_transformer_estimators_n_iter():
                 # These models are dependent on external solvers like
                 # libsvm and accessing the iter parameter is non-trivial.
                 elif name not in ['Ridge', 'SVR', 'NuSVR', 'NuSVC',
-                                  'OrthogonalMatchingPursuitCV',
                                   'RidgeClassifier',
                                   'SVC', 'RandomizedLasso']:
                     yield (check_non_transformer_estimators_n_iter,

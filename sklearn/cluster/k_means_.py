@@ -231,6 +231,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
 
     best_n_iter: int
         Number of iterations corresponding to the best results.
+        Returned only if `return_n_iter` is set to True.
 
     """
     random_state = check_random_state(random_state)

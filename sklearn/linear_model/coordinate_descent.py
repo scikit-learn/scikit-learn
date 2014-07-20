@@ -204,9 +204,9 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     n_iters : array-like, shape (n_alphas,)
         The number of iterations taken by the coordinate descent optimizer to
-        reach the given tolerance for each alpha.
+        reach the specified tolerance for each alpha.
         (Is returned, along with ``alphas``, when ``return_models`` is set
-        to ``False``).
+        to ``False`` and ``return_n_iter`` is set to ``True``).
 
     Notes
     -----
@@ -383,7 +383,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         The number of iterations taken by the coordinate descent optimizer to
         reach the specified tolerance for each alpha.
         (Is returned, along with ``alphas``, when ``return_models`` is set
-        to ``False``).
+        to ``False`` and ``return_n_iter`` is set to True).
 
     Notes
     -----

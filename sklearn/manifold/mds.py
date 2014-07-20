@@ -216,6 +216,7 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
 
     iter : int
         The number of iterations corresponding to the best stress.
+        Returned only if `return_n_iter` is set to True.
 
     Notes
     -----

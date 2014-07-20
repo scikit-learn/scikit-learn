@@ -70,6 +70,8 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
         for the active features at that step. The lower left triangle contains
         garbage. Only returned if ``return_path=True``.
 
+    n_active : int
+        Number of active features at convergence.
     """
     if copy_X:
         X = X.copy('F')
@@ -127,9 +129,9 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
             break
 
     if return_path:
-        return gamma, indices[:n_active], coefs[:, :n_active]
+        return gamma, indices[:n_active], coefs[:, :n_active], n_active
     else:
-        return gamma, indices[:n_active]
+        return gamma, indices[:n_active], n_active
 
 
 def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
@@ -182,6 +184,8 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
         for the active features at that step. The lower left triangle contains
         garbage. Only returned if ``return_path=True``.
 
+    n_active : int
+        Number of active features at convergence.
     """
     Gram = Gram.copy('F') if copy_Gram else np.asfortranarray(Gram)
 
@@ -245,13 +249,14 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
             break
 
     if return_path:
-        return gamma, indices[:n_active], coefs[:, :n_active]
+        return gamma, indices[:n_active], coefs[:, :n_active], n_active
     else:
-        return gamma, indices[:n_active]
+        return gamma, indices[:n_active], n_active
 
 
 def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
-                  copy_X=True, return_path=False):
+                  copy_X=True, return_path=False,
+                  return_n_iter=False):
     """Orthogonal Matching Pursuit (OMP)
 
     Solves n_targets Orthogonal Matching Pursuit problems.
@@ -292,6 +297,9 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
         Whether to return every value of the nonzero coefficients along the
         forward path. Useful for cross-validation.
 
+    return_n_iter : bool, optional default False
+        Whether or not to return the number of iterations.
+
     Returns
     -------
     coef: array, shape (n_features,) or (n_features, n_targets)
@@ -300,6 +308,10 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
         (n_features, n_features) or (n_features, n_targets, n_features) and
         iterating over the last axis yields coefficients in increasing order
         of active features.
+
+    n_iters : array-like or int
+        Number of active features across every target. Returned only if
+        `return_n_iter` is set to True.
 
     See also
     --------
@@ -356,24 +368,36 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
         coef = np.zeros((X.shape[1], y.shape[1], X.shape[1]))
     else:
         coef = np.zeros((X.shape[1], y.shape[1]))
+    n_iters = []
 
     for k in range(y.shape[1]):
-        out = _cholesky_omp(X, y[:, k], n_nonzero_coefs, tol,
-                            copy_X=copy_X, return_path=return_path)
+        out = _cholesky_omp(
+            X, y[:, k], n_nonzero_coefs, tol,
+            copy_X=copy_X, return_path=return_path
+            )
         if return_path:
-            _, idx, coefs = out
+            _, idx, coefs, n_iter = out
             coef = coef[:, :, :len(idx)]
             for n_active, x in enumerate(coefs.T):
                 coef[idx[:n_active + 1], k, n_active] = x[:n_active + 1]
         else:
-            x, idx = out
+            x, idx, n_iter = out
             coef[idx, k] = x
-    return np.squeeze(coef)
+        n_iters.append(n_iter)
+
+    if y.shape[1] == 1:
+        n_iters = n_iters[0]
+
+    if return_n_iter:
+        return np.squeeze(coef), n_iters
+    else:
+        return np.squeeze(coef)
 
 
 def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
                        norms_squared=None, copy_Gram=True,
-                       copy_Xy=True, return_path=False):
+                       copy_Xy=True, return_path=False,
+                       return_n_iter=False):
     """Gram Orthogonal Matching Pursuit (OMP)
 
     Solves n_targets Orthogonal Matching Pursuit problems using only
@@ -410,6 +434,9 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
         Whether to return every value of the nonzero coefficients along the
         forward path. Useful for cross-validation.
 
+    return_n_iter : bool, optional default False
+        Whether or not to return the number of iterations.
+
     Returns
     -------
     coef: array, shape (n_features,) or (n_features, n_targets)
@@ -418,6 +445,10 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
         (n_features, n_features) or (n_features, n_targets, n_features) and
         iterating over the last axis yields coefficients in increasing order
         of active features.
+
+    n_iters : array-like or int
+        Number of active features across every target. Returned only if
+        `return_n_iter` is set to True.
 
     See also
     --------
@@ -467,21 +498,31 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
     else:
         coef = np.zeros((len(Gram), Xy.shape[1]))
 
+    n_iters = []
     for k in range(Xy.shape[1]):
-        out = _gram_omp(Gram, Xy[:, k], n_nonzero_coefs,
-                        norms_squared[k] if tol is not None else None, tol,
-                        copy_Gram=copy_Gram, copy_Xy=copy_Xy,
-                        return_path=return_path)
+        out = _gram_omp(
+            Gram, Xy[:, k], n_nonzero_coefs,
+            norms_squared[k] if tol is not None else None, tol,
+            copy_Gram=copy_Gram, copy_Xy=copy_Xy,
+            return_path=return_path
+            )
         if return_path:
-            _, idx, coefs = out
+            _, idx, coefs, n_iter = out
             coef = coef[:, :, :len(idx)]
             for n_active, x in enumerate(coefs.T):
                 coef[idx[:n_active + 1], k, n_active] = x[:n_active + 1]
         else:
-            x, idx = out
+            x, idx, n_iter = out
             coef[idx, k] = x
+        n_iters.append(n_iter)
 
-    return np.squeeze(coef)
+    if Xy.shape[1] == 1:
+        n_iters = n_iters[0]
+
+    if return_n_iter:
+        return np.squeeze(coef), n_iters
+    else:
+        return np.squeeze(coef)
 
 
 class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
@@ -517,6 +558,9 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
 
     `intercept_` : float or array, shape (n_targets,)
         independent term in decision function.
+
+    `n_iter_` : int or array-like
+        Number of active features across every target.
 
     Notes
     -----
@@ -584,16 +628,19 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
             self.n_nonzero_coefs_ = self.n_nonzero_coefs
 
         if Gram is False:
-            self.coef_ = orthogonal_mp(X, y, self.n_nonzero_coefs_, self.tol,
-                                       precompute=False, copy_X=True).T
+            coef_, self.n_iter_ = orthogonal_mp(
+                X, y, self.n_nonzero_coefs_, self.tol,
+                precompute=False, copy_X=True,
+                return_n_iter=True)
         else:
             norms_sq = np.sum(y ** 2, axis=0) if self.tol is not None else None
 
-            self.coef_ = orthogonal_mp_gram(
+            coef_, self.n_iter_ = orthogonal_mp_gram(
                 Gram, Xy=Xy, n_nonzero_coefs=self.n_nonzero_coefs_,
                 tol=self.tol, norms_squared=norms_sq,
-                copy_Gram=True, copy_Xy=True).T
-
+                copy_Gram=True, copy_Xy=True,
+                return_n_iter=True)
+        self.coef_ = coef_.T
         self._set_intercept(X_mean, y_mean, X_std)
         return self
 
@@ -715,6 +762,10 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         Estimated number of non-zero coefficients giving the best mean squared
         error over the cross-validation folds.
 
+    `n_iter_` : int or array-like
+        Number of active features across every target for the model refit with
+        the best hyperparameters got by cross-validating across all folds.
+
     See also
     --------
     orthogonal_mp
@@ -776,4 +827,5 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         omp.fit(X, y)
         self.coef_ = omp.coef_
         self.intercept_ = omp.intercept_
+        self.n_iter_ = omp.n_iter_
         return self

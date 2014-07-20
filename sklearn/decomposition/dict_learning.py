@@ -400,7 +400,8 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
         Vector of errors at each iteration.
 
     n_iter : int
-        Number of iterations run.
+        Number of iterations run. Returned only if `return_n_iter` is
+        set to True.
 
     See also
     --------
@@ -590,7 +591,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         the solutions to the dictionary learning problem
 
     n_iter : int
-        Number of iterations run.
+        Number of iterations run. Returned only if `return_n_iter` is
+        set to `True`.
 
     See also
     --------

@@ -925,7 +925,7 @@ def check_non_transformer_estimators_n_iter(name, Estimator, multi_output=False)
         Estimator.fit(X)
     else:
         Estimator.fit(X, y_)
-    assert_greater(Estimator.n_iter_, 1)
+    assert_greater(Estimator.n_iter_, 0)
 
 
 def check_transformer_n_iter(name, Estimator):
