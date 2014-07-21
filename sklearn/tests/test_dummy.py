@@ -402,25 +402,6 @@ def test_classification_sample_weight():
 
 
 def test_sparse_target_data():
-    # XXX a test of the cahnge to the fit function only
-    X = [[0]] * 4  # ignored
-    y = sp.csc_matrix(np.array([[1, 0],
-                                [2, 0],
-                                [1, 0],
-                                [1, 3]]))
-
-    n_samples = len(X)
-
-    clf = DummyClassifier(strategy="most_frequent", random_state=0)
-    print y
-    clf.fit(X, y)
-    y_pred = clf.predict(X)
-    print y_pred
-    assert_array_equal(y_pred,
-                       np.hstack([np.ones((n_samples, 1)),
-                                  np.zeros((n_samples, 1))]))
-    # XXX Remove ^^^
-
     X = [[0]] * 4  # ignored
     y = sp.csc_matrix(np.array([[1, 0],
                                 [2, 0],
