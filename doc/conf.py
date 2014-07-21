@@ -123,7 +123,7 @@ html_theme = 'scikit-learn'
 # documentation.
 html_theme_options = {'oldversion': False, 'collapsiblesidebar': True,
                       'google_analytics': True, 'surveybanner': False,
-                      'sprintbanner' : True}
+                      'sprintbanner': True}
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ['themes']
@@ -225,7 +225,9 @@ latex_preamble = r"""
 
 trim_doctests_flags = True
 
-# Add the 'copybutton' javascript, to hide/show the prompt in code
-# examples
+
 def setup(app):
+    # to hide/show the prompt in code examples:
     app.add_javascript('js/copybutton.js')
+    # to format example galleries:
+    app.add_javascript('js/examples.js')
