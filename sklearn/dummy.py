@@ -91,45 +91,40 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                                  "constant"):
             raise ValueError("Unknown strategy type.")
 
-        self.n_outputs_ = y.shape[1]
+        self.sparse_target_input_ = sp.issparse(y)
         self.classes_ = []
         self.n_classes_ = []
         self.class_prior_ = []
 
-        if not sp.issparse(y):
+        if not self.sparse_target_input_:
             y = np.atleast_1d(y)
             self.output_2d_ = y.ndim == 2
 
             if y.ndim == 1:
                 y = np.reshape(y, (-1, 1))
 
-            if self.strategy == "constant":
-                if self.constant is None:
-                    raise ValueError("Constant target value has to be"
-                                     "specified when the constant strategy is"
-                                     " used.")
-                else:
-                    constant = np.reshape(np.atleast_1d(self.constant),
-                                          (-1, 1))
-                    if constant.shape[0] != self.n_outputs_:
-                        raise ValueError("Constant target value should have "
-                                         "shape (%d, 1)." % self.n_outputs_)
+        self.n_outputs_ = y.shape[1]
 
+        if self.strategy == "constant":
+            if self.constant is None:
+                raise ValueError("Constant target value has to be"
+                                 "specified when the constant strategy is"
+                                 " used.")
+            else:
+                constant = np.reshape(np.atleast_1d(self.constant),
+                                      (-1, 1))
+                if constant.shape[0] != self.n_outputs_:
+                    raise ValueError("Constant target value should have "
+                                     "shape (%d, 1)." % self.n_outputs_)
+
+        if not self.sparse_target_input_:
             for k in xrange(self.n_outputs_):
                 classes, y_k = np.unique(y[:, k], return_inverse=True)
                 self.classes_.append(classes)
                 self.n_classes_.append(classes.shape[0])
                 class_prior = np.bincount(y_k, weights=sample_weight)
                 self.class_prior_.append(class_prior / class_prior.sum())
-
-                # Checking in case of constant strategy if the constant
-                # provided by the user is in y.
-                if self.strategy == "constant":
-                    if constant[k] not in self.classes_[k]:
-                        raise ValueError("The constant target value must be "
-                                         "present in training data")
         else:
-
             y.tocsc()
             y.eliminate_zeros()
             y_nnz = np.diff(y.indptr)
@@ -144,12 +139,12 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                 self.class_prior_.append(np.bincount(y_k) /
                                          float(y_k.shape[0]))
 
-                # Checking in case of constant strategy if the constant
-                # provided by the user is in y.
-                if self.strategy == "constant":
-                    if constant[k] not in self.classes_[k]:
-                        raise ValueError("The constant target value must be "
-                                         "present in training data")
+        # Checking in case of constant strategy if the constant
+        # provided by the user is in y.
+        if self.strategy == "constant":
+            if constant[k] not in self.classes_[k]:
+                raise ValueError("The constant target value must be "
+                                 "present in training data")
 
         if self.n_outputs_ == 1 and not self.output_2d_:
             self.n_classes_ = self.n_classes_[0]
@@ -198,26 +193,71 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             if self.n_outputs_ == 1:
                 proba = [proba]
 
-        y = []
-        for k in xrange(self.n_outputs_):
-            if self.strategy == "most_frequent":
-                ret = np.ones(n_samples, dtype=int) * class_prior_[k].argmax()
+        if not self.sparse_target_input_:
+            y = []
+            for k in xrange(self.n_outputs_):
+                if self.strategy == "most_frequent":
+                    ret = (np.ones(n_samples, dtype=int) *
+                           class_prior_[k].argmax())
 
-            elif self.strategy == "stratified":
-                ret = proba[k].argmax(axis=1)
+                elif self.strategy == "stratified":
+                    ret = proba[k].argmax(axis=1)
 
-            elif self.strategy == "uniform":
-                ret = rs.randint(n_classes_[k], size=n_samples)
+                elif self.strategy == "uniform":
+                    ret = rs.randint(n_classes_[k], size=n_samples)
 
-            elif self.strategy == "constant":
-                ret = np.ones(n_samples, dtype=int) * (
-                    np.where(classes_[k] == constant[k]))
+                elif self.strategy == "constant":
+                    ret = (np.ones(n_samples, dtype=int) * 
+                           np.where(classes_[k] == constant[k]))
 
-            y.append(classes_[k][ret])
+                y.append(classes_[k][ret])
 
-        y = np.vstack(y).T
-        if self.n_outputs_ == 1 and not self.output_2d_:
-            y = np.ravel(y)
+            y = np.vstack(y).T
+            if self.n_outputs_ == 1 and not self.output_2d_:
+                y = np.ravel(y)
+        else:
+            data = np.array([], dtype=classes_[0].dtype)
+            indices = np.array([])
+            indptr = np.array([0])
+            for k in range(self.n_outputs_):
+                if self.strategy == "most_frequent":
+                    mode = class_prior_[k].argmax()
+                    if classes_[k][mode] == 0:
+                        indptr = np.append(indptr, len(indices))
+                    else:
+                        ret = (np.ones(n_samples, dtype=int) *
+                               class_prior_[k].argmax())
+                        data = np.append(data, classes_[k][ret])
+                        indices = np.append(indices, range(n_samples))
+                        indptr = np.append(indptr, len(indices))
+
+                elif self.strategy == "stratified":
+                    # XXX how does this work?
+                    ret = proba[k].argmax(axis=1)
+                    data = np.append(data, classes_[k][ret])
+                    indices = np.append(indices, range(n_samples))
+                    indptr = np.append(indptr, len(indices))
+
+                elif self.strategy == "uniform":
+                    ret = rs.randint(n_classes_[k], size=n_samples)
+                    # XXX remove zeros
+                    data = np.append(data, classes_[k][ret])
+                    indices = np.append(indices, range(n_samples))
+                    indptr = np.append(indptr, len(indices))
+
+                elif self.strategy == "constant":
+                    if constant[k] == 0:
+                        indptr = np.append(indptr, len(indices))
+                    else:
+                        ret = (np.ones(n_samples, dtype=int) * 
+                               np.where(classes_[k] == constant[k]))
+                        data = np.append(data, classes_[k][ret])
+                        indices = np.append(indices, range(n_samples))
+                        indptr = np.append(indptr, len(indices))
+
+            y = sp.csc_matrix((data, indices, indptr),
+                                   (n_samples, self.n_outputs_),
+                                   dtype=np.intp)
 
         return y
 
