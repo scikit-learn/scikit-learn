@@ -202,6 +202,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
                 elif self.strategy == "stratified":
                     ret = proba[k].argmax(axis=1)
+                    # print proba[k]
 
                 elif self.strategy == "uniform":
                     ret = rs.randint(n_classes_[k], size=n_samples)
@@ -234,15 +235,17 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                 elif self.strategy == "stratified":
                     # XXX how does this work?
                     ret = proba[k].argmax(axis=1)
+                    # print proba
                     data = np.append(data, classes_[k][ret])
                     indices = np.append(indices, range(n_samples))
                     indptr = np.append(indptr, len(indices))
 
                 elif self.strategy == "uniform":
                     ret = rs.randint(n_classes_[k], size=n_samples)
-                    # XXX remove zeros
-                    data = np.append(data, classes_[k][ret])
-                    indices = np.append(indices, range(n_samples))
+                    # Select the nonzero elements, insert as column
+                    sel = np.where((classes_[k][ret]) != 0)[0]
+                    data = np.append(data, classes_[k][ret[sel]])
+                    indices = np.append(indices, sel)
                     indptr = np.append(indptr, len(indices))
 
                 elif self.strategy == "constant":
