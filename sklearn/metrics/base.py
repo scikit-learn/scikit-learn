@@ -56,8 +56,8 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
-    Return
-    ------
+    Returns
+    -------
     score : float or array of shape [n_classes]
         If not ``None``, average the score, else return the score for each
         classes.

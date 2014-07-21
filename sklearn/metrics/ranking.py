@@ -719,8 +719,8 @@ def label_ranking_average_precision_score(y_true, y_score):
         Target scores, can either be probability estimates of the positive
         class, confidence values, or binary decisions.
 
-    Return
-    ------
+    Returns
+    -------
     score : float
 
     Examples
