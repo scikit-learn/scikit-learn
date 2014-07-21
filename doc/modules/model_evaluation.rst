@@ -929,6 +929,14 @@ variance is  estimated  as follow:
 
 The best possible score is 1.0, lower values are worse.
 
+The :func:`explained_variance_score` function has an `output_weights` keyword
+with two possible values `None` and 'uniform'. If the value provided is `None`,
+then the explained variance score is calculated for each dimension separately
+and a numpy array is returned. If the value given is `uniform`, the
+explained variance error is averaged over each dimension with a weight of
+`1 / n_outputs`. If the value given is `variance`, then the explained
+variance of each output is weighted by the scale of the variable.
+
 Here a small example of usage of the :func:`explained_variance_score`
 function::
 
@@ -937,6 +945,14 @@ function::
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> explained_variance_score(y_true, y_pred)  # doctest: +ELLIPSIS
     0.957...
+    >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+    >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
+    >>> explained_variance_score(y_true, y_pred, output_weights=None)
+    ... # doctest: +ELLIPSIS
+    array([ 0.967...,  1.        ])
+    >>> explained_variance_score(y_true, y_pred, output_weights=[0.3, 0.7])
+    ... # doctest: +ELLIPSIS
+    0.990...
 
 Mean absolute error
 ...................
@@ -954,6 +970,14 @@ and :math:`y_i` is the corresponding true value, then the mean absolute error
 
   \text{MAE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1} \left| y_i - \hat{y}_i \right|.
 
+
+The :func:`mean_absolute_error` function has an `output_weights` keyword
+with two possible values `None` and 'uniform'. If the value provided is
+`None`, then the mean absolute error is calculated for each dimension
+separately and a numpy array is returned. If the value given is `uniform`, the
+mean absolute error is averaged over each dimension with a weight of
+`1 / n_outputs`.
+
 Here a small example of usage of the :func:`mean_absolute_error` function::
 
   >>> from sklearn.metrics import mean_absolute_error
@@ -965,7 +989,11 @@ Here a small example of usage of the :func:`mean_absolute_error` function::
   >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
   >>> mean_absolute_error(y_true, y_pred)
   0.75
-
+  >>> mean_absolute_error(y_true, y_pred, output_weights=None)
+  array([ 0.5,  1. ])
+  >>> mean_absolute_error(y_true, y_pred, output_weights=[0.3, 0.7])
+  ... # doctest: +ELLIPSIS
+  0.849...
 
 
 Mean squared error
@@ -1021,6 +1049,14 @@ over :math:`n_{\text{samples}}` is defined as
 
 where :math:`\bar{y} =  \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}} - 1} y_i`.
 
+The :func:`r2_score` function has an `output_weights` keyword with two possible
+values `None` and 'uniform'. If the value provided is `None`, then the r2 score
+is calculated for each dimension separately and a numpy array is returned.
+ If the value given is `uniform`, the r2 score is averaged over each dimension
+ with a weight of `1 / n_outputs`. If the value is `variance`, then the 
+output r2 scores are averaged weighted by the variances of the corresponding
+variables, which corresponds to a global r2 score.
+
 Here a small example of usage of the :func:`r2_score` function::
 
   >>> from sklearn.metrics import r2_score
@@ -1032,6 +1068,12 @@ Here a small example of usage of the :func:`r2_score` function::
   >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
   >>> r2_score(y_true, y_pred)  # doctest: +ELLIPSIS
   0.938...
+  >>> r2_score(y_true, y_pred, output_weights=None)
+  ... # doctest: +ELLIPSIS
+  array([ 0.965...,  0.908...])
+  >>> r2_score(y_true, y_pred, output_weights=[0.3, 0.7])
+  ... # doctest: +ELLIPSIS
+  0.925...
 
 
 .. topic:: Example:
