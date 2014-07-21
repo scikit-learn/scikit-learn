@@ -91,17 +91,17 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                                  "constant"):
             raise ValueError("Unknown strategy type.")
 
+        self.n_outputs_ = y.shape[1]
+        self.classes_ = []
+        self.n_classes_ = []
+        self.class_prior_ = []
+
         if not sp.issparse(y):
             y = np.atleast_1d(y)
             self.output_2d_ = y.ndim == 2
 
             if y.ndim == 1:
                 y = np.reshape(y, (-1, 1))
-
-            self.n_outputs_ = y.shape[1]
-            self.classes_ = []
-            self.n_classes_ = []
-            self.class_prior_ = []
 
             if self.strategy == "constant":
                 if self.constant is None:
@@ -133,10 +133,6 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             y.tocsc()
             y.eliminate_zeros()
             y_nnz = np.diff(y.indptr)
-            self.n_outputs_ = y.shape[1]
-            self.classes_ = []
-            self.n_classes_ = []
-            self.class_prior_ = []
 
             for k in range(self.n_outputs_):
                 classes, y_k = np.unique(y.data[y.indices[k]:y.indices[k + 1]],
