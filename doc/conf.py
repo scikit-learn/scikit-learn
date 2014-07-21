@@ -12,6 +12,7 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+from __future__ import print_function
 import sys
 import os
 from sklearn.externals.six import u
@@ -21,6 +22,8 @@ from sklearn.externals.six import u
 # is relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
 sys.path.insert(0, os.path.abspath('sphinxext'))
+
+from github_link import make_linkcode_resolve
 
 # -- General configuration ---------------------------------------------------
 
@@ -34,7 +37,8 @@ except:
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['gen_rst',
               'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
-              'sphinx.ext.pngmath', 'numpy_ext.numpydoc'
+              'sphinx.ext.pngmath', 'numpy_ext.numpydoc',
+              'sphinx.ext.linkcode',
               ]
 
 autosummary_generate = True
@@ -231,3 +235,10 @@ def setup(app):
     app.add_javascript('js/copybutton.js')
     # to format example galleries:
     app.add_javascript('js/examples.js')
+
+
+# The following is used by sphinx.ext.linkcode to provide links to github
+linkcode_resolve = make_linkcode_resolve('sklearn',
+                                         u'https://github.com/scikit-learn/'
+                                         'scikit-learn/blob/{revision}/'
+                                         '{package}/{path}#L{lineno}')
