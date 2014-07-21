@@ -210,6 +210,12 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             raise ValueError("min_samples_split must be greater than zero.")
         if self.min_samples_leaf <= 0:
             raise ValueError("min_samples_leaf must be greater than zero.")
+        if isinstance(self.min_samples_leaf, float) \
+                and not 0 < self.min_samples_leaf <= 0.5:
+            raise ValueError("float min_samples_leaf must in (0, 0.5]")
+        if isinstance(self.min_samples_split, float) \
+                and not 0 < self.min_samples_split < 1.0:
+            raise ValueError("float min_samples_split must in (0, 1.0)")
         if not 0 <= self.min_weight_fraction_leaf <= 0.5:
             raise ValueError("min_weight_fraction_leaf must in [0, 0.5]")
         if max_depth <= 0:
