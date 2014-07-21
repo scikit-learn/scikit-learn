@@ -93,14 +93,13 @@ def _precomp_kernel_ridge_path_eigen(gramX_train, Y_train, alphas,
                          "or change mode.")
 
     if sample_weight is not None:
-        sqrt_sw = np.sqrt(sample_weight.ravel())
+        sw = sample_weight.reshape(-1, 1)
         if copy:
-            gramX_train = (gramX_train * sqrt_sw[:, np.newaxis]) * sqrt_sw
-            Y_train = sqrt_sw[:, np.newaxis] * Y_train
+            gramX_train = sw * gramX_train
+            Y_train = sw * Y_train
         else:
-            gramX_train *= sqrt_sw[:, np.newaxis]
-            gramX_train *= sqrt_sw
-            Y_train *= sqrt_sw[:, np.newaxis]
+            gramX_train *= sw
+            Y_train *= sw
 
     eig_val_train, eig_vect_train = linalg.eigh(gramX_train)
     VTY = eig_vect_train.T.dot(Y_train)
@@ -114,8 +113,6 @@ def _precomp_kernel_ridge_path_eigen(gramX_train, Y_train, alphas,
 
     if gramX_test is None:
         dual_coef = eig_vect_train.dot(v_alpha_VTY).transpose(1, 0, 2)
-        if sample_weight is not None:
-            dual_coef *= sqrt_sw[:, np.newaxis]
         if mode == 'normal':
             output = dual_coef
         elif mode in ['looe', 'loov']:
@@ -129,11 +126,7 @@ def _precomp_kernel_ridge_path_eigen(gramX_train, Y_train, alphas,
         else:
             raise ValueError("mode not understood")
     else:
-        if sample_weight is not None:
-            predict_mat = gramX_test.dot(
-                sqrt_sw[:, np.newaxis] * eig_vect_train)
-        else:
-            predict_mat = gramX_test.dot(eig_vect_train)
+        predict_mat = gramX_test.dot(eig_vect_train)
         predictions = predict_mat.dot(v_alpha_VTY).transpose(1, 0, 2)
         output = predictions
 
