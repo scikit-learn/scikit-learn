@@ -136,8 +136,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                     classes = np.insert(classes, 0, 0)
                 self.classes_.append(classes)
                 self.n_classes_.append(classes.shape[0])
-                self.class_prior_.append(np.bincount(y_k) /
-                                         float(y_k.shape[0]))
+                class_prior = np.bincount(y_k, weights=sample_weight)
+                self.class_prior_.append(class_prior / class_prior.sum())
 
         # Checking in case of constant strategy if the constant
         # provided by the user is in y.
