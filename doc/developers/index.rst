@@ -214,8 +214,9 @@ and are viewable in a web browser. See the README file in the doc/ directory
 for more information.
 
 For building the documentation, you will need `sphinx
-<http://sphinx.pocoo.org/>`_ and `matplotlib
-<http://matplotlib.sourceforge.net/>`_.
+<http://sphinx.pocoo.org/>`_,
+`matplotlib <http://matplotlib.sourceforge.net/>`_ and
+`pillow <http://pillow.readthedocs.org/en/latest/>`_.
 
 **When you are writing documentation**, it is important to keep a good
 compromise between mathematical and algorithmic details, and give
