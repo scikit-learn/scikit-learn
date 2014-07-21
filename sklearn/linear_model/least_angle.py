@@ -513,8 +513,8 @@ class Lars(LinearModel, RegressorMixin):
     ``intercept_`` : float | array, shape (n_targets,)
         Independent term in decision function.
 
-    ``n_iter_`` : array-like
-        A list of the number of iterations taken by lars_path to find the
+    ``n_iter_`` : array-like or int
+        The number of iterations taken by lars_path to find the
         grid of alphas for each target.
 
     Examples
@@ -728,8 +728,8 @@ class LassoLars(Lars):
     ``intercept_`` : float | array, shape (n_targets,)
         Independent term in decision function.
 
-    ``n_iter_`` : array-like
-        A list of the number of iterations taken by lars_path to find the
+    ``n_iter_`` : array-like or int.
+        The number of iterations taken by lars_path to find the
         grid of alphas for each target.
 
     Examples
@@ -932,7 +932,7 @@ class LarsCV(Lars):
         the mean square error on left-out for each fold along the path
         (alpha values given by ``cv_alphas``)
 
-    ``n_iter_`` : int
+    ``n_iter_`` : array-like or int
         the number of iterations run by Lars with the optimal alpha.
 
     See also
@@ -1107,7 +1107,7 @@ class LassoLarsCV(LarsCV):
         the mean square error on left-out for each fold along the path
         (alpha values given by ``cv_alphas``)
 
-    ``n_iter_`` : int
+    ``n_iter_`` : array-like or int
         the number of iterations run by Lars with the optimal alpha.
 
     Notes

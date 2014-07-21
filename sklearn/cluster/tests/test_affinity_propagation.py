@@ -49,7 +49,7 @@ def test_affinity_propagation():
 
     # Test also with no copy
     _, labels_no_copy = affinity_propagation(S, preference=preference,
-                                              copy=False)
+                                             copy=False)
     assert_array_equal(labels, labels_no_copy)
 
     # Test input validation

@@ -204,7 +204,7 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                             max_iter, tol)
                     else:
                         # Use LARS
-                        _, _, coefs, _ = lars_path(
+                        _, _, coefs = lars_path(
                             sub_covariance, row, Xy=row, Gram=sub_covariance,
                             alpha_min=alpha / (n_features - 1), copy_Gram=True,
                             method='lars')
