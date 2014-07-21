@@ -105,7 +105,7 @@ An alternative standardization is scaling features to
 lie between a given minimum and maximum value, often between zero and one.
 This can be achieved using :class:`MinMaxScaler`.
 
-The motivation to use this scaling include robustness to very small
+The motivation to use such a scaling include robustness to very small
 standard deviations of features and preserving zero entries in sparse data.
 
 Here is an example to scale a toy data matrix to the ``[0, 1]`` range::
@@ -146,6 +146,15 @@ full formula is::
 As with :func:`scale`, the ``preprocessing`` module further provides a
 convenience function function :func:`minmax_scale` if you don't want to use
 the `Transformer` API.
+
+Scaling data with outliers
+--------------------------
+If your data contains many outliers, scaling using the mean and variance
+of the data does sometimes not work very well. In these cases, you can use
+:func:`robust_scale` and :class:`RobustScaler` as drop-in replacements
+instead, which use more robust estimates for the center and range of your
+data.
+
 
 .. topic:: References:
 
@@ -528,6 +537,5 @@ similarly.
 
    Note that if features have very different scaling or statistical
    properties, :class:`cluster.FeatureAgglomeration` maye not be able to
-   capture the links between related features. Using a 
+   capture the links between related features. Using a
    :class:`preprocessing.StandardScaler` can be useful in these settings.
-
