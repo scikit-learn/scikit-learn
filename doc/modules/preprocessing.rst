@@ -133,11 +133,8 @@ applied to be consistent with the transformation performed on the train data::
 It is possible to introspect the scaler attributes to find about the exact
 nature of the transformation learned on the training data::
 
-  >>> min_max_scaler.scale_                             # doctest: +ELLIPSIS
-  array([ 0.5       ,  0.5       ,  0.33...])
-
-  >>> min_max_scaler.min_                               # doctest: +ELLIPSIS
-  array([ 0.        ,  0.5       ,  0.33...])
+  >>> min_max_scaler.scale_                       # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+  array([ 2.,  2.,  3.])
 
 If :class:`MinMaxScaler` is given an explicit ``feature_range=(min, max)`` the
 full formula is::
@@ -145,6 +142,10 @@ full formula is::
     X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
 
     X_scaled = X_std / (max - min) + min
+
+As with :func:`scale`, the ``preprocessing`` module further provides a
+convenience function function :func:`minmax_scale` if you don't want to use
+the `Transformer` API.
 
 .. topic:: References:
 
