@@ -2,6 +2,9 @@ import warnings
 import numpy as np
 import numpy.linalg as la
 from scipy import sparse
+from functools import partial
+
+from scipy.stats.mstats import mquantiles
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -13,8 +16,9 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import ignore_warnings
 
-from sklearn.utils.sparsefuncs import mean_variance_axis0
+from sklearn.utils.sparsefuncs import mean_variance_axis
 from sklearn.preprocessing.data import _transform_selected
 from sklearn.preprocessing.data import Binarizer
 from sklearn.preprocessing.data import KernelCenterer
@@ -24,83 +28,306 @@ from sklearn.preprocessing.data import OneHotEncoder
 from sklearn.preprocessing.data import StandardScaler
 from sklearn.preprocessing.data import scale
 from sklearn.preprocessing.data import MinMaxScaler
+from sklearn.preprocessing.data import minmax_scale
 from sklearn.preprocessing.data import add_dummy_feature
 from sklearn.preprocessing.data import PolynomialFeatures
 
 from sklearn import datasets
 
+
 iris = datasets.load_iris()
 
 
-def toarray(a):
-    if hasattr(a, "toarray"):
-        a = a.toarray()
-    return a
+SPARSE_SCALERS = {  # support sparse or dense input
+    'uncentered StandardScaler': partial(StandardScaler, with_centering=False),
+}
+
+NON_SPARSE_SCALERS = {  # only support dense input
+    'centered StandardScaler': partial(StandardScaler, with_centering=True),
+    'MinMaxScaler[0,1]': partial(MinMaxScaler, feature_range=(0, 1)),
+    'MinMaxScaler[-1,1]': partial(MinMaxScaler, feature_range=(-1, 1)),
+    'MinMaxScaler[-3,5]': partial(MinMaxScaler, feature_range=(-3, 5))
+}
 
 
-def test_polynomial_features():
-    """Test Polynomial Features"""
-    X1 = np.arange(6)[:, np.newaxis]
-    P1 = np.hstack([np.ones_like(X1),
-                    X1, X1 ** 2, X1 ** 3])
-    deg1 = 3
-
-    X2 = np.arange(6).reshape((3, 2))
-    x1 = X2[:, :1]
-    x2 = X2[:, 1:]
-    P2 = np.hstack([x1 ** 0 * x2 ** 0,
-                    x1 ** 1 * x2 ** 0,
-                    x1 ** 0 * x2 ** 1,
-                    x1 ** 2 * x2 ** 0,
-                    x1 ** 1 * x2 ** 1,
-                    x1 ** 0 * x2 ** 2])
-    deg2 = 2
-
-    for (deg, X, P) in [(deg1, X1, P1), (deg2, X2, P2)]:
-        P_test = PolynomialFeatures(deg, include_bias=True).fit_transform(X)
-        assert_array_almost_equal(P_test, P)
-
-        P_test = PolynomialFeatures(deg, include_bias=False).fit_transform(X)
-        assert_array_almost_equal(P_test, P[:, 1:])
-
-    interact = PolynomialFeatures(2, interaction_only=True, include_bias=True)
-    X_poly = interact.fit_transform(X)
-    assert_array_almost_equal(X_poly, P2[:, [0, 1, 2, 4]])
-
-    assert_raises(ValueError, interact.transform, X[:, 1:])
+ALL_SCALERS = {}
+ALL_SCALERS.update(SPARSE_SCALERS)
+ALL_SCALERS.update(NON_SPARSE_SCALERS)
 
 
-def test_scaler_1d():
-    """Test scaling of dataset along single axis"""
+SCALER_FUNCTIONS = {
+    'scale': scale,
+    'minmax_scale': minmax_scale,
+}
+
+
+def test_scaler_2d_axis0():
+    """Test robust scaling of 2d array along axis0"""
     rng = np.random.RandomState(0)
-    X = rng.randn(5)
-    X_orig_copy = X.copy()
+    X = rng.randn(4, 5)
+    X[:, 0] = 0.0  # first feature is always of zero
 
-    scaler = StandardScaler()
-    X_scaled = scaler.fit(X).transform(X, copy=False)
-    assert_array_almost_equal(X_scaled.mean(axis=0), 0.0)
-    assert_array_almost_equal(X_scaled.std(axis=0), 1.0)
+    for fn, ScalerClass in ALL_SCALERS.items():
+        scaler = ScalerClass(axis=0)
+        X_scaled = scaler.fit(X).transform(X, copy=True)
+        assert_false(np.any(np.isnan(X_scaled)))
 
-    # check inverse transform
-    X_scaled_back = scaler.inverse_transform(X_scaled)
-    assert_array_almost_equal(X_scaled_back, X_orig_copy)
+        assert_array_almost_equal(X_scaled.std(axis=0)[0], 0)
+        # Check that X has been copied
+        assert_true(X_scaled is not X)
 
-    # Test with 1D list
-    X = [0., 1., 2, 0.4, 1.]
-    scaler = StandardScaler()
-    X_scaled = scaler.fit(X).transform(X, copy=False)
-    assert_array_almost_equal(X_scaled.mean(axis=0), 0.0)
-    assert_array_almost_equal(X_scaled.std(axis=0), 1.0)
+        # check inverse transform
+        X_scaled_back = scaler.inverse_transform(X_scaled)
+        assert_true(X_scaled_back is not X)
+        assert_true(X_scaled_back is not X_scaled)
+        assert_array_almost_equal(X_scaled_back, X)
 
-    X_scaled = scale(X)
-    assert_array_almost_equal(X_scaled.mean(axis=0), 0.0)
-    assert_array_almost_equal(X_scaled.std(axis=0), 1.0)
+        assert_false(np.any(np.isnan(X_scaled)))
+        # Check that the data hasn't been modified
+        assert_true(X_scaled is not X)
 
-    X = np.ones(5)
-    assert_array_equal(scale(X, with_mean=False), X)
+        X_scaled = scaler.fit(X).transform(X, copy=False)
+        # Check that X has not been copied
+        assert_true(X_scaled is X)
 
 
-def test_scaler_2d_arrays():
+def test_scaler_2d_axis1():
+    '''Check that scalers work on 2D arrays on axis=1'''
+    rng = np.random.RandomState(42)
+    X = rng.randn(4, 5)
+    for fn, ScalerClass in ALL_SCALERS.items():
+        scaler = ScalerClass().fit(X)
+        scaler_trans = ScalerClass(axis=1).fit(X.T)
+        X_scaled = scaler.transform(X)
+        X_scaled_trans = scaler_trans.transform(X.T)
+        assert_array_almost_equal(X_scaled.T, X_scaled_trans)
+        X_inv = scaler.inverse_transform(X_scaled)
+        X_trans_inv = scaler_trans.inverse_transform(X_scaled_trans)
+        assert_array_almost_equal(X_inv.T, X_trans_inv)
+
+    for fn, scale_func in SCALER_FUNCTIONS.items():
+        X_scaled = scale_func(X)
+        X_scaled_trans = scale_func(X.T, axis=1)
+        assert_array_almost_equal(X_scaled.T, X_scaled_trans)
+
+
+def test_scaler_1D():
+    '''Check that scalers accept 1D input'''
+    X = np.array([-1, 0.0, 1.6])
+    Xl = [-1, 0.0, 1.6]  # 1D list
+    for fn, ScalerClass in ALL_SCALERS.items():
+        scaler = ScalerClass()
+        X_trans = scaler.fit_transform(X)
+        X_inv = scaler.inverse_transform(X_trans)
+        assert_array_almost_equal(X_inv, X)
+
+        Xl_trans = scaler.fit_transform(Xl)
+        assert_array_almost_equal(X_trans, Xl_trans)
+        X_trans2 = np.squeeze(scaler.fit_transform(np.transpose([X])))
+        assert_array_almost_equal(Xl_trans, X_trans2)
+        X_inv = scaler.inverse_transform(Xl_trans)
+        assert_array_almost_equal(X_inv, Xl)
+        Xl_inv = scaler.inverse_transform(Xl_trans.tolist())
+        assert_array_almost_equal(X_inv, Xl_inv)
+
+    for fn, scale_func in SCALER_FUNCTIONS.items():
+        scale_func(X)
+
+
+def test_scale_allzeros():
+    X = np.array([0.0, 0.0, 0.0, 0.0])
+    for fn, ScalerClass in ALL_SCALERS.items():
+        scaler = ScalerClass().fit(X)
+        X_scaled = scaler.transform(X)
+        if "MinMaxScaler" in fn:
+            continue
+        assert_array_almost_equal(X_scaled, X)
+        X_inv = scaler.inverse_transform(X_scaled)
+        assert_array_almost_equal(X_inv, X)
+
+    for fn, scale_func in SCALER_FUNCTIONS.items():
+        X_scaled = scale_func(X)
+        assert_array_almost_equal(X_scaled, X)
+
+
+def test_scaler_sparse_data():
+    """Check that the scalers works with sparse inputs."""
+    X = [[0., 1., +0.5, -1],
+         [0., 1., -0.3, -0.5],
+         [0., 1., -1.5, 0],
+         [0., 0., +0.0, -2]]
+
+    X_csr = sparse.csr_matrix(X)
+    X_csc = sparse.csc_matrix(X)
+
+    for axis in (0, 1):
+        for fn, ScalerClass in SPARSE_SCALERS.items():
+            scaler = ScalerClass(axis=axis)
+            scaler_csr = ScalerClass(axis=axis)
+            scaler_csc = ScalerClass(axis=axis)
+            X_trans = scaler.fit_transform(X)
+            X_trans_csr = scaler_csr.fit_transform(X_csr)
+            X_trans_csc = scaler_csc.fit_transform(X_csc)
+            assert_false(np.any(np.isnan(X_trans_csr.data)))
+            assert_false(np.any(np.isnan(X_trans_csc.data)))
+
+            assert_array_almost_equal(X_trans, X_trans_csr.toarray())
+            assert_array_almost_equal(X_trans, X_trans_csc.toarray())
+            X_trans_inv = scaler.inverse_transform(X_trans)
+            X_trans_inv_csr = scaler_csr.inverse_transform(X_trans_csr)
+            X_trans_inv_csc = scaler_csc.inverse_transform(X_trans_csc)
+            assert_false(np.any(np.isnan(X_trans_inv_csr.data)))
+            assert_false(np.any(np.isnan(X_trans_inv_csc.data)))
+            assert_array_almost_equal(X_trans_inv, X_trans_inv_csr.toarray())
+            assert_array_almost_equal(X_trans_inv, X_trans_inv_csc.toarray())
+
+
+def test_scaler_center_property():
+    """Check that the center_ attribute of the Scalers is accessible"""
+    X = [[0., 2.0, +0.5],
+         [0., 0.0, -0.3]]
+    for fn, ScalerClass in ALL_SCALERS.items():
+        scaler = ScalerClass()
+        if not scaler.with_centering:
+            continue
+        scaler.fit_transform(X)
+        assert(len(scaler.center_) == 3)
+
+    scaler = StandardScaler().fit(X)
+    with warnings.catch_warnings(record=True):
+        assert(len(scaler.mean_) == 3)  # deprecated parameter
+
+
+def test_scaler_scale_property():
+    """Check that the scale_ attribute of Scalers is accessible"""
+    X = [[0., 2.0, +0.5],
+         [0., 0.0, -0.3]]
+
+    for fn, ScalerClass in ALL_SCALERS.items():
+        scaler = ScalerClass()
+        scaler.fit_transform(X)
+        assert(len(scaler.scale_) == 3)
+
+    scaler = StandardScaler().fit(X)
+    with warnings.catch_warnings(record=True):
+        assert(len(scaler.std_) == 3)  # deprecated parameter
+
+
+def test_scaler_matrix_copy_argument():
+    '''Make sure the scalers respect the 'copy' argument on inputs.'''
+
+    def test_impl(X, ScalerClass):
+        scaler = ScalerClass(copy=True).fit(X)
+        X_scaled = scaler.transform(X)
+        assert (X_scaled is not X)
+        X2 = scaler.inverse_transform(X_scaled)
+        assert (X_scaled is not X2)
+
+        scaler = ScalerClass(copy=False).fit(X)
+        X_scaled = scaler.transform(X)
+        assert (X_scaled is X)
+        X2 = scaler.inverse_transform(X_scaled)
+        assert (X_scaled is X2)
+
+        scaler = ScalerClass(copy=False).fit(X)
+        X_scaled = scaler.transform(X, copy=True)
+        assert (X_scaled is not X)
+        X2 = scaler.inverse_transform(X_scaled, copy=True)
+        assert (X_scaled is not X2)
+
+        scaler = ScalerClass(copy=False).fit(X)
+        X_scaled = scaler.transform(X)
+        assert (X_scaled is X)
+
+    rng = np.random.RandomState(42)
+    X = rng.randn(4, 5)
+    rng = np.random.RandomState(42)
+    for fn, ScalerClass in ALL_SCALERS.items():
+        test_impl(X, ScalerClass)
+
+    X = rng.randn(4, 5)
+    X[0, 0] = 0
+    X_csr = sparse.csr_matrix(X)
+    for fn, ScalerClass in SPARSE_SCALERS.items():
+        test_impl(X, ScalerClass)
+
+
+@ignore_warnings
+def test_scaler_int():
+    '''Test that scaler converts integer input to float
+       (or at least that transform->inverse_transform works as it should)'''
+    rng = np.random.RandomState(42)
+    X = rng.randint(20, size=(4, 5))
+    X[:, 0] = 0  # first feature is always of zero
+    X_csr = sparse.csr_matrix(X)
+    X_csc = sparse.csc_matrix(X)
+
+    for fn, ScalerClass in ALL_SCALERS.items():
+        try:
+            null_transform = ScalerClass(with_centering=False,
+                                         with_scaling=False, copy=True)
+            X_null = null_transform.fit_transform(X)
+            assert_array_equal(X_null, X)
+        except TypeError:
+            pass  # some classes can't be initialized with above args
+
+        with warnings.catch_warnings(record=True):
+            scaler = ScalerClass().fit(X)
+            X_scaled = scaler.transform(X, copy=True)
+        assert_false(np.any(np.isnan(X_scaled)))
+
+        X_scaled_back = scaler.inverse_transform(X_scaled)
+        assert_array_almost_equal(X_scaled_back, X)
+
+    for fn, ScalerClass in SPARSE_SCALERS.items():
+        with warnings.catch_warnings(record=True):
+            scaler_csr = ScalerClass().fit(X_csr)
+            X_csr_scaled = scaler_csr.transform(X_csr, copy=True)
+        assert_false(np.any(np.isnan(X_csr_scaled.data)))
+
+        with warnings.catch_warnings(record=True):
+            scaler_csc = ScalerClass().fit(X_csc)
+            X_csc_scaled = scaler_csc.transform(X_csc, copy=True)
+        assert_false(np.any(np.isnan(X_csc_scaled.data)))
+
+        X_csr_scaled_back = scaler_csr.inverse_transform(X_csr_scaled)
+        assert_array_almost_equal(X_csr_scaled_back.toarray(), X)
+
+        X_csc_scaled_back = scaler_csc.inverse_transform(X_csc_scaled.tocsc())
+        assert_array_almost_equal(X_csc_scaled_back.toarray(), X)
+
+
+def test_warning_scaling_integers():
+    """Check warning when scaling integer data"""
+    X = np.array([[1, 2, 0],
+                  [0, 0, 0]], dtype=np.uint8)
+
+    for fn, ScalerClass in ALL_SCALERS.items():
+        assert_warns(UserWarning, ScalerClass().fit, X)
+
+
+def test_nonsparse_scaler_raise_exception_on_sparse():
+    rng = np.random.RandomState(42)
+    X = rng.randn(4, 5)
+    X_csr = sparse.csr_matrix(X)
+
+    nonsparse = set(ALL_SCALERS.keys()) - set(SPARSE_SCALERS.keys())
+    for fn in nonsparse:
+        scaler = ALL_SCALERS[fn]()
+
+        # some scalers don't except sparse matrices at all and will throw
+        # a TypeError, while others except them only under certain conditions
+        # and will throw a ValueError if that happens. Thus we test for
+        # BaseException
+        assert_raises(BaseException, scaler.fit, X_csr)
+        scaler.fit(X)
+        assert_raises(BaseException, scaler.transform, X_csr)
+        X_transformed_csr = sparse.csr_matrix(scaler.transform(X))
+        assert_raises(BaseException, scaler.inverse_transform,
+                      X_transformed_csr)
+
+
+def test_standardscaler_2d_arrays():
     """Test scaling of 2d array along first axis"""
     rng = np.random.RandomState(0)
     X = rng.randn(4, 5)
@@ -108,45 +335,40 @@ def test_scaler_2d_arrays():
 
     scaler = StandardScaler()
     X_scaled = scaler.fit(X).transform(X, copy=True)
-    assert_false(np.any(np.isnan(X_scaled)))
 
     assert_array_almost_equal(X_scaled.mean(axis=0), 5 * [0.0])
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
-    # Check that X has been copied
-    assert_true(X_scaled is not X)
 
-    # check inverse transform
-    X_scaled_back = scaler.inverse_transform(X_scaled)
-    assert_true(X_scaled_back is not X)
-    assert_true(X_scaled_back is not X_scaled)
-    assert_array_almost_equal(X_scaled_back, X)
-
-    X_scaled = scale(X, axis=1, with_std=False)
-    assert_false(np.any(np.isnan(X_scaled)))
+    X_scaled = scale(X, axis=1, with_scaling=False)
     assert_array_almost_equal(X_scaled.mean(axis=1), 4 * [0.0])
-    X_scaled = scale(X, axis=1, with_std=True)
-    assert_false(np.any(np.isnan(X_scaled)))
+    X_scaled = scale(X, axis=1, with_scaling=True)
     assert_array_almost_equal(X_scaled.mean(axis=1), 4 * [0.0])
     assert_array_almost_equal(X_scaled.std(axis=1), 4 * [1.0])
-    # Check that the data hasn't been modified
-    assert_true(X_scaled is not X)
 
-    X_scaled = scaler.fit(X).transform(X, copy=False)
-    assert_false(np.any(np.isnan(X_scaled)))
-    assert_array_almost_equal(X_scaled.mean(axis=0), 5 * [0.0])
-    assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
-    # Check that X has not been copied
-    assert_true(X_scaled is X)
 
-    X = rng.randn(4, 5)
-    X[:, 0] = 1.0  # first feature is a constant, non zero feature
+def test_standard_scaler_zero_variance_features():
+    """Check standard scaler on toy data with zero variance features"""
+    X = [[0., 1., +0.5],
+         [0., 1., -0.1],
+         [0., 1., +1.1]]
     scaler = StandardScaler()
-    X_scaled = scaler.fit(X).transform(X, copy=True)
-    assert_false(np.any(np.isnan(X_scaled)))
-    assert_array_almost_equal(X_scaled.mean(axis=0), 5 * [0.0])
-    assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
-    # Check that X has not been copied
-    assert_true(X_scaled is not X)
+    X_trans = scaler.fit_transform(X)
+    X_expected = [[0., 0.,  0.],
+                  [0., 0., -1.22474487],
+                  [0., 0.,  1.22474487]]
+    assert_array_almost_equal(X_trans, X_expected)
+    X_trans_inv = scaler.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_trans_inv, decimal=4)
+
+    # make sure new data gets transformed correctly
+    X_new = [[+0., 2., 0.5],
+             [-1., 1., 0.0],
+             [+0., 1., 1.5]]
+    X_trans_new = scaler.transform(X_new)
+    X_expected_new = [[+0., 1.,  0.],
+                      [-1., 0., -1.02062073],
+                      [+0., 0.,  2.04124145]]
+    assert_array_almost_equal(X_trans_new, X_expected_new, decimal=4)
 
 
 def test_min_max_scaler_iris():
@@ -155,41 +377,53 @@ def test_min_max_scaler_iris():
     # default params
     X_trans = scaler.fit_transform(X)
     assert_array_almost_equal(X_trans.min(axis=0), 0)
-    assert_array_almost_equal(X_trans.min(axis=0), 0)
     assert_array_almost_equal(X_trans.max(axis=0), 1)
-    X_trans_inv = scaler.inverse_transform(X_trans)
-    assert_array_almost_equal(X, X_trans_inv)
 
     # not default params: min=1, max=2
     scaler = MinMaxScaler(feature_range=(1, 2))
     X_trans = scaler.fit_transform(X)
     assert_array_almost_equal(X_trans.min(axis=0), 1)
     assert_array_almost_equal(X_trans.max(axis=0), 2)
-    X_trans_inv = scaler.inverse_transform(X_trans)
-    assert_array_almost_equal(X, X_trans_inv)
 
     # min=-.5, max=.6
     scaler = MinMaxScaler(feature_range=(-.5, .6))
     X_trans = scaler.fit_transform(X)
     assert_array_almost_equal(X_trans.min(axis=0), -.5)
     assert_array_almost_equal(X_trans.max(axis=0), .6)
-    X_trans_inv = scaler.inverse_transform(X_trans)
-    assert_array_almost_equal(X, X_trans_inv)
 
-    # raises on invalid range
-    scaler = MinMaxScaler(feature_range=(2, 1))
-    assert_raises(ValueError, scaler.fit, X)
+    # minmax_scale function
+    X_trans = minmax_scale(X)
+    assert_array_almost_equal(X_trans.min(axis=0), 0)
+    assert_array_almost_equal(X_trans.max(axis=0), 1)
+    X_trans = minmax_scale(X, feature_range=(1, 2))
+    assert_array_almost_equal(X_trans.min(axis=0), 1)
+    assert_array_almost_equal(X_trans.max(axis=0), 2)
+    X_trans = minmax_scale(X, feature_range=(-0.5, 0.6))
+    assert_array_almost_equal(X_trans.min(axis=0), -0.5)
+    assert_array_almost_equal(X_trans.max(axis=0),  0.6)
 
 
-def test_min_max_scaler_zero_variance_features():
-    """Check min max scaler on toy data with zero variance features"""
+def test_min_max_scaler_raise_invalid_range():
+    '''Check if MinMaxScaler raises an error if range is invalid'''
     X = [[0., 1., +0.5],
          [0., 1., -0.1],
          [0., 1., +1.1]]
+    scaler = MinMaxScaler(feature_range=(2, 1))
+    assert_raises(ValueError, scaler.fit, X)
+    # TODO: for some reason assert_raise doesn't test this correctly
+    did_raise = False
+    try:
+        minmax_scale(X, feature_range=(2, 1))
+    except ValueError:
+        did_raise = True
+    assert_true(did_raise)
 
-    X_new = [[+0., 2., 0.5],
-             [-1., 1., 0.0],
-             [+0., 1., 1.5]]
+
+def test_min_max_scaler_zero_variance_features():
+    """Check MinMaxScaler on toy data with zero variance features"""
+    X = [[0., 1., +0.5],
+         [0., 1., -0.1],
+         [0., 1., +1.1]]
 
     # default params
     scaler = MinMaxScaler()
@@ -201,6 +435,10 @@ def test_min_max_scaler_zero_variance_features():
     X_trans_inv = scaler.inverse_transform(X_trans)
     assert_array_almost_equal(X, X_trans_inv)
 
+    # make sure new data gets transformed correctly
+    X_new = [[+0., 2., 0.5],
+             [-1., 1., 0.0],
+             [+0., 1., 1.5]]
     X_trans_new = scaler.transform(X_new)
     X_expected_0_1_new = [[+0., 1., 0.500],
                           [-1., 0., 0.083],
@@ -246,209 +484,78 @@ def test_min_max_scaler_1d():
     assert_less_equal(X_scaled.max(), 1.)
 
 
-def test_scaler_without_centering():
+def test_standardscaler_nulltransform():
     rng = np.random.RandomState(42)
     X = rng.randn(4, 5)
     X[:, 0] = 0.0  # first feature is always of zero
     X_csr = sparse.csr_matrix(X)
-    X_csc = sparse.csc_matrix(X)
-
-    assert_raises(ValueError, StandardScaler().fit, X_csr)
-
-    null_transform = StandardScaler(with_mean=False, with_std=False, copy=True)
+    null_transform = StandardScaler(with_centering=False,
+                                    with_scaling=False, copy=True)
     X_null = null_transform.fit_transform(X_csr)
     assert_array_equal(X_null.data, X_csr.data)
     X_orig = null_transform.inverse_transform(X_null)
     assert_array_equal(X_orig.data, X_csr.data)
 
-    scaler = StandardScaler(with_mean=False).fit(X)
-    X_scaled = scaler.transform(X, copy=True)
-    assert_false(np.any(np.isnan(X_scaled)))
-
-    scaler_csr = StandardScaler(with_mean=False).fit(X_csr)
-    X_csr_scaled = scaler_csr.transform(X_csr, copy=True)
-    assert_false(np.any(np.isnan(X_csr_scaled.data)))
-
-    scaler_csc = StandardScaler(with_mean=False).fit(X_csc)
-    X_csc_scaled = scaler_csr.transform(X_csc, copy=True)
-    assert_false(np.any(np.isnan(X_csc_scaled.data)))
-
-    assert_equal(scaler.mean_, scaler_csr.mean_)
-    assert_array_almost_equal(scaler.std_, scaler_csr.std_)
-
-    assert_equal(scaler.mean_, scaler_csc.mean_)
-    assert_array_almost_equal(scaler.std_, scaler_csc.std_)
-
-    assert_array_almost_equal(
-        X_scaled.mean(axis=0), [0., -0.01, 2.24, -0.35, -0.78], 2)
-    assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
-
-    X_csr_scaled_mean, X_csr_scaled_std = mean_variance_axis0(X_csr_scaled)
-    assert_array_almost_equal(X_csr_scaled_mean, X_scaled.mean(axis=0))
-    assert_array_almost_equal(X_csr_scaled_std, X_scaled.std(axis=0))
-
-    # Check that X has not been modified (copy)
-    assert_true(X_scaled is not X)
-    assert_true(X_csr_scaled is not X_csr)
-
-    X_scaled_back = scaler.inverse_transform(X_scaled)
-    assert_true(X_scaled_back is not X)
-    assert_true(X_scaled_back is not X_scaled)
-    assert_array_almost_equal(X_scaled_back, X)
-
-    X_csr_scaled_back = scaler_csr.inverse_transform(X_csr_scaled)
-    assert_true(X_csr_scaled_back is not X_csr)
-    assert_true(X_csr_scaled_back is not X_csr_scaled)
-    assert_array_almost_equal(X_csr_scaled_back.toarray(), X)
-
-    X_csc_scaled_back = scaler_csr.inverse_transform(X_csc_scaled.tocsc())
-    assert_true(X_csc_scaled_back is not X_csc)
-    assert_true(X_csc_scaled_back is not X_csc_scaled)
-    assert_array_almost_equal(X_csc_scaled_back.toarray(), X)
 
 
-def test_scaler_int():
-    # test that scaler converts integer input to floating
-    # for both sparse and dense matrices
+
+
+
+
+
+
     rng = np.random.RandomState(42)
-    X = rng.randint(20, size=(4, 5))
-    X[:, 0] = 0  # first feature is always of zero
-    X_csr = sparse.csr_matrix(X)
-    X_csc = sparse.csc_matrix(X)
-
-    null_transform = StandardScaler(with_mean=False, with_std=False, copy=True)
-    with warnings.catch_warnings(record=True):
-        X_null = null_transform.fit_transform(X_csr)
-    assert_array_equal(X_null.data, X_csr.data)
-    X_orig = null_transform.inverse_transform(X_null)
-    assert_array_equal(X_orig.data, X_csr.data)
-
-    with warnings.catch_warnings(record=True):
-        scaler = StandardScaler(with_mean=False).fit(X)
-        X_scaled = scaler.transform(X, copy=True)
-    assert_false(np.any(np.isnan(X_scaled)))
-
-    with warnings.catch_warnings(record=True):
-        scaler_csr = StandardScaler(with_mean=False).fit(X_csr)
-        X_csr_scaled = scaler_csr.transform(X_csr, copy=True)
-    assert_false(np.any(np.isnan(X_csr_scaled.data)))
-
-    with warnings.catch_warnings(record=True):
-        scaler_csc = StandardScaler(with_mean=False).fit(X_csc)
-        X_csc_scaled = scaler_csr.transform(X_csc, copy=True)
-    assert_false(np.any(np.isnan(X_csc_scaled.data)))
-
-    assert_equal(scaler.mean_, scaler_csr.mean_)
-    assert_array_almost_equal(scaler.std_, scaler_csr.std_)
-
-    assert_equal(scaler.mean_, scaler_csc.mean_)
-    assert_array_almost_equal(scaler.std_, scaler_csc.std_)
-
-    assert_array_almost_equal(
-        X_scaled.mean(axis=0),
-        [0., 1.109, 1.856, 21., 1.559], 2)
-    assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
-
-    X_csr_scaled_mean, X_csr_scaled_std = mean_variance_axis0(
-        X_csr_scaled.astype(np.float))
-    assert_array_almost_equal(X_csr_scaled_mean, X_scaled.mean(axis=0))
-    assert_array_almost_equal(X_csr_scaled_std, X_scaled.std(axis=0))
-
-    # Check that X has not been modified (copy)
-    assert_true(X_scaled is not X)
-    assert_true(X_csr_scaled is not X_csr)
-
-    X_scaled_back = scaler.inverse_transform(X_scaled)
-    assert_true(X_scaled_back is not X)
-    assert_true(X_scaled_back is not X_scaled)
-    assert_array_almost_equal(X_scaled_back, X)
-
-    X_csr_scaled_back = scaler_csr.inverse_transform(X_csr_scaled)
-    assert_true(X_csr_scaled_back is not X_csr)
-    assert_true(X_csr_scaled_back is not X_csr_scaled)
-    assert_array_almost_equal(X_csr_scaled_back.toarray(), X)
-
-    X_csc_scaled_back = scaler_csr.inverse_transform(X_csc_scaled.tocsc())
-    assert_true(X_csc_scaled_back is not X_csc)
-    assert_true(X_csc_scaled_back is not X_csc_scaled)
-    assert_array_almost_equal(X_csc_scaled_back.toarray(), X)
 
 
-def test_scaler_without_copy():
-    """Check that StandardScaler.fit does not change input"""
     rng = np.random.RandomState(42)
     X = rng.randn(4, 5)
-    X[:, 0] = 0.0  # first feature is always of zero
-    X_csr = sparse.csr_matrix(X)
-
-    X_copy = X.copy()
-    StandardScaler(copy=False).fit(X)
-    assert_array_equal(X, X_copy)
-
-    X_csr_copy = X_csr.copy()
-    StandardScaler(with_mean=False, copy=False).fit(X_csr)
-    assert_array_equal(X_csr.toarray(), X_csr_copy.toarray())
 
 
-def test_scale_sparse_with_mean_raise_exception():
-    rng = np.random.RandomState(42)
-    X = rng.randn(4, 5)
-    X_csr = sparse.csr_matrix(X)
-
-    # check scaling and fit with direct calls on sparse data
-    assert_raises(ValueError, scale, X_csr, with_mean=True)
-    assert_raises(ValueError, StandardScaler(with_mean=True).fit, X_csr)
-
-    # check transform and inverse_transform after a fit on a dense array
-    scaler = StandardScaler(with_mean=True).fit(X)
-    assert_raises(ValueError, scaler.transform, X_csr)
-
-    X_transformed_csr = sparse.csr_matrix(scaler.transform(X))
-    assert_raises(ValueError, scaler.inverse_transform, X_transformed_csr)
 
 
-def test_scale_function_without_centering():
-    rng = np.random.RandomState(42)
-    X = rng.randn(4, 5)
-    X[:, 0] = 0.0  # first feature is always of zero
-    X_csr = sparse.csr_matrix(X)
-
-    X_scaled = scale(X, with_mean=False)
-    assert_false(np.any(np.isnan(X_scaled)))
-
-    X_csr_scaled = scale(X_csr, with_mean=False)
-    assert_false(np.any(np.isnan(X_csr_scaled.data)))
-
-    # test csc has same outcome
-    X_csc_scaled = scale(X_csr.tocsc(), with_mean=False)
-    assert_array_almost_equal(X_scaled, X_csc_scaled.toarray())
-
-    # raises value error on axis != 0
-    assert_raises(ValueError, scale, X_csr, with_mean=False, axis=1)
-
-    assert_array_almost_equal(X_scaled.mean(axis=0),
-                              [0., -0.01, 2.24, -0.35, -0.78], 2)
-    assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
-    # Check that X has not been copied
-    assert_true(X_scaled is not X)
-
-    X_csr_scaled_mean, X_csr_scaled_std = mean_variance_axis0(X_csr_scaled)
-    assert_array_almost_equal(X_csr_scaled_mean, X_scaled.mean(axis=0))
-    assert_array_almost_equal(X_csr_scaled_std, X_scaled.std(axis=0))
 
 
-def test_warning_scaling_integers():
-    """Check warning when scaling integer data"""
-    X = np.array([[1, 2, 0],
-                  [0, 0, 0]], dtype=np.uint8)
 
-    with warnings.catch_warnings(record=True):
-        warnings.simplefilter("always")
-        assert_warns(UserWarning, StandardScaler().fit, X)
 
-    with warnings.catch_warnings(record=True):
-        warnings.simplefilter("always")
-        assert_warns(UserWarning, MinMaxScaler().fit, X)
+
+
+
+def toarray(a):
+    if hasattr(a, "toarray"):
+        a = a.toarray()
+    return a
+
+
+def test_polynomial_features():
+    """Test Polynomial Features"""
+    X1 = np.arange(6)[:, np.newaxis]
+    P1 = np.hstack([np.ones_like(X1),
+                    X1, X1 ** 2, X1 ** 3])
+    deg1 = 3
+
+    X2 = np.arange(6).reshape((3, 2))
+    x1 = X2[:, :1]
+    x2 = X2[:, 1:]
+    P2 = np.hstack([x1 ** 0 * x2 ** 0,
+                    x1 ** 1 * x2 ** 0,
+                    x1 ** 0 * x2 ** 1,
+                    x1 ** 2 * x2 ** 0,
+                    x1 ** 1 * x2 ** 1,
+                    x1 ** 0 * x2 ** 2])
+    deg2 = 2
+
+    for (deg, X, P) in [(deg1, X1, P1), (deg2, X2, P2)]:
+        P_test = PolynomialFeatures(deg, include_bias=True).fit_transform(X)
+        assert_array_almost_equal(P_test, P)
+
+        P_test = PolynomialFeatures(deg, include_bias=False).fit_transform(X)
+        assert_array_almost_equal(P_test, P[:, 1:])
+
+    interact = PolynomialFeatures(2, interaction_only=True, include_bias=True)
+    X_poly = interact.fit_transform(X)
+    assert_array_almost_equal(X_poly, P2[:, [0, 1, 2, 4]])
+
+    assert_raises(ValueError, interact.transform, X[:, 1:])
 
 
 def test_normalizer_l1():
@@ -611,7 +718,7 @@ def test_center_kernel():
        in feature space"""
     rng = np.random.RandomState(0)
     X_fit = rng.random_sample((5, 4))
-    scaler = StandardScaler(with_std=False)
+    scaler = StandardScaler(with_scaling=False)
     scaler.fit(X_fit)
     X_fit_centered = scaler.transform(X_fit)
     K_fit = np.dot(X_fit, X_fit.T)
