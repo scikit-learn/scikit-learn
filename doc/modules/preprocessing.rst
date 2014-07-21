@@ -72,13 +72,14 @@ This class is hence suitable for use in the early steps of a
 :class:`sklearn.pipeline.Pipeline`::
 
   >>> scaler = preprocessing.StandardScaler().fit(X)
-  >>> scaler
-  StandardScaler(copy=True, with_mean=True, with_std=True)
+  >>> scaler                                        # doctest: +NORMALIZE_WHITESPACE
+  StandardScaler(axis=0, copy=True, with_centering=True, with_mean=None,
+            with_scaling=True, with_std=None)
 
-  >>> scaler.mean_                                      # doctest: +ELLIPSIS
+  >>> scaler.center_                                    # doctest: +ELLIPSIS
   array([ 1. ...,  0. ...,  0.33...])
 
-  >>> scaler.std_                                       # doctest: +ELLIPSIS
+  >>> scaler.scale_                                     # doctest: +ELLIPSIS
   array([ 0.81...,  0.81...,  1.24...])
 
   >>> scaler.transform(X)                               # doctest: +ELLIPSIS
@@ -94,7 +95,7 @@ same way it did on the training set::
   array([[-2.44...,  1.22..., -0.26...]])
 
 It is possible to disable either centering or scaling by either
-passing ``with_mean=False`` or ``with_std=False`` to the constructor
+passing ``with_centering=False`` or ``with_scaling=False`` to the constructor
 of :class:`StandardScaler`.
 
 
