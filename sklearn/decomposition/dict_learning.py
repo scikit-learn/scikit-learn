@@ -454,9 +454,9 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
         print('[dict_learning]', end=' ')
 
     # If max_iter is 0, number of iterations returned should be zero
-    n_iter = -1
+    ii = -1
 
-    for n_iter in range(max_iter):
+    for ii in range(max_iter):
         dt = (time.time() - t0)
         if verbose == 1:
             sys.stdout.write(".")
@@ -479,7 +479,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
         current_cost = 0.5 * residuals + alpha * np.sum(np.abs(code))
         errors.append(current_cost)
 
-        if n_iter > 0:
+        if ii > 0:
             dE = errors[-2] - errors[-1]
             # assert(dE >= -tol * errors[-1])
             if dE < tol * errors[-1]:
@@ -489,11 +489,11 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
                 elif verbose:
                     print("--- Convergence reached after %d iterations" % ii)
                 break
-        if n_iter % 5 == 0 and callback is not None:
+        if ii % 5 == 0 and callback is not None:
             callback(locals())
 
     if return_n_iter:
-        return code, dictionary, errors, n_iter + 1
+        return code, dictionary, errors, ii + 1
     else:
         return code, dictionary, errors
 
@@ -690,11 +690,9 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         if callback is not None:
             callback(locals())
 
-    n_iter = ii - iter_offset + 1
-
     if return_inner_stats:
         if return_n_iter:
-            return dictionary.T, (A, B), n_iter
+            return dictionary.T, (A, B), ii - iter_offset + 1
         else:
             return dictionary.T, (A, B)
     if return_code:
@@ -708,12 +706,12 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
             dt = (time.time() - t0)
             print('done (total time: % 3is, % 4.1fmn)' % (dt, dt / 60))
         if return_n_iter:
-            return code, dictionary.T, n_iter
+            return code, dictionary.T, ii - iter_offset + 1
         else:
             return code, dictionary.T
 
     if return_n_iter:
-        return dictionary.T, n_iter
+        return dictionary.T, ii - iter_offset + 1
     else:
         return dictionary.T
 

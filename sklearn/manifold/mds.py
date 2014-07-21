@@ -90,7 +90,7 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
 
     old_stress = None
     ir = IsotonicRegression()
-    for n_iter in range(max_iter):
+    for it in range(max_iter):
         # Compute distance and monotonic regression
         dis = euclidean_distances(X)
 
@@ -130,7 +130,7 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
                 break
         old_stress = stress / dis
 
-    return X, stress, n_iter + 1
+    return X, stress, it + 1
 
 
 def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
@@ -214,7 +214,7 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points)
 
-    iter : int
+    n_iter : int
         The number of iterations corresponding to the best stress.
         Returned only if `return_n_iter` is set to True.
 

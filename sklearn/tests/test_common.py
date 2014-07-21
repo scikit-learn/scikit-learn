@@ -301,46 +301,45 @@ def test_sparsify_estimators():
         except:
             pass
 
+
 def test_non_transformer_estimators_n_iter():
     # Test that all estimators of type which are non-transformer
     # and which have an attribute of max_iter, return the attribute
     # of n_iter atleast 1.
     for est_type in ['regressor', 'classifier', 'cluster']:
         regressors = all_estimators(type_filter=est_type)
-        for name, estimator in regressors:
+        for name, Estimator in regressors:
             # LassoLars stops early for the default alpha=1.0 for
             # the iris dataset.
             if name == 'LassoLars':
-                Estimator = estimator(alpha=0.)
+                estimator = Estimator(alpha=0.)
             else:
-                Estimator = estimator()
-            if hasattr(Estimator, "max_iter"):
-                # Multitask models related to ENet cannot handle
-                # if y is mono-output.
-                if 'Multi' in name:
-                    yield (check_non_transformer_estimators_n_iter, name,
-                           Estimator, True)
+                estimator = Estimator()
+            if hasattr(estimator, "max_iter"):
+                # These models are dependent on external solvers like
+                # libsvm and accessing the iter parameter is non-trivial.
+                if name in (['Ridge', 'SVR', 'NuSVR', 'NuSVC',
+                             'RidgeClassifier', 'SVC', 'RandomizedLasso']):
+                    continue
 
-                # Tested in test_transformer_n_iter
+                # Tested in test_transformer_n_iter below
                 elif name in CROSS_DECOMPOSITION:
                     continue
 
-                # These models are dependent on external solvers like
-                # libsvm and accessing the iter parameter is non-trivial.
-                elif name not in ['Ridge', 'SVR', 'NuSVR', 'NuSVC',
-                                  'RidgeClassifier',
-                                  'SVC', 'RandomizedLasso']:
+                else:
+                    # Multitask models related to ENet cannot handle
+                    # if y is mono-output.
                     yield (check_non_transformer_estimators_n_iter,
-                           name, Estimator)
+                           name, estimator, 'Multi' in name)
 
 
 def test_transformer_n_iter():
     transformers = all_estimators(type_filter='transformer')
-    for name, estimator in transformers:
-        Estimator = estimator()
-        if hasattr(Estimator, "max_iter"):
-            # Dependent on external solvers and hence accessing the iter
-            # param is non-trivial.
-            if name not in ['Isomap', 'KernelPCA', 'LocallyLinearEmbedding',
-                            'RandomizedLasso']:
-                yield check_transformer_n_iter, name, Estimator
+    for name, Estimator in transformers:
+        estimator = Estimator()
+        # Dependent on external solvers and hence accessing the iter
+        # param is non-trivial.
+        external_solver = ['Isomap', 'KernelPCA', 'LocallyLinearEmbedding',
+                           'RandomizedLasso']
+        if hasattr(estimator, "max_iter") and name not in external_solver:
+            yield check_transformer_n_iter, name, estimator

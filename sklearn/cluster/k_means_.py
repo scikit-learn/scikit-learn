@@ -384,7 +384,7 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
     distances = np.zeros(shape=(X.shape[0],), dtype=np.float64)
 
     # iterations
-    for n_iter in range(max_iter):
+    for i in range(max_iter):
         centers_old = centers.copy()
         # labels assignment is also called the E-step of EM
         labels, inertia = \
@@ -400,7 +400,7 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
             centers = _k_means._centers_dense(X, labels, n_clusters, distances)
 
         if verbose:
-            print('Iteration %2d, inertia %.3f' % (n_iter, inertia))
+            print('Iteration %2d, inertia %.3f' % (i, inertia))
 
         if best_inertia is None or inertia < best_inertia:
             best_labels = labels.copy()
@@ -409,9 +409,9 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
 
         if np.sum((centers_old - centers) ** 2) <= tol:
             if verbose:
-                print("Converged at iteration %d" % n_iter)
+                print("Converged at iteration %d" % i)
             break
-    return best_labels, best_inertia, best_centers, n_iter + 1
+    return best_labels, best_inertia, best_centers, i + 1
 
 
 def _labels_inertia_precompute_dense(X, x_squared_norms, centers, distances):

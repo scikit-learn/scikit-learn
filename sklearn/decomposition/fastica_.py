@@ -228,7 +228,8 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     n_iter : int
         If the algorithm is "deflation", n_iter is the
         maximum number of iterations run across all components. Else
-        they are just the number of iterations taken to converge.
+        they are just the number of iterations taken to converge. This is
+        returned only when return_n_iter is set to `True`.
 
     Notes
     -----
