@@ -10,8 +10,8 @@ from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .externals.six.moves import xrange
 from .utils import check_random_state
 from .utils.validation import check_array
+from .utils.fixes import scoreatpercentile_axis
 from sklearn.utils import deprecated
-from scipy import stats
 
 
 class DummyClassifier(BaseEstimator, ClassifierMixin):
@@ -324,7 +324,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         True if the output at fit is 2d, else false.
     """
 
-    def __init__(self, strategy="mean", constant=None, alpha=None):
+    def __init__(self, strategy="mean", constant=None, alpha=0.5):
         self.strategy = strategy
         self.constant = constant
         self.alpha = alpha
@@ -390,8 +390,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
                                  % self.alpha)
             else:
                 self.constant_ = np.reshape(
-                    stats.scoreatpercentile(y, self.alpha * 100.0, axis=0),
-                                           (1, -1))
+                    scoreatpercentile_axis(y, self.alpha * 100.0, axis=0),
+                    (1, -1))
 
         self.n_outputs_ = np.size(self.constant_)  # y.shape[1] is not safe
         return self
