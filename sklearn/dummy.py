@@ -105,10 +105,12 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
             if self.strategy == "constant":
                 if self.constant is None:
-                    raise ValueError("Constant target value has to be specified "
-                                     "when the constant strategy is used.")
+                    raise ValueError("Constant target value has to be"
+                                     "specified when the constant strategy is"
+                                     " used.")
                 else:
-                    constant = np.reshape(np.atleast_1d(self.constant), (-1, 1))
+                    constant = np.reshape(np.atleast_1d(self.constant),
+                                          (-1, 1))
                     if constant.shape[0] != self.n_outputs_:
                         raise ValueError("Constant target value should have "
                                          "shape (%d, 1)." % self.n_outputs_)
@@ -120,30 +122,34 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                 class_prior = np.bincount(y_k, weights=sample_weight)
                 self.class_prior_.append(class_prior / class_prior.sum())
 
-                # Checking in case of constant strategy if the constant provided
-                # by the user is in y.
+                # Checking in case of constant strategy if the constant
+                # provided by the user is in y.
                 if self.strategy == "constant":
                     if constant[k] not in self.classes_[k]:
                         raise ValueError("The constant target value must be "
                                          "present in training data")
         else:
+
+            y.tocsc()
             y.eliminate_zeros()
+            y_nnz = np.diff(y.indptr)
             self.n_outputs_ = y.shape[1]
             self.classes_ = []
             self.n_classes_ = []
             self.class_prior_ = []
 
-            for k in xrange(self.n_outputs_):
-                y_col_k = y.getcol(k)
-                classes, y_k = np.unique(y_col_k.data, return_inverse=True)
-                if y_col_k.nnz < y.shape[0]:
-                    classes = np.insert(classes,0,0)
+            for k in range(self.n_outputs_):
+                classes, y_k = np.unique(y.data[y.indices[k]:y.indices[k + 1]],
+                                         return_inverse=True)
+                if y_nnz[k] < y.shape[0]:
+                    classes = np.insert(classes, 0, 0)
                 self.classes_.append(classes)
                 self.n_classes_.append(classes.shape[0])
-                self.class_prior_.append(np.bincount(y_k) / float(y_k.shape[0]))
+                self.class_prior_.append(np.bincount(y_k) /
+                                         float(y_k.shape[0]))
 
-                # Checking in case of constant strategy if the constant provided
-                # by the user is in y.
+                # Checking in case of constant strategy if the constant
+                # provided by the user is in y.
                 if self.strategy == "constant":
                     if constant[k] not in self.classes_[k]:
                         raise ValueError("The constant target value must be "
