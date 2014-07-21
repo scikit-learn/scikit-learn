@@ -601,12 +601,8 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery, seen_bac
         target_dir = root_dir
         src_dir = example_dir
     if not os.path.exists(os.path.join(src_dir, 'README.txt')):
-        print(80 * '_')
-        print('Example directory %s does not have a README.txt file' %
-              src_dir)
-        print('Skipping this directory')
-        print(80 * '_')
-        return
+        raise ValueError('Example directory %s does not have a README.txt' %
+                         src_dir)
 
     fhindex.write("""
 
