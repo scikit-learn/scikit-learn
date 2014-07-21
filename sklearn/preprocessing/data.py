@@ -16,10 +16,11 @@ from ..utils import check_array
 from ..utils import warn_if_not_float
 from ..utils.extmath import row_norms
 from ..utils.fixes import combinations_with_replacement as combinations_w_r
-from ..utils.sparsefuncs_fast import inplace_csr_row_normalize_l1
-from ..utils.sparsefuncs_fast import inplace_csr_row_normalize_l2
-from ..utils.sparsefuncs import inplace_column_scale
-from ..utils.sparsefuncs import mean_variance_axis0
+from ..utils import deprecated
+from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
+                                      inplace_csr_row_normalize_l2)
+from ..utils.sparsefuncs import (inplace_column_scale, inplace_row_scale,
+                                 mean_variance_axis, min_max_axis)
 
 zip = six.moves.zip
 map = six.moves.map
