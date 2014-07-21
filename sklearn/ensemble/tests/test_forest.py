@@ -552,6 +552,14 @@ def check_min_samples_split(name, X, y):
     """Test min_samples_split parameter"""
     ForestEstimator = FOREST_ESTIMATORS[name]
 
+    # test boundary value
+    assert_raises(ValueError,
+                  ForestEstimator(min_samples_split=-1).fit, X, y)
+    assert_raises(ValueError,
+                  ForestEstimator(min_samples_split=0).fit, X, y)
+    assert_raises(ValueError,
+                  ForestEstimator(min_samples_split=1.0).fit, X, y)
+
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
     # by setting max_leaf_nodes
     for max_leaf_nodes in (None, 1000):
@@ -586,6 +594,14 @@ def test_min_samples_split():
 def check_min_samples_leaf(name, X, y):
     """Test if leaves contain more than leaf_count training examples"""
     ForestEstimator = FOREST_ESTIMATORS[name]
+
+    # test boundary value
+    assert_raises(ValueError,
+                  ForestEstimator(min_samples_leaf=-1).fit, X, y)
+    assert_raises(ValueError,
+                  ForestEstimator(min_samples_leaf=0).fit, X, y)
+    assert_raises(ValueError,
+                  ForestEstimator(min_samples_leaf=0.6).fit, X, y)
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
     # by setting max_leaf_nodes
