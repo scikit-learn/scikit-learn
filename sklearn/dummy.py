@@ -15,7 +15,6 @@ from scipy import stats
 
 
 class DummyClassifier(BaseEstimator, ClassifierMixin):
-
     """
     DummyClassifier is a classifier that makes predictions using simple rules.
 
@@ -285,7 +284,6 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
 
 class DummyRegressor(BaseEstimator, RegressorMixin):
-
     """
     DummyRegressor is a regressor that makes predictions using
     simple rules.
