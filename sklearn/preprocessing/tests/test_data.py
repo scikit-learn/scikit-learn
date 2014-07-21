@@ -274,10 +274,7 @@ def test_scaler_without_centering():
     X_csc_scaled = scaler_csr.transform(X_csc, copy=True)
     assert_false(np.any(np.isnan(X_csc_scaled.data)))
 
-    assert_equal(scaler.mean_, scaler_csr.mean_)
     assert_array_almost_equal(scaler.std_, scaler_csr.std_)
-
-    assert_equal(scaler.mean_, scaler_csc.mean_)
     assert_array_almost_equal(scaler.std_, scaler_csc.std_)
 
     assert_array_almost_equal(
@@ -343,10 +340,7 @@ def test_scaler_int():
         X_csc_scaled = scaler_csr.transform(X_csc, copy=True)
     assert_false(np.any(np.isnan(X_csc_scaled.data)))
 
-    assert_equal(scaler.mean_, scaler_csr.mean_)
     assert_array_almost_equal(scaler.std_, scaler_csr.std_)
-
-    assert_equal(scaler.mean_, scaler_csc.mean_)
     assert_array_almost_equal(scaler.std_, scaler_csc.std_)
 
     assert_array_almost_equal(
@@ -440,9 +434,6 @@ def test_scale_function_without_centering():
     # test csc has same outcome
     X_csc_scaled = scale(X_csr.tocsc(), with_mean=False)
     assert_array_almost_equal(X_scaled, X_csc_scaled.toarray())
-
-    # raises value error on axis != 0
-    assert_raises(ValueError, scale, X_csr, with_mean=False, axis=1)
 
     assert_array_almost_equal(X_scaled.mean(axis=0),
                               [0., -0.01, 2.24, -0.35, -0.78], 2)

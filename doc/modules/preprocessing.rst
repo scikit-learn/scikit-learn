@@ -72,7 +72,7 @@ This class is hence suitable for use in the early steps of a
 :class:`sklearn.pipeline.Pipeline`::
 
   >>> scaler = preprocessing.StandardScaler().fit(X)
-  >>> scaler
+  >>> scaler                                        # doctest: +NORMALIZE_WHITESPACE
   StandardScaler(copy=True, with_mean=True, with_std=True)
 
   >>> scaler.mean_                                      # doctest: +ELLIPSIS
@@ -132,11 +132,11 @@ applied to be consistent with the transformation performed on the train data::
 It is possible to introspect the scaler attributes to find about the exact
 nature of the transformation learned on the training data::
 
-  >>> min_max_scaler.scale_                             # doctest: +ELLIPSIS
-  array([ 0.5       ,  0.5       ,  0.33...])
+  >>> min_max_scaler.scale_                             # doctest: +NORMALIZE_WHITESPACE
+  array([ 0.5       ,  0.5       ,  0.33333333])
 
   >>> min_max_scaler.min_                               # doctest: +ELLIPSIS
-  array([ 0.        ,  0.5       ,  0.33...])
+  array([ 0.        ,  0.5       ,  0.33333333])
 
 If :class:`MinMaxScaler` is given an explicit ``feature_range=(min, max)`` the
 full formula is::

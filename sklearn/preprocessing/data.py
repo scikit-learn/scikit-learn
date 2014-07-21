@@ -6,20 +6,26 @@
 
 from itertools import chain, combinations
 import numbers
+import warnings
 
+from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy import sparse
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..utils import check_array
+from ..utils import as_float_array
 from ..utils import warn_if_not_float
+from ..utils import deprecated
 from ..utils.extmath import row_norms
 from ..utils.fixes import combinations_with_replacement as combinations_w_r
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
-from ..utils.sparsefuncs import (inplace_column_scale, mean_variance_axis)
 from ..utils.validation import check_is_fitted
+from ..utils.sparsefuncs import (inplace_column_scale,
+                                 inplace_row_scale,
+                                 mean_variance_axis)
 
 zip = six.moves.zip
 map = six.moves.map
@@ -39,116 +45,124 @@ __all__ = [
 ]
 
 
-def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
-    """Compute mean and std deviation for centering, scaling.
+class BaseScaler(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
+    """Base class for all Scale transformers."""
 
-    Zero valued std components are reset to 1.0 to avoid NaNs when scaling.
-    """
-    X = np.asarray(X)
-    Xr = np.rollaxis(X, axis)
+    def __init__(self, copy=True, with_centering=True, with_scaling=True):
+        self.with_centering = with_centering
+        self.with_scaling = with_scaling
+        self.copy = copy
 
-    if with_mean:
-        mean_ = Xr.mean(axis=0)
-    else:
-        mean_ = None
+    def _check_array(self, X, copy):
+        """Makes sure centering is not enabled for sparse matrices."""
+        X = check_array(X, accept_sparse=('csr', 'csc'),
+                        copy=copy, ensure_2d=False)
+        if warn_if_not_float(X, estimator=self):
+            X = X.astype(np.float)
+        if sparse.issparse(X):
+            if self.with_centering:
+                raise ValueError(
+                    "Cannot center sparse matrices: use `with_centering=False`"
+                    " instead. See docstring for motivation and alternatives.")
+        return X
 
-    if with_std:
-        std_ = Xr.std(axis=0)
-        if isinstance(std_, np.ndarray):
-            std_[std_ == 0.0] = 1.0
-        elif std_ == 0.:
-            std_ = 1.
-    else:
-        std_ = None
+    def _handle_zeros_in_scale(self, scale):
+        ''' Makes sure that whenever scale is zero, we handle it correctly.
 
-    return mean_, std_
+        This happens in most scalers when we have constant features.'''
+        # if we are fitting on 1D arrays, scale might be a scalar
+        if np.isscalar(scale):
+            if scale == 0:
+                scale = 1.
+        elif isinstance(scale, np.ndarray):
+            scale[scale == 0.0] = 1.0
+            scale[-np.isfinite(scale)] = 1.0
+        return scale
+
+    @abstractmethod
+    def fit(self, X, y=None):
+        """Compute the statistics to be used for later scaling.
+
+        Parameters
+        ----------
+        X : array-like or CSR matrix.
+            The data used to compute the mean and standard deviation
+            used for later scaling along the features axis.
+        """
+
+    def transform(self, X, y=None, copy=None):
+        """Perform standardization by centering and scaling
+
+        Parameters
+        ----------
+        X : array-like or CSR matrix.
+            The data used to scale along the specified axis.
+
+        copy : boolean, optional, default True
+            set to False to perform inplace row normalization and avoid a
+            copy (if the input is already a numpy array or a scipy.sparse
+            CSR matrix and if axis is 1).
+        """
+        if self.with_centering:
+            check_is_fitted(self, 'center_')
+        if self.with_scaling:
+            check_is_fitted(self, 'scalefactor_')
+        if copy is None:
+            copy = self.copy
+        X = self._check_array(X, copy)
+        if sparse.issparse(X):
+            if self.with_scaling:
+                if X.shape[0] == 1:
+                    inplace_row_scale(X, 1.0 / self.scalefactor_)
+                else:
+                    inplace_column_scale(X, 1.0 / self.scalefactor_)
+        else:
+            if copy:
+                X = X.copy()
+
+            if self.with_centering:
+                X -= self.center_
+            if self.with_scaling:
+                X /= self.scalefactor_
+        return X
+
+    def inverse_transform(self, X, copy=None):
+        """Scale back the data to the original representation
+
+        Parameters
+        ----------
+        X : array-like or CSR matrix.
+            The data used to scale along the specified axis.
+        """
+        if self.with_centering:
+            check_is_fitted(self, 'center_')
+        if self.with_scaling:
+            check_is_fitted(self, 'scalefactor_')
+        if copy is None:
+            copy = self.copy
+        X = self._check_array(X, copy)
+        if sparse.issparse(X):
+            if self.with_scaling:
+                if X.shape[0] == 1:
+                    inplace_row_scale(X, self.scalefactor_)
+                else:
+                    inplace_column_scale(X, self.scalefactor_)
+        else:
+            if copy:
+                X = X.copy()
+
+            if self.with_scaling:
+                X *= self.scalefactor_
+            if self.with_centering:
+                X += self.center_
+        return X
 
 
-def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
-    """Standardize a dataset along any axis
-
-    Center to the mean and component wise scale to unit variance.
-
-    Parameters
-    ----------
-    X : array-like or CSR matrix.
-        The data to center and scale.
-
-    axis : int (0 by default)
-        axis used to compute the means and standard deviations along. If 0,
-        independently standardize each feature, otherwise (if 1) standardize
-        each sample.
-
-    with_mean : boolean, True by default
-        If True, center the data before scaling.
-
-    with_std : boolean, True by default
-        If True, scale the data to unit variance (or equivalently,
-        unit standard deviation).
-
-    copy : boolean, optional, default True
-        set to False to perform inplace row normalization and avoid a
-        copy (if the input is already a numpy array or a scipy.sparse
-        CSR matrix and if axis is 1).
-
-    Notes
-    -----
-    This implementation will refuse to center scipy.sparse matrices
-    since it would make them non-sparse and would potentially crash the
-    program with memory exhaustion problems.
-
-    Instead the caller is expected to either set explicitly
-    `with_mean=False` (in that case, only variance scaling will be
-    performed on the features of the CSR matrix) or to call `X.toarray()`
-    if he/she expects the materialized dense array to fit in memory.
-
-    To avoid memory copy the caller should pass a CSR matrix.
-
-    See also
-    --------
-    :class:`sklearn.preprocessing.StandardScaler` to perform centering and
-    scaling using the ``Transformer`` API (e.g. as part of a preprocessing
-    :class:`sklearn.pipeline.Pipeline`)
-    """
-    X = check_array(X, accept_sparse='csr', copy=copy, ensure_2d=False)
-    warn_if_not_float(X, estimator='The scale function')
-    if sparse.issparse(X):
-        if with_mean:
-            raise ValueError(
-                "Cannot center sparse matrices: pass `with_mean=False` instead"
-                " See docstring for motivation and alternatives.")
-        if axis != 0:
-            raise ValueError("Can only scale sparse matrix on axis=0, "
-                             " got axis=%d" % axis)
-        if not sparse.isspmatrix_csr(X):
-            X = X.tocsr()
-            copy = False
-        if copy:
-            X = X.copy()
-        _, var = mean_variance_axis(X, axis=0)
-        var[var == 0.0] = 1.0
-        inplace_column_scale(X, 1 / np.sqrt(var))
-    else:
-        X = np.asarray(X)
-        mean_, std_ = _mean_and_std(
-            X, axis, with_mean=with_mean, with_std=with_std)
-        if copy:
-            X = X.copy()
-        # Xr is a view on the original array that enables easy use of
-        # broadcasting on the axis in which we are interested in
-        Xr = np.rollaxis(X, axis)
-        if with_mean:
-            Xr -= mean_
-        if with_std:
-            Xr /= std_
-    return X
-
-
-class MinMaxScaler(BaseEstimator, TransformerMixin):
+class MinMaxScaler(BaseScaler):
     """Standardizes features by scaling each feature to a given range.
 
     This estimator scales and translates each feature individually such
-    that it is in the given range on the training set, i.e. between
+    that it is in the given range on the training set, e.g. between
     zero and one.
 
     The standardization is given by::
@@ -159,6 +173,10 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
     This standardization is often used as an alternative to zero mean,
     unit variance scaling.
+
+    Note that if future input exceeds the maximal/minimal values seen
+    during `fit`, the return values of `transform` might lie outside
+    of the specified `feature_range`.
 
     Parameters
     ----------
@@ -174,11 +192,17 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     min_ : ndarray, shape (n_features,)
         Per feature adjustment for minimum.
 
+    center_ : ndarray, shape (n_features,)
+        Per feature center.
+
     scale_ : ndarray, shape (n_features,)
         Per feature relative scaling of the data.
     """
 
     def __init__(self, feature_range=(0, 1), copy=True):
+        super(MinMaxScaler, self).__init__(with_centering=True,
+                                           with_scaling=True,
+                                           copy=copy)
         self.feature_range = feature_range
         self.copy = copy
 
@@ -191,57 +215,30 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
             The data used to compute the per-feature minimum and maximum
             used for later scaling along the features axis.
         """
-        X = check_array(X, copy=self.copy, ensure_2d=False)
-        warn_if_not_float(X, estimator=self)
+
+        if sparse.issparse(X):
+            raise TypeError("MinMaxScaler cannot be fitted on sparse inputs")
+
+        X = self._check_array(X, False)
+
         feature_range = self.feature_range
         if feature_range[0] >= feature_range[1]:
             raise ValueError("Minimum of desired feature range must be smaller"
                              " than maximum. Got %s." % str(feature_range))
         data_min = np.min(X, axis=0)
         data_range = np.max(X, axis=0) - data_min
-        # Do not scale constant features
-        if isinstance(data_range, np.ndarray):
-            data_range[data_range == 0.0] = 1.0
-        elif data_range == 0.:
-            data_range = 1.
+        data_range = self._handle_zeros_in_scale(data_range)
+        self.scalefactor_ = data_range / (feature_range[1] - feature_range[0])
+        self.center_ = data_min - feature_range[0] * self.scalefactor_
+
         self.scale_ = (feature_range[1] - feature_range[0]) / data_range
         self.min_ = feature_range[0] - data_min * self.scale_
         self.data_range = data_range
         self.data_min = data_min
         return self
 
-    def transform(self, X):
-        """Scaling features of X according to feature_range.
 
-        Parameters
-        ----------
-        X : array-like with shape [n_samples, n_features]
-            Input data that will be transformed.
-        """
-        check_is_fitted(self, 'scale_')
-
-        X = check_array(X, copy=self.copy, ensure_2d=False)
-        X *= self.scale_
-        X += self.min_
-        return X
-
-    def inverse_transform(self, X):
-        """Undo the scaling of X according to feature_range.
-
-        Parameters
-        ----------
-        X : array-like with shape [n_samples, n_features]
-            Input data that will be transformed.
-        """
-        check_is_fitted(self, 'scale_')
-
-        X = check_array(X, copy=self.copy, ensure_2d=False)
-        X -= self.min_
-        X /= self.scale_
-        return X
-
-
-class StandardScaler(BaseEstimator, TransformerMixin):
+class StandardScaler(BaseScaler):
     """Standardize features by removing the mean and scaling to unit variance
 
     Centering and scaling happen independently on each feature by computing
@@ -299,102 +296,50 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, copy=True, with_mean=True, with_std=True):
+        super(StandardScaler, self).__init__(with_centering=with_mean,
+                                             with_scaling=with_std,
+                                             copy=copy)
         self.with_mean = with_mean
         self.with_std = with_std
-        self.copy = copy
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, copy=None):
         """Compute the mean and std to be used for later scaling.
 
         Parameters
         ----------
-        X : array-like or CSR matrix with shape [n_samples, n_features]
+        X : array-like or CSR matrix
             The data used to compute the mean and standard deviation
-            used for later scaling along the features axis.
+            used for later scaling along the specified axis.
         """
-        X = check_array(X, accept_sparse='csr', copy=self.copy,
-                        ensure_2d=False)
-        if warn_if_not_float(X, estimator=self):
-            X = X.astype(np.float)
-        if sparse.issparse(X):
-            if self.with_mean:
-                raise ValueError(
-                    "Cannot center sparse matrices: pass `with_mean=False` "
-                    "instead. See docstring for motivation and alternatives.")
-            self.mean_ = None
+        if copy is None:
+            copy = self.copy
+        X = self._check_array(X, copy)
 
-            if self.with_std:
+        if sparse.issparse(X):
+            if self.with_scaling:
                 var = mean_variance_axis(X, axis=0)[1]
-                self.std_ = np.sqrt(var)
-                self.std_[var == 0.0] = 1.0
-            else:
-                self.std_ = None
-            return self
-        else:
-            self.mean_, self.std_ = _mean_and_std(
-                X, axis=0, with_mean=self.with_mean, with_std=self.with_std)
-            return self
-
-    def transform(self, X, y=None, copy=None):
-        """Perform standardization by centering and scaling
-
-        Parameters
-        ----------
-        X : array-like with shape [n_samples, n_features]
-            The data used to scale along the features axis.
-        """
-        check_is_fitted(self, 'std_')
-
-        copy = copy if copy is not None else self.copy
-        X = check_array(X, accept_sparse='csr', copy=copy, ensure_2d=False)
-        if warn_if_not_float(X, estimator=self):
-            X = X.astype(np.float)
-        if sparse.issparse(X):
-            if self.with_mean:
-                raise ValueError(
-                    "Cannot center sparse matrices: pass `with_mean=False` "
-                    "instead. See docstring for motivation and alternatives.")
-            if self.std_ is not None:
-                inplace_column_scale(X, 1 / self.std_)
-        else:
-            if self.with_mean:
-                X -= self.mean_
-            if self.with_std:
-                X /= self.std_
-        return X
-
-    def inverse_transform(self, X, copy=None):
-        """Scale back the data to the original representation
-
-        Parameters
-        ----------
-        X : array-like with shape [n_samples, n_features]
-            The data used to scale along the features axis.
-        """
-        check_is_fitted(self, 'std_')
-
-        copy = copy if copy is not None else self.copy
-        if sparse.issparse(X):
-            if self.with_mean:
-                raise ValueError(
-                    "Cannot uncenter sparse matrices: pass `with_mean=False` "
-                    "instead See docstring for motivation and alternatives.")
-            if not sparse.isspmatrix_csr(X):
-                X = X.tocsr()
-                copy = False
-            if copy:
-                X = X.copy()
-            if self.std_ is not None:
-                inplace_column_scale(X, self.std_)
+                self.scalefactor_ = np.sqrt(var)
         else:
             X = np.asarray(X)
-            if copy:
-                X = X.copy()
-            if self.with_std:
-                X *= self.std_
-            if self.with_mean:
-                X += self.mean_
-        return X
+            if self.with_centering:
+                self.center_ = X.mean(axis=0)
+            else:
+                self.center_ = None
+            if self.with_scaling:
+                self.scalefactor_ = X.std(axis=0)
+        if self.with_scaling:
+            self.scalefactor_ = self._handle_zeros_in_scale(self.scalefactor_)
+        return self
+
+    @property
+    def mean_(self):
+        check_is_fitted(self, 'center_')
+        return self.center_
+
+    @property
+    def std_(self):
+        check_is_fitted(self, 'scalefactor_')
+        return self.scalefactor_
 
 
 class PolynomialFeatures(BaseEstimator, TransformerMixin):
@@ -501,6 +446,59 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
             raise ValueError("X shape does not match training shape")
 
         return (X[:, None, :] ** self.powers_).prod(-1)
+
+
+def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
+    """Standardize a dataset along any axis
+
+    Center to the mean and component wise scale to unit variance.
+
+    Parameters
+    ----------
+    X : array-like or CSR matrix.
+        The data to center and scale.
+
+    axis : int (0 by default)
+        axis used to compute the means and standard deviations along. If 0,
+        independently standardize each feature, otherwise (if 1) standardize
+        each sample.
+
+    with_mean : boolean, True by default
+        If True, center the data before scaling.
+
+    with_std : boolean, True by default
+        If True, scale the data to unit variance (or equivalently,
+        unit standard deviation).
+
+    copy : boolean, optional, default is True
+        set to False to perform inplace row normalization and avoid a
+        copy (if the input is already a numpy array or a scipy.sparse
+        CSR matrix and if axis is 1).
+
+    Notes
+    -----
+    This implementation will refuse to center scipy.sparse matrices
+    since it would make them non-sparse and would potentially crash the
+    program with memory exhaustion problems.
+
+    Instead the caller is expected to either set explicitly
+    `with_centering=False` (in that case, only variance scaling will be
+    performed on the features of the CSR matrix) or to call `X.toarray()`
+    if the materialized dense array is expected to fit in memory.
+
+    To avoid memory copy the caller should pass a CSR matrix.
+
+    See also
+    --------
+    :class:`sklearn.preprocessing.StandardScaler` to perform centering and
+    scaling using the ``Transformer`` API (e.g. as part of a preprocessing
+    :class:`sklearn.pipeline.Pipeline`)
+    """
+    s = StandardScaler(with_mean=with_mean, with_std=with_std, copy=copy)
+    if axis == 0:
+        return s.fit_transform(X)
+    else:
+        return s.fit_transform(X.T).T
 
 
 def normalize(X, norm='l2', axis=1, copy=True):
@@ -627,7 +625,8 @@ class Normalizer(BaseEstimator, TransformerMixin):
             The data to normalize, row by row. scipy.sparse matrices should be
             in CSR format to avoid an un-necessary copy.
         """
-        copy = copy if copy is not None else self.copy
+        if copy is None:
+            copy = self.copy
         X = check_array(X, accept_sparse='csr')
         return normalize(X, norm=self.norm, axis=1, copy=copy)
 
@@ -732,7 +731,8 @@ class Binarizer(BaseEstimator, TransformerMixin):
             scipy.sparse matrices should be in CSR format to avoid an
             un-necessary copy.
         """
-        copy = copy if copy is not None else self.copy
+        if copy is None:
+            copy = self.copy
         return binarize(X, threshold=self.threshold, copy=copy)
 
 
