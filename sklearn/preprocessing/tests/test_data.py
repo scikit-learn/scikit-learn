@@ -30,7 +30,9 @@ from sklearn.preprocessing.data import scale
 from sklearn.preprocessing.data import RobustScaler
 from sklearn.preprocessing.data import robust_scale
 from sklearn.preprocessing.data import MinMaxScaler
+from sklearn.preprocessing.data import MaxAbsScaler
 from sklearn.preprocessing.data import minmax_scale
+from sklearn.preprocessing.data import maxabs_scale
 from sklearn.preprocessing.data import add_dummy_feature
 from sklearn.preprocessing.data import PolynomialFeatures
 
@@ -42,10 +44,12 @@ iris = datasets.load_iris()
 
 SPARSE_SCALERS = {  # support sparse or dense input
     'uncentered StandardScaler': partial(StandardScaler, with_centering=False),
+    'MaxAbsScaler': MaxAbsScaler
 }
 
 NON_SPARSE_SCALERS = {  # only support dense input
     'centered StandardScaler': partial(StandardScaler, with_centering=True),
+    'MaxAbsScaler': MaxAbsScaler,
     'RobustScaler': RobustScaler,
     'MinMaxScaler[0,1]': partial(MinMaxScaler, feature_range=(0, 1)),
     'MinMaxScaler[-1,1]': partial(MinMaxScaler, feature_range=(-1, 1)),
@@ -62,6 +66,7 @@ SCALER_FUNCTIONS = {
     'scale': scale,
     'robust_scale': robust_scale,
     'minmax_scale': minmax_scale,
+    'maxabs_scale': maxabs_scale
 }
 
 
@@ -584,12 +589,50 @@ def test_robust_scaler_zero_variance_features():
     assert_array_almost_equal(X_trans_new, X_expected_new, decimal=3)
 
 
+def test_maxabs_scaler_zero_variance_features():
+    """Check MaxAbsScaler on toy data with zero variance features"""
+    X = [[0., 1., +0.5],
+         [0., 1., -0.3],
+         [0., 1., +1.5],
+         [0., 0., +0.0]]
+
+    # default params
+    scaler = MaxAbsScaler()
+    X_trans = scaler.fit_transform(X)
+    X_expected = [[0., 1., 1.0 / 3.0],
+                  [0., 1., -0.2],
+                  [0., 1., 1.0],
+                  [0., 0., 0.0]]
+    assert_array_almost_equal(X_trans, X_expected)
+    X_trans_inv = scaler.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_trans_inv)
+
+    # make sure new data gets transformed correctly
+    X_new = [[+0., 2., 0.5],
+             [-1., 1., 0.0],
+             [+0., 1., 1.5]]
+    X_trans_new = scaler.transform(X_new)
+    X_expected_new = [[+0., 2.0, 1.0 / 3.0],
+                      [-1., 1.0, 0.0],
+                      [+0., 1.0, 1.0]]
+
+    assert_array_almost_equal(X_trans_new, X_expected_new, decimal=2)
 
 
+def test_maxabs_scaler_large_negative_value():
+    """Check MaxAbsScaler on toy data with a large negative value"""
+    X = [[0., 1.,   +0.5, -1.0],
+         [0., 1.,   -0.3, -0.5],
+         [0., 1., -100.0,  0.0],
+         [0., 0.,   +0.0, -2.0]]
 
-
-
-
+    scaler = MaxAbsScaler()
+    X_trans = scaler.fit_transform(X)
+    X_expected = [[0., 1.,  0.005,    -0.5],
+                  [0., 1., -0.003,    -0.25],
+                  [0., 1., -1.0,       0.0],
+                  [0., 0.,  0.0,      -1.0]]
+    assert_array_almost_equal(X_trans, X_expected)
 
 
 def toarray(a):
@@ -898,6 +941,7 @@ def test_one_hot_encoder_sparse():
     # test negative input to transform
     enc.fit([[0], [1]])
     assert_raises(ValueError, enc.transform, [[0], [-1]])
+
 
 def test_one_hot_encoder_dense():
     """check for sparse=False"""

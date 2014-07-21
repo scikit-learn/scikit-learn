@@ -35,6 +35,7 @@ __all__ = [
     'Binarizer',
     'KernelCenterer',
     'MinMaxScaler',
+    'MaxAbsScaler',
     'Normalizer',
     'OneHotEncoder',
     'StandardScaler',
@@ -44,7 +45,8 @@ __all__ = [
     'normalize',
     'scale',
     'robust_scale',
-    'minmax_scale'
+    'minmax_scale',
+    'maxabs_scale'
 ]
 
 
@@ -268,10 +270,60 @@ class MinMaxScaler(BaseScaler):
             return self.center_
 
 
+class MaxAbsScaler(BaseScaler):
+    """Scale each feature to the [-1, 1] range without breaking the sparsity.
+
+    This estimator scales and translates each feature individually such
+    that the maximal absolute value of each feature in the
+    training set will be 1.0.
+
+    This scaler can also be applied to sparse CSR or CSC matrices.
+
+    Parameters
+    ----------
+    copy : boolean, optional, default is True
+        Set to False to perform inplace scaling and avoid a copy (if the input
+        is already a numpy array).
+
+    axis : int (0 by default)
+        axis used to compute the scaling statistics along. If 0,
+        independently scale each feature, otherwise (if 1) scale
+        each sample.
+
+    Attributes
+    ----------
+    `scale_` : ndarray, shape (n_features,)
+        Per feature relative scaling of the data.
+    """
+
+    def __init__(self, copy=True, axis=0):
+        super(MaxAbsScaler, self).__init__(with_centering=False,
+                                           with_scaling=True,
+                                           copy=copy, axis=axis)
+
+    def fit(self, X, y=None, copy=None):
+        """Compute the minimum and maximum to be used for later scaling.
 
         Parameters
         ----------
+        X : array-like, shape [n_samples, n_features]
+            The data used to compute the per-feature minimum and maximum
+            used for later scaling along the features axis.
         """
+        if copy is None:
+            copy = self.copy
+
+        X = self._check_array(X, copy)
+        if sparse.issparse(X):
+            mins, maxs = min_max_axis(X, axis=self.axis)
+            scales = np.maximum(np.abs(mins), np.abs(maxs))
+        else:
+            scales = np.abs(X).max(axis=self.axis)
+        scales = np.array(scales)
+        scales = scales.reshape(-1)
+        self.scale_ = self._handle_zeros_in_scale(scales)
+        self.center_ = np.zeros((len(self.scale_), ), dtype=self.scale_.dtype)
+        return self
 
 
 class StandardScaler(BaseScaler):
@@ -791,6 +843,32 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, with_centering=True,
     """
     s = MinMaxScaler(feature_range=feature_range, copy=copy, axis=axis)
     return s.fit_transform(X)
+
+
+def maxabs_scale(X, axis=0, copy=True):
+    """Standardizes features by scaling each feature.
+
+    This estimator scales and translates each feature individually such
+    that the maximal absoulte value of each feature in the training set
+    will have be 1.
+
+    This function can also be applied to sparse CSR or CSC matrices.
+
+    Parameters
+    ----------
+    axis : int (0 by default)
+        axis used to compute the scaling statistics along. If 0,
+        independently scale each feature, otherwise (if 1) scale
+        each sample.
+
+    copy : boolean, optional, default is True
+        Set to False to perform inplace row normalization and avoid a
+        copy (if the input is already a numpy array).
+    """
+    s = MaxAbsScaler(copy=copy, axis=axis)
+    return s.fit_transform(X)
+
+
 def normalize(X, norm='l2', axis=1, copy=True):
     """Scale input vectors individually to unit norm (vector length).
 
