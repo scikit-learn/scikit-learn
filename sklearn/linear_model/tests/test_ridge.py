@@ -846,7 +846,7 @@ def test_kernel_ridge_path_with_sample_weights():
         np.arange(1, n_targets + 1)
 
     rng = np.random.RandomState(42)
-    sample_weights = np.ones(n_samples)  # rng.randn(n_samples) ** 2
+    sample_weights = rng.randn(n_samples) ** 2
 
     cv = LeaveOneOut(n_samples)
     cv_predictions = np.array([[
