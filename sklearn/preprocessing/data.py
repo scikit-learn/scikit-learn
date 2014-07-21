@@ -41,6 +41,7 @@ __all__ = [
     'binarize',
     'normalize',
     'scale',
+    'minmax_scale'
 ]
 
 
@@ -573,6 +574,53 @@ def scale(X, axis=0, with_centering=True, with_scaling=True, copy=True,
 
     s = StandardScaler(with_centering=with_centering,
                        with_scaling=with_scaling, copy=copy, axis=axis)
+    return s.fit_transform(X)
+
+
+def minmax_scale(X, feature_range=(0, 1), axis=0, with_centering=True,
+                 with_scaling=True, copy=True):
+    """Standardizes features by scaling each feature to a given range.
+
+    This estimator scales and translates each feature individually such
+    that it is in the given range on the training set, i.e. between
+    zero and one.
+
+    The standardization is given by::
+        X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
+        X_scaled = X_std * (max - min) + min
+
+    where min, max = feature_range.
+
+    This standardization is often used as an alternative to zero mean,
+    unit variance scaling.
+
+    Note that if future input exceeds the maximal/minimal values seen
+    during `fit`, the return values of `transform` might lie outside
+    of the specified `feature_range`.
+
+    Parameters
+    ----------
+    feature_range: tuple (min, max), default=(0, 1)
+        Desired range of transformed data.
+
+    copy : boolean, optional, default is True
+        Set to False to perform inplace row normalization and avoid a
+        copy (if the input is already a numpy array).
+
+    axis : int (0 by default)
+        axis used to compute the scaling statistics along. If 0,
+        independently scale each feature, otherwise (if 1) scale
+        each sample.
+
+    Attributes
+    ----------
+    `center_` : ndarray, shape (n_features,)
+        Per feature adjustment for minimum.
+
+    `scale_` : ndarray, shape (n_features,)
+        Per feature relative scaling of the data.
+    """
+    s = MinMaxScaler(feature_range=feature_range, copy=copy, axis=axis)
     return s.fit_transform(X)
 def normalize(X, norm='l2', axis=1, copy=True):
     """Scale input vectors individually to unit norm (vector length).
