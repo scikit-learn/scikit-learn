@@ -17,7 +17,7 @@ from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..preprocessing import LabelEncoder
 from ..svm.base import BaseLibLinear
-from ..utils import atleast2d_or_csc, check_arrays, compute_class_weight
+from ..utils import check_array, check_consistent_length, compute_class_weight
 from ..utils.extmath import log_logistic, safe_sparse_dot
 from ..utils.optimize import newton_cg
 from ..utils.validation import as_float_array, DataConversionWarning
@@ -176,6 +176,7 @@ def _logistic_loss_grad_hess(w, X, y, alpha, sample_weight=None):
     """
     n_samples, n_features = X.shape
     grad = np.empty_like(w)
+    fit_intercept = grad.shape[0] > n_features
 
     w, c, yz = _intercept_dot(w, X, y)
 
@@ -191,7 +192,7 @@ def _logistic_loss_grad_hess(w, X, y, alpha, sample_weight=None):
     grad[:n_features] = safe_sparse_dot(X.T, z0) + alpha * w
 
     # Case where we fit the intercept.
-    if grad.shape[0] > n_features:
+    if fit_intercept:
         grad[-1] = z0.sum()
 
     # The mat-vec product of the Hessian
@@ -203,7 +204,7 @@ def _logistic_loss_grad_hess(w, X, y, alpha, sample_weight=None):
         # Precompute as much as possible
         dX = d[:, np.newaxis] * X
 
-    if c is not None:
+    if fit_intercept:
         # Calculate the double derivative with respect to intercept
         # In the case of sparse matrices this returns a matrix object.
         dd_intercept = np.squeeze(np.array(dX.sum(axis=0)))
@@ -214,7 +215,7 @@ def _logistic_loss_grad_hess(w, X, y, alpha, sample_weight=None):
         ret[:n_features] += alpha * s[:n_features]
 
         # For the fit intercept case.
-        if s.shape[0] > n_features:
+        if fit_intercept:
             ret[:n_features] += s[-1] * dd_intercept
             ret[-1] = dd_intercept.dot(s[:n_features])
             ret[-1] += d.sum() * s[-1]
@@ -312,8 +313,9 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     if isinstance(Cs, numbers.Integral):
         Cs = np.logspace(-4, 4, Cs)
 
-    X = atleast2d_or_csc(X, dtype=np.float64)
-    X, y = check_arrays(X, y, copy=copy)
+    X = check_array(X, accept_sparse='csc', dtype=np.float64)
+    y = check_array(y, ensure_2d=False, copy=copy)
+    check_consistent_length(X, y)
     n_classes = np.unique(y)
 
     if pos_class is None:
@@ -844,8 +846,8 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
                 raise ValueError("newton-cg and lbfgs solvers support only "
                                  "the primal form.")
 
-        X = atleast2d_or_csc(X, dtype=np.float64)
-        X, y = check_arrays(X, y, copy=False)
+        X = check_array(X, accept_sparse='csc', dtype=np.float64)
+        y = check_array(y, ensure_2d=False)
 
         if y.ndim == 2 and y.shape[1] == 1:
             warnings.warn(
@@ -855,6 +857,8 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
                 DataConversionWarning
                 )
             y = np.ravel(y)
+
+        check_consistent_length(X, y)
 
         # init cross-validation generator
         cv = _check_cv(self.cv, X, y, classifier=True)
