@@ -441,8 +441,8 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     polynomially in the number of features of the input array, and
     exponentially in the degree. High degrees can cause overfitting.
 
-    See :ref:`examples/linear_model/plot_polynomial_regression.py
-    <example_linear_model_plot_polynomial_regression.py>`
+    See :ref:`examples/linear_model/plot_polynomial_interpolation.py
+    <example_linear_model_plot_polynomial_interpolation.py>`
     """
     def __init__(self, degree=2, interaction_only=False, include_bias=True):
         self.degree = degree
