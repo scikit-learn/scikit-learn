@@ -234,37 +234,34 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                 if self.strategy == "most_frequent":
                     mode = class_prior_[k].argmax()
                     if classes_[k][mode] == 0:
-                        indptr = np.append(indptr, len(indices))
+                        ret = None
                     else:
                         ret = (np.ones(n_samples, dtype=int) *
                                class_prior_[k].argmax())
-                        data = np.append(data, classes_[k][ret])
-                        indices = np.append(indices, range(n_samples))
-                        indptr = np.append(indptr, len(indices))
+                        ind = range(n_samples)
 
                 elif self.strategy == "stratified":
                     ret = proba[k].argmax(axis=1)
-                    data = np.append(data, classes_[k][ret])
-                    indices = np.append(indices, range(n_samples))
-                    indptr = np.append(indptr, len(indices))
+                    ind = range(n_samples)
 
                 elif self.strategy == "uniform":
-                    ret = rs.randint(n_classes_[k], size=n_samples)
+                    uni = rs.randint(n_classes_[k], size=n_samples)
                     # Select the nonzero elements, insert as column
-                    sel = np.where((classes_[k][ret]) != 0)[0]
-                    data = np.append(data, classes_[k][ret[sel]])
-                    indices = np.append(indices, sel)
-                    indptr = np.append(indptr, len(indices))
+                    ind = np.where((classes_[k][uni]) != 0)[0]
+                    ret = uni[ind]
 
                 elif self.strategy == "constant":
                     if constant[k] == 0:
-                        indptr = np.append(indptr, len(indices))
+                        ret = None
                     else:
                         ret = (np.ones(n_samples, dtype=int) *
                                np.where(classes_[k] == constant[k]))
-                        data = np.append(data, classes_[k][ret])
-                        indices = np.append(indices, range(n_samples))
-                        indptr = np.append(indptr, len(indices))
+                        ind = range(n_samples)
+
+                if ret is not None:
+                    data = np.append(data, classes_[k][ret])
+                    indices = np.append(indices, ind)
+                indptr = np.append(indptr, len(indices))
 
             y = sp.csc_matrix((data, indices, indptr),
                               (n_samples, self.n_outputs_),
