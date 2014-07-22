@@ -10,7 +10,6 @@ from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .externals.six.moves import xrange
 from .utils import check_random_state
 from .utils.validation import check_array
-from .utils.validation import safe_asarray
 from .utils.fixes import scoreatpercentile_axis
 from sklearn.utils import deprecated
 
