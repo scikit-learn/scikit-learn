@@ -21,6 +21,9 @@ New features
    - Add the :func:`metrics.label_ranking_average_precision_score` metrics. By
      `Arnaud Joly`_.
 
+   - Added :class:`linear_model.LogisticRegressionCV`. By
+     `Manoj Kumar`_, `Fabian Pedregosa`_, `Gael Varoquaux`_
+     and `Alexandre Gramfort`_.
 
 Enhancements
 ............
@@ -28,6 +31,9 @@ Enhancements
 
    - Add support for sample weights in scorer objects.  Metrics with sample
      weight support will automatically benefit from it.
+
+   - Added ``newton-cg`` and `lbfgs` solver support in
+     :class:`linear_model.LogisticRegression`. By `Manoj Kumar`_.
 
 
 Documentation improvements

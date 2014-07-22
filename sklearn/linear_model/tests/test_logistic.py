@@ -368,7 +368,7 @@ def test_ova_iris():
     assert_array_equal(scores.shape, (3, 3, 10))
 
 
-def test_logreg_newton_lbfgs():
+def test_logistic_regression_solvers():
     X, y = make_classification(n_features=10, n_informative=5, random_state=0)
     clf_n = LogisticRegression(solver='newton-cg', fit_intercept=False)
     clf_n.fit(X, y)
@@ -381,7 +381,7 @@ def test_logreg_newton_lbfgs():
     assert_array_almost_equal(clf_n.coef_, clf_lbf.coef_, decimal=3)
 
 
-def test_logreg_newton_lbfgs_multitask_class_weights():
+def test_logistic_regression_solvers_multiclass():
     X, y = make_classification(n_samples=20, n_features=20, n_informative=10,
                                n_classes=3, random_state=0)
     clf_n = LogisticRegression(solver='newton-cg', fit_intercept=False)
@@ -395,7 +395,7 @@ def test_logreg_newton_lbfgs_multitask_class_weights():
     assert_array_almost_equal(clf_n.coef_, clf_lbf.coef_, decimal=3)
 
 
-def test_logreg_newton_lbfgs_class_weights():
+def test_logistic_regressioncv_class_weights():
     X, y = make_classification(n_samples=20, n_features=20, n_informative=10,
                                n_classes=3, random_state=0)
 

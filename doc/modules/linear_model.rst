@@ -692,6 +692,12 @@ which is shipped with scikit-learn.
    thus be used to perform feature selection, as detailed in
    :ref:`l1_feature_selection`.
 
+:class:`LogisticRegressionCV` implements Logistic Regression with
+builtin cross-validation to find out the optimal C parameter. In
+general the "newton-cg" and "lbfgs" solvers are found to be faster
+due to warm-starting. For the multiclass case, One-vs-All is used
+and an optimal C is obtained for each class.
+
 
 Stochastic Gradient Descent - SGD
 =================================
