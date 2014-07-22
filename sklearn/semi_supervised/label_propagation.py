@@ -256,6 +256,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         transduction = self.classes_[np.argmax(self.label_distributions_,
                                                axis=1)]
         self.transduction_ = transduction.ravel()
+        self.n_iter_ = self.max_iter - remaining_iter
         return self
 
 
@@ -292,6 +293,9 @@ class LabelPropagation(BaseLabelPropagation):
 
     `transduction_` : array, shape = [n_samples]
         Label assigned to each item via the transduction.
+
+    `n_iter_` : int
+        Number of iterations run.
 
     Examples
     --------
@@ -371,6 +375,9 @@ class LabelSpreading(BaseLabelPropagation):
 
     `transduction_` : array, shape = [n_samples]
         Label assigned to each item via the transduction.
+
+    `n_iter_` : int
+        Number of iterations run.
 
     Examples
     --------

@@ -103,6 +103,9 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
     `noise_variance_` : array, shape=(n_features,)
         The estimated noise variance for each feature.
 
+    `n_iter_` : int
+        Number of iterations run.
+
     References
     ----------
     .. David Barber, Bayesian Reasoning and Machine Learning,
@@ -229,6 +232,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         self.components_ = W
         self.noise_variance_ = psi
         self.loglike_ = loglike
+        self.n_iter_ = i + 1
         return self
 
     def transform(self, X):

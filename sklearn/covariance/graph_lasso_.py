@@ -79,7 +79,7 @@ def alpha_max(emp_cov):
 
 def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                 max_iter=100, verbose=False, return_costs=False,
-                eps=np.finfo(np.float).eps):
+                eps=np.finfo(np.float).eps, return_n_iter=False):
     """l1-penalized covariance estimator
 
     Parameters
@@ -119,6 +119,9 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems.
 
+    return_n_iter : bool, optional
+        Whether or not to return the number of iterations.
+
     Returns
     -------
     covariance : 2D ndarray, shape (n_features, n_features)
@@ -130,6 +133,9 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
     costs : list of (objective, dual_gap) pairs
         The list of values of the objective function and the dual gap at
         each iteration. Returned only if return_costs is True.
+
+    n_iter : int
+        Number of iterations. Returned only if `return_n_iter` is set to True.
 
     See Also
     --------
@@ -152,9 +158,15 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
             cost = - 2. * log_likelihood(emp_cov, precision_)
             cost += n_features * np.log(2 * np.pi)
             d_gap = np.sum(emp_cov * precision_) - n_features
-            return emp_cov, precision_, (cost, d_gap)
+            if return_n_iter:
+                return emp_cov, precision_, (cost, d_gap), 0
+            else:
+                return emp_cov, precision_, (cost, d_gap)
         else:
-            return emp_cov, linalg.inv(emp_cov)
+            if return_n_iter:
+                return emp_cov, linalg.inv(emp_cov), 0
+            else:
+                return emp_cov, linalg.inv(emp_cov)
     if cov_init is None:
         covariance_ = emp_cov.copy()
     else:
@@ -229,9 +241,17 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
         e.args = (e.args[0]
                   + '. The system is too ill-conditioned for this solver',)
         raise e
+
     if return_costs:
-        return covariance_, precision_, costs
-    return covariance_, precision_
+        if return_n_iter:
+            return covariance_, precision_, costs, i + 1
+        else:
+            return covariance_, precision_, costs
+    else:
+        if return_n_iter:
+            return covariance_, precision_, i + 1
+        else:
+            return covariance_, precision_
 
 
 class GraphLasso(EmpiricalCovariance):
@@ -270,6 +290,9 @@ class GraphLasso(EmpiricalCovariance):
     `precision_` : array-like, shape (n_features, n_features)
         Estimated pseudo inverse matrix.
 
+    `n_iter_` : int
+        Number of iterations run.
+
     See Also
     --------
     graph_lasso, GraphLassoCV
@@ -294,9 +317,10 @@ class GraphLasso(EmpiricalCovariance):
             self.location_ = X.mean(0)
         emp_cov = empirical_covariance(
             X, assume_centered=self.assume_centered)
-        self.covariance_, self.precision_ = graph_lasso(
+        self.covariance_, self.precision_, self.n_iter_ = graph_lasso(
             emp_cov, alpha=self.alpha, mode=self.mode, tol=self.tol,
-            max_iter=self.max_iter, verbose=self.verbose,)
+            max_iter=self.max_iter, verbose=self.verbose,
+            return_n_iter=True)
         return self
 
 
@@ -442,6 +466,9 @@ class GraphLassoCV(GraphLasso):
 
     `grid_scores`: 2D numpy.ndarray (n_alphas, n_folds)
         Log-likelihood score on left-out data across folds.
+
+    `n_iter_` : int
+        Number of iterations run for the optimal alpha.
 
     See Also
     --------
@@ -590,7 +617,8 @@ class GraphLassoCV(GraphLasso):
         self.cv_alphas_ = alphas
 
         # Finally fit the model with the selected alpha
-        self.covariance_, self.precision_ = graph_lasso(
+        self.covariance_, self.precision_, self.n_iter_ = graph_lasso(
             emp_cov, alpha=best_alpha, mode=self.mode, tol=self.tol,
-            max_iter=self.max_iter, verbose=inner_verbose)
+            max_iter=self.max_iter, verbose=inner_verbose,
+            return_n_iter=True)
         return self
