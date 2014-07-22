@@ -9,7 +9,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
-from ..utils.fixes import scoreatpercentile_axis
+from sklearn.utils.fixes import scoreatpercentile_axis
 from scipy import stats
 
 
