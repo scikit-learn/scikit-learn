@@ -9,6 +9,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
+from .utils.fixes import scoreatpercentile_axis
 from scipy import stats
 
 
@@ -417,8 +418,8 @@ def test_quantile_strategy_multioutput_regressor():
     y_learn = random_state.randn(10, 5)
 
     quantile = np.reshape(
-        stats.scoreatpercentile(y_learn, 80.0, axis=0),
-                               (1, -1))
+        scoreatpercentile_axis(y_learn, 80.0, axis=0),
+                              (1, -1))
 
     X_test = random_state.randn(20, 10)
     y_test = random_state.randn(20, 5)
