@@ -319,4 +319,4 @@ except TypeError:
 
 else:
     def scoreatpercentile_axis(a, per, axis):
-        return stats.scoreatpercentile(a, per, axis)
+        return stats.scoreatpercentile(a, per, axis=axis)
