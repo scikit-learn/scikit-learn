@@ -140,14 +140,15 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                                        np.sum(nz_sample_weight))
                 classes, y_k = np.unique(y.data[nz_indices],
                                          return_inverse=True)
+                class_prior = np.bincount(y_k, weights=nz_sample_weight)
+
                 if y_nnz[k] < y.shape[0]:
                     classes = np.insert(classes, 0, 0)
-                self.classes_.append(classes)
-                self.n_classes_.append(classes.shape[0])
-                class_prior = np.bincount(y_k, weights=nz_sample_weight)
-                if y_nnz[k] < y.shape[0]:
                     class_prior = np.insert(class_prior, 0,
                                             z_sample_weight_sum)
+
+                self.classes_.append(classes)
+                self.n_classes_.append(classes.shape[0])
                 self.class_prior_.append(class_prior / class_prior.sum())
 
         # Checking in case of constant strategy if the constant
