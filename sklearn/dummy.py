@@ -98,10 +98,10 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
         if not self.sparse_target_input_:
             y = np.atleast_1d(y)
-            self.output_2d_ = y.ndim == 2
 
-            if y.ndim == 1:
-                y = np.reshape(y, (-1, 1))
+        self.output_2d_ = y.ndim == 2
+        if y.ndim == 1:
+            y = np.reshape(y, (-1, 1))
 
         self.n_outputs_ = y.shape[1]
 
@@ -130,13 +130,24 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             y_nnz = np.diff(y.indptr)
 
             for k in range(self.n_outputs_):
-                classes, y_k = np.unique(y.data[y.indices[k]:y.indices[k + 1]],
+                nz_indices = y.indices[y.indptr[k]:y.indptr[k+1]]
+                # separate sample weights for zero and non-zero elements
+                nz_sample_weight = (None if sample_weight is None else
+                                    sample_weight[nz_indices])
+                z_sample_weight_sum = (y.shape[0] - y_nnz[k] if
+                                       sample_weight is None else
+                                       np.sum(sample_weight) -
+                                       np.sum(nz_sample_weight))
+                classes, y_k = np.unique(y.data[nz_indices],
                                          return_inverse=True)
                 if y_nnz[k] < y.shape[0]:
                     classes = np.insert(classes, 0, 0)
                 self.classes_.append(classes)
                 self.n_classes_.append(classes.shape[0])
-                class_prior = np.bincount(y_k, weights=sample_weight)
+                class_prior = np.bincount(y_k, weights=nz_sample_weight)
+                if y_nnz[k] < y.shape[0]:
+                    class_prior = np.insert(class_prior, 0,
+                                            z_sample_weight_sum)
                 self.class_prior_.append(class_prior / class_prior.sum())
 
         # Checking in case of constant strategy if the constant
@@ -202,13 +213,12 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
                 elif self.strategy == "stratified":
                     ret = proba[k].argmax(axis=1)
-                    # print proba[k]
 
                 elif self.strategy == "uniform":
                     ret = rs.randint(n_classes_[k], size=n_samples)
 
                 elif self.strategy == "constant":
-                    ret = (np.ones(n_samples, dtype=int) * 
+                    ret = (np.ones(n_samples, dtype=int) *
                            np.where(classes_[k] == constant[k]))
 
                 y.append(classes_[k][ret])
@@ -233,9 +243,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                         indptr = np.append(indptr, len(indices))
 
                 elif self.strategy == "stratified":
-                    # XXX how does this work?
                     ret = proba[k].argmax(axis=1)
-                    # print proba
                     data = np.append(data, classes_[k][ret])
                     indices = np.append(indices, range(n_samples))
                     indptr = np.append(indptr, len(indices))
@@ -252,15 +260,15 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                     if constant[k] == 0:
                         indptr = np.append(indptr, len(indices))
                     else:
-                        ret = (np.ones(n_samples, dtype=int) * 
+                        ret = (np.ones(n_samples, dtype=int) *
                                np.where(classes_[k] == constant[k]))
                         data = np.append(data, classes_[k][ret])
                         indices = np.append(indices, range(n_samples))
                         indptr = np.append(indptr, len(indices))
 
             y = sp.csc_matrix((data, indices, indptr),
-                                   (n_samples, self.n_outputs_),
-                                   dtype=np.intp)
+                              (n_samples, self.n_outputs_),
+                              dtype=np.intp)
 
         return y
 
