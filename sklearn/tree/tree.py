@@ -16,7 +16,6 @@ from __future__ import division
 import numbers
 import numpy as np
 from abc import ABCMeta, abstractmethod
-from warnings import warn
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..externals import six
@@ -91,8 +90,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.tree_ = None
         self.max_features_ = None
 
-    def fit(self, X, y, sample_weight=None, check_input=True, sample_mask=None,
-            X_argsorted=None):
+    def fit(self, X, y, sample_weight=None, check_input=True):
         """Build a decision tree from the training set (X, y).
 
         Parameters
@@ -123,15 +121,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             Returns self.
         """
         random_state = check_random_state(self.random_state)
-
-        # Deprecations
-        if sample_mask is not None:
-            warn("The sample_mask parameter is deprecated as of version 0.14 "
-                 "and will be removed in 0.16.", DeprecationWarning)
-
-        if X_argsorted is not None:
-            warn("The X_argsorted parameter is deprecated as of version 0.14 "
-                 "and will be removed in 0.16.", DeprecationWarning)
 
         # Convert data
         if check_input:
@@ -486,8 +475,6 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                  min_weight_fraction_leaf=0.,
                  max_features=None,
                  random_state=None,
-                 min_density=None,
-                 compute_importances=None,
                  max_leaf_nodes=None):
         super(DecisionTreeClassifier, self).__init__(
             criterion=criterion,
@@ -499,17 +486,6 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
             random_state=random_state)
-
-        if min_density is not None:
-            warn("The min_density parameter is deprecated as of version 0.14 "
-                 "and will be removed in 0.16.", DeprecationWarning)
-
-        if compute_importances is not None:
-            warn("Setting compute_importances is no longer required as "
-                 "version 0.14. Variable importances are now computed on the "
-                 "fly when accessing the feature_importances_ attribute. "
-                 "This parameter will be removed in 0.16.",
-                 DeprecationWarning)
 
     def predict_proba(self, X):
         """Predict class probabilities of the input samples X.
@@ -701,8 +677,6 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                  min_weight_fraction_leaf=0.,
                  max_features=None,
                  random_state=None,
-                 min_density=None,
-                 compute_importances=None,
                  max_leaf_nodes=None):
         super(DecisionTreeRegressor, self).__init__(
             criterion=criterion,
@@ -714,17 +688,6 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
             random_state=random_state)
-
-        if min_density is not None:
-            warn("The min_density parameter is deprecated as of version 0.14 "
-                 "and will be removed in 0.16.", DeprecationWarning)
-
-        if compute_importances is not None:
-            warn("Setting compute_importances is no longer required as "
-                 "version 0.14. Variable importances are now computed on the "
-                 "fly when accessing the feature_importances_ attribute. "
-                 "This parameter will be removed in 0.16.",
-                 DeprecationWarning)
 
 
 class ExtraTreeClassifier(DecisionTreeClassifier):
@@ -758,8 +721,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                  min_weight_fraction_leaf=0.,
                  max_features="auto",
                  random_state=None,
-                 min_density=None,
-                 compute_importances=None,
                  max_leaf_nodes=None):
         super(ExtraTreeClassifier, self).__init__(
             criterion=criterion,
@@ -771,17 +732,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
             random_state=random_state)
-
-        if min_density is not None:
-            warn("The min_density parameter is deprecated as of version 0.14 "
-                 "and will be removed in 0.16.", DeprecationWarning)
-
-        if compute_importances is not None:
-            warn("Setting compute_importances is no longer required as "
-                 "version 0.14. Variable importances are now computed on the "
-                 "fly when accessing the feature_importances_ attribute. "
-                 "This parameter will be removed in 0.16.",
-                 DeprecationWarning)
 
 
 class ExtraTreeRegressor(DecisionTreeRegressor):
@@ -815,8 +765,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                  min_weight_fraction_leaf=0.,
                  max_features="auto",
                  random_state=None,
-                 min_density=None,
-                 compute_importances=None,
                  max_leaf_nodes=None):
         super(ExtraTreeRegressor, self).__init__(
             criterion=criterion,
@@ -828,14 +776,3 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
             random_state=random_state)
-
-        if min_density is not None:
-            warn("The min_density parameter is deprecated as of version 0.14 "
-                 "and will be removed in 0.16.", DeprecationWarning)
-
-        if compute_importances is not None:
-            warn("Setting compute_importances is no longer required as "
-                 "version 0.14. Variable importances are now computed on the "
-                 "fly when accessing the feature_importances_ attribute. "
-                 "This parameter will be removed in 0.16.",
-                 DeprecationWarning)

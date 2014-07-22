@@ -43,10 +43,6 @@ class _LearntSelectorMixin(TransformerMixin):
         # Retrieve importance vector
         if hasattr(self, "feature_importances_"):
             importances = self.feature_importances_
-            if importances is None:
-                raise ValueError("Importance weights not computed. Please set"
-                                 " the compute_importances parameter before "
-                                 "fit.")
 
         elif hasattr(self, "coef_"):
             if self.coef_.ndim == 1:
@@ -56,9 +52,8 @@ class _LearntSelectorMixin(TransformerMixin):
                 importances = np.sum(np.abs(self.coef_), axis=0)
 
         else:
-            raise ValueError("Missing `feature_importances_` or `coef_`"
-                             " attribute, did you forget to set the "
-                             "estimator's parameter to compute it?")
+            raise ValueError("No `feature_importances_` or `coef_` on %r"
+                             % self)
         if len(importances) != X.shape[1]:
             raise ValueError("X has different number of features than"
                              " during model fitting.")

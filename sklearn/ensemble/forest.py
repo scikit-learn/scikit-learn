@@ -753,9 +753,7 @@ class RandomForestClassifier(ForestClassifier):
                  oob_score=False,
                  n_jobs=1,
                  random_state=None,
-                 verbose=0,
-                 min_density=None,
-                 compute_importances=None):
+                 verbose=0):
         super(RandomForestClassifier, self).__init__(
             base_estimator=DecisionTreeClassifier(),
             n_estimators=n_estimators,
@@ -776,17 +774,6 @@ class RandomForestClassifier(ForestClassifier):
         self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
-
-        if min_density is not None:
-            warn("The min_density parameter is deprecated as of version 0.14 "
-                 "and will be removed in 0.16.", DeprecationWarning)
-
-        if compute_importances is not None:
-            warn("Setting compute_importances is no longer required as "
-                 "version 0.14. Variable importances are now computed on the "
-                 "fly when accessing the feature_importances_ attribute. "
-                 "This parameter will be removed in 0.16.",
-                 DeprecationWarning)
 
 
 class RandomForestRegressor(ForestRegressor):
@@ -908,9 +895,7 @@ class RandomForestRegressor(ForestRegressor):
                  oob_score=False,
                  n_jobs=1,
                  random_state=None,
-                 verbose=0,
-                 min_density=None,
-                 compute_importances=None):
+                 verbose=0):
         super(RandomForestRegressor, self).__init__(
             base_estimator=DecisionTreeRegressor(),
             n_estimators=n_estimators,
@@ -931,17 +916,6 @@ class RandomForestRegressor(ForestRegressor):
         self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
-
-        if min_density is not None:
-            warn("The min_density parameter is deprecated as of version 0.14 "
-                 "and will be removed in 0.16.", DeprecationWarning)
-
-        if compute_importances is not None:
-            warn("Setting compute_importances is no longer required as "
-                 "version 0.14. Variable importances are now computed on the "
-                 "fly when accessing the feature_importances_ attribute. "
-                 "This parameter will be removed in 0.16.",
-                 DeprecationWarning)
 
 
 class ExtraTreesClassifier(ForestClassifier):
@@ -1078,9 +1052,7 @@ class ExtraTreesClassifier(ForestClassifier):
                  oob_score=False,
                  n_jobs=1,
                  random_state=None,
-                 verbose=0,
-                 min_density=None,
-                 compute_importances=None):
+                 verbose=0):
         super(ExtraTreesClassifier, self).__init__(
             base_estimator=ExtraTreeClassifier(),
             n_estimators=n_estimators,
@@ -1100,17 +1072,6 @@ class ExtraTreesClassifier(ForestClassifier):
         self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
-
-        if min_density is not None:
-            warn("The min_density parameter is deprecated as of version 0.14 "
-                 "and will be removed in 0.16.", DeprecationWarning)
-
-        if compute_importances is not None:
-            warn("Setting compute_importances is no longer required as "
-                 "version 0.14. Variable importances are now computed on the "
-                 "fly when accessing the feature_importances_ attribute. "
-                 "This parameter will be removed in 0.16.",
-                 DeprecationWarning)
 
 
 class ExtraTreesRegressor(ForestRegressor):
@@ -1236,9 +1197,7 @@ class ExtraTreesRegressor(ForestRegressor):
                  oob_score=False,
                  n_jobs=1,
                  random_state=None,
-                 verbose=0,
-                 min_density=None,
-                 compute_importances=None):
+                 verbose=0):
         super(ExtraTreesRegressor, self).__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
@@ -1259,17 +1218,6 @@ class ExtraTreesRegressor(ForestRegressor):
         self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
-
-        if min_density is not None:
-            warn("The min_density parameter is deprecated as of version 0.14 "
-                 "and will be removed in 0.16.", DeprecationWarning)
-
-        if compute_importances is not None:
-            warn("Setting compute_importances is no longer required as "
-                 "version 0.14. Variable importances are now computed on the "
-                 "fly when accessing the feature_importances_ attribute. "
-                 "This parameter will be removed in 0.16.",
-                 DeprecationWarning)
 
 
 class RandomTreesEmbedding(BaseForest):
@@ -1358,8 +1306,7 @@ class RandomTreesEmbedding(BaseForest):
                  sparse_output=True,
                  n_jobs=1,
                  random_state=None,
-                 verbose=0,
-                 min_density=None):
+                 verbose=0):
         super(RandomTreesEmbedding, self).__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
@@ -1381,10 +1328,6 @@ class RandomTreesEmbedding(BaseForest):
         self.max_features = 1
         self.max_leaf_nodes = max_leaf_nodes
         self.sparse_output = sparse_output
-
-        if min_density is not None:
-            warn("The min_density parameter is deprecated as of version 0.14 "
-                 "and will be removed in 0.16.", DeprecationWarning)
 
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by tree embedding")
