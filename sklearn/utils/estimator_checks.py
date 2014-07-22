@@ -745,6 +745,9 @@ def check_estimators_overwrite_params(name, Estimator):
     set_random_state(estimator)
 
     params = estimator.get_params()
+    if name == 'OrthogonalMatchingPursuitCV':
+        # FIXME: This test is unstable on Travis, see issue #3190.
+        check_skip_travis()
     estimator.fit(X, y)
     new_params = estimator.get_params()
     for k, v in params.items():
@@ -826,7 +829,6 @@ def check_regressor_data_not_an_array(name, Estimator):
 
 
 def check_estimators_data_not_an_array(name, Estimator, X, y):
-
     if name in CROSS_DECOMPOSITION:
         raise SkipTest
     # catch deprecation warnings
@@ -843,6 +845,9 @@ def check_estimators_data_not_an_array(name, Estimator, X, y):
     X_ = NotAnArray(np.asarray(X))
 
     # fit
+    if name == 'OrthogonalMatchingPursuitCV':
+        # FIXME: This test is unstable on Travis, see issue #3190.
+        check_skip_travis()
     estimator_1.fit(X_, y_)
     pred1 = estimator_1.predict(X_)
     estimator_2.fit(X, y)
