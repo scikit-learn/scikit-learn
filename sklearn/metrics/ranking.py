@@ -617,7 +617,7 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None):
     return fpr, tpr, thresholds
 
 
-def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
+def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight = None):
     """Log loss, aka logistic loss or cross-entropy loss.
 
     This is the loss function used in (multinomial) logistic regression
@@ -644,6 +644,9 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
     normalize : bool, optional (default=True)
         If true, return the mean loss per sample.
         Otherwise, return the sum of the per-sample losses.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
 
     Returns
     -------
@@ -682,6 +685,10 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
         Y = Y[:, np.newaxis]
     if Y.shape[1] == 1:
         Y = np.append(1 - Y, Y, axis=1)
+
+    if sample_weight is not None:
+        W = np.diag(sample_weight)
+        T = W.dot(T)
 
     # Check if dimensions are consistent.
     check_consistent_length(T, Y)
