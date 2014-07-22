@@ -5,7 +5,7 @@ function animateClone(e){
   position = $(this).position();
   var clone = $(this).closest('.thumbnailContainer').find('.clonedItem');
   var clone_fig = clone.find('.figure');
-  clone.css("left", position.left - 70).css("top", position.top - 70).css("position", "absolute").css("z-index", 1000).css("background-color", "white");
+  clone.css("left", position.left - 70).css("top", position.top - 70).css("position", "absolute").css("z-index", 1000).css("background-color", "transparent");
 
   var cloneImg = clone_fig.find('img');
 
