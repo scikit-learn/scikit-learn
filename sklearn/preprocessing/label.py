@@ -271,12 +271,6 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         self.sparse_output = sparse_output
 
     @property
-    @deprecated("Attribute `multilabel` was renamed to `multilabel_` in "
-                "0.14 and will be removed in 0.16")
-    def multilabel(self):
-        return self.multilabel_
-
-    @property
     @deprecated("Attribute indicator_matrix_ is deprecated and will be "
                 "removed in 0.17. Use 'y_type_ == 'multilabel-indicator'' "
                 "instead")
