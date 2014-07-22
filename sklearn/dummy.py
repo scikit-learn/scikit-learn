@@ -125,7 +125,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                 class_prior = np.bincount(y_k, weights=sample_weight)
                 self.class_prior_.append(class_prior / class_prior.sum())
         else:
-            y.tocsc()
+            y = y.tocsc()
             y.eliminate_zeros()
             y_nnz = np.diff(y.indptr)
 
@@ -243,6 +243,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
                 elif self.strategy == "stratified":
                     ret = proba[k].argmax(axis=1)
+                    # XXX select non zeros
                     ind = range(n_samples)
 
                 elif self.strategy == "uniform":
