@@ -38,7 +38,7 @@ Single and multi-output problems are both handled.
 
 from __future__ import division
 
-import itertools
+from itertools import chain
 import numpy as np
 from warnings import warn
 from abc import ABCMeta, abstractmethod
@@ -162,7 +162,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
                  oob_score=False,
                  n_jobs=1,
                  random_state=None,
-                 verbose=0):
+                 verbose=0,
+                 warm_start=False):
         super(BaseForest, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
@@ -173,6 +174,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.verbose = verbose
+        self.warm_start = warm_start
 
     def apply(self, X):
         """Apply trees in the forest to X, return leaf indices.
@@ -218,7 +220,6 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         self : object
             Returns self.
         """
-        random_state = check_random_state(self.random_state)
 
         # Convert data
         # ensure_2d=False because there are actually unit test checking we fail
@@ -254,35 +255,55 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             raise ValueError("Out of bag estimation only available"
                              " if bootstrap=True")
 
-        # Assign chunk of trees to jobs
-        n_jobs, n_trees, starts = _partition_estimators(
-            n_estimators=self.n_estimators, n_jobs=self.n_jobs)
-        trees = []
+        random_state = check_random_state(self.random_state)
 
-        for i in range(self.n_estimators):
-            tree = self._make_estimator(append=False)
-            tree.set_params(random_state=random_state.randint(MAX_INT))
-            trees.append(tree)
+        if not self.warm_start:
+            # Free allocated memory, if any
+            self.estimators_ = []
 
-        # Free allocated memory, if any
-        self.estimators_ = None
+        n_more_estimators = self.n_estimators - len(self.estimators_)
 
-        # Parallel loop: we use the threading backend as the Cython code for
-        # fitting the trees is internally releasing the Python GIL making
-        # threading always more efficient than multiprocessing in that case.
-        all_trees = Parallel(n_jobs=n_jobs, verbose=self.verbose,
-                             backend="threading")(
-            delayed(_parallel_build_trees)(
-                trees[starts[i]:starts[i + 1]],
-                self,
-                X,
-                y,
-                sample_weight,
-                verbose=self.verbose)
-            for i in range(n_jobs))
+        if n_more_estimators < 0:
+            raise ValueError('n_estimators=%d must be larger or equal to '
+                             'len(estimators_)=%d when warm_start==True'
+                             % (self.n_estimators, len(self.estimators_)))
 
-        # Reduce
-        self.estimators_ = list(itertools.chain(*all_trees))
+        elif n_more_estimators == 0:
+            warn("Warm-start fitting without increasing n_estimators does not "
+                 "fit new trees.")
+        else:
+            # Assign chunk of trees to jobs
+            n_jobs, n_trees, starts = _partition_estimators(n_more_estimators,
+                                                            self.n_jobs)
+            trees = []
+
+            if self.warm_start and len(self.estimators_) > 0:
+                # We draw from the random state to get the random state we
+                # would have got if we hadn't used a warm_start.
+                random_state.randint(MAX_INT, size=len(self.estimators_))
+
+            for i in range(n_more_estimators):
+                tree = self._make_estimator(append=False)
+                tree.set_params(random_state=random_state.randint(MAX_INT))
+                trees.append(tree)
+
+            # Parallel loop: we use the threading backend as the Cython code
+            # for fitting the trees is internally releasing the Python GIL
+            # making threading always more efficient than multiprocessing in
+            # that case.
+            all_new_trees = Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                                     backend="threading")(
+                delayed(_parallel_build_trees)(
+                    trees[starts[i]:starts[i + 1]],
+                    self,
+                    X,
+                    y,
+                    sample_weight,
+                    verbose=self.verbose)
+                for i in range(n_jobs))
+
+            # Reduce
+            self.estimators_.extend(chain.from_iterable(all_new_trees))
 
         if self.oob_score:
             self._set_oob_score(X, y)
@@ -336,7 +357,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
                  oob_score=False,
                  n_jobs=1,
                  random_state=None,
-                 verbose=0):
+                 verbose=0,
+                 warm_start=False):
 
         super(ForestClassifier, self).__init__(
             base_estimator,
@@ -346,7 +368,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose,
+            warm_start=warm_start)
 
     def _set_oob_score(self, X, y):
         n_classes_ = self.n_classes_
@@ -461,8 +484,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             X = check_array(X, dtype=DTYPE)
 
         # Assign chunk of trees to jobs
-        n_jobs, n_trees, starts = _partition_estimators(
-            n_estimators=self.n_estimators, n_jobs=self.n_jobs)
+        n_jobs, n_trees, starts = _partition_estimators(self.n_estimators,
+                                                        self.n_jobs)
 
         # Parallel loop
         all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose,
@@ -540,7 +563,8 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
                  oob_score=False,
                  n_jobs=1,
                  random_state=None,
-                 verbose=0):
+                 verbose=0,
+                 warm_start=False):
         super(ForestRegressor, self).__init__(
             base_estimator,
             n_estimators=n_estimators,
@@ -549,7 +573,8 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose,
+            warm_start=warm_start)
 
     def predict(self, X):
         """Predict regression target for X.
@@ -572,8 +597,8 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             X = check_array(X, dtype=DTYPE)
 
         # Assign chunk of trees to jobs
-        n_jobs, n_trees, starts = _partition_estimators(
-            n_estimators=self.n_estimators, n_jobs=self.n_jobs)
+        n_jobs, n_trees, starts = _partition_estimators(self.n_estimators,
+                                                        self.n_jobs)
 
         # Parallel loop
         all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose,
@@ -709,6 +734,11 @@ class RandomForestClassifier(ForestClassifier):
     verbose : int, optional (default=0)
         Controls the verbosity of the tree building process.
 
+    warm_start : bool, optional (default=False)
+        When set to ``True``, reuse the solution of the previous call to fit
+        and add more estimators to the ensemble, otherwise, just fit a whole
+        new forest.
+
     Attributes
     ----------
     `estimators_`: list of DecisionTreeClassifier
@@ -756,7 +786,10 @@ class RandomForestClassifier(ForestClassifier):
                  oob_score=False,
                  n_jobs=1,
                  random_state=None,
-                 verbose=0):
+                 verbose=0,
+                 min_density=None,
+                 compute_importances=None,
+                 warm_start=False):
         super(RandomForestClassifier, self).__init__(
             base_estimator=DecisionTreeClassifier(),
             n_estimators=n_estimators,
@@ -768,7 +801,8 @@ class RandomForestClassifier(ForestClassifier):
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose,
+            warm_start=warm_start)
 
         self.criterion = criterion
         self.max_depth = max_depth
@@ -862,6 +896,11 @@ class RandomForestRegressor(ForestRegressor):
     verbose : int, optional (default=0)
         Controls the verbosity of the tree building process.
 
+    warm_start : bool, optional (default=False)
+        When set to ``True``, reuse the solution of the previous call to fit
+        and add more estimators to the ensemble, otherwise, just fit a whole
+        new forest.
+
     Attributes
     ----------
     `estimators_`: list of DecisionTreeRegressor
@@ -898,7 +937,10 @@ class RandomForestRegressor(ForestRegressor):
                  oob_score=False,
                  n_jobs=1,
                  random_state=None,
-                 verbose=0):
+                 verbose=0,
+                 min_density=None,
+                 compute_importances=None,
+                 warm_start=False):
         super(RandomForestRegressor, self).__init__(
             base_estimator=DecisionTreeRegressor(),
             n_estimators=n_estimators,
@@ -910,7 +952,8 @@ class RandomForestRegressor(ForestRegressor):
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose,
+            warm_start=warm_start)
 
         self.criterion = criterion
         self.max_depth = max_depth
@@ -1005,6 +1048,11 @@ class ExtraTreesClassifier(ForestClassifier):
     verbose : int, optional (default=0)
         Controls the verbosity of the tree building process.
 
+    warm_start : bool, optional (default=False)
+        When set to ``True``, reuse the solution of the previous call to fit
+        and add more estimators to the ensemble, otherwise, just fit a whole
+        new forest.
+
     Attributes
     ----------
     `estimators_`: list of DecisionTreeClassifier
@@ -1055,7 +1103,10 @@ class ExtraTreesClassifier(ForestClassifier):
                  oob_score=False,
                  n_jobs=1,
                  random_state=None,
-                 verbose=0):
+                 verbose=0,
+                 min_density=None,
+                 compute_importances=None,
+                 warm_start=False):
         super(ExtraTreesClassifier, self).__init__(
             base_estimator=ExtraTreeClassifier(),
             n_estimators=n_estimators,
@@ -1066,7 +1117,8 @@ class ExtraTreesClassifier(ForestClassifier):
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose,
+            warm_start=warm_start)
 
         self.criterion = criterion
         self.max_depth = max_depth
@@ -1162,6 +1214,11 @@ class ExtraTreesRegressor(ForestRegressor):
     verbose : int, optional (default=0)
         Controls the verbosity of the tree building process.
 
+    warm_start : bool, optional (default=False)
+        When set to ``True``, reuse the solution of the previous call to fit
+        and add more estimators to the ensemble, otherwise, just fit a whole
+        new forest.
+
     Attributes
     ----------
     `estimators_`: list of DecisionTreeRegressor
@@ -1200,7 +1257,10 @@ class ExtraTreesRegressor(ForestRegressor):
                  oob_score=False,
                  n_jobs=1,
                  random_state=None,
-                 verbose=0):
+                 verbose=0,
+                 min_density=None,
+                 compute_importances=None,
+                 warm_start=False):
         super(ExtraTreesRegressor, self).__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
@@ -1212,7 +1272,8 @@ class ExtraTreesRegressor(ForestRegressor):
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose,
+            warm_start=warm_start)
 
         self.criterion = criterion
         self.max_depth = max_depth
@@ -1284,6 +1345,11 @@ class RandomTreesEmbedding(BaseForest):
     verbose : int, optional (default=0)
         Controls the verbosity of the tree building process.
 
+    warm_start : bool, optional (default=False)
+        When set to ``True``, reuse the solution of the previous call to fit
+        and add more estimators to the ensemble, otherwise, just fit a whole
+        new forest.
+
     Attributes
     ----------
     `estimators_`: list of DecisionTreeClassifier
@@ -1309,7 +1375,9 @@ class RandomTreesEmbedding(BaseForest):
                  sparse_output=True,
                  n_jobs=1,
                  random_state=None,
-                 verbose=0):
+                 verbose=0,
+                 min_density=None,
+                 warm_start=False):
         super(RandomTreesEmbedding, self).__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
@@ -1321,7 +1389,8 @@ class RandomTreesEmbedding(BaseForest):
             oob_score=False,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose,
+            warm_start=warm_start)
 
         self.criterion = 'mse'
         self.max_depth = max_depth

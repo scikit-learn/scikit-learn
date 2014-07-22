@@ -22,6 +22,7 @@ from sklearn.utils.testing import assert_less, assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn import datasets
 from sklearn.decomposition import TruncatedSVD
@@ -668,6 +669,141 @@ def test_1d_input():
 
     for name in FOREST_ESTIMATORS:
         yield check_1d_input, name, X, X_2d, y
+
+
+def check_warm_start(name, random_state=42):
+    """Test if fitting incrementally with warm start gives a forest of the
+    right size and the same results as a normal fit."""
+    X, y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
+    ForestEstimator = FOREST_ESTIMATORS[name]
+    clf_ws = None
+    for n_estimators in [5, 10]:
+        if clf_ws is None:
+            clf_ws = ForestEstimator(n_estimators=n_estimators,
+                                     random_state=random_state,
+                                     warm_start=True)
+        else:
+            clf_ws.set_params(n_estimators=n_estimators)
+        clf_ws.fit(X, y)
+        assert_equal(len(clf_ws), n_estimators)
+
+    clf_no_ws = ForestEstimator(n_estimators=10, random_state=random_state,
+                                warm_start=False)
+    clf_no_ws.fit(X, y)
+
+    assert_equal(set([tree.random_state for tree in clf_ws]),
+                 set([tree.random_state for tree in clf_no_ws]))
+
+    assert_array_equal(clf_ws.apply(X), clf_no_ws.apply(X),
+                       err_msg="Failed with {0}".format(name))
+
+
+def test_warm_start():
+    for name in FOREST_ESTIMATORS:
+        yield check_warm_start, name
+
+
+def check_warm_start_clear(name):
+    """Test if fit clears state and grows a new forest when warm_start==False.
+    """
+    X, y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
+    ForestEstimator = FOREST_ESTIMATORS[name]
+    clf = ForestEstimator(n_estimators=5, max_depth=1, warm_start=False,
+                          random_state=1)
+    clf.fit(X, y)
+
+    clf_2 = ForestEstimator(n_estimators=5, max_depth=1, warm_start=True,
+                            random_state=2)
+    clf_2.fit(X, y)  # inits state
+    clf_2.set_params(warm_start=False, random_state=1)
+    clf_2.fit(X, y)  # clears old state and equals clf
+
+    assert_array_almost_equal(clf_2.apply(X), clf.apply(X))
+
+
+def test_warm_start_clear():
+    for name in FOREST_ESTIMATORS:
+        yield check_warm_start_clear, name
+
+
+def check_warm_start_smaller_n_estimators(name):
+    """Test if warm start second fit with smaller n_estimators raises error."""
+    X, y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
+    ForestEstimator = FOREST_ESTIMATORS[name]
+    clf = ForestEstimator(n_estimators=5, max_depth=1, warm_start=True)
+    clf.fit(X, y)
+    clf.set_params(n_estimators=4)
+    assert_raises(ValueError, clf.fit, X, y)
+
+
+def test_warm_start_smaller_n_estimators():
+    for name in FOREST_ESTIMATORS:
+        yield check_warm_start_smaller_n_estimators, name
+
+
+def check_warm_start_equal_n_estimators(name):
+    """Test if warm start with equal n_estimators does nothing and returns the
+    same forest and raises a warning."""
+    X, y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
+    ForestEstimator = FOREST_ESTIMATORS[name]
+    clf = ForestEstimator(n_estimators=5, max_depth=3, warm_start=True,
+                          random_state=1)
+    clf.fit(X, y)
+
+    clf_2 = ForestEstimator(n_estimators=5, max_depth=3, warm_start=True,
+                            random_state=1)
+    clf_2.fit(X, y)
+    # Now clf_2 equals clf.
+
+    clf_2.set_params(random_state=2)
+    assert_warns(UserWarning, clf_2.fit, X, y)
+    # If we had fit the trees again we would have got a different forest as we
+    # changed the random state.
+    assert_array_equal(clf.apply(X), clf_2.apply(X))
+
+
+def test_warm_start_equal_n_estimators():
+    for name in FOREST_ESTIMATORS:
+        yield check_warm_start_equal_n_estimators, name
+
+
+def check_warm_start_oob(name):
+    """Test that the warm start computes oob score when asked."""
+    X, y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
+    ForestEstimator = FOREST_ESTIMATORS[name]
+    # Use 15 estimators to avoid 'some inputs do not have OOB scores' warning.
+    clf = ForestEstimator(n_estimators=15, max_depth=3, warm_start=False,
+                          random_state=1, bootstrap=True, oob_score=True)
+    clf.fit(X, y)
+
+    clf_2 = ForestEstimator(n_estimators=5, max_depth=3, warm_start=False,
+                            random_state=1, bootstrap=True, oob_score=False)
+    clf_2.fit(X, y)
+
+    clf_2.set_params(warm_start=True, oob_score=True, n_estimators=15)
+    clf_2.fit(X, y)
+
+    assert_true(hasattr(clf_2, 'oob_score_'))
+    assert_equal(clf.oob_score_, clf_2.oob_score_)
+
+    # Test that oob_score is computed even if we don't need to train
+    # additional trees.
+    clf_3 = ForestEstimator(n_estimators=15, max_depth=3, warm_start=True,
+                            random_state=1, bootstrap=True, oob_score=False)
+    clf_3.fit(X, y)
+    assert_true(not(hasattr(clf_3, 'oob_score_')))
+
+    clf_3.set_params(oob_score=True)
+    ignore_warnings(clf_3.fit)(X, y)
+
+    assert_equal(clf.oob_score_, clf_3.oob_score_)
+
+
+def test_warm_start_oob():
+    for name in FOREST_CLASSIFIERS:
+        yield check_warm_start_oob, name
+    for name in FOREST_REGRESSORS:
+        yield check_warm_start_oob, name
 
 
 if __name__ == "__main__":
