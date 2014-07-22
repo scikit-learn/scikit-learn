@@ -339,7 +339,7 @@ def test_intercept_logistic_helper():
 
 
 def test_ova_iris():
-    # Test that our OvA implementation is correct using the iris dataset.
+    """Test that our OvA implementation is correct using the iris dataset."""
     train, target = iris.data, iris.target
     n_samples, n_features = train.shape
 
@@ -369,7 +369,7 @@ def test_ova_iris():
 
 
 def test_logreg_newton_lbfgs():
-    X, y = make_classification(n_features=50, n_informative=10, random_state=0)
+    X, y = make_classification(n_features=10, n_informative=5, random_state=0)
     clf_n = LogisticRegression(solver='newton-cg', fit_intercept=False)
     clf_n.fit(X, y)
     clf_lbf = LogisticRegression(solver='lbfgs', fit_intercept=False)
@@ -381,8 +381,8 @@ def test_logreg_newton_lbfgs():
     assert_array_almost_equal(clf_n.coef_, clf_lbf.coef_, decimal=3)
 
 
-def test_logreg_newton_lbfgs_multitask():
-    X, y = make_classification(n_features=50, n_informative=10,
+def test_logreg_newton_lbfgs_multitask_class_weights():
+    X, y = make_classification(n_samples=20, n_features=20, n_informative=10,
                                n_classes=3, random_state=0)
     clf_n = LogisticRegression(solver='newton-cg', fit_intercept=False)
     clf_n.fit(X, y)
@@ -393,3 +393,24 @@ def test_logreg_newton_lbfgs_multitask():
     assert_array_almost_equal(clf_n.coef_, clf_lib.coef_, decimal=3)
     assert_array_almost_equal(clf_lib.coef_, clf_lbf.coef_, decimal=3)
     assert_array_almost_equal(clf_n.coef_, clf_lbf.coef_, decimal=3)
+
+
+def test_logreg_newton_lbfgs_class_weights():
+    X, y = make_classification(n_samples=20, n_features=20, n_informative=10,
+                               n_classes=3, random_state=0)
+
+    # Test the liblinear fails when class_weight of type dict is
+    # provided, when it is multiclass
+    clf_lib = LogisticRegressionCV(class_weight={0: 0.1, 1: 0.2},
+                                   solver='liblinear')
+    assert_raises(ValueError, clf_lib.fit, X, y)
+
+    # Test for class_weight=auto
+    X, y = make_classification(n_samples=20, n_features=20, n_informative=10)
+    clf_lbf = LogisticRegressionCV(solver='lbfgs', fit_intercept=False,
+                                   class_weight='auto')
+    clf_lbf.fit(X, y)
+    clf_lib = LogisticRegressionCV(solver='liblinear', fit_intercept=False,
+                                   class_weight='auto')
+    clf_lib.fit(X, y)
+    assert_array_almost_equal(clf_lib.coef_, clf_lbf.coef_, decimal=3)

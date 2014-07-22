@@ -319,7 +319,9 @@ def test_non_transformer_estimators_n_iter():
                 # These models are dependent on external solvers like
                 # libsvm and accessing the iter parameter is non-trivial.
                 if name in (['Ridge', 'SVR', 'NuSVR', 'NuSVC',
-                             'RidgeClassifier', 'SVC', 'RandomizedLasso']):
+                             'RidgeClassifier', 'SVC', 'RandomizedLasso',
+                             'LogisticRegressionCV', 'LogisticRegression',
+                             'LinearSVC']):
                     continue
 
                 # Tested in test_transformer_n_iter below
@@ -340,6 +342,7 @@ def test_transformer_n_iter():
         # Dependent on external solvers and hence accessing the iter
         # param is non-trivial.
         external_solver = ['Isomap', 'KernelPCA', 'LocallyLinearEmbedding',
-                           'RandomizedLasso']
+                           'RandomizedLasso', 'LogisticRegression',
+                           'LogisticRegressionCV', 'LinearSVC']
         if hasattr(estimator, "max_iter") and name not in external_solver:
             yield check_transformer_n_iter, name, estimator
