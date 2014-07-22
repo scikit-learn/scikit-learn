@@ -209,6 +209,9 @@ def test_ward_agglomeration():
     assert_warns(DeprecationWarning, WardAgglomeration)
     with warnings.catch_warnings(record=True) as warning_list:
         warnings.simplefilter("always", DeprecationWarning)
+        if hasattr(np, 'VisibleDeprecationWarning'):
+            # Let's not catch the numpy internal DeprecationWarnings
+            warnings.simplefilter('ignore', np.VisibleDeprecationWarning)
         ward = WardAgglomeration(n_clusters=5, connectivity=connectivity)
         ward.fit(X)
         assert_equal(len(warning_list), 1)

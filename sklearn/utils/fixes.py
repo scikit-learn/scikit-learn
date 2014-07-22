@@ -15,6 +15,7 @@ import inspect
 import numpy as np
 import scipy.sparse as sp
 
+from .testing import ignore_warnings
 
 np_version = []
 for x in np.__version__.split('.'):
@@ -102,7 +103,10 @@ else:
 
 
 try:
-    sp.csr_matrix([1.0, 2.0, 3.0]).max(axis=0)
+    with ignore_warnings():
+        # Don't raise the numpy deprecation warnings that appear in
+        # 1.9
+        sp.csr_matrix([1.0, 2.0, 3.0]).max(axis=0)
 except (TypeError, AttributeError):
     # in scipy < 14.0, sparse matrix min/max doesn't accept an `axis` argument
     # the following code is taken from the scipy 0.14 codebase
