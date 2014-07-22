@@ -277,8 +277,8 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         self.estimators_ = None
 
         # Parallel loop
-        n_jobs, n_estimators, starts = _partition_estimators(
-            n_estimators=self.n_estimators, n_jobs=self.n_jobs)
+        n_jobs, n_estimators, starts = _partition_estimators(self.n_estimators,
+                                                             self.n_jobs)
         seeds = random_state.randint(MAX_INT, size=self.n_estimators)
 
         all_results = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
@@ -550,8 +550,8 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
                              "".format(self.n_features_, X.shape[1]))
 
         # Parallel loop
-        n_jobs, n_estimators, starts = _partition_estimators(
-            n_estimators=self.n_estimators, n_jobs=self.n_jobs)
+        n_jobs, n_estimators, starts = _partition_estimators(self.n_estimators,
+                                                             self.n_jobs)
 
         all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_predict_proba)(
@@ -597,7 +597,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
             # Parallel loop
             n_jobs, n_estimators, starts = _partition_estimators(
-                n_estimators=self.n_estimators, n_jobs=self.n_jobs)
+                self.n_estimators, self.n_jobs)
 
             all_log_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
                 delayed(_parallel_predict_log_proba)(
@@ -652,8 +652,8 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
                              "".format(self.n_features_, X.shape[1]))
 
         # Parallel loop
-        n_jobs, n_estimators, starts = _partition_estimators(
-            n_estimators=self.n_estimators, n_jobs=self.n_jobs)
+        n_jobs, n_estimators, starts = _partition_estimators(self.n_estimators,
+                                                             self.n_jobs)
 
         all_decisions = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_decision_function)(
@@ -812,8 +812,8 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
         # Parallel loop
-        n_jobs, n_estimators, starts = _partition_estimators(
-            n_estimators=self.n_estimators, n_jobs=self.n_jobs)
+        n_jobs, n_estimators, starts = _partition_estimators(self.n_estimators,
+                                                             self.n_jobs)
 
         all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_predict_regression)(

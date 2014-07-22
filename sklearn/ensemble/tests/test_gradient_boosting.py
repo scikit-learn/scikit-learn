@@ -675,7 +675,7 @@ def test_warm_start_n_estimators():
 
 
 def test_warm_start_max_depth():
-    """Test if possible to fit trees of differet depth in ensemble. """
+    """Test if possible to fit trees of different depth in ensemble. """
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
         est = Cls(n_estimators=100, max_depth=1, warm_start=True)
