@@ -314,9 +314,17 @@ except TypeError:
         # Use np.add.reduce (== np.sum but a little faster) to coerce data type
         return np.add.reduce(sorted[indexer] * weights, axis=axis) / sumval
 
-    def scoreatpercentile_axis(a, per, axis):
-        return _scoreatpercentile(a, per, axis=axis)
+    def scoreatpercentile(a, per, limit=(), interpolation_method='fraction',
+                          axis=None):
+        return _scoreatpercentile(a, per, limit=limit,
+                                  interpolation_method=
+                                  interpolation_method,
+                                  axis=axis)
 
 else:
-    def scoreatpercentile_axis(a, per, axis):
-        return stats.scoreatpercentile(a, per, axis=axis)
+    def scoreatpercentile(a, per, limit=(), interpolation_method='fraction',
+                          axis=None):
+        return stats.scoreatpercentile(a, per, limit=limit,
+                                       interpolation_method=
+                                       interpolation_method,
+                                       axis=axis)

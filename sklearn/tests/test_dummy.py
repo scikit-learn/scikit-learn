@@ -9,7 +9,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
-from sklearn.utils.fixes import scoreatpercentile_axis
+from sklearn.utils.fixes import scoreatpercentile
 from scipy import stats
 
 
@@ -404,7 +404,7 @@ def test_classification_sample_weight():
 def test_y_quantile_attribute_regressor():
     X = [[0]] * 5
     y = [1, 2, 4, 6, 8]
-    est = DummyRegressor(strategy='quantile', alpha=0.9)
+    est = DummyRegressor(strategy='quantile', quantile=0.9)
     est.fit(X, y)
 
     assert_equal(est.constant_, stats.scoreatpercentile(y, 90.0))
@@ -418,14 +418,14 @@ def test_quantile_strategy_multioutput_regressor():
     y_learn = random_state.randn(10, 5)
 
     quantile = np.reshape(
-        scoreatpercentile_axis(y_learn, 80.0, axis=0),
-                              (1, -1))
+        scoreatpercentile(y_learn, 80.0, axis=0),
+                         (1, -1))
 
     X_test = random_state.randn(20, 10)
     y_test = random_state.randn(20, 5)
 
     # Correctness oracle
-    est = DummyRegressor(strategy="quantile", alpha=0.8)
+    est = DummyRegressor(strategy="quantile", quantile=0.8)
     est.fit(X_learn, y_learn)
     y_pred_learn = est.predict(X_learn)
     y_pred_test = est.predict(X_test)

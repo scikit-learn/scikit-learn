@@ -10,7 +10,7 @@ from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .externals.six.moves import xrange
 from .utils import check_random_state
 from .utils.validation import check_array
-from .utils.fixes import scoreatpercentile_axis
+from .utils.fixes import scoreatpercentile
 from sklearn.utils import deprecated
 
 
@@ -307,9 +307,9 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
 
-    alpha : float, optional.
+    quantile : float, optional.
         The parameter for the quantile strategy, ranging from 0 to 1.
-        For instance, alpha = 0.5 will calculate the median.
+        For instance, quantile = 0.5 will calculate the median.
 
     Attributes
     ----------
@@ -324,10 +324,10 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         True if the output at fit is 2d, else false.
     """
 
-    def __init__(self, strategy="mean", constant=None, alpha=0.5):
+    def __init__(self, strategy="mean", constant=None, quantile=0.5):
         self.strategy = strategy
         self.constant = constant
-        self.alpha = alpha
+        self.quantile = quantile
 
     @property
     @deprecated('This will be removed in version 0.17')
@@ -385,12 +385,12 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             self.constant_ = np.reshape(self.constant, (1, -1))
 
         elif self.strategy == "quantile":
-            if not 0 < self.alpha < 1.0:
-                raise ValueError("`alpha` must be in (0, 1.0) but was %r"
-                                 % self.alpha)
+            if not 0 < self.quantile < 1.0:
+                raise ValueError("`quantile` must be in (0, 1.0) but was %r"
+                                 % self.quantile)
             else:
                 self.constant_ = np.reshape(
-                    scoreatpercentile_axis(y, self.alpha * 100.0, axis=0),
+                    scoreatpercentile(y, self.quantile * 100.0, axis=0),
                     (1, -1))
 
         self.n_outputs_ = np.size(self.constant_)  # y.shape[1] is not safe
