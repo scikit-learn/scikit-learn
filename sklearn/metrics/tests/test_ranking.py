@@ -25,9 +25,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.metrics import auc
 from sklearn.metrics import auc_score
 from sklearn.metrics import average_precision_score
-from sklearn.metrics import hinge_loss
 from sklearn.metrics import label_ranking_average_precision_score
-from sklearn.metrics import log_loss
 from sklearn.metrics import roc_curve
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import roc_auc_score
@@ -627,54 +625,6 @@ def test_score_scale_invariance():
     pr_auc_shifted = average_precision_score(y_true, probas_pred - 10)
     assert_equal(pr_auc, pr_auc_scaled)
     assert_equal(pr_auc, pr_auc_shifted)
-
-
-def test_hinge_loss_binary():
-    y_true = np.array([-1, 1, 1, -1])
-    pred_decision = np.array([-8.5, 0.5, 1.5, -0.3])
-    assert_equal(hinge_loss(y_true, pred_decision), 1.2 / 4)
-
-    y_true = np.array([0, 2, 2, 0])
-    pred_decision = np.array([-8.5, 0.5, 1.5, -0.3])
-    assert_equal(hinge_loss(y_true, pred_decision), 1.2 / 4)
-
-
-def test_log_loss():
-    # binary case with symbolic labels ("no" < "yes")
-    y_true = ["no", "no", "no", "yes", "yes", "yes"]
-    y_pred = np.array([[0.5, 0.5], [0.1, 0.9], [0.01, 0.99],
-                       [0.9, 0.1], [0.75, 0.25], [0.001, 0.999]])
-    loss = log_loss(y_true, y_pred)
-    assert_almost_equal(loss, 1.8817971)
-
-    # multiclass case; adapted from http://bit.ly/RJJHWA
-    y_true = [1, 0, 2]
-    y_pred = [[0.2, 0.7, 0.1], [0.6, 0.2, 0.2], [0.6, 0.1, 0.3]]
-    loss = log_loss(y_true, y_pred, normalize=True)
-    assert_almost_equal(loss, 0.6904911)
-
-    # check that we got all the shapes and axes right
-    # by doubling the length of y_true and y_pred
-    y_true *= 2
-    y_pred *= 2
-    loss = log_loss(y_true, y_pred, normalize=False)
-    assert_almost_equal(loss, 0.6904911 * 6, decimal=6)
-
-    # check eps and handling of absolute zero and one probabilities
-    y_pred = np.asarray(y_pred) > .5
-    loss = log_loss(y_true, y_pred, normalize=True, eps=.1)
-    assert_almost_equal(loss, log_loss(y_true, np.clip(y_pred, .1, .9)))
-
-    # raise error if number of classes are not equal.
-    y_true = [1, 0, 2]
-    y_pred = [[0.2, 0.7], [0.6, 0.5], [0.4, 0.1]]
-    assert_raises(ValueError, log_loss, y_true, y_pred)
-
-    # case when y_true is a string array object
-    y_true = ["ham", "spam", "spam", "ham"]
-    y_pred = [[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]]
-    loss = log_loss(y_true, y_pred)
-    assert_almost_equal(loss, 1.0383217, decimal=6)
 
 
 def check_lrap_toy(lrap_score):
