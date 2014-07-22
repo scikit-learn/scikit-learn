@@ -337,8 +337,8 @@ def test_max_feature_auto():
     X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
     _, n_features = X.shape
 
-    X_train, X_test = X[:2000], X[2000:]
-    y_train, y_test = y[:2000], y[2000:]
+    X_train = X[:2000]
+    y_train = y[:2000]
 
     gbrt = GradientBoostingClassifier(n_estimators=1, max_features='auto')
     gbrt.fit(X_train, y_train)
@@ -368,7 +368,7 @@ def test_staged_predict():
     X, y = datasets.make_friedman1(n_samples=1200,
                                    random_state=1, noise=1.0)
     X_train, y_train = X[:200], y[:200]
-    X_test, y_test = X[200:], y[200:]
+    X_test = X[200:]
     clf = GradientBoostingRegressor()
     # test raise ValueError if not fitted
     assert_raises(ValueError, lambda X: np.fromiter(
