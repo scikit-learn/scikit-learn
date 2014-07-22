@@ -66,8 +66,7 @@ the tests and will be removed in release 0.16.
                'gaussian_process', 'grid_search', 'hmm', 'lda', 'linear_model',
                'metrics', 'mixture', 'naive_bayes', 'neighbors', 'pipeline',
                'preprocessing', 'qda', 'svm', 'clone',
-               'cross_decomposition',
-               'isotonic', 'pls']
+               'cross_decomposition', 'isotonic']
 
 
 def setup_module(module):
