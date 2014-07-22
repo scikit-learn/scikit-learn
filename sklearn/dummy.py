@@ -307,9 +307,15 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
 
+<<<<<<< HEAD
     quantile : float, optional.
         The parameter for the quantile strategy, ranging from 0 to 1.
         For instance, quantile = 0.5 will calculate the median.
+=======
+    alpha : float, optional.
+        The parameter for the quantile strategy, ranging from 0 to 1.
+        For instance, alpha = 0.5 will calculate the median.
+>>>>>>> bd925887066c10f1707d72f65f635c7bb3c40cd3
 
     Attributes
     ----------
