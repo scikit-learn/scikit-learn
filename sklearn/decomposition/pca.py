@@ -664,9 +664,10 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         """
         random_state = check_random_state(self.random_state)
         if sparse.issparse(X):
-            warnings.warn("Sparse matrix support is deprecated"
-                          " and will be dropped in 0.16."
-                          " Use TruncatedSVD instead.",
+            warnings.warn("Sparse matrix support is deprecated in 0.15"
+                          " and will be dropped in 0.17. In particular"
+                          " computed explained variance is incorrect on"
+                          " sparse data. Use TruncatedSVD instead.",
                           DeprecationWarning)
         else:
             # not a sparse matrix, ensure this is a 2D array
