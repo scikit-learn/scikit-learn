@@ -37,29 +37,6 @@ else:
     from . import __check_build
     from .base import clone
 
-    def test(*args, **kwargs):
-        import warnings
-        # Not using a DeprecationWarning, as they are turned off by
-        # default
-        warnings.warn("""sklearn.test() is no longer supported to run the
-scikit-learn test suite.
-
-After installation, you can launch the test suite from outside the
-source directory (you will need to have nosetests installed)::
-
-   $ nosetests --exe sklearn
-
-See the web page http://scikit-learn.org/stable/install.html#testing
-for more information.
-
-This function, `sklearn.test()` does not do anything. It does not run
-the tests and will be removed in release 0.16.
-""", stacklevel=2)
-
-    # The following line is useful so that nosetests doesn't consider
-    # "test" as a test function
-    test.__test__ = False
-
     __all__ = ['cross_validation', 'cluster', 'covariance',
                'datasets', 'decomposition', 'feature_extraction',
                'feature_selection', 'semi_supervised',
