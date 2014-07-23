@@ -48,8 +48,8 @@ def test_f_oneway_ints():
 
     # test that is gives the same result as with float
     f, p = f_oneway(X.astype(np.float), y)
-    assert_array_almost_equal(f, fint, decimal=5)
-    assert_array_almost_equal(p, pint, decimal=5)
+    assert_array_almost_equal(f, fint, decimal=4)
+    assert_array_almost_equal(p, pint, decimal=4)
 
 
 def test_f_classif():
