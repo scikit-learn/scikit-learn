@@ -468,7 +468,11 @@ def generate_example_rst(app):
         examples.
     """
     root_dir = os.path.join(app.builder.srcdir, 'auto_examples')
-    example_dir = os.path.abspath(app.builder.srcdir + '/../' + 'examples')
+    example_dir = os.path.abspath(os.path.join(app.builder.srcdir, '..',
+                                               'examples'))
+    generated_dir = os.path.abspath(os.path.join(app.builder.srcdir,
+                                                 'modules', 'generated'))
+
     try:
         plot_gallery = eval(app.builder.config.plot_gallery)
     except TypeError:
@@ -477,10 +481,12 @@ def generate_example_rst(app):
         os.makedirs(example_dir)
     if not os.path.exists(root_dir):
         os.makedirs(root_dir)
+    if not os.path.exists(generated_dir):
+        os.makedirs(generated_dir)
 
     # we create an index.rst with all examples
     fhindex = open(os.path.join(root_dir, 'index.rst'), 'w')
-    #Note: The sidebar button has been removed from the examples page for now
+    # Note: The sidebar button has been removed from the examples page for now
     #      due to how it messes up the layout. Will be fixed at a later point
     fhindex.write("""\
 
