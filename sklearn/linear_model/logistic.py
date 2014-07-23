@@ -719,6 +719,18 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     regularization with primal formulation. The liblinear solver supports both
     L1 and L2 regularization, with a dual formulation only for the L2 penalty.
 
+    For the grid of Cs values (that are set by default to be ten values in
+    a logarithmic scale between 1e-4 and 1e4), the best hyperparameter is
+    selected by the cross-validator StratifiedKFold, but it can be changed
+    using the cv parameter. In the case of newton-cg and lbfgs solvers,
+    we warm start along the path i.e guess the initial coefficients of the
+    present fit to be the coefficients got after convergence in the previous
+    fit, so in general it is supposed to be faster.
+
+    For a multiclass problem, the hyperparameters for each class are computed
+    using the best scores got by doing a one-vs-rest in parallel across all
+    folds and classes. Hence this is not the true multinomial loss.
+
     Parameters
     ----------
     Cs : list of floats | int
