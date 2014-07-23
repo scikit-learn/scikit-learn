@@ -25,6 +25,29 @@ from sklearn.utils.seq_dataset cimport SequentialDataset
 
 np.import_array()
 
+# Import CBLAS Functions
+cdef extern from "cblas.h":
+
+    # dot product of two n elemenet vectors x and y
+    double ddot "cblas_ddot" (int n,
+                              double* x,
+                              int incrx,
+                              double* y,
+                              int incry) nogil
+
+    # scale the passed in n element vector x at scale
+    void dscal "cblas_dscal" (int n,
+                              double scale,
+                              double* x,
+                              int incrx) nogil
+
+    # adds a vector x * scaler scale to another vector y
+    void daxpy "cblas_daxpy" (int n,
+                              double scale,
+                              double* x,
+                              int incrx,
+                              double* y,
+                              int incry) nogil
 
 # Penalty constants
 DEF NO_PENALTY = 0
@@ -344,7 +367,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
               double power_t,
               double t=1.0,
               double intercept_decay=1.0,
-              bint avg = False):
+              bint avg=True):
     """Plain SGD for generic loss functions and penalties.
 
     Parameters
@@ -400,7 +423,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         Default: 1.0.
     avg : bool
         When set to true, will compute the averged sgd and store the
-        averaged weight vector in avg_weights 
+        averaged weight vector in avg_weights
 
     Returns
     -------
@@ -408,6 +431,8 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         The fitted weight vector.
     intercept : float
         The fitted intercept term.
+    avg_weights : array, shape=[n_features]
+        The fitted avg weight vector.
 
     """
 
@@ -416,6 +441,8 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef Py_ssize_t n_features = weights.shape[0]
 
     cdef WeightVector w = WeightVector(weights)
+    cdef double* aw_ptr = &avg_weights[0]
+    cdef double* w_ptr = &weights[0]
 
     cdef double *x_data_ptr = NULL
     cdef int *x_ind_ptr = NULL
@@ -459,7 +486,12 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
             if shuffle:
                 dataset.shuffle(seed)
             for i in range(n_samples):
-                dataset.next(&x_data_ptr, &x_ind_ptr, &xnnz, &y, &sample_weight)
+
+                dataset.next(&x_data_ptr,
+                             &x_ind_ptr,
+                             &xnnz,
+                             &y,
+                             &sample_weight)
 
                 p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
 
@@ -507,6 +539,16 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 if penalty_type == L1 or penalty_type == ELASTICNET:
                     u += (l1_ratio * eta * alpha)
                     l1penalty(w, q_data_ptr, x_ind_ptr, xnnz, u)
+
+                # update the avg_weights if needed
+                # for q in range(5):
+                #     print(x_ind_ptr[q])
+
+                if avg:
+                    dscal(n_features, count, aw_ptr, 1)
+                    daxpy(n_features, 1, w_ptr, 1, aw_ptr, 1)
+                    dscal(n_features, 1./(count+1.), aw_ptr, 1)
+
                 t += 1
                 count += 1
 

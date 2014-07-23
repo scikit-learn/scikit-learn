@@ -660,6 +660,28 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
         """Check whether expected ValueError on bad loss"""
         self.factory(loss="foobar")
 
+    def test_sgd_averaged(self):
+        xmin, xmax = -5, 5
+        n_samples = 100
+        rng = np.random.RandomState(0)
+        X = np.linspace(xmin, xmax, n_samples).reshape(n_samples, 1)
+
+        # simple linear function without noise
+        y = 0.5 * X.ravel()
+
+        clf = self.factory(loss='squared_loss', alpha=0.1, n_iter=20,
+                           fit_intercept=False, avg=True)
+
+        # simple linear function with noise
+        y = 0.5 * X.ravel() + rng.randn(n_samples, 1).ravel()
+
+        clf = self.factory(loss='squared_loss', alpha=0.1, n_iter=20,
+                           fit_intercept=False, avg=True)
+
+        clf.fit(X, y)
+        score = clf.score(X, y)
+        assert_greater(score, 0.5)
+
     def test_sgd_least_squares_fit(self):
         xmin, xmax = -5, 5
         n_samples = 100
@@ -847,7 +869,7 @@ def test_underflow_or_overlow():
     assert_array_equal(np.unique(y), [0, 1])
 
     model = SGDClassifier(alpha=0.1, loss='squared_hinge', n_iter=500)
-    
+
     # smoke test: model is stable on scaled data
     model.fit(scale(X), y)
 

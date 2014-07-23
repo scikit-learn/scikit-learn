@@ -52,7 +52,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, epsilon=0.1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 warm_start=False):
+                 warm_start=False, avg=False):
         self.loss = loss
         self.penalty = penalty
         self.learning_rate = learning_rate
@@ -68,10 +68,12 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         self.eta0 = eta0
         self.power_t = power_t
         self.warm_start = warm_start
+        self.avg = avg
 
         self._validate_params()
 
         self.coef_ = None
+        self.avg_weights_ = None
         # iteration count for learning rate schedule
         # must not be int (e.g. if ``learning_rate=='optimal'``)
         self.t_ = None
@@ -762,7 +764,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, epsilon=DEFAULT_EPSILON, random_state=None,
                  learning_rate="invscaling", eta0=0.01, power_t=0.25,
-                 warm_start=False):
+                 warm_start=False, avg=False):
         super(BaseSGDRegressor, self).__init__(loss=loss, penalty=penalty,
                                                alpha=alpha, l1_ratio=l1_ratio,
                                                fit_intercept=fit_intercept,
@@ -772,7 +774,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                                                random_state=random_state,
                                                learning_rate=learning_rate,
                                                eta0=eta0, power_t=power_t,
-                                               warm_start=warm_start)
+                                               warm_start=warm_start,
+                                               avg=avg)
 
     def _partial_fit(self, X, y, alpha, C, loss, learning_rate,
                      n_iter, sample_weight,
@@ -791,6 +794,11 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         if self.coef_ is None:
             self._allocate_parameter_mem(1, n_features,
                                          coef_init, intercept_init)
+
+        if self.avg_weights_ is None:
+            self.avg_weights_ = np.zeros(n_features,
+                                         dtype=np.float64,
+                                         order="C")
 
         self._fit_regressor(X, y, alpha, C, loss, learning_rate,
                             sample_weight, n_iter)
@@ -833,6 +841,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                 intercept_init = self.intercept_
         else:
             self.coef_ = None
+            self.avg_weights_ = None
             self.intercept_ = None
 
         # Clear iteration count for multiple call to fit.
@@ -920,9 +929,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         # Windows
         seed = random_state.randint(0, np.iinfo(np.int32).max)
 
-        # TODO: add implementation for asgd
         self.coef_, intercept = plain_sgd(self.coef_,
-                                          np.array([]),
+                                          self.avg_weights_,
                                           self.intercept_[0],
                                           loss_function,
                                           penalty_type,
@@ -1029,6 +1037,10 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
+    avg : bool, optional
+        When set to True, computes the averaged sgd and stores the weights
+        in the avg_weights_ attribute
+
     Attributes
     ----------
     `coef_` : array, shape = [n_features]
@@ -1036,6 +1048,9 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
 
     `intercept_` : array, shape = [1]
         The intercept term.
+
+    `avg_weights_` : array shape = [n_features]
+        Averaged weights asigned to the features.
 
     Examples
     --------
@@ -1050,7 +1065,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
     SGDRegressor(alpha=0.0001, epsilon=0.1, eta0=0.01, fit_intercept=True,
            l1_ratio=0.15, learning_rate='invscaling', loss='squared_loss',
            n_iter=5, penalty='l2', power_t=0.25, random_state=None,
-           shuffle=False, verbose=0, warm_start=False)
+           shuffle=False, verbose=0, warm_start=False, avg=False)
 
     See also
     --------
@@ -1061,7 +1076,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, epsilon=DEFAULT_EPSILON, random_state=None,
                  learning_rate="invscaling", eta0=0.01, power_t=0.25,
-                 warm_start=False):
+                 warm_start=False, avg=False):
         super(SGDRegressor, self).__init__(loss=loss, penalty=penalty,
                                            alpha=alpha, l1_ratio=l1_ratio,
                                            fit_intercept=fit_intercept,
@@ -1071,4 +1086,5 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
                                            random_state=random_state,
                                            learning_rate=learning_rate,
                                            eta0=eta0, power_t=power_t,
-                                           warm_start=warm_start)
+                                           warm_start=warm_start,
+                                           avg=avg)
