@@ -13,7 +13,7 @@ environment:
       PYTHON_VERSION: "2.7.8"
       PYTHON_ARCH: "32"
 
-    - PYTHON: "C:\\Python27"
+    - PYTHON: "C:\\Python27_64"
       PYTHON_VERSION: "2.7.8"
       PYTHON_ARCH: "64"
 
@@ -21,9 +21,14 @@ environment:
       PYTHON_VERSION: "3.4.1"
       PYTHON_ARCH: "32"
 
-    - PYTHON: "C:\\Python34"
+    - PYTHON: "C:\\Python34_64"
       PYTHON_VERSION: "3.4.1"
       PYTHON_ARCH: "64"
+
+branches:
+  only:
+    - master
+    - 0.15.X
 
 install:
   # Install Python (from the official .msi of http://python.org) and pip when
@@ -53,7 +58,7 @@ test_script:
 
   # Skip joblib tests that require multiprocessing as they are prone to random
   # slow down
-  - "python -c \"import nose; nose.main()\" -v -s sklearn"
+  - "python -c \"import nose; nose.main()\" -s sklearn"
 
 artifacts:
   # Archive the generated wheel package in the ci.appveyor.com build report.
