@@ -242,9 +242,9 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                         ind = range(n_samples)
 
                 elif self.strategy == "stratified":
-                    ret = proba[k].argmax(axis=1)
-                    # XXX select non zeros
-                    ind = range(n_samples)
+                    probmax = proba[k].argmax(axis=1)
+                    ind = np.where((classes_[k][probmax]) != 0)[0]
+                    ret = probmax[ind]
 
                 elif self.strategy == "uniform":
                     uni = rs.randint(n_classes_[k], size=n_samples)
