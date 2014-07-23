@@ -10,7 +10,6 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
 from sklearn import neighbors, datasets
@@ -787,14 +786,6 @@ def test_neighbors_badargs():
     assert_raises(ValueError,
                   nbrs.radius_neighbors_graph,
                   X, mode='blah')
-
-
-def test_neighbors_deprecation_arg():
-    """Test that passing the deprecated parameter will cause a
-    warning to be raised, as well as not crash the estimator."""
-    for cls in (neighbors.KNeighborsClassifier,
-                neighbors.KNeighborsRegressor):
-        assert_warns(DeprecationWarning, cls, warn_on_equidistant=True)
 
 
 def test_neighbors_metrics(n_samples=20, n_features=3,

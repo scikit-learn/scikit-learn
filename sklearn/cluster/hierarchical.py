@@ -86,8 +86,7 @@ def _fix_connectivity(X, connectivity, n_components=None,
 ###############################################################################
 # Hierarchical tree building functions
 
-def ward_tree(X, connectivity=None, n_components=None, copy=None,
-              n_clusters=None):
+def ward_tree(X, connectivity=None, n_components=None, n_clusters=None):
     """Ward clustering based on a Feature matrix.
 
     Recursively merges the pair of clusters that minimally increases
@@ -138,11 +137,6 @@ def ward_tree(X, connectivity=None, n_components=None, copy=None,
         The parent of each node. Only returned when a connectivity matrix
         is specified, elsewhere 'None' is returned.
     """
-    if copy is not None:
-        warnings.warn("The copy argument is deprecated and will be removed "
-                      "in 0.16. The connectivity is now always copied.",
-                      DeprecationWarning)
-
     X = np.asarray(X)
     if X.ndim == 1:
         X = np.reshape(X, (-1, 1))
@@ -755,7 +749,7 @@ class Ward(AgglomerativeClustering):
     linkage = 'ward'
 
     def __init__(self, n_clusters=2, memory=Memory(cachedir=None, verbose=0),
-                 connectivity=None, copy=None, n_components=None,
+                 connectivity=None, n_components=None,
                  compute_full_tree='auto', pooling_func=np.mean):
 
         warnings.warn("The Ward class is deprecated since 0.14 and will be "
@@ -763,13 +757,6 @@ class Ward(AgglomerativeClustering):
                       "instead.", DeprecationWarning)
         self.n_clusters = n_clusters
         self.memory = memory
-        self.copy = copy
-        if copy is not None:
-            warnings.warn("The copy argument is deprecated and will be "
-                          "removed in 0.16. The connectivity is now "
-                          "always copied.",
-                          DeprecationWarning)
-
         self.n_components = n_components
         self.connectivity = connectivity
         self.compute_full_tree = compute_full_tree

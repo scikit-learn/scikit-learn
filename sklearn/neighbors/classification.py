@@ -8,8 +8,6 @@
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 
-import warnings
-
 import numpy as np
 from scipy import stats
 from ..utils.extmath import weighted_mode
@@ -116,13 +114,6 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     def __init__(self, n_neighbors=5,
                  weights='uniform', algorithm='auto', leaf_size=30,
                  p=2, metric='minkowski', **kwargs):
-        if kwargs:
-            if 'warn_on_equidistant' in kwargs:
-                kwargs.pop('warn_on_equidistant')
-                warnings.warn("The warn_on_equidistant parameter is "
-                              "deprecated and will be removed in 0.16.",
-                              DeprecationWarning,
-                              stacklevel=2)
         self._init_params(n_neighbors=n_neighbors,
                           algorithm=algorithm,
                           leaf_size=leaf_size, metric=metric, p=p, **kwargs)

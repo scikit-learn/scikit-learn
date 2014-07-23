@@ -6,8 +6,6 @@
 #         Michael Becker <mike@beckerfuffle.com>
 # License: 3-clause BSD.
 
-import warnings
-
 import numpy as np
 import scipy.sparse as sp
 
@@ -108,12 +106,8 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     class to data once, then keep the instance around to do transformations.
 
     """
-    def __init__(self, n_components=2, algorithm="randomized",
-                 n_iter=5, random_state=None, tol=0., n_iterations=None):
-        if n_iterations is not None:
-            warnings.warn("n_iterations was renamed to n_iter for consistency "
-                          "and will be removed in 0.16.", DeprecationWarning)
-            n_iter = n_iterations
+    def __init__(self, n_components=2, algorithm="randomized", n_iter=5,
+                 random_state=None, tol=0.):
         self.algorithm = algorithm
         self.n_components = n_components
         self.n_iter = n_iter
@@ -221,9 +215,3 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         """
         X = check_array(X)
         return np.dot(X, self.components_)
-
-    @property
-    def n_iterations(self):
-        warnings.warn("n_iterations was renamed to n_iter for consistency "
-                      "and will be removed in 0.16.", DeprecationWarning)
-        return self.n_iter

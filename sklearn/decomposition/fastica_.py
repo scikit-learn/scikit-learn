@@ -15,7 +15,7 @@ from scipy import linalg
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..externals.six import moves
-from ..utils import check_array, as_float_array, check_random_state, deprecated
+from ..utils import check_array, as_float_array, check_random_state
 from ..utils.extmath import fast_dot
 
 __all__ = ['fastica', 'FastICA']
@@ -417,11 +417,6 @@ class FastICA(BaseEstimator, TransformerMixin):
     `mixing_` : array, shape (n_features, n_components)
         The mixing matrix.
 
-    `sources_` : 2D array, shape (n_samples, n_components)
-        The estimated latent sources of the data. This attribute is
-        deprecated and will be removed in 0.16. Use `fit_transform` instead and
-        store the result.
-
     `n_iter_`: int
         If the algorithm is "deflation", n_iter is the
         maximum number of iterations run across all components. Else
@@ -516,7 +511,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         self
         """
-        self._fit(X, compute_sources=True)  # will become False in 0.16
+        self._fit(X, compute_sources=False)
         return self
 
     def transform(self, X, y=None, copy=True):
@@ -540,22 +535,6 @@ class FastICA(BaseEstimator, TransformerMixin):
             X -= self.mean_
 
         return fast_dot(X, self.components_.T)
-
-    @deprecated('To be removed in 0.16. Use the `mixing_` attribute.')
-    def get_mixing_matrix(self):
-        """Compute the mixing matrix.
-
-        Returns
-        -------
-        mixing_matrix : array, shape (n_features, n_components)
-        """
-        return self.mixing_
-
-    @property
-    @deprecated('To be removed in 0.16.  Use `fit_transform` and store the '
-                'output instead.')
-    def sources_(self):
-        return self.__sources
 
     def inverse_transform(self, X, copy=True):
         """Transform the sources back to the mixed data (apply mixing matrix).
