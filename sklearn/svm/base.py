@@ -601,7 +601,8 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
     @abstractmethod
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
                  multi_class='ovr', fit_intercept=True, intercept_scaling=1,
-                 class_weight=None, verbose=0, random_state=None):
+                 class_weight=None, verbose=0, random_state=None, max_iter=100,
+                 solver='liblinear'):
 
         self.penalty = penalty
         self.loss = loss
@@ -614,6 +615,8 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.class_weight = class_weight
         self.verbose = verbose
         self.random_state = random_state
+        self.solver = solver
+        self.max_iter = max_iter
 
         # Check that the arguments given are valid:
         self._get_solver_type()
@@ -670,6 +673,19 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
         self : object
             Returns self.
         """
+
+        # Circular import, logistic_regression_path depends on LogisticRegression
+        # and hence BaseLibLinear.
+        from ..linear_model import logistic_regression_path
+
+        if self.solver != 'liblinear':
+            if self.penalty != 'l2':
+                raise ValueError("newton-cg and lbfgs solvers support only "
+                                 "l2 penalties.")
+            if self.dual:
+                raise ValueError("newton-cg and lbfgs solvers support only "
+                                 "the primal form.")
+
         self._enc = LabelEncoder()
         y_ind = self._enc.fit_transform(y)
         if len(self.classes_) < 2:
@@ -678,6 +694,7 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         X = check_array(X, accept_sparse='csr', dtype=np.float64, order="C")
 
+        # Used in the liblinear solver.
         self.class_weight_ = compute_class_weight(self.class_weight,
                                                   self.classes_, y)
 
@@ -686,31 +703,67 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
                              "X has %s samples, but y has %s." %
                              (X.shape[0], y_ind.shape[0]))
 
-        liblinear.set_verbosity_wrap(self.verbose)
+        if self.solver not in ['liblinear', 'newton-cg', 'lbfgs']:
+            raise ValueError("Logistic Regression supports only liblinear,"
+                             " newton-cg and lbfgs solvers.")
 
-        rnd = check_random_state(self.random_state)
-        if self.verbose:
-            print('[LibLinear]', end='')
+        if self.solver == 'liblinear':
+            liblinear.set_verbosity_wrap(self.verbose)
 
-        # LibLinear wants targets as doubles, even for classification
-        y_ind = np.asarray(y_ind, dtype=np.float64).ravel()
-        raw_coef_ = liblinear.train_wrap(X, y_ind,
-                                         sp.isspmatrix(X),
-                                         self._get_solver_type(),
-                                         self.tol, self._get_bias(),
-                                         self.C, self.class_weight_,
-                                         rnd.randint(np.iinfo('i').max))
-        # Regarding rnd.randint(..) in the above signature:
-        # seed for srand in range [0..INT_MAX); due to limitations in Numpy
-        # on 32-bit platforms, we can't get to the UINT_MAX limit that
-        # srand supports
+            rnd = check_random_state(self.random_state)
+            if self.verbose:
+                print('[LibLinear]', end='')
 
-        if self.fit_intercept:
-            self.coef_ = raw_coef_[:, :-1]
-            self.intercept_ = self.intercept_scaling * raw_coef_[:, -1]
+            # LibLinear wants targets as doubles, even for classification
+            y_ind = np.asarray(y_ind, dtype=np.float64).ravel()
+            raw_coef_ = liblinear.train_wrap(X, y_ind,
+                                             sp.isspmatrix(X),
+                                             self._get_solver_type(),
+                                             self.tol, self._get_bias(),
+                                             self.C, self.class_weight_,
+                                             rnd.randint(np.iinfo('i').max))
+            # Regarding rnd.randint(..) in the above signature:
+            # seed for srand in range [0..INT_MAX); due to limitations in Numpy
+            # on 32-bit platforms, we can't get to the UINT_MAX limit that
+            # srand supports
+
+            if self.fit_intercept:
+                self.coef_ = raw_coef_[:, :-1]
+                self.intercept_ = self.intercept_scaling * raw_coef_[:, -1]
+            else:
+                self.coef_ = raw_coef_
+                self.intercept_ = 0.
+
         else:
-            self.coef_ = raw_coef_
-            self.intercept_ = 0.
+            if self.penalty != 'l2':
+                raise ValueError("newton-cg and lbfgs solvers support only "
+                                 "l2 penalties.")
+
+            n_tasks = len(self.classes_)
+            classes_ = self.classes_
+
+            if len(self.classes_) == 2:
+                n_tasks = 1
+                classes_ = classes_[1:]
+
+            self.coef_ = np.empty((n_tasks, X.shape[1]))
+            self.intercept_ = np.zeros(n_tasks)
+
+            for ind, class_ in enumerate(classes_):
+                coef_, _ = logistic_regression_path(
+                    X, y, pos_class=class_, Cs=[self.C],
+                    fit_intercept=self.fit_intercept,
+                    tol=self.tol, verbose=self.verbose,
+                    solver=self.solver, copy=True,
+                    max_iter=self.max_iter, class_weight=self.class_weight)
+
+                coef_ = coef_[0]
+                if self.fit_intercept:
+                    self.coef_[ind] = coef_[:-1]
+                    self.intercept_[ind] = coef_[-1]
+
+                else:
+                    self.coef_[ind] = coef_
 
         if self.multi_class == "crammer_singer" and len(self.classes_) == 2:
             self.coef_ = (self.coef_[1] - self.coef_[0]).reshape(1, -1)
