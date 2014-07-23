@@ -136,15 +136,6 @@ def check_regressors_classifiers_sparse_data(name, Estimator):
 
 
 def check_transformer(name, Transformer):
-    if name in ('CCA', 'LocallyLinearEmbedding', 'KernelPCA') and _is_32bit():
-        # Those transformers yield non-deterministic output when executed on
-        # a 32bit Python. The same transformers are stable on 64bit Python.
-        # FIXME: try to isolate a minimalistic reproduction case only depending
-        # on numpy & scipy and/or maybe generate a test dataset that does not
-        # cause such unstable behaviors.
-        msg = name + ' is non deterministic on 32bit Python'
-        raise SkipTest(msg)
-
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
     X = StandardScaler().fit_transform(X)
@@ -166,6 +157,14 @@ def check_transformer_data_not_an_array(name, Transformer):
 
 
 def _check_transformer(name, Transformer, X, y):
+    if name in ('CCA', 'LocallyLinearEmbedding', 'KernelPCA') and _is_32bit():
+        # Those transformers yield non-deterministic output when executed on
+        # a 32bit Python. The same transformers are stable on 64bit Python.
+        # FIXME: try to isolate a minimalistic reproduction case only depending
+        # on numpy & scipy and/or maybe generate a test dataset that does not
+        # cause such unstable behaviors.
+        msg = name + ' is non deterministic on 32bit Python'
+        raise SkipTest(msg)
     n_samples, n_features = np.asarray(X).shape
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
