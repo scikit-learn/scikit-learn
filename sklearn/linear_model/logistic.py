@@ -389,13 +389,13 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                 out = optimize.fmin_l_bfgs_b(
                     func, w0, fprime=None,
                     args=(X, y, 1. / C, sample_weight),
-                    iprint=verbose > 0, pgtol=tol, maxiter=max_iter)
+                    iprint=(verbose > 0) - 1, pgtol=tol, maxiter=max_iter)
             except TypeError:
                 # old scipy doesn't have maxiter
                 out = optimize.fmin_l_bfgs_b(
                     func, w0, fprime=None,
                     args=(X, y, 1. / C, sample_weight),
-                    iprint=verbose > 0, pgtol=tol)
+                    iprint=(verbose > 0) - 1, pgtol=tol)
             w0 = out[0]
             if out[2]["warnflag"] == 1:
                 warnings.warn("lbfgs failed to converge. Increase the number "

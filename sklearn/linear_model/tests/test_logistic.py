@@ -10,6 +10,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import raises
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.linear_model.logistic import (
     LogisticRegression,
@@ -153,10 +154,11 @@ def test_nan():
 def test_consistency_path():
     """Test that the path algorithm is consistent"""
     Cs = np.logspace(0, 4, 10)
+    f = ignore_warnings
     # can't test with fit_intercept=True since LIBLINEAR
     # penalizes the intercept
     for method in ('lbfgs', 'newton-cg', 'liblinear'):
-        coefs, Cs = logistic_regression_path(
+        coefs, Cs = f(logistic_regression_path)(
             X, Y1, Cs=Cs, fit_intercept=False, tol=1e-16, solver=method)
         for i, C in enumerate(Cs):
             lr = LogisticRegression(C=C, fit_intercept=False, tol=1e-16)
@@ -167,7 +169,7 @@ def test_consistency_path():
     # test for fit_intercept=True
     for method in ('lbfgs', 'newton-cg', 'liblinear'):
         Cs = [1e3]
-        coefs, Cs = logistic_regression_path(
+        coefs, Cs = f(logistic_regression_path)(
             X, Y1, Cs=Cs, fit_intercept=True, tol=1e-16, solver=method)
         lr = LogisticRegression(C=Cs[0], fit_intercept=True, tol=1e-16)
         lr.fit(X, Y1)
@@ -406,7 +408,8 @@ def test_logistic_regressioncv_class_weights():
     assert_raises(ValueError, clf_lib.fit, X, y)
 
     # Test for class_weight=auto
-    X, y = make_classification(n_samples=20, n_features=20, n_informative=10)
+    X, y = make_classification(n_samples=20, n_features=20, n_informative=10,
+                               random_state=0)
     clf_lbf = LogisticRegressionCV(solver='lbfgs', fit_intercept=False,
                                    class_weight='auto')
     clf_lbf.fit(X, y)
