@@ -153,28 +153,33 @@ def test_nan():
 
 def test_consistency_path():
     """Test that the path algorithm is consistent"""
+    rng = np.random.RandomState(0)
+    X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
+    y = [1] * 100 + [-1] * 100
     Cs = np.logspace(0, 4, 10)
+
     f = ignore_warnings
     # can't test with fit_intercept=True since LIBLINEAR
     # penalizes the intercept
     for method in ('lbfgs', 'newton-cg', 'liblinear'):
         coefs, Cs = f(logistic_regression_path)(
-            X, Y1, Cs=Cs, fit_intercept=False, tol=1e-16, solver=method)
+            X, y, Cs=Cs, fit_intercept=False, tol=1e-16, solver=method)
         for i, C in enumerate(Cs):
             lr = LogisticRegression(C=C, fit_intercept=False, tol=1e-16)
-            lr.fit(X, Y1)
+            lr.fit(X, y)
             lr_coef = lr.coef_.ravel()
-            assert_array_almost_equal(lr_coef, coefs[i], decimal=3)
+            assert_array_almost_equal(lr_coef, coefs[i], decimal=4)
 
     # test for fit_intercept=True
     for method in ('lbfgs', 'newton-cg', 'liblinear'):
         Cs = [1e3]
         coefs, Cs = f(logistic_regression_path)(
-            X, Y1, Cs=Cs, fit_intercept=True, tol=1e-16, solver=method)
-        lr = LogisticRegression(C=Cs[0], fit_intercept=True, tol=1e-16)
-        lr.fit(X, Y1)
+            X, y, Cs=Cs, fit_intercept=True, tol=1e-4, solver=method)
+        lr = LogisticRegression(C=Cs[0], fit_intercept=True, tol=1e-4,
+                                intercept_scaling=10000)
+        lr.fit(X, y)
         lr_coef = np.concatenate([lr.coef_.ravel(), lr.intercept_])
-        assert_array_almost_equal(lr_coef, coefs[0], decimal=1)
+        assert_array_almost_equal(lr_coef, coefs[0], decimal=4)
 
 
 def test_liblinear_random_state():
@@ -392,9 +397,9 @@ def test_logistic_regression_solvers_multiclass():
     clf_lbf.fit(X, y)
     clf_lib = LogisticRegression(fit_intercept=False)
     clf_lib.fit(X, y)
-    assert_array_almost_equal(clf_n.coef_, clf_lib.coef_, decimal=3)
-    assert_array_almost_equal(clf_lib.coef_, clf_lbf.coef_, decimal=3)
-    assert_array_almost_equal(clf_n.coef_, clf_lbf.coef_, decimal=3)
+    assert_array_almost_equal(clf_n.coef_, clf_lib.coef_, decimal=4)
+    assert_array_almost_equal(clf_lib.coef_, clf_lbf.coef_, decimal=4)
+    assert_array_almost_equal(clf_n.coef_, clf_lbf.coef_, decimal=4)
 
 
 def test_logistic_regressioncv_class_weights():
@@ -416,4 +421,4 @@ def test_logistic_regressioncv_class_weights():
     clf_lib = LogisticRegressionCV(solver='liblinear', fit_intercept=False,
                                    class_weight='auto')
     clf_lib.fit(X, y)
-    assert_array_almost_equal(clf_lib.coef_, clf_lbf.coef_, decimal=3)
+    assert_array_almost_equal(clf_lib.coef_, clf_lbf.coef_, decimal=4)
