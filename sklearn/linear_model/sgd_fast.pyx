@@ -330,6 +330,7 @@ cdef class SquaredEpsilonInsensitive(Regression):
 
 
 def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
+              np.ndarray[double, ndim=1, mode='c'] avg_weights,
               double intercept,
               LossFunction loss,
               int penalty_type,
@@ -342,13 +343,17 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
               int learning_rate, double eta0,
               double power_t,
               double t=1.0,
-              double intercept_decay=1.0):
+              double intercept_decay=1.0,
+              bint avg = False):
     """Plain SGD for generic loss functions and penalties.
 
     Parameters
     ----------
     weights : ndarray[double, ndim=1]
         The allocated coef_ vector.
+    avg_weights : ndarray[double, ndim=1]
+        The avg weights as computed for
+        asgd
     intercept : double
         The initial intercept.
     loss : LossFunction
@@ -393,6 +398,9 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         Initial state of the learning rate. This value is equal to the
         iteration count except when the learning rate is set to `optimal`.
         Default: 1.0.
+    avg : bool
+        When set to true, will compute the averged sgd and store the
+        averaged weight vector in avg_weights 
 
     Returns
     -------

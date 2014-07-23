@@ -266,13 +266,14 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
     # Windows
     seed = random_state.randint(0, np.iinfo(np.int32).max)
 
-    return plain_sgd(coef, intercept, est.loss_function,
+    # TODO: pass in average array for second argument
+    return plain_sgd(coef, np.array([]), intercept, est.loss_function,
                      penalty_type, alpha, C, est.l1_ratio,
                      dataset, n_iter, int(est.fit_intercept),
                      int(est.verbose), int(est.shuffle), seed,
                      pos_weight, neg_weight,
                      learning_rate_type, est.eta0,
-                     est.power_t, est.t_, intercept_decay)
+                     est.power_t, est.t_, intercept_decay, False)
 
 
 class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
@@ -919,7 +920,9 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         # Windows
         seed = random_state.randint(0, np.iinfo(np.int32).max)
 
+        # TODO: add implementation for asgd
         self.coef_, intercept = plain_sgd(self.coef_,
+                                          np.array([]),
                                           self.intercept_[0],
                                           loss_function,
                                           penalty_type,
@@ -934,7 +937,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                                           1.0, 1.0,
                                           learning_rate_type,
                                           self.eta0, self.power_t, self.t_,
-                                          intercept_decay)
+                                          intercept_decay,
+                                          False)
 
         self.intercept_ = np.atleast_1d(intercept)
 
