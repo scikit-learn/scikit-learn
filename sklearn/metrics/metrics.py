@@ -1,5 +1,5 @@
 import warnings
-warnings.warn("sklearn.metrics.metrics is deprecated and will be remove in "
+warnings.warn("sklearn.metrics.metrics is deprecated and will be removed in "
               "0.18. Please import from sklearn.metrics",
               DeprecationWarning)
 
