@@ -372,7 +372,6 @@ def sparse_enet_coordinate_descent(double[:] w,
 
             w_max = 0.0
             d_w_max = 0.0
-            startptr = X_indptr[0]
 
             for f_iter in range(n_features):  # Loop over coordinates
                 if shuffle:
@@ -383,6 +382,7 @@ def sparse_enet_coordinate_descent(double[:] w,
                 if norm_cols_X[ii] == 0.0:
                     continue
 
+                startptr = X_indptr[ii]
                 endptr = X_indptr[ii + 1]
                 w_ii = w[ii]  # Store previous value
                 X_mean_ii = X_mean[ii]
@@ -428,7 +428,6 @@ def sparse_enet_coordinate_descent(double[:] w,
 
                 if w[ii] > w_max:
                     w_max = w[ii]
-                startptr = endptr
             if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
@@ -436,6 +435,7 @@ def sparse_enet_coordinate_descent(double[:] w,
 
                 # sparse X.T / dense R dot product
                 for ii in range(n_features):
+                    X_T_R[ii] = 0.0
                     for jj in range(X_indptr[ii], X_indptr[ii + 1]):
                         X_T_R[ii] += X_data[jj] * R[X_indices[jj]]
                     R_sum = 0.0
