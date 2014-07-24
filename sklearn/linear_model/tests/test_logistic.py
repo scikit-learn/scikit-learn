@@ -137,7 +137,7 @@ def test_write_parameters():
     clf.fit(X, Y1)
     clf.coef_[:] = 0
     clf.intercept_[:] = 0
-    assert_array_equal(clf.decision_function(X), 0)
+    assert_array_almost_equal(clf.decision_function(X), 0)
 
 
 @raises(ValueError)
@@ -359,20 +359,20 @@ def test_ova_iris():
     target[target == 0] = 1
     clf1.fit(train, target)
 
-    assert_array_equal(clf.scores_[2], clf1.scores_[2])
-    assert_array_equal(clf.intercept_[2:], clf1.intercept_)
-    assert_array_equal(clf.coef_[2][np.newaxis, :], clf1.coef_)
+    assert_array_almost_equal(clf.scores_[2], clf1.scores_[2])
+    assert_array_almost_equal(clf.intercept_[2:], clf1.intercept_)
+    assert_array_almost_equal(clf.coef_[2][np.newaxis, :], clf1.coef_)
 
     # Test the shape of various attributes.
-    assert_array_equal(clf.coef_.shape, (3, n_features))
+    assert_equal(clf.coef_.shape, (3, n_features))
     assert_array_equal(clf.classes_, [0, 1, 2])
     assert_equal(len(clf.classes_), 3)
 
     coefs_paths = np.asarray(list(clf.coefs_paths_.values()))
-    assert_array_equal(coefs_paths.shape, (3, 3, 10, n_features + 1))
-    assert_array_equal(clf.Cs_.shape, (10, ))
+    assert_array_almost_equal(coefs_paths.shape, (3, 3, 10, n_features + 1))
+    assert_equal(clf.Cs_.shape, (10, ))
     scores = np.asarray(list(clf.scores_.values()))
-    assert_array_equal(scores.shape, (3, 3, 10))
+    assert_equal(scores.shape, (3, 3, 10))
 
 
 def test_logistic_regression_solvers():
