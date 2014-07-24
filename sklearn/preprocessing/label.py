@@ -228,6 +228,11 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
                                      for value in y[missing_mask]]
                 return out
             elif type(self.new_labels) in [int]:
+                # Update the new label mapping
+                self.new_label_mapping_.update(dict(zip(diff_new,
+                                                        [self.new_labels]
+                                                        * len(diff_new))))
+
                 # Find entries with new labels
                 missing_mask = np.in1d(y, diff_fit)
 
@@ -259,8 +264,24 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         """
         self._check_fitted()
 
+        if type(self.new_labels) in [int]:
+            warnings.warn('When ``new_labels`` uses an integer '
+                          're-labeling strategy, the ``inverse_transform`` '
+                          'is not necessarily one-to-one mapping; any '
+                          'labels not present during initial ``fit`` will '
+                          'not be mapped.',
+                          UserWarning)
+
         y = np.asarray(y)
-        return self.get_classes()[y]
+        try:
+            return self.get_classes()[y]
+        except IndexError:
+            # Raise exception
+            num_classes = len(self.get_classes())
+            raise ValueError("Classes were passed to ``inverse_transform`` "
+                             "with integer new_labels strategy ``fit``-time: "
+                             "{0}"
+                             .format(np.setdiff1d(y, range(num_classes))))
 
 
 class LabelBinarizer(BaseEstimator, TransformerMixin):

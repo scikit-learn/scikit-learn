@@ -250,6 +250,7 @@ def test_label_encoder_new_label_replace():
                        ["c", "b", "a"])
     assert_array_equal(le.transform(["b", "c", "d"]),
                        [1, 2, -99])
+    assert_warns(UserWarning, le.inverse_transform, [2, 1, 0])
 
 
 def test_label_encoder_new_label_arg():
