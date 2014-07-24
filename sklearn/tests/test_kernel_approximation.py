@@ -247,6 +247,8 @@ def test_hadamard_equivalence():
     # Ensure that the fht along axes 0 is equivalent an explicit hadamard
     # transform for random diagonal gaussian matrices
     for i, d in ((x, 2 ** x) for x in xrange(1, 8)):
+        vector = np.random.normal(size=d)
+
         g = np.diag(np.random.normal(size=d))
         h = hadamard(d)
         normalization = (1 / np.power(2, i / 2.0))
@@ -254,7 +256,23 @@ def test_hadamard_equivalence():
         one = normalization * np.dot(h, g)
         # fht
         two = fht.fht(g, axes=0)
+
+        # fht with vector without matrix
+        a = np.dot(g,vector)
+        print "a",a,g, a.shape,vector.shape
+        three = fht.fht(a, axes=0)
+
+        # fht with vector with matrix
+        four = np.dot(fht.fht(g, axes=0),vector)
+        
+        # fht without diagonal matrix
+        a = np.diag(g)*vector
+        print "a",a,g, a.shape,vector.shape
+        five = fht.fht(a, axes=0)
+        
         yield assert_array_almost_equal, one, two
+        yield assert_array_almost_equal, three, four
+        yield assert_array_almost_equal, four,five
 
 
 def test_scalability_to_one():
@@ -485,9 +503,6 @@ def test_fastfood_performance_comparison_between_methods():
 
     assert_greater(rks_spent_time, fastfood_spent_time)
     #kernel_approx = np.dot(X_trans_rks, Y_trans_rks.T)
-
-    
-    print "Timimg fastfood: ", fastfood_spent_time, "Timimg rks: ", rks_spent_time
 
     assert_greater(rks_spent_time, fastfood_spent_time)
     #kernel_approx = np.dot(X_trans_rks, Y_trans_rks.T)
