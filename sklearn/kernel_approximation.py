@@ -612,7 +612,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
         #GP = np.dot(np.diag(G), P)
         GP = np.take(np.diag(g), p, axis=0)
         HGP = Fastfood.hadamard(GP)
-        HGPHB = np.dot(HGP, HB)
+        HGPHB = safe_sparse_dot(HGP, HB)
         return HGPHB
 
     @staticmethod
@@ -638,7 +638,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
 
     def create_approximation_matrix(self, S, HGPHB):
         """ Create V from HGPHB and S """
-        SHGPHB = np.dot(np.diag(S), HGPHB)
+        SHGPHB = safe_sparse_dot(np.diag(S), HGPHB)
         return 1 / (self.sigma * np.sqrt(self.d)) * SHGPHB
 
     def create_approximation_matrix_fast(self, S, x):
@@ -647,7 +647,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
 
     @staticmethod
     def phi(V, X):
-        X_mapped = np.dot(V, X.T)
+        X_mapped = safe_sparse_dot(V, X.T)
         return (1 / np.sqrt(V.shape[0])) * np.vstack([np.cos(X_mapped), np.sin(X_mapped)])
 
     @staticmethod
@@ -690,6 +690,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
         return Fastfood.phi(V_stacked, X_padded).T
 
     def transform_fast(self, X):
+        X = atleast2d_or_csr(X)
         X_padded = self.pad_with_zeros(X)
         mapped_examples = []
         for i in range(X_padded.shape[0]):
