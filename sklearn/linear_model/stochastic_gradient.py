@@ -250,7 +250,7 @@ def _prepare_fit_binary(est, y, i):
 
 
 def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
-               pos_weight, neg_weight, sample_weight):
+               pos_weight, neg_weight, sample_weight, avg):
     """Fit a single binary classifier.
 
     The i'th class is considered the "positive" class.
@@ -268,15 +268,13 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
     # Windows
     seed = random_state.randint(0, np.iinfo(np.int32).max)
 
-    # TODO: pass in average array for second argument and change
-    # False to self.svg
-    return plain_sgd(coef, np.array([]), intercept, est.loss_function,
+    return plain_sgd(coef, est.avg_weights, intercept, est.loss_function,
                      penalty_type, alpha, C, est.l1_ratio,
                      dataset, n_iter, int(est.fit_intercept),
                      int(est.verbose), int(est.shuffle), seed,
                      pos_weight, neg_weight,
                      learning_rate_type, est.eta0,
-                     est.power_t, est.t_, intercept_decay, False)
+                     est.power_t, est.t_, intercept_decay, avg)
 
 
 class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
@@ -300,7 +298,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                  fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
                  epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 class_weight=None, warm_start=False):
+                 class_weight=None, warm_start=False, avg=False):
 
         super(BaseSGDClassifier, self).__init__(loss=loss, penalty=penalty,
                                                 alpha=alpha, l1_ratio=l1_ratio,
@@ -311,7 +309,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                                                 random_state=random_state,
                                                 learning_rate=learning_rate,
                                                 eta0=eta0, power_t=power_t,
-                                                warm_start=warm_start)
+                                                warm_start=warm_start,
+                                                avg=avg)
         self.class_weight = class_weight
         self.classes_ = None
         self.n_jobs = int(n_jobs)
@@ -340,6 +339,12 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         if self.coef_ is None or coef_init is not None:
             self._allocate_parameter_mem(n_classes, n_features,
                                          coef_init, intercept_init)
+
+        # initialize averaged weights for averaged sgd
+        if self.avg_weights_ is None:
+            self.avg_weights_ = np.zeros(n_features,
+                                         dtype=np.float64,
+                                         order="C")
 
         self.loss_function = self._get_loss_function(loss)
         if self.t_ is None:
@@ -416,7 +421,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                           verbose=self.verbose)(
             delayed(fit_binary)(self, i, X, y, alpha, C, learning_rate,
                                 n_iter, self._expanded_class_weight[i], 1.,
-                                sample_weight)
+                                sample_weight, self.avg)
             for i in range(len(self.classes_)))
 
         for i, (_, intercept) in enumerate(result):
@@ -480,7 +485,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         -------
         self : returns an instance of self.
         """
-        return self._fit(X, y, alpha=self.alpha, C=1.0,
+    return self._fit(X, y, alpha=self.alpha, C=1.0,
                          loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init, intercept_init=intercept_init,
                          sample_weight=sample_weight)
@@ -595,6 +600,10 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
+    avg : bool, optional
+        When set to True, computes the averaged SGD weights and stores the
+        result in the avg_weights_ attribute
+
     Attributes
     ----------
     `coef_` : array, shape = [1, n_features] if n_classes == 2 else [n_classes,
@@ -631,13 +640,14 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
                  fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
                  epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 class_weight=None, warm_start=False):
+                 class_weight=None, warm_start=False, avg=False):
         super(SGDClassifier, self).__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
             fit_intercept=fit_intercept, n_iter=n_iter, shuffle=shuffle,
             verbose=verbose, epsilon=epsilon, n_jobs=n_jobs,
             random_state=random_state, learning_rate=learning_rate, eta0=eta0,
-            power_t=power_t, class_weight=class_weight, warm_start=warm_start)
+            power_t=power_t, class_weight=class_weight, warm_start=warm_start,
+            avg=avg)
 
     def _check_proba(self):
         if self.loss not in ("log", "modified_huber"):
@@ -936,7 +946,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         # Windows
         seed = random_state.randint(0, np.iinfo(np.int32).max)
 
-        throw_away, intercept = plain_sgd(self.coef_,
+        self.coef_, intercept = plain_sgd(self.coef_,
                                           self.avg_weights_,
                                           self.intercept_[0],
                                           loss_function,

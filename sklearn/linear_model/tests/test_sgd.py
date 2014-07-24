@@ -541,6 +541,25 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         y_pred = clf.predict(T)
         assert_array_equal(y_pred, true_result)
 
+    def test_partial_fit_binary_avg(self):
+        third = X.shape[0] // 3
+        clf = self.factory(alpha=0.01, avg=True)
+        classes = np.unique(Y)
+
+        clf.partial_fit(X[:third], Y[:third], classes=classes)
+        assert_equal(clf.coef_.shape, (1, X.shape[1]))
+        assert_equal(clf.intercept_.shape, (1,))
+        assert_equal(clf.decision_function([0, 0]).shape, (1, ))
+        id1 = id(clf.coef_.data)
+
+        clf.partial_fit(X[third:], Y[third:])
+        id2 = id(clf.coef_.data)
+        # check that coef_ haven't been re-allocated
+        assert_true(id1, id2)
+
+        y_pred = clf.predict(T)
+        assert_array_equal(y_pred, true_result)
+
     def test_partial_fit_multiclass(self):
         third = X2.shape[0] // 3
         clf = self.factory(alpha=0.01)
