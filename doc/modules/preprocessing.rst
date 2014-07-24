@@ -397,7 +397,7 @@ follows::
     >>> from sklearn import preprocessing
     >>> le = preprocessing.LabelEncoder()
     >>> le.fit([1, 2, 2, 6])
-    LabelEncoder(new_label_class=-1, new_labels='raise')
+    LabelEncoder(new_labels='raise')
     >>> le.classes_
     array([1, 2, 6])
     >>> le.transform([1, 1, 2, 6])
@@ -410,7 +410,7 @@ hashable and comparable) to numerical labels::
 
     >>> le = preprocessing.LabelEncoder()
     >>> le.fit(["paris", "paris", "tokyo", "amsterdam"])
-    LabelEncoder(new_label_class=-1, new_labels='raise')
+    LabelEncoder(new_labels='raise')
     >>> list(le.classes_)
     ['amsterdam', 'paris', 'tokyo']
     >>> le.transform(["tokyo", "tokyo", "paris"])
@@ -421,17 +421,20 @@ hashable and comparable) to numerical labels::
 By default, ``LabelEncoder`` will throw a ``ValueError`` in the event that
 labels are passed in ``transform`` that were not seen in ``fit``.  This
 behavior can be handled with the ``new_labels`` parameter, which supports
-``"raise"``, ``"nan"``, ``"update"``, and ``"label"`` strategies for
-handling new labels.  For example, the ``"label"`` strategy will assign
-the unseen values a label of ``-1``.
+``"raise"``, ``"update"``, and integer strategies for
+handling new labels.  For example, the integer strategy will assign
+the unseen values an arbitrary, user-specified integer label (e.g., ``-1``
+below).
 
-    >>> le = preprocessing.LabelEncoder(new_labels="label")
+    >>> le = preprocessing.LabelEncoder(new_labels=-1)
     >>> le.fit(["paris", "paris", "tokyo", "amsterdam"])
-    LabelEncoder(new_label_class=-1, new_labels='label')
-    >>> list(le.classes_)
+    LabelEncoder(new_labels=-1)
+    >>> le.get_classes()
     ['amsterdam', 'paris', 'tokyo']
     >>> le.transform(["tokyo", "tokyo", "paris", "rome"])
     array([ 2,  2,  1, -1])
+    >>> le.get_classes()
+    ['amsterdam', 'paris', 'tokyo', 'rome']
 
 Imputation of missing values
 ============================
