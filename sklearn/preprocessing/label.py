@@ -12,6 +12,7 @@ import array
 import warnings
 import operator
 
+import operator
 import numpy as np
 import scipy.sparse as sp
 
