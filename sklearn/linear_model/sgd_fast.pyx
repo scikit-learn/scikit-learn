@@ -367,7 +367,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
               double power_t,
               double t=1.0,
               double intercept_decay=1.0,
-              bint avg=True):
+              bint avg=False):
     """Plain SGD for generic loss functions and penalties.
 
     Parameters
@@ -431,9 +431,6 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         The fitted weight vector.
     intercept : float
         The fitted intercept term.
-    avg_weights : array, shape=[n_features]
-        The fitted avg weight vector.
-
     """
 
     # get the data information into easy vars
@@ -541,9 +538,6 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     l1penalty(w, q_data_ptr, x_ind_ptr, xnnz, u)
 
                 # update the avg_weights if needed
-                # for q in range(5):
-                #     print(x_ind_ptr[q])
-
                 if avg:
                     dscal(n_features, count, aw_ptr, 1)
                     daxpy(n_features, 1, w_ptr, 1, aw_ptr, 1)

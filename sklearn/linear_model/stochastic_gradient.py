@@ -268,7 +268,8 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
     # Windows
     seed = random_state.randint(0, np.iinfo(np.int32).max)
 
-    # TODO: pass in average array for second argument
+    # TODO: pass in average array for second argument and change
+    # False to self.svg
     return plain_sgd(coef, np.array([]), intercept, est.loss_function,
                      penalty_type, alpha, C, est.l1_ratio,
                      dataset, n_iter, int(est.fit_intercept),
@@ -794,7 +795,6 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         if self.coef_ is None:
             self._allocate_parameter_mem(1, n_features,
                                          coef_init, intercept_init)
-
         if self.avg_weights_ is None:
             self.avg_weights_ = np.zeros(n_features,
                                          dtype=np.float64,
@@ -895,8 +895,15 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
            Predicted target values per element in X.
         """
         X = check_array(X, accept_sparse='csr')
-        scores = safe_sparse_dot(X, self.coef_.T,
-                                 dense_output=True) + self.intercept_
+
+        if not self.avg:
+            # use the normal weights for scoring
+            scores = safe_sparse_dot(X, self.coef_.T,
+                                     dense_output=True) + self.intercept_
+        else:
+            # use the averaged weights, not the normal weights
+            scores = safe_sparse_dot(X, self.avg_weights_.T,
+                                     dense_output=True) + self.intercept_
         return scores.ravel()
 
     def predict(self, X):
@@ -929,7 +936,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         # Windows
         seed = random_state.randint(0, np.iinfo(np.int32).max)
 
-        self.coef_, intercept = plain_sgd(self.coef_,
+        throw_away, intercept = plain_sgd(self.coef_,
                                           self.avg_weights_,
                                           self.intercept_[0],
                                           loss_function,
@@ -946,7 +953,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                                           learning_rate_type,
                                           self.eta0, self.power_t, self.t_,
                                           intercept_decay,
-                                          False)
+                                          self.avg)
 
         self.intercept_ = np.atleast_1d(intercept)
 
