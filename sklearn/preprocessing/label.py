@@ -68,12 +68,14 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         - If an integer value is passed, then re-label with this value.
           N.B. that default values are in [0, 1, ...], so caution should be
           taken if a non-negative value is passed to not accidentally
-          intersect.
+          intersect.  Additionally, ``inverse_transform`` will fail for a
+          value that does not intersect with the ``fit``-time label set.
 
     Attributes
     ----------
     `classes_` : array of shape (n_class,)
-        Holds the label for each class.
+        Holds the label for each class that were seen at fit.  See
+        ``get_classes()`` to retrieve all observed labels.
 
     `new_label_mapping_` : dictionary
         Stores the mapping for classes not seen during original ``fit``.
@@ -130,6 +132,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         """
         # If we've seen updates, include them in the order they were added.
         if len(self.new_label_mapping_) > 0:
+            # Sort the post-fit time labels to return into the class array.
             sorted_new, _ = zip(*sorted(self.new_label_mapping_.iteritems(),
                                         key=operator.itemgetter(1)))
             return np.append(self.classes_, sorted_new)
