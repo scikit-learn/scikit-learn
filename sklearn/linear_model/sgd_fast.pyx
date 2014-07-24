@@ -353,7 +353,7 @@ cdef class SquaredEpsilonInsensitive(Regression):
 
 
 def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
-              np.ndarray[double, ndim=1, mode='c'] avg_weights,
+              np.ndarray[double, ndim=1, mode='c'] average_weights,
               double intercept,
               LossFunction loss,
               int penalty_type,
@@ -367,15 +367,15 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
               double power_t,
               double t=1.0,
               double intercept_decay=1.0,
-              bint avg=False):
+              bint average=False):
     """Plain SGD for generic loss functions and penalties.
 
     Parameters
     ----------
     weights : ndarray[double, ndim=1]
         The allocated coef_ vector.
-    avg_weights : ndarray[double, ndim=1]
-        The avg weights as computed for
+    average_weights : ndarray[double, ndim=1]
+        The average weights as computed for
         asgd
     intercept : double
         The initial intercept.
@@ -421,9 +421,9 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         Initial state of the learning rate. This value is equal to the
         iteration count except when the learning rate is set to `optimal`.
         Default: 1.0.
-    avg : bool
+    average : bool
         When set to true, will compute the averged sgd and store the
-        averaged weight vector in avg_weights
+        averaged weight vector in average_weights
 
     Returns
     -------
@@ -438,7 +438,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef Py_ssize_t n_features = weights.shape[0]
 
     cdef WeightVector w = WeightVector(weights)
-    cdef double* aw_ptr = &avg_weights[0]
+    cdef double* aw_ptr = &average_weights[0]
     cdef double* w_ptr = &weights[0]
 
     cdef double *x_data_ptr = NULL
@@ -537,10 +537,15 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     u += (l1_ratio * eta * alpha)
                     l1penalty(w, q_data_ptr, x_ind_ptr, xnnz, u)
 
-                # update the avg_weights if needed
-                if avg:
+                # update the average_weights if needed
+                if average:
+                    # average_weights *= count
                     dscal(n_features, count, aw_ptr, 1)
+                    
+                    # average_weights *= weights
                     daxpy(n_features, 1, w_ptr, 1, aw_ptr, 1)
+                    
+                    # average_weights /= count + 2
                     dscal(n_features, 1./(count+1.), aw_ptr, 1)
 
                 t += 1
