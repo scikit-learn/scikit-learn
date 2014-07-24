@@ -671,7 +671,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
         y = np.dot(X, w)
 
         clf = self.factory(loss='squared_loss', alpha=0.1, n_iter=20,
-                           fit_intercept=False, avg=True)
+                           fit_intercept=False, average=True)
 
         clf.fit(X, y)
         score = clf.score(X, y)
