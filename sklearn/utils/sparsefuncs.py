@@ -278,3 +278,37 @@ def min_max_axis(X, axis):
         return sparse_min_max(X, axis=axis)
     else:
         _raise_typeerror(X)
+
+
+def random_choice_csc(a, size, p=None):
+    # XXX Corner case: size 0
+
+    if isinstance(a, int):
+        a = np.arange(a)
+    a = np.array(a, np.int)
+
+    if p is None:
+            p = np.empty(shape=a.shape[0])
+            p.fill(1.0/a.shape[0])
+    p = np.array(p)
+
+    # XXX Validate: p and a have the same length
+    # XXX Warning: Sparse efficieny if 0 is not in a, or p for 0 is small
+
+    if 0 not in a:
+        a = np.insert(a, 0, 0)
+        p = np.insert(p, 0, 0.0)
+
+    if 0 in a and a.shape[0] is 1:
+        return sp.csc_matrix((size, 1))
+
+    nnz = size - int(size * p[np.where(a == 0)[0][0]])  # XXX maybe round
+    indices = np.random.choice(a=range(size), size=nnz, replace=False)
+
+    # Normalize probabilites for the nonzero elements
+    p_nz = p[a != 0]
+    p_nz_norm = p_nz / np.sum(p_nz)
+    data = np.random.choice(a=a[a != 0], size=nnz, p=p_nz_norm, replace=True)
+    indptr = [0, indices.shape[0]]
+
+    return sp.csc_matrix((data, indices, indptr), shape=(size, 1))

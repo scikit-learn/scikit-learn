@@ -12,6 +12,7 @@ from .externals.six.moves import xrange
 from .utils import check_random_state
 from .utils.validation import check_array
 from sklearn.utils import deprecated
+from sklearn.utils.sparsefuncs import random_choice_csc
 
 
 class DummyClassifier(BaseEstimator, ClassifierMixin):
@@ -228,43 +229,49 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             if self.n_outputs_ == 1 and not self.output_2d_:
                 y = np.ravel(y)
         else:
-            data = np.array([], dtype=classes_[0].dtype)
-            indices = np.array([])
-            indptr = np.array([0])
+            data = []
+            indices = []
+            len_indices = 0
+            indptr = [0]
             for k in range(self.n_outputs_):
                 if self.strategy == "most_frequent":
                     mode = class_prior_[k].argmax()
                     if classes_[k][mode] == 0:
-                        ret = None
+                        col_data = None
                     else:
-                        ret = (np.ones(n_samples, dtype=int) *
-                               class_prior_[k].argmax())
-                        ind = range(n_samples)
+                        col_data = (np.ones(n_samples, dtype=int) *
+                                    class_prior_[k].argmax())
+                        col_data = classes_[k][col_data]
+                        col_ind = range(n_samples)
 
                 elif self.strategy == "stratified":
-                    probmax = proba[k].argmax(axis=1)
-                    ind = np.where((classes_[k][probmax]) != 0)[0]
-                    ret = probmax[ind]
+                    rnd = random_choice_csc(a=classes_[k], size=n_samples,
+                                            p=class_prior_[k])
+                    col_data = rnd.data
+                    col_ind = rnd.indices
 
                 elif self.strategy == "uniform":
-                    uni = rs.randint(n_classes_[k], size=n_samples)
-                    # Select the nonzero elements, insert as column
-                    ind = np.where((classes_[k][uni]) != 0)[0]
-                    ret = uni[ind]
+                    rnd = random_choice_csc(a=classes_[k], size=n_samples)
+                    col_data = rnd.data
+                    col_ind = rnd.indices
 
                 elif self.strategy == "constant":
                     if constant[k] == 0:
-                        ret = None
+                        col_data = None
                     else:
-                        ret = (np.ones(n_samples, dtype=int) *
-                               np.where(classes_[k] == constant[k]))
-                        ind = range(n_samples)
+                        col_data = (np.ones(n_samples, dtype=int) *
+                                    np.where(classes_[k] == constant[k]))
+                        col_data = classes_[k][col_data][0]
+                        col_ind = range(n_samples)
 
-                if ret is not None:
-                    data = np.append(data, classes_[k][ret])
-                    indices = np.append(indices, ind)
-                indptr = np.append(indptr, len(indices))
+                if col_data is not None:
+                    data.append(col_data)
+                    indices.append(col_ind)
+                    len_indices += len(col_ind)
+                indptr.append(len_indices)
 
+            data = np.concatenate(data)
+            indices = np.concatenate(indices)
             y = sp.csc_matrix((data, indices, indptr),
                               (n_samples, self.n_outputs_),
                               dtype=np.intp)
