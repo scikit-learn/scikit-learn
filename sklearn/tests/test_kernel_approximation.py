@@ -135,6 +135,7 @@ def test_rbf_sampler():
     Y_trans = rbf_transform.transform(Y)
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
+
     assert_array_almost_equal(kernel, kernel_approx, 1)
 
 
@@ -351,8 +352,8 @@ def test_fastfood():
     #print X_trans, Y_trans
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
-    print 'approximation:', kernel_approx[1:5, 1:5]
-    print 'true kernel:', kernel[1:5, 1:5]
+    print 'approximation:', kernel_approx[:5, :5]
+    print 'true kernel:', kernel[:5, :5]
     assert False
     assert_array_almost_equal(kernel, kernel_approx, decimal=1)
 
@@ -369,21 +370,56 @@ def test_fastfood_fast():
     
     pars = ff_transform.fit(X)
     X_trans = pars.transform_fast(X)
+    print X_trans.shape
     Y_trans = ff_transform.transform_fast(Y)
-    #print X_trans, Y_trans
+    print Y_trans.shape
+
+
+#print X_trans, Y_trans
     kernel_approx = np.dot(X_trans, Y_trans.T)
     
-    print 'approximation:', kernel_approx[1:5, 1:5]
-    print 'true kernel:', kernel[1:5, 1:5]
+    print 'approximation:', kernel_approx[:5, :5]
+    print 'true kernel:', kernel[:5, :5]
     assert False
     assert_array_almost_equal(kernel, kernel_approx, decimal=1)
 
+def test_fastfood_mem_or_accuracy():
+    """compares the performance of Fastfood and RKS"""
+    #generate data
+    X = rng.random_sample(size=(10000, 4000))
+    X /= X.sum(axis=1)[:, np.newaxis]
+
+    # calculate feature maps
+    gamma = 10.
+    sigma = np.sqrt(1 / (2 * gamma))
+    number_of_features_to_generate = 1000
+
+
+
+    fastfood_start = datetime.datetime.utcnow()
+    # Fastfood: approximate kernel mapping
+    rbf_transform = Fastfood(sigma=sigma, n_components=number_of_features_to_generate, tradeoff_less_mem_or_higher_accuracy='accuracy', random_state=42)
+    _ = rbf_transform.fit_transform(X)
+    fastfood_end = datetime.datetime.utcnow()
+    fastfood_spent_time =fastfood_end- fastfood_start
+    print "Timimg fastfood accuracy: \t\t", fastfood_spent_time
+
+
+    fastfood_mem_start = datetime.datetime.utcnow()
+    # Fastfood: approximate kernel mapping
+    rbf_transform = Fastfood(sigma=sigma, n_components=number_of_features_to_generate, tradeoff_less_mem_or_higher_accuracy='mem', random_state=42)
+    _ = rbf_transform.fit_transform(X)
+    fastfood_mem_end = datetime.datetime.utcnow()
+    fastfood_mem_spent_time = fastfood_mem_end- fastfood_mem_start
+    print "Timimg fastfood memory: \t\t", fastfood_mem_spent_time
+
+    assert_greater(fastfood_spent_time, fastfood_mem_spent_time)
 
 def test_fastfood_performance_comparison_between_methods():
     """compares the performance of Fastfood and RKS"""
     #generate data
-    X = rng.random_sample(size=(5000, 1000))
-    Y = rng.random_sample(size=(5000, 1000))
+    X = rng.random_sample(size=(1000, 4000))
+    Y = rng.random_sample(size=(1000, 4000))
     X /= X.sum(axis=1)[:, np.newaxis]
     Y /= Y.sum(axis=1)[:, np.newaxis]
 
@@ -399,16 +435,20 @@ def test_fastfood_performance_comparison_between_methods():
     rbf_kernel(X, Y, gamma=gamma)
     exact_end = datetime.datetime.utcnow()
     exact_spent_time = exact_end- exact_start
+    print "Timimg exact rbf: \t\t", exact_spent_time
+
 
     fastfood_start = datetime.datetime.utcnow()
     # Fastfood: approximate kernel mapping
     rbf_transform = Fastfood(sigma=sigma, n_components=number_of_features_to_generate, random_state=42)
-    X_trans_fastfood = rbf_transform.fit_transform(X)
-    Y_trans_fastfood = rbf_transform.transform(Y)
+    _ = rbf_transform.fit_transform(X)
+    _ = rbf_transform.transform(Y)
     fastfood_end = datetime.datetime.utcnow()
     fastfood_spent_time =fastfood_end- fastfood_start
     #print X_trans, Y_trans
     #kernel_approx = np.dot(X_trans_fastfood, Y_trans_fastfood.T)
+    print "Timimg fastfood: \t\t", fastfood_spent_time
+    
 
     fastfood_fast_one_step_start = datetime.datetime.utcnow()
     # Fastfood: approximate kernel mapping
@@ -419,28 +459,28 @@ def test_fastfood_performance_comparison_between_methods():
     fastfood_fast_one_step_spent_time =fastfood_fast_one_step_end- fastfood_fast_one_step_start
     #print X_trans, Y_trans
     #kernel_approx = np.dot(X_trans_fastfood, Y_trans_fastfood.T)
+    print "Timimg fastfood fast one step: \t" ,fastfood_fast_one_step_spent_time
+
 
     fastfood_fast_start = datetime.datetime.utcnow()
     # Fastfood: approximate kernel mapping
     rbf_transform = Fastfood(sigma=sigma, n_components=number_of_features_to_generate, random_state=42)
-    X_trans_fastfood_fast = rbf_transform.fit(X).transform_fast(X)
-    Y_trans_fastfood_fast = rbf_transform.transform_fast(Y)
+    _ = rbf_transform.fit(X).transform_fast(X)
+    _ = rbf_transform.transform_fast(Y)
     fastfood_fast_end = datetime.datetime.utcnow()
     fastfood_fast_spent_time =fastfood_fast_end- fastfood_fast_start
     #print X_trans, Y_trans
     #kernel_approx = np.dot(X_trans_fastfood, Y_trans_fastfood.T)
+    print "Timimg fastfood fast: \t\t", fastfood_fast_spent_time
+
 
     rks_start = datetime.datetime.utcnow()
     # Random Kitchens Sinks: approximate kernel mapping
     rks_rbf_transform = RBFSampler(gamma=gamma, n_components=number_of_features_to_generate, random_state=42)
-    X_trans_rks = rks_rbf_transform.fit_transform(X)
-    Y_trans_rks = rks_rbf_transform.transform(Y)
+    _ = rks_rbf_transform.fit_transform(X)
+    _ = rks_rbf_transform.transform(Y)
     rks_end = datetime.datetime.utcnow()
     rks_spent_time =rks_end- rks_start
-    print "Timimg exact rbf: \t\t", exact_spent_time
-    print "Timimg fastfood: \t\t", fastfood_spent_time
-    print "Timimg fastfood fast one step: \t" ,fastfood_fast_one_step_spent_time
-    print "Timimg fastfood fast: \t\t", fastfood_fast_spent_time
     print "Timimg rks: \t\t\t", rks_spent_time
 
     assert_greater(rks_spent_time, fastfood_spent_time)
@@ -473,3 +513,73 @@ def test_fht_dct_performance():
     print "Timing fht: ", fht_spent_time, dct_spent_time
 
     assert_greater(fht_spent_time, dct_spent_time)
+
+# nosetests D:\playground\scikit-learn\sklearn\tests\test_kernel_approximation.py:test_digit_recognition
+def test_digit_recognition():
+    print __doc__
+
+    # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
+    # License: Simplified BSD
+    
+    # Standard scientific Python imports
+    import pylab as pl
+    
+    # Import datasets, classifiers and performance metrics
+    from sklearn import datasets, svm, metrics
+    from sklearn.linear_model.stochastic_gradient import SGDClassifier
+    
+    # The digits dataset
+    digits = datasets.load_digits()
+    
+    # The data that we are interested in is made of 8x8 images of digits,
+    # let's have a look at the first 3 images, stored in the `images`
+    # attribute of the dataset. If we were working from image files, we
+    # could load them using pylab.imread. For these images know which
+    # digit they represent: it is given in the 'target' of the dataset.
+    for index, (image, label) in enumerate(zip(digits.images, digits.target)[:4]):
+        pl.subplot(2, 4, index + 1)
+        pl.axis('off')
+        pl.imshow(image, cmap=pl.cm.gray_r, interpolation='nearest')
+        pl.title('Training: %i' % label)
+    
+    # To apply an classifier on this data, we need to flatten the image, to
+    # turn the data in a (samples, feature) matrix:
+    n_samples = len(digits.images)
+    data = digits.images.reshape((n_samples, -1))
+    gamma = .001
+    sigma = np.sqrt(1 / (2 * gamma))
+    number_of_features_to_generate = 1000
+    train__idx = range(n_samples / 2)
+    test__idx = range(n_samples / 2,n_samples)
+    
+    # Create a classifier: a support vector classifier
+    classifier = svm.SVC(gamma=gamma)
+    sgd_classifier = SGDClassifier()
+    
+    # map data into featurespace
+    rbf_transform = Fastfood(sigma=sigma, n_components=number_of_features_to_generate, random_state=42)
+    data_transformed_train = rbf_transform.fit(data[train__idx]).transform_fast(data[train__idx])
+    data_transformed_test = rbf_transform.transform_fast(data[test__idx])
+    
+    # We learn the digits on the first half of the digits
+    classifier.fit(data[train__idx], digits.target[train__idx])
+    sgd_classifier.fit(data_transformed_train, digits.target[train__idx])
+    
+    # Now predict the value of the digit on the second half:
+    expected = digits.target[test__idx]
+    predicted = classifier.predict(data[test__idx])
+    predicted_sgd = sgd_classifier.predict(data_transformed_test)
+    
+    print "Classification report for classifier %s:\n%s\n" % (
+        classifier, metrics.classification_report(expected, predicted))
+    print "Classification report for classifier %s:\n%s\n" % (
+        sgd_classifier, metrics.classification_report(expected, predicted_sgd))
+    print "Confusion matrix:\n%s" % metrics.confusion_matrix(expected, predicted)
+    
+    for index, (image, prediction) in enumerate(zip(digits.images[test__idx], predicted)[:4]):
+        pl.subplot(2, 4, index + 5)
+        pl.axis('off')
+        pl.imshow(image, cmap=pl.cm.gray_r, interpolation='nearest')
+        pl.title('Prediction: %i' % prediction)
+    
+    pl.show()
