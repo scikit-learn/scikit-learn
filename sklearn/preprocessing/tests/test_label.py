@@ -235,6 +235,8 @@ def test_label_encoder_new_label_update():
     assert_array_equal(le.get_classes(), ["a", "b", "c", "_"])
     assert_array_equal(le.transform(["_", "z", "a"]),
                        [3, 4, 0])
+    assert_array_equal(le.inverse_transform([3, 4, 0]),
+                       ["_", "z", "a"])
 
 
 def test_label_encoder_new_label_replace():

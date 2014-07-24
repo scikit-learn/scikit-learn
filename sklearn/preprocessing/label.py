@@ -260,7 +260,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         self._check_fitted()
 
         y = np.asarray(y)
-        return self.classes_[y]
+        return self.get_classes()[y]
 
 
 class LabelBinarizer(BaseEstimator, TransformerMixin):
