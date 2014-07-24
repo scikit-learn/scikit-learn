@@ -133,7 +133,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         # If we've seen updates, include them in the order they were added.
         if len(self.new_label_mapping_) > 0:
             # Sort the post-fit time labels to return into the class array.
-            sorted_new, _ = zip(*sorted(self.new_label_mapping_.iteritems(),
+            sorted_new, _ = zip(*sorted(self.new_label_mapping_.items(),
                                         key=operator.itemgetter(1)))
             return np.append(self.classes_, sorted_new)
         else:
