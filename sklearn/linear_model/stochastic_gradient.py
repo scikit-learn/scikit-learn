@@ -268,7 +268,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
     # Windows
     seed = random_state.randint(0, np.iinfo(np.int32).max)
 
-    return plain_sgd(coef, est.avg_weights, intercept, est.loss_function,
+    return plain_sgd(coef, est.avg_weights_, intercept, est.loss_function,
                      penalty_type, alpha, C, est.l1_ratio,
                      dataset, n_iter, int(est.fit_intercept),
                      int(est.verbose), int(est.shuffle), seed,
@@ -403,7 +403,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                                      learning_rate, n_iter,
                                      self._expanded_class_weight[1],
                                      self._expanded_class_weight[0],
-                                     sample_weight)
+                                     sample_weight, False)
         # need to be 2d
         self.coef_ = coef.reshape(1, -1)
         # intercept is a float, need to convert it to an array of length 1
@@ -485,7 +485,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         -------
         self : returns an instance of self.
         """
-    return self._fit(X, y, alpha=self.alpha, C=1.0,
+        return self._fit(X, y, alpha=self.alpha, C=1.0,
                          loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init, intercept_init=intercept_init,
                          sample_weight=sample_weight)
