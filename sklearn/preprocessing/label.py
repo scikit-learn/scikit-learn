@@ -4,13 +4,13 @@
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Hamzeh Alsalhi <ha258@cornell.edu>
+#          Michael Bommarito <michael@bommaritollc.com>
 # License: BSD 3 clause
 
 from collections import defaultdict
 import itertools
 import array
 import warnings
-import operator
 
 import operator
 import numpy as np
@@ -65,7 +65,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         - If ``"raise"``, then raise ValueError.
         - If ``"update"``, then re-map the new labels to
           classes ``[N, ..., N+m-1]``, where ``m`` is the number of new labels.
-        - If an integer value is passed, then use re-label with this value.
+        - If an integer value is passed, then re-label with this value.
           N.B. that default values are in [0, 1, ...], so caution should be
           taken if a non-negative value is passed to not accidentally
           intersect.
@@ -85,8 +85,8 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     >>> from sklearn import preprocessing
     >>> le = preprocessing.LabelEncoder()
     >>> le.fit([1, 2, 2, 6])
-    LabelEncoder(new_label_class=-1, new_labels='raise')
-    >>> le.classes_
+    LabelEncoder(new_labels='raise')
+    >>> le.get_classes()
     array([1, 2, 6])
     >>> le.transform([1, 1, 2, 6]) #doctest: +ELLIPSIS
     array([0, 0, 1, 2]...)
@@ -98,8 +98,8 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
     >>> le = preprocessing.LabelEncoder()
     >>> le.fit(["paris", "paris", "tokyo", "amsterdam"])
-    LabelEncoder(new_label_class=-1, new_labels='raise')
-    >>> list(le.classes_)
+    LabelEncoder(new_labels='raise')
+    >>> list(le.get_classes())
     ['amsterdam', 'paris', 'tokyo']
     >>> le.transform(["tokyo", "tokyo", "paris"]) #doctest: +ELLIPSIS
     array([2, 2, 1]...)
