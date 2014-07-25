@@ -185,7 +185,7 @@ for another implementation::
     >>> clf.fit([[0, 0], [1, 1]], [0, 1])
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
        normalize=False, positive=False, precompute='auto', random_state=None,
-       shuffle=False, tol=0.0001, warm_start=False)
+       selection='cyclic', tol=0.0001, warm_start=False)
     >>> clf.predict([[1, 1]])
     array([ 0.8])
 
