@@ -4,6 +4,7 @@
 # License: BSD 3 clause
 from __future__ import division
 
+import array
 import numpy as np
 import scipy.sparse as sp
 
@@ -152,12 +153,13 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                 self.n_classes_.append(classes.shape[0])
                 self.class_prior_.append(class_prior / class_prior.sum())
 
-        # Checking in case of constant strategy if the constant
-        # provided by the user is in y.
-        if self.strategy == "constant":
-            if constant[k] not in self.classes_[k]:
-                raise ValueError("The constant target value must be "
-                                 "present in training data")
+        for k in range(self.n_outputs_):
+            # Checking in case of constant strategy if the constant
+            # provided by the user is in y.
+            if self.strategy == "constant":
+                if constant[k] not in self.classes_[k]:
+                    raise ValueError("The constant target value must be "
+                                     "present in training data")
 
         if self.n_outputs_ == 1 and not self.output_2d_:
             self.n_classes_ = self.n_classes_[0]
@@ -229,10 +231,10 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             if self.n_outputs_ == 1 and not self.output_2d_:
                 y = np.ravel(y)
         else:
-            data = []
-            indices = []
-            len_indices = 0
-            indptr = [0]
+            data = array.array('f')
+            indices = array.array('i')
+            indptr = array.array('i', [0])
+
             for k in range(self.n_outputs_):
                 if self.strategy == "most_frequent":
                     mode = class_prior_[k].argmax()
@@ -259,19 +261,14 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                     if constant[k] == 0:
                         col_data = None
                     else:
-                        col_data = (np.ones(n_samples, dtype=int) *
-                                    np.where(classes_[k] == constant[k]))
-                        col_data = classes_[k][col_data][0]
+                        col_data = np.ones(n_samples, dtype=int) * constant[k]
                         col_ind = range(n_samples)
 
                 if col_data is not None:
-                    data.append(col_data)
-                    indices.append(col_ind)
-                    len_indices += len(col_ind)
-                indptr.append(len_indices)
+                    data.extend(col_data)
+                    indices.extend(col_ind)
+                indptr.append(len(indices))
 
-            data = np.concatenate(data)
-            indices = np.concatenate(indices)
             y = sp.csc_matrix((data, indices, indptr),
                               (n_samples, self.n_outputs_),
                               dtype=np.intp)
