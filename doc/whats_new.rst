@@ -25,6 +25,11 @@ New features
      `Manoj Kumar`_, `Fabian Pedregosa`_, `Gael Varoquaux`_
      and `Alexandre Gramfort`_.
 
+   - Added ``warm_start`` constructor parameter to make it possible for any
+     trained forest model to grow additional trees incrementally. By
+     `Laurent Direr`_.
+
+
 Enhancements
 ............
 
@@ -2826,3 +2831,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Hamzeh Alsalhi: https://github.com/hamsal
 
 .. _Ronald Phlypo: https://github.com/rphlypo
+
+.. _Laurent Direr: https://github.com/ldirer
