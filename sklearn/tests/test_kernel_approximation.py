@@ -491,6 +491,17 @@ def test_fastfood_performance_comparison_between_methods():
     #kernel_approx = np.dot(X_trans_fastfood, Y_trans_fastfood.T)
     print "Timimg fastfood fast: \t\t", fastfood_fast_spent_time
 
+    fastfood_fast_vec_start = datetime.datetime.utcnow()
+    # Fastfood: approximate kernel mapping
+    rbf_transform = Fastfood(sigma=sigma, n_components=number_of_features_to_generate, random_state=42)
+    _ = rbf_transform.fit_vectorized(X).transform_fast_vectorized(X)
+    _ = rbf_transform.transform_fast_vectorized(Y)
+    fastfood_fast_vec_end = datetime.datetime.utcnow()
+    fastfood_fast_vec_spent_time =fastfood_fast_vec_end- fastfood_fast_vec_start
+    #print X_trans, Y_trans
+    #kernel_approx = np.dot(X_trans_fastfood, Y_trans_fastfood.T)
+    print "Timimg fastfood fast vectorized: \t\t", fastfood_fast_vec_spent_time
+
 
     rks_start = datetime.datetime.utcnow()
     # Random Kitchens Sinks: approximate kernel mapping
