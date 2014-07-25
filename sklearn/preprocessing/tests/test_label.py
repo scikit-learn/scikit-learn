@@ -77,6 +77,25 @@ def test_label_binarizer():
     assert_array_equal(lb.inverse_transform(got), inp)
 
 
+def test_label_binarizer_unseen_labels():
+    lb = LabelBinarizer()
+
+    expected = np.array([[1, 0, 0],
+                         [0, 1, 0],
+                         [0, 0, 1]])
+    got = lb.fit_transform(['b', 'd', 'e'])
+    assert_array_equal(expected, got)
+
+    expected = np.array([[0, 0, 0],
+                         [1, 0, 0],
+                         [0, 0, 0],
+                         [0, 1, 0],
+                         [0, 0, 1],
+                         [0, 0, 0]])
+    got = lb.transform(['a', 'b', 'c', 'd', 'e', 'f'])
+    assert_array_equal(expected, got)
+
+
 @ignore_warnings
 def test_label_binarizer_column_y():
     # first for binary classification vs multi-label with 1 possible class
@@ -537,10 +556,8 @@ def test_deprecation_inverse_binarize_thresholding():
 
 
 def test_invalid_input_label_binarize():
-    assert_raises(ValueError, label_binarize, [0.5, 2], classes=[1, 2])
     assert_raises(ValueError, label_binarize, [0, 2], classes=[0, 2],
                   pos_label=0, neg_label=1)
-    assert_raises(ValueError, label_binarize, [1, 2], classes=[0, 2])
 
 
 def test_inverse_binarize_multiclass():

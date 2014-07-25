@@ -19,6 +19,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils.fixes import np_version
 from ..utils.fixes import sparse_min_max
 from ..utils.fixes import astype
+from ..utils.fixes import in1d
 from ..utils import deprecated, column_or_1d
 from ..utils.validation import check_array
 from ..utils.multiclass import unique_labels
@@ -329,6 +330,12 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             Shape will be [n_samples, 1] for binary problems.
         """
         self._check_fitted()
+
+        y_is_multilabel = type_of_target(y).startswith('multilabel')
+        if y_is_multilabel and not self.y_type_.startswith('multilabel'):
+            raise ValueError("The object was not fitted with multilabel"
+                             " input.")
+
         return label_binarize(y, self.classes_,
                               pos_label=self.pos_label,
                               neg_label=self.neg_label,
@@ -446,7 +453,8 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
         allow for fitting to classes independently of the transform operation
     """
     if not isinstance(y, list):
-        # XXX Workaround that will be removed when list of list format is dropped
+        # XXX Workaround that will be removed when list of list format is
+        # dropped
         y = check_array(y, accept_sparse='csr', ensure_2d=False)
     if neg_label >= pos_label:
         raise ValueError("neg_label={0} must be strictly less than "
@@ -487,18 +495,21 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
             y_type = "multiclass"
 
     sorted_class = np.sort(classes)
-    if (y_type == "multilabel-indicator" and classes.size != y.shape[1] or
-            not set(classes).issuperset(unique_labels(y))):
+    if (y_type == "multilabel-indicator" and classes.size != y.shape[1]):
         raise ValueError("classes {0} missmatch with the labels {1}"
                          "found in the data".format(classes, unique_labels(y)))
 
     if y_type in ("binary", "multiclass"):
         y = column_or_1d(y)
-        indptr = np.arange(n_samples + 1)
-        indices = np.searchsorted(sorted_class, y)
+
+        # pick out the known labels from y
+        y_in_classes = in1d(y, classes)
+        y_seen = y[y_in_classes]
+        indices = np.searchsorted(sorted_class, y_seen)
+        indptr = np.hstack((0, np.cumsum(y_in_classes)))
+
         data = np.empty_like(indices)
         data.fill(pos_label)
-
         Y = sp.csr_matrix((data, indices, indptr),
                           shape=(n_samples, n_classes))
 
