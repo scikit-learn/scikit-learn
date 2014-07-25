@@ -569,3 +569,42 @@ Guillaume Lebourgeois & Samuel Charron - Data Scientists at Data Publica
    </span>
 
 
+
+`Machinalis <http://www.machinalis.com>`_
+-----------------------------------------
+
+.. raw:: html
+
+   <div class="logo">
+
+.. image:: images/machinalis.png
+   :target: http://www.machinalis.com
+
+.. raw:: html
+
+   </div>
+
+Scikit-learn is the cornerstone of all the Machine Learning projects carried at
+Machinalis. It has a consistent API, a wide selection of algorithms and lots
+of auxiliary tools to deal with the boilerplate.
+We have used it in production environments for all kinds of stuff from
+predicting click-through rates to counting sheeps passing trought a cattle's
+fence gate to `information extraction <https://github.com/machinalis/iepy>`_ and
+we always come back for more.
+
+In fact, we use it so much that we've started to freeze our common use cases
+into Python packages, some of them open-sourced, like
+`FeatureForge <https://github.com/machinalis/featureforge>`_ .
+Scikit-learn in one word: Awesome.
+
+.. raw:: html
+
+  <span class="testimonial-author">
+
+Rafael Carrascosa, Lead developer
+
+.. raw:: html
+
+  </span>
+
+
