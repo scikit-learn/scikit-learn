@@ -14,6 +14,10 @@ Bug fixes
      :class:`cross_validation.StratifiedKFold` on multi-output classification
      problems. By `Nikolay Mayorov`_.
 
+   - Support unseen labels :class:`preprocessing.LabelBinarizer` to restore
+     the default behavior of 0.14.1 for backward compatibility. By
+     `Hamzeh Alsalhi`_.
+
 
 .. _changes_0_15:
 
