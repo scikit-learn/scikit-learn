@@ -660,7 +660,29 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
         """Check whether expected ValueError on bad loss"""
         self.factory(loss="foobar")
 
-    def test_sgd_averaged(self):
+    # an simple implentation of asgd to use for testing
+    # uses squared loss to find the gradient
+    def asgd(self, X, y, eta):
+        weights = np.zeros(X.shape[1])
+        average_weights = np.zeros(X.shape[1])
+        i = 0
+
+        for entry in X:
+            p = np.dot(entry, weights)
+            gradient = y[i] - p
+            weights += eta * gradient * entry
+
+            average_weights *= i
+            average_weights += weights
+            average_weights /= i + 1
+
+            i += 1
+
+        return average_weights
+
+
+    def test_sgd_averaged_computed_correctly(self):
+        eta = .0001
         n_samples = 100
         n_features = 10
         rng = np.random.RandomState(0)
@@ -670,12 +692,15 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
         # simple linear function without noise
         y = np.dot(X, w)
 
-        clf = self.factory(loss='squared_loss', alpha=0.1, n_iter=20,
-                           fit_intercept=False, average=True)
+        clf = self.factory(loss='squared_loss',
+                           learning_rate='constant',
+                           eta0=eta,
+                           fit_intercept=False,
+                           n_iter=1, average=True)
 
         clf.fit(X, y)
-        score = clf.score(X, y)
-        assert_greater(score, 0.99)
+        avg_weights = self.asgd(X, y, eta)
+        assert_array_almost_equal(clf.average_weights_, avg_weights)
 
     def test_sgd_least_squares_fit(self):
         xmin, xmax = -5, 5
