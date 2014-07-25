@@ -680,9 +680,8 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
 
         return average_weights
 
-
     def test_sgd_averaged_computed_correctly(self):
-        eta = .0001
+        eta = .001
         n_samples = 100
         n_features = 10
         rng = np.random.RandomState(0)
@@ -694,13 +693,16 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
 
         clf = self.factory(loss='squared_loss',
                            learning_rate='constant',
-                           eta0=eta,
+                           eta0=eta, alpha=0,
                            fit_intercept=False,
                            n_iter=1, average=True)
 
         clf.fit(X, y)
         avg_weights = self.asgd(X, y, eta)
-        assert_array_almost_equal(clf.average_weights_, avg_weights)
+
+        assert_array_almost_equal(clf.average_weights_,
+                                  avg_weights,
+                                  decimal=10)
 
     def test_sgd_least_squares_fit(self):
         xmin, xmax = -5, 5
