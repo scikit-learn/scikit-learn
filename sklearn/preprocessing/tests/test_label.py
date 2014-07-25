@@ -215,10 +215,9 @@ def test_label_encoder_get_classes():
     le = LabelEncoder(new_labels="update")
     le.fit([1, 1, 4, 5, -1, 0])
     assert_array_equal(le.classes_, [-1, 0, 1, 4, 5])
-    assert_array_equal(le.classes_, le.get_classes())
+    assert_array_equal(le.classes_, le.classes_)
     le.transform([10])
-    assert_array_equal(le.classes_, [-1, 0, 1, 4, 5])
-    assert_array_equal(le.get_classes(), [-1, 0, 1, 4, 5, 10])
+    assert_array_equal(le.classes_, [-1, 0, 1, 4, 5, 10])
 
 
 def test_label_encoder_new_label_update():

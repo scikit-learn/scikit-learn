@@ -398,7 +398,7 @@ follows::
     >>> le = preprocessing.LabelEncoder()
     >>> le.fit([1, 2, 2, 6])
     LabelEncoder(new_labels='raise')
-    >>> list(le.get_classes())
+    >>> list(le.classes_)
     [1, 2, 6]
     >>> le.transform([1, 1, 2, 6])
     array([0, 0, 1, 2])
@@ -429,11 +429,11 @@ below).
     >>> le = preprocessing.LabelEncoder(new_labels=-1)
     >>> le.fit(["paris", "paris", "tokyo", "amsterdam"])
     LabelEncoder(new_labels=-1)
-    >>> list(le.get_classes())
+    >>> list(le.classes_)
     ['amsterdam', 'paris', 'tokyo']
     >>> le.transform(["tokyo", "tokyo", "paris", "rome"])
     array([ 2,  2,  1, -1])
-    >>> list(le.get_classes())
+    >>> list(le.classes_)
     ['amsterdam', 'paris', 'tokyo', 'rome']
 
 Imputation of missing values

@@ -74,8 +74,12 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     `classes_` : array of shape (n_class,)
-        Holds the label for each class that were seen at fit.  See
-        ``get_classes()`` to retrieve all observed labels.
+        Property that holds the label for each class that were seen at fit.
+          See ``get_classes()`` and ``set_classes()`` to retrieve all
+          view getter and setter for observed labels.
+
+    `fit_labels` : array of shape (n_class,)
+        Stores the labels seen at ``fit``-time.
 
     `new_label_mapping_` : dictionary
         Stores the mapping for classes not seen during original ``fit``.
@@ -88,7 +92,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     >>> le = preprocessing.LabelEncoder()
     >>> le.fit([1, 2, 2, 6])
     LabelEncoder(new_labels='raise')
-    >>> le.get_classes()
+    >>> le.classes_
     array([1, 2, 6])
     >>> le.transform([1, 1, 2, 6]) #doctest: +ELLIPSIS
     array([0, 0, 1, 2]...)
@@ -101,7 +105,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     >>> le = preprocessing.LabelEncoder()
     >>> le.fit(["paris", "paris", "tokyo", "amsterdam"])
     LabelEncoder(new_labels='raise')
-    >>> list(le.get_classes())
+    >>> list(le.classes_)
     ['amsterdam', 'paris', 'tokyo']
     >>> le.transform(["tokyo", "tokyo", "paris"]) #doctest: +ELLIPSIS
     array([2, 2, 1]...)
@@ -114,9 +118,10 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         """Constructor"""
         self.new_labels = new_labels
         self.new_label_mapping_ = {}
+        self.fit_labels_ = []
 
     def _check_fitted(self):
-        if not hasattr(self, "classes_"):
+        if len(self.fit_labels_) == 0:
             raise ValueError("LabelEncoder was not fitted yet.")
 
     def get_classes(self):
@@ -135,9 +140,15 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
             # Sort the post-fit time labels to return into the class array.
             sorted_new, _ = zip(*sorted(self.new_label_mapping_.items(),
                                         key=operator.itemgetter(1)))
-            return np.append(self.classes_, sorted_new)
+            return np.append(self.fit_labels_, sorted_new)
         else:
-            return self.classes_
+            return self.fit_labels_
+
+    def set_classes(self, classes):
+        """Set the classes via property."""
+        self.fit_labels_ = classes
+
+    classes_ = property(get_classes, set_classes)
 
     def fit(self, y):
         """Fit label encoder
@@ -161,7 +172,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
         y = column_or_1d(y, warn=True)
         _check_numpy_unicode_bug(y)
-        self.classes_ = np.unique(y)
+        self.fit_labels_ = np.unique(y)
         return self
 
     def fit_transform(self, y):
@@ -186,7 +197,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
         y = column_or_1d(y, warn=True)
         _check_numpy_unicode_bug(y)
-        self.classes_, y = np.unique(y, return_inverse=True)
+        self.fit_labels_, y = np.unique(y, return_inverse=True)
         return y
 
     def transform(self, y):
@@ -207,7 +218,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         _check_numpy_unicode_bug(classes)
         if len(np.intersect1d(classes, self.get_classes())) < len(classes):
             # Get the new classes
-            diff_fit = np.setdiff1d(classes, self.classes_)
+            diff_fit = np.setdiff1d(classes, self.fit_labels_)
             diff_new = np.setdiff1d(classes, self.get_classes())
 
             # Create copy of array and return
@@ -226,7 +237,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
                 missing_mask = np.in1d(y, diff_fit)
 
                 # Populate return array properly by mask and return
-                out = np.searchsorted(self.classes_, y)
+                out = np.searchsorted(self.fit_labels_, y)
                 out[missing_mask] = [self.new_label_mapping_[value]
                                      for value in y[missing_mask]]
                 return out
@@ -240,7 +251,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
                 missing_mask = np.in1d(y, diff_fit)
 
                 # Populate return array properly by mask and return
-                out = np.searchsorted(self.classes_, y)
+                out = np.searchsorted(self.fit_labels_, y)
                 out[missing_mask] = self.new_labels
                 return out
             elif self.new_labels == "raise":
@@ -251,7 +262,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
                 raise ValueError("Value of argument `new_labels`={0} "
                                  "is unknown.".format(self.new_labels))
 
-        return np.searchsorted(self.classes_, y)
+        return np.searchsorted(self.fit_labels_, y)
 
     def inverse_transform(self, y):
         """Transform labels back to original encoding.
