@@ -588,7 +588,7 @@ Scikit-learn is the cornerstone of all the Machine Learning projects carried at
 Machinalis. It has a consistent API, a wide selection of algorithms and lots
 of auxiliary tools to deal with the boilerplate.
 We have used it in production environments for all kinds of stuff from
-predicting click-through rates to counting sheeps passing trought a cattle's
+predicting click-through rates to counting sheeps passing through a cattle's
 fence gate to `information extraction <https://github.com/machinalis/iepy>`_ and
 we always come back for more.
 
