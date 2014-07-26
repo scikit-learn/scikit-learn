@@ -561,7 +561,7 @@ def check_min_samples_split(name, X, y):
     assert_raises(ValueError,
                   ForestEstimator(min_samples_split=0).fit, X, y)
     assert_raises(ValueError,
-                  ForestEstimator(min_samples_split=1.0).fit, X, y)
+                  ForestEstimator(min_samples_split=1.1).fit, X, y)
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
     # by setting max_leaf_nodes
@@ -602,7 +602,7 @@ def check_min_samples_leaf(name, X, y):
     assert_raises(ValueError,
                   ForestEstimator(min_samples_leaf=0).fit, X, y)
     assert_raises(ValueError,
-                  ForestEstimator(min_samples_leaf=0.6).fit, X, y)
+                  ForestEstimator(min_samples_leaf=1.0).fit, X, y)
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
     # by setting max_leaf_nodes

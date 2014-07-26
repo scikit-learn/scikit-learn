@@ -170,12 +170,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                             else self.min_samples_leaf)
 
         # Set min_samples_split sensibly
-        min_samples_split = (int(np.ceil(self.min_samples_split * n_samples))
+        min_samples_split = (max(int(np.ceil(self.min_samples_split * n_samples)), 2)
                              if isinstance(self.min_samples_split, float)
                              else self.min_samples_split)
-
-        min_samples_split = max(min_samples_split,
-                                2 * self.min_samples_leaf)
 
         if isinstance(self.max_features, six.string_types):
             if self.max_features == "auto":
@@ -212,11 +209,15 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             raise ValueError("min_samples_split must be greater than zero.")
         if self.min_samples_leaf <= 0:
             raise ValueError("min_samples_leaf must be greater than zero.")
+        if (isinstance(self.min_samples_leaf, float)
+            and self.min_samples_leaf == 1.0):
+            raise ValueError("min_samples_leaf cannot be 1.0 "
+                             "in order to avoid ambiguity")
         if not 0 < min_samples_leaf <= n_samples:
             raise ValueError("min_samples_leaf must in (0, n_samples], "
                              "check both the value and type of input parameter")
-        if not 0 < min_samples_split <= n_samples:
-            raise ValueError("min_samples_split must in (0, n_samples], "
+        if not 1 < min_samples_split <= n_samples:
+            raise ValueError("min_samples_split must in [2, n_samples], "
                              "check both the value and type of input parameter")
         if not 0 <= self.min_weight_fraction_leaf <= 0.5:
             raise ValueError("min_weight_fraction_leaf must in [0, 0.5]")
@@ -251,6 +252,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                np.sum(sample_weight))
         else:
             min_weight_leaf = 0.
+
+        min_samples_split = max(min_samples_split, 2 * self.min_samples_leaf)
 
         # Build tree
         criterion = self.criterion
