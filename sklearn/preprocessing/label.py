@@ -452,8 +452,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
         allow for fitting to classes independently of the transform operation
     """
     if not isinstance(y, list):
-        # XXX Workaround that will be removed when list of list format is
-        # dropped
+        # XXX Workaround that will be removed when list of list format is dropped
         y = check_array(y, accept_sparse='csr', ensure_2d=False)
     if neg_label >= pos_label:
         raise ValueError("neg_label={0} must be strictly less than "
@@ -494,18 +493,26 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
             y_type = "multiclass"
 
     sorted_class = np.sort(classes)
-    if y_type == "multilabel-indicator" and classes.size != y.shape[1]:
+    if (y_type == "multilabel-indicator" and classes.size != y.shape[1]):
         raise ValueError("classes {0} missmatch with the labels {1}"
                          "found in the data".format(classes, unique_labels(y)))
 
     if y_type in ("binary", "multiclass"):
         y = column_or_1d(y)
-        indptr = np.arange(n_samples + 1)
-        indices = np.searchsorted(sorted_class, y)
 
-        # Slice off the elements that exceed the number of classes
-        indices = indices[indices < len(sorted_class)]
-        indptr[indptr >= len(indices)] = len(indices)
+        # pick out the known labels from y, and their index in y
+        y_seen = [e for e in y if e in classes]
+        indices = np.searchsorted(sorted_class, y_seen)
+
+        # Construct indices of to tell us how many unseen labels we 
+        # have between each seen label
+        y_seen_ind = [i for (i,e) in enumerate(y) if e in classes]
+        y_seen_ind.append(n_samples)
+        y_seen_ind = np.insert(y_seen_ind, 0 ,0)
+
+        indptr = np.arange(len(y_seen) + 1)
+        indptr = np.repeat(indptr, np.diff(y_seen_ind))
+        indptr = np.insert(indptr, 0 ,0)
 
         data = np.empty_like(indices)
         data.fill(pos_label)
