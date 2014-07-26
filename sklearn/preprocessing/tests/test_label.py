@@ -84,7 +84,6 @@ def test_label_binarizer_unseen_labels():
                          [0, 1, 0],
                          [0, 0, 1]])
     got = lb.fit_transform(['b', 'd', 'e'])
-    print got
     assert_array_equal(expected, got)
 
     expected = np.array([[0, 0, 0],
@@ -94,7 +93,6 @@ def test_label_binarizer_unseen_labels():
                          [0, 0, 1],
                          [0, 0, 0]])
     got = lb.transform(['a', 'b', 'c', 'd', 'e', 'f'])
-    print got
     assert_array_equal(expected, got)
 
 
