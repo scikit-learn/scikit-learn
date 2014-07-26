@@ -452,7 +452,8 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
         allow for fitting to classes independently of the transform operation
     """
     if not isinstance(y, list):
-        # XXX Workaround that will be removed when list of list format is dropped
+        # XXX Workaround that will be removed when list of list format is
+        # dropped
         y = check_array(y, accept_sparse='csr', ensure_2d=False)
     if neg_label >= pos_label:
         raise ValueError("neg_label={0} must be strictly less than "
@@ -504,15 +505,15 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
         y_seen = [e for e in y if e in classes]
         indices = np.searchsorted(sorted_class, y_seen)
 
-        # Construct indices of to tell us how many unseen labels we 
+        # Construct indices of to tell us how many unseen labels we
         # have between each seen label
-        y_seen_ind = [i for (i,e) in enumerate(y) if e in classes]
+        y_seen_ind = [i for (i, e) in enumerate(y) if e in classes]
         y_seen_ind.append(n_samples)
-        y_seen_ind = np.insert(y_seen_ind, 0 ,0)
+        y_seen_ind = np.insert(y_seen_ind, 0, 0)
 
         indptr = np.arange(len(y_seen) + 1)
         indptr = np.repeat(indptr, np.diff(y_seen_ind))
-        indptr = np.insert(indptr, 0 ,0)
+        indptr = np.insert(indptr, 0, 0)
 
         data = np.empty_like(indices)
         data.fill(pos_label)
