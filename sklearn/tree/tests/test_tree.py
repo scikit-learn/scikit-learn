@@ -453,29 +453,30 @@ def test_min_samples_split():
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
     # by setting max_leaf_nodes
-    for max_leaf_nodes in (None, 1000):
-        for name, TreeEstimator in ALL_TREES.items():
-            est = TreeEstimator(min_samples_split=10,
-                                max_leaf_nodes=max_leaf_nodes,
-                                random_state=0)
-            est.fit(X, y)
-            # count samples on nodes, -1 means it is a leaf
-            node_samples = est.tree_.n_node_samples[est.tree_.children_left != -1]
+    for max_leaf_nodes, name in product((None, 1000), ALL_TREES.keys()):
+        TreeEstimator = ALL_TREES[name]
 
-            assert_greater(np.min(node_samples), 9,
-                           "Failed with {0}".format(name))
+        # test for integer parameter
+        est = TreeEstimator(min_samples_split=10,
+                            max_leaf_nodes=max_leaf_nodes,
+                            random_state=0)
+        est.fit(X, y)
+        # count samples on nodes, -1 means it is a leaf
+        node_samples = est.tree_.n_node_samples[est.tree_.children_left != -1]
 
-    for max_leaf_nodes in (None, 1000):
-        for name, TreeEstimator in ALL_TREES.items():
-            est = TreeEstimator(min_samples_split=0.2,
-                                max_leaf_nodes=max_leaf_nodes,
-                                random_state=0)
-            est.fit(X, y)
-            # count samples on nodes, -1 means it is a leaf
-            node_samples = est.tree_.n_node_samples[est.tree_.children_left != -1]
+        assert_greater(np.min(node_samples), 9,
+                       "Failed with {0}".format(name))
 
-            assert_greater(np.min(node_samples), 9,
-                           "Failed with {0}".format(name))
+        # test for float parameter
+        est = TreeEstimator(min_samples_split=0.2,
+                            max_leaf_nodes=max_leaf_nodes,
+                            random_state=0)
+        est.fit(X, y)
+        # count samples on nodes, -1 means it is a leaf
+        node_samples = est.tree_.n_node_samples[est.tree_.children_left != -1]
+
+        assert_greater(np.min(node_samples), 9,
+                       "Failed with {0}".format(name))
 
 
 
@@ -486,31 +487,32 @@ def test_min_samples_leaf():
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
     # by setting max_leaf_nodes
-    for max_leaf_nodes in (None, 1000):
-        for name, TreeEstimator in ALL_TREES.items():
-            est = TreeEstimator(min_samples_leaf=5,
-                                max_leaf_nodes=max_leaf_nodes,
-                                random_state=0)
-            est.fit(X, y)
-            out = est.tree_.apply(X)
-            node_counts = np.bincount(out)
-            # drop inner nodes
-            leaf_count = node_counts[node_counts != 0]
-            assert_greater(np.min(leaf_count), 4,
-                           "Failed with {0}".format(name))
+    for max_leaf_nodes, name in product((None, 1000), ALL_TREES.keys()):
+        TreeEstimator = ALL_TREES[name]
 
-    for max_leaf_nodes in (None, 1000):
-        for name, TreeEstimator in ALL_TREES.items():
-            est = TreeEstimator(min_samples_leaf=0.1,
-                                max_leaf_nodes=max_leaf_nodes,
-                                random_state=0)
-            est.fit(X, y)
-            out = est.tree_.apply(X)
-            node_counts = np.bincount(out)
-            # drop inner nodes
-            leaf_count = node_counts[node_counts != 0]
-            assert_greater(np.min(leaf_count), 4,
-                           "Failed with {0}".format(name))
+        # test integer parameter
+        est = TreeEstimator(min_samples_leaf=5,
+                            max_leaf_nodes=max_leaf_nodes,
+                            random_state=0)
+        est.fit(X, y)
+        out = est.tree_.apply(X)
+        node_counts = np.bincount(out)
+        # drop inner nodes
+        leaf_count = node_counts[node_counts != 0]
+        assert_greater(np.min(leaf_count), 4,
+                       "Failed with {0}".format(name))
+
+        # test float parameter
+        est = TreeEstimator(min_samples_leaf=0.1,
+                            max_leaf_nodes=max_leaf_nodes,
+                            random_state=0)
+        est.fit(X, y)
+        out = est.tree_.apply(X)
+        node_counts = np.bincount(out)
+        # drop inner nodes
+        leaf_count = node_counts[node_counts != 0]
+        assert_greater(np.min(leaf_count), 4,
+                       "Failed with {0}".format(name))
 
 
 def test_min_weight_fraction_leaf():
