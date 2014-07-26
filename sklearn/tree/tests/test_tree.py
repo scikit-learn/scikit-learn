@@ -803,9 +803,9 @@ def test_arrays_persist():
     """
     for attr in ['n_classes', 'value', 'children_left', 'children_right',
                  'threshold', 'impurity', 'feature', 'n_node_samples']:
-        value = getattr(DecisionTreeClassifier().fit([[0]], [0]).tree_, attr)
+        value = getattr(DecisionTreeClassifier().fit([[0], [1]], [0, 1]).tree_, attr)
         # if pointing to freed memory, contents may be arbitrary
-        assert_true(-2 <= value.flat[0] < 2,
+        assert_true(-3 <= value.flat[0] < 3,
                     'Array points to arbitrary memory')
 
 

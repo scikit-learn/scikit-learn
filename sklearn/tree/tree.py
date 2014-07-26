@@ -203,6 +203,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         self.max_features_ = max_features
 
+        if n_samples < 2:
+            raise ValueError("number of samples should be greater than one")
         if len(y) != n_samples:
             raise ValueError("Number of labels=%d does not match "
                              "number of samples=%d" % (len(y), n_samples))
@@ -210,12 +212,12 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             raise ValueError("min_samples_split must be greater than zero.")
         if self.min_samples_leaf <= 0:
             raise ValueError("min_samples_leaf must be greater than zero.")
-        if isinstance(self.min_samples_leaf, float) \
-                and not 0 < self.min_samples_leaf <= 0.5:
-            raise ValueError("float min_samples_leaf must in (0, 0.5]")
-        if isinstance(self.min_samples_split, float) \
-                and not 0 < self.min_samples_split < 1.0:
-            raise ValueError("float min_samples_split must in (0, 1.0)")
+        if not 0 < min_samples_leaf <= n_samples:
+            raise ValueError("min_samples_leaf must in (0, n_samples], "
+                             "check both the value and type of input parameter")
+        if not 0 < min_samples_split <= n_samples:
+            raise ValueError("min_samples_split must in (0, n_samples], "
+                             "check both the value and type of input parameter")
         if not 0 <= self.min_weight_fraction_leaf <= 0.5:
             raise ValueError("min_weight_fraction_leaf must in [0, 0.5]")
         if max_depth <= 0:
