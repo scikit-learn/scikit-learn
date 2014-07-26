@@ -275,7 +275,7 @@ def assign_rows_csr(X,
     out : array, shape=(arbitrary, n_features)
     """
     cdef:
-        # npy_intp (np.intc in Python) is what np.where returns,
+        # npy_intp (np.intp in Python) is what np.where returns,
         # but int is what scipy.sparse uses.
         int i, ind, j
         np.npy_intp rX
