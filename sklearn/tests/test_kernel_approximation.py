@@ -436,8 +436,8 @@ def test_fastfood_mem_or_accuracy():
 def test_fastfood_performance_comparison_between_methods():
     """compares the performance of Fastfood and RKS"""
     #generate data
-    X = rng.random_sample(size=(1000, 4000))
-    Y = rng.random_sample(size=(1000, 4000))
+    X = rng.random_sample(size=(1000, 50))
+    Y = rng.random_sample(size=(1000, 50))
     X /= X.sum(axis=1)[:, np.newaxis]
     Y /= Y.sum(axis=1)[:, np.newaxis]
 

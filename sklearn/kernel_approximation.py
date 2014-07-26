@@ -702,7 +702,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
 
         self.G = self.rng.normal(size=(self.times_to_stack_v, self.d))
         self.B = self.rng.choice([-1, 1], size=(self.times_to_stack_v, self.d))
-        self.P = self.rng.permutation(size=(self.times_to_stack_v, self.d))
+        self.P = [self.rng.permutation(self.d) for _ in range(self.times_to_stack_v)]
         self.S = np.multiply(1 / np.linalg.norm(self.G, axis=1),
                              chi.rvs(self.d, size=(self.times_to_stack_v, self.d)))
 
