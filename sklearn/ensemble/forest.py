@@ -694,18 +694,22 @@ class RandomForestClassifier(ForestClassifier):
 
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
-          - If int, then consider `min_samples_split` as the minimum number.
-          - If float, then `min_samples_split` is a percentage and
-            `int(min_samples_split * n_samples)` are the minimum
-            number of samples for each split.
+
+        - If int, then consider `min_samples_split` as the minimum number.
+        - If float, then `min_samples_split` is a percentage and
+          `int(min_samples_split * n_samples)` are the minimum
+          number of samples for each split.
+
         Note: this parameter is tree-specific.
 
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
-          - If int, then consider `min_samples_leaf` as the minimum number.
-          - If float, then `min_samples_leaf` is a percentage and
-            `int(min_samples_leaf * n_samples)` are the minimum
-            number of samples for each node.
+
+        - If int, then consider `min_samples_leaf` as the minimum number.
+        - If float, then `min_samples_leaf` is a percentage and
+          `int(min_samples_leaf * n_samples)` are the minimum
+          number of samples for each node.
+
         Note: this parameter is tree-specific.
 
     min_weight_fraction_leaf : float, optional (default=0.)
@@ -860,18 +864,22 @@ class RandomForestRegressor(ForestRegressor):
 
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
-          - If int, then consider `min_samples_split` as the minimum number.
-          - If float, then `min_samples_split` is a percentage and
-            `int(min_samples_split * n_samples)` are the minimum
-            number of samples for each split.
+
+        - If int, then consider `min_samples_split` as the minimum number.
+        - If float, then `min_samples_split` is a percentage and
+          `int(min_samples_split * n_samples)` are the minimum
+          number of samples for each split.
+
         Note: this parameter is tree-specific.
 
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
-          - If int, then consider `min_samples_leaf` as the minimum number.
-          - If float, then `min_samples_leaf` is a percentage and
-            `int(min_samples_leaf * n_samples)` are the minimum
-            number of samples for each node.
+
+        - If int, then consider `min_samples_leaf` as the minimum number.
+        - If float, then `min_samples_leaf` is a percentage and
+          `int(min_samples_leaf * n_samples)` are the minimum
+          number of samples for each node.
+
         Note: this parameter is tree-specific.
 
     min_weight_fraction_leaf : float, optional (default=0.)
@@ -1016,18 +1024,22 @@ class ExtraTreesClassifier(ForestClassifier):
 
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
-          - If int, then consider `min_samples_split` as the minimum number.
-          - If float, then `min_samples_split` is a percentage and
-            `int(min_samples_split * n_samples)` are the minimum
-            number of samples for each split.
+
+        - If int, then consider `min_samples_split` as the minimum number.
+        - If float, then `min_samples_split` is a percentage and
+          `int(min_samples_split * n_samples)` are the minimum
+          number of samples for each split.
+
         Note: this parameter is tree-specific.
 
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
-          - If int, then consider `min_samples_leaf` as the minimum number.
-          - If float, then `min_samples_leaf` is a percentage and
-            `int(min_samples_leaf * n_samples)` are the minimum
-            number of samples for each node.
+
+        - If int, then consider `min_samples_leaf` as the minimum number.
+        - If float, then `min_samples_leaf` is a percentage and
+          `int(min_samples_leaf * n_samples)` are the minimum
+          number of samples for each node.
+
         Note: this parameter is tree-specific.
 
     min_weight_fraction_leaf : float, optional (default=0.)
@@ -1185,18 +1197,22 @@ class ExtraTreesRegressor(ForestRegressor):
 
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
-          - If int, then consider `min_samples_split` as the minimum number.
-          - If float, then `min_samples_split` is a percentage and
-            `int(min_samples_split * n_samples)` are the minimum
-            number of samples for each split.
+
+        - If int, then consider `min_samples_split` as the minimum number.
+        - If float, then `min_samples_split` is a percentage and
+          `int(min_samples_split * n_samples)` are the minimum
+          number of samples for each split.
+
         Note: this parameter is tree-specific.
 
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
-          - If int, then consider `min_samples_leaf` as the minimum number.
-          - If float, then `min_samples_leaf` is a percentage and
-            `int(min_samples_leaf * n_samples)` are the minimum
-            number of samples for each node.
+
+        - If int, then consider `min_samples_leaf` as the minimum number.
+        - If float, then `min_samples_leaf` is a percentage and
+          `int(min_samples_leaf * n_samples)` are the minimum
+          number of samples for each node.
+
         Note: this parameter is tree-specific.
 
     min_weight_fraction_leaf : float, optional (default=0.)
@@ -1324,18 +1340,22 @@ class RandomTreesEmbedding(BaseForest):
 
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
-          - If int, then consider `min_samples_split` as the minimum number.
-          - If float, then `min_samples_split` is a percentage and
-            `int(min_samples_split * n_samples)` are the minimum
-            number of samples for each split.
+
+        - If int, then consider `min_samples_split` as the minimum number.
+        - If float, then `min_samples_split` is a percentage and
+          `int(min_samples_split * n_samples)` are the minimum
+          number of samples for each split.
+
         Note: this parameter is tree-specific.
 
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
-          - If int, then consider `min_samples_leaf` as the minimum number.
-          - If float, then `min_samples_leaf` is a percentage and
-            `int(min_samples_leaf * n_samples)` are the minimum
-            number of samples for each node.
+
+        - If int, then consider `min_samples_leaf` as the minimum number.
+        - If float, then `min_samples_leaf` is a percentage and
+          `int(min_samples_leaf * n_samples)` are the minimum
+          number of samples for each node.
+
         Note: this parameter is tree-specific.
 
     min_weight_fraction_leaf : float, optional (default=0.)
