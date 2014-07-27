@@ -631,12 +631,17 @@ class Fastfood(BaseEstimator, TransformerMixin):
         return result
 
     @staticmethod
-    def create_gaussian_iid_matrix_fast_vectorized(B, G, P, x):
+    def create_gaussian_iid_matrix_fast_vectorized(B, G, P, X):
         """ Create mapping of a specific x from B, G and P"""
-        result = np.multiply(B, x)
+        result = np.multiply(B.reshape((1, B.shape[0], B.shape[1])), X.reshape(( X.shape[0], X.shape[1], 1)))
         result = Fastfood.approx_fourier_transformation_multi_dim(result)
-        np.take(result, P, axis=1, out=result)
-        result = np.multiply(G, result)
+        offset = np.arange(0, result.shape[0]*result.shape[1]+1, result.shape[1])
+        offset = offset.reshape(offset.shape[0], 1)
+        Perm = np.tile(P, X.shape[0]) + offset
+        np.take(result, Perm, axis=1, out=result)
+        np.multiply(G.reshape((1, G.shape[0], G.shape[1])),
+                             result.reshape((result.shape[0], result.shape[1], 1)),
+                             out=result)
         result = Fastfood.approx_fourier_transformation_multi_dim(result)
         return result
 
@@ -710,17 +715,34 @@ class Fastfood(BaseEstimator, TransformerMixin):
 
         return self
 
+    # def transform_fast_vectorized(self, X):
+    #     X = atleast2d_or_csr(X)
+    #     X_padded = self.pad_with_zeros(X)
+    #     mapped_examples = []
+    #     for i in range(X_padded.shape[0]):
+    #         example = []
+    #         HGPHBx = Fastfood.create_gaussian_iid_matrix_fast(self.B, self.G, self.P, X_padded[i, :])
+    #         Vx = self.create_approximation_matrix_fast_vectorized(self.S, HGPHBx)
+    #         np.reshape(Vx, (-1, 1), order='C')
+    #         #print "1", type(v),v.shape
+    #         mapped_examples.append(example)
+    #     mapped_examples_as_matrix = np.matrix(mapped_examples)
+    #     #print "4:",mapped_examples_as_matrix, mapped_examples_as_matrix.shape
+    #     #print mapped_examples.count()
+    #     #print mapped_examples[:5]
+    #     #mapped_examples_as_matrix = np.matrix(mapped_examples, copy=True)
+    #     return Fastfood.phi_fast(self, mapped_examples_as_matrix)
+
     def transform_fast_vectorized(self, X):
         X = atleast2d_or_csr(X)
         X_padded = self.pad_with_zeros(X)
         mapped_examples = []
-        for i in range(X_padded.shape[0]):
-            example = []
-            HGPHBx = Fastfood.create_gaussian_iid_matrix_fast(self.B, self.G, self.P, X_padded[i, :])
-            Vx = self.create_approximation_matrix_fast_vectorized(self.S, HGPHBx)
-            np.reshape(Vx, (-1, 1), order='C')
-            #print "1", type(v),v.shape
-            mapped_examples.append(example)
+        example = []
+        HGPHBX = Fastfood.create_gaussian_iid_matrix_fast_vectorized(self.B, self.G, self.P, X_padded)
+        VX = self.create_approximation_matrix_fast_vectorized(self.S, HGPHBX)
+        np.reshape(Vx, (-1, 1), order='C')
+        #print "1", type(v),v.shape
+        mapped_examples.append(example)
         mapped_examples_as_matrix = np.matrix(mapped_examples)
         #print "4:",mapped_examples_as_matrix, mapped_examples_as_matrix.shape
         #print mapped_examples.count()
