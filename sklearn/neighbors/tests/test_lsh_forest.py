@@ -10,7 +10,6 @@ import numpy as np
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_greater
 
@@ -87,6 +86,9 @@ def test_kneighbors():
     X = np.random.rand(samples, dim)
 
     lshf = LSHForest(lower_bound=0)
+    # Test unfitted estimator
+    assert_raises(ValueError, lshf.kneighbors, X[0])
+
     lshf.fit(X)
 
     for i in range(n_iter):
@@ -103,14 +105,46 @@ def test_kneighbors():
     # Multiple points
     n_points = 10
     points = X[np.random.randint(0, samples, n_points)]
-    neighbors = lshf.kneighbors(points, n_neighbors=1,
-                                return_distance=False)
+    neighbors, distances = lshf.kneighbors(points,
+                                           n_neighbors=1,
+                                           return_distance=True)
     assert_equal(neighbors.shape[0], n_points)
-
+    assert_equal(distances.shape[0], n_points)
     # Test random point(not in the data set)
     point = np.random.randn(dim)
     lshf.kneighbors(point, n_neighbors=1,
                     return_distance=False)
+
+
+def test_radius_neighbors():
+    samples = 1000
+    dim = 50
+    n_iter = 100
+    X = np.random.rand(samples, dim)
+
+    lshf = LSHForest()
+    # Test unfitted estimator
+    assert_raises(ValueError, lshf.radius_neighbors, X[0])
+
+    lshf.fit(X)
+
+    for i in range(n_iter):
+        point = X[np.random.randint(0, samples)]
+        mean_dist = np.mean(euclidean_distances(point, X))
+        neighbors = lshf.radius_neighbors(point, radius=mean_dist)
+        # At least one neighbor should be returned.
+        assert_greater(neighbors.shape[1], 0)
+
+    # Test whether a value error is raised when X=None
+    assert_raises(ValueError, lshf.radius_neighbors, None)
+
+    # Multiple points
+    n_points = 10
+    points = X[np.random.randint(0, samples, n_points)]
+    neighbors, distances = lshf.radius_neighbors(points,
+                                                 return_distance=True)
+    assert_equal(neighbors.shape[0], n_points)
+    assert_equal(distances.shape[0], n_points)
 
 
 def test_distances():
@@ -130,7 +164,7 @@ def test_distances():
                                                return_distance=True)
         # Returned distances should be in sorted order.
         assert_array_equal(distances[0], np.sort(distances[0]))
-        
+
         mean_dist = np.mean(euclidean_distances(point, X))
         neighbors, distances = lshf.radius_neighbors(point,
                                                      radius=mean_dist,
