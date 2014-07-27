@@ -293,8 +293,8 @@ class LSHForest(BaseEstimator):
             projections = np.array(np.dot(self.hash_functions_[i],
                                           query) > 0, dtype=int)
             xx = tuple(projections)
-            bin_query = self.cache[xx[:self.cache_N]] * self.k
-            + self.cache[xx[self.cache_N:]]
+            bin_query = (self.cache[xx[:self.cache_N]] * self.k +
+                         self.cache[xx[self.cache_N:]])
             k = _find_longest_prefix_match(self._trees[i], bin_query,
                                            self.max_label_length,
                                            self._left_mask,

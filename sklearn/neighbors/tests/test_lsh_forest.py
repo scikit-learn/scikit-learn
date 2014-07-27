@@ -109,6 +109,11 @@ def test_kneighbors():
                                 return_distance=False)
     assert_equal(neighbors.shape[0], n_points)
 
+    # Test random point(not in the data set)
+    point = np.random.randn(dim)
+    lshf.kneighbors(point, n_neighbors=1,
+                    return_distance=False)
+
 
 def test_distances():
     samples = 1000
