@@ -8,13 +8,11 @@ module (sklearn.neighbors.LSHForest).
 import numpy as np
 
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_array_less
+from sklearn.utils.testing import assert_greater
 
 from sklearn.metrics import euclidean_distances
 from sklearn.neighbors import LSHForest
@@ -132,6 +130,12 @@ def test_distances():
                                                return_distance=True)
         # Returned distances should be in sorted order.
         assert_array_equal(distances[0], np.sort(distances[0]))
+        
+        mean_dist = np.mean(euclidean_distances(point, X))
+        neighbors, distances = lshf.radius_neighbors(point,
+                                                     radius=mean_dist,
+                                                     return_distance=True)
+        assert_array_less(distances, mean_dist)
 
 
 def test_fit():

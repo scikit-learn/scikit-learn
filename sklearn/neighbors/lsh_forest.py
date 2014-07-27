@@ -495,8 +495,8 @@ class LSHForest(BaseEstimator):
             projections = np.array(np.dot(self.hash_functions_[i],
                                           item) > 0, dtype=int)
             xx = tuple(projections)
-            bin_query = self.cache[xx[:self.cache_N]] * self.k
-            + self.cache[xx[self.cache_N:]]
+            bin_query = (self.cache[xx[:self.cache_N]] * self.k +
+                         self.cache[xx[self.cache_N:]])
             # gets the position to be added in the tree.
             position = self._trees[i].searchsorted(bin_query)
             # adds the hashed value into the tree.
