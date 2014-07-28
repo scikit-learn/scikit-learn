@@ -286,8 +286,10 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             raise ValueError("Estimator not fitted, "
                              "call `fit` before `feature_importances_`.")
 
-        return sum(tree.feature_importances_
-                   for tree in self.estimators_) / self.n_estimators
+        all_importances = Parallel(n_jobs=self.n_jobs)(
+            delayed(getattr)(tree, 'feature_importances_')
+            for tree in self.estimators_)
+        return sum(all_importances) / self.n_estimators
 
 
 class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
