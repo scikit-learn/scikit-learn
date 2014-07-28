@@ -1012,12 +1012,14 @@ class _RidgeGCV(LinearModel):
                                score_overrides_loss=True)
         error = scorer is None
 
-        if gcv_mode == 'eigen' and not with_sw:
+        if gcv_mode == 'eigen':
             alphas = np.atleast_2d(self.alphas.T).T
             mode = 'looe' if error else 'loov'
             y_is_raveled = y.ndim == 1
             y = np.atleast_2d(y.T).T
-            out, C = _kernel_ridge_path_eigen(X, y, alphas, mode=mode)
+            out, C = _kernel_ridge_path_eigen(X, y, alphas,
+                                              sample_weight=sample_weight,
+                                              mode=mode)
             if mode == 'looe':
                 out = out ** 2
 
