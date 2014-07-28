@@ -288,10 +288,17 @@ def _test_ridge_loo(filter_):
     ridge_gcv = _RidgeGCV(fit_intercept=False)
     ridge = Ridge(alpha=1.0, fit_intercept=False)
 
-    # generalized cross-validation (efficient leave-one-out)
-    decomp = ridge_gcv._pre_compute(X_diabetes, y_diabetes)
-    errors, c = ridge_gcv._errors(1.0, y_diabetes, *decomp)
-    values, c = ridge_gcv._values(1.0, y_diabetes, *decomp)
+    alphas = np.array([1.])
+    errors, _ = _kernel_ridge_path_eigen(X_diabetes,
+                                         y_diabetes[:, np.newaxis],
+                                         alphas,
+                                         mode='looe')
+    errors = errors.ravel() ** 2
+    values, _ = _kernel_ridge_path_eigen(X_diabetes,
+                                         y_diabetes[:, np.newaxis],
+                                         alphas,
+                                         mode='loov')
+    values = values.ravel()
 
     # brute-force leave-one-out: remove one example at a time
     errors2 = []

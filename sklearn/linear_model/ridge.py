@@ -887,13 +887,6 @@ class _RidgeGCV(LinearModel):
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
 
-    def _pre_compute(self, X, y):
-        # even if X is very sparse, K is usually very dense
-        K = safe_sparse_dot(X, X.T, dense_output=True)
-        v, Q = linalg.eigh(K)
-        QT_y = np.dot(Q.T, y)
-        return v, Q, QT_y
-
     def _decomp_diag(self, v_prime, Q):
         # compute diagonal of the matrix: dot(Q, dot(diag(v_prime), Q^T))
         return (v_prime * Q ** 2).sum(axis=-1)
@@ -904,26 +897,6 @@ class _RidgeGCV(LinearModel):
             # handle case where B is > 1-d
             D = D[(slice(None), ) + (np.newaxis, ) * (len(B.shape) - 1)]
         return D * B
-
-    def _errors(self, alpha, y, v, Q, QT_y):
-        # don't construct matrix G, instead compute action on y & diagonal
-        w = 1.0 / (v + alpha)
-        c = np.dot(Q, self._diag_dot(w, QT_y))
-        G_diag = self._decomp_diag(w, Q)
-        # handle case where y is 2-d
-        if len(y.shape) != 1:
-            G_diag = G_diag[:, np.newaxis]
-        return (c / G_diag) ** 2, c
-
-    def _values(self, alpha, y, v, Q, QT_y):
-        # don't construct matrix G, instead compute action on y & diagonal
-        w = 1.0 / (v + alpha)
-        c = np.dot(Q, self._diag_dot(w, QT_y))
-        G_diag = self._decomp_diag(w, Q)
-        # handle case where y is 2-d
-        if len(y.shape) != 1:
-            G_diag = G_diag[:, np.newaxis]
-        return y - (c / G_diag), c
 
     def _pre_compute_svd(self, X, y):
         if sparse.issparse(X):
@@ -992,18 +965,16 @@ class _RidgeGCV(LinearModel):
             gcv_mode = 'eigen'
 
         if gcv_mode == 'eigen':
-            _pre_compute = self._pre_compute
-            _errors = self._errors
-            _values = self._values
+            pass
         elif gcv_mode == 'svd':
             # assert n_samples >= n_features
             _pre_compute = self._pre_compute_svd
             _errors = self._errors_svd
             _values = self._values_svd
+            v, Q, QT_y = _pre_compute(X, y)
         else:
             raise ValueError('bad gcv_mode "%s"' % gcv_mode)
 
-        v, Q, QT_y = _pre_compute(X, y)
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
         cv_values = np.zeros((n_samples * n_y, len(self.alphas)))
         C = []
