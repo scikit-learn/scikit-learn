@@ -19,6 +19,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils.fixes import np_version
 from ..utils.fixes import sparse_min_max
 from ..utils.fixes import astype
+from ..utils.fixes import in1d
 from ..utils import deprecated, column_or_1d
 from ..utils.validation import check_array
 from ..utils.multiclass import unique_labels
@@ -502,7 +503,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
         y = column_or_1d(y)
 
         # pick out the known labels from y
-        y_in_classes = np.in1d(y, classes)
+        y_in_classes = in1d(y, classes)
         y_seen = y[y_in_classes]
         indices = np.searchsorted(sorted_class, y_seen)
 
