@@ -200,19 +200,21 @@ def test_fit():
     # Hash length = 32
     assert_equal(32, lshf.hash_functions_.shape[1])
     # Number of trees in the forest
-    assert_equal(n_trees, lshf._trees.shape[0])
+    assert_equal(n_trees, len(lshf._trees))
     # Each tree has entries for every data point
-    assert_equal(samples, lshf._trees.shape[1])
+    assert_equal(samples, len(lshf._trees[0]))
     # Original indices after sorting the hashes
-    assert_equal(n_trees, lshf._original_indices.shape[0])
+    assert_equal(n_trees, len(lshf._original_indices))
     # Each set of original indices in a tree has entries for every data point
-    assert_equal(samples, lshf._original_indices.shape[1])
+    assert_equal(samples, len(lshf._original_indices[0]))
 
 
 def test_insert():
     samples = 100
+    samples_insert = 10
     dim = 50
     X = np.random.rand(samples, dim)
+    X_insert = np.random.rand(samples_insert, dim)
 
     lshf = LSHForest()
     # Test unfitted estimator
@@ -222,19 +224,19 @@ def test_insert():
 
     # Insert wrong dimension
     assert_raises(ValueError, lshf.insert,
-                  np.random.randn(dim-1))
-    # Insert 2D array
-    assert_raises(ValueError, lshf.insert,
-                  np.random.randn(dim, 2))
+                  np.random.randn(samples_insert, dim-1))
 
-    lshf.insert(np.random.randn(dim))
+    lshf.insert(X_insert)
 
     # size of _input_array = samples + 1 after insertion
-    assert_equal(lshf._input_array.shape[0], samples+1)
+    assert_equal(lshf._input_array.shape[0],
+                 samples+samples_insert)
     # size of _original_indices[1] = samples + 1
-    assert_equal(lshf._original_indices.shape[1], samples+1)
+    assert_equal(len(lshf._original_indices[0]),
+                 samples+samples_insert)
     # size of _trees[1] = samples + 1
-    assert_equal(lshf._trees.shape[1], samples+1)
+    assert_equal(len(lshf._trees[1]),
+                 samples+samples_insert)
 
 
 if __name__ == "__main__":
