@@ -20,7 +20,7 @@ from sklearn.neighbors import LSHForest
 def test_neighbors_accuracy_with_c():
     """Accuracy increases as `c` increases."""
     c_values = np.array([10, 50, 250])
-    samples = 1000
+    samples = 100
     dim = 50
     n_iter = 10
     n_points = 20
@@ -51,7 +51,7 @@ def test_neighbors_accuracy_with_c():
 def test_neighbors_accuracy_with_n_trees():
     """Accuracy increases as `n_trees` increases."""
     n_trees = np.array([1, 10, 100])
-    samples = 1000
+    samples = 100
     dim = 50
     n_iter = 10
     n_points = 20
@@ -80,9 +80,9 @@ def test_neighbors_accuracy_with_n_trees():
 
 
 def test_kneighbors():
-    samples = 1000
+    samples = 100
     dim = 50
-    n_iter = 100
+    n_iter = 10
     X = np.random.rand(samples, dim)
 
     lshf = LSHForest(lower_bound=0)
@@ -110,6 +110,9 @@ def test_kneighbors():
                                            return_distance=True)
     assert_equal(neighbors.shape[0], n_points)
     assert_equal(distances.shape[0], n_points)
+    # Test only neighbors
+    neighbors = lshf.kneighbors(points, n_neighbors=1)
+    assert_equal(neighbors.shape[0], n_points)
     # Test random point(not in the data set)
     point = np.random.randn(dim)
     lshf.kneighbors(point, n_neighbors=1,
@@ -117,9 +120,9 @@ def test_kneighbors():
 
 
 def test_radius_neighbors():
-    samples = 1000
+    samples = 100
     dim = 50
-    n_iter = 100
+    n_iter = 10
     X = np.random.rand(samples, dim)
 
     lshf = LSHForest()
@@ -134,6 +137,11 @@ def test_radius_neighbors():
         neighbors = lshf.radius_neighbors(point, radius=mean_dist)
         # At least one neighbor should be returned.
         assert_greater(neighbors.shape[1], 0)
+        # All distances should be less than mean_dist
+        neighbors, distances = lshf.radius_neighbors(point,
+                                                     radius=mean_dist,
+                                                     return_distance=True)
+        assert_array_less(distances, mean_dist)
 
     # Test whether a value error is raised when X=None
     assert_raises(ValueError, lshf.radius_neighbors, None)
@@ -148,9 +156,9 @@ def test_radius_neighbors():
 
 
 def test_distances():
-    samples = 1000
+    samples = 100
     dim = 50
-    n_iter = 100
+    n_iter = 10
     X = np.random.rand(samples, dim)
 
     lshf = LSHForest()
@@ -173,7 +181,7 @@ def test_distances():
 
 
 def test_fit():
-    samples = 1000
+    samples = 100
     dim = 50
     n_trees = 5
     X = np.random.rand(samples, dim)
@@ -202,7 +210,7 @@ def test_fit():
 
 
 def test_insert():
-    samples = 1000
+    samples = 100
     dim = 50
     X = np.random.rand(samples, dim)
 

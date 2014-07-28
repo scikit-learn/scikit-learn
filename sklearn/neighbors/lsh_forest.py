@@ -200,6 +200,12 @@ class LSHForest(BaseEstimator):
         return np.argsort(binary_hashes), np.sort(binary_hashes), hash_function
 
     def _compute_distances(self, query, candidates):
+        """
+        Computes the Euclidean distance from the query
+        to points in the candidates array.
+        Returns argsort of distances in the candidates
+        array and sorted distances.
+        """
         distances = _simple_euclidean_distance(
             query, self._input_array[candidates])
         return np.argsort(distances), np.sort(distances)
@@ -226,7 +232,12 @@ class LSHForest(BaseEstimator):
         self._right_mask = np.array(self._right_mask)
 
     def _get_candidates(self, query, max_depth, bin_queries, m):
-        # Synchronous ascend phase
+        """
+        Performs the Synchronous ascending phase in the LSH Forest
+        paper.
+        Returns an array of candidates, their distance rancks and
+        distances.
+        """
         candidates = []
         n_candidates = self.c * self.n_trees
         while max_depth > self.lower_bound and (len(candidates) < n_candidates
@@ -245,6 +256,11 @@ class LSHForest(BaseEstimator):
         return candidates, ranks, distances
 
     def _get_radius_neighbors(self, query, max_depth, bin_queries, radius):
+        """
+        Finds neighbors of which the distances from query are smaller than
+        radius, from the candidates obtained.
+        Returns radius neighbors and distances.
+        """
         ratio_within_radius = 1
         threshold = 1 - self.radius_cutoff_ratio
         total_candidates = np.array([], dtype=int)
@@ -321,7 +337,9 @@ class LSHForest(BaseEstimator):
 
     def _query(self, query, m=None, radius=None, is_radius=False):
         """
-        returns self.m number of neighbors and the distances
+        Returns the neighbors whose distances from the query is less
+        than radius if is_radius is True.
+        Otherwise returns m number of neighbors and the distances
         for a given query.
         """
         bin_queries = []
