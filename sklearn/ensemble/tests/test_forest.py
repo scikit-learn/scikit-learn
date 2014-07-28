@@ -305,9 +305,19 @@ def check_parallel(name, X, y):
 
     forest.set_params(n_jobs=1)
     y1 = forest.predict(X)
+    a1 = forest.apply(X)
     forest.set_params(n_jobs=2)
     y2 = forest.predict(X)
+    a2 = forest.apply(X)
     assert_array_almost_equal(y1, y2, 3)
+    assert_array_almost_equal(a1, a2, 3)
+
+    if hasattr(forest, 'predict_proba'):
+        forest.set_params(n_jobs=1)
+        proba1 = forest.predict_proba(X)
+        forest.set_params(n_jobs=2)
+        proba2 = forest.predict_proba(X)
+        assert_array_almost_equal(proba1, proba2, 3)
 
 
 def test_parallel():
@@ -358,15 +368,17 @@ def check_multioutput(name):
 
     if name in FOREST_CLASSIFIERS:
         with np.errstate(divide="ignore"):
-            proba = est.predict_proba(X_test)
-            assert_equal(len(proba), 2)
-            assert_equal(proba[0].shape, (4, 2))
-            assert_equal(proba[1].shape, (4, 4))
+            for n_jobs in [1, 2]:
+                est.set_params(n_jobs=n_jobs)
+                proba = est.predict_proba(X_test)
+                assert_equal(len(proba), 2)
+                assert_equal(proba[0].shape, (4, 2))
+                assert_equal(proba[1].shape, (4, 4))
 
-            log_proba = est.predict_log_proba(X_test)
-            assert_equal(len(log_proba), 2)
-            assert_equal(log_proba[0].shape, (4, 2))
-            assert_equal(log_proba[1].shape, (4, 4))
+                log_proba = est.predict_log_proba(X_test)
+                assert_equal(len(log_proba), 2)
+                assert_equal(log_proba[0].shape, (4, 2))
+                assert_equal(log_proba[1].shape, (4, 4))
 
 
 def test_multioutput():
