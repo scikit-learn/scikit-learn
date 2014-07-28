@@ -2368,9 +2368,7 @@ model* train(const problem *prob, const parameter *param)
 	model_->param = *param;
 	model_->bias = prob->bias;
 
-	if(param->solver_type == L2R_L2LOSS_SVR ||
-	   param->solver_type == L2R_L1LOSS_SVR_DUAL ||
-	   param->solver_type == L2R_L2LOSS_SVR_DUAL)
+	if(check_regression_model(model_))
 	{
 		model_->w = Malloc(double, w_size);
 		model_->n_iter = Malloc(int, 1);
@@ -2579,9 +2577,7 @@ double predict_values(const struct model *model_, const struct feature_node *x, 
 
 	if(nr_class==2)
 	{
-		if(model_->param.solver_type == L2R_L2LOSS_SVR ||
-		   model_->param.solver_type == L2R_L1LOSS_SVR_DUAL ||
-		   model_->param.solver_type == L2R_L2LOSS_SVR_DUAL)
+		if(check_regression_model(model_))
 			return dec_values[0];
 		else
 			return (dec_values[0]>0)?model_->label[0]:model_->label[1];
@@ -2844,6 +2840,58 @@ void get_n_iter(const model *model_, int* n_iter)
             n_iter[i] = model_->n_iter[i];
 }
 
+#if 0
+// use inline here for better performance (around 20% faster than the non-inline one)
+static inline double get_w_value(const struct model *model_, int idx, int label_idx)
+{
+	int nr_class = model_->nr_class;
+	int solver_type = model_->param.solver_type;
+	const double *w = model_->w;
+
+	if(!check_regression_model(model_) && (label_idx < 0 || label_idx >= nr_class))
+	{
+		const double nan = 0.0/0.0;
+		return nan;
+	}
+	if(idx < 0 || idx > model_->nr_feature)
+		return 0;
+	if(check_regression_model(model_))
+		return w[idx];
+	else
+	{
+		if(nr_class == 2 && solver_type != MCSVM_CS)
+		{
+			if(label_idx == 0)
+				return w[idx];
+			else
+				return -w[idx];
+		}
+		else
+			return w[idx*nr_class+label_idx];
+	}
+}
+
+// feat_idx: starting from 1 to nr_feature
+// label_idx: starting from 0 to nr_class-1 for classification models;
+//            for regression models, label_idx is ignored.
+double get_decfun_coef(const struct model *model_, int feat_idx, int label_idx)
+{
+	if(feat_idx > model_->nr_feature)
+		return 0;
+	return get_w_value(model_, feat_idx-1, label_idx);
+}
+
+double get_decfun_bias(const struct model *model_, int label_idx)
+{
+	int bias_idx = model_->nr_feature;
+	double bias = model_->bias;
+	if(bias <= 0)
+		return 0;
+	else
+		return bias*get_w_value(model_, bias_idx, label_idx);
+}
+#endif
+
 void free_model_content(struct model *model_ptr)
 {
 	if(model_ptr->w != NULL)
@@ -2905,6 +2953,13 @@ int check_probability_model(const struct model *model_)
 			model_->param.solver_type==L1R_LR);
 }
 #endif
+
+int check_regression_model(const struct model *model_)
+{
+	return (model_->param.solver_type==L2R_L2LOSS_SVR ||
+			model_->param.solver_type==L2R_L1LOSS_SVR_DUAL ||
+			model_->param.solver_type==L2R_L2LOSS_SVR_DUAL);
+}
 
 void set_print_string_function(void (*print_func)(const char*))
 {
