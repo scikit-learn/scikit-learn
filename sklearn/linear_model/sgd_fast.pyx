@@ -30,23 +30,23 @@ cdef extern from "cblas.h":
 
     # dot product of two n elemenet vectors x and y
     double ddot "cblas_ddot" (int n,
-                              double* x,
+                              const double* x,
                               int incrx,
-                              double* y,
+                              const double* y,
                               int incry) nogil
 
     # scale the passed in n element vector x at scale
     void dscal "cblas_dscal" (int n,
                               double scale,
-                              double* x,
+                              const double* x,
                               int incrx) nogil
 
     # adds a vector x * scaler scale to another vector y
     void daxpy "cblas_daxpy" (int n,
                               double scale,
-                              double* x,
+                              const double* x,
                               int incrx,
-                              double* y,
+                              const double* y,
                               int incry) nogil
 
 # Penalty constants
