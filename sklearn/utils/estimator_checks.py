@@ -770,8 +770,9 @@ def check_cluster_overwrite_params(name, Clustering):
 
 
 def check_sparsify_multiclass_classifier(name, Classifier):
-    X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
-    y = [1, 1, 1, 2, 2, 3]
+    X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1],
+                  [-1, -2], [2, 2], [-2, -2]])
+    y = [1, 1, 1, 2, 2, 2, 3, 3, 3]
     est = Classifier()
 
     est.fit(X, y)
