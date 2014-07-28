@@ -185,30 +185,30 @@ def check_importance(name, X, y):
     """Check variable importances."""
 
     ForestClassifier = FOREST_CLASSIFIERS[name]
+    for n_jobs in [1, 2]:
+        clf = ForestClassifier(n_estimators=10, n_jobs=n_jobs)
+        clf.fit(X, y)
+        importances = clf.feature_importances_
+        n_important = np.sum(importances > 0.1)
+        assert_equal(importances.shape[0], 10)
+        assert_equal(n_important, 3)
 
-    clf = ForestClassifier(n_estimators=10)
-    clf.fit(X, y)
-    importances = clf.feature_importances_
-    n_important = np.sum(importances > 0.1)
-    assert_equal(importances.shape[0], 10)
-    assert_equal(n_important, 3)
+        X_new = clf.transform(X, threshold="mean")
+        assert_less(0 < X_new.shape[1], X.shape[1])
 
-    X_new = clf.transform(X, threshold="mean")
-    assert_less(0 < X_new.shape[1], X.shape[1])
+        # Check with sample weights
+        sample_weight = np.ones(y.shape)
+        sample_weight[y == 1] *= 100
 
-    # Check with sample weights
-    sample_weight = np.ones(y.shape)
-    sample_weight[y == 1] *= 100
+        clf = ForestClassifier(n_estimators=50, n_jobs=n_jobs, random_state=0)
+        clf.fit(X, y, sample_weight=sample_weight)
+        importances = clf.feature_importances_
+        assert_true(np.all(importances >= 0.0))
 
-    clf = ForestClassifier(n_estimators=50, random_state=0)
-    clf.fit(X, y, sample_weight=sample_weight)
-    importances = clf.feature_importances_
-    assert_true(np.all(importances >= 0.0))
-
-    clf = ForestClassifier(n_estimators=50, random_state=0)
-    clf.fit(X, y, sample_weight=3 * sample_weight)
-    importances_bis = clf.feature_importances_
-    assert_almost_equal(importances, importances_bis)
+        clf = ForestClassifier(n_estimators=50, n_jobs=n_jobs, random_state=0)
+        clf.fit(X, y, sample_weight=3 * sample_weight)
+        importances_bis = clf.feature_importances_
+        assert_almost_equal(importances, importances_bis)
 
 
 def test_importances():
@@ -305,19 +305,9 @@ def check_parallel(name, X, y):
 
     forest.set_params(n_jobs=1)
     y1 = forest.predict(X)
-    a1 = forest.apply(X)
     forest.set_params(n_jobs=2)
     y2 = forest.predict(X)
-    a2 = forest.apply(X)
     assert_array_almost_equal(y1, y2, 3)
-    assert_array_almost_equal(a1, a2, 3)
-
-    if hasattr(forest, 'predict_proba'):
-        forest.set_params(n_jobs=1)
-        proba1 = forest.predict_proba(X)
-        forest.set_params(n_jobs=2)
-        proba2 = forest.predict_proba(X)
-        assert_array_almost_equal(proba1, proba2, 3)
 
 
 def test_parallel():
@@ -368,17 +358,15 @@ def check_multioutput(name):
 
     if name in FOREST_CLASSIFIERS:
         with np.errstate(divide="ignore"):
-            for n_jobs in [1, 2]:
-                est.set_params(n_jobs=n_jobs)
-                proba = est.predict_proba(X_test)
-                assert_equal(len(proba), 2)
-                assert_equal(proba[0].shape, (4, 2))
-                assert_equal(proba[1].shape, (4, 4))
+            proba = est.predict_proba(X_test)
+            assert_equal(len(proba), 2)
+            assert_equal(proba[0].shape, (4, 2))
+            assert_equal(proba[1].shape, (4, 4))
 
-                log_proba = est.predict_log_proba(X_test)
-                assert_equal(len(log_proba), 2)
-                assert_equal(log_proba[0].shape, (4, 2))
-                assert_equal(log_proba[1].shape, (4, 4))
+            log_proba = est.predict_log_proba(X_test)
+            assert_equal(len(log_proba), 2)
+            assert_equal(log_proba[0].shape, (4, 2))
+            assert_equal(log_proba[1].shape, (4, 4))
 
 
 def test_multioutput():
