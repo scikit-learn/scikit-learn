@@ -465,12 +465,10 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     n_iters = []
 
     rng = check_random_state(params.get('random_state', None))
-
-    shuffle = False
     selection = params.get('selection', 'cyclic')
-    if selection == 'random':
-        shuffle = True
-
+    if selection not in ['random', 'cyclic']:
+        raise ValueError("selection should be either random or cyclic.")
+    random = (selection == 'random')
     models = []
 
     if not multi_output:
@@ -491,17 +489,17 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             model = cd_fast.sparse_enet_coordinate_descent(
                 coef_, l1_reg, l2_reg, X.data, X.indices,
                 X.indptr, y, X_sparse_scaling,
-                max_iter, tol, rng, shuffle, positive)
+                max_iter, tol, rng, random, positive)
         elif multi_output:
             model = cd_fast.enet_coordinate_descent_multi_task(
-                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, shuffle)
+                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random)
         elif isinstance(precompute, np.ndarray):
             model = cd_fast.enet_coordinate_descent_gram(
                 coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
-                tol, rng, shuffle, positive)
+                tol, rng, random, positive)
         elif precompute is False:
             model = cd_fast.enet_coordinate_descent(
-                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, shuffle,
+                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random,
                 positive)
         else:
             raise ValueError("Precompute should be one of True, False, "
@@ -626,13 +624,16 @@ class ElasticNet(LinearModel, RegressorMixin):
     positive: bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
-    random_state : int, RandomState instance, or None (default)
-        The seed of the pseudo random number generator that selects
-        a random feature to update. Useful only when shuffle is set to True.
-
     selection : str, default 'cyclic'
         If set to 'random', a random coefficient is updated every iteration
-        rather than looping over features sequentially by default.
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4.
+
+    random_state : int, RandomState instance, or None (default)
+        The seed of the pseudo random number generator that selects
+        a random feature to update. Useful only when selection is set to
+        'random'.
 
     Attributes
     ----------
@@ -846,13 +847,16 @@ class Lasso(ElasticNet):
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
-    random_state : int, RandomState instance, or None (default)
-        The seed of the pseudo random number generator that selects
-        a random feature to update. Useful only when shuffle is set to True.
-
     selection : str, default 'cyclic'
         If set to 'random', a random coefficient is updated every iteration
-        rather than looping over features sequentially by default.
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4.
+
+    random_state : int, RandomState instance, or None (default)
+        The seed of the pseudo random number generator that selects
+        a random feature to update. Useful only when selection is set to
+        'random'.
 
     Attributes
     ----------
@@ -1266,13 +1270,16 @@ class LassoCV(LinearModelCV, RegressorMixin):
     positive : bool, optional
         If positive, restrict regression coefficients to be positive
 
-    random_state : int, RandomState instance, or None (default)
-        The seed of the pseudo random number generator that selects
-        a random feature to update. Useful only when shuffle is set to True.
-
     selection : str, default 'cyclic'
         If set to 'random', a random coefficient is updated every iteration
-        rather than looping over features sequentially by default.
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4.
+
+    random_state : int, RandomState instance, or None (default)
+        The seed of the pseudo random number generator that selects
+        a random feature to update. Useful only when selection is set to
+        'random'.
 
     Attributes
     ----------
@@ -1390,13 +1397,16 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
-    random_state : int, RandomState instance, or None (default)
-        The seed of the pseudo random number generator that selects
-        a random feature to update. Useful only when shuffle is set to True.
-
     selection : str, default 'cyclic'
         If set to 'random', a random coefficient is updated every iteration
-        rather than looping over features sequentially by default.
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4.
+
+    random_state : int, RandomState instance, or None (default)
+        The seed of the pseudo random number generator that selects
+        a random feature to update. Useful only when selection is set to
+        'random'.
 
     Attributes
     ----------
@@ -1532,13 +1542,16 @@ class MultiTaskElasticNet(Lasso):
         When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
-    random_state : int, RandomState instance, or None (default)
-        The seed of the pseudo random number generator that selects
-        a random feature to update. Useful only when shuffle is set to True.
-
     selection : str, default 'cyclic'
         If set to 'random', a random coefficient is updated every iteration
-        rather than looping over features sequentially by default.
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4.
+
+    random_state : int, RandomState instance, or None (default)
+        The seed of the pseudo random number generator that selects
+        a random feature to update. Useful only when selection is set to
+        'random'.
 
     Attributes
     ----------
@@ -1647,14 +1660,12 @@ class MultiTaskElasticNet(Lasso):
 
         if self.selection not in ['random', 'cyclic']:
             raise ValueError("selection should be either random or cyclic.")
-        shuffle = False
-        if self.selection == 'random':
-            shuffle = True
+        random = (self.selection == 'random')
 
         self.coef_, self.dual_gap_, self.eps_, self.n_iter_ = \
             cd_fast.enet_coordinate_descent_multi_task(
                 self.coef_, l1_reg, l2_reg, X, y, self.max_iter, self.tol,
-                check_random_state(self.random_state), shuffle)
+                check_random_state(self.random_state), random)
 
         self._set_intercept(X_mean, y_mean, X_std)
 
@@ -1708,13 +1719,16 @@ class MultiTaskLasso(MultiTaskElasticNet):
         When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
-    random_state : int, RandomState instance, or None (default)
-        The seed of the pseudo random number generator that selects
-        a random feature to update. Useful only when shuffle is set to True.
-
     selection : str, default 'cyclic'
         If set to 'random', a random coefficient is updated every iteration
-        rather than looping over features sequentially by default.
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4
+
+    random_state : int, RandomState instance, or None (default)
+        The seed of the pseudo random number generator that selects
+        a random feature to update. Useful only when selection is set to
+        'random'.
 
     Attributes
     ----------
@@ -1837,13 +1851,16 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         all the CPUs. Note that this is used only if multiple values for
         l1_ratio are given.
 
-    random_state : int, RandomState instance, or None (default)
-        The seed of the pseudo random number generator that selects
-        a random feature to update. Useful only when shuffle is set to True.
-
     selection : str, default 'cyclic'
         If set to 'random', a random coefficient is updated every iteration
-        rather than looping over features sequentially by default.
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4.
+
+    random_state : int, RandomState instance, or None (default)
+        The seed of the pseudo random number generator that selects
+        a random feature to update. Useful only when selection is set to
+        'random'.
 
     Attributes
     ----------
@@ -1982,13 +1999,16 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
         all the CPUs. Note that this is used only if multiple values for
         l1_ratio are given.
 
-    random_state : int, RandomState instance, or None (default)
-        The seed of the pseudo random number generator that selects
-        a random feature to update. Useful only when shuffle is set to True.
-
     selection : str, default 'cyclic'
         If set to 'random', a random coefficient is updated every iteration
-        rather than looping over features sequentially by default.
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4.
+
+    random_state : int, RandomState instance, or None (default)
+        The seed of the pseudo random number generator that selects
+        a random feature to update. Useful only when selection is set to
+        'random'.
 
     Attributes
     ----------

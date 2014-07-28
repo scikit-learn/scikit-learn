@@ -128,7 +128,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             np.ndarray[DOUBLE, ndim=2] X,
                             np.ndarray[DOUBLE, ndim=1] y,
                             int max_iter, double tol,
-                            object rng, bint shuffle=0, bint positive=0):
+                            object rng, bint random=0, bint positive=0):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -192,7 +192,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             w_max = 0.0
             d_w_max = 0.0
             for f_iter in range(n_features):  # Loop over coordinates
-                if shuffle:
+                if random:
                     ii = rand_int(n_features, rand_r_state)
                 else:
                     ii = f_iter
@@ -292,7 +292,7 @@ def sparse_enet_coordinate_descent(double[:] w,
                             double[:] X_data, int[:] X_indices,
                             int[:] X_indptr, double[:] y,
                             double[:] X_mean, int max_iter,
-                            double tol, object rng, bint shuffle=0,
+                            double tol, object rng, bint random=0,
                             bint positive=0):
     """Cython version of the coordinate descent algorithm for Elastic-Net
 
@@ -374,7 +374,7 @@ def sparse_enet_coordinate_descent(double[:] w,
             d_w_max = 0.0
 
             for f_iter in range(n_features):  # Loop over coordinates
-                if shuffle:
+                if random:
                     ii = rand_int(n_features, rand_r_state)
                 else:
                     ii = f_iter
@@ -486,7 +486,7 @@ def sparse_enet_coordinate_descent(double[:] w,
 def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
                                  double[:, :] Q, double[:] q, double[:] y,
                                  int max_iter, double tol, object rng,
-                                 bint shuffle=0, bint positive=0):
+                                 bint random=0, bint positive=0):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -539,7 +539,7 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
             w_max = 0.0
             d_w_max = 0.0
             for f_iter in range(n_features):  # Loop over coordinates
-                if shuffle:
+                if random:
                     ii = rand_int(n_features, rand_r_state)
                 else:
                     ii = f_iter
@@ -628,7 +628,7 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
                                        double l2_reg, double[::1, :] X,
                                        double[:, :] Y, int max_iter,
                                        double tol, object rng,
-                                       bint shuffle=0):
+                                       bint random=0):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net mult-task regression
 
@@ -700,7 +700,7 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
             w_max = 0.0
             d_w_max = 0.0
             for f_iter in range(n_features):  # Loop over coordinates
-                if shuffle:
+                if random:
                     ii = rand_int(n_features, rand_r_state)
                 else:
                     ii = f_iter

@@ -516,8 +516,10 @@ def test_warm_start_convergence_with_regularizer_decrement():
 
 
 def test_random_descent():
-    """Test that both random and cyclic selection give the same results
-    when converged fully and using all conditions.
+    """Test that both random and cyclic selection give the same results.
+
+    Ensure that the test models fully converge and check a wide
+    range of conditions.
     """
 
     # This uses the coordinate descent algo using the gram trick.
@@ -554,6 +556,10 @@ def test_random_descent():
     clf_random.fit(X, new_y)
     assert_array_almost_equal(clf_cyclic.coef_, clf_random.coef_)
     assert_almost_equal(clf_cyclic.intercept_, clf_random.intercept_)
+
+    # Raise error when selection is not in cyclic or random.
+    clf_random = ElasticNet(selection='invalid')
+    assert_raises(ValueError, clf_random.fit, X, y)
 
 
 if __name__ == '__main__':
