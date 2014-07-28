@@ -93,13 +93,17 @@ def _precomp_kernel_ridge_path_eigen(gramX_train, Y_train, alphas,
                          "or change mode.")
 
     if sample_weight is not None:
-        sw = sample_weight.reshape(-1, 1)
+        has_sw = True
+        sqrt_sw = np.sqrt(sample_weight.reshape(-1, 1))
         if copy:
-            gramX_train = sw * gramX_train
-            Y_train = sw * Y_train
+            gramX_train = (sqrt_sw * gramX_train) * sqrt_sw.T
+            Y_train = sqrt_sw * Y_train
         else:
-            gramX_train *= sw
-            Y_train *= sw
+            gramX_train *= sqrt_sw
+            gramX_train *= sqrt_sw.T
+            Y_train *= sqrt_sw
+    else:
+        has_sw = False
 
     eig_val_train, eig_vect_train = linalg.eigh(gramX_train)
     VTY = eig_vect_train.T.dot(Y_train)
@@ -113,12 +117,16 @@ def _precomp_kernel_ridge_path_eigen(gramX_train, Y_train, alphas,
 
     if gramX_test is None:
         dual_coef = eig_vect_train.dot(v_alpha_VTY).transpose(1, 0, 2)
+        if has_sw:
+            dual_coef *= sqrt_sw
         if mode == 'normal':
             output = dual_coef
         elif mode in ['looe', 'loov']:
             diag_rescale = (eig_vect_train ** 2).dot(
                 v_alpha_inv).transpose(1, 0, 2)
             looe = dual_coef / diag_rescale
+            if has_sw:
+                looe /= sqrt_sw ** 2
             output = looe, dual_coef
             if mode == 'loov':
                 loov = Y_train[np.newaxis] - looe
@@ -127,6 +135,8 @@ def _precomp_kernel_ridge_path_eigen(gramX_train, Y_train, alphas,
             raise ValueError("mode not understood")
     else:
         predict_mat = gramX_test.dot(eig_vect_train)
+        if has_sw:
+            predict_mat *= sqrt_sw
         predictions = predict_mat.dot(v_alpha_VTY).transpose(1, 0, 2)
         output = predictions
 

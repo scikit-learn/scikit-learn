@@ -858,8 +858,7 @@ def test_kernel_ridge_path_with_sample_weights():
     cv_errors = Y[np.newaxis] - cv_predictions.reshape(
         len(alphas), n_samples, n_targets)
 
-
-    ridge_path_gcv_errors = _kernel_ridge_path_eigen(X, Y, alphas,
-                                                     mode='looe')[0]
+    ridge_path_gcv_errors = _kernel_ridge_path_eigen(
+        X, Y, alphas, sample_weight=sample_weights, mode='looe')[0]
 
     assert_array_almost_equal(cv_errors, ridge_path_gcv_errors)
