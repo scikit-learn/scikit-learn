@@ -177,35 +177,20 @@ class LSHForest(BaseEstimator):
         grp.fit(X)
         return grp
 
-    def _do_hash(self, input_array=None):
-        """
-        Does hashing on an array of data points.
-        This creates a binary hash by getting the dot product of
-        input_point and hash_function then transforming the projection
-        into a binary string array based on the sign(positive/negative)
-        of the projection.
-
-        Parameters
-        ----------
-
-        input_array: array_like, shape (n_samples, n_features)
-            A matrix of dimensions (n_samples, n_features), which is being
-            hashed.
-        """
-        if input_array is None:
-            raise ValueError("input_array cannot be None.")
-
-        grp = self._generate_hash_function()
-        res = np.array(grp.transform(input_array) > 0, dtype=int)
-
-        return res, grp.components_
-
     def _create_tree(self):
         """
         Builds a single tree (in this case creates a sorted array of
         binary hashes).
+        Hashing is done on an array of data points.
+        This creates a binary hashes by getting the dot product of
+        input points and hash_function then transforming the projection
+        into a binary string array based on the sign(positive/negative)
+        of the projection.
         """
-        hashes, hash_function = self._do_hash(self._input_array)
+        grp = self._generate_hash_function()
+        hashes = np.array(grp.transform(self._input_array) > 0, dtype=int)
+        hash_function = grp.components_
+
         binary_hashes = []
         for i in range(hashes.shape[0]):
             xx = tuple(hashes[i])
