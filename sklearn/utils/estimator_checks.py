@@ -770,9 +770,8 @@ def check_cluster_overwrite_params(name, Clustering):
 
 
 def check_sparsify_multiclass_classifier(name, Classifier):
-    X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1],
-                  [-1, -2], [2, 2], [-2, -2]])
-    y = [1, 1, 1, 2, 2, 2, 3, 3, 3]
+    X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
+    y = [1, 1, 1, 2, 2, 3]
     est = Classifier()
 
     est.fit(X, y)
@@ -921,6 +920,7 @@ def check_non_transformer_estimators_n_iter(name, estimator, multi_output=False)
     if multi_output:
         y_ = y_[:, np.newaxis]
 
+    set_random_state(estimator, 0)
     if name == 'AffinityPropagation':
         estimator.fit(X)
     else:
@@ -932,12 +932,13 @@ def check_transformer_n_iter(name, estimator):
     if name in CROSS_DECOMPOSITION:
         # Check using default data
         X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
-        y_ = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
+        y_ = [[0.1, -0.2], [0.9, 1.1], [0.1, -0.5], [0.3, -0.2]]
 
     else:
         X, y_ = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                           random_state=0, n_features=2, cluster_std=0.1)
         X -= X.min() - 0.1
+    set_random_state(estimator, 0)
     estimator.fit(X, y_)
 
     # These return a n_iter per component.
