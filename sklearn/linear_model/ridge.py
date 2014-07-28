@@ -27,6 +27,7 @@ from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
 from ..externals import six
 from ..metrics.scorer import check_scoring
+from ..cross_validation import check_cv
 
 
 def _precomp_kernel_ridge_path_eigen(v_train, V_train, Y_train, alphas,
@@ -91,6 +92,12 @@ def feature_ridge_path_eigen(X_train, Y_train, alphas, X_test=None):
     v, V = np.linalg.eigh(X_train.T.dot(X_train))
 
     return _feature_ridge_path_eigen(v, V, XTY, alphas, X_test)
+
+
+def _multi_r2(y_true, y_pred):
+    err = ((y_pred - y_true) ** 2).sum(-2)
+    sq_norm_y_true = (y_true ** 2).sum(-2)
+    return 1 - err / (sq_norm_y_true + 1e-18)
 
 
 def ridge_path(X_train, Y_train, alphas, X_test=None, solver="eigen"):
@@ -168,7 +175,7 @@ def ridge_path(X_train, Y_train, alphas, X_test=None, solver="eigen"):
                 dual_path_or_predictions).transpose(1, 0, 2)
             path = primal_path
         else:
-            prediction_path = dual_path_or_predictions
+            prediction_path = dual_path_or_predictions[0]
             path = prediction_path
     else:
         path = feature_ridge_path_eigen(X_train, Y_train, alphas, X_test)
@@ -967,8 +974,8 @@ class _RidgeGCV(LinearModel):
 class _BaseRidgeCV(LinearModel):
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]),
                  fit_intercept=True, normalize=False, scoring=None,
-                 cv=None, gcv_mode=None,
-                 store_cv_values=False):
+                 scoring=None, cv=None, gcv_mode=None,
+                 store_cv_values=False, solver=None, copyX=True):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -976,6 +983,8 @@ class _BaseRidgeCV(LinearModel):
         self.cv = cv
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
+        self.solver = solver
+        self.copyX = copyX
 
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model
@@ -1006,23 +1015,81 @@ class _BaseRidgeCV(LinearModel):
             self.alpha_ = estimator.alpha_
             if self.store_cv_values:
                 self.cv_values_ = estimator.cv_values_
+            self.coef_ = estimator.coef_
+            self.intercept_ = estimator.intercept_
         else:
-            if self.store_cv_values:
-                raise ValueError("cv!=None and store_cv_values=True "
-                                 " are incompatible")
-            parameters = {'alpha': self.alphas}
-            # FIXME: sample_weight must be split into training/validation data
-            #        too!
-            #fit_params = {'sample_weight' : sample_weight}
-            fit_params = {}
-            gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept),
-                              parameters, fit_params=fit_params, cv=self.cv)
-            gs.fit(X, y)
-            estimator = gs.best_estimator_
-            self.alpha_ = gs.best_estimator_.alpha
+            if self.solver == 'eigen':
+                cv = check_cv(self.cv)
+                scorer = check_scoring(self,
+                                       scoring=self.scoring,
+                                       allow_none=True,
+                                       loss_func=self.loss_func,
+                                       score_func=self.score_func,
+                                       score_overrides_loss=True)
 
-        self.coef_ = estimator.coef_
-        self.intercept_ = estimator.intercept_
+                alphas = np.atleast_2d(np.array(self.alphas).T).T
+
+                # need to make an object with methods that scorers like
+                def identity_estimator():
+                    pass
+                identity_estimator.predict = lambda pred: pred
+                identity_estimator.decision_function = lambda dec: dec
+                identity_estimator.score = _multi_r2
+
+                # Need to center data before regression paths ...
+                # Means we probably need to write _center_and_ridge_path
+                # Or even a center + ridge_path + predict + score
+                # The following is rudimentary to ensure functionality
+                all_scores = np.zeros([len(cv), len(alphas), y.shape[1]])
+                for (train, test), scores in zip(cv, all_scores):
+                    X_train, y_train = X[train], y[train]
+                    (X_train, y_train,
+                     X_train_mean, y_train_mean,
+                     X_train_std) = self._center_data(
+                        X_train, y_train, self.fit_intercept,
+                        self.normalize, copy=True,
+                        sample_weight=sample_weight)
+
+                    predictions = ridge_path(
+                        X_train, y_train, alphas,
+                        (X[test] - X_train_mean) / X_train_std,
+                        solver='eigen') + y_train_mean[np.newaxis]
+                    for score, prediction in zip(scores, predictions):
+                        score[:] = scorer(
+                            identity_estimator, y[test], prediction)
+
+                arg_best_penalty = all_scores.mean(axis=0).argmax(axis=0)
+                self.best_alphas_ = alphas[
+                    arg_best_penalty,
+                    np.maximum(
+                        np.arange(len(arg_best_penalty)),
+                        alphas.shape[1] - 1)]
+
+                (X, y, X_mean, y_mean, X_std) = self._center_data(
+                    X, y, self.fit_intercept, self.normalize,
+                    copy=self.copyX, sample_weight=sample_weight)
+                self.coef_ = ridge_path(X, y,
+                                        np.atleast_2d(self.best_alphas_),
+                                        solver='eigen')[0].T
+                self._set_intercept(X_mean, y_mean, X_std)
+            else:
+                # do the old grid search
+                if self.store_cv_values:
+                    raise ValueError("cv!=None and store_cv_values=True "
+                                 " are incompatible")
+                parameters = {'alpha': self.alphas}
+                # FIXME: sample_weight must be split into training/validation data
+                #        too!
+                #fit_params = {'sample_weight' : sample_weight}
+                fit_params = {}
+                gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept),
+                              parameters, fit_params=fit_params, cv=self.cv)
+                gs.fit(X, y)
+                estimator = gs.best_estimator_
+                self.alpha_ = gs.best_estimator_.alpha
+
+                self.coef_ = estimator.coef_
+                self.intercept_ = estimator.intercept_
 
         return self
 

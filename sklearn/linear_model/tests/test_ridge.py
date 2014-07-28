@@ -674,3 +674,26 @@ def test_raises_value_error_if_solver_not_supported():
         ridge_regression(X, y, alpha=1., solver=wrong_solver)
 
     assert_raise_message(exception, message, func)
+
+
+def test_ridge_cv_eigen_solver():
+
+    alphas = np.logspace(-3, 3, 10)
+    cv = KFold(len(y_diabetes), 2)
+    ridge_cv = RidgeCV(alphas=alphas, solver=None, cv=cv,
+                       fit_intercept=False)
+    ridge_cv_eigen = RidgeCV(alphas=alphas, solver='eigen', cv=cv,
+                             fit_intercept=False)
+
+    ridge_cv.fit(X_diabetes, y_diabetes)
+    ridge_cv_eigen.fit(X_diabetes, y_diabetes[:, np.newaxis])
+
+    assert_array_almost_equal(ridge_cv.coef_, ridge_cv_eigen.coef_[0])
+
+    ridge_cv.fit_intercept = True
+    ridge_cv_eigen.fit_intercept = True
+
+    ridge_cv.fit(X_diabetes, y_diabetes)
+    ridge_cv_eigen.fit(X_diabetes, y_diabetes[:, np.newaxis])
+
+    assert_array_almost_equal(ridge_cv.coef_, ridge_cv_eigen.coef_[0])
