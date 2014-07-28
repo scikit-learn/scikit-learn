@@ -282,19 +282,19 @@ class LabelPropagation(BaseLabelPropagation):
 
     Attributes
     ----------
-    `X_` : array, shape = [n_samples, n_features]
+    X_ : array, shape = [n_samples, n_features]
         Input array.
 
-    `classes_` : array, shape = [n_classes]
+    classes_ : array, shape = [n_classes]
         The distinct labels used in classifying instances.
 
-    `label_distributions_` : array, shape = [n_samples, n_classes]
+    label_distributions_ : array, shape = [n_samples, n_classes]
         Categorical distribution for each item.
 
-    `transduction_` : array, shape = [n_samples]
+    transduction_ : array, shape = [n_samples]
         Label assigned to each item via the transduction.
 
-    `n_iter_` : int
+    n_iter_ : int
         Number of iterations run.
 
     Examples
@@ -364,19 +364,19 @@ class LabelSpreading(BaseLabelPropagation):
 
     Attributes
     ----------
-    `X_` : array, shape = [n_samples, n_features]
+    X_ : array, shape = [n_samples, n_features]
         Input array.
 
-    `classes_` : array, shape = [n_classes]
+    classes_ : array, shape = [n_classes]
         The distinct labels used in classifying instances.
 
-    `label_distributions_` : array, shape = [n_samples, n_classes]
+    label_distributions_ : array, shape = [n_samples, n_classes]
         Categorical distribution for each item.
 
-    `transduction_` : array, shape = [n_samples]
+    transduction_ : array, shape = [n_samples]
         Label assigned to each item via the transduction.
 
-    `n_iter_` : int
+    n_iter_ : int
         Number of iterations run.
 
     Examples

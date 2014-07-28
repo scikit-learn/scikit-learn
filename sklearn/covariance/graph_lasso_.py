@@ -284,13 +284,13 @@ class GraphLasso(EmpiricalCovariance):
 
     Attributes
     ----------
-    `covariance_` : array-like, shape (n_features, n_features)
+    covariance_ : array-like, shape (n_features, n_features)
         Estimated covariance matrix
 
-    `precision_` : array-like, shape (n_features, n_features)
+    precision_ : array-like, shape (n_features, n_features)
         Estimated pseudo inverse matrix.
 
-    `n_iter_` : int
+    n_iter_ : int
         Number of iterations run.
 
     See Also
@@ -358,13 +358,13 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
 
     Returns
     -------
-    `covariances_` : List of 2D ndarray, shape (n_features, n_features)
+    covariances_ : List of 2D ndarray, shape (n_features, n_features)
         The estimated covariance matrices.
 
-    `precisions_` : List of 2D ndarray, shape (n_features, n_features)
+    precisions_ : List of 2D ndarray, shape (n_features, n_features)
         The estimated (sparse) precision matrices.
 
-    `scores_` : List of float
+    scores_ : List of float
         The generalisation error (log-likelihood) on the test data.
         Returned only if test data is passed.
     """
@@ -452,22 +452,22 @@ class GraphLassoCV(GraphLasso):
 
     Attributes
     ----------
-    `covariance_` : numpy.ndarray, shape (n_features, n_features)
+    covariance_ : numpy.ndarray, shape (n_features, n_features)
         Estimated covariance matrix.
 
-    `precision_` : numpy.ndarray, shape (n_features, n_features)
+    precision_ : numpy.ndarray, shape (n_features, n_features)
         Estimated precision matrix (inverse covariance).
 
-    `alpha_`: float
+    alpha_ : float
         Penalization parameter selected.
 
-    `cv_alphas_`: list of float
+    cv_alphas_ : list of float
         All penalization parameters explored.
 
     `grid_scores`: 2D numpy.ndarray (n_alphas, n_folds)
         Log-likelihood score on left-out data across folds.
 
-    `n_iter_` : int
+    n_iter_ : int
         Number of iterations run for the optimal alpha.
 
     See Also

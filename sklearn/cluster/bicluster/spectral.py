@@ -236,17 +236,17 @@ class SpectralCoclustering(BaseSpectral):
 
     Attributes
     ----------
-    `rows_` : array-like, shape (n_row_clusters, n_rows)
+    rows_ : array-like, shape (n_row_clusters, n_rows)
         Results of the clustering. `rows[i, r]` is True if
         cluster `i` contains row `r`. Available only after calling ``fit``.
 
-    `columns_` : array-like, shape (n_column_clusters, n_columns)
+    columns_ : array-like, shape (n_column_clusters, n_columns)
         Results of the clustering, like `rows`.
 
-    `row_labels_` : array-like, shape (n_rows,)
+    row_labels_ : array-like, shape (n_rows,)
         The bicluster label of each row.
 
-    `column_labels_` : array-like, shape (n_cols,)
+    column_labels_ : array-like, shape (n_cols,)
         The bicluster label of each column.
 
     References
@@ -364,17 +364,17 @@ class SpectralBiclustering(BaseSpectral):
 
     Attributes
     ----------
-    `rows_` : array-like, shape (n_row_clusters, n_rows)
+    rows_ : array-like, shape (n_row_clusters, n_rows)
         Results of the clustering. `rows[i, r]` is True if
         cluster `i` contains row `r`. Available only after calling ``fit``.
 
-    `columns_` : array-like, shape (n_column_clusters, n_columns)
+    columns_ : array-like, shape (n_column_clusters, n_columns)
         Results of the clustering, like `rows`.
 
-    `row_labels_` : array-like, shape (n_rows,)
+    row_labels_ : array-like, shape (n_rows,)
         Row partition labels.
 
-    `column_labels_` : array-like, shape (n_cols,)
+    column_labels_ : array-like, shape (n_cols,)
         Column partition labels.
 
     References

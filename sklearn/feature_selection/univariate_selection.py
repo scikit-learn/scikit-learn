@@ -323,10 +323,10 @@ class SelectPercentile(_BaseFilter):
 
     Attributes
     ----------
-    `scores_` : array-like, shape=(n_features,)
+    scores_ : array-like, shape=(n_features,)
         Scores of features.
 
-    `pvalues_` : array-like, shape=(n_features,)
+    pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores.
 
     Notes
@@ -379,10 +379,10 @@ class SelectKBest(_BaseFilter):
 
     Attributes
     ----------
-    `scores_` : array-like, shape=(n_features,)
+    scores_ : array-like, shape=(n_features,)
         Scores of features.
 
-    `pvalues_` : array-like, shape=(n_features,)
+    pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores.
 
     Notes
@@ -434,10 +434,10 @@ class SelectFpr(_BaseFilter):
 
     Attributes
     ----------
-    `scores_` : array-like, shape=(n_features,)
+    scores_ : array-like, shape=(n_features,)
         Scores of features.
 
-    `pvalues_` : array-like, shape=(n_features,)
+    pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores.
     """
 
@@ -467,10 +467,10 @@ class SelectFdr(_BaseFilter):
 
     Attributes
     ----------
-    `scores_` : array-like, shape=(n_features,)
+    scores_ : array-like, shape=(n_features,)
         Scores of features.
 
-    `pvalues_` : array-like, shape=(n_features,)
+    pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores.
     """
 
@@ -499,10 +499,10 @@ class SelectFwe(_BaseFilter):
 
     Attributes
     ----------
-    `scores_` : array-like, shape=(n_features,)
+    scores_ : array-like, shape=(n_features,)
         Scores of features.
 
-    `pvalues_` : array-like, shape=(n_features,)
+    pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores.
     """
 
@@ -537,10 +537,10 @@ class GenericUnivariateSelect(_BaseFilter):
 
     Attributes
     ----------
-    `scores_` : array-like, shape=(n_features,)
+    scores_ : array-like, shape=(n_features,)
         Scores of features.
 
-    `pvalues_` : array-like, shape=(n_features,)
+    pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores.
     """
 

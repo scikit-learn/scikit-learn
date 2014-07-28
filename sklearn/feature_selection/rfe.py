@@ -58,18 +58,18 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
     Attributes
     ----------
-    `n_features_` : int
+    n_features_ : int
         The number of selected features.
 
-    `support_` : array of shape [n_features]
+    support_ : array of shape [n_features]
         The mask of selected features.
 
-    `ranking_` : array of shape [n_features]
+    ranking_ : array of shape [n_features]
         The feature ranking, such that `ranking_[i]` corresponds to the \
         ranking position of the i-th feature. Selected (i.e., estimated \
         best) features are assigned rank 1.
 
-    `estimator_` : object
+    estimator_ : object
         The external estimator fit on the reduced dataset.
 
     Examples
@@ -252,24 +252,24 @@ class RFECV(RFE, MetaEstimatorMixin):
 
     Attributes
     ----------
-    `n_features_` : int
+    n_features_ : int
         The number of selected features with cross-validation.
-    `support_` : array of shape [n_features]
+    support_ : array of shape [n_features]
         The mask of selected features.
 
-    `ranking_` : array of shape [n_features]
+    ranking_ : array of shape [n_features]
         The feature ranking, such that `ranking_[i]`
         corresponds to the ranking
         position of the i-th feature.
         Selected (i.e., estimated best)
         features are assigned rank 1.
 
-    `grid_scores_` : array of shape [n_subsets_of_features]
+    grid_scores_ : array of shape [n_subsets_of_features]
         The cross-validation scores such that
         `grid_scores_[i]` corresponds to
         the CV score of the i-th subset of features.
 
-    `estimator_` : object
+    estimator_ : object
         The external estimator fit on the reduced dataset.
 
     Examples

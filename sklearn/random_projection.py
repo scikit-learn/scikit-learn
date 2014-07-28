@@ -446,10 +446,10 @@ class GaussianRandomProjection(BaseRandomProjection):
 
     Attributes
     ----------
-    ``n_component_`` : int
+    n_component_ : int
         Concrete number of components computed when n_components="auto".
 
-    ``components_`` : numpy array of shape [n_components, n_features]
+    components_ : numpy array of shape [n_components, n_features]
         Random matrix used for the projection.
 
     See Also
@@ -550,13 +550,13 @@ class SparseRandomProjection(BaseRandomProjection):
 
     Attributes
     ----------
-    ``n_component_`` : int
+    n_component_ : int
         Concrete number of components computed when n_components="auto".
 
-    ``components_`` : CSR matrix with shape [n_components, n_features]
+    components_ : CSR matrix with shape [n_components, n_features]
         Random matrix used for the projection.
 
-    ``density_`` : float in range 0.0 - 1.0
+    density_ : float in range 0.0 - 1.0
         Concrete density computed from when density = "auto".
 
     See Also

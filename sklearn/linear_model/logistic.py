@@ -632,10 +632,10 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
 
     Attributes
     ----------
-    `coef_` : array, shape (n_classes, n_features)
+    coef_ : array, shape (n_classes, n_features)
         Coefficient of the features in the decision function.
 
-    `intercept_` : array, shape (n_classes,)
+    intercept_ : array, shape (n_classes,)
         Intercept (a.k.a. bias) added to the decision function.
         If `fit_intercept` is set to False, the intercept is set to zero.
 
@@ -813,7 +813,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
     Attributes
     ----------
-    `coef_` : array, shape (1, n_features) or (n_classes, n_features)
+    coef_ : array, shape (1, n_features) or (n_classes, n_features)
         Coefficient of the features in the decision function.
 
         `coef_` is of shape (1, n_features) when the given problem
@@ -821,16 +821,16 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         `coef_` is readonly property derived from `raw_coef_` that
         follows the internal memory layout of liblinear.
 
-    `intercept_` : array, shape (1,) or (n_classes,)
+    intercept_ : array, shape (1,) or (n_classes,)
         Intercept (a.k.a. bias) added to the decision function.
         It is available only when parameter intercept is set to True
         and is of shape(1,) when the problem is binary.
 
-    `Cs_` : array
+    Cs_ : array
         Array of C i.e. inverse of regularization parameter values used
         for cross-validation.
 
-    `coefs_paths_` : array, shape (n_folds, len(Cs_), n_features) or
+    coefs_paths_ : array, shape (n_folds, len(Cs_), n_features) or
                      (n_folds, len(Cs_), n_features + 1)
         dict with classes as the keys, and the path of coefficients obtained
         during cross-validating across each fold and then across each Cs
@@ -839,13 +839,13 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         (n_folds, len(Cs_), n_features + 1) depending on whether the
         intercept is fit or not.
 
-    `scores_` : dict
+    scores_ : dict
         dict with classes as the keys, and the values as the
         grid of scores obtained during cross-validating each fold, after doing
         an OvA for the corresponding class.
         Each dict value has shape (n_folds, len(Cs))
 
-    `C_` : array, shape (n_classes,) or (n_classes - 1,)
+    C_ : array, shape (n_classes,) or (n_classes - 1,)
         Array of C that maps to the best scores across every class. If refit is
         set to False, then for each class, the best C is the average of the
         C's that correspond to the best scores for each fold.

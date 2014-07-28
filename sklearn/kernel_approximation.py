@@ -378,13 +378,13 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `components_` : array, shape (n_components, n_features)
+    components_ : array, shape (n_components, n_features)
         Subset of training points used to construct the feature map.
 
-    `component_indices_` : array, shape (n_components)
+    component_indices_ : array, shape (n_components)
         Indices of ``components_`` in the training set.
 
-    `normalization_` : array, shape (n_components, n_components)
+    normalization_ : array, shape (n_components, n_components)
         Normalization matrix needed for embedding.
         Square root of the kernel matrix on ``components_``.
 

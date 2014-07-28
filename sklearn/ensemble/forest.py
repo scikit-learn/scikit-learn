@@ -741,24 +741,24 @@ class RandomForestClassifier(ForestClassifier):
 
     Attributes
     ----------
-    `estimators_`: list of DecisionTreeClassifier
+    estimators_ : list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
 
-    `classes_`: array of shape = [n_classes] or a list of such arrays
+    classes_ : array of shape = [n_classes] or a list of such arrays
         The classes labels (single output problem), or a list of arrays of
         class labels (multi-output problem).
 
-    `n_classes_`: int or list
+    n_classes_ : int or list
         The number of classes (single output problem), or a list containing the
         number of classes for each output (multi-output problem).
 
-    `feature_importances_` : array of shape = [n_features]
+    feature_importances_ : array of shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
-    `oob_score_` : float
+    oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
 
-    `oob_decision_function_` : array of shape = [n_samples, n_classes]
+    oob_decision_function_ : array of shape = [n_samples, n_classes]
         Decision function computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
@@ -903,16 +903,16 @@ class RandomForestRegressor(ForestRegressor):
 
     Attributes
     ----------
-    `estimators_`: list of DecisionTreeRegressor
+    estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
 
-    `feature_importances_` : array of shape = [n_features]
+    feature_importances_ : array of shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
-    `oob_score_` : float
+    oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
 
-    `oob_prediction_` : array of shape = [n_samples]
+    oob_prediction_ : array of shape = [n_samples]
         Prediction computed with out-of-bag estimate on the training set.
 
     References
@@ -1055,24 +1055,24 @@ class ExtraTreesClassifier(ForestClassifier):
 
     Attributes
     ----------
-    `estimators_`: list of DecisionTreeClassifier
+    estimators_ : list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
 
-    `classes_`: array of shape = [n_classes] or a list of such arrays
+    classes_ : array of shape = [n_classes] or a list of such arrays
         The classes labels (single output problem), or a list of arrays of
         class labels (multi-output problem).
 
-    `n_classes_`: int or list
+    n_classes_ : int or list
         The number of classes (single output problem), or a list containing the
         number of classes for each output (multi-output problem).
 
-    `feature_importances_` : array of shape = [n_features]
+    feature_importances_ : array of shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
-    `oob_score_` : float
+    oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
 
-    `oob_decision_function_` : array of shape = [n_samples, n_classes]
+    oob_decision_function_ : array of shape = [n_samples, n_classes]
         Decision function computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
@@ -1221,16 +1221,16 @@ class ExtraTreesRegressor(ForestRegressor):
 
     Attributes
     ----------
-    `estimators_`: list of DecisionTreeRegressor
+    estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
 
-    `feature_importances_` : array of shape = [n_features]
+    feature_importances_ : array of shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
-    `oob_score_` : float
+    oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
 
-    `oob_prediction_` : array of shape = [n_samples]
+    oob_prediction_ : array of shape = [n_samples]
         Prediction computed with out-of-bag estimate on the training set.
 
     References
@@ -1352,7 +1352,7 @@ class RandomTreesEmbedding(BaseForest):
 
     Attributes
     ----------
-    `estimators_`: list of DecisionTreeClassifier
+    estimators_ : list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
 
     References

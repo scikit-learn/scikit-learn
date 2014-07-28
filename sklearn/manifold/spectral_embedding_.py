@@ -343,10 +343,10 @@ class SpectralEmbedding(BaseEstimator):
     Attributes
     ----------
 
-    `embedding_` : array, shape = (n_samples, n_components)
+    embedding_ : array, shape = (n_samples, n_components)
         Spectral embedding of the training matrix.
 
-    `affinity_matrix_` : array, shape = (n_samples, n_samples)
+    affinity_matrix_ : array, shape = (n_samples, n_samples)
         Affinity_matrix constructed from samples or precomputed.
 
     References

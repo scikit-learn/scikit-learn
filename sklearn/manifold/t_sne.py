@@ -359,10 +359,10 @@ class TSNE(BaseEstimator):
 
     Attributes
     ----------
-    `embedding_` : array-like, shape (n_samples, n_components)
+    embedding_ : array-like, shape (n_samples, n_components)
         Stores the embedding vectors.
 
-    `training_data_` : array-like, shape (n_samples, n_features)
+    training_data_ : array-like, shape (n_samples, n_features)
         Stores the training data.
 
     Examples

@@ -60,11 +60,11 @@ class Perceptron(BaseSGDClassifier, _LearntSelectorMixin):
 
     Attributes
     ----------
-    `coef_` : array, shape = [1, n_features] if n_classes == 2 else [n_classes,
+    coef_ : array, shape = [1, n_features] if n_classes == 2 else [n_classes,
     n_features]
         Weights assigned to the features.
 
-    `intercept_` : array, shape = [1] if n_classes == 2 else [n_classes]
+    intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
     Notes

@@ -573,10 +573,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     Attributes
     ----------
-    `vocabulary_` : dict
+    vocabulary_ : dict
         A mapping of terms to feature indices.
 
-    `stop_words_` : set
+    stop_words_ : set
         Terms that were ignored because
         they occurred in either too many
         (`max_df`) or in too few (`min_df`) documents.
@@ -1128,7 +1128,7 @@ class TfidfVectorizer(CountVectorizer):
 
     Attributes
     ----------
-    ``idf_`` : array, shape = [n_features], or None
+    idf_ : array, shape = [n_features], or None
         The learned idf vector (global term weights)
         when ``use_idf`` is set to True, None otherwise.
 

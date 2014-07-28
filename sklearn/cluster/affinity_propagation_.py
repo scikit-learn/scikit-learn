@@ -220,19 +220,19 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
 
     Attributes
     ----------
-    `cluster_centers_indices_` : array, shape (n_clusters,)
+    cluster_centers_indices_ : array, shape (n_clusters,)
         Indices of cluster centers
 
-    `cluster_centers_` : array, shape (n_clusters, n_features)
+    cluster_centers_ : array, shape (n_clusters, n_features)
         Cluster centers (if affinity != ``precomputed``).
 
-    `labels_` : array, shape (n_samples,)
+    labels_ : array, shape (n_samples,)
         Labels of each point
 
-    `affinity_matrix_` : array, shape (n_samples, n_samples)
+    affinity_matrix_ : array, shape (n_samples, n_samples)
         Stores the affinity matrix used in ``fit``.
 
-    `n_iter_` : int
+    n_iter_ : int
         Number of iterations taken to converge.
 
     Notes

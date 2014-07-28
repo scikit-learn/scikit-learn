@@ -94,16 +94,16 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `components_` : array, [n_components, n_features]
+    components_ : array, [n_components, n_features]
         Components with maximum variance.
 
-    `loglike_` : list, [n_iterations]
+    loglike_ : list, [n_iterations]
         The log likelihood at each iteration.
 
-    `noise_variance_` : array, shape=(n_features,)
+    noise_variance_ : array, shape=(n_features,)
         The estimated noise variance for each feature.
 
-    `n_iter_` : int
+    n_iter_ : int
         Number of iterations run.
 
     References

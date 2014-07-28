@@ -53,20 +53,20 @@ class Isomap(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `embedding_` : array-like, shape (n_samples, n_components)
+    embedding_ : array-like, shape (n_samples, n_components)
         Stores the embedding vectors.
 
-    `kernel_pca_` : object
+    kernel_pca_ : object
         `KernelPCA` object used to implement the embedding.
 
-    `training_data_` : array-like, shape (n_samples, n_features)
+    training_data_ : array-like, shape (n_samples, n_features)
         Stores the training data.
 
-    `nbrs_` : sklearn.neighbors.NearestNeighbors instance
+    nbrs_ : sklearn.neighbors.NearestNeighbors instance
         Stores nearest neighbors instance, including BallTree or KDtree
         if applicable.
 
-    `dist_matrix_` : array-like, shape (n_samples, n_samples)
+    dist_matrix_ : array-like, shape (n_samples, n_samples)
         Stores the geodesic distance matrix of training data.
 
     References

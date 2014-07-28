@@ -323,10 +323,10 @@ class MDS(BaseEstimator):
 
     Attributes
     ----------
-    ``embedding_`` : array-like, shape [n_components, n_samples]
+    embedding_ : array-like, shape [n_components, n_samples]
         Stores the position of the dataset in the embedding space
 
-    ``stress_`` : float
+    stress_ : float
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points)
 
