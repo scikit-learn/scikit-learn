@@ -584,13 +584,12 @@ Guillaume Lebourgeois & Samuel Charron - Data Scientists at Data Publica
 
    </div>
 
-Scikit-learn is the cornerstone of all the Machine Learning projects carried at
+Scikit-learn is the cornerstone of all the machine learning projects carried at
 Machinalis. It has a consistent API, a wide selection of algorithms and lots
 of auxiliary tools to deal with the boilerplate.
-We have used it in production environments for all kinds of stuff from
-predicting click-through rates to counting sheeps passing through a cattle's
-fence gate to `information extraction <https://github.com/machinalis/iepy>`_ and
-we always come back for more.
+We have used it in production environments on a variety of projects
+including click-through rate prediction, `information extraction <https://github.com/machinalis/iepy>`_,
+and even counting sheep!
 
 In fact, we use it so much that we've started to freeze our common use cases
 into Python packages, some of them open-sourced, like
