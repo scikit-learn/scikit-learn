@@ -700,7 +700,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
         clf.fit(X, y)
         avg_weights = self.asgd(X, y, eta)
 
-        assert_array_almost_equal(clf.average_weights_,
+        assert_array_almost_equal(clf.coef_,
                                   avg_weights,
                                   decimal=10)
 

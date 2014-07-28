@@ -537,15 +537,15 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     u += (l1_ratio * eta * alpha)
                     l1penalty(w, q_data_ptr, x_ind_ptr, xnnz, u)
 
-                # update the average_weights if needed
+                # update the average_weights_ if needed
                 if average:
-                    # average_weights *= count
+                    # average_weights_ *= count
                     dscal(n_features, count, aw_ptr, 1)
                     
-                    # average_weights += weights
+                    # average_weights_ += weights
                     daxpy(n_features, 1, w_ptr, 1, aw_ptr, 1)
                     
-                    # average_weights /= count + 2
+                    # average_weights_ /= count + 2
                     dscal(n_features, 1./(count+1.), aw_ptr, 1)
 
                 t += 1
@@ -574,7 +574,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
 
     w.reset_wscale()
 
-    return weights, intercept
+    return weights, intercept, average_weights
 
 
 cdef bint any_nonfinite(double *w, int n) nogil:
