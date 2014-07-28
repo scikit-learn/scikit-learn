@@ -14,6 +14,7 @@ import inspect
 
 import numpy as np
 import scipy.sparse as sp
+import scipy.stats as stats
 
 from .testing import ignore_warnings
 
@@ -244,3 +245,90 @@ except ImportError:
                 # Make NaN == NaN
                 cond[np.isnan(x) & np.isnan(y)] = True
             return cond
+
+
+try:
+    stats.scoreatpercentile([1], 50, axis=0)
+except TypeError:
+    # in scipy == 9.0, scoreatpercentile doesn't accept an `axis` argument
+    # the following code is taken from the scipy 0.14 codebase
+
+    def _scoreatpercentile(a, per, limit=(), interpolation_method='fraction',
+                           axis=None):
+        # adapted from NumPy's percentile function. When we require
+        # numpy >= 1.8, the implementation of this function can be replaced
+        # by np.percentile.
+        a = np.asarray(a)
+        if a.size == 0:
+            # empty array, return nan(s) with shape matching `per`
+            if np.isscalar(per):
+                return np.nan
+            else:
+                return np.ones(np.asarray(per).shape, dtype=np.float64) \
+                    * np.nan
+
+        if limit:
+            a = a[(limit[0] <= a) & (a <= limit[1])]
+
+        sorted = np.sort(a, axis=axis)
+        if axis is None:
+            axis = 0
+
+        return _compute_qth_percentile(sorted, per, interpolation_method, axis)
+
+    # handle sequence of per's without calling sort multiple times
+    def _compute_qth_percentile(sorted, per, interpolation_method, axis):
+        if not np.isscalar(per):
+            score = [_compute_qth_percentile(sorted, i, interpolation_method,
+                     axis) for i in per]
+            return np.array(score)
+
+        if (per < 0) or (per > 100):
+            raise ValueError("percentile must be in the range [0, 100]")
+
+        indexer = [slice(None)] * sorted.ndim
+        idx = per / 100. * (sorted.shape[axis] - 1)
+
+        if int(idx) != idx:
+            # round fractional indices according to interpolation method
+            if interpolation_method == 'lower':
+                idx = int(np.floor(idx))
+            elif interpolation_method == 'higher':
+                idx = int(np.ceil(idx))
+            elif interpolation_method == 'fraction':
+                pass  # keep idx as fraction and interpolate
+            else:
+                raise ValueError("interpolation_method can only be "
+                                 "'fraction', 'lower' or 'higher'")
+
+        i = int(idx)
+        if i == idx:
+            indexer[axis] = slice(i, i + 1)
+            weights = np.array(1)
+            sumval = 1.0
+        else:
+            indexer[axis] = slice(i, i + 2)
+            j = i + 1
+            weights = np.array([(j - idx), (idx - i)], float)
+            wshape = [1] * sorted.ndim
+            wshape[axis] = 2
+            weights.shape = wshape
+            sumval = weights.sum()
+
+        # Use np.add.reduce (== np.sum but a little faster) to coerce data type
+        return np.add.reduce(sorted[indexer] * weights, axis=axis) / sumval
+
+    def scoreatpercentile(a, per, limit=(), interpolation_method='fraction',
+                          axis=None):
+        return _scoreatpercentile(a, per, limit=limit,
+                                  interpolation_method=
+                                  interpolation_method,
+                                  axis=axis)
+
+else:
+    def scoreatpercentile(a, per, limit=(), interpolation_method='fraction',
+                          axis=None):
+        return stats.scoreatpercentile(a, per, limit=limit,
+                                       interpolation_method=
+                                       interpolation_method,
+                                       axis=axis)
