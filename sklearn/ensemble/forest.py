@@ -787,8 +787,6 @@ class RandomForestClassifier(ForestClassifier):
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
-                 min_density=None,
-                 compute_importances=None,
                  warm_start=False):
         super(RandomForestClassifier, self).__init__(
             base_estimator=DecisionTreeClassifier(),
@@ -938,8 +936,6 @@ class RandomForestRegressor(ForestRegressor):
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
-                 min_density=None,
-                 compute_importances=None,
                  warm_start=False):
         super(RandomForestRegressor, self).__init__(
             base_estimator=DecisionTreeRegressor(),
@@ -1104,8 +1100,6 @@ class ExtraTreesClassifier(ForestClassifier):
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
-                 min_density=None,
-                 compute_importances=None,
                  warm_start=False):
         super(ExtraTreesClassifier, self).__init__(
             base_estimator=ExtraTreeClassifier(),
@@ -1258,8 +1252,6 @@ class ExtraTreesRegressor(ForestRegressor):
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
-                 min_density=None,
-                 compute_importances=None,
                  warm_start=False):
         super(ExtraTreesRegressor, self).__init__(
             base_estimator=ExtraTreeRegressor(),
@@ -1376,7 +1368,6 @@ class RandomTreesEmbedding(BaseForest):
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
-                 min_density=None,
                  warm_start=False):
         super(RandomTreesEmbedding, self).__init__(
             base_estimator=ExtraTreeRegressor(),
