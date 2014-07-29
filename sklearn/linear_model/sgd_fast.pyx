@@ -541,12 +541,12 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 if average:
                     # average_weights_ *= count
                     dscal(n_features, count, aw_ptr, 1)
-                    
+
                     # average_weights_ += weights
                     daxpy(n_features, 1, w_ptr, 1, aw_ptr, 1)
-                    
+
                     # average_weights_ /= count + 2
-                    dscal(n_features, 1./(count+1.), aw_ptr, 1)
+                    dscal(n_features, 1. / (count + 1.), aw_ptr, 1)
 
                 t += 1
                 count += 1

@@ -277,7 +277,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
                      int(est.verbose), int(est.shuffle), seed,
                      pos_weight, neg_weight,
                      learning_rate_type, est.eta0,
-                     est.power_t, est.t_, intercept_decay, average)
+                     est.power_t, est.t_, intercept_decay, est.average)
 
 
 class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
@@ -436,7 +436,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         for i, (standard_weights, intercept, average_weights) \
                 in enumerate(result):
             self.intercept_[i] = intercept
-
 
         if self.average:
             self.coef_ = self.average_coef_
@@ -955,7 +954,6 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         # numpy mtrand expects a C long which is a signed 32 bit integer under
         # Windows
         seed = random_state.randint(0, np.iinfo(np.int32).max)
-
         self.standard_coef_, self.intercept_, self.average_coef_ =\
             plain_sgd(self.standard_coef_,
                       self.average_coef_,

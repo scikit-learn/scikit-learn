@@ -94,6 +94,24 @@ X5 = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
 Y5 = [1, 1, 1, 2, 2, 2]
 true_result5 = [0, 1, 1]
 
+
+# an simple implentation of asgd to use for testing
+# uses squared loss to find the gradient
+def asgd(X, y, eta):
+    weights = np.zeros(X.shape[1])
+    average_weights = np.zeros(X.shape[1])
+
+    for i, entry in enumerate(X):
+        p = np.dot(entry, weights)
+        gradient = y[i] - p
+        weights += eta * gradient * entry
+
+        average_weights *= i
+        average_weights += weights
+        average_weights /= i + 1
+
+    return average_weights
+
 ##
 ## Classification Test Case
 ##
@@ -235,6 +253,33 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     def test_set_intercept_binary(self):
         """Checks intercept_ shape for the warm starts in binary case"""
         self.factory().fit(X5, Y5, intercept_init=0)
+
+    def test_average_binary_computed_correctly(self):
+        """Checks the SGDClassifier correctly computes the average weights"""
+        eta = .001
+        n_samples = 100
+        n_features = 10
+        rng = np.random.RandomState(0)
+        X = rng.normal(size=(n_samples, n_features))
+        w = rng.normal(size=n_features)
+
+        clf = self.factory(loss='squared_loss',
+                           learning_rate='constant',
+                           eta0=eta, alpha=0,
+                           fit_intercept=False,
+                           n_iter=1, average=True)
+
+        # simple linear function without noise
+        y = np.dot(X, w)
+        y = np.sign(y)
+
+        clf.fit(X, y)
+
+        average_weights = asgd(X, y, eta)
+        average_weights = average_weights.reshape(1, -1)
+        assert_array_almost_equal(clf.coef_,
+                                  average_weights,
+                                  decimal=10)
 
     def test_set_intercept_to_intercept(self):
         """Checks intercept_ shape consistency for the warm starts"""
@@ -660,26 +705,6 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
         """Check whether expected ValueError on bad loss"""
         self.factory(loss="foobar")
 
-    # an simple implentation of asgd to use for testing
-    # uses squared loss to find the gradient
-    def asgd(self, X, y, eta):
-        weights = np.zeros(X.shape[1])
-        average_weights = np.zeros(X.shape[1])
-        i = 0
-
-        for entry in X:
-            p = np.dot(entry, weights)
-            gradient = y[i] - p
-            weights += eta * gradient * entry
-
-            average_weights *= i
-            average_weights += weights
-            average_weights /= i + 1
-
-            i += 1
-
-        return average_weights
-
     def test_sgd_averaged_computed_correctly(self):
         eta = .001
         n_samples = 100
@@ -698,7 +723,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
                            n_iter=1, average=True)
 
         clf.fit(X, y)
-        avg_weights = self.asgd(X, y, eta)
+        avg_weights = asgd(X, y, eta)
 
         assert_array_almost_equal(clf.coef_,
                                   avg_weights,
