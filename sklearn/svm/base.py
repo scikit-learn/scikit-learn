@@ -18,6 +18,29 @@ from ..externals import six
 LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
 
 
+def _validate_targets_with_weight(clf, y, sample_weight):
+    y_ = column_or_1d(y, warn=True)
+    cls, y = unique(y_, return_inverse=True)
+
+    if sample_weight is not None:
+        sw = column_or_1d(sample_weight, warn=True)
+        cls = np.unique(y_[sw > 0])
+
+    if len(cls) < 2:
+        raise ValueError(
+            "The number of classes has to be greater than one; got %d"
+            % len(cls))
+
+    # This must be called here so that the class weight list doesn't contain
+    # weights for classes eliminated because they had no samples with > 0
+    # weight.
+    clf.class_weight_ = compute_class_weight(clf.class_weight, cls, y_)
+    clf.classes_ = cls
+
+    # LibLinear and LibSVM want targets as doubles, even for classification.
+    return np.asarray(y, dtype=np.float64, order='C')
+
+
 def _one_vs_one_coef(dual_coef, n_support, support_vectors):
     """Generate primal coefficients from dual coefficients
     for the one-vs-one multi class LibSVM in the case
@@ -135,7 +158,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         self._sparse = sparse and not callable(self.kernel)
 
         X = check_array(X, accept_sparse='csr', dtype=np.float64, order='C')
-        y = self._validate_targets(y)
+        y = self._validate_targets(y, sample_weight)
 
         sample_weight = np.asarray([]
                                    if sample_weight is None
@@ -185,7 +208,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             self.intercept_ *= -1
         return self
 
-    def _validate_targets(self, y):
+    def _validate_targets(self, y, sample_weight=None):
         """Validation of y and class_weight.
 
         Default implementation for SVR and one-class; overridden in BaseSVC.
@@ -437,18 +460,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 class BaseSVC(BaseLibSVM, ClassifierMixin):
     """ABC for LibSVM-based classifiers."""
 
-    def _validate_targets(self, y):
-        y_ = column_or_1d(y, warn=True)
-        cls, y = np.unique(y_, return_inverse=True)
-        self.class_weight_ = compute_class_weight(self.class_weight, cls, y_)
-        if len(cls) < 2:
-            raise ValueError(
-                "The number of classes has to be greater than one; got %d"
-                % len(cls))
-
-        self.classes_ = cls
-
-        return np.asarray(y, dtype=np.float64, order='C')
+    def _validate_targets(self, y, sample_weight=None):
+        return _validate_targets_with_weight(self, y, sample_weight)
 
     def predict(self, X):
         """Perform classification on samples in X.
