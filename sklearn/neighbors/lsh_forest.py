@@ -75,13 +75,11 @@ class LSHForest(BaseEstimator):
     LSH Forest: Locality Sensitive Hashing forest [1] is an alternative
     method for vanilla approximate nearest neighbor search methods.
     LSH forest data structure has been implemented using sorted
-    arrays and binary search.
+    arrays and binary search. 32 bit fixed length hashes are used in
+    this implementation.
 
     Parameters
     ----------
-
-    max_label_length: int, optional(default = 32)
-        Maximum length of a binary hash
 
     n_trees: int, optional (default = 10)
         Number of trees in the LSH Forest.
@@ -135,8 +133,8 @@ class LSHForest(BaseEstimator):
       >>> X = X.reshape((100,50))
       >>> lshf = LSHForest()
       >>> lshf.fit(X)
-      LSHForest(c=50, lower_bound=4, max_label_length=32, n_neighbors=1, n_trees=10,
-           radius=1.0, radius_cutoff_ratio=0.9, random_state=None)
+      LSHForest(c=50, lower_bound=4, n_neighbors=1, n_trees=10, radius=1.0,
+           radius_cutoff_ratio=0.9, random_state=None)
 
       >>> lshf.kneighbors(X[:5], n_neighbors=3, return_distance=True)
       (array([[0, 1, 2],
@@ -151,11 +149,9 @@ class LSHForest(BaseEstimator):
 
     """
 
-    def __init__(self, max_label_length=32, n_trees=10,
-                 radius=1.0, c=50, n_neighbors=1,
+    def __init__(self, n_trees=10, radius=1.0, c=50, n_neighbors=1,
                  lower_bound=4, radius_cutoff_ratio=.9,
                  random_state=None):
-        self.max_label_length = int(max_label_length/2*2)
         self.n_trees = n_trees
         self.radius = radius
         self.random_state = random_state
@@ -217,16 +213,21 @@ class LSHForest(BaseEstimator):
         self._left_mask, self._right_mask = [], []
 
         for length in range(self.max_label_length+1):
-            left_mask = int("".join(['1' for i in range(length)])
-                            + "".join(['0' for i in
-                                       range(self.max_label_length-length)]),
-                            2)
-            self._left_mask.append(left_mask)
-            right_mask = int("".join(['0' for i in range(length)])
-                             + "".join(['1' for i in
-                                        range(self.max_label_length-length)]),
-                             2)
-            self._right_mask.append(right_mask)
+            left_mask = np.append(np.ones(length, dtype=int),
+                                  np.zeros(self.max_label_length-length,
+                                           dtype=int))
+            xx = tuple(left_mask)
+            binary_hash_left = (self.cache[xx[:self.cache_N]] * self.k +
+                                self.cache[xx[self.cache_N:]])
+            self._left_mask.append(binary_hash_left)
+
+            right_mask = np.append(np.zeros(length, dtype=int),
+                                   np.ones(self.max_label_length-length,
+                                           dtype=int))
+            xx = tuple(right_mask)
+            binary_hash_right = (self.cache[xx[:self.cache_N]] * self.k +
+                                 self.cache[xx[self.cache_N:]])
+            self._right_mask.append(binary_hash_right)
 
         self._left_mask = np.array(self._left_mask)
         self._right_mask = np.array(self._right_mask)
@@ -287,10 +288,10 @@ class LSHForest(BaseEstimator):
                                    float(total_candidates.shape[0]))
             max_depth = max_depth - 1
         return total_neighbors, total_distances
-    
+
     def _convert_to_hash(self, item, tree_n):
         """
-        Converts item(a date point) into the integer value of 
+        Converts item(a date point) into the integer value of
         the binary hashed value
         """
         projections = np.array(np.dot(self.hash_functions_[tree_n],
@@ -316,6 +317,7 @@ class LSHForest(BaseEstimator):
         self._input_array = safe_asarray(X)
         self._n_dim = self._input_array.shape[1]
 
+        self.max_label_length = 32
         digits = ['0', '1']
         # Creates a g(p,x) for each tree
         self.hash_functions_ = []
