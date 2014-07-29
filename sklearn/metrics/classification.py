@@ -1433,8 +1433,8 @@ def hinge_loss(y_true, pred_decision, pos_label=None, neg_label=None):
     >>> est = svm.LinearSVC(random_state=0)
     >>> est.fit(X, y)
     LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-         intercept_scaling=1, loss='l2', multi_class='ovr', penalty='l2',
-         random_state=0, tol=0.0001, verbose=0)
+         intercept_scaling=1, loss='l2', max_iter=1000, multi_class='ovr',
+         penalty='l2', random_state=0, tol=0.0001, verbose=0)
     >>> pred_decision = est.decision_function([[-2], [3], [0.5]])
     >>> pred_decision  # doctest: +ELLIPSIS
     array([-2.18...,  2.36...,  0.09...])
