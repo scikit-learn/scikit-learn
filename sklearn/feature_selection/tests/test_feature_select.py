@@ -42,7 +42,8 @@ def test_f_oneway_vs_scipy_stats():
 def test_f_oneway_ints():
     # Smoke test f_oneway on integers: that it does raise casting errors
     # with recent numpys
-    X = np.random.randint(10, size=(10, 10))
+    rng = np.random.RandomState(0)
+    X = rng.randint(10, size=(10, 10))
     y = np.arange(10)
     fint, pint = f_oneway(X, y)
 
