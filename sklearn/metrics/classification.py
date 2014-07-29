@@ -15,6 +15,7 @@ the lower the better
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Noel Dawe <noel@dawe.me>
+#          Jatin Shah <jatindshah@gmail.com>
 # License: BSD 3 clause
 
 from __future__ import division
@@ -237,7 +238,7 @@ def confusion_matrix(y_true, y_pred, labels=None):
     return CM
 
 
-def jaccard_similarity_score(y_true, y_pred, normalize=True):
+def jaccard_similarity_score(y_true, y_pred, normalize=True, sample_weight=None):
     """Jaccard similarity coefficient score
 
     The Jaccard index [1], or Jaccard similarity coefficient, defined as
@@ -257,6 +258,9 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True):
         If ``False``, return the sum of the Jaccard similarity coefficient
         over the sample set. Otherwise, return the average of Jaccard
         similarity coefficient.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
 
     Returns
     -------
@@ -340,8 +344,12 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True):
         score = y_true == y_pred
 
     if normalize:
+        if sample_weight is not None:
+            return np.average(score, weights=sample_weight)
         return np.mean(score)
     else:
+        if sample_weight is not None:
+            return np.dot(score, sample_weight)
         return np.sum(score)
 
 
