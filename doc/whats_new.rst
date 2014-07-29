@@ -1,5 +1,11 @@
 .. currentmodule:: sklearn
 
+Enhancements
+............
+
+
+    - Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score`.
+
 .. _changes_0_16:
 
 0.16
