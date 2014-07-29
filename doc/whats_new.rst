@@ -2784,10 +2784,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Hamzeh Alsalhi: https://github.com/hamsal
 
 .. _Ronald Phlypo: https://github.com/rphlypo
-<<<<<<< HEAD
-=======
 
 .. _Laurent Direr: https://github.com/ldirer
 
 .. _Nikolay Mayorov: https://github.com/nmayorov
->>>>>>> e894205... FIX Implemented correct handling of multilabel y in cross_val_score
