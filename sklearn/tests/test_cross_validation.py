@@ -16,6 +16,7 @@ from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
@@ -117,22 +118,15 @@ def test_kfold_valueerrors():
 
     # Check that a warning is raised if the least populated class has too few
     # members.
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter('always')
-        y = [3, 3, -1, -1, 2]
-        cv = cval.StratifiedKFold(y, 3)
-        # checking there was only one warning.
-        assert_equal(len(w), 1)
-        # checking it has the right type
-        assert_equal(w[0].category, Warning)
-        # checking it's the right warning. This might be a bad test since it's
-        # a characteristic of the code and not a behavior
-        assert_true("The least populated class" in str(w[0]))
+    y = [3, 3, -1, -1, 2]
 
-        # Check that despite the warning the folds are still computed even
-        # though all the classes are not necessarily represented at on each
-        # side of the split at each split
-        check_cv_coverage(cv, expected_n_iter=3, n_samples=len(y))
+    cv = assert_warns_message(Warning, "The least populated class",
+                              cval.StratifiedKFold, y, 3)
+
+    # Check that despite the warning the folds are still computed even
+    # though all the classes are not necessarily represented at on each
+    # side of the split at each split
+    check_cv_coverage(cv, expected_n_iter=3, n_samples=len(y))
 
     # Error when number of folds is <= 1
     assert_raises(ValueError, cval.KFold, 2, 0)
