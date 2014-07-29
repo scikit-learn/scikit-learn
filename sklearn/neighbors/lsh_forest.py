@@ -245,7 +245,7 @@ class LSHForest(BaseEstimator):
                                                 or len(set(candidates)) < m):
             for i in range(self.n_trees):
                 candidates.extend(
-                    self._original_indices[i, _find_matching_indices(
+                    self._original_indices[i][_find_matching_indices(
                         self._trees[i],
                         bin_queries[i],
                         self._left_mask[max_depth],
@@ -272,7 +272,7 @@ class LSHForest(BaseEstimator):
             candidates = []
             for i in range(self.n_trees):
                 candidates.extend(
-                    self._original_indices[i, _find_matching_indices(
+                    self._original_indices[i][_find_matching_indices(
                         self._trees[i],
                         bin_queries[i],
                         self._left_mask[max_depth],
@@ -343,8 +343,6 @@ class LSHForest(BaseEstimator):
             self.hash_functions_.append(hash_function)
 
         self.hash_functions_ = np.array(self.hash_functions_)
-        self._trees = np.array(self._trees)
-        self._original_indices = np.array(self._original_indices)
         self._generate_masks()
 
         return self
@@ -477,46 +475,44 @@ class LSHForest(BaseEstimator):
             else:
                 return np.array(neighbors)
 
-    def insert(self, item):
+    def insert(self, X):
         """
-        Inserts a new data point into the LSH Forest.
+        Inserts new data into the LSH Forest.
 
         Parameters
         ----------
-        item: array_like, shape (n_features, )
+        X: array_like, shape (n_samples, n_features)
             New data point to be inserted into the LSH Forest.
         """
         if not hasattr(self, 'hash_functions_'):
             raise ValueError("estimator should be fitted before"
                              " inserting.")
 
-        item = safe_asarray(item)
+        X = safe_asarray(X)
 
-        if item.ndim != 1:
-            raise ValueError("item shoud be a 1-D vector.")
-        if item.shape[0] != self._input_array.shape[1]:
-            raise ValueError("Number of features in item and"
+        if X.ndim != 2:
+            raise ValueError("X should be a 2-D matrix")
+        if X.shape[1] != self._input_array.shape[1]:
+            raise ValueError("Number of features in X and"
                              " fitted array does not match.")
+        n_samples = X.shape[0]
+        input_array_size = self._input_array.shape[0]
 
-        input_array_shape = self._input_array.shape[0]
-        trees = np.empty((self.n_trees, input_array_shape + 1),
-                         dtype=int)
-        original_incides = np.empty((self.n_trees,
-                                     input_array_shape + 1),
-                                    dtype=int)
         for i in range(self.n_trees):
-            bin_item = self._convert_to_hash(item, i)
+            bin_X = []
+            for j in range(n_samples):
+                bin_X.append(self._convert_to_hash(X[j], i))
             # gets the position to be added in the tree.
-            position = self._trees[i].searchsorted(bin_item)
+            positions = self._trees[i].searchsorted(bin_X)
             # adds the hashed value into the tree.
-            trees[i] = np.insert(self._trees[i],
-                                 position, bin_item)
+            self._trees[i] = np.insert(self._trees[i],
+                                       positions, bin_X)
             # add the entry into the original_indices.
-            original_incides[i] = np.insert(self._original_indices[i],
-                                            position,
-                                            input_array_shape)
-        self._trees = trees
-        self._original_indices = original_incides
+            self._original_indices[i] = np.insert(self._original_indices[i],
+                                                  positions,
+                                                  np.arange(input_array_size,
+                                                            input_array_size +
+                                                            n_samples))
 
         # adds the entry into the input_array.
-        self._input_array = np.row_stack((self._input_array, item))
+        self._input_array = np.row_stack((self._input_array, X))
