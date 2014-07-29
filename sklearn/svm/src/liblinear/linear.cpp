@@ -9,6 +9,14 @@
         See issue 546: https://github.com/scikit-learn/scikit-learn/pull/546
    - Also changed roles for pairwise class weights, Andreas Mueller
         See issue 1491: https://github.com/scikit-learn/scikit-learn/pull/1491
+
+   Modified 2014:
+
+   - Remove the hard-coded value of max_iter (1000), that allows max_iter
+     to be passed as a parameter from the classes LogisticRegression and
+     LinearSVC, Manoj Kumar
+        See issue 3499: https://github.com/scikit-learn/scikit-learn/issues/3499
+        See pull 3501: https://github.com/scikit-learn/scikit-learn/pull/3501
    
  */
 
@@ -791,14 +799,13 @@ void Solver_MCSVM_CS::Solve(double *w)
 
 static void solve_l2r_l1l2_svc(
 	const problem *prob, double *w, double eps, 
-	double Cp, double Cn, int solver_type)
+	double Cp, double Cn, int solver_type, int max_iter)
 {
 	int l = prob->l;
 	int w_size = prob->n;
 	int i, s, iter = 0;
 	double C, d, G;
 	double *QD = new double[l];
-	int max_iter = 1000;
 	int *index = new int[l];
 	double *alpha = new double[l];
 	schar *y = new schar[l];
@@ -1009,7 +1016,7 @@ static void solve_l2r_l1l2_svc(
 
 static void solve_l2r_l1l2_svr(
 	const problem *prob, double *w, const parameter *param,
-	int solver_type)
+	int solver_type, int max_iter)
 {
 	int l = prob->l;
 	double C = param->C;
@@ -1017,7 +1024,6 @@ static void solve_l2r_l1l2_svr(
 	int w_size = prob->n;
 	double eps = param->eps;
 	int i, s, iter = 0;
-	int max_iter = 1000;
 	int active_size = l;
 	int *index = new int[l];
 
@@ -1234,13 +1240,13 @@ static void solve_l2r_l1l2_svr(
 #define GETI(i) (y[i]+1)
 // To support weights for instances, use GETI(i) (i)
 
-void solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, double Cn)
+void solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, double Cn,
+					   int max_iter)
 {
 	int l = prob->l;
 	int w_size = prob->n;
 	int i, s, iter = 0;
 	double *xTx = new double[l];
-	int max_iter = 1000;
 	int *index = new int[l];		
 	double *alpha = new double[2*l]; // store alpha and C - alpha
 	schar *y = new schar[l];	
@@ -1410,12 +1416,11 @@ void solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, do
 
 static void solve_l1r_l2_svc(
 	problem *prob_col, double *w, double eps, 
-	double Cp, double Cn)
+	double Cp, double Cn, int max_iter)
 {
 	int l = prob_col->l;
 	int w_size = prob_col->n;
 	int j, s, iter = 0;
-	int max_iter = 1000;
 	int active_size = w_size;
 	int max_num_linesearch = 20;
 
@@ -1697,12 +1702,11 @@ static void solve_l1r_l2_svc(
 
 static void solve_l1r_lr(
 	const problem *prob_col, double *w, double eps, 
-	double Cp, double Cn)
+	double Cp, double Cn, int max_newton_iter)
 {
 	int l = prob_col->l;
 	int w_size = prob_col->n;
 	int j, s, newton_iter=0, iter=0;
-	int max_newton_iter = 100;
 	int max_iter = 1000;
 	int max_num_linesearch = 20;
 	int active_size;
@@ -2210,6 +2214,7 @@ static void group_classes(const problem *prob, int *nr_class_ret, int **label_re
 static void train_one(const problem *prob, const parameter *param, double *w, double Cp, double Cn)
 {
 	double eps=param->eps;
+	int max_iter=param->max_iter;
 	int pos = 0;
 	int neg = 0;
 	for(int i=0;i<prob->l;i++)
@@ -2233,7 +2238,7 @@ static void train_one(const problem *prob, const parameter *param, double *w, do
 					C[i] = Cn;
 			}
 			fun_obj=new l2r_lr_fun(prob, C);
-			TRON tron_obj(fun_obj, primal_solver_tol);
+			TRON tron_obj(fun_obj, primal_solver_tol, max_iter);
 			tron_obj.set_print_string(liblinear_print_string);
 			tron_obj.tron(w);
 			delete fun_obj;
@@ -2251,7 +2256,7 @@ static void train_one(const problem *prob, const parameter *param, double *w, do
 					C[i] = Cn;
 			}
 			fun_obj=new l2r_l2_svc_fun(prob, C);
-			TRON tron_obj(fun_obj, primal_solver_tol);
+			TRON tron_obj(fun_obj, primal_solver_tol, max_iter);
 			tron_obj.set_print_string(liblinear_print_string);
 			tron_obj.tron(w);
 			delete fun_obj;
@@ -2259,17 +2264,17 @@ static void train_one(const problem *prob, const parameter *param, double *w, do
 			break;
 		}
 		case L2R_L2LOSS_SVC_DUAL:
-			solve_l2r_l1l2_svc(prob, w, eps, Cp, Cn, L2R_L2LOSS_SVC_DUAL);
+			solve_l2r_l1l2_svc(prob, w, eps, Cp, Cn, L2R_L2LOSS_SVC_DUAL, max_iter);
 			break;
 		case L2R_L1LOSS_SVC_DUAL:
-			solve_l2r_l1l2_svc(prob, w, eps, Cp, Cn, L2R_L1LOSS_SVC_DUAL);
+			solve_l2r_l1l2_svc(prob, w, eps, Cp, Cn, L2R_L1LOSS_SVC_DUAL, max_iter);
 			break;
 		case L1R_L2LOSS_SVC:
 		{
 			problem prob_col;
 			feature_node *x_space = NULL;
 			transpose(prob, &x_space ,&prob_col);
-			solve_l1r_l2_svc(&prob_col, w, primal_solver_tol, Cp, Cn);
+			solve_l1r_l2_svc(&prob_col, w, primal_solver_tol, Cp, Cn, max_iter);
 			delete [] prob_col.y;
 			delete [] prob_col.x;
 			delete [] x_space;
@@ -2280,14 +2285,14 @@ static void train_one(const problem *prob, const parameter *param, double *w, do
 			problem prob_col;
 			feature_node *x_space = NULL;
 			transpose(prob, &x_space ,&prob_col);
-			solve_l1r_lr(&prob_col, w, primal_solver_tol, Cp, Cn);
+			solve_l1r_lr(&prob_col, w, primal_solver_tol, Cp, Cn, max_iter);
 			delete [] prob_col.y;
 			delete [] prob_col.x;
 			delete [] x_space;
 			break;
 		}
 		case L2R_LR_DUAL:
-			solve_l2r_lr_dual(prob, w, eps, Cp, Cn);
+			solve_l2r_lr_dual(prob, w, eps, Cp, Cn, max_iter);
 			break;
 		case L2R_L2LOSS_SVR:
 		{
@@ -2296,7 +2301,7 @@ static void train_one(const problem *prob, const parameter *param, double *w, do
 				C[i] = param->C;
 			
 			fun_obj=new l2r_l2_svr_fun(prob, C, param->p);
-			TRON tron_obj(fun_obj, param->eps);
+			TRON tron_obj(fun_obj, param->eps, max_iter);
 			tron_obj.set_print_string(liblinear_print_string);
 			tron_obj.tron(w);
 			delete fun_obj;
@@ -2305,10 +2310,10 @@ static void train_one(const problem *prob, const parameter *param, double *w, do
 
 		}
 		case L2R_L1LOSS_SVR_DUAL:
-			solve_l2r_l1l2_svr(prob, w, param, L2R_L1LOSS_SVR_DUAL);
+			solve_l2r_l1l2_svr(prob, w, param, L2R_L1LOSS_SVR_DUAL, max_iter);
 			break;
 		case L2R_L2LOSS_SVR_DUAL:
-			solve_l2r_l1l2_svr(prob, w, param, L2R_L2LOSS_SVR_DUAL);
+			solve_l2r_l1l2_svr(prob, w, param, L2R_L2LOSS_SVR_DUAL, max_iter);
 			break;
 		default:
 			fprintf(stderr, "ERROR: unknown solver_type\n");

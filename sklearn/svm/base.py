@@ -721,6 +721,7 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
                                              self._get_solver_type(),
                                              self.tol, self._get_bias(),
                                              self.C, self.class_weight_,
+                                             self.max_iter,
                                              rnd.randint(np.iinfo('i').max))
             # Regarding rnd.randint(..) in the above signature:
             # seed for srand in range [0..INT_MAX); due to limitations in Numpy

@@ -80,6 +80,8 @@ class LinearSVC(BaseLibLinear, LinearClassifierMixin, _LearntSelectorMixin,
         The seed of the pseudo random number generator to use when
         shuffling the data.
 
+    max_iter : int, default 1000
+        The maximum number of iterations to be run.
 
     Attributes
     ----------
@@ -133,13 +135,13 @@ class LinearSVC(BaseLibLinear, LinearClassifierMixin, _LearntSelectorMixin,
 
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
                  multi_class='ovr', fit_intercept=True, intercept_scaling=1,
-                 class_weight=None, verbose=0, random_state=None):
+                 class_weight=None, verbose=0, random_state=None, max_iter=1000):
         super(LinearSVC, self).__init__(
             penalty=penalty, loss=loss, dual=dual, tol=tol, C=C,
             multi_class=multi_class, fit_intercept=fit_intercept,
             intercept_scaling=intercept_scaling,
             class_weight=class_weight, verbose=verbose,
-            random_state=random_state)
+            random_state=random_state, max_iter=max_iter)
 
 
 class SVC(BaseSVC):
