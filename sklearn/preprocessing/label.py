@@ -506,17 +506,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
         y_in_classes = in1d(y, classes)
         y_seen = y[y_in_classes]
         indices = np.searchsorted(sorted_class, y_seen)
-
-        # Construct indices of seen labels to tell us how many unseen labels
-        # we have between each seen label
-        y_seen_ind = np.empty(shape=len(y_seen) + 2, dtype=np.int)
-        y_seen_ind[1:-1] = np.where(y_in_classes)[0]
-        y_seen_ind[-1] = n_samples
-        y_seen_ind[0] = 0
-
-        indptr = np.arange(len(y_seen) + 1)
-        indptr = np.repeat(indptr, np.diff(y_seen_ind))
-        indptr = np.insert(indptr, 0, 0)
+        indptr = np.hstack((0, np.cumsum(y_in_classes)))
 
         data = np.empty_like(indices)
         data.fill(pos_label)
