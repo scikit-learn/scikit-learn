@@ -353,8 +353,9 @@ cdef class SquaredEpsilonInsensitive(Regression):
 
 
 def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
-              np.ndarray[double, ndim=1, mode='c'] average_weights,
               double intercept,
+              np.ndarray[double, ndim=1, mode='c'] average_weights,
+              double average_intercept,
               LossFunction loss,
               int penalty_type,
               double alpha, double C,
@@ -379,6 +380,8 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         asgd
     intercept : double
         The initial intercept.
+    average_intercept : double
+        The average intercept for asgd
     loss : LossFunction
         A concrete ``LossFunction`` object.
     penalty_type : int
@@ -431,6 +434,10 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         The fitted weight vector.
     intercept : float
         The fitted intercept term.
+    average_weights : array shape=[n_features]
+        The averaged weights accross iterations
+    average_intercept : float
+        The averaged intercept accross iterations
     """
     # get the data information into easy vars
     cdef Py_ssize_t n_samples = dataset.n_samples
@@ -536,8 +543,9 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     u += (l1_ratio * eta * alpha)
                     l1penalty(w, q_data_ptr, x_ind_ptr, xnnz, u)
 
-                # update the average_weights_ if needed
+                # update the average weights and intercept if needed
                 if average:
+                    # compute the average for the weights
                     # average_weights_ *= t - 1
                     dscal(n_features, t - 1, aw_ptr, 1)
 
@@ -546,6 +554,11 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
 
                     # average_weights_ /= t
                     dscal(n_features, 1. / t, aw_ptr, 1)
+
+                    # compute the average for the intercept
+                    average_intercept *= t - 1
+                    average_intercept += intercept
+                    average_intercept /= t
 
                 t += 1
                 count += 1
@@ -573,7 +586,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
 
     w.reset_wscale()
 
-    return weights, intercept, average_weights
+    return weights, intercept, average_weights, average_intercept
 
 
 cdef bint any_nonfinite(double *w, int n) nogil:

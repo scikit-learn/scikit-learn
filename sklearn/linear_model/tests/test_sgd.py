@@ -95,29 +95,29 @@ Y5 = [1, 1, 1, 2, 2, 2]
 true_result5 = [0, 1, 1]
 
 
-# an simple implentation of asgd to use for testing
-# uses squared loss to find the gradient
-def asgd(X, y, eta):
-    weights = np.zeros(X.shape[1])
-    average_weights = np.zeros(X.shape[1])
-
-    for i, entry in enumerate(X):
-        p = np.dot(entry, weights)
-        gradient = y[i] - p
-        weights += eta * gradient * entry
-
-        average_weights *= i
-        average_weights += weights
-        average_weights /= i + 1
-
-    return average_weights
-
 ##
 ## Classification Test Case
 ##
 
 
 class CommonTest(object):
+
+    # an simple implentation of asgd to use for testing
+    # uses squared loss to find the gradient
+    def asgd(self, X, y, eta):
+        weights = np.zeros(X.shape[1])
+        average_weights = np.zeros(X.shape[1])
+
+        for i, entry in enumerate(X):
+            p = np.dot(entry, weights)
+            gradient = y[i] - p
+            weights += eta * gradient * entry
+
+            average_weights *= i
+            average_weights += weights
+            average_weights /= i + 1
+
+        return average_weights
 
     def _test_warm_start(self, X, Y, lr):
         # Test that explicit warm restart...
@@ -275,7 +275,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
         clf.fit(X, y)
 
-        average_weights = asgd(X, y, eta)
+        average_weights = self.asgd(X, y, eta)
         average_weights = average_weights.reshape(1, -1)
         assert_array_almost_equal(clf.coef_,
                                   average_weights,
@@ -725,7 +725,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
                            n_iter=1, average=True)
 
         clf.fit(X, y)
-        avg_weights = asgd(X, y, eta)
+        avg_weights = self.asgd(X, y, eta)
 
         assert_array_almost_equal(clf.coef_,
                                   avg_weights,
@@ -751,7 +751,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
 
         clf.partial_fit(X[:n_samples / 2][:], y[:n_samples / 2])
         clf.partial_fit(X[n_samples / 2:][:], y[n_samples / 2:])
-        avg_weights = asgd(X, y, eta)
+        avg_weights = self.asgd(X, y, eta)
 
         assert_array_almost_equal(clf.coef_,
                                   avg_weights,
@@ -950,6 +950,6 @@ def test_underflow_or_overlow():
 
     # model is numerically unstable on unscaled data
     msg_regxp = (r"Floating-point under-/overflow occurred at epoch #.*"
-                  " Scaling input data with StandardScaler or MinMaxScaler"
-                  " might help.")
+                 " Scaling input data with StandardScaler or MinMaxScaler"
+                 " might help.")
     assert_raises_regexp(ValueError, msg_regxp, model.fit, X, y)
