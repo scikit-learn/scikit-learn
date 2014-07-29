@@ -290,7 +290,7 @@ PATH environment variable.
 
 
 32-bit Python
-~~~~~~~~~~~~~
+-------------
 
 For 32-bit Python it is possible use the standalone installers for
 `Microsoft Visual C++ Express 2008 <http://go.microsoft.com/?linkid=7729279>`_
@@ -306,7 +306,7 @@ folder::
 
 
 64-bit Python
-~~~~~~~~~~~~~
+-------------
 
 For the 64-bit architecture, you either need the full Visual Studio or
 the free Windows SDKs that can be downloaded from the links below.
@@ -348,7 +348,7 @@ Python.
 
 
 Building binary packages and installers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------------
 
 The ``.whl`` package and ``.exe`` installers can be built with::
 
@@ -359,7 +359,7 @@ The resulting packages are generated in the ``dist/`` folder.
 
 
 Using an alternative compiler
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------
 
 It is possible to use `MinGW <http://www.mingw.org>`_ (a port of GCC to Windows
 OS) as an alternative to MSVC for 32-bit Python. Not that extensions built with
