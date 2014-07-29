@@ -257,7 +257,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     def test_average_binary_computed_correctly(self):
         """Checks the SGDClassifier correctly computes the average weights"""
         eta = .001
-        n_samples = 100
+        n_samples = 20
         n_features = 10
         rng = np.random.RandomState(0)
         X = rng.normal(size=(n_samples, n_features))
@@ -706,8 +706,10 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
         self.factory(loss="foobar")
 
     def test_sgd_averaged_computed_correctly(self):
+        """Tests whether the average for the Regressor matches the
+        naive implementation"""
         eta = .001
-        n_samples = 100
+        n_samples = 20
         n_features = 10
         rng = np.random.RandomState(0)
         X = rng.normal(size=(n_samples, n_features))
@@ -723,6 +725,32 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
                            n_iter=1, average=True)
 
         clf.fit(X, y)
+        avg_weights = asgd(X, y, eta)
+
+        assert_array_almost_equal(clf.coef_,
+                                  avg_weights,
+                                  decimal=10)
+
+    def test_sgd_averaged_partial_fit(self):
+        """Tests whether the partial fit yields the same average as the fit"""
+        eta = .001
+        n_samples = 20
+        n_features = 10
+        rng = np.random.RandomState(0)
+        X = rng.normal(size=(n_samples, n_features))
+        w = rng.normal(size=n_features)
+
+        # simple linear function without noise
+        y = np.dot(X, w)
+
+        clf = self.factory(loss='squared_loss',
+                           learning_rate='constant',
+                           eta0=eta, alpha=0,
+                           fit_intercept=False,
+                           n_iter=1, average=True)
+
+        clf.partial_fit(X[:n_samples / 2][:], y[:n_samples / 2])
+        clf.partial_fit(X[n_samples / 2:][:], y[n_samples / 2:])
         avg_weights = asgd(X, y, eta)
 
         assert_array_almost_equal(clf.coef_,

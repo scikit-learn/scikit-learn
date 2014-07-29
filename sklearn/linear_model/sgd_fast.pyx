@@ -432,7 +432,6 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     intercept : float
         The fitted intercept term.
     """
-
     # get the data information into easy vars
     cdef Py_ssize_t n_samples = dataset.n_samples
     cdef Py_ssize_t n_features = weights.shape[0]
@@ -539,14 +538,14 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
 
                 # update the average_weights_ if needed
                 if average:
-                    # average_weights_ *= count
-                    dscal(n_features, count, aw_ptr, 1)
+                    # average_weights_ *= t - 1
+                    dscal(n_features, t - 1, aw_ptr, 1)
 
                     # average_weights_ += weights
                     daxpy(n_features, 1, w_ptr, 1, aw_ptr, 1)
 
-                    # average_weights_ /= count + 2
-                    dscal(n_features, 1. / (count + 1.), aw_ptr, 1)
+                    # average_weights_ /= t
+                    dscal(n_features, 1. / t, aw_ptr, 1)
 
                 t += 1
                 count += 1
