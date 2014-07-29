@@ -315,7 +315,6 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = [
     "confusion_matrix",
     "hamming_loss",
     "hinge_loss",
-    "unnormalized_jaccard_similarity_score",
     "log_loss",
     "matthews_corrcoef_score",
 ]

@@ -238,7 +238,8 @@ def confusion_matrix(y_true, y_pred, labels=None):
     return CM
 
 
-def jaccard_similarity_score(y_true, y_pred, normalize=True, sample_weight=None):
+def jaccard_similarity_score(y_true, y_pred, normalize=True,
+                             sample_weight=None):
     """Jaccard similarity coefficient score
 
     The Jaccard index [1], or Jaccard similarity coefficient, defined as
@@ -344,13 +345,12 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True, sample_weight=None)
         score = y_true == y_pred
 
     if normalize:
-        if sample_weight is not None:
-            return np.average(score, weights=sample_weight)
-        return np.mean(score)
+        return np.average(score, weights=sample_weight)
     else:
         if sample_weight is not None:
             return np.dot(score, sample_weight)
-        return np.sum(score)
+        else:
+            return np.sum(score)
 
 
 def matthews_corrcoef(y_true, y_pred):
