@@ -287,6 +287,18 @@ class LSHForest(BaseEstimator):
                                    float(total_candidates.shape[0]))
             max_depth = max_depth - 1
         return total_neighbors, total_distances
+    
+    def _convert_to_hash(self, item, tree_n):
+        """
+        Converts item(a date point) into the integer value of 
+        the binary hashed value
+        """
+        projections = np.array(np.dot(self.hash_functions_[tree_n],
+                                      item) > 0, dtype=int)
+        xx = tuple(projections)
+        binary_hash = (self.cache[xx[:self.cache_N]] * self.k +
+                       self.cache[xx[self.cache_N:]])
+        return binary_hash
 
     def fit(self, X=None):
         """
@@ -347,11 +359,7 @@ class LSHForest(BaseEstimator):
         # descend phase
         max_depth = 0
         for i in range(self.n_trees):
-            projections = np.array(np.dot(self.hash_functions_[i],
-                                          query) > 0, dtype=int)
-            xx = tuple(projections)
-            bin_query = (self.cache[xx[:self.cache_N]] * self.k +
-                         self.cache[xx[self.cache_N:]])
+            bin_query = self._convert_to_hash(query, i)
             k = _find_longest_prefix_match(self._trees[i], bin_query,
                                            self.max_label_length,
                                            self._left_mask,
@@ -495,16 +503,12 @@ class LSHForest(BaseEstimator):
                                      input_array_shape + 1),
                                     dtype=int)
         for i in range(self.n_trees):
-            projections = np.array(np.dot(self.hash_functions_[i],
-                                          item) > 0, dtype=int)
-            xx = tuple(projections)
-            bin_query = (self.cache[xx[:self.cache_N]] * self.k +
-                         self.cache[xx[self.cache_N:]])
+            bin_item = self._convert_to_hash(item, i)
             # gets the position to be added in the tree.
-            position = self._trees[i].searchsorted(bin_query)
+            position = self._trees[i].searchsorted(bin_item)
             # adds the hashed value into the tree.
             trees[i] = np.insert(self._trees[i],
-                                 position, bin_query)
+                                 position, bin_item)
             # add the entry into the original_indices.
             original_incides[i] = np.insert(self._original_indices[i],
                                             position,
