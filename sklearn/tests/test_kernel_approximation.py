@@ -640,3 +640,41 @@ def test_digit_recognition():
         pl.title('Prediction: %i' % prediction)
     
     pl.show()
+
+def test_compare_fast_slow_for_correctness():
+
+    #generate data
+    X = rng.random_sample(size=(2, 2))
+    #Y = rng.random_sample(size=(1, 4))
+    X /= X.sum(axis=1)[:, np.newaxis]
+    #Y /= Y.sum(axis=1)[:, np.newaxis]
+
+    # calculate feature maps
+    gamma = 10.
+    sigma = np.sqrt(1 / (2 * gamma))
+    number_of_features_to_generate = 4
+
+
+    exact_start = datetime.datetime.utcnow()
+    # original rbf kernel method: 
+    rbf_kernel(X, X, gamma=gamma)
+    #rbf_kernel(X, Y, gamma=gamma)
+    exact_end = datetime.datetime.utcnow()
+    exact_spent_time = exact_end- exact_start
+    print "Timimg exact rbf: \t\t", exact_spent_time
+
+    # Fastfood: approximate kernel mapping
+    rbf_transform = Fastfood(sigma=sigma, n_components=number_of_features_to_generate, random_state=42)
+    foo = rbf_transform.fit_vectorized(X)
+    foo.transform_fast(X)
+    #_ = rbf_transform.transform_fast(Y)
+    #print X_trans, Y_trans
+    #kernel_approx = np.dot(X_trans_fastfood, Y_trans_fastfood.T)
+
+    rbf_transform = Fastfood(sigma=sigma, n_components=number_of_features_to_generate, 
+                             tradeoff_less_mem_or_higher_accuracy='mem', random_state=42)
+    # Fastfood: approximate kernel mapping
+    foo.transform_fast_vectorized(X)
+    #_ = rbf_transform.transform_fast_vectorized(Y)
+    #print X_trans, Y_trans
+    #kernel_approx = np.dot(X_trans_fastfood, Y_trans_fastfood.T)
