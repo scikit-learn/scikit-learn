@@ -19,7 +19,6 @@ from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import shuffle
 from sklearn import datasets
-import time
 
 
 # Common random state
@@ -293,7 +292,6 @@ def test_sparse_classification():
         sparse_results = sparse_classifier.predict(X_test_sparse)
         dense_results = dense_classifier.predict(X_test)
         assert_array_equal(sparse_results, dense_results)
-        sparse_y_pred, dense_y_pred = sparse_results, dense_results
 
         # decision_function
         sparse_results = sparse_classifier.decision_function(X_test_sparse)
@@ -342,7 +340,6 @@ def test_sparse_classification():
             assert_array_equal(sprase_res, dense_res)
 
         # Verify sparsity of data is maintained during training
-        sparse_type = type(X_train_sparse)
         types = [i.data_type_ for i in sparse_classifier.estimators_]
 
         assert all([(t == csc_matrix or t == csr_matrix)
@@ -394,7 +391,6 @@ def test_sparse_regression():
         for sprase_res, dense_res in zip(sparse_results, dense_results):
             assert_array_equal(sprase_res, dense_res)
 
-        sparse_type = type(X_train_sparse)
         types = [i.data_type_ for i in sparse_classifier.estimators_]
 
         assert all([(t == csc_matrix or t == csr_matrix)

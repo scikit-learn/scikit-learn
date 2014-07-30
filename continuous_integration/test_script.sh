@@ -9,17 +9,18 @@ set -e
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"
-python setup.py build_ext --inplace
 
 # Skip tests that require large downloads over the network to save bandwith
 # usage as travis workers are stateless and therefore traditional local
 # disk caching does not work.
 export SKLEARN_SKIP_NETWORK_TESTS=1
 
+# Do not use "make test" or "make test-coverage" as they enable verbose mode
+# which renders travis output too slow to display in a browser.
 if [[ "$COVERAGE" == "true" ]]; then
-    make test-coverage
+    nosetests -s --with-coverage sklearn
 else
-    make test
+    nosetests -s sklearn
 fi
 
 make test-doc test-sphinxext

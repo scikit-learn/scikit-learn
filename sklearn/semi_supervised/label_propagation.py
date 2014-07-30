@@ -61,7 +61,7 @@ from ..base import BaseEstimator, ClassifierMixin
 from ..metrics.pairwise import rbf_kernel
 from ..utils.graph import graph_laplacian
 from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_arrays
+from ..utils.validation import check_X_y
 from ..externals import six
 from ..neighbors.unsupervised import NearestNeighbors
 
@@ -206,7 +206,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         -------
         self : returns an instance of self.
         """
-        X, y = check_arrays(X, y)
+        X, y = check_X_y(X, y)
         self.X_ = X
 
         # actual graph construction (implementations should override this)
@@ -256,6 +256,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         transduction = self.classes_[np.argmax(self.label_distributions_,
                                                axis=1)]
         self.transduction_ = transduction.ravel()
+        self.n_iter_ = self.max_iter - remaining_iter
         return self
 
 
@@ -292,6 +293,9 @@ class LabelPropagation(BaseLabelPropagation):
 
     `transduction_` : array, shape = [n_samples]
         Label assigned to each item via the transduction.
+
+    `n_iter_` : int
+        Number of iterations run.
 
     Examples
     --------
@@ -371,6 +375,9 @@ class LabelSpreading(BaseLabelPropagation):
 
     `transduction_` : array, shape = [n_samples]
         Label assigned to each item via the transduction.
+
+    `n_iter_` : int
+        Number of iterations run.
 
     Examples
     --------

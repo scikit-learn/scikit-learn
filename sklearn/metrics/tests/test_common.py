@@ -315,7 +315,6 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = [
     "confusion_matrix",
     "hamming_loss",
     "hinge_loss",
-    "jaccard_similarity_score", "unnormalized_jaccard_similarity_score",
     "log_loss",
     "matthews_corrcoef_score",
 ]
@@ -904,10 +903,10 @@ def check_sample_weight_invariance(name, metric, y1, y2):
 
     # check that unit weights gives the same score as no weight
     unweighted_score = metric(y1, y2, sample_weight=None)
-    assert_equal(
+    assert_almost_equal(
         unweighted_score,
         metric(y1, y2, sample_weight=np.ones(shape=len(y1))),
-        msg="For %s sample_weight=None is not equivalent to "
+        err_msg="For %s sample_weight=None is not equivalent to "
             "sample_weight=ones" % name)
 
     # check that the weighted and unweighted scores are unequal
@@ -920,9 +919,9 @@ def check_sample_weight_invariance(name, metric, y1, y2):
     # check that sample_weight can be a list
     weighted_score_list = metric(y1, y2,
                                  sample_weight=sample_weight.tolist())
-    assert_equal(
+    assert_almost_equal(
         weighted_score, weighted_score_list,
-        msg="Weighted scores for array and list sample_weight input are "
+        err_msg="Weighted scores for array and list sample_weight input are "
             "not equal (%f != %f) for %s" % (
                 weighted_score, weighted_score_list, name))
 

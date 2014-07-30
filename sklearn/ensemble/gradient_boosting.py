@@ -35,7 +35,7 @@ from .base import BaseEnsemble
 from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
-from ..utils import check_random_state, array2d, check_arrays, column_or_1d
+from ..utils import check_random_state, check_array, check_X_y, column_or_1d
 from ..utils.extmath import logsumexp
 from ..externals import six
 from ..feature_selection.from_model import _LearntSelectorMixin
@@ -751,8 +751,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             self._clear_state()
 
         # Check input
-        X, = check_arrays(X, dtype=DTYPE, sparse_format="dense")
-        y = column_or_1d(y, warn=True)
+        X, y = check_X_y(X, y, dtype=DTYPE)
         n_samples, n_features = X.shape
         self.n_features = n_features
         random_state = check_random_state(self.random_state)
@@ -895,7 +894,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             Regression and binary classification produce an array of shape
             [n_samples].
         """
-        X = array2d(X, dtype=DTYPE, order="C")
+        X = check_array(X, dtype=DTYPE, order="C")
         score = self._decision_function(X)
         if score.shape[1] == 1:
             return score.ravel()
@@ -920,7 +919,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             Regression and binary classification are special cases with
             ``k == 1``, otherwise ``k==n_classes``.
         """
-        X = array2d(X, dtype=DTYPE, order="C")
+        X = check_array(X, dtype=DTYPE, order="C")
         score = self._init_decision_function(X)
         for i in range(self.estimators_.shape[0]):
             predict_stage(self.estimators_, i, X, self.learning_rate, score)

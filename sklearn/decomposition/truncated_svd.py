@@ -6,8 +6,6 @@
 #         Michael Becker <mike@beckerfuffle.com>
 # License: 3-clause BSD.
 
-import warnings
-
 import numpy as np
 import scipy.sparse as sp
 
@@ -17,8 +15,7 @@ except ImportError:
     from ..utils.arpack import svds
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import (array2d, as_float_array, atleast2d_or_csr,
-                     check_random_state)
+from ..utils import check_array, as_float_array, check_random_state
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
 from ..utils.sparsefuncs import mean_variance_axis0
 
@@ -109,12 +106,8 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     class to data once, then keep the instance around to do transformations.
 
     """
-    def __init__(self, n_components=2, algorithm="randomized",
-                 n_iter=5, random_state=None, tol=0., n_iterations=None):
-        if n_iterations is not None:
-            warnings.warn("n_iterations was renamed to n_iter for consistency "
-                          "and will be removed in 0.16.", DeprecationWarning)
-            n_iter = n_iterations
+    def __init__(self, n_components=2, algorithm="randomized", n_iter=5,
+                 random_state=None, tol=0.):
         self.algorithm = algorithm
         self.n_components = n_components
         self.n_iter = n_iter
@@ -179,7 +172,6 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         self.components_ = VT
 
         # Calculate explained variance & explained variance ratio
-        n_samples = X.shape[0]
         X_transformed = np.dot(U, np.diag(Sigma))
         self.explained_variance_ = exp_var = np.var(X_transformed, axis=0)
         if sp.issparse(X):
@@ -203,7 +195,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         X_new : array, shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
         return safe_sparse_dot(X, self.components_.T)
 
     def inverse_transform(self, X):
@@ -221,11 +213,5 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         X_original : array, shape (n_samples, n_features)
             Note that this is always a dense array.
         """
-        X = array2d(X)
+        X = check_array(X)
         return np.dot(X, self.components_)
-
-    @property
-    def n_iterations(self):
-        warnings.warn("n_iterations was renamed to n_iter for consistency "
-                      "and will be removed in 0.16.", DeprecationWarning)
-        return self.n_iter

@@ -20,7 +20,7 @@ from scipy.sparse import linalg as sp_linalg
 from .base import LinearClassifierMixin, LinearModel
 from ..base import RegressorMixin
 from ..utils.extmath import safe_sparse_dot
-from ..utils import safe_asarray
+from ..utils import check_X_y
 from ..utils import compute_class_weight
 from ..utils import column_or_1d
 from ..preprocessing import LabelBinarizer
@@ -178,7 +178,6 @@ def _solve_svd(X, y, alpha):
 
 def _deprecate_dense_cholesky(solver):
     if solver == 'dense_cholesky':
-        import warnings
         warnings.warn(DeprecationWarning("The name 'dense_cholesky' is "
                                          "deprecated. Using 'cholesky' "
                                          "instead. Changed in 0.15"))
@@ -294,7 +293,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
             solver = 'cholesky'
 
     # There should be either 1 or n_targets penalties
-    alpha = safe_asarray(alpha).ravel()
+    alpha = np.asarray(alpha).ravel()
     if alpha.size not in [1, n_targets]:
         raise ValueError("Number of targets and number of penalties "
                          "do not correspond: %d != %d"
@@ -355,11 +354,10 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
         self.solver = solver
 
     def fit(self, X, y, sample_weight=None):
-        X = safe_asarray(X, dtype=np.float)
-        y = np.asarray(y, dtype=np.float)
+        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float, multi_output=True)
 
         if ((sample_weight is not None) and
-            np.atleast_1d(sample_weight).ndim > 1):
+                np.atleast_1d(sample_weight).ndim > 1):
             raise ValueError("Sample weights must be 1D array or scalar")
 
         X, y, X_mean, y_mean, X_std = self._center_data(
@@ -723,8 +721,7 @@ class _RidgeGCV(LinearModel):
         -------
         self : Returns self.
         """
-        X = safe_asarray(X, dtype=np.float)
-        y = np.asarray(y, dtype=np.float)
+        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float, multi_output=True)
 
         n_samples, n_features = X.shape
 

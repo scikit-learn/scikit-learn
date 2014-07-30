@@ -288,4 +288,4 @@ def test_min_max_axis_errors():
     X_csc = sp.csc_matrix(X)
     assert_raises(TypeError, min_max_axis, X_csr.tolil(), axis=0)
     assert_raises(ValueError, min_max_axis, X_csr, axis=2)
-    assert_raises(ValueError, min_max_axis, X_csr, axis=-3)
+    assert_raises(ValueError, min_max_axis, X_csc, axis=-3)

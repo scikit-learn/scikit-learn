@@ -9,7 +9,7 @@ import numpy as np
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .externals.six.moves import xrange
 from .utils import check_random_state
-from .utils.validation import safe_asarray
+from .utils.validation import check_array
 from sklearn.utils import deprecated
 
 
@@ -150,7 +150,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         if not hasattr(self, "classes_"):
             raise ValueError("DummyClassifier not fitted.")
 
-        X = safe_asarray(X)
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         # numpy random_state expects Python int and not long as size argument
         # under Windows
         n_samples = int(X.shape[0])
@@ -215,7 +215,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         if not hasattr(self, "classes_"):
             raise ValueError("DummyClassifier not fitted.")
 
-        X = safe_asarray(X)
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         # numpy random_state expects Python int and not long as size argument
         # under Windows
         n_samples = int(X.shape[0])
@@ -351,7 +351,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
                              "expected 'mean', 'median' or 'constant'"
                              % self.strategy)
 
-        y = safe_asarray(y)
+        y = check_array(y, accept_sparse='csr', ensure_2d=False)
         self.output_2d_ = (y.ndim == 2)
 
         if self.strategy == "mean":
@@ -365,7 +365,9 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
                 raise TypeError("Constant target value has to be specified "
                                 "when the constant strategy is used.")
 
-            self.constant = safe_asarray(self.constant)
+            self.constant = check_array(self.constant,
+                                        accept_sparse=['csr', 'csc', 'coo'],
+                                        ensure_2d=False)
 
             if self.output_2d_ and self.constant.shape[0] != y.shape[1]:
                 raise ValueError(
@@ -395,7 +397,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         if not hasattr(self, "constant_"):
             raise ValueError("DummyRegressor not fitted.")
 
-        X = safe_asarray(X)
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         n_samples = X.shape[0]
 
         y = np.ones((n_samples, 1)) * self.constant_

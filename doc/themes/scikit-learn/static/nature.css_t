@@ -630,14 +630,14 @@ div.sprint-wrapper:hover {
 /*-----------------------The Examples Gallery-------------------------------*/
 
 /* ------- Fix maximum size of thumbnails in example gallery -------------- */
-div#examples.section .figure img {
+.thumbnailContainer .figure img {
     max-width: 160px;
     max-height: 160px;
     display: block;
     margin: auto;
 }
 
-div#examples.section .thumbnailContainer {
+.thumbnailContainer {
     float: left;
     width: 182px;
     height: 242px;
@@ -646,9 +646,9 @@ div#examples.section .thumbnailContainer {
 
 /* Standard browsers hover */
 
-div#examples.section .figure:hover img ,
-div#examples.section .figure:focus img,
-div#examples.section .figure:active img{
+.thumbnailContainer .figure:hover img ,
+.thumbnailContainer .figure:focus img,
+.thumbnailContainer  .figure:active img{
   z-index: 100;
   /* --> Full image size */
   /*width: 240px;*/
@@ -665,6 +665,7 @@ div#examples.section .figure:active img{
   *height: 145px;
   *margin-top: 0;
   *margin-left: 0;
+  background: transparent;
 }
 
 /* IE hover */
@@ -682,6 +683,62 @@ div#examples.section .figure:active img{
   *width: 160px;
   *height: 145px;
 }
+
+/* Styling for example galleries */
+
+.thumbnailContainer .figure {
+    float: left;
+    margin: 10px;
+    -webkit-border-radius: 10px; /* Saf3-4, iOS 1-3.2, Android <1.6 */
+    -moz-border-radius: 10px; /* FF1-3.6 */
+    border-radius: 10px; /* Opera 10.5, IE9, Saf5, Chrome, FF4, iOS 4, Android 2.1+ */
+    border: 2px solid #fff;
+    background-color: white;
+    /* --> Thumbnail image size */
+    width: 150px;
+    height: 100px;
+    -webkit-background-size: 150px 100px; /* Saf3-4 */
+    -moz-background-size: 150px 100px; /* FF3.6 */
+}
+
+.thumbnailContainer .figure img {
+    display: inline;
+}
+
+div.docstringWrapper p.caption {
+    display: block;
+    -webkit-box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.0);
+    -moz-box-shadow: 0px 0px 20px rgba(0, 0, 0, .0); /* FF3.5 - 3.6 */
+    box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.0); /* Opera 10.5, IE9, FF4+, Chrome 10+ */
+    padding: 0px;
+    border: white;
+}
+
+div.docstringWrapper p {
+    display: none;
+    background-color: white;
+    -webkit-box-shadow: 0px 0px 20px rgba(0, 0, 0, 1.00);
+    -moz-box-shadow: 0px 0px 20px rgba(0, 0, 0, 1.00); /* FF3.5 - 3.6 */
+    box-shadow: 0px 0px 20px rgba(0, 0, 0, 1.00); /* Opera 10.5, IE9, FF4+, Chrome 10+ */
+    padding: 13px;
+    margin-top: 0px;
+    border-style: solid;
+    border-width: 1px;
+}
+
+.class,
+.function {
+	clear: both
+}
+
+.documentwrapper {
+	position: absolute;  /* Internal floats are separate to external */
+}
+
+.section:after {
+    clear: both;
+}
+
 
 /* The hover-effect for the examples gallery was adapted from Martin Michálek's
 /* example: http://www.vzhurudolu.cz/test/image-gallery-enlarge-on-hover/
@@ -965,7 +1022,7 @@ p.citing {
     background-color: #fff;
 }
 
-dl.class dt, dl.function dt {
+dl.class > dt, dl.function > dt, dl.method > dt {
     padding: 10px;
     background-color: #f8f8f8;
     color: #222;

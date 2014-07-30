@@ -28,7 +28,7 @@ test-code: in
 test-sphinxext:
 	$(NOSETESTS) -s -v doc/sphinxext/
 test-doc:
-	$(NOSETESTS) -s -v doc/ doc/modules/ doc/datasets/ \
+	$(NOSETESTS) -s -v doc/*.rst doc/modules/ doc/datasets/ \
 	doc/developers doc/tutorial/basic doc/tutorial/statistical_inference \
 	doc/tutorial/text_analytics
 

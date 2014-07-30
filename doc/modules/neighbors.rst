@@ -110,7 +110,7 @@ Our dataset is structured such that points nearby in index order are nearby
 in parameter space, leading to an approximately block-diagonal matrix of
 K-nearest neighbors.  Such a sparse graph is useful in a variety of
 circumstances which make use of spatial relationships between points for
-unsupervised learning: in particular, see :class:`sklearn.manifold.IsoMap`,
+unsupervised learning: in particular, see :class:`sklearn.manifold.Isomap`,
 :class:`sklearn.manifold.LocallyLinearEmbedding`, and
 :class:`sklearn.cluster.SpectralClustering`.
 

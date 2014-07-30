@@ -21,7 +21,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import array2d, arrayfuncs, as_float_array, check_arrays
+from ..utils import arrayfuncs, as_float_array, check_array, check_X_y
 from ..cross_validation import _check_cv as check_cv
 from ..utils import ConvergenceWarning
 from ..externals.joblib import Parallel, delayed
@@ -36,7 +36,8 @@ if LooseVersion(scipy.__version__) >= LooseVersion('0.12'):
 def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
               alpha_min=0, method='lar', copy_X=True,
               eps=np.finfo(np.float).eps,
-              copy_Gram=True, verbose=0, return_path=True):
+              copy_Gram=True, verbose=0, return_path=True,
+              return_n_iter=False):
     """Compute Least Angle Regression or Lasso path using LARS algorithm [1]
 
     The optimization objective for the case method='lasso' is::
@@ -101,6 +102,10 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     coefs: array, shape (n_features, n_alphas + 1)
         Coefficients along the path
+
+    n_iter : int
+        Number of iterations run. Returned only if return_n_iter is set
+        to True.
 
     See also
     --------
@@ -433,9 +438,15 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         alphas = alphas[:n_iter + 1]
         coefs = coefs[:n_iter + 1]
 
-        return alphas, active, coefs.T
+        if return_n_iter:
+            return alphas, active, coefs.T, n_iter
+        else:
+            return alphas, active, coefs.T
     else:
-        return alpha, active, coef
+        if return_n_iter:
+            return alpha, active, coef, n_iter
+        else:
+            return alpha, active, coef
 
 
 ###############################################################################
@@ -502,6 +513,10 @@ class Lars(LinearModel, RegressorMixin):
     ``intercept_`` : float | array, shape (n_targets,)
         Independent term in decision function.
 
+    ``n_iter_`` : array-like or int
+        The number of iterations taken by lars_path to find the
+        grid of alphas for each target.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -564,7 +579,7 @@ class Lars(LinearModel, RegressorMixin):
         self : object
             returns an instance of self.
         """
-        X = array2d(X)
+        X = check_array(X)
         y = np.asarray(y)
         n_features = X.shape[1]
 
@@ -595,6 +610,7 @@ class Lars(LinearModel, RegressorMixin):
             Gram = self._get_gram()
 
         self.alphas_ = []
+        self.n_iter_ = []
 
         if self.fit_path:
             self.coef_ = []
@@ -602,13 +618,15 @@ class Lars(LinearModel, RegressorMixin):
             self.coef_path_ = []
             for k in xrange(n_targets):
                 this_Xy = None if Xy is None else Xy[:, k]
-                alphas, active, coef_path = lars_path(
+                alphas, active, coef_path, n_iter_ = lars_path(
                     X, y[:, k], Gram=Gram, Xy=this_Xy, copy_X=self.copy_X,
                     copy_Gram=True, alpha_min=alpha, method=self.method,
                     verbose=max(0, self.verbose - 1), max_iter=max_iter,
-                    eps=self.eps, return_path=True)
+                    eps=self.eps, return_path=True,
+                    return_n_iter=True)
                 self.alphas_.append(alphas)
                 self.active_.append(active)
+                self.n_iter_.append(n_iter_)
                 self.coef_path_.append(coef_path)
                 self.coef_.append(coef_path[:, -1])
 
@@ -616,18 +634,21 @@ class Lars(LinearModel, RegressorMixin):
                 self.alphas_, self.active_, self.coef_path_, self.coef_ = [
                     a[0] for a in (self.alphas_, self.active_, self.coef_path_,
                                    self.coef_)]
+                self.n_iter_ = self.n_iter_[0]
         else:
             self.coef_ = np.empty((n_targets, n_features))
             for k in xrange(n_targets):
                 this_Xy = None if Xy is None else Xy[:, k]
-                alphas, _, self.coef_[k] = lars_path(
+                alphas, _, self.coef_[k], n_iter_ = lars_path(
                     X, y[:, k], Gram=Gram, Xy=this_Xy, copy_X=self.copy_X,
                     copy_Gram=True, alpha_min=alpha, method=self.method,
                     verbose=max(0, self.verbose - 1), max_iter=max_iter,
-                    eps=self.eps, return_path=False)
+                    eps=self.eps, return_path=False, return_n_iter=True)
                 self.alphas_.append(alphas)
+                self.n_iter_.append(n_iter_)
             if n_targets == 1:
                 self.alphas_ = self.alphas_[0]
+                self.n_iter_ = self.n_iter_[0]
         self._set_intercept(X_mean, y_mean, X_std)
         return self
 
@@ -706,6 +727,10 @@ class LassoLars(Lars):
 
     ``intercept_`` : float | array, shape (n_targets,)
         Independent term in decision function.
+
+    ``n_iter_`` : array-like or int.
+        The number of iterations taken by lars_path to find the
+        grid of alphas for each target.
 
     Examples
     --------
@@ -907,6 +932,9 @@ class LarsCV(Lars):
         the mean square error on left-out for each fold along the path
         (alpha values given by ``cv_alphas``)
 
+    ``n_iter_`` : array-like or int
+        the number of iterations run by Lars with the optimal alpha.
+
     See also
     --------
     lars_path, LassoLars, LassoLarsCV
@@ -946,8 +974,7 @@ class LarsCV(Lars):
             returns an instance of self.
         """
         self.fit_path = True
-        X = array2d(X)
-        X, y = check_arrays(X, y)
+        X, y = check_X_y(X, y)
 
         # init cross-validation generator
         cv = check_cv(self.cv, X, y, classifier=False)
@@ -1080,6 +1107,9 @@ class LassoLarsCV(LarsCV):
         the mean square error on left-out for each fold along the path
         (alpha values given by ``cv_alphas``)
 
+    ``n_iter_`` : array-like or int
+        the number of iterations run by Lars with the optimal alpha.
+
     Notes
     -----
 
@@ -1160,6 +1190,10 @@ class LassoLarsIC(LassoLars):
     ``alpha_`` : float
         the alpha parameter chosen by the information criterion
 
+    ``n_iter_`` : int
+        number of iterations run by lars_path to find the grid of
+        alphas.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -1216,7 +1250,7 @@ class LassoLarsIC(LassoLars):
             returns an instance of self.
         """
         self.fit_path = True
-        X = array2d(X)
+        X = check_array(X)
         y = np.asarray(y)
 
         X, y, Xmean, ymean, Xstd = LinearModel._center_data(
@@ -1225,10 +1259,10 @@ class LassoLarsIC(LassoLars):
 
         Gram = self._get_gram()
 
-        alphas_, active_, coef_path_ = lars_path(
+        alphas_, active_, coef_path_, self.n_iter_ = lars_path(
             X, y, Gram=Gram, copy_X=copy_X, copy_Gram=True, alpha_min=0.0,
             method='lasso', verbose=self.verbose, max_iter=max_iter,
-            eps=self.eps)
+            eps=self.eps, return_n_iter=True)
 
         n_samples = X.shape[0]
 

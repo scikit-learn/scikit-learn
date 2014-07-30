@@ -10,7 +10,6 @@ Base IO code for all datasets
 import os
 import csv
 import shutil
-import warnings
 from os import environ
 from os.path import dirname
 from os.path import join
@@ -66,7 +65,6 @@ def clear_data_home(data_home=None):
 
 def load_files(container_path, description=None, categories=None,
                load_content=True, shuffle=True, encoding=None,
-               charset=None, charset_error=None,
                decode_error='strict', random_state=0):
     """Load text files with categories as subfolder names.
 
@@ -155,20 +153,6 @@ def load_files(container_path, description=None, categories=None,
         'target_names', the meaning of the labels, and 'DESCR', the full
         description of the dataset.
     """
-    if charset is not None:
-        warnings.warn("The charset parameter is deprecated as of version "
-                      "0.14 and will be removed in 0.16. "
-                      "Use encoding instead.",
-                      DeprecationWarning)
-        encoding = charset
-
-    if charset_error is not None:
-        warnings.warn("The charset_error parameter is deprecated as of "
-                      "version 0.14 and will be removed in 0.16. Use "
-                      "decode_error instead.",
-                      DeprecationWarning)
-        decode_error = charset_error
-
     target = []
     target_names = []
     filenames = []

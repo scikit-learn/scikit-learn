@@ -193,6 +193,9 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
         warnings.simplefilter("always")
+        if hasattr(np, 'VisibleDeprecationWarning'):
+            # Let's not catch the numpy internal DeprecationWarnings
+            warnings.simplefilter('ignore', np.VisibleDeprecationWarning)
         # Trigger a warning.
         result = func(*args, **kw)
         # Verify some things
@@ -470,7 +473,7 @@ DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
 
 def all_estimators(include_meta_estimators=False, include_other=False,
                    type_filter=None, include_dont_test=False):
-    """Get a list of all  from sklearn.
+    """Get a list of all estimators from sklearn.
 
     This function crawls the module and gets all classes that inherit
     from BaseEstimator. Classes that are defined in test-modules are not
@@ -485,7 +488,7 @@ def all_estimators(include_meta_estimators=False, include_other=False,
         BaseEnsemble, OneVsOneClassifier, OutputCodeClassifier,
         OneVsRestClassifier, RFE, RFECV.
 
-    include_others : boolean, default=False
+    include_other : boolean, default=False
         Wether to include meta-estimators that are somehow special and can
         not be default-constructed sensibly. These are currently
         Pipeline, FeatureUnion and GridSearchCV

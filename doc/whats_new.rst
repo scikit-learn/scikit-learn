@@ -21,6 +21,14 @@ New features
    - Add the :func:`metrics.label_ranking_average_precision_score` metrics. By
      `Arnaud Joly`_.
 
+   - Added :class:`linear_model.LogisticRegressionCV`. By
+     `Manoj Kumar`_, `Fabian Pedregosa`_, `Gael Varoquaux`_
+     and `Alexandre Gramfort`_.
+
+   - Added ``warm_start`` constructor parameter to make it possible for any
+     trained forest model to grow additional trees incrementally. By
+     `Laurent Direr`_.
+
 
 Enhancements
 ............
@@ -28,6 +36,17 @@ Enhancements
 
    - Add support for sample weights in scorer objects.  Metrics with sample
      weight support will automatically benefit from it.
+
+   - Added ``newton-cg`` and `lbfgs` solver support in
+     :class:`linear_model.LogisticRegression`. By `Manoj Kumar`_.
+
+   - Add ``selection="random"`` parameter to implement stochastic coordinate
+     descent for :class:`linear_model.Lasso`, :class:`linear_model.ElasticNet`
+     and related. By `Manoj Kumar`_.
+
+    - Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score`.
+      By `Jatin Shah`.
+
 
 
 Documentation improvements
@@ -51,7 +70,26 @@ API changes summary
       :func:`multiclass.fit_ecoc` and :func:`multiclass.predict_ecoc`
       are deprecated. Use the underlying estimators instead.
 
+.. _changes_0_15_1:
+
+0.15.1
+======
+
 .. _changes_0_15:
+
+
+Bug fixes
+---------
+
+   - Make :func:`cross_validation.cross_val_score` use
+     :class:`cross_validation.KFold` instead of
+     :class:`cross_validation.StratifiedKFold` on multi-output classification
+     problems. By `Nikolay Mayorov`_.
+
+   - Support unseen labels :class:`preprocessing.LabelBinarizer` to restore
+     the default behavior of 0.14.1 for backward compatibility. By
+     `Hamzeh Alsalhi`_.
+
 
 0.15
 ====
@@ -2820,3 +2858,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Hamzeh Alsalhi: https://github.com/hamsal
 
 .. _Ronald Phlypo: https://github.com/rphlypo
+
+.. _Laurent Direr: https://github.com/ldirer
+
+.. _Nikolay Mayorov: https://github.com/nmayorov

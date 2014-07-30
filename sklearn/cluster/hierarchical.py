@@ -18,7 +18,7 @@ from ..base import BaseEstimator, ClusterMixin
 from ..externals.joblib import Memory
 from ..externals import six
 from ..metrics.pairwise import paired_distances, pairwise_distances
-from ..utils import array2d, safe_asarray, check_arrays
+from ..utils import check_array
 from ..utils.sparsetools import connected_components
 
 from . import _hierarchical
@@ -86,8 +86,7 @@ def _fix_connectivity(X, connectivity, n_components=None,
 ###############################################################################
 # Hierarchical tree building functions
 
-def ward_tree(X, connectivity=None, n_components=None, copy=None,
-              n_clusters=None):
+def ward_tree(X, connectivity=None, n_components=None, n_clusters=None):
     """Ward clustering based on a Feature matrix.
 
     Recursively merges the pair of clusters that minimally increases
@@ -138,11 +137,6 @@ def ward_tree(X, connectivity=None, n_components=None, copy=None,
         The parent of each node. Only returned when a connectivity matrix
         is specified, elsewhere 'None' is returned.
     """
-    if copy is not None:
-        warnings.warn("The copy argument is deprecated and will be removed "
-                      "in 0.16. The connectivity is now always copied.",
-                      DeprecationWarning)
-
     X = np.asarray(X)
     if X.ndim == 1:
         X = np.reshape(X, (-1, 1))
@@ -614,7 +608,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         -------
         self
         """
-        X = array2d(X)
+        X = check_array(X)
         memory = self.memory
         if isinstance(memory, six.string_types):
             memory = Memory(cachedir=memory, verbose=0)
@@ -685,7 +679,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         -------
         self
         """
-        X = safe_asarray(X)
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         if not (len(X.shape) == 2 and X.shape[0] > 0):
             raise ValueError('At least one sample is required to fit the '
                 'model. A data matrix of shape %s was given.'
@@ -755,7 +749,7 @@ class Ward(AgglomerativeClustering):
     linkage = 'ward'
 
     def __init__(self, n_clusters=2, memory=Memory(cachedir=None, verbose=0),
-                 connectivity=None, copy=None, n_components=None,
+                 connectivity=None, n_components=None,
                  compute_full_tree='auto', pooling_func=np.mean):
 
         warnings.warn("The Ward class is deprecated since 0.14 and will be "
@@ -763,13 +757,6 @@ class Ward(AgglomerativeClustering):
                       "instead.", DeprecationWarning)
         self.n_clusters = n_clusters
         self.memory = memory
-        self.copy = copy
-        if copy is not None:
-            warnings.warn("The copy argument is deprecated and will be "
-                          "removed in 0.16. The connectivity is now "
-                          "always copied.",
-                          DeprecationWarning)
-
         self.n_components = n_components
         self.connectivity = connectivity
         self.compute_full_tree = compute_full_tree
@@ -838,5 +825,5 @@ class WardAgglomeration(AgglomerationTransform, Ward):
         -------
         self
         """
-        X, = check_arrays(X)
+        X = check_array(X)
         return Ward.fit(self, X.T, **params)

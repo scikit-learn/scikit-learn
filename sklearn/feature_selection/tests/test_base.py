@@ -6,7 +6,7 @@ from numpy.testing import assert_array_equal
 
 from sklearn.base import BaseEstimator
 from sklearn.feature_selection.base import SelectorMixin
-from sklearn.utils import atleast2d_or_csc
+from sklearn.utils import check_array
 
 
 class StepSelector(SelectorMixin, BaseEstimator):
@@ -15,7 +15,7 @@ class StepSelector(SelectorMixin, BaseEstimator):
         self.step = step
 
     def fit(self, X, y=None):
-        X = atleast2d_or_csc(X)
+        X = check_array(X, 'csc')
         self.n_input_feats = X.shape[1]
         return self
 

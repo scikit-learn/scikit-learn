@@ -25,7 +25,7 @@ class MockDataFrame(object):
 
     def __array__(self):
         # Pandas data frames also are array-like: we want to make sure that
-        # when `check_arrays` with `force_arrays=False` does not try to call that
+        # input validation in cross-validation does not try to call that
         # method.
         return self.array
 

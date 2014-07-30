@@ -217,7 +217,7 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
 
     See Also
     ---------
-    `c_step` function
+    c_step
 
     Returns
     -------
