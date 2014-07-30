@@ -18,8 +18,10 @@ from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..preprocessing import LabelEncoder, LabelBinarizer
 from ..svm.base import BaseLibLinear
-from ..utils import check_array, check_consistent_length, compute_class_weight
-from ..utils.extmath import logsumexp, log_logistic, safe_sparse_dot
+from ..utils import (check_array, check_consistent_length,
+                     compute_class_weight, check_X_y)
+from ..utils.extmath import (logsumexp, log_logistic, safe_sparse_dot,
+                             squared_norm)
 from ..utils.optimize import newton_cg
 from ..utils.validation import as_float_array, DataConversionWarning
 from ..utils.fixes import expit
@@ -1065,9 +1067,9 @@ class MultinomialLR(BaseEstimator, _LogRegMixin):
     sklearn.linear_model.SGDClassifier
 
     """
-    def __init__(self, alpha=1e-4, fit_intercept=True, class_weight=None,
+    def __init__(self, C=1., fit_intercept=True, class_weight=None,
                  max_iter=100, tol=0.0001):
-        self.alpha = alpha
+        self.C = C
         self.class_weight = class_weight
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
@@ -1086,6 +1088,7 @@ class MultinomialLR(BaseEstimator, _LogRegMixin):
             Target vector for the samples in X.
         """
         X = check_array(X, accept_sparse='csr')
+        X, y = check_X_y(X, y)
 
         if y.ndim == 2 and y.shape[1] == 1:
             warnings.warn(
@@ -1101,19 +1104,39 @@ class MultinomialLR(BaseEstimator, _LogRegMixin):
         if Y.shape[1] == 1:
             Y = np.hstack([1 - Y, Y])
 
+        self.classes_ = lbin.classes_
+        class_weight_ = compute_class_weight(self.class_weight, self.classes_,
+                                             y)
+        le = LabelEncoder()
+        sample_weight = class_weight_[le.fit_transform(y)]
+
         # Fortran-ordered so we can slice off the intercept in loss_grad and
         # get contiguous arrays.
         w = np.zeros((Y.shape[1], X.shape[1] + bool(self.fit_intercept)),
                      order='F')
 
-        C = 1. / self.alpha
-        if C < 0:
-            raise ValueError("Penalty term must be positive; got (alpha=%r)"
-                             % self.alpha)
-        w, loss, info = optimize.fmin_l_bfgs_b(_loss_grad, w.ravel(),
-                                               args=[X, Y, C, self.fit_intercept],
-                                               maxiter=self.max_iter,
-                                               pgtol=self.tol)
+        if self.C < 0:
+            raise ValueError("Penalty term must be positive; got (C=%r)"
+                             % self.C)
+
+        # Compatibility for old scipy since it does not have a maxiter param.
+        try:
+            w, loss, info = optimize.fmin_l_bfgs_b(
+                _loss_grad, w.ravel(),
+                args=[X, Y, self.C, self.fit_intercept, sample_weight],
+                maxiter=self.max_iter, pgtol=self.tol
+                )
+        except TypeError:
+            w, loss, info = optimize.fmin_l_bfgs_b(
+                _loss_grad, w.ravel(),
+                args=[X, Y, self.C, self.fit_intercept, sample_weight],
+                pgtol=self.tol
+                )
+
+        if info['warnflag'] == 1:
+            warnings.warn("lbfgs solver failed to converge for the given "
+                          "no. of iterations. Increase the number of iterations")
+
         w = w.reshape(Y.shape[1], -1)
         if self.fit_intercept:
             intercept = w[:, -1]
@@ -1121,25 +1144,19 @@ class MultinomialLR(BaseEstimator, _LogRegMixin):
         else:
             intercept = np.zeros(Y.shape[1])
 
-        self.classes_ = lbin.classes_
         if len(self.classes_) == 2:
             w = w[1].reshape(1, -1)
             intercept = intercept[1:]
         self.coef_ = w
         self.intercept_ = intercept
-
         return self
 
 
-def _sqnorm(x):
-    x = x.ravel()
-    return np.dot(x, x)
-
-
-def _loss_grad(w, X, Y, C, fit_intercept):
+def _loss_grad(w, X, Y, C, fit_intercept, sample_weight):
     # Cross-entropy loss and its gradient for multinomial logistic regression
     # (Bishop 2006, p. 209) with L2 penalty (weight decay).
     w = w.reshape(Y.shape[1], -1)
+    sample_weight = sample_weight[:, np.newaxis]
     if fit_intercept:
         intercept = w[:, -1]
         w = w[:, :-1]
@@ -1150,10 +1167,10 @@ def _loss_grad(w, X, Y, C, fit_intercept):
     p += intercept
     p -= logsumexp(p, axis=1).reshape(-1, 1)
 
-    loss = (-C * (Y * p).sum()) + .5 * _sqnorm(w)
+    loss = (-C * (sample_weight * Y * p).sum()) + .5 * squared_norm(w)
 
     p = np.exp(p, p)
-    diff = p - Y
+    diff = sample_weight * (p - Y)
     grad = safe_sparse_dot(diff.T, X)
     grad *= C
     grad += w
