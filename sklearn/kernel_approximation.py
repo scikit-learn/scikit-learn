@@ -636,14 +636,20 @@ class Fastfood(BaseEstimator, TransformerMixin):
         result = np.multiply(B, X.reshape((1, X.shape[0], 1, X.shape[1])))
         result = result.reshape((X.shape[0]*B.shape[0], B.shape[1]))
         result = Fastfood.approx_fourier_transformation_multi_dim(result)
-        
-        Perm = np.tile(P, (X.shape[0], 1))
+        #np.arange(0, B.shape[0], B.shape[1])[:,np.newaxis]
+        offset = np.arange(0, result.shape[0]*result.shape[1]-1, result.shape[1])
+        offset = offset.reshape(offset.shape[0], 1)
+        Perm = np.tile(P, (X.shape[0], 1)) + offset
         np.take(result, Perm, out=result)
-        result = result.reshape(X.shape[0], B.shape[0]*B.shape[1])
+        print result # 3
+        result = result.reshape(X.shape[0], B.shape[0]*B.shape[1]) 
         np.multiply(np.ravel(G), result.reshape(X.shape[0], B.shape[0]*B.shape[1]), out=result)
-        
         result = result.reshape(B.shape[0]*X.shape[0], B.shape[1])
-        return Fastfood.approx_fourier_transformation_multi_dim(result)
+        print result
+        result = Fastfood.approx_fourier_transformation_multi_dim(result)
+        print result
+        print '--------------------------'
+        return result
 
 
     @staticmethod
