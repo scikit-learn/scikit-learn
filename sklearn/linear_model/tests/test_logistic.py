@@ -83,7 +83,7 @@ def test_predict_iris():
     target = iris.target_names[iris.target]
 
     for clf in [LogisticRegression(C=len(iris.data)),
-                MultinomialLR(alpha=(1. / len(iris.data)))]:
+                MultinomialLR(C=len(iris.data))]:
         clf.fit(iris.data, target)
         assert_array_equal(np.unique(target), clf.classes_)
 
@@ -99,7 +99,7 @@ def test_predict_iris():
 
 
 def test_multinomial_validation():
-    lr = MultinomialLR(alpha=-1)
+    lr = MultinomialLR(C=-1)
     assert_raises(ValueError, lr.fit, [[0, 1], [1, 0]], [0, 1])
 
 
