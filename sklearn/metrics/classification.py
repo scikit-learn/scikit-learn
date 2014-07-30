@@ -116,10 +116,10 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
 
     Parameters
     ----------
-    y_true : array-like or label indicator matrix
+    y_true : 1d array-like, or label indicator array / sparse matrix
         Ground truth (correct) labels.
 
-    y_pred : array-like or label indicator matrix
+    y_pred : 1d array-like, or label indicator array / sparse matrix
         Predicted labels, as returned by a classifier.
 
     normalize : bool, optional (default=True)
@@ -262,10 +262,10 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
 
     Parameters
     ----------
-    y_true : array-like or label indicator matrix
+    y_true : 1d array-like, or label indicator array / sparse matrix
         Ground truth (correct) labels.
 
-    y_pred : array-like or label indicator matrix
+    y_pred : 1d array-like, or label indicator array / sparse matrix
         Predicted labels, as returned by a classifier.
 
     normalize : bool, optional (default=True)
@@ -420,10 +420,10 @@ def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
 
     Parameters
     ----------
-    y_true : array-like or label indicator matrix
+    y_true : 1d array-like, or label indicator array / sparse matrix
         Ground truth (correct) labels.
 
-    y_pred : array-like or label indicator matrix
+    y_pred : 1d array-like, or label indicator array / sparse matrix
         Predicted labels, as returned by a classifier.
 
     normalize : bool, optional (default=True)
@@ -494,10 +494,10 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted',
 
     Parameters
     ----------
-    y_true : array-like or label indicator matrix
+    y_true : 1d array-like, or label indicator array / sparse matrix
         Ground truth (correct) target values.
 
-    y_pred : array-like or label indicator matrix
+    y_pred : 1d array-like, or label indicator array / sparse matrix
         Estimated targets as returned by a classifier.
 
     labels : array
@@ -577,10 +577,10 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
 
     Parameters
     ----------
-    y_true : array-like or label indicator matrix
+    y_true : 1d array-like, or label indicator array / sparse matrix
         Ground truth (correct) target values.
 
-    y_pred : array-like or label indicator matrix
+    y_pred : 1d array-like, or label indicator array / sparse matrix
         Estimated targets as returned by a classifier.
 
     beta: float
@@ -736,10 +736,10 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     Parameters
     ----------
-    y_true : array-like or label indicator matrix
+    y_true : 1d array-like, or label indicator array / sparse matrix
         Ground truth (correct) target values.
 
-    y_pred : array-like or label indicator matrix
+    y_pred : 1d array-like, or label indicator array / sparse matrix
         Estimated targets as returned by a classifier.
 
     beta : float, 1.0 by default
@@ -969,10 +969,10 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
 
     Parameters
     ----------
-    y_true : array-like or label indicator matrix
+    y_true : 1d array-like, or label indicator array / sparse matrix
         Ground truth (correct) target values.
 
-    y_pred : array-like or label indicator matrix
+    y_pred : 1d array-like, or label indicator array / sparse matrix
         Estimated targets as returned by a classifier.
 
     labels : array
@@ -1051,10 +1051,10 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted',
 
     Parameters
     ----------
-    y_true : array-like or label indicator matrix
+    y_true : 1d array-like, or label indicator array / sparse matrix
         Ground truth (correct) target values.
 
-    y_pred : array-like or label indicator matrix
+    y_pred : 1d array-like, or label indicator array / sparse matrix
         Estimated targets as returned by a classifier.
 
     labels : array
@@ -1126,10 +1126,10 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     Parameters
     ----------
-    y_true : array-like or label indicator matrix
+    y_true : 1d array-like, or label indicator array / sparse matrix
         Ground truth (correct) target values.
 
-    y_pred : array-like or label indicator matrix
+    y_pred : 1d array-like, or label indicator array / sparse matrix
         Estimated targets as returned by a classifier.
 
     labels : array, shape = [n_labels]
@@ -1220,10 +1220,10 @@ def hamming_loss(y_true, y_pred, classes=None):
 
     Parameters
     ----------
-    y_true : array-like or label indicator matrix
+    y_true : 1d array-like, or label indicator array / sparse matrix
         Ground truth (correct) labels.
 
-    y_pred : array-like or label indicator matrix
+    y_pred : 1d array-like, or label indicator array / sparse matrix
         Predicted labels, as returned by a classifier.
 
     classes : array, shape = [n_labels], optional
