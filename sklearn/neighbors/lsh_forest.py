@@ -7,7 +7,7 @@ Locality Sensitive Hashing Forest for Approximate Nearest Neighbor Search
 import numpy as np
 import itertools
 from ..base import BaseEstimator
-from ..utils.validation import safe_asarray
+from ..utils.validation import check_array
 from ..utils import check_random_state
 
 from ..random_projection import GaussianRandomProjection
@@ -314,7 +314,7 @@ class LSHForest(BaseEstimator):
         if X is None:
             raise ValueError("X cannot be None")
 
-        self._input_array = safe_asarray(X)
+        self._input_array = check_array(X)
         self._n_dim = self._input_array.shape[1]
 
         self.max_label_length = 32
@@ -405,7 +405,7 @@ class LSHForest(BaseEstimator):
         if n_neighbors is not None:
             self.n_neighbors = n_neighbors
 
-        X = safe_asarray(X)
+        X = check_array(X)
         x_dim = X.ndim
 
         if x_dim == 1:
@@ -452,7 +452,7 @@ class LSHForest(BaseEstimator):
         if radius is not None:
             self.radius = radius
 
-        X = safe_asarray(X)
+        X = check_array(X)
         x_dim = X.ndim
 
         if x_dim == 1:
@@ -477,7 +477,8 @@ class LSHForest(BaseEstimator):
 
     def insert(self, X):
         """
-        Inserts new data into the LSH Forest.
+        Inserts new data into the LSH Forest. Cost is proportional
+        to new total size, so additions should be batched.
 
         Parameters
         ----------
@@ -488,10 +489,8 @@ class LSHForest(BaseEstimator):
             raise ValueError("estimator should be fitted before"
                              " inserting.")
 
-        X = safe_asarray(X)
+        X = check_array(X)
 
-        if X.ndim != 2:
-            raise ValueError("X should be a 2-D matrix")
         if X.shape[1] != self._input_array.shape[1]:
             raise ValueError("Number of features in X and"
                              " fitted array does not match.")
@@ -499,9 +498,7 @@ class LSHForest(BaseEstimator):
         input_array_size = self._input_array.shape[0]
 
         for i in range(self.n_trees):
-            bin_X = []
-            for j in range(n_samples):
-                bin_X.append(self._convert_to_hash(X[j], i))
+            bin_X = [self._convert_to_hash(X[j], i) for j in range(n_samples)]
             # gets the position to be added in the tree.
             positions = self._trees[i].searchsorted(bin_X)
             # adds the hashed value into the tree.

@@ -222,9 +222,6 @@ def test_insert():
 
     lshf.fit(X)
 
-    # Insert 1D array
-    assert_raises(ValueError, lshf.insert,
-                  np.random.randn(dim))
     # Insert wrong dimension
     assert_raises(ValueError, lshf.insert,
                   np.random.randn(samples_insert, dim-1))
