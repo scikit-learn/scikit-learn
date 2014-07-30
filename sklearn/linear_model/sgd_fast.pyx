@@ -431,11 +431,11 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     -------
     weights : array, shape=[n_features]
         The fitted weight vector.
-    intercept : float
+    intercept : double
         The fitted intercept term.
     average_weights : array shape=[n_features]
         The averaged weights accross iterations
-    average_intercept : float
+    average_intercept : double
         The averaged intercept accross iterations
     """
     # get the data information into easy vars
