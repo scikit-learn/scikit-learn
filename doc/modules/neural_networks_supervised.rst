@@ -12,27 +12,31 @@ Neural network models (supervised)
 Multi-layer Perceptron
 ======================
 
-**Multi-layer Perceptron (MLP)** is a supervised algorithm that tries to learn 
-the relationship between input features :math:`X` and target :math:`y` for 
-either classification or regression. 
-Here we implemented a single-layer feedforward network as shown in Figure 1.
+**Multi-layer Perceptron (MLP)** is a supervised learning algorithm which learns
+a function :math:`f(\cdot): R \rightarrow R` given a set of features :math:`X = {x_1, x_2, ..., x_m}`
+and a target :math:`y`. It can learn non-linear, complex functions for either classification
+or regression. It is different from logistic regression, in that between the input 
+and the output layer, there are one or more hidden layers. Figure 1 shows 
+an MLP with one hidden layer.
 
 .. figure:: ../images/multilayerperceptron_network.png
    :align: center
+   :scale: 60%
 
-   **Figure 1 : Single-layer feedforward network**
+   **Figure 1 : One hidden layer MLP.**
 
-Across the module, :math:`W_1` is the weight matrix between the input layer and
-the hidden ``coef_hidden_``, :math:`W_2` is the weight matrix between the 
-hidden layer and output ``coef_output_`` :math:`b_1` is the intercept vector 
-between the input layer and the hidden ``intercept_hidden_``, and :math:`b_2` 
-is the intercept vector between the hidden layer and output ``intercept_output_``.
+The leftmost layer, known as the input layer, consists of a set of neurons 
+:math:`\{x_i | x_1, x_2, ..., x_m\}` representing the input features. Each hidden
+layer transforms the values from the previous layer by a weighted linear summation
+:math:`w_1x_1 + w_2x_2 + ... + w_mx_m`, followed by a non-linear activation function
+:math:`g(\cdot):R \rightarrow R` - like the hyperbolic tan function. The output layer
+receives the values from the last hidden layer and transforms them into output values.
 
-It can be regarded as a sequence of connected Logistic Regression models. 
-Recalling Figure 1, The input layer and the hidden layer constitute one 
-Logistic Regression model. The values of the hidden layer form the input 
-of the next Logistic Regression model composing of that layer and the output 
-layer. This algorithm, however, is limited to one single hidden layer.
+The module contains, among others, :math:`layers_coef_` and :math:`layers_intecept_`.
+:math:`layers_coef_` is a list of weight matrices, where the weight matrix
+at index :math:`i` represents the weights between layer :math:`i` and layer 
+:math:`i+1`. :math:`layers_intercept_` is a list of bias vectors, where the vector
+at index :math:`i` represents the bias values added to layer :math:`i+1`.
 
 The advantages of Multi-layer Perceptron are:
 
@@ -44,15 +48,15 @@ The advantages of Multi-layer Perceptron are:
       
 The disadvantages of Multi-layer Perceptron (MLP) include:
 
-    + Since hidden layers in MLP make the loss function non-convex 
-      - which contains more than one local minimum, random weights'
-      initialization could impact the predictive accuracy of a trained model.
+    + MLP with hidden layers have a non-convex loss function where there exists 
+      more than one local minimum. Therefore different random weight 
+      initializations can lead to different validation accuracy.
 
     + MLP suffers from the Backpropagation diffusion problem; layers far from 
       the output update with decreasing momentum, leading to slow convergence.
 
     + MLP requires tuning a number of hyperparameters such as the number of 
-      hidden neurons and iterations.
+      hidden neurons, layers, and iterations.
 
     + MLP is sensitive to feature scaling.
 
@@ -63,8 +67,8 @@ some of the aforementioned disadvantages.
 Classification
 ==============
 
-The class :class:`MultilayerPerceptronClassifier` implements single-layer 
-feedforward network that trains using Backpropagation. 
+Class :class:`MultilayerPerceptronClassifier` implements  
+a multi layer perceptron (MLP) that trains using Backpropagation. 
 
 Like all classifiers, MLP trains on two arrays: array X
 of size [n_samples, n_features] holding the training samples represented as 
@@ -74,40 +78,33 @@ the target values (class labels) for the training samples::
     >>> from sklearn.neural_network import MultilayerPerceptronClassifier
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [0, 1]
-    >>> clf = MultilayerPerceptronClassifier(n_hidden=2)
+    >>> clf = MultilayerPerceptronClassifier(n_hidden=[5,2])
     >>> clf.fit(X, y)
-    MultilayerPerceptronClassifier(activation='logistic', algorithm='l-bfgs',
-                alpha=1e-05, batch_size=200, eta0=0.5,
-                learning_rate='constant', max_iter=200, n_hidden=2,
-                power_t=0.25, random_state=None, shuffle=False, tol=1e-05,
-                verbose=False, warm_start=False)
+    MultilayerPerceptronClassifier(activation='tanh', algorithm='l-bfgs',
+                    alpha=1e-05, batch_size=200, eta0=0.5,
+                    learning_rate='constant', max_iter=200, n_hidden=[5, 2],
+                    power_t=0.5, random_state=None, shuffle=False, tol=1e-05,
+                    verbose=False, warm_start=False)
 
 After fitting (training), the model can predict labels for new samples::
 
     >>> clf.predict([[2., 2.], [-1., -2.]]) 
-    >>> array([1, 0])
+    array([1, 0])
 
 MLP can fit a non-linear model to the training data. The members 
-``clf.coef_hidden_`` and ``clf.coef_output_`` (denoted as :math:`W_1` and 
-:math:`W_2`  in Figure 1, respectively) constitute the model parameters::
+``clf.layers_coef_`` containing the weight matrices constitute the model 
+parameters::
 
-    >>> clf.coef_hidden_ 
-    array([[-1.89246274, -1.54302052],
-           [-2.69710894, -2.97215466]])
-    >>> clf.coef_output_
-    array([[-5.05305052],
-           [-2.80708402]])
+    >>> [coef.shape for coef in clf.layers_coef_]
+    [(2, 5), (5, 2), (2, 1)]
 
-The members ``clf.intercept_hidden_`` and ``clf.intercept_output_`` hold the 
-intercepts (denoted as :math:`b_1` and :math:`b_2` in Figure 1, respectively):
+To get the raw values before applying the output activation function, run the
+following command,
 
-
-To get the raw values before the application of an output function (which is 
-applied at the last/right-most layer of the classifier)
 use :meth:`MultilayerPerceptronClassifier.decision_function`::
 
     >>> clf.decision_function([[2., 2.], [1., 2.]])
-    array([9.80650883, 9.77826778])
+    array([ 10.78102679,  10.76966913])
 
 
 
@@ -120,8 +117,8 @@ Cross-Entropy loss function, giving a vector of probability estimates
 :math:`P(y|x)` per sample :math:`x`:: 
 
     >>> clf.predict_proba([[2., 2.], [1., 2.]])
-    array([[5.50888114e-05, 9.99944911e-01],
-           [5.66666648e-05, 9.99943333e-01]])
+    array([[  2.07898104e-05,   9.99979210e-01],
+           [  2.10272749e-05,   9.99978973e-01]])
 
 :class:`MultilayerPerceptronClassifier` supports multi-class classification by 
 applying `Softmax <http://en.wikipedia.org/wiki/Softmax_activation_function>`_
@@ -135,8 +132,13 @@ otherwise `0`. Classes with value `1` are returned in the prediction::
 
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [[0, 1], [1]]
-    >>> clf = MultilayerPerceptronClassifier(n_hidden=2)
+    >>> clf = MultilayerPerceptronClassifier(n_hidden=[2])
     >>> clf.fit(X, y)
+    MultilayerPerceptronClassifier(activation='tanh', algorithm='l-bfgs',
+                    alpha=1e-05, batch_size=200, eta0=0.5,
+                    learning_rate='constant', max_iter=200, n_hidden=[2],
+                    power_t=0.5, random_state=None, shuffle=False, tol=1e-05,
+                    verbose=False, warm_start=False)
     >>> clf.predict([1., 2.])
     [(1,)]
     >>> clf.predict([0., 0.])
@@ -154,21 +156,20 @@ See the examples below and the doc string of
 Regression
 ==========
 
-The class :class:`MultilayerPerceptronRegressor` implements a single-layer 
-feedforward network that trains using Backpropagation. It only differs from 
-:class:`MultilayerPerceptronClassifier`, in that there is no output gate 
-function and the loss function is the Square Error. The output is the result 
-returned by math:`MultilayerPerceptronRegressor.decision_function`
+Class :class:`MultilayerPerceptronRegressor` implements  
+a multi layer perceptron (MLP) that trains using Backpropagation with no 
+activation function in the output layer. Therefore, it uses the square error as 
+the loss function, and the output is the set of continuous values returned by
+:math:`MultilayerPerceptronRegressor.decision_function`.
 
-
-:class:`MultilayerPerceptronRegressor` supports multi-output regression, in 
-which a sample has more than one target.
+:class:`MultilayerPerceptronRegressor` also supports multi-output regression, in 
+which a sample can have more than one target.
 
 
 Algorithms
 ==========
 
-MLP trains either by `Stochastic Gradient Descent <http://en.wikipedia.org/wiki/Stochastic_gradient_descent>`_ 
+MLP trains using either `Stochastic Gradient Descent <http://en.wikipedia.org/wiki/Stochastic_gradient_descent>`_ 
 or `L-BFGS <http://en.wikipedia.org/wiki/Limited-memory_BFGS>`_. 
 Stochastic Gradient Descent (SGD)  computes the gradient of the loss function 
 with respect to a parameter that needs adaptation, i.e.
@@ -199,54 +200,88 @@ mini-batch learning.
 Complexity
 ==========
 
-Single-layer feedforward network has a time complexity that is linear
-to the number of training examples. If X is a matrix of size (n, p), and 
-the number of hidden neurons is m, training has a cost of 
-:math:`O(k n \bar p m)`, where k is the number of iterations (epochs) and 
-:math:`\bar p` is the average number of non-zero attributes per sample.
+Suppose there are :math:`n` training samples, :math:`m` features, :math:`k` 
+hidden layers, each containing :math:`h` neurons - for simplicity, and :math:`o`
+output neurons.  The time complexity of backpropogation is 
+:math:`O(n\cdot m \cdot h^k \cdot o \cdot i)`, where :math:`i` is the number 
+of iterations. It is clear that backpropagation has a high time complexity, 
+therefore, it is best advice to start with smaller number of hidden neurons and
+few hidden layers.
 
 Mathematical formulation
 ========================
 
-Given a set of training examples :math:`(x_1, y_1), \ldots, (x_n, y_n)` where
-:math:`x_i \in \mathbf{R}^n` and :math:`y_i \in \{0, 1\}`, our goal is to
-learn a scoring function :math:`\hat{y} = g(W_2^T f(W_1^T x + b_1) + b_2)` 
-with model parameters :math:`W_1, W_2 \in \mathbf{R}^m` and intercepts 
-:math:`b_1, b_2 \in \mathbf{R}`. `f()` and `g()` are
-activation functions. In binary classification, `g()` is the logistic function,
+Given a set of training examples :math:`(x_1, y_1), (x_2, y_2), \ldots, (x_n, y_n)` 
+where :math:`x_i \in \mathbf{R}^n` and :math:`y_i \in \{0, 1\}`, a one hidden 
+layer mlp learns the score function :math:`f(x) = W_2^T g(W_1^T x + b_1) + b_2` 
+where :math:`W_1, W_2 \in \mathbf{R}^m` and :math:`b_1, b_2 \in \mathbf{R}` are 
+model parameters. :math:`W_1, W_2` represent the weights of the input layer and 
+hidden layer, resepctively; and :math:`b_1, b_2` represent the bias vectors added 
+to the hidden layer and the output layer, respectively. 
+:math:`g(\cdot) : R \rightarrow R` is the activation function, set by default as 
+the hyperbolic tan. It is given as,
 
 .. math::
-      \text{logistic} = 1/(1+e^{-x})
+      g(x)= \frac{e^x-e^{-x}}{e^x+e^{-x}}
 
-so predictions larger than or equal 0.5 are set to 1, otherwise to 0. The 
-output activation for multi-classification is the Softmax,
+For binary classification, :math:`f(x)` passes through the logistic function
+:math:`g(x)= 1/(1+e^{-x})` to get  output values between zero and one. A threshold,
+set to 0.5, would assign samples of outputs larger or equal 0.5 to the positive 
+class, and the rest to the negative class.
 
-.. math::
-      \text{Softmax} = \frac{\exp(W_j^Tx)}{\sum_{l=1}^k\exp(W_l^Tx)} 
-
-where :math:`W_i` is  the incoming weights to output neuron :math:`i`, and `K`
-is the number of classes. For a sample :math:`x`, ``Softmax`` returns the 
-class with the highest probability.
-
-
-For classification, it finds the model parameters by minimizing the regularized
-Cross-Entropy loss function,
+If there are more than two classes, :math:`f(x)` would instead pass through
+the softmax function, which is written as,
 
 .. math::
+      \text{Softmax} = \frac{\exp(W_i^Tx)}{\sum_{l=1}^k\exp(W_l^Tx)} 
 
-    \text{Loss} = -y \ln {\hat{y}}+(1-y)\ln{(1-\hat{y})} + \alpha ||W||_2^2
+where :math:`W_i` contains the weights incident to the output neuron representing
+class :math:`i`, and :math:`K` is the number of classes. The result is a vector 
+containing the probabilities that sample :math:`x` belong to each class. The 
+output is the class with the highest probability.
+
+In regression, the output remains as :math:`f(x)`; therefore, there is no
+output activation function.
+
+MLP uses different loss functions depending on the problem type. The loss 
+function for classification is Cross-Entropy, which is given as,
+
+.. math::
+
+    Loss(x,y,W) = -y \ln {f(x)}+(1-y)\ln{(1-f(x))} + \alpha ||W||_2^2
 
 where :math: `\alpha ||W||_2^2` is an L2-norm regularization term (aka penalty)
-that penalizes model complexity; :math: `W` comprises :math: `W_1` and :math: 
-`W_2`;  and :math:`\alpha > 0` is a non-negative hyperparameter that controls
-the magnitude of the penalty term.
+that penalizes model complexity; and :math:`\alpha > 0` is a non-negative 
+hyperparameter that controls the magnitude of the penalty term.
 
-For regression, it finds the model parameters by minimizing the regularized 
-Square Error loss function,
+For regression, MLP uses the Square Error loss function; written as,
 
 .. math::
 
-    \text{Loss} = \frac{1}{2}||W_2 f(W_1 X + b_1) + b_2 - X ||_2^2 + \alpha ||W||_2^2
+    Loss(x,y,W) = \frac{1}{2}||f(x) - y ||_2^2 + \alpha ||W||_2^2
+
+
+Starting from initial random weights, multi layer perceptron (MLP) minimizes 
+the loss function by repeatedly updating these weights. After computing
+the loss function value, a backward pass propagates it from the output layer 
+to the initial layer, providing each weight parameter with an update value 
+meant to decrease the loss function.
+
+In gradient descent, the weight gradient :math:`\nabla W_{loss}` with respect
+to the loss function is computed and added to the corresponding :math:`W`.
+More formally, this is expressed as,
+
+.. math::
+
+    W^{i+1} = W^i + \epsilon \nabla W^i_{loss}
+
+
+where :math:`i` is the iteration step, and :math:`\epsilon` is the learning rate 
+with a value ranging from 0 and 1. 
+
+The algorithm stops when it reaches the set number of iterations; or 
+when the loss value is below a certain, small number.
+
 
 
 .. _mlp_tips:

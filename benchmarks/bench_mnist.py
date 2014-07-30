@@ -15,11 +15,11 @@ operating the Windows 7 64-bit version.
     ===========================
     Classifier            train-time  test-time error-rate
     ------------------------------------------------------
-    nystroem_approx_svm     124.819s    0.811s    0.0242 
-    MultilayerPerceptron    359.460s    0.217s    0.0271
-    ExtraTrees              79.957s     0.344s    0.0271
-    fourier_approx_svm      147.744s    0.594s    0.0488
-    LogisticRegression      69.162s     0.136s    0.0799  
+    MultilayerPerceptron  655.5s      0.30s     0.0169
+    nystroem_approx_svm   125.0s      0.91s     0.0239
+    ExtraTrees            79.9s       0.34s     0.0272
+    fourier_approx_svm    148.9s      0.60s     0.0488
+    LogisticRegression    68.9s       0.14s     0.0799  
 
 
 """
@@ -117,9 +117,9 @@ classifiers['LogisticRegression'] = LogisticRegression()
 
 # Train MultilayerPerceptron model
 classifiers['MultilayerPerceptron'] = MultilayerPerceptronClassifier(
-    n_hidden=100,
+    n_hidden=200,
     max_iter=400,
-    alpha=0.1,
+    alpha=0.5,
     algorithm='l-bfgs',
     random_state=1)
 

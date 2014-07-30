@@ -8,6 +8,7 @@ import numpy as np
 
 from abc import ABCMeta, abstractmethod
 from scipy.optimize import fmin_l_bfgs_b
+import warnings
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..externals import six
@@ -15,21 +16,23 @@ from ..preprocessing import LabelBinarizer
 from ..utils import gen_even_slices
 from ..utils import shuffle
 from ..utils import atleast2d_or_csr, check_random_state, column_or_1d
+from ..utils import ConvergenceWarning
 from ..utils.extmath import safe_sparse_dot
 from ..utils.fixes import expit as logistic_sigmoid
 
 
 def _identity(X):
-    """returns the same input array."""
+    """Return the same input array."""
     return X
 
 
 def _d_logistic(sigm_X):
-    """Implements the derivative of the logistic function.
+    """Compute the derivative of the logistic function.
 
     Parameters
     ----------
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Data given by the previous layer.
 
     Returns
     -------
@@ -39,26 +42,28 @@ def _d_logistic(sigm_X):
 
 
 def _softmax(Z):
-    """Implements the K-way softmax, (exp(Z).T / exp(Z).sum(axis=1)).T
+    """Compute the K-way softmax, (exp(Z).T / exp(Z).sum(axis=1)).T
 
     Parameters
     ----------
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Data given by the previous layer.
 
     Returns
     -------
     X_new : {array-like, sparse matrix}, shape (n_samples, n_features)
     """
-    exp_Z = np.exp(Z.T - Z.max(axis=1)).T
-    return (exp_Z.T / exp_Z.sum(axis=1)).T
+    exp_Z = np.exp(Z - Z.max(axis=1)[:, np.newaxis])
+    return (exp_Z / exp_Z.sum(axis=1)[:, np.newaxis])
 
 
 def _tanh(X):
-    """Implements the hyperbolic tan function
+    """Compute the hyperbolic tan function
 
     Parameters
     ----------
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Data given by the previous layer.
 
     Returns
     -------
@@ -68,11 +73,12 @@ def _tanh(X):
 
 
 def _d_tanh(Z):
-    """Implements the derivative of the hyperbolic tan function
+    """Compute the derivative of the hyperbolic tan function
 
     Parameters
     ----------
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Data given by the previous layer.
 
     Returns
     -------
@@ -82,17 +88,18 @@ def _d_tanh(Z):
 
 
 def _squared_loss(Y, Z):
-    """Implements the square loss for regression."""
+    """Compute the square loss for regression."""
     return np.sum((Y - Z) ** 2) / (2 * len(Y))
 
 
 def _log_loss(Y, Z):
-    """Implements Logistic loss for binary class.
+    """Compute Logistic loss for binary class.
 
     Max/Min clipping is enabled to prevent
     invalid zero value in log computation.
     """
-    Z = np.clip(Z, 0.00000001, 0.99999999)
+    Z = np.clip(Z, 1e-10, 1 - 1e-10)
+
     return -np.sum(Y * np.log(Z) +
                   (1 - Y) * np.log(1 - Z)) / Z.shape[0]
 
@@ -104,25 +111,24 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
     Warning: This class should not be used directly.
     Use derived classes instead.
     """
-    activation_functions = {
+    _activation_functions = {
         'tanh': _tanh,
         'logistic': logistic_sigmoid,
         'softmax': _softmax
     }
-    derivative_functions = {
+    _derivative_functions = {
         'tanh': _d_tanh,
         'logistic': _d_logistic
     }
-    loss_functions = {
+    _loss_functions = {
         'squared_loss': _squared_loss,
         'log_loss': _log_loss,
     }
 
     @abstractmethod
-    def __init__(
-        self, n_hidden, activation, algorithm,
-            alpha, batch_size, learning_rate, eta0, power_t,
-            max_iter, shuffle, random_state, tol, verbose, warm_start):
+    def __init__(self, n_hidden, activation, algorithm,
+                 alpha, batch_size, learning_rate, eta0, power_t,
+                 max_iter, shuffle, random_state, tol, verbose, warm_start):
         self.activation = activation
         self.algorithm = algorithm
         self.alpha = alpha
@@ -138,32 +144,44 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.verbose = verbose
         self.warm_start = warm_start
 
-        self.coef_hidden_ = None
-        self.t_ = None
+        self.layers_coef_ = None
+        self.layers_intercept_ = None
+        self.cost_ = None
+        self.n_iter_ = None
         self.eta_ = None
 
-    def _pack(self, W1, W2, b1, b2):
-        """Pack the coefficients and intercepts from theta."""
-        return np.hstack((W1.ravel(), W2.ravel(),
-                          b1.ravel(), b2.ravel()))
-
-    def _unpack(self, theta):
-        """Extracts the coefficients and intercepts from theta.
-
-        Parameters
-        ----------
-        theta : array-like, shape (size(W1) * size(W2) * size(b1) * size(b2))
-        A vector comprising the  flattened weights : "W1, W2, b1, b2"
+    def _pack(self, layers_coef_, layers_intercept_):
+        """Pack the coefficient and intercept parameters into a single vector.
         """
-        N = self.n_hidden * self.n_features
-        N2 = self.n_outputs * self.n_hidden
+        return np.hstack([l.ravel() for l in layers_coef_ + layers_intercept_])
 
-        self.coef_hidden_ = np.reshape(
-            theta[:N], (self.n_features, self.n_hidden))
-        self.coef_output_ = np.reshape(
-            theta[N:N2 + N], (self.n_hidden, self.n_outputs))
-        self.intercept_hidden_ = theta[N2 + N:N2 + N + self.n_hidden]
-        self.intercept_output_ = theta[N2 + N + self.n_hidden:]
+    def _unpack(self, packed_parameters):
+        """Extract the coefficients and intercepts from packed_parameters."""
+        for i in range(self._n_layers - 1):
+            s, e, shape = self._packed_parameter_meta[i]
+            self.layers_coef_[i] = np.reshape(packed_parameters[s:e], (shape))
+
+            s, e = self._packed_parameter_meta[i + self._n_layers - 1]
+            self.layers_intercept_[i] = packed_parameters[s:e]
+
+    def _precompute_layer_shapes(self):
+        """Precompute layers' shapes for fast unpacking."""
+        self._packed_parameter_meta = [0] * (2 * self._n_layers - 2)
+        s = 0
+
+        # save sizes and indices of coefficients for faster unpacking
+        for i in range(self._n_layers - 1):
+            fan_in, fan_out = self._layers_units[i], self._layers_units[i + 1]
+
+            e = s + (fan_in * fan_out)
+            self._packed_parameter_meta[i] = (s, e, (fan_in, fan_out))
+            s = e
+
+        # save sizes and indices of intercepts for faster unpacking
+        for i in range(self._n_layers - 1):
+            e = s + self._layers_units[i + 1]
+            self._packed_parameter_meta[i + self._n_layers - 1] = (s, e)
+            s = e
 
     def _validate_params(self):
         """Validate input params. """
@@ -177,8 +195,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             if self.eta0 <= 0.0:
                 raise ValueError("eta0 must be > 0")
 
-        # raises ValueError if not registered
-        if self.activation not in self.activation_functions:
+        # raise ValueError if not registered
+        if self.activation not in self._activation_functions:
             raise ValueError("The activation %s"
                              " is not supported. " % self.activation)
         if self.learning_rate not in ["constant", "invscaling"]:
@@ -188,52 +206,75 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("The algorithm %s"
                              " is not supported. " % self.algorithm)
 
-    def _init_fit(self):
+    def _scaled_weight_init(self, fan_in, fan_out):
+        """Scale the initial, random parameters for a specific layer."""
+        if self.activation == 'tanh':
+                interval = np.sqrt(6. / (fan_in + fan_out))
+
+        elif self.activation == 'logistic':
+                interval = 4. * np.sqrt(6. / (fan_in + fan_out))
+
+        return interval
+
+    def _init_random_weights(self):
         """Initialize weight and bias parameters."""
         rng = check_random_state(self.random_state)
 
-        if self.activation == 'tanh':
-            interval = np.sqrt(6. / (self.n_features + self.n_hidden))
+        self.layers_coef_ = [0] * (self._n_layers - 1)
+        self.layers_intercept_ = [0] * (self._n_layers - 1)
 
-        elif self.activation == 'logistic':
-            interval = 4 * np.sqrt(6. / (self.n_features + self.n_hidden))
+        for i in range(self._n_layers - 1):
+            fan_in, fan_out = self._layers_units[i], self._layers_units[i + 1]
+            interval = self._scaled_weight_init(fan_in, fan_out)
 
-        self.coef_hidden_ = rng.uniform(
-            -interval, interval, (self.n_features, self.n_hidden))
-        self.coef_output_ = rng.uniform(
-            -interval, interval, (self.n_hidden, self.n_outputs))
-        self.intercept_hidden_ = rng.uniform(
-            -interval, interval, self.n_hidden)
-        self.intercept_output_ = rng.uniform(
-            -interval, interval, self.n_outputs)
+            self.layers_coef_[i] = rng.uniform(
+                -interval, interval, (fan_in, fan_out))
+            self.layers_intercept_[i] = rng.uniform(
+                -interval, interval, (fan_out))
+            self._coef_grads[i] = np.empty((fan_in, fan_out))
+            self._intercept_grads[i] = np.empty((fan_out))
 
-    def _init_param(self):
-        """Sets the activation, derivative, loss and output functions."""
-        self.activation_func = self.activation_functions[self.activation]
-        self.derivative_func = self.derivative_functions[self.activation]
+    def _init_param(self, n_features):
+        """Set the activation, derivative, loss and output functions."""
+        self._activation_func = self._activation_functions[self.activation]
+        self._derivative_func = self._derivative_functions[self.activation]
+
+        self.n_iter_ = 0
+
+        # check whether self.n_hidden is a list
+        if not hasattr(self.n_hidden, "__iter__"):
+            self.n_hidden = [self.n_hidden]
+
+        self._layers_units = [n_features] + self.n_hidden + \
+            [self.n_outputs_]
+        self._n_layers = len(self._layers_units)
+
+        self._coef_grads = [0] * (self._n_layers - 1)
+        self._intercept_grads = [0] * (self._n_layers - 1)
 
         # output for regression
         if self.classes_ is None:
-            self.output_func = _identity
+            self._output_func = _identity
         # output for multi class
-        elif len(self.classes_) > 2 and self.multi_label is False:
-            self.output_func = _softmax
+        elif len(self.classes_) > 2 and self._multi_label is False:
+            self._output_func = _softmax
         # output for binary class and multi-label
         else:
-            self.output_func = logistic_sigmoid
+            self._output_func = logistic_sigmoid
 
-    def _init_t_eta_(self):
-        """Initialize iteration counter attr ``t_``"""
-        self.t_ = 1.0
+    def _init_eta_(self):
+        """Initialize the learning rate `eta0` for SGD"""
         self.eta_ = self.eta0
 
-    def _preallocate_memory(self, size):
-        """ preallocate memory"""
-        a_hidden = np.empty((size, self.n_hidden))
-        a_output = np.empty((size, self.n_outputs))
-        delta_o = np.empty((size, self.n_outputs))
+    def _preallocate_memory(self, size, X):
+        """Preallocate memory"""
+        self._a_layers = [0] * (self._n_layers)
+        self._deltas = [0] * (self._n_layers - 1)
+        self._a_layers[0] = X
 
-        return a_hidden, a_output, delta_o
+        for i in range(self._n_layers - 1):
+            self._a_layers[i + 1] = np.empty((size, self._layers_units[i + 1]))
+            self._deltas[i] = np.empty((size, self._layers_units[i + 1]))
 
     def fit(self, X, y):
         """Fit the model to the data X and target y.
@@ -244,7 +285,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
-        y : numpy array of shape (n_samples)
+        y : array-like, shape (n_samples)
              Subset of the target values.
 
         Returns
@@ -255,18 +296,15 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         self._validate_params()
 
-        n_samples, self.n_features = X.shape
-        self.n_outputs = y.shape[1]
+        n_samples, n_features = X.shape
+        self.n_outputs_ = y.shape[1]
 
-        if not self.warm_start:
-            self._init_t_eta_()
-            self._init_fit()
-            self._init_param()
-        else:
-            if self.t_ is None or self.coef_hidden_ is None:
-                self._init_t_eta_()
-                self._init_fit()
-                self._init_param()
+        self._init_eta_()
+        self._init_param(n_features)
+
+        if (not self.warm_start or
+                (self.warm_start and self.layers_coef_ is None)):
+            self._init_random_weights()
 
         if self.shuffle:
             X, y = shuffle(X, y, random_state=self.random_state)
@@ -277,56 +315,121 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         else:
             batch_size = np.clip(self.batch_size, 0, n_samples)
             n_batches = int(n_samples / batch_size)
-            batch_slices = list(
-                gen_even_slices(
-                    n_batches * batch_size,
-                    n_batches))
+            batch_slices = list(gen_even_slices(n_batches * batch_size,
+                                                n_batches))
 
         # preallocate memory
-        a_hidden, a_output, delta_o = self._preallocate_memory(
-            batch_size)
+        self._preallocate_memory(batch_size, X)
 
         if self.algorithm == 'sgd':
             prev_cost = np.inf
+            cost_increase_count = 0
 
             for i in range(self.max_iter):
                 for batch_slice in batch_slices:
-                    cost = self._backprop_sgd(
+                    self.cost_ = self._backprop_sgd(
                         X[batch_slice], y[batch_slice],
-                        batch_size, a_hidden,
-                        a_output, delta_o)
+                        batch_size)
 
                 if self.verbose:
-                    print("Iteration %d, cost = %.2f"
-                          % (i, cost))
-                if abs(cost - prev_cost) < self.tol:
-                    break
-                prev_cost = cost
-                self.t_ += 1
+                    print("Iteration %d, cost = %.8f" % (i, self.cost_))
 
-        elif 'l-bfgs':
-            self._backprop_lbfgs(
-                X, y, n_samples, a_hidden,
-                a_output, delta_o)
+                if self.cost_ > prev_cost:
+                    cost_increase_count += 1
+                    if cost_increase_count == 0.2 * self.max_iter:
+                        warnings.warn('Cost is increasing for more than 20%%'
+                                      ' of the iterations. Consider reducing'
+                                      ' eta0 and preprocessing your data'
+                                      ' with StandardScaler or MinMaxScaler.'
+                                      % self.cost_, ConvergenceWarning)
+
+                elif prev_cost - self.cost_ < self.tol:
+                    break
+
+                prev_cost = self.cost_
+                self.n_iter_ += 1
+
+        elif self.algorithm == 'l-bfgs':
+            self._precompute_layer_shapes()
+            self._backprop_lbfgs(X, y, n_samples)
 
         return self
 
-    def _backprop(self, X, y, n_samples, a_hidden, a_output, delta_o):
-        """Computes the MLP cost  function
-        and its corresponding derivatives with respect to the
-        different parameters given in the initialization.
+    def _forward_pass(self, with_output_activation=True):
+        """Perform a forward pass on the network by computing the values
+        of the neurons in the hidden layers and the output layer.
+       
+        Parameters
+        ----------
+        with_output_activation : if True, the output passes through
+                                 the output activation function, which
+                                 is either the softmax function or the
+                                 logistic function
+        """
+        # iterate over the hidden layers
+        for i in range(self._n_layers - 2):
+            self._a_layers[i + 1] = self._activation_func(safe_sparse_dot(
+                self._a_layers[i],
+                self.layers_coef_[i]) +
+                self.layers_intercept_[i])
+
+        self._a_layers[-1] = safe_sparse_dot(self._a_layers[-2],
+                                             self.layers_coef_[-1]) + \
+            self.layers_intercept_[-1]
+
+        if with_output_activation:
+            self._a_layers[-1] = self._output_func(self._a_layers[-1])
+
+    def _backward_pass(self, y):
+        """Perform a backward pass on the network by computing the deltas 
+        and the gradients of the weights and bias vectors with respect to the 
+        loss function.
+       
+        Parameters
+        ----------
+        y : array-like, shape (n_samples)
+            Subset of the target values.
+
+        """
+        last = len(self.n_hidden)
+
+        diff = y - self._a_layers[-1]
+        self._deltas[-1] = -diff
+
+        self._coef_grads[last] = (safe_sparse_dot(self._a_layers[last].T,
+                                                  self._deltas[last]) +
+                                 (self.alpha * self.layers_coef_[last])) /\
+            y.shape[0]
+
+        self._intercept_grads[last] = np.mean(self._deltas[last], 0)
+
+        # iterate over the hidden layers
+        for i in range(self._n_layers - 2, 0, -1):
+            self._deltas[i - 1] = np.dot(self._deltas[i],
+                                         self.layers_coef_[i].T) *\
+                self._derivative_func(self._a_layers[i])
+            n_samples = self._a_layers[0].shape[0]
+
+            self._coef_grads[i - 1] = (safe_sparse_dot(self._a_layers[i - 1].T,
+                                                       self._deltas[i - 1]) +
+                                      (self.alpha *
+                                       self.layers_coef_[i - 1])) \
+                / n_samples
+
+            self._intercept_grads[i - 1] = np.mean(self._deltas[i - 1], 0)
+
+    def _backprop(self, X, y, n_samples):
+        """Compute the MLP cost function
+        and its corresponding derivatives with respect to each
+        parameter: weights and bias vectors.
 
         Parameters
         ----------
-        theta : array-like, shape (size(W1) * size(W2) * size(b1) * size(b2))
-                    A vector comprising the  flattened weights :
-                    "W1, W2, b1, b2"
-
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
-        y : numpy array of shape (n_samples)
+        y : array-like, shape (n_samples)
             Subset of the target values.
 
         n_samples : int
@@ -335,45 +438,23 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         Returns
         -------
         cost : float
-        grad : array-like, shape (size(W1) * size(W2) * size(b1) * size(b2))
         """
-        # Forward propagate
-        a_hidden[:] = self.activation_func(safe_sparse_dot(X,
-                                                           self.coef_hidden_) +
-                                           self.intercept_hidden_)
-
-        a_output[:] = self.output_func(safe_sparse_dot(a_hidden,
-                                                       self.coef_output_) +
-                                       self.intercept_output_)
+        # forward propagate
+        self._forward_pass()
 
         # get cost
-        cost = self.loss_functions[self.loss](y, a_output)
+        cost = self._loss_functions[self.loss](y, self._a_layers[-1])
         # add regularization term to cost
-        cost += (0.5 * self.alpha) * (np.sum(self.coef_hidden_ ** 2) +
-                                      np.sum(self.coef_output_ ** 2)) \
-            / n_samples
+        values = np.sum(np.array([np.sum(s ** 2) for s in self.layers_coef_]))
+        cost += (0.5 * self.alpha) * values / n_samples
 
         # backward propagate
-        diff = y - a_output
-        delta_o[:] = -diff
-        delta_h = np.dot(delta_o, self.coef_output_.T) *\
-            self.derivative_func(a_hidden)
+        self._backward_pass(y)
 
-        # get regularized gradient
-        W1grad = (safe_sparse_dot(X.T,
-                                  delta_h) + (self.alpha *
-                                              self.coef_hidden_)) / n_samples
-        W2grad = (safe_sparse_dot(a_hidden.T,
-                                  delta_o) + (self.alpha *
-                                              self.coef_output_)) / n_samples
-        b1grad = np.mean(delta_h, 0)
-        b2grad = np.mean(delta_o, 0)
+        return cost
 
-        return cost, W1grad, W2grad, b1grad, b2grad
-
-    def _backprop_sgd(
-            self, X, y, n_samples, a_hidden, a_output, delta_o):
-        """Updates the weights using the computed gradients.
+    def _backprop_sgd(self, X, y, n_samples):
+        """Update the weights using the computed gradients.
 
         Parameters
         ----------
@@ -381,30 +462,29 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
-        y : numpy array of shape (n_samples)
+        y : array-like, shape (n_samples)
             Subset of the target values.
 
         n_samples : int
             Number of samples.
 
         """
-        cost, W1grad, W2grad, b1grad, b2grad = self._backprop(
-            X, y, n_samples, a_hidden, a_output, delta_o)
+        self._a_layers[0] = X
 
-        # Update weights
-        self.coef_hidden_ -= (self.eta_ * W1grad)
-        self.coef_output_ -= (self.eta_ * W2grad)
-        self.intercept_hidden_ -= (self.eta_ * b1grad)
-        self.intercept_output_ -= (self.eta_ * b2grad)
+        cost = self._backprop(X, y, n_samples)
+
+        # update weights
+        for i in range(self._n_layers - 1):
+            self.layers_coef_[i] -= (self.eta_ * self._coef_grads[i])
+            self.layers_intercept_[i] -= (self.eta_ * self._intercept_grads[i])
 
         if self.learning_rate == 'invscaling':
-            self.eta_ = self.eta0 / pow(self.t_, self.power_t)
+            self.eta_ = self.eta0 / pow(self.n_iter_ + 1, self.power_t)
 
         return cost
 
-    def _backprop_lbfgs(self, X, y, n_samples,
-                        a_hidden, a_output, delta_o):
-        """Applies the quasi-Newton optimization methods that uses a l_BFGS
+    def _backprop_lbfgs(self, X, y, n_samples):
+        """Apply the quasi-Newton optimization methods that uses a l_BFGS
         to train the weights.
 
         Parameters
@@ -413,7 +493,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
-        y : numpy array of shape (n_samples)
+        y : array-like, shape (n_samples)
             Subset of the target values.
 
         n_samples : int
@@ -421,42 +501,41 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         """
         packed_parameters = self._pack(
-            self.coef_hidden_,
-            self.coef_output_,
-            self.intercept_hidden_,
-            self.intercept_output_)
+            self.layers_coef_, self.layers_intercept_)
 
         if self.verbose is True or self.verbose >= 1:
             iprint = 1
         else:
             iprint = -1
 
-        optTheta, _, _ = fmin_l_bfgs_b(
+        optimal_parameters, f, d = fmin_l_bfgs_b(
             func=self._cost_grad,
             x0=packed_parameters,
             maxfun=self.max_iter,
             iprint=iprint,
             pgtol=self.tol,
-            args=(X, y, n_samples, a_hidden, a_output, delta_o))
+            args=(X, y, n_samples))
 
-        self._unpack(optTheta)
+        self.cost_ = f
 
-    def _cost_grad(self, theta, X, y, n_samples, a_hidden, a_output, delta_o):
-        """Computes the MLP cost  function and its
+        self._unpack(optimal_parameters)
+
+    def _cost_grad(self, packed_parameters, X, y, n_samples):
+        """Compute the MLP cost  function and its
         corresponding derivatives with respect to the
         different parameters given in the initialization.
 
         Parameters
         ----------
-        theta : array-like, shape (size(W1) * size(W2) * size(b1) * size(b2))
-                    A vector comprising the  flattened weights :
-                    "W1, W2, b1, b2"
+        packed_parameters : array-like 
+                    A vector comprising the  flattened coefficients and
+                    intercepts
 
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
-        y : numpy array of shape (n_samples)
+        y : array-like, shape (n_samples)
             Subset of the target values.
 
         n_samples : int
@@ -465,14 +544,14 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         Returns
         -------
         cost : float
-        grad : array-like, shape (size(W1) * size(W2) * size(b1) * size(b2))
+        grad : array-like, shape (product{ |layer| for layer in layers})
 
         """
-        self._unpack(theta)
 
-        cost, W1grad, W2grad, b1grad, b2grad = self._backprop(
-            X, y, n_samples, a_hidden, a_output, delta_o)
-        grad = self._pack(W1grad, W2grad, b1grad, b2grad)
+        self._unpack(packed_parameters)
+        cost = self._backprop(X, y, n_samples)
+        grad = self._pack(self._coef_grads, self._intercept_grads)
+        self.n_iter_ += 1
 
         return cost, grad
 
@@ -484,7 +563,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Subset of training data.
 
-        y : numpy array of shape (n_samples)
+        y : array-like, shape (n_samples)
             Subset of target values.
 
         Returns
@@ -493,24 +572,24 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         """
         X = atleast2d_or_csr(X)
 
-        self.n_outputs = y.shape[1]
+        self.n_outputs_ = y.shape[1]
 
-        n_samples, self.n_features = X.shape
+        n_samples, n_features = X.shape
         self._validate_params()
 
-        if self.coef_hidden_ is None:
-            self._init_fit()
-            self._init_param()
+        if self.layers_coef_ is None:
+            self._init_param(n_features)
+            self._init_random_weights()
 
-        if self.t_ is None or self.eta_ is None:
-            self._init_t_eta_()
+        if self.n_iter_ is None or self.eta_ is None:
+            self._init_eta_()
 
-        a_hidden, a_output, delta_o = self._preallocate_memory(n_samples)
+        self._preallocate_memory(n_samples, X)
 
-        cost = self._backprop_sgd(X, y, n_samples, a_hidden, a_output, delta_o)
+        cost = self._backprop_sgd(X, y, n_samples)
         if self.verbose:
-            print("Iteration %d, cost = %.2f" % (self.t_, cost))
-        self.t_ += 1
+            print("Iteration %d, cost = %.8f" % (self.n_iter_, cost))
+        self.n_iter_ += 1
 
         return self
 
@@ -527,11 +606,11 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         Predicted target values per element in X.
         """
         X = atleast2d_or_csr(X)
+        self._a_layers[0] = X
+        # forward propagate
+        self._forward_pass(with_output_activation=False)
 
-        a_hidden = self.activation_func(safe_sparse_dot(X, self.coef_hidden_) +
-                                        self.intercept_hidden_)
-        output = safe_sparse_dot(a_hidden, self.coef_output_) +\
-            self.intercept_output_
+        output = self._a_layers[-1]
         if output.shape[1] == 1:
             output = output.ravel()
 
@@ -544,9 +623,9 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
     """Multi-layer Perceptron classifier.
 
     Under a loss function, the algorithm trains either by l-bfgs or gradient 
-    descent. The training is done iteratively, in that at each time step the 
+    descent. The training is iterative, in that at each time step the 
     partial derivatives of the loss function with respect to the model 
-    parameters are used to update the parameters.  
+    parameters are computed to update the parameters.  
 
     It has a regularizer as a penalty term added to the loss function that 
     shrinks model parameters towards zero.
@@ -554,12 +633,10 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
     This implementation works with data represented as dense and sparse numpy
     arrays of floating point values for the features.
 
-    Please note that this implementation uses one hidden layer only.
-
     Parameters
     ----------
-    n_hidden : int, default 100
-        Number of units in the hidden layer.
+    n_hidden : python list, length = n_layers - 2, default [100]
+        A list containing the number of neurons in the ith hidden layer.
 
     activation : {'logistic', 'tanh'}, default 'tanh'
         Activation function for the hidden layer.
@@ -615,7 +692,7 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
         The initial learning rate used. It controls the step-size
         in updating the weights.
 
-    power_t : double, optional, default 0.25
+    power_t : double, optional, default 0.5
         The exponent for inverse scaling learning rate.
         It is used in updating eta0 when the learning_rate
         is set to 'invscaling'.
@@ -627,15 +704,40 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
         When set to True, reuse the solution of the previous
         call to fit as initialization, otherwise, just erase the
         previous solution.
+
+    Attributes
+    ----------
+    `classes_` : array or list of array of shape = [n_classes]
+        Class labels for each output.
+
+    `cost_` : float
+        The current cost value computed by the loss function.
+
+    `eta_` : float
+        The current learning rate.
+
+    `layers_coef_` : python list, length = n_layers - 1
+        The ith element in the list represents the weight matrix corresponding 
+        to layer i.
+
+    `layers_intercept_` : python list, length = n_layers - 1
+        The ith element in the list represents the bias vector corresponding to
+        layer i + 1.
+
+    n_iter_ : int
+        The current number of iterations the algorithm has ran.
+
+    `n_outputs_` : int,
+        Number of outputs.
+
     """
 
-    def __init__(
-            self, n_hidden=100, activation="tanh",
-            algorithm='l-bfgs', alpha=0.00001,
-            batch_size=200, learning_rate="constant", eta0=0.5,
-            power_t=0.25, max_iter=200, shuffle=False,
-            random_state=None, tol=1e-5,
-            verbose=False, warm_start=False):
+    def __init__(self, n_hidden=[100], activation="tanh",
+                 algorithm='l-bfgs', alpha=0.00001,
+                 batch_size=200, learning_rate="constant", eta0=0.5,
+                 power_t=0.5, max_iter=200, shuffle=False,
+                 random_state=None, tol=1e-5,
+                 verbose=False, warm_start=False):
 
         sup = super(MultilayerPerceptronClassifier, self)
         sup.__init__(n_hidden, activation,
@@ -659,7 +761,7 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
-        y : numpy array of shape (n_samples)
+        y : array-like, shape (n_samples)
 
         Returns
         -------
@@ -669,9 +771,9 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
 
         # needs a better way to check multi-label instances
         if isinstance(np.reshape(y, (-1, 1))[0][0], list):
-            self.multi_label = True
+            self._multi_label = True
         else:
-            self.multi_label = False
+            self._multi_label = False
 
         self.classes_ = np.unique(y)
         self._lbin = LabelBinarizer()
@@ -698,7 +800,7 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
             and can be omitted in the subsequent calls.
             Note that y doesn't need to contain all labels in `classes`.
 
-        y : numpy array of shape (n_samples)
+        y : array-like, shape (n_samples)
              Subset of the target values.
 
         Returns
@@ -706,8 +808,7 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
         self
         """
         if self.algorithm != 'sgd':
-            raise ValueError("only SGD algorithm"
-                             " supports partial fit")
+            raise ValueError("only SGD algorithm supports partial fit")
 
         if self.classes_ is None and classes is None:
             raise ValueError("classes must be passed on the first call "
@@ -727,9 +828,9 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
 
         # needs a better way to check multi-label instances
         if isinstance(np.reshape(y, (-1, 1))[0][0], list):
-            self.multi_label = True
+            self._multi_label = True
         else:
-            self.multi_label = False
+            self._multi_label = False
 
         y = self._lbin.fit_transform(y)
         super(MultilayerPerceptronClassifier, self).partial_fit(X, y)
@@ -742,6 +843,7 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Data samples.
 
         Returns
         -------
@@ -750,26 +852,17 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
         """
         X = atleast2d_or_csr(X)
         scores = self.decision_function(X)
+        scores = self._output_func(scores)
 
-        if len(scores.shape) == 1 or self.multi_label is True:
-            scores = logistic_sigmoid(scores)
-            results = (scores > 0.5).astype(np.int)
-
-            if self.multi_label:
-                return self._lbin.inverse_transform(results)
-
-        else:
-            scores = _softmax(scores)
-            results = scores.argmax(axis=1)
-
-        return self.classes_[results]
+        return self._lbin.inverse_transform(scores)
 
     def predict_log_proba(self, X):
-        """Returns the log of probability estimates.
+        """Return the log of probability estimates.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
+            Data samples.
 
         Returns
         -------
@@ -786,6 +879,7 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Data samples.
 
         Returns
         -------
@@ -807,9 +901,9 @@ class MultilayerPerceptronRegressor(BaseMultilayerPerceptron, RegressorMixin):
     """Multi-layer Perceptron regressor.
 
     Under a loss function, the algorithm trains either by l-bfgs or gradient 
-    descent. The training is done iteratively, in that at each time step the 
+    descent. The training is iterative, in that at each time step the 
     partial derivatives of the loss function with respect to the model 
-    parameters are used to update the parameters.  
+    parameters are computed to update the parameters.   
 
     It has a regularizer as a penalty term added to the loss function that 
     shrinks model parameters towards zero.
@@ -817,12 +911,10 @@ class MultilayerPerceptronRegressor(BaseMultilayerPerceptron, RegressorMixin):
     This implementation works with data represented as dense and sparse numpy
     arrays of floating point values for the features.
 
-    Please note that this implementation uses one hidden layer only.
-
     Parameters
     ----------
-    n_hidden : int, default 100
-        Number of units in the hidden layer.
+    n_hidden : python list, length = n_layers - 2, default [100]
+        A list containing the number of neurons in the ith hidden layer.
 
     activation : {'logistic', 'tanh'}, default 'tanh'
         Activation function for the hidden layer.
@@ -878,7 +970,7 @@ class MultilayerPerceptronRegressor(BaseMultilayerPerceptron, RegressorMixin):
         The initial learning rate used. It controls the step-size
         in updating the weights.
 
-    power_t : double, optional, default 0.25
+    power_t : double, optional, default 0.5
         The exponent for inverse scaling learning rate.
         It is used in updating eta0 when the learning_rate
         is set to 'invscaling'.
@@ -890,15 +982,40 @@ class MultilayerPerceptronRegressor(BaseMultilayerPerceptron, RegressorMixin):
         When set to True, reuse the solution of the previous
         call to fit as initialization, otherwise, just erase the
         previous solution.
+
+    Attributes
+    ----------
+    `classes_` : array or list of array of shape = [n_classes]
+        Class labels for each output.
+
+    `cost_` : float
+        The current cost value computed by the loss function.
+
+    `eta_` : float
+        The current learning rate.
+
+    `layers_coef_` : python list, length = n_layers - 1
+        The ith element in the list represents the weight matrix corresponding 
+        to layer i.
+
+    `layers_intercept_` : python list, length = n_layers - 1
+        The ith element in the list represents the bias vector corresponding to
+        layer i + 1.
+
+    n_iter_ : int
+        The current number of iterations the algorithm has ran.
+
+    `n_outputs_` : int,
+        Number of outputs.
+
     """
 
-    def __init__(
-            self, n_hidden=100, activation="tanh",
-            algorithm='l-bfgs', alpha=0.00001,
-            batch_size=200, learning_rate="constant", eta0=0.1,
-            power_t=0.25, max_iter=100, shuffle=False,
-            random_state=None, tol=1e-5,
-            verbose=False, warm_start=False):
+    def __init__(self, n_hidden=[100], activation="tanh",
+                 algorithm='l-bfgs', alpha=0.00001,
+                 batch_size=200, learning_rate="constant", eta0=0.1,
+                 power_t=0.5, max_iter=100, shuffle=False,
+                 random_state=None, tol=1e-5,
+                 verbose=False, warm_start=False):
 
         sup = super(MultilayerPerceptronRegressor, self)
         sup.__init__(n_hidden, activation,
@@ -922,7 +1039,7 @@ class MultilayerPerceptronRegressor(BaseMultilayerPerceptron, RegressorMixin):
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
-        y : numpy array of shape (n_samples)
+        y : array-like, shape (n_samples)
             Subset of the target values.
 
         Returns
@@ -946,7 +1063,7 @@ class MultilayerPerceptronRegressor(BaseMultilayerPerceptron, RegressorMixin):
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
-        y : numpy array of shape (n_samples)
+        y : array-like, shape (n_samples)
             Subset of the target values.
 
         Returns
@@ -967,6 +1084,7 @@ class MultilayerPerceptronRegressor(BaseMultilayerPerceptron, RegressorMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Data samples.
 
         Returns
         -------

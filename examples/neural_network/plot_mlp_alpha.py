@@ -32,7 +32,7 @@ from sklearn.neural_network import MultilayerPerceptronClassifier
 
 h = .02  # step size in the mesh
 
-alphas = np.arange(0, 3, 0.4)
+alphas = np.arange(0, 2, 0.15)
 names = []
 for i in alphas:
     names.append('alpha ' + str(i))

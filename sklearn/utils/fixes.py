@@ -15,7 +15,10 @@ import inspect
 import numpy as np
 import scipy.sparse as sp
 
+
 from .testing import ignore_warnings
+
+import pickle
 
 np_version = []
 for x in np.__version__.split('.'):
@@ -51,6 +54,31 @@ except ImportError:
 
         return out.reshape(np.shape(x))
 
+
+# added a code block that addresses the `expit` issue with python3
+try:
+    pickle.loads(pickle.dumps(expit))
+
+except AttributeError:
+    # monkeypatch numpy to backport a fix for:
+    # https://github.com/numpy/numpy/pull/4800
+    def _ufunc_reconstruct(module, name):
+        mod = __import__(module, fromlist=[name])
+        return getattr(mod, name)
+
+    np.core._ufunc_reconstruct = _ufunc_reconstruct
+
+# added a code block that addresses the `expit` issue with python3
+# monkeypatch numpy to backport a fix for:
+# https://github.com/numpy/numpy/pull/4800
+major, minor = int(np.version.version[0]), int(np.version.version[2])
+
+if major <= 1 and minor <= 9:
+    def _ufunc_reconstruct(module, name):
+        mod = __import__(module, fromlist=[name])
+        return getattr(mod, name)
+
+    np.core._ufunc_reconstruct = _ufunc_reconstruct
 
 # little danse to see if np.copy has an 'order' keyword argument
 if 'order' in inspect.getargspec(np.copy)[0]:
@@ -217,7 +245,7 @@ except ImportError:
         """
         def within_tol(x, y, atol, rtol):
             with np.errstate(invalid='ignore'):
-                result = np.less_equal(abs(x-y), atol + rtol * abs(y))
+                result = np.less_equal(abs(x - y), atol + rtol * abs(y))
             if np.isscalar(a) and np.isscalar(b):
                 result = bool(result)
             return result
