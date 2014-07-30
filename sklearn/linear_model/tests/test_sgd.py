@@ -102,7 +102,7 @@ true_result5 = [0, 1, 1]
 
 class CommonTest(object):
 
-    # a simple implentation of asgd to use for testing
+    # a simple implentation of ASGD to use for testing
     # uses squared loss to find the gradient
     def asgd(self, X, y, eta):
         weights = np.zeros(X.shape[1])
@@ -316,6 +316,31 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         assert_equal(clf.decision_function([0, 0]).shape, (1, 3))
         pred = clf.predict(T2)
         assert_array_equal(pred, true_result2)
+
+    def test_sgd_multiclass_average(self):
+        eta = .001
+        """Multi-class average test case"""
+        clf = self.factory(loss='squared_loss',
+                           learning_rate='constant',
+                           eta0=eta, alpha=0,
+                           fit_intercept=True,
+                           n_iter=1, average=True)
+
+        # TODO: remove label encoding when class bug is fixed
+        le = LabelEncoder()
+        y_encoded = le.fit_transform(Y2)
+        classes = np.unique(y_encoded)
+
+        clf.fit(X2, y_encoded)
+
+        for i, cl in enumerate(classes):
+            y_i = np.ones(y_encoded.shape)
+            y_i[y_encoded != cl] = -1
+            average_coef, average_intercept = self.asgd(X2, y_i, eta)
+            assert_array_almost_equal(average_coef, clf.coef_[i], decimal=10)
+            assert_almost_equal(average_intercept,
+                                clf.intercept_[i],
+                                decimal=10)
 
     def test_sgd_multiclass_with_init_coef(self):
         """Multi-class test case"""

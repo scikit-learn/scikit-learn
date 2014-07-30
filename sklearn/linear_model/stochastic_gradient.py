@@ -213,6 +213,13 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                 self.standard_intercept_ = np.zeros(1,
                                                     dtype=np.float64,
                                                     order="C")
+        #initialize average parameters
+        self.average_coef_ = np.zeros(self.standard_coef_.shape,
+                                      dtype=np.float64,
+                                      order="C")
+        self.average_intercept_ = np.zeros(self.standard_intercept_.shape,
+                                           dtype=np.float64,
+                                           order="C")
 
 
 def _check_fit_data(X, y):
@@ -245,19 +252,22 @@ def _prepare_fit_binary(est, y, i):
     y_i = np.ones(y.shape, dtype=np.float64, order="C")
     y_i[y != est.classes_[i]] = -1.0
     average_intercept = 0
+    average_coef = None
 
     if len(est.classes_) == 2:
         coef = est.standard_coef_.ravel()
         intercept = est.standard_intercept_[0]
         if est.average:
+            average_coef = est.average_coef_.ravel()
             average_intercept = est.average_intercept_[0]
     else:
         coef = est.standard_coef_[i]
         intercept = est.standard_intercept_[i]
         if est.average:
+            average_coef = est.average_coef_[i]
             average_intercept = est.average_intercept_[i]
 
-    return y_i, coef, intercept, average_intercept
+    return y_i, coef, intercept, average_coef, average_intercept
 
 
 def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
@@ -266,7 +276,8 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
 
     The i'th class is considered the "positive" class.
     """
-    y_i, coef, intercept, average_intercept = _prepare_fit_binary(est, y, i)
+    y_i, coef, intercept, average_coef, average_intercept = \
+        _prepare_fit_binary(est, y, i)
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
     dataset, intercept_decay = _make_dataset(X, y_i, sample_weight)
 
@@ -279,7 +290,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
     # Windows
     seed = random_state.randint(0, np.iinfo(np.int32).max)
 
-    return plain_sgd(coef, intercept, est.average_coef_,
+    return plain_sgd(coef, intercept, average_coef,
                      average_intercept, est.loss_function,
                      penalty_type, alpha, C, est.l1_ratio,
                      dataset, n_iter, int(est.fit_intercept),
@@ -351,15 +362,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         if self.standard_coef_ is None or coef_init is not None:
             self._allocate_parameter_mem(n_classes, n_features,
                                          coef_init, intercept_init)
-
-        # initialize averaged weights and average_intercept for averaged sgd
-        if self.average_coef_ is None:
-            self.average_coef_ = np.zeros(n_features,
-                                          dtype=np.float64,
-                                          order="C")
-            self.average_intercept_ = np.zeros(n_classes,
-                                               dtype=np.float64,
-                                               order="C")
 
         self.loss_function = self._get_loss_function(loss)
         if self.t_ is None:

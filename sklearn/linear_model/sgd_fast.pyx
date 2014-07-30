@@ -376,12 +376,11 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     weights : ndarray[double, ndim=1]
         The allocated coef_ vector.
     average_weights : ndarray[double, ndim=1]
-        The average weights as computed for
-        asgd
+        The average weights as computed for ASGD
     intercept : double
         The initial intercept.
     average_intercept : double
-        The average intercept for asgd
+        The average intercept for ASGD
     loss : LossFunction
         A concrete ``LossFunction`` object.
     penalty_type : int
@@ -548,10 +547,8 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     # compute the average for the weights
                     # average_weights_ *= t - 1
                     dscal(n_features, t - 1, aw_ptr, 1)
-
                     # average_weights_ += weights
                     daxpy(n_features, 1, w_ptr, 1, aw_ptr, 1)
-
                     # average_weights_ /= t
                     dscal(n_features, 1. / t, aw_ptr, 1)
 
