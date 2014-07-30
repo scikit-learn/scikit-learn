@@ -5,7 +5,9 @@
 import scipy.sparse as sp
 import numpy as np
 
+from numpy.random import permutation
 from sklearn.utils.random import choice
+from sklearn.utils.random import sample_without_replacement
 from .fixes import sparse_min_max
 from .sparsefuncs_fast import (csr_mean_variance_axis0,
                                csc_mean_variance_axis0)
@@ -304,12 +306,12 @@ def random_choice_csc(a, size, p=None):
         return sp.csc_matrix((size, 1))
 
     nnz = size - int(size * p[np.where(a == 0)[0][0]])  # XXX maybe round
-    indices = choice(a=range(size), size=nnz, replace=False)
+    indices = sample_without_replacement(size, nnz)
 
     # Normalize probabilites for the nonzero elements
     p_nz = p[a != 0]
     p_nz_norm = p_nz / np.sum(p_nz)
     data = choice(a=a[a != 0], size=nnz, p=p_nz_norm, replace=True)
-    indptr = [0, indices.shape[0]]
+    indptr = [0, nnz]
 
     return sp.csc_matrix((data, indices, indptr), shape=(size, 1))
