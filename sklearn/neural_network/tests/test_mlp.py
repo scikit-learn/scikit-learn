@@ -62,9 +62,8 @@ def test_alpha():
     absolute_sum = lambda x: np.sum(np.abs(x))
 
     for alpha in alpha_values:
-        mlp = MultilayerPerceptronClassifier(
-            n_hidden=10,
-            alpha=alpha, random_state=1)
+        mlp = MultilayerPerceptronClassifier(n_hidden=10,
+                                             alpha=alpha, random_state=1)
         mlp.fit(X, y)
         alpha_vectors.append(np.array([absolute_sum(mlp.layers_coef_[0]),
                                        absolute_sum(mlp.layers_coef_[1])]))
@@ -135,19 +134,15 @@ def test_fit():
     # b1 = b1 - eta * [b1grad1, b1grad2] = 0.1 - 0.1 * [0.01667, 0.0374]
     #         = [0.098333, 0.09626]
     # b2 = b2 - eta * b2grad = 1.0 - 0.1 * 0.765 = 0.9235
-    assert_almost_equal(mlp.layers_coef_[0], np.array(
-        [[0.098, 0.195756], [0.2956664, 0.096008],
-         [0.4939998, -0.002244]]), decimal=3)
-    assert_almost_equal(
-        mlp.layers_coef_[1],
-        np.array([[0.04706],
-                  [0.154089]]),
-        decimal=3)
-    assert_almost_equal(
-        mlp.layers_intercept_[0],
-        np.array([0.098333,
-                  0.09626]),
-        decimal=3)
+    assert_almost_equal(mlp.layers_coef_[0], np.array([[0.098, 0.195756],
+                                                       [0.2956664, 0.096008],
+                                                       [0.4939998,
+                                                        -0.002244]]),
+                        decimal=3)
+    assert_almost_equal(mlp.layers_coef_[1], np.array([[0.04706], [0.154089]]),
+                        decimal=3)
+    assert_almost_equal(mlp.layers_intercept_[0],
+                        np.array([0.098333, 0.09626]), decimal=3)
     assert_almost_equal(mlp.layers_intercept_[1], np.array(0.9235), decimal=3)
     # Testing output
     #  h1 = g(X1 * W_i1 + b11) = g(0.6 * 0.098 + 0.8 * 0.2956664 +
@@ -174,6 +169,7 @@ def test_gradient():
     for activation in ACTIVATION_TYPES:
         mlp = MultilayerPerceptronClassifier(alpha=0.5, activation=activation,
                                              n_hidden=2)
+        mlp._n_samples = n_samples
         mlp.classes_ = np.unique(Y)
         mlp.n_outputs_ = Y.shape[1]
         mlp._init_param(n_features)
@@ -181,9 +177,9 @@ def test_gradient():
         mlp._precompute_layer_shapes()
 
         theta = mlp._pack(mlp.layers_coef_, mlp.layers_intercept_)
-        mlp._preallocate_memory(n_samples, X)
+        mlp._preallocate_memory(X)
         # analytically compute the gradients
-        cost_grad_fun = lambda t: mlp._cost_grad(t, X, Y, n_samples)
+        cost_grad_fun = lambda t: mlp._cost_grad(t, X, Y)
         [value, grad] = cost_grad_fun(theta)
         numgrad = np.zeros(np.size(theta))
         n = np.size(theta, 0)
@@ -192,9 +188,8 @@ def test_gradient():
         # numerically compute the gradients
         for i in range(n):
             dtheta = E[:, i] * epsilon
-            numgrad[i] = (
-                cost_grad_fun(theta + dtheta)[0] -
-                cost_grad_fun(theta - dtheta)[0]) / (epsilon * 2.0)
+            numgrad[i] = (cost_grad_fun(theta + dtheta)[0] -
+                          cost_grad_fun(theta - dtheta)[0]) / (epsilon * 2.0)
         assert_almost_equal(numgrad, grad)
 
 
@@ -211,13 +206,12 @@ def test_lbfgs_classification():
         expected_shape_dtype = (X_test.shape[0], y_train.dtype.kind)
 
         for activation in ACTIVATION_TYPES:
-            mlp = MultilayerPerceptronClassifier(
-                algorithm='l-bfgs',
-                n_hidden=50,
-                max_iter=150,
-                shuffle=True,
-                random_state=1,
-                activation=activation)
+            mlp = MultilayerPerceptronClassifier(algorithm='l-bfgs',
+                                                 n_hidden=50,
+                                                 max_iter=150,
+                                                 shuffle=True,
+                                                 random_state=1,
+                                                 activation=activation)
             mlp.fit(X_train, y_train)
             y_predict = mlp.predict(X_test)
             assert_greater(mlp.score(X_train, y_train), 0.95)
@@ -235,13 +229,12 @@ def test_lbfgs_regression():
     X = Xboston
     y = yboston
     for activation in ACTIVATION_TYPES:
-        mlp = MultilayerPerceptronRegressor(
-            algorithm='l-bfgs',
-            n_hidden=50,
-            max_iter=150,
-            shuffle=True,
-            random_state=1,
-            activation=activation)
+        mlp = MultilayerPerceptronRegressor(algorithm='l-bfgs',
+                                            n_hidden=50,
+                                            max_iter=150,
+                                            shuffle=True,
+                                            random_state=1,
+                                            activation=activation)
         mlp.fit(X, y)
         assert_greater(mlp.score(X, y), 0.95)
 
@@ -255,11 +248,10 @@ def test_learning_rate_warmstart():
     X = [[3, 2], [1, 6], [5, 6], [-2, -4]]
     y = [1, 1, 1, 0]
     for learning_rate in LEARNING_RATE_TYPES:
-        mlp = MultilayerPerceptronClassifier(
-            algorithm='sgd', n_hidden=4,
-            learning_rate=learning_rate,
-            max_iter=1, power_t=0.25,
-            warm_start=True)
+        mlp = MultilayerPerceptronClassifier(algorithm='sgd', n_hidden=4,
+                                             learning_rate=learning_rate,
+                                             max_iter=1, power_t=0.25,
+                                             warm_start=True)
         mlp.fit(X, y)
         prev_eta = mlp.eta_
         mlp.fit(X, y)
@@ -276,22 +268,20 @@ def test_multilabel_classification():
     """
     # test fit method
     X, y = make_multilabel_classification(n_samples=50, random_state=0)
-    mlp = MultilayerPerceptronClassifier(
-        algorithm='l-bfgs',
-        n_hidden=50,
-        max_iter=150,
-        random_state=1,
-        activation='logistic')
+    mlp = MultilayerPerceptronClassifier(algorithm='l-bfgs',
+                                         n_hidden=50,
+                                         max_iter=150,
+                                         random_state=1,
+                                         activation='logistic')
     mlp.fit(X, y)
     assert_equal(mlp.score(X, y), 1)
 
     # test partial fit method
-    mlp = MultilayerPerceptronClassifier(
-        algorithm='sgd',
-        n_hidden=50,
-        max_iter=150,
-        random_state=1,
-        activation='logistic')
+    mlp = MultilayerPerceptronClassifier(algorithm='sgd',
+                                         n_hidden=50,
+                                         max_iter=150,
+                                         random_state=1,
+                                         activation='logistic')
     y = np.atleast_1d(y)
     classes_ = np.unique(y)
     for i in range(100):
@@ -304,12 +294,11 @@ def test_multioutput_regression():
     Tests that multi-output regression works as expected
     """
     X, y = make_regression(n_samples=200, n_targets=5)
-    mlp = MultilayerPerceptronRegressor(
-        algorithm='l-bfgs',
-        n_hidden=50,
-        max_iter=200,
-        random_state=1,
-        activation='logistic')
+    mlp = MultilayerPerceptronRegressor(algorithm='l-bfgs',
+                                        n_hidden=50,
+                                        max_iter=200,
+                                        random_state=1,
+                                        activation='logistic')
     mlp.fit(X, y)
     assert_greater(mlp.score(X, y), 0.95)
 
@@ -332,11 +321,10 @@ def test_partial_fit_classification():
     for X, y in classification_datasets:
         X = X
         y = y
-        mlp = MultilayerPerceptronClassifier(
-            algorithm='sgd',
-            max_iter=100,
-            random_state=1,
-            batch_size=X.shape[0])
+        mlp = MultilayerPerceptronClassifier(algorithm='sgd',
+                                             max_iter=100,
+                                             random_state=1,
+                                             batch_size=X.shape[0])
         mlp.fit(X, y)
         pred1 = mlp.predict(X)
         mlp = MultilayerPerceptronClassifier(algorithm='sgd', random_state=1)
@@ -355,20 +343,18 @@ def test_partial_fit_regression():
     X = Xboston
     y = yboston
     for activation in ACTIVATION_TYPES:
-        mlp = MultilayerPerceptronRegressor(
-            algorithm='sgd',
-            max_iter=150,
-            random_state=1,
-            eta0=0.07,
-            activation=activation,
-            batch_size=X.shape[0])
+        mlp = MultilayerPerceptronRegressor(algorithm='sgd',
+                                            max_iter=150,
+                                            random_state=1,
+                                            eta0=0.07,
+                                            activation=activation,
+                                            batch_size=X.shape[0])
         mlp.fit(X, y)
         pred1 = mlp.predict(X)
-        mlp = MultilayerPerceptronRegressor(
-            algorithm='sgd',
-            activation=activation,
-            eta0=0.07,
-            random_state=1)
+        mlp = MultilayerPerceptronRegressor(algorithm='sgd',
+                                            activation=activation,
+                                            eta0=0.07,
+                                            random_state=1)
         for i in range(150):
             mlp.partial_fit(X, y)
         pred2 = mlp.predict(X)
@@ -387,11 +373,8 @@ def test_partial_fit_errors():
 
     # no classes passed
     assert_raises(ValueError, clf(algorithm='sgd').partial_fit, X, y)
-    assert_raises(
-        ValueError,
-        clf(algorithm='l-bfgs').partial_fit,
-        X, y,
-        classes=[0, 1])
+    assert_raises(ValueError, clf(algorithm='l-bfgs').partial_fit, X, y,
+                  classes=[0, 1])
 
 
 def test_params_errors():
@@ -483,10 +466,8 @@ def test_tolerance():
     """
     X = [[3, 2], [1, 6]]
     y = [1, 0]
-    clf = MultilayerPerceptronClassifier(
-        tol=0.5,
-        max_iter=3000,
-        algorithm='sgd')
+    clf = MultilayerPerceptronClassifier(tol=0.5, max_iter=3000,
+                                         algorithm='sgd')
     clf.fit(X, y)
     assert_greater(clf.max_iter, clf.n_iter_)
 
@@ -494,11 +475,10 @@ def test_tolerance():
 def test_verbose_sgd():
     X = [[3, 2], [1, 6]]
     y = [1, 0]
-    clf = MultilayerPerceptronClassifier(
-        algorithm='sgd',
-        max_iter=2,
-        verbose=10,
-        n_hidden=2)
+    clf = MultilayerPerceptronClassifier(algorithm='sgd',
+                                         max_iter=2,
+                                         verbose=10,
+                                         n_hidden=2)
     old_stdout = sys.stdout
     sys.stdout = output = StringIO()
 

@@ -16,10 +16,6 @@ import numpy as np
 import scipy.sparse as sp
 
 
-from .testing import ignore_warnings
-
-import pickle
-
 np_version = []
 for x in np.__version__.split('.'):
     try:
@@ -54,31 +50,6 @@ except ImportError:
 
         return out.reshape(np.shape(x))
 
-
-# added a code block that addresses the `expit` issue with python3
-try:
-    pickle.loads(pickle.dumps(expit))
-
-except AttributeError:
-    # monkeypatch numpy to backport a fix for:
-    # https://github.com/numpy/numpy/pull/4800
-    def _ufunc_reconstruct(module, name):
-        mod = __import__(module, fromlist=[name])
-        return getattr(mod, name)
-
-    np.core._ufunc_reconstruct = _ufunc_reconstruct
-
-# added a code block that addresses the `expit` issue with python3
-# monkeypatch numpy to backport a fix for:
-# https://github.com/numpy/numpy/pull/4800
-major, minor = int(np.version.version[0]), int(np.version.version[2])
-
-if major <= 1 and minor <= 9:
-    def _ufunc_reconstruct(module, name):
-        mod = __import__(module, fromlist=[name])
-        return getattr(mod, name)
-
-    np.core._ufunc_reconstruct = _ufunc_reconstruct
 
 # little danse to see if np.copy has an 'order' keyword argument
 if 'order' in inspect.getargspec(np.copy)[0]:
@@ -131,10 +102,7 @@ else:
 
 
 try:
-    with ignore_warnings():
-        # Don't raise the numpy deprecation warnings that appear in
-        # 1.9
-        sp.csr_matrix([1.0, 2.0, 3.0]).max(axis=0)
+    sp.csr_matrix([1.0, 2.0, 3.0]).max(axis=0)
 except (TypeError, AttributeError):
     # in scipy < 14.0, sparse matrix min/max doesn't accept an `axis` argument
     # the following code is taken from the scipy 0.14 codebase
@@ -272,47 +240,3 @@ except ImportError:
                 # Make NaN == NaN
                 cond[np.isnan(x) & np.isnan(y)] = True
             return cond
-
-if np_version < (1, 8):
-    def in1d(ar1, ar2, assume_unique=False, invert=False):
-        # Backport of numpy function in1d 1.8.1 to support numpy 1.6.2
-        # Ravel both arrays, behavior for the first array could be different
-        ar1 = np.asarray(ar1).ravel()
-        ar2 = np.asarray(ar2).ravel()
-
-        # This code is significantly faster when the condition is satisfied.
-        if len(ar2) < 10 * len(ar1) ** 0.145:
-            if invert:
-                mask = np.ones(len(ar1), dtype=np.bool)
-                for a in ar2:
-                    mask &= (ar1 != a)
-            else:
-                mask = np.zeros(len(ar1), dtype=np.bool)
-                for a in ar2:
-                    mask |= (ar1 == a)
-            return mask
-
-        # Otherwise use sorting
-        if not assume_unique:
-            ar1, rev_idx = np.unique(ar1, return_inverse=True)
-            ar2 = np.unique(ar2)
-
-        ar = np.concatenate((ar1, ar2))
-        # We need this to be a stable sort, so always use 'mergesort'
-        # here. The values from the first array should always come before
-        # the values from the second array.
-        order = ar.argsort(kind='mergesort')
-        sar = ar[order]
-        if invert:
-            bool_ar = (sar[1:] != sar[:-1])
-        else:
-            bool_ar = (sar[1:] == sar[:-1])
-        flag = np.concatenate((bool_ar, [invert]))
-        indx = order.argsort(kind='mergesort')[:len(ar1)]
-
-        if assume_unique:
-            return flag[indx]
-        else:
-            return flag[indx][rev_idx]
-else:
-    from numpy import in1d
