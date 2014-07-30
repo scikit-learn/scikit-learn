@@ -4,6 +4,7 @@
 # License: BSD 3 clause
 from __future__ import division
 
+import warnings
 import array
 import numpy as np
 import scipy.sparse as sp
@@ -92,6 +93,13 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         if self.strategy not in ("most_frequent", "stratified", "uniform",
                                  "constant"):
             raise ValueError("Unknown strategy type.")
+
+        if self.strategy == "uniform" and sp.issparse(y):
+            y = y.toarray()
+            warnings.warn('prediciting on sparse target data with the uniform '
+                          'strategy would not save memory and would be '
+                          'slower. The target data has been densified',
+                          sp.SparseEfficiencyWarning)
 
         self.sparse_target_input_ = sp.issparse(y)
         self.classes_ = []
@@ -253,9 +261,11 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                     col_ind = rnd.indices
 
                 elif self.strategy == "uniform":
-                    rnd = random_choice_csc(a=classes_[k], size=n_samples)
-                    col_data = rnd.data
-                    col_ind = rnd.indices
+                    # rnd = random_choice_csc(a=classes_[k], size=n_samples)
+                    # col_data = rnd.data
+                    # col_ind = rnd.indices
+                    raise ValueError("Sparse target prediction is not "
+                                     "supported with the uniform strategy")
 
                 elif self.strategy == "constant":
                     if constant[k] == 0:

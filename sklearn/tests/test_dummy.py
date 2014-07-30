@@ -9,6 +9,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_warns
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
 
@@ -419,7 +420,7 @@ def test_constant_strategy_sparse_target():
                                                     np.zeros((n_samples, 1))]))
 
 
-def test_uniform_strategy_sparse_target():
+def test_uniform_strategy_sparse_target_warning():
     X = [[0]] * 5  # ignored
     y = sp.csc_matrix(np.array([[2, 1],
                                 [2, 2],
@@ -428,12 +429,10 @@ def test_uniform_strategy_sparse_target():
                                 [1, 1]]))
 
     clf = DummyClassifier(strategy="uniform", random_state=0)
-    clf.fit(X, y)
+    assert_warns(sp.SparseEfficiencyWarning, clf.fit, X, y)
 
     X = [[0]] * 500
     y_pred = clf.predict(X)
-    assert_true(sp.issparse(y_pred))
-    y_pred = y_pred.toarray()
 
     for k in range(y.shape[1]):
         p = np.bincount(y_pred[:, k]) / float(len(X))
