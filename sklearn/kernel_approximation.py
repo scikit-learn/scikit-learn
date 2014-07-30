@@ -641,14 +641,10 @@ class Fastfood(BaseEstimator, TransformerMixin):
         offset = offset.reshape(offset.shape[0], 1)
         Perm = np.tile(P, (X.shape[0], 1)) + offset
         np.take(result, Perm, out=result)
-        print result # 3
         result = result.reshape(X.shape[0], B.shape[0]*B.shape[1]) 
         np.multiply(np.ravel(G), result.reshape(X.shape[0], B.shape[0]*B.shape[1]), out=result)
         result = result.reshape(B.shape[0]*X.shape[0], B.shape[1])
-        print result
         result = Fastfood.approx_fourier_transformation_multi_dim(result)
-        print result
-        print '--------------------------'
         return result
 
 
