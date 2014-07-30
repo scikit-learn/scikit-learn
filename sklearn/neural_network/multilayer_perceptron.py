@@ -679,7 +679,6 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
                  power_t=0.5, max_iter=200, shuffle=False,
                  random_state=None, tol=1e-5,
                  verbose=False, warm_start=False):
-
         sup = super(MultilayerPerceptronClassifier, self)
         sup.__init__(n_hidden=n_hidden, activation=activation,
                      algorithm=algorithm, alpha=alpha, batch_size=batch_size,
@@ -976,7 +975,6 @@ class MultilayerPerceptronRegressor(BaseMultilayerPerceptron, RegressorMixin):
                  power_t=0.5, max_iter=100, shuffle=False,
                  random_state=None, tol=1e-5,
                  verbose=False, warm_start=False):
-
         sup = super(MultilayerPerceptronRegressor, self)
         sup.__init__(n_hidden=n_hidden, activation=activation,
                      algorithm=algorithm, alpha=alpha, batch_size=batch_size,
