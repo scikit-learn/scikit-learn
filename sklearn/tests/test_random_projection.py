@@ -338,3 +338,16 @@ def test_warning_n_components_greater_than_n_features():
     for RandomProjection in all_RandomProjection:
         assert_warns(UserWarning,
                      RandomProjection(n_components=n_features + 1).fit, data)
+
+
+def test_works_with_sparse_data():
+    n_features = 20
+    data, _ = make_sparse_random_data(5, n_features, int(n_features / 4))
+
+    for RandomProjection in all_RandomProjection:
+        rp_dense = RandomProjection(n_components=3,
+                                    random_state=1).fit(data)
+        rp_sparse = RandomProjection(n_components=3,
+                                     random_state=1).fit(sp.csr_matrix(data))
+        assert_array_almost_equal(densify(rp_dense.components_),
+                                  densify(rp_sparse.components_))
