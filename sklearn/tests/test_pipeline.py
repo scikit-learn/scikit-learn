@@ -16,6 +16,7 @@ from sklearn.base import BaseEstimator, clone
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LinearRegression
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.decomposition import PCA, RandomizedPCA, TruncatedSVD
 from sklearn.datasets import load_iris
@@ -378,3 +379,19 @@ def test_feature_union_feature_names():
     for feat in feature_names:
         assert_true("chars__" in feat or "words__" in feat)
     assert_equal(len(feature_names), 35)
+
+
+def test_classes_property():
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
+
+    reg = make_pipeline(SelectKBest(k=1), LinearRegression())
+    reg.fit(X, y)
+    assert_raises(AttributeError, getattr, reg, "classes_")
+
+
+    clf = make_pipeline(SelectKBest(k=1), LogisticRegression(random_state=0))
+    assert_raises(AttributeError, getattr, clf, "classes_")
+    clf.fit(X, y)
+    assert_array_equal(clf.classes_, np.unique(y))
