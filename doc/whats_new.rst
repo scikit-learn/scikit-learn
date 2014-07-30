@@ -5,6 +5,7 @@ Enhancements
 
 
     - Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score`.
+      By `Jatin Shah`.
 
 .. _changes_0_16:
 
