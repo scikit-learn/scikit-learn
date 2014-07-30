@@ -1,12 +1,5 @@
 .. currentmodule:: sklearn
 
-Enhancements
-............
-
-
-    - Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score`.
-      By `Jatin Shah`.
-
 .. _changes_0_16:
 
 0.16
@@ -50,6 +43,10 @@ Enhancements
    - Add ``selection="random"`` parameter to implement stochastic coordinate
      descent for :class:`linear_model.Lasso`, :class:`linear_model.ElasticNet`
      and related. By `Manoj Kumar`_.
+
+    - Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score`.
+      By `Jatin Shah`.
+
 
 
 Documentation improvements
