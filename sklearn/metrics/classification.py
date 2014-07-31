@@ -169,6 +169,89 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
         return np.sum(score)
 
 
+def _1d_balanced_accuracy_score(y_true, y_pred, sample_weight=None):
+    # Compute accuracy for each possible representation
+    y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
+    if y_type == 'binary':
+        score = y_true == y_pred
+    else:
+        raise ValueError("%s is not yet implemented" % y_type)
+
+    # Positive and negative index in y_true
+    p_idx = np.where(y_true == 1)
+    n_idx = np.where(y_true == 0)
+
+    if sample_weight is None:
+        sample_weight = np.ones(y_true.shape[0])
+
+    # Handle the edge cases
+    if len(p_idx) == 0:
+        sensitive = 1
+    else:
+        sensitive = np.average(score[p_idx], weights=sample_weight)
+
+    if len(n_idx) == 0:
+        specificity = 1
+    else:
+        specificity = np.average(score[n_idx], weights=sample_weight)
+
+    score = (sensitive + specificity) / 2
+
+    return score
+
+
+def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
+    """Balanced accuracy classification score.
+
+    This function only support binary classification for now.
+
+    Parameters
+    ----------
+    y_true : array-like or label indicator matrix
+        Ground truth (correct) labels.
+
+    y_pred : array-like or label indicator matrix
+        Predicted labels, as returned by a classifier.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
+    Returns
+    -------
+    score : float
+        score = (sensitive + specificity) / 2
+
+        The best performance is 1.
+
+    See also
+    --------
+    accuracy_score, jaccard_similarity_score, hamming_loss, zero_one_loss
+
+    Notes
+    -----
+    In binary and multiclass classification, this function is equal
+    to the ``jaccard_similarity_score`` function.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import balanced_accuracy_score
+    >>> y_pred = [0, 1, 1, 1]
+    >>> y_true = [0, 1, 0, 1]
+    >>> balanced_accuracy_score(y_true, y_pred)
+    0.8333333333333334
+
+    In the multilabel case with binary label indicators:
+    >>> accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
+    0.875
+    """
+
+    vecfunc = np.vectorize(_1d_balanced_accuracy_score)
+    scores = vecfunc(y_true, y_pred, sample_weight=sample_weight)
+
+    return np.mean(scores)
+
+
 def confusion_matrix(y_true, y_pred, labels=None):
     """Compute confusion matrix to evaluate the accuracy of a classification
 
