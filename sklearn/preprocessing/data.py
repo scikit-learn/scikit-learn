@@ -511,7 +511,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         if n_features != self.powers_.shape[1]:
             raise ValueError("X shape does not match training shape")
 
-	NP = self.powers_.shape[0]
+        NP = self.powers_.shape[0]
         XP = np.zeros((n_samples, NP), dtype=X.dtype)
         
         for i in range(n_samples):
