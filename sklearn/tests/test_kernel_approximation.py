@@ -464,21 +464,21 @@ def test_fastfood_mem_or_accuracy():
 def test_fastfood_performance_comparison_between_methods():
     """compares the performance of Fastfood and RKS"""
     #generate data
-    X = rng.random_sample(size=(5000, 2000))
-    Y = rng.random_sample(size=(5000, 2000))
+    X = rng.random_sample(size=(5000, 2048))
+    Y = rng.random_sample(size=(5000, 2048))
     X /= X.sum(axis=1)[:, np.newaxis]
     Y /= Y.sum(axis=1)[:, np.newaxis]
 
     # calculate feature maps
     gamma = 10.
     sigma = np.sqrt(1 / (2 * gamma))
-    number_of_features_to_generate = 1024
+    number_of_features_to_generate = 2048
 
 
     exact_start = datetime.datetime.utcnow()
     # original rbf kernel method: 
-    rbf_kernel(X, X, gamma=gamma)
-    rbf_kernel(X, Y, gamma=gamma)
+    #rbf_kernel(X, X, gamma=gamma)
+    #rbf_kernel(X, Y, gamma=gamma)
     exact_end = datetime.datetime.utcnow()
     exact_spent_time = exact_end- exact_start
     print "Timimg exact rbf: \t\t", exact_spent_time
@@ -543,10 +543,9 @@ def test_fastfood_performance_comparison_between_methods():
     rks_spent_time =rks_end- rks_start
     print "Timimg rks: \t\t\t", rks_spent_time
 
-    assert_greater(rks_spent_time, fastfood_spent_time)
+    #assert_greater(rks_spent_time, fastfood_spent_time)
     #kernel_approx = np.dot(X_trans_rks, Y_trans_rks.T)
 
-    assert_greater(rks_spent_time, fastfood_spent_time)
     #kernel_approx = np.dot(X_trans_rks, Y_trans_rks.T)
 
 def test_fht_dct_performance():
@@ -582,8 +581,9 @@ def test_digit_recognition():
     import pylab as pl
     
     # Import datasets, classifiers and performance metrics
-    from sklearn import datasets, svm, metrics
+    from sklearn import datasets, svm, metrics, LinearSVC
     from sklearn.linear_model.stochastic_gradient import SGDClassifier
+    from sklearn.multiclass import
     
     # The digits dataset
     digits = datasets.load_digits()
@@ -607,30 +607,37 @@ def test_digit_recognition():
     sigma = np.sqrt(1 / (2 * gamma))
     number_of_features_to_generate = 1000
     train__idx = range(n_samples / 2)
-    test__idx = range(n_samples / 2,n_samples)
-    
-    # Create a classifier: a support vector classifier
-    classifier = svm.SVC(gamma=gamma)
-    sgd_classifier = SGDClassifier()
-    
+    test__idx = range(n_samples / 2, n_samples)
+
     # map data into featurespace
     rbf_transform = Fastfood(sigma=sigma, n_components=number_of_features_to_generate, random_state=42)
     data_transformed_train = rbf_transform.fit(data[train__idx]).transform_fast(data[train__idx])
     data_transformed_test = rbf_transform.transform_fast(data[test__idx])
-    
+
+    # Create a classifier: a support vector classifier
+    classifier = svm.SVC(gamma=gamma)
+    linear_classifier = svm.LinearSVC()
+    linear_classifier_transformation = svm.LinearSVC()
+
     # We learn the digits on the first half of the digits
     classifier.fit(data[train__idx], digits.target[train__idx])
-    sgd_classifier.fit(data_transformed_train, digits.target[train__idx])
-    
+    linear_classifier.fit(data[train__idx], digits.target[train__idx])
+    linear_classifier_transformation.fit(data_transformed_train, digits.target[train__idx])
+
     # Now predict the value of the digit on the second half:
     expected = digits.target[test__idx]
     predicted = classifier.predict(data[test__idx])
-    predicted_sgd = sgd_classifier.predict(data_transformed_test)
+    predicted_linear = linear_classifier.predict(data[test__idx])
+    predicted_linear_transformed = linear_classifier_transformation.predict(data_transformed_test)
     
-    print "Classification report for classifier %s:\n%s\n" % (
+    print "Classification report for dual classifier %s:\n%s\n" % (
         classifier, metrics.classification_report(expected, predicted))
-    print "Classification report for classifier %s:\n%s\n" % (
-        sgd_classifier, metrics.classification_report(expected, predicted_sgd))
+    print "Classification report for primal linear classifier %s:\n%s\n" % (
+        linear_classifier, metrics.classification_report(expected, predicted_linear))
+    print "Classification report for primal transformation classifier %s:\n%s\n" % (
+        linear_classifier_transformation, metrics.classification_report(expected, predicted_linear_transformed))
+
+    print "Confusion matrix:\n%s" % metrics.confusion_matrix(expected, predicted)
     print "Confusion matrix:\n%s" % metrics.confusion_matrix(expected, predicted)
     
     for index, (image, prediction) in enumerate(zip(digits.images[test__idx], predicted)[:4]):
