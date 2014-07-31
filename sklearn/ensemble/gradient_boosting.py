@@ -822,6 +822,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             verbose_reporter.init(self, begin_at_stage)
 
         # perform boosting iterations
+        i = begin_at_stage
         for i in range(begin_at_stage, self.n_estimators):
 
             # subsampling
