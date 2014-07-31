@@ -170,7 +170,7 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
 
 
 def _1d_balanced_accuracy_score(y_true, y_pred, sample_weight=None):
-    # Compute accuracy for each possible representation
+    # Only support binary classification for now
     y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
     if y_type == 'binary':
         score = y_true == y_pred
@@ -178,8 +178,8 @@ def _1d_balanced_accuracy_score(y_true, y_pred, sample_weight=None):
         raise ValueError("%s is not yet implemented" % y_type)
 
     # Positive and negative index in y_true
-    p_idx = np.where(y_true == 1)
-    n_idx = np.where(y_true == 0)
+    p_idx = np.where(y_true == 1)[0]
+    n_idx = np.where(y_true == 0)[0]
 
     if sample_weight is None:
         sample_weight = np.ones(y_true.shape[0])
@@ -188,12 +188,12 @@ def _1d_balanced_accuracy_score(y_true, y_pred, sample_weight=None):
     if len(p_idx) == 0:
         sensitive = 1
     else:
-        sensitive = np.average(score[p_idx], weights=sample_weight)
+        sensitive = np.average(score[p_idx], weights=sample_weight[p_idx])
 
     if len(n_idx) == 0:
         specificity = 1
     else:
-        specificity = np.average(score[n_idx], weights=sample_weight)
+        specificity = np.average(score[n_idx], weights=sample_weight[p_idx])
 
     score = (sensitive + specificity) / 2
 
@@ -239,15 +239,23 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
     >>> y_pred = [0, 1, 1, 1]
     >>> y_true = [0, 1, 0, 1]
     >>> balanced_accuracy_score(y_true, y_pred)
-    0.8333333333333334
+    0.75
 
     In the multilabel case with binary label indicators:
-    >>> accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
-    0.875
+    >>> balanced_accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
+    0.75
     """
 
-    vecfunc = np.vectorize(_1d_balanced_accuracy_score)
-    scores = vecfunc(y_true, y_pred, sample_weight=sample_weight)
+    if len(np.array(y_true).shape) == 1:
+        y_true = np.reshape(np.array(y_true), (1, -1))
+        y_pred = np.reshape(np.array(y_pred), (1, -1))
+
+    scores = map(
+        lambda ys: _1d_balanced_accuracy_score(
+            ys[0],
+            ys[1],
+            sample_weight=sample_weight),
+        zip(y_true, y_pred))
 
     return np.mean(scores)
 
