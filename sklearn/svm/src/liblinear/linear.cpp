@@ -15,6 +15,7 @@
    - Remove the hard-coded value of max_iter (1000), that allows max_iter
      to be passed as a parameter from the classes LogisticRegression and
      LinearSVC, Manoj Kumar
+   - Added function get_n_iter that exposes the number of iterations.
         See issue 3499: https://github.com/scikit-learn/scikit-learn/issues/3499
         See pull 3501: https://github.com/scikit-learn/scikit-learn/pull/3501
    
@@ -2809,11 +2810,12 @@ void get_labels(const model *model_, int* label)
 
 void get_n_iter(const model *model_, int* n_iter)
 {
-	int labels;
-	labels = model_->nr_class;
-	if (labels == 2)
-		labels = 1;
-	if (model_->n_iter != NULL)
+    int labels;
+    labels = model_->nr_class;
+    if (labels == 2)
+        labels = 1;
+
+    if (model_->n_iter != NULL)
         for(int i=0;i<labels;i++)
             n_iter[i] = model_->n_iter[i];
 }

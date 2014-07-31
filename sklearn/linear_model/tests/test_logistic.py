@@ -9,8 +9,10 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import raises
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils import ConvergenceWarning
 
 from sklearn.linear_model.logistic import (
     LogisticRegression,
@@ -422,3 +424,12 @@ def test_logistic_regressioncv_class_weights():
                                    class_weight='auto')
     clf_lib.fit(X, y)
     assert_array_almost_equal(clf_lib.coef_, clf_lbf.coef_, decimal=4)
+
+
+def test_logistic_regression_convergence_warnings():
+    """Test that warnings are raised if model does not converge"""
+
+    X, y = make_classification(n_samples=20, n_features=20)
+    clf_lib = LogisticRegression(solver='liblinear', max_iter=2)
+    assert_warns(ConvergenceWarning, clf_lib.fit, X, y)
+    assert_equal(clf_lib.n_iter_, 2)
