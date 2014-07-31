@@ -4,6 +4,7 @@
 # License: BSD 3 clause
 import scipy.sparse as sp
 import numpy as np
+import array
 
 from numpy.random import permutation
 from sklearn.utils.random import choice
@@ -283,35 +284,67 @@ def min_max_axis(X, axis):
         _raise_typeerror(X)
 
 
-def random_choice_csc(a, size, p=None):
-    # XXX Corner case: size 0
+def random_choice_csc(n_samples, classes, class_probability=None, random_state=None):
+    """Generate a sparse random matrix given a class distribution
 
-    if isinstance(a, int):
-        a = np.arange(a)
-    a = np.array(a, np.int)
+    Parameters
+    ----------
+    n_samples : int,
+        Number of samples to draw in each column
 
-    if p is None:
-            p = np.empty(shape=a.shape[0])
-            p.fill(1.0/a.shape[0])
-    p = np.array(p)
+    classes : list of size n_outputs of array of size (n_classes, )
+        List of classes for each column.
 
-    # XXX Validate: p and a have the same length
-    # XXX Warning: Sparse efficieny if 0 is not in a, or p for 0 is small
+    class_probability : list of size n_output of array of size (n_classes)
+        Class distribution of each column.
 
-    if 0 not in a:
-        a = np.insert(a, 0, 0)
-        p = np.insert(p, 0, 0.0)
+    Return
+    ------
+    random_matrix : sparse csc matrix of size (n_samples, n_outputs)
 
-    if 0 in a and a.shape[0] is 1:
-        return sp.csc_matrix((size, 1))
+    """
+    data = array.array('i')
+    indices = array.array('i')
+    indptr = array.array('i', [0])
 
-    nnz = size - int(size * p[np.where(a == 0)[0][0]])  # XXX maybe round
-    indices = sample_without_replacement(size, nnz)
+    for j in range(len(classes)):
+        classes[j] = classes[j].astype(int)
 
-    # Normalize probabilites for the nonzero elements
-    p_nz = p[a != 0]
-    p_nz_norm = p_nz / np.sum(p_nz)
-    data = choice(a=a[a != 0], size=nnz, p=p_nz_norm, replace=True)
-    indptr = [0, nnz]
+        # Uniform class proability is the default
+        if class_probability is None:
+            class_probability_j = np.empty(shape=n_samples)
+            class_probability_j.fill(1.0/n_samples)
+        else:
+            class_probability_j = class_probability[j]
+        class_probability_j = np.array(class_probability_j) # XXX np.asarray()?
 
-    return sp.csc_matrix((data, indices, indptr), shape=(size, 1))
+        # XXX Validate: class_probability_j and classes[j] have the same length
+        # XXX Warning: Sparse efficieny if 0 is not in classes,
+        #               or class_probability_j for 0 is small
+
+        if 0 not in classes[j]:
+            classes[j] = np.insert(classes[j], 0, 0)
+            class_probability_j = np.insert(class_probability_j, 0, 0.0)
+
+        if 0 not in classes[j] or classes[j].shape[0] > 1:
+            nnz = int(n_samples - 
+                      n_samples * 
+                      class_probability_j[np.where(classes[j] == 0)[0][0]])
+            indices.extend(sample_without_replacement(n_samples, 
+                                                      nnz,
+                                                      "auto", 
+                                                      random_state))
+
+            # Normalize probabilites for the nonzero elements
+            class_probability_nz = class_probability_j[classes[j] != 0]
+            class_probability_nz_norm = (class_probability_nz /
+                                        np.sum(class_probability_nz))
+            data.extend(choice(classes[j][classes[j] != 0], 
+                               size=nnz,
+                               p=class_probability_nz_norm, 
+                               replace=True))
+        indptr.append(len(indices))
+
+    return sp.csc_matrix((data, indices, indptr),
+                         (n_samples, len(classes)), 
+                         dtype=int)

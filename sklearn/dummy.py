@@ -239,49 +239,22 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             if self.n_outputs_ == 1 and not self.output_2d_:
                 y = np.ravel(y)
         else:
-            data = array.array('f')
-            indices = array.array('i')
-            indptr = array.array('i', [0])
+            class_prob = None
+            if self.strategy == "most_frequent":
+                classes_ = [np.array([cp.argmax()]) for cp in class_prior_]
 
-            for k in range(self.n_outputs_):
-                if self.strategy == "most_frequent":
-                    mode = class_prior_[k].argmax()
-                    if classes_[k][mode] == 0:
-                        col_data = None
-                    else:
-                        col_data = (np.ones(n_samples, dtype=int) *
-                                    class_prior_[k].argmax())
-                        col_data = classes_[k][col_data]
-                        col_ind = range(n_samples)
+            elif self.strategy == "stratified":
+                class_prob = class_prior_
 
-                elif self.strategy == "stratified":
-                    rnd = random_choice_csc(a=classes_[k], size=n_samples,
-                                            p=class_prior_[k])
-                    col_data = rnd.data
-                    col_ind = rnd.indices
-
-                elif self.strategy == "uniform":
-                    # rnd = random_choice_csc(a=classes_[k], size=n_samples)
-                    # col_data = rnd.data
-                    # col_ind = rnd.indices
+            elif self.strategy == "uniform":
                     raise ValueError("Sparse target prediction is not "
                                      "supported with the uniform strategy")
 
-                elif self.strategy == "constant":
-                    if constant[k] == 0:
-                        col_data = None
-                    else:
-                        col_data = np.ones(n_samples, dtype=int) * constant[k]
-                        col_ind = range(n_samples)
+            elif self.strategy == "constant":
+                classes_ = [np.array([c]) for c in constant]
 
-                if col_data is not None:
-                    data.extend(col_data)
-                    indices.extend(col_ind)
-                indptr.append(len(indices))
-
-            y = sp.csc_matrix((data, indices, indptr),
-                              (n_samples, self.n_outputs_),
-                              dtype=np.intp)
+            y = random_choice_csc(n_samples, classes_, class_prob,
+                                  self.random_state)
 
         return y
 
