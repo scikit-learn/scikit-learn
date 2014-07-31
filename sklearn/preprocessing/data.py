@@ -472,17 +472,17 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     def transform_OLD(self, X, y=None):
         """Transform data to polynomial features
 
-	Parameters
-	----------
-	X : array with shape [n_samples, n_features]
-	The data to transform, row by row.
+        Parameters
+        ----------
+        X : array with shape [n_samples, n_features]
+        The data to transform, row by row.
 
-	Returns
-	-------
-	XP : np.ndarray shape [n_samples, NP]
-	The matrix of features, where NP is the number of polynomial
-	features generated from the combination of inputs.
-	"""
+        Returns
+        -------
+        XP : np.ndarray shape [n_samples, NP]
+        The matrix of features, where NP is the number of polynomial
+        features generated from the combination of inputs.
+        """
         X = check_array(X)
         n_samples, n_features = X.shape
 
@@ -517,7 +517,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         for i in range(n_samples):
             XP[i, :] = (X[i, None, :] ** self.powers_).prod(-1)
 
-	return XP
+        return XP
 
 
 def normalize(X, norm='l2', axis=1, copy=True):
