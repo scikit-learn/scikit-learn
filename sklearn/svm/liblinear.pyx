@@ -55,6 +55,13 @@ def train_wrap(X, np.ndarray[np.float64_t,   ndim=1, mode='c'] Y,
     # coef matrix holder created as fortran since that's what's used in liblinear
     cdef np.ndarray[np.float64_t, ndim=2, mode='fortran'] w
     cdef int nr_class = get_nr_class(model)
+
+    cdef int labels_ = nr_class
+    if nr_class == 2:
+        labels_ = 1
+    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] n_iter = np.zeros(labels_, dtype=np.int32)
+    get_n_iter(model, <int *>n_iter.data)
+
     cdef int nr_feature = get_nr_feature(model)
     if bias > 0: nr_feature = nr_feature + 1
     if nr_class == 2 and solver_type != 4:  # solver is not Crammer-Singer
@@ -71,7 +78,7 @@ def train_wrap(X, np.ndarray[np.float64_t,   ndim=1, mode='c'] Y,
     free_parameter(param)
     # destroy_param(param)  don't call this or it will destroy class_weight_label and class_weight
 
-    return w
+    return w, n_iter
 
 
 def set_verbosity_wrap(int verbosity):

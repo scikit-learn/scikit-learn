@@ -639,6 +639,10 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
         Intercept (a.k.a. bias) added to the decision function.
         If `fit_intercept` is set to False, the intercept is set to zero.
 
+    `n_iter_` : int | array, shape (n_classes,)
+        Number of iterations run per class. Valid only for the liblinear
+        solver.
+
     See also
     --------
     SGDClassifier : incrementally trained logistic regression (when given

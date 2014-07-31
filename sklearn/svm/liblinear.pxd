@@ -13,6 +13,7 @@ cdef extern from "src/liblinear/linear.h":
     model *train(problem_const_ptr prob, parameter_const_ptr param) nogil
     int get_nr_feature (model *model)
     int get_nr_class (model *model)
+    void get_n_iter (model *model, int *n_iter)
     void free_and_destroy_model (model **)
     void destroy_param (parameter *)
 
