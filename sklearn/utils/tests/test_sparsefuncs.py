@@ -312,7 +312,12 @@ def test_random_choice_csc():
 
 
 def test_random_choice_csc_errors():
-    pass
+    # the length of an array in classes and class_probabilites is mismatched
+    classes = [np.array([[0, 1]]).T,  np.array([[0, 1, 2, 3]]).T]
+    class_probabilites = [np.array([[0.5, 0.5]]).T,
+                          np.array([[0.6, 0.1, 0.3]]).T]
+    assert_raises(ValueError, random_choice_csc, 4, classes,
+                  class_probabilites, 1)
 
 
 if __name__ == '__main__':
