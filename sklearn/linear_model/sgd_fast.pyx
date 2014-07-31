@@ -32,13 +32,13 @@ cdef extern from "cblas.h":
     double ddot "cblas_ddot" (int n,
                               const double* x,
                               int incrx,
-                              const double* y,
+                              double* y,
                               int incry) nogil
 
     # scale the passed in n element vector x at scale
     void dscal "cblas_dscal" (int n,
                               double scale,
-                              const double* x,
+                              double* x,
                               int incrx) nogil
 
     # adds a vector x * scaler scale to another vector y
@@ -46,7 +46,7 @@ cdef extern from "cblas.h":
                               double scale,
                               const double* x,
                               int incrx,
-                              const double* y,
+                              double* y,
                               int incry) nogil
 
 # Penalty constants
@@ -449,6 +449,12 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef double *x_data_ptr = NULL
     cdef int *x_ind_ptr = NULL
 
+    #initialize components needed for averaging
+    # if average:
+    #     dscal(n_features, t - 1, aw_ptr, 1)
+    #     cdef np.ndarray[double, ndim = 1, mode = "c"] previously_seen = \
+    #         np.zeros(n_features, dtype=np.float64, order="c")
+
     # helper variables
     cdef bint infinity = False
     cdef int xnnz
@@ -549,6 +555,14 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     dscal(n_features, t - 1, aw_ptr, 1)
                     # average_weights_ += weights
                     daxpy(n_features, 1, w_ptr, 1, aw_ptr, 1)
+                    # for j in range(xnnz):
+                    #     index = x_ind_ptr[j]
+                    #     entry = w_ptr[index]
+                    #     aw_ptr[index] -= previously_seen[index] * \
+                    #         (n_samples - i)
+                    #     aw_ptr[index] += entry * (n_samples - i)
+                    #     previously_seen[index] = entry
+
                     # average_weights_ /= t
                     dscal(n_features, 1. / t, aw_ptr, 1)
 
@@ -582,6 +596,8 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                           " MinMaxScaler might help.") % (epoch + 1))
 
     w.reset_wscale()
+    # if average:
+    #      dscal(n_features, 1. / (t - 1), aw_ptr, 1)
 
     return weights, intercept, average_weights, average_intercept
 
