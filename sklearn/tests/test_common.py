@@ -26,6 +26,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import make_classification
 
 from sklearn.cross_validation import train_test_split
+from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.utils.estimator_checks import (
     check_parameters_default_constructible,
     check_regressors_classifiers_sparse_data,
@@ -44,6 +45,7 @@ from sklearn.utils.estimator_checks import (
     check_classifiers_pickle,
     check_class_weight_classifiers,
     check_class_weight_auto_classifiers,
+    check_class_weight_auto_linear_classifier,
     check_estimators_overwrite_params,
     check_cluster_overwrite_params,
     check_sparsify_binary_classifier,
@@ -214,7 +216,7 @@ def test_class_weight_classifiers():
         yield check_class_weight_classifiers, name, Classifier
 
 
-def test_class_weight_auto_classifies():
+def test_class_weight_auto_classifiers():
     """Test that class_weight="auto" improves f1-score"""
 
     # This test is broken; its success depends on:
@@ -249,6 +251,26 @@ def test_class_weight_auto_classifies():
                 # FIXME SOON!
                 yield (check_class_weight_auto_classifiers, name, Classifier,
                        X_train, y_train, X_test, y_test, weights)
+
+
+def test_class_weight_auto_linear_classifiers():
+    classifiers = all_estimators(type_filter='classifier')
+
+    with warnings.catch_warnings(record=True):
+        linear_classifiers = [
+            (name, clazz)
+            for name, clazz in classifiers
+            if 'class_weight' in clazz().get_params().keys()
+               and issubclass(clazz, LinearClassifierMixin)]
+
+    for name, Classifier in linear_classifiers:
+        if name == "LogisticRegressionCV":
+            # Contrary to RidgeClassifierCV, LogisticRegressionCV use actual
+            # CV folds and fit a model for each CV iteration before averaging
+            # the coef. Therefore it is expected to not behave exactly as the
+            # other linear model.
+            continue
+        yield check_class_weight_auto_linear_classifier, name, Classifier
 
 
 def test_estimators_overwrite_params():

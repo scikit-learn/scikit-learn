@@ -105,6 +105,10 @@ Bug fixes
      and ``pandas.DataFrame`` in recent versions of pandas. By
      `Gael Varoquaux`_.
 
+   - Fixed a regression for :class:`linear_model.SGDClassifier` with
+     ``class_weight="auto"`` on data with non-contiguous labels. By
+     `Olivier Grisel`_.
+
 
 .. _changes_0_15:
 
