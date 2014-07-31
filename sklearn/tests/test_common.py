@@ -320,12 +320,13 @@ def test_non_transformer_estimators_n_iter():
                 # libsvm and accessing the iter parameter is non-trivial.
                 if name in (['Ridge', 'SVR', 'NuSVR', 'NuSVC',
                              'RidgeClassifier', 'SVC', 'RandomizedLasso',
-                             'LogisticRegressionCV', 'LogisticRegression',
-                             'LinearSVC']):
+                             'LogisticRegressionCV']):
                     continue
 
                 # Tested in test_transformer_n_iter below
-                elif name in CROSS_DECOMPOSITION:
+                elif name in CROSS_DECOMPOSITION or (
+                    name in ['LinearSVC', 'LogisticRegression']
+                    ):
                     continue
 
                 else:
@@ -342,7 +343,6 @@ def test_transformer_n_iter():
         # Dependent on external solvers and hence accessing the iter
         # param is non-trivial.
         external_solver = ['Isomap', 'KernelPCA', 'LocallyLinearEmbedding',
-                           'RandomizedLasso', 'LogisticRegression',
-                           'LogisticRegressionCV', 'LinearSVC']
+                           'RandomizedLasso','LogisticRegressionCV']
         if hasattr(estimator, "max_iter") and name not in external_solver:
             yield check_transformer_n_iter, name, estimator

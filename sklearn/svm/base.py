@@ -716,17 +716,21 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
 
             # LibLinear wants targets as doubles, even for classification
             y_ind = np.asarray(y_ind, dtype=np.float64).ravel()
-            raw_coef_ = liblinear.train_wrap(X, y_ind,
-                                             sp.isspmatrix(X),
-                                             self._get_solver_type(),
-                                             self.tol, self._get_bias(),
-                                             self.C, self.class_weight_,
-                                             self.max_iter,
-                                             rnd.randint(np.iinfo('i').max))
+            raw_coef_, self.n_iter_  = liblinear.train_wrap(
+                X, y_ind, sp.isspmatrix(X), self._get_solver_type(),
+                self.tol, self._get_bias(), self.C, self.class_weight_,
+                self.max_iter, rnd.randint(np.iinfo('i').max)
+                )
             # Regarding rnd.randint(..) in the above signature:
             # seed for srand in range [0..INT_MAX); due to limitations in Numpy
             # on 32-bit platforms, we can't get to the UINT_MAX limit that
             # srand supports
+            for n_iter in self.n_iter_:
+                if n_iter >= self.max_iter:
+                    warnings.warn("Liblinear failed to converge, increase "
+                                  "the number of iterations.", ConvergenceWarning)
+            if len(self.classes_) == 2:
+                self.n_iter_ = self.n_iter_[0]
 
             if self.fit_intercept:
                 self.coef_ = raw_coef_[:, :-1]
