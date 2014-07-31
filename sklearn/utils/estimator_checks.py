@@ -725,6 +725,36 @@ def check_class_weight_auto_classifiers(name, Classifier, X_train, y_train,
                    f1_score(y_test, y_pred))
 
 
+def check_class_weight_auto_linear_classifier(name, Classifier):
+    """Test class weights with non-contiguous class labels."""
+    X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
+                  [1.0, 1.0], [1.0, 0.0]])
+    y = [1, 1, 1, -1, -1]
+
+    with warnings.catch_warnings(record=True):
+        classifier = Classifier()
+    if hasattr(classifier, "n_iter"):
+        # This is a very small dataset, default n_iter are likely to prevent
+        # convergence
+        classifier.set_params(n_iter=1000)
+    set_random_state(classifier)
+
+    # Let the model compute the class frequencies
+    classifier.set_params(class_weight='auto')
+    coef_auto = classifier.fit(X, y).coef_.copy()
+
+    # Count each label occurrence to reweight manually
+    mean_weight = (1. / 3 + 1. / 2) / 2
+    class_weight = {
+        1: 1. / 3 / mean_weight,
+        -1: 1. / 2 / mean_weight,
+    }
+    classifier.set_params(class_weight=class_weight)
+    coef_manual = classifier.fit(X, y).coef_.copy()
+
+    assert_array_almost_equal(coef_auto, coef_manual)
+
+
 def check_estimators_overwrite_params(name, Estimator):
     X, y = make_blobs(random_state=0, n_samples=9)
     y = multioutput_estimator_convert_y_2d(name, y)
