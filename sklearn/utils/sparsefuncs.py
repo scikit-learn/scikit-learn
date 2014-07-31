@@ -1,5 +1,6 @@
 # Authors: Manoj Kumar
 #          Thomas Unterthiner
+#          Hamzeh Alsalhi
 
 # License: BSD 3 clause
 import scipy.sparse as sp
@@ -285,18 +286,25 @@ def min_max_axis(X, axis):
 
 
 def random_choice_csc(n_samples, classes, class_probability=None, random_state=None):
-    """Generate a sparse random matrix given a class distribution
+    """Generate a sparse random matrix given column class distributions
 
     Parameters
     ----------
     n_samples : int,
-        Number of samples to draw in each column
+        Number of samples to draw in each column.
 
-    classes : list of size n_outputs of array of size (n_classes, )
+    classes : list of size n_outputs of arrays of size (n_classes, )
         List of classes for each column.
 
-    class_probability : list of size n_output of array of size (n_classes)
-        Class distribution of each column.
+    class_probability : list of size n_outputs of arrays of size (n_classes, )
+        Optional (default=None). Class distribution of each column. If None the
+        uniform distribution is assumed.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Return
     ------
@@ -310,33 +318,38 @@ def random_choice_csc(n_samples, classes, class_probability=None, random_state=N
     for j in range(len(classes)):
         classes[j] = classes[j].astype(int)
 
-        # Uniform class proability is the default
+        # use uniform distribution if no class_probability is given
         if class_probability is None:
-            class_probability_j = np.empty(shape=n_samples)
-            class_probability_j.fill(1.0/n_samples)
+            class_prob_j = np.empty(shape=classes[j].shape[0])
+            class_prob_j.fill(1.0/classes[j].shape[0])
         else:
-            class_probability_j = class_probability[j]
-        class_probability_j = np.array(class_probability_j) # XXX np.asarray()?
+            class_prob_j = class_probability[j]
+        class_prob_j = np.asarray(class_prob_j)
 
-        # XXX Validate: class_probability_j and classes[j] have the same length
-        # XXX Warning: Sparse efficieny if 0 is not in classes,
-        #               or class_probability_j for 0 is small
+        if class_prob_j.shape[0] != classes[j].shape[0]:
+            raise ValueError("classes[{0}] (length {1}) and "
+                             "class_probability[{0}] (length {2}) have "
+                             "different length.".format(j, 
+                                                        classes[j].shape[0], 
+                                                        class_prob_j.shape[0]))
 
+        # If 0 is not present in the classes insert it with a probability 0.0
         if 0 not in classes[j]:
             classes[j] = np.insert(classes[j], 0, 0)
-            class_probability_j = np.insert(class_probability_j, 0, 0.0)
+            class_prob_j = np.insert(class_prob_j, 0, 0.0)
 
+        # If there are nonzero classes choose randomly using class_probability
         if 0 not in classes[j] or classes[j].shape[0] > 1:
             nnz = int(n_samples - 
                       n_samples * 
-                      class_probability_j[np.where(classes[j] == 0)[0][0]])
+                      class_prob_j[np.where(classes[j] == 0)[0][0]])
             indices.extend(sample_without_replacement(n_samples, 
                                                       nnz,
                                                       "auto", 
                                                       random_state))
 
             # Normalize probabilites for the nonzero elements
-            class_probability_nz = class_probability_j[classes[j] != 0]
+            class_probability_nz = class_prob_j[classes[j] != 0]
             class_probability_nz_norm = (class_probability_nz /
                                         np.sum(class_probability_nz))
             data.extend(choice(classes[j][classes[j] != 0], 
