@@ -15,6 +15,7 @@ from .utils import check_random_state
 from .utils.validation import check_array
 from sklearn.utils import deprecated
 from sklearn.utils.sparsefuncs import random_choice_csc
+from sklearn.utils.sparsefuncs import sparse_class_distribution
 
 
 class DummyClassifier(BaseEstimator, ClassifierMixin):
@@ -135,31 +136,9 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                 class_prior = np.bincount(y_k, weights=sample_weight)
                 self.class_prior_.append(class_prior / class_prior.sum())
         else:
-            y = y.tocsc()
-            y.eliminate_zeros()
-            y_nnz = np.diff(y.indptr)
-
-            for k in range(self.n_outputs_):
-                nz_indices = y.indices[y.indptr[k]:y.indptr[k+1]]
-                # separate sample weights for zero and non-zero elements
-                nz_sample_weight = (None if sample_weight is None else
-                                    sample_weight[nz_indices])
-                z_sample_weight_sum = (y.shape[0] - y_nnz[k] if
-                                       sample_weight is None else
-                                       np.sum(sample_weight) -
-                                       np.sum(nz_sample_weight))
-                classes, y_k = np.unique(y.data[nz_indices],
-                                         return_inverse=True)
-                class_prior = np.bincount(y_k, weights=nz_sample_weight)
-
-                if y_nnz[k] < y.shape[0]:
-                    classes = np.insert(classes, 0, 0)
-                    class_prior = np.insert(class_prior, 0,
-                                            z_sample_weight_sum)
-
-                self.classes_.append(classes)
-                self.n_classes_.append(classes.shape[0])
-                self.class_prior_.append(class_prior / class_prior.sum())
+            (self.classes_,
+             self.n_classes_,
+             self.class_prior_) = sparse_class_distribution(y, sample_weight)
 
         for k in range(self.n_outputs_):
             # Checking in case of constant strategy if the constant

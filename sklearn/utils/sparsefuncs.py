@@ -285,7 +285,8 @@ def min_max_axis(X, axis):
         _raise_typeerror(X)
 
 
-def random_choice_csc(n_samples, classes, class_probability=None, random_state=None):
+def random_choice_csc(n_samples, classes, class_probability=None,
+                      random_state=None):
     """Generate a sparse random matrix given column class distributions
 
     Parameters
@@ -329,8 +330,8 @@ def random_choice_csc(n_samples, classes, class_probability=None, random_state=N
         if class_prob_j.shape[0] != classes[j].shape[0]:
             raise ValueError("classes[{0}] (length {1}) and "
                              "class_probability[{0}] (length {2}) have "
-                             "different length.".format(j, 
-                                                        classes[j].shape[0], 
+                             "different length.".format(j,
+                                                        classes[j].shape[0],
                                                         class_prob_j.shape[0]))
 
         # If 0 is not present in the classes insert it with a probability 0.0
@@ -340,24 +341,80 @@ def random_choice_csc(n_samples, classes, class_probability=None, random_state=N
 
         # If there are nonzero classes choose randomly using class_probability
         if 0 not in classes[j] or classes[j].shape[0] > 1:
-            nnz = int(n_samples - 
-                      n_samples * 
+            nnz = int(n_samples -
+                      n_samples *
                       class_prob_j[np.where(classes[j] == 0)[0][0]])
-            indices.extend(sample_without_replacement(n_samples, 
+            indices.extend(sample_without_replacement(n_samples,
                                                       nnz,
-                                                      "auto", 
+                                                      "auto",
                                                       random_state))
 
             # Normalize probabilites for the nonzero elements
             class_probability_nz = class_prob_j[classes[j] != 0]
             class_probability_nz_norm = (class_probability_nz /
-                                        np.sum(class_probability_nz))
-            data.extend(choice(classes[j][classes[j] != 0], 
+                                         np.sum(class_probability_nz))
+            data.extend(choice(classes[j][classes[j] != 0],
                                size=nnz,
-                               p=class_probability_nz_norm, 
+                               p=class_probability_nz_norm,
                                replace=True))
         indptr.append(len(indices))
 
     return sp.csc_matrix((data, indices, indptr),
-                         (n_samples, len(classes)), 
+                         (n_samples, len(classes)),
                          dtype=int)
+
+
+def sparse_class_distribution(y, sample_weight=None):
+    """Generate class priors from multiclass-multioutput target data
+
+    Parameters
+    ----------
+    y : sparse matrix of size (n_samples, n_outputs)
+        The labels for each example.
+
+   sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
+    Return
+    ------
+    classes : list of size n_outputs of arrays of size (n_classes, )
+        List of classes for each column.
+
+    n_classes : list of integrs of size n_outputs
+        Number of classes in each column
+
+    class_prior : list of size n_outputs of arrays of size (n_classes, )
+        Class distribution of each column.
+
+    """
+    classes_ = []
+    n_classes = []
+    class_prior_ = []
+
+    y = y.tocsc()
+    y.eliminate_zeros()
+    y_nnz = np.diff(y.indptr)
+
+    n_samples, n_outputs = y.shape
+
+    for k in range(n_outputs):
+        nz_indices = y.indices[y.indptr[k]:y.indptr[k+1]]
+        # separate sample weights for zero and non-zero elements
+        nz_sample_weight = (None if sample_weight is None else
+                            sample_weight[nz_indices])
+        z_sample_weight_sum = (y.shape[0] - y_nnz[k] if
+                               sample_weight is None else
+                               np.sum(sample_weight) -
+                               np.sum(nz_sample_weight))
+        classes, y_k = np.unique(y.data[nz_indices],
+                                 return_inverse=True)
+        class_prior = np.bincount(y_k, weights=nz_sample_weight)
+        if y_nnz[k] < y.shape[0]:
+            classes = np.insert(classes, 0, 0)
+            class_prior = np.insert(class_prior, 0,
+                                    z_sample_weight_sum)
+        classes_.append(classes)
+        n_classes.append(classes.shape[0])
+        class_prior_.append(class_prior / float(class_prior.sum()))
+
+    return (classes_, n_classes, class_prior_)
