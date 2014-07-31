@@ -327,21 +327,41 @@ def test_sample_weights():
     """
     Test weights on individual samples
     """
-    # TODO: check on NuSVR, OneClass, etc.
-    clf = svm.SVC()
-    clf.fit(X, Y)
-    assert_array_equal(clf.predict(X[2]), [1.])
 
-    sample_weight = [.1] * 3 + [10] * 3
-    clf.fit(X, Y, sample_weight=sample_weight)
-    assert_array_equal(clf.predict(X[2]), [2.])
+    # Modified toy sample with an outlier.
+    X_sw = [[-2, -1], [-1, -1], [-1, -2], [-2, -2],
+            [1, 1], [1, 2], [2, 1], [2, 2]]
+    Y_sw = [1, 1, 1, 1, 2, 2, 2, 1]
+
+    # TODO: check on NuSVR, OneClass, etc.
+    for clf in (svm.SVC(), svm.LinearSVC()):
+        # Test that sample weights can force an outlier, X[-1], to be correctly
+        # classified. If the kernel is linear, this will come at the expense of
+        # misclassifying all other samples.
+        clf.fit(X_sw, Y_sw)
+        assert_array_equal(clf.predict(X_sw[-1]), [2.])
+
+        sample_weight = [1] * 7 + [10]
+        clf.fit(X_sw, Y_sw, sample_weight=sample_weight)
+        assert_array_equal(clf.predict(X_sw[-1]), [1.])
+
+        # Test that the length of clf.classes_ is correct if all examples of a
+        # certain class have 0 weight.
+        X_tmp = np.array([[0,0], [1,1], [2,2]])
+        Y_tmp = np.array([1, 2, 3])
+        sample_weight = np.array([1, 1, 0])
+
+        clf.fit(X_tmp, Y_tmp, sample_weight)
+
+        expected_num_classes = len(np.unique(Y_tmp[sample_weight > 0]))
+        assert_array_equal(len(clf.classes_), expected_num_classes)
 
     # test that rescaling all samples is the same as changing C
     clf = svm.SVC()
-    clf.fit(X, Y)
+    clf.fit(X_sw, Y_sw)
     dual_coef_no_weight = clf.dual_coef_
     clf.set_params(C=100)
-    clf.fit(X, Y, sample_weight=np.repeat(0.01, len(X)))
+    clf.fit(X_sw, Y_sw, sample_weight=np.repeat(0.01, len(X_sw)))
     assert_array_almost_equal(dual_coef_no_weight, clf.dual_coef_)
 
 
@@ -376,17 +396,27 @@ def test_bad_input():
     Test that it gives proper exception on deficient input
     """
     # impossible value of C
-    assert_raises(ValueError, svm.SVC(C=-1).fit, X, Y)
+    for clf in (svm.SVC(C=-1), svm.LinearSVC(C=-1)):
+        assert_raises(ValueError, clf.fit, X, Y)
 
     # impossible value of nu
     clf = svm.NuSVC(nu=0.0)
     assert_raises(ValueError, clf.fit, X, Y)
 
-    Y2 = Y[:-1]  # wrong dimensions for labels
-    assert_raises(ValueError, clf.fit, X, Y2)
+    # error for precomputed kernelsx
+    clf = svm.SVC(kernel='precomputed')
+    assert_raises(ValueError, clf.fit, X, Y)
 
-    # Test with arrays that are non-contiguous.
+    # predict with sparse input when trained with dense
+    clf = svm.SVC().fit(X, Y)
+    assert_raises(ValueError, clf.predict, sparse.lil_matrix(X))
+
     for clf in (svm.SVC(), svm.LinearSVC(random_state=0)):
+        # wrong dimensions for labels
+        Y2 = Y[:-1]
+        assert_raises(ValueError, clf.fit, X, Y2)
+
+        # Test with arrays that are non-contiguous.
         Xf = np.asfortranarray(X)
         assert_false(Xf.flags['C_CONTIGUOUS'])
         yf = np.ascontiguousarray(np.tile(Y, (2, 1)).T)
@@ -396,25 +426,24 @@ def test_bad_input():
         clf.fit(Xf, yf)
         assert_array_equal(clf.predict(T), true_result)
 
-    # error for precomputed kernelsx
-    clf = svm.SVC(kernel='precomputed')
-    assert_raises(ValueError, clf.fit, X, Y)
+        # sample_weight bad dimensions
+        assert_raises(ValueError, clf.fit, X, Y,
+                sample_weight=range(len(X) - 1))
 
-    # sample_weight bad dimensions
-    clf = svm.SVC()
-    assert_raises(ValueError, clf.fit, X, Y, sample_weight=range(len(X) - 1))
+        # not enough classes because of 0 sample_weight
+        assert_raises(ValueError, clf.fit, X, Y,
+                sample_weight=np.zeros((len(Y),)))
 
-    # predict with sparse input when trained with dense
-    clf = svm.SVC().fit(X, Y)
-    assert_raises(ValueError, clf.predict, sparse.lil_matrix(X))
+        # Shape mismatch between training and testing.
+        Xt = np.array(X).T
+        clf.fit(np.dot(X, Xt), Y)
+        assert_raises(ValueError, clf.predict, X)
 
-    Xt = np.array(X).T
-    clf.fit(np.dot(X, Xt), Y)
-    assert_raises(ValueError, clf.predict, X)
+        clf.fit(X, Y)
+        assert_raises(ValueError, clf.predict, Xt)
 
-    clf = svm.SVC()
-    clf.fit(X, Y)
-    assert_raises(ValueError, clf.predict, Xt)
+        # Different n_samples in X and y
+        assert_raises(ValueError, clf.fit, X, Y[:-1])
 
 
 def test_sparse_precomputed():

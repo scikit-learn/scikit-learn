@@ -124,7 +124,7 @@ static struct feature_node **csr_to_sparse(double *values,
     return sparse;
 }
 
-struct problem * set_problem(char *X,char *Y, npy_intp *dims, double bias)
+struct problem * set_problem(char *W, char *X, char *Y, npy_intp *dims, double bias)
 {
     struct problem *problem;
     /* not performant but simple */
@@ -138,10 +138,11 @@ struct problem * set_problem(char *X,char *Y, npy_intp *dims, double bias)
         problem->n = (int) dims[1];
     }
 
+    problem->W = (double *) W;
     problem->y = (double *) Y;
     problem->x = dense_to_sparse((double *) X, dims, bias);
     problem->bias = bias;
-    if (problem->x == NULL) { 
+    if (problem->x == NULL) {
         free(problem);
         return NULL;
     }
@@ -149,7 +150,7 @@ struct problem * set_problem(char *X,char *Y, npy_intp *dims, double bias)
     return problem;
 }
 
-struct problem * csr_set_problem (char *values, npy_intp *n_indices,
+struct problem * csr_set_problem (char *W, char *values, npy_intp *n_indices,
 	char *indices, npy_intp *n_indptr, char *indptr, char *Y,
         npy_intp n_features, double bias) {
 
@@ -164,6 +165,7 @@ struct problem * csr_set_problem (char *values, npy_intp *n_indices,
         problem->n = (int) n_features;
     }
 
+    problem->W = (double *) W;
     problem->y = (double *) Y;
     problem->x = csr_to_sparse((double *) values, n_indices, (int *) indices,
 			n_indptr, (int *) indptr, bias, n_features);
@@ -200,7 +202,7 @@ struct parameter *set_parameter(int solver_type, double eps, double C,
 
 void copy_w(void *data, struct model *model, int len)
 {
-    memcpy(data, model->w, len * sizeof(double)); 
+    memcpy(data, model->w, len * sizeof(double));
 }
 
 double get_bias(struct model *model)

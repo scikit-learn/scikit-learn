@@ -370,6 +370,10 @@ Bug fixes
      when fit with ``sample_weight != None`` and/or with ``bootstrap=True``.
      By `Gilles Louppe`_.
 
+   - Added support for sample weights to :class:`LinearSVC <svm.LinearSVC>`. By
+     Gabriel Schwartz.
+
+
 API changes summary
 -------------------
 
