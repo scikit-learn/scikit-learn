@@ -37,7 +37,7 @@ def train_wrap(X, np.ndarray[np.float64_t,   ndim=1, mode='c'] Y,
                 bias)
 
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
-        class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
+        class_weight_label = np.arange(class_weight.shape[0], dtype=np.intc)
     param = set_parameter(solver_type, eps, C, class_weight.shape[0],
                           class_weight_label.data, class_weight.data,
                           max_iter, random_seed)
@@ -59,7 +59,7 @@ def train_wrap(X, np.ndarray[np.float64_t,   ndim=1, mode='c'] Y,
     cdef int labels_ = nr_class
     if nr_class == 2:
         labels_ = 1
-    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] n_iter = np.zeros(labels_, dtype=np.int32)
+    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] n_iter = np.zeros(labels_, dtype=np.intc)
     get_n_iter(model, <int *>n_iter.data)
 
     cdef int nr_feature = get_nr_feature(model)
