@@ -2,10 +2,12 @@
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
+#          Joel Nothman <joel.nothman@gmail.com>
 # License: BSD 3 clause
 
 from itertools import chain, combinations
 import numbers
+import warnings
 
 import numpy as np
 from scipy import sparse
@@ -432,8 +434,9 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     Attributes
     ----------
 
-    powers_ :
-         powers_[i, j] is the exponent of the jth input in the ith output.
+    sparse_powers_: CSC matrix, shape (n_in_features, n_out_features)
+         sparse_powers_[j, i] is the exponent of the jth input in the
+         ith output.
 
     Notes
     -----
@@ -453,21 +456,34 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     def _power_matrix(n_features, degree, interaction_only, include_bias):
         """Compute the matrix of polynomial powers"""
         comb = (combinations if interaction_only else combinations_w_r)
-        start = int(not include_bias)
-        combn = chain.from_iterable(comb(range(n_features), i)
-                                    for i in range(start, degree + 1))
-        powers = np.vstack(np.bincount(c, minlength=n_features) for c in combn)
-        return powers
+        stack = []
+        if include_bias:
+            stack.append(sparse.csr_matrix((1, n_features)))
+        for i in range(1, degree + 1):
+            combs = sum(comb(range(n_features), i), ())
+            n_combs = len(combs) // i
+            stack.append(sparse.csr_matrix((np.ones(len(combs)), combs,
+                                            np.arange(0, len(combs) + i, i)),
+                                           shape=(n_combs, n_features)))
+        return sparse.vstack(stack)
 
     def fit(self, X, y=None):
         """
         Compute the polynomial feature combinations
         """
         n_samples, n_features = check_array(X).shape
-        self.powers_ = self._power_matrix(n_features, self.degree,
-                                          self.interaction_only,
-                                          self.include_bias)
+        powers = self._power_matrix(n_features, self.degree,
+                                    self.interaction_only,
+                                    self.include_bias)
+        self.sparse_powers_ = powers.T
         return self
+
+    @property
+    def powers_(self):
+        warnings.warn('PolynomialFeatures.powers_ is deprecated and will be '
+                      'removed in version 0.18. sparse_powers_ replaces it, '
+                      'but contains its transpose.', DeprecationWarning)
+        return self.sparse_powers_.A.T
 
     def transform(self, X, y=None):
         """Transform data to polynomial features
@@ -486,10 +502,14 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         X = check_array(X)
         n_samples, n_features = X.shape
 
-        if n_features != self.powers_.shape[1]:
+        if n_features != self.sparse_powers_.shape[0]:
             raise ValueError("X shape does not match training shape")
 
-        return (X[:, None, :] ** self.powers_).prod(-1)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', RuntimeWarning)
+            logX = X.astype(complex)
+            logX = np.log(logX, out=logX)
+        return np.exp(logX * self.sparse_powers_).real
 
 
 def normalize(X, norm='l2', axis=1, copy=True):
