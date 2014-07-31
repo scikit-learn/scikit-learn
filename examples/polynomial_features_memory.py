@@ -20,7 +20,7 @@ Examples
 
 >>> %memit XP1 = p.transform_OLD(X)
 peak memory: 3455.32 MiB, increment: 3405.33 MiB
-polynomial_features_memory
+
 >>> %timeit XP2 = p.transform(X)
 1 loops, best of 3: 6.47 s per loop
 
