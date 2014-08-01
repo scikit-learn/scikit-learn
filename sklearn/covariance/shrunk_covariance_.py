@@ -19,7 +19,7 @@ import numpy as np
 
 from .empirical_covariance_ import empirical_covariance, EmpiricalCovariance
 from ..externals.six.moves import xrange
-from ..utils import check_array
+from ..utils import array2d
 
 
 # ShrunkCovariance estimator
@@ -51,7 +51,7 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
     where mu = trace(cov) / n_features
 
     """
-    emp_cov = check_array(emp_cov)
+    emp_cov = array2d(emp_cov)
     n_features = emp_cov.shape[0]
 
     mu = np.trace(emp_cov) / n_features
@@ -188,10 +188,6 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     else:
         n_samples, n_features = X.shape
 
-    # optionaly center data
-    if not assume_centered:
-        X = X - X.mean(0)
-
     # number of blocks to split the covariance matrix into
     n_splits = int(n_features / block_size)
     X2 = X ** 2
@@ -233,7 +229,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     return shrinkage
 
 
-def ledoit_wolf(X, assume_centered=False, block_size=1000):
+def ledoit_wolf(X, assume_centered=False, assume_scaled=False, block_size=1000):
     """Estimates the shrunk Ledoit-Wolf covariance matrix.
 
     Parameters
@@ -246,6 +242,11 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
         Useful to work with data whose mean is significantly equal to
         zero but is not exactly zero.
         If False, data are centered before computation.
+
+    assume_scaled : Boolean
+        If True, data are not scaled before computation.
+        Typically, all features should have unit L2-norm and zero mean before
+        computing the shrunk covariance matrix.
 
     block_size : int,
         Size of the blocks into which the covariance matrix will be split.
@@ -291,6 +292,14 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
         raise MemoryError("LW: n_features is too large, " +
                           "try increasing block_size")
 
+    # optionally center data
+    if not assume_centered:
+        X -= X.mean(0)
+
+    if not assume_scaled:
+        s = X.std(0)
+        X /= s
+
     # get Ledoit-Wolf shrinkage
     shrinkage = ledoit_wolf_shrinkage(
         X, assume_centered=assume_centered, block_size=block_size)
@@ -298,6 +307,10 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
     mu = np.sum(np.trace(emp_cov)) / n_features
     shrunk_cov = (1. - shrinkage) * emp_cov
     shrunk_cov.flat[::n_features + 1] += shrinkage * mu
+
+    if not assume_scaled:
+        s = np.diag(s)
+        shrunk_cov = s * shrunk_cov * s
 
     return shrunk_cov, shrinkage
 
