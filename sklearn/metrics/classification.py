@@ -169,17 +169,21 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
         return np.sum(score)
 
 
-def _1d_balanced_accuracy_score(y_true, y_pred, sample_weight=None):
-    # Only support binary classification for now
+def _1d_balanced_accuracy_score(y_true, y_pred, sample_weight=None, neg_class=0):
     y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
-    if y_type == 'binary':
-        score = y_true == y_pred
-    else:
+
+    # Only support binary nad multiclass classification for now
+    if y_type not in ["binary", "multiclass"]:
         raise ValueError("%s is not yet implemented" % y_type)
 
+    y_true = (y_true != neg_class).astype(int)
+    y_pred = (y_pred != neg_class).astype(int)
+
     # Positive and negative index in y_true
-    p_idx = np.where(y_true == 1)[0]
     n_idx = np.where(y_true == 0)[0]
+    p_idx = np.where(y_true == 1)[0]
+
+    score = y_true == y_pred
 
     if sample_weight is None:
         sample_weight = np.ones(y_true.shape[0])
@@ -193,17 +197,17 @@ def _1d_balanced_accuracy_score(y_true, y_pred, sample_weight=None):
     if len(n_idx) == 0:
         specificity = 1
     else:
-        specificity = np.average(score[n_idx], weights=sample_weight[p_idx])
+        specificity = np.average(score[n_idx], weights=sample_weight[n_idx])
 
     score = (sensitive + specificity) / 2
 
     return score
 
 
-def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
+def balanced_accuracy_score(y_true, y_pred, sample_weight=None, neg_class=0):
     """Balanced accuracy classification score.
 
-    This function only support binary classification for now.
+    This function only support binary and multiclass classification for now.
 
     Parameters
     ----------
@@ -215,6 +219,9 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
+
+    neg_class : int, 0 by default
+        Indicate which class is "negative"
 
     Returns
     -------
@@ -241,6 +248,12 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
     >>> balanced_accuracy_score(y_true, y_pred)
     0.75
 
+    In the multiclass case
+    >>> y_pred = [0, 1, 2, 4]
+    >>> y_true = [0, 2, 3, 4]
+    >>> balanced_accuracy_score(y_true, y_pred, neg_class=2)
+    0.33333333333333331
+
     In the multilabel case with binary label indicators:
     >>> balanced_accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
     0.75
@@ -254,7 +267,8 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
         lambda ys: _1d_balanced_accuracy_score(
             ys[0],
             ys[1],
-            sample_weight=sample_weight),
+            sample_weight=sample_weight,
+            neg_class=neg_class),
         zip(y_true, y_pred))
 
     scores = list(scores)
