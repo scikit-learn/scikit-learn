@@ -406,7 +406,7 @@ def sparse_class_distribution(y, sample_weight=None):
                                sample_weight is None else
                                np.sum(sample_weight) -
                                np.sum(nz_sample_weight))
-        classes, y_k = np.unique(y.data[nz_indices],
+        classes, y_k = np.unique(y.data[y.indptr[k]:y.indptr[k+1]],
                                  return_inverse=True)
         class_prior = np.bincount(y_k, weights=nz_sample_weight)
         if y_nnz[k] < y.shape[0]:

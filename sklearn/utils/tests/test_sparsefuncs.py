@@ -11,6 +11,7 @@ from sklearn.utils.sparsefuncs import (mean_variance_axis0,
                                        inplace_swap_row, inplace_swap_column,
                                        min_max_axis)
 from sklearn.utils.sparsefuncs import random_choice_csc
+from sklearn.utils.sparsefuncs import sparse_class_distribution
 from sklearn.utils.sparsefuncs_fast import assign_rows_csr
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
@@ -306,7 +307,7 @@ def test_random_choice_csc():
     assert_true(sp.issparse(got))
     got = got.toarray()
 
-    for k in range(got.shape[1]):
+    for k in range(len(classes)):
         p = np.bincount(got[:, k]) / float(n_samples)
         assert_array_almost_equal(class_probabilites[k][:, 0], p, decimal=1)
 
@@ -318,6 +319,27 @@ def test_random_choice_csc_errors():
                           np.array([[0.6, 0.1, 0.3]]).T]
     assert_raises(ValueError, random_choice_csc, 4, classes,
                   class_probabilites, 1)
+
+
+def test_sparse_class_distribution():
+    y = sp.csc_matrix(np.array([[1, 0, 0, 1],
+                                [2, 0, 0, 1],
+                                [1, 3, 0, 1],
+                                [1, 3, 0, 1],
+                                [2, 0, 0, 1],
+                                [1, 3, 0, 1]]))
+
+    classes, n_classes, class_prior = sparse_class_distribution(y)
+    classes_expected = [np.array([1, 2]), np.array([0, 3]),
+                        np.array([0]), np.array([1])]
+    n_classes_expected = [2, 2, 1, 1]
+    class_prior_expected = [np.array([4.0/6, 2.0/6]), np.array([0.5, 0.5]),
+                            np.array([1.0]), np.array([1.0])]
+
+    for k in range(y.shape[1]):
+        assert_array_equal(classes[k], classes_expected[k])
+        assert_array_equal(n_classes[k], n_classes_expected[k])
+        assert_array_equal(class_prior[k], class_prior_expected[k])
 
 
 if __name__ == '__main__':
