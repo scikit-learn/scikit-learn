@@ -5,6 +5,7 @@
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Mathieu Blondel <mathieu@mblondel.org>
 #         Denis A. Engemann <d.engemann@fz-juelich.de>
+#         Michael Eickenberg <michael.eickenberg@inria.fr>
 #
 # License: BSD 3 clause
 
@@ -271,10 +272,7 @@ class PCA(BaseEstimator, TransformerMixin):
         explained_variance_ratio_ = (explained_variance_ /
                                      explained_variance_.sum())
 
-        if self.whiten:
-            components_ = V / (S[:, np.newaxis] / sqrt(n_samples))
-        else:
-            components_ = V
+        components_ = V
 
         n_components = self.n_components
         if n_components is None:
@@ -356,8 +354,6 @@ class PCA(BaseEstimator, TransformerMixin):
         # Get precision using matrix inversion lemma
         components_ = self.components_
         exp_var = self.explained_variance_
-        if self.whiten:
-            components_ = components_ * np.sqrt(exp_var[:, np.newaxis])
         exp_var_diff = np.maximum(exp_var - self.noise_variance_, 0.)
         precision = np.dot(components_, components_.T) / self.noise_variance_
         precision.flat[::len(precision) + 1] += 1. / exp_var_diff
@@ -388,6 +384,8 @@ class PCA(BaseEstimator, TransformerMixin):
         if self.mean_ is not None:
             X = X - self.mean_
         X_transformed = fast_dot(X, self.components_.T)
+        if self.whiten:
+            X_transformed /= np.sqrt(self.explained_variance_)
         return X_transformed
 
     def inverse_transform(self, X):
@@ -405,9 +403,10 @@ class PCA(BaseEstimator, TransformerMixin):
         X_original array-like, shape (n_samples, n_features)
         """
         if self.whiten:
-            return fast_dot(X,
-                            self.explained_variance_[:, np.newaxis] *
-                            self.components_) + self.mean_
+            return fast_dot(
+                X,
+                np.sqrt(self.explained_variance_[:, np.newaxis]) *
+                self.components_) + self.mean_
         else:
             return fast_dot(X, self.components_) + self.mean_
 
