@@ -19,7 +19,7 @@ import numpy as np
 
 from .empirical_covariance_ import empirical_covariance, EmpiricalCovariance
 from ..externals.six.moves import xrange
-from ..utils import array2d
+from ..utils import check_array
 
 
 # ShrunkCovariance estimator
@@ -51,7 +51,7 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
     where mu = trace(cov) / n_features
 
     """
-    emp_cov = array2d(emp_cov)
+    emp_cov = check_array(emp_cov)
     n_features = emp_cov.shape[0]
 
     mu = np.trace(emp_cov) / n_features
