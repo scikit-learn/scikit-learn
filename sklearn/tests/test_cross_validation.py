@@ -468,7 +468,9 @@ def test_cross_val_score():
     for a in range(-10, 10):
         clf.a = a
         # Smoke test
-        scores = cval.cross_val_score(clf, X, y, sample_weight=int_weights)
+        params = dict(sample_weight=int_weights)
+        scores = cval.cross_val_score(clf, X, y,
+            fit_params=params, scorer_params=params)
         assert_array_equal(scores, clf.score(X, y, sample_weight=int_weights))
 
         # test with multioutput y
@@ -483,8 +485,9 @@ def test_cross_val_score():
         assert_array_equal(scores, clf.score(X_sparse, X))
 
     # test with sample_weight as list
+    params = dict(sample_weight=int_weights.tolist())
     scores = cval.cross_val_score(
-        clf, X, y, sample_weight=int_weights.tolist())
+        clf, X, y, fit_params=params, scorer_params=params)
 
     # test with X and y as list
     list_check = lambda x: isinstance(x, list)
@@ -920,12 +923,12 @@ def test_safe_split_with_precomputed_kernel():
     cv = cval.ShuffleSplit(X.shape[0], test_size=0.25, random_state=0)
     tr, te = list(cv)[0]
 
-    X_tr, y_tr, _ = cval._safe_split(clf, X, y, None, tr)
-    K_tr, y_tr2, _ = cval._safe_split(clfp, K, y, None, tr)
+    X_tr, y_tr = cval._safe_split(clf, X, y, tr)
+    K_tr, y_tr2 = cval._safe_split(clfp, K, y, tr)
     assert_array_almost_equal(K_tr, np.dot(X_tr, X_tr.T))
 
-    X_te, y_te, _ = cval._safe_split(clf, X, y, None, te, tr)
-    K_te, y_te2, _ = cval._safe_split(clfp, K, y, None, te, tr)
+    X_te, y_te = cval._safe_split(clf, X, y, te, tr)
+    K_te, y_te2 = cval._safe_split(clfp, K, y, te, tr)
     assert_array_almost_equal(K_te, np.dot(X_te, X_tr.T))
 
 

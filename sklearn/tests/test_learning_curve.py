@@ -25,7 +25,7 @@ class MockImprovingEstimator(BaseEstimator):
         self.train_sizes = 0
         self.X_subset = None
 
-    def fit(self, X_subset, y_subset=None):
+    def fit(self, X_subset, y_subset=None, **params):
         self.X_subset = X_subset
         self.train_sizes = X_subset.shape[0]
         return self
@@ -65,7 +65,7 @@ class MockEstimatorWithParameter(BaseEstimator):
         self.X_subset = None
         self.param = param
 
-    def fit(self, X_subset, y_subset):
+    def fit(self, X_subset, y_subset, **params):
         self.X_subset = X_subset
         self.train_sizes = X_subset.shape[0]
         return self

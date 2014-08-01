@@ -281,7 +281,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
     @abstractmethod
     def __init__(self, estimator, scoring=None,
                  fit_params=None, n_jobs=1, iid=True,
-                 refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs'):
+                 refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
+                 scorer_params=None):
 
         self.scoring = scoring
         self.estimator = estimator
@@ -292,8 +293,9 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.cv = cv
         self.verbose = verbose
         self.pre_dispatch = pre_dispatch
+        self.scorer_params = scorer_params
 
-    def score(self, X, y=None, sample_weight=None):
+    def score(self, X, y=None, **scorer_params):
         """Returns the score on the given test data and labels, if the search
         estimator has been refit. The ``score`` function of the best estimator
         is used, or the ``scoring`` parameter where unavailable.
@@ -308,24 +310,18 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
-        sample_weight : array-like, shape = [n_samples], optional
-            Sample weights.
-
         Returns
         -------
         score : float
 
         """
-        kwargs = {}
-        if sample_weight is not None:
-            kwargs['sample_weight'] = sample_weight
         if hasattr(self.best_estimator_, 'score'):
-            return self.best_estimator_.score(X, y, **kwargs)
+            return self.best_estimator_.score(X, y, **scorer_params)
         if self.scorer_ is None:
             raise ValueError("No score function explicitly defined, "
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
-        return self.scorer_(self.best_estimator_, X, y, **kwargs)
+        return self.scorer_(self.best_estimator_, X, y, **scorer_params)
 
     @property
     def predict(self):
@@ -343,7 +339,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
     def transform(self):
         return self.best_estimator_.transform
 
-    def _fit(self, X, y, sample_weight, parameter_iterable):
+    def _fit(self, X, y, parameter_iterable):
         """Actual fitting,  performing the search over parameters."""
 
         estimator = self.estimator
@@ -351,7 +347,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.scorer_ = check_scoring(self.estimator, scoring=self.scoring)
 
         n_samples = _num_samples(X)
-        X, y, sample_weight = indexable(X, y, sample_weight)
+        X, y = indexable(X, y)
 
         if y is not None:
             if len(y) != n_samples:
@@ -376,10 +372,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             n_jobs=self.n_jobs, verbose=self.verbose,
             pre_dispatch=pre_dispatch
         )(
-            delayed(_fit_and_score)(clone(base_estimator), X, y, sample_weight,
+            delayed(_fit_and_score)(clone(base_estimator), X, y,
                                     self.scorer_, train, test,
                                     self.verbose, parameters, self.fit_params,
-                                    return_parameters=True)
+                                    self.scorer_params, return_parameters=True)
             for parameters in parameter_iterable
             for train, test in cv)
 
@@ -422,9 +418,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         if self.refit:
             fit_params = self.fit_params
-            if sample_weight is not None:
-                fit_params = fit_params.copy()
-                fit_params['sample_weight'] = sample_weight
             # fit the best estimator using the entire dataset
             # clone first to work around broken estimators
             best_estimator = clone(base_estimator).set_params(
@@ -580,14 +573,15 @@ class GridSearchCV(BaseSearchCV):
 
     def __init__(self, estimator, param_grid, scoring=None,
                  fit_params=None, n_jobs=1, iid=True,
-                 refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs'):
+                 refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
+                 scorer_params=None):
         super(GridSearchCV, self).__init__(
             estimator, scoring, fit_params, n_jobs, iid,
-            refit, cv, verbose, pre_dispatch)
+            refit, cv, verbose, pre_dispatch, scorer_params)
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
-    def fit(self, X, y=None, sample_weight=None):
+    def fit(self, X, y=None):
         """Run fit with all sets of parameters.
 
         Parameters
@@ -600,11 +594,8 @@ class GridSearchCV(BaseSearchCV):
         y : array-like, shape = [n_samples] or [n_samples, n_output], optional
             Target relative to X for classification or regression;
             None for unsupervised learning.
-
-        sample_weight : array-like, shape = [n_samples], optional
-            Sample weights.
         """
-        return self._fit(X, y, sample_weight, ParameterGrid(self.param_grid))
+        return self._fit(X, y, ParameterGrid(self.param_grid))
 
 
 class RandomizedSearchCV(BaseSearchCV):
@@ -730,7 +721,8 @@ class RandomizedSearchCV(BaseSearchCV):
 
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
                  fit_params=None, n_jobs=1, iid=True, refit=True, cv=None,
-                 verbose=0, pre_dispatch='2*n_jobs', random_state=None):
+                 verbose=0, pre_dispatch='2*n_jobs', random_state=None,
+                 scorer_params=None):
 
         self.param_distributions = param_distributions
         self.n_iter = n_iter
@@ -738,9 +730,9 @@ class RandomizedSearchCV(BaseSearchCV):
         super(RandomizedSearchCV, self).__init__(
             estimator=estimator, scoring=scoring, fit_params=fit_params,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
-            pre_dispatch=pre_dispatch)
+            pre_dispatch=pre_dispatch, scorer_params=scorer_params)
 
-    def fit(self, X, y=None, sample_weight=None):
+    def fit(self, X, y=None):
         """Run fit on the estimator with randomly drawn parameters.
 
         Parameters
@@ -752,12 +744,8 @@ class RandomizedSearchCV(BaseSearchCV):
         y : array-like, shape = [n_samples] or [n_samples, n_output], optional
             Target relative to X for classification or regression;
             None for unsupervised learning.
-
-        sample_weight : array-like, shape = [n_samples], optional
-            Sample weights.
-
         """
         sampled_params = ParameterSampler(self.param_distributions,
                                           self.n_iter,
                                           random_state=self.random_state)
-        return self._fit(X, y, sample_weight, sampled_params)
+        return self._fit(X, y, sampled_params)

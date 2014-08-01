@@ -656,8 +656,12 @@ def test_grid_search_with_sample_weights():
     est_parameters = {"foo_param": [1, 2, 3]}
     cv = KFold(y.shape[0], n_folds=2, random_state=0)
     for search_cls in (GridSearchCV, RandomizedSearchCV):
-        grid_search = search_cls(MockClassifier(), est_parameters, cv=cv)
-        grid_search.fit(X, y, sample_weight=sample_weight)
+        params=dict(sample_weight=sample_weight)
+        grid_search = search_cls(MockClassifier(), est_parameters, cv=cv,
+                                 fit_params=params, scorer_params=params)
+        grid_search.fit(X, y)
         # check that sample_weight can be a list
-        grid_search = GridSearchCV(MockClassifier(), est_parameters, cv=cv)
-        grid_search.fit(X, y, sample_weight=sample_weight.tolist())
+        params=dict(sample_weight=sample_weight.tolist())
+        grid_search = GridSearchCV(MockClassifier(), est_parameters, cv=cv,
+                                   fit_params=params, scorer_params=params)
+        grid_search.fit(X, y)

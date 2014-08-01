@@ -1078,7 +1078,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
 def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
                     verbose=0, fit_params=None, pre_dispatch='2*n_jobs',
-                    sample_weight=None):
+                    scorer_params=None):
     """Evaluate a score by cross-validation
 
     Parameters
@@ -1092,9 +1092,6 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     y : array-like, optional, default: None
         The target variable to try to predict in the case of
         supervised learning.
-
-    sample_weight : array-like, optional, default: None
-        Sample weights.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
@@ -1134,12 +1131,16 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
+    scorer_params : dict, optional
+        Parameters to pass to the scorer.  Can be used for sample weights
+        and sample groups.
+
     Returns
     -------
     scores : array of float, shape=(len(list(cv)),)
         Array of scores of the estimator for each run of the cross validation.
     """
-    X, y, sample_weight = indexable(X, y, sample_weight)
+    X, y = indexable(X, y)
 
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
@@ -1148,16 +1149,14 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
     scores = parallel(delayed(_fit_and_score)(clone(estimator), X, y,
-                                              sample_weight, scorer,
-                                              train, test, verbose, None,
-                                              fit_params)
+                                              scorer, train, test, verbose,
+                                              None, fit_params, scorer_params)
                       for train, test in cv)
     return np.array(scores)[:, 0]
 
 
-def _fit_and_score(estimator, X, y, sample_weight,
-                   scorer, train, test, verbose, parameters,
-                   fit_params, return_train_score=False,
+def _fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
+                   fit_params, scorer_params, return_train_score=False,
                    return_parameters=False):
     """Fit estimator and compute scores for a given dataset split.
 
@@ -1172,9 +1171,6 @@ def _fit_and_score(estimator, X, y, sample_weight,
     y : array-like or None
         The target variable to try to predict in the case of
         supervised learning.
-
-    sample_weight : array-like or None
-        Sample weights.
 
     scoring : callable
         A scorer callable object / function with signature
@@ -1194,6 +1190,9 @@ def _fit_and_score(estimator, X, y, sample_weight,
 
     fit_params : dict or None
         Parameters that will be passed to ``estimator.fit``.
+
+    scorer_params : dict or None
+        Parameters that will be passed to the scorer.
 
     return_train_score : boolean, optional, default: False
         Compute and return score on training set.
@@ -1233,33 +1232,36 @@ def _fit_and_score(estimator, X, y, sample_weight,
                        if hasattr(v, '__len__') and len(v) == n_samples else v)
                        for k, v in fit_params.items()])
 
+    # Same, but take both slices
+    scorer_params = scorer_params if scorer_params is not None else {}
+    train_scorer_params = dict([(k, np.asarray(v)[train]
+                                 if hasattr(v, '__len__')
+                                 and len(v) == n_samples
+                                 else v)
+                                for k, v in scorer_params.items()])
+    test_scorer_params = dict([(k, np.asarray(v)[test]
+                                if hasattr(v, '__len__')
+                                and len(v) == n_samples
+                                else v)
+                               for k, v in scorer_params.items()])
+
     if parameters is not None:
         estimator.set_params(**parameters)
 
     start_time = time.time()
 
-    X_train, y_train, sample_weight_train = _safe_split(
-        estimator, X, y, sample_weight, train)
-    X_test, y_test, sample_weight_test = _safe_split(
-        estimator, X, y, sample_weight, test, train)
-
-    test_score_params = {}
-    train_score_params = {}
-    if sample_weight is not None:
-        fit_params = fit_params.copy()
-        fit_params['sample_weight'] = sample_weight_train
-        test_score_params['sample_weight'] = sample_weight_test
-        train_score_params['sample_weight'] = sample_weight_train
+    X_train, y_train = _safe_split(estimator, X, y, train)
+    X_test, y_test = _safe_split(estimator, X, y, test, train)
 
     if y_train is None:
         estimator.fit(X_train, **fit_params)
     else:
         estimator.fit(X_train, y_train, **fit_params)
     test_score = _score(estimator, X_test, y_test, scorer,
-                        **test_score_params)
+                        **test_scorer_params)
     if return_train_score:
         train_score = _score(estimator, X_train, y_train, scorer,
-                             **train_score_params)
+                             **train_scorer_params)
 
     scoring_time = time.time() - start_time
 
@@ -1276,7 +1278,7 @@ def _fit_and_score(estimator, X, y, sample_weight,
     return ret
 
 
-def _safe_split(estimator, X, y, sample_weight, indices, train_indices=None):
+def _safe_split(estimator, X, y, indices, train_indices=None):
     """Create subset of dataset and properly handle kernels."""
     if hasattr(estimator, 'kernel') and callable(estimator.kernel):
         # cannot compute the kernel values with custom function
@@ -1305,12 +1307,7 @@ def _safe_split(estimator, X, y, sample_weight, indices, train_indices=None):
     else:
         y_subset = None
 
-    if sample_weight is not None:
-        sample_weight_subset = np.asarray(sample_weight)[indices]
-    else:
-        sample_weight_subset = None
-
-    return X_subset, y_subset, sample_weight_subset
+    return X_subset, y_subset
 
 
 def _score(estimator, X_test, y_test, scorer, **params):

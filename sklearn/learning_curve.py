@@ -136,10 +136,15 @@ def learning_curve(estimator, X, y, sample_weight=None,
             classes, train, test, train_sizes_abs,
             scorer, verbose) for train, test in cv)
     else:
+        if sample_weight is not None:
+            params = dict(sample_weight=sample_weight)
+        else:
+            params = None
         out = parallel(delayed(_fit_and_score)(
-            clone(estimator), X, y, sample_weight,
+            clone(estimator), X, y,
             scorer, train[:n_train_samples], test,
-            verbose, parameters=None, fit_params=None, return_train_score=True)
+            verbose, parameters=None, fit_params=params, scorer_params=params,
+            return_train_score=True)
             for train, test in cv for n_train_samples in train_sizes_abs)
         out = np.array(out)[:, :2]
         n_cv_folds = out.shape[0] // n_unique_ticks
@@ -217,20 +222,26 @@ def _incremental_fit_estimator(estimator, X, y, sample_weight,
     partitions = zip(train_sizes, np.split(train, train_sizes)[:-1])
     for n_train_samples, partial_train in partitions:
         train_subset = train[:n_train_samples]
-        X_train, y_train, sample_weight_train = _safe_split(
-            estimator, X, y, sample_weight, train_subset)
-        X_partial_train, y_partial_train, sample_weight_partial_train = \
-            _safe_split(estimator, X, y, sample_weight, partial_train)
-        X_test, y_test, sample_weight_test = _safe_split(
-            estimator, X, y, sample_weight, test, train_subset)
+        X_train, y_train = _safe_split(
+            estimator, X, y, train_subset)
+        X_partial_train, y_partial_train = \
+            _safe_split(estimator, X, y, partial_train)
+        X_test, y_test = _safe_split(
+            estimator, X, y, test, train_subset)
+
+        # TODO: replace sample_weight with fit_params and scorer_params
 
         fit_params = dict()
-        train_score_params = dict()
-        test_score_params = dict()
+        train_scorer_params = dict()
+        test_scorer_params = dict()
         if sample_weight is not None:
+            sample_weight = np.asarray(sample_weight)
+            sample_weight_train = sample_weight[train_subset]
+            sample_weight_partial_train = sample_weight[partial_train]
+            sample_weight_test = sample_weight[test]
             fit_params['sample_weight'] = sample_weight_partial_train
-            train_score_params['sample_weight'] = sample_weight_train
-            test_score_params['sample_weight'] = sample_weight_test
+            train_scorer_params['sample_weight'] = sample_weight_train
+            test_scorer_params['sample_weight'] = sample_weight_test
 
         if y_partial_train is None:
             estimator.partial_fit(X_partial_train,
@@ -239,9 +250,9 @@ def _incremental_fit_estimator(estimator, X, y, sample_weight,
             estimator.partial_fit(X_partial_train, y_partial_train,
                                   classes=classes, **fit_params)
         train_scores.append(_score(
-            estimator, X_train, y_train, scorer, **train_score_params))
+            estimator, X_train, y_train, scorer, **train_scorer_params))
         test_scores.append(_score(
-            estimator, X_test, y_test, scorer, **test_score_params))
+            estimator, X_test, y_test, scorer, **test_scorer_params))
     return np.array((train_scores, test_scores)).T
 
 
@@ -320,9 +331,14 @@ def validation_curve(estimator, X, y, param_name, param_range,
 
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)
+    if sample_weight is not None:
+        params = dict(sample_weight=sample_weight)
+    else:
+        params = None
     out = parallel(delayed(_fit_and_score)(
-        estimator, X, y, sample_weight, scorer, train, test, verbose,
-        parameters={param_name: v}, fit_params=None, return_train_score=True)
+        estimator, X, y, scorer, train, test, verbose,
+        parameters={param_name: v}, fit_params=params, scorer_params=params,
+        return_train_score=True)
         for train, test in cv for v in param_range)
 
     out = np.asarray(out)[:, :2]

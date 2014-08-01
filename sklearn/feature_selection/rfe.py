@@ -335,16 +335,17 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         # Cross-validation
         for n, (train, test) in enumerate(cv):
-            X_train, y_train, sample_weight_train = _safe_split(
-                self.estimator, X, y, sample_weight, train)
-            X_test, y_test, sample_weight_test = _safe_split(
-                self.estimator, X, y, sample_weight, test, train)
+            X_train, y_train = _safe_split(
+                self.estimator, X, y, train)
+            X_test, y_test  = _safe_split(
+                self.estimator, X, y, test, train)
 
             fit_params = dict()
             score_params = dict()
             if sample_weight is not None:
-                fit_params['sample_weight'] = sample_weight_train
-                score_params['sample_weight'] = sample_weight_test
+                sample_weight = np.asarray(sample_weight)
+                fit_params['sample_weight'] = sample_weight[train]
+                score_params['sample_weight'] = sample_weight[test]
 
             # Compute a full ranking of the features
             ranking_ = rfe.fit(X_train, y_train, **fit_params).ranking_
