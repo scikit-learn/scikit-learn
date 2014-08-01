@@ -79,7 +79,7 @@ API changes summary
 Bug fixes
 ---------
 
-   - Make :func:`cross_validation.cross_val_score` use
+   - Made :func:`cross_validation.cross_val_score` use
      :class:`cross_validation.KFold` instead of
      :class:`cross_validation.StratifiedKFold` on multi-output classification
      problems. By `Nikolay Mayorov`_.
@@ -88,22 +88,22 @@ Bug fixes
      the default behavior of 0.14.1 for backward compatibility. By
      `Hamzeh Alsalhi`_.
 
-   - Fixed :class:`cluster.KMeans` stopping criterion that prevented early
+   - Fixed the :class:`cluster.KMeans` stopping criterion that prevented early
      convergence detection. By Edward Raff and `Gael Varoquaux`_.
 
    - Fixed the behavior of :class:`multiclass.OneVsOneClassifier`.
      in case of ties at the per-class vote level by computing the correct
      per-class sum of prediction scores. By `Andreas Müller`_.
 
-   - Made :func:`cross_valiation.cross_val_score` and
+   - Made :func:`cross_validation.cross_val_score` and
      :class:`grid_search.GridSearchCV` accept Python lists as input data.
      This is especially useful for cross-validation and model selection of
      text processing pipelines. By `Andreas Müller`_.
 
    - Fixed data input checks of most estimators to accept input data that
-     implements the NumPy ``__array__`` protocol such as ``pandas.Series``
-     and ``pandas.DataFrame`` in recent versions of pandas. By
-     `Gael Varoquaux`_.
+     implements the NumPy ``__array__`` protocol. This is the case for
+     for ``pandas.Series`` and ``pandas.DataFrame`` in recent versions of
+     pandas. By `Gael Varoquaux`_.
 
    - Fixed a regression for :class:`linear_model.SGDClassifier` with
      ``class_weight="auto"`` on data with non-contiguous labels. By
