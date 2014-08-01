@@ -608,7 +608,9 @@ def clean_warning_registry():
     """Safe way to reset warnings """
     warnings.resetwarnings()
     reg = "__warningregistry__"
-    for mod in sys.modules.copy().values():
+    for mod_name, mod in list(sys.modules.items()):
+        if 'six.moves' in mod_name:
+            continue
         if hasattr(mod, reg):
             getattr(mod, reg).clear()
 
