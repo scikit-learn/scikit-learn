@@ -398,10 +398,10 @@ def sparse_class_distribution(y, sample_weight=None):
     n_samples, n_outputs = y.shape
 
     for k in range(n_outputs):
-        nz_indices = y.indices[y.indptr[k]:y.indptr[k+1]]
+        col_nonzero = y.indices[y.indptr[k]:y.indptr[k+1]]
         # separate sample weights for zero and non-zero elements
         nz_sample_weight = (None if sample_weight is None else
-                            sample_weight[nz_indices])
+                            sample_weight[col_nonzero])
         z_sample_weight_sum = (y.shape[0] - y_nnz[k] if
                                sample_weight is None else
                                np.sum(sample_weight) -

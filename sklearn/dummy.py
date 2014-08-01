@@ -103,9 +103,6 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                           sp.SparseEfficiencyWarning)
 
         self.sparse_target_input_ = sp.issparse(y)
-        self.classes_ = []
-        self.n_classes_ = []
-        self.class_prior_ = []
 
         if not self.sparse_target_input_:
             y = np.atleast_1d(y)
@@ -129,6 +126,10 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                                      "shape (%d, 1)." % self.n_outputs_)
 
         if not self.sparse_target_input_:
+            self.classes_ = []
+            self.n_classes_ = []
+            self.class_prior_ = []
+
             for k in xrange(self.n_outputs_):
                 classes, y_k = np.unique(y[:, k], return_inverse=True)
                 self.classes_.append(classes)
