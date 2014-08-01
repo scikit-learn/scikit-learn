@@ -253,6 +253,7 @@
                 <li><em>On-going development:</em>
                 <a href="whats_new.html"><em>What's new</em> (changelog)</a>
                 </li>
+                <li><em>August 2014.</em> scikit-learn 0.15.1 is available for download (<a href="whats_new.html">Changelog</a>).
                 <li><em>July 2014.</em> scikit-learn 0.15.0 is available for download (<a href="whats_new.html">Changelog</a>).
                 </li>
                 <li><em>July 14-20th, 2014: international sprint.</em>
