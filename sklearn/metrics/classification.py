@@ -257,6 +257,8 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
             sample_weight=sample_weight),
         zip(y_true, y_pred))
 
+    scores = list(scores)
+
     return np.mean(scores)
 
 
