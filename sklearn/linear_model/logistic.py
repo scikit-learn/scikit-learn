@@ -352,10 +352,11 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                 temp[-1] = class_weight[n_classes[0]]
                 class_weight = temp.copy()
             else:
-                raise ValueError("In LogisticRegressionCV the liblinear solver "
-                                 "cannot handle multiclass with class_weight "
-                                 "of type dict. Use the lbfgs, newton-cg "
-                                 "solvers or set class_weight='auto'")
+                raise ValueError("In LogisticRegressionCV the liblinear "
+                                 "solver cannot handle multiclass with "
+                                 "class_weight of type dict. Use the lbfgs, "
+                                 "newton-cg solvers or set "
+                                 "class_weight='auto'")
         else:
             class_weight_ = compute_class_weight(class_weight, n_classes, y)
             sample_weight = class_weight_[le.fit_transform(y)]
@@ -639,7 +640,7 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
         Intercept (a.k.a. bias) added to the decision function.
         If `fit_intercept` is set to False, the intercept is set to zero.
 
-    `n_iter_` : int
+    n_iter_ : int
         Maximum of the actual number of iterations across all classes.
         Valid only for the liblinear solver.
 
@@ -942,23 +943,19 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             raise ValueError("class_weight provided should be a "
                              "dict or 'auto'")
 
+        path_func = delayed(_log_reg_scoring_path)
         fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-            delayed(_log_reg_scoring_path)(X, y, train, test,
-                                           pos_class=label,
-                                           Cs=self.Cs,
-                                           fit_intercept=self.fit_intercept,
-                                           penalty=self.penalty,
-                                           dual=self.dual,
-                                           solver=self.solver,
-                                           max_iter=self.max_iter,
-                                           tol=self.tol,
-                                           class_weight=self.class_weight,
-                                           verbose=max(0, self.verbose - 1),
-                                           scoring=self.scoring,
-                                           intercept_scaling=self.intercept_scaling)
+            path_func(X, y, train, test, pos_class=label, Cs=self.Cs,
+                      fit_intercept=self.fit_intercept, penalty=self.penalty,
+                      dual=self.dual, solver=self.solver,
+                      max_iter=self.max_iter, tol=self.tol,
+                      class_weight=self.class_weight,
+                      verbose=max(0, self.verbose - 1),
+                      scoring=self.scoring,
+                      intercept_scaling=self.intercept_scaling)
             for label in labels
-            for train, test in folds
-            )
+            for train, test in folds)
+
         coefs_paths, Cs, scores = zip(*fold_coefs_)
 
         self.Cs_ = Cs[0]
