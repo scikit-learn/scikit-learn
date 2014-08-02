@@ -36,6 +36,7 @@ from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 
 from .base import UndefinedMetricWarning
+from .base import _average_binary_score
 
 
 def _check_clf_targets(y_true, y_pred):
@@ -169,42 +170,7 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
         return np.sum(score)
 
 
-def _1d_balanced_accuracy_score(y_true, y_pred, sample_weight=None, neg_class=0):
-    y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
-
-    # Only support binary nad multiclass classification for now
-    if y_type not in ["binary", "multiclass"]:
-        raise ValueError("%s is not yet implemented" % y_type)
-
-    y_true = (y_true != neg_class).astype(int)
-    y_pred = (y_pred != neg_class).astype(int)
-
-    # Positive and negative index in y_true
-    n_idx = np.where(y_true == 0)[0]
-    p_idx = np.where(y_true == 1)[0]
-
-    score = y_true == y_pred
-
-    if sample_weight is None:
-        sample_weight = np.ones(y_true.shape[0])
-
-    # Handle the edge cases
-    if len(p_idx) == 0:
-        sensitive = 1
-    else:
-        sensitive = np.average(score[p_idx], weights=sample_weight[p_idx])
-
-    if len(n_idx) == 0:
-        specificity = 1
-    else:
-        specificity = np.average(score[n_idx], weights=sample_weight[n_idx])
-
-    score = (sensitive + specificity) / 2
-
-    return score
-
-
-def balanced_accuracy_score(y_true, y_pred, sample_weight=None, neg_class=0):
+def balanced_accuracy_score(y_true, y_pred, sample_weight=None, pos_label=1):
     """Balanced accuracy classification score.
 
     This function only support binary and multiclass classification for now.
@@ -220,8 +186,8 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None, neg_class=0):
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
-    neg_class : int, 0 by default
-        Indicate which class is "negative"
+    pos_label : int, 1 by default
+        Indicate which label is "positive"
 
     Returns
     -------
@@ -251,7 +217,7 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None, neg_class=0):
     In the multiclass case
     >>> y_pred = [0, 1, 2, 4]
     >>> y_true = [0, 2, 3, 4]
-    >>> balanced_accuracy_score(y_true, y_pred, neg_class=2)
+    >>> balanced_accuracy_score(y_true, y_pred, pos_label=2)
     0.33333333333333331
 
     In the multilabel case with binary label indicators:
@@ -259,21 +225,46 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None, neg_class=0):
     0.75
     """
 
-    if len(np.array(y_true).shape) == 1:
-        y_true = np.reshape(np.array(y_true), (1, -1))
-        y_pred = np.reshape(np.array(y_pred), (1, -1))
+    y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
+    # Only support binary nad multiclass classification for now
+    if y_type not in ["binary", "multiclass", "multilabel-indicator"]:
+        raise ValueError("%s is not yet implemented" % y_type)
 
-    scores = map(
-        lambda ys: _1d_balanced_accuracy_score(
-            ys[0],
-            ys[1],
-            sample_weight=sample_weight,
-            neg_class=neg_class),
-        zip(y_true, y_pred))
+    # Turn multiclass into binary
+    y_true = (y_true == pos_label).astype(int)
+    y_pred = (y_pred == pos_label).astype(int)
 
-    scores = list(scores)
+    def _1d_balanced_accuracy_score(y_true, y_pred, sample_weight=None):
+        # Positive and negative index in y_true
+        n_idx = np.where(y_true == 0)[0]
+        p_idx = np.where(y_true == 1)[0]
 
-    return np.mean(scores)
+        score = y_true == y_pred
+
+        if sample_weight is None:
+            sample_weight = np.ones(y_true.shape[0])
+
+        # Handle the edge cases
+        if len(p_idx) == 0:
+            sensitive = 1
+        else:
+            sensitive = np.average(score[p_idx], weights=sample_weight[p_idx])
+
+        if len(n_idx) == 0:
+            specificity = 1
+        else:
+            specificity = np.average(score[n_idx], weights=sample_weight[n_idx])
+
+        score = (sensitive + specificity) / 2
+
+        return score
+
+    return _average_binary_score(
+        _1d_balanced_accuracy_score,
+        y_true,
+        y_pred,
+        average='macro',
+        sample_weight=sample_weight)
 
 
 def confusion_matrix(y_true, y_pred, labels=None):
