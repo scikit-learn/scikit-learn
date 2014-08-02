@@ -154,34 +154,34 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
 
     Attributes
     ----------
-    `x_weights_` : array, [p, n_components]
+    x_weights_ : array, [p, n_components]
         X block weights vectors.
 
-    `y_weights_` : array, [q, n_components]
+    y_weights_ : array, [q, n_components]
         Y block weights vectors.
 
-    `x_loadings_` : array, [p, n_components]
+    x_loadings_ : array, [p, n_components]
         X block loadings vectors.
 
-    `y_loadings_` : array, [q, n_components]
+    y_loadings_ : array, [q, n_components]
         Y block loadings vectors.
 
-    `x_scores_` : array, [n_samples, n_components]
+    x_scores_ : array, [n_samples, n_components]
         X scores.
 
-    `y_scores_` : array, [n_samples, n_components]
+    y_scores_ : array, [n_samples, n_components]
         Y scores.
 
-    `x_rotations_` : array, [p, n_components]
+    x_rotations_ : array, [p, n_components]
         X block to latents rotations.
 
-    `y_rotations_` : array, [q, n_components]
+    y_rotations_ : array, [q, n_components]
         Y block to latents rotations.
 
     coefs: array, [p, q]
         The coefficients of the linear model: Y = X coefs + Err
 
-    `n_iter_` : array-like
+    n_iter_ : array-like
         Number of iterations of the NIPALS inner loop for each
         component. Not useful if the algorithm given is "svd".
 
@@ -475,34 +475,34 @@ class PLSRegression(_PLS):
 
     Attributes
     ----------
-    `x_weights_` : array, [p, n_components]
+    x_weights_ : array, [p, n_components]
         X block weights vectors.
 
-    `y_weights_` : array, [q, n_components]
+    y_weights_ : array, [q, n_components]
         Y block weights vectors.
 
-    `x_loadings_` : array, [p, n_components]
+    x_loadings_ : array, [p, n_components]
         X block loadings vectors.
 
-    `y_loadings_` : array, [q, n_components]
+    y_loadings_ : array, [q, n_components]
         Y block loadings vectors.
 
-    `x_scores_` : array, [n_samples, n_components]
+    x_scores_ : array, [n_samples, n_components]
         X scores.
 
-    `y_scores_` : array, [n_samples, n_components]
+    y_scores_ : array, [n_samples, n_components]
         Y scores.
 
-    `x_rotations_` : array, [p, n_components]
+    x_rotations_ : array, [p, n_components]
         X block to latents rotations.
 
-    `y_rotations_` : array, [q, n_components]
+    y_rotations_ : array, [q, n_components]
         Y block to latents rotations.
 
     coefs: array, [p, q]
         The coefficients of the linear model: Y = X coefs + Err
 
-    `n_iter_` : array-like
+    n_iter_ : array-like
         Number of iterations of the NIPALS inner loop for each
         component.
 
@@ -599,31 +599,31 @@ class PLSCanonical(_PLS):
 
     Attributes
     ----------
-    `x_weights_` : array, shape = [p, n_components]
+    x_weights_ : array, shape = [p, n_components]
         X block weights vectors.
 
-    `y_weights_` : array, shape = [q, n_components]
+    y_weights_ : array, shape = [q, n_components]
         Y block weights vectors.
 
-    `x_loadings_` : array, shape = [p, n_components]
+    x_loadings_ : array, shape = [p, n_components]
         X block loadings vectors.
 
-    `y_loadings_` : array, shape = [q, n_components]
+    y_loadings_ : array, shape = [q, n_components]
         Y block loadings vectors.
 
-    `x_scores_` : array, shape = [n_samples, n_components]
+    x_scores_ : array, shape = [n_samples, n_components]
         X scores.
 
-    `y_scores_` : array, shape = [n_samples, n_components]
+    y_scores_ : array, shape = [n_samples, n_components]
         Y scores.
 
-    `x_rotations_` : array, shape = [p, n_components]
+    x_rotations_ : array, shape = [p, n_components]
         X block to latents rotations.
 
-    `y_rotations_` : array, shape = [q, n_components]
+    y_rotations_ : array, shape = [q, n_components]
         Y block to latents rotations.
 
-    `n_iter_` : array-like
+    n_iter_ : array-like
         Number of iterations of the NIPALS inner loop for each
         component. Not useful if the algorithm provided is "svd".
 
@@ -711,16 +711,16 @@ class PLSSVD(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `x_weights_` : array, [p, n_components]
+    x_weights_ : array, [p, n_components]
         X block weights vectors.
 
-    `y_weights_` : array, [q, n_components]
+    y_weights_ : array, [q, n_components]
         Y block weights vectors.
 
-    `x_scores_` : array, [n_samples, n_components]
+    x_scores_ : array, [n_samples, n_components]
         X scores.
 
-    `y_scores_` : array, [n_samples, n_components]
+    y_scores_ : array, [n_samples, n_components]
         Y scores.
 
     See also

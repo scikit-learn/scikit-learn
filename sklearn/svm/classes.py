@@ -85,7 +85,7 @@ class LinearSVC(BaseLibLinear, LinearClassifierMixin, _LearntSelectorMixin,
 
     Attributes
     ----------
-    `coef_` : array, shape = [n_features] if n_classes == 2 \
+    coef_ : array, shape = [n_features] if n_classes == 2 \
             else [n_classes, n_features]
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
@@ -93,7 +93,7 @@ class LinearSVC(BaseLibLinear, LinearClassifierMixin, _LearntSelectorMixin,
         `coef_` is readonly property derived from `raw_coef_` that \
         follows the internal memory layout of liblinear.
 
-    `intercept_` : array, shape = [1] if n_classes == 2 else [n_classes]
+    intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
     Notes
@@ -218,30 +218,30 @@ class SVC(BaseSVC):
 
     Attributes
     ----------
-    `support_` : array-like, shape = [n_SV]
+    support_ : array-like, shape = [n_SV]
         Index of support vectors.
 
-    `support_vectors_` : array-like, shape = [n_SV, n_features]
+    support_vectors_ : array-like, shape = [n_SV, n_features]
         Support vectors.
 
-    `n_support_` : array-like, dtype=int32, shape = [n_class]
+    n_support_ : array-like, dtype=int32, shape = [n_class]
         number of support vector for each class.
 
-    `dual_coef_` : array, shape = [n_class-1, n_SV]
+    dual_coef_ : array, shape = [n_class-1, n_SV]
         Coefficients of the support vector in the decision function. \
         For multiclass, coefficient for all 1-vs-1 classifiers. \
         The layout of the coefficients in the multiclass case is somewhat \
         non-trivial. See the section about multi-class classification in the \
         SVM section of the User Guide for details.
 
-    `coef_` : array, shape = [n_class-1, n_features]
+    coef_ : array, shape = [n_class-1, n_features]
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`
 
-    `intercept_` : array, shape = [n_class * (n_class-1) / 2]
+    intercept_ : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
     Examples
@@ -342,30 +342,30 @@ class NuSVC(BaseSVC):
 
     Attributes
     ----------
-    `support_` : array-like, shape = [n_SV]
+    support_ : array-like, shape = [n_SV]
         Index of support vectors.
 
-    `support_vectors_` : array-like, shape = [n_SV, n_features]
+    support_vectors_ : array-like, shape = [n_SV, n_features]
         Support vectors.
 
-    `n_support_` : array-like, dtype=int32, shape = [n_class]
+    n_support_ : array-like, dtype=int32, shape = [n_class]
         number of support vector for each class.
 
-    `dual_coef_` : array, shape = [n_class-1, n_SV]
+    dual_coef_ : array, shape = [n_class-1, n_SV]
         Coefficients of the support vector in the decision function. \
         For multiclass, coefficient for all 1-vs-1 classifiers. \
         The layout of the coefficients in the multiclass case is somewhat \
         non-trivial. See the section about multi-class classification in \
         the SVM section of the User Guide for details.
 
-    `coef_` : array, shape = [n_class-1, n_features]
+    coef_ : array, shape = [n_class-1, n_features]
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`
 
-    `intercept_` : array, shape = [n_class * (n_class-1) / 2]
+    intercept_ : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
     Examples
@@ -466,23 +466,23 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     Attributes
     ----------
-    `support_` : array-like, shape = [n_SV]
+    support_ : array-like, shape = [n_SV]
         Index of support vectors.
 
-    `support_vectors_` : array-like, shape = [nSV, n_features]
+    support_vectors_ : array-like, shape = [nSV, n_features]
         Support vectors.
 
-    `dual_coef_` : array, shape = [n_classes-1, n_SV]
+    dual_coef_ : array, shape = [n_classes-1, n_SV]
         Coefficients of the support vector in the decision function.
 
-    `coef_` : array, shape = [n_classes-1, n_features]
+    coef_ : array, shape = [n_classes-1, n_features]
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`
 
-    `intercept_` : array, shape = [n_class * (n_class-1) / 2]
+    intercept_ : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
     Examples
@@ -582,23 +582,23 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
     Attributes
     ----------
-    `support_` : array-like, shape = [n_SV]
+    support_ : array-like, shape = [n_SV]
         Index of support vectors.
 
-    `support_vectors_` : array-like, shape = [nSV, n_features]
+    support_vectors_ : array-like, shape = [nSV, n_features]
         Support vectors.
 
-    `dual_coef_` : array, shape = [n_classes-1, n_SV]
+    dual_coef_ : array, shape = [n_classes-1, n_SV]
         Coefficients of the support vector in the decision function.
 
-    `coef_` : array, shape = [n_classes-1, n_features]
+    coef_ : array, shape = [n_classes-1, n_features]
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`
 
-    `intercept_` : array, shape = [n_class * (n_class-1) / 2]
+    intercept_ : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
     Examples
@@ -692,23 +692,23 @@ class OneClassSVM(BaseLibSVM):
 
     Attributes
     ----------
-    `support_` : array-like, shape = [n_SV]
+    support_ : array-like, shape = [n_SV]
         Index of support vectors.
 
-    `support_vectors_` : array-like, shape = [nSV, n_features]
+    support_vectors_ : array-like, shape = [nSV, n_features]
         Support vectors.
 
-    `dual_coef_` : array, shape = [n_classes-1, n_SV]
+    dual_coef_ : array, shape = [n_classes-1, n_SV]
         Coefficient of the support vector in the decision function.
 
-    `coef_` : array, shape = [n_classes-1, n_features]
+    coef_ : array, shape = [n_classes-1, n_features]
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`
 
-    `intercept_` : array, shape = [n_classes-1]
+    intercept_ : array, shape = [n_classes-1]
         Constants in decision function.
 
     """

@@ -164,13 +164,13 @@ class DPGMM(GMM):
     n_components : int
         Number of mixture components.
 
-    `weights_` : array, shape (`n_components`,)
+    weights_ : array, shape (`n_components`,)
         Mixing weights for each mixture component.
 
-    `means_` : array, shape (`n_components`, `n_features`)
+    means_ : array, shape (`n_components`, `n_features`)
         Mean parameters for each mixture component.
 
-    `precs_` : array
+    precs_ : array
         Precision (inverse covariance) parameters for each mixture
         component.  The shape depends on `covariance_type`::
 
@@ -179,7 +179,7 @@ class DPGMM(GMM):
             (`n_components`, `n_features`)                if 'diag',
             (`n_components`, `n_features`, `n_features`)  if 'full'
 
-    `converged_` : bool
+    converged_ : bool
         True when convergence was reached in fit(), False otherwise.
 
     See Also
@@ -619,13 +619,13 @@ class VBGMM(DPGMM):
     n_components : int (read-only)
         Number of mixture components.
 
-    `weights_` : array, shape (`n_components`,)
+    weights_ : array, shape (`n_components`,)
         Mixing weights for each mixture component.
 
-    `means_` : array, shape (`n_components`, `n_features`)
+    means_ : array, shape (`n_components`, `n_features`)
         Mean parameters for each mixture component.
 
-    `precs_` : array
+    precs_ : array
         Precision (inverse covariance) parameters for each mixture
         component.  The shape depends on `covariance_type`::
 
@@ -634,7 +634,7 @@ class VBGMM(DPGMM):
             (`n_components`, `n_features`)                if 'diag',
             (`n_components`, `n_features`, `n_features`)  if 'full'
 
-    `converged_` : bool
+    converged_ : bool
         True when convergence was reached in fit(), False
         otherwise.
 

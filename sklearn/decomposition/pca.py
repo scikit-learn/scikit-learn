@@ -138,23 +138,23 @@ class PCA(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `components_` : array, [n_components, n_features]
+    components_ : array, [n_components, n_features]
         Components with maximum variance.
 
-    `explained_variance_ratio_` : array, [n_components]
+    explained_variance_ratio_ : array, [n_components]
         Percentage of variance explained by each of the selected components. \
         k is not set then all components are stored and the sum of explained \
         variances is equal to 1.0
 
-    `mean_` : array, [n_features]
+    mean_ : array, [n_features]
         Per-feature empirical mean, estimated from the training set.
 
-    `n_components_` : int
+    n_components_ : int
         The estimated number of components. Relevant when n_components is set
         to 'mle' or a number between 0 and 1 to select using explained
         variance.
 
-    `noise_variance_` : float
+    noise_variance_ : float
         The estimated noise covariance following the Probabilistic PCA model
         from Tipping and Bishop 1999. See "Pattern Recognition and
         Machine Learning" by C. Bishop, 12.2.1 p. 574 or
@@ -495,15 +495,15 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `components_` : array, [n_components, n_features]
+    components_ : array, [n_components, n_features]
         Components with maximum variance.
 
-    `explained_variance_ratio_` : array, [n_components]
+    explained_variance_ratio_ : array, [n_components]
         Percentage of variance explained by each of the selected components. \
         k is not set then all components are stored and the sum of explained \
         variances is equal to 1.0
 
-    `mean_` : array, [n_features]
+    mean_ : array, [n_features]
         Per-feature empirical mean, estimated from the training set.
 
     Examples

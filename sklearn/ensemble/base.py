@@ -33,10 +33,10 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
 
     Attributes
     ----------
-    `base_estimator_`: list of estimators
+    base_estimator_ : list of estimators
         The base estimator from which the ensemble is grown.
 
-    `estimators_`: list of estimators
+    estimators_ : list of estimators
         The collection of fitted base estimators.
     """
 

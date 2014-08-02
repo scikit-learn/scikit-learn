@@ -64,12 +64,12 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `components_` : array, shape (n_components, n_features)
+    components_ : array, shape (n_components, n_features)
 
-    `explained_variance_ratio_` : array, [n_components]
+    explained_variance_ratio_ : array, [n_components]
         Percentage of variance explained by each of the selected components.
 
-    `explained_variance_` : array, [n_components]
+    explained_variance_ : array, [n_components]
         The variance of the training samples transformed by a projection to
         each component.
 

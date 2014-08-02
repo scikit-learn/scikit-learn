@@ -38,20 +38,20 @@ class QDA(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    `covariances_` : list of array-like, shape = [n_features, n_features]
+    covariances_ : list of array-like, shape = [n_features, n_features]
         Covariance matrices of each class.
 
-    `means_` : array-like, shape = [n_classes, n_features]
+    means_ : array-like, shape = [n_classes, n_features]
         Class means.
 
-    `priors_` : array-like, shape = [n_classes]
+    priors_ : array-like, shape = [n_classes]
         Class priors (sum to 1).
 
-    `rotations_` : list of arrays
+    rotations_ : list of arrays
         For each class an array of shape [n_samples, n_samples], the
         rotation of the Gaussian distribution, i.e. its principal axis.
 
-    `scalings_` : array-like, shape = [n_classes, n_features]
+    scalings_ : array-like, shape = [n_classes, n_features]
         Contains the scaling of the Gaussian
         distributions along the principal axes for each
         class, i.e. the variance in the rotated coordinate system.

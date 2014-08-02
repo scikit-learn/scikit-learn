@@ -43,19 +43,19 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    `classes_` : array or list of array of shape = [n_classes]
+    classes_ : array or list of array of shape = [n_classes]
         Class labels for each output.
 
-    `n_classes_` : array or list of array of shape = [n_classes]
+    n_classes_ : array or list of array of shape = [n_classes]
         Number of label for each output.
 
-    `class_prior_` : array or list of array of shape = [n_classes]
+    class_prior_ : array or list of array of shape = [n_classes]
         Probability of each class for each output.
 
-    `n_outputs_` : int,
+    n_outputs_ : int,
         Number of outputs.
 
-    `outputs_2d_` : bool,
+    outputs_2d_ : bool,
         True if the output at fit is 2d, else false.
 
     """
@@ -306,14 +306,14 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
     Attributes
     ----------
-    `constant_` : float or array of shape [n_outputs]
+    constant_ : float or array of shape [n_outputs]
         Mean or median of the training targets or constant value given the by
         the user.
 
-    `n_outputs_` : int,
+    n_outputs_ : int,
         Number of outputs.
 
-    `outputs_2d_` : bool,
+    outputs_2d_ : bool,
         True if the output at fit is 2d, else false.
     """
 

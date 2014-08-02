@@ -414,22 +414,22 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
     Attributes
     ----------
-    `tree_` : Tree object
+    tree_ : Tree object
         The underlying Tree object.
 
-    `max_features_` : int,
+    max_features_ : int,
         The infered value of max_features.
 
-    `classes_` : array of shape = [n_classes] or a list of such arrays
+    classes_ : array of shape = [n_classes] or a list of such arrays
         The classes labels (single output problem),
         or a list of arrays of class labels (multi-output problem).
 
-    `n_classes_` : int or list
+    n_classes_ : int or list
         The number of classes (for single output problems),
         or a list containing the number of classes for each
         output (for multi-output problems).
 
-    `feature_importances_` : array of shape = [n_features]
+    feature_importances_ : array of shape = [n_features]
         The feature importances. The higher, the more important the
         feature. The importance of a feature is computed as the (normalized)
         total reduction of the criterion brought by that feature.  It is also
@@ -624,13 +624,13 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
     Attributes
     ----------
-    `tree_` : Tree object
+    tree_ : Tree object
         The underlying Tree object.
 
-    `max_features_` : int,
+    max_features_ : int,
         The infered value of max_features.
 
-    `feature_importances_` : array of shape = [n_features]
+    feature_importances_ : array of shape = [n_features]
         The feature importances.
         The higher, the more important the feature.
         The importance of a feature is computed as the
