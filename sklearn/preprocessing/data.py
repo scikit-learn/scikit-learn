@@ -509,7 +509,10 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
             warnings.simplefilter('ignore', RuntimeWarning)
             logX = X.astype(complex)
             logX = np.log(logX, out=logX)
-        return np.exp(logX * self.sparse_powers_).real
+        out = np.exp(logX * self.sparse_powers_).real
+        if X.dtype.kind in 'biu':  # boolean, integer, uint
+            out = np.around(out, out=out).astype(X.dtype)
+        return out
 
 
 def normalize(X, norm='l2', axis=1, copy=True):
