@@ -334,7 +334,7 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
         self
 
         """
-        X = check_array(X)
+        X = check_array(X, accept_sparse=['csr', 'csc'])
 
         n_samples, n_features = X.shape
 
