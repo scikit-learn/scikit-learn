@@ -80,7 +80,7 @@ def test_fit():
     X = np.array([[0.6, 0.8, 0.7]])
     y = np.array([0])
     mlp = MultilayerPerceptronClassifier(algorithm='sgd',
-                                         eta0=0.1, alpha=0.1,
+                                         learning_rate_init=0.1, alpha=0.1,
                                          activation='logistic', random_state=1,
                                          max_iter=1, n_hidden=2)
     # set weights
@@ -94,14 +94,9 @@ def test_fit():
     mlp.layers_intercept_[1] = np.array([1.0])
     mlp._coef_grads = [0] * 2
     mlp._intercept_grads = [0] * 2
-    """
-    mlp.coef_hidden_ = np.array([[0.1, 0.2], [0.3, 0.1], [0.5, 0]])
-    mlp.coef_output_ = np.array([[0.1], [0.2]])
-    mlp.intercept_hidden_ = np.array([0.1, 0.1])
-    mlp.intercept_output_ = np.array([1.0])
-    """
 
     # initialize
+    mlp._lbin.y_type_ = 'binary'
     mlp._init_param(X.shape[1])
     mlp.partial_fit(X, y, classes=[0, 1])
     # Manually worked out example
@@ -172,12 +167,15 @@ def test_gradient():
         mlp._n_samples = n_samples
         mlp.classes_ = np.unique(Y)
         mlp.n_outputs_ = Y.shape[1]
+        mlp._lbin.y_type_ = 'binary'
         mlp._init_param(n_features)
         mlp._init_random_weights()
+        mlp._preallocate_memory(X)
         mlp._precompute_layer_shapes()
 
-        theta = mlp._pack(mlp.layers_coef_, mlp.layers_intercept_)
-        mlp._preallocate_memory(X)
+        theta = np.hstack([l.ravel() for l in mlp.layers_coef_ +
+                           mlp.layers_intercept_])
+
         # analytically compute the gradients
         cost_grad_fun = lambda t: mlp._cost_grad(t, X, Y)
         [value, grad] = cost_grad_fun(theta)
@@ -253,9 +251,9 @@ def test_learning_rate_warmstart():
                                              max_iter=1, power_t=0.25,
                                              warm_start=True)
         mlp.fit(X, y)
-        prev_eta = mlp.eta_
+        prev_eta = mlp.learning_rate_
         mlp.fit(X, y)
-        post_eta = mlp.eta_
+        post_eta = mlp.learning_rate_
         if learning_rate == 'constant':
             assert prev_eta == post_eta
         elif learning_rate == 'invscaling':
@@ -267,7 +265,8 @@ def test_multilabel_classification():
     Tests that multi-label classification works as expected
     """
     # test fit method
-    X, y = make_multilabel_classification(n_samples=50, random_state=0)
+    X, y = make_multilabel_classification(n_samples=50, random_state=0,
+                                          return_indicator=True)
     mlp = MultilayerPerceptronClassifier(algorithm='l-bfgs',
                                          n_hidden=50,
                                          max_iter=150,
@@ -297,10 +296,9 @@ def test_multioutput_regression():
     mlp = MultilayerPerceptronRegressor(algorithm='l-bfgs',
                                         n_hidden=50,
                                         max_iter=200,
-                                        random_state=1,
-                                        activation='logistic')
+                                        random_state=1)
     mlp.fit(X, y)
-    assert_greater(mlp.score(X, y), 0.95)
+    assert_greater(mlp.score(X, y), 0.9)
 
 
 def test_partial_fit_classes_error():
@@ -346,14 +344,14 @@ def test_partial_fit_regression():
         mlp = MultilayerPerceptronRegressor(algorithm='sgd',
                                             max_iter=150,
                                             random_state=1,
-                                            eta0=0.07,
+                                            learning_rate_init=0.07,
                                             activation=activation,
                                             batch_size=X.shape[0])
         mlp.fit(X, y)
         pred1 = mlp.predict(X)
         mlp = MultilayerPerceptronRegressor(algorithm='sgd',
                                             activation=activation,
-                                            eta0=0.07,
+                                            learning_rate_init=0.07,
                                             random_state=1)
         for i in range(150):
             mlp.partial_fit(X, y)
@@ -387,7 +385,7 @@ def test_params_errors():
     assert_raises(ValueError, clf(max_iter=-1).fit, X, y)
     assert_raises(ValueError, clf(shuffle='true').fit, X, y)
     assert_raises(ValueError, clf(alpha=-1).fit, X, y)
-    assert_raises(ValueError, clf(eta0=-1).fit, X, y)
+    assert_raises(ValueError, clf(learning_rate_init=-1).fit, X, y)
 
     assert_raises(ValueError, clf(algorithm='hadoken').fit, X, y)
     assert_raises(ValueError, clf(learning_rate='converge').fit, X, y)
