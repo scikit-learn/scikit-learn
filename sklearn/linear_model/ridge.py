@@ -945,43 +945,6 @@ class _RidgeGCV(LinearModel):
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
 
-    def _decomp_diag(self, v_prime, Q):
-        # compute diagonal of the matrix: dot(Q, dot(diag(v_prime), Q^T))
-        return (v_prime * Q ** 2).sum(axis=-1)
-
-    def _diag_dot(self, D, B):
-        # compute dot(diag(D), B)
-        if len(B.shape) > 1:
-            # handle case where B is > 1-d
-            D = D[(slice(None), ) + (np.newaxis, ) * (len(B.shape) - 1)]
-        return D * B
-
-    def _pre_compute_svd(self, X, y):
-        if sparse.issparse(X):
-            raise TypeError("SVD not supported for sparse matrices")
-        U, s, _ = linalg.svd(X, full_matrices=0)
-        v = s ** 2
-        UT_y = np.dot(U.T, y)
-        return v, U, UT_y
-
-    def _errors_svd(self, alpha, y, v, U, UT_y):
-        w = ((v + alpha) ** -1) - (alpha ** -1)
-        c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha ** -1) * y
-        G_diag = self._decomp_diag(w, U) + (alpha ** -1)
-        if len(y.shape) != 1:
-            # handle case where y is 2-d
-            G_diag = G_diag[:, np.newaxis]
-        return (c / G_diag) ** 2, c
-
-    def _values_svd(self, alpha, y, v, U, UT_y):
-        w = ((v + alpha) ** -1) - (alpha ** -1)
-        c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha ** -1) * y
-        G_diag = self._decomp_diag(w, U) + (alpha ** -1)
-        if len(y.shape) != 1:
-            # handle case when y is 2-d
-            G_diag = G_diag[:, np.newaxis]
-        return y - (c / G_diag), c
-
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model
 
@@ -1025,11 +988,7 @@ class _RidgeGCV(LinearModel):
         if gcv_mode == 'eigen':
             pass
         elif gcv_mode == 'svd':
-            # assert n_samples >= n_features
-            _pre_compute = self._pre_compute_svd
-            _errors = self._errors_svd
-            _values = self._values_svd
-            v, Q, QT_y = _pre_compute(X, y)
+            pass
         else:
             raise ValueError('bad gcv_mode "%s"' % gcv_mode)
 
@@ -1075,18 +1034,6 @@ class _RidgeGCV(LinearModel):
             cv_values = out.transpose(1, 2, 0).reshape(-1, alphas.shape[0])
             if y_is_raveled:
                 C = C[:, :, 0]
-            # for i, alpha in enumerate(self.alphas):
-            #     weighted_alpha = (sample_weight * alpha
-            #                       if sample_weight is not None
-            #                       else alpha)
-            #     if error:
-            #         out, c = _errors(weighted_alpha, y, v, Q, QT_y)
-            #     else:
-            #         out, c = _values(weighted_alpha, y, v, Q, QT_y)
-            #     # if y.ndim > 1 and y.shape[1] > 1:
-            #     #     stop
-            #     cv_values[:, i] = out.ravel()
-            #     C.append(c)
         else:
             raise ValueError("gcv_mode must be in ['eigen', 'svd']")
 

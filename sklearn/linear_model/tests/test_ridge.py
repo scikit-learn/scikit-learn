@@ -320,9 +320,16 @@ def _test_ridge_loo(filter_):
 
     # generalized cross-validation (efficient leave-one-out,
     # SVD variation)
-    decomp = ridge_gcv._pre_compute_svd(X_diabetes, y_diabetes)
-    errors3, c = ridge_gcv._errors_svd(ridge.alpha, y_diabetes, *decomp)
-    values3, c = ridge_gcv._values_svd(ridge.alpha, y_diabetes, *decomp)
+    errors3_, c = _ridge_gcv_path_svd(X_diabetes,
+                                      np.atleast_2d(y_diabetes.T).T,
+                                      np.atleast_2d(ridge.alpha),
+                                      mode='looe')
+    errors3 = (errors3_ ** 2).ravel()
+    values3, c = _ridge_gcv_path_svd(X_diabetes,
+                                      np.atleast_2d(y_diabetes.T).T,
+                                      np.atleast_2d(ridge.alpha),
+                                      mode='loov')
+    values3 = values3.ravel()
 
     # check that efficient and SVD efficient LOO give same results
     assert_almost_equal(errors, errors3)
