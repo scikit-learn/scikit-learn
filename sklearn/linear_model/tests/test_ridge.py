@@ -879,7 +879,7 @@ def test__ridge_gcv_path_svd_against_eigen():
         np.arange(1, n_targets + 1)
 
     eigen_solved, c = _kernel_ridge_path_eigen(X, Y, alphas, mode='looe')
-    svd_solved = _ridge_gcv_path_svd(X, Y, alphas, mode='looe')
+    svd_solved, c2 = _ridge_gcv_path_svd(X, Y, alphas, mode='looe')
 
 
     assert_array_almost_equal(eigen_solved, svd_solved)
@@ -898,6 +898,6 @@ def test__ridge_gcv_path_svd_with_sample_weights_against_eigen():
         X, Y, alphas, sample_weight=sample_weights, mode='looe')[0]
     looe_svd = _ridge_gcv_path_svd(X, Y, alphas,
                                    sample_weight=sample_weights,
-                                   mode='looe')
+                                   mode='looe')[0]
 
     assert_array_almost_equal(looe_eigen, looe_svd)

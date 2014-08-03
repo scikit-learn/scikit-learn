@@ -88,6 +88,7 @@ def _ridge_gcv_path_svd(X_train, Y_train, alphas,
 
     if has_sw:
         looe /= sqrt_sw[np.newaxis]
+        numerator *= sqrt_sw[np.newaxis]
 
     if sample_weight is not None:
         if copy:
@@ -97,9 +98,9 @@ def _ridge_gcv_path_svd(X_train, Y_train, alphas,
             X_train /= sqrt_sw
 
     if mode == 'loov':
-        return Y_train[np.newaxis] - looe
+        return Y_train[np.newaxis] - looe, numerator
     elif mode == 'looe':
-        return looe
+        return looe, numerator
     else:
         raise ValueError("mode must be in ['looe', 'loov']. Got %s" % mode)
 
@@ -1057,19 +1058,37 @@ class _RidgeGCV(LinearModel):
             if y_is_raveled:
                 C = C[:, :, 0]
 
+        elif gcv_mode == 'svd':
+            alphas = np.atleast_2d(self.alphas.T).T
+            mode = 'looe' if error else 'loov'
+            y_is_raveled = y.ndim == 1
+            y = np.atleast_2d(y.T).T
+
+            out, C = _ridge_gcv_path_svd(X, y, alphas,
+                                         sample_weight=sample_weight,
+                                         mode=mode)
+            if mode == 'looe':
+                out = out ** 2
+
+            # same here, need to remove ugly stuff later. Actually the
+            # test requires
+            cv_values = out.transpose(1, 2, 0).reshape(-1, alphas.shape[0])
+            if y_is_raveled:
+                C = C[:, :, 0]
+            # for i, alpha in enumerate(self.alphas):
+            #     weighted_alpha = (sample_weight * alpha
+            #                       if sample_weight is not None
+            #                       else alpha)
+            #     if error:
+            #         out, c = _errors(weighted_alpha, y, v, Q, QT_y)
+            #     else:
+            #         out, c = _values(weighted_alpha, y, v, Q, QT_y)
+            #     # if y.ndim > 1 and y.shape[1] > 1:
+            #     #     stop
+            #     cv_values[:, i] = out.ravel()
+            #     C.append(c)
         else:
-            for i, alpha in enumerate(self.alphas):
-                weighted_alpha = (sample_weight * alpha
-                                  if sample_weight is not None
-                                  else alpha)
-                if error:
-                    out, c = _errors(weighted_alpha, y, v, Q, QT_y)
-                else:
-                    out, c = _values(weighted_alpha, y, v, Q, QT_y)
-                # if y.ndim > 1 and y.shape[1] > 1:
-                #     stop
-                cv_values[:, i] = out.ravel()
-                C.append(c)
+            raise ValueError("gcv_mode must be in ['eigen', 'svd']")
 
         if error:
             best = cv_values.mean(axis=0).argmin()
@@ -1093,7 +1112,7 @@ class _RidgeGCV(LinearModel):
         self._set_intercept(X_mean, y_mean, X_std)
 
         if self.store_cv_values:
-            if len(y.shape) == 1:
+            if y_is_raveled:
                 cv_values_shape = n_samples, len(self.alphas)
             else:
                 cv_values_shape = n_samples, n_y, len(self.alphas)
