@@ -980,11 +980,7 @@ class _RidgeGCV(LinearModel):
             else:
                 gcv_mode = 'svd'
 
-        if gcv_mode == 'eigen':
-            pass
-        elif gcv_mode == 'svd':
-            pass
-        else:
+        if gcv_mode not in ['eigen', 'svd']:
             raise ValueError('bad gcv_mode "%s"' % gcv_mode)
 
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
