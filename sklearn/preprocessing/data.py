@@ -5,7 +5,7 @@
 #          Joel Nothman <joel.nothman@gmail.com>
 # License: BSD 3 clause
 
-from itertools import chain, combinations
+from itertools import combinations
 import numbers
 import warnings
 
@@ -498,6 +498,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         XP : np.ndarray shape [n_samples, NP]
             The matrix of features, where NP is the number of polynomial
             features generated from the combination of inputs.
+            The output dtype will be of the same kind as the input.
         """
         X = check_array(X)
         n_samples, n_features = X.shape
