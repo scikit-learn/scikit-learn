@@ -46,46 +46,25 @@ def _ridge_path_svd(X_train, Y_train, alphas,
     output = dekernelize.dot(s_alpha_UTY).transpose(1, 0, 2)
     return output
 
-    # def _decomp_diag(self, v_prime, Q):
-    #     # compute diagonal of the matrix: dot(Q, dot(diag(v_prime), Q^T))
-    #     return (v_prime * Q ** 2).sum(axis=-1)
-
-    # def _diag_dot(self, D, B):
-    #     # compute dot(diag(D), B)
-    #     if len(B.shape) > 1:
-    #         # handle case where B is > 1-d
-    #         D = D[(slice(None), ) + (np.newaxis, ) * (len(B.shape) - 1)]
-    #     return D * B
-
-    # def _pre_compute_svd(self, X, y):
-    #     if sparse.issparse(X):
-    #         raise TypeError("SVD not supported for sparse matrices")
-    #     U, s, _ = linalg.svd(X, full_matrices=0)
-    #     v = s ** 2
-    #     UT_y = np.dot(U.T, y)
-    #     return v, U, UT_y
-
-    # def _errors_svd(self, alpha, y, v, U, UT_y):
-    #     w = ((v + alpha) ** -1) - (alpha ** -1)
-    #     c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha ** -1) * y
-    #     G_diag = self._decomp_diag(w, U) + (alpha ** -1)
-    #     if len(y.shape) != 1:
-    #         # handle case where y is 2-d
-    #         G_diag = G_diag[:, np.newaxis]
-    #     return (c / G_diag) ** 2, c
-
-    # def _values_svd(self, alpha, y, v, U, UT_y):
-    #     w = ((v + alpha) ** -1) - (alpha ** -1)
-    #     c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha ** -1) * y
-    #     G_diag = self._decomp_diag(w, U) + (alpha ** -1)
-    #     if len(y.shape) != 1:
-    #         # handle case when y is 2-d
-    #         G_diag = G_diag[:, np.newaxis]
-    #     return y - (c / G_diag), c
 
 
-def _ridge_gcv_path_svd(X_train, Y_train, alphas, sg_val_thresh=1e-15,
-                   mode='looe'):
+def _ridge_gcv_path_svd(X_train, Y_train, alphas,
+                        sample_weight=None,
+                        mode='looe',
+                        sg_val_thresh=1e-15,
+                        copy=True):
+
+    if sample_weight is not None:
+        has_sw = True
+        sqrt_sw = np.sqrt(sample_weight).ravel()[:, np.newaxis]
+        if copy:
+            X_train = X_train * sqrt_sw
+            Y_train = Y_train * sqrt_sw
+        else:
+            X_train *= sqrt_sw
+            Y_train *= sqrt_sw
+    else:
+        has_sw = False
 
     U, S, VT = linalg.svd(X_train, full_matrices=False)
     del VT
@@ -106,6 +85,16 @@ def _ridge_gcv_path_svd(X_train, Y_train, alphas, sg_val_thresh=1e-15,
                    + 1. / alphas[:, np.newaxis, :])
 
     looe = numerator / denominator
+
+    if has_sw:
+        looe /= sqrt_sw[np.newaxis]
+
+    if sample_weight is not None:
+        if copy:
+            Y_train = Y_train / sqrt_sw
+        else:
+            Y_train /= sqrt_sw
+            X_train /= sqrt_sw
 
     if mode == 'loov':
         return Y_train[np.newaxis] - looe
