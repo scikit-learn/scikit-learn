@@ -46,6 +46,74 @@ def _ridge_path_svd(X_train, Y_train, alphas,
     output = dekernelize.dot(s_alpha_UTY).transpose(1, 0, 2)
     return output
 
+    # def _decomp_diag(self, v_prime, Q):
+    #     # compute diagonal of the matrix: dot(Q, dot(diag(v_prime), Q^T))
+    #     return (v_prime * Q ** 2).sum(axis=-1)
+
+    # def _diag_dot(self, D, B):
+    #     # compute dot(diag(D), B)
+    #     if len(B.shape) > 1:
+    #         # handle case where B is > 1-d
+    #         D = D[(slice(None), ) + (np.newaxis, ) * (len(B.shape) - 1)]
+    #     return D * B
+
+    # def _pre_compute_svd(self, X, y):
+    #     if sparse.issparse(X):
+    #         raise TypeError("SVD not supported for sparse matrices")
+    #     U, s, _ = linalg.svd(X, full_matrices=0)
+    #     v = s ** 2
+    #     UT_y = np.dot(U.T, y)
+    #     return v, U, UT_y
+
+    # def _errors_svd(self, alpha, y, v, U, UT_y):
+    #     w = ((v + alpha) ** -1) - (alpha ** -1)
+    #     c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha ** -1) * y
+    #     G_diag = self._decomp_diag(w, U) + (alpha ** -1)
+    #     if len(y.shape) != 1:
+    #         # handle case where y is 2-d
+    #         G_diag = G_diag[:, np.newaxis]
+    #     return (c / G_diag) ** 2, c
+
+    # def _values_svd(self, alpha, y, v, U, UT_y):
+    #     w = ((v + alpha) ** -1) - (alpha ** -1)
+    #     c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha ** -1) * y
+    #     G_diag = self._decomp_diag(w, U) + (alpha ** -1)
+    #     if len(y.shape) != 1:
+    #         # handle case when y is 2-d
+    #         G_diag = G_diag[:, np.newaxis]
+    #     return y - (c / G_diag), c
+
+
+def _ridge_gcv_path_svd(X_train, Y_train, alphas, sg_val_thresh=1e-15,
+                   mode='looe'):
+
+    U, S, VT = linalg.svd(X_train, full_matrices=False)
+    del VT
+    nnzmax = np.where(S > sg_val_thresh)[0].max() + 1
+    U = U[:, :nnzmax]
+    S = S[:nnzmax]
+
+    penalized_inv_S = (1. / (S[np.newaxis, :, np.newaxis] ** 2 +
+                             alphas[:, np.newaxis, :]) -
+                       1. / alphas[:, np.newaxis, :])
+
+    UTY = U.T.dot(Y_train)
+    numerator = (
+        U.dot(penalized_inv_S * UTY[np.newaxis]).transpose(1, 0, 2) +
+        Y_train[np.newaxis] / alphas[:, np.newaxis, :])
+
+    denominator = ((U ** 2).dot(penalized_inv_S).transpose(1, 0, 2)
+                   + 1. / alphas[:, np.newaxis, :])
+
+    looe = numerator / denominator
+
+    if mode == 'loov':
+        return Y_train[np.newaxis] - looe
+    elif mode == 'looe':
+        return looe
+    else:
+        raise ValueError("mode must be in ['looe', 'loov']. Got %s" % mode)
+
 
 def _precomp_kernel_ridge_path_eigen(gramX_train, Y_train, alphas,
                                      gramX_test=None,

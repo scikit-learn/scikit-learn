@@ -31,6 +31,7 @@ from sklearn.linear_model.ridge import _solve_cholesky_kernel
 from sklearn.linear_model.ridge import ridge_path
 from sklearn.linear_model.ridge import _precomp_kernel_ridge_path_eigen
 from sklearn.linear_model.ridge import _kernel_ridge_path_eigen
+from sklearn.linear_model.ridge import _ridge_gcv_path_svd
 
 from sklearn.cross_validation import KFold
 from sklearn.cross_validation import LeaveOneOut
@@ -869,3 +870,17 @@ def test_kernel_ridge_path_with_sample_weights():
         X, Y, alphas, sample_weight=sample_weights, mode='looe')[0]
 
     assert_array_almost_equal(cv_errors, ridge_path_gcv_errors)
+
+
+def test__ridge_gcv_path_svd_against_eigen():
+    n_samples, n_features, n_targets = 20, 5, 7
+    X, Y, W, _, _ = make_noisy_forward_data(n_samples, n_features, n_targets)
+    alphas = np.logspace(-3, 3, 9)[:, np.newaxis] * \
+        np.arange(1, n_targets + 1)
+
+    eigen_solved, c = _kernel_ridge_path_eigen(X, Y, alphas, mode='looe')
+    svd_solved = _ridge_gcv_path_svd(X, Y, alphas, mode='looe')
+
+
+    assert_array_almost_equal(eigen_solved, svd_solved)
+
