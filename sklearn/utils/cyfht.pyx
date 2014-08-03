@@ -1,7 +1,14 @@
 import numpy as np
 cimport numpy as np
+cimport cython
 
-def fht(array_):
+DTYPE = np.double
+ctypedef np.double_t DTYPE_t
+
+@cython.boundscheck(False)
+def fht(np.ndarray[DTYPE_t] array_):
+    cdef int bit, length, _, i, j
+    cdef double temp
     bit = length = len(array_)
     for _ in xrange(int(np.log2(length))):
         bit >>= 1
