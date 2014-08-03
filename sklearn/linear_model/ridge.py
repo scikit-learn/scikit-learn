@@ -979,11 +979,6 @@ class _RidgeGCV(LinearModel):
                 gcv_mode = 'eigen'
             else:
                 gcv_mode = 'svd'
-        elif gcv_mode == "svd" and with_sw:
-            # FIXME non-uniform sample weights not yet supported
-            warnings.warn("non-uniform sample weights unsupported for svd, "
-                          "forcing usage of eigen")
-            gcv_mode = 'eigen'
 
         if gcv_mode == 'eigen':
             pass
