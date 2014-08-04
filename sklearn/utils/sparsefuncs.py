@@ -387,9 +387,9 @@ def sparse_class_distribution(y, sample_weight=None):
         Class distribution of each column.
 
     """
-    classes_ = []
+    classes = []
     n_classes = []
-    class_prior_ = []
+    class_prior = []
 
     y = y.tocsc()
     y.eliminate_zeros()
@@ -400,23 +400,22 @@ def sparse_class_distribution(y, sample_weight=None):
     for k in range(n_outputs):
         col_nonzero = y.indices[y.indptr[k]:y.indptr[k+1]]
         # separate sample weights for zero and non-zero elements
-        
         nz_sample_weight = None
         z_sample_weight_sum = y.shape[0] - y_nnz[k]
         if sample_weight is not None:
             nz_sample_weight = sample_weight[col_nonzero]
             z_sample_weight_sum = (np.sum(sample_weight) -
-                                  np.sum(nz_sample_weight))
+                                   np.sum(nz_sample_weight))
 
-        classes, y_k = np.unique(y.data[y.indptr[k]:y.indptr[k+1]],
-                                 return_inverse=True)
-        class_prior = np.bincount(y_k, weights=nz_sample_weight)
+        classes_k, y_k = np.unique(y.data[y.indptr[k]:y.indptr[k+1]],
+                                   return_inverse=True)
+        class_prior_k = np.bincount(y_k, weights=nz_sample_weight)
         if y_nnz[k] < y.shape[0]:
-            classes = np.insert(classes, 0, 0)
-            class_prior = np.insert(class_prior, 0,
-                                    z_sample_weight_sum)
-        classes_.append(classes)
-        n_classes.append(classes.shape[0])
-        class_prior_.append(class_prior / float(class_prior.sum()))
+            classes_k = np.insert(classes_k, 0, 0)
+            class_prior_k = np.insert(class_prior_k, 0, z_sample_weight_sum)
 
-    return (classes_, n_classes, class_prior_)
+        classes.append(classes_k)
+        n_classes.append(classes_k.shape[0])
+        class_prior.append(class_prior_k / float(class_prior_k.sum()))
+
+    return (classes, n_classes, class_prior)
