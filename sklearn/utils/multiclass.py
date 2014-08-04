@@ -377,6 +377,8 @@ def sparse_class_distribution(y, sample_weight=None):
     class_prior = []
 
     y = y.tocsc()
+    # Remove explcit zeros so we can count zeros vs nonzeros accurately
+    # using the shape of the matrix
     y.eliminate_zeros()
     y_nnz = np.diff(y.indptr)
 
