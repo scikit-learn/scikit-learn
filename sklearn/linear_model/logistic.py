@@ -1123,13 +1123,13 @@ class MultinomialLR(BaseEstimator, _LogRegMixin):
         try:
             w, loss, info = optimize.fmin_l_bfgs_b(
                 _loss_grad, w.ravel(),
-                args=[X, Y, self.C, self.fit_intercept, sample_weight],
+                args=[X, Y, 1. / self.C, self.fit_intercept, sample_weight],
                 maxiter=self.max_iter, pgtol=self.tol
                 )
         except TypeError:
             w, loss, info = optimize.fmin_l_bfgs_b(
                 _loss_grad, w.ravel(),
-                args=[X, Y, self.C, self.fit_intercept, sample_weight],
+                args=[X, Y, 1. / self.C, self.fit_intercept, sample_weight],
                 pgtol=self.tol
                 )
 
@@ -1152,7 +1152,7 @@ class MultinomialLR(BaseEstimator, _LogRegMixin):
         return self
 
 
-def _loss_grad(w, X, Y, C, fit_intercept, sample_weight):
+def _loss_grad(w, X, Y, alpha, fit_intercept, sample_weight):
     # Cross-entropy loss and its gradient for multinomial logistic regression
     # (Bishop 2006, p. 209) with L2 penalty (weight decay).
     w = w.reshape(Y.shape[1], -1)
@@ -1167,13 +1167,12 @@ def _loss_grad(w, X, Y, C, fit_intercept, sample_weight):
     p += intercept
     p -= logsumexp(p, axis=1).reshape(-1, 1)
 
-    loss = (-C * (sample_weight * Y * p).sum()) + .5 * squared_norm(w)
+    loss = -(sample_weight * Y * p).sum() + .5 * alpha * squared_norm(w)
 
     p = np.exp(p, p)
     diff = sample_weight * (p - Y)
     grad = safe_sparse_dot(diff.T, X)
-    grad *= C
-    grad += w
+    grad += alpha * w
     if fit_intercept:
         grad = np.hstack([grad, diff.sum(axis=0).reshape(-1, 1)])
 
