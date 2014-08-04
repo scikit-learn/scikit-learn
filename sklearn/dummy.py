@@ -14,8 +14,8 @@ from .externals.six.moves import xrange
 from .utils import check_random_state
 from .utils.validation import check_array
 from sklearn.utils import deprecated
-from sklearn.utils.sparsefuncs import random_choice_csc
-from sklearn.utils.sparsefuncs import sparse_class_distribution
+from sklearn.utils.random import random_choice_csc
+from sklearn.utils.multiclass import sparse_class_distribution
 
 
 class DummyClassifier(BaseEstimator, ClassifierMixin):
