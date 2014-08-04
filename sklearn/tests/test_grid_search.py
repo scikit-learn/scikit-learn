@@ -79,14 +79,21 @@ class MockClassifier(object):
 class MockListClassifier(object):
     """Dummy classifier to test the cross-validation.
 
-    Checks that GridSearchCV didn't convert X to array.
+    Checks that GridSearchCV didn't convert X (or y) to array.
     """
-    def __init__(self, foo_param=0):
+    def __init__(self, foo_param=0, check_y_is_list=False,
+                 check_X_is_list=True):
         self.foo_param = foo_param
+        self.check_y_is_list = check_y_is_list
+        self.check_X_is_list = check_X_is_list
 
     def fit(self, X, Y):
         assert_true(len(X) == len(Y))
-        assert_true(isinstance(X, list))
+        if self.check_X_is_list:
+            assert_true(isinstance(X, list))
+        if self.check_y_is_list:
+            assert_true(isinstance(Y, list))
+
         return self
 
     def predict(self, T):
@@ -100,10 +107,15 @@ class MockListClassifier(object):
         return score
 
     def get_params(self, deep=False):
-        return {'foo_param': self.foo_param}
+        return {'foo_param': self.foo_param, 'check_X_is_list': self.check_X_is_list,
+                'check_y_is_list': self.check_y_is_list}
 
     def set_params(self, **params):
         self.foo_param = params['foo_param']
+        if "check_y_is_list" in params:
+            self.check_y = params["check_y_is_list"]
+        if "check_X_is_list" in params:
+            self.check_X = params["check_X_is_list"]
         return self
 
 
@@ -475,6 +487,18 @@ def test_X_as_list():
     cv = KFold(n=len(X), n_folds=3)
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
     grid_search.fit(X.tolist(), y).score(X, y)
+    assert_true(hasattr(grid_search, "grid_scores_"))
+
+
+def test_y_as_list():
+    """Pass y as list in GridSearchCV"""
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+
+    clf = MockListClassifier(check_X_is_list=False, check_y_is_list=True)
+    cv = KFold(n=len(X), n_folds=3)
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
+    grid_search.fit(X, y.tolist()).score(X, y)
     assert_true(hasattr(grid_search, "grid_scores_"))
 
 

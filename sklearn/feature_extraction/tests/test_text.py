@@ -12,6 +12,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 
+from sklearn.cross_validation import train_test_split
+from sklearn.cross_validation import cross_val_score
 from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
@@ -704,15 +706,13 @@ def test_vectorizer_inverse_transform():
 def test_count_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
-    # simulate iterables
-    train_data = iter(data[1:-1])
-    test_data = iter([data[0], data[-1]])
 
     # label junk food as -1, the others as +1
-    y = np.ones(len(data))
-    y[:6] = -1
-    y_train = y[1:-1]
-    y_test = np.array([y[0], y[-1]])
+    target = [-1] * len(JUNK_FOOD_DOCS) + [1] * len(NOTJUNK_FOOD_DOCS)
+
+    # split the dataset for model development and final evaluation
+    train_data, test_data, target_train, target_test = train_test_split(
+        data, target, test_size=.2, random_state=0)
 
     pipeline = Pipeline([('vect', CountVectorizer()),
                          ('svc', LinearSVC())])
@@ -726,10 +726,10 @@ def test_count_vectorizer_pipeline_grid_selection():
     # classifier
     grid_search = GridSearchCV(pipeline, parameters, n_jobs=1)
 
-    # cross-validation doesn't work if the length of the data is not known,
-    # hence use lists instead of iterators
-    pred = grid_search.fit(list(train_data), y_train).predict(list(test_data))
-    assert_array_equal(pred, y_test)
+    # Check that the best model found by grid search is 100% correct on the
+    # held out evaluation set.
+    pred = grid_search.fit(train_data, target_train).predict(test_data)
+    assert_array_equal(pred, target_test)
 
     # on this toy dataset bigram representation which is used in the last of
     # the grid_search is considered the best estimator since they all converge
@@ -742,15 +742,13 @@ def test_count_vectorizer_pipeline_grid_selection():
 def test_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
-    # simulate iterables
-    train_data = iter(data[1:-1])
-    test_data = iter([data[0], data[-1]])
 
     # label junk food as -1, the others as +1
-    y = np.ones(len(data))
-    y[:6] = -1
-    y_train = y[1:-1]
-    y_test = np.array([y[0], y[-1]])
+    target = [-1] * len(JUNK_FOOD_DOCS) + [1] * len(NOTJUNK_FOOD_DOCS)
+
+    # split the dataset for model development and final evaluation
+    train_data, test_data, target_train, target_test = train_test_split(
+        data, target, test_size=.1, random_state=0)
 
     pipeline = Pipeline([('vect', TfidfVectorizer()),
                          ('svc', LinearSVC())])
@@ -765,10 +763,10 @@ def test_vectorizer_pipeline_grid_selection():
     # classifier
     grid_search = GridSearchCV(pipeline, parameters, n_jobs=1)
 
-    # cross-validation doesn't work if the length of the data is not known,
-    # hence use lists instead of iterators
-    pred = grid_search.fit(list(train_data), y_train).predict(list(test_data))
-    assert_array_equal(pred, y_test)
+    # Check that the best model found by grid search is 100% correct on the
+    # held out evaluation set.
+    pred = grid_search.fit(train_data, target_train).predict(test_data)
+    assert_array_equal(pred, target_test)
 
     # on this toy dataset bigram representation which is used in the last of
     # the grid_search is considered the best estimator since they all converge
@@ -778,6 +776,21 @@ def test_vectorizer_pipeline_grid_selection():
     assert_equal(best_vectorizer.ngram_range, (1, 1))
     assert_equal(best_vectorizer.norm, 'l2')
     assert_false(best_vectorizer.fixed_vocabulary)
+
+
+def test_vectorizer_pipeline_cross_validation():
+    # raw documents
+    data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
+
+    # label junk food as -1, the others as +1
+    target = [-1] * len(JUNK_FOOD_DOCS) + [1] * len(NOTJUNK_FOOD_DOCS)
+
+
+    pipeline = Pipeline([('vect', TfidfVectorizer()),
+                         ('svc', LinearSVC())])
+
+    cv_scores = cross_val_score(pipeline, data, target, cv=3)
+    assert_array_equal(cv_scores, [1., 1., 1.])
 
 
 def test_vectorizer_unicode():

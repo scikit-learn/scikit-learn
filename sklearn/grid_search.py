@@ -355,7 +355,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 raise ValueError('Target variable (y) has a different number '
                                  'of samples (%i) than data (X: %i samples)'
                                  % (len(y), n_samples))
-            y = np.asarray(y)
         cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
 
         if self.verbose > 0:
