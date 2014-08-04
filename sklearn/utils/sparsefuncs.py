@@ -3,6 +3,7 @@
 #          Hamzeh Alsalhi
 
 # License: BSD 3 clause
+from __future__ import division
 import scipy.sparse as sp
 import numpy as np
 import array
@@ -322,7 +323,7 @@ def random_choice_csc(n_samples, classes, class_probability=None,
         # use uniform distribution if no class_probability is given
         if class_probability is None:
             class_prob_j = np.empty(shape=classes[j].shape[0])
-            class_prob_j.fill(1.0/classes[j].shape[0])
+            class_prob_j.fill(1 / classes[j].shape[0])
         else:
             class_prob_j = class_probability[j]
         class_prob_j = np.asarray(class_prob_j)
