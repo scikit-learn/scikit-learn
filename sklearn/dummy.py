@@ -97,9 +97,10 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
         if self.strategy == "uniform" and sp.issparse(y):
             y = y.toarray()
-            warnings.warn('prediciting on sparse target data with the uniform '
-                          'strategy would not save memory and would be '
-                          'slower. The target data has been densified',
+            warnings.warn('The target data has been converted to a numpy '
+                          'array. Prediciting on sparse target data with the '
+                          'uniform strategy would not save memory and would '
+                          'be slower.',
                           sp.SparseEfficiencyWarning)
 
         self.sparse_target_input_ = sp.issparse(y)
@@ -115,12 +116,10 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
         if self.strategy == "constant":
             if self.constant is None:
-                raise ValueError("Constant target value has to be"
-                                 "specified when the constant strategy is"
-                                 " used.")
+                raise ValueError("Constant target value has to be specified "
+                                 "when the constant strategy is used.")
             else:
-                constant = np.reshape(np.atleast_1d(self.constant),
-                                      (-1, 1))
+                constant = np.reshape(np.atleast_1d(self.constant), (-1, 1))
                 if constant.shape[0] != self.n_outputs_:
                     raise ValueError("Constant target value should have "
                                      "shape (%d, 1)." % self.n_outputs_)
