@@ -631,24 +631,6 @@ class Fastfood(BaseEstimator, TransformerMixin):
         return result
 
     @staticmethod
-    def create_gaussian_iid_matrix_fast_vectorized(B, G, P, X):
-        """ Create mapping of a specific x from B, G and P"""
-        result = np.multiply(B, X.reshape((1, X.shape[0], 1, X.shape[1])))
-        result = result.reshape((X.shape[0]*B.shape[0], B.shape[1]))
-        result = Fastfood.approx_fourier_transformation_multi_dim(result)
-        #np.arange(0, B.shape[0], B.shape[1])[:,np.newaxis]
-        offset = np.arange(0, result.shape[0]*result.shape[1]-1, result.shape[1])
-        offset = offset.reshape(offset.shape[0], 1)
-        Perm = np.tile(P, (X.shape[0], 1)) + offset
-        np.take(result, Perm, out=result)
-        result = result.reshape(X.shape[0], B.shape[0]*B.shape[1]) 
-        np.multiply(np.ravel(G), result.reshape(X.shape[0], B.shape[0]*B.shape[1]), out=result)
-        result = result.reshape(B.shape[0]*X.shape[0], B.shape[1])
-        result = Fastfood.approx_fourier_transformation_multi_dim(result)
-        return result
-
-
-    @staticmethod
     def create_gaussian_iid_matrix_fast_one_step(B, G, P, X):
         """ Create mapping of a specific x from B, G and P"""
         result = np.dot(np.diag(B), X)
@@ -657,6 +639,23 @@ class Fastfood(BaseEstimator, TransformerMixin):
         result = np.dot(np.diag(G), result)
         result = Fastfood.hadamard(result)
 
+        return result
+
+    def create_gaussian_iid_matrix_fast_vectorized(self, B, G, P, X):
+        """ Create mapping of a specific x from B, G and P"""
+        num_examples = X.shape[0]
+
+        result = np.multiply(B, X.reshape((1, num_examples, 1, self.d)))
+        result = result.reshape((num_examples*self.times_to_stack_v, self.d))
+        result = Fastfood.approx_fourier_transformation_multi_dim(result)
+        offset = np.arange(0, num_examples*self.times_to_stack_v - 1, self.d)
+        offset = offset.reshape(-1, 1)
+        Perm = np.tile(P, (num_examples, 1)) + offset
+        np.take(result, Perm, out=result)
+        result = result.reshape(num_examples, self.n)
+        np.multiply(np.ravel(G), result.reshape(num_examples, self.n), out=result)
+        result = result.reshape(num_examples*self.times_to_stack_v, self.d)
+        result = Fastfood.approx_fourier_transformation_multi_dim(result)
         return result
 
     def create_approximation_matrix(self, S, HGPHB):
