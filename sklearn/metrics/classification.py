@@ -170,7 +170,7 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
         return np.sum(score)
 
 
-def balanced_accuracy_score(y_true, y_pred, sample_weight=None, pos_label=1):
+def balanced_accuracy_score(y_true, y_pred, sample_weight=None, labels=1):
     """Balanced accuracy classification score.
 
     This function only support binary and multiclass classification for now.
@@ -186,8 +186,8 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None, pos_label=1):
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
-    pos_label : int, 1 by default
-        Indicate which label is "positive"
+    labels : array of int or int, 1 by defualt
+        Indicate multiple positive labels
 
     Returns
     -------
@@ -217,7 +217,7 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None, pos_label=1):
     In the multiclass case
     >>> y_pred = [0, 1, 2, 4]
     >>> y_true = [0, 2, 3, 4]
-    >>> balanced_accuracy_score(y_true, y_pred, pos_label=2)
+    >>> balanced_accuracy_score(y_true, y_pred, labels=2)
     0.33333333333333331
 
     In the multilabel case with binary label indicators:
@@ -230,9 +230,12 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None, pos_label=1):
     if y_type not in ["binary", "multiclass", "multilabel-indicator"]:
         raise ValueError("%s is not yet implemented" % y_type)
 
+    if isinstance(labels, int):
+        labels = [labels]
+
     # Turn multiclass into binary
-    y_true = (y_true == pos_label).astype(int)
-    y_pred = (y_pred == pos_label).astype(int)
+    y_true = np.in1d(y_true, labels).reshape(y_true.shape).astype(int)
+    y_pred = np.in1d(y_pred, labels).reshape(y_pred.shape).astype(int)
 
     def _1d_balanced_accuracy_score(y_true, y_pred, sample_weight=None):
         # Positive and negative index in y_true
