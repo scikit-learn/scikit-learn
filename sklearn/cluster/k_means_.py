@@ -391,7 +391,7 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
             best_centers = centers.copy()
             best_inertia = inertia
 
-        if np.sum((centers_old - centers) ** 2) < tol:
+        if np.sum((centers_old - centers) ** 2) <= tol:
             if verbose:
                 print("Converged at iteration %d" % i)
             break
@@ -981,7 +981,7 @@ def _mini_batch_convergence(model, iteration_idx, n_iter, tol,
 
     # Early stopping based on absolute tolerance on squared change of
     # centers position (using EWA smoothing)
-    if tol > 0.0 and ewa_diff < tol:
+    if tol > 0.0 and ewa_diff <= tol:
         if verbose:
             print('Converged (small centers change) at iteration %d/%d'
                   % (iteration_idx + 1, n_iter))
