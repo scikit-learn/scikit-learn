@@ -20,8 +20,10 @@ model:
   This is discussed on section :ref:`scoring_parameter`.
 
 * **Metric functions**: The :mod:`metrics` module implements functions
-  assessing prediction errors for specific purposes. This is discussed in
-  the section :ref:`prediction_error_metrics`.
+  assessing prediction error for specific purposes. These metrics are detailed
+  in sections on :ref:`classification_metrics`,
+  :ref:`multilabel_ranking_metrics`, :ref:`regression_metrics` and
+  :ref:`clustering_metrics`.
 
 Finally, :ref:`dummy_estimators` are useful to get a baseline
 value of those metrics for random predictions.
@@ -42,7 +44,7 @@ Model selection and evaluation using tools, such as
 controls what metric they apply to estimators evaluated.
 
 Common cases: predefined values
---------------------------------
+-------------------------------
 
 For the most common usecases, you can simply provide a string as the
 ``scoring`` parameter. Possible values are:
@@ -91,22 +93,31 @@ predicted values. These are detailed below, in the next sections.
 
 .. _scoring:
 
-Defining your scoring strategy from score functions
+Defining your scoring strategy from metric functions
 -----------------------------------------------------
 
-The scoring parameter can be a callable that takes model predictions and
-ground truth.
+The module :mod:`sklearn.metric` also exposes a set of simple functions
+measuring a prediction error given ground truth and prediction:
 
-However, if you want to use a scoring function that takes additional parameters, such as
-:func:`fbeta_score`, you need to generate an appropriate scoring object.  The
-simplest way to generate a callable object for scoring is by using
-:func:`make_scorer`.
-That function converts score functions (discussed below in :ref:`prediction_error_metrics`) into callables that can be
-used for model evaluation.
+- functions ending with ``_score`` return a value to
+  maximize (the higher the better).
 
-One typical use case is to wrap an existing scoring function from the library
-with non default value for its parameters such as the ``beta`` parameter for the
-:func:`fbeta_score` function::
+- functions ending with ``_error`` or ``_loss`` return a
+  value to minimize (the lower the better).
+
+Metrics available for various machine learning tasks are detailed in sections
+below.
+
+Many metrics are not given names to be used as ``scoring`` values,
+sometimes because they require additional parameters, such as
+:func:`fbeta_score`. In such cases, you need to generate an appropriate
+scoring object.  The simplest way to generate a callable object for scoring
+is by using :func:`make_scorer`. That function converts metrics
+into callables that can be used for model evaluation.
+
+One typical use case is to wrap an existing metric function from the library
+with non default value for its parameters, such as the ``beta`` parameter for
+the :func:`fbeta_score` function::
 
     >>> from sklearn.metrics import fbeta_score, make_scorer
     >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
@@ -138,6 +149,8 @@ from a simple python function::
 * any additional parameters, such as ``beta`` in an :func:`f1_score`.
 
 
+.. _diy_scoring:
+
 Implementing your own scoring object
 ------------------------------------
 You can generate even more flexible model scores by constructing your own
@@ -154,24 +167,10 @@ the following two rules:
   ``estimator``'s predictions on ``X`` which reference to ``y``.
   Again, higher numbers are better.
 
-.. _prediction_error_metrics:
-
-Function for prediction-error metrics
-======================================
-
-The module :mod:`sklearn.metric` also exposes a set of simple functions
-measuring a prediction error given ground truth and prediction:
-
-- functions ending with ``_score`` return a value to
-  maximize (the higher the better).
-
-- functions ending with ``_error`` or ``_loss`` return a
-  value to minimize (the lower the better).
-
 .. _classification_metrics:
 
 Classification metrics
------------------------
+=======================
 
 .. currentmodule:: sklearn.metrics
 
@@ -228,7 +227,7 @@ And some work with binary and multilabel indicator format:
 In the following sub-sections, we will describe each of those functions.
 
 Accuracy score
-..............
+--------------
 
 The :func:`accuracy_score` function computes the
 `accuracy <http://en.wikipedia.org/wiki/Accuracy_and_precision>`_, the fraction
@@ -271,7 +270,7 @@ In the multilabel case with binary label indicators: ::
     the dataset.
 
 Confusion matrix
-................
+----------------
 
 The :func:`confusion_matrix` function computes the `confusion matrix
 <http://en.wikipedia.org/wiki/Confusion_matrix>`_ to evaluate
@@ -313,7 +312,7 @@ from the :ref:`example_model_selection_plot_confusion_matrix.py` example):
 
 
 Classification report
-......................
+----------------------
 
 The :func:`classification_report` function builds a text report showing the
 main classification metrics. Here a small example with custom ``target_names``
@@ -348,7 +347,7 @@ and inferred labels::
     grid search with a nested cross-validation.
 
 Hamming loss
-.............
+-------------
 
 The :func:`hamming_loss` computes the average Hamming loss or `Hamming
 distance <http://en.wikipedia.org/wiki/Hamming_distance>`_ between two sets
@@ -395,7 +394,7 @@ In the multilabel case with binary label indicators: ::
 
 
 Jaccard similarity coefficient score
-.....................................
+-------------------------------------
 
 The :func:`jaccard_similarity_score` function computes the average (default)
 or sum of `Jaccard similarity coefficients
@@ -432,7 +431,7 @@ In the multilabel case with binary label indicators: ::
 .. _precision_recall_f_measure_metrics:
 
 Precision, recall and F-measures
-.................................
+---------------------------------
 
 The `precision <http://en.wikipedia.org/wiki/Precision_and_recall#Precision>`_
 is intuitively the ability of the classifier not to label as
@@ -639,7 +638,7 @@ Then the metrics are defined as:
 
 
 Hinge loss
-...........
+-----------
 
 The :func:`hinge_loss` function computes the average
 `hinge loss function <http://en.wikipedia.org/wiki/Hinge_loss>`_. The hinge
@@ -673,7 +672,8 @@ with a svm classifier::
 
 
 Log loss
-........
+--------
+
 The log loss, also called logistic regression loss or cross-entropy loss,
 is a loss function defined on probability estimates.
 It is commonly used in (multinomial) logistic regression and neural networks,
@@ -725,7 +725,7 @@ The log loss is non-negative.
 
 
 Matthews correlation coefficient
-.................................
+---------------------------------
 
 The :func:`matthews_corrcoef` function computes the Matthew's correlation
 coefficient (MCC) for binary classes (quoting the `Wikipedia article on the
@@ -761,7 +761,7 @@ function:
 .. _roc_metrics:
 
 Receiver operating characteristic (ROC)
-.......................................
+---------------------------------------
 
 The function :func:`roc_curve` computes the `receiver operating characteristic
 curve, or ROC curve (quoting
@@ -857,7 +857,7 @@ if predicted outputs have been binarized.
 .. _zero_one_loss:
 
 Zero one loss
-..............
+--------------
 
 The :func:`zero_one_loss` function computes the sum or the average of the 0-1
 classification loss (:math:`L_{0-1}`) over :math:`n_{\text{samples}}`. By
@@ -903,7 +903,7 @@ In the multilabel case with binary label indicators: ::
 .. _multilabel_ranking_metrics:
 
 Multilabel ranking metrics
---------------------------
+==========================
 
 .. currentmodule:: sklearn.metrics
 
@@ -912,7 +912,8 @@ associated with it. The goal is to give high scores and better rank to
 the ground truth labels.
 
 Label ranking average precision
-...............................
+-------------------------------
+
 The :func:`label_ranking_average_precision_score` function
 implements the label ranking average precision (LRAP). This metric is linked to
 the :func:`average_precision_score` function, but is based on the notion of
@@ -955,7 +956,7 @@ Here a small example of usage of this function::
 .. _regression_metrics:
 
 Regression metrics
--------------------
+===================
 
 .. currentmodule:: sklearn.metrics
 
@@ -966,7 +967,7 @@ to handle the multioutput case: :func:`mean_absolute_error`,
 
 
 Explained variance score
-.........................
+-------------------------
 
 The :func:`explained_variance_score` computes the `explained variance
 regression score <http://en.wikipedia.org/wiki/Explained_variation>`_.
@@ -991,7 +992,7 @@ function::
     0.957...
 
 Mean absolute error
-...................
+-------------------
 
 The :func:`mean_absolute_error` function computes the `mean absolute
 error <http://en.wikipedia.org/wiki/Mean_absolute_error>`_, which is a risk
@@ -1021,7 +1022,7 @@ Here a small example of usage of the :func:`mean_absolute_error` function::
 
 
 Mean squared error
-...................
+-------------------
 
 The :func:`mean_squared_error` function computes the `mean square
 error <http://en.wikipedia.org/wiki/Mean_squared_error>`_, which is a risk
@@ -1056,7 +1057,7 @@ function::
     evaluate gradient boosting regression.
 
 R² score, the coefficient of determination
-...........................................
+-------------------------------------------
 
 The :func:`r2_score` function computes R², the `coefficient of
 determination <http://en.wikipedia.org/wiki/Coefficient_of_determination>`_.
@@ -1092,31 +1093,17 @@ Here a small example of usage of the :func:`r2_score` function::
     for an example of R² score usage to
     evaluate Lasso and Elastic Net on sparse signals.
 
-Clustering metrics
-======================
-
-The :mod:`sklearn.metrics` implements several losses, scores and utility
-function for more information see the :ref:`clustering_evaluation`
-section.
-
-
-Biclustering metrics
-====================
-
-The :mod:`sklearn.metrics` module implements bicluster scoring
-metrics. For more information see the :ref:`biclustering_evaluation`
-section.
-
-
-.. currentmodule:: sklearn.metrics
-
 .. _clustering_metrics:
 
 Clustering metrics
--------------------
+======================
+
+.. currentmodule:: sklearn.metrics
 
 The :mod:`sklearn.metrics` implements several losses, scores and utility
-functions. For more information see the :ref:`clustering_evaluation` section.
+functions. For more information see the :ref:`clustering_evaluation`
+section for instance clustering, and :ref:`biclustering_evaluation` for
+biclustering.
 
 
 .. _dummy_estimators:
