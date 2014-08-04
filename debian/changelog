@@ -1,3 +1,9 @@
+scikit-learn (0.15.1-1) unstable; urgency=medium
+
+  * Fresh upstream minor release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 04 Aug 2014 14:10:50 -0400
+
 scikit-learn (0.15.0-1) unstable; urgency=medium
 
   * Fresh upstream release
