@@ -1,9 +1,11 @@
 from __future__ import division
 
 import numpy as np
+import scipy.sparse as sp
 from scipy.misc import comb as combinations
-
+from numpy.testing import assert_array_almost_equal
 from sklearn.utils.random import sample_without_replacement
+from sklearn.utils.random import random_choice_csc
 
 from sklearn.utils.testing import (
     assert_raises,
@@ -99,3 +101,31 @@ def check_sample_int_distribution(sample_without_replacement):
             raise AssertionError(
                 "number of combinations != number of expected (%s != %s)" %
                 (len(output), n_expected))
+
+
+def test_random_choice_csc(n_samples=10000, random_state=24):
+    classes = [np.array([[0, 1]]).T,  np.array([[0, 1, 2]]).T]
+    class_probabilites = [np.array([[0.5, 0.5]]).T,
+                          np.array([[0.6, 0.1, 0.3]]).T]
+
+    got = random_choice_csc(n_samples, classes, class_probabilites,
+                            random_state)
+    assert_true(sp.issparse(got))
+    got = got.toarray()
+
+    for k in range(len(classes)):
+        p = np.bincount(got[:, k]) / float(n_samples)
+        assert_array_almost_equal(class_probabilites[k][:, 0], p, decimal=1)
+
+
+def test_random_choice_csc_errors():
+    # the length of an array in classes and class_probabilites is mismatched
+    classes = [np.array([[0, 1]]).T,  np.array([[0, 1, 2, 3]]).T]
+    class_probabilites = [np.array([[0.5, 0.5]]).T,
+                          np.array([[0.6, 0.1, 0.3]]).T]
+    assert_raises(ValueError, random_choice_csc, 4, classes,
+                  class_probabilites, 1)
+
+if __name__ == '__main__':
+    import nose
+    nose.runmodule()

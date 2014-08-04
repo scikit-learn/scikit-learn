@@ -10,11 +10,9 @@ from sklearn.utils.sparsefuncs import (mean_variance_axis0,
                                        inplace_row_scale,
                                        inplace_swap_row, inplace_swap_column,
                                        min_max_axis)
-from sklearn.utils.sparsefuncs import random_choice_csc
 from sklearn.utils.sparsefuncs import sparse_class_distribution
 from sklearn.utils.sparsefuncs_fast import assign_rows_csr
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_true
 
 
 def test_mean_variance_axis0():
@@ -292,30 +290,6 @@ def test_min_max_axis_errors():
     assert_raises(TypeError, min_max_axis, X_csr.tolil(), axis=0)
     assert_raises(ValueError, min_max_axis, X_csr, axis=2)
     assert_raises(ValueError, min_max_axis, X_csc, axis=-3)
-
-
-def test_random_choice_csc(n_samples=10000, random_state=24):
-    classes = [np.array([[0, 1]]).T,  np.array([[0, 1, 2]]).T]
-    class_probabilites = [np.array([[0.5, 0.5]]).T,
-                          np.array([[0.6, 0.1, 0.3]]).T]
-
-    got = random_choice_csc(n_samples, classes, class_probabilites,
-                            random_state)
-    assert_true(sp.issparse(got))
-    got = got.toarray()
-
-    for k in range(len(classes)):
-        p = np.bincount(got[:, k]) / float(n_samples)
-        assert_array_almost_equal(class_probabilites[k][:, 0], p, decimal=1)
-
-
-def test_random_choice_csc_errors():
-    # the length of an array in classes and class_probabilites is mismatched
-    classes = [np.array([[0, 1]]).T,  np.array([[0, 1, 2, 3]]).T]
-    class_probabilites = [np.array([[0.5, 0.5]]).T,
-                          np.array([[0.6, 0.1, 0.3]]).T]
-    assert_raises(ValueError, random_choice_csc, 4, classes,
-                  class_probabilites, 1)
 
 
 def test_sparse_class_distribution():
