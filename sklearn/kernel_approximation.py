@@ -648,10 +648,10 @@ class Fastfood(BaseEstimator, TransformerMixin):
         result = np.multiply(B, X.reshape((1, num_examples, 1, self.d)))
         result = result.reshape((num_examples*self.times_to_stack_v, self.d))
         result = Fastfood.approx_fourier_transformation_multi_dim(result)
-        offset = np.arange(0, num_examples*self.times_to_stack_v - 1, self.d)
+        offset = np.arange(0, num_examples*self.times_to_stack_v*self.d - 1, self.d)
         offset = offset.reshape(-1, 1)
-        Perm = np.tile(P, (num_examples, 1)) + offset
-        np.take(result, Perm, out=result)
+        perm = np.tile(P, (num_examples, 1)) + offset
+        np.take(result, perm, out=result)
         result = result.reshape(num_examples, self.n)
         np.multiply(np.ravel(G), result.reshape(num_examples, self.n), out=result)
         result = result.reshape(num_examples*self.times_to_stack_v, self.d)
@@ -722,7 +722,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
     def transform_fast_vectorized(self, X):
         X = atleast2d_or_csr(X)
         X_padded = self.pad_with_zeros(X)
-        HGPHBX = Fastfood.create_gaussian_iid_matrix_fast_vectorized(self.B, self.G, self.P, X_padded)
+        HGPHBX = self.create_gaussian_iid_matrix_fast_vectorized(self.B, self.G, self.P, X_padded)
         VX = self.create_approximation_matrix_fast_vectorized(self.S, HGPHBX)
         #print "4:",mapped_examples_as_matrix, mapped_examples_as_matrix.shape
         #print mapped_examples.count()
