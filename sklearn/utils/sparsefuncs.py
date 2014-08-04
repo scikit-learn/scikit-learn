@@ -340,23 +340,22 @@ def random_choice_csc(n_samples, classes, class_probability=None,
             class_prob_j = np.insert(class_prob_j, 0, 0.0)
 
         # If there are nonzero classes choose randomly using class_probability
-        if 0 not in classes[j] or classes[j].shape[0] > 1:
-            nnz = int(n_samples -
-                      n_samples *
-                      class_prob_j[np.where(classes[j] == 0)[0][0]])
-            indices.extend(sample_without_replacement(n_samples,
-                                                      nnz,
-                                                      "auto",
-                                                      random_state))
+        if classes[j].shape[0] > 1:
+            p_nonzero = 1 - class_prob_j[classes == 0]
+            nnz = int(n_samples * p_nonzero)
+            ind_sample = sample_without_replacement(n_population=n_samples,
+                                                    n_samples=nnz,
+                                                    random_state=random_state)
+            indices.extend(ind_sample)
 
             # Normalize probabilites for the nonzero elements
-            class_probability_nz = class_prob_j[classes[j] != 0]
+            classes_j_nonzero = classes[j] != 0
+            class_probability_nz = class_prob_j[classes_j_nonzero]
             class_probability_nz_norm = (class_probability_nz /
                                          np.sum(class_probability_nz))
-            data.extend(choice(classes[j][classes[j] != 0],
+            data.extend(choice(classes[j][classes_j_nonzero],
                                size=nnz,
-                               p=class_probability_nz_norm,
-                               replace=True))
+                               p=class_probability_nz_norm))
         indptr.append(len(indices))
 
     return sp.csc_matrix((data, indices, indptr),
