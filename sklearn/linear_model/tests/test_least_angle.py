@@ -12,6 +12,7 @@ from sklearn.utils.testing import ignore_warnings, assert_warns_message
 from sklearn.utils.testing import assert_warns
 from sklearn.utils import ConvergenceWarning
 from sklearn import linear_model, datasets
+from nose import SkipTest
 
 diabetes = datasets.load_diabetes()
 X, y = diabetes.data, diabetes.target
@@ -290,6 +291,10 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
 
 
 def test_lasso_lars_path_length():
+    import struct
+    if struct.calcsize('P') * 8 == 32:
+        # FIXME in master
+        raise SkipTest("skip unstable test on 32 bit arch")
     # Test that the path length of the LassoLars is right
     lasso = linear_model.LassoLars()
     lasso.fit(X, y)

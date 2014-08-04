@@ -329,10 +329,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         n_classes = self.classes_.shape[0]
 
         # Allocate datastructures from input arguments
-        y_ind = np.searchsorted(self.classes_, y)   # XXX use a LabelBinarizer?
         self._expanded_class_weight = compute_class_weight(self.class_weight,
-                                                           self.classes_,
-                                                           y_ind)
+                                                           self.classes_, y)
         sample_weight = self._validate_sample_weight(sample_weight, n_samples)
 
         if self.coef_ is None or coef_init is not None:
@@ -366,6 +364,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
             self.classes_ = None
 
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
+        y, = check_arrays(y)
         n_samples, n_features = X.shape
 
         # labels can be encoded as float, int, or string literals

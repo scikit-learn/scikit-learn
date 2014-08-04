@@ -61,6 +61,7 @@ from ..base import BaseEstimator, ClassifierMixin
 from ..metrics.pairwise import rbf_kernel
 from ..utils.graph import graph_laplacian
 from ..utils.extmath import safe_sparse_dot
+from ..utils.validation import check_arrays
 from ..externals import six
 from ..neighbors.unsupervised import NearestNeighbors
 
@@ -205,10 +206,8 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         -------
         self : returns an instance of self.
         """
-        if sparse.isspmatrix(X):
-            self.X_ = X
-        else:
-            self.X_ = np.asarray(X)
+        X, y = check_arrays(X, y)
+        self.X_ = X
 
         # actual graph construction (implementations should override this)
         graph_matrix = self._build_graph()

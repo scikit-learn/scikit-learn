@@ -28,28 +28,36 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import fbeta_score
 from sklearn.metrics import make_scorer
+from sklearn.metrics import precision_score
 
 from sklearn.externals import six
 from sklearn.externals.six.moves import zip
 
 from sklearn.linear_model import Ridge
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 
-from sklearn.preprocessing import Imputer
+from sklearn.preprocessing import Imputer, LabelBinarizer
 from sklearn.pipeline import Pipeline
 
 
 class MockListClassifier(BaseEstimator):
     """Dummy classifier to test the cross-validation.
 
-    Checks that GridSearchCV didn't convert X to array.
+    Checks that GridSearchCV didn't convert X or Y to array.
     """
-    def __init__(self, foo_param=0):
+    def __init__(self, foo_param=0, check_y_is_list=False, check_X_is_list=True):
         self.foo_param = foo_param
+        self.check_y_is_list = check_y_is_list
+        self.check_X_is_list = check_X_is_list
 
     def fit(self, X, Y):
         assert_true(len(X) == len(Y))
-        assert_true(isinstance(X, list))
+        if self.check_X_is_list:
+            assert_true(isinstance(X, list))
+        if self.check_y_is_list:
+            assert_true(isinstance(Y, list))
+
         return self
 
     def predict(self, T):
@@ -513,6 +521,9 @@ def test_cross_val_score():
     clf = MockListClassifier()
     scores = cval.cross_val_score(clf, X.tolist(), y.tolist())
 
+    clf = MockListClassifier(check_X_is_list=False, check_y_is_list=True)
+    scores = cval.cross_val_score(clf, X, y.tolist())
+
     assert_raises(ValueError, cval.cross_val_score, clf, X, y,
                   scoring="sklearn")
 
@@ -523,6 +534,18 @@ def test_cross_val_score():
 
     clf = MockClassifier(allow_nd=False)
     assert_raises(ValueError, cval.cross_val_score, clf, X_3d, y)
+
+
+def test_cross_val_score_mask():
+    # test that cross_val_score works with boolean masks
+    svm = SVC(kernel="linear")
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    cv_indices = cval.KFold(len(y), 5, indices=True)
+    scores_indices = cval.cross_val_score(svm, X, y, cv=cv_indices)
+    cv_masks = cval.KFold(len(y), 5, indices=False)
+    scores_masks = cval.cross_val_score(svm, X, y, cv=cv_masks)
+    assert_array_equal(scores_indices, scores_masks)
 
 
 def test_cross_val_score_precomputed():
@@ -596,7 +619,7 @@ def test_train_test_split():
     X = np.arange(100).reshape((10, 10))
     X_s = coo_matrix(X)
     y = range(10)
-    split = cval.train_test_split(X, X_s, y)
+    split = cval.train_test_split(X, X_s, y, allow_lists=False)
     X_train, X_test, X_s_train, X_s_test, y_train, y_test = split
     assert_array_equal(X_train, X_s_train.toarray())
     assert_array_equal(X_test, X_s_test.toarray())
@@ -605,6 +628,11 @@ def test_train_test_split():
     split = cval.train_test_split(X, y, test_size=None, train_size=.5)
     X_train, X_test, y_train, y_test = split
     assert_equal(len(y_test), len(y_train))
+
+    split = cval.train_test_split(X, X_s, y)
+    X_train, X_test, X_s_train, X_s_test, y_train, y_test = split
+    assert_true(isinstance(y_train, list))
+    assert_true(isinstance(y_test, list))
 
 
 def test_cross_val_score_with_score_func_classification():
@@ -911,7 +939,7 @@ def test_train_test_split_allow_nans():
     X = np.arange(200, dtype=np.float64).reshape(10, -1)
     X[2, :] = np.nan
     y = np.repeat([0, 1], X.shape[0]/2)
-    split = cval.train_test_split(X, y, test_size=0.2, random_state=42)
+    cval.train_test_split(X, y, test_size=0.2, random_state=42)
 
 
 def test_permutation_test_score_allow_nans():
@@ -924,3 +952,48 @@ def test_permutation_test_score_allow_nans():
         ('classifier', MockClassifier()),
     ])
     cval.permutation_test_score(p, X, y, cv=5)
+
+
+def test_check_cv_return_types():
+    X = np.ones((9, 2))
+    cv = cval._check_cv(3, X, classifier=False)
+    assert_true(isinstance(cv, cval.KFold))
+
+    y_binary = np.array([0, 1, 0, 1, 0, 0, 1, 1, 1])
+    cv = cval._check_cv(3, X, y_binary, classifier=True)
+    assert_true(isinstance(cv, cval.StratifiedKFold))
+
+    y_multiclass = np.array([0, 1, 0, 1, 2, 1, 2, 0, 2])
+    cv = cval._check_cv(3, X, y_multiclass, classifier=True)
+    assert_true(isinstance(cv, cval.StratifiedKFold))
+
+    X = np.ones((5, 2))
+    y_seq_of_seqs = [[], [1, 2], [3], [0, 1, 3], [2]]
+    cv = cval._check_cv(3, X, y_seq_of_seqs, classifier=True)
+    assert_true(isinstance(cv, cval.KFold))
+
+    y_indicator_matrix = LabelBinarizer().fit_transform(y_seq_of_seqs)
+    cv = cval._check_cv(3, X, y_indicator_matrix, classifier=True)
+    assert_true(isinstance(cv, cval.KFold))
+
+    y_multioutput = np.array([[1, 2], [0, 3], [0, 0], [3, 1], [2, 0]])
+    cv = cval._check_cv(3, X, y_multioutput, classifier=True)
+    assert_true(isinstance(cv, cval.KFold))
+
+
+def test_cross_val_score_multilabel():
+    X = np.array([[-3, 4], [2, 4], [3, 3], [0, 2], [-3, 1],
+                  [-2, 1], [0, 0], [-2, -1], [-1, -2], [1, -2]])
+    y = np.array([[1, 1], [0, 1], [0, 1], [0, 1], [1, 1],
+                  [0, 1], [1, 0], [1, 1], [1, 0], [0, 0]])
+    clf = KNeighborsClassifier(n_neighbors=1)
+    scoring_micro = make_scorer(precision_score, average='micro')
+    scoring_macro = make_scorer(precision_score, average='macro')
+    scoring_samples = make_scorer(precision_score, average='samples')
+    score_micro = cval.cross_val_score(clf, X, y, scoring=scoring_micro, cv=5)
+    score_macro = cval.cross_val_score(clf, X, y, scoring=scoring_macro, cv=5)
+    score_samples = cval.cross_val_score(clf, X, y,
+                                         scoring=scoring_samples, cv=5)
+    assert_almost_equal(score_micro, [1, 1/2, 3/4, 1/2, 1/3])
+    assert_almost_equal(score_macro, [1, 1/2, 3/4, 1/2, 1/4])
+    assert_almost_equal(score_samples, [1, 1/2, 3/4, 1/2, 1/4])

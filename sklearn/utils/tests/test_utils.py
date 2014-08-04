@@ -12,6 +12,7 @@ from sklearn.utils import deprecated
 from sklearn.utils import resample
 from sklearn.utils import safe_mask
 from sklearn.utils import column_or_1d
+from sklearn.utils import safe_indexing
 from sklearn.utils.extmath import pinvh
 
 
@@ -141,3 +142,12 @@ def test_column_or_1d():
             assert_array_equal(column_or_1d(y), np.ravel(y))
         else:
             assert_raises(ValueError, column_or_1d, y)
+
+
+def test_safe_indexing():
+    X = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    inds = np.array([1, 2])
+    X_inds = safe_indexing(X, inds)
+    X_arrays = safe_indexing(np.array(X), inds)
+    assert_array_equal(np.array(X_inds), X_arrays)
+    assert_array_equal(np.array(X_inds), np.array(X)[inds])
