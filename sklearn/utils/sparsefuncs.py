@@ -1,6 +1,5 @@
 # Authors: Manoj Kumar
 #          Thomas Unterthiner
-#          Hamzeh Alsalhi
 
 # License: BSD 3 clause
 import scipy.sparse as sp
@@ -279,60 +278,3 @@ def min_max_axis(X, axis):
         return sparse_min_max(X, axis=axis)
     else:
         _raise_typeerror(X)
-
-
-def sparse_class_distribution(y, sample_weight=None):
-    """Compute class priors from sparse multioutput-multiclass target data
-
-    Parameters
-    ----------
-    y : sparse matrix of size (n_samples, n_outputs)
-        The labels for each example.
-
-   sample_weight : array-like of shape = [n_samples], optional
-        Sample weights.
-
-    Return
-    ------
-    classes : list of size n_outputs of arrays of size (n_classes, )
-        List of classes for each column.
-
-    n_classes : list of integrs of size n_outputs
-        Number of classes in each column
-
-    class_prior : list of size n_outputs of arrays of size (n_classes, )
-        Class distribution of each column.
-
-    """
-    classes = []
-    n_classes = []
-    class_prior = []
-
-    y = y.tocsc()
-    y.eliminate_zeros()
-    y_nnz = np.diff(y.indptr)
-
-    n_samples, n_outputs = y.shape
-
-    for k in range(n_outputs):
-        col_nonzero = y.indices[y.indptr[k]:y.indptr[k+1]]
-        # separate sample weights for zero and non-zero elements
-        nz_samp_weight = None
-        zeros_samp_weight_sum = y.shape[0] - y_nnz[k]
-        if sample_weight is not None:
-            nz_samp_weight = sample_weight[col_nonzero]
-            zeros_samp_weight_sum = (np.sum(sample_weight) -
-                                     np.sum(nz_samp_weight))
-
-        classes_k, y_k = np.unique(y.data[y.indptr[k]:y.indptr[k+1]],
-                                   return_inverse=True)
-        class_prior_k = np.bincount(y_k, weights=nz_samp_weight)
-        if y_nnz[k] < y.shape[0]:
-            classes_k = np.insert(classes_k, 0, 0)
-            class_prior_k = np.insert(class_prior_k, 0, zeros_samp_weight_sum)
-
-        classes.append(classes_k)
-        n_classes.append(classes_k.shape[0])
-        class_prior.append(class_prior_k / float(class_prior_k.sum()))
-
-    return (classes, n_classes, class_prior)

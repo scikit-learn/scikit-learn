@@ -10,7 +10,6 @@ from sklearn.utils.sparsefuncs import (mean_variance_axis0,
                                        inplace_row_scale,
                                        inplace_swap_row, inplace_swap_column,
                                        min_max_axis)
-from sklearn.utils.sparsefuncs import sparse_class_distribution
 from sklearn.utils.sparsefuncs_fast import assign_rows_csr
 from sklearn.utils.testing import assert_raises
 
@@ -290,29 +289,3 @@ def test_min_max_axis_errors():
     assert_raises(TypeError, min_max_axis, X_csr.tolil(), axis=0)
     assert_raises(ValueError, min_max_axis, X_csr, axis=2)
     assert_raises(ValueError, min_max_axis, X_csc, axis=-3)
-
-
-def test_sparse_class_distribution():
-    y = sp.csc_matrix(np.array([[1, 0, 0, 1],
-                                [2, 0, 0, 1],
-                                [1, 3, 0, 1],
-                                [1, 3, 0, 1],
-                                [2, 0, 0, 1],
-                                [1, 3, 0, 1]]))
-
-    classes, n_classes, class_prior = sparse_class_distribution(y)
-    classes_expected = [np.array([1, 2]), np.array([0, 3]),
-                        np.array([0]), np.array([1])]
-    n_classes_expected = [2, 2, 1, 1]
-    class_prior_expected = [np.array([4.0/6, 2.0/6]), np.array([0.5, 0.5]),
-                            np.array([1.0]), np.array([1.0])]
-
-    for k in range(y.shape[1]):
-        assert_array_almost_equal(classes[k], classes_expected[k])
-        assert_array_almost_equal(n_classes[k], n_classes_expected[k])
-        assert_array_almost_equal(class_prior[k], class_prior_expected[k])
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()

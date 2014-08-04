@@ -1,4 +1,6 @@
 import numpy as np
+import scipy.sparse as sp
+
 from itertools import product
 from functools import partial
 from sklearn.externals.six.moves import xrange
@@ -12,6 +14,7 @@ from scipy.sparse import dok_matrix
 from scipy.sparse import lil_matrix
 
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
@@ -24,6 +27,8 @@ from sklearn.utils.multiclass import is_label_indicator_matrix
 from sklearn.utils.multiclass import is_multilabel
 from sklearn.utils.multiclass import is_sequence_of_sequences
 from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.multiclass import sparse_class_distribution
+
 
 class NotAnArray(object):
     """An object that is convertable to an array. This is useful to
@@ -330,6 +335,27 @@ def test_type_of_target():
 
     for example in NON_ARRAY_LIKE_EXAMPLES:
         assert_raises(ValueError, type_of_target, example)
+
+
+def test_sparse_class_distribution():
+    y = sp.csc_matrix(np.array([[1, 0, 0, 1],
+                                [2, 0, 0, 1],
+                                [1, 3, 0, 1],
+                                [1, 3, 0, 1],
+                                [2, 0, 0, 1],
+                                [1, 3, 0, 1]]))
+
+    classes, n_classes, class_prior = sparse_class_distribution(y)
+    classes_expected = [np.array([1, 2]), np.array([0, 3]),
+                        np.array([0]), np.array([1])]
+    n_classes_expected = [2, 2, 1, 1]
+    class_prior_expected = [np.array([4.0/6, 2.0/6]), np.array([0.5, 0.5]),
+                            np.array([1.0]), np.array([1.0])]
+
+    for k in range(y.shape[1]):
+        assert_array_almost_equal(classes[k], classes_expected[k])
+        assert_array_almost_equal(n_classes[k], n_classes_expected[k])
+        assert_array_almost_equal(class_prior[k], class_prior_expected[k])
 
 
 if __name__ == "__main__":
