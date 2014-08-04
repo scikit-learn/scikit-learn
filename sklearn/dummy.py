@@ -63,6 +63,10 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
     `outputs_2d_` : bool,
         True if the output at fit is 2d, else false.
 
+    `sparse_output_` : bool,
+        True if the array returned from predict is to be in sparse CSC format.
+        Is set True if the input target data given to fit in sparse format.
+
     """
 
     def __init__(self, strategy="stratified", random_state=None,
@@ -98,14 +102,14 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         if self.strategy == "uniform" and sp.issparse(y):
             y = y.toarray()
             warnings.warn('The target data has been converted to a numpy '
-                          'array. Prediciting on sparse target data with the '
+                          'array. Predicting on sparse target data with the '
                           'uniform strategy would not save memory and would '
                           'be slower.',
                           sp.SparseEfficiencyWarning)
 
-        self.sparse_target_input_ = sp.issparse(y)
+        self.sparse_output_ = sp.issparse(y)
 
-        if not self.sparse_target_input_:
+        if not self.sparse_output_:
             y = np.atleast_1d(y)
 
         self.output_2d_ = y.ndim == 2
@@ -124,7 +128,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                     raise ValueError("Constant target value should have "
                                      "shape (%d, 1)." % self.n_outputs_)
 
-        if not self.sparse_target_input_:
+        if not self.sparse_output_:
             self.classes_ = []
             self.n_classes_ = []
             self.class_prior_ = []
@@ -195,7 +199,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             if self.n_outputs_ == 1:
                 proba = [proba]
 
-        if not self.sparse_target_input_:
+        if not self.sparse_output_:
             y = []
             for k in xrange(self.n_outputs_):
                 if self.strategy == "most_frequent":
