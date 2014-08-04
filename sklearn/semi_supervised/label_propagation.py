@@ -56,9 +56,11 @@ Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
 from abc import ABCMeta, abstractmethod
 from scipy import sparse
 import numpy as np
+import warnings
 
 from ..base import BaseEstimator, ClassifierMixin
 from ..metrics.pairwise import rbf_kernel
+from ..utils import ConvergenceWarning
 from ..utils.graph import graph_laplacian
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_X_y
@@ -96,13 +98,18 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         Convergence tolerance: threshold to consider the system at steady
         state
 
+    default_label : int
+        Default label for unpropagated instances.
+        A ConvergenceWarning will be raised if any instance remains unlabeled.
+
     """
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
-                 alpha=1, max_iter=30, tol=1e-3):
+                 alpha=1, max_iter=30, tol=1e-3, default_label=0):
 
         self.max_iter = max_iter
         self.tol = tol
+        self.default_label = default_label
 
         # kernel parameters
         self.kernel = kernel
@@ -241,7 +248,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         if sparse.isspmatrix(graph_matrix):
             graph_matrix = graph_matrix.tocsr()
         while (_not_converged(self.label_distributions_, l_previous, self.tol)
-                and remaining_iter > 1):
+                and remaining_iter > 0):
             l_previous = self.label_distributions_
             self.label_distributions_ = safe_sparse_dot(
                 graph_matrix, self.label_distributions_)
@@ -251,10 +258,22 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
             remaining_iter -= 1
 
         normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
+
+        # check for unpropagated instances
+        unlabeled_idx, = np.where(normalizer[:,0] == 0)
+        if unlabeled_idx.size > 0:
+            warnings.warn("Some instances remain unlabeled"
+                          " after %d iterations." % self.max_iter,
+                          ConvergenceWarning)
+            # avoid divide by zero errors
+            normalizer[unlabeled_idx] = 1.0
+
         self.label_distributions_ /= normalizer
         # set the transduction item
         transduction = self.classes_[np.argmax(self.label_distributions_,
                                                axis=1)]
+        if unlabeled_idx.size > 0:
+            transduction[unlabeled_idx] = self.default_label
         self.transduction_ = transduction.ravel()
         self.n_iter_ = self.max_iter - remaining_iter
         return self
@@ -279,6 +298,9 @@ class LabelPropagation(BaseLabelPropagation):
     tol : float
       Convergence tolerance: threshold to consider the system at steady
       state
+    default_label : int
+        Default label for unpropagated instances.
+        A ConvergenceWarning will be raised if any instance remains unlabeled.
 
     Attributes
     ----------
@@ -361,6 +383,9 @@ class LabelSpreading(BaseLabelPropagation):
     tol : float
       Convergence tolerance: threshold to consider the system at steady
       state
+    default_label : int
+        Default label for unpropagated instances.
+        A ConvergenceWarning will be raised if any instance remains unlabeled.
 
     Attributes
     ----------
@@ -405,13 +430,14 @@ class LabelSpreading(BaseLabelPropagation):
     """
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7, alpha=0.2,
-                 max_iter=30, tol=1e-3):
+                 max_iter=30, tol=1e-3, default_label=0):
 
         # this one has different base parameters
         super(LabelSpreading, self).__init__(kernel=kernel, gamma=gamma,
                                              n_neighbors=n_neighbors,
                                              alpha=alpha, max_iter=max_iter,
-                                             tol=tol)
+                                             tol=tol,
+                                             default_label=default_label)
 
     def _build_graph(self):
         """Graph matrix for Label Spreading computes the graph laplacian"""

@@ -2,10 +2,13 @@
 
 import nose
 import numpy as np
+import warnings
 
 from sklearn.semi_supervised import label_propagation
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
+from sklearn.utils import ConvergenceWarning
+from sklearn.utils.testing import assert_warns
 
 
 ESTIMATORS = [
@@ -53,3 +56,16 @@ def test_predict_proba():
         clf = estimator(**parameters).fit(samples, labels)
         assert_array_almost_equal(clf.predict_proba([[1., 1.]]),
                                   np.array([[0.5, 0.5]]))
+
+
+def test_unlabeled():
+    samples = [[1., 0.], [0., 1.], [1., 2.5]]
+    labels = [0, 1, -1]
+    for estimator, parameters in ESTIMATORS:
+        clf = estimator(max_iter=0, **parameters)
+        assert_warns(ConvergenceWarning, clf.fit, samples, labels)
+        assert_array_almost_equal(clf.transduction_, np.array([0, 1, 0]))
+    for estimator, parameters in ESTIMATORS:
+        clf = estimator(max_iter=0, default_label=-5, **parameters)
+        assert_warns(ConvergenceWarning, clf.fit, samples, labels)
+        assert_array_almost_equal(clf.transduction_, np.array([0, 1, -5]))
