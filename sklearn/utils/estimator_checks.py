@@ -527,7 +527,7 @@ def check_classifiers_input_shapes(name, Classifier):
 
 
 def check_classifiers_classes(name, Classifier):
-    X, y = make_blobs(n_samples=30, random_state=0)
+    X, y = make_blobs(n_samples=30, random_state=0, cluster_std=0.1)
     X, y = shuffle(X, y, random_state=7)
     X = StandardScaler().fit_transform(X)
     # We need to make sure that we have non negative data, for things
