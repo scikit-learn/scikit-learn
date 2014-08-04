@@ -15,7 +15,6 @@ from sklearn.utils.sparsefuncs import sparse_class_distribution
 from sklearn.utils.sparsefuncs_fast import assign_rows_csr
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_array_almost_equal
 
 
 def test_mean_variance_axis0():
@@ -295,12 +294,10 @@ def test_min_max_axis_errors():
     assert_raises(ValueError, min_max_axis, X_csc, axis=-3)
 
 
-def test_random_choice_csc():
-    n_samples = 10000
+def test_random_choice_csc(n_samples=10000, random_state=24):
     classes = [np.array([[0, 1]]).T,  np.array([[0, 1, 2]]).T]
     class_probabilites = [np.array([[0.5, 0.5]]).T,
                           np.array([[0.6, 0.1, 0.3]]).T]
-    random_state = 24
 
     got = random_choice_csc(n_samples, classes, class_probabilites,
                             random_state)
@@ -337,9 +334,9 @@ def test_sparse_class_distribution():
                             np.array([1.0]), np.array([1.0])]
 
     for k in range(y.shape[1]):
-        assert_array_equal(classes[k], classes_expected[k])
-        assert_array_equal(n_classes[k], n_classes_expected[k])
-        assert_array_equal(class_prior[k], class_prior_expected[k])
+        assert_array_almost_equal(classes[k], classes_expected[k])
+        assert_array_almost_equal(n_classes[k], n_classes_expected[k])
+        assert_array_almost_equal(class_prior[k], class_prior_expected[k])
 
 
 if __name__ == '__main__':
