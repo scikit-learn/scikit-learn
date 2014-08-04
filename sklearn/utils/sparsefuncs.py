@@ -365,7 +365,7 @@ def random_choice_csc(n_samples, classes, class_probability=None,
 
 
 def sparse_class_distribution(y, sample_weight=None):
-    """Generate class priors from multiclass-multioutput target data
+    """Compute class priors from sparse multioutput-multiclass target data
 
     Parameters
     ----------
@@ -400,12 +400,14 @@ def sparse_class_distribution(y, sample_weight=None):
     for k in range(n_outputs):
         col_nonzero = y.indices[y.indptr[k]:y.indptr[k+1]]
         # separate sample weights for zero and non-zero elements
-        nz_sample_weight = (None if sample_weight is None else
-                            sample_weight[col_nonzero])
-        z_sample_weight_sum = (y.shape[0] - y_nnz[k] if
-                               sample_weight is None else
-                               np.sum(sample_weight) -
-                               np.sum(nz_sample_weight))
+        
+        nz_sample_weight = None
+        z_sample_weight_sum = y.shape[0] - y_nnz[k]
+        if sample_weight is not None:
+            nz_sample_weight = sample_weight[col_nonzero]
+            z_sample_weight_sum = (np.sum(sample_weight) -
+                                  np.sum(nz_sample_weight))
+
         classes, y_k = np.unique(y.data[y.indptr[k]:y.indptr[k+1]],
                                  return_inverse=True)
         class_prior = np.bincount(y_k, weights=nz_sample_weight)
