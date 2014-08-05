@@ -6,6 +6,7 @@ Locality Sensitive Hashing Forest for Approximate Nearest Neighbor Search
 
 import numpy as np
 import itertools
+from bisect import bisect_left, bisect_right
 from ..base import BaseEstimator
 from ..utils.validation import check_array
 from ..utils import check_random_state
@@ -21,11 +22,8 @@ def _find_matching_indices(sorted_array, item, left_mask, right_mask):
     Most significant h bits in the binary representations of the
     integers are matched with the items' most significant h bits.
     """
-    left_index = np.searchsorted(sorted_array,
-                                 item & left_mask)
-    right_index = np.searchsorted(sorted_array,
-                                  item | right_mask,
-                                  side='right')
+    left_index = bisect_left(sorted_array, item & left_mask)
+    right_index = bisect_right(sorted_array, item | right_mask)
     return np.arange(left_index, right_index)
 
 
