@@ -208,10 +208,10 @@ def random_choice_csc(n_samples, classes, class_probability=None,
     n_samples : int,
         Number of samples to draw in each column.
 
-    classes : list of size n_outputs of arrays of size (n_classes, )
+    classes : list of size n_outputs of arrays of size (n_classes,)
         List of classes for each column.
 
-    class_probability : list of size n_outputs of arrays of size (n_classes, )
+    class_probability : list of size n_outputs of arrays of size (n_classes,)
         Optional (default=None). Class distribution of each column. If None the
         uniform distribution is assumed.
 
@@ -264,7 +264,7 @@ def random_choice_csc(n_samples, classes, class_probability=None,
 
             # Normalize probabilites for the nonzero elements
             classes_j_nonzero = classes[j] != 0
-            class_probability_nz = class_prob_j[classes_j_nonzero[:, 0]]
+            class_probability_nz = class_prob_j[classes_j_nonzero]
             class_probability_nz_norm = (class_probability_nz /
                                          np.sum(class_probability_nz))
             classes_ind = np.searchsorted(class_probability_nz_norm.cumsum(),

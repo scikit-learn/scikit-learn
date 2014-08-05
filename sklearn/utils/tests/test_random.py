@@ -105,7 +105,7 @@ def check_sample_int_distribution(sample_without_replacement):
 
 def test_random_choice_csc(n_samples=10000, random_state=24):
     # Explicit class probabilities
-    classes = [np.array([[0, 1]]).T,  np.array([[0, 1, 2]]).T]
+    classes = [np.array([0, 1]),  np.array([0, 1, 2])]
     class_probabilites = [np.array([0.5, 0.5]), np.array([0.6, 0.1, 0.3])]
 
     got = random_choice_csc(n_samples, classes, class_probabilites,
@@ -118,7 +118,7 @@ def test_random_choice_csc(n_samples=10000, random_state=24):
         assert_array_almost_equal(class_probabilites[k], p, decimal=1)
 
     # Implicit class probabilities
-    classes = [np.array([[0, 1]]).T,  np.array([[0, 1, 2]]).T]
+    classes = [np.array([0, 1]),  np.array([0, 1, 2])]
     class_probabilites = [np.array([0.5, 0.5]), np.array([1/3, 1/3, 1/3])]
 
     got = random_choice_csc(n_samples=n_samples,
@@ -134,7 +134,7 @@ def test_random_choice_csc(n_samples=10000, random_state=24):
 
 def test_random_choice_csc_errors():
     # the length of an array in classes and class_probabilites is mismatched
-    classes = [np.array([[0, 1]]).T,  np.array([[0, 1, 2, 3]]).T]
+    classes = [np.array([0, 1]),  np.array([0, 1, 2, 3])]
     class_probabilites = [np.array([0.5, 0.5]), np.array([0.6, 0.1, 0.3])]
     assert_raises(ValueError, random_choice_csc, 4, classes,
                   class_probabilites, 1)
