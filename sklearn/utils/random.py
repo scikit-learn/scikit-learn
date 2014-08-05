@@ -239,7 +239,7 @@ def random_choice_csc(n_samples, classes, class_probability=None,
             class_prob_j.fill(1 / classes[j].shape[0])
         else:
             class_prob_j = class_probability[j]
-        class_prob_j = np.asarray(class_prob_j)
+            class_prob_j = np.asarray(class_prob_j)
 
         if class_prob_j.shape[0] != classes[j].shape[0]:
             raise ValueError("classes[{0}] (length {1}) and "
@@ -264,7 +264,7 @@ def random_choice_csc(n_samples, classes, class_probability=None,
 
             # Normalize probabilites for the nonzero elements
             classes_j_nonzero = classes[j] != 0
-            class_probability_nz = class_prob_j[classes_j_nonzero]
+            class_probability_nz = class_prob_j[classes_j_nonzero[:, 0]]
             class_probability_nz_norm = (class_probability_nz /
                                          np.sum(class_probability_nz))
             classes_ind = np.searchsorted(class_probability_nz_norm.cumsum(),
