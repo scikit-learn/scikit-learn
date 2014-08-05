@@ -227,11 +227,72 @@ def _logistic_loss_grad_hess(w, X, y, alpha, sample_weight=None):
     return out, grad, Hs
 
 
+def _multinomial_loss_grad(w, X, Y, alpha, sample_weight):
+    """Computes true multinomial loss and its gradient.
+
+    Parameters
+    ----------
+    w : ndarray, shape (n_classes * n_features,) or
+        (n_classes * (n_features + 1),)
+        Coefficient vector.
+
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Training data.
+
+    y : ndarray, shape (n_samples, n_classes)
+        Transformed labels according to the output of LabelBinarizer.
+
+    alpha : float
+        Regularization parameter. alpha is equal to 1 / C.
+
+    sample_weight : ndarray, shape (n_samples,) optional
+        Array of weights that are assigned to individual samples.
+
+    Returns
+    -------
+    loss : float
+        True multinomial loss.
+
+    grad : ndarray, shape (n_classes * n_features,) or
+        (n_classes * (n_features + 1),)
+        Ravelled gradient of the logistic loss.
+    """
+    _, n_classes = Y.shape
+    _, n_features = X.shape
+
+    fit_intercept = (w.size == n_classes * (n_features +  1))
+    w = w.reshape(Y.shape[1], -1)
+
+    sample_weight = sample_weight[:, np.newaxis]
+    if fit_intercept:
+        grad = np.zeros((n_classes, n_features + 1))
+        intercept = w[:, -1]
+        w = w[:, :-1]
+    else:
+        grad = np.zeros((n_classes, n_features))
+        n_features = X.shape[1]
+        intercept = 0
+
+    p = safe_sparse_dot(X, w.T)
+    p += intercept
+    p -= logsumexp(p, axis=1).reshape(-1, 1)
+
+    loss = -(sample_weight * Y * p).sum() + .5 * alpha * squared_norm(w)
+    p = np.exp(p, p)
+    diff = sample_weight * (p - Y)
+    grad[:, :n_features] = safe_sparse_dot(diff.T, X)
+    grad[:, :n_features] += alpha * w
+    if fit_intercept:
+        grad[:, -1] = diff.sum(axis=0)
+
+    return loss, grad.ravel()
+
+
 def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              max_iter=100, tol=1e-4, verbose=0,
                              solver='lbfgs', coef=None, copy=True,
                              class_weight=None, dual=False, penalty='l2',
-                             intercept_scaling=1.):
+                             intercept_scaling=1., multi_class='ovr'):
     """Compute a Logistic Regression model for a list of regularization
     parameters.
 
@@ -311,6 +372,13 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
+    multi_class : str, optional default 'ovr'
+        Multiclass option can be either 'ovr' or 'multinomial'. If the option
+        chosen is 'ovr', then a binary problem is fit for each label. Else
+        the loss minimised for is the true multinomial loss fit across
+        the entire probability distribution. Useful only for the 'lbfgs'
+        solvers.
+
     Returns
     -------
     coefs : ndarray, shape (n_cs, n_features) or (n_cs, n_features + 1)
@@ -329,16 +397,22 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     if isinstance(Cs, numbers.Integral):
         Cs = np.logspace(-4, 4, Cs)
 
+    if multi_class == 'multinomial' and solver != 'lbfgs':
+        raise ValueError("Solver %s cannot solve problems with "
+                         "a multinomial backend." % solver)
+
+    # Preprocessing.
     X = check_array(X, accept_sparse='csc', dtype=np.float64)
     y = check_array(y, ensure_2d=False, copy=copy)
+    _, n_features = X.shape
     check_consistent_length(X, y)
-    n_classes = np.unique(y)
+    classes = np.unique(y)
 
-    if pos_class is None:
-        if (n_classes.size > 2):
+    if pos_class is None and multi_class != 'multinomial':
+        if (classes.size > 2):
             raise ValueError('To fit OvA, use the pos_class argument')
         # np.unique(y) gives labels in sorted order.
-        pos_class = n_classes[1]
+        pos_class = classes[1]
 
     # If class_weights is a dict (provided by the user), the weights
     # are assigned to the original labels. If it is "auto", then
@@ -348,11 +422,11 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     if isinstance(class_weight, dict):
         if solver == "liblinear":
-            if n_classes.size == 2:
+            if classes.size == 2:
                 # Reconstruct the weights with keys 1 and -1
                 temp = {}
                 temp[1] = class_weight[pos_class]
-                temp[-1] = class_weight[n_classes[0]]
+                temp[-1] = class_weight[classes[0]]
                 class_weight = temp.copy()
             else:
                 raise ValueError("In LogisticRegressionCV the liblinear "
@@ -361,23 +435,32 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                                  "newton-cg solvers or set "
                                  "class_weight='auto'")
         else:
-            class_weight_ = compute_class_weight(class_weight, n_classes, y)
+            class_weight_ = compute_class_weight(class_weight, classes, y)
             sample_weight = class_weight_[le.fit_transform(y)]
 
-    mask = (y == pos_class)
-    y[mask] = 1
-    y[~mask] = -1
+    # For doing a ovr, we need to mask the labels first. for the true
+    # multinomial case this is not necessary.
+    if multi_class == 'ovr':
+        w0 = np.zeros(n_features + int(fit_intercept))
+        mask_classes = [-1, 1]
+        mask = (y == pos_class)
+        y[mask] = 1
+        y[~mask] = -1
+        # To take care of object dtypes, i.e 1 and -1 are in the form of
+        # strings.
+        y = as_float_array(y, copy=False)
 
-    # To take care of object dtypes
-    y = as_float_array(y, copy=False)
-    if class_weight == "auto":
-        class_weight_ = compute_class_weight(class_weight, [-1, 1], y)
-        sample_weight = class_weight_[le.fit_transform(y)]
-
-    if fit_intercept:
-        w0 = np.zeros(X.shape[1] + 1)
     else:
-        w0 = np.zeros(X.shape[1])
+        lbin = LabelBinarizer()
+        Y = lbin.fit_transform(y)
+        if Y.shape[1] == 1:
+            Y = np.hstack([1 - Y, Y])
+        w0 = np.zeros((Y.shape[1], n_features + int(fit_intercept)))
+        mask_classes = classes
+
+    if class_weight == "auto":
+        class_weight_ = compute_class_weight(class_weight, mask_classes, y)
+        sample_weight = class_weight_[le.fit_transform(y)]
 
     if coef is not None:
         # it must work both giving the bias term and not
@@ -388,22 +471,29 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     for C in Cs:
         if solver == 'lbfgs':
-            func = _logistic_loss_and_grad
+            if multi_class == 'multinomial':
+                target = Y
+                w0 = w0.ravel()
+                func = _multinomial_loss_grad
+            else:
+                target = y
+                func = _logistic_loss_and_grad
             try:
-                out = optimize.fmin_l_bfgs_b(
+                w0, loss, info = optimize.fmin_l_bfgs_b(
                     func, w0, fprime=None,
-                    args=(X, y, 1. / C, sample_weight),
-                    iprint=(verbose > 0) - 1, pgtol=tol, maxiter=max_iter)
+                    args=(X, target, 1. / C, sample_weight),
+                    iprint=(verbose > 0) - 1, pgtol=tol, maxiter=max_iter
+                    )
             except TypeError:
                 # old scipy doesn't have maxiter
-                out = optimize.fmin_l_bfgs_b(
+                w0, loss, info = optimize.fmin_l_bfgs_b(
                     func, w0, fprime=None,
-                    args=(X, y, 1. / C, sample_weight),
-                    iprint=(verbose > 0) - 1, pgtol=tol)
-            w0 = out[0]
-            if out[2]["warnflag"] == 1:
-                warnings.warn("lbfgs failed to converge. Increase the number "
-                              "of iterations.")
+                    args=(X, target, 1. / C, sample_weight),
+                    iprint=(verbose > 0) - 1, pgtol=tol
+                    )
+                if info["warnflag"] == 1:
+                    warnings.warn("lbfgs failed to converge. Increase the number "
+                                  "of iterations.")
 
         elif solver == 'newton-cg':
             grad = lambda x, *args: _logistic_loss_and_grad(x, *args)[1]
@@ -423,7 +513,14 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         else:
             raise ValueError("solver must be one of {'liblinear', 'lbfgs', "
                              "'newton-cg'}, got '%s' instead" % solver)
-        coefs.append(w0)
+
+        if multi_class == 'multinomial':
+            multi_w0 = np.reshape(w0, (classes.size, -1))
+            if classes.size == 2:
+                multi_w0 = multi_w0[1][np.newaxis, :]
+            coefs.append(multi_w0)
+        else:
+            coefs.append(w0)
     return coefs, np.array(Cs)
 
 
@@ -566,50 +663,15 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     return coefs, Cs, np.array(scores)
 
 
-class _LogRegMixin(LinearClassifierMixin):
-    def predict_proba(self, X):
-        """Probability estimates.
-
-        The returned estimates for all classes are ordered by the
-        label of classes.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-
-        Returns
-        -------
-        T : array-like, shape = [n_samples, n_classes]
-            Returns the probability of the sample for each class in the model,
-            where classes are ordered as they are in ``self.classes_``.
-        """
-        return self._predict_proba_lr(X)
-
-    def predict_log_proba(self, X):
-        """Log of probability estimates.
-
-        The returned estimates for all classes are ordered by the
-        label of classes.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-
-        Returns
-        -------
-        T : array-like, shape = [n_samples, n_classes]
-            Returns the log-probability of the sample for each class in the
-            model, where classes are ordered as they are in ``self.classes_``.
-        """
-        return np.log(self.predict_proba(X))
-
-
-class LogisticRegression(BaseLibLinear, _LogRegMixin, _LearntSelectorMixin,
-                         SparseCoefMixin):
+class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
+                         _LearntSelectorMixin, SparseCoefMixin):
     """Logistic Regression (aka logit, MaxEnt) classifier.
 
-    In the multiclass case, the training algorithm uses a one-vs.-all (OvA)
-    scheme, rather than the "true" multinomial LR.
+    In the multiclass case, the training algorithm uses the one-vs.-all (OvA)
+    scheme if the 'multi_class' option is set to 'ovr' and the "true"
+    multinomial LR, if the 'multi_class' option is set to 'multinomial'.
+    (Currently the 'multinomial' option is supported only by the 'lbfgs'
+    solver.)
 
     This class implements regularized logistic regression using the
     `liblinear` library, newton-cg and lbfgs solvers. It can handle both
@@ -672,6 +734,13 @@ class LogisticRegression(BaseLibLinear, _LogRegMixin, _LearntSelectorMixin,
     tol : float, optional
         Tolerance for stopping criteria.
 
+    multi_class : str, optional default 'ovr'
+        Multiclass option can be either 'ovr' or 'multinomial'. If the option
+        chosen is 'ovr', then a binary problem is fit for each label. Else
+        the loss minimised for is the true multinomial loss fit across
+        the entire probability distribution. Useful only for the 'lbfgs'
+        solvers.
+
     Attributes
     ----------
     coef_ : array, shape (n_classes, n_features)
@@ -717,13 +786,50 @@ class LogisticRegression(BaseLibLinear, _LogRegMixin, _LearntSelectorMixin,
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
-                 random_state=None, solver='liblinear', max_iter=100):
+                 random_state=None, solver='liblinear', max_iter=100,
+                 multi_class='ovr'):
 
         super(LogisticRegression, self).__init__(
             penalty=penalty, dual=dual, loss='lr', tol=tol, C=C,
             fit_intercept=fit_intercept, intercept_scaling=intercept_scaling,
             class_weight=class_weight, random_state=random_state,
-            solver=solver, max_iter=max_iter)
+            solver=solver, max_iter=max_iter, multi_class=multi_class)
+
+    def predict_proba(self, X):
+        """Probability estimates.
+
+        The returned estimates for all classes are ordered by the
+        label of classes.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        T : array-like, shape = [n_samples, n_classes]
+            Returns the probability of the sample for each class in the model,
+            where classes are ordered as they are in ``self.classes_``.
+        """
+        return self._predict_proba_lr(X)
+
+    def predict_log_proba(self, X):
+        """Log of probability estimates.
+
+        The returned estimates for all classes are ordered by the
+        label of classes.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        T : array-like, shape = [n_samples, n_classes]
+            Returns the log-probability of the sample for each class in the
+            model, where classes are ordered as they are in ``self.classes_``.
+        """
+        return np.log(self.predict_proba(X))
 
 
 class LogisticRegressionCV(LogisticRegression, BaseEstimator,
@@ -1018,162 +1124,3 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self.coef_ = np.asarray(self.coef_)
         self.intercept_ = np.asarray(self.intercept_)
         return self
-
-
-class MultinomialLR(BaseEstimator, _LogRegMixin):
-    """Multinomial logistic regression.
-
-    This class implements logistic regression for multiclass problems. While
-    LogisticRegression is able to do multiclass classification out of the box,
-    the probabilities it estimates are not well-calibrated for such problems
-    as it fits one binary model per class. By contrast, multinomial LR
-    estimators solve a single multiclass optimization problem and minimize
-    the cross-entropy (aka. log loss) over the whole probability
-    distribution P(y=k|X).
-
-    Parameters
-    ----------
-    alpha : float, optional
-        Strength of L2 penalty (aka. regularization, weight decay).
-        Note that the (optional) intercept term is not regularized.
-
-    class_weight : {dict, 'auto'}, optional
-        Over-/undersamples the samples of each class according to the given
-        weights. If not given, all classes are supposed to have weight one.
-        The 'auto' mode selects weights inversely proportional to class
-        frequencies in the training set.
-
-    fit_intercept : bool, default: True
-        Whether an intercept (bias) term should be learned and added to the
-        decision function.
-
-    Attributes
-    ----------
-    `coef_` : array, shape = [n_classes, n_features]
-        Coefficient of the features in the decision function.
-
-    `intercept_` : array, shape = [n_classes]
-        Intercept (a.k.a. bias) added to the decision function.
-        If `fit_intercept` is set to False, the intercept is set to zero.
-
-    References
-    ----------
-    C. M. Bishop (2006). Pattern Recognition and Machine Learning. Springer,
-        pp. 205-210.
-
-    See also
-    --------
-    sklearn.linear_model.LogisticRegression
-    sklearn.linear_model.SGDClassifier
-
-    """
-    def __init__(self, C=1., fit_intercept=True, class_weight=None,
-                 max_iter=100, tol=0.0001):
-        self.C = C
-        self.class_weight = class_weight
-        self.fit_intercept = fit_intercept
-        self.max_iter = max_iter
-        self.tol = tol
-
-    def fit(self, X, y):
-        """Fit logistic regression model to training data X, y.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training vectors, where n_samples in the number of samples and
-            n_features is the number of features.
-
-        y : array-like, shape = [n_samples]
-            Target vector for the samples in X.
-        """
-        X = check_array(X, accept_sparse='csr')
-        X, y = check_X_y(X, y)
-
-        if y.ndim == 2 and y.shape[1] == 1:
-            warnings.warn(
-                "A column-vector y was passed when a 1d array was"
-                " expected. Please change the shape of y to "
-                "(n_samples, ), for example using ravel().",
-                DataConversionWarning
-                )
-            y = np.ravel(y)
-
-        lbin = LabelBinarizer()
-        Y = lbin.fit_transform(y)
-        if Y.shape[1] == 1:
-            Y = np.hstack([1 - Y, Y])
-
-        self.classes_ = lbin.classes_
-        class_weight_ = compute_class_weight(self.class_weight, self.classes_,
-                                             y)
-        le = LabelEncoder()
-        sample_weight = class_weight_[le.fit_transform(y)]
-
-        # Fortran-ordered so we can slice off the intercept in loss_grad and
-        # get contiguous arrays.
-        w = np.zeros((Y.shape[1], X.shape[1] + bool(self.fit_intercept)),
-                     order='F')
-
-        if self.C < 0:
-            raise ValueError("Penalty term must be positive; got (C=%r)"
-                             % self.C)
-
-        # Compatibility for old scipy since it does not have a maxiter param.
-        try:
-            w, loss, info = optimize.fmin_l_bfgs_b(
-                _loss_grad, w.ravel(),
-                args=[X, Y, 1. / self.C, self.fit_intercept, sample_weight],
-                maxiter=self.max_iter, pgtol=self.tol
-                )
-        except TypeError:
-            w, loss, info = optimize.fmin_l_bfgs_b(
-                _loss_grad, w.ravel(),
-                args=[X, Y, 1. / self.C, self.fit_intercept, sample_weight],
-                pgtol=self.tol
-                )
-
-        if info['warnflag'] == 1:
-            warnings.warn("lbfgs solver failed to converge for the given "
-                          "no. of iterations. Increase the number of iterations")
-
-        w = w.reshape(Y.shape[1], -1)
-        if self.fit_intercept:
-            intercept = w[:, -1]
-            w = w[:, :-1]
-        else:
-            intercept = np.zeros(Y.shape[1])
-
-        if len(self.classes_) == 2:
-            w = w[1].reshape(1, -1)
-            intercept = intercept[1:]
-        self.coef_ = w
-        self.intercept_ = intercept
-        return self
-
-
-def _loss_grad(w, X, Y, alpha, fit_intercept, sample_weight):
-    # Cross-entropy loss and its gradient for multinomial logistic regression
-    # (Bishop 2006, p. 209) with L2 penalty (weight decay).
-    w = w.reshape(Y.shape[1], -1)
-    sample_weight = sample_weight[:, np.newaxis]
-    if fit_intercept:
-        intercept = w[:, -1]
-        w = w[:, :-1]
-    else:
-        intercept = 0
-
-    p = safe_sparse_dot(X, w.T)
-    p += intercept
-    p -= logsumexp(p, axis=1).reshape(-1, 1)
-
-    loss = -(sample_weight * Y * p).sum() + .5 * alpha * squared_norm(w)
-
-    p = np.exp(p, p)
-    diff = sample_weight * (p - Y)
-    grad = safe_sparse_dot(diff.T, X)
-    grad += alpha * w
-    if fit_intercept:
-        grad = np.hstack([grad, diff.sum(axis=0).reshape(-1, 1)])
-
-    return loss, grad.ravel()

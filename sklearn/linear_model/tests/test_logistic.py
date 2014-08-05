@@ -17,8 +17,7 @@ from sklearn.utils import ConvergenceWarning
 from sklearn.linear_model.logistic import (
     LogisticRegression,
     logistic_regression_path, LogisticRegressionCV,
-    _logistic_loss_and_grad, _logistic_loss_grad_hess,
-    MultinomialLR
+    _logistic_loss_and_grad, _logistic_loss_grad_hess
     )
 from sklearn.cross_validation import StratifiedKFold
 from sklearn.datasets import load_iris, make_classification
@@ -83,7 +82,8 @@ def test_predict_iris():
     target = iris.target_names[iris.target]
 
     for clf in [LogisticRegression(C=len(iris.data)),
-                MultinomialLR(C=len(iris.data))]:
+                LogisticRegression(C=len(iris.data), solver='lbfgs',
+                                   multi_class='multinomial')]:
         clf.fit(iris.data, target)
         assert_array_equal(np.unique(target), clf.classes_)
 
@@ -99,7 +99,7 @@ def test_predict_iris():
 
 
 def test_multinomial_validation():
-    lr = MultinomialLR(C=-1)
+    lr = LogisticRegression(C=-1, solver='lbfgs', multi_class='multinomial')
     assert_raises(ValueError, lr.fit, [[0, 1], [1, 0]], [0, 1])
 
 
@@ -108,13 +108,16 @@ def test_multinomial_binary():
     target = (iris.target > 0).astype(np.intp)
     target = np.array(["setosa", "not-setosa"])[target]
 
-    clf = MultinomialLR().fit(iris.data, target)
+    clf = LogisticRegression(solver='lbfgs', multi_class='multinomial')
+    clf.fit(iris.data, target)
 
     assert_equal(clf.coef_.shape, (1, iris.data.shape[1]))
     assert_equal(clf.intercept_.shape, (1,))
     assert_array_equal(clf.predict(iris.data), target)
 
-    clf = MultinomialLR(fit_intercept=False).fit(iris.data, target)
+    mlr = LogisticRegression(solver='lbfgs', multi_class='multinomial',
+                             fit_intercept=False)
+    clf.fit(iris.data, target)
     pred = clf.classes_[np.argmax(clf.predict_log_proba(iris.data), axis=1)]
     assert_greater(np.mean(pred == target), .9)
 
