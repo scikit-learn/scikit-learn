@@ -5,7 +5,6 @@ Locality Sensitive Hashing Forest for Approximate Nearest Neighbor Search
 # Author: Maheshakya Wijewardena <maheshakya.10@cse.mrt.ac.lk>
 
 import numpy as np
-import itertools
 from bisect import bisect_left, bisect_right
 from ..base import BaseEstimator
 from ..utils.validation import check_array
@@ -188,9 +187,7 @@ class LSHForest(BaseEstimator):
         hashes = np.array(grp.transform(self._input_array) > 0, dtype=int)
         hash_function = grp.components_
 
-        binary_hashes = []
-        for i in range(hashes.shape[0]):
-            binary_hashes.append(np.packbits(hashes[i]).view(dtype='>u4')[0])
+        binary_hashes = np.packbits(hashes).view(dtype='>u4')
 
         return np.argsort(binary_hashes), np.sort(binary_hashes), hash_function
 
@@ -311,9 +308,6 @@ class LSHForest(BaseEstimator):
         self.hash_functions_ = []
         self._trees = []
         self._original_indices = []
-
-        self.cache_N = int(self.max_label_length/2)
-        hashes = list(itertools.product((0, 1), repeat=self.cache_N))
 
         for i in range(self.n_trees):
             # This is g(p,x) for a particular tree.
