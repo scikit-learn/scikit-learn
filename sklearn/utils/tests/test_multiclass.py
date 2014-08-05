@@ -27,7 +27,7 @@ from sklearn.utils.multiclass import is_label_indicator_matrix
 from sklearn.utils.multiclass import is_multilabel
 from sklearn.utils.multiclass import is_sequence_of_sequences
 from sklearn.utils.multiclass import type_of_target
-from sklearn.utils.multiclass import sparse_class_distribution
+from sklearn.utils.multiclass import class_distribution
 
 
 class NotAnArray(object):
@@ -337,7 +337,7 @@ def test_type_of_target():
         assert_raises(ValueError, type_of_target, example)
 
 
-def test_sparse_class_distribution():
+def test_class_distribution():
     y = sp.csc_matrix(np.array([[1, 0, 0, 1],
                                 [2, 0, 0, 1],
                                 [1, 3, 0, 1],
@@ -345,7 +345,7 @@ def test_sparse_class_distribution():
                                 [2, 0, 0, 1],
                                 [1, 3, 0, 1]]))
 
-    classes, n_classes, class_prior = sparse_class_distribution(y)
+    classes, n_classes, class_prior = class_distribution(y)
     classes_expected = [np.array([1, 2]), np.array([0, 3]),
                         np.array([0]), np.array([1])]
     n_classes_expected = [2, 2, 1, 1]

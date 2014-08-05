@@ -5,7 +5,6 @@
 from __future__ import division
 
 import warnings
-import array
 import numpy as np
 import scipy.sparse as sp
 
@@ -15,7 +14,7 @@ from .utils import check_random_state
 from .utils.validation import check_array
 from sklearn.utils import deprecated
 from sklearn.utils.random import random_choice_csc
-from sklearn.utils.multiclass import sparse_class_distribution
+from sklearn.utils.multiclass import class_distribution
 
 
 class DummyClassifier(BaseEstimator, ClassifierMixin):
@@ -128,21 +127,9 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                     raise ValueError("Constant target value should have "
                                      "shape (%d, 1)." % self.n_outputs_)
 
-        if self.sparse_output_:
-            (self.classes_,
-             self.n_classes_,
-             self.class_prior_) = sparse_class_distribution(y, sample_weight)
-        else:
-            self.classes_ = []
-            self.n_classes_ = []
-            self.class_prior_ = []
-
-            for k in xrange(self.n_outputs_):
-                classes, y_k = np.unique(y[:, k], return_inverse=True)
-                self.classes_.append(classes)
-                self.n_classes_.append(classes.shape[0])
-                class_prior = np.bincount(y_k, weights=sample_weight)
-                self.class_prior_.append(class_prior / class_prior.sum())
+        (self.classes_,
+         self.n_classes_,
+         self.class_prior_) = class_distribution(y, sample_weight)
 
         for k in range(self.n_outputs_):
             # Checking in case of constant strategy if the constant
