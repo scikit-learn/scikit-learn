@@ -62,13 +62,13 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `intercept_hidden_` : array-like, shape (n_components,)
+    intercept_hidden_ : array-like, shape (n_components,)
         Biases of the hidden units.
 
-    `intercept_visible_` : array-like, shape (n_features,)
+    intercept_visible_ : array-like, shape (n_features,)
         Biases of the visible units.
 
-    `components_` : array-like, shape (n_components, n_features)
+    components_ : array-like, shape (n_components, n_features)
         Weight matrix, where n_features in the number of
         visible units and n_components is the number of hidden units.
 

@@ -312,23 +312,23 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
     Attributes
     ----------
-    `estimators_` : list of classifiers
+    estimators_ : list of classifiers
         The collection of fitted sub-estimators.
 
-    `classes_` : array of shape = [n_classes]
+    classes_ : array of shape = [n_classes]
         The classes labels.
 
-    `n_classes_` : int
+    n_classes_ : int
         The number of classes.
 
-    `estimator_weights_` : array of floats
+    estimator_weights_ : array of floats
         Weights for each estimator in the boosted ensemble.
 
-    `estimator_errors_` : array of floats
+    estimator_errors_ : array of floats
         Classification error for each estimator in the boosted
         ensemble.
 
-    `feature_importances_` : array of shape = [n_features]
+    feature_importances_ : array of shape = [n_features]
         The feature importances if supported by the ``base_estimator``.
 
     See also
@@ -854,16 +854,16 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
     Attributes
     ----------
-    `estimators_` : list of classifiers
+    estimators_ : list of classifiers
         The collection of fitted sub-estimators.
 
-    `estimator_weights_` : array of floats
+    estimator_weights_ : array of floats
         Weights for each estimator in the boosted ensemble.
 
-    `estimator_errors_` : array of floats
+    estimator_errors_ : array of floats
         Regression error for each estimator in the boosted ensemble.
 
-    `feature_importances_` : array of shape = [n_features]
+    feature_importances_ : array of shape = [n_features]
         The feature importances if supported by the ``base_estimator``.
 
     See also

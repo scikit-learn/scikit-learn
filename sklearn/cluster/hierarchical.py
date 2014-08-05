@@ -567,16 +567,16 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
 
     Attributes
     ----------
-    `labels_` : array [n_samples]
+    labels_ : array [n_samples]
         cluster labels for each point
 
-    `n_leaves_` : int
+    n_leaves_ : int
         Number of leaves in the hierarchical tree.
 
-    `n_components_` : int
+    n_components_ : int
         The estimated number of connected components in the graph.
 
-    `children_` : array-like, shape = [n_nodes, 2]
+    children_ : array-like, shape = [n_nodes, 2]
         The children of each non-leaf node. Values less than `n_samples`
         refer to leaves of the tree. A greater value `i` indicates a node with
         children `children_[i - n_samples]`.
@@ -727,16 +727,16 @@ class Ward(AgglomerativeClustering):
 
     Attributes
     ----------
-    `labels_` : array [n_features]
+    labels_ : array [n_features]
         cluster labels for each feature
 
-    `n_leaves_` : int
+    n_leaves_ : int
         Number of leaves in the hierarchical tree.
 
-    `n_components_` : int
+    n_components_ : int
         The estimated number of connected components in the graph.
 
-    `children_` : array-like, shape = [n_nodes, 2]
+    children_ : array-like, shape = [n_nodes, 2]
         The children of each non-leaf node. Values less than `n_samples`
         refer to leaves of the tree. A greater value `i` indicates a node with
         children `children_[i - n_samples]`.
@@ -797,18 +797,18 @@ class WardAgglomeration(AgglomerationTransform, Ward):
 
     Attributes
     ----------
-    `children_` : array-like, shape = [n_nodes, 2]
+    children_ : array-like, shape = [n_nodes, 2]
         The children of each non-leaf node. Values less than `n_samples` refer
         to leaves of the tree. A greater value `i` indicates a node with
         children `children_[i - n_samples]`.
 
-    `labels_` : array [n_features]
+    labels_ : array [n_features]
         cluster labels for each feature
 
-    `n_leaves_` : int
+    n_leaves_ : int
         Number of leaves in the hierarchical tree.
 
-    `n_components_` : int
+    n_components_ : int
         The estimated number of connected components in the graph.
 
     """

@@ -171,10 +171,10 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `min_` : ndarray, shape (n_features,)
+    min_ : ndarray, shape (n_features,)
         Per feature adjustment for minimum.
 
-    `scale_` : ndarray, shape (n_features,)
+    scale_ : ndarray, shape (n_features,)
         Per feature relative scaling of the data.
     """
 
@@ -279,10 +279,10 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `mean_` : array of floats with shape [n_features]
+    mean_ : array of floats with shape [n_features]
         The mean value for each feature in the training set.
 
-    `std_` : array of floats with shape [n_features]
+    std_ : array of floats with shape [n_features]
         The standard deviation for each feature in the training set.
 
     See also
@@ -432,7 +432,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     Attributes
     ----------
 
-    `powers_`:
+    powers_ :
          powers_[i, j] is the exponent of the jth input in the ith output.
 
     Notes
@@ -928,17 +928,17 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `active_features_` : array
+    active_features_ : array
         Indices for active features, meaning values that actually occur
         in the training set. Only available when n_values is ``'auto'``.
 
-    `feature_indices_` : array of shape (n_features,)
+    feature_indices_ : array of shape (n_features,)
         Indices to feature ranges.
         Feature ``i`` in the original data is mapped to features
         from ``feature_indices_[i]`` to ``feature_indices_[i+1]``
         (and then potentially masked by `active_features_` afterwards)
 
-    `n_values_` : array of shape (n_features,)
+    n_values_ : array of shape (n_features,)
         Maximum number of values per feature.
 
     Examples

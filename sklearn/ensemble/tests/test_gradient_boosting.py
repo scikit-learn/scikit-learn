@@ -916,6 +916,18 @@ def test_max_leaf_nodes_max_depth():
         assert_equal(tree.max_depth, 1)
 
 
+def test_warm_start_wo_nestimators_change():
+    """Test if warm_start does nothing if n_estimators is not changed.
+
+    Regression test for #3513.
+    """
+    clf = GradientBoostingClassifier(n_estimators=10, warm_start=True)
+    clf.fit([[0, 1], [2, 3]], [0, 1])
+    assert clf.estimators_.shape[0] == 10
+    clf.fit([[0, 1], [2, 3]], [0, 1])
+    assert clf.estimators_.shape[0] == 10
+
+
 if __name__ == "__main__":
     import nose
     nose.runmodule()
