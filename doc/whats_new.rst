@@ -44,10 +44,8 @@ Enhancements
      descent for :class:`linear_model.Lasso`, :class:`linear_model.ElasticNet`
      and related. By `Manoj Kumar`_.
 
-    - Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score`.
-      By `Jatin Shah`.
-
-
+   - Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score` and
+     `metrics.log_loss`. By `Jatin Shah`.
 
 Documentation improvements
 ..........................
