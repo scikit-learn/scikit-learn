@@ -346,7 +346,7 @@ class RFECV(RFE, MetaEstimatorMixin):
 
                 if self.verbose > 0:
                     print("Finished fold with %d / %d feature ranks, score=%f"
-                          % (k, max(ranking_), score))
+                          % (k + 1, max(ranking_), score))
                 scores[k] += score
 
         # Pick the best number of features on average
