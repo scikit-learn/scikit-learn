@@ -204,25 +204,23 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             y = random_choice_csc(n_samples, classes_, class_prob,
                                   self.random_state)
         else:
-            y = []
-            for k in xrange(self.n_outputs_):
-                if self.strategy == "most_frequent":
-                    ret = (np.ones(n_samples, dtype=int) *
-                           class_prior_[k].argmax())
+            if self.strategy == "most_frequent":
+                ret = [classes_[k][class_prior_[k].argmax()] for k in
+                       range(self.n_outputs_)]
+                y = np.tile(ret, [n_samples, 1])
 
-                elif self.strategy == "stratified":
-                    ret = proba[k].argmax(axis=1)
+            elif self.strategy == "stratified":
+                y = np.vstack([classes_[k][proba[k].argmax(axis=1)] for k in
+                               range(self.n_outputs_)]).T
 
-                elif self.strategy == "uniform":
-                    ret = rs.randint(n_classes_[k], size=n_samples)
+            elif self.strategy == "uniform":
+                ret = [classes_[k][rs.randint(n_classes_[k], size=n_samples)]
+                       for k in range(self.n_outputs_)]
+                y = np.vstack(ret).T
 
-                elif self.strategy == "constant":
-                    ret = (np.ones(n_samples, dtype=int) *
-                           np.where(classes_[k] == constant[k]))
+            elif self.strategy == "constant":
+                y = np.tile(self.constant, (n_samples, 1))
 
-                y.append(classes_[k][ret])
-
-            y = np.vstack(y).T
             if self.n_outputs_ == 1 and not self.output_2d_:
                 y = np.ravel(y)
 
