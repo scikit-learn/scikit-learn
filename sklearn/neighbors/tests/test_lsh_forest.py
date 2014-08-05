@@ -99,9 +99,6 @@ def test_kneighbors():
         # Desired number of neighbors should be returned.
         assert_equal(neighbors.shape[1], n_neighbors)
 
-    # Test whether a value error is raised when X=None
-    assert_raises(ValueError, lshf.kneighbors, None)
-
     # Multiple points
     n_points = 10
     points = X[np.random.randint(0, samples, n_points)]
@@ -142,9 +139,6 @@ def test_radius_neighbors():
                                                      radius=mean_dist,
                                                      return_distance=True)
         assert_array_less(distances, mean_dist)
-
-    # Test whether a value error is raised when X=None
-    assert_raises(ValueError, lshf.radius_neighbors, None)
 
     # Multiple points
     n_points = 10
@@ -187,10 +181,6 @@ def test_fit():
     X = np.random.rand(samples, dim)
 
     lshf = LSHForest(n_trees=n_trees)
-
-    # Test whether a value error is raised when X=None
-    assert_raises(ValueError, lshf.fit, None)
-
     lshf.fit(X)
 
     # _input_array = X
