@@ -798,6 +798,27 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
                                   decimal=10)
         assert_almost_equal(clf.intercept_[0], average_intercept, decimal=10)
 
+    def test_average_sparse(self):
+        """Checks the average weights on data with 0s"""
+
+        eta = .001
+        clf = self.factory(loss='squared_loss',
+                           learning_rate='constant',
+                           eta0=eta, alpha=0,
+                           fit_intercept=True,
+                           n_iter=1, average=True)
+
+        n_samples = Y3.shape[0]
+
+        clf.partial_fit(X3[:int(n_samples / 2)][:], Y3[:int(n_samples / 2)])
+        clf.partial_fit(X3[int(n_samples / 2):][:], Y3[int(n_samples / 2):])
+        average_weights, average_intercept = self.asgd(X3, Y3, eta)
+
+        assert_array_almost_equal(clf.coef_,
+                                  average_weights,
+                                  decimal=10)
+        assert_almost_equal(clf.intercept_, average_intercept, decimal=10)
+
     def test_sgd_least_squares_fit(self):
         xmin, xmax = -5, 5
         n_samples = 100
