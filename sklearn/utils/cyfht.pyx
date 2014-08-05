@@ -1,6 +1,8 @@
 import numpy as np
 cimport numpy as np
 cimport cython
+from libc.math cimport log2
+
 
 DTYPE = np.double
 ctypedef np.double_t DTYPE_t
@@ -10,7 +12,7 @@ def fht(np.ndarray[DTYPE_t] array_):
     cdef int bit, length, _, i, j
     cdef double temp
     bit = length = len(array_)
-    for _ in xrange(int(np.log2(length))):
+    for _ in xrange(int(log2(length))):
         bit >>= 1
         for i in xrange(length):
             if i & bit == 0:
