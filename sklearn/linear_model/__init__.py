@@ -23,7 +23,7 @@ from .stochastic_gradient import SGDClassifier, SGDRegressor
 from .ridge import (Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV,
                     ridge_regression)
 from .logistic import (LogisticRegression, LogisticRegressionCV,
-                       logistic_regression_path, MultinomialLR)
+                       logistic_regression_path)
 from .omp import (orthogonal_mp, orthogonal_mp_gram, OrthogonalMatchingPursuit,
                   OrthogonalMatchingPursuitCV)
 from .passive_aggressive import PassiveAggressiveClassifier
