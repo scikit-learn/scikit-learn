@@ -47,6 +47,11 @@ Enhancements
     - Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score`.
       By `Jatin Shah`.
 
+   - :class:`GridSearchCV` and :class:`RandomizedSearchCV` can now be
+     configured to work with estimators that may fail and raise errors on
+     individual folds. This option is controlled by the `error_score`
+     parameter. This does not affect errors raised on re-fit. By 
+	 `Michal Romaniuk`_.
 
 
 Documentation improvements
@@ -2883,3 +2888,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Laurent Direr: https://github.com/ldirer
 
 .. _Nikolay Mayorov: https://github.com/nmayorov
+
+.. _Michal Romaniuk: https://github.com/romaniukm
