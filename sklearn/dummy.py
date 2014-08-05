@@ -104,7 +104,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                           'to a numpy array. Predicting on sparse target data '
                           'with the uniform strategy would not save memory '
                           'and would be slower.',
-                          sp.SparseEfficiencyWarning)
+                          ValueError)
 
         self.sparse_output_ = sp.issparse(y)
 
