@@ -1317,7 +1317,7 @@ def hamming_loss(y_true, y_pred, classes=None):
         raise ValueError("{0} is not supported".format(y_type))
 
 
-def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
+def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None):
     """Log loss, aka logistic loss or cross-entropy loss.
 
     This is the loss function used in (multinomial) logistic regression
@@ -1344,6 +1344,9 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
     normalize : bool, optional (default=True)
         If true, return the mean loss per sample.
         Otherwise, return the sum of the per-sample losses.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
 
     Returns
     -------
@@ -1393,8 +1396,14 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
 
     # Renormalize
     Y /= Y.sum(axis=1)[:, np.newaxis]
-    loss = -(T * np.log(Y)).sum()
-    return loss / T.shape[0] if normalize else loss
+    loss = -(T * np.log(Y)).sum(axis=1)
+    if normalize:
+        return np.average(loss, weights=sample_weight)
+    else:
+        if sample_weight is not None:
+            return np.dot(loss, sample_weight)
+        else:
+            return np.sum(loss)
 
 
 def hinge_loss(y_true, pred_decision, pos_label=None, neg_label=None):
