@@ -1,3 +1,4 @@
+from __future__ import division
 import numpy as np
 import scipy.sparse as sp
 
@@ -338,18 +339,41 @@ def test_type_of_target():
 
 
 def test_class_distribution():
+    y = np.array([[1, 0, 0, 1],
+                  [2, 2, 0, 1],
+                  [1, 3, 0, 1],
+                  [4, 2, 0, 1],
+                  [2, 0, 0, 1],
+                  [1, 3, 0, 1]])
+
+    classes, n_classes, class_prior = class_distribution(y)
+    classes_expected = [np.array([1, 2, 4]), np.array([0, 2, 3]),
+                        np.array([0]), np.array([1])]
+    n_classes_expected = [3, 3, 1, 1]
+    class_prior_expected = [np.array([3/6, 2/6, 1/6]),
+                            np.array([1/3, 1/3, 1/3]),
+                            np.array([1.0]), np.array([1.0])]
+
+    for k in range(y.shape[1]):
+        assert_array_almost_equal(classes[k], classes_expected[k])
+        assert_array_almost_equal(n_classes[k], n_classes_expected[k])
+        assert_array_almost_equal(class_prior[k], class_prior_expected[k])
+
+
+def test_class_distribution_sparse():
     y = sp.csc_matrix(np.array([[1, 0, 0, 1],
-                                [2, 0, 0, 1],
+                                [2, 2, 0, 1],
                                 [1, 3, 0, 1],
-                                [1, 3, 0, 1],
+                                [4, 2, 0, 1],
                                 [2, 0, 0, 1],
                                 [1, 3, 0, 1]]))
 
     classes, n_classes, class_prior = class_distribution(y)
-    classes_expected = [np.array([1, 2]), np.array([0, 3]),
+    classes_expected = [np.array([1, 2, 4]), np.array([0, 2, 3]),
                         np.array([0]), np.array([1])]
-    n_classes_expected = [2, 2, 1, 1]
-    class_prior_expected = [np.array([4.0/6, 2.0/6]), np.array([0.5, 0.5]),
+    n_classes_expected = [3, 3, 1, 1]
+    class_prior_expected = [np.array([3/6, 2/6, 1/6]),
+                            np.array([1/3, 1/3, 1/3]),
                             np.array([1.0]), np.array([1.0])]
 
     for k in range(y.shape[1]):
