@@ -11,9 +11,9 @@ from __builtin__ import staticmethod
 import warnings
 
 import numpy as np
-from scipy.fftpack import dct
 import scipy.sparse as sp
 import fht as fht
+from sklearn.utils.cyfht import fht2 as cyfht
 from scipy.linalg import svd, hadamard
 from scipy.stats import chi
 
@@ -576,7 +576,9 @@ class Fastfood(BaseEstimator, TransformerMixin):
 
     @staticmethod
     def approx_fourier_transformation_multi_dim(result):
-        return fht.fht2(result, normalized=False, axes=1)
+        # return fht.fht2(result, normalized=False, axes=1)
+        cyfht(result)
+        return result
         #return dct(result, norm='ortho',axis=0)
 
     @staticmethod

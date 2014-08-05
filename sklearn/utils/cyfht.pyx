@@ -1,18 +1,17 @@
-import numpy as np
 cimport numpy as np
 cimport cython
 from libc.math cimport log2
 
 
-DTYPE = np.double
+#DTYPE = np.double
 ctypedef np.double_t DTYPE_t
 
 @cython.boundscheck(False)
 def fht(np.ndarray[DTYPE_t] array_):
     cdef unsigned int bit, length, _, i, j
     cdef double temp
-    bit = length = len(array_)
-    for _ in xrange(int(log2(length))):
+    bit = length = array_.shape[0]
+    for _ in xrange(<unsigned int>(log2(length))):
         bit >>= 1
         for i in xrange(length):
             if i & bit == 0:
@@ -28,7 +27,7 @@ def fht2(np.ndarray[DTYPE_t, ndim=2] array_):
     n = array_.shape[0]
     for x in xrange(n):
         bit = length = array_.shape[1]
-        for _ in xrange(int(log2(length))):
+        for _ in xrange(<unsigned int>(log2(length))):
             bit >>= 1
             for i in xrange(length):
                 if i & bit == 0:
