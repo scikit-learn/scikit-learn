@@ -190,9 +190,7 @@ class LSHForest(BaseEstimator):
 
         binary_hashes = []
         for i in range(hashes.shape[0]):
-            xx = tuple(hashes[i])
-            binary_hashes.append(self.cache[xx[:self.cache_N]] * self.k
-                                 + self.cache[xx[self.cache_N:]])
+            binary_hashes.append(np.packbits(hashes[i]).view(dtype='>u4')[0])
 
         return np.argsort(binary_hashes), np.sort(binary_hashes), hash_function
 
@@ -215,17 +213,13 @@ class LSHForest(BaseEstimator):
             left_mask = np.append(np.ones(length, dtype=int),
                                   np.zeros(self.max_label_length-length,
                                            dtype=int))
-            xx = tuple(left_mask)
-            binary_hash_left = (self.cache[xx[:self.cache_N]] * self.k +
-                                self.cache[xx[self.cache_N:]])
+            binary_hash_left = np.packbits(left_mask).view(dtype='>u4')[0]
             self._left_mask.append(binary_hash_left)
 
             right_mask = np.append(np.zeros(length, dtype=int),
                                    np.ones(self.max_label_length-length,
                                            dtype=int))
-            xx = tuple(right_mask)
-            binary_hash_right = (self.cache[xx[:self.cache_N]] * self.k +
-                                 self.cache[xx[self.cache_N:]])
+            binary_hash_right = np.packbits(right_mask).view(dtype='>u4')[0]
             self._right_mask.append(binary_hash_right)
 
         self._left_mask = np.array(self._left_mask)
@@ -295,10 +289,8 @@ class LSHForest(BaseEstimator):
         """
         projections = np.array(np.dot(self.hash_functions_[tree_n],
                                       item) > 0, dtype=int)
-        xx = tuple(projections)
-        binary_hash = (self.cache[xx[:self.cache_N]] * self.k +
-                       self.cache[xx[self.cache_N:]])
-        return binary_hash
+
+        return np.packbits(projections).view(dtype='>u4')[0]
 
     def fit(self, X):
         """Fit the LSH forest on the data.
@@ -314,7 +306,7 @@ class LSHForest(BaseEstimator):
         self._n_dim = self._input_array.shape[1]
 
         self.max_label_length = 32
-        digits = ['0', '1']
+
         # Creates a g(p,x) for each tree
         self.hash_functions_ = []
         self._trees = []
@@ -322,13 +314,6 @@ class LSHForest(BaseEstimator):
 
         self.cache_N = int(self.max_label_length/2)
         hashes = list(itertools.product((0, 1), repeat=self.cache_N))
-
-        self.cache = {}
-        for item in hashes:
-            self.cache[tuple(item)] = int("".join([digits[y] for y in item]),
-                                          2)
-
-        self.k = 2 ** self.cache_N
 
         for i in range(self.n_trees):
             # This is g(p,x) for a particular tree.
