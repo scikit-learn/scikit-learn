@@ -136,6 +136,8 @@ CLASSIFICATION_METRICS = {
 
 THRESHOLDED_METRICS = {
     "log_loss": log_loss,
+    "unnormalized_log_loss": partial(log_loss, normalize=False),
+
     "hinge_loss": hinge_loss,
 
     "roc_auc_score": roc_auc_score,
@@ -239,6 +241,7 @@ METRICS_WITH_NORMALIZE_OPTION = [
 # Threshold-based metrics with "multilabel-indicator" format support
 THRESHOLDED_MULTILABEL_METRICS = [
     "log_loss",
+    "unnormalized_log_loss",
 
     "roc_auc_score", "weighted_roc_auc", "samples_roc_auc",
     "micro_roc_auc", "macro_roc_auc",
@@ -315,7 +318,6 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = [
     "confusion_matrix",
     "hamming_loss",
     "hinge_loss",
-    "log_loss",
     "matthews_corrcoef_score",
 ]
 
@@ -532,7 +534,7 @@ def test_invariance_string_vs_numbers_labels():
                                        "invariance test".format(name))
 
     for name, metric in THRESHOLDED_METRICS.items():
-        if name in ("log_loss", "hinge_loss"):
+        if name in ("log_loss", "hinge_loss", "unnormalized_log_loss"):
             measure_with_number = metric(y1, y2)
             measure_with_str = metric(y1_str, y2)
             assert_array_equal(measure_with_number, measure_with_str,
@@ -968,23 +970,31 @@ def test_sample_weight_invariance(n_samples=50):
     random_state = check_random_state(0)
     y_true = random_state.randint(0, 2, size=(n_samples, ))
     y_pred = random_state.randint(0, 2, size=(n_samples, ))
+    y_score = random_state.random_sample(size=(n_samples,))
     for name in ALL_METRICS:
         if (name in METRICS_WITHOUT_SAMPLE_WEIGHT or
                 name in METRIC_UNDEFINED_MULTICLASS):
             continue
         metric = ALL_METRICS[name]
-        yield check_sample_weight_invariance, name, metric, y_true, y_pred
+        if name in THRESHOLDED_METRICS:
+            yield check_sample_weight_invariance, name, metric, y_true, y_score
+        else:
+            yield check_sample_weight_invariance, name, metric, y_true, y_pred
 
     # multiclass
     random_state = check_random_state(0)
     y_true = random_state.randint(0, 5, size=(n_samples, ))
     y_pred = random_state.randint(0, 5, size=(n_samples, ))
+    y_score = random_state.random_sample(size=(n_samples, 5))
     for name in ALL_METRICS:
         if (name in METRICS_WITHOUT_SAMPLE_WEIGHT or
                 name in METRIC_UNDEFINED_MULTICLASS):
             continue
         metric = ALL_METRICS[name]
-        yield check_sample_weight_invariance, name, metric, y_true, y_pred
+        if name in THRESHOLDED_METRICS:
+            yield check_sample_weight_invariance, name, metric, y_true, y_score
+        else:
+            yield check_sample_weight_invariance, name, metric, y_true, y_pred
 
     # multilabel sequence
     y_true = 2 * [(1, 2, ), (1, ), (0, ), (0, 1), (1, 2)]
