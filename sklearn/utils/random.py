@@ -267,9 +267,9 @@ def random_choice_csc(n_samples, classes, class_probability=None,
             class_probability_nz = class_prob_j[classes_j_nonzero]
             class_probability_nz_norm = (class_probability_nz /
                                          np.sum(class_probability_nz))
-            data.extend(choice(classes[j][classes_j_nonzero],
-                               size=nnz,
-                               p=class_probability_nz_norm))
+            classes_ind = np.searchsorted(class_probability_nz_norm.cumsum(),
+                                          np.random.rand(nnz))
+            data.extend(classes[j][classes_j_nonzero][classes_ind])
         indptr.append(len(indices))
 
     return sp.csc_matrix((data, indices, indptr),
