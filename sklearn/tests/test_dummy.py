@@ -430,7 +430,7 @@ def test_uniform_strategy_sparse_target_warning():
                                 [1, 1]]))
 
     clf = DummyClassifier(strategy="uniform", random_state=0)
-    assert_warns(sp.SparseEfficiencyWarning, clf.fit, X, y)
+    assert_warns(UserWarning, clf.fit, X, y)
 
     X = [[0]] * 500
     y_pred = clf.predict(X)
