@@ -92,6 +92,15 @@ def _check_clf_targets(y_true, y_pred):
     return y_type, y_true, y_pred
 
 
+def _weighted_sum(sample_score, sample_weight, normalize=False):
+    if normalize:
+        return np.average(sample_score, weights=sample_weight)
+    elif sample_weight is not None:
+        return np.dot(sample_score, sample_weight)
+    else:
+        return sample_score.sum()
+
+
 def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     """Accuracy classification score.
 
@@ -159,14 +168,7 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     else:
         score = y_true == y_pred
 
-    if normalize:
-        if sample_weight is not None:
-            return np.average(score, weights=sample_weight)
-        return np.mean(score)
-    else:
-        if sample_weight is not None:
-            return np.dot(score, sample_weight)
-        return np.sum(score)
+    return _weighted_sum(score, sample_weight, normalize)
 
 
 def confusion_matrix(y_true, y_pred, labels=None):
@@ -344,13 +346,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
     else:
         score = y_true == y_pred
 
-    if normalize:
-        return np.average(score, weights=sample_weight)
-    else:
-        if sample_weight is not None:
-            return np.dot(score, sample_weight)
-        else:
-            return np.sum(score)
+    return _weighted_sum(score, sample_weight, normalize)
 
 
 def matthews_corrcoef(y_true, y_pred):
@@ -1397,13 +1393,8 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None):
     # Renormalize
     Y /= Y.sum(axis=1)[:, np.newaxis]
     loss = -(T * np.log(Y)).sum(axis=1)
-    if normalize:
-        return np.average(loss, weights=sample_weight)
-    else:
-        if sample_weight is not None:
-            return np.dot(loss, sample_weight)
-        else:
-            return np.sum(loss)
+
+    return _weighted_sum(loss, sample_weight, normalize)
 
 
 def hinge_loss(y_true, pred_decision, pos_label=None, neg_label=None):
