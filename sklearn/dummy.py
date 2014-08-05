@@ -64,7 +64,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
     `sparse_output_` : bool,
         True if the array returned from predict is to be in sparse CSC format.
-        Is set True if the input target data given to fit in sparse format.
+        Is automatically set to True if the input y is passed in sparse format.
 
     """
 
@@ -100,10 +100,10 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
         if self.strategy == "uniform" and sp.issparse(y):
             y = y.toarray()
-            warnings.warn('The target data has been converted to a numpy '
-                          'array. Predicting on sparse target data with the '
-                          'uniform strategy would not save memory and would '
-                          'be slower.',
+            warnings.warn('A Local copy of the target data has been converted '
+                          'to a numpy array. Predicting on sparse target data '
+                          'with the uniform strategy would not save memory '
+                          'and would be slower.',
                           sp.SparseEfficiencyWarning)
 
         self.sparse_output_ = sp.issparse(y)
