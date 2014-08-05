@@ -1,3 +1,4 @@
+from __future__ import division
 import warnings
 import numpy as np
 import scipy.sparse as sp
@@ -405,9 +406,9 @@ def test_classification_sample_weight():
 def test_constant_strategy_sparse_target():
     X = [[0]] * 5  # ignored
     y = sp.csc_matrix(np.array([[0, 1],
-                                [0, 0],
+                                [4, 0],
                                 [1, 1],
-                                [1, 0],
+                                [1, 4],
                                 [1, 1]]))
 
     n_samples = len(X)
@@ -424,8 +425,8 @@ def test_uniform_strategy_sparse_target_warning():
     X = [[0]] * 5  # ignored
     y = sp.csc_matrix(np.array([[2, 1],
                                 [2, 2],
-                                [1, 1],
-                                [1, 2],
+                                [1, 4],
+                                [4, 2],
                                 [1, 1]]))
 
     clf = DummyClassifier(strategy="uniform", random_state=0)
@@ -436,19 +437,19 @@ def test_uniform_strategy_sparse_target_warning():
 
     for k in range(y.shape[1]):
         p = np.bincount(y_pred[:, k]) / float(len(X))
-        assert_almost_equal(p[1], 0.5, decimal=1)
-        assert_almost_equal(p[2], 0.5, decimal=1)
+        assert_almost_equal(p[1], 1/3, decimal=1)
+        assert_almost_equal(p[2], 1/3, decimal=1)
+        assert_almost_equal(p[4], 1/3, decimal=1)
 
 
 def test_stratified_strategy_sparse_target():
     X = [[0]] * 5  # ignored
-    y = sp.csc_matrix(np.array([[0, 1],
+    y = sp.csc_matrix(np.array([[4, 1],
                                 [0, 0],
                                 [1, 1],
-                                [1, 0],
+                                [1, 4],
                                 [1, 1]]))
 
-    n_samples = len(X)
     clf = DummyClassifier(strategy="stratified", random_state=0)
     clf.fit(X, y)
 
@@ -460,14 +461,15 @@ def test_stratified_strategy_sparse_target():
     for k in range(y.shape[1]):
         p = np.bincount(y_pred[:, k]) / float(len(X))
         assert_almost_equal(p[1], 3. / 5, decimal=1)
-        assert_almost_equal(p[0], 2. / 5, decimal=1)
+        assert_almost_equal(p[0], 1. / 5, decimal=1)
+        assert_almost_equal(p[4], 1. / 5, decimal=1)
 
 
 def test_most_frequent_strategy_sparse_target():
     X = [[0]] * 5  # ignored
     y = sp.csc_matrix(np.array([[1, 0],
-                                [1, 1],
-                                [0, 0],
+                                [1, 3],
+                                [4, 0],
                                 [0, 1],
                                 [1, 0]]))
 
