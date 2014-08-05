@@ -204,23 +204,12 @@ class LSHForest(BaseEstimator):
 
     def _generate_masks(self):
         """Creates left and right masks for all hash lengths."""
-        self._left_mask, self._right_mask = [], []
+        tri_size = self.max_label_length + 1
+        left_mask = np.tril(np.ones((tri_size, tri_size), dtype=int))[:, 1:]
+        right_mask = np.triu(np.ones((tri_size, tri_size), dtype=int))[:, :-1]
 
-        for length in range(self.max_label_length+1):
-            left_mask = np.append(np.ones(length, dtype=int),
-                                  np.zeros(self.max_label_length-length,
-                                           dtype=int))
-            binary_hash_left = np.packbits(left_mask).view(dtype='>u4')[0]
-            self._left_mask.append(binary_hash_left)
-
-            right_mask = np.append(np.zeros(length, dtype=int),
-                                   np.ones(self.max_label_length-length,
-                                           dtype=int))
-            binary_hash_right = np.packbits(right_mask).view(dtype='>u4')[0]
-            self._right_mask.append(binary_hash_right)
-
-        self._left_mask = np.array(self._left_mask)
-        self._right_mask = np.array(self._right_mask)
+        self._left_mask = np.packbits(left_mask).view(dtype='>u4')
+        self._right_mask = np.packbits(right_mask).view(dtype='>u4')
 
     def _get_candidates(self, query, max_depth, bin_queries, m):
         """Performs the Synchronous ascending phase.
