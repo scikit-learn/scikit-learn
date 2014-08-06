@@ -141,3 +141,27 @@ def test_no_normalize():
     gp = GaussianProcess(normalize=False).fit(X, y)
     y_pred = gp.predict(X)
     assert_true(np.allclose(y_pred, y))
+
+
+def test_1d_tough_noisy(regr=regression.constant, corr=correlation.squared_exponential,
+                        random_start=10, beta0=None):
+    """
+    MLE estimation of a one-dimensional Gaussian Process model.
+    Check random start optimization with noisy / duplicate inputs.
+
+    Test the interpolating property.
+    """
+
+    X = np.atleast_2d([1., 3., 5., 6., 7., 8., 9., 10., 12., 13., 14., 17.]).T
+    x = np.atleast_2d(np.linspace(0, 20, 100)).T
+
+    y = f(X).ravel() + np.random.normal(0, 0.1, len(X))
+
+    gp = GaussianProcess(regr=regr, corr=corr, beta0=beta0,
+                         theta0=1e-2, thetaL=1e-4, thetaU=1.,
+                         random_start=random_start, verbose=False, nugget=0.002).fit(X, y)
+
+    y_pred, MSE = gp.predict(x, eval_MSE=True)
+    y = f(x).ravel()
+
+    assert_true((np.abs(y_pred - y) <= (1.96 * MSE)  ).all())  #check that true value is within 95% conf. int.
