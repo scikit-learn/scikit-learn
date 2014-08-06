@@ -455,7 +455,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         Y = lbin.fit_transform(y)
         if Y.shape[1] == 1:
             Y = np.hstack([1 - Y, Y])
-        w0 = np.zeros((Y.shape[1], n_features + int(fit_intercept)))
+        w0 = np.zeros((Y.shape[1], n_features + int(fit_intercept)), order='F')
         mask_classes = classes
 
     if class_weight == "auto":
@@ -464,16 +464,26 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     if coef is not None:
         # it must work both giving the bias term and not
-        if not coef.size in (X.shape[1], w0.size):
-            raise ValueError('Initialization coef is not of correct shape')
-        w0[:coef.size] = coef
+        if multi_class == 'ovr':
+            if not coef.size in (n_features, w0.size):
+                raise ValueError('Initialization coef is not of correct shape')
+            w0[:coef.size] = coef
+        else:
+            if coef.shape[0] != classes.size or coef.shape[1] not in (
+                n_features, n_features + 1):
+                raise ValueError('Initialization coef is not of correct shape')
+            w0[:, :coef.shape[1]] = coef
+            # fmin_l_bfgs_b accaepts only ravelled parameters.
+
+    if multi_class == 'multinomial':
+        w0 = w0.ravel()
+
     coefs = list()
 
     for C in Cs:
         if solver == 'lbfgs':
             if multi_class == 'multinomial':
                 target = Y
-                w0 = w0.ravel()
                 func = _multinomial_loss_grad
             else:
                 target = y
@@ -529,7 +539,8 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
                           scoring=None, fit_intercept=False,
                           max_iter=100, tol=1e-4, class_weight=None,
                           verbose=0, solver='lbfgs', penalty='l2',
-                          dual=False, copy=True, intercept_scaling=1.):
+                          dual=False, copy=True, intercept_scaling=1.,
+                          multi_class='ovr'):
     """Computes scores across logistic_regression_path
 
     Parameters
@@ -604,6 +615,13 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
+    multi_class : str, optional default 'ovr'
+        Multiclass option can be either 'ovr' or 'multinomial'. If the option
+        chosen is 'ovr', then a binary problem is fit for each label. Else
+        the loss minimised for is the true multinomial loss fit across
+        the entire probability distribution. Useful only for the 'lbfgs'
+        solvers.
+
     Returns
     -------
     coefs : ndarray, shape (n_cs, n_features) or (n_cs, n_features + 1)
@@ -619,13 +637,18 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     """
 
     log_reg = LogisticRegression(fit_intercept=fit_intercept)
-    log_reg._enc = LabelEncoder()
-    log_reg._enc.fit_transform([-1, 1])
 
     X_train = X[train]
     X_test = X[test]
     y_train = y[train]
     y_test = y[test]
+
+    log_reg._enc = LabelEncoder()
+    if multi_class == 'ovr':
+        log_reg._enc.fit_transform([-1, 1])
+    else:
+        log_reg._enc.fit_transform(np.unique(y_train))
+
 
     if pos_class is not None:
         mask = (y_test == pos_class)
@@ -641,6 +664,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
                                          max_iter=max_iter,
                                          class_weight=class_weight,
                                          copy=copy, pos_class=pos_class,
+                                         multi_class=multi_class,
                                          tol=tol, verbose=verbose,
                                          dual=dual, penalty=penalty,
                                          intercept_scaling=intercept_scaling)
@@ -650,12 +674,15 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     if isinstance(scoring, six.string_types):
         scoring = SCORERS[scoring]
     for w in coefs:
+        if multi_class == 'ovr':
+            w = w[np.newaxis, :]
         if fit_intercept:
-            log_reg.coef_ = w[np.newaxis, :-1]
-            log_reg.intercept_ = w[-1]
+            log_reg.coef_ = w[:, :-1]
+            log_reg.intercept_ = w[:, -1]
         else:
-            log_reg.coef_ = w[np.newaxis, :]
+            log_reg.coef_ = w[:, :]
             log_reg.intercept_ = 0.
+
         if scoring is None:
             scores.append(log_reg.score(X_test, y_test))
         else:
@@ -921,6 +948,13 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         Otherwise the coefs, intercepts and C that correspond to the
         best scores across folds are averaged.
 
+    multi_class : str, optional default 'ovr'
+        Multiclass option can be either 'ovr' or 'multinomial'. If the option
+        chosen is 'ovr', then a binary problem is fit for each label. Else
+        the loss minimised for is the true multinomial loss fit across
+        the entire probability distribution. Useful only for the 'lbfgs'
+        solvers.
+
     intercept_scaling : float, default 1.
         This parameter is useful only when the solver 'liblinear' is used
         and self.fit_intercept is set to True. In this case, x becomes
@@ -956,7 +990,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                      (n_folds, len(Cs_), n_features + 1)
         dict with classes as the keys, and the path of coefficients obtained
         during cross-validating across each fold and then across each Cs
-        after doing an OvA for the corresponding class.
+        after doing an OvA for the corresponding class as values.
+        If the 'multi_class' option is set to 'multinomial', then
+        the coefs_paths are the true coefficients corresponding to each class.
         Each dict value has shape (n_folds, len(Cs_), n_features) or
         (n_folds, len(Cs_), n_features + 1) depending on whether the
         intercept is fit or not.
@@ -964,7 +1000,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     scores_ : dict
         dict with classes as the keys, and the values as the
         grid of scores obtained during cross-validating each fold, after doing
-        an OvA for the corresponding class.
+        an OvA for the corresponding class. If the 'multi_class' option
+        given is 'multinomial' then the same scores are repeated across
+        all classes, since this is the true multinomial class.
         Each dict value has shape (n_folds, len(Cs))
 
     C_ : array, shape (n_classes,) or (n_classes - 1,)
@@ -981,7 +1019,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     def __init__(self, Cs=10, fit_intercept=True, cv=None, dual=False,
                  penalty='l2', scoring=None, solver='lbfgs', tol=1e-4,
                  max_iter=100, class_weight=None, n_jobs=1, verbose=False,
-                 refit=True, intercept_scaling=1.):
+                 refit=True, intercept_scaling=1., multi_class='ovr'):
         self.Cs = Cs
         self.fit_intercept = fit_intercept
         self.cv = cv
@@ -995,7 +1033,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self.verbose = verbose
         self.solver = solver
         self.refit = refit
-        self.intercept_scaling = 1.
+        self.intercept_scaling = intercept_scaling
+        self.multi_class = multi_class
 
     def fit(self, X, y):
         """Fit the model according to the given training data.
@@ -1024,6 +1063,10 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         X = check_array(X, accept_sparse='csc', dtype=np.float64)
         y = check_array(y, ensure_2d=False)
+
+        if self.multi_class not in ['ovr', 'multinomial']:
+            raise ValueError("multi_class backend shold be either 'ovr' or 'multinomial'"
+                             "got %s" % self.multi_class)
 
         if y.ndim == 2 and y.shape[1] == 1:
             warnings.warn(
@@ -1061,46 +1104,94 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                              "dict or 'auto'")
 
         path_func = delayed(_log_reg_scoring_path)
-        fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-            path_func(X, y, train, test, pos_class=label, Cs=self.Cs,
-                      fit_intercept=self.fit_intercept, penalty=self.penalty,
-                      dual=self.dual, solver=self.solver,
-                      max_iter=self.max_iter, tol=self.tol,
-                      class_weight=self.class_weight,
-                      verbose=max(0, self.verbose - 1),
-                      scoring=self.scoring,
-                      intercept_scaling=self.intercept_scaling)
-            for label in labels
-            for train, test in folds)
 
-        coefs_paths, Cs, scores = zip(*fold_coefs_)
+        # For ovr we iterate across all labels and folds, however for multinomial
+        # we iterate only across all folds.
+        if self.multi_class == 'ovr':
+            fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+                path_func(X, y, train, test, pos_class=label, Cs=self.Cs,
+                          fit_intercept=self.fit_intercept,
+                          penalty=self.penalty,
+                          dual=self.dual, solver=self.solver,
+                          max_iter=self.max_iter, tol=self.tol,
+                          class_weight=self.class_weight,
+                          verbose=max(0, self.verbose - 1),
+                          scoring=self.scoring, multi_class=self.multi_class,
+                          intercept_scaling=self.intercept_scaling)
+                for label in labels
+                for train, test in folds)
 
-        self.Cs_ = Cs[0]
-        coefs_paths = np.reshape(coefs_paths, (n_classes, len(folds),
-                                 len(self.Cs_), -1))
+        else:
+            fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+                path_func(X, y, train, test, Cs=self.Cs,
+                          fit_intercept=self.fit_intercept,
+                          penalty=self.penalty,
+                          dual=self.dual, solver=self.solver,
+                          max_iter=self.max_iter, tol=self.tol,
+                          class_weight=self.class_weight,
+                          verbose=max(0, self.verbose - 1),
+                          scoring=self.scoring, multi_class=self.multi_class,
+                          intercept_scaling=self.intercept_scaling)
+                for train, test in folds)
+
+        if self.multi_class == 'multinomial':
+            multi_coefs_paths, Cs, multi_scores = zip(*fold_coefs_)
+            multi_coefs_paths = np.asarray(multi_coefs_paths)
+            multi_scores = np.asarray(multi_scores)
+            # this is just to maintain API similarity between the ovr and
+            # multinomial option.
+            # coefs_paths in now n_folds X len(Cs) X n_classes X n_features
+            # we need it to be n_classes X len(Cs) X n_folds X n_features
+            # to be similar to "ovr"
+
+            coefs_paths = np.rollaxis(np.asarray(multi_coefs_paths), 2, 0)
+
+            # multinomial has a true score across all labels. Hence the
+            # shape is n_folds X len(Cs). We need to repeat this score
+            # across all labels for API similarity.
+            scores = np.tile(multi_scores, (n_classes, 1, 1))
+            self.Cs_ = Cs[0]
+
+        else:
+            coefs_paths, Cs, scores = zip(*fold_coefs_)
+            self.Cs_ = Cs[0]
+            coefs_paths = np.reshape(coefs_paths, (n_classes, len(folds),
+                                     len(self.Cs_), -1))
+
         self.coefs_paths_ = dict(zip(labels, coefs_paths))
         scores = np.reshape(scores, (n_classes, len(folds), -1))
         self.scores_ = dict(zip(labels, scores))
 
         self.C_ = list()
-        self.coef_ = list()
-        self.intercept_ = list()
+        self.coef_ = np.empty((n_classes, X.shape[1]))
+        self.intercept_ = np.zeros(n_classes)
 
-        for label in labels:
-            scores = self.scores_[label]
-            coefs_paths = self.coefs_paths_[label]
+        # hack to iterate only once for multinomial case.
+        if self.multi_class == 'multinomial':
+            labels = [1.]
+            scores = multi_scores
+            coefs_paths = multi_coefs_paths
+
+        for index, label in enumerate(labels):
+            if self.multi_class == 'ovr':
+                scores = self.scores_[label]
+                coefs_paths = self.coefs_paths_[label]
 
             if self.refit:
                 best_index = scores.sum(axis=0).argmax()
+
                 C_ = self.Cs_[best_index]
                 self.C_.append(C_)
-                coef_init = np.mean(coefs_paths[:, best_index, :], axis=0)
-
+                if self.multi_class == 'multinomial':
+                    coef_init = np.mean(coefs_paths[:, best_index, :, :], axis=0)
+                else:
+                    coef_init = np.mean(coefs_paths[:, best_index, :], axis=0)
                 w, _ = logistic_regression_path(
                     X, y, pos_class=label, Cs=[C_], solver=self.solver,
                     fit_intercept=self.fit_intercept, coef=coef_init,
                     max_iter=self.max_iter, tol=self.tol,
                     class_weight=self.class_weight,
+                    multi_class=self.multi_class,
                     verbose=max(0, self.verbose - 1))
                 w = w[0]
 
@@ -1114,13 +1205,15 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                     ], axis=0)
                 self.C_.append(np.mean(self.Cs_[best_indices]))
 
-            if self.fit_intercept:
-                self.coef_.append(w[:-1])
-                self.intercept_.append(w[-1])
+            if self.multi_class == 'multinomial':
+                self.C_ = np.tile(self.C_, n_classes)
+                self.coef_ = w[:, :X.shape[1]]
+                if self.fit_intercept:
+                    self.intercept_ = w[:, -1]
             else:
-                self.coef_.append(w)
-                self.intercept_.append(0.)
+                self.coef_[index] = w[: X.shape[1]]
+                if self.fit_intercept:
+                    self.intercept_[index] = w[-1]
+
         self.C_ = np.asarray(self.C_)
-        self.coef_ = np.asarray(self.coef_)
-        self.intercept_ = np.asarray(self.intercept_)
         return self
