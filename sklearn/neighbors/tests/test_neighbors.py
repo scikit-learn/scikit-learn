@@ -887,7 +887,7 @@ def test_kneighbors_classifier_sparse_target_multioutput():
 
         assert_equal(y_pred_mo.shape, y_test.shape)
         assert_true(sp.issparse(y_pred_mo))
-        assert_array_equal(y_pred_mo.toarray(), y_pred_so)
+        assert_array_almost_equal(y_pred_mo.toarray(), y_pred_so)
 
         # Check proba
         y_pred_proba_mo = knn_mo.predict_proba(X_test)
