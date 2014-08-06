@@ -54,6 +54,11 @@ Documentation improvements
 Bug fixes
 .........
 
+    - The :class:`decomposition.PCA` now undoes whitening in its 
+     ``inverse_transform``. Also, its ``components_`` now always have unit
+     length. By Michael Eickenberg.
+
+
 API changes summary
 -------------------
 
