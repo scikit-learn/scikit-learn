@@ -45,7 +45,7 @@ Enhancements
      and related. By `Manoj Kumar`_.
 
    - Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score` and
-     `metrics.log_loss`. By `Jatin Shah`.
+     `metrics.log_loss`. By `Jatin Shah`_.
 
 Documentation improvements
 ..........................
@@ -2881,3 +2881,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Laurent Direr: https://github.com/ldirer
 
 .. _Nikolay Mayorov: https://github.com/nmayorov
+
+.. _Jatin Shah: http://jatinshah.org/
