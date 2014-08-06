@@ -501,6 +501,37 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
 
 class Fastfood(BaseEstimator, TransformerMixin):
+    """Approximates feature map of an RBF kernel by Monte Carlo approximation
+    of its Fourier transform.
+    Fastfood replaces the random matrix of Random Kitchen Sinks (RBFSampler) with an approximation that uses the
+    Walsh-Hadamard transformation to gain significant speed and storage advantages.
+    The computational complexity for mapping a single example is O(n_components log d).
+    The space complexity is O(n_components).
+    Hint: n_components should be a power of two. If this is not the case, the next higher number that fulfills this
+    contraint is chosen automatically.
+
+    Parameters
+    ----------
+    sigma : float
+        Parameter of RBF kernel: exp(-(1/(2*sigma^2)) * x^2)
+
+    n_components : int
+        Number of Monte Carlo samples per original feature.
+        Equals the dimensionality of the computed feature space.
+
+    tradeoff_less_mem_or_higher_accuracy : "accuracy" or "mem"
+        mem:        This version is not as accurate as the option "accuracy", but is consuming less memory.
+        accuracy:   The final feature space is of dimension 2*n_components, while being more accurate and consuming more
+                    memory.
+
+    random_state : {int, RandomState}, optional
+        If int, random_state is the seed used by the random number generator;
+        if RandomState instance, random_state is the random number generator.
+
+    Notes
+    -----
+    See "Fastfood | Approximating Kernel Expansions in Loglinear Time" by Quoc Le, Tamas Sarl and Alex Smola.
+    """
 
     def __init__(self, sigma, n_components, tradeoff_less_mem_or_higher_accuracy = 'accuracy', random_state=None):
         self.sigma = sigma
