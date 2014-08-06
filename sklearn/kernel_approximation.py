@@ -12,9 +12,8 @@ import warnings
 
 import numpy as np
 import scipy.sparse as sp
-import fht as fht
 from sklearn.utils.cyfht import fht2 as cyfht
-from scipy.linalg import svd, hadamard
+from scipy.linalg import svd
 from scipy.stats import chi
 
 from .base import BaseEstimator
@@ -515,46 +514,11 @@ class Fastfood(BaseEstimator, TransformerMixin):
     def is_number_power_of_two(n):
         return n != 0 and ((n & (n - 1)) == 0)
 
-    def random_gauss_vector(self, d):
-        return self.rng.normal(size=d)
-
-    def permutation_matrix_old(self, d):
-        return self.rng.permutation(np.identity(d))
-
-    def permutation_matrix(self, d):
-        p = self.rng.permutation(d)
-        return p
-
-    def binary_vector(self, d):
-        return self.rng.choice([-1, 1], size=d)
-
-    def scaling_vector_vectorized(self, d, g):
-        s = np.linalg.norm(self.rng.normal(size=(d, d)), axis=0)
-        return s * (1 / np.linalg.norm(g))
-
-    # scaling_vector_iterative_time_consuming_but_lower_space_complexity
-    def scaling_vector_chi(self, d, g):
-        inverse_of_norm_of_G = 1 / np.linalg.norm(g)
-        return chi.rvs(d, size=d)*inverse_of_norm_of_G
-
-    def scaling_vector(self, d, g):
-        return Fastfood.scaling_vector_chi(self, d, g)
-
     def uniform_vector(self):
         if self.tradeoff_less_mem_or_higher_accuracy != 'accuracy':
             return self.rng.uniform(0, 2 * np.pi, size=self.n)
         else:
             return None
-
-    def create_vectors(self):
-        """ Create G, B, P and S. """
-        d = self.d
-        G = self.random_gauss_vector(d)
-        B = self.binary_vector(d)
-        P = self.permutation_matrix(d)
-        S = self.scaling_vector(d, G)
-
-        return B, G, P, S
 
     @staticmethod
     def enforce_dimensionality_constraints(d, n):
@@ -570,34 +534,9 @@ class Fastfood(BaseEstimator, TransformerMixin):
         return int(d), int(n), times_to_stack_v
 
     @staticmethod
-    def approx_fourier_transformation(result):
-        return fht.fht1(result, normalized=False)
-        #return dct(result, norm='ortho',axis=0)
-
-    @staticmethod
     def approx_fourier_transformation_multi_dim(result):
-        # return fht.fht2(result, normalized=False, axes=1)
         cyfht(result)
         return result
-        #return dct(result, norm='ortho',axis=0)
-
-    @staticmethod
-    def hadamard(X):
-        """ Abstraction for the hadamard transform.
-
-        Doing this in a single function should eas testing different
-        implementations.
-        """
-        # the fast hadamard transform
-        return fht.fht2(X, axes=0, normalized=False)
-
-        # the fast cosine transform, yields other mappings :-(
-        # return dct(X.astype(float), norm=None)
-
-        # full multiplication with explicit hadamard matrix
-        #H = (1 / (X.shape[0] * np.sqrt(2))) * hadamard(X.shape[0])
-        #H = hadamard(X.shape[0])
-        # return np.dot(H, X)
 
     def pad_with_zeros(self, X):
         X_padded = np.pad(X, ((0, 0), (0, self.number_of_features_to_pad_with_zeros)), 'constant')
@@ -622,12 +561,11 @@ class Fastfood(BaseEstimator, TransformerMixin):
 
     def create_approximation_matrix_fast_vectorized(self, S, V):
         """ Create V from HGPHB and S """
-        # S = S.reshape((1, S.shape[0]*S.shape[1])) # rival/flatten?
         V = V.reshape(-1, self.times_to_stack_v*self.d)
 
         return 1 / (self.sigma * np.sqrt(self.d)) * np.multiply(np.ravel(S), V)
 
-    def phi_fast(self, X):
+    def phi(self, X):
         if self.tradeoff_less_mem_or_higher_accuracy == 'accuracy':
             return (1 / np.sqrt(X.shape[1])) * np.hstack([np.cos(X), np.sin(X)])
         else:
@@ -657,4 +595,4 @@ class Fastfood(BaseEstimator, TransformerMixin):
         X_padded = self.pad_with_zeros(X)
         HGPHBX = self.create_gaussian_iid_matrix_fast_vectorized(self.B, self.G, self.P, X_padded)
         VX = self.create_approximation_matrix_fast_vectorized(self.S, HGPHBX)
-        return self.phi_fast(VX)
+        return self.phi(VX)
