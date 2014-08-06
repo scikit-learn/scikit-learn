@@ -418,85 +418,6 @@ def test_KNeighborsClassifier_multioutput():
             assert_array_almost_equal(proba_mo, proba_so)
 
 
-def test_kneighbors_classifier_sparse_target_multioutput():
-    """Test k-NN classifier on multioutput data with sparse target data"""
-    rng = check_random_state(0)
-    n_features = 5
-    n_samples = 50
-    n_output = 3
-
-    X = rng.rand(n_samples, n_features)
-    y = rng.randint(0, 3, (n_samples, n_output))
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    y_train = csc_matrix(y_train)
-
-    weights = [None, 'uniform', 'distance', _weight_func]
-
-    for algorithm, weights in product(ALGORITHMS, weights):
-        # Stack single output prediction
-        y_pred_so = []
-        y_pred_proba_so = []
-        for o in range(n_output):
-            knn = neighbors.KNeighborsClassifier(weights=weights,
-                                                 algorithm=algorithm)
-            knn.fit(X_train, y_train.getcol(o).toarray().ravel())
-            y_pred_so.append(knn.predict(X_test))
-            y_pred_proba_so.append(knn.predict_proba(X_test))
-
-        y_pred_so = np.vstack(y_pred_so).T
-        assert_equal(y_pred_so.shape, y_test.shape)
-        assert_equal(len(y_pred_proba_so), n_output)
-
-        # Multioutput prediction
-        knn_mo = neighbors.KNeighborsClassifier(weights=weights,
-                                                algorithm=algorithm)
-        knn_mo.fit(X_train, y_train)
-        y_pred_mo = knn_mo.predict(X_test)
-
-        # XXX Desify the y_pre_mo output which is supposed to be sparse
-        assert_equal(y_pred_mo.shape, y_test.shape)
-        assert_true(sp.issparse(y_pred_mo))
-        assert_array_almost_equal(y_pred_mo.toarray(), y_pred_so)
-
-        # Check proba
-        y_pred_proba_mo = knn_mo.predict_proba(X_test)
-        assert_equal(len(y_pred_proba_mo), n_output)
-
-        for proba_mo, proba_so in zip(y_pred_proba_mo, y_pred_proba_so):
-            assert_array_almost_equal(proba_mo, proba_so)
-
-
-def test_kneighbors_classifier_sparse_target(n_samples=40,
-                               n_features=5,
-                               n_test_pts=10,
-                               n_neighbors=5,
-                               random_state=0):
-    """Test k-neighbors classification with sparse target data"""
-    rng = np.random.RandomState(random_state)
-    X = 2 * rng.rand(n_samples, n_features) - 1
-    y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
-    y_sp = csc_matrix(y)
-
-    weight_func = _weight_func
-
-    for algorithm in ALGORITHMS:
-        for weights in ['uniform', 'distance', weight_func]:
-            knn = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors,
-                                                 weights=weights,
-                                                 algorithm=algorithm)
-            knn_sp = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors,
-                                                    weights=weights,
-                                                    algorithm=algorithm)
-            knn.fit(X, y)
-            knn_sp.fit(X, y_sp)
-            epsilon = 1e-5 * (2 * rng.rand(1, n_features) - 1)
-            y_pred = knn.predict(X[:n_test_pts] + epsilon)
-            y_pred_sp = knn_sp.predict(X[:n_test_pts] + epsilon)
-            assert_true(sp.issparse(y_pred_sp))
-            assert_array_equal(y_pred,y_pred_sp.toarray())
-            #assert_true(False)
-
 def test_kneighbors_regressor(n_samples=40,
                               n_features=5,
                               n_test_pts=10,
@@ -927,6 +848,53 @@ def test_callable_metric():
 
     assert_array_almost_equal(dist1, dist2)
 
+
+def test_kneighbors_classifier_sparse_target_multioutput():
+    """Test k-NN classifier on multioutput data with sparse target data"""
+    rng = check_random_state(0)
+    n_features = 5
+    n_samples = 50
+    n_output = 3
+
+    X = rng.rand(n_samples, n_features)
+    y = rng.randint(0, 3, (n_samples, n_output))
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    y_train = csc_matrix(y_train)
+
+    weights = [None, 'uniform', 'distance', _weight_func]
+
+    for algorithm, weights in product(ALGORITHMS, weights):
+        # Stack single output prediction
+        y_pred_so = []
+        y_pred_proba_so = []
+        for o in range(n_output):
+            knn = neighbors.KNeighborsClassifier(weights=weights,
+                                                 algorithm=algorithm)
+            knn.fit(X_train, y_train.getcol(o).toarray().ravel())
+            y_pred_so.append(knn.predict(X_test))
+            y_pred_proba_so.append(knn.predict_proba(X_test))
+
+        y_pred_so = np.vstack(y_pred_so).T
+        assert_equal(y_pred_so.shape, y_test.shape)
+        assert_equal(len(y_pred_proba_so), n_output)
+
+        # Multioutput prediction
+        knn_mo = neighbors.KNeighborsClassifier(weights=weights,
+                                                algorithm=algorithm)
+        knn_mo.fit(X_train, y_train)
+        y_pred_mo = knn_mo.predict(X_test)
+
+        assert_equal(y_pred_mo.shape, y_test.shape)
+        assert_true(sp.issparse(y_pred_mo))
+        assert_array_equal(y_pred_mo.toarray(), y_pred_so)
+
+        # Check proba
+        y_pred_proba_mo = knn_mo.predict_proba(X_test)
+        assert_equal(len(y_pred_proba_mo), n_output)
+
+        for proba_mo, proba_so in zip(y_pred_proba_mo, y_pred_proba_so):
+            assert_array_almost_equal(proba_mo, proba_so)
 
 if __name__ == '__main__':
     import nose

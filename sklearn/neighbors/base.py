@@ -650,11 +650,6 @@ class SupervisedIntegerMixin(object):
 
             self._y = _y
 
-            if not self.outputs_2d_:
-                # XXX include sparse support here, write a test
-                self.classes_ = self.classes_[0]
-                self._y = self._y.ravel()
-
         return self._fit(X)
 
 

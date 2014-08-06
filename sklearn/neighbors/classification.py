@@ -7,9 +7,11 @@
 #          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
-
+import warnings
+import array
 import numpy as np
 import scipy.sparse as sp
+
 from scipy import stats
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.sparsefuncs_fast import csr_row_mode
@@ -148,28 +150,35 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         n_samples = X.shape[0]
         weights = _get_weights(neigh_dist, self.weights)
 
-        # XXX Unnecessary if fit is changed to give sparse matrix in all cases
+        # XXX For now both dense and sparse inputs are treated as sparse,
+        # dense can be factored out
         if not self.sparse_target_input_:
             _y = sp.csc_matrix(_y)
 
-        data = np.array([], dtype=classes_[0].dtype)
-        indices = np.array([])
-        indptr = np.array([0])
+        data = array.array('i')
+        indices = array.array('i')
+        indptr = array.array('i', [0])
+
+        # data = np.array([], dtype=classes_[0].dtype)
+        # indices = np.array([])
+        # indptr = np.array([0])
         for k, classes_k in enumerate(classes_):
-            neigh_lbls_k = _y[neigh_ind, k]
+            # neigh_lbls_k = _y[neigh_ind, k]
+            neigh_lbls_k = _y.getcol(k).toarray()[neigh_ind, 0]
             if weights is None:
-                mode = csr_row_mode(sp.csr_matrix(neigh_lbls_k.T))
+                # neigh_lbls_k =  neigh_lbls_k.T
+                mode = csr_row_mode(sp.csr_matrix(neigh_lbls_k))
                 mode = sp.csc_matrix(mode, dtype=np.intp)
             else:
+                # neigh_lbls_k = neigh_lbls_k.toarray().T
                 # XXX make a sparse function, do not densify neigh_lbls_k
-                mode, _ = weighted_mode(neigh_lbls_k.toarray().T, weights,
+                mode, _ = weighted_mode(neigh_lbls_k, weights,
                                         axis=1)
                 mode = sp.csc_matrix(mode, dtype=np.intp)
 
-            # XXX Changes appends to concats
-            data = np.append(data, mode.data)
-            indices = np.append(indices, mode.indices)
-            indptr = np.append(indptr, len(indices))
+            data.extend(mode.data)
+            indices.extend(mode.indices)
+            indptr.append(len(indices))
 
         y_pred = sp.csc_matrix((data, indices, indptr), (n_samples, n_outputs),
                                dtype=np.intp)
@@ -206,7 +215,6 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         classes_ = self.classes_
         _y = self._y
 
-        # XXX temporary patch
         if self.sparse_target_input_:
             _y = _y.toarray()
 
