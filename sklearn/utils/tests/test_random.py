@@ -118,7 +118,7 @@ def test_random_choice_csc(n_samples=10000, random_state=24):
         assert_array_almost_equal(class_probabilites[k], p, decimal=1)
 
     # Implicit class probabilities
-    classes = [np.array([0, 1]),  np.array([0, 1, 2])]
+    classes = [[0, 1],  [0, 1, 2]]  # array like support
     class_probabilites = [np.array([0.5, 0.5]), np.array([1/3, 1/3, 1/3])]
 
     got = random_choice_csc(n_samples=n_samples,
@@ -138,6 +138,19 @@ def test_random_choice_csc_errors():
     class_probabilites = [np.array([0.5, 0.5]), np.array([0.6, 0.1, 0.3])]
     assert_raises(ValueError, random_choice_csc, 4, classes,
                   class_probabilites, 1)
+
+    # the class dtype is not supported
+    classes = [np.array(["a", "1"]),  np.array(["z", "1", "2"])]
+    class_probabilites = [np.array([0.5, 0.5]), np.array([0.6, 0.1, 0.3])]
+    assert_raises(ValueError, random_choice_csc, 4, classes,
+                  class_probabilites, 1)
+
+    # the class dtype is not supported
+    classes = [np.array([4.2, 0.1]),  np.array([0.1, 0.2, 9.4])]
+    class_probabilites = [np.array([0.5, 0.5]), np.array([0.6, 0.1, 0.3])]
+    assert_raises(ValueError, random_choice_csc, 4, classes,
+                  class_probabilites, 1)
+
 
 if __name__ == '__main__':
     import nose
