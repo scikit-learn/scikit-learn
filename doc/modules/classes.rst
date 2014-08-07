@@ -570,6 +570,7 @@ From text
    kernel_approximation.Nystroem
    kernel_approximation.RBFSampler
    kernel_approximation.SkewedChi2Sampler
+   kernel_approximation.Fastfood
 
 .. _lda_ref:
 

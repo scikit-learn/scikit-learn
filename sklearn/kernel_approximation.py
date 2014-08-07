@@ -533,7 +533,8 @@ class Fastfood(BaseEstimator, TransformerMixin):
     See "Fastfood | Approximating Kernel Expansions in Loglinear Time" by Quoc Le, Tamas Sarl and Alex Smola.
     """
 
-    def __init__(self, sigma, n_components, tradeoff_less_mem_or_higher_accuracy = 'accuracy', random_state=None):
+    def __init__(self, sigma=np.sqrt(1/2), n_components=100, tradeoff_less_mem_or_higher_accuracy='accuracy',
+                 random_state=None):
         self.sigma = sigma
         self.n_components = n_components
         self.random_state = random_state
@@ -604,7 +605,22 @@ class Fastfood(BaseEstimator, TransformerMixin):
             return X * np.sqrt(2. / X.shape[1])
 
     def fit(self, X, y=None):
+        """Fit the model with X.
 
+        Samples a couple of random based vectors to approximate a Gaussian random projection matrix to generate
+        n_components features.
+
+        Parameters
+        ----------
+        X : {array-like}, shape (n_samples, n_features)
+            Training data, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        self : object
+            Returns the transformer.
+        """
         d_orig = X.shape[1]
 
         self.d, self.n, self.times_to_stack_v = \
@@ -622,7 +638,20 @@ class Fastfood(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        X = atleast2d_or_csr(X)
+        """Apply the approximate feature map to X.
+
+        Parameters
+        ----------
+        X : {array-like}, shape (n_samples, n_features)
+            New data, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        X_new : array-like, shape (n_samples, n_components)
+        """
+        X = array2d(X)
+        np.isnan()
         X_padded = self.pad_with_zeros(X)
         HGPHBX = self.create_gaussian_iid_matrix_fast_vectorized(self.B, self.G, self.P, X_padded)
         VX = self.create_approximation_matrix_fast_vectorized(self.S, HGPHBX)
