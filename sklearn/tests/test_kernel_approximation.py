@@ -245,12 +245,12 @@ def test_hadamard_equivalence():
         two = fht.fht(g, axes=0)
 
         # fht with vector without matrix
-        a = np.dot(g,vector)
-        print "a",a,g, a.shape,vector.shape
+        a = np.dot(g, vector)
+        print "a", a, g, a.shape, vector.shape
         three = fht.fht(a, axes=0)
 
         # fht with vector with matrix
-        four = np.dot(fht.fht(g, axes=0),vector)
+        four = np.dot(fht.fht(g, axes=0), vector)
         
         # fht without diagonal matrix
         a = np.diag(g)*vector
@@ -259,7 +259,7 @@ def test_hadamard_equivalence():
         
         yield assert_array_almost_equal, one, two
         yield assert_array_almost_equal, three, four
-        yield assert_array_almost_equal, four,five
+        yield assert_array_almost_equal, four, five
 
 ########     Performance Analysis    #################
 
@@ -286,54 +286,54 @@ def test_fastfood():
     print 'true kernel:', kernel[:5, :5]
     assert_array_almost_equal(kernel, kernel_approx, decimal=1)
 
-def test_fastfood_mem_or_accuracy():
-    """compares the performance of Fastfood and RKS"""
-    #generate data
-    X = rng.random_sample(size=(10000, 4000))
-    X /= X.sum(axis=1)[:, np.newaxis]
-
-    # calculate feature maps
-    gamma = 10.
-    sigma = np.sqrt(1 / (2 * gamma))
-    number_of_features_to_generate = 1000
-
-
-
-    fastfood_start = datetime.datetime.utcnow()
-    # Fastfood: approximate kernel mapping
-    rbf_transform = Fastfood(sigma=sigma, n_components=number_of_features_to_generate, tradeoff_less_mem_or_higher_accuracy='accuracy', random_state=42)
-    _ = rbf_transform.fit_transform(X)
-    fastfood_end = datetime.datetime.utcnow()
-    fastfood_spent_time =fastfood_end- fastfood_start
-    print "Timimg fastfood accuracy: \t\t", fastfood_spent_time
-
-
-    fastfood_mem_start = datetime.datetime.utcnow()
-    # Fastfood: approximate kernel mapping
-    rbf_transform = Fastfood(sigma=sigma, n_components=number_of_features_to_generate, tradeoff_less_mem_or_higher_accuracy='mem', random_state=42)
-    _ = rbf_transform.fit_transform(X)
-    fastfood_mem_end = datetime.datetime.utcnow()
-    fastfood_mem_spent_time = fastfood_mem_end- fastfood_mem_start
-    print "Timimg fastfood memory: \t\t", fastfood_mem_spent_time
-
-    assert_greater(fastfood_spent_time, fastfood_mem_spent_time)
-
+# def test_fastfood_mem_or_accuracy():
+#     """compares the performance of Fastfood and RKS"""
+#     #generate data
+#     X = rng.random_sample(size=(10000, 4000))
+#     X /= X.sum(axis=1)[:, np.newaxis]
+#
+#     # calculate feature maps
+#     gamma = 10.
+#     sigma = np.sqrt(1 / (2 * gamma))
+#     number_of_features_to_generate = 1000
+#
+#
+#
+#     fastfood_start = datetime.datetime.utcnow()
+#     # Fastfood: approximate kernel mapping
+#     rbf_transform = Fastfood(sigma=sigma, n_components=number_of_features_to_generate, tradeoff_less_mem_or_higher_accuracy='accuracy', random_state=42)
+#     _ = rbf_transform.fit_transform(X)
+#     fastfood_end = datetime.datetime.utcnow()
+#     fastfood_spent_time =fastfood_end- fastfood_start
+#     print "Timimg fastfood accuracy: \t\t", fastfood_spent_time
+#
+#
+#     fastfood_mem_start = datetime.datetime.utcnow()
+#     # Fastfood: approximate kernel mapping
+#     rbf_transform = Fastfood(sigma=sigma, n_components=number_of_features_to_generate, tradeoff_less_mem_or_higher_accuracy='mem', random_state=42)
+#     _ = rbf_transform.fit_transform(X)
+#     fastfood_mem_end = datetime.datetime.utcnow()
+#     fastfood_mem_spent_time = fastfood_mem_end- fastfood_mem_start
+#     print "Timimg fastfood memory: \t\t", fastfood_mem_spent_time
+#
+#     assert_greater(fastfood_spent_time, fastfood_mem_spent_time)
+#
 def test_fastfood_performance_comparison_between_methods():
     """compares the performance of Fastfood and RKS"""
     #generate data
-    X = rng.random_sample(size=(5000, 2048))
-    Y = rng.random_sample(size=(5000, 2048))
+    X = rng.random_sample(size=(1000, 4096))
+    Y = rng.random_sample(size=(10000, 4096))
     X /= X.sum(axis=1)[:, np.newaxis]
     Y /= Y.sum(axis=1)[:, np.newaxis]
 
     # calculate feature maps
     gamma = 10.
     sigma = np.sqrt(1 / (2 * gamma))
-    number_of_features_to_generate = 4096
+    number_of_features_to_generate = 4096*4
 
 
     exact_start = datetime.datetime.utcnow()
-    # original rbf kernel method: 
+    # original rbf kernel method:
     #rbf_kernel(X, X, gamma=gamma)
     #rbf_kernel(X, Y, gamma=gamma)
     exact_end = datetime.datetime.utcnow()
@@ -346,7 +346,7 @@ def test_fastfood_performance_comparison_between_methods():
     _ = rbf_transform.fit(X)
     fastfood_fast_vec_start = datetime.datetime.utcnow()
     # Fastfood: approximate kernel mapping
-    rbf_transform.transform(X)
+    _ = rbf_transform.transform(X)
     _ = rbf_transform.transform(Y)
     fastfood_fast_vec_end = datetime.datetime.utcnow()
     fastfood_fast_vec_spent_time =fastfood_fast_vec_end- fastfood_fast_vec_start
@@ -370,16 +370,16 @@ def test_digit_recognition():
 
     # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
     # License: Simplified BSD
-    
+
     # Standard scientific Python imports
     import pylab as pl
-    
+
     # Import datasets, classifiers and performance metrics
     from sklearn import datasets, svm, metrics
 
     # The digits dataset
     digits = datasets.load_digits()
-    
+
     # The data that we are interested in is made of 8x8 images of digits,
     # let's have a look at the first 3 images, stored in the `images`
     # attribute of the dataset. If we were working from image files, we
@@ -390,7 +390,7 @@ def test_digit_recognition():
         pl.axis('off')
         pl.imshow(image, cmap=pl.cm.gray_r, interpolation='nearest')
         pl.title('Training: %i' % label)
-    
+
     # To apply an classifier on this data, we need to flatten the image, to
     # turn the data in a (samples, feature) matrix:
     n_samples = len(digits.images)
@@ -436,3 +436,11 @@ def test_digit_recognition():
     # assert_almost_equal(metrics.classification_report(expected, predicted),
     #                     metrics.classification_report(expected, predicted_linear_transformed),
     #                     decimal=1)
+
+    for index, (image, prediction) in enumerate(zip(digits.images[test__idx], predicted)[:4]):
+        pl.subplot(2, 4, index + 5)
+        pl.axis('off')
+        pl.imshow(image, cmap=pl.cm.gray_r, interpolation='nearest')
+        pl.title('Prediction: %i' % prediction)
+
+    pl.show()
