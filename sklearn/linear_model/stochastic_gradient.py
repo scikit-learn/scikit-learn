@@ -19,7 +19,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..externals import six
 
-from .sgd_fast import plain_sgd
+from .sgd_fast import average_sgd
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
 from ..utils import compute_class_weight
 from .sgd_fast import Hinge
@@ -298,14 +298,14 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
     # Windows
     seed = random_state.randint(0, np.iinfo(np.int32).max)
 
-    return plain_sgd(coef, intercept, average_coef,
-                     average_intercept, previously_seen, est.loss_function,
-                     penalty_type, alpha, C, est.l1_ratio,
-                     dataset, n_iter, int(est.fit_intercept),
-                     int(est.verbose), int(est.shuffle), seed,
-                     pos_weight, neg_weight,
-                     learning_rate_type, est.eta0,
-                     est.power_t, est.t_, intercept_decay, est.average)
+    return average_sgd(coef, intercept, average_coef,
+                       average_intercept, previously_seen, est.loss_function,
+                       penalty_type, alpha, C, est.l1_ratio,
+                       dataset, n_iter, int(est.fit_intercept),
+                       int(est.verbose), int(est.shuffle), seed,
+                       pos_weight, neg_weight,
+                       learning_rate_type, est.eta0,
+                       est.power_t, est.t_, intercept_decay, est.average)
 
 
 class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
@@ -999,26 +999,26 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         seed = random_state.randint(0, np.iinfo(np.int32).max)
         self.standard_coef_, self.standard_intercept_, \
             self.average_coef_, self.average_intercept_ =\
-            plain_sgd(self.standard_coef_,
-                      self.standard_intercept_[0],
-                      self.average_coef_,
-                      self.average_intercept_[0],
-                      self.previously_seen_,
-                      loss_function,
-                      penalty_type,
-                      alpha, C,
-                      self.l1_ratio,
-                      dataset,
-                      n_iter,
-                      int(self.fit_intercept),
-                      int(self.verbose),
-                      int(self.shuffle),
-                      seed,
-                      1.0, 1.0,
-                      learning_rate_type,
-                      self.eta0, self.power_t, self.t_,
-                      intercept_decay,
-                      self.average)
+            average_sgd(self.standard_coef_,
+                        self.standard_intercept_[0],
+                        self.average_coef_,
+                        self.average_intercept_[0],
+                        self.previously_seen_,
+                        loss_function,
+                        penalty_type,
+                        alpha, C,
+                        self.l1_ratio,
+                        dataset,
+                        n_iter,
+                        int(self.fit_intercept),
+                        int(self.verbose),
+                        int(self.shuffle),
+                        seed,
+                        1.0, 1.0,
+                        learning_rate_type,
+                        self.eta0, self.power_t, self.t_,
+                        intercept_decay,
+                        self.average)
 
         self.average_intercept_ = np.atleast_1d(self.average_intercept_)
         self.standard_intercept_ = np.atleast_1d(self.standard_intercept_)

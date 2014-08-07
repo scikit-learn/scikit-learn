@@ -354,9 +354,6 @@ cdef class SquaredEpsilonInsensitive(Regression):
 
 def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
               double intercept,
-              np.ndarray[double, ndim=1, mode='c'] average_weights,
-              double average_intercept,
-              np.ndarray[double, ndim=1, mode='c'] previously_seen,
               LossFunction loss,
               int penalty_type,
               double alpha, double C,
@@ -368,9 +365,106 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
               int learning_rate, double eta0,
               double power_t,
               double t=1.0,
-              double intercept_decay=1.0,
-              bint average=False):
+              double intercept_decay=1.0):
     """Plain SGD for generic loss functions and penalties.
+
+    Parameters
+    ----------
+    weights : ndarray[double, ndim=1]
+        The allocated coef_ vector.
+    intercept : double
+        The initial intercept.
+    loss : LossFunction
+        A concrete ``LossFunction`` object.
+    penalty_type : int
+        The penalty 2 for L2, 1 for L1, and 3 for Elastic-Net.
+    alpha : float
+        The regularization parameter.
+    C : float
+        Maximum step size for passive aggressive.
+    l1_ratio : float
+        The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
+        l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
+    dataset : SequentialDataset
+        A concrete ``SequentialDataset`` object.
+    n_iter : int
+        The number of iterations (epochs).
+    fit_intercept : int
+        Whether or not to fit the intercept (1 or 0).
+    verbose : int
+        Print verbose output; 0 for quite.
+    shuffle : boolean
+        Whether to shuffle the training data before each epoch.
+    weight_pos : float
+        The weight of the positive class.
+    weight_neg : float
+        The weight of the negative class.
+    seed : np.uint32_t
+        Seed of the pseudorandom number generator used to shuffle the data.
+    learning_rate : int
+        The learning rate:
+        (1) constant, eta = eta0
+        (2) optimal, eta = 1.0/(t+t0)
+        (3) inverse scaling, eta = eta0 / pow(t, power_t)
+        (4) Passive Agressive-I, eta = min(alpha, loss/norm(x))
+        (5) Passive Agressive-II, eta = 1.0 / (norm(x) + 0.5*alpha)
+    eta0 : double
+        The initial learning rate.
+    power_t : double
+        The exponent for inverse scaling learning rate.
+    t : double
+        Initial state of the learning rate. This value is equal to the
+        iteration count except when the learning rate is set to `optimal`.
+        Default: 1.0.
+
+    Returns
+    -------
+    weights : array, shape=[n_features]
+        The fitted weight vector.
+    intercept : double
+        The fitted intercept term.
+    """
+    standard_weights, standard_intercept,\
+        _, _ = _plain_sgd(weights,
+                          intercept,
+                          None,
+                          None,
+                          0,
+                          loss,
+                          penalty_type,
+                          alpha, C,
+                          l1_ratio,
+                          dataset,
+                          n_iter, fit_intercept,
+                          verbose, shuffle, seed,
+                          weight_pos, weight_neg,
+                          learning_rate, eta0,
+                          power_t,
+                          t,
+                          intercept_decay,
+                          False)
+    return standard_weights, standard_intercept
+
+
+def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
+                double intercept,
+                np.ndarray[double, ndim=1, mode='c'] average_weights,
+                double average_intercept,
+                np.ndarray[double, ndim=1, mode='c'] previously_seen,
+                LossFunction loss,
+                int penalty_type,
+                double alpha, double C,
+                double l1_ratio,
+                SequentialDataset dataset,
+                int n_iter, int fit_intercept,
+                int verbose, bint shuffle, np.uint32_t seed,
+                double weight_pos, double weight_neg,
+                int learning_rate, double eta0,
+                double power_t,
+                double t=1.0,
+                double intercept_decay=1.0,
+                bint average=True):
+    """Average SGD for generic loss functions and penalties.
 
     Parameters
     ----------
@@ -442,20 +536,60 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     average_intercept : double
         The averaged intercept accross iterations
     """
+    return _plain_sgd(weights,
+                      intercept,
+                      average_weights,
+                      average_intercept,
+                      previously_seen,
+                      loss,
+                      penalty_type,
+                      alpha, C,
+                      l1_ratio,
+                      dataset,
+                      n_iter, fit_intercept,
+                      verbose, shuffle, seed,
+                      weight_pos, weight_neg,
+                      learning_rate, eta0,
+                      power_t,
+                      t,
+                      intercept_decay,
+                      average)
+
+
+def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
+               double intercept,
+               np.ndarray[double, ndim=1, mode='c'] average_weights,
+               double average_intercept,
+               np.ndarray[double, ndim=1, mode='c'] previously_seen,
+               LossFunction loss,
+               int penalty_type,
+               double alpha, double C,
+               double l1_ratio,
+               SequentialDataset dataset,
+               int n_iter, int fit_intercept,
+               int verbose, bint shuffle, np.uint32_t seed,
+               double weight_pos, double weight_neg,
+               int learning_rate, double eta0,
+               double power_t,
+               double t=1.0,
+               double intercept_decay=1.0,
+               bint average=False):
+
     # get the data information into easy vars
     cdef Py_ssize_t n_samples = dataset.n_samples
     cdef Py_ssize_t n_features = weights.shape[0]
 
     cdef WeightVector w = WeightVector(weights)
-    cdef double* aw_ptr = &average_weights[0]
     cdef double* w_ptr = &weights[0]
-    cdef double* ps_ptr = &previously_seen[0]
-
     cdef double *x_data_ptr = NULL
     cdef int *x_ind_ptr = NULL
+    cdef double* aw_ptr = NULL
+    cdef double* ps_ptr = NULL
 
     #initialize components needed for averaging
     if average:
+        aw_ptr = &average_weights[0]
+        ps_ptr = &previously_seen[0]
         # average_weights_ *= t - 1
         dscal(n_features, t - 1, aw_ptr, 1)
         # average_weights_ += previously_seen_ * n_samples
