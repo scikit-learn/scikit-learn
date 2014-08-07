@@ -224,8 +224,8 @@ class Pipeline(_BasePipeline):
     # Estimator interface
 
     def _fit(self, X, y=None, **fit_params):
-        fit_params_steps = {name: {} for name, step in self.steps
-                            if step is not None}
+        fit_params_steps = dict((name, {}) for name, step in self.steps
+                                if step is not None)
         for pname, pval in six.iteritems(fit_params):
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval
