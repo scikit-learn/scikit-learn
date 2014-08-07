@@ -375,9 +375,9 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     multi_class : str, optional default 'ovr'
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
-        the loss minimised for is the true multinomial loss fit across
-        the entire probability distribution. Useful only for the 'lbfgs'
-        solvers.
+        the loss minimised is the true multinomial loss fit across
+        the entire probability distribution. Works only for the 'lbfgs'
+        solver.
 
     Returns
     -------
@@ -396,6 +396,10 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     """
     if isinstance(Cs, numbers.Integral):
         Cs = np.logspace(-4, 4, Cs)
+
+    if multi_class not in ['multinomial', 'ovr']:
+        raise ValueError("multi_class can be either 'multinomial' or 'ovr'"
+                         "got %s" % multi_class)
 
     if multi_class == 'multinomial' and solver != 'lbfgs':
         raise ValueError("Solver %s cannot solve problems with "
@@ -473,8 +477,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                 n_features, n_features + 1):
                 raise ValueError('Initialization coef is not of correct shape')
             w0[:, :coef.shape[1]] = coef
-            # fmin_l_bfgs_b accaepts only ravelled parameters.
 
+    # fmin_l_bfgs_b accepts only ravelled parameters.
     if multi_class == 'multinomial':
         w0 = w0.ravel()
 
@@ -501,9 +505,9 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                     args=(X, target, 1. / C, sample_weight),
                     iprint=(verbose > 0) - 1, pgtol=tol
                     )
-                if info["warnflag"] == 1:
-                    warnings.warn("lbfgs failed to converge. Increase the number "
-                                  "of iterations.")
+            if info["warnflag"] == 1:
+                warnings.warn("lbfgs failed to converge. Increase the number "
+                              "of iterations.")
 
         elif solver == 'newton-cg':
             grad = lambda x, *args: _logistic_loss_and_grad(x, *args)[1]
@@ -618,9 +622,9 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     multi_class : str, optional default 'ovr'
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
-        the loss minimised for is the true multinomial loss fit across
-        the entire probability distribution. Useful only for the 'lbfgs'
-        solvers.
+        the loss minimised is the true multinomial loss fit across
+        the entire probability distribution. Works only for the 'lbfgs'
+        solver.
 
     Returns
     -------
@@ -694,7 +698,7 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
                          _LearntSelectorMixin, SparseCoefMixin):
     """Logistic Regression (aka logit, MaxEnt) classifier.
 
-    In the multiclass case, the training algorithm uses the one-vs.-all (OvA)
+    In the multiclass case, the training algorithm uses the one-vs-rest (OvR)
     scheme if the 'multi_class' option is set to 'ovr' and the "true"
     multinomial LR, if the 'multi_class' option is set to 'multinomial'.
     (Currently the 'multinomial' option is supported only by the 'lbfgs'
@@ -764,9 +768,9 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
     multi_class : str, optional default 'ovr'
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
-        the loss minimised for is the true multinomial loss fit across
-        the entire probability distribution. Useful only for the 'lbfgs'
-        solvers.
+        the loss minimised is the true multinomial loss fit across
+        the entire probability distribution. Works only for the 'lbfgs'
+        solver.
 
     Attributes
     ----------
@@ -807,7 +811,6 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
 
     See also
     --------
-    sklearn.linear_model.MultinomialLR
     sklearn.linear_model.SGDClassifier
     """
 
@@ -951,9 +954,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     multi_class : str, optional default 'ovr'
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
-        the loss minimised for is the true multinomial loss fit across
-        the entire probability distribution. Useful only for the 'lbfgs'
-        solvers.
+        the loss minimised is the true multinomial loss fit across
+        the entire probability distribution. Works only for the 'lbfgs'
+        solver.
 
     intercept_scaling : float, default 1.
         This parameter is useful only when the solver 'liblinear' is used
@@ -1065,7 +1068,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         y = check_array(y, ensure_2d=False)
 
         if self.multi_class not in ['ovr', 'multinomial']:
-            raise ValueError("multi_class backend shold be either 'ovr' or 'multinomial'"
+            raise ValueError("multi_class backend should be either 'ovr' or 'multinomial'"
                              "got %s" % self.multi_class)
 
         if y.ndim == 2 and y.shape[1] == 1:
@@ -1144,7 +1147,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             # we need it to be n_classes X len(Cs) X n_folds X n_features
             # to be similar to "ovr"
 
-            coefs_paths = np.rollaxis(np.asarray(multi_coefs_paths), 2, 0)
+            coefs_paths = np.rollaxis(multi_coefs_paths, 2, 0)
 
             # multinomial has a true score across all labels. Hence the
             # shape is n_folds X len(Cs). We need to repeat this score
