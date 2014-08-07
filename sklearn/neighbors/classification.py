@@ -7,7 +7,6 @@
 #          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
-import warnings
 import array
 import numpy as np
 import scipy.sparse as sp
@@ -167,7 +166,8 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             neigh_lbls_k = _y.getcol(k).toarray()[neigh_ind, 0]
             if weights is None:
                 # neigh_lbls_k =  neigh_lbls_k.T
-                mode = csr_row_mode(sp.csr_matrix(neigh_lbls_k))
+                # mode = csr_row_mode(sp.csr_matrix(neigh_lbls_k))
+                mode, _ = stats.mode(neigh_lbls_k, axis=1)
                 mode = sp.csc_matrix(mode, dtype=np.intp)
             else:
                 # neigh_lbls_k = neigh_lbls_k.toarray().T
