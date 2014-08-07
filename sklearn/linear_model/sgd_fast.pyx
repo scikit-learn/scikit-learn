@@ -428,8 +428,8 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         _, _ = _plain_sgd(weights,
                           intercept,
                           None,
-                          None,
                           0,
+                          None,
                           loss,
                           penalty_type,
                           alpha, C,
@@ -462,8 +462,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 int learning_rate, double eta0,
                 double power_t,
                 double t=1.0,
-                double intercept_decay=1.0,
-                bint average=True):
+                double intercept_decay=1.0):
     """Average SGD for generic loss functions and penalties.
 
     Parameters
@@ -521,9 +520,6 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         Initial state of the learning rate. This value is equal to the
         iteration count except when the learning rate is set to `optimal`.
         Default: 1.0.
-    average : bool
-        When set to true, will compute the averged sgd and store the
-        averaged weight vector in average_weights
 
     Returns
     -------
@@ -553,7 +549,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                       power_t,
                       t,
                       intercept_decay,
-                      average)
+                      True)
 
 
 def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,

@@ -19,7 +19,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..externals import six
 
-from .sgd_fast import average_sgd
+from .sgd_fast import plain_sgd, average_sgd
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
 from ..utils import compute_class_weight
 from .sgd_fast import Hinge
@@ -215,15 +215,16 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                                                     dtype=np.float64,
                                                     order="C")
         #initialize average parameters
-        self.average_coef_ = np.zeros(self.standard_coef_.shape,
-                                      dtype=np.float64,
-                                      order="C")
-        self.average_intercept_ = np.zeros(self.standard_intercept_.shape,
-                                           dtype=np.float64,
-                                           order="C")
-        self.previously_seen_ = np.zeros(self.standard_coef_.shape,
-                                         dtype=np.float64,
-                                         order="c")
+        if self.average:
+            self.average_coef_ = np.zeros(self.standard_coef_.shape,
+                                          dtype=np.float64,
+                                          order="C")
+            self.average_intercept_ = np.zeros(self.standard_intercept_.shape,
+                                               dtype=np.float64,
+                                               order="C")
+            self.previously_seen_ = np.zeros(self.standard_coef_.shape,
+                                             dtype=np.float64,
+                                             order="c")
 
 
 def _check_fit_data(X, y):
@@ -279,7 +280,7 @@ def _prepare_fit_binary(est, y, i):
 
 
 def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
-               pos_weight, neg_weight, sample_weight, average):
+               pos_weight, neg_weight, sample_weight):
     """Fit a single binary classifier.
 
     The i'th class is considered the "positive" class.
@@ -298,14 +299,34 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
     # Windows
     seed = random_state.randint(0, np.iinfo(np.int32).max)
 
-    return average_sgd(coef, intercept, average_coef,
-                       average_intercept, previously_seen, est.loss_function,
-                       penalty_type, alpha, C, est.l1_ratio,
-                       dataset, n_iter, int(est.fit_intercept),
-                       int(est.verbose), int(est.shuffle), seed,
-                       pos_weight, neg_weight,
-                       learning_rate_type, est.eta0,
-                       est.power_t, est.t_, intercept_decay, est.average)
+    if not est.average:
+        return plain_sgd(coef, intercept, est.loss_function,
+                         penalty_type, alpha, C, est.l1_ratio,
+                         dataset, n_iter, int(est.fit_intercept),
+                         int(est.verbose), int(est.shuffle), seed,
+                         pos_weight, neg_weight,
+                         learning_rate_type, est.eta0,
+                         est.power_t, est.t_, intercept_decay)
+
+    else:
+        standard_coef, standard_intercept, average_coef, \
+            average_intercept = average_sgd(coef, intercept, average_coef,
+                                            average_intercept, previously_seen,
+                                            est.loss_function, penalty_type,
+                                            alpha, C, est.l1_ratio, dataset,
+                                            n_iter, int(est.fit_intercept),
+                                            int(est.verbose), int(est.shuffle),
+                                            seed, pos_weight, neg_weight,
+                                            learning_rate_type, est.eta0,
+                                            est.power_t, est.t_,
+                                            intercept_decay)
+
+        if len(est.classes_) == 2:
+            est.average_intercept_[0] = average_intercept
+        else:
+            est.average_intercept_[i] = average_intercept
+
+        return standard_coef, standard_intercept
 
 
 class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
@@ -427,21 +448,19 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
     def _fit_binary(self, X, y, alpha, C, sample_weight,
                     learning_rate, n_iter):
         """Fit a binary classifier on X and y. """
-        coef, self.standard_intercept_, \
-            average_coef, self.average_intercept_ =\
+        coef, self.standard_intercept_ = \
             fit_binary(self, 1, X, y, alpha, C,
                        learning_rate, n_iter,
                        self._expanded_class_weight[1],
                        self._expanded_class_weight[0],
-                       sample_weight, False)
+                       sample_weight)
 
         # intercept is a float, need to convert it to an array of length 1
         self.standard_intercept_ = np.atleast_1d(self.standard_intercept_)
-        self.average_intercept_ = np.atleast_1d(self.average_intercept_)
 
         # need to be 2d
         if self.average:
-            self.coef_ = average_coef.reshape(1, -1)
+            self.coef_ = self.average_coef_.reshape(1, -1)
             self.intercept_ = self.average_intercept_
         else:
             self.coef_ = coef.reshape(1, -1)
@@ -459,14 +478,11 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                           verbose=self.verbose)(
             delayed(fit_binary)(self, i, X, y, alpha, C, learning_rate,
                                 n_iter, self._expanded_class_weight[i], 1.,
-                                sample_weight, self.average)
+                                sample_weight)
             for i in range(len(self.classes_)))
 
-        for i, (_, standard_intercept,
-                _, average_intercept) in enumerate(result):
-
+        for i, (_, standard_intercept) in enumerate(result):
             self.standard_intercept_[i] = standard_intercept
-            self.average_intercept_[i] = average_intercept
 
         if self.average:
             self.coef_ = self.average_coef_
@@ -997,30 +1013,51 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         # numpy mtrand expects a C long which is a signed 32 bit integer under
         # Windows
         seed = random_state.randint(0, np.iinfo(np.int32).max)
-        self.standard_coef_, self.standard_intercept_, \
-            self.average_coef_, self.average_intercept_ =\
-            average_sgd(self.standard_coef_,
-                        self.standard_intercept_[0],
-                        self.average_coef_,
-                        self.average_intercept_[0],
-                        self.previously_seen_,
-                        loss_function,
-                        penalty_type,
-                        alpha, C,
-                        self.l1_ratio,
-                        dataset,
-                        n_iter,
-                        int(self.fit_intercept),
-                        int(self.verbose),
-                        int(self.shuffle),
-                        seed,
-                        1.0, 1.0,
-                        learning_rate_type,
-                        self.eta0, self.power_t, self.t_,
-                        intercept_decay,
-                        self.average)
 
-        self.average_intercept_ = np.atleast_1d(self.average_intercept_)
+        if self.average:
+            self.standard_coef_, self.standard_intercept_, \
+                self.average_coef_, self.average_intercept_ =\
+                average_sgd(self.standard_coef_,
+                            self.standard_intercept_[0],
+                            self.average_coef_,
+                            self.average_intercept_[0],
+                            self.previously_seen_,
+                            loss_function,
+                            penalty_type,
+                            alpha, C,
+                            self.l1_ratio,
+                            dataset,
+                            n_iter,
+                            int(self.fit_intercept),
+                            int(self.verbose),
+                            int(self.shuffle),
+                            seed,
+                            1.0, 1.0,
+                            learning_rate_type,
+                            self.eta0, self.power_t, self.t_,
+                            intercept_decay)
+
+            self.average_intercept_ = np.atleast_1d(self.average_intercept_)
+
+        else:
+            self.standard_coef_, self.standard_intercept_ = \
+                plain_sgd(self.standard_coef_,
+                          self.standard_intercept_[0],
+                          loss_function,
+                          penalty_type,
+                          alpha, C,
+                          self.l1_ratio,
+                          dataset,
+                          n_iter,
+                          int(self.fit_intercept),
+                          int(self.verbose),
+                          int(self.shuffle),
+                          seed,
+                          1.0, 1.0,
+                          learning_rate_type,
+                          self.eta0, self.power_t, self.t_,
+                          intercept_decay)
+
         self.standard_intercept_ = np.atleast_1d(self.standard_intercept_)
 
         if self.average:
