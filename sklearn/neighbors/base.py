@@ -637,12 +637,13 @@ class SupervisedIntegerMixin(object):
             self.classes_ = []
             for k in range(y.shape[1]):
                 k_col = y.getcol(k)
-                classes = np.unique(k_col.data)
+                k_col_data = y.data[y.indptr[k]:y.indptr[k + 1]]
+                classes = np.unique(k_col_data)
                 if not k_col.nnz == y.shape[0]:
                     classes = np.insert(classes, 0, 0)
                 self.classes_.append(classes)
 
-                data_k = [np.where(classes == e)[0][0] for e in k_col.data]
+                data_k = [np.where(classes == e)[0][0] for e in k_col_data]
                 data = np.append(data, data_k)
 
             _y = sp.csc_matrix((data, y.indices, y.indptr), shape=y.shape,
