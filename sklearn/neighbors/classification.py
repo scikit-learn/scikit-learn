@@ -162,14 +162,14 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         # indices = np.array([])
         # indptr = np.array([0])
         for k, classes_k in enumerate(classes_):
-            neigh_lbls_k = _y[neigh_ind, k]
-            # neigh_lbls_k = _y.getcol(k).toarray()[neigh_ind, 0]
+            # neigh_lbls_k = _y[neigh_ind, k]
+            neigh_lbls_k = _y.getcol(k).toarray()[neigh_ind, 0]
             if weights is None:
-                neigh_lbls_k =  neigh_lbls_k.T
+                # neigh_lbls_k =  neigh_lbls_k.T
                 mode = csr_row_mode(sp.csr_matrix(neigh_lbls_k))
                 mode = sp.csc_matrix(mode, dtype=np.intp)
             else:
-                neigh_lbls_k = neigh_lbls_k.toarray().T
+                # neigh_lbls_k = neigh_lbls_k.toarray().T
                 # XXX make a sparse function, do not densify neigh_lbls_k
                 mode, _ = weighted_mode(neigh_lbls_k, weights,
                                         axis=1)
