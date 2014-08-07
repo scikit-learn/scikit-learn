@@ -411,8 +411,8 @@ There exists two types of MDS algorithm: metric and non metric. In the
 scikit-learn, the class :class:`MDS` implements both. In Metric MDS, the input
 similarity matrix arises from a metric (and thus respects the triangular
 inequality), the distances between output two points are then set to be as
-close as possible to the similarity or dissimilarity data. In the non metric
-vision, the algorithms will try to preserve the order of the distances, and
+close as possible to the similarity or dissimilarity data. In the non-metric
+version, the algorithms will try to preserve the order of the distances, and
 hence seek for a monotonic relationship between the distances in the embedded
 space and the similarities/dissimilarities.
 
