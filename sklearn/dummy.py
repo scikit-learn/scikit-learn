@@ -131,10 +131,10 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
          self.n_classes_,
          self.class_prior_) = class_distribution(y, sample_weight)
 
-        for k in range(self.n_outputs_):
-            # Checking in case of constant strategy if the constant
-            # provided by the user is in y.
-            if self.strategy == "constant":
+        if self.strategy == "constant":
+            for k in range(self.n_outputs_):
+                # Checking in case of constant strategy if the constant
+                # provided by the user is in y.
                 if constant[k] not in self.classes_[k]:
                     raise ValueError("The constant target value must be "
                                      "present in training data")
@@ -205,13 +205,12 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                                   self.random_state)
         else:
             if self.strategy == "most_frequent":
-                ret = [classes_[k][class_prior_[k].argmax()] for k in
-                       range(self.n_outputs_)]
-                y = np.tile(ret, [n_samples, 1])
+                y = np.tile([classes_[k][class_prior_[k].argmax()] for
+                             k in range(self.n_outputs_)], [n_samples, 1])
 
             elif self.strategy == "stratified":
-                y = np.vstack([classes_[k][proba[k].argmax(axis=1)] for k in
-                               range(self.n_outputs_)]).T
+                y = np.vstack(classes_[k][proba[k].argmax(axis=1)] for
+                              k in range(self.n_outputs_)).T
 
             elif self.strategy == "uniform":
                 ret = [classes_[k][rs.randint(n_classes_[k], size=n_samples)]

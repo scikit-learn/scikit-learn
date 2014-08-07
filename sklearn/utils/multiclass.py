@@ -407,7 +407,7 @@ def class_distribution(y, sample_weight=None):
 
             classes.append(classes_k)
             n_classes.append(classes_k.shape[0])
-            class_prior.append(class_prior_k / float(class_prior_k.sum()))
+            class_prior.append(class_prior_k / class_prior_k.sum())
     else:
         for k in range(n_outputs):
             classes_k, y_k = np.unique(y[:, k], return_inverse=True)

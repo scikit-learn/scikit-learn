@@ -238,8 +238,7 @@ def random_choice_csc(n_samples, classes, class_probability=None,
             class_prob_j = np.empty(shape=classes[j].shape[0])
             class_prob_j.fill(1 / classes[j].shape[0])
         else:
-            class_prob_j = class_probability[j]
-            class_prob_j = np.asarray(class_prob_j)
+            class_prob_j = np.asarray(class_probability[j])
 
         if class_prob_j.shape[0] != classes[j].shape[0]:
             raise ValueError("classes[{0}] (length {1}) and "
