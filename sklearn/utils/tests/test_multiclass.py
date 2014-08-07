@@ -381,6 +381,19 @@ def test_class_distribution_sparse():
         assert_array_almost_equal(n_classes[k], n_classes_expected[k])
         assert_array_almost_equal(class_prior[k], class_prior_expected[k])
 
+    # Test again with explicit sample weights
+    (classes,
+     n_classes,
+     class_prior) = class_distribution(y, [1.0, 2.0, 1.0, 2.0, 1.0, 2.0])
+    class_prior_expected = [np.array([4/9, 3/9, 2/9]),
+                            np.array([2/9, 4/9, 3/9]),
+                            np.array([1.0]), np.array([1.0])]
+
+    for k in range(y.shape[1]):
+        assert_array_almost_equal(classes[k], classes_expected[k])
+        assert_array_almost_equal(n_classes[k], n_classes_expected[k])
+        assert_array_almost_equal(class_prior[k], class_prior_expected[k])
+
 
 if __name__ == "__main__":
     import nose
