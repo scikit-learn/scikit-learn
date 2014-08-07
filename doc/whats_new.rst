@@ -233,6 +233,12 @@ Enhancements
    - Added new return type ``(data, target)`` : tuple option to :func:`load_iris` dataset. (`#7049 <https://github.com/scikit-learn/scikit-learn/pull/7049>`_) 
      By `Manvendra Singh`_ and `Nelson Liu`_.   
 
+   - Added support for substituting or disabling :class:`pipeline.Pipeline`
+     and :class:`pipeline.FeatureUnion` components using the ``set_params``
+     interface that powers :mod:`sklearn.grid_search`.
+     See :ref:`example_plot_compare_reduction.py`. By `Joel Nothman`_ and
+     `Robert McGibbon`_.
+
 Bug fixes
 .........
 
@@ -4300,6 +4306,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Ori Ziv: https://github.com/zivori
 
 .. _Sears Merritt: https://github.com/merritts
+<<<<<<< 738698ac93085287844605cacdc62357c026622f
 
 .. _Wenhua Yang: https://github.com/geekoala
 
@@ -4308,7 +4315,12 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Sebastian Säger: https://github.com/ssaeger
 
 .. _YenChen Lin: https://github.com/yenchenlin
+<<<<<<< 8bd5658eff6dc3578a38edf65650c4806d1bd51b
 
 .. _Nelson Liu: https://github.com/nelson-liu
 
 .. _Manvendra Singh: https://github.com/manu-chroma
+=======
+=======
+>>>>>>> DOC add what's new entry
+>>>>>>> DOC add what's new entry
