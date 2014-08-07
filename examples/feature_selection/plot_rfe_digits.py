@@ -13,6 +13,7 @@ a digit classification task.
 """
 print(__doc__)
 
+# Import the necessary modules and libraries
 from sklearn.svm import SVC
 from sklearn.datasets import load_digits
 from sklearn.feature_selection import RFE
