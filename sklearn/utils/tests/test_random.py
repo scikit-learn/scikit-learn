@@ -118,8 +118,8 @@ def test_random_choice_csc(n_samples=10000, random_state=24):
         assert_array_almost_equal(class_probabilites[k], p, decimal=1)
 
     # Implicit class probabilities
-    classes = [[0, 1],  [0, 1, 2]]  # array like support
-    class_probabilites = [np.array([0.5, 0.5]), np.array([1/3, 1/3, 1/3])]
+    classes = [[0, 1],  [1, 2]]  # array like support
+    class_probabilites = [np.array([0.5, 0.5]), np.array([0, 1/2, 1/2])]
 
     got = random_choice_csc(n_samples=n_samples,
                             classes=classes,

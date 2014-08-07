@@ -257,7 +257,7 @@ def random_choice_csc(n_samples, classes, class_probability=None,
 
         # If there are nonzero classes choose randomly using class_probability
         if classes[j].shape[0] > 1:
-            p_nonzero = 1 - class_prob_j[classes == 0]
+            p_nonzero = 1 - class_prob_j[classes[j] == 0]
             nnz = int(n_samples * p_nonzero)
             ind_sample = sample_without_replacement(n_population=n_samples,
                                                     n_samples=nnz,
