@@ -347,12 +347,15 @@ def test_class_distribution():
                   [1, 3, 0, 1]])
 
     classes, n_classes, class_prior = class_distribution(y)
-    classes_expected = [np.array([1, 2, 4]), np.array([0, 2, 3]),
-                        np.array([0]), np.array([1])]
+    classes_expected = [[1, 2, 4],
+                        [0, 2, 3],
+                        [0],
+                        [1]]
     n_classes_expected = [3, 3, 1, 1]
-    class_prior_expected = [np.array([3/6, 2/6, 1/6]),
-                            np.array([1/3, 1/3, 1/3]),
-                            np.array([1.0]), np.array([1.0])]
+    class_prior_expected = [[3/6, 2/6, 1/6],
+                            [1/3, 1/3, 1/3],
+                            [1.0],
+                            [1.0]]
 
     for k in range(y.shape[1]):
         assert_array_almost_equal(classes[k], classes_expected[k])
@@ -369,12 +372,15 @@ def test_class_distribution_sparse():
                                 [1, 3, 0, 1]]))
 
     classes, n_classes, class_prior = class_distribution(y)
-    classes_expected = [np.array([1, 2, 4]), np.array([0, 2, 3]),
-                        np.array([0]), np.array([1])]
+    classes_expected = [[1, 2, 4],
+                        [0, 2, 3],
+                        [0],
+                        [1]]
     n_classes_expected = [3, 3, 1, 1]
-    class_prior_expected = [np.array([3/6, 2/6, 1/6]),
-                            np.array([1/3, 1/3, 1/3]),
-                            np.array([1.0]), np.array([1.0])]
+    class_prior_expected = [[3/6, 2/6, 1/6],
+                            [1/3, 1/3, 1/3],
+                            [1.0],
+                            [1.0]]
 
     for k in range(y.shape[1]):
         assert_array_almost_equal(classes[k], classes_expected[k])
@@ -385,9 +391,10 @@ def test_class_distribution_sparse():
     (classes,
      n_classes,
      class_prior) = class_distribution(y, [1.0, 2.0, 1.0, 2.0, 1.0, 2.0])
-    class_prior_expected = [np.array([4/9, 3/9, 2/9]),
-                            np.array([2/9, 4/9, 3/9]),
-                            np.array([1.0]), np.array([1.0])]
+    class_prior_expected = [[4/9, 3/9, 2/9],
+                            [2/9, 4/9, 3/9],
+                            [1.0],
+                            [1.0]]
 
     for k in range(y.shape[1]):
         assert_array_almost_equal(classes[k], classes_expected[k])

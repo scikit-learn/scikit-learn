@@ -10,7 +10,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
 
@@ -430,7 +430,9 @@ def test_uniform_strategy_sparse_target_warning():
                                 [1, 1]]))
 
     clf = DummyClassifier(strategy="uniform", random_state=0)
-    assert_warns(UserWarning, clf.fit, X, y)
+    assert_warns_message(UserWarning,
+                         "the uniform strategy would not save memory",
+                         clf.fit, X, y)
 
     X = [[0]] * 500
     y_pred = clf.predict(X)

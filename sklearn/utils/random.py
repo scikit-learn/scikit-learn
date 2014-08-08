@@ -1,5 +1,6 @@
-# This file contains a backport of np.random.choice from numpy 1.7
-# The function can be removed when we bump the requirements to >=1.7
+# Author: Hamzeh Alsalhi <ha258@cornell.edu>
+#
+# License: BSD 3 clause
 from __future__ import division
 import numpy as np
 import scipy.sparse as sp
@@ -13,6 +14,8 @@ from ._random import sample_without_replacement
 __all__ = ['sample_without_replacement', 'choice']
 
 
+# This is a backport of np.random.choice from numpy 1.7
+# The function can be removed when we bump the requirements to >=1.7
 def choice(a, size=None, replace=True, p=None, random_state=None):
     """
     choice(a, size=None, replace=True, p=None)

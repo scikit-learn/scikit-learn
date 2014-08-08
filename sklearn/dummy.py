@@ -1,6 +1,6 @@
 # Author: Mathieu Blondel <mathieu@mblondel.org>
 #         Arnaud Joly <a.joly@ulg.ac.be>
-#         Maheshakya Wijewardena<maheshakya.10@cse.mrt.ac.lk>
+#         Maheshakya Wijewardena <maheshakya.10@cse.mrt.ac.lk>
 # License: BSD 3 clause
 from __future__ import division
 
@@ -100,7 +100,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
         if self.strategy == "uniform" and sp.issparse(y):
             y = y.toarray()
-            warnings.warn('A Local copy of the target data has been converted '
+            warnings.warn('A local copy of the target data has been converted '
                           'to a numpy array. Predicting on sparse target data '
                           'with the uniform strategy would not save memory '
                           'and would be slower.',
