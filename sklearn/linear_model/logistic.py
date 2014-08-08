@@ -428,9 +428,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         if solver == "liblinear":
             if classes.size == 2:
                 # Reconstruct the weights with keys 1 and -1
-                temp = {}
-                temp[1] = class_weight[pos_class]
-                temp[-1] = class_weight[classes[0]]
+                temp = {1: class_weight[pos_class],
+                        -1: class_weight[classes[0]]}
                 class_weight = temp.copy()
             else:
                 raise ValueError("In LogisticRegressionCV the liblinear "
