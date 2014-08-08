@@ -232,8 +232,9 @@ def random_choice_csc(n_samples, classes, class_probability=None,
 
     for j in range(len(classes)):
         classes[j] = np.asarray(classes[j])
-        if classes[j].dtype.kind is 'f':
-            raise ValueError("Class type float is not supported")
+        if classes[j].dtype.kind != 'i':
+            raise ValueError("class dtype %s is not supported" %
+                             classes[j].dtype)
         classes[j] = classes[j].astype(int)
 
         # use uniform distribution if no class_probability is given
