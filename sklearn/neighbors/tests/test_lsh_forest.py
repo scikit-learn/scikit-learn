@@ -19,21 +19,20 @@ from sklearn.neighbors import LSHForest
 
 def test_neighbors_accuracy_with_c():
     """Accuracy increases as `c` increases."""
-    c_values = np.array([10, 50, 250])
+    n_candidates_values = np.array([10, 50, 250])
     samples = 100
     dim = 50
     n_iter = 10
     n_points = 20
-    accuracies = np.zeros(c_values.shape[0], dtype=float)
+    accuracies = np.zeros(n_candidates_values.shape[0], dtype=float)
     X = np.random.rand(samples, dim)
 
-    for i, c in enumerate(c_values):
-        lshf = LSHForest(c=c)
+    for i, n_candidates in enumerate(n_candidates_values):
+        lshf = LSHForest(n_candidates=n_candidates)
         lshf.fit(X)
         for j in range(n_iter):
             point = X[np.random.randint(0, samples)]
-            neighbors = lshf.kneighbors(point, n_neighbors=n_points,
-                                        return_distance=False)
+            neighbors = lshf.kneighbors(point, n_neighbors=n_points)
             distances = euclidean_distances(point, X)
             ranks = np.argsort(distances)[0, :n_points]
 
@@ -42,29 +41,27 @@ def test_neighbors_accuracy_with_c():
             accuracies[i] = accuracies[i] + ratio
 
         accuracies[i] = accuracies[i]/float(n_iter)
-
     # Sorted accuracies should be equal to original accuracies
     assert_array_equal(accuracies, np.sort(accuracies),
                        err_msg="Accuracies are not non-decreasing.")
 
 
-def test_neighbors_accuracy_with_n_trees():
-    """Accuracy increases as `n_trees` increases."""
-    n_trees = np.array([1, 10, 100])
+def test_neighbors_accuracy_with_n_estimators():
+    """Accuracy increases as `n_estimators` increases."""
+    n_estimators = np.array([1, 10, 100])
     samples = 100
     dim = 50
     n_iter = 10
     n_points = 20
-    accuracies = np.zeros(n_trees.shape[0], dtype=float)
+    accuracies = np.zeros(n_estimators.shape[0], dtype=float)
     X = np.random.rand(samples, dim)
 
-    for i, t in enumerate(n_trees):
-        lshf = LSHForest(c=500, n_trees=t)
+    for i, t in enumerate(n_estimators):
+        lshf = LSHForest(n_candidates=500, n_estimators=t)
         lshf.fit(X)
         for j in range(n_iter):
             point = X[np.random.randint(0, samples)]
-            neighbors = lshf.kneighbors(point, n_neighbors=n_points,
-                                        return_distance=False)
+            neighbors = lshf.kneighbors(point, n_neighbors=n_points)
             distances = euclidean_distances(point, X)
             ranks = np.argsort(distances)[0, :n_points]
 
@@ -73,7 +70,6 @@ def test_neighbors_accuracy_with_n_trees():
             accuracies[i] = accuracies[i] + ratio
 
         accuracies[i] = accuracies[i]/float(n_iter)
-
     # Sorted accuracies should be equal to original accuracies
     assert_array_equal(accuracies, np.sort(accuracies),
                        err_msg="Accuracies are not non-decreasing.")
@@ -85,7 +81,7 @@ def test_kneighbors():
     n_iter = 10
     X = np.random.rand(samples, dim)
 
-    lshf = LSHForest(lower_bound=0)
+    lshf = LSHForest(min_hash_length=0)
     # Test unfitted estimator
     assert_raises(ValueError, lshf.kneighbors, X[0])
 
@@ -177,56 +173,57 @@ def test_distances():
 def test_fit():
     samples = 100
     dim = 50
-    n_trees = 5
+    n_estimators = 5
     X = np.random.rand(samples, dim)
 
-    lshf = LSHForest(n_trees=n_trees)
+    lshf = LSHForest(n_estimators=n_estimators)
+
     lshf.fit(X)
 
     # _input_array = X
-    assert_array_equal(X, lshf._input_array)
+    assert_array_equal(X, lshf._fit_X)
     # A hash function g(p) for each tree
-    assert_equal(n_trees, lshf.hash_functions_.shape[0])
+    assert_equal(n_estimators, lshf.hash_functions_.shape[0])
     # Hash length = 32
     assert_equal(32, lshf.hash_functions_.shape[1])
     # Number of trees in the forest
-    assert_equal(n_trees, len(lshf._trees))
+    assert_equal(n_estimators, len(lshf._trees))
     # Each tree has entries for every data point
     assert_equal(samples, len(lshf._trees[0]))
     # Original indices after sorting the hashes
-    assert_equal(n_trees, len(lshf._original_indices))
+    assert_equal(n_estimators, len(lshf._original_indices))
     # Each set of original indices in a tree has entries for every data point
     assert_equal(samples, len(lshf._original_indices[0]))
 
 
-def test_insert():
+def test_partial_fit():
     samples = 100
-    samples_insert = 10
+    samples_partial_fit = 10
     dim = 50
     X = np.random.rand(samples, dim)
-    X_insert = np.random.rand(samples_insert, dim)
+    X_partial_fit = np.random.rand(samples_partial_fit, dim)
 
     lshf = LSHForest()
     # Test unfitted estimator
-    assert_raises(ValueError, lshf.insert, X[0])
+    assert_raises(ValueError, lshf.partial_fit, X[0])
 
     lshf.fit(X)
 
     # Insert wrong dimension
-    assert_raises(ValueError, lshf.insert,
-                  np.random.randn(samples_insert, dim-1))
+    assert_raises(ValueError, lshf.partial_fit,
+                  np.random.randn(samples_partial_fit, dim-1))
 
-    lshf.insert(X_insert)
+    lshf.partial_fit(X_partial_fit)
 
     # size of _input_array = samples + 1 after insertion
-    assert_equal(lshf._input_array.shape[0],
-                 samples+samples_insert)
+    assert_equal(lshf._fit_X.shape[0],
+                 samples+samples_partial_fit)
     # size of _original_indices[1] = samples + 1
     assert_equal(len(lshf._original_indices[0]),
-                 samples+samples_insert)
+                 samples+samples_partial_fit)
     # size of _trees[1] = samples + 1
     assert_equal(len(lshf._trees[1]),
-                 samples+samples_insert)
+                 samples+samples_partial_fit)
 
 
 if __name__ == "__main__":

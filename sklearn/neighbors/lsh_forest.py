@@ -79,19 +79,19 @@ class LSHForest(BaseEstimator):
     Parameters
     ----------
 
-    n_trees: int (default = 10)
+    n_estimators: int (default = 10)
         Number of trees in the LSH Forest.
 
-    c: int (default = 10)
-        Value to restrict candidates selection for nearest neighbors.
-        Number of candidates is often greater than c*n_trees(unless
-        restricted by lower_bound)
+    n_candidates: int (default = 10)
+        Value to restrict candidates selected from a single esitimator(tree)
+        for nearest neighbors. Number of total candidates is often greater
+        than n_candidates*n_estimators(unless restricted by min_hash_length)
 
     n_neighbors: int (default = 1)
         Number of neighbors to be returned from query function when
         it is not provided to :meth:`k_neighbors`
 
-    lower_bound: int (defualt = 4)
+    min_hash_length: int (default = 4)
         lowest hash length to be searched when candidate selection is
         performed for nearest neighbors.
 
@@ -103,9 +103,11 @@ class LSHForest(BaseEstimator):
         Cut off ratio of radius neighbors to candidates at the radius
         neighbor search
 
-    random_state: numpy.RandomState, optional
-        The generator used to initialize random projections.
-        Defaults to numpy.random.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
@@ -133,8 +135,8 @@ class LSHForest(BaseEstimator):
       >>> X = X.reshape((100,50))
       >>> lshf = LSHForest()
       >>> lshf.fit(X)
-      LSHForest(c=50, lower_bound=4, n_neighbors=1, n_trees=10, radius=1.0,
-           radius_cutoff_ratio=0.9, random_state=None)
+      LSHForest(min_hash_length=4, n_candidates=50, n_estimators=10, n_neighbors=1,
+           radius=1.0, radius_cutoff_ratio=0.9, random_state=None)
 
       >>> lshf.kneighbors(X[:5], n_neighbors=3, return_distance=True)
       (array([[0, 1, 2],
@@ -149,15 +151,15 @@ class LSHForest(BaseEstimator):
 
     """
 
-    def __init__(self, n_trees=10, radius=1.0, c=50, n_neighbors=1,
-                 lower_bound=4, radius_cutoff_ratio=.9,
+    def __init__(self, n_estimators=10, radius=1.0, n_candidates=50,
+                 n_neighbors=1, min_hash_length=4, radius_cutoff_ratio=.9,
                  random_state=None):
-        self.n_trees = n_trees
+        self.n_estimators = n_estimators
         self.radius = radius
         self.random_state = random_state
-        self.c = c
+        self.n_candidates = n_candidates
         self.n_neighbors = n_neighbors
-        self.lower_bound = lower_bound
+        self.min_hash_length = min_hash_length
         self.radius_cutoff_ratio = radius_cutoff_ratio
 
     def _generate_hash_function(self):
@@ -169,7 +171,7 @@ class LSHForest(BaseEstimator):
         grp = GaussianRandomProjection(n_components=self.max_label_length,
                                        random_state=random_state.randint(0,
                                                                          10))
-        X = np.zeros((1, self._n_dim), dtype=float)
+        X = np.zeros((1, self._fit_X.shape[1]), dtype=float)
         grp.fit(X)
         return grp
 
@@ -184,12 +186,13 @@ class LSHForest(BaseEstimator):
         of the projection.
         """
         grp = self._generate_hash_function()
-        hashes = np.array(grp.transform(self._input_array) > 0, dtype=int)
+        hashes = np.array(grp.transform(self._fit_X) > 0, dtype=int)
         hash_function = grp.components_
 
         binary_hashes = np.packbits(hashes).view(dtype='>u4')
+        original_indices = np.argsort(binary_hashes)
 
-        return np.argsort(binary_hashes), np.sort(binary_hashes), hash_function
+        return original_indices, binary_hashes[original_indices], hash_function
 
     def _compute_distances(self, query, candidates):
         """Computes the Euclidean distance.
@@ -199,8 +202,9 @@ class LSHForest(BaseEstimator):
         array and sorted distances.
         """
         distances = _simple_euclidean_distance(
-            query, self._input_array[candidates])
-        return np.argsort(distances), np.sort(distances)
+            query, self._fit_X[candidates])
+        distance_positions = np.argsort(distances)
+        return distance_positions, distances[distance_positions]
 
     def _generate_masks(self):
         """Creates left and right masks for all hash lengths."""
@@ -218,10 +222,13 @@ class LSHForest(BaseEstimator):
         distances.
         """
         candidates = []
-        n_candidates = self.c * self.n_trees
-        while max_depth > self.lower_bound and (len(candidates) < n_candidates
-                                                or len(set(candidates)) < m):
-            for i in range(self.n_trees):
+        max_candidates = self.n_candidates * self.n_estimators
+        while max_depth > self.min_hash_length and (len(candidates)
+                                                    < max_candidates or
+                                                    len(set(candidates))
+                                                    < m):
+
+            for i in range(self.n_estimators):
                 candidates.extend(
                     self._original_indices[i][_find_matching_indices(
                         self._trees[i],
@@ -246,9 +253,10 @@ class LSHForest(BaseEstimator):
         total_neighbors = np.array([], dtype=int)
         total_distances = np.array([], dtype=float)
 
-        while max_depth > self.lower_bound and ratio_within_radius > threshold:
+        while max_depth > self.min_hash_length and (ratio_within_radius
+                                                    > threshold):
             candidates = []
-            for i in range(self.n_trees):
+            for i in range(self.n_estimators):
                 candidates.extend(
                     self._original_indices[i][_find_matching_indices(
                         self._trees[i],
@@ -267,14 +275,14 @@ class LSHForest(BaseEstimator):
             max_depth = max_depth - 1
         return total_neighbors, total_distances
 
-    def _convert_to_hash(self, item, tree_n):
-        """Converts item(a date point) into an integer.
+    def _convert_to_hash(self, y, tree_n):
+        """Converts item(a data point) into an integer.
 
         Value of the integer is the value represented by the
         binary hashed value.
         """
         projections = np.array(np.dot(self.hash_functions_[tree_n],
-                                      item) > 0, dtype=int)
+                                      y) > 0, dtype=int)
 
         return np.packbits(projections).view(dtype='>u4')[0]
 
@@ -288,9 +296,7 @@ class LSHForest(BaseEstimator):
             corresponds to a single data point.
         """
 
-        self._input_array = check_array(X)
-        self._n_dim = self._input_array.shape[1]
-
+        self._fit_X = check_array(X)
         self.max_label_length = 32
 
         # Creates a g(p,x) for each tree
@@ -298,7 +304,7 @@ class LSHForest(BaseEstimator):
         self._trees = []
         self._original_indices = []
 
-        for i in range(self.n_trees):
+        for i in range(self.n_estimators):
             # This is g(p,x) for a particular tree.
             original_index, bin_hashes, hash_function = self._create_tree()
             self._original_indices.append(original_index)
@@ -321,7 +327,7 @@ class LSHForest(BaseEstimator):
 
         # descend phase
         max_depth = 0
-        for i in range(self.n_trees):
+        for i in range(self.n_estimators):
             bin_query = self._convert_to_hash(query, i)
             k = _find_longest_prefix_match(self._trees[i], bin_query,
                                            self.max_label_length,
@@ -433,10 +439,11 @@ class LSHForest(BaseEstimator):
             else:
                 return np.array(neighbors)
 
-    def insert(self, X):
+    def partial_fit(self, X):
         """
-        Inserts new data into the LSH Forest. Cost is proportional
-        to new total size, so additions should be batched.
+        Inserts new data into the already fitted LSH Forest.
+        Cost is proportional to new total size, so additions
+        should be batched.
 
         Parameters
         ----------
@@ -449,13 +456,13 @@ class LSHForest(BaseEstimator):
 
         X = check_array(X)
 
-        if X.shape[1] != self._input_array.shape[1]:
+        if X.shape[1] != self._fit_X.shape[1]:
             raise ValueError("Number of features in X and"
                              " fitted array does not match.")
         n_samples = X.shape[0]
-        input_array_size = self._input_array.shape[0]
+        input_array_size = self._fit_X.shape[0]
 
-        for i in range(self.n_trees):
+        for i in range(self.n_estimators):
             bin_X = [self._convert_to_hash(X[j], i) for j in range(n_samples)]
             # gets the position to be added in the tree.
             positions = self._trees[i].searchsorted(bin_X)
@@ -470,4 +477,4 @@ class LSHForest(BaseEstimator):
                                                             n_samples))
 
         # adds the entry into the input_array.
-        self._input_array = np.row_stack((self._input_array, X))
+        self._fit_X = np.row_stack((self._fit_X, X))
