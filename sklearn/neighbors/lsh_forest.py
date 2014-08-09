@@ -275,14 +275,14 @@ class LSHForest(BaseEstimator):
             max_depth = max_depth - 1
         return total_neighbors, total_distances
 
-    def _convert_to_hash(self, item, tree_n):
-        """Converts item(a date point) into an integer.
+    def _convert_to_hash(self, y, tree_n):
+        """Converts item(a data point) into an integer.
 
         Value of the integer is the value represented by the
         binary hashed value.
         """
         projections = np.array(np.dot(self.hash_functions_[tree_n],
-                                      item) > 0, dtype=int)
+                                      y) > 0, dtype=int)
 
         return np.packbits(projections).view(dtype='>u4')[0]
 
