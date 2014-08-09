@@ -345,7 +345,11 @@ def test_class_distribution():
                   [4, 2, 0, 1],
                   [2, 0, 0, 1],
                   [1, 3, 0, 1]])
-    y_sp = sp.csc_matrix(y)
+    # Define the sparse matrix with a mix of implicit and explicit zeros
+    data = np.array([1, 2, 1, 4, 2, 1, 0, 2, 3, 2, 3, 1, 1, 1, 1, 1, 1])
+    indices = np.array([0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 5, 0, 1, 2, 3, 4, 5])
+    indptr = np.array([0, 6, 11, 11, 17])
+    y_sp = sp.csc_matrix((data, indices, indptr), shape=(6, 4))
 
     classes, n_classes, class_prior = class_distribution(y)
     classes_sp, n_classes_sp, class_prior_sp = class_distribution(y_sp)

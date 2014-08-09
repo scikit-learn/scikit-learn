@@ -381,9 +381,6 @@ def class_distribution(y, sample_weight=None):
 
     if issparse(y):
         y = y.tocsc()
-        # Remove explicit zeros so we can count zeros vs nonzeros accurately
-        # using the shape of the matrix
-        y.eliminate_zeros()
         y_nnz = np.diff(y.indptr)
 
         for k in range(n_outputs):
@@ -400,7 +397,15 @@ def class_distribution(y, sample_weight=None):
             classes_k, y_k = np.unique(y.data[y.indptr[k]:y.indptr[k + 1]],
                                        return_inverse=True)
             class_prior_k = np.bincount(y_k, weights=nz_samp_weight)
-            if y_nnz[k] < y.shape[0]:
+
+            # An explicit zero was found, combine its wieght with the wieght
+            # of the implicit zeros
+            if 0 in classes_k:
+                class_prior_k[classes_k == 0] += zeros_samp_weight_sum
+
+            # If an there is an implict zero and it is not in classes and
+            # class_prior, make an entry for it
+            if 0 not in classes_k and y_nnz[k] < y.shape[0]:
                 classes_k = np.insert(classes_k, 0, 0)
                 class_prior_k = np.insert(class_prior_k, 0,
                                           zeros_samp_weight_sum)
