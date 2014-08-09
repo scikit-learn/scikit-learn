@@ -111,10 +111,9 @@ def test_random_choice_csc(n_samples=10000, random_state=24):
     got = random_choice_csc(n_samples, classes, class_probabilites,
                             random_state)
     assert_true(sp.issparse(got))
-    got = got.toarray()
 
     for k in range(len(classes)):
-        p = np.bincount(got[:, k]) / float(n_samples)
+        p = np.bincount(got.getcol(k).toarray().ravel()) / float(n_samples)
         assert_array_almost_equal(class_probabilites[k], p, decimal=1)
 
     # Implicit class probabilities
@@ -125,10 +124,35 @@ def test_random_choice_csc(n_samples=10000, random_state=24):
                             classes=classes,
                             random_state=random_state)
     assert_true(sp.issparse(got))
-    got = got.toarray()
 
     for k in range(len(classes)):
-        p = np.bincount(got[:, k]) / float(n_samples)
+        p = np.bincount(got.getcol(k).toarray().ravel()) / float(n_samples)
+        assert_array_almost_equal(class_probabilites[k], p, decimal=1)
+
+    # Edge case proabilites 1.0 and 0.0
+    classes = [np.array([0, 1]),  np.array([0, 1, 2])]
+    class_probabilites = [np.array([1.0, 0.0]), np.array([0.0, 1.0, 0.0])]
+
+    got = random_choice_csc(n_samples, classes, class_probabilites,
+                            random_state)
+    assert_true(sp.issparse(got))
+
+    for k in range(len(classes)):
+        p = np.bincount(got.getcol(k).toarray().ravel(),
+                        minlength=len(class_probabilites[k])) / n_samples
+        assert_array_almost_equal(class_probabilites[k], p, decimal=1)
+
+    # One class target data
+    classes = [[1],  [0]]  # test for array-like support
+    class_probabilites = [np.array([0.0, 1.0]), np.array([1.0])]
+
+    got = random_choice_csc(n_samples=n_samples,
+                            classes=classes,
+                            random_state=random_state)
+    assert_true(sp.issparse(got))
+
+    for k in range(len(classes)):
+        p = np.bincount(got.getcol(k).toarray().ravel()) / n_samples
         assert_array_almost_equal(class_probabilites[k], p, decimal=1)
 
 
@@ -148,6 +172,12 @@ def test_random_choice_csc_errors():
     # the class dtype is not supported
     classes = [np.array([4.2, 0.1]),  np.array([0.1, 0.2, 9.4])]
     class_probabilites = [np.array([0.5, 0.5]), np.array([0.6, 0.1, 0.3])]
+    assert_raises(ValueError, random_choice_csc, 4, classes,
+                  class_probabilites, 1)
+
+    # Given proabilites don't sum to 1
+    classes = [np.array([0, 1]),  np.array([0, 1, 2])]
+    class_probabilites = [np.array([0.5, 0.6]), np.array([0.6, 0.1, 0.3])]
     assert_raises(ValueError, random_choice_csc, 4, classes,
                   class_probabilites, 1)
 

@@ -247,6 +247,10 @@ def random_choice_csc(n_samples, classes, class_probability=None,
         else:
             class_prob_j = np.asarray(class_probability[j])
 
+        if np.sum(class_prob_j) != 1.0:
+            raise ValueError("Probabilites at index {0} do not sum to "
+                             "one".format(j))
+
         if class_prob_j.shape[0] != classes[j].shape[0]:
             raise ValueError("classes[{0}] (length {1}) and "
                              "class_probability[{0}] (length {2}) have "
