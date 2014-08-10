@@ -12,12 +12,13 @@ Neural network models (supervised)
 Multi-layer Perceptron
 ======================
 
-**Multi-layer Perceptron (MLP)** is a supervised learning algorithm which learns
-a function :math:`f(\cdot): R \rightarrow R` given a set of features :math:`X = {x_1, x_2, ..., x_m}`
-and a target :math:`y`. It can learn non-linear, complex functions for either classification
+**Multi-layer Perceptron (MLP)** is a supervised learning algorithm that learns
+a function :math:`f(\cdot): R \rightarrow R` by training on a dataset. Given a 
+set of features :math:`X = {x_1, x_2, ..., x_m}` and a target :math:`y`. It 
+can learn non-linear, complex functions for either classification
 or regression. It is different from logistic regression, in that between the input 
-and the output layer, there are one or more hidden layers. Figure 1 shows 
-an MLP with one hidden layer.
+and the output layer, there can be one or more hidden layers. Figure 1 shows 
+a one hidden layer MLP.
 
 .. figure:: ../images/multilayerperceptron_network.png
    :align: center
@@ -32,9 +33,9 @@ layer transforms the values from the previous layer by a weighted linear summati
 :math:`g(\cdot):R \rightarrow R` - like the hyperbolic tan function. The output layer
 receives the values from the last hidden layer and transforms them into output values.
 
-The module contains, among others, :math:`layers_coef_` and :math:`layers_intecept_`.
-:math:`layers_coef_` is a list of weight matrices, where the weight matrix
-at index :math:`i` represents the weights between layer :math:`i` and layer 
+The module contains the public attributes :math:`layers_coef_` and :math:`layers_intecept_`.
+:math:`layers_coef_` is a list of weight matrices, where weight matrix at index
+:math:`i` represents the weights between layer :math:`i` and layer 
 :math:`i+1`. :math:`layers_intercept_` is a list of bias vectors, where the vector
 at index :math:`i` represents the bias values added to layer :math:`i+1`.
 
@@ -43,7 +44,7 @@ The advantages of Multi-layer Perceptron are:
     + Capability to learn complex/non-linear models.
 
     + Capability to learn models in real-time (on-line learning) 
-      using ``partial_fit``
+      using ``partial_fit``.
       
       
 The disadvantages of Multi-layer Perceptron (MLP) include:
@@ -60,30 +61,30 @@ The disadvantages of Multi-layer Perceptron (MLP) include:
 
     + MLP is sensitive to feature scaling.
 
-Please see the :ref:`Tips on Practical Use <mlp_tips>` section that addresses 
-some of the aforementioned disadvantages.
+Please see :ref:`Tips on Practical Use <mlp_tips>` section that addresses 
+some of these disadvantages.
 
 
 Classification
 ==============
 
 Class :class:`MultilayerPerceptronClassifier` implements  
-a multi layer perceptron (MLP) that trains using Backpropagation. 
+a multi layer perceptron (MLP) algorithm that trains using Backpropagation. 
 
 Like all classifiers, MLP trains on two arrays: array X
-of size [n_samples, n_features] holding the training samples represented as 
-floating point feature vectors, and array y of size [n_samples] holding 
+of size (n_samples, n_features), which holds the training samples represented as 
+floating point feature vectors; and array y of size (n_samples,), which holds 
 the target values (class labels) for the training samples::
 
     >>> from sklearn.neural_network import MultilayerPerceptronClassifier
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [0, 1]
-    >>> clf = MultilayerPerceptronClassifier(n_hidden=[5,2])
+    >>> clf = MultilayerPerceptronClassifier(n_hidden=[5, 2], random_state=1)
     >>> clf.fit(X, y)
     MultilayerPerceptronClassifier(activation='tanh', algorithm='l-bfgs',
-                    alpha=1e-05, batch_size=200, eta0=0.5,
-                    learning_rate='constant', max_iter=200, n_hidden=[5, 2],
-                    power_t=0.5, random_state=None, shuffle=False, tol=1e-05,
+                    alpha=1e-05, batch_size=200, learning_rate='constant',
+                    learning_rate_init=0.5, max_iter=200, n_hidden=[5, 2],
+                    power_t=0.5, random_state=1, shuffle=False, tol=1e-05,
                     verbose=False, warm_start=False)
 
 After fitting (training), the model can predict labels for new samples::
@@ -91,9 +92,8 @@ After fitting (training), the model can predict labels for new samples::
     >>> clf.predict([[2., 2.], [-1., -2.]]) 
     array([1, 0])
 
-MLP can fit a non-linear model to the training data. The members 
-``clf.layers_coef_`` containing the weight matrices constitute the model 
-parameters::
+MLP can fit a non-linear model to the training data. ``clf.layers_coef_`` 
+contains the weight matrices that constitute the model parameters::
 
     >>> [coef.shape for coef in clf.layers_coef_]
     [(2, 5), (5, 2), (2, 1)]
@@ -104,21 +104,19 @@ following command,
 use :meth:`MultilayerPerceptronClassifier.decision_function`::
 
     >>> clf.decision_function([[2., 2.], [1., 2.]])
-    array([ 10.78102679,  10.76966913])
-
-
+    array([ 11.26812165,  11.25140817])
 
 Currently, :class:`MultilayerPerceptronClassifier` supports only the 
 Cross-Entropy loss function, which allows probability estimates by running the 
 ``predict_proba`` method.
 
-MLP trains using Backpropagation. For classification, it minimizes the 
+MLP trains using backpropagation. For classification, it minimizes the 
 Cross-Entropy loss function, giving a vector of probability estimates 
 :math:`P(y|x)` per sample :math:`x`:: 
 
     >>> clf.predict_proba([[2., 2.], [1., 2.]])
-    array([[  2.07898104e-05,   9.99979210e-01],
-           [  2.10272749e-05,   9.99978973e-01]])
+    array([[  1.27735438e-05,   9.99987226e-01],
+           [  1.29888254e-05,   9.99987011e-01]])
 
 :class:`MultilayerPerceptronClassifier` supports multi-class classification by 
 applying `Softmax <http://en.wikipedia.org/wiki/Softmax_activation_function>`_
@@ -128,16 +126,17 @@ Further, the algorithm supports :ref:`multi-label classification <multiclass>`
 in which a sample can belong to more than one class. For each class, the output 
 of :meth:`MultilayerPerceptronClassifier.decision_function` passes through the 
 logistic function. Values larger or equal to `0.5` are rounded to `1`, 
-otherwise `0`. Classes with value `1` are returned in the prediction::
+otherwise to `0`. For a predicted output of a sample, the indices where the
+value is `1` represents the assigned classes of that samples::
 
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [[0, 1], [1]]
-    >>> clf = MultilayerPerceptronClassifier(n_hidden=[2])
+    >>> clf = MultilayerPerceptronClassifier(n_hidden=[2], random_state=1)
     >>> clf.fit(X, y)
     MultilayerPerceptronClassifier(activation='tanh', algorithm='l-bfgs',
-                    alpha=1e-05, batch_size=200, eta0=0.5,
-                    learning_rate='constant', max_iter=200, n_hidden=[2],
-                    power_t=0.5, random_state=None, shuffle=False, tol=1e-05,
+                    alpha=1e-05, batch_size=200, learning_rate='constant',
+                    learning_rate_init=0.5, max_iter=200, n_hidden=[2],
+                    power_t=0.5, random_state=1, shuffle=False, tol=1e-05,
                     verbose=False, warm_start=False)
     >>> clf.predict([1., 2.])
     [(1,)]
@@ -157,10 +156,9 @@ Regression
 ==========
 
 Class :class:`MultilayerPerceptronRegressor` implements  
-a multi layer perceptron (MLP) that trains using Backpropagation with no 
+a multi layer perceptron (MLP) that trains using backpropagation with no 
 activation function in the output layer. Therefore, it uses the square error as 
-the loss function, and the output is the set of continuous values returned by
-:math:`MultilayerPerceptronRegressor.decision_function`.
+the loss function, and the output is a set of continuous values.
 
 :class:`MultilayerPerceptronRegressor` also supports multi-output regression, in 
 which a sample can have more than one target.
@@ -180,17 +178,17 @@ with respect to a parameter that needs adaptation, i.e.
     + \frac{\partial Loss}{\partial w})
     
 where :math:`\eta` is the learning rate which controls the step-size in
-the parameter space.  :math:`Loss` is the loss function used for the network.
+the parameter space search.  :math:`Loss` is the loss function used for the network.
 
 With SGD, training supports online and mini-batch learning.
 
 More details can be seen in the documentation of 
 `SGD <http://scikit-learn.org/stable/modules/sgd.html>`_ 
 
-L-BFGS is a fast learning algorithm but it works in batch mode only. It 
-approximates the Hessian matrix which is the second-order partial derivative of
-a function. Further it approximates the inverse of the Hessian matrix to perform
-parameter update. The implementation uses the Scipy's version of 
+L-BFGS is a fast learning algorithm that approximates the Hessian matrix which 
+is the second-order partial derivative of a function. Further it approximates 
+the inverse of the Hessian matrix to perform parameter update. 
+The implementation uses the Scipy version of 
 `L-BFGS <http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_l_bfgs_b.html>`_..
 
 If the selected algorithm is 'L-BFGS', training would not support online nor 
@@ -204,9 +202,9 @@ Suppose there are :math:`n` training samples, :math:`m` features, :math:`k`
 hidden layers, each containing :math:`h` neurons - for simplicity, and :math:`o`
 output neurons.  The time complexity of backpropogation is 
 :math:`O(n\cdot m \cdot h^k \cdot o \cdot i)`, where :math:`i` is the number 
-of iterations. It is clear that backpropagation has a high time complexity, 
-therefore, it is best advice to start with smaller number of hidden neurons and
-few hidden layers.
+of iterations. Since backpropagation has a high time complexity, it is advisable
+to start with smaller number of hidden neurons and few hidden layers for 
+training.
 
 Mathematical formulation
 ========================
