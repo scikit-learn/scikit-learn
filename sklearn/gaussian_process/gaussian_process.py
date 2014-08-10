@@ -7,7 +7,7 @@
 from __future__ import print_function
 
 import numpy as np
-from scipy import linalg, optimize, rand
+from scipy import linalg, optimize
 
 from ..base import BaseEstimator, RegressorMixin
 from ..metrics.pairwise import manhattan_distances
@@ -721,8 +721,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                     # Generate a random starting point log10-uniformly
                     # distributed between bounds
                     log10theta0 = np.log10(self.thetaL) \
-                        + rand(self.theta0.size).reshape(self.theta0.shape) \
-                        * np.log10(self.thetaU / self.thetaL)
+                        + self.random_state.rand(self.theta0.size).reshape(
+                            self.theta0.shape) * np.log10(self.thetaU
+                                                          / self.thetaL)
                     theta0 = 10. ** log10theta0
 
                 # Run Cobyla
