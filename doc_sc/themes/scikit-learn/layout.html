@@ -1,0 +1,353 @@
+{#
+    scikit-learn/layout.html
+    ~~~~~~~~~~~~~~~~~
+
+    Layout for scikit-learn, after a design made by Angel Soler
+    (http://angelsoler.net)
+
+    Update: Collapsable sidebar added - 13/03/2012 - Jaques Grobler
+    Update: Next-page button added - 16/03/2012 - Jaques Grobler
+
+
+    :copyright: Fabian Pedregosa
+    :license: BSD
+#}
+{% extends "basic/layout.html" %}
+
+
+{% block htmltitle %}
+  {{ super() }}
+  <!-- htmltitle is before nature.css - we use this hack to load bootstrap first -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="{{ pathto('_static/css/bootstrap.min.css', 1) }}" media="screen" />
+  <link rel="stylesheet" href="{{ pathto('_static/css/bootstrap-responsive.css', 1) }}"/>
+{% endblock %}
+
+{% block extrahead %}
+  {% if pagename != 'index' %}
+   {% if theme_collapsiblesidebar|tobool %}
+       <script type="text/javascript" src="{{ pathto('_static/sidebar.js', 1) }}"></script>
+   {% endif %}
+  {% endif %}
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="{{ pathto('_static/js/bootstrap.min.js', 1)}}" type="text/javascript"></script>
+  <link rel="canonical" href="http://scikit-learn.org/stable/{{pagename}}.html" />
+
+  <script type="text/javascript">
+    $("div.buttonNext, div.buttonPrevious").hover(
+       function () {
+           $(this).css('background-color', '#FF9C34');
+       },
+       function () {
+           $(this).css('background-color', '#A7D6E2');
+       }
+    );
+    var bodywrapper = $('.bodywrapper');
+    var sidebarbutton = $('#sidebarbutton');
+    sidebarbutton.css({'height': '900px'});
+  </script>
+{% endblock %}
+
+{%- if pagename == 'index' %}
+    {% set title = 'scikit-learn: machine learning in Python' %}
+{%- endif %}
+
+{%- if pagename == 'documentation' %}
+    {% set title = 'Documentation scikit-learn: machine learning in Python' %}
+{%- endif %}
+
+{% block header %}
+
+<div class="header-wrapper">
+    <div class="header">
+        {%- if logo %}
+        <p class="logo"><a href="{{ pathto(master_doc) }}">
+            <img src="{{ pathto('_static/' + logo, 1) }}" alt="Logo"/>
+        </a>
+        </p>
+        {%- endif %}
+
+        {%- block navbar -%}
+        <div class="navbar">
+            <ul>
+                <li><a href="{{pathto('../dev/index')}}">Home</a></li>
+                <li><a href="{{pathto('../dev/install')}}">Installation</a></li>
+                <li class="btn-li"><div class="btn-group">
+		      <a href="{{pathto('documentation')}}">Documentation</a>
+		      <a class="btn dropdown-toggle" data-toggle="dropdown">
+			     <span class="caret"></span>
+		      </a>
+		      <ul class="dropdown-menu">
+			<li class="link-title">Scikit-learn 0.16 (development)</li>
+			<li><a href="{{ pathto('tutorial/index') }}">Tutorials</a></li>
+			<li><a href="{{ pathto('user_guide') }}">User guide</a></li>
+			<li><a href="{{ pathto('modules/classes') }}">API</a></li>
+			<li><a href="{{ pathto('faq') }}">FAQ</a></li>
+			<li class="divider"></li>
+		        <li><a href="http://scikit-learn.org/stable/documentation.html">Stable</a></li>
+			<li><a href="http://scikit-learn.org/0.14/">Scikit-learn 0.14</a></li>
+		        <li><a href="http://scikit-learn.org/0.13/">Scikit-learn 0.13</a></li>
+		        <li><a href="http://scikit-learn.org/0.12/">Scikit-learn 0.12</a></li>
+		        <li><a href="http://scikit-learn.org/0.11/">Scikit-learn 0.11</a></li>
+		        <li><a href="{{ pathto('documentation')}}">More versions...</a></li>
+		      </ul>
+		    </div>
+		</li>
+            <li><a href="{{pathto('auto_examples/index')}}">Examples</a></li>
+            </ul>
+
+            <div class="search_form">
+                <div id="cse" style="width: 100%;"></div>
+            </div>
+        </div> <!-- end navbar -->
+
+        {%- endblock -%}
+
+    </div>
+</div>
+
+
+{%- if pagename == 'index' %}
+<!-- Banner -->
+<div class="container banner-container">
+  <div class="row-fluid banner-inner">
+    <div class="hidden-phone">
+      <div class="span6">
+	<div class="row-fluid">
+          <div class="offset2 span8"><div id="index_carousel_tn" class="thumbnail">
+	      <div id="examples_carousel" class="carousel slide" data-interval="false">
+		<ol id="scikit_learn_index_indicators" class="carousel-indicators">
+		  <li data-target="#examples_carousel" data-slide-to="0" class="active"></li>
+		  <li data-target="#examples_carousel" data-slide-to="1"></li>
+		  <li data-target="#examples_carousel" data-slide-to="2"></li>
+		  <li data-target="#examples_carousel" data-slide-to="3"></li>
+		  <li data-target="#examples_carousel" data-slide-to="4"></li>
+		  <li data-target="#examples_carousel" data-slide-to="5"></li>
+		  <li data-target="#examples_carousel" data-slide-to="6"></li>
+		  <li data-target="#examples_carousel" data-slide-to="7"></li>
+		  <li data-target="#examples_carousel" data-slide-to="8"></li>
+		  <li data-target="#examples_carousel" data-slide-to="9"></li>
+		</ol>
+		<!-- Carousel items -->
+		<div class="carousel-inner">
+		  <div class="active item">
+		    <a href="{{ pathto('auto_examples/plot_classifier_comparison') }}">
+		      <div class="crop-wrapper" style="width: 380px; height: 190px; overflow: hidden">
+			<img src="_images/plot_classifier_comparison_carousel.png"
+			     style="max-height: 200px; max-width: 629px; margin-left: -21px;"></div></a>
+		  </div>
+		  <div class="item">
+		    <a href="auto_examples/covariance/plot_outlier_detection.html">
+		      <img src="_images/plot_outlier_detection_carousel.png"></a>
+		  </div>
+		  <div class="item">
+		    <a href="{{pathto('auto_examples/neighbors/plot_species_kde') }}">
+		      <img src="_images/plot_species_kde.png"></a>
+		  </div>
+		  <div class="item">
+		    <a href="{{pathto('auto_examples/linear_model/plot_lasso_lars') }}">
+		      <img src="_images/plot_lasso_lars.png"></a>
+		  </div>
+		  <div class="item">
+		    <a href="{{ pathto('auto_examples/cluster/plot_cluster_comparison') }}">
+		      <img src="_images/plot_cluster_comparison.png"></a>
+		  </div>
+		  <div class="item">
+		    <a href="{{ pathto('auto_examples/ensemble/plot_adaboost_twoclass') }}">
+		      <img src="_images/plot_adaboost_twoclass_carousel.png"></a>
+		  </div>
+		  <div class="item">
+		    <a href="{{pathto('auto_examples/gaussian_process/plot_gp_regression') }}">
+		      <img src="_images/plot_gp_regression_carousel.png"></a>
+		  </div>
+		  <div class="item">
+		    <a href="{{ pathto('auto_examples/manifold/plot_compare_methods') }}">
+		      <img src="_images/plot_compare_methods_carousel.png"></a>
+		  </div>
+		  <div class="item">
+		    <a href="{{ pathto('auto_examples/mixture/plot_gmm_pdf') }}">
+		      <img src="_images/plot_gmm_pdf.png"></a>
+		  </div>
+		  <div class="item">
+		    <a href="{{ pathto('auto_examples/cluster/plot_lena_ward_segmentation') }}">
+		      <img src="_images/plot_lena_ward_segmentation.png"></a>
+		  </div>
+		</div>
+		<!-- Carousel nav -->
+		<a class="carousel-control left" href="#examples_carousel" data-slide="prev">&lsaquo;</a>
+		<a class="carousel-control right" href="#examples_carousel" data-slide="next">&rsaquo;</a>
+	      </div>
+	  </div></div>
+	</div>
+      </div>
+    </div>
+    <div id="intro_to_sklearn_p" class="span6">
+      <h1>scikit-learn</h1>
+      <h2>Machine Learning in Python</h2>
+      <ul>
+        <li>Simple and efficient tools for data mining and data analysis</li>
+        <li>Accessible to everybody, and reusable in various contexts</li>
+        <li>Built on NumPy, SciPy, and matplotlib</li>
+        <li>Open source, commercially usable - BSD license</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{%- endif %}
+
+{% endblock %}
+
+{% block content %}
+<!-- Github "fork me" ribbon -->
+<a href="https://github.com/scikit-learn/scikit-learn">
+  <img class="fork-me"
+       style="position: absolute; top: 0; right: 0; border: 0;"
+       src="{{ pathto('_static/img/forkme.png', 1) }}"
+       alt="Fork me on GitHub" />
+</a>
+
+<div class="content-wrapper">
+
+{%- if pagename != 'index' and pagename != 'documentation' %}
+    <div class="sphinxsidebar">
+    <div class="sphinxsidebarwrapper">
+
+    {%- if rellinks[1:] %}
+
+    {%- if parents %}
+        <div class="rel">
+    {% else %}
+        <div class="rel rellarge">
+    {% endif %}
+
+  <!-- rellinks[1:] is an ugly hack to avoid link to module
+  index -->
+
+    {%- for rellink in rellinks[1:]|reverse %}
+        <div class="rellink">
+        <a href="{{ pathto(rellink[0]) }}"
+        {{ accesskey(rellink[2]) }}>{{ rellink[3]|capitalize }}
+        <br/>
+        <span class="smallrellink">
+        {{ rellink[1]|striptags|truncate(16, killwords=True) }}
+        </span>
+        {%- if rellink[1]|striptags %}
+            <span class="hiddenrellink">
+            {{ rellink[1]|striptags}}
+            </span>
+        {%- endif %}
+        </a>
+        </div>
+        {%- if not loop.last %}
+            <div class="spacer">
+            &nbsp;
+            </div>
+        {%- endif %}
+    {%- endfor %}
+
+    <!-- Ad a link to the 'up' page -->
+
+    {%- if parents %}
+        <div class="spacer">
+        &nbsp;
+        </div>
+        <div class="rellink">
+        <a href="{{ parents[-1].link|e }}">
+        Up
+        <br/>
+        <span class="smallrellink">
+        {{ parents[-1].title|striptags|truncate(16, killwords=True) }}
+        </span>
+        {%- if parents[-1].title|striptags != '<no title>' %}
+            <span class="hiddenrellink">
+            {{ parents[-1].title|striptags }}
+            </span>
+            {% endif %}
+        </a>
+        </div>
+    {%- endif %}
+    </div>
+    {% endif %}
+
+    {%- if pagename != "install" %}
+      <p class="doc-version">This documentation is for {{project}} <strong>version {{ release|e }}</strong> &mdash; <a href="http://scikit-learn.org/stable/support.html#documentation-resources">Other versions</a></p>
+    {%- endif %}
+    <p class="citing">If you use the software, please consider <a href="{{pathto('about')}}#citing-scikit-learn">citing scikit-learn</a>.</p>
+    {{ toc }}
+    </div>
+</div>
+{% endif %}
+
+
+      <div class="content">
+          {%- block document %}
+            {{ super() }}
+          {%- endblock %}
+        <div class="clearer"></div>
+      </div>
+    </div>
+{% endblock %}
+
+{% block relbar1 %}{% endblock %}
+{% block relbar2 %}{% endblock %}
+
+
+{%- block footer %}
+    <div class="footer">
+    {%- if pagename != 'index' %}
+     {%- if show_copyright %}
+      {%- if hasdoc('copyright') %}
+        {% trans path=pathto('copyright'), copyright=copyright|e %}&copy; {{ copyright }}.{% endtrans %}
+      {%- else %}
+        {% trans copyright=copyright|e %}&copy; {{ copyright }}.{% endtrans %}
+      {%- endif %}
+     {%- endif %}
+     {%- if last_updated %}
+      {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
+     {%- endif %}
+     {%- if show_source and has_source and sourcename %}
+      <a href="{{ pathto('_sources/' + sourcename, true)|e }}" rel="nofollow">{{ _('Show this page source') }}</a>
+     {%- endif %}
+    {%- endif %}
+    </div>
+
+    {%- if pagename != 'index' %}
+    {%- if parents %}
+     <div class="rel">
+    {% else %}
+     <div class="rel rellarge">
+    {% endif %}
+    {%- for rellink in rellinks[1:]|reverse %}
+    <div class="{{ loop.cycle('buttonPrevious', 'buttonNext') }}">
+      <a href="{{ pathto(rellink[0]) }}">{{ loop.cycle('Previous', 'Next') }}
+      </a>
+    </div>
+    {%- endfor %}
+    {% endif %}
+     </div>
+
+    {% if theme_google_analytics|tobool %}
+    <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-22606712-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    {% endif %}
+
+    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+    <script type="text/javascript"> google.load('search', '1',
+        {language : 'en'}); google.setOnLoadCallback(function() {
+            var customSearchControl = new
+            google.search.CustomSearchControl('016639176250731907682:tjtqbvtvij0');
+            customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+            var options = new google.search.DrawOptions();
+            options.setAutoComplete(true);
+            customSearchControl.draw('cse', options); }, true);
+    </script>
+{%- endblock %}
