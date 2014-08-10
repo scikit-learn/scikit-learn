@@ -11,9 +11,12 @@ from .externals.six.moves import xrange
 from .utils import check_random_state
 from .utils.validation import check_array
 from sklearn.utils import deprecated
+from scipy import stats
+from .utils import weighted_quantiles
 
 
 class DummyClassifier(BaseEstimator, ClassifierMixin):
+
     """
     DummyClassifier is a classifier that makes predictions using simple rules.
 
@@ -283,6 +286,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
 
 class DummyRegressor(BaseEstimator, RegressorMixin):
+
     """
     DummyRegressor is a regressor that makes predictions using
     simple rules.
@@ -299,10 +303,16 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         * "median": always predicts the median of the training set
         * "constant": always predicts a constant value that is provided by
           the user.
+        * "quantile": always predict the quantile of the training set,
+          the value is provided by the user.
 
     constant : int or float or array of shape = [n_outputs]
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
+
+    alpha : float, optional.
+        The parameter for the quantile strategy, ranging from 0 to 1.
+        For instance, alpha = 0.5 will calculate the median.
 
     Attributes
     ----------
@@ -317,9 +327,10 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         True if the output at fit is 2d, else false.
     """
 
-    def __init__(self, strategy="mean", constant=None):
+    def __init__(self, strategy="mean", constant=None, alpha=None):
         self.strategy = strategy
         self.constant = constant
+        self.alpha = alpha
 
     @property
     @deprecated('This will be removed in version 0.17')
@@ -328,7 +339,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             return self.constant_
         raise AttributeError
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the random regressor.
 
         Parameters
@@ -340,25 +351,34 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             Target values.
 
+        sample_weight : array-like of shape = [n_samples], optional
+            Sample weights.
+
         Returns
         -------
         self : object
             Returns self.
         """
 
-        if self.strategy not in ("mean", "median", "constant"):
+        if self.strategy not in ("mean", "median", "constant", "quantile"):
             raise ValueError("Unknown strategy type: %s, "
-                             "expected 'mean', 'median' or 'constant'"
-                             % self.strategy)
+                             "expected 'mean', 'median', 'constant'"
+                             "or 'quantile'" % self.strategy)
 
         y = check_array(y, accept_sparse='csr', ensure_2d=False)
         self.output_2d_ = (y.ndim == 2)
 
         if self.strategy == "mean":
-            self.constant_ = np.reshape(np.mean(y, axis=0), (1, -1))
+            self.constant_ = np.reshape(np.average(y, axis=0,
+                                                   weights=sample_weight),
+                                        (1, -1))
 
         elif self.strategy == "median":
-            self.constant_ = np.reshape(np.median(y, axis=0), (1, -1))
+            if not sample_weight:
+                self.constant_ = np.reshape(np.median(y, axis=0), (1, -1))
+            else:
+                self.constant_ = np.reshape(
+                    weighted_quantiles(y, sample_weight, 0.5), (1, -1))
 
         elif self.strategy == "constant":
             if self.constant is None:
@@ -375,6 +395,20 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
                     "shape (%d, 1)." % y.shape[1])
 
             self.constant_ = np.reshape(self.constant, (1, -1))
+
+        elif self.strategy == "quantile":
+            if not 0 < self.alpha < 1.0:
+                raise ValueError("`alpha` must be in (0, 1.0) but was %r"
+                                 % self.alpha)
+            else:
+                if not sample_weight:
+                    self.constant_ = np.reshape(
+                        stats.scoreatpercentile(y, self.alpha * 100.0, axis=0),
+                        (1, -1))
+                else:
+                    self.constant_ = np.reshape(
+                        weighted_quantiles(y, sample_weight, self.alpha),
+                        (1, -1))
 
         self.n_outputs_ = np.size(self.constant_)  # y.shape[1] is not safe
         return self
