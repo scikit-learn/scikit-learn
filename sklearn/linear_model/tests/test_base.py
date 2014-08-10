@@ -120,8 +120,7 @@ def test_center_data():
     X = rng.rand(n_samples, n_features)
     y = rng.rand(n_samples)
     expected_X_mean = np.mean(X, axis=0)
-    # XXX: currently scaled to variance=n_samples
-    expected_X_std = np.std(X, axis=0) * np.sqrt(X.shape[0])
+    expected_X_std = np.std(X, axis=0)
     expected_y_mean = np.mean(y, axis=0)
 
     Xt, yt, X_mean, y_mean, X_std = center_data(X, y, fit_intercept=False,
@@ -188,9 +187,7 @@ def test_center_data_weighted():
 
     # XXX: if normalize=True, should we expect a weighted standard deviation?
     #      Currently not weighted, but calculated with respect to weighted mean
-    # XXX: currently scaled to variance=n_samples
-    expected_X_std = (np.sqrt(X.shape[0]) *
-                      np.mean((X - expected_X_mean) ** 2, axis=0) ** .5)
+    expected_X_std = np.mean((X - expected_X_mean) ** 2, axis=0) ** .5
 
     Xt, yt, X_mean, y_mean, X_std = center_data(X, y, fit_intercept=True,
                                                 normalize=False,
@@ -220,8 +217,7 @@ def test_sparse_center_data():
     X = X.tolil()
     y = rng.rand(n_samples)
     XA = X.toarray()
-    # XXX: currently scaled to variance=n_samples
-    expected_X_std = np.std(XA, axis=0) * np.sqrt(X.shape[0])
+    expected_X_std = np.std(XA, axis=0)
 
     Xt, yt, X_mean, y_mean, X_std = sparse_center_data(X, y,
                                                        fit_intercept=False,
