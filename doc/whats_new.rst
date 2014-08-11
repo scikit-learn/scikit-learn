@@ -44,10 +44,8 @@ Enhancements
      descent for :class:`linear_model.Lasso`, :class:`linear_model.ElasticNet`
      and related. By `Manoj Kumar`_.
 
-    - Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score`.
-      By `Jatin Shah`.
-
-
+   - Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score` and
+     `metrics.log_loss`. By `Jatin Shah`_.
 
 Documentation improvements
 ..........................
@@ -55,6 +53,11 @@ Documentation improvements
 
 Bug fixes
 .........
+
+    - The :class:`decomposition.PCA` now undoes whitening in its 
+     ``inverse_transform``. Also, its ``components_`` now always have unit
+     length. By Michael Eickenberg.
+
 
 API changes summary
 -------------------
@@ -70,18 +73,16 @@ API changes summary
       :func:`multiclass.fit_ecoc` and :func:`multiclass.predict_ecoc`
       are deprecated. Use the underlying estimators instead.
 
+
 .. _changes_0_15_1:
 
 0.15.1
 ======
 
-.. _changes_0_15:
-
-
 Bug fixes
 ---------
 
-   - Make :func:`cross_validation.cross_val_score` use
+   - Made :func:`cross_validation.cross_val_score` use
      :class:`cross_validation.KFold` instead of
      :class:`cross_validation.StratifiedKFold` on multi-output classification
      problems. By `Nikolay Mayorov`_.
@@ -90,6 +91,29 @@ Bug fixes
      the default behavior of 0.14.1 for backward compatibility. By
      `Hamzeh Alsalhi`_.
 
+   - Fixed the :class:`cluster.KMeans` stopping criterion that prevented early
+     convergence detection. By Edward Raff and `Gael Varoquaux`_.
+
+   - Fixed the behavior of :class:`multiclass.OneVsOneClassifier`.
+     in case of ties at the per-class vote level by computing the correct
+     per-class sum of prediction scores. By `Andreas Müller`_.
+
+   - Made :func:`cross_validation.cross_val_score` and
+     :class:`grid_search.GridSearchCV` accept Python lists as input data.
+     This is especially useful for cross-validation and model selection of
+     text processing pipelines. By `Andreas Müller`_.
+
+   - Fixed data input checks of most estimators to accept input data that
+     implements the NumPy ``__array__`` protocol. This is the case for
+     for ``pandas.Series`` and ``pandas.DataFrame`` in recent versions of
+     pandas. By `Gael Varoquaux`_.
+
+   - Fixed a regression for :class:`linear_model.SGDClassifier` with
+     ``class_weight="auto"`` on data with non-contiguous labels. By
+     `Olivier Grisel`_.
+
+
+.. _changes_0_15:
 
 0.15
 ====
@@ -2862,3 +2886,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Laurent Direr: https://github.com/ldirer
 
 .. _Nikolay Mayorov: https://github.com/nmayorov
+
+.. _Jatin Shah: http://jatinshah.org/

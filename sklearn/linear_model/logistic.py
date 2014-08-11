@@ -352,10 +352,11 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                 temp[-1] = class_weight[n_classes[0]]
                 class_weight = temp.copy()
             else:
-                raise ValueError("In LogisticRegressionCV the liblinear solver "
-                                 "cannot handle multiclass with class_weight "
-                                 "of type dict. Use the lbfgs, newton-cg "
-                                 "solvers or set class_weight='auto'")
+                raise ValueError("In LogisticRegressionCV the liblinear "
+                                 "solver cannot handle multiclass with "
+                                 "class_weight of type dict. Use the lbfgs, "
+                                 "newton-cg solvers or set "
+                                 "class_weight='auto'")
         else:
             class_weight_ = compute_class_weight(class_weight, n_classes, y)
             sample_weight = class_weight_[le.fit_transform(y)]
@@ -632,12 +633,16 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
 
     Attributes
     ----------
-    `coef_` : array, shape (n_classes, n_features)
+    coef_ : array, shape (n_classes, n_features)
         Coefficient of the features in the decision function.
 
-    `intercept_` : array, shape (n_classes,)
+    intercept_ : array, shape (n_classes,)
         Intercept (a.k.a. bias) added to the decision function.
         If `fit_intercept` is set to False, the intercept is set to zero.
+
+    n_iter_ : int
+        Maximum of the actual number of iterations across all classes.
+        Valid only for the liblinear solver.
 
     See also
     --------
@@ -813,7 +818,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
     Attributes
     ----------
-    `coef_` : array, shape (1, n_features) or (n_classes, n_features)
+    coef_ : array, shape (1, n_features) or (n_classes, n_features)
         Coefficient of the features in the decision function.
 
         `coef_` is of shape (1, n_features) when the given problem
@@ -821,16 +826,16 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         `coef_` is readonly property derived from `raw_coef_` that
         follows the internal memory layout of liblinear.
 
-    `intercept_` : array, shape (1,) or (n_classes,)
+    intercept_ : array, shape (1,) or (n_classes,)
         Intercept (a.k.a. bias) added to the decision function.
         It is available only when parameter intercept is set to True
         and is of shape(1,) when the problem is binary.
 
-    `Cs_` : array
+    Cs_ : array
         Array of C i.e. inverse of regularization parameter values used
         for cross-validation.
 
-    `coefs_paths_` : array, shape (n_folds, len(Cs_), n_features) or
+    coefs_paths_ : array, shape (n_folds, len(Cs_), n_features) or
                      (n_folds, len(Cs_), n_features + 1)
         dict with classes as the keys, and the path of coefficients obtained
         during cross-validating across each fold and then across each Cs
@@ -839,13 +844,13 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         (n_folds, len(Cs_), n_features + 1) depending on whether the
         intercept is fit or not.
 
-    `scores_` : dict
+    scores_ : dict
         dict with classes as the keys, and the values as the
         grid of scores obtained during cross-validating each fold, after doing
         an OvA for the corresponding class.
         Each dict value has shape (n_folds, len(Cs))
 
-    `C_` : array, shape (n_classes,) or (n_classes - 1,)
+    C_ : array, shape (n_classes,) or (n_classes - 1,)
         Array of C that maps to the best scores across every class. If refit is
         set to False, then for each class, the best C is the average of the
         C's that correspond to the best scores for each fold.
@@ -938,23 +943,19 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             raise ValueError("class_weight provided should be a "
                              "dict or 'auto'")
 
+        path_func = delayed(_log_reg_scoring_path)
         fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-            delayed(_log_reg_scoring_path)(X, y, train, test,
-                                           pos_class=label,
-                                           Cs=self.Cs,
-                                           fit_intercept=self.fit_intercept,
-                                           penalty=self.penalty,
-                                           dual=self.dual,
-                                           solver=self.solver,
-                                           max_iter=self.max_iter,
-                                           tol=self.tol,
-                                           class_weight=self.class_weight,
-                                           verbose=max(0, self.verbose - 1),
-                                           scoring=self.scoring,
-                                           intercept_scaling=self.intercept_scaling)
+            path_func(X, y, train, test, pos_class=label, Cs=self.Cs,
+                      fit_intercept=self.fit_intercept, penalty=self.penalty,
+                      dual=self.dual, solver=self.solver,
+                      max_iter=self.max_iter, tol=self.tol,
+                      class_weight=self.class_weight,
+                      verbose=max(0, self.verbose - 1),
+                      scoring=self.scoring,
+                      intercept_scaling=self.intercept_scaling)
             for label in labels
-            for train, test in folds
-            )
+            for train, test in folds)
+
         coefs_paths, Cs, scores = zip(*fold_coefs_)
 
         self.Cs_ = Cs[0]

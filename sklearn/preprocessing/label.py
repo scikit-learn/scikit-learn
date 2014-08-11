@@ -56,7 +56,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `classes_` : array of shape (n_class,)
+    classes_ : array of shape (n_class,)
         Holds the label for each class.
 
     Examples
@@ -199,26 +199,26 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `classes_` : array of shape [n_class]
+    classes_ : array of shape [n_class]
         Holds the label for each class.
 
-    `y_type_` : str,
+    y_type_ : str,
         Represents the type of the target data as evaluated by
         utils.multiclass.type_of_target. Possible type are 'continuous',
         'continuous-multioutput', 'binary', 'multiclass',
         'mutliclass-multioutput', 'multilabel-sequences',
         'multilabel-indicator', and 'unknown'.
 
-    `multilabel_` : boolean
+    multilabel_ : boolean
         True if the transformer was fitted on a multilabel rather than a
         multiclass set of labels. The multilabel_ attribute is deprecated
         and will be removed in 0.18
 
-    `sparse_input_` : boolean,
+    sparse_input_ : boolean,
         True if the input data to transform is given as a sparse matrix, False
         otherwise.
 
-    `indicator_matrix_` : str
+    indicator_matrix_ : str
         'sparse' when the input data to tansform is a multilable-indicator and
         is sparse, None otherwise. The indicator_matrix_ attribute is
         deprecated as of version 0.16 and will be removed in 0.18
@@ -670,7 +670,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `classes_` : array of labels
+    classes_ : array of labels
         A copy of the `classes` parameter where provided,
         or otherwise, the sorted set of classes found when fitting.
 

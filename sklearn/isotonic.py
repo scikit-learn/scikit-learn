@@ -104,7 +104,7 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
 
     Returns
     -------
-    `y_` : list of floating-point values
+    y_ : list of floating-point values
         Isotonic fit of y.
 
     References
@@ -184,19 +184,19 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
     Attributes
     ----------
-    `X_` : ndarray (n_samples, )
+    X_ : ndarray (n_samples, )
         A copy of the input X.
 
-    `y_` : ndarray (n_samples, )
+    y_ : ndarray (n_samples, )
         Isotonic fit of y.
 
-    `X_min_` : float
+    X_min_ : float
         Minimum value of input array `X_` for left bound.
 
-    `X_max_` : float
+    X_max_ : float
         Maximum value of input array `X_` for right bound.
 
-    `f_` : function
+    f_ : function
         The stepwise interpolating function that covers the domain
         X_.
 
@@ -302,7 +302,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         Returns
         -------
-        `T_` : array, shape=(n_samples,)
+        T_ : array, shape=(n_samples,)
             The transformed data
         """
         T = as_float_array(T)
@@ -336,7 +336,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         Returns
         -------
-        `y_` : array, shape=(n_samples,)
+        y_ : array, shape=(n_samples,)
             The transformed data.
 
         Notes
@@ -367,7 +367,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         Returns
         -------
-        `T_` : array, shape=(n_samples,)
+        T_ : array, shape=(n_samples,)
             Transformed data.
         """
         return self.transform(T)

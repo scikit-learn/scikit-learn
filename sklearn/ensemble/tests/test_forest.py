@@ -185,30 +185,30 @@ def check_importance(name, X, y):
     """Check variable importances."""
 
     ForestClassifier = FOREST_CLASSIFIERS[name]
+    for n_jobs in [1, 2]:
+        clf = ForestClassifier(n_estimators=10, n_jobs=n_jobs)
+        clf.fit(X, y)
+        importances = clf.feature_importances_
+        n_important = np.sum(importances > 0.1)
+        assert_equal(importances.shape[0], 10)
+        assert_equal(n_important, 3)
 
-    clf = ForestClassifier(n_estimators=10)
-    clf.fit(X, y)
-    importances = clf.feature_importances_
-    n_important = np.sum(importances > 0.1)
-    assert_equal(importances.shape[0], 10)
-    assert_equal(n_important, 3)
+        X_new = clf.transform(X, threshold="mean")
+        assert_less(0 < X_new.shape[1], X.shape[1])
 
-    X_new = clf.transform(X, threshold="mean")
-    assert_less(0 < X_new.shape[1], X.shape[1])
+        # Check with sample weights
+        sample_weight = np.ones(y.shape)
+        sample_weight[y == 1] *= 100
 
-    # Check with sample weights
-    sample_weight = np.ones(y.shape)
-    sample_weight[y == 1] *= 100
+        clf = ForestClassifier(n_estimators=50, n_jobs=n_jobs, random_state=0)
+        clf.fit(X, y, sample_weight=sample_weight)
+        importances = clf.feature_importances_
+        assert_true(np.all(importances >= 0.0))
 
-    clf = ForestClassifier(n_estimators=50, random_state=0)
-    clf.fit(X, y, sample_weight=sample_weight)
-    importances = clf.feature_importances_
-    assert_true(np.all(importances >= 0.0))
-
-    clf = ForestClassifier(n_estimators=50, random_state=0)
-    clf.fit(X, y, sample_weight=3 * sample_weight)
-    importances_bis = clf.feature_importances_
-    assert_almost_equal(importances, importances_bis)
+        clf = ForestClassifier(n_estimators=50, n_jobs=n_jobs, random_state=0)
+        clf.fit(X, y, sample_weight=3 * sample_weight)
+        importances_bis = clf.feature_importances_
+        assert_almost_equal(importances, importances_bis)
 
 
 def test_importances():

@@ -150,7 +150,12 @@ def safe_indexing(X, indices):
         # Pandas Dataframes and Series
         return X.iloc[indices]
     elif hasattr(X, "shape"):
-        return X[indices]
+        if hasattr(X, 'take') and (hasattr(indices, 'dtype') and
+                                   indices.dtype.kind == 'i'):
+            # This is often substantially faster than X[indices]
+            return X.take(indices, axis=0)
+        else:
+            return X[indices]
     else:
         return [X[idx] for idx in indices]
 
@@ -239,7 +244,8 @@ def resample(*arrays, **options):
             max_n_samples, n_samples))
 
     check_consistent_length(*arrays)
-    arrays = [check_array(x, accept_sparse='csr', ensure_2d=False) for x in arrays]
+    arrays = [check_array(x, accept_sparse='csr', ensure_2d=False)
+              for x in arrays]
 
     if replace:
         indices = random_state.randint(0, n_samples, size=(max_n_samples,))

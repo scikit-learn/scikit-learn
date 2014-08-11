@@ -155,13 +155,13 @@ class GMM(BaseEstimator):
 
     Attributes
     ----------
-    `weights_` : array, shape (`n_components`,)
+    weights_ : array, shape (`n_components`,)
         This attribute stores the mixing weights for each mixture component.
 
-    `means_` : array, shape (`n_components`, `n_features`)
+    means_ : array, shape (`n_components`, `n_features`)
         Mean parameters for each mixture component.
 
-    `covars_` : array
+    covars_ : array
         Covariance parameters for each mixture component.  The shape
         depends on `covariance_type`::
 
@@ -170,7 +170,7 @@ class GMM(BaseEstimator):
             (n_components, n_features)             if 'diag',
             (n_components, n_features, n_features) if 'full'
 
-    `converged_` : bool
+    converged_ : bool
         True when convergence was reached in fit(), False otherwise.
 
 

@@ -349,11 +349,11 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     Attributes
     ----------
-    `affinity_matrix_` : array-like, shape (n_samples, n_samples)
+    affinity_matrix_ : array-like, shape (n_samples, n_samples)
         Affinity matrix used for clustering. Available only if after calling
         ``fit``.
 
-    `labels_` :
+    labels_ :
         Labels of each point
 
     Notes

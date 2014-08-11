@@ -562,13 +562,13 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `embedding_vectors_` : array-like, shape [n_components, n_samples]
+    embedding_vectors_ : array-like, shape [n_components, n_samples]
         Stores the embedding vectors
 
-    `reconstruction_error_` : float
+    reconstruction_error_ : float
         Reconstruction error associated with `embedding_vectors_`
 
-    `nbrs_` : NearestNeighbors object
+    nbrs_ : NearestNeighbors object
         Stores nearest neighbors instance, including BallTree or KDtree
         if applicable.
 
