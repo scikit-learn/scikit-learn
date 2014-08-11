@@ -52,7 +52,7 @@ def test_neighbors_accuracy_with_n_estimators():
     samples = 12
     dim = 2
     n_iter = 10
-    n_points = 20
+    n_points = 5
     accuracies = np.zeros(n_estimators.shape[0], dtype=float)
     X = np.random.rand(samples, dim)
 
