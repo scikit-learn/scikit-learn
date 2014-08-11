@@ -5,8 +5,8 @@ Plot classification probability
 
 Plot the classification probability for different classifiers. We use a 3
 class dataset, and we classify it with a Support Vector classifier, L1
-and L2 penalized logistic regression, and L2 penalized logistic
-regression with a multinomial setting.
+and L2 penalized logistic regression with either a One-Vs-Rest or multinomial
+setting.
 
 The logistic regression is not a multiclass classifier out of the box. As
 a result it can identify only the first class.
@@ -34,10 +34,10 @@ C = 1.0
 # Create different classifiers. The logistic regression cannot do
 # multiclass out of the box.
 classifiers = {'L1 logistic': LogisticRegression(C=C, penalty='l1'),
-               'L2 logistic': LogisticRegression(C=C, penalty='l2'),
+               'L2 logistic (OvR)': LogisticRegression(C=C, penalty='l2'),
                'Linear SVC': SVC(kernel='linear', C=C, probability=True,
                                  random_state=0),
-               'Multinomial Logistic': LogisticRegression(
+               'L2 logistic (Multinomial)': LogisticRegression(
                 C=C, solver='lbfgs', multi_class='multinomial'
                 )}
 

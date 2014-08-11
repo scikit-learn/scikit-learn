@@ -377,8 +377,8 @@ def test_intercept_logistic_helper():
     assert_almost_equal(hess_interp[-1] + alpha * grad[-1], hess[-1])
 
 
-def test_ova_multinomial_iris():
-    """Test that OvA and multinomial are correct using the iris dataset."""
+def test_ovr_multinomial_iris():
+    """Test that OvR and multinomial are correct using the iris dataset."""
     train, target = iris.data, iris.target
     n_samples, n_features = train.shape
 
@@ -405,13 +405,13 @@ def test_ova_multinomial_iris():
     scores = np.asarray(list(clf.scores_.values()))
     assert_equal(scores.shape, (3, 3, 10))
 
-    # Test that for the iris data multinomial gives a better accuracy than ova
+    # Test that for the iris data multinomial gives a better accuracy than OvR
     clf_multi = LogisticRegressionCV(
         solver='lbfgs', multi_class='multinomial', max_iter=5
         )
     clf_multi.fit(train, target)
     multi_score = clf_multi.score(train, target)
-    ova_score = clf.score(train, target)
+    ovr_score = clf.score(train, target)
 
     # Test attributes of LogisticRegressionCV
     assert_equal(clf.coef_.shape, clf_multi.coef_.shape)

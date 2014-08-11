@@ -228,7 +228,7 @@ def _logistic_loss_grad_hess(w, X, y, alpha, sample_weight=None):
 
 
 def _multinomial_loss_grad(w, X, Y, alpha, sample_weight):
-    """Computes true multinomial loss and its gradient.
+    """Computes multinomial loss and its gradient.
 
     Parameters
     ----------
@@ -251,7 +251,7 @@ def _multinomial_loss_grad(w, X, Y, alpha, sample_weight):
     Returns
     -------
     loss : float
-        True multinomial loss.
+        Multinomial loss.
 
     grad : ndarray, shape (n_classes * n_features,) or
         (n_classes * (n_features + 1),)
@@ -375,7 +375,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     multi_class : str, optional default 'ovr'
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
-        the loss minimised is the true multinomial loss fit across
+        the loss minimised is the multinomial loss fit across
         the entire probability distribution. Works only for the 'lbfgs'
         solver.
 
@@ -414,13 +414,13 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     if pos_class is None and multi_class != 'multinomial':
         if (classes.size > 2):
-            raise ValueError('To fit OvA, use the pos_class argument')
+            raise ValueError('To fit OvR, use the pos_class argument')
         # np.unique(y) gives labels in sorted order.
         pos_class = classes[1]
 
     # If class_weights is a dict (provided by the user), the weights
     # are assigned to the original labels. If it is "auto", then
-    # the class_weights are assigned after masking the labels with a OvA.
+    # the class_weights are assigned after masking the labels with a OvR.
     sample_weight = np.ones(X.shape[0])
     le = LabelEncoder()
 
@@ -441,7 +441,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             class_weight_ = compute_class_weight(class_weight, classes, y)
             sample_weight = class_weight_[le.fit_transform(y)]
 
-    # For doing a ovr, we need to mask the labels first. for the true
+    # For doing a ovr, we need to mask the labels first. for the
     # multinomial case this is not necessary.
     if multi_class == 'ovr':
         w0 = np.zeros(n_features + int(fit_intercept))
@@ -621,7 +621,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     multi_class : str, optional default 'ovr'
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
-        the loss minimised is the true multinomial loss fit across
+        the loss minimised is the multinomial loss fit across
         the entire probability distribution. Works only for the 'lbfgs'
         solver.
 
@@ -683,7 +683,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
             log_reg.coef_ = w[:, :-1]
             log_reg.intercept_ = w[:, -1]
         else:
-            log_reg.coef_ = w[:, :]
+            log_reg.coef_ = w
             log_reg.intercept_ = 0.
 
         if scoring is None:
@@ -698,8 +698,8 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
     """Logistic Regression (aka logit, MaxEnt) classifier.
 
     In the multiclass case, the training algorithm uses the one-vs-rest (OvR)
-    scheme if the 'multi_class' option is set to 'ovr' and the "true"
-    multinomial LR, if the 'multi_class' option is set to 'multinomial'.
+    scheme if the 'multi_class' option is set to 'ovr' and uses the
+    cross-entropy loss, if the 'multi_class' option is set to 'multinomial'.
     (Currently the 'multinomial' option is supported only by the 'lbfgs'
     solver.)
 
@@ -767,7 +767,7 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
     multi_class : str, optional default 'ovr'
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
-        the loss minimised is the true multinomial loss fit across
+        the loss minimised is the multinomial loss fit across
         the entire probability distribution. Works only for the 'lbfgs'
         solver.
 
@@ -953,7 +953,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     multi_class : str, optional default 'ovr'
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
-        the loss minimised is the true multinomial loss fit across
+        the loss minimised is the multinomial loss fit across
         the entire probability distribution. Works only for the 'lbfgs'
         solver.
 
@@ -992,9 +992,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                      (n_folds, len(Cs_), n_features + 1)
         dict with classes as the keys, and the path of coefficients obtained
         during cross-validating across each fold and then across each Cs
-        after doing an OvA for the corresponding class as values.
+        after doing an OvR for the corresponding class as values.
         If the 'multi_class' option is set to 'multinomial', then
-        the coefs_paths are the true coefficients corresponding to each class.
+        the coefs_paths are the coefficients corresponding to each class.
         Each dict value has shape (n_folds, len(Cs_), n_features) or
         (n_folds, len(Cs_), n_features + 1) depending on whether the
         intercept is fit or not.
@@ -1002,9 +1002,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     scores_ : dict
         dict with classes as the keys, and the values as the
         grid of scores obtained during cross-validating each fold, after doing
-        an OvA for the corresponding class. If the 'multi_class' option
+        an OvR for the corresponding class. If the 'multi_class' option
         given is 'multinomial' then the same scores are repeated across
-        all classes, since this is the true multinomial class.
+        all classes, since this is the multinomial class.
         Each dict value has shape (n_folds, len(Cs))
 
     C_ : array, shape (n_classes,) or (n_classes - 1,)
@@ -1068,7 +1068,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         if self.multi_class not in ['ovr', 'multinomial']:
             raise ValueError("multi_class backend should be either 'ovr' or 'multinomial'"
-                             "got %s" % self.multi_class)
+                             " got %s" % self.multi_class)
 
         if y.ndim == 2 and y.shape[1] == 1:
             warnings.warn(
@@ -1095,7 +1095,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             raise ValueError("Number of classes have to be greater than one.")
 
         if n_classes == 2:
-            # OvA in case of binary problems is as good as fitting
+            # OvR in case of binary problems is as good as fitting
             # the higher label
             n_classes = 1
             labels = labels[1:]
@@ -1140,15 +1140,15 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             multi_coefs_paths, Cs, multi_scores = zip(*fold_coefs_)
             multi_coefs_paths = np.asarray(multi_coefs_paths)
             multi_scores = np.asarray(multi_scores)
-            # this is just to maintain API similarity between the ovr and
+            # This is just to maintain API similarity between the ovr and
             # multinomial option.
-            # coefs_paths in now n_folds X len(Cs) X n_classes X n_features
+            # Coefs_paths in now n_folds X len(Cs) X n_classes X n_features
             # we need it to be n_classes X len(Cs) X n_folds X n_features
-            # to be similar to "ovr"
+            # to be similar to "ovr".
 
             coefs_paths = np.rollaxis(multi_coefs_paths, 2, 0)
 
-            # multinomial has a true score across all labels. Hence the
+            # Multinomial has a true score across all labels. Hence the
             # shape is n_folds X len(Cs). We need to repeat this score
             # across all labels for API similarity.
             scores = np.tile(multi_scores, (n_classes, 1, 1))
