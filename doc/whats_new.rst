@@ -54,9 +54,12 @@ Documentation improvements
 Bug fixes
 .........
 
-    - The :class:`decomposition.PCA` now undoes whitening in its 
+    - The :class:`decomposition.PCA` now undoes whitening in its
      ``inverse_transform``. Also, its ``components_`` now always have unit
      length. By Michael Eickenberg.
+
+    - Fix incomplete download of the dataset when
+      :func:`datasets.download_20newsgroups` is called. By `Manoj Kumar`_.
 
 
 API changes summary
