@@ -17,13 +17,13 @@ from sklearn.metrics import euclidean_distances
 from sklearn.neighbors import LSHForest
 
 
-def test_neighbors_accuracy_with_c():
-    """Accuracy increases as `c` increases."""
+def test_neighbors_accuracy_with_n_candidates():
+    """Checks whether accuracy increases as `n_candidates` increases."""
     n_candidates_values = np.array([10, 50, 250])
-    samples = 100
-    dim = 50
+    samples = 12
+    dim = 2
     n_iter = 10
-    n_points = 20
+    n_points = 5
     accuracies = np.zeros(n_candidates_values.shape[0], dtype=float)
     X = np.random.rand(samples, dim)
 
@@ -47,10 +47,10 @@ def test_neighbors_accuracy_with_c():
 
 
 def test_neighbors_accuracy_with_n_estimators():
-    """Accuracy increases as `n_estimators` increases."""
+    """Checks whether accuracy increases as `n_estimators` increases."""
     n_estimators = np.array([1, 10, 100])
-    samples = 100
-    dim = 50
+    samples = 12
+    dim = 2
     n_iter = 10
     n_points = 20
     accuracies = np.zeros(n_estimators.shape[0], dtype=float)
@@ -76,8 +76,14 @@ def test_neighbors_accuracy_with_n_estimators():
 
 
 def test_kneighbors():
-    samples = 100
-    dim = 50
+    """Checks whether desired number of neighbors are returned.
+
+    It is guaranteed to return the requested number of neighbors
+    if `min_hash_length` is set to 0. Returned distances should be
+    in ascending order.
+    """
+    samples = 12
+    dim = 2
     n_iter = 10
     X = np.random.rand(samples, dim)
 
@@ -113,8 +119,14 @@ def test_kneighbors():
 
 
 def test_radius_neighbors():
-    samples = 100
-    dim = 50
+    """Checks whether Returned distances are less than `radius`
+
+    At least one point should be returned when the `radius` is set
+    to mean distance from the considering point to other points in
+    the database.
+    """
+    samples = 12
+    dim = 2
     n_iter = 10
     X = np.random.rand(samples, dim)
 
@@ -146,8 +158,9 @@ def test_radius_neighbors():
 
 
 def test_distances():
-    samples = 100
-    dim = 50
+    """Checks whether returned distances are in ascending order."""
+    samples = 12
+    dim = 2
     n_iter = 10
     X = np.random.rand(samples, dim)
 
@@ -171,8 +184,9 @@ def test_distances():
 
 
 def test_fit():
-    samples = 100
-    dim = 50
+    """Checks whether `fit` method sets all attribute values correctly."""
+    samples = 12
+    dim = 2
     n_estimators = 5
     X = np.random.rand(samples, dim)
 
@@ -197,9 +211,13 @@ def test_fit():
 
 
 def test_partial_fit():
-    samples = 100
-    samples_partial_fit = 10
-    dim = 50
+    """Checks whether inserting array is consitent with fitted data.
+
+    `partial_fit` method should set all attribute values correctly.
+    """
+    samples = 12
+    samples_partial_fit = 3
+    dim = 2
     X = np.random.rand(samples, dim)
     X_partial_fit = np.random.rand(samples_partial_fit, dim)
 
