@@ -39,6 +39,9 @@ Bug fixes
      ``class_weight="auto"`` on data with non-contiguous labels. By
      `Olivier Grisel`_.
 
+    - Fix incomplete download of the dataset when
+      :func:`datasets.download_20newsgroups` is called. By `Manoj Kumar`_.
+
 
 .. _changes_0_15:
 
