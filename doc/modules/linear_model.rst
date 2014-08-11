@@ -683,7 +683,8 @@ The implementation of Logistic Regression relies on the excellent
 `LIBLINEAR library <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_,
 which is shipped with scikit-learn.
 
-However, the CD algorithm cannot learn a true multinomial (multiclass) model;
+However, the CD algorithm implemented in liblinear
+cannot learn a true multinomial (multiclass) model;
 instead, the optimization problem is decomposed in a "one-vs-rest" fashion
 so separate binary classifiers are trained for all classes.
 This happens under the hood, so :class:`LogisticRegression` instances
