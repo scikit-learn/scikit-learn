@@ -260,7 +260,7 @@ where :math:`1(x)` is the `indicator function
 
 In the multilabel case with binary label indicators: ::
 
-  >>> accuracy_score(np.array([[0.0, 1.0], [1.0, 1.0]]), np.ones((2, 2)))
+  >>> accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
   0.5
 
 .. topic:: Example:
@@ -373,7 +373,7 @@ where :math:`1(x)` is the `indicator function
 
 In the multilabel case with binary label indicators: ::
 
-  >>> hamming_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
+  >>> hamming_loss(np.array([[0, 1], [1, 1]]), np.zeros((2, 2)))
   0.75
 
 .. note::
@@ -425,7 +425,7 @@ score is equal to the classification accuracy.
 
 In the multilabel case with binary label indicators: ::
 
-  >>> jaccard_similarity_score(np.array([[0.0, 1.0], [1.0, 1.0]]), np.ones((2, 2)))
+  >>> jaccard_similarity_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
   0.75
 
 .. _precision_recall_f_measure_metrics:
@@ -889,7 +889,7 @@ where :math:`1(x)` is the `indicator function
 
 In the multilabel case with binary label indicators: ::
 
-  >>> zero_one_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.ones((2, 2)))
+  >>> zero_one_loss(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
   0.5
 
 
