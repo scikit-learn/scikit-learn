@@ -159,14 +159,25 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         indptr = array.array('i', [0])
 
         for k, classes_k in enumerate(classes_):
-            neigh_lbls_k = _y[neigh_ind, k]
-            # neigh_lbls_k = _y.getcol(k).toarray()[neigh_ind, 0]
+            # Using _y[neigh_ind, k] is not supported with scipy <0.13
+            # so we recreate fancy indexing using numpy functions
+            _y.sum_duplicates()
+            _y_data_k = _y.data[_y.indptr[k]:_y.indptr[k+1]]
+            _y_indices_k = _y.indices[_y.indptr[k]:_y.indptr[k+1]]
+
+            # Find the neigh_ind in _y.data using _y.indices as a guide
+            data_index = np.searchsorted(_y_indices_k, neigh_ind)
+            data_index[data_index == _y_data_k.shape[0]] = 0
+            neigh_lbls_k = _y_data_k[data_index]
+
+            # Replace incorrect nonzero elements with correct zeros
+            neigh_lbls_k[_y_indices_k[data_index] != neigh_ind] = 0
+
             if weights is None:
-                neigh_lbls_k = neigh_lbls_k.T
                 mode = csr_row_mode(sp.csr_matrix(neigh_lbls_k))
                 mode = sp.csc_matrix(mode, dtype=np.intp)
             else:
-                neigh_lbls_k = neigh_lbls_k.toarray().T
+                neigh_lbls_k = neigh_lbls_k
                 # XXX make a sparse function, do not densify neigh_lbls_k
                 mode, _ = weighted_mode(neigh_lbls_k, weights,
                                         axis=1)
