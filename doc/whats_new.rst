@@ -61,6 +61,9 @@ Bug fixes
     - Fix incomplete download of the dataset when
       :func:`datasets.download_20newsgroups` is called. By `Manoj Kumar`_.
 
+    - Various fixes to the Gaussian processes subpackage by Vincent Dubourg
+      and Jan Hendrik Metzen.
+
 
 API changes summary
 -------------------
