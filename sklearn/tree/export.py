@@ -65,7 +65,7 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
         value = tree.value[node_id]
         if tree.n_outputs == 1:
             value = value[0, :]
-        value = value.astype(int)
+        value = value.astype(float)
 
         if tree.children_left[node_id] == _tree.TREE_LEAF:
             return "%s = %.4f\\nsamples = %s\\nvalue = %s" \
