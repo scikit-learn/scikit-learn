@@ -37,6 +37,11 @@ def _inplace_tanh(X):
     return np.tanh(X, out=X)
 
 
+def _inplace_relu(X):
+    """Compute the rectified linear unit function."""
+    return np.clip(X, 0, None, out=X)
+
+
 def _inplace_softmax(X):
     """Compute the K-way softmax function. """
     tmp = X - X.max(axis=1)[:, np.newaxis]
@@ -56,6 +61,11 @@ def _d_tanh(Z):
     return 1 - (Z ** 2)
 
 
+def _d_relu(Z):
+    """Compute the derivative of the rectified linear unit function."""
+    return (Z > 0).astype('b')
+
+
 def _squared_loss(y_true, y_pred):
     """Compute the square loss for regression."""
     return np.sum((y_true - y_pred) ** 2) / (2 * len(y_true))
@@ -73,9 +83,11 @@ def _log_loss(y_true, y_prob):
                   (1 - y_true) * np.log(1 - y_prob)) / y_prob.shape[0]
 
 
-ACTIVATIONS = {'tanh': _inplace_tanh, 'logistic': _inplace_logistic_sigmoid}
+ACTIVATIONS = {'tanh': _inplace_tanh, 'logistic': _inplace_logistic_sigmoid,
+               'relu': _inplace_relu}
 
-DERIVATIVE_FUNCTIONS = {'tanh': _d_tanh, 'logistic': _d_logistic}
+DERIVATIVE_FUNCTIONS = {'tanh': _d_tanh, 'logistic': _d_logistic,
+                        'relu': _d_relu}
 
 LOSS_FUNCTIONS = {'squared_loss': _squared_loss, 'log_loss': _log_loss}
 
@@ -120,13 +132,26 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.learning_rate_ = None
         self.classes_ = None
 
+    def _pack(self, packed_coef_, packed_inter_, layers_coef_,
+              layers_intercept_):
+        """Pack the parameters into a single vector."""
+        # NOT USED (TO BE FIXED)
+        for i in range(self._n_layers - 1):
+            s, e, shape = self._packed_parameter_meta[i]
+            packed_coef_[s:e] = layers_coef_[i].ravel()
+
+            s, e = self._packed_parameter_meta[i + self._n_layers - 1]
+            packed_inter_[s:e] = layers_intercept_[i].ravel()
+
+        return packed_coef_, packed_inter_
+
     def _unpack(self, packed_parameters):
         """Extract the coefficients and intercepts from packed_parameters."""
         for i in range(self._n_layers - 1):
-            s, e, shape = self._packed_parameter_meta[i]
-            self.layers_coef_[i] = np.reshape(packed_parameters[s:e], (shape))
+            s, e, shape = self._coef_indpr[i]
+            self.layers_coef_[i] = np.reshape(packed_parameters[s:e], shape)
 
-            s, e = self._packed_parameter_meta[i + self._n_layers - 1]
+            s, e = self._intercept_indpr[i]
             self.layers_intercept_[i] = packed_parameters[s:e]
 
     def _forward_pass(self, with_output_activation=True):
@@ -150,12 +175,14 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
             # For the hidden layers
             if i + 1 != last_layer:
-                ACTIVATIONS[self.activation](self._a_layers[i + 1])
+                self._a_layers[i + 1] = \
+                    ACTIVATIONS[self.activation](self._a_layers[i + 1])
 
             # For the last layer
             elif with_output_activation:
                 # Apply activation in an inplace manner
-                self._inplace_out_activation(self._a_layers[i + 1])
+                self._a_layers[i + 1] = \
+                    self._inplace_out_activation(self._a_layers[i + 1])
 
     def _compute_cost_grad(self, layer):
         """Compute the cost gradient for the layer."""
@@ -186,8 +213,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         # update weights
         for i in range(self._n_layers - 1):
             self.layers_coef_[i] -= (self.learning_rate_ * self._coef_grads[i])
-            self.layers_intercept_[i] -= (
-                self.learning_rate_ * self._intercept_grads[i])
+            self.layers_intercept_[i] -= (self.learning_rate_ *
+                                          self._intercept_grads[i])
 
         if self.learning_rate == 'invscaling':
             self.learning_rate_ = self.learning_rate_init / \
@@ -210,13 +237,15 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         """
         packed_coef_inter = _pack(self.layers_coef_, self.layers_intercept_)
+        # self._grad NOT USED, TO BE FIXED!
+        self._grad = np.zeros(packed_coef_inter.size)
 
         if self.verbose is True or self.verbose >= 1:
             iprint = 1
         else:
             iprint = -1
 
-        optimal_parameters, f, d = fmin_l_bfgs_b(func=self._cost_grad,
+        optimal_parameters, f, d = fmin_l_bfgs_b(func=self._cost_grad_lbfgs,
                                                  x0=packed_coef_inter,
                                                  maxfun=self.max_iter,
                                                  iprint=iprint,
@@ -225,7 +254,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.cost_ = f
         self._unpack(optimal_parameters)
 
-    def _cost_grad(self, packed_coef_inter, X, y):
+    def _cost_grad_lbfgs(self, packed_coef_inter, X, y):
         """Compute the MLP cost  function and its
         corresponding derivatives with respect to the
         different parameters given in the initialization.
@@ -249,13 +278,21 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         grad : array-like, shape (number of nodes of all layers,)
 
         """
-
         self._unpack(packed_coef_inter)
         cost = self._backprop(X, y)
-        grad = _pack(self._coef_grads, self._intercept_grads)
-        self.n_iter_ += 1
+        """
+        # Pack grad parameters
+        NOT USED TO BE FIXED
+        for i in range(self._n_layers - 1):
+            s, e, shape = self._coef_indpr[i]
+            self._grad[s:e] = self._coef_grads[i].ravel()
 
-        return cost, grad
+            s, e = self._intercept_indpr[i]
+            self._grad[s:e] = self._intercept_grads[i].ravel()
+        """
+        self.n_iter_ += 1
+        self._grad = _pack(self._coef_grads, self._intercept_grads)
+        return cost, self._grad
 
     def _backprop(self, X, y):
         """Compute the MLP cost function and its corresponding derivatives
@@ -304,21 +341,31 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         return cost
 
     def _fit(self, X, y, warm_start=False):
+        # Ensure self.n_hidden is a list
+        if not hasattr(self.n_hidden, "__iter__"):
+            self.n_hidden = [self.n_hidden]
+
         # Validate input parameters.
+        for n_neurons in self.n_hidden:
+            if n_neurons <= 0:
+                raise ValueError("n_hidden must be > 0, got %s." % n_neurons)
         if not isinstance(self.shuffle, bool):
-            raise ValueError("shuffle must be either True or False")
+            raise ValueError("shuffle must be either True or False, got %s." %
+                             self.shuffle)
         if self.max_iter <= 0:
-            raise ValueError("max_iter must be > zero")
+            raise ValueError("max_iter must be > 0, got %s." % self.max_iter)
         if self.alpha < 0.0:
-            raise ValueError("alpha must be >= 0")
-        if self.learning_rate in ("constant", "invscaling"):
+            raise ValueError("alpha must be >= 0, got %s." % self.alpha)
+        if self.learning_rate in ["constant", "invscaling"]:
             if self.learning_rate_init <= 0.0:
-                raise ValueError("learning_rate_init must be > 0")
+                raise ValueError("learning_rate_init must be > 0, got %s." %
+                                 self.learning_rate)
 
         # raise ValueError if not registered
         if self.activation not in ACTIVATIONS:
-            raise ValueError("The activation %s is not supported. " %
-                             self.activation)
+            raise ValueError("The activation %s is not supported. Supported "
+                             "activations are %s." % (self.activation,
+                                                      ACTIVATIONS))
         if self.learning_rate not in ["constant", "invscaling"]:
             raise ValueError("learning rate %s is not supported. " %
                              self.learning_rate)
@@ -352,10 +399,6 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             y = np.reshape(y, (-1, 1))
 
         self.n_outputs_ = y.shape[1]
-
-        # Ensure self.n_hidden is a list
-        if not hasattr(self.n_hidden, "__iter__"):
-                self.n_hidden = [self.n_hidden]
 
         layer_units = ([n_features] + self.n_hidden + [self.n_outputs_])
 
@@ -399,6 +442,9 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
                 elif self.activation == 'logistic':
                     interval = 4. * np.sqrt(6. / (fan_in + fan_out))
+                # For other activation functions
+                else:
+                    interval = np.sqrt(1. / fan_in)
 
                 self.layers_coef_[i] = rng.uniform(-interval, interval,
                                                    (fan_in, fan_out))
@@ -461,8 +507,9 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         # Run the LBFGS algorithm
         elif self.algorithm == 'l-bfgs':
-            # Pre-compute parameter shapes
-            self._packed_parameter_meta = [0] * (2 * self._n_layers - 2)
+            # Store meta information for the parameters
+            self._coef_indpr = [0] * (self._n_layers - 1)
+            self._intercept_indpr = [0] * (self._n_layers - 1)
             s = 0
 
             # Save sizes and indices of coefficients for faster unpacking
@@ -470,13 +517,13 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                 fan_in, fan_out = layer_units[i], layer_units[i + 1]
 
                 e = s + (fan_in * fan_out)
-                self._packed_parameter_meta[i] = (s, e, (fan_in, fan_out))
+                self._coef_indpr[i] = (s, e, (fan_in, fan_out))
                 s = e
 
             # Save sizes and indices of intercepts for faster unpacking
             for i in range(self._n_layers - 1):
                 e = s + layer_units[i + 1]
-                self._packed_parameter_meta[i + self._n_layers - 1] = (s, e)
+                self._intercept_indpr[i] = (s, e)
                 s = e
 
             # Run LBFGS
@@ -564,12 +611,15 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
     n_hidden : python list, length = n_layers - 2, default [100]
         A list containing the number of neurons in the ith hidden layer.
 
-    activation : {'logistic', 'tanh'}, default 'tanh'
-        Activation function for the hidden layer.
+    activation : {'logistic', 'tanh', 'relu'}, default 'tanh'
+        Activation function for the hidden layer. It only applies to
+        kernel='random'.
 
-         - 'logistic' for 1 / (1 + exp(x)).
+         - 'logistic' returns f(x) = 1 / (1 + exp(x)).
 
-         - 'tanh' for the hyperbolic tangent.
+         - 'tanh' returns f(x) = tanh(x).
+
+         - 'relu' returns f(x) = max(0, x)
 
     algorithm : {'l-bfgs', 'sgd'}, default 'l-bfgs'
         The algorithm for weight optimization.  Defaults to 'l-bfgs'
@@ -590,8 +640,9 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
     learning_rate : {'constant', 'invscaling'}, default 'constant'
         Base learning rate for weight updates.
 
-        -'constant' keeps the learning rate 'learning_rate_init' constant
-          throughout training. learning_rate_ = learning_rate_init
+        -'constant', as it stands,  keeps the learning rate
+         'learning_rate_init' constant throughout training.
+         learning_rate_ = learning_rate_init
 
         -'invscaling' gradually decreases the learning rate 'learning_rate_' at
           each time step 't' using an inverse scaling exponent of 'power_t'.
@@ -807,12 +858,15 @@ class MultilayerPerceptronRegressor(BaseMultilayerPerceptron, RegressorMixin):
     n_hidden : python list, length = n_layers - 2, default [100]
         A list containing the number of neurons in the ith hidden layer.
 
-    activation : {'logistic', 'tanh'}, default 'tanh'
-        Activation function for the hidden layer.
+    activation : {'logistic', 'tanh', 'relu'}, default 'tanh'
+        Activation function for the hidden layer. It only applies to
+        kernel='random'.
 
-         - 'logistic' for 1 / (1 + exp(x)).
+         - 'logistic' returns f(x) = 1 / (1 + exp(x)).
 
-         - 'tanh' for the hyperbolic tangent.
+         - 'tanh' returns f(x) = tanh(x).
+
+         - 'relu' returns f(x) = max(0, x)
 
     algorithm : {'l-bfgs', 'sgd'}, default 'l-bfgs'
         The algorithm for weight optimization.  Defaults to 'l-bfgs'
@@ -833,8 +887,9 @@ class MultilayerPerceptronRegressor(BaseMultilayerPerceptron, RegressorMixin):
     learning_rate : {'constant', 'invscaling'}, default 'constant'
         Base learning rate for weight updates.
 
-        -'constant' keeps the learning rate 'learning_rate_init' constant
-          throughout training. learning_rate_ = learning_rate_init
+        -'constant', as it stands,  keeps the learning rate
+         'learning_rate_init' constant throughout training.
+         learning_rate_ = learning_rate_init
 
         -'invscaling' gradually decreases the learning rate 'learning_rate_' at
           each time step 't' using an inverse scaling exponent of 'power_t'.
