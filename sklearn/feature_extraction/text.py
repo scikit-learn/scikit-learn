@@ -28,7 +28,8 @@ from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
-from sklearn.externals import six
+from ..utils import deprecated
+from ..externals import six
 
 __all__ = ['CountVectorizer',
            'ENGLISH_STOP_WORDS',
@@ -257,10 +258,16 @@ class VectorizerMixin(object):
                         raise ValueError(msg)
             if not vocabulary:
                 raise ValueError("empty vocabulary passed to fit")
-            self.fixed_vocabulary = True
+            self.fixed_vocabulary_ = True
             self.vocabulary_ = dict(vocabulary)
         else:
-            self.fixed_vocabulary = False
+            self.fixed_vocabulary_ = False
+
+    @property
+    @deprecated("The `fixed_vocabulary` attribute is deprecated and will be "
+                "removed in 0.18.  Please use `fixed_vocabulary_` instead.")
+    def fixed_vocabulary(self):
+        return self.fixed_vocabulary_
 
 
 class HashingVectorizer(BaseEstimator, VectorizerMixin):
@@ -782,12 +789,13 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         min_df = self.min_df
         max_features = self.max_features
 
-        vocabulary, X = self._count_vocab(raw_documents, self.fixed_vocabulary)
+        vocabulary, X = self._count_vocab(raw_documents,
+                                          self.fixed_vocabulary_)
 
         if self.binary:
             X.data.fill(1)
 
-        if not self.fixed_vocabulary:
+        if not self.fixed_vocabulary_:
             X = self._sort_features(X, vocabulary)
 
             n_doc = X.shape[0]
