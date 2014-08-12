@@ -445,7 +445,7 @@ def test_vectorizer():
 
     tv.max_df = v1.max_df
     tfidf2 = tv.fit_transform(train_data).toarray()
-    assert_false(tv.fixed_vocabulary)
+    assert_false(tv.fixed_vocabulary_)
     assert_array_almost_equal(tfidf, tfidf2)
 
     # test the direct tfidf vectorizer with new data
@@ -769,7 +769,7 @@ def test_vectorizer_pipeline_grid_selection():
     best_vectorizer = grid_search.best_estimator_.named_steps['vect']
     assert_equal(best_vectorizer.ngram_range, (1, 1))
     assert_equal(best_vectorizer.norm, 'l2')
-    assert_false(best_vectorizer.fixed_vocabulary)
+    assert_false(best_vectorizer.fixed_vocabulary_)
 
 
 def test_vectorizer_pipeline_cross_validation():
@@ -828,7 +828,7 @@ def test_tfidf_vectorizer_with_fixed_vocabulary():
     X_1 = vect.fit_transform(ALL_FOOD_DOCS)
     X_2 = vect.transform(ALL_FOOD_DOCS)
     assert_array_almost_equal(X_1.toarray(), X_2.toarray())
-    assert_true(vect.fixed_vocabulary)
+    assert_true(vect.fixed_vocabulary_)
 
 
 def test_pickling_vectorizer():
