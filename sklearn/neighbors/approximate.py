@@ -5,7 +5,6 @@ Locality Sensitive Hashing Forest for Approximate Nearest Neighbor Search
 # Author: Maheshakya Wijewardena <maheshakya.10@cse.mrt.ac.lk>
 
 import numpy as np
-from bisect import bisect_left, bisect_right
 from ..base import BaseEstimator
 from ..utils.validation import check_array
 from ..utils import check_random_state
@@ -21,8 +20,9 @@ def _find_matching_indices(sorted_array, item, left_mask, right_mask):
     Most significant h bits in the binary representations of the
     integers are matched with the items' most significant h bits.
     """
-    left_index = bisect_left(sorted_array, item & left_mask)
-    right_index = bisect_right(sorted_array, item | right_mask)
+    left_index = np.searchsorted(sorted_array, item & left_mask)
+    right_index = np.searchsorted(sorted_array, item | right_mask,
+                                  side='right')
     return np.arange(left_index, right_index)
 
 
@@ -59,6 +59,9 @@ def _simple_euclidean_distance(query, candidates):
 
     Distance is calculated between each point in candidates
     and query.
+    This method is faster than `sklearn.metrics.pairwise.euclidean_distance`
+    because it is is optimised for matrix by matrix computation where as
+    this version takes a vector as the first input.
     """
     distances = np.zeros(candidates.shape[0])
     for i in range(candidates.shape[0]):
@@ -67,7 +70,6 @@ def _simple_euclidean_distance(query, candidates):
 
 
 class LSHForest(BaseEstimator):
-
     """Performs approximate nearest neighbor search using LSH forest.
 
     LSH Forest: Locality Sensitive Hashing forest [1] is an alternative
@@ -79,19 +81,19 @@ class LSHForest(BaseEstimator):
     Parameters
     ----------
 
-    n_estimators: int (default = 10)
+    n_estimators : int (default = 10)
         Number of trees in the LSH Forest.
 
-    n_candidates: int (default = 10)
+    n_candidates : int (default = 10)
         Value to restrict candidates selected from a single esitimator(tree)
         for nearest neighbors. Number of total candidates is often greater
         than n_candidates*n_estimators(unless restricted by min_hash_length)
 
-    n_neighbors: int (default = 1)
+    n_neighbors : int (default = 5)
         Number of neighbors to be returned from query function when
         it is not provided to :meth:`k_neighbors`
 
-    min_hash_length: int (default = 4)
+    min_hash_length : int (default = 4)
         lowest hash length to be searched when candidate selection is
         performed for nearest neighbors.
 
@@ -99,7 +101,7 @@ class LSHForest(BaseEstimator):
         Radius from the data point to its neighbors. This is the parameter
         space to use by default for :meth`radius_neighbors` queries.
 
-    radius_cutoff_ratio: float, optional (defualt = 0.9)
+    radius_cutoff_ratio : float, optional (defualt = 0.9)
         Cut off ratio of radius neighbors to candidates at the radius
         neighbor search
 
@@ -112,9 +114,9 @@ class LSHForest(BaseEstimator):
     Attributes
     ----------
 
-    `hash_functions_`: list of arrays
+    `hash_functions_` : list of arrays
         Hash function g(p,x) for a tree is an array of 32 randomly generated
-        float arrays with the same dimenstion as the data set.
+        float arrays with the same dimension as the data set.
 
 
     References
@@ -135,24 +137,26 @@ class LSHForest(BaseEstimator):
       >>> X = X.reshape((100,50))
       >>> lshf = LSHForest()
       >>> lshf.fit(X)
-      LSHForest(min_hash_length=4, n_candidates=50, n_estimators=10, n_neighbors=1,
+      LSHForest(min_hash_length=4, n_candidates=50, n_estimators=10, n_neighbors=5,
            radius=1.0, radius_cutoff_ratio=0.9, random_state=None)
-
-      >>> lshf.kneighbors(X[:5], n_neighbors=3, return_distance=True)
-      (array([[0, 1, 2],
-             [1, 0, 2],
-             [2, 1, 3],
-             [3, 2, 4],
-             [4, 3, 5]]), array([[ 0.        ,  0.52344831,  1.08434102],
-             [ 0.        ,  0.52344831,  0.56089272],
-             [ 0.        ,  0.56089272,  0.60101568],
-             [ 0.        ,  0.60101568,  0.6440088 ],
-             [ 0.        ,  0.6440088 ,  0.6900774 ]]))
+      >>> distances, indices = lshf.kneighbors(X[:5], n_neighbors=3)
+      >>> distances
+      array([[ 1.08434102,  0.52344831,  0.        ],
+             [ 0.56089272,  0.52344831,  0.        ],
+             [ 0.60101568,  0.56089272,  0.        ],
+             [ 0.6440088 ,  0.60101568,  0.        ],
+             [ 0.6900774 ,  0.6440088 ,  0.        ]])
+      >>> indices
+      array([[2, 1, 0],
+             [2, 0, 1],
+             [3, 1, 2],
+             [4, 2, 3],
+             [5, 3, 4]])
 
     """
 
     def __init__(self, n_estimators=10, radius=1.0, n_candidates=50,
-                 n_neighbors=1, min_hash_length=4, radius_cutoff_ratio=.9,
+                 n_neighbors=5, min_hash_length=4, radius_cutoff_ratio=.9,
                  random_state=None):
         self.n_estimators = n_estimators
         self.radius = radius
@@ -168,9 +172,9 @@ class LSHForest(BaseEstimator):
         `n_components=hash_size and n_features=n_dim.
         """
         random_state = check_random_state(self.random_state)
+        rng_seed = random_state.randint(0, np.iinfo(np.int32).max)
         grp = GaussianRandomProjection(n_components=self.max_label_length,
-                                       random_state=random_state.randint(0,
-                                                                         10))
+                                       random_state=rng_seed)
         X = np.zeros((1, self._fit_X.shape[1]), dtype=float)
         grp.fit(X)
         return grp
@@ -267,13 +271,15 @@ class LSHForest(BaseEstimator):
             total_candidates = np.append(total_candidates, candidates)
             ranks, distances = self._compute_distances(query, candidates)
             m = np.searchsorted(distances, radius, side='right')
-            total_neighbors = np.append(total_neighbors,
+            positions = np.searchsorted(total_distances, distances[:m])
+            total_neighbors = np.insert(total_neighbors, positions,
                                         candidates[ranks[:m]])
-            total_distances = np.append(total_distances, distances[:m])
+            total_distances = np.insert(total_distances, positions,
+                                        distances[:m])
             ratio_within_radius = (total_neighbors.shape[0] /
                                    float(total_candidates.shape[0]))
             max_depth = max_depth - 1
-        return total_neighbors, total_distances
+        return total_neighbors[::-1], total_distances[::-1]
 
     def _convert_to_hash(self, y, tree_n):
         """Converts item(a data point) into an integer.
@@ -347,9 +353,9 @@ class LSHForest(BaseEstimator):
                                                                 bin_queries,
                                                                 m)
 
-            return candidates[ranks[:m]], distances[:m]
+            return candidates[ranks[:m]][::-1], distances[:m][::-1]
 
-    def kneighbors(self, X, n_neighbors=None, return_distance=False):
+    def kneighbors(self, X, n_neighbors=None, return_distance=True):
         """
         Returns the n_number of approximated nearest neighbors
 
@@ -359,11 +365,11 @@ class LSHForest(BaseEstimator):
             List of n_features-dimensional data points.  Each row
             corresponds to a single query.
 
-        n_neighbors: int, opitonal (default = None)
+        n_neighbors : int, opitonal (default = None)
             Number of neighbors required. If not provided, this will
             return the number specified at the initialization.
 
-        return_distance: boolean, optional (default = False)
+        return_distance : boolean, optional (default = False)
             Returns the distances of neighbors if set to True.
         """
         if not hasattr(self, 'hash_functions_'):
@@ -378,7 +384,7 @@ class LSHForest(BaseEstimator):
         if x_dim == 1:
             neighbors, distances = self._query(X, n_neighbors)
             if return_distance:
-                return np.array([neighbors]), np.array([distances])
+                return np.array([distances]), np.array([neighbors])
             else:
                 return np.array([neighbors])
         else:
@@ -389,11 +395,11 @@ class LSHForest(BaseEstimator):
                 distances.append(dists)
 
             if return_distance:
-                return np.array(neighbors), np.array(distances)
+                return np.array(distances), np.array(neighbors)
             else:
                 return np.array(neighbors)
 
-    def radius_neighbors(self, X, radius=None, return_distance=False):
+    def radius_neighbors(self, X, radius=None, return_distance=True):
         """
         Returns the approximated nearest neighbors within the radius
 
@@ -407,7 +413,7 @@ class LSHForest(BaseEstimator):
             Limiting distance of neighbors to return.
             (default is the value passed to the constructor).
 
-        return_distance: boolean, optional (default = False)
+        return_distance : boolean, optional (default = False)
             Returns the distances of neighbors if set to True.
         """
         if not hasattr(self, 'hash_functions_'):
@@ -423,7 +429,7 @@ class LSHForest(BaseEstimator):
             neighbors, distances = self._query(X, radius=radius,
                                                is_radius=True)
             if return_distance:
-                return np.array([neighbors]), np.array([distances])
+                return np.array([distances]), np.array([neighbors])
             else:
                 return np.array([neighbors])
         else:
@@ -435,7 +441,7 @@ class LSHForest(BaseEstimator):
                 distances.append(dists)
 
             if return_distance:
-                return np.array(neighbors), np.array(distances)
+                return np.array(distances), np.array(neighbors)
             else:
                 return np.array(neighbors)
 
@@ -447,7 +453,7 @@ class LSHForest(BaseEstimator):
 
         Parameters
         ----------
-        X: array_like, shape (n_samples, n_features)
+        X : array_like, shape (n_samples, n_features)
             New data point to be inserted into the LSH Forest.
         """
         if not hasattr(self, 'hash_functions_'):
