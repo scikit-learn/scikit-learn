@@ -152,51 +152,60 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         # XXX For now both dense and sparse inputs are treated as sparse,
         # dense can be factored out
         if not self.sparse_target_input_:
-            _y = sp.csc_matrix(_y)
+            y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
+            for k, classes_k in enumerate(classes_):
+                if weights is None:
+                    mode, _ = stats.mode(_y[neigh_ind, k], axis=1)
+                else:
+                    mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
 
-        data = array.array('i')
-        indices = array.array('i')
-        indptr = array.array('i', [0])
+                mode = np.asarray(mode.ravel(), dtype=np.intp)
+                y_pred[:, k] = classes_k.take(mode)
 
-        for k, classes_k in enumerate(classes_):
-            # Using _y[neigh_ind, k] is not supported with scipy <0.13
-            # so we recreate fancy indexing using numpy functions
-            _y.sum_duplicates()
-            _y_data_k = _y.data[_y.indptr[k]:_y.indptr[k+1]]
-            _y_indices_k = _y.indices[_y.indptr[k]:_y.indptr[k+1]]
+            if not self.outputs_2d_:
+                y_pred = y_pred.ravel()
 
-            # Find the neigh_ind in _y.data using _y.indices as a guide
-            data_index = np.searchsorted(_y_indices_k, neigh_ind)
-            data_index[data_index == _y_data_k.shape[0]] = 0
-            neigh_lbls_k = _y_data_k[data_index]
+        else:
 
-            # Replace incorrect nonzero elements with correct zeros
-            neigh_lbls_k[_y_indices_k[data_index] != neigh_ind] = 0
+            data = array.array('i')
+            indices = array.array('i')
+            indptr = array.array('i', [0])
 
-            if weights is None:
-                mode = csr_row_mode(sp.csr_matrix(neigh_lbls_k))
-                mode = sp.csc_matrix(mode, dtype=np.intp)
-            else:
-                neigh_lbls_k = neigh_lbls_k
-                # XXX make a sparse function, do not densify neigh_lbls_k
-                mode, _ = weighted_mode(neigh_lbls_k, weights,
-                                        axis=1)
-                mode = sp.csc_matrix(mode, dtype=np.intp)
+            for k, classes_k in enumerate(classes_):
+                # Using _y[neigh_ind, k] is not supported with scipy <0.13
+                # so we recreate fancy indexing using numpy functions
+                _y.sum_duplicates()
+                _y_data_k = _y.data[_y.indptr[k]:_y.indptr[k+1]]
+                _y_indices_k = _y.indices[_y.indptr[k]:_y.indptr[k+1]]
 
-            data.extend(mode.data)
-            indices.extend(mode.indices)
-            indptr.append(len(indices))
+                # Find the neigh_ind in _y.data using _y.indices as a guide
+                data_index = np.searchsorted(_y_indices_k, neigh_ind)
+                data_index[data_index == _y_data_k.shape[0]] = 0
+                print data_index
+                print _y_data_k
+                print _y.toarray()
 
-        y_pred = sp.csc_matrix((data, indices, indptr), (n_samples, n_outputs),
-                               dtype=np.intp)
+                neigh_lbls_k = _y_data_k[data_index]
 
-        # XXX Unnecessary if fit is changed to give sparse matrix in all cases
-        if not self.sparse_target_input_:
-            y_pred = y_pred.toarray()
-            y_pred = classes_k[y_pred]
+                # Replace incorrect nonzero elements with correct zeros
+                neigh_lbls_k[_y_indices_k[data_index] != neigh_ind] = 0
 
-        if not self.outputs_2d_:
-            y_pred = y_pred.ravel()
+                if weights is None:
+                    mode = csr_row_mode(sp.csr_matrix(neigh_lbls_k))
+                    mode = sp.csc_matrix(mode, dtype=np.intp)
+                else:
+                    neigh_lbls_k = neigh_lbls_k
+                    # XXX make a sparse function, do not densify neigh_lbls_k
+                    mode, _ = weighted_mode(neigh_lbls_k, weights,
+                                            axis=1)
+                    mode = sp.csc_matrix(mode, dtype=np.intp)
+
+                data.extend(mode.data)
+                indices.extend(mode.indices)
+                indptr.append(len(indices))
+
+            y_pred = sp.csc_matrix((data, indices, indptr), (n_samples, n_outputs),
+                                   dtype=np.intp)
 
         return y_pred
 
