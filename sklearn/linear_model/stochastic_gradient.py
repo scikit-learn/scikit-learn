@@ -74,8 +74,10 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
 
         self.coef_ = None
         self.standard_coef_ = None
-        self.average_coef_ = None
-        self.previously_seen_ = None
+
+        if self.average:
+            self.average_coef_ = None
+            self.previously_seen_ = None
         # iteration count for learning rate schedule
         # must not be int (e.g. if ``learning_rate=='optimal'``)
         self.t_ = None
@@ -433,9 +435,11 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         else:
             self.standard_coef_ = None
             self.standard_intercept_ = None
-            self.average_coef_ = None
-            self.average_intercept_ = None
-            self.previously_seen_ = None
+
+            if self.average:
+                self.average_coef_ = None
+                self.average_intercept_ = None
+                self.previously_seen_ = None
 
         # Clear iteration count for multiple call to fit.
         self.t_ = None
@@ -869,7 +873,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         if self.standard_coef_ is None:
             self._allocate_parameter_mem(1, n_features,
                                          coef_init, intercept_init)
-        if self.average_coef_ is None:
+        if self.average and self.average_coef_ is None:
             self.average_coef_ = np.zeros(n_features,
                                           dtype=np.float64,
                                           order="C")
@@ -922,11 +926,13 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         else:
             self.coef_ = None
             self.intercept_ = None
-            self.standard_coef_ = None
-            self.average_coef_ = None
             self.standard_intercept_ = None
-            self.average_intercept_ = None
-            self.previously_seen_ = None
+            self.standard_coef_ = None
+
+            if self.average:
+                self.average_coef_ = None
+                self.average_intercept_ = None
+                self.previously_seen_ = None
 
         # Clear iteration count for multiple call to fit.
         self.t_ = None
