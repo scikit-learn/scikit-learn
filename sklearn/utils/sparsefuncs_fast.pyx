@@ -318,12 +318,23 @@ def csr_row_mode(X, weights=None):
 
     for i in range(n_samples):
         nnz = indptr[i + 1] - indptr[i]
-        if nnz < n_features / 2:
+        if weights is None and nnz < n_features / 2:
             modes[i] = 0
         else:
+            if weights is None:
+                w_nonzero = None
+                w_zero_sum = n_features - nnz
+            else:
+                w_nonzero = weights[i][indices[indptr[i]:indptr[i + 1]]] 
+                w_zero_sum = np.sum(weights[i]) - np.sum(w_nonzero)
+
             u, inv = np.unique(data[indptr[i]:indptr[i + 1]],
                                return_inverse=True)
-            c = np.bincount(inv, weights=weights ,minlength=len(u))
-            m = np.argmax(c)
-            modes[i] = u[m] if n_features - (nnz) < c[m] else 0
+
+            if inv.size == 0:
+                modes[i] = 0
+            else:
+                c = np.bincount(inv, weights=w_nonzero, minlength=len(u))
+                m = np.argmax(c)
+                modes[i] = u[m] if w_zero_sum < c[m] else 0
     return modes
