@@ -149,8 +149,6 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         n_samples = X.shape[0]
         weights = _get_weights(neigh_dist, self.weights)
 
-        # XXX For now both dense and sparse inputs are treated as sparse,
-        # dense can be factored out
         if not self.sparse_target_input_:
             y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
             for k, classes_k in enumerate(classes_):
@@ -181,10 +179,6 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
                 # Find the neigh_ind in _y.data using _y.indices as a guide
                 data_index = np.searchsorted(_y_indices_k, neigh_ind)
                 data_index[data_index == _y_data_k.shape[0]] = 0
-                print data_index
-                print _y_data_k
-                print _y.toarray()
-
                 neigh_lbls_k = _y_data_k[data_index]
 
                 # Replace incorrect nonzero elements with correct zeros
