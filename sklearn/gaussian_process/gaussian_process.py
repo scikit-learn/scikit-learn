@@ -474,7 +474,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 if self.beta0 is None:
                     # Universal Kriging
                     u = linalg.solve_triangular(self.G.T,
-                                                np.dot(self.Ft.T, rt) - f.T)
+                                                np.dot(self.Ft.T, rt) - f.T,
+                                                lower=True)
                 else:
                     # Ordinary Kriging
                     u = np.zeros((n_targets, n_eval))
