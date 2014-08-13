@@ -421,7 +421,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     -------
     weights : array, shape=[n_features]
         The fitted weight vector.
-    intercept : double
+    intercept : float
         The fitted intercept term.
     """
     standard_weights, standard_intercept,\
@@ -525,11 +525,11 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     -------
     weights : array, shape=[n_features]
         The fitted weight vector.
-    intercept : double
+    intercept : float
         The fitted intercept term.
     average_weights : array shape=[n_features]
         The averaged weights accross iterations
-    average_intercept : double
+    average_intercept : float
         The averaged intercept accross iterations
     """
     return _plain_sgd(weights,
@@ -691,10 +691,9 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     for j in range(xnnz):
                         index = x_ind_ptr[j]
                         entry = w_ptr[index]
-                        aw_ptr[index] -= previously_seen[index] * \
-                            (n_samples - i)
+                        aw_ptr[index] -= ps_ptr[index] * (n_samples - i)
                         aw_ptr[index] += entry * (n_samples - i)
-                        previously_seen[index] = entry
+                        ps_ptr[index] = entry
 
                     # compute the average for the intercept
                     average_intercept *= t - 1

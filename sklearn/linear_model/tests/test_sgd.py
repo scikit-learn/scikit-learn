@@ -102,7 +102,7 @@ true_result5 = [0, 1, 1]
 
 class CommonTest(object):
 
-    # a simple implentation of ASGD to use for testing
+    # a simple implementation of ASGD to use for testing
     # uses squared loss to find the gradient
     def asgd(self, X, y, eta):
         weights = np.zeros(X.shape[1])
