@@ -309,13 +309,13 @@ class LinearRegression(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    `coef_` : array, shape (n_features, ) or (n_targets, n_features)
+    coef_ : array, shape (n_features, ) or (n_targets, n_features)
         Estimated coefficients for the linear regression problem.
         If multiple targets are passed during the fit (y 2D), this
         is a 2D array of shape (n_targets, n_features), while if only
         one target is passed, this is a 1D array of length n_features.
 
-    `intercept_` : array
+    intercept_ : array
         Independent term in the linear model.
 
     Notes

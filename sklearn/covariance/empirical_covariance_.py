@@ -97,10 +97,10 @@ class EmpiricalCovariance(BaseEstimator):
 
     Attributes
     ----------
-    `covariance_` : 2D ndarray, shape (n_features, n_features)
+    covariance_ : 2D ndarray, shape (n_features, n_features)
         Estimated covariance matrix
 
-    `precision_` : 2D ndarray, shape (n_features, n_features)
+    precision_ : 2D ndarray, shape (n_features, n_features)
         Estimated pseudo-inverse matrix.
         (stored only if store_precision is True)
 
@@ -136,7 +136,7 @@ class EmpiricalCovariance(BaseEstimator):
 
         Returns
         -------
-        `precision_` : array-like,
+        precision_ : array-like,
             The precision matrix associated to the current covariance object.
 
         """

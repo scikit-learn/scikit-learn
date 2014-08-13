@@ -822,7 +822,7 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
 
     Attributes
     ----------
-    `components_` : array, [n_components, n_features]
+    components_ : array, [n_components, n_features]
         The unchanged dictionary atoms
 
     See also
@@ -933,13 +933,13 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
 
     Attributes
     ----------
-    `components_` : array, [n_components, n_features]
+    components_ : array, [n_components, n_features]
         dictionary atoms extracted from the data
 
-    `error_` : array
+    error_ : array
         vector of errors at each iteration
 
-    `n_iter_` : int
+    n_iter_ : int
         Number of iterations run.
 
     Notes
@@ -1092,10 +1092,10 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
 
     Attributes
     ----------
-    `components_` : array, [n_components, n_features]
+    components_ : array, [n_components, n_features]
         components extracted from the data
 
-    `inner_stats_` : tuple of (A, B) ndarrays
+    inner_stats_ : tuple of (A, B) ndarrays
         Internal sufficient statistics that are kept by the algorithm.
         Keeping them is useful in online settings, to avoid loosing the
         history of the evolution, but they shouldn't have any use for the
@@ -1103,7 +1103,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         A (n_components, n_components) is the dictionary covariance matrix.
         B (n_features, n_components) is the data approximation matrix
 
-    `n_iter_` : int
+    n_iter_ : int
         Number of iterations run.
 
     Notes

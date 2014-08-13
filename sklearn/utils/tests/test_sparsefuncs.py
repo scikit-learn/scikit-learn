@@ -9,7 +9,8 @@ from sklearn.utils.sparsefuncs import (mean_variance_axis0,
                                        inplace_column_scale,
                                        inplace_row_scale,
                                        inplace_swap_row, inplace_swap_column,
-                                       min_max_axis)
+                                       min_max_axis,
+                                       count_nonzero)
 from sklearn.utils.sparsefuncs_fast import assign_rows_csr
 from sklearn.utils.testing import assert_raises
 
@@ -289,3 +290,26 @@ def test_min_max_axis_errors():
     assert_raises(TypeError, min_max_axis, X_csr.tolil(), axis=0)
     assert_raises(ValueError, min_max_axis, X_csr, axis=2)
     assert_raises(ValueError, min_max_axis, X_csc, axis=-3)
+
+
+def test_count_nonzero():
+    X = np.array([[0, 3, 0],
+                  [2, -1, 0],
+                  [0, 0, 0],
+                  [9, 8, 7],
+                  [4, 0, 5]], dtype=np.float64)
+    X_csr = sp.csr_matrix(X)
+    X_csc = sp.csc_matrix(X)
+    X_nonzero = X != 0
+    sample_weight = [.5, .2, .3, .1, .1]
+    X_nonzero_weighted = X_nonzero * np.array(sample_weight)[:, None]
+
+    for axis in [0, 1, -1, -2, None]:
+        assert_array_almost_equal(count_nonzero(X_csr, axis=axis),
+                                  X_nonzero.sum(axis=axis))
+        assert_array_almost_equal(count_nonzero(X_csr, axis=axis,
+                                                sample_weight=sample_weight),
+                                  X_nonzero_weighted.sum(axis=axis))
+
+    assert_raises(TypeError, count_nonzero, X_csc)
+    assert_raises(ValueError, count_nonzero, X_csr, axis=2)

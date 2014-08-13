@@ -33,10 +33,10 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
 
     Attributes
     ----------
-    `base_estimator_`: list of estimators
+    base_estimator_ : list of estimators
         The base estimator from which the ensemble is grown.
 
-    `estimators_`: list of estimators
+    estimators_ : list of estimators
         The collection of fitted base estimators.
     """
 
@@ -95,19 +95,19 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
         return iter(self.estimators_)
 
 
-def _partition_estimators(ensemble):
+def _partition_estimators(n_estimators, n_jobs):
     """Private function used to partition estimators between jobs."""
     # Compute the number of jobs
-    if ensemble.n_jobs == -1:
-        n_jobs = min(cpu_count(), ensemble.n_estimators)
+    if n_jobs == -1:
+        n_jobs = min(cpu_count(), n_estimators)
 
     else:
-        n_jobs = min(ensemble.n_jobs, ensemble.n_estimators)
+        n_jobs = min(n_jobs, n_estimators)
 
     # Partition estimators between jobs
-    n_estimators = (ensemble.n_estimators // n_jobs) * np.ones(n_jobs,
-                                                               dtype=np.int)
-    n_estimators[:ensemble.n_estimators % n_jobs] += 1
-    starts = np.cumsum(n_estimators)
+    n_estimators_per_job = (n_estimators // n_jobs) * np.ones(n_jobs,
+                                                              dtype=np.int)
+    n_estimators_per_job[:n_estimators % n_jobs] += 1
+    starts = np.cumsum(n_estimators_per_job)
 
-    return n_jobs, n_estimators.tolist(), [0] + starts.tolist()
+    return n_jobs, n_estimators_per_job.tolist(), [0] + starts.tolist()

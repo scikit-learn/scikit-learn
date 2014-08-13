@@ -411,13 +411,13 @@ class FastICA(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `components_` : 2D array, shape (n_components, n_features)
+    components_ : 2D array, shape (n_components, n_features)
         The unmixing matrix.
 
-    `mixing_` : array, shape (n_features, n_components)
+    mixing_ : array, shape (n_features, n_components)
         The mixing matrix.
 
-    `n_iter_`: int
+    n_iter_ : int
         If the algorithm is "deflation", n_iter is the
         maximum number of iterations run across all components. Else
         they are just the number of iterations taken to converge.

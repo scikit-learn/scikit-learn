@@ -306,15 +306,15 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `components_` : array, [n_components, n_features]
+    components_ : array, [n_components, n_features]
         Non-negative components of the data.
 
-    `reconstruction_err_` : number
+    reconstruction_err_ : number
         Frobenius norm of the matrix difference between
         the training data and the reconstructed data from
         the fit produced by the model. ``|| X - WH ||_2``
 
-    ``n_iter_`` : int
+    n_iter_ : int
         Number of iterations run.
 
     Examples

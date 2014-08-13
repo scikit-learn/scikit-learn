@@ -18,6 +18,7 @@ from .empirical_covariance_ import (empirical_covariance, EmpiricalCovariance,
 
 from ..utils import ConvergenceWarning
 from ..utils.extmath import pinvh
+from ..utils.validation import check_random_state
 from ..linear_model import lars_path
 from ..linear_model import cd_fast
 from ..cross_validation import _check_cv as check_cv, cross_val_score
@@ -201,7 +202,7 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                                   / (precision_[idx, idx] + 1000 * eps))
                         coefs, _, _, _ = cd_fast.enet_coordinate_descent_gram(
                             coefs, alpha, 0, sub_covariance, row, row,
-                            max_iter, tol)
+                            max_iter, tol, check_random_state(None), False)
                     else:
                         # Use LARS
                         _, _, coefs = lars_path(
@@ -284,13 +285,13 @@ class GraphLasso(EmpiricalCovariance):
 
     Attributes
     ----------
-    `covariance_` : array-like, shape (n_features, n_features)
+    covariance_ : array-like, shape (n_features, n_features)
         Estimated covariance matrix
 
-    `precision_` : array-like, shape (n_features, n_features)
+    precision_ : array-like, shape (n_features, n_features)
         Estimated pseudo inverse matrix.
 
-    `n_iter_` : int
+    n_iter_ : int
         Number of iterations run.
 
     See Also
@@ -358,13 +359,13 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
 
     Returns
     -------
-    `covariances_` : List of 2D ndarray, shape (n_features, n_features)
+    covariances_ : List of 2D ndarray, shape (n_features, n_features)
         The estimated covariance matrices.
 
-    `precisions_` : List of 2D ndarray, shape (n_features, n_features)
+    precisions_ : List of 2D ndarray, shape (n_features, n_features)
         The estimated (sparse) precision matrices.
 
-    `scores_` : List of float
+    scores_ : List of float
         The generalisation error (log-likelihood) on the test data.
         Returned only if test data is passed.
     """
@@ -452,22 +453,22 @@ class GraphLassoCV(GraphLasso):
 
     Attributes
     ----------
-    `covariance_` : numpy.ndarray, shape (n_features, n_features)
+    covariance_ : numpy.ndarray, shape (n_features, n_features)
         Estimated covariance matrix.
 
-    `precision_` : numpy.ndarray, shape (n_features, n_features)
+    precision_ : numpy.ndarray, shape (n_features, n_features)
         Estimated precision matrix (inverse covariance).
 
-    `alpha_`: float
+    alpha_ : float
         Penalization parameter selected.
 
-    `cv_alphas_`: list of float
+    cv_alphas_ : list of float
         All penalization parameters explored.
 
     `grid_scores`: 2D numpy.ndarray (n_alphas, n_folds)
         Log-likelihood score on left-out data across folds.
 
-    `n_iter_` : int
+    n_iter_ : int
         Number of iterations run for the optimal alpha.
 
     See Also

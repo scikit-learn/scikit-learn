@@ -847,7 +847,7 @@ def test_underflow_or_overlow():
     assert_array_equal(np.unique(y), [0, 1])
 
     model = SGDClassifier(alpha=0.1, loss='squared_hinge', n_iter=500)
-    
+
     # smoke test: model is stable on scaled data
     model.fit(scale(X), y)
 

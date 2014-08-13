@@ -515,6 +515,53 @@ def test_warm_start_convergence_with_regularizer_decrement():
     assert_greater(low_reg_model.n_iter_, warm_low_reg_model.n_iter_)
 
 
+def test_random_descent():
+    """Test that both random and cyclic selection give the same results.
+
+    Ensure that the test models fully converge and check a wide
+    range of conditions.
+    """
+
+    # This uses the coordinate descent algo using the gram trick.
+    X, y, _, _ = build_dataset(n_samples=50, n_features=20)
+    clf_cyclic = ElasticNet(selection='cyclic', tol=1e-8)
+    clf_cyclic.fit(X, y)
+    clf_random = ElasticNet(selection='random', tol=1e-8, random_state=42)
+    clf_random.fit(X, y)
+    assert_array_almost_equal(clf_cyclic.coef_, clf_random.coef_)
+    assert_almost_equal(clf_cyclic.intercept_, clf_random.intercept_)
+
+    # This uses the descent algo without the gram trick
+    clf_cyclic = ElasticNet(selection='cyclic', tol=1e-8)
+    clf_cyclic.fit(X.T, y[:20])
+    clf_random = ElasticNet(selection='random', tol=1e-8, random_state=42)
+    clf_random.fit(X.T, y[:20])
+    assert_array_almost_equal(clf_cyclic.coef_, clf_random.coef_)
+    assert_almost_equal(clf_cyclic.intercept_, clf_random.intercept_)
+
+    # Sparse Case
+    clf_cyclic = ElasticNet(selection='cyclic', tol=1e-8)
+    clf_cyclic.fit(sparse.csr_matrix(X), y)
+    clf_random = ElasticNet(selection='random', tol=1e-8, random_state=42)
+    clf_random.fit(sparse.csr_matrix(X), y)
+    assert_array_almost_equal(clf_cyclic.coef_, clf_random.coef_)
+    assert_almost_equal(clf_cyclic.intercept_, clf_random.intercept_)
+
+    # Multioutput case.
+    new_y = np.hstack((y[:, np.newaxis], y[:, np.newaxis]))
+    clf_cyclic = MultiTaskElasticNet(selection='cyclic', tol=1e-8)
+    clf_cyclic.fit(X, new_y)
+    clf_random = MultiTaskElasticNet(selection='random', tol=1e-8,
+                                     random_state=42)
+    clf_random.fit(X, new_y)
+    assert_array_almost_equal(clf_cyclic.coef_, clf_random.coef_)
+    assert_almost_equal(clf_cyclic.intercept_, clf_random.intercept_)
+
+    # Raise error when selection is not in cyclic or random.
+    clf_random = ElasticNet(selection='invalid')
+    assert_raises(ValueError, clf_random.fit, X, y)
+
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()

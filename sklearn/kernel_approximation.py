@@ -124,7 +124,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
     AdditiveChi2Sampler : A different approach for approximating an additive
         variant of the chi squared kernel.
 
-    sklearn.metrics.chi2_kernel : The exact chi squared kernel.
+    sklearn.metrics.pairwise.chi2_kernel : The exact chi squared kernel.
     """
 
     def __init__(self, skewedness=1., n_components=100, random_state=None):
@@ -219,10 +219,10 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
     SkewedChi2Sampler : A Fourier-approximation to a non-additive variant of
         the chi squared kernel.
 
-    sklearn.metrics.chi2_kernel : The exact chi squared kernel.
+    sklearn.metrics.pairwise.chi2_kernel : The exact chi squared kernel.
 
-    sklearn.metrics.additive_chi2_kernel : The exact additive chi squared
-        kernel.
+    sklearn.metrics.pairwise.additive_chi2_kernel : The exact additive chi
+        squared kernel.
 
     References
     ----------
@@ -378,13 +378,13 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `components_` : array, shape (n_components, n_features)
+    components_ : array, shape (n_components, n_features)
         Subset of training points used to construct the feature map.
 
-    `component_indices_` : array, shape (n_components)
+    component_indices_ : array, shape (n_components)
         Indices of ``components_`` in the training set.
 
-    `normalization_` : array, shape (n_components, n_components)
+    normalization_ : array, shape (n_components, n_components)
         Normalization matrix needed for embedding.
         Square root of the kernel matrix on ``components_``.
 
@@ -406,7 +406,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
     RBFSampler : An approximation to the RBF kernel using random Fourier
                  features.
 
-    sklearn.metric.pairwise.kernel_metrics : List of built-in kernels.
+    sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
     """
     def __init__(self, kernel="rbf", gamma=None, coef0=1, degree=3,
                  kernel_params=None, n_components=100, random_state=None):

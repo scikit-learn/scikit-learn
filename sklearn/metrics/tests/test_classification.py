@@ -42,7 +42,7 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import zero_one_loss
 
 
-from sklearn.metrics.classification import _check_clf_targets
+from sklearn.metrics.classification import _check_targets
 from sklearn.metrics.base import UndefinedMetricWarning
 
 
@@ -956,8 +956,8 @@ def test_fscore_warnings():
 
 
 @ignore_warnings  # sequence of sequences is deprecated
-def test__check_clf_targets():
-    """Check that _check_clf_targets correctly merges target types, squeezes
+def test__check_targets():
+    """Check that _check_targets correctly merges target types, squeezes
     output and fails if input lengths differ."""
     IND = 'multilabel-indicator'
     SEQ = 'multilabel-sequences'
@@ -985,7 +985,7 @@ def test__check_clf_targets():
     # (types will be tried in either order)
     EXPECTED = {
         (IND, IND): IND,
-        (SEQ, SEQ): SEQ,
+        (SEQ, SEQ): IND,
         (MC, MC): MC,
         (BIN, BIN): BIN,
 
@@ -1023,27 +1023,30 @@ def test__check_clf_targets():
         except KeyError:
             expected = EXPECTED[type2, type1]
         if expected is None:
-            assert_raises(ValueError, _check_clf_targets, y1, y2)
+            assert_raises(ValueError, _check_targets, y1, y2)
 
             if type1 != type2:
                 assert_raise_message(
                     ValueError,
                     "Can't handle mix of {0} and {1}".format(type1, type2),
-                    _check_clf_targets, y1, y2)
+                    _check_targets, y1, y2)
 
             else:
                 if type1 not in (BIN, MC, SEQ, IND):
                     assert_raise_message(ValueError,
                                          "{0} is not supported".format(type1),
-                                         _check_clf_targets, y1, y2)
+                                         _check_targets, y1, y2)
 
         else:
-            merged_type, y1out, y2out = _check_clf_targets(y1, y2)
+            merged_type, y1out, y2out = _check_targets(y1, y2)
             assert_equal(merged_type, expected)
-            if not merged_type.startswith('multilabel'):
+            if merged_type.startswith('multilabel'):
+                assert_equal(y1out.format, 'csr')
+                assert_equal(y2out.format, 'csr')
+            else:
                 assert_array_equal(y1out, np.squeeze(y1))
                 assert_array_equal(y2out, np.squeeze(y2))
-            assert_raises(ValueError, _check_clf_targets, y1[:-1], y2)
+            assert_raises(ValueError, _check_targets, y1[:-1], y2)
 
 
 def test_hinge_loss_binary():

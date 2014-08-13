@@ -75,10 +75,10 @@ class ShrunkCovariance(EmpiricalCovariance):
 
     Attributes
     ----------
-    `covariance_` : array-like, shape (n_features, n_features)
+    covariance_ : array-like, shape (n_features, n_features)
         Estimated covariance matrix
 
-    `precision_` : array-like, shape (n_features, n_features)
+    precision_ : array-like, shape (n_features, n_features)
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
@@ -331,14 +331,14 @@ class LedoitWolf(EmpiricalCovariance):
 
     Attributes
     ----------
-    `covariance_` : array-like, shape (n_features, n_features)
+    covariance_ : array-like, shape (n_features, n_features)
         Estimated covariance matrix
 
-    `precision_` : array-like, shape (n_features, n_features)
+    precision_ : array-like, shape (n_features, n_features)
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
-    `shrinkage_` : float, 0 <= shrinkage <= 1
+    shrinkage_ : float, 0 <= shrinkage <= 1
         Coefficient in the convex combination used for the computation
         of the shrunk estimate.
 
@@ -491,14 +491,14 @@ class OAS(EmpiricalCovariance):
 
     Attributes
     ----------
-    `covariance_` : array-like, shape (n_features, n_features)
+    covariance_ : array-like, shape (n_features, n_features)
         Estimated covariance matrix.
 
-    `precision_` : array-like, shape (n_features, n_features)
+    precision_ : array-like, shape (n_features, n_features)
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
-    `shrinkage_` : float, 0 <= shrinkage <= 1
+    shrinkage_ : float, 0 <= shrinkage <= 1
       coefficient in the convex combination used for the computation
       of the shrunk estimate.
 

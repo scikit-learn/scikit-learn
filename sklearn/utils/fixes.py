@@ -11,10 +11,10 @@ at which the fixe is no longer needed.
 # License: BSD 3 clause
 
 import inspect
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
-
 
 np_version = []
 for x in np.__version__.split('.'):
@@ -102,7 +102,11 @@ else:
 
 
 try:
-    sp.csr_matrix([1.0, 2.0, 3.0]).max(axis=0)
+    with warnings.catch_warnings(record=True):
+        # Don't raise the numpy deprecation warnings that appear in
+        # 1.9, but avoid Python bug due to simplefilter('ignore')
+        warnings.simplefilter('always')
+        sp.csr_matrix([1.0, 2.0, 3.0]).max(axis=0)
 except (TypeError, AttributeError):
     # in scipy < 14.0, sparse matrix min/max doesn't accept an `axis` argument
     # the following code is taken from the scipy 0.14 codebase
@@ -240,3 +244,47 @@ except ImportError:
                 # Make NaN == NaN
                 cond[np.isnan(x) & np.isnan(y)] = True
             return cond
+
+if np_version < (1, 8):
+    def in1d(ar1, ar2, assume_unique=False, invert=False):
+        # Backport of numpy function in1d 1.8.1 to support numpy 1.6.2
+        # Ravel both arrays, behavior for the first array could be different
+        ar1 = np.asarray(ar1).ravel()
+        ar2 = np.asarray(ar2).ravel()
+
+        # This code is significantly faster when the condition is satisfied.
+        if len(ar2) < 10 * len(ar1) ** 0.145:
+            if invert:
+                mask = np.ones(len(ar1), dtype=np.bool)
+                for a in ar2:
+                    mask &= (ar1 != a)
+            else:
+                mask = np.zeros(len(ar1), dtype=np.bool)
+                for a in ar2:
+                    mask |= (ar1 == a)
+            return mask
+
+        # Otherwise use sorting
+        if not assume_unique:
+            ar1, rev_idx = np.unique(ar1, return_inverse=True)
+            ar2 = np.unique(ar2)
+
+        ar = np.concatenate((ar1, ar2))
+        # We need this to be a stable sort, so always use 'mergesort'
+        # here. The values from the first array should always come before
+        # the values from the second array.
+        order = ar.argsort(kind='mergesort')
+        sar = ar[order]
+        if invert:
+            bool_ar = (sar[1:] != sar[:-1])
+        else:
+            bool_ar = (sar[1:] == sar[:-1])
+        flag = np.concatenate((bool_ar, [invert]))
+        indx = order.argsort(kind='mergesort')[:len(ar1)]
+
+        if assume_unique:
+            return flag[indx]
+        else:
+            return flag[indx][rev_idx]
+else:
+    from numpy import in1d

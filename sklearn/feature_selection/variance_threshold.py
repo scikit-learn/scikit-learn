@@ -23,7 +23,7 @@ class VarianceThreshold(BaseEstimator, SelectorMixin):
 
     Attributes
     ----------
-    `variances_` : array, shape (n_features,)
+    variances_ : array, shape (n_features,)
         Variances of individual features.
 
     Examples

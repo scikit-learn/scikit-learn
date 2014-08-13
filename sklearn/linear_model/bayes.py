@@ -73,16 +73,16 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    `coef_` : array, shape = (n_features)
+    coef_ : array, shape = (n_features)
         Coefficients of the regression model (mean of distribution)
 
-    `alpha_` : float
+    alpha_ : float
        estimated precision of the noise.
 
-    `lambda_` : array, shape = (n_features)
+    lambda_ : array, shape = (n_features)
        estimated precisions of the weights.
 
-    `scores_` : float
+    scores_ : float
         if computed, value of the objective function (to be maximized)
 
     Examples
@@ -274,19 +274,19 @@ class ARDRegression(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    `coef_` : array, shape = (n_features)
+    coef_ : array, shape = (n_features)
         Coefficients of the regression model (mean of distribution)
 
-    `alpha_` : float
+    alpha_ : float
        estimated precision of the noise.
 
-    `lambda_` : array, shape = (n_features)
+    lambda_ : array, shape = (n_features)
        estimated precisions of the weights.
 
-    `sigma_` : array, shape = (n_features, n_features)
+    sigma_ : array, shape = (n_features, n_features)
         estimated variance-covariance matrix of the weights
 
-    `scores_` : float
+    scores_ : float
         if computed, value of the objective function (to be maximized)
 
     Examples

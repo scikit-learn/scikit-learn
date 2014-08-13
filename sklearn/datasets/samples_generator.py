@@ -76,7 +76,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         The number of redundant features. These features are generated as
         random linear combinations of the informative features.
 
-    n_repeated : int, optional (default=2)
+    n_repeated : int, optional (default=0)
         The number of duplicated features, drawn randomly from the informative
         and the redundant features.
 

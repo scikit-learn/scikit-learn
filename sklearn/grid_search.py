@@ -511,7 +511,7 @@ class GridSearchCV(BaseSearchCV):
 
     Attributes
     ----------
-    `grid_scores_` : list of named tuples
+    grid_scores_ : list of named tuples
         Contains scores for all parameter combinations in param_grid.
         Each entry corresponds to one parameter setting.
         Each named tuple has the attributes:
@@ -521,18 +521,18 @@ class GridSearchCV(BaseSearchCV):
               cross-validation folds
             * ``cv_validation_scores``, the list of scores for each fold
 
-    `best_estimator_` : estimator
+    best_estimator_ : estimator
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data.
 
-    `best_score_` : float
+    best_score_ : float
         Score of best_estimator on the left out data.
 
-    `best_params_` : dict
+    best_params_ : dict
         Parameter setting that gave the best results on the hold out data.
 
-    `scorer_` : function
+    scorer_ : function
         Scorer function used on the held out data to choose the best
         parameters for the model.
 
@@ -667,7 +667,7 @@ class RandomizedSearchCV(BaseSearchCV):
 
     Attributes
     ----------
-    `grid_scores_` : list of named tuples
+    grid_scores_ : list of named tuples
         Contains scores for all parameter combinations in param_grid.
         Each entry corresponds to one parameter setting.
         Each named tuple has the attributes:
@@ -677,15 +677,15 @@ class RandomizedSearchCV(BaseSearchCV):
               cross-validation folds
             * ``cv_validation_scores``, the list of scores for each fold
 
-    `best_estimator_` : estimator
+    best_estimator_ : estimator
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data.
 
-    `best_score_` : float
+    best_score_ : float
         Score of best_estimator on the left out data.
 
-    `best_params_` : dict
+    best_params_ : dict
         Parameter setting that gave the best results on the hold out data.
 
     Notes

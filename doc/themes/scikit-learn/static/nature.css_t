@@ -1022,7 +1022,7 @@ p.citing {
     background-color: #fff;
 }
 
-dl.class dt, dl.function dt {
+dl.class > dt, dl.function > dt, dl.method > dt {
     padding: 10px;
     background-color: #f8f8f8;
     color: #222;

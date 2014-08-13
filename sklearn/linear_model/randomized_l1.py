@@ -267,10 +267,10 @@ class RandomizedLasso(BaseRandomizedLinearModel):
 
     Attributes
     ----------
-    `scores_` : array, shape = [n_features]
+    scores_ : array, shape = [n_features]
         Feature scores between 0 and 1.
 
-    `all_scores_` : array, shape = [n_features, n_reg_parameter]
+    all_scores_ : array, shape = [n_features, n_reg_parameter]
         Feature scores between 0 and 1 for all values of the regularization \
         parameter. The reference article suggests ``scores_`` is the max of \
         ``all_scores_``.
@@ -435,10 +435,10 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
 
     Attributes
     ----------
-    `scores_` : array, shape = [n_features]
+    scores_ : array, shape = [n_features]
         Feature scores between 0 and 1.
 
-    `all_scores_` : array, shape = [n_features, n_reg_parameter]
+    all_scores_ : array, shape = [n_features, n_reg_parameter]
         Feature scores between 0 and 1 for all values of the regularization \
         parameter. The reference article suggests ``scores_`` is the max \
         of ``all_scores_``.

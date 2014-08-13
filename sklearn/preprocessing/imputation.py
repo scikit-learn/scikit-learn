@@ -128,7 +128,7 @@ class Imputer(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `statistics_` : array of shape (n_features,)
+    statistics_ : array of shape (n_features,)
         The imputation fill value for each feature if axis == 0.
 
     Notes

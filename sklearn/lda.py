@@ -42,26 +42,26 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     Attributes
     ----------
-    `coef_` : array-like, shape = [rank, n_classes - 1]
+    coef_ : array-like, shape = [rank, n_classes - 1]
         Coefficients of the features in the linear decision
         function. rank is min(rank_features, n_classes) where
         rank_features is the dimensionality of the spaces spanned
         by the features (i.e. n_features excluding redundant features).
 
-    `covariance_` : array-like, shape = [n_features, n_features]
+    covariance_ : array-like, shape = [n_features, n_features]
         Covariance matrix (shared by all classes).
 
-    `means_` : array-like, shape = [n_classes, n_features]
+    means_ : array-like, shape = [n_classes, n_features]
         Class means.
 
-    `priors_` : array-like, shape = [n_classes]
+    priors_ : array-like, shape = [n_classes]
         Class priors (sum to 1).
 
-    `scalings_` : array-like, shape = [rank, n_classes - 1]
+    scalings_ : array-like, shape = [rank, n_classes - 1]
         Scaling of the features in the space spanned by the class
         centroids.
 
-    `xbar_` : float, shape = [n_features]
+    xbar_ : float, shape = [n_features]
         Overall mean.
 
     Examples
