@@ -58,17 +58,13 @@ def test_lda_orthogonality():
     # the shorter distance to the second component.
     means = np.array([[0, 0, -1], [0, 2, 0], [0, -2, 0], [0, 0, 5]])
 
-    # Here, we construct perfectly symmetric distributions, so the LDA can
-    # estimate precise means.
-    X, y = [], []
-    for i in range(len(means)):
-        y.extend([i]*6)
-        X.append(means[i] + [0.1, 0, 0])
-        X.append(means[i] + [-0.1, 0, 0])
-        X.append(means[i] + [0, 0.1, 0])
-        X.append(means[i] + [0, -0.1, 0])
-        X.append(means[i] + [0, 0, 0.1])
-        X.append(means[i] + [0, 0, -0.1])
+    # We construct perfectly symmetric distributions, so the LDA can estimate
+    # precise means.
+    scatter = np.array([[0.1, 0, 0], [-0.1, 0, 0], [0, 0.1, 0], [0, -0.1, 0],
+                        [0, 0, 0.1], [0, 0, -0.1]])
+
+    X = (means[:, np.newaxis, :] + scatter[np.newaxis, :, :]).reshape((-1, 3))
+    y = np.repeat(np.arange(means.shape[0]), scatter.shape[0])
 
     # Fit LDA and transform the means
     clf = lda.LDA().fit(X, y)
@@ -84,5 +80,3 @@ def test_lda_orthogonality():
 
     # the means of classes 1 and 2 should lie on the second component
     assert_almost_equal(np.abs(np.dot(d2[:2], [0, 1])), 1.0)
-
-test_lda_orthogonality()
