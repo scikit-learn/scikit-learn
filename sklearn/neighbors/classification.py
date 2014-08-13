@@ -179,10 +179,12 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
                 # Find the neigh_ind in _y.data using _y.indices as a guide
                 data_index = np.searchsorted(_y_indices_k, neigh_ind)
                 data_index[data_index == _y_data_k.shape[0]] = 0
-                neigh_lbls_k = _y_data_k[data_index]
-
-                # Replace incorrect nonzero elements with correct zeros
-                neigh_lbls_k[_y_indices_k[data_index] != neigh_ind] = 0
+                if _y_data_k.size == 0:
+                    neigh_lbls_k = np.zeros(shape=data_index.shape)
+                else:
+                    neigh_lbls_k = _y_data_k[data_index]
+                    # Replace incorrect nonzero elements with correct zeros
+                    neigh_lbls_k[_y_indices_k[data_index] != neigh_ind] = 0
 
                 if weights is None:
                     mode = csr_row_mode(sp.csr_matrix(neigh_lbls_k))
