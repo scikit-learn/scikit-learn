@@ -3,9 +3,11 @@ import numpy as np
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_true
+from sklearn.datasets import make_blobs
 
-from .. import lda
+from sklearn import lda
 
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -49,3 +51,27 @@ def test_lda_transform():
     clf = lda.LDA()
     X_transformed = clf.fit(X, y).transform(X)
     assert_equal(X_transformed.shape[1], 1)
+
+
+def test_lda_orthogonality():
+    # arrange four classes with their means in a kite-shaped pattern
+    # the longer distance should be transformed to the first component, and
+    # the shorter distance to the second component.
+    means = [[0, 0, -1], [0, 2, 0], [0, -2, 0], [0, 0, 5]]
+    X, y = make_blobs(n_samples=10000, n_features=3, cluster_std=1,
+                      centers=means, random_state=123)
+    clf = lda.LDA().fit(X, y)
+    means_transformed = clf.transform(means)
+
+    # the means of classes 0 and 3 should lie on the first component
+    d1 = means_transformed[3] - means_transformed[0]
+    d1 /= np.sqrt(np.sum(d1**2))
+
+    # the means of classes 1 and 2 should lie on the second component
+    d2 = means_transformed[2] - means_transformed[1]
+    d2 /= np.sqrt(np.sum(d2**2))
+
+    # the axes are not very precise. The second less so than the first.
+    # Increase number of samples to get more accurate results.
+    assert_almost_equal(np.dot(d1, [1, 0, 0]), 1.0, decimal=3)
+    assert_almost_equal(np.dot(d2, [0, 1, 0]), 1.0, decimal=2)
