@@ -21,9 +21,11 @@ class LinearSVC(BaseLibLinear, LinearClassifierMixin, _LearntSelectorMixin,
     C : float, optional (default=1.0)
         Penalty parameter C of the error term.
 
-    loss : string, 'l1' or 'l2' (default='l2')
+    loss : string, {'l1', 'l2', 'hinge', 'squared_hinge', 'lr'} (default='l2')
         Specifies the loss function. 'l1' is the hinge loss (standard SVM)
-        while 'l2' is the squared hinge loss.
+        while 'l2' is the squared hinge loss. 'hinge' is equivalent to 'l1',
+        'squared_hinge' is equivalent to 'l2', 'lr' is the logistic
+        regression
 
     penalty : string, 'l1' or 'l2' (default='l2')
         Specifies the norm used in the penalization. The 'l2'
@@ -134,6 +136,13 @@ class LinearSVC(BaseLibLinear, LinearClassifierMixin, _LearntSelectorMixin,
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
                  multi_class='ovr', fit_intercept=True, intercept_scaling=1,
                  class_weight=None, verbose=0, random_state=None):
+        # make aliases for loss functions
+        loss = loss.lower().strip()
+        if loss == "hinge":
+            loss = "l1"
+        if loss == "squared_hinge":
+            loss = "l2"
+
         super(LinearSVC, self).__init__(
             penalty=penalty, loss=loss, dual=dual, tol=tol, C=C,
             multi_class=multi_class, fit_intercept=fit_intercept,

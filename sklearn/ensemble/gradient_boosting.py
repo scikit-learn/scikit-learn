@@ -450,6 +450,7 @@ class MultinomialDeviance(LossFunction):
 
 LOSS_FUNCTIONS = {'ls': LeastSquaresError,
                   'lad': LeastAbsoluteError,
+                  'absolute': LeastAbsoluteError,
                   'huber': HuberLossFunction,
                   'quantile': QuantileLossFunction,
                   'bdeviance': BinomialDeviance,
@@ -1238,12 +1239,13 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     Parameters
     ----------
-    loss : {'ls', 'lad', 'huber', 'quantile'}, optional (default='ls')
-        loss function to be optimized. 'ls' refers to least squares
-        regression. 'lad' (least absolute deviation) is a highly robust
-        loss function solely based on order information of the input
+    loss : {'ls', 'lad', 'absolute', huber', 'quantile'},
+        optional (default='ls') loss function to be optimized. 'ls' refers to
+        least squares regression. 'lad' (least absolute deviation) is a highly
+        robust loss function solely based on order information of the input
         variables. 'huber' is a combination of the two. 'quantile'
         allows quantile regression (use `alpha` to specify the quantile).
+        'absolute' is equivalent to 'lad'.
 
     learning_rate : float, optional (default=0.1)
         learning rate shrinks the contribution of each tree by `learning_rate`.
@@ -1367,7 +1369,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     Elements of Statistical Learning Ed. 2, Springer, 2009.
     """
 
-    _SUPPORTED_LOSS = ('ls', 'lad', 'huber', 'quantile')
+    _SUPPORTED_LOSS = ('ls', 'lad', 'huber', 'quantile', 'absolute')
 
     def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=2,

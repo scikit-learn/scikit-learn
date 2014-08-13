@@ -433,13 +433,15 @@ def test_linearsvc_parameters():
     """
     # generate list of possible parameter combinations
     params = [(dual, loss, penalty) for dual in [True, False]
-              for loss in ['l1', 'l2', 'lr'] for penalty in ['l1', 'l2']]
+              for loss in ['l1', 'l2', 'HINGE', ' squared_hinge', 'lr']
+              for penalty in ['l1', 'l2']]
 
     for dual, loss, penalty in params:
-            if loss == 'l1' and penalty == 'l1':
+            if ((loss == 'l1' or loss == 'HINGE') and penalty == 'l1'):
                 assert_raises(ValueError, svm.LinearSVC, penalty=penalty,
                               loss=loss, dual=dual)
-            elif loss == 'l1' and penalty == 'l2' and not dual:
+            elif ((loss == 'l1' or loss == 'HINGE') and penalty == 'l2'
+                  and not dual):
                 assert_raises(ValueError, svm.LinearSVC, penalty=penalty,
                               loss=loss, dual=dual)
             elif penalty == 'l1' and dual:
