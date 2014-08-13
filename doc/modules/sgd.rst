@@ -163,6 +163,10 @@ further information.
  - :ref:`example_linear_model_plot_sgd_weighted_samples.py`
  - :ref:`example_svm_plot_separating_hyperplane_unbalanced.py` (See the `Note`)
 
+:class:`SGDClassifier` supports averaging sgd. This will average the results
+of the plain sgd over each iteration over a sample. Averaging can be enabled
+by setting ```average=True```
+
 Regression
 ==========
 
@@ -184,6 +188,10 @@ The Huber and epsilon-insensitive loss functions can be used for
 robust regression. The width of the insensitive region has to be
 specified via the parameter ``epsilon``. This parameter depends on the
 scale of the target variables.
+
+:class:`SGDRegressor` supports averaging sgd. This will average the results
+of the plain sgd over each iteration over a sample. Averaging can be enabled
+by setting ```average=True```
 
 
 Stochastic Gradient Descent for sparse data
@@ -246,6 +254,8 @@ Tips on Practical Use
     it is often wise to scale the feature values by some constant `c`
     such that the average L2 norm of the training data equals one.
 
+  * We found that Averaged SGD works best with a larger number of features
+    and a higher eta0
 
 .. topic:: References:
 
@@ -369,6 +379,11 @@ The model parameters can be accessed through the members ``coef_`` and
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.124.4696>`_
    H. Zou, T. Hastie - Journal of the Royal Statistical Society Series B,
    67 (2), 301-320.
+
+ * `"Towards Optimal One Pass Large Scale Learning with
+   Averaged Stochastic Gradient Descent"
+   <http://arxiv.org/pdf/1107.2490v2.pdf>`_
+   Xu, Wei
 
 
 Implementation details
