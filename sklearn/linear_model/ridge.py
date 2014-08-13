@@ -47,7 +47,6 @@ def _ridge_path_svd(X_train, Y_train, alphas,
     return output
 
 
-
 def _ridge_gcv_path_svd(X_train, Y_train, alphas,
                         sample_weight=None,
                         mode='looe',
@@ -991,37 +990,23 @@ class _RidgeGCV(LinearModel):
                                score_overrides_loss=True)
         error = scorer is None
 
-        if gcv_mode == 'eigen':
+        if gcv_mode in ['eigen', 'svd']:
             alphas = np.atleast_2d(self.alphas.T).T
             mode = 'looe' if error else 'loov'
             y_is_raveled = y.ndim == 1
             y = np.atleast_2d(y.T).T
-            out, C = _kernel_ridge_path_eigen(X, y, alphas,
-                                              sample_weight=sample_weight,
-                                              mode=mode)
+            if gcv_mode == 'eigen':
+                out, C = _kernel_ridge_path_eigen(
+                    X, y, alphas, sample_weight=sample_weight, mode=mode)
+            else:
+                out, C = _ridge_gcv_path_svd(
+                    X, y, alphas, sample_weight=sample_weight, mode=mode)
+
             if mode == 'looe':
                 out = out ** 2
 
             # Since this object wants to choose a global penalty, we need
             # to reshape this. I wholeheartedly disagree with this.
-            cv_values = out.transpose(1, 2, 0).reshape(-1, alphas.shape[0])
-            if y_is_raveled:
-                C = C[:, :, 0]
-
-        elif gcv_mode == 'svd':
-            alphas = np.atleast_2d(self.alphas.T).T
-            mode = 'looe' if error else 'loov'
-            y_is_raveled = y.ndim == 1
-            y = np.atleast_2d(y.T).T
-
-            out, C = _ridge_gcv_path_svd(X, y, alphas,
-                                         sample_weight=sample_weight,
-                                         mode=mode)
-            if mode == 'looe':
-                out = out ** 2
-
-            # same here, need to remove ugly stuff later. Actually the
-            # test requires
             cv_values = out.transpose(1, 2, 0).reshape(-1, alphas.shape[0])
             if y_is_raveled:
                 C = C[:, :, 0]
