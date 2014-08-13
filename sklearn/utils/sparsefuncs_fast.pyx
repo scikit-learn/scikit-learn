@@ -300,7 +300,7 @@ def assign_rows_csr(X,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def csr_row_mode(X):
+def csr_row_mode(X, weights=None):
     """Most frequent element of each row in CSR matrix X."""
     cdef:
         unsigned int n_samples = X.shape[0]
@@ -313,15 +313,17 @@ def csr_row_mode(X):
         np.npy_intp i, j
         np.npy_int mode
 
-    # XXX these need to be dtype=X.data.dtype
     modes = np.zeros((n_samples,1), dtype=np.float64)
     data = np.asarray(X.data, dtype=np.float64)     # might copy!
 
     for i in range(n_samples):
         nnz = indptr[i + 1] - indptr[i]
-        if nnz > 0:
-            nonz_mode, count = stats.mode(data[indptr[i]:indptr[i + 1]])
+        if nnz < n_features / 2:
+            modes[i] = 0
         else:
-            nonz_mode, count = (["NaN"], [0])
-        modes[i] = nonz_mode[0] if n_features - (nnz) < count[0] else 0
+            u, inv = np.unique(data[indptr[i]:indptr[i + 1]],
+                               return_inverse=True)
+            c = np.bincount(inv, weights=weights ,minlength=len(u))
+            m = np.argmax(c)
+            modes[i] = u[m] if n_features - (nnz) < c[m] else 0
     return modes

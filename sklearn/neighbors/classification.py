@@ -183,24 +183,22 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
                     neigh_lbls_k = np.zeros(shape=data_index.shape)
                 else:
                     neigh_lbls_k = _y_data_k[data_index]
-                    # Replace incorrect nonzero elements with correct zeros
+                    # Replace incorrect nonzero elements with zeros
                     neigh_lbls_k[_y_indices_k[data_index] != neigh_ind] = 0
 
                 if weights is None:
                     mode = csr_row_mode(sp.csr_matrix(neigh_lbls_k))
                     mode = sp.csc_matrix(mode, dtype=np.intp)
                 else:
-                    neigh_lbls_k = neigh_lbls_k
-                    # XXX make a sparse function, do not densify neigh_lbls_k
-                    mode, _ = weighted_mode(neigh_lbls_k, weights,
-                                            axis=1)
+                    mode = mode = csr_row_mode(sp.csr_matrix(neigh_lbls_k))
                     mode = sp.csc_matrix(mode, dtype=np.intp)
 
                 data.extend(mode.data)
                 indices.extend(mode.indices)
                 indptr.append(len(indices))
 
-            y_pred = sp.csc_matrix((data, indices, indptr), (n_samples, n_outputs),
+            y_pred = sp.csc_matrix((data, indices, indptr),
+                                   (n_samples, n_outputs),
                                    dtype=np.intp)
 
         return y_pred
