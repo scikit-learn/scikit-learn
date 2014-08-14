@@ -12,7 +12,6 @@ Changelog
 New features
 ............
 
-
    - Incremental fit for :class:`GaussianNB <naive_bayes.GaussianNB>`.
 
    - Add ``sample_weight`` support to :class:`dummy.DummyClassifier`. By
@@ -33,9 +32,9 @@ New features
 Enhancements
 ............
 
-
    - Add support for sample weights in scorer objects.  Metrics with sample
-     weight support will automatically benefit from it.
+     weight support will automatically benefit from it. By `Noel Dawe`_ and
+     `Vlad Niculae`_.
 
    - Added ``newton-cg`` and `lbfgs` solver support in
      :class:`linear_model.LogisticRegression`. By `Manoj Kumar`_.
@@ -46,6 +45,13 @@ Enhancements
 
    - Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score` and
      `metrics.log_loss`. By `Jatin Shah`_.
+
+   - Support sparse multilabel indicator representation in
+     :class:`preprocessing.LabelBinarizer` and
+     :class:`multiclass.OneVsRestClassifier` (by `Hamzeh Alsalhi`_ with thanks
+     to `Rohit Sivaprasad`_), as well as evaluation metrics (by
+     `Joel Nothman`_).
+
 
 Documentation improvements
 ..........................
