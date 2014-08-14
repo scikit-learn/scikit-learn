@@ -431,8 +431,12 @@ class TSNE(BaseEstimator):
             distances = X
         else:
             if self.verbose:
-                print("[t-SNE] Computing pairwise distances...")
-            distances = pairwise_distances(X, metric=self.metric)
+                print("[t-SNE] Computing pairwise distances...")\
+            
+            if self.metric == "euclidean":
+                distances = pairwise_distances(X, metric=self.metric, squared=True)
+            else:
+                distances = pairwise_distances(X, metric=self.metric)
 
         # Degrees of freedom of the Student's t-distribution. The suggestion
         # alpha = n_components - 1 comes from "Learning a Parametric Embedding
