@@ -9,7 +9,6 @@ from libc.math cimport fabs, sqrt
 cimport numpy as np
 import numpy as np
 import scipy.sparse as sp
-from scipy import stats
 cimport cython
 
 np.import_array()
@@ -295,46 +294,3 @@ def assign_rows_csr(X,
         for ind in range(indptr[rX], indptr[rX + 1]):
             j = indices[ind]
             out[out_rows[i], j] = data[ind]
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-def csr_row_mode(X, weights=None):
-    """Most frequent element of each row in CSR matrix X."""
-    cdef:
-        unsigned int n_samples = X.shape[0]
-        unsigned int n_features = X.shape[1]
-        np.ndarray[np.float64_t, ndim=2, mode="c"] modes
-        np.ndarray[np.float64_t, ndim=1, mode="c"] data
-        np.ndarray[int, ndim=1, mode="c"] indices = X.indices
-        np.ndarray[int, ndim=1, mode="c"] indptr = X.indptr
-
-        np.npy_intp i, j
-        np.npy_int mode
-
-    modes = np.zeros((n_samples,1), dtype=np.float64)
-    data = np.asarray(X.data, dtype=np.float64)     # might copy!
-
-    for i in range(n_samples):
-        nnz = indptr[i + 1] - indptr[i]
-        if weights is None and nnz < n_features / 2:
-            modes[i] = 0
-        else:
-            if weights is None:
-                w_nonzero = None
-                w_zero_sum = n_features - nnz
-            else:
-                w_nonzero = weights[i][indices[indptr[i]:indptr[i + 1]]] 
-                w_zero_sum = np.sum(weights[i]) - np.sum(w_nonzero)
-
-            u, inv = np.unique(data[indptr[i]:indptr[i + 1]],
-                               return_inverse=True)
-
-            if inv.size == 0:
-                modes[i] = 0
-            else:
-                c = np.bincount(inv, weights=w_nonzero, minlength=len(u))
-                m = np.argmax(c)
-                modes[i] = u[m] if w_zero_sum < c[m] else 0
-    return modes
