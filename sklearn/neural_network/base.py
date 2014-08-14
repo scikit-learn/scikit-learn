@@ -64,7 +64,7 @@ DERIVATIVES = {'tanh': _d_tanh, 'logistic': _d_logistic, 'relu': _d_relu}
 
 def _squared_loss(y_true, y_pred):
     """Compute the square loss for regression."""
-    return np.sum((y_true - y_pred) ** 2) / (2 * len(y_true))
+    return ((y_true - y_pred) ** 2).mean() / 2
 
 
 def _log_loss(y_true, y_prob):
