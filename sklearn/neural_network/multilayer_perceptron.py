@@ -20,7 +20,7 @@ from ..utils import ConvergenceWarning
 from ..utils.extmath import safe_sparse_dot
 from .base import logistic, softmax, init_weights
 from .base import clear_layer_lists
-from .base import ACTIVATIONS, DERIVATIVE_FUNCTIONS, LOSS_FUNCTIONS
+from .base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
 
 
 def _pack(layers_coef_, layers_intercept_):
@@ -94,14 +94,13 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
             # For the hidden layers
             if i + 1 != last_layer:
-                self._a_layers[i + 1] = \
-                    ACTIVATIONS[self.activation](self._a_layers[i + 1])
+                activation = ACTIVATIONS[self.activation]
+                self._a_layers[i + 1] = activation(self._a_layers[i + 1])
 
             # For the last layer
             elif with_output_activation:
-                # Apply activation in an inplace manner
-                self._a_layers[i + 1] = \
-                    ACTIVATIONS[self.out_activation_](self._a_layers[i + 1])
+                out_activation = ACTIVATIONS[self.out_activation_]
+                self._a_layers[i + 1] = out_activation(self._a_layers[i + 1])
 
     def _compute_cost_grad(self, layer, n_samples):
         """Compute the cost gradient for the layer."""
@@ -242,8 +241,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         for i in range(self.n_layers_ - 2, 0, -1):
             self._deltas[i - 1] = safe_sparse_dot(self._deltas[i],
                                                   self.layers_coef_[i].T)
-            derivative_func = DERIVATIVE_FUNCTIONS[self.activation]
-            self._deltas[i - 1] *= derivative_func(self._a_layers[i])
+            derivative = DERIVATIVES[self.activation]
+            self._deltas[i - 1] *= derivative(self._a_layers[i])
 
             self._compute_cost_grad(i - 1, n_samples)
 

@@ -59,8 +59,7 @@ def _d_relu(Z):
     return (Z > 0).astype('b')
 
 
-DERIVATIVE_FUNCTIONS = {'tanh': _d_tanh, 'logistic': _d_logistic,
-                        'relu': _d_relu}
+DERIVATIVES = {'tanh': _d_tanh, 'logistic': _d_logistic, 'relu': _d_relu}
 
 
 def _squared_loss(y_true, y_pred):
