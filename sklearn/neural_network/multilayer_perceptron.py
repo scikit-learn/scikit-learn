@@ -116,12 +116,12 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                 self._a_layers[i + 1] = \
                     ACTIVATIONS[self.out_activation_](self._a_layers[i + 1])
 
-    def _compute_cost_grad(self, layer):
+    def _compute_cost_grad(self, layer, n_samples):
         """Compute the cost gradient for the layer."""
         self._coef_grads[layer] = safe_sparse_dot(self._a_layers[layer].T,
                                                   self._deltas[layer])
         self._coef_grads[layer] += (self.alpha * self.layers_coef_[layer])
-        self._coef_grads[layer] /= self._n_samples
+        self._coef_grads[layer] /= n_samples
 
         self._intercept_grads[layer] = np.mean(self._deltas[layer], 0)
 
@@ -243,6 +243,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         -------
         cost : float
         """
+        n_samples = X.shape[0]
         # Step (1/3): Forward propagate
         self._forward_pass()
 
@@ -250,7 +251,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         cost = LOSS_FUNCTIONS[self.loss](y, self._a_layers[-1])
         # Add L2 regularization term to cost
         values = np.sum(np.array([np.sum(s ** 2) for s in self.layers_coef_]))
-        cost += (0.5 * self.alpha) * values / self._n_samples
+        cost += (0.5 * self.alpha) * values / n_samples
 
         # Step (3/3): Backward propagate
         last = len(self.n_hidden)
@@ -259,7 +260,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         self._deltas[last] = -diff
 
         # Compute gradient for the last layer
-        self._compute_cost_grad(last)
+        self._compute_cost_grad(last, n_samples)
 
         # Iterate over the hidden layers
         for i in range(self.n_layers_ - 2, 0, -1):
@@ -268,7 +269,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             derivative_func = DERIVATIVE_FUNCTIONS[self.activation]
             self._deltas[i - 1] *= derivative_func(self._a_layers[i])
 
-            self._compute_cost_grad(i - 1)
+            self._compute_cost_grad(i - 1, n_samples)
 
         return cost
 
@@ -390,8 +391,6 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             batch_size = n_samples
         else:
             batch_size = np.clip(self.batch_size, 1, n_samples)
-
-        self._n_samples = batch_size
 
         # Initialize lists
         self._a_layers = []
