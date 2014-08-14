@@ -8,6 +8,7 @@ import numpy as np
 from ..base import BaseEstimator
 from ..utils.validation import check_array
 from ..utils import check_random_state
+from ..utils.extmath import row_norms
 
 from ..random_projection import GaussianRandomProjection
 
@@ -52,21 +53,6 @@ def _find_longest_prefix_match(bit_string_array, query, hash_size,
             hi = mid
 
     return res
-
-
-def _simple_euclidean_distance(query, candidates):
-    """Private function to calculate Euclidean distances.
-
-    Distance is calculated between each point in candidates
-    and query.
-    This method is faster than `sklearn.metrics.pairwise.euclidean_distance`
-    because it is is optimised for matrix by matrix computation where as
-    this version takes a vector as the first input.
-    """
-    distances = np.zeros(candidates.shape[0])
-    for i in range(candidates.shape[0]):
-        distances[i] = np.linalg.norm(candidates[i] - query)
-    return distances
 
 
 class LSHForest(BaseEstimator):
@@ -205,8 +191,7 @@ class LSHForest(BaseEstimator):
         Returns argsort of distances in the candidates
         array and sorted distances.
         """
-        distances = _simple_euclidean_distance(
-            query, self._fit_X[candidates])
+        distances = row_norms(self._fit_X[candidates] - query)
         distance_positions = np.argsort(distances)
         return distance_positions, distances[distance_positions]
 
