@@ -63,19 +63,6 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.learning_rate_ = None
         self.classes_ = None
 
-    def _pack(self, packed_coef_, packed_inter_, layers_coef_,
-              layers_intercept_):
-        """Pack the parameters into a single vector."""
-        # NOT USED (TO BE FIXED)
-        for i in range(self.n_layers_ - 1):
-            s, e, shape = self._packed_parameter_meta[i]
-            packed_coef_[s:e] = layers_coef_[i].ravel()
-
-            s, e = self._packed_parameter_meta[i + self.n_layers_ - 1]
-            packed_inter_[s:e] = layers_intercept_[i].ravel()
-
-        return packed_coef_, packed_inter_
-
     def _unpack(self, packed_parameters):
         """Extract the coefficients and intercepts from packed_parameters."""
         for i in range(self.n_layers_ - 1):
@@ -169,8 +156,6 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         """
         packed_coef_inter = _pack(self.layers_coef_, self.layers_intercept_)
-        # self._grad NOT USED, TO BE FIXED!
-        self._grad = np.zeros(packed_coef_inter.size)
 
         if self.verbose is True or self.verbose >= 1:
             iprint = 1
@@ -212,16 +197,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         """
         self._unpack(packed_coef_inter)
         cost = self._backprop(X, y)
-        """
-        # Pack grad parameters
-        NOT USED TO BE FIXED
-        for i in range(self.n_layers_ - 1):
-            s, e, shape = self._coef_indptr[i]
-            self._grad[s:e] = self._coef_grads[i].ravel()
 
-            s, e = self._intercept_indptr[i]
-            self._grad[s:e] = self._intercept_grads[i].ravel()
-        """
         self.n_iter_ += 1
         grad = _pack(self._coef_grads, self._intercept_grads)
         return cost, grad
@@ -279,9 +255,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             self.n_hidden = [self.n_hidden]
 
         # Validate input parameters.
-        for n_neurons in self.n_hidden:
-            if n_neurons <= 0:
-                raise ValueError("n_hidden must be > 0, got %s." % n_neurons)
+        if np.any(np.array(self.n_hidden) <= 0):
+            raise ValueError("n_hidden must be > 0, got %s." % self.n_hidden)
         if not isinstance(self.shuffle, bool):
             raise ValueError("shuffle must be either True or False, got %s." %
                              self.shuffle)
@@ -289,10 +264,10 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("max_iter must be > 0, got %s." % self.max_iter)
         if self.alpha < 0.0:
             raise ValueError("alpha must be >= 0, got %s." % self.alpha)
-        if self.learning_rate in ["constant", "invscaling"]:
-            if self.learning_rate_init <= 0.0:
-                raise ValueError("learning_rate_init must be > 0, got %s." %
-                                 self.learning_rate)
+        if (self.learning_rate in ["constant", "invscaling"] and
+           self.learning_rate_init <= 0.0):
+            raise ValueError("learning_rate_init must be > 0, got %s." %
+                             self.learning_rate)
 
         # raise ValueError if not registered
         if self.activation not in ACTIVATIONS:
@@ -306,7 +281,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("The algorithm %s is not supported. " %
                              self.algorithm)
 
-        X, y = check_X_y(X, y, accept_sparse='csr', multi_output=True)
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                         multi_output=True)
 
         # This outputs a warning when a 1d array is expected
         if y.ndim == 2 and y.shape[1] == 1:
@@ -393,23 +369,15 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             batch_size = np.clip(self.batch_size, 1, n_samples)
 
         # Initialize lists
-        self._a_layers = []
-        self._deltas = []
-        self._coef_grads = []
-        self._intercept_grads = []
-
-        self._a_layers.append(X)
-
-        for i in range(self.n_layers_ - 1):
-            self._a_layers.append(np.empty((batch_size,
-                                            layer_units[i + 1])))
-            self._deltas.append(np.empty((batch_size,
-                                          layer_units[i + 1])))
-            # Initialize gradient lists
-            fan_in = layer_units[i]
-            fan_out = layer_units[i + 1]
-            self._coef_grads.append(np.empty((fan_in, fan_out)))
-            self._intercept_grads.append(np.empty(fan_out))
+        self._a_layers = [X]
+        self._a_layers.extend(np.empty((batch_size, layer_units[i + 1]))
+                              for i in range(self.n_layers_ - 1))
+        self._deltas = [np.empty((batch_size, layer_units[i + 1]))
+                        for i in range(self.n_layers_ - 1)]
+        self._coef_grads = [np.empty((layer_units[i], layer_units[i + 1]))
+                            for i in range(self.n_layers_ - 1)]
+        self._intercept_grads = [np.empty(layer_units[i + 1])
+                                 for i in range(self.n_layers_ - 1)]
 
         # Run the Stochastic Gradient Descent algorithm
         if self.algorithm == 'sgd':
