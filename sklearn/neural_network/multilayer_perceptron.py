@@ -84,23 +84,21 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                                  is either the softmax function or the
                                  logistic function
         """
-        last_layer = self.n_layers_ - 1
-
-        # Iterate over the layers
-        for i in range(last_layer):
+        # Iterate over the hidden layers
+        for i in range(self.n_layers_ - 1):
             self._a_layers[i + 1] = safe_sparse_dot(self._a_layers[i],
                                                     self.layers_coef_[i])
             self._a_layers[i + 1] += self.layers_intercept_[i]
 
             # For the hidden layers
-            if i + 1 != last_layer:
+            if i + 1 != self.n_layers_ - 1:
                 activation = ACTIVATIONS[self.activation]
                 self._a_layers[i + 1] = activation(self._a_layers[i + 1])
 
-            # For the last layer
-            elif with_output_activation:
-                out_activation = ACTIVATIONS[self.out_activation_]
-                self._a_layers[i + 1] = out_activation(self._a_layers[i + 1])
+        # For the last layer
+        if with_output_activation:
+            out_activation = ACTIVATIONS[self.out_activation_]
+            self._a_layers[i + 1] = out_activation(self._a_layers[i + 1])
 
     def _compute_cost_grad(self, layer, n_samples):
         """Compute the cost gradient for the layer."""
@@ -111,69 +109,9 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         self._intercept_grads[layer] = np.mean(self._deltas[layer], 0)
 
-    def _backprop_sgd(self, X, y):
-        """Update the weights using the computed gradients.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data, where n_samples in the number of samples
-            and n_features is the number of features.
-
-        y : array-like, shape (n_samples,)
-            Subset of the target values.
-
-        """
-        self._a_layers[0] = X
-
-        cost = self._backprop(X, y)
-
-        # update weights
-        for i in range(self.n_layers_ - 1):
-            self.layers_coef_[i] -= (self.learning_rate_ * self._coef_grads[i])
-            self.layers_intercept_[i] -= (self.learning_rate_ *
-                                          self._intercept_grads[i])
-
-        if self.learning_rate == 'invscaling':
-            self.learning_rate_ = self.learning_rate_init / \
-                pow(self.n_iter_ + 1, self.power_t)
-
-        return cost
-
-    def _backprop_lbfgs(self, X, y):
-        """Apply the quasi-Newton optimization methods that uses a l_BFGS
-        to train the weights.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data, where n_samples in the number of samples
-            and n_features is the number of features.
-
-        y : array-like, shape (n_samples,)
-            Subset of the target values.
-
-        """
-        packed_coef_inter = _pack(self.layers_coef_, self.layers_intercept_)
-
-        if self.verbose is True or self.verbose >= 1:
-            iprint = 1
-        else:
-            iprint = -1
-
-        optimal_parameters, f, d = fmin_l_bfgs_b(func=self._cost_grad_lbfgs,
-                                                 x0=packed_coef_inter,
-                                                 maxfun=self.max_iter,
-                                                 iprint=iprint,
-                                                 pgtol=self.tol,
-                                                 args=(X, y))
-        self.cost_ = f
-        self._unpack(optimal_parameters)
-
     def _cost_grad_lbfgs(self, packed_coef_inter, X, y):
-        """Compute the MLP cost  function and its
-        corresponding derivatives with respect to the
-        different parameters given in the initialization.
+        """Compute the MLP cost  function and its corresponding derivatives
+        with respect to the different parameters given in the initialization.
 
         Parameters
         ----------
@@ -229,7 +167,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         cost += (0.5 * self.alpha) * values / n_samples
 
         # Step (3/3): Backward propagate
-        last = len(self.n_hidden)
+        last = self.n_layers_ - 2
 
         diff = y - self._a_layers[-1]
         self._deltas[last] = -diff
@@ -385,8 +323,19 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
             for i in range(self.max_iter):
                 for batch_slice in gen_batches(n_samples, batch_size):
-                    self.cost_ = self._backprop_sgd(X[batch_slice],
-                                                    y[batch_slice])
+                    self._a_layers[0] = X[batch_slice]
+                    self.cost_ = self._backprop(X[batch_slice], y[batch_slice])
+
+                    # update weights
+                    for i in range(self.n_layers_ - 1):
+                        self.layers_coef_[i] -= (self.learning_rate_ *
+                                                 self._coef_grads[i])
+                        self.layers_intercept_[i] -= (self.learning_rate_ *
+                                                      self._intercept_grads[i])
+
+                    if self.learning_rate == 'invscaling':
+                        self.learning_rate_ = self.learning_rate_init / \
+                            (self.n_iter_ + 1) ** self.power_t
 
                 self.n_iter_ += 1
 
@@ -430,7 +379,23 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                 start = end
 
             # Run LBFGS
-            self._backprop_lbfgs(X, y)
+            packed_coef_inter = _pack(self.layers_coef_,
+                                      self.layers_intercept_)
+
+            if self.verbose is True or self.verbose >= 1:
+                iprint = 1
+            else:
+                iprint = -1
+
+            optimal_parameters, self.cost_, d = fmin_l_bfgs_b(
+                x0=packed_coef_inter,
+                func=self._cost_grad_lbfgs,
+                maxfun=self.max_iter,
+                iprint=iprint,
+                pgtol=self.tol,
+                args=(X, y))
+
+            self._unpack(optimal_parameters)
 
         # Clear the lists
         clear_layer_lists(self._a_layers, self._deltas, self._coef_grads,

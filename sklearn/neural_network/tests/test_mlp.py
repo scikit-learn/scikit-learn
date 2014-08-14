@@ -170,7 +170,8 @@ def test_gradient():
 
     for activation in ACTIVATION_TYPES:
         mlp = MultilayerPerceptronClassifier(activation=activation,
-                                             n_hidden=10, max_iter=1)
+                                             n_hidden=10, max_iter=1,
+                                             random_state=1)
         mlp.fit(X, y)
 
         theta = np.hstack([l.ravel() for l in mlp.layers_coef_ +
