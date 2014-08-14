@@ -724,6 +724,7 @@ def make_noisy_forward_data(
     n_features=200,
     n_targets=10,
     train_frac=.8,
+    noise_levels=None,
     random_state=42):
     """Creates a simple, dense, noisy forward linear model with multiple
     output."""
@@ -734,7 +735,9 @@ def make_noisy_forward_data(
     X = rng.randn(n_samples, n_features)
     W = rng.randn(n_features, n_targets)
     Y_clean = X.dot(W)
-    noise_levels = rng.randn(n_targets) ** 2
+    if noise_levels is None:
+        noise_levels = rng.randn(n_targets) ** 2
+    noise_levels = np.atleast_1d(noise_levels) * np.ones(n_targets)
     noise = rng.randn(*Y_clean.shape) * noise_levels * Y_clean.std(0)
     Y = Y_clean + noise
     return X, Y, W, train, test
@@ -908,3 +911,36 @@ def test__ridge_gcv_path_svd_with_sample_weights_against_eigen():
                                    mode='looe')[0]
 
     assert_array_almost_equal(looe_eigen, looe_svd)
+
+
+def test_best_alpha_scales_with_target():
+    """Best penalty must be selected per target and yield corresponding
+    coefficients"""
+
+    n_samples, n_features, n_targets = 20, 10, 10
+    noise_levels = np.arange(10) / 5.
+    X, Y, W, _, _ = make_noisy_forward_data(
+        n_samples, n_features, n_targets, noise_levels=noise_levels)
+
+    alphas = np.logspace(-3, 3, 35)
+
+    cv_mses = []
+    coefs = []
+    best_alphas = []
+    for y in Y.T:
+        ridge_gcv = _RidgeGCV(alphas=alphas, store_cv_values=True,
+                          fit_intercept=False)
+
+        ridge_gcv.fit(X, y)
+        cv_mses.append(ridge_gcv.cv_values_.mean(0))
+        coefs.append(ridge_gcv.coef_)
+        best_alphas.append(ridge_gcv.alpha_)
+
+    ridge_gcv.fit(X, Y)
+    assert_array_almost_equal(
+        np.array(cv_mses), ridge_gcv.cv_values_.mean(0))
+    assert_array_almost_equal(np.array(coefs),
+                              ridge_gcv.coef_)
+
+
+
