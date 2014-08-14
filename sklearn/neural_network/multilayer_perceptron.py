@@ -15,81 +15,12 @@ from ..externals import six
 from ..preprocessing import LabelBinarizer
 from ..utils import gen_batches
 from ..utils import shuffle
-from ..utils import check_array, check_X_y, check_random_state, column_or_1d
+from ..utils import check_array, check_X_y, column_or_1d
 from ..utils import ConvergenceWarning
 from ..utils.extmath import safe_sparse_dot
-from ..utils.fixes import expit as logistic_sigmoid
-from ..utils.multiclass import unique_labels
-
-
-def _identity(X):
-    """Return the input array."""
-    return X
-
-
-def _inplace_logistic_sigmoid(X):
-    """Compute the logistic function. """
-    return logistic_sigmoid(X, out=X)
-
-
-def _inplace_tanh(X):
-    """Compute the hyperbolic tan function."""
-    return np.tanh(X, out=X)
-
-
-def _inplace_relu(X):
-    """Compute the rectified linear unit function."""
-    return np.clip(X, 0, None, out=X)
-
-
-def _inplace_softmax(X):
-    """Compute the K-way softmax function. """
-    tmp = X - X.max(axis=1)[:, np.newaxis]
-    np.exp(tmp, out=X)
-    X /= X.sum(axis=1)[:, np.newaxis]
-
-    return X
-
-
-def _d_logistic(Z):
-    """Compute the derivative of the logistic function."""
-    return Z * (1 - Z)
-
-
-def _d_tanh(Z):
-    """Compute the derivative of the hyperbolic tan function."""
-    return 1 - (Z ** 2)
-
-
-def _d_relu(Z):
-    """Compute the derivative of the rectified linear unit function."""
-    return (Z > 0).astype('b')
-
-
-def _squared_loss(y_true, y_pred):
-    """Compute the square loss for regression."""
-    return np.sum((y_true - y_pred) ** 2) / (2 * len(y_true))
-
-
-def _log_loss(y_true, y_prob):
-    """Compute Logistic loss for binary class.
-
-    Max/Min clipping is enabled to prevent
-    invalid zero value in log computation.
-    """
-    y_prob = np.clip(y_prob, 1e-10, 1 - 1e-10)
-
-    return -np.sum(y_true * np.log(y_prob) +
-                  (1 - y_true) * np.log(1 - y_prob)) / y_prob.shape[0]
-
-
-ACTIVATIONS = {'tanh': _inplace_tanh, 'logistic': _inplace_logistic_sigmoid,
-               'relu': _inplace_relu}
-
-DERIVATIVE_FUNCTIONS = {'tanh': _d_tanh, 'logistic': _d_logistic,
-                        'relu': _d_relu}
-
-LOSS_FUNCTIONS = {'squared_loss': _squared_loss, 'log_loss': _log_loss}
+from .base import logistic, softmax, init_weights
+from .base import clear_layer_lists
+from .base import ACTIVATIONS, DERIVATIVE_FUNCTIONS, LOSS_FUNCTIONS
 
 
 def _pack(layers_coef_, layers_intercept_):
@@ -136,23 +67,24 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
               layers_intercept_):
         """Pack the parameters into a single vector."""
         # NOT USED (TO BE FIXED)
-        for i in range(self._n_layers - 1):
+        for i in range(self.n_layers_ - 1):
             s, e, shape = self._packed_parameter_meta[i]
             packed_coef_[s:e] = layers_coef_[i].ravel()
 
-            s, e = self._packed_parameter_meta[i + self._n_layers - 1]
+            s, e = self._packed_parameter_meta[i + self.n_layers_ - 1]
             packed_inter_[s:e] = layers_intercept_[i].ravel()
 
         return packed_coef_, packed_inter_
 
     def _unpack(self, packed_parameters):
         """Extract the coefficients and intercepts from packed_parameters."""
-        for i in range(self._n_layers - 1):
-            s, e, shape = self._coef_indpr[i]
-            self.layers_coef_[i] = np.reshape(packed_parameters[s:e], shape)
+        for i in range(self.n_layers_ - 1):
+            start, end, shape = self._coef_indptr[i]
+            self.layers_coef_[i] = np.reshape(packed_parameters[start:end],
+                                              shape)
 
-            s, e = self._intercept_indpr[i]
-            self.layers_intercept_[i] = packed_parameters[s:e]
+            start, end = self._intercept_indptr[i]
+            self.layers_intercept_[i] = packed_parameters[start:end]
 
     def _forward_pass(self, with_output_activation=True):
         """Perform a forward pass on the network by computing the values
@@ -165,7 +97,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                                  is either the softmax function or the
                                  logistic function
         """
-        last_layer = self._n_layers - 1
+        last_layer = self.n_layers_ - 1
 
         # Iterate over the layers
         for i in range(last_layer):
@@ -182,7 +114,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             elif with_output_activation:
                 # Apply activation in an inplace manner
                 self._a_layers[i + 1] = \
-                    self._inplace_out_activation(self._a_layers[i + 1])
+                    ACTIVATIONS[self.out_activation_](self._a_layers[i + 1])
 
     def _compute_cost_grad(self, layer):
         """Compute the cost gradient for the layer."""
@@ -211,7 +143,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         cost = self._backprop(X, y)
 
         # update weights
-        for i in range(self._n_layers - 1):
+        for i in range(self.n_layers_ - 1):
             self.layers_coef_[i] -= (self.learning_rate_ * self._coef_grads[i])
             self.layers_intercept_[i] -= (self.learning_rate_ *
                                           self._intercept_grads[i])
@@ -283,16 +215,16 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         """
         # Pack grad parameters
         NOT USED TO BE FIXED
-        for i in range(self._n_layers - 1):
-            s, e, shape = self._coef_indpr[i]
+        for i in range(self.n_layers_ - 1):
+            s, e, shape = self._coef_indptr[i]
             self._grad[s:e] = self._coef_grads[i].ravel()
 
-            s, e = self._intercept_indpr[i]
+            s, e = self._intercept_indptr[i]
             self._grad[s:e] = self._intercept_grads[i].ravel()
         """
         self.n_iter_ += 1
-        self._grad = _pack(self._coef_grads, self._intercept_grads)
-        return cost, self._grad
+        grad = _pack(self._coef_grads, self._intercept_grads)
+        return cost, grad
 
     def _backprop(self, X, y):
         """Compute the MLP cost function and its corresponding derivatives
@@ -330,7 +262,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         self._compute_cost_grad(last)
 
         # Iterate over the hidden layers
-        for i in range(self._n_layers - 2, 0, -1):
+        for i in range(self.n_layers_ - 2, 0, -1):
             self._deltas[i - 1] = safe_sparse_dot(self._deltas[i],
                                                   self.layers_coef_[i].T)
             derivative_func = DERIVATIVE_FUNCTIONS[self.activation]
@@ -383,75 +315,72 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         # Classification
         if isinstance(self, ClassifierMixin):
+            self.label_binarizer_.fit(y)
+
             if self.classes_ is None or not warm_start:
-                self.classes_ = unique_labels(y)
+                self.classes_ = self.label_binarizer_.classes_
             else:
-                classes = unique_labels(y)
+                classes = self.label_binarizer_.classes_
                 if not np.all(np.in1d(classes, self.classes_)):
                     raise ValueError("`y` has classes not in `self.classes_`."
                                      " `self.classes_` has %s. 'y' has %s." %
                                      (self.classes_, classes))
 
-            y = self.label_binarizer_.fit_transform(y)
+            y = self.label_binarizer_.transform(y)
 
         # Ensure y is 2D
         if y.ndim == 1:
-            y = np.reshape(y, (-1, 1))
+            y = y.reshape((-1, 1))
 
         self.n_outputs_ = y.shape[1]
 
         layer_units = ([n_features] + self.n_hidden + [self.n_outputs_])
 
         # First time training the model
-        if not self.warm_start and not warm_start or self.layers_coef_ is None:
+        if self.layers_coef_ is None or (not self.warm_start and
+                                         not warm_start):
             # Initialize parameters
             self.n_iter_ = 0
             self.learning_rate_ = self.learning_rate_init
             self.n_outputs_ = y.shape[1]
 
             # Compute the number of layers
-            self._n_layers = len(layer_units)
-
-            # Pre-allocate gradient matrices
-            self._coef_grads = [0] * (self._n_layers - 1)
-            self._intercept_grads = [0] * (self._n_layers - 1)
+            self.n_layers_ = len(layer_units)
 
             # Output for regression
-            if self.classes_ is None:
-                self._inplace_out_activation = _identity
+            if not isinstance(self, ClassifierMixin):
+                self.out_activation_ = 'identity'
             # Output for multi class
-            elif self.label_binarizer_.y_type_.startswith('multiclass'):
-                self._inplace_out_activation = _inplace_softmax
+            elif self.label_binarizer_.y_type_ == 'multiclass':
+                self.out_activation_ = 'softmax'
             # Output for binary class and multi-label
             else:
-                self._inplace_out_activation = _inplace_logistic_sigmoid
+                self.out_activation_ = 'logistic'
 
-            # Randomize weights
-            rng = check_random_state(self.random_state)
+            # Initialize coefficient and intercept layers
+            self.layers_coef_ = []
+            self.layers_intercept_ = []
 
-            self.layers_coef_ = [0] * (self._n_layers - 1)
-            self.layers_intercept_ = [0] * (self._n_layers - 1)
-
-            for i in range(self._n_layers - 1):
+            for i in range(self.n_layers_ - 1):
                 fan_in = layer_units[i]
                 fan_out = layer_units[i + 1]
 
-                # get scaled weights
+                # Get scaled weights based on Glorot et al. randomization
                 if self.activation == 'tanh':
-                    interval = np.sqrt(6. / (fan_in + fan_out))
+                    weight_scale = np.sqrt(6. / (fan_in + fan_out))
 
                 elif self.activation == 'logistic':
-                    interval = 4. * np.sqrt(6. / (fan_in + fan_out))
+                    weight_scale = 4. * np.sqrt(6. / (fan_in + fan_out))
                 # For other activation functions
                 else:
-                    interval = np.sqrt(1. / fan_in)
+                    weight_scale = np.sqrt(1. / fan_in)
 
-                self.layers_coef_[i] = rng.uniform(-interval, interval,
-                                                   (fan_in, fan_out))
-                self.layers_intercept_[i] = rng.uniform(-interval, interval,
-                                                        fan_out)
-                self._coef_grads[i] = np.empty((fan_in, fan_out))
-                self._intercept_grads[i] = np.empty(fan_out)
+                coef_intercept_weights = init_weights(weight_scale, fan_in,
+                                                      fan_out,
+                                                      self.random_state)
+                # Initialize weights
+                self.layers_coef_.append(coef_intercept_weights[0])
+                self.layers_intercept_.append(coef_intercept_weights[1])
 
         if self.shuffle:
             X, y = shuffle(X, y, random_state=self.random_state)
@@ -464,16 +393,24 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         self._n_samples = batch_size
 
-        # Pre-allocate memory
-        self._a_layers = [0] * (self._n_layers)
-        self._deltas = [0] * (self._n_layers - 1)
-        self._a_layers[0] = X
+        # Initialize lists
+        self._a_layers = []
+        self._deltas = []
+        self._coef_grads = []
+        self._intercept_grads = []
 
-        for i in range(self._n_layers - 1):
-            self._a_layers[i + 1] = np.empty((batch_size,
-                                              layer_units[i + 1]))
-            self._deltas[i] = np.empty((batch_size,
-                                        layer_units[i + 1]))
+        self._a_layers.append(X)
+
+        for i in range(self.n_layers_ - 1):
+            self._a_layers.append(np.empty((batch_size,
+                                            layer_units[i + 1])))
+            self._deltas.append(np.empty((batch_size,
+                                          layer_units[i + 1])))
+            # Initialize gradient lists
+            fan_in = layer_units[i]
+            fan_out = layer_units[i + 1]
+            self._coef_grads.append(np.empty((fan_in, fan_out)))
+            self._intercept_grads.append(np.empty(fan_out))
 
         # Run the Stochastic Gradient Descent algorithm
         if self.algorithm == 'sgd':
@@ -508,26 +445,30 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         # Run the LBFGS algorithm
         elif self.algorithm == 'l-bfgs':
             # Store meta information for the parameters
-            self._coef_indpr = [0] * (self._n_layers - 1)
-            self._intercept_indpr = [0] * (self._n_layers - 1)
-            s = 0
+            self._coef_indptr = []
+            self._intercept_indptr = []
+            start = 0
 
             # Save sizes and indices of coefficients for faster unpacking
-            for i in range(self._n_layers - 1):
+            for i in range(self.n_layers_ - 1):
                 fan_in, fan_out = layer_units[i], layer_units[i + 1]
 
-                e = s + (fan_in * fan_out)
-                self._coef_indpr[i] = (s, e, (fan_in, fan_out))
-                s = e
+                end = start + (fan_in * fan_out)
+                self._coef_indptr.append((start, end, (fan_in, fan_out)))
+                start = end
 
             # Save sizes and indices of intercepts for faster unpacking
-            for i in range(self._n_layers - 1):
-                e = s + layer_units[i + 1]
-                self._intercept_indpr[i] = (s, e)
-                s = e
+            for i in range(self.n_layers_ - 1):
+                end = start + layer_units[i + 1]
+                self._intercept_indptr.append((start, end))
+                start = end
 
             # Run LBFGS
             self._backprop_lbfgs(X, y)
+
+        # Clear the lists
+        clear_layer_lists(self._a_layers, self._deltas, self._coef_grads,
+                          self._intercept_grads)
 
         return self
 
@@ -584,11 +525,24 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                  The predicted values.
         """
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
-        self._a_layers[0] = X
 
+        layer_units = [X.shape[1]] + self.n_hidden + [self.n_outputs_]
+
+        # Initialize layers
+        self._a_layers = []
+        self._a_layers.append(X)
+
+        for i in range(self.n_layers_ - 1):
+            self._a_layers.append(np.empty((X.shape[0],
+                                            layer_units[i + 1])))
         # forward propagate
         self._forward_pass(with_output_activation=False)
-        return self._a_layers[-1]
+        y_pred = self._a_layers[-1]
+
+        # Clear the list
+        clear_layer_lists(self._a_layers)
+
+        return y_pred
 
 
 class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
@@ -684,28 +638,47 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
 
     Attributes
     ----------
-    `classes_` : array or list of array of shape = [n_classes]
+    `classes_` : array or list of array of shape (n_classes,)
         Class labels for each output.
 
     `cost_` : float
         The current cost value computed by the loss function.
 
-    ` learning_rate_` : float
-        The current learning rate.
+    `label_binarizer_` : LabelBinarizer
+        A LabelBinarizer object trained on the training set.
 
-    `layers_coef_` : python list, length = n_layers - 1
+    `layers_coef_` : python list, length n_layers - 1
         The ith element in the list represents the weight matrix corresponding
         to layer i.
 
-    `layers_intercept_` : python list, length = n_layers - 1
+    `layers_intercept_` : python list, length n_layers - 1
         The ith element in the list represents the bias vector corresponding to
         layer i + 1.
 
-    n_iter_ : int
+    `learning_rate_` : float
+        The current learning rate.
+
+    n_iter_ : int,
         The current number of iterations the algorithm has ran.
 
-    `n_outputs_` : int,
+    n_layers_ : int
+        Number of layers.
+
+    `n_outputs_` : int
         Number of outputs.
+
+    `out_activation_` : string
+        Name of the output activation function.
+
+    References
+    ----------
+    Hinton, Geoffrey E.
+        "Connectionist learning procedures." Artificial intelligence 40.1
+        (1989): 185-234.
+
+    Glorot, Xavier, and Yoshua Bengio. "Understanding the difficulty of
+        training deep feedforward neural networks." International Conference
+        on Artificial Intelligence and Statistics. 2010.
     """
     def __init__(self, n_hidden=[100], activation="tanh",
                  algorithm='l-bfgs', alpha=0.00001,
@@ -739,12 +712,12 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
         y : array-like, shape (n_samples,) or (n_samples, n_classes)
             The predict values.
         """
-        scores = self._decision_scores(X)
+        y_scores = self._decision_scores(X)
 
         if self.n_outputs_ == 1:
-            return scores.ravel()
+            return y_scores.ravel()
         else:
-            return scores
+            return y_scores
 
     def predict(self, X):
         """Predict using the extreme learning machines model
@@ -760,10 +733,10 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
         y : array-like, shape (n_samples,) or (n_samples, n_classes)
             The predicted classes, or the predict values.
         """
-        scores = self.decision_function(X)
-        self._inplace_out_activation(scores)
+        y_scores = self.decision_function(X)
+        y_scores = ACTIVATIONS[self.out_activation_](y_scores)
 
-        return self.label_binarizer_.inverse_transform(scores)
+        return self.label_binarizer_.inverse_transform(y_scores)
 
     def partial_fit(self, X, y, classes=None):
         """Fit the model to the data X and target y.
@@ -830,13 +803,13 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
                  model, where classes are ordered as they are in
                  `self.classes_`.
         """
-        scores = self.decision_function(X)
+        y_scores = self.decision_function(X)
 
-        if scores.ndim == 1:
-            scores = logistic_sigmoid(scores)
-            return np.vstack([1 - scores, scores]).T
+        if y_scores.ndim == 1:
+            y_scores = logistic(y_scores)
+            return np.vstack([1 - y_scores, y_scores]).T
         else:
-            return _inplace_softmax(scores)
+            return softmax(y_scores)
 
 
 class MultilayerPerceptronRegressor(BaseMultilayerPerceptron, RegressorMixin):
@@ -931,28 +904,41 @@ class MultilayerPerceptronRegressor(BaseMultilayerPerceptron, RegressorMixin):
 
     Attributes
     ----------
-    `classes_` : array or list of array of shape = [n_classes]
-        Class labels for each output.
-
     `cost_` : float
         The current cost value computed by the loss function.
+
+    `layers_coef_` : python list, length n_layers - 1
+        The ith element in the list represents the weight matrix corresponding
+        to layer i.
+
+    `layers_intercept_` : python list, length n_layers - 1
+        The ith element in the list represents the bias vector corresponding to
+        layer i + 1.
 
     `learning_rate_` : float
         The current learning rate.
 
-    `layers_coef_` : python list, length = n_layers - 1
-        The ith element in the list represents the weight matrix corresponding
-        to layer i.
-
-    `layers_intercept_` : python list, length = n_layers - 1
-        The ith element in the list represents the bias vector corresponding to
-        layer i + 1.
-
-    n_iter_ : int
+    n_iter_ : int,
         The current number of iterations the algorithm has ran.
 
-    `n_outputs_` : int,
+    n_layers_ : int
+        Number of layers.
+
+    `n_outputs_` : int
         Number of outputs.
+
+    `out_activation_` : string
+        Name of the output activation function.
+
+    References
+    ----------
+    Hinton, Geoffrey E.
+        "Connectionist learning procedures." Artificial intelligence 40.1
+        (1989): 185-234.
+
+    Glorot, Xavier, and Yoshua Bengio. "Understanding the difficulty of
+        training deep feedforward neural networks." International Conference
+        on Artificial Intelligence and Statistics. 2010.
     """
     def __init__(self, n_hidden=[100], activation="tanh",
                  algorithm='l-bfgs', alpha=0.00001,

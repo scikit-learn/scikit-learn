@@ -21,7 +21,6 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from scipy.sparse import csr_matrix
 from sklearn.utils.testing import assert_raises, assert_greater, assert_equal
-from sklearn.utils.fixes import expit as logistic_sigmoid
 
 
 np.seterr(all='warn')
@@ -96,16 +95,13 @@ def test_fit():
     mlp.learning_rate_ = 0.1
 
     # Compute the number of layers
-    mlp._n_layers = 3
+    mlp.n_layers_ = 3
 
     # Pre-allocate gradient matrices
-    mlp._coef_grads = [0] * (mlp._n_layers - 1)
-    mlp._intercept_grads = [0] * (mlp._n_layers - 1)
+    mlp._coef_grads = [0] * (mlp.n_layers_ - 1)
+    mlp._intercept_grads = [0] * (mlp.n_layers_ - 1)
 
-    def _inplace_logistic_sigmoid(X):
-        return logistic_sigmoid(X, out=X)
-
-    mlp._inplace_out_activation = _inplace_logistic_sigmoid
+    mlp.out_activation_ = 'logistic'
 
     mlp.partial_fit(X, y, classes=[0, 1])
     # Manually worked out example
@@ -174,11 +170,30 @@ def test_gradient():
 
     for activation in ACTIVATION_TYPES:
         mlp = MultilayerPerceptronClassifier(activation=activation,
-                                             n_hidden=10)
+                                             n_hidden=10, max_iter=1)
         mlp.fit(X, y)
 
         theta = np.hstack([l.ravel() for l in mlp.layers_coef_ +
                            mlp.layers_intercept_])
+
+        layer_units = [X.shape[1]] + mlp.n_hidden + [mlp.n_outputs_]
+
+        mlp._a_layers = []
+        mlp._deltas = []
+        mlp._coef_grads = []
+        mlp._intercept_grads = []
+
+        mlp._a_layers.append(X)
+        for i in range(mlp.n_layers_ - 1):
+            mlp._a_layers.append(np.empty((X.shape[0],
+                                           layer_units[i + 1])))
+            mlp._deltas.append(np.empty((X.shape[0],
+                                         layer_units[i + 1])))
+
+            fan_in = layer_units[i]
+            fan_out = layer_units[i + 1]
+            mlp._coef_grads.append(np.empty((fan_in, fan_out)))
+            mlp._intercept_grads.append(np.empty(fan_out))
 
         # analytically compute the gradients
         cost_grad_fun = lambda t: mlp._cost_grad_lbfgs(t, X, Y)
@@ -218,10 +233,8 @@ def test_lbfgs_classification():
             mlp.fit(X_train, y_train)
             y_predict = mlp.predict(X_test)
             assert_greater(mlp.score(X_train, y_train), 0.95)
-            assert_equal(
-                (y_predict.shape[0],
-                 y_predict.dtype.kind),
-                expected_shape_dtype)
+            assert_equal((y_predict.shape[0], y_predict.dtype.kind),
+                         expected_shape_dtype)
 
 
 def test_lbfgs_regression():

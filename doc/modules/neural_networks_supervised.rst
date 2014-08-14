@@ -14,8 +14,8 @@ Multi-layer Perceptron
 
 **Multi-layer Perceptron (MLP)** is a supervised learning algorithm that learns
 a function :math:`f(\cdot): R \rightarrow R` by training on a dataset. Given a 
-set of features :math:`X = {x_1, x_2, ..., x_m}` and a target :math:`y`. It 
-can learn non-linear, complex functions for either classification
+set of features :math:`X = {x_1, x_2, ..., x_m}` and a target :math:`y`, it 
+can learn a non-linear, complex functions for either classification
 or regression. It is different from logistic regression, in that between the input 
 and the output layer, there can be one or more hidden layers. Figure 1 shows 
 a one hidden layer MLP.
@@ -71,10 +71,10 @@ Classification
 Class :class:`MultilayerPerceptronClassifier` implements  
 a multi layer perceptron (MLP) algorithm that trains using Backpropagation. 
 
-Like all classifiers, MLP trains on two arrays: array X
-of size (n_samples, n_features), which holds the training samples represented as 
-floating point feature vectors; and array y of size (n_samples,), which holds 
-the target values (class labels) for the training samples::
+MLP trains on two arrays: array X of size (n_samples, n_features), which holds 
+the training samples represented as floating point feature vectors; and array 
+y of size (n_samples,), which holds the target values (class labels) for the 
+training samples::
 
     >>> from sklearn.neural_network import MultilayerPerceptronClassifier
     >>> X = [[0., 0.], [1., 1.]]
@@ -191,7 +191,7 @@ the inverse of the Hessian matrix to perform parameter update.
 The implementation uses the Scipy version of 
 `L-BFGS <http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_l_bfgs_b.html>`_..
 
-If the selected algorithm is 'L-BFGS', training would not support online nor 
+If the selected algorithm is 'L-BFGS', training does not support online nor 
 mini-batch learning.
 
 
