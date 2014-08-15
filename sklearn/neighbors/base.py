@@ -632,17 +632,17 @@ class SupervisedIntegerMixin(object):
         else:
             y = y.tocsc()
             y.eliminate_zeros()
-
+            nnz = np.diff(y.indptr)
             data = np.array([])
             self.classes_ = []
+
             for k in range(y.shape[1]):
-                k_col = y.getcol(k)
                 k_col_data = y.data[y.indptr[k]:y.indptr[k + 1]]
                 classes = np.unique(k_col_data)
-                if not k_col.nnz == y.shape[0]:
+
+                if not nnz[k] == y.shape[0]:
                     classes = np.insert(classes, 0, 0)
                 self.classes_.append(classes)
-
                 data_k = [np.where(classes == e)[0][0] for e in k_col_data]
                 data = np.append(data, data_k)
 

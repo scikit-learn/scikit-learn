@@ -173,13 +173,11 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
                 if weights is None:
                     mode, _ = stats.mode(neigh_lbls_k,  axis=1)
-                    mode = sp.csc_matrix(mode, dtype=np.intp)
                 else:
                     mode, _ = weighted_mode(neigh_lbls_k, weights, axis=1)
-                    mode = sp.csc_matrix(mode, dtype=np.intp)
 
-                data.extend(mode.data)
-                indices.extend(mode.indices)
+                data.extend(mode[mode != 0].astype(_y.dtype))
+                indices.extend(np.where(mode != 0)[0])
                 indptr.append(len(indices))
 
             y_pred = sp.csc_matrix((data, indices, indptr),
