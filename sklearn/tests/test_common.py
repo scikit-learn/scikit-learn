@@ -14,7 +14,7 @@ import pkgutil
 
 from sklearn.externals.six import PY3
 from sklearn.externals.six.moves import zip
-from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_false, clean_warning_registry
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import SkipTest
@@ -184,6 +184,7 @@ def test_configure():
         os.chdir(setup_path)
         old_argv = sys.argv
         sys.argv = ['setup.py', 'config']
+        clean_warning_registry()
         with warnings.catch_warnings():
             # The configuration spits out warnings when not finding
             # Blas/Atlas development headers
@@ -201,6 +202,7 @@ def test_class_weight_classifiers():
     # test that class_weight works and that the semantics are consistent
     classifiers = all_estimators(type_filter='classifier')
 
+    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         classifiers = [c for c in classifiers
                        if 'class_weight' in c[1]().get_params().keys()]
@@ -228,6 +230,7 @@ def test_class_weight_auto_classifiers():
 
     classifiers = all_estimators(type_filter='classifier')
 
+    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         classifiers = [c for c in classifiers
                        if 'class_weight' in c[1]().get_params().keys()]
@@ -256,6 +259,7 @@ def test_class_weight_auto_classifiers():
 def test_class_weight_auto_linear_classifiers():
     classifiers = all_estimators(type_filter='classifier')
 
+    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         linear_classifiers = [
             (name, clazz)

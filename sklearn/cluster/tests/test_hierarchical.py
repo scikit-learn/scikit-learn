@@ -11,7 +11,7 @@ import numpy as np
 from scipy import sparse
 from scipy.cluster import hierarchy
 
-from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_true, clean_warning_registry
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -43,6 +43,7 @@ def test_linkage_misc():
     FeatureAgglomeration().fit(X)
 
     # Deprecation of Ward class
+    clean_warning_registry()
     with warnings.catch_warnings(record=True) as warning_list:
         warnings.simplefilter("always", DeprecationWarning)
         Ward().fit(X)
@@ -91,6 +92,7 @@ def test_unstructured_linkage_tree():
     for this_X in (X, X[0]):
         # With specified a number of clusters just for the sake of
         # raising a warning and testing the warning code
+        clean_warning_registry()
         with warnings.catch_warnings(record=True) as warning_list:
             warnings.simplefilter("ignore", DeprecationWarning)
             children, n_nodes, n_leaves, parent = assert_warns(
@@ -100,6 +102,7 @@ def test_unstructured_linkage_tree():
 
     for tree_builder in _TREE_BUILDERS.values():
         for this_X in (X, X[0]):
+            clean_warning_registry()
             with warnings.catch_warnings(record=True) as warning_list:
                 warnings.simplefilter("always", UserWarning)
                 warnings.simplefilter("ignore", DeprecationWarning)
@@ -207,6 +210,7 @@ def test_ward_agglomeration():
     X = rnd.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
     assert_warns(DeprecationWarning, WardAgglomeration)
+    clean_warning_registry()
     with warnings.catch_warnings(record=True) as warning_list:
         warnings.simplefilter("always", DeprecationWarning)
         if hasattr(np, 'VisibleDeprecationWarning'):
