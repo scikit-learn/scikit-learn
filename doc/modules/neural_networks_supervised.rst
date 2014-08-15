@@ -206,6 +206,7 @@ of iterations. Since backpropagation has a high time complexity, it is advisable
 to start with smaller number of hidden neurons and few hidden layers for 
 training.
 
+
 Mathematical formulation
 ========================
 

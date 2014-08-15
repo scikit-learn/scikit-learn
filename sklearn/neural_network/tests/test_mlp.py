@@ -280,7 +280,7 @@ def test_multilabel_classification():
     mlp = MultilayerPerceptronClassifier(algorithm='l-bfgs',
                                          n_hidden=50,
                                          max_iter=150,
-                                         random_state=1,
+                                         random_state=0,
                                          activation='logistic')
     mlp.fit(X, y)
     assert_equal(mlp.score(X, y), 1)
@@ -289,9 +289,8 @@ def test_multilabel_classification():
     mlp = MultilayerPerceptronClassifier(algorithm='sgd',
                                          n_hidden=50,
                                          max_iter=150,
-                                         random_state=1,
+                                         random_state=0,
                                          activation='logistic')
-
     #y = np.atleast_1d(y)
     for i in range(100):
             mlp.partial_fit(X, y)
@@ -348,35 +347,29 @@ def test_partial_fit_regression():
     """
     X = Xboston
     y = yboston
-    for activation in ACTIVATION_TYPES:
-        if activation == 'relu':
-            alpha = 100
-            lr = 0.01
-        else:
-            alpha = 0
-            lr = 0.07
-        mlp = MultilayerPerceptronRegressor(algorithm='sgd',
-                                            max_iter=150,
-                                            random_state=1,
-                                            alpha=alpha,
-                                            learning_rate_init=lr,
-                                            activation=activation,
-                                            batch_size=X.shape[0])
-        mlp.fit(X, y)
-        pred1 = mlp.predict(X)
-        mlp = MultilayerPerceptronRegressor(algorithm='sgd',
-                                            activation=activation,
-                                            learning_rate_init=lr,
-                                            alpha=alpha,
-                                            random_state=1,
-                                            batch_size=X.shape[0])
-        for i in range(150):
-            mlp.partial_fit(X, y)
 
-        pred2 = mlp.predict(X)
-        assert_almost_equal(pred1, pred2, decimal=2)
-        score = mlp.score(X, y)
-        assert_greater(score, 0.75)
+    mlp = MultilayerPerceptronRegressor(algorithm='sgd',
+                                        max_iter=150,
+                                        activation='relu',
+                                        random_state=1,
+                                        alpha=100,
+                                        learning_rate_init=0.01,
+                                        batch_size=X.shape[0])
+    mlp.fit(X, y)
+    pred1 = mlp.predict(X)
+    mlp = MultilayerPerceptronRegressor(algorithm='sgd',
+                                        activation='relu',
+                                        learning_rate_init=0.01,
+                                        alpha=100,
+                                        random_state=1,
+                                        batch_size=X.shape[0])
+    for i in range(150):
+        mlp.partial_fit(X, y)
+
+    pred2 = mlp.predict(X)
+    assert_almost_equal(pred1, pred2, decimal=2)
+    score = mlp.score(X, y)
+    assert_greater(score, 0.75)
 
 
 def test_partial_fit_errors():
