@@ -264,8 +264,8 @@ fold cross validation should be preferred to LOO.
    <http://www.cs.iastate.edu/~jtian/cs573/Papers/Kohavi-IJCAI-95.pdf>`_, Intl. Jnt. Conf. AI   
  * R. Bharat Rao, G. Fung, R. Rosales, `On the Dangers of Cross-Validation. An Experimental Evaluation
    <http://www.siam.org/proceedings/datamining/2008/dm08_54_Rao.pdf>`_, SIAM 2008
- * G. James, D. Witten, T. Hastie, R Tibshirani, `An Introduction to Statitical Learning
-   <http://www-bcf.usc.edu/~gareth/ISL>`_, Springer 2013
+ * G. James, D. Witten, T. Hastie, R Tibshirani, `An Introduction to
+   Statistical Learning <http://www-bcf.usc.edu/~gareth/ISL>`_, Springer 2013
 
 
 Leave-P-Out - LPO
