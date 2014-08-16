@@ -179,7 +179,7 @@ def log_loss(y_true, y_prob):
         Ground truth (correct) labels.
 
     y_pred : array-like of float, shape = (n_samples, n_classes)
-        Predicted probabilities, as returned by a classifier’s
+        Predicted probabilities, as returned by a classifier's
         predict_proba method.
 
     Returns
