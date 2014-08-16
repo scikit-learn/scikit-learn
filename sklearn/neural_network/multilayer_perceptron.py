@@ -11,6 +11,9 @@ from scipy.optimize import fmin_l_bfgs_b
 import warnings
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from .base import logistic, softmax
+from .base import clear_layer_lists
+from .base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
 from ..externals import six
 from ..preprocessing import LabelBinarizer
 from ..utils import gen_batches, check_random_state
@@ -18,9 +21,6 @@ from ..utils import shuffle
 from ..utils import check_array, check_X_y, column_or_1d
 from ..utils import ConvergenceWarning
 from ..utils.extmath import safe_sparse_dot
-from .base import logistic, softmax
-from .base import clear_layer_lists
-from .base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
 
 
 def _pack(layers_coef_, layers_intercept_):
@@ -79,10 +79,10 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Parameters
         ----------
-        with_output_activation : if True, the output passes through
-                                 the output activation function, which
-                                 is either the softmax function or the
-                                 logistic function
+        with_output_activation : boolean
+            If True, the output passes through the output activation
+            function, which is either the softmax function or the
+            logistic function
         """
         # Iterate over the hidden layers
         for i in range(self.n_layers_ - 1):
@@ -116,14 +116,13 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         Parameters
         ----------
         packed_parameters : array-like
-                    A vector comprising the  flattened coefficients and
-                    intercepts
+            A vector comprising the  flattened coefficients and intercepts.
 
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input data.
 
         y : array-like, shape (n_samples,)
-            Subset of the target values.
+            The target values.
 
         Returns
         -------
@@ -148,7 +147,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             The input data.
 
         y : array-like, shape (n_samples,)
-            Subset of the target values.
+            The target values.
 
         Returns
         -------
@@ -184,7 +183,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         return cost
 
-    def _fit(self, X, y, warm_start=False):
+    def _fit(self, X, y, incremental=False):
         # Ensure self.n_hidden is a list
         if not hasattr(self.n_hidden, "__iter__"):
             self.n_hidden = [self.n_hidden]
@@ -229,7 +228,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         if isinstance(self, ClassifierMixin):
             self.label_binarizer_.fit(y)
 
-            if self.classes_ is None or not warm_start:
+            if self.classes_ is None or not incremental:
                 self.classes_ = self.label_binarizer_.classes_
             else:
                 classes = self.label_binarizer_.classes_
@@ -250,7 +249,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         # First time training the model
         if self.layers_coef_ is None or (not self.warm_start and
-                                         not warm_start):
+                                         not incremental):
             # Initialize parameters
             self.n_iter_ = 0
             self.learning_rate_ = self.learning_rate_init
@@ -279,7 +278,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                 fan_in = layer_units[i]
                 fan_out = layer_units[i + 1]
 
-                # Use the initialization method recommended by Glorot et al.
+                # Use the initialization method recommended by
+                # Glorot et al.
                 weight_init_bound = np.sqrt(6. / (fan_in + fan_out))
 
                 self.layers_coef_.append(rng.uniform(-weight_init_bound,
@@ -345,7 +345,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                                       ' MinMaxScaler.'
                                       % self.cost_, ConvergenceWarning)
 
-                elif prev_cost - self.cost_ < self.tol or warm_start:
+                elif prev_cost - self.cost_ < self.tol or incremental:
                     break
 
                 prev_cost = self.cost_
@@ -405,13 +405,13 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             The input data.
 
         y : array-like, shape (n_samples,)
-            Target values.
+            The target values.
 
         Returns
         -------
         self : returns a trained MLP model.
         """
-        return self._fit(X, y, warm_start=False)
+        return self._fit(X, y, incremental=False)
 
     def partial_fit(self, X, y):
         """Fit the model to the data X and target y.
@@ -422,7 +422,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             The input data.
 
         y : array-like, shape (n_samples,)
-            Subset of target values.
+            The target values.
 
         Returns
         -------
@@ -431,7 +431,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         if self.algorithm != 'sgd':
             raise ValueError("only SGD algorithm supports partial fit")
 
-        return self._fit(X, y, warm_start=True)
+        return self._fit(X, y, incremental=True)
 
     def _decision_scores(self, X):
         """Predict using the trained model
@@ -890,6 +890,6 @@ class MultilayerPerceptronRegressor(BaseMultilayerPerceptron, RegressorMixin):
         Returns
         -------
         y : array-like, shape (n_samples, n_outputs)
-            The predicted classes, or the predicted values.
+            The predicted values.
         """
         return self._decision_scores(X)
