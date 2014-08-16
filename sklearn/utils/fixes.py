@@ -50,6 +50,17 @@ except ImportError:
 
         return out.reshape(np.shape(x))
 
+# added a code block that addresses the `expit` issue with python3
+# monkeypatch numpy to backport a fix for:
+# https://github.com/numpy/numpy/pull/4800
+major, minor = int(np.version.version[0]), int(np.version.version[2])
+
+if major <= 1 and minor <= 9:
+    def _ufunc_reconstruct(module, name):
+        mod = __import__(module, fromlist=[name])
+        return getattr(mod, name)
+
+    np.core._ufunc_reconstruct = _ufunc_reconstruct
 
 # little danse to see if np.copy has an 'order' keyword argument
 if 'order' in inspect.getargspec(np.copy)[0]:
