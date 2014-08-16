@@ -41,7 +41,7 @@ def _find_longest_prefix_match(bit_string_array, query, hash_size,
         return hi
 
     while lo < hi:
-        mid = (lo+hi)//2
+        mid = (lo+hi) // 2
 
         k = _find_matching_indices(bit_string_array, query,
                                    left_masks[mid],

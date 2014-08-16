@@ -58,7 +58,7 @@ accuracies_c = np.zeros(n_candidates_values.shape[0], dtype=float)
 # Calculate average accuracy for each value of `n_candidates`
 for i, n_candidates in enumerate(n_candidates_values):
     lshf = LSHForest(n_candidates=n_candidates, n_neighbors=n_neighbors)
-    nbrs = NearestNeighbors(n_neighbors=n_neighbors)
+    nbrs = NearestNeighbors(n_neighbors=n_neighbors, algorithm='brute')
     # Fit the Nearest neighbor models
     lshf.fit(X)
     nbrs.fit(X)
@@ -70,10 +70,10 @@ for i, n_candidates in enumerate(n_candidates_values):
 
         intersection = np.intersect1d(neighbors_approx,
                                       neighbors_exact).shape[0]
-        ratio = intersection/float(n_neighbors)
-        accuracies_c[i] = accuracies_c[i] + ratio
+        ratio = intersection / float(n_neighbors)
+        accuracies_c[i] += ratio
 
-    accuracies_c[i] = accuracies_c[i]/float(n_iter)
+    accuracies_c[i] = accuracies_c[i] / float(n_iter)
 
 # Set `n_estimators` values
 n_estimators_values = np.linspace(1, 30, 5).astype(np.int)
@@ -83,7 +83,7 @@ accuracies_trees = np.zeros(n_estimators_values.shape[0], dtype=float)
 for i, n_estimators in enumerate(n_estimators_values):
     lshf = LSHForest(n_candidates=500, n_estimators=n_estimators,
                      n_neighbors=n_neighbors)
-    nbrs = NearestNeighbors(n_neighbors=n_neighbors)
+    nbrs = NearestNeighbors(n_neighbors=n_neighbors, algorithm='brute')
 
     lshf.fit(X)
     nbrs.fit(X)
@@ -94,10 +94,10 @@ for i, n_estimators in enumerate(n_estimators_values):
 
         intersection = np.intersect1d(neighbors_approx,
                                       neighbors_exact).shape[0]
-        ratio = intersection/float(n_neighbors)
-        accuracies_trees[i] = accuracies_trees[i] + ratio
+        ratio = intersection / float(n_neighbors)
+        accuracies_trees[i] += ratio
 
-    accuracies_trees[i] = accuracies_trees[i]/float(n_iter)
+    accuracies_trees[i] = accuracies_trees[i] / float(n_iter)
 
 ###############################################################################
 # Plot the accuracy variation with `n_estimators`
@@ -143,7 +143,7 @@ for n_samples in n_samples_values:
         T = time.time() - t0
         average_time = average_time + T
 
-    average_time = average_time/float(n_iter)
+    average_time = average_time / float(n_iter)
     average_times.append(average_time)
 
 # Plot average query time against n_samples
