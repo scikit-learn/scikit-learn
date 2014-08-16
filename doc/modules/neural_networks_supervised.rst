@@ -148,8 +148,8 @@ See the examples below and the doc string of
 
 .. topic:: Examples:
 
- * :ref:`example_plot_mlp_alpha.py`
- * :ref:`example_plot_mlp_nonlinear.py`
+ * :ref:`example_neural_networks_plot_mlp_alpha.py`
+ * :ref:`example_neural_networks_plot_mlp_nonlinear.py`
 
 
 Regression
@@ -162,6 +162,34 @@ the loss function, and the output is a set of continuous values.
 
 :class:`MultilayerPerceptronRegressor` also supports multi-output regression, in 
 which a sample can have more than one target.
+
+
+Pre-training parameters
+=======================
+
+Prior to running backpropagation, an unsupervised learner can provide the MLP 
+with initial weights that might be better than randomized weights. The parameters 
+optimized by the unsupervised learner - after training on the dataset - can be 
+assigned to the MLP weight parameters as starting points.
+
+The motivation is that these initial weights are meant to allow backpropagation
+to converge in a better local optima than otherwise.
+
+Figure 2 illustrates the pre-training scheme.
+
+.. figure:: ../images/pretraining_mlp_scheme.png
+   :align: center
+   :scale: 60%
+
+   **Figure 2 : The pre-training scheme.**
+
+
+See the example below for a full demonstration of using pre-training 
+with multi-layer perceptron.
+
+.. topic:: Examples:
+
+ * :ref:`example_neural_networks_mlp_with_pretraining.py`
 
 
 Algorithms
@@ -326,4 +354,8 @@ Tips on Practical Use
     * `"Efficient BackProp" <yann.lecun.com/exdb/publis/pdf/lecun-98b.pdf>`_
       Y. LeCun, L. Bottou, G. Orr, K. Müller - In Neural Networks: Tricks
       of the Trade 1998.
+
+    * Hinton, Geoffrey, Simon Osindero, and Yee-Whye Teh. "A fast learning
+      algorithm for deep belief nets." Neural computation 18.7
+      (2006): 1527-1554.
          

@@ -617,6 +617,10 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
     Glorot, Xavier, and Yoshua Bengio. "Understanding the difficulty of
         training deep feedforward neural networks." International Conference
         on Artificial Intelligence and Statistics. 2010.
+
+    Hinton, Geoffrey, Simon Osindero, and Yee-Whye Teh. "A fast learning
+        algorithm for deep belief nets." Neural computation 18.7
+        (2006): 1527-1554.
     """
     def __init__(self, n_hidden=[100], activation="tanh",
                  algorithm='l-bfgs', alpha=0.00001,
@@ -874,6 +878,10 @@ class MultilayerPerceptronRegressor(BaseMultilayerPerceptron, RegressorMixin):
     Glorot, Xavier, and Yoshua Bengio. "Understanding the difficulty of
         training deep feedforward neural networks." International Conference
         on Artificial Intelligence and Statistics. 2010.
+
+    Hinton, Geoffrey, Simon Osindero, and Yee-Whye Teh. "A fast learning
+        algorithm for deep belief nets." Neural computation 18.7
+        (2006): 1527-1554.
     """
     def __init__(self, n_hidden=[100], activation="tanh",
                  algorithm='l-bfgs', alpha=0.00001,
