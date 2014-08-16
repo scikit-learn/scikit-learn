@@ -510,3 +510,121 @@ the model from 0.81 to 0.82.
 
   * :ref:`example_neighbors_plot_nearest_centroid.py`: an example of
     classification using nearest centroid with different shrink thresholds.
+
+Approximate Nearest Neighbors
+=============================
+
+Even though there are several efficient exact nearest neighbor search
+algorithms known for the case when the dimension `d` is low (eg: up to 50 or 60
+), they tend to suffer from either space or query time that is exponential in
+`d`. For large enough `d`, in practice they often provide only a little
+improvement over linear time algorithm that compares query point to each point
+from the database which is the brute force algorithm discussed in the Nearest
+Neighbor Algorithms. This phenomena is often called “The Curse of
+Dimensionality”.
+
+Approximate nearest neighbor search is a method proposed for overcoming the
+bottleneck of running time of queries. In certain applications which involve
+high dimensional data, it may be acceptable to retrieve a “good guess” for
+nearest neighbors. In such cases, an algorithm which does not guarantee to
+return the actual nearest neighbors can be used, in return for improved speed.
+Algorithms that support approximate nearest neighbor search include locality
+sensitive hashing (LSH), best bin fit and balanced box-decomposition tree based
+search.
+
+Locality sensitive hashing algorithm and its variants have been successfully
+applied to many computational problems in many areas. The key idea of LSH is to
+hash the data points using several hash functions to ensure that for each
+function, the probability of collision is much higher for the objects that are
+close to each other than those that are far apart. Following are the
+requirements for a hash function family to be locality sensitive.
+
+A family :math:`H` of functions from a domain :math:`S` to a range :math:`U`
+is called :math:`(r, e , p1 , p2 )`-sensitive, with :math:`r, e > 0`,
+:math:`p_1 > p_2 > 0`, if for any :math:`p, q ∈ S`, the following conditions
+hold (:math:`D` is the distance function):
+
+* If :math:`D(p,q) <= r` then :math:`P_H[h(p) = h(q)] >= p_1`,
+* If :math:`D(p,q) > r(1 + e)` then :math:`P_H[h(p) = h(q)] <= p_2`.
+
+The definition states that “nearby” points within a distance :math:`r` of
+each other are likely to collide (with probability :math:`p_1`), while 
+“distant” points more than :math:`r(1 + e)` apart have only a smaller
+probability (:math:`p_2`) of colliding. Assuming that there is some family
+of LSH functions :math:`H` available, LSH index is built as follows:
+
+1. Choose :math:`k` functions :math:`h_1, h_2 , . . . h_k` uniformly at
+random (with replacement) from :math:`H`. For any :math:`p ∈ S`, place
+:math:`p` in the bucket with label
+:math:`g(p) = (h_1(p), h_2(p), . . . h_k(p))`. Observe that if
+each :math:`h_i` outputs one “digit”, each bucket has a k-digit label.
+
+2. Independently perform step 1 :math:`l` times to construct :math:`l`
+separate estimators, with hash functions :math:`g_1, g_2 , . . . g_l`.
+
+In step 1, if two “distant” points had a probability :math:`p_2` of
+collision with one hash function, their collision probability drops by
+just :math:`k`th power of :math:`p_2` with the concatenation, which becomes
+negligibly small for large :math:`k`. However, a larger value of :math:`k`
+has the side-effect of lowering the chances of even nearby points colliding.
+Therefore, to ensure enough “good” collisions occur, step 2 constructs
+multiple estimators.
+
+.. topic:: References:
+
+   * `"Near-Optimal Hashing Algorithms for Approximate Nearest Neighbor in
+     High Dimensions"
+     <http://web.mit.edu/andoni/www/papers/cSquared.pdf>`_,
+     Alexandr, A., Indyk, P., Foundations of Computer Science, 2006. FOCS
+     '06. 47th Annual IEEE Symposium
+
+Locality Sensitive Hashing Forest
+---------------------------------
+
+scikit-learn implements Locality sensitive hashing forest (LSH Forest) which
+is one of the most promising variants of LSH. Logically, a tree in the LSH
+forest is a prefix tree, with each leaf corresponding to a point in the data
+base. This data structure simply consists of :math:`l` such LSH trees, each
+constructed with an independently drawn random sequence of hash functions from
+:math:`H`. This collection of :math:`l` trees is the LSH Forest. In our
+implementation, the length of the sequence of hash functions is kept fixed at
+32. Moreover, a prefix tree is implemented using sorted arrays and binary 
+search.
+
+.. topic:: References:
+
+   * `“LSH Forest: Self-Tuning Indexes for Similarity Search”
+     <http://www2005.org/docs/p651.pdf>`_,
+     Bawa, M., Condie, T., Ganesan, P., WWW '05 Proceedings of the 14th
+     international conference on World Wide Web  Pages 651-660
+
+Nearest Neighbor Queries of LSH Forest
+--------------------------------------
+
+A query for the :math:`m` nearest neighbors of a point :math:`q` is answered by
+traversing the LSH trees in two phases. In the first top-down phase, each LSH
+Tree is descended to find the leaf having the largest prefix match(maximum
+depth)  with :math:`q`s label after subject :math:`q` to the same hashing
+functions.  In the second bottom-up phase, :math:`M` points (total candidates)
+from the LSH Forest, moving up from maximum depth towards the root
+synchronously across all LSH trees. :math:`M` is set to :math:`cl` where
+:math:`c` is constant. We call this :math:`c` the number of candidates from a 
+tree. :math:`M >> m`. Finally , similarity of all :math:`M` points to point
+:math:`q` are calculated and top :math:`m` points are returned as the nearest
+neighbors of :math:`q`. Since much of time is spent calculating the distances
+to candidates, the speedup compared to brute force search is approximately
+:math:`n/M` where :math:`n` is the number of points in database.
+
+The query time depends mainly on the parameters :math:`l` and :math:`c`
+(``n_estimators`` and ``n_candidates`` in our implementation). The behaviour of
+query time at the variation of these parameters are as follows.
+
+.. figure:: ../auto_examples/neighbors/images/plot_approximate_nearest_neighbors_001.png
+   :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors.html
+   :align: center
+   :scale: 75
+
+.. topic:: Examples:
+
+  * :ref:`example_neighbors_plot_approximate_nearest_neighbors.py`: an example of
+    approximate nearest neighbor search using LSH Forest.
