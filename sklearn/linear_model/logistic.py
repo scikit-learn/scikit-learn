@@ -228,7 +228,7 @@ def _logistic_loss_grad_hess(w, X, y, alpha, sample_weight=None):
 
 
 def _multinomial_loss_grad(w, X, Y, alpha, sample_weight):
-    """Computes multinomial loss and its gradient.
+    """Computes the multinomial loss and its gradient.
 
     Parameters
     ----------
@@ -469,12 +469,21 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         # it must work both giving the bias term and not
         if multi_class == 'ovr':
             if not coef.size in (n_features, w0.size):
-                raise ValueError('Initialization coef is not of correct shape')
+                raise ValueError(
+                    'Initialization coef is of shape %d, expected shape '
+                    '%d or %d' % (n_features, w0.size)
+                    )
             w0[:coef.size] = coef
         else:
             if coef.shape[0] != classes.size or coef.shape[1] not in (
                 n_features, n_features + 1):
-                raise ValueError('Initialization coef is not of correct shape')
+                raise ValueError(
+                    'Initialization coef is of shape (%d, %d), expected '
+                    'shape (%d, %d) or (%d, %d)' % (
+                        coef.shape[0], coef.shape[1], classes.size,
+                        n_features, classes.size, n_features + 1
+                        )
+                    )
             w0[:, :coef.shape[1]] = coef
 
     # fmin_l_bfgs_b accepts only ravelled parameters.
@@ -648,9 +657,9 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
 
     log_reg._enc = LabelEncoder()
     if multi_class == 'ovr':
-        log_reg._enc.fit_transform([-1, 1])
+        log_reg._enc.fit([-1, 1])
     else:
-        log_reg._enc.fit_transform(np.unique(y_train))
+        log_reg._enc.fit(np.unique(y_train))
 
 
     if pos_class is not None:
@@ -1140,12 +1149,12 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             multi_coefs_paths, Cs, multi_scores = zip(*fold_coefs_)
             multi_coefs_paths = np.asarray(multi_coefs_paths)
             multi_scores = np.asarray(multi_scores)
+
             # This is just to maintain API similarity between the ovr and
             # multinomial option.
             # Coefs_paths in now n_folds X len(Cs) X n_classes X n_features
             # we need it to be n_classes X len(Cs) X n_folds X n_features
             # to be similar to "ovr".
-
             coefs_paths = np.rollaxis(multi_coefs_paths, 2, 0)
 
             # Multinomial has a true score across all labels. Hence the

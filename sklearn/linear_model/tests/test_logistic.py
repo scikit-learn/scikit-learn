@@ -81,6 +81,9 @@ def test_predict_iris():
 
     target = iris.target_names[iris.target]
 
+    # Test that both multinomial and OvR solvers handle
+    # multiclass data correctly and give good accuracy
+    # score (>0.95) for the training data.
     for clf in [LogisticRegression(C=len(iris.data)),
                 LogisticRegression(C=len(iris.data), solver='lbfgs',
                                    multi_class='multinomial')]:

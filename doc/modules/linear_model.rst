@@ -688,11 +688,12 @@ cannot learn a true multinomial (multiclass) model;
 instead, the optimization problem is decomposed in a "one-vs-rest" fashion
 so separate binary classifiers are trained for all classes.
 This happens under the hood, so :class:`LogisticRegression` instances
-behave as multiclass classifiers.
+with the solver set to "liblinear" behave as multiclass classifiers.
 
 Setting `multi_class` to "multinomial" with the "lbfgs" solver
+in :class:`LogisticRegression` and :class:`LogisticRegressionCV`
 learns a true multinomial logistic regression model,
-which means that its probability estimates should be better-calibrated
+which means that its probability estimates should be better calibrated
 than the default "one-vs-rest" setting.
 L-BFGS cannot optimize L1-penalized models, though,
 so the "multinomial" setting does not learn sparse models.
