@@ -80,7 +80,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Parameters
         ----------
-        with_output_activation : boolean
+        with_output_activation : bool, default True
             If True, the output passes through the output activation
             function, which is either the softmax function or the
             logistic function
@@ -569,10 +569,12 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
     verbose : bool, optional, default False
         Whether to print progress messages to stdout.
 
-    warm_start : bool, optional, default False
+    warm_start : bool or list, optional, default False
         When set to True, reuse the solution of the previous
         call to fit as initialization, otherwise, just erase the
-        previous solution.
+        previous solution. If a list is given, the ith index
+        represents the unsupervised learner that pre-trains
+        the weights between layer i-1 and layer i.
 
     Attributes
     ----------
@@ -836,10 +838,12 @@ class MultilayerPerceptronRegressor(BaseMultilayerPerceptron, RegressorMixin):
     verbose : bool, optional, default False
         Whether to print progress messages to stdout.
 
-    warm_start : bool, optional, default False
+    warm_start : bool or list, optional, default False
         When set to True, reuse the solution of the previous
         call to fit as initialization, otherwise, just erase the
-        previous solution.
+        previous solution. If a list is given, the ith index
+        represents the unsupervised learner that pre-trains
+        the weights between layer i-1 and layer i.
 
     Attributes
     ----------
