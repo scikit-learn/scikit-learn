@@ -79,7 +79,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Parameters
         ----------
-        with_output_activation : boolean
+        with_output_activation : bool, default True
             If True, the output passes through the output activation
             function, which is either the softmax function or the
             logistic function
