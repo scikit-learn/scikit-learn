@@ -42,10 +42,10 @@ def test_neighbors_accuracy_with_n_candidates():
             ranks = np.argsort(distances)[0, :n_points]
 
             intersection = np.intersect1d(ranks, neighbors).shape[0]
-            ratio = intersection/float(n_points)
+            ratio = intersection / float(n_points)
             accuracies[i] = accuracies[i] + ratio
 
-        accuracies[i] = accuracies[i]/float(n_iter)
+        accuracies[i] = accuracies[i] / float(n_iter)
     # Sorted accuracies should be equal to original accuracies
     assert_true(all(np.diff(accuracies) >= 0),
                 msg="Accuracies are not non-decreasing.")
@@ -73,10 +73,10 @@ def test_neighbors_accuracy_with_n_estimators():
             ranks = np.argsort(distances)[0, :n_points]
 
             intersection = np.intersect1d(ranks, neighbors).shape[0]
-            ratio = intersection/float(n_points)
+            ratio = intersection / float(n_points)
             accuracies[i] = accuracies[i] + ratio
 
-        accuracies[i] = accuracies[i]/float(n_iter)
+        accuracies[i] = accuracies[i] / float(n_iter)
     # Sorted accuracies should be equal to original accuracies
     assert_true(all(np.diff(accuracies) >= 0),
                 msg="Accuracies are not non-decreasing.")
@@ -256,7 +256,7 @@ def test_partial_fit():
 
     # Insert wrong dimension
     assert_raises(ValueError, lshf.partial_fit,
-                  np.random.randn(n_samples_partial_fit, n_features-1))
+                  np.random.randn(n_samples_partial_fit, n_features - 1))
 
     lshf.partial_fit(X_partial_fit)
 
