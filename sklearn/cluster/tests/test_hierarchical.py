@@ -43,10 +43,7 @@ def test_linkage_misc():
     FeatureAgglomeration().fit(X)
 
     # Deprecation of Ward class
-    clean_warning_registry()
-    with warnings.catch_warnings(record=True) as warning_list:
-        warnings.simplefilter("always", DeprecationWarning)
-        Ward().fit(X)
+    warning_list = assert_warns(DeprecationWarning, Ward.fit, X)
     assert_equal(len(warning_list), 1)
 
     # test hiearchical clustering on a precomputed distances matrix
