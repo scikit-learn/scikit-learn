@@ -63,7 +63,8 @@ def l1_min_c(X, y, loss='l2', fit_intercept=True, intercept_scaling=1.0):
         den = max(den, abs(np.dot(Y, bias)).max())
 
     if den == 0.0:
-        raise ValueError('Ill-posed l1_min_c calculation')
+        raise ValueError('Ill-posed l1_min_c calculation: l1 will always '
+                         'select zero coefficients for this data')
     if loss == 'l2':
         return 0.5 / den
     else:  # loss == 'log':
