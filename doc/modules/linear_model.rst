@@ -673,28 +673,25 @@ sparse predicting weights.
 
 Several estimators are available for logistic regression.
 
-:class:`LogisticRegression` uses a coordinate descent (CD) algorithm based on
-Liblinear.
-For L1 penalization :func:`sklearn.svm.l1_min_c` allows to calculate
-the lower bound for C in order to get a non "null" (all feature weights to
-zero) model.
+:class:`LogisticRegression` has an option of using three solvers,
+"liblinear", "lbfgs" and "newton-cg".
 
-The implementation of Logistic Regression relies on the excellent
+The solver "liblinear" uses a coordinate descent (CD) algorithm based on
+Liblinear. For L1 penalization :func:`sklearn.svm.l1_min_c` allows to
+calculate the lower bound for C in order to get a non "null" (all feature weights to
+zero) model. This relies on the excellent
 `LIBLINEAR library <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_,
-which is shipped with scikit-learn.
-
-However, the CD algorithm implemented in liblinear
-cannot learn a true multinomial (multiclass) model;
+which is shipped with scikit-learn. However, the CD algorithm implemented in
+liblinear cannot learn a true multinomial (multiclass) model;
 instead, the optimization problem is decomposed in a "one-vs-rest" fashion
 so separate binary classifiers are trained for all classes.
 This happens under the hood, so :class:`LogisticRegression` instances
-with the solver set to "liblinear" behave as multiclass classifiers.
+using this solver behave as multiclass classifiers.
 
 Setting `multi_class` to "multinomial" with the "lbfgs" solver
-in :class:`LogisticRegression` and :class:`LogisticRegressionCV`
-learns a true multinomial logistic regression model,
-which means that its probability estimates should be better calibrated
-than the default "one-vs-rest" setting.
+in :class:`LogisticRegression` learns a true multinomial logistic
+regression model, which means that its probability estimates should
+be better calibrated than the default "one-vs-rest" setting.
 L-BFGS cannot optimize L1-penalized models, though,
 so the "multinomial" setting does not learn sparse models.
 
@@ -713,8 +710,10 @@ so the "multinomial" setting does not learn sparse models.
 :class:`LogisticRegressionCV` implements Logistic Regression with
 builtin cross-validation to find out the optimal C parameter. In
 general the "newton-cg" and "lbfgs" solvers are found to be faster
-due to warm-starting. For the multiclass case, One-vs-All is used
-and an optimal C is obtained for each class.
+due to warm-starting. For the multiclass case, if `multi_class`
+option is set to "ovr", an optimal C is obtained for each class and if
+the `multi_class` option is set to "multinomial", an optimal C is
+obtained that minimizes the cross-entropy loss.
 
 
 Stochastic Gradient Descent - SGD
