@@ -19,7 +19,7 @@ from ..feature_selection.from_model import _LearntSelectorMixin
 from ..preprocessing import LabelEncoder, LabelBinarizer
 from ..svm.base import BaseLibLinear
 from ..utils import (check_array, check_consistent_length,
-                     compute_class_weight, check_X_y)
+                     compute_class_weight)
 from ..utils.extmath import (logsumexp, log_logistic, safe_sparse_dot,
                              squared_norm)
 from ..utils.optimize import newton_cg
@@ -260,7 +260,7 @@ def _multinomial_loss_grad(w, X, Y, alpha, sample_weight):
     _, n_classes = Y.shape
     _, n_features = X.shape
 
-    fit_intercept = (w.size == n_classes * (n_features +  1))
+    fit_intercept = (w.size == n_classes * (n_features + 1))
     w = w.reshape(Y.shape[1], -1)
 
     sample_weight = sample_weight[:, np.newaxis]
@@ -475,8 +475,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                     )
             w0[:coef.size] = coef
         else:
-            if coef.shape[0] != classes.size or coef.shape[1] not in (
-                n_features, n_features + 1):
+            if (coef.shape[0] != classes.size or
+                    coef.shape[1] not in (n_features, n_features + 1)):
                 raise ValueError(
                     'Initialization coef is of shape (%d, %d), expected '
                     'shape (%d, %d) or (%d, %d)' % (
@@ -660,7 +660,6 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         log_reg._enc.fit([-1, 1])
     else:
         log_reg._enc.fit(np.unique(y_train))
-
 
     if pos_class is not None:
         mask = (y_test == pos_class)
@@ -1076,7 +1075,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         y = check_array(y, ensure_2d=False)
 
         if self.multi_class not in ['ovr', 'multinomial']:
-            raise ValueError("multi_class backend should be either 'ovr' or 'multinomial'"
+            raise ValueError("multi_class backend should be either "
+                             "'ovr' or 'multinomial'"
                              " got %s" % self.multi_class)
 
         if y.ndim == 2 and y.shape[1] == 1:
@@ -1116,8 +1116,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         path_func = delayed(_log_reg_scoring_path)
 
-        # For ovr we iterate across all labels and folds, however for multinomial
-        # we iterate only across all folds.
+        # For ovr we iterate across all labels and folds, however for
+        # multinomial we iterate only across all folds.
         if self.multi_class == 'ovr':
             fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                 path_func(X, y, train, test, pos_class=label, Cs=self.Cs,
@@ -1194,7 +1194,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 C_ = self.Cs_[best_index]
                 self.C_.append(C_)
                 if self.multi_class == 'multinomial':
-                    coef_init = np.mean(coefs_paths[:, best_index, :, :], axis=0)
+                    coef_init = np.mean(coefs_paths[:, best_index, :, :],
+                                        axis=0)
                 else:
                     coef_init = np.mean(coefs_paths[:, best_index, :], axis=0)
                 w, _ = logistic_regression_path(

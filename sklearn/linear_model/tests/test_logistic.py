@@ -120,7 +120,7 @@ def test_multinomial_binary():
 
     mlr = LogisticRegression(solver='lbfgs', multi_class='multinomial',
                              fit_intercept=False)
-    clf.fit(iris.data, target)
+    mlr.fit(iris.data, target)
     pred = clf.classes_[np.argmax(clf.predict_log_proba(iris.data), axis=1)]
     assert_greater(np.mean(pred == target), .9)
 
@@ -415,12 +415,13 @@ def test_ovr_multinomial_iris():
     clf_multi.fit(train, target)
     multi_score = clf_multi.score(train, target)
     ovr_score = clf.score(train, target)
+    assert_greater(multi_score, ovr_score)
 
     # Test attributes of LogisticRegressionCV
     assert_equal(clf.coef_.shape, clf_multi.coef_.shape)
     assert_array_equal(clf_multi.classes_, [0, 1, 2])
     coefs_paths = np.asarray(list(clf_multi.coefs_paths_.values()))
-    assert_array_almost_equal(coefs_paths.shape,(3, 3, 10, n_features + 1))
+    assert_array_almost_equal(coefs_paths.shape, (3, 3, 10, n_features + 1))
     assert_equal(clf_multi.Cs_.shape, (10, ))
     scores = np.asarray(list(clf_multi.scores_.values()))
     assert_equal(scores.shape, (3, 3, 10))
@@ -496,8 +497,6 @@ def test_logistic_regression_multinomial():
     n_samples, n_features, n_classes = 50, 20, 3
     X, y = make_classification(n_samples=50, n_features=20, n_informative=10,
                                n_classes=3, random_state=0)
-    # For doing a ovr, we need to mask the labels first. for the t random_state=0)
-
     clf_int = LogisticRegression(solver='lbfgs', multi_class='multinomial')
     clf_int.fit(X, y)
     assert_array_equal(clf_int.coef_.shape, (n_classes, n_features))
