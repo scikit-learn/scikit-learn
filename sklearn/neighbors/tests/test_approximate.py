@@ -125,6 +125,9 @@ def test_kneighbors():
     query = rng.randn(n_features)
     lshf.kneighbors(query, n_neighbors=1,
                     return_distance=False)
+    # Test n_neighbors at initialization
+    neighbors = lshf.kneighbors(query, return_distance=False)
+    assert_equal(neighbors.shape[1], 5)
 
 
 def test_radius_neighbors():
