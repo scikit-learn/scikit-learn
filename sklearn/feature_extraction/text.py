@@ -360,9 +360,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         will be used.
 
     stop_words: string {'english'}, list, or None (default)
-        If a string, it is passed to _check_stop_list and the appropriate stop
-        list is returned. 'english' is currently the only supported string
-        value.
+        If 'english', a built-in stop word list for English is used.
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
@@ -547,9 +545,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         will be used.
 
     stop_words : string {'english'}, list, or None (default)
-        If a string, it is passed to _check_stop_list and the appropriate stop
-        list is returned. 'english' is currently the only supported string
-        value.
+        If 'english', a built-in stop word list for English is used.
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
