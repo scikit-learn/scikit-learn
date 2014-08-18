@@ -15,6 +15,7 @@ the lower the better
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Noel Dawe <noel@dawe.me>
+#          Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD 3 clause
 
 from __future__ import division
@@ -23,7 +24,6 @@ import warnings
 import numpy as np
 from scipy.sparse import csr_matrix
 
-from ..preprocessing import LabelBinarizer
 from ..utils import check_consistent_length
 from ..utils import deprecated
 from ..utils import column_or_1d, check_array
@@ -619,3 +619,87 @@ def label_ranking_average_precision_score(y_true, y_score):
         out += np.divide(L, rank, dtype=float).mean()
 
     return out / n_samples
+
+
+def reliability_curve(y_true, y_score, bins=10, normalize=False):
+    """Compute reliability curve
+
+    Reliability curves allow checking if the predicted probabilities of a
+    binary classifier are well calibrated. This function returns two arrays
+    which encode a mapping from predicted probability to empirical probability.
+    For this, the predicted probabilities are partitioned into equally sized
+    bins and the mean predicted probability and the mean empirical probabilties
+    in the bins are computed. For perfectly calibrated predictions, both
+    quantities whould be approximately equal (for sufficiently many test
+    samples).
+
+    Note: this implementation is restricted to binary classification.
+
+    Parameters
+    ----------
+
+    y_true : array, shape = [n_samples]
+        True binary labels (0 or 1).
+
+    y_score : array, shape = [n_samples]
+        Target scores, can either be probability estimates of the positive
+        class or confidence values. If normalize is False, y_score must be in
+        the interval [0, 1]
+
+    bins : int, optional, default=10
+        The number of bins into which the y_scores are partitioned.
+        Note: n_samples should be considerably larger than bins such that
+              there is sufficient data in each bin to get a reliable estimate
+              of the reliability
+
+    normalize : bool, optional, default=False
+        Whether y_score needs to be normalized into the bin [0, 1]. If True,
+        the smallest value in y_score is mapped onto 0 and the largest one
+        onto 1.
+
+    Returns
+    -------
+    y_score_bin_mean : array, shape = [bins]
+        The mean predicted y_score in the respective bins.
+
+    empirical_prob_pos : array, shape = [bins]
+        The empirical probability (frequency) of the positive class (+1) in the
+        respective bins.
+
+    References
+    ----------
+    .. [1] `Predicting Good Probabilities with Supervised Learning
+            <http://machinelearning.wustl.edu/mlpapers/paper_files/
+             icml2005_Niculescu-MizilC05.pdf>`_
+
+    """
+    check_consistent_length(y_true, y_score)
+    y_true = check_array(y_true, ensure_2d=False)
+    y_score = check_array(y_score, ensure_2d=False)
+
+    if y_true.shape != y_score.shape:
+        raise ValueError("y_true and y_score have different shape")
+
+    if normalize:  # Normalize scores into bin [0, 1]
+        y_score = (y_score - y_score.min()) / (y_score.max() - y_score.min())
+    elif y_score.min() < 0 or y_score.max() > 1:
+        raise ValueError("y_score has values outside [0, 1] and normalize is "
+                         "set to False.")
+
+    bin_width = 1.0 / bins
+    bin_centers = np.linspace(0, 1.0 - bin_width, bins) + bin_width / 2
+
+    y_score_bin_mean = np.empty(bins)
+    empirical_prob_pos = np.empty(bins)
+    for i, threshold in enumerate(bin_centers):
+        # determine all samples where y_score falls into the i-th bin
+        bin_idx = np.logical_and(threshold - bin_width / 2 < y_score,
+                                 y_score <= threshold + bin_width / 2)
+        # Store mean y_score and mean empirical probability of positive class
+        if np.any(bin_idx):
+            y_score_bin_mean[i] = y_score[bin_idx].mean()
+            empirical_prob_pos[i] = y_true[bin_idx].mean()
+        else:
+            y_score_bin_mean[i] = np.nan
+            empirical_prob_pos[i] = np.nan
+    return y_score_bin_mean, empirical_prob_pos
