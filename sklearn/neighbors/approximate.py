@@ -364,25 +364,17 @@ class LSHForest(BaseEstimator):
             n_neighbors = self.n_neighbors
 
         X = check_array(X)
-        x_dim = X.ndim
 
-        if x_dim == 1:
-            neighbors, distances = self._query(X, n_neighbors)
-            if return_distance:
-                return np.array([distances]), np.array([neighbors])
-            else:
-                return np.array([neighbors])
+        neighbors, distances = [], []
+        for i in range(X.shape[0]):
+            neighs, dists = self._query(X[i], n_neighbors)
+            neighbors.append(neighs)
+            distances.append(dists)
+
+        if return_distance:
+            return np.array(distances), np.array(neighbors)
         else:
-            neighbors, distances = [], []
-            for i in range(X.shape[0]):
-                neighs, dists = self._query(X[i], n_neighbors)
-                neighbors.append(neighs)
-                distances.append(dists)
-
-            if return_distance:
-                return np.array(distances), np.array(neighbors)
-            else:
-                return np.array(neighbors)
+            return np.array(neighbors)
 
     def radius_neighbors(self, X, radius=None, return_distance=True):
         """
@@ -408,27 +400,18 @@ class LSHForest(BaseEstimator):
             radius = self.radius
 
         X = check_array(X)
-        x_dim = X.ndim
 
-        if x_dim == 1:
-            neighbors, distances = self._query(X, radius=radius,
-                                               is_radius=True)
-            if return_distance:
-                return np.array([distances]), np.array([neighbors])
-            else:
-                return np.array([neighbors])
+        neighbors, distances = [], []
+        for i in range(X.shape[0]):
+            neighs, dists = self._query(X[i], radius=radius,
+                                        is_radius=True)
+            neighbors.append(neighs)
+            distances.append(dists)
+
+        if return_distance:
+            return np.array(distances), np.array(neighbors)
         else:
-            neighbors, distances = [], []
-            for i in range(X.shape[0]):
-                neighs, dists = self._query(X[i], radius=radius,
-                                            is_radius=True)
-                neighbors.append(neighs)
-                distances.append(dists)
-
-            if return_distance:
-                return np.array(distances), np.array(neighbors)
-            else:
-                return np.array(neighbors)
+            return np.array(neighbors)
 
     def partial_fit(self, X):
         """
