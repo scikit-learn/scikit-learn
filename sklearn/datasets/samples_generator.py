@@ -269,11 +269,15 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
         The number of classes of the classification problem.
 
     n_labels : int, optional (default=2)
-        The average number of labels per instance. Number of labels follows
-        a Poisson distribution that never takes the value 0.
+        The average number of labels per instance. More precisely, the number
+        of labels per sample is drawn from a Poisson distribution with
+        ``n_labels`` as its expected value, but samples are bounded (using
+        rejection sampling) by ``n_classes``, and must be nonzero if
+        ``allow_unlabeled`` is False.
 
     length : int, optional (default=50)
-        Sum of the features (number of words if documents).
+        The sum of the features (number of words if documents) is drawn from
+        a Poisson distribution with this expected value.
 
     allow_unlabeled : bool, optional (default=True)
         If ``True``, some instances might not belong to any class.
