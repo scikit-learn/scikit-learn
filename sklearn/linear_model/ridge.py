@@ -990,28 +990,25 @@ class _RidgeGCV(LinearModel):
                                score_overrides_loss=True)
         error = scorer is None
 
-        if gcv_mode in ['eigen', 'svd']:
-            alphas = np.atleast_2d(self.alphas.T).T
-            mode = 'looe' if error else 'loov'
-            y_is_raveled = y.ndim == 1
-            y = np.atleast_2d(y.T).T
-            if gcv_mode == 'eigen':
-                out, C = _kernel_ridge_path_eigen(
-                    X, y, alphas, sample_weight=sample_weight, mode=mode)
-            else:
-                out, C = _ridge_gcv_path_svd(
-                    X, y, alphas, sample_weight=sample_weight, mode=mode)
-
-            if mode == 'looe':
-                out = out ** 2
-
-            # Since this object wants to choose a global penalty, we need
-            # to reshape this. I wholeheartedly disagree with this.
-            cv_values = out.transpose(1, 2, 0).reshape(-1, alphas.shape[0])
-            if y_is_raveled:
-                C = C[:, :, 0]
+        alphas = np.atleast_2d(self.alphas.T).T
+        mode = 'looe' if error else 'loov'
+        y_is_raveled = y.ndim == 1
+        y = np.atleast_2d(y.T).T
+        if gcv_mode == 'eigen':
+            out, C = _kernel_ridge_path_eigen(
+                X, y, alphas, sample_weight=sample_weight, mode=mode)
         else:
-            raise ValueError("gcv_mode must be in ['eigen', 'svd']")
+            out, C = _ridge_gcv_path_svd(
+                X, y, alphas, sample_weight=sample_weight, mode=mode)
+
+        if mode == 'looe':
+            out = out ** 2
+
+        # Since this object wants to choose a global penalty, we need
+        # to reshape this. I wholeheartedly disagree with this.
+        cv_values = out.transpose(1, 2, 0).reshape(-1, alphas.shape[0])
+        if y_is_raveled:
+            C = C[:, :, 0]
 
         if error:
             best = cv_values.mean(axis=0).argmin()
