@@ -1005,8 +1005,6 @@ class _RidgeGCV(LinearModel):
             out = out ** 2
 
         cv_values = out.transpose(1, 2, 0)
-        if y_is_raveled:
-            C = C[:, :, 0]
 
         if error:
             best = cv_values.mean(axis=0).argmin(axis=1)
@@ -1019,17 +1017,23 @@ class _RidgeGCV(LinearModel):
             identity_estimator.decision_function = lambda y_predict: y_predict
             identity_estimator.predict = lambda y_predict: y_predict
 
+            # XXX
             # This is the wrong application of the scorer: It is given all
             # of y and all cv values, although it should only be given one
             # value at a time, because the CV we are using here is LOO!
-            out = [scorer(identity_estimator, y.ravel(), cv_values[:, i])
-                   for i in range(len(self.alphas))]
+            out = np.array([scorer(identity_estimator, y, cv_values[..., i])
+                   for i in range(len(self.alphas))])
             best = np.argmax(out)
+            best = np.atleast_1d(best)
 
         self.alpha_ = self.alphas[best]
-        self.dual_coef_ = C[best]
-        self.coef_ = safe_sparse_dot(self.dual_coef_.T, X)
+        self.dual_coef_ = C[best, :, np.arange(len(best))].T
 
+        if y_is_raveled:
+            C = C[:, :, 0]
+            self.dual_coef_ = self.dual_coef_.ravel()
+
+        self.coef_ = safe_sparse_dot(self.dual_coef_.T, X)
         self._set_intercept(X_mean, y_mean, X_std)
 
         if self.store_cv_values:
