@@ -9,6 +9,7 @@
 import warnings
 from abc import ABCMeta, abstractmethod
 
+import array
 import numpy as np
 import scipy.sparse as sp
 from scipy.sparse import csr_matrix, issparse
@@ -633,7 +634,7 @@ class SupervisedIntegerMixin(object):
             y = y.tocsc()
             y.eliminate_zeros()
             nnz = np.diff(y.indptr)
-            data = np.array([])
+            data = array.array('i')
             self.classes_ = []
 
             for k in range(y.shape[1]):
@@ -644,7 +645,7 @@ class SupervisedIntegerMixin(object):
                     classes = np.insert(classes, 0, 0)
                     data_k += 1
                 self.classes_.append(classes)
-                data = np.append(data, data_k)
+                data.extend(data_k)
 
             _y = sp.csc_matrix((data, y.indices, y.indptr), shape=y.shape,
                                dtype=int)
