@@ -12,12 +12,15 @@ import numpy as np
 import scipy.sparse as sp
 
 from scipy import stats
-from sklearn.utils.extmath import weighted_mode
+from ..utils.extmath import weighted_mode
 
-from sklearn.neighbors.base import \
-    _check_weights, _get_weights, \
-    NeighborsBase, KNeighborsMixin,\
-    RadiusNeighborsMixin, SupervisedIntegerMixin
+from .base import _check_weights
+from .base import _get_weights
+from .base import NeighborsBase
+from .base import KNeighborsMixin
+from .base import RadiusNeighborsMixin
+from .base import SupervisedIntegerMixin
+
 from ..base import ClassifierMixin
 from ..utils import check_array
 
