@@ -1004,14 +1004,12 @@ class _RidgeGCV(LinearModel):
         if mode == 'looe':
             out = out ** 2
 
-        # Since this object wants to choose a global penalty, we need
-        # to reshape this. I wholeheartedly disagree with this.
-        cv_values = out.transpose(1, 2, 0).reshape(-1, alphas.shape[0])
+        cv_values = out.transpose(1, 2, 0)
         if y_is_raveled:
             C = C[:, :, 0]
 
         if error:
-            best = cv_values.mean(axis=0).argmin()
+            best = cv_values.mean(axis=0).argmin(axis=1)
         else:
             # The scorer want an object that will make the predictions but
             # they are already computed efficiently by _RidgeGCV. This
@@ -1021,6 +1019,9 @@ class _RidgeGCV(LinearModel):
             identity_estimator.decision_function = lambda y_predict: y_predict
             identity_estimator.predict = lambda y_predict: y_predict
 
+            # This is the wrong application of the scorer: It is given all
+            # of y and all cv values, although it should only be given one
+            # value at a time, because the CV we are using here is LOO!
             out = [scorer(identity_estimator, y.ravel(), cv_values[:, i])
                    for i in range(len(self.alphas))]
             best = np.argmax(out)
