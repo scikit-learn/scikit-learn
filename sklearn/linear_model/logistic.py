@@ -372,7 +372,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    multi_class : str, optional default 'ovr'
+    multi_class : str, {'ovr', 'multinomial'}
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
         the loss minimised is the multinomial loss fit across
@@ -455,10 +455,11 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     else:
         lbin = LabelBinarizer()
-        Y = lbin.fit_transform(y)
-        if Y.shape[1] == 1:
-            Y = np.hstack([1 - Y, Y])
-        w0 = np.zeros((Y.shape[1], n_features + int(fit_intercept)), order='F')
+        Y_bin = lbin.fit_transform(y)
+        if Y_bin.shape[1] == 1:
+            Y_bin = np.hstack([1 - Y_bin, Y_bin])
+        w0 = np.zeros((Y_bin.shape[1], n_features + int(fit_intercept)),
+                      order='F')
         mask_classes = classes
 
     if class_weight == "auto":
@@ -495,7 +496,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     for C in Cs:
         if solver == 'lbfgs':
             if multi_class == 'multinomial':
-                target = Y
+                target = Y_bin
                 func = _multinomial_loss_grad
             else:
                 target = y
@@ -627,7 +628,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    multi_class : str, optional default 'ovr'
+    multi_class : str, {'ovr', 'multinomial'}
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
         the loss minimised is the multinomial loss fit across
@@ -658,8 +659,10 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     log_reg._enc = LabelEncoder()
     if multi_class == 'ovr':
         log_reg._enc.fit([-1, 1])
-    else:
+    elif multi_class == 'multinomial':
         log_reg._enc.fit(np.unique(y_train))
+    else:
+        raise ValueError("multi_class should be either multinomial or ovr")
 
     if pos_class is not None:
         mask = (y_test == pos_class)
@@ -772,7 +775,7 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
     tol : float, optional
         Tolerance for stopping criteria.
 
-    multi_class : str, optional default 'ovr'
+    multi_class : str, {'ovr', 'multinomial'}
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
         the loss minimised is the multinomial loss fit across
@@ -958,7 +961,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         Otherwise the coefs, intercepts and C that correspond to the
         best scores across folds are averaged.
 
-    multi_class : str, optional default 'ovr'
+    multi_class : str, {'ovr', 'multinomial'}
         Multiclass option can be either 'ovr' or 'multinomial'. If the option
         chosen is 'ovr', then a binary problem is fit for each label. Else
         the loss minimised is the multinomial loss fit across
