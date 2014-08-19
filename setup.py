@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2007-2009 Cournapeau David <cournape@gmail.com>
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
+# License: 3-clause BSD
 
 descr = """A set of python modules for machine learning and data mining"""
 
