@@ -856,7 +856,7 @@ def test_kneighbors_classifier_sparse_target_multioutput():
     n_output = 3
 
     X = rng.rand(n_samples, n_features)
-    y = rng.randint(0, 3, (n_samples, n_output))
+    y = rng.randint(1, 4, (n_samples, n_output)).astype(float)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     y_train = csc_matrix(y_train)
@@ -883,6 +883,8 @@ def test_kneighbors_classifier_sparse_target_multioutput():
                                                 algorithm=algorithm)
         knn_mo.fit(X_train, y_train)
         y_pred_mo = knn_mo.predict(X_test)
+
+        assert_equal(y_pred_mo.dtype, float)
         assert_array_equal(y_pred_mo.toarray(), y_pred_so)
 
         # Check proba

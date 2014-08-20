@@ -167,25 +167,26 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         else:
 
-            data = array.array('i')
+            data = []
             indices = array.array('i')
             indptr = array.array('i', [0])
 
             for k, classes_k in enumerate(classes_):
                 neigh_lbls_k = _y.getcol(k).toarray().ravel()[neigh_ind]
+                neigh_lbls_k = classes_k[neigh_lbls_k]
 
                 if weights is None:
                     mode, _ = stats.mode(neigh_lbls_k,  axis=1)
                 else:
                     mode, _ = weighted_mode(neigh_lbls_k, weights, axis=1)
 
-                data.extend(mode[mode != 0].astype(_y.dtype))
+                data.extend(mode[mode != 0])
                 indices.extend(np.where(mode != 0)[0])
                 indptr.append(len(indices))
 
             y_pred = sp.csc_matrix((data, indices, indptr),
                                    (n_samples, n_outputs),
-                                   dtype=np.intp)
+                                   dtype=classes_[0].dtype)
 
         return y_pred
 
