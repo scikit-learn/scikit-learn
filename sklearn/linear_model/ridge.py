@@ -34,15 +34,15 @@ def _ridge_path_svd(X_train, Y_train, alphas,
                     X_test=None, sg_val_thresh=1e-15):
 
     U, S, VT = linalg.svd(X_train, full_matrices=False)
-    nnzmax = np.where(S > sg_val_thresh)[0].max() + 1
-    UTY = U.T[:nnzmax].dot(Y_train)
-    s_alpha = S[np.newaxis, :nnzmax, np.newaxis] / (
-        S[np.newaxis, :nnzmax, np.newaxis] ** 2 + alphas[:, np.newaxis])
-    s_alpha_UTY = s_alpha * UTY[np.newaxis]  # possibly inplace
+    nnz_max = np.where(S > sg_val_thresh)[0].max() + 1
+    UTY = U.T[:nnz_max].dot(Y_train)
+    s_alpha = S[np.newaxis, :nnz_max, np.newaxis] / (
+        S[np.newaxis, :nnz_max, np.newaxis] ** 2 + alphas[:, np.newaxis])
+    s_alpha_UTY = s_alpha * UTY[np.newaxis]
     if X_test is not None:
-        dekernelize = X_test.dot(VT[:nnzmax].T)
+        dekernelize = X_test.dot(VT[:nnz_max].T)
     else:
-        dekernelize = VT[:nnzmax].T
+        dekernelize = VT[:nnz_max].T
     output = dekernelize.dot(s_alpha_UTY).transpose(1, 0, 2)
     return output
 
@@ -67,20 +67,20 @@ def _ridge_gcv_path_svd(X_train, Y_train, alphas,
 
     U, S, VT = linalg.svd(X_train, full_matrices=False)
     del VT
-    nnzmax = np.where(S > sg_val_thresh)[0].max() + 1
-    U = U[:, :nnzmax]
-    S = S[:nnzmax]
+    nnz_max = np.where(S > sg_val_thresh)[0].max() + 1
+    U = U[:, :nnz_max]
+    S = S[:nnz_max]
 
-    penalized_inv_S = (1. / (S[np.newaxis, :, np.newaxis] ** 2 +
+    inv_S_and_alpha = (1. / (S[np.newaxis, :, np.newaxis] ** 2 +
                              alphas[:, np.newaxis, :]) -
                        1. / alphas[:, np.newaxis, :])
 
     UTY = U.T.dot(Y_train)
     numerator = (
-        U.dot(penalized_inv_S * UTY[np.newaxis]).transpose(1, 0, 2) +
+        U.dot(inv_S_and_alpha * UTY[np.newaxis]).transpose(1, 0, 2) +
         Y_train[np.newaxis] / alphas[:, np.newaxis, :])
 
-    denominator = ((U ** 2).dot(penalized_inv_S).transpose(1, 0, 2)
+    denominator = ((U ** 2).dot(inv_S_and_alpha).transpose(1, 0, 2)
                    + 1. / alphas[:, np.newaxis, :])
 
     looe = numerator / denominator
@@ -167,9 +167,8 @@ def _precomp_kernel_ridge_path_eigen(gramX_train, Y_train, alphas,
     v_alpha = (eig_val_train[np.newaxis, :, np.newaxis] +
                alphas[:, np.newaxis])
     v_alpha_inv = np.zeros_like(v_alpha)
-    passes_threshold = v_alpha > eig_val_thresh
+    passes_threshold = (v_alpha > eig_val_thresh)
     v_alpha_inv[passes_threshold] = 1. / v_alpha[passes_threshold]
-    # should probably be done inplace
     v_alpha_VTY = v_alpha_inv * VTY[np.newaxis]
 
     if gramX_test is None:
