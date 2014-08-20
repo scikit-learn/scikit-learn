@@ -127,6 +127,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             double alpha, double beta,
                             np.ndarray[DOUBLE, ndim=2] X,
                             np.ndarray[DOUBLE, ndim=1] y,
+                            np.ndarray[np.int32_t, ndim=1] active_features,
                             int max_iter, double tol,
                             object rng, bint random=0, bint positive=0):
     """Cython version of the coordinate descent algorithm
@@ -169,6 +170,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef unsigned int i
     cdef unsigned int n_iter
     cdef unsigned int f_iter
+    cdef unsigned int n_active = active_features.size
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
 
@@ -191,11 +193,11 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
         for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
-            for f_iter in range(n_features):  # Loop over coordinates
+            for f_iter in range(n_active):  # Loop over coordinates
                 if random:
-                    ii = rand_int(n_features, rand_r_state)
+                    ii = active_features[rand_int(n_active, rand_r_state)]
                 else:
-                    ii = f_iter
+                    ii = active_features[f_iter]
 
                 if norm_cols_X[ii] == 0.0:
                     continue
@@ -291,9 +293,11 @@ def sparse_enet_coordinate_descent(double[:] w,
                             double alpha, double beta,
                             double[:] X_data, int[:] X_indices,
                             int[:] X_indptr, double[:] y,
-                            double[:] X_mean, int max_iter,
-                            double tol, object rng, bint random=0,
-                            bint positive=0):
+                            double[:] X_mean,
+                            int[:] active_features,
+                            int max_iter,
+                            double tol, object rng,
+                            bint random=0, bint positive=0):
     """Cython version of the coordinate descent algorithm for Elastic-Net
 
     We minimize:
@@ -337,6 +341,7 @@ def sparse_enet_coordinate_descent(double[:] w,
     cdef unsigned int jj
     cdef unsigned int n_iter
     cdef unsigned int f_iter
+    cdef unsigned int n_active = active_features.size
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
     cdef bint center = False
@@ -373,11 +378,11 @@ def sparse_enet_coordinate_descent(double[:] w,
             w_max = 0.0
             d_w_max = 0.0
 
-            for f_iter in range(n_features):  # Loop over coordinates
+            for f_iter in range(n_active):  # Loop over coordinates
                 if random:
-                    ii = rand_int(n_features, rand_r_state)
+                    ii = active_features[rand_int(n_active, rand_r_state)]
                 else:
-                    ii = f_iter
+                    ii = active_features[f_iter]
 
                 if norm_cols_X[ii] == 0.0:
                     continue
@@ -484,8 +489,10 @@ def sparse_enet_coordinate_descent(double[:] w,
 @cython.cdivision(True)
 def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
                                  double[:, :] Q, double[:] q, double[:] y,
+                                 int[:] active_features,
                                  int max_iter, double tol, object rng,
-                                 bint random=0, bint positive=0):
+                                 bint random=0, bint positive=0
+                                 ):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -520,6 +527,7 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
     cdef unsigned int ii
     cdef unsigned int n_iter
     cdef unsigned int f_iter
+    cdef unsigned n_active = active_features.size
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
 
@@ -537,11 +545,11 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
         for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
-            for f_iter in range(n_features):  # Loop over coordinates
+            for f_iter in range(n_active):  # Loop over coordinates
                 if random:
-                    ii = rand_int(n_features, rand_r_state)
+                    ii = active_features[rand_int(n_active, rand_r_state)]
                 else:
-                    ii = f_iter
+                    ii = active_features[f_iter]
 
                 if Q[ii, ii] == 0.0:
                     continue
@@ -625,7 +633,8 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
 @cython.cdivision(True)
 def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
                                        double l2_reg, double[::1, :] X,
-                                       double[:, :] Y, int max_iter,
+                                       double[:, :] Y, int[:] active_features,
+                                       int max_iter,
                                        double tol, object rng,
                                        bint random=0):
     """Cython version of the coordinate descent algorithm
@@ -667,6 +676,7 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
     cdef unsigned int jj
     cdef unsigned int n_iter
     cdef unsigned int f_iter
+    cdef unsigned n_active = active_features.size
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
 
@@ -698,11 +708,11 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
         for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
-            for f_iter in range(n_features):  # Loop over coordinates
+            for f_iter in range(n_active):  # Loop over coordinates
                 if random:
-                    ii = rand_int(n_features, rand_r_state)
+                    ii = active_features[rand_int(n_active, rand_r_state)]
                 else:
-                    ii = f_iter
+                    ii = active_features[f_iter]
 
                 if norm_cols_X[ii] == 0.0:
                     continue
