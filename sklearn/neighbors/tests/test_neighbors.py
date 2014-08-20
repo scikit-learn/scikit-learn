@@ -853,10 +853,12 @@ def test_kneighbors_classifier_sparse_target_multioutput():
     rng = check_random_state(0)
     n_features = 5
     n_samples = 50
-    n_output = 3
+    n_output = 4
 
     X = rng.rand(n_samples, n_features)
-    y = rng.randint(1, 4, (n_samples, n_output)).astype(float)
+    y_fst = rng.randint(1, 4, (n_samples, n_output/2)).astype(float)
+    y_snd = rng.randint(0, 3, (n_samples, n_output/2)).astype(float)
+    y = np.hstack((y_fst, y_snd))
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     y_train = csc_matrix(y_train)
