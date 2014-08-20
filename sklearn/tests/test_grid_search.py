@@ -15,12 +15,16 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_no_warnings
+from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
 from scipy.stats import distributions
@@ -31,7 +35,8 @@ from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
 from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
-                                 ParameterGrid, ParameterSampler)
+                                 ParameterGrid, ParameterSampler,
+                                 ChangedBehaviorWarning)
 from sklearn.svm import LinearSVC, SVC
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree import DecisionTreeClassifier
@@ -143,13 +148,14 @@ def test_grid_search():
     assert_raises(ValueError, grid_search.fit, X, y)
 
 
+@ignore_warnings
 def test_grid_search_no_score():
     # Test grid-search on classifier that has no score function.
     clf = LinearSVC(random_state=0)
     X, y = make_blobs(random_state=0, centers=2)
     Cs = [.1, 1, 10]
     clf_no_score = LinearSVCNoScore(random_state=0)
-    grid_search = GridSearchCV(clf, {'C': Cs})
+    grid_search = GridSearchCV(clf, {'C': Cs}, scoring='accuracy')
     grid_search.fit(X, y)
 
     grid_search_no_score = GridSearchCV(clf_no_score, {'C': Cs},
@@ -166,6 +172,36 @@ def test_grid_search_no_score():
     grid_search_no_score = GridSearchCV(clf_no_score, {'C': Cs})
     assert_raise_message(TypeError, "no scoring", grid_search_no_score.fit,
                          [[1]])
+
+
+def test_grid_search_score_method():
+    X, y = make_classification(n_samples=100, n_classes=2, flip_y=.2,
+                               random_state=0)
+    clf = LinearSVC(random_state=0)
+    grid = {'C': [.1]}
+
+    search_no_scoring = GridSearchCV(clf, grid, scoring=None).fit(X, y)
+    search_accuracy = GridSearchCV(clf, grid, scoring='accuracy').fit(X, y)
+    search_no_score_method_auc = GridSearchCV(LinearSVCNoScore(), grid,
+                                              scoring='roc_auc').fit(X, y)
+    search_auc = GridSearchCV(clf, grid, scoring='roc_auc').fit(X, y)
+
+    # Check warning only occurs in situation where behavior changed:
+    # estimator requires score method to compete with scoring parameter
+    score_no_scoring = assert_no_warnings(search_no_scoring.score, X, y)
+    score_accuracy = assert_warns(ChangedBehaviorWarning,
+                                  search_accuracy.score, X, y)
+    score_no_score_auc = assert_no_warnings(search_no_score_method_auc.score,
+                                            X, y)
+    score_auc = assert_warns(ChangedBehaviorWarning,
+                             search_auc.score, X, y)
+    # ensure the test is sane
+    assert_true(score_auc < 1.0)
+    assert_true(score_accuracy < 1.0)
+    assert_not_equal(score_auc, score_accuracy)
+
+    assert_almost_equal(score_accuracy, score_no_scoring)
+    assert_almost_equal(score_auc, score_no_score_auc)
 
 
 def test_trivial_grid_scores():
