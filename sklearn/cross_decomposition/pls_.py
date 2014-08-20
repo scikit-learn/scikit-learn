@@ -235,16 +235,14 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         # copy since this will contains the residuals (deflated) matrices
         check_consistent_length(X, Y)
         X = check_array(X, dtype=np.float, copy=self.copy)
-        Y = check_array(Y, dtype=np.float, copy=self.copy)
+        Y = check_array(Y, dtype=np.float, copy=self.copy, ensure_2d=False)
+        if Y.ndim == 1:
+            Y = Y[:, None]
 
         n = X.shape[0]
         p = X.shape[1]
         q = Y.shape[1]
 
-        if n != Y.shape[0]:
-            raise ValueError(
-                'Incompatible shapes: X has %s samples, while Y '
-                'has %s' % (X.shape[0], Y.shape[0]))
         if self.n_components < 1 or self.n_components > p:
             raise ValueError('invalid number of components')
         if self.algorithm not in ("svd", "nipals"):
@@ -452,7 +450,7 @@ class PLSRegression(_PLS):
         Training vectors, where n_samples in the number of samples and
         p is the number of predictors.
 
-    Y : array-like of response, shape = [n_samples, q]
+    Y : array-like of response, shape = [n_samples, q] or [n_samples]
         Training vectors, where n_samples in the number of samples and
         q is the number of response variables.
 
