@@ -52,6 +52,12 @@ Enhancements
      to `Rohit Sivaprasad`_), as well as evaluation metrics (by
      `Joel Nothman`_).
 
+   - Add ``multi_class="multinomial"`` option in
+     :class:`linear_model.LogisticRegression` to implement a Logistic
+     Regression solver that minimizes the cross-entropy or multinomial loss
+     instead of the default One-vs-Rest setting. By `Lars Buitinck`_ and
+     `Manoj Kumar`_.
+
 
 Documentation improvements
 ..........................

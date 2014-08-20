@@ -366,5 +366,6 @@ def test_transformer_n_iter():
         # param is non-trivial.
         external_solver = ['Isomap', 'KernelPCA', 'LocallyLinearEmbedding',
                            'RandomizedLasso', 'LogisticRegressionCV']
+
         if hasattr(estimator, "max_iter") and name not in external_solver:
             yield check_transformer_n_iter, name, estimator
