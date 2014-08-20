@@ -103,12 +103,21 @@ class SafeFunction(object):
 
 
 ###############################################################################
-def delayed(function):
-    """ Decorator used to capture the arguments of a function.
+def delayed(function, check_pickle=True):
+    """Decorator used to capture the arguments of a function.
+
+    Pass `check_pickle=False` when:
+
+    - performing a possibly repeated check is too costly and has been done
+      already once outside of the call to delayed.
+
+    - when used in conjunction `Parallel(backend='threading')`.
+
     """
     # Try to pickle the input function, to catch the problems early when
-    # using with multiprocessing
-    pickle.dumps(function)
+    # using with multiprocessing:
+    if check_pickle:
+        pickle.dumps(function)
 
     def delayed_function(*args, **kwargs):
         return function, args, kwargs
@@ -519,7 +528,7 @@ class Parallel(Logger):
                         # Capture exception to add information on the local
                         # stack in addition to the distant stack
                         this_report = format_outer_frames(context=10,
-                                                        stack_start=1)
+                                                          stack_start=1)
                         report = """Multiprocessing exception:
     %s
     ---------------------------------------------------------------------------
