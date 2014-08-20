@@ -213,7 +213,7 @@ computes the coefficients along the full path of possible values.
 Setting regularization parameter
 --------------------------------
 
-The `alpha` parameter control the degree of sparsity of the coefficients
+The `alpha` parameter controls the degree of sparsity of the coefficients
 estimated.
 
 Using cross-validation
@@ -268,11 +268,11 @@ They also tend to break when the problem is badly conditioned
 
 Elastic Net
 ===========
-:class:`ElasticNet` is a linear model trained with L1 and L2 prior as
-regularizer. This combination allows for learning a sparse model where
+:class:`ElasticNet` is a linear regression model trained with L1 and L2 prior
+as regularizer. This combination allows for learning a sparse model where
 few of the weights are non-zero like :class:`Lasso`, while still maintaining
-the regularization properties of :class:`Ridge`. We control this tradeoff
-using the `l1_ratio` parameter.
+the regularization properties of :class:`Ridge`. We control the convex
+combination of L1 and L2 using the `l1_ratio` parameter.
 
 Elastic-net is useful when there are multiple features which are
 correlated with one another. Lasso is likely to pick one of these
@@ -676,11 +676,14 @@ Stochastic Gradient Descent - SGD
 Stochastic gradient descent is a simple yet very efficient approach
 to fit linear models. It is particularly useful when the number of samples
 (and the number of features) is very large.
-
+The ``partial_fit`` method allows only/out-of-core learning.
 
 The classes :class:`SGDClassifier` and :class:`SGDRegressor` provide
 functionality to fit linear models for classification and regression
 using different (convex) loss functions and different penalties.
+E.g., with ``loss="log"``, :class:`SGDClassifier`
+fits a logistic regression model,
+while with ``loss="hinge"`` it fits a linear support vector machine (SVM).
 
 .. topic:: References
 
@@ -788,3 +791,116 @@ performance.
  * `"Performance Evaluation of RANSAC Family"
    <http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf>`_
    Sunglok Choi, Taemin Kim and Wonpil Yu - BMVC (2009)
+
+
+.. _polynomial_regression:
+
+Polynomial regression: extending linear models with basis functions
+===================================================================
+
+.. currentmodule:: sklearn.preprocessing
+
+One common pattern within machine learning is to use linear models trained
+on nonlinear functions of the data.  This approach maintains the generally
+fast performance of linear methods, while allowing them to fit a much wider
+range of data.
+
+For example, a simple linear regression can be extended by constructing
+**polynomial features** from the coefficients.  In the standard linear
+regression case, you might have a model that looks like this for
+two-dimensional data:
+
+.. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + w_2 x_2
+
+If we want to fit a paraboloid to the data instead of a plane, we can combine
+the features in second-order polynomials, so that the model looks like this:
+
+.. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + w_2 x_2 + w_3 x_1 x_2 + w_4 x_1^2 + w_5 x_2^2
+
+The (sometimes surprising) observation is that this is *still a linear model*:
+to see this, imagine creating a new variable
+
+.. math::  z = [x_1, x_2, x_1 x_2, x_1^2, x_2^2]
+
+With this re-labeling of the data, our problem can be written
+
+.. math::    \hat{y}(w, x) = w_0 + w_1 z_1 + w_2 z_2 + w_3 z_3 + w_4 z_4 + w_5 z_5
+
+We see that the resulting *polynomial regression* is in the same class of
+linear models we'd considered above (i.e. the model is linear in :math:`w`)
+and can be solved by the same techniques.  By considering linear fits within
+a higher-dimensional space built with these basis functions, the model has the
+flexibility to fit a much broader range of data.
+
+Here is an example of applying this idea to one-dimensional data, using
+polynomial features of varying degrees:
+
+.. figure:: ../auto_examples/linear_model/images/plot_polynomial_interpolation_1.png
+   :target: ../auto_examples/linear_model/plot_polynomial_interpolation.html
+   :align: center
+   :scale: 50%
+
+This figure is created using the :class:`PolynomialFeatures` preprocessor.
+This preprocessor transforms an input data matrix into a new data matrix
+of a given degree.  It can be used as follows::
+
+    >>> from sklearn.preprocessing import PolynomialFeatures
+    >>> import numpy as np
+    >>> X = np.arange(6).reshape(3, 2)
+    >>> X
+    array([[0, 1],
+           [2, 3],
+           [4, 5]])
+    >>> poly = PolynomialFeatures(degree=2)
+    >>> poly.fit_transform(X)
+    array([[ 1,  0,  1,  0,  0,  1],
+           [ 1,  2,  3,  4,  6,  9],
+           [ 1,  4,  5, 16, 20, 25]])
+
+The features of ``X`` have been transformed from :math:`[x_1, x_2]` to
+:math:`[1, x_1, x_2, x_1^2, x_1 x_2, x_2^2]`, and can now be used within
+any linear model.
+
+This sort of preprocessing can be streamlined with the
+:ref:`Pipeline <pipeline>` tools. A single object representing a simple
+polynomial regression can be created and used as follows::
+
+    >>> from sklearn.preprocessing import PolynomialFeatures
+    >>> from sklearn.linear_model import LinearRegression
+    >>> from sklearn.pipeline import Pipeline
+    >>> model = Pipeline([('poly', PolynomialFeatures(degree=3)),
+    ...                   ('linear', LinearRegression(fit_intercept=False))])
+    >>> # fit to an order-3 polynomial data
+    >>> x = np.arange(5)
+    >>> y = 3 - 2 * x + x ** 2 - x ** 3
+    >>> model = model.fit(x[:, np.newaxis], y)
+    >>> model.named_steps['linear'].coef_
+    array([ 3., -2.,  1., -1.])
+
+The linear model trained on polynomial features is able to exactly recover
+the input polynomial coefficients.
+
+In some cases it's not necessary to include higher powers of any single feature,
+but only the so-called *interaction features*
+that multiply together at most :math:`d` distinct features.
+These can be gotten from :class:`PolynomialFeatures` with the setting
+``interaction_only=True``.
+
+For example, when dealing with boolean features,
+:math:`x_i^n = x_i` for all :math:`n` and is therefore useless;
+but :math:`x_i x_j` represents the conjunction of two booleans.
+This way, we can solve the XOR problem with a linear classifier::
+
+    >>> from sklearn.linear_model import Perceptron
+    >>> from sklearn.preprocessing import PolynomialFeatures
+    >>> X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
+    >>> y = X[:, 0] ^ X[:, 1]
+    >>> X = PolynomialFeatures(interaction_only=True).fit_transform(X)
+    >>> X
+    array([[1, 0, 0, 0],
+           [1, 0, 1, 0],
+           [1, 1, 0, 0],
+           [1, 1, 1, 1]])
+    >>> clf = Perceptron(fit_intercept=False, n_iter=10).fit(X, y)
+    >>> clf.score(X, y)
+    1.0

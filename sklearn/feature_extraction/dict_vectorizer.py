@@ -52,12 +52,12 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
+    `vocabulary_` : dict
+        A dictionary mapping feature names to feature indices.
+
     `feature_names_` : list
         A list of length n_features containing the feature names (e.g., "f=ham"
         and "f=spam").
-
-    `vocabulary_` : dict
-        A dictionary mapping feature names to feature indices.
 
     Examples
     --------
@@ -233,7 +233,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
                 indptr.append(len(indices))
 
-            if len(indptr) == 0:
+            if len(indptr) == 1:
                 raise ValueError("Sample sequence X is empty.")
 
             if len(indices) > 0:

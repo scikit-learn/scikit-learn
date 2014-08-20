@@ -78,7 +78,6 @@ METRIC_MAPPING = {'euclidean': EuclideanDistance,
                   'canberra': CanberraDistance,
                   'braycurtis': BrayCurtisDistance,
                   'matching': MatchingDistance,
-                  'hamming': HammingDistance,
                   'jaccard': JaccardDistance,
                   'dice': DiceDistance,
                   'kulsinski': KulsinskiDistance,
@@ -126,17 +125,17 @@ cdef class DistanceMetric:
 
     **Metrics intended for real-valued vector spaces:**
 
-    ==============  ====================  ========  ============================
+    ==============  ====================  ========  ===============================
     identifier      class name            args      distance function
-    --------------  --------------------  --------  ----------------------------
-    "euclidean"     EuclideanDistance     -         sqrt(sum((x - y)^2))
-    "manhattan"     ManhattanDistance     -         sum(|x - y|)
-    "chebyshev"     ChebyshevDistance     -         sum(max(|x - y|))
-    "minkowski"     MinkowskiDistance     p         sum(|x - y|^p)^(1/p)
-    "wminkowski"    WMinkowskiDistance    p, w      sum(w * |x - y|^p)^(1/p)
-    "seuclidean"    SEuclideanDistance    V         sqrt(sum((x - y)^2 / V))
-    "mahalanobis"   MahalanobisDistance   V or VI   sqrt((x - y)' V^-1 (x - y))
-    ==============  ====================  ========  ============================
+    --------------  --------------------  --------  -------------------------------
+    "euclidean"     EuclideanDistance     -         ``sqrt(sum((x - y)^2))``
+    "manhattan"     ManhattanDistance     -         ``sum(|x - y|)``
+    "chebyshev"     ChebyshevDistance     -         ``sum(max(|x - y|))``
+    "minkowski"     MinkowskiDistance     p         ``sum(|x - y|^p)^(1/p)``
+    "wminkowski"    WMinkowskiDistance    p, w      ``sum(w * |x - y|^p)^(1/p)``
+    "seuclidean"    SEuclideanDistance    V         ``sqrt(sum((x - y)^2 / V))``
+    "mahalanobis"   MahalanobisDistance   V or VI   ``sqrt((x - y)' V^-1 (x - y))``
+    ==============  ====================  ========  ===============================
 
     **Metrics intended for two-dimensional vector spaces:**
 
@@ -152,13 +151,13 @@ cdef class DistanceMetric:
     for integer-valued vectors, these are also valid metrics in the case of
     real-valued vectors.
 
-    =============  ====================  =====================================
+    =============  ====================  ========================================
     identifier     class name            distance function
-    -------------  --------------------  -------------------------------------
-    "hamming"      HammingDistance       N_unequal(x, y) / N_tot
-    "canberra"     CanberraDistance      sum(|x - y| / (|x| + |y|))
-    "braycurtis"   BrayCurtisDistance    sum(|x - y|) / (sum(|x|) + sum(|y|))
-    =============  ====================  =====================================
+    -------------  --------------------  ----------------------------------------
+    "hamming"      HammingDistance       ``N_unequal(x, y) / N_tot``
+    "canberra"     CanberraDistance      ``sum(|x - y| / (|x| + |y|))``
+    "braycurtis"   BrayCurtisDistance    ``sum(|x - y|) / (sum(|x|) + sum(|y|))``
+    =============  ====================  ========================================
 
     **Metrics intended for boolean-valued vector spaces:**  Any nonzero entry
     is evaluated to "True".  In the listings below, the following

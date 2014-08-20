@@ -15,6 +15,7 @@ import warnings
 from itertools import chain, combinations
 from math import ceil, floor, factorial
 import numbers
+import time
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
@@ -22,10 +23,11 @@ import scipy.sparse as sp
 
 from .base import is_classifier, clone
 from .utils import check_arrays, check_random_state, safe_mask
-from .utils.fixes import unique
-from .externals.joblib import Parallel, delayed
-from .externals.six import string_types, with_metaclass
-from .metrics.scorer import _deprecate_loss_and_score_funcs
+from .utils.validation import _num_samples
+from .externals.joblib import Parallel, delayed, logger
+from .externals.six import with_metaclass
+from .externals.six.moves import zip
+from .metrics.scorer import check_scoring
 
 __all__ = ['Bootstrap',
            'KFold',
@@ -232,7 +234,7 @@ class _BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
     """Base class to validate KFold approaches"""
 
     @abstractmethod
-    def __init__(self, n, n_folds, indices):
+    def __init__(self, n, n_folds, indices, shuffle, random_state):
         super(_BaseKFold, self).__init__(n, indices)
 
         if abs(n_folds - int(n_folds)) >= np.finfo('f').eps:
@@ -243,11 +245,17 @@ class _BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
             raise ValueError(
                 "k-fold cross validation requires at least one"
                 " train / test split by setting n_folds=2 or more,"
-                " got n_folds=%d.".format(n_folds))
+                " got n_folds={0}.".format(n_folds))
         if n_folds > self.n:
             raise ValueError(
                 ("Cannot have number of folds n_folds={0} greater"
                  " than the number of samples: {1}.").format(n_folds, n))
+
+        if not isinstance(shuffle, bool):
+            raise TypeError("shuffle must be True or False;"
+                            " got {0}".format(shuffle))
+        self.shuffle = shuffle
+        self.random_state = random_state
 
 
 class KFold(_BaseKFold):
@@ -270,8 +278,9 @@ class KFold(_BaseKFold):
     shuffle : boolean, optional
         Whether to shuffle the data before splitting into batches.
 
-    random_state : int or RandomState
-            Pseudo number generator state used for random sampling.
+    random_state : None, int or RandomState
+        Pseudo-random number generator state used for random
+        sampling. If None, use default numpy RNG for shuffling
 
     Examples
     --------
@@ -281,8 +290,9 @@ class KFold(_BaseKFold):
     >>> kf = cross_validation.KFold(4, n_folds=2)
     >>> len(kf)
     2
-    >>> print(kf)
-    sklearn.cross_validation.KFold(n=4, n_folds=2)
+    >>> print(kf)  # doctest: +NORMALIZE_WHITESPACE
+    sklearn.cross_validation.KFold(n=4, n_folds=2, shuffle=False,
+                                   random_state=None)
     >>> for train_index, test_index in kf:
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -304,11 +314,11 @@ class KFold(_BaseKFold):
 
     def __init__(self, n, n_folds=3, indices=None, shuffle=False,
                  random_state=None):
-        super(KFold, self).__init__(n, n_folds, indices)
-        random_state = check_random_state(random_state)
+        super(KFold, self).__init__(n, n_folds, indices, shuffle, random_state)
         self.idxs = np.arange(n)
         if shuffle:
-            random_state.shuffle(self.idxs)
+            rng = check_random_state(self.random_state)
+            rng.shuffle(self.idxs)
 
     def _iter_test_indices(self):
         n = self.n
@@ -322,11 +332,13 @@ class KFold(_BaseKFold):
             current = stop
 
     def __repr__(self):
-        return '%s.%s(n=%i, n_folds=%i)' % (
+        return '%s.%s(n=%i, n_folds=%i, shuffle=%s, random_state=%s)' % (
             self.__class__.__module__,
             self.__class__.__name__,
             self.n,
             self.n_folds,
+            self.shuffle,
+            self.random_state,
         )
 
     def __len__(self):
@@ -338,7 +350,7 @@ class StratifiedKFold(_BaseKFold):
 
     Provides train/test indices to split data in train test sets.
 
-    This cross-validation object is a variation of KFold, which
+    This cross-validation object is a variation of KFold that
     returns stratified folds. The folds are made by preserving
     the percentage of samples for each class.
 
@@ -350,6 +362,14 @@ class StratifiedKFold(_BaseKFold):
     n_folds : int, default=3
         Number of folds. Must be at least 2.
 
+    shuffle : boolean, optional
+        Whether to shuffle each stratification of the data before splitting
+        into batches.
+
+    random_state : None, int or RandomState
+        Pseudo-random number generator state used for random
+        sampling. If None, use default numpy RNG for shuffling
+
     Examples
     --------
     >>> from sklearn import cross_validation
@@ -358,8 +378,9 @@ class StratifiedKFold(_BaseKFold):
     >>> skf = cross_validation.StratifiedKFold(y, n_folds=2)
     >>> len(skf)
     2
-    >>> print(skf)
-    sklearn.cross_validation.StratifiedKFold(labels=[0 0 1 1], n_folds=2)
+    >>> print(skf)  # doctest: +NORMALIZE_WHITESPACE
+    sklearn.cross_validation.StratifiedKFold(labels=[0 0 1 1], n_folds=2,
+                                             shuffle=False, random_state=None)
     >>> for train_index, test_index in skf:
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -371,13 +392,16 @@ class StratifiedKFold(_BaseKFold):
     -----
     All the folds have size trunc(n_samples / n_folds), the last one has the
     complementary.
+
     """
 
-    def __init__(self, y, n_folds=3, indices=None):
-        super(StratifiedKFold, self).__init__(len(y), n_folds, indices)
+    def __init__(self, y, n_folds=3, indices=None, shuffle=False,
+                 random_state=None):
+        super(StratifiedKFold, self).__init__(
+            len(y), n_folds, indices, shuffle, random_state)
         y = np.asarray(y)
         n_samples = y.shape[0]
-        unique_labels, y_inversed = unique(y, return_inverse=True)
+        unique_labels, y_inversed = np.unique(y, return_inverse=True)
         label_counts = np.bincount(y_inversed)
         min_labels = np.min(label_counts)
         if self.n_folds > min_labels:
@@ -387,11 +411,18 @@ class StratifiedKFold(_BaseKFold):
                           " be less than n_folds=%d."
                           % (min_labels, self.n_folds)), Warning)
 
+        # don't want to use the same seed in each label's shuffle
+        if self.shuffle:
+            rng = check_random_state(self.random_state)
+        else:
+            rng = self.random_state
+
         # pre-assign each sample to a test fold index using individual KFold
         # splitting strategies for each label so as to respect the
         # balance of labels
-        per_label_cvs = [KFold(max(c, self.n_folds), self.n_folds)
-                         for c in label_counts]
+        per_label_cvs = [
+            KFold(max(c, self.n_folds), self.n_folds, shuffle=self.shuffle,
+                  random_state=rng) for c in label_counts]
         test_folds = np.zeros(n_samples, dtype=np.int)
         for test_fold_idx, per_label_splits in enumerate(zip(*per_label_cvs)):
             for label, (_, test_split) in zip(unique_labels, per_label_splits):
@@ -414,11 +445,13 @@ class StratifiedKFold(_BaseKFold):
             yield self.test_folds == i
 
     def __repr__(self):
-        return '%s.%s(labels=%s, n_folds=%i)' % (
+        return '%s.%s(labels=%s, n_folds=%i, shuffle=%s, random_state=%s)' % (
             self.__class__.__module__,
             self.__class__.__name__,
             self.y,
             self.n_folds,
+            self.shuffle,
+            self.random_state,
         )
 
     def __len__(self):
@@ -472,7 +505,7 @@ class LeaveOneLabelOut(_PartitionIterator):
         super(LeaveOneLabelOut, self).__init__(len(labels), indices)
         # We make a copy of labels to avoid side-effects during iteration
         self.labels = np.array(labels, copy=True)
-        self.unique_labels = unique(labels)
+        self.unique_labels = np.unique(labels)
         self.n_unique_labels = len(self.unique_labels)
 
     def _iter_test_masks(self):
@@ -545,7 +578,7 @@ class LeavePLabelOut(_PartitionIterator):
         # We make a copy of labels to avoid side-effects during iteration
         super(LeavePLabelOut, self).__init__(len(labels), indices)
         self.labels = np.array(labels, copy=True)
-        self.unique_labels = unique(labels)
+        self.unique_labels = np.unique(labels)
         self.n_unique_labels = len(self.unique_labels)
         self.p = p
 
@@ -965,7 +998,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             len(y), n_iter, test_size, train_size, indices, random_state,
             n_iterations)
         self.y = np.array(y)
-        self.classes, self.y_indices = unique(y, return_inverse=True)
+        self.classes, self.y_indices = np.unique(y, return_inverse=True)
         n_cls = self.classes.shape[0]
 
         if np.min(np.bincount(self.y_indices)) < 2:
@@ -996,11 +1029,23 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             test = []
 
             for i, cls in enumerate(self.classes):
-                permutation = rng.permutation(n_i[i] + t_i[i])
+                permutation = rng.permutation(cls_count[i])
                 cls_i = np.where((self.y == cls))[0][permutation]
 
                 train.extend(cls_i[:n_i[i]])
                 test.extend(cls_i[n_i[i]:n_i[i] + t_i[i]])
+
+            # Because of rounding issues (as n_train and n_test are not
+            # dividers of the number of elements per class), we may end
+            # up here with less samples in train and test than asked for.
+            if len(train) < self.n_train or len(test) < self.n_test:
+                # We complete by affecting randomly the missing indexes
+                missing_idx = np.where(np.bincount(train + test,
+                                                   minlength=len(self.y)) == 0,
+                                       )[0]
+                missing_idx = rng.permutation(missing_idx)
+                train.extend(missing_idx[:(self.n_train - len(train))])
+                test.extend(missing_idx[-(self.n_test - len(test)):])
 
             train = rng.permutation(train)
             test = rng.permutation(test)
@@ -1022,48 +1067,6 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
 
 ##############################################################################
-
-def _cross_val_score(estimator, X, y, scorer, train, test, verbose,
-                     fit_params):
-    """Inner loop for cross validation"""
-    n_samples = X.shape[0] if sp.issparse(X) else len(X)
-    fit_params = dict([(k, np.asarray(v)[train]
-                       if hasattr(v, '__len__') and len(v) == n_samples else v)
-                       for k, v in fit_params.items()])
-    if not hasattr(X, "shape"):
-        if getattr(estimator, "_pairwise", False):
-            raise ValueError("Precomputed kernels or affinity matrices have "
-                             "to be passed as arrays or sparse matrices.")
-        X_train = [X[idx] for idx in train]
-        X_test = [X[idx] for idx in test]
-    else:
-        if getattr(estimator, "_pairwise", False):
-            # X is a precomputed square kernel matrix
-            if X.shape[0] != X.shape[1]:
-                raise ValueError("X should be a square kernel matrix")
-            X_train = X[np.ix_(train, train)]
-            X_test = X[np.ix_(test, train)]
-        else:
-            X_train = X[safe_mask(X, train)]
-            X_test = X[safe_mask(X, test)]
-
-    if y is None:
-        y_train = None
-        y_test = None
-    else:
-        y_train = y[train]
-        y_test = y[test]
-    estimator.fit(X_train, y_train, **fit_params)
-    if scorer is None:
-        score = estimator.score(X_test, y_test)
-    else:
-        score = scorer(estimator, X_test, y_test)
-        if not isinstance(score, numbers.Number):
-            raise ValueError("scoring must return a number, got %s (%s)"
-                             " instead." % (str(score), type(score)))
-    if verbose > 1:
-        print("score: %f" % score)
-    return score
 
 
 def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
@@ -1125,28 +1128,170 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     scores : array of float, shape=(len(list(cv)),)
         Array of scores of the estimator for each run of the cross validation.
     """
-    X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
+    X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True,
+                        allow_nans=True)
+    if y is not None:
+        y = np.asarray(y)
+
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
-    scorer = _deprecate_loss_and_score_funcs(
-        loss_func=None,
-        score_func=score_func,
-        scoring=scoring
-    )
-    if scorer is None and not hasattr(estimator, 'score'):
-        raise TypeError(
-            "If no scoring is specified, the estimator passed "
-            "should have a 'score' method. The estimator %s "
-            "does not." % estimator)
+    scorer = check_scoring(estimator, score_func=score_func, scoring=scoring)
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
-    fit_params = fit_params if fit_params is not None else {}
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
-    scores = parallel(
-        delayed(_cross_val_score)(clone(estimator), X, y, scorer, train, test,
-                                  verbose, fit_params)
-        for train, test in cv)
-    return np.array(scores)
+    scores = parallel(delayed(_fit_and_score)(clone(estimator), X, y, scorer,
+                                              train, test, verbose, None,
+                                              fit_params)
+                      for train, test in cv)
+    return np.array(scores)[:, 0]
+
+
+def _fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
+                   fit_params, return_train_score=False,
+                   return_parameters=False):
+    """Fit estimator and compute scores for a given dataset split.
+
+    Parameters
+    ----------
+    estimator : estimator object implementing 'fit'
+        The object to use to fit the data.
+
+    X : array-like of shape at least 2D
+        The data to fit.
+
+    y : array-like, optional, default: None
+        The target variable to try to predict in the case of
+        supervised learning.
+
+    scoring : callable
+        A scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
+
+    train : array-like, shape = (n_train_samples,)
+        Indices of training samples.
+
+    test : array-like, shape = (n_test_samples,)
+        Indices of test samples.
+
+    verbose : integer
+        The verbosity level.
+
+    parameters : dict or None
+        Parameters to be set on the estimator.
+
+    fit_params : dict or None
+        Parameters that will be passed to ``estimator.fit``.
+
+    return_train_score : boolean, optional, default: False
+        Compute and return score on training set.
+
+    return_parameters : boolean, optional, default: False
+        Return parameters that has been used for the estimator.
+
+    Returns
+    -------
+    train_score : float, optional
+        Score on training set, returned only if `return_train_score` is `True`. 
+        
+    test_score : float
+        Score on test set.
+
+    n_test_samples : int
+        Number of test samples.
+
+    scoring_time : float
+        Time spent for fitting and scoring in seconds.
+
+    parameters : dict or None, optional
+        The parameters that have been evaluated.
+    """
+    if verbose > 1:
+        if parameters is None:
+            msg = "no parameters to be set"
+        else:
+            msg = '%s' % (', '.join('%s=%s' % (k, v)
+                          for k, v in parameters.items()))
+        print("[CV] %s %s" % (msg, (64 - len(msg)) * '.'))
+
+    # Adjust lenght of sample weights
+    n_samples = _num_samples(X)
+    fit_params = fit_params if fit_params is not None else {}
+    fit_params = dict([(k, np.asarray(v)[train]
+                       if hasattr(v, '__len__') and len(v) == n_samples else v)
+                       for k, v in fit_params.items()])
+
+    if parameters is not None:
+        estimator.set_params(**parameters)
+
+    start_time = time.time()
+
+    X_train, y_train = _safe_split(estimator, X, y, train)
+    X_test, y_test = _safe_split(estimator, X, y, test, train)
+    if y_train is None:
+        estimator.fit(X_train, **fit_params)
+    else:
+        estimator.fit(X_train, y_train, **fit_params)
+    test_score = _score(estimator, X_test, y_test, scorer)
+    if return_train_score:
+        train_score = _score(estimator, X_train, y_train, scorer)
+
+    scoring_time = time.time() - start_time
+
+    if verbose > 2:
+        msg += ", score=%f" % test_score
+    if verbose > 1:
+        end_msg = "%s -%s" % (msg, logger.short_format_time(scoring_time))
+        print("[CV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
+
+    ret = [train_score] if return_train_score else []
+    ret.extend([test_score, _num_samples(X_test), scoring_time])
+    if return_parameters:
+        ret.append(parameters)
+    return ret
+
+
+def _safe_split(estimator, X, y, indices, train_indices=None):
+    """Create subset of dataset and properly handle kernels."""
+    if hasattr(estimator, 'kernel') and callable(estimator.kernel):
+        # cannot compute the kernel values with custom function
+        raise ValueError("Cannot use a custom kernel function. "
+                         "Precompute the kernel matrix instead.")
+
+    if not hasattr(X, "shape"):
+        if getattr(estimator, "_pairwise", False):
+            raise ValueError("Precomputed kernels or affinity matrices have "
+                             "to be passed as arrays or sparse matrices.")
+        X_subset = [X[idx] for idx in indices]
+    else:
+        if getattr(estimator, "_pairwise", False):
+            # X is a precomputed square kernel matrix
+            if X.shape[0] != X.shape[1]:
+                raise ValueError("X should be a square kernel matrix")
+            if train_indices is None:
+                X_subset = X[np.ix_(indices, indices)]
+            else:
+                X_subset = X[np.ix_(indices, train_indices)]
+        else:
+            X_subset = X[safe_mask(X, indices)]
+
+    if y is not None:
+        y_subset = y[safe_mask(y, indices)]
+    else:
+        y_subset = None
+
+    return X_subset, y_subset
+
+
+def _score(estimator, X_test, y_test, scorer):
+    """Compute the score of an estimator on a given test set."""
+    if y_test is None:
+        score = scorer(estimator, X_test)
+    else:
+        score = scorer(estimator, X_test, y_test)
+    if not isinstance(score, numbers.Number):
+        raise ValueError("scoring must return a number, got %s (%s) instead."
+                         % (str(score), type(score)))
+    return score
 
 
 def _permutation_test_score(estimator, X, y, cv, scorer):
@@ -1164,7 +1309,7 @@ def _shuffle(y, labels, random_state):
         ind = random_state.permutation(len(y))
     else:
         ind = np.arange(len(labels))
-        for label in unique(labels):
+        for label in np.unique(labels):
             this_mask = (labels == label)
             ind[this_mask] = random_state.permutation(ind[this_mask])
     return y[ind]
@@ -1252,7 +1397,7 @@ def permutation_test_score(estimator, X, y, score_func=None, cv=None,
         If an integer is passed, it is the number of fold (default 3).
         Specific cross-validation objects can be passed, see
         sklearn.cross_validation module for the list of possible objects.
-        
+
     n_permutations : integer, optional
         Number of times to permute ``y``.
 
@@ -1295,13 +1440,9 @@ def permutation_test_score(estimator, X, y, score_func=None, cv=None,
         vol. 11
 
     """
-    X, y = check_arrays(X, y, sparse_format='csr')
+    X, y = check_arrays(X, y, sparse_format='csr', allow_nans=True)
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
-    scorer = _deprecate_loss_and_score_funcs(
-        loss_func=None,
-        score_func=score_func,
-        scoring=scoring
-    )
+    scorer = check_scoring(estimator, scoring=scoring, score_func=score_func)
     random_state = check_random_state(random_state)
 
     # We clone the estimator to make sure that all the folds are
@@ -1396,6 +1537,7 @@ def train_test_split(*arrays, **options):
     train_size = options.pop('train_size', None)
     random_state = options.pop('random_state', None)
     options['sparse_format'] = 'csr'
+    options['allow_nans'] = True
 
     if test_size is None and train_size is None:
         test_size = 0.25

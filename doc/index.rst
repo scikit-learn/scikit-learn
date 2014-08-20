@@ -12,6 +12,7 @@
     tutorial/index
     user_guide
     auto_examples/index
+    faq
     support
     whats_new
     presentations
@@ -161,7 +162,7 @@
     <strong>Applications</strong>: Visualization, Increased efficiency</br>
     <strong>Algorithms</strong>:&nbsp;
 
-:ref:`PCA<PCA>`, :ref:`Isomap<isomap>`, :ref:`non-negative matrix factorization<NMF>`.
+:ref:`PCA<PCA>`, :ref:`feature selection<feature_selection>`, :ref:`non-negative matrix factorization<NMF>`.
 
 .. raw:: html
 
@@ -296,6 +297,18 @@
                           <img src="_images/inria.png" class="thumbnail" />
                           <p>
                           <em>"We use scikit-learn to support leading-edge basic research [...]"</em>
+                          </p>
+                        </div>
+                        <div class="item">
+                          <img src="_images/spotify.png" class="thumbnail" />
+                          <p>
+                          <em>"I think it's the most well-designed ML package I've seen so far."</em>
+                          </p>
+                        </div>
+                        <div class="item">
+                          <img src="_images/change-logo.png" class="thumbnail" />
+                          <p>
+                          <em>"scikit-learn's ease-of-use, performance and overall variety of algorithms implemented has proved invaluable [...]."</em>
                           </p>
                         </div>
                         <div class="item">

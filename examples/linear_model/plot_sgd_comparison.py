@@ -11,7 +11,7 @@ on the hand-written digits dataset.
 # License: BSD 3 clause
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from sklearn import datasets
 from sklearn.cross_validation import train_test_split
 from sklearn.linear_model import SGDClassifier, Perceptron
@@ -43,9 +43,9 @@ for name, clf in classifiers:
             y_pred = clf.predict(X_test)
             yy_.append(1 - np.mean(y_pred == y_test))
         yy.append(np.mean(yy_))
-    pl.plot(xx, yy, label=name)
+    plt.plot(xx, yy, label=name)
 
-pl.legend(loc="upper right")
-pl.xlabel("Proportion train")
-pl.ylabel("Test Error Rate")
-pl.show()
+plt.legend(loc="upper right")
+plt.xlabel("Proportion train")
+plt.ylabel("Test Error Rate")
+plt.show()

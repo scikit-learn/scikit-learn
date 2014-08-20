@@ -12,7 +12,6 @@ from __future__ import division
 
 from math import sqrt
 import warnings
-import numbers
 
 import numpy as np
 import scipy.sparse as sp
@@ -20,7 +19,7 @@ from scipy.optimize import nnls
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import atleast2d_or_csr, check_random_state, check_arrays
-from ..utils.extmath import randomized_svd, safe_sparse_dot
+from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
 
 
 def safe_vstack(Xs):
@@ -35,12 +34,11 @@ def norm(x):
 
     See: http://fseoane.net/blog/2011/computing-the-vector-norm/
     """
-    x = x.ravel()
-    return np.sqrt(np.dot(x, x))
+    return sqrt(squared_norm(x))
 
 
 def trace_dot(X, Y):
-    """Trace of np.dot(X, Y)."""
+    """Trace of np.dot(X, Y.T)."""
     return np.dot(X.ravel(), Y.ravel())
 
 
@@ -392,15 +390,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
             else:
                 init = 'random'
 
-        if isinstance(init, (numbers.Integral, np.random.RandomState)):
-            random_state = check_random_state(init)
-            init = "random"
-            warnings.warn("Passing a random seed or generator as init "
-                          "is deprecated and will be removed in 0.15. Use "
-                          "init='random' and random_state instead.",
-                          DeprecationWarning)
-        else:
-            random_state = self.random_state
+        random_state = self.random_state
 
         if init == 'nndsvd':
             W, H = _initialize_nmf(X, self.n_components_)
@@ -527,7 +517,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
             error = norm(X - np.dot(W, H))
         else:
             sqnorm_X = np.dot(X.data, X.data)
-            norm_WHT = trace_dot(np.dot(H.T, np.dot(W.T, W)).T, H)
+            norm_WHT = trace_dot(np.dot(np.dot(W.T, W), H), H)
             cross_prod = trace_dot((X * H.T), W)
             error = sqrt(sqnorm_X + norm_WHT - 2. * cross_prod)
 

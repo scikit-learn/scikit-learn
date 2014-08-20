@@ -22,10 +22,10 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     Parameters
     ----------
 
-    S : array [n_samples, n_samples]
+    S : array-like, shape (n_samples, n_samples)
         Matrix of similarities between points
 
-    preference : array [n_samples,] or float, optional, default: None
+    preference : array-like, shape (n_samples,) or float, optional
         Preferences for each point - points with larger values of
         preferences are more likely to be chosen as exemplars. The number of
         exemplars, i.e. of clusters, is influenced by the input preferences
@@ -54,10 +54,10 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     Returns
     -------
 
-    cluster_centers_indices : array [n_clusters]
+    cluster_centers_indices : array, shape (n_clusters,)
         index of clusters centers
 
-    labels : array [n_samples]
+    labels : array, shape (n_samples,)
         cluster labels for each point
 
     Notes
@@ -174,7 +174,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
 ###############################################################################
 
 class AffinityPropagation(BaseEstimator, ClusterMixin):
-    """Perform Affinity Propagation Clustering of data
+    """Perform Affinity Propagation Clustering of data.
 
     Parameters
     ----------
@@ -186,12 +186,12 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         of estimated clusters that stops the convergence.
 
     max_iter : int, optional, default: 200
-        Maximum number of iterations
+        Maximum number of iterations.
 
     copy : boolean, optional, default: True
         Make a copy of input data.
 
-    preference : array [n_samples,] or float, optional, default: None
+    preference : array-like, shape (n_samples,) or float, optional
         Preferences for each point - points with larger values of
         preferences are more likely to be chosen as exemplars. The number
         of exemplars, ie of clusters, is influenced by the input
@@ -209,16 +209,16 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
 
     Attributes
     ----------
-    `cluster_centers_indices_` : array, [n_clusters]
+    `cluster_centers_indices_` : array, shape (n_clusters,)
         Indices of cluster centers
 
-    `cluster_centers_` : array, [n_clusters, n_features]
-        Cluster centers (if affinity != ``precomputed'').
+    `cluster_centers_` : array, shape (n_clusters, n_features)
+        Cluster centers (if affinity != ``precomputed``).
 
-    `labels_` : array, [n_samples]
+    `labels_` : array, shape (n_samples,)
         Labels of each point
 
-    `affinity_matrix_` : array-like, [n_samples, n_samples]
+    `affinity_matrix_` : array, shape (n_samples, n_samples)
         Stores the affinity matrix used in ``fit``.
 
     Notes
@@ -249,7 +249,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
 
     @property
     def _pairwise(self):
-        return self.affinity is "precomputed"
+        return self.affinity == "precomputed"
 
     def fit(self, X):
         """ Create affinity matrix from negative euclidean distances, then
@@ -258,14 +258,14 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         Parameters
         ----------
 
-        X: array [n_samples, n_features] or [n_samples, n_samples]
+        X: array-like, shape (n_samples, n_features) or (n_samples, n_samples)
             Data matrix or, if affinity is ``precomputed``, matrix of
             similarities / affinities.
         """
 
-        if self.affinity is "precomputed":
+        if self.affinity == "precomputed":
             self.affinity_matrix_ = X
-        elif self.affinity is "euclidean":
+        elif self.affinity == "euclidean":
             self.affinity_matrix_ = -euclidean_distances(X, squared=True)
         else:
             raise ValueError("Affinity must be 'precomputed' or "
@@ -287,12 +287,12 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             New data to predict.
 
         Returns
         -------
-        labels : array, shape [n_samples,]
+        labels : array, shape (n_samples,)
             Index of the cluster each sample belongs to.
         """
         if not hasattr(self, "cluster_centers_indices_"):

@@ -100,16 +100,13 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
             memory = Memory(cachedir=memory)
 
         scores_ = memory.cache(
-            _resample_model, ignore=['verbose', 'n_jobs', 'pre_dispatch'])(
-                estimator_func, X, y,
-                scaling=self.scaling,
-                n_resampling=self.n_resampling,
-                n_jobs=self.n_jobs,
-                verbose=self.verbose,
-                pre_dispatch=self.pre_dispatch,
-                random_state=self.random_state,
-                sample_fraction=self.sample_fraction,
-                **params)
+            _resample_model, ignore=['verbose', 'n_jobs', 'pre_dispatch']
+        )(
+            estimator_func, X, y,
+            scaling=self.scaling, n_resampling=self.n_resampling,
+            n_jobs=self.n_jobs, verbose=self.verbose,
+            pre_dispatch=self.pre_dispatch, random_state=self.random_state,
+            sample_fraction=self.sample_fraction, **params)
 
         if scores_.ndim == 1:
             scores_ = scores_[:, np.newaxis]
@@ -215,7 +212,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional, default False
+    normalize : boolean, optional, default True
         If True, the regressors X will be normalized before regression.
 
     precompute : True | False | 'auto'
@@ -262,7 +259,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
 
     memory : Instance of joblib.Memory or string
         Used for internal caching. By default, no caching is done.
-        If a string is given, it is thepath to the caching directory.
+        If a string is given, it is the path to the caching directory.
 
     Attributes
     ----------
@@ -395,7 +392,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional, default=False
+    normalize : boolean, optional, default=True
         If True, the regressors X will be normalized before regression.
 
     tol : float, optional, default=1e-3
@@ -430,7 +427,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
 
     memory : Instance of joblib.Memory or string
         Used for internal caching. By default, no caching is done.
-        If a string is given, it is thepath to the caching directory.
+        If a string is given, it is the path to the caching directory.
 
     Attributes
     ----------

@@ -1,5 +1,3 @@
-import warnings
-
 from nose.tools import assert_true
 from nose.tools import assert_equal
 
@@ -104,8 +102,6 @@ def test_spectral_embedding_callable_affinity(seed=36):
     se_rbf = SpectralEmbedding(n_components=2, affinity="rbf",
                                gamma=gamma,
                                random_state=np.random.RandomState(seed))
-    embed_rbf = se_rbf.fit_transform(S)
-    embed_callable = se_callable.fit_transform(S)
     embed_rbf = se_rbf.fit_transform(S)
     embed_callable = se_callable.fit_transform(S)
     assert_array_almost_equal(

@@ -24,7 +24,8 @@ test-code: in
 	$(NOSETESTS) -s -v sklearn
 test-doc:
 	$(NOSETESTS) -s -v doc/ doc/modules/ doc/datasets/ \
-	doc/developers doc/tutorial/basic doc/tutorial/statistical_inference
+	doc/developers doc/tutorial/basic doc/tutorial/statistical_inference \
+	doc/tutorial/text_analytics
 
 test-coverage:
 	rm -rf coverage .coverage
@@ -33,10 +34,10 @@ test-coverage:
 test: test-code test-doc
 
 trailing-spaces:
-	find sklearn -name "*.py" | xargs perl -pi -e 's/[ \t]*$$//'
+	find sklearn -name "*.py" -exec perl -pi -e 's/[ \t]*$$//' {} \;
 
 cython:
-	find sklearn -name "*.pyx" | xargs $(CYTHON)
+	find sklearn -name "*.pyx" -exec $(CYTHON) {} \;
 
 ctags:
 	# make tags for symbol based navigation in emacs and vim
@@ -44,10 +45,10 @@ ctags:
 	$(CTAGS) -R *
 
 doc: inplace
-	make -C doc html
+	$(MAKE) -C doc html
 
 doc-noplot: inplace
-	make -C doc html-noplot
+	$(MAKE) -C doc html-noplot
 
 code-analysis:
 	flake8 sklearn | grep -v __init__ | grep -v external

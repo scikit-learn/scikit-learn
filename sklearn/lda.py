@@ -12,7 +12,6 @@ from scipy import linalg
 
 from .base import BaseEstimator, ClassifierMixin, TransformerMixin
 from .utils.extmath import logsumexp
-from .utils.fixes import unique
 from .utils import check_arrays, array2d, column_or_1d
 
 __all__ = ['LDA']
@@ -113,7 +112,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         """
         X, y = check_arrays(X, y, sparse_format='dense')
         y = column_or_1d(y, warn=True)
-        self.classes_, y = unique(y, return_inverse=True)
+        self.classes_, y = np.unique(y, return_inverse=True)
         n_samples, n_features = X.shape
         n_classes = len(self.classes_)
         if n_classes < 2:

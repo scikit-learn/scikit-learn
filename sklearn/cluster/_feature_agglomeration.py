@@ -9,7 +9,8 @@ import numpy as np
 
 from ..base import TransformerMixin
 from ..utils import array2d
-from ..utils.fixes import unique
+
+import warnings
 
 
 ###############################################################################
@@ -20,7 +21,9 @@ class AgglomerationTransform(TransformerMixin):
     A class for feature agglomeration via the transform interface
     """
 
-    def transform(self, X, pooling_func=np.mean):
+    pooling_func = np.mean
+
+    def transform(self, X, pooling_func=None):
         """
         Transform a new matrix using the built clustering
 
@@ -40,6 +43,11 @@ class AgglomerationTransform(TransformerMixin):
         Y : array, shape = [n_samples, n_clusters] or [n_clusters]
             The pooled values for each feature cluster.
         """
+        if pooling_func is not None:
+            warnings.warn("The pooling_func parameter is deprecated since 0.15 and will be "
+                "removed in 0.18. Pass it to the constructor instead.", DeprecationWarning)
+        else:
+            pooling_func = self.pooling_func
         X = array2d(X)
         nX = []
         if len(self.labels_) != X.shape[1]:
@@ -67,5 +75,5 @@ class AgglomerationTransform(TransformerMixin):
             A vector of size n_samples with the values of Xred assigned to
             each of the cluster of samples.
         """
-        unil, inverse = unique(self.labels_, return_inverse=True)
+        unil, inverse = np.unique(self.labels_, return_inverse=True)
         return Xred[..., inverse]

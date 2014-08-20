@@ -74,7 +74,7 @@ In the basic approach, called *k*-fold CV,
 the training set is split into *k* smaller sets
 (other approaches are described below,
 but generally follow the same principles).
-The following is procedure is followed for each of the *k* "folds":
+The following procedure is followed for each of the *k* "folds":
 
  * A model is trained using :math:`k-1` of the folds as training data;
  * the resulting model is validated on the remaining part of the data
@@ -93,7 +93,7 @@ where the number of samples is very small.
 Computing cross-validated metrics
 =================================
 
-The simplest way to use perform cross-validation in to call the
+The simplest way to use cross-validation is to call the
 :func:`cross_val_score` helper function on the estimator and the dataset.
 
 The following example demonstrates how to estimate the accuracy of a linear
@@ -165,7 +165,7 @@ validation strategies.
 K-fold
 ------
 
-:class:`KFold` divides all the samples in math:`k` groups of samples,
+:class:`KFold` divides all the samples in :math:`k` groups of samples,
 called folds (if :math:`k = n`, this is equivalent to the *Leave One
 Out* strategy), of equal sizes (if possible). The prediction function is
 learned using :math:`k - 1` folds, and the fold left out is used for test.
@@ -229,6 +229,40 @@ not waste much data as only one sample is removed from the learning set::
   [0 2 3] [1]
   [0 1 3] [2]
   [0 1 2] [3]
+
+
+Potential users of LOO for model selection should weigh a few known caveats. 
+When compared with *k*-fold cross validation, one builds *n* models from *n* 
+samples instead of *k* models, where *n > k*. Moreover, each is trained on *n - 1* 
+samples rather than *(k-1)n / k*. In both ways, assuming *k* is not too large 
+and *k < n*, LOO is more computationally expensive than *k*-fold cross validation.
+
+In terms of accuracy, LOO often results in high variance as an estimator for the 
+test error. Intuitively, since *n - 1* of 
+the *n* samples are used to build each model, models constructed from folds are 
+virtually identical to each other and to the model built from the entire training 
+set. 
+
+However, if the learning curve is steep for the training size in question, 
+then 5- or 10- fold cross validation can overestimate the generalization error.
+
+As a general rule, most authors, and empirical evidence, suggest that 5- or 10- 
+fold cross validation should be preferred to LOO.
+
+
+.. topic:: References:
+
+ * http://www.faqs.org/faqs/ai-faq/neural-nets/part3/section-12.html
+ * T. Hastie, R. Tibshirani, J. Friedman,  `The Elements of Statistical Learning
+   <http://www-stat.stanford.edu/~tibs/ElemStatLearn>`_, Springer 2009
+ * L. Breiman, P. Spector `Submodel selection and evaluation in regression: The X-random case
+   <http://digitalassets.lib.berkeley.edu/sdtr/ucb/text/197.pdf>`_, International Statistical Review 1992
+ * R. Kohavi, `A Study of Cross-Validation and Bootstrap for Accuracy Estimation and Model Selection
+   <http://www.cs.iastate.edu/~jtian/cs573/Papers/Kohavi-IJCAI-95.pdf>`_, Intl. Jnt. Conf. AI   
+ * R. Bharat Rao, G. Fung, R. Rosales, `On the Dangers of Cross-Validation. An Experimental Evaluation
+   <http://www.siam.org/proceedings/datamining/2008/dm08_54_Rao.pdf>`_, SIAM 2008
+ * G. James, D. Witten, T. Hastie, R Tibshirani, `An Introduction to Statitical Learning
+   <http://www-bcf.usc.edu/~gareth/ISL>`_, Springer 2013
 
 
 Leave-P-Out - LPO
@@ -379,6 +413,17 @@ smaller than the total dataset if it is very large.
   [5 4 2 4 2] [6 7 1 0]
   [4 7 0 1 1] [5 3 6 5]
 
+A note on shuffling
+===================
+
+If the data ordering is not arbitrary (e.g. samples with the same label are contiguous), shuffling it first may be essential to getting a meaningful cross-validation result. However, the opposite may be true if the samples are not independent and identically distributed. For example if samples correspond to news articles, and are ordered by their time of publication, then shuffling the data will likely lead to a model that is overfit and an inflated validation score: it will be tested on samples that are artificially similar (close in time) to training samples.
+
+Some cross validation iterators, such as :class:`KFold`, have an inbuilt option to shuffle the data indices before splitting them. Note that:
+
+* This consumes less memory than shuffling the data directly.
+* By default no shuffling occurs, including for the (stratified) K fold cross-validation performed by specifying ``cv=some_integer`` to :func:`cross_val_score`, grid search, etc. Keep in mind that :func:`train_test_split` still returns a random split.
+* The ``random_state`` parameter defaults to ``None``, meaning that the shuffling will be different every time ``KFold(..., shuffle=True)`` is iterated. However, ``GridSearchCV`` will use the same shuffling for each set of parameters validated by a single call to its ``fit`` method.
+* To ensure results are repeatable (*on the same platform*), use a fixed value for ``random_state``.
 
 Cross validation and model selection
 ====================================

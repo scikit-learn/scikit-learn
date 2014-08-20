@@ -41,7 +41,7 @@ samples are built sequentially and so do not use multiple cores.
 print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn import clone
 from sklearn.datasets import load_iris
@@ -54,7 +54,7 @@ from sklearn.tree import DecisionTreeClassifier
 n_classes = 3
 n_estimators = 30
 plot_colors = "ryb"
-cmap = pl.cm.RdYlBu
+cmap = plt.cm.RdYlBu
 plot_step = 0.02  # fine step width for decision surface contours
 plot_step_coarser = 0.5  # step widths for coarse classifier guesses
 RANDOM_SEED = 13  # fix the seed on each iteration
@@ -99,12 +99,12 @@ for pair in ([0, 1], [0, 2], [2, 3]):
         model_details = model_title
         if hasattr(model, "estimators_"):
             model_details += " with {} estimators".format(len(model.estimators_))
-        print model_details + " with features", pair, "has a score of", scores
+        print( model_details + " with features", pair, "has a score of", scores )
 
-        pl.subplot(3, 4, plot_idx)
+        plt.subplot(3, 4, plot_idx)
         if plot_idx <= len(models):
             # Add a title at the top of each column
-            pl.title(model_title)
+            plt.title(model_title)
 
         # Now plot the decision boundary using a fine mesh as input to a
         # filled contour plot
@@ -118,7 +118,7 @@ for pair in ([0, 1], [0, 2], [2, 3]):
         if isinstance(model, DecisionTreeClassifier):
             Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
             Z = Z.reshape(xx.shape)
-            cs = pl.contourf(xx, yy, Z, cmap=cmap)
+            cs = plt.contourf(xx, yy, Z, cmap=cmap)
         else:
             # Choose alpha blend level with respect to the number of estimators
             # that are in use (noting that AdaBoost can use fewer estimators
@@ -127,7 +127,7 @@ for pair in ([0, 1], [0, 2], [2, 3]):
             for tree in model.estimators_:
                 Z = tree.predict(np.c_[xx.ravel(), yy.ravel()])
                 Z = Z.reshape(xx.shape)
-                cs = pl.contourf(xx, yy, Z, alpha=estimator_alpha, cmap=cmap)
+                cs = plt.contourf(xx, yy, Z, alpha=estimator_alpha, cmap=cmap)
 
         # Build a coarser grid to plot a set of ensemble classifications
         # to show how these are different to what we see in the decision
@@ -135,18 +135,18 @@ for pair in ([0, 1], [0, 2], [2, 3]):
         xx_coarser, yy_coarser = np.meshgrid(np.arange(x_min, x_max, plot_step_coarser),
                                              np.arange(y_min, y_max, plot_step_coarser))
         Z_points_coarser = model.predict(np.c_[xx_coarser.ravel(), yy_coarser.ravel()]).reshape(xx_coarser.shape)
-        cs_points = pl.scatter(xx_coarser, yy_coarser, s=15, c=Z_points_coarser, cmap=cmap, edgecolors="none")
+        cs_points = plt.scatter(xx_coarser, yy_coarser, s=15, c=Z_points_coarser, cmap=cmap, edgecolors="none")
 
         # Plot the training points, these are clustered together and have a
         # black outline
         for i, c in zip(xrange(n_classes), plot_colors):
             idx = np.where(y == i)
-            pl.scatter(X[idx, 0], X[idx, 1], c=c, label=iris.target_names[i],
-                       cmap=cmap)
+            plt.scatter(X[idx, 0], X[idx, 1], c=c, label=iris.target_names[i],
+                        cmap=cmap)
 
         plot_idx += 1  # move on to the next plot in sequence
 
-pl.suptitle("Classifiers on feature subsets of the Iris dataset")
-pl.axis("tight")
+plt.suptitle("Classifiers on feature subsets of the Iris dataset")
+plt.axis("tight")
 
-pl.show()
+plt.show()

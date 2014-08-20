@@ -1,4 +1,3 @@
-
 .. _sgd:
 
 ===========================
@@ -159,8 +158,8 @@ further information.
 
  - :ref:`example_linear_model_plot_sgd_separating_hyperplane.py`,
  - :ref:`example_linear_model_plot_sgd_iris.py`
- - :ref:`example_linear_model_plot_sgd_weighted_classes.py`
  - :ref:`example_linear_model_plot_sgd_weighted_samples.py`
+ - :ref:`example_svm_plot_separating_hyperplane_unbalanced.py` (See the `Note`)
 
 Regression
 ==========
@@ -267,7 +266,7 @@ training error given by
 
 .. math::
 
-    E(w,b) = \sum_{i=1}^{n} L(y_i, f(x_i)) + \alpha R(w)
+    E(w,b) = \frac{1}{n}\sum_{i=1}^{n} L(y_i, f(x_i)) + \alpha R(w)
 
 where :math:`L` is a loss function that measures model (mis)fit and
 :math:`R` is a regularization term (aka penalty) that penalizes model
@@ -292,7 +291,7 @@ Popular choices for the regularization term :math:`R` include:
    - L2 norm: :math:`R(w) := \frac{1}{2} \sum_{i=1}^{n} w_i^2`,
    - L1 norm: :math:`R(w) := \sum_{i=1}^{n} |w_i|`, which leads to sparse
      solutions.
-   - Elastic Net: :math:`R(w) := \rho \frac{1}{2} \sum_{i=1}^{n} w_i^2 + (1-\rho) \sum_{i=1}^{n} |w_i|`, a convex combination of L2 and L1, where :math:`\rho` is given by ``1 - l1_ratio``.
+   - Elastic Net: :math:`R(w) := \frac{\rho}{2} \sum_{i=1}^{n} w_i^2 + (1-\rho) \sum_{i=1}^{n} |w_i|`, a convex combination of L2 and L1, where :math:`\rho` is given by ``1 - l1_ratio``.
 
 The Figure below shows the contours of the different regularization terms
 in the parameter space when :math:`R(w) = 1`.

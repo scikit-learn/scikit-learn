@@ -10,7 +10,7 @@ plot the decision surface and the support vectors.
 print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from sklearn import svm, datasets
 
 # import some data to play with
@@ -47,11 +47,11 @@ Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
 
 # Put the result into a color plot
 Z = Z.reshape(xx.shape)
-pl.pcolormesh(xx, yy, Z, cmap=pl.cm.Paired)
+plt.pcolormesh(xx, yy, Z, cmap=plt.cm.Paired)
 
 # Plot also the training points
-pl.scatter(X[:, 0], X[:, 1], c=Y, cmap=pl.cm.Paired)
-pl.title('3-Class classification using Support Vector Machine with custom'
-         ' kernel')
-pl.axis('tight')
-pl.show()
+plt.scatter(X[:, 0], X[:, 1], c=Y, cmap=plt.cm.Paired)
+plt.title('3-Class classification using Support Vector Machine with custom'
+          ' kernel')
+plt.axis('tight')
+plt.show()

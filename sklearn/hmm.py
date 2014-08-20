@@ -8,8 +8,10 @@
 The :mod:`sklearn.hmm` module implements hidden Markov models.
 
 **Warning:** :mod:`sklearn.hmm` is orphaned, undocumented and has known
-numerical stability issues. If nobody volunteers to write documentation and
-make it more stable, this module will be removed in version 0.11.
+numerical stability issues. This module will be removed in version 0.17.
+
+It has been moved to a separate repository:
+https://github.com/hmmlearn/hmmlearn
 """
 
 import string
@@ -37,8 +39,15 @@ NEGINF = -np.inf
 decoder_algorithms = ("viterbi", "map")
 
 
+@deprecated("WARNING: The HMM module and its functions will be removed in 0.17 "
+            "as it no longer falls within the project's scope and API. "
+            "It has been moved to a separate repository: "
+            "https://github.com/hmmlearn/hmmlearn")
 def normalize(A, axis=None):
     """ Normalize the input array so that it sums to 1.
+
+    WARNING: The HMM module and its functions will be removed in 0.17
+    as it no longer falls within the project's scope and API.
 
     Parameters
     ----------
@@ -65,6 +74,10 @@ def normalize(A, axis=None):
     return A / Asum
 
 
+@deprecated("WARNING: The HMM module and its function will be removed in 0.17"
+            "as it no longer falls within the project's scope and API. "
+            "It has been moved to a separate repository: "
+            "https://github.com/hmmlearn/hmmlearn")
 class _BaseHMM(BaseEstimator):
     """Hidden Markov Model base class.
 
@@ -74,6 +87,11 @@ class _BaseHMM(BaseEstimator):
 
     See the instance documentation for details specific to a
     particular object.
+
+    .. warning::
+
+       The HMM module and its functions will be removed in 0.17
+       as it no longer falls within the project's scope and API.
 
     Attributes
     ----------
@@ -152,8 +170,6 @@ class _BaseHMM(BaseEstimator):
         self._algorithm = algorithm
         self.random_state = random_state
 
-    @deprecated("HMM.eval was renamed to HMM.score_samples in 0.14 and will be"
-                " removed in 0.16.")
     def eval(self, X):
         return self.score_samples(X)
 
@@ -565,12 +581,15 @@ class _BaseHMM(BaseEstimator):
             stats['start'] += posteriors[0]
         if 't' in params:
             n_observations, n_components = framelogprob.shape
-            lneta = np.zeros((n_observations - 1, n_components, n_components))
-            lnP = logsumexp(fwdlattice[-1])
-            _hmmc._compute_lneta(n_observations, n_components, fwdlattice,
-                                 self._log_transmat, bwdlattice, framelogprob,
-                                 lnP, lneta)
-            stats["trans"] += np.exp(logsumexp(lneta, 0))
+            # when the sample is of length 1, it contains no transitions
+            # so there is no reason to update our trans. matrix estimate
+            if n_observations > 1:
+                lneta = np.zeros((n_observations - 1, n_components, n_components))
+                lnP = logsumexp(fwdlattice[-1])
+                _hmmc._compute_lneta(n_observations, n_components, fwdlattice,
+                                     self._log_transmat, bwdlattice, framelogprob,
+                                     lnP, lneta)
+                stats['trans'] += np.exp(np.minimum(logsumexp(lneta, 0), 700))
 
     def _do_mstep(self, stats, params):
         # Based on Huang, Acero, Hon, "Spoken Language Processing",
@@ -596,6 +615,11 @@ class GaussianHMM(_BaseHMM):
     Representation of a hidden Markov model probability distribution.
     This class allows for easy evaluation of, sampling from, and
     maximum-likelihood estimation of the parameters of a HMM.
+
+    .. warning::
+
+       The HMM module and its functions will be removed in 0.17
+       as it no longer falls within the project's scope and API.
 
     Parameters
     ----------
@@ -769,6 +793,7 @@ class GaussianHMM(_BaseHMM):
                 cv.shape = (1, 1)
             self._covars_ = distribute_covar_matrix_to_match_covariance_type(
                 cv, self._covariance_type, self.n_components)
+            self._covars_[self._covars_ == 0] = 1e-5
 
     def _initialize_sufficient_statistics(self):
         stats = super(GaussianHMM, self)._initialize_sufficient_statistics()
@@ -833,7 +858,7 @@ class GaussianHMM(_BaseHMM):
                           - 2 * self._means_ * stats['obs']
                           + self._means_ ** 2 * denom)
                 cv_den = max(covars_weight - 1, 0) + denom
-                self._covars_ = (covars_prior + cv_num) / cv_den
+                self._covars_ = (covars_prior + cv_num) / np.maximum(cv_den, 1e-5)
                 if self._covariance_type == 'spherical':
                     self._covars_ = np.tile(
                         self._covars_.mean(1)[:, np.newaxis],
@@ -884,6 +909,11 @@ class GaussianHMM(_BaseHMM):
 
 class MultinomialHMM(_BaseHMM):
     """Hidden Markov Model with multinomial (discrete) emissions
+
+    .. warning::
+
+       The HMM module and its functions will be removed in 0.17
+       as it no longer falls within the project's scope and API.
 
     Attributes
     ----------
@@ -1078,20 +1108,13 @@ class MultinomialHMM(_BaseHMM):
 class GMMHMM(_BaseHMM):
     """Hidden Markov Model with Gaussin mixture emissions
 
+    .. warning::
+
+       The HMM module and its functions will be removed in 0.17
+       as it no longer falls within the project's scope and API.
+
     Attributes
     ----------
-    init_params : string, optional
-        Controls which parameters are initialized prior to training. Can
-        contain any combination of 's' for startprob, 't' for transmat, 'm'
-        for means, 'c' for covars, and 'w' for GMM mixing weights.
-        Defaults to all parameters.
-
-    params : string, optional
-        Controls which parameters are updated in the training process.  Can
-        contain any combination of 's' for startprob, 't' for transmat, 'm' for
-        means, and 'c' for covars, and 'w' for GMM mixing weights.
-        Defaults to all parameters.
-
     n_components : int
         Number of states in the model.
 
@@ -1112,6 +1135,18 @@ class GMMHMM(_BaseHMM):
 
     thresh : float, optional
         Convergence threshold.
+
+    init_params : string, optional
+        Controls which parameters are initialized prior to training.
+        Can contain any combination of 's' for startprob, 't' for transmat, 'm'
+        for means, 'c' for covars, and 'w' for GMM mixing weights.  Defaults to
+        all parameters.
+
+    params : string, optional
+        Controls which parameters are updated in the training process. Can
+        contain any combination of 's' for startprob, 't' for transmat,
+        'm' for means, and 'c' for covars, and 'w' for GMM mixing weights.
+        Defaults to all parameters.
 
     Examples
     --------

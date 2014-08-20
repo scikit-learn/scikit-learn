@@ -84,7 +84,7 @@ def load_files(container_path, description=None, categories=None,
                 file_44.txt
                 ...
 
-    The folder names are used has supervised signal label names. The
+    The folder names are used as supervised signal label names. The
     individual file names are not important.
 
     This function does not try to extract features into a numpy array or
@@ -157,7 +157,8 @@ def load_files(container_path, description=None, categories=None,
     """
     if charset is not None:
         warnings.warn("The charset parameter is deprecated as of version "
-                      "0.14 and will be removed in 0.16. Use encode instead.",
+                      "0.14 and will be removed in 0.16. "
+                      "Use encoding instead.",
                       DeprecationWarning)
         encoding = charset
 
@@ -249,22 +250,25 @@ def load_iris():
     ['setosa', 'versicolor', 'virginica']
     """
     module_path = dirname(__file__)
-    data_file = csv.reader(open(join(module_path, 'data', 'iris.csv')))
-    fdescr = open(join(module_path, 'descr', 'iris.rst'))
-    temp = next(data_file)
-    n_samples = int(temp[0])
-    n_features = int(temp[1])
-    target_names = np.array(temp[2:])
-    data = np.empty((n_samples, n_features))
-    target = np.empty((n_samples,), dtype=np.int)
+    with open(join(module_path, 'data', 'iris.csv')) as csv_file:
+        data_file = csv.reader(csv_file)
+        temp = next(data_file)
+        n_samples = int(temp[0])
+        n_features = int(temp[1])
+        target_names = np.array(temp[2:])
+        data = np.empty((n_samples, n_features))
+        target = np.empty((n_samples,), dtype=np.int)
 
-    for i, ir in enumerate(data_file):
-        data[i] = np.asarray(ir[:-1], dtype=np.float)
-        target[i] = np.asarray(ir[-1], dtype=np.int)
+        for i, ir in enumerate(data_file):
+            data[i] = np.asarray(ir[:-1], dtype=np.float)
+            target[i] = np.asarray(ir[-1], dtype=np.int)
+
+    with open(join(module_path, 'descr', 'iris.rst')) as rst_file:
+        fdescr = rst_file.read()
 
     return Bunch(data=data, target=target,
                  target_names=target_names,
-                 DESCR=fdescr.read(),
+                 DESCR=fdescr,
                  feature_names=['sepal length (cm)', 'sepal width (cm)',
                                 'petal length (cm)', 'petal width (cm)'])
 
@@ -404,8 +408,7 @@ def load_boston():
     data : Bunch
         Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the regression targets,
-        'target_names', the meaning of the labels, and 'DESCR', the
-        full description of the dataset.
+        and 'DESCR', the full description of the dataset.
 
     Examples
     --------
@@ -432,7 +435,8 @@ def load_boston():
 
     return Bunch(data=data,
                  target=target,
-                 feature_names=feature_names,
+                 # last column is target value
+                 feature_names=feature_names[:-1],
                  DESCR=fdescr.read())
 
 

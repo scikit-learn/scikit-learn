@@ -37,7 +37,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     metric: string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
-        the options allowed by metrics.pairwise.calculate_distance for its
+        the options allowed by metrics.pairwise.pairwise_distances for its
         metric parameter.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square.
@@ -87,8 +87,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
 
     # If index order not given, create random order.
     random_state = check_random_state(random_state)
-    index_order = np.arange(n)
-    random_state.shuffle(index_order)
+    index_order = random_state.permutation(n)
 
     # check for known metric powers
     distance_matrix = True
@@ -109,7 +108,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
         neighborhoods = [np.where(x <= eps)[0] for x in D]
 
     # Initially, all samples are noise.
-    labels = -np.ones(n)
+    labels = -np.ones(n, dtype=np.int)
 
     # A list of all core samples found.
     core_samples = []

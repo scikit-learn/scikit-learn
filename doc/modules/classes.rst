@@ -8,6 +8,40 @@ function raw specifications may not be enough to give full guidelines on their
 uses.
 
 
+.. _base_ref:
+
+:mod:`sklearn.base`: Base classes and utility functions
+=======================================================
+
+.. automodule:: sklearn.base
+    :no-members:
+    :no-inherited-members:
+
+Base classes
+------------
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   base.BaseEstimator
+   base.ClassifierMixin
+   base.ClusterMixin
+   base.RegressorMixin
+   base.TransformerMixin
+
+Functions
+---------
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   base.clone
+
+
 .. _cluster_ref:
 
 :mod:`sklearn.cluster`: Clustering
@@ -28,7 +62,9 @@ Classes
    :template: class.rst
 
    cluster.AffinityPropagation
+   cluster.AgglomerativeClustering
    cluster.DBSCAN
+   cluster.FeatureAgglomeration
    cluster.KMeans
    cluster.MiniBatchKMeans
    cluster.MeanShift
@@ -412,6 +448,7 @@ From text
    :toctree: generated/
    :template: class.rst
 
+   feature_selection.GenericUnivariateSelect
    feature_selection.SelectPercentile
    feature_selection.SelectKBest
    feature_selection.SelectFpr
@@ -531,6 +568,7 @@ From text
    :template: function.rst
 
    isotonic.isotonic_regression
+   isotonic.check_increasing
 
 .. _kernel_approximation_ref:
 
@@ -554,24 +592,6 @@ From text
    kernel_approximation.RBFSampler
    kernel_approximation.SkewedChi2Sampler
 
-:mod:`sklearn.semi_supervised` Semi-Supervised Learning
-========================================================
-
-.. automodule:: sklearn.semi_supervised
-   :no-members:
-   :no-inherited-members:
-
-**User guide:** See the :ref:`semi_supervised` section for further details.
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   semi_supervised.LabelPropagation
-   semi_supervised.LabelSpreading
-
 .. _lda_ref:
 
 :mod:`sklearn.lda`: Linear Discriminant Analysis
@@ -591,6 +611,24 @@ From text
 
    lda.LDA
 
+
+.. _learning_curve_ref:
+
+:mod:`sklearn.learning_curve` Learning curve evaluation
+=======================================================
+
+.. automodule:: sklearn.learning_curve
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   learning_curve.learning_curve
+   learning_curve.validation_curve
 
 .. _linear_model_ref:
 
@@ -624,6 +662,8 @@ From text
    linear_model.LogisticRegression
    linear_model.MultiTaskLasso
    linear_model.MultiTaskElasticNet
+   linear_model.MultiTaskLassoCV
+   linear_model.MultiTaskElasticNetCV
    linear_model.OrthogonalMatchingPursuit
    linear_model.OrthogonalMatchingPursuitCV
    linear_model.PassiveAggressiveClassifier
@@ -670,6 +710,7 @@ From text
     manifold.Isomap
     manifold.MDS
     manifold.SpectralEmbedding
+    manifold.TSNE
 
 .. autosummary::
     :toctree: generated
@@ -990,6 +1031,13 @@ Pairwise metrics
    pipeline.Pipeline
    pipeline.FeatureUnion
 
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   pipeline.make_pipeline
+   pipeline.make_union
+
 
 .. _preprocessing_ref:
 
@@ -1013,10 +1061,12 @@ Pairwise metrics
    preprocessing.KernelCenterer
    preprocessing.LabelBinarizer
    preprocessing.LabelEncoder
+   preprocessing.MultiLabelBinarizer
    preprocessing.MinMaxScaler
    preprocessing.Normalizer
    preprocessing.OneHotEncoder
    preprocessing.StandardScaler
+   preprocessing.PolynomialFeatures
 
 .. autosummary::
    :toctree: generated/
@@ -1071,6 +1121,27 @@ Pairwise metrics
    :template: function.rst
 
    random_projection.johnson_lindenstrauss_min_dim
+
+
+.. _semi_supervised_ref:
+
+:mod:`sklearn.semi_supervised` Semi-Supervised Learning
+========================================================
+
+.. automodule:: sklearn.semi_supervised
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`semi_supervised` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   semi_supervised.LabelPropagation
+   semi_supervised.LabelSpreading
 
 
 .. _svm_ref:

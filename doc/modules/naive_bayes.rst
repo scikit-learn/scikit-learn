@@ -52,7 +52,7 @@ make regarding the distribution of :math:`P(x_i \mid y)`.
 
 In spite of their apparently over-simplified assumptions, naive Bayes
 classifiers have worked quite well in many real-world situations, famously
-document classification and spam filtering. They requires a small amount
+document classification and spam filtering. They require a small amount
 of training data to estimate the necessary parameters. (For theoretical
 reasons why naive Bayes works well, and on which types of data it does, see
 the references below.)
@@ -150,7 +150,7 @@ The decision rule for Bernoulli naive Bayes is based on
 
 .. math::
 
-    P(x_i \mid y) = P(i \mid y) x_i \times (1 - P(i \mid y)) (1 - x_i)
+    P(x_i \mid y) = P(i \mid y) x_i + (1 - P(i \mid y)) (1 - x_i)
 
 which differs from multinomial NB's rule
 in that it explicitly penalizes the non-occurrence of a feature :math:`i`

@@ -10,14 +10,6 @@ class CCA(_PLS):
 
     Parameters
     ----------
-    X : array-like of predictors, shape = [n_samples, p]
-        Training vectors, where n_samples is the number of samples and
-        p is the number of predictors.
-
-    Y : array-like of response, shape = [n_samples, q]
-        Training vectors, where n_samples is the number of samples and
-        q is the number of response variables.
-
     n_components : int, (default 2).
         number of components to keep.
 

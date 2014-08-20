@@ -35,7 +35,7 @@ fetched from mldata.org have more sophisticated structure.
 These functions return a dictionary-like object holding at least two items:
 an array of shape ``n_samples`` * `` n_features`` with key ``data``
 (except for 20newsgroups)
-and a NumPy array of length ``n_features``, containing the target values,
+and a NumPy array of length ``n_samples``, containing the target values,
 with key ``target``.
 
 The datasets also contain a description in ``DESCR`` and some contain
