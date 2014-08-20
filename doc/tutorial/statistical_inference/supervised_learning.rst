@@ -567,6 +567,6 @@ creating a decision energy by positioning *kernels* on observations:
    intuitions.
 
    .. literalinclude:: ../../auto_examples/exercises/plot_iris_exercise.py
-       :lines: 15-22
+       :lines: 18-23
 
    Solution: :download:`../../auto_examples/exercises/plot_iris_exercise.py`
