@@ -856,8 +856,12 @@ def test_kneighbors_classifier_sparse_target_multioutput():
     n_output = 4
 
     X = rng.rand(n_samples, n_features)
-    y_fst = rng.randint(1, 4, (n_samples, n_output/2)).astype(float)
-    y_snd = rng.randint(0, 3, (n_samples, n_output/2)).astype(float)
+
+    # Consturct target data so that we cover two cases label encoding
+    # case 1: classes are not a 0 to n sequence
+    y_fst = rng.randint(1, 4, (n_samples, n_output//2)).astype(float)
+    # case 2: classes line up with their integer encoding
+    y_snd = rng.randint(0, 3, (n_samples, n_output//2)).astype(float)
     y = np.hstack((y_fst, y_snd))
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
