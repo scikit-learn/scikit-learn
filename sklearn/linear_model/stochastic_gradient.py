@@ -1161,7 +1161,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
         initialization, otherwise, just erase the previous solution.
 
     average : bool, optional
-        When set to True, computes the averaged sgd and stores the weights
+        When set to True, computes the averaged SGD and stores the weights
         in the average_coef_ attribute
 
     Attributes
