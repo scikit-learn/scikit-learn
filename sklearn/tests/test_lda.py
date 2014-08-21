@@ -75,6 +75,9 @@ def test_lda_orthogonality():
     d1 /= np.sqrt(np.sum(d1**2))
     d2 /= np.sqrt(np.sum(d2**2))
 
+    # the transformed within-class covariance should be the identity matrix
+    assert_almost_equal(np.cov(clf.transform(scatter).T), np.eye(2))
+
     # the means of classes 0 and 3 should lie on the first component
     assert_almost_equal(np.abs(np.dot(d1[:2], [1, 0])), 1.0)
 
