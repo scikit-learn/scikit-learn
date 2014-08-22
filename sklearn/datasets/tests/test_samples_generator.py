@@ -4,6 +4,7 @@ from collections import defaultdict
 from functools import partial
 
 import numpy as np
+import scipy.sparse as sp
 from sklearn.externals.six.moves import zip
 
 from sklearn.utils.testing import assert_equal
@@ -154,6 +155,16 @@ def test_make_multilabel_classification_return_indicator():
         assert_equal(Y.shape, (25, 3), "Y shape mismatch")
         assert_true(np.all(np.sum(Y, axis=0) > min_length))
 
+def test_make_multilabel_classification_return_indicator_sparse():
+    for allow_unlabeled, min_length in zip((True, False), (0, 1)):
+        X, Y = make_multilabel_classification(n_samples=25, n_features=20,
+                                              n_classes=3, random_state=0,
+                                              return_indicator=True,
+                                              sparse=True,
+                                              allow_unlabeled=allow_unlabeled)
+        assert_equal(X.shape, (25, 20), "X shape mismatch")
+        assert_equal(Y.shape, (25, 3), "Y shape mismatch")
+        assert_true(sp.issparse(Y))
 
 def test_make_hastie_10_2():
     X, y = make_hastie_10_2(n_samples=100, random_state=0)
