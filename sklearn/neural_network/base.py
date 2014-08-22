@@ -144,7 +144,7 @@ def relu_derivative(Z):
     Z_new : {array-like, sparse matrix}, shape (n_samples, n_features)
         The transformed data.
     """
-    return (Z > 0).astype('b')
+    return (Z > 0).astype(Z.dtype)
 
 
 DERIVATIVES = {'tanh': tanh_derivative, 'logistic': logistic_derivative,
@@ -194,9 +194,3 @@ def log_loss(y_true, y_prob):
 
 
 LOSS_FUNCTIONS = {'squared_loss': squared_loss, 'log_loss': log_loss}
-
-
-def clear_layer_lists(*args):
-    """Clear layer list from memory."""
-    for layer_list in args:
-        del layer_list[:]

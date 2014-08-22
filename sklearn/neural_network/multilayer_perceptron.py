@@ -12,7 +12,6 @@ import warnings
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .base import logistic, softmax
-from .base import clear_layer_lists
 from .base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
 from ..externals import six
 from ..preprocessing import LabelBinarizer
@@ -372,8 +371,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                 start = end
 
             # Run LBFGS
-            packed_coef_inter = _pack(
-                self.layers_coef_, self.layers_intercept_)
+            packed_coef_inter = _pack(self.layers_coef_, 
+                                      self.layers_intercept_)
 
             if self.verbose is True or self.verbose >= 1:
                 iprint = 1
@@ -391,8 +390,10 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             self._unpack(optimal_parameters)
 
         # Clear the lists
-        clear_layer_lists(self._a_layers, self._deltas, self._coef_grads,
-                          self._intercept_grads)
+        del self._a_layers[:]
+        del self._deltas[:]
+        del self._coef_grads[:]
+        del self._intercept_grads[:]
 
         return self
 
@@ -462,7 +463,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         y_pred = self._a_layers[-1]
 
         # Clear the list
-        clear_layer_lists(self._a_layers)
+        del self._a_layers[:]
 
         return y_pred
 
