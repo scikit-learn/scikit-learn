@@ -177,6 +177,17 @@ def test_make_multilabel_classification_return_indicator_sparse():
     assert_equal(p_w_c.shape, (20, 3))
     assert_almost_equal(p_w_c.sum(axis=0), [1] * 3)
 
+def test_make_multilabel_classification_return_indicator_sparse():
+    for allow_unlabeled, min_length in zip((True, False), (0, 1)):
+        X, Y = make_multilabel_classification(n_samples=25, n_features=20,
+                                              n_classes=3, random_state=0,
+                                              return_indicator=True,
+                                              sparse=True,
+                                              allow_unlabeled=allow_unlabeled)
+        assert_equal(X.shape, (25, 20), "X shape mismatch")
+        assert_equal(Y.shape, (25, 3), "Y shape mismatch")
+        assert_true(sp.issparse(Y))
+
 def test_make_hastie_10_2():
     X, y = make_hastie_10_2(n_samples=100, random_state=0)
     assert_equal(X.shape, (100, 10), "X shape mismatch")
