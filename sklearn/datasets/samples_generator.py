@@ -361,7 +361,7 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
         X = X.toarray()
 
     if return_indicator:
-        lb = MultiLabelBinarizer()
+        lb = MultiLabelBinarizer(sparse_output=sparse)
         Y = lb.fit([range(n_classes)]).transform(Y)
     else:
         warnings.warn('Support for the sequence of sequences multilabel '
