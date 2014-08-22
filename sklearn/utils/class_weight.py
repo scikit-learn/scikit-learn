@@ -3,7 +3,6 @@
 # License: BSD 3 clause
 
 import numpy as np
-from ..utils import column_or_1d
 
 
 def compute_class_weight(class_weight, classes, y):
