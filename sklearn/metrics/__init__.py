@@ -9,6 +9,7 @@ from .ranking import label_ranking_average_precision_score
 from .ranking import precision_recall_curve
 from .ranking import roc_auc_score
 from .ranking import roc_curve
+from .ranking import reliability_curve
 
 from .classification import accuracy_score
 from .classification import classification_report
@@ -93,6 +94,7 @@ __all__ = [
     'precision_score',
     'r2_score',
     'recall_score',
+    'reliability_curve',
     'roc_auc_score',
     'roc_curve',
     'SCORERS',
