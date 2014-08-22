@@ -76,6 +76,9 @@ Bug fixes
     - Various fixes to the Gaussian processes subpackage by Vincent Dubourg
       and Jan Hendrik Metzen.
 
+    - The ``transform`` of :class:`lda.LDA` now projects the input on the most
+      discriminant directions. By Martin Billinger.
+
 
 API changes summary
 -------------------
