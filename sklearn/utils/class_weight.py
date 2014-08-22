@@ -3,6 +3,7 @@
 # License: BSD 3 clause
 
 import numpy as np
+from ..utils import column_or_1d
 
 
 def compute_class_weight(class_weight, classes, y):
@@ -36,15 +37,19 @@ def compute_class_weight(class_weight, classes, y):
         # uniform class weights
         weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
     elif class_weight == 'auto':
+        if not all(np.in1d(y, classes)):
+            raise ValueError("all classes in y should be "
+                             "included the classes attribute")
+
         # Find the weight of each class as present in y.
         le = LabelEncoder()
-        y_ind = le.fit_transform(y)
-        if not all(np.in1d(classes, le.classes_)):
-            raise ValueError("classes should have valid labels that are in y")
+        class_ind = le.fit_transform(classes)
+        y_ind = le.transform(y).ravel()
 
         # inversely proportional to the number of samples in the class
         recip_freq = 1. / np.bincount(y_ind)
-        weight = recip_freq[le.transform(classes)] / np.mean(recip_freq)
+        recip_freq.resize(class_ind.shape[0])
+        weight = recip_freq[class_ind] / np.mean(recip_freq)
     else:
         # user-defined dictionary
         weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
