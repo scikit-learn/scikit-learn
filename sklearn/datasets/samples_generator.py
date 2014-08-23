@@ -285,9 +285,10 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     sparse : bool, optional (default=False)
         If ``True``, return a sparse feature matrix
 
-    return_indicator : bool, optional (default=False),
-        If ``True``, return ``Y`` in the binary indicator format, else
-        return a tuple of lists of labels.
+    return_indicator : False | True | 'dense' | 'sparse' (default=False),
+        If ``True`` (or ``'dense'``) return ``Y`` in the dense binary indicator
+        format. If ``'sparse'`` return ``Y`` in the sparse binary indicator
+        format. And by default, ``False``, return a tuple of lists of labels.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -360,8 +361,9 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     if not sparse:
         X = X.toarray()
 
-    if return_indicator:
-        lb = MultiLabelBinarizer(sparse_output=sparse)
+    if (return_indicator == True or return_indicator == 'dense'
+                                 or return_indicator == 'sparse'):
+        lb = MultiLabelBinarizer(sparse_output=(return_indicator=='sparse'))
         Y = lb.fit([range(n_classes)]).transform(Y)
     else:
         warnings.warn('Support for the sequence of sequences multilabel '
