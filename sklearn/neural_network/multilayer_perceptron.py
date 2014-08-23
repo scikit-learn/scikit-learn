@@ -28,7 +28,6 @@ def _pack(layers_coef_, layers_intercept_):
 
 
 class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
-
     """Base class for MLP classification and regression.
 
     Warning: This class should not be used directly.
@@ -478,7 +477,6 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
 class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
                                      ClassifierMixin):
-
     """Multi-layer Perceptron classifier.
 
     Under a loss function, the algorithm trains either by l-bfgs or gradient
@@ -615,7 +613,6 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
         training deep feedforward neural networks." International Conference
         on Artificial Intelligence and Statistics. 2010.
     """
-
     def __init__(self, n_hidden=[100], activation="relu",
                  algorithm='l-bfgs', alpha=0.00001,
                  batch_size=200, learning_rate="constant",
@@ -743,7 +740,6 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
 
 
 class MultilayerPerceptronRegressor(BaseMultilayerPerceptron, RegressorMixin):
-
     """Multi-layer Perceptron regressor.
 
     Under a loss function, the algorithm trains either by l-bfgs or gradient
@@ -874,7 +870,6 @@ class MultilayerPerceptronRegressor(BaseMultilayerPerceptron, RegressorMixin):
         training deep feedforward neural networks." International Conference
         on Artificial Intelligence and Statistics. 2010.
     """
-
     def __init__(self, n_hidden=[100], activation="relu",
                  algorithm='l-bfgs', alpha=0.00001,
                  batch_size=200, learning_rate="constant",
