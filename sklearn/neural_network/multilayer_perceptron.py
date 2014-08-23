@@ -28,6 +28,7 @@ def _pack(layers_coef_, layers_intercept_):
 
 
 class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
+
     """Base class for MLP classification and regression.
 
     Warning: This class should not be used directly.
@@ -198,7 +199,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         if self.alpha < 0.0:
             raise ValueError("alpha must be >= 0, got %s." % self.alpha)
         if (self.learning_rate in ["constant", "invscaling"] and
-           self.learning_rate_init <= 0.0):
+                self.learning_rate_init <= 0.0):
             raise ValueError("learning_rate_init must be > 0, got %s." %
                              self.learning_rate)
 
@@ -274,19 +275,19 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             for i in range(self.n_layers_ - 1):
                 rng = check_random_state(self.random_state)
 
-                fan_in = layer_units[i]
-                fan_out = layer_units[i + 1]
+                n_fan_in = layer_units[i]
+                n_fan_out = layer_units[i + 1]
 
                 # Use the initialization method recommended by
                 # Glorot et al.
-                weight_init_bound = np.sqrt(6. / (fan_in + fan_out))
+                weight_init_bound = np.sqrt(6. / (n_fan_in + n_fan_out))
 
                 self.layers_coef_.append(rng.uniform(-weight_init_bound,
                                                      weight_init_bound,
-                                                     (fan_in, fan_out)))
+                                                     (n_fan_in, n_fan_out)))
                 self.layers_intercept_.append(rng.uniform(-weight_init_bound,
                                                           weight_init_bound,
-                                                          fan_out))
+                                                          n_fan_out))
 
         if self.shuffle:
             X, y = shuffle(X, y, random_state=self.random_state)
@@ -298,15 +299,22 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             batch_size = np.clip(self.batch_size, 1, n_samples)
 
         # Initialize lists
+        # _a_layers: the ith index holds the neuron values of the ith layer.
         self._a_layers = [X]
-        self._a_layers.extend(np.empty((batch_size, layer_units[i + 1]))
-                              for i in range(self.n_layers_ - 1))
-        self._deltas = [np.empty((batch_size, layer_units[i + 1]))
-                        for i in range(self.n_layers_ - 1)]
-        self._coef_grads = [np.empty((layer_units[i], layer_units[i + 1]))
-                            for i in range(self.n_layers_ - 1)]
-        self._intercept_grads = [np.empty(layer_units[i + 1])
-                                 for i in range(self.n_layers_ - 1)]
+        self._a_layers.extend(np.empty((batch_size, n_fan_out))
+                              for n_fan_out in layer_units[1:])
+        # _deltas : part of the gradient equation, it holds the change
+        # required for updating the parameters in an iteration.
+        self._deltas = [np.empty_like(a_layer) for a_layer in self._a_layers]
+        # _coef_grad: the amount of change used to update the coefficient
+        # parameters in an iteration.
+        self._coef_grads = [np.empty((n_fan_in, n_fan_out)) for n_fan_in,
+                            n_fan_out in zip(layer_units[:-1],
+                                             layer_units[1:])]
+        # _intercept_grads: the amount of change used to update the intercept
+        # parameters in an iteration.
+        self._intercept_grads = [np.empty(n_fan_out) for n_fan_out in
+                                 layer_units[1:]]
 
         # Run the Stochastic Gradient Descent algorithm
         if self.algorithm == 'sgd':
@@ -358,10 +366,10 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
             # Save sizes and indices of coefficients for faster unpacking
             for i in range(self.n_layers_ - 1):
-                fan_in, fan_out = layer_units[i], layer_units[i + 1]
+                n_fan_in, n_fan_out = layer_units[i], layer_units[i + 1]
 
-                end = start + (fan_in * fan_out)
-                self._coef_indptr.append((start, end, (fan_in, fan_out)))
+                end = start + (n_fan_in * n_fan_out)
+                self._coef_indptr.append((start, end, (n_fan_in, n_fan_out)))
                 start = end
 
             # Save sizes and indices of intercepts for faster unpacking
@@ -371,7 +379,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                 start = end
 
             # Run LBFGS
-            packed_coef_inter = _pack(self.layers_coef_, 
+            packed_coef_inter = _pack(self.layers_coef_,
                                       self.layers_intercept_)
 
             if self.verbose is True or self.verbose >= 1:
@@ -470,6 +478,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
 class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
                                      ClassifierMixin):
+
     """Multi-layer Perceptron classifier.
 
     Under a loss function, the algorithm trains either by l-bfgs or gradient
@@ -606,7 +615,8 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
         training deep feedforward neural networks." International Conference
         on Artificial Intelligence and Statistics. 2010.
     """
-    def __init__(self, n_hidden=[100], activation="tanh",
+
+    def __init__(self, n_hidden=[100], activation="relu",
                  algorithm='l-bfgs', alpha=0.00001,
                  batch_size=200, learning_rate="constant",
                  learning_rate_init=0.5, power_t=0.5, max_iter=200,
@@ -733,6 +743,7 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
 
 
 class MultilayerPerceptronRegressor(BaseMultilayerPerceptron, RegressorMixin):
+
     """Multi-layer Perceptron regressor.
 
     Under a loss function, the algorithm trains either by l-bfgs or gradient
@@ -863,7 +874,8 @@ class MultilayerPerceptronRegressor(BaseMultilayerPerceptron, RegressorMixin):
         training deep feedforward neural networks." International Conference
         on Artificial Intelligence and Statistics. 2010.
     """
-    def __init__(self, n_hidden=[100], activation="tanh",
+
+    def __init__(self, n_hidden=[100], activation="relu",
                  algorithm='l-bfgs', alpha=0.00001,
                  batch_size=200, learning_rate="constant",
                  learning_rate_init=0.1,
