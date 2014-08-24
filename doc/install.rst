@@ -80,11 +80,17 @@ Installing build dependencies
 
 Installing from source requires you to have installed the scikit-learn runtime
 dependencies, Python development headers and a working C/C++ compiler.
-Under Debian-based operating systems, which include Ubuntu,
-you can install all these requirements by issuing::
+Under Debian-based operating systems, which include Ubuntu, if you have
+Python 2 you can install all these requirements by issuing::
 
     sudo apt-get install build-essential python-dev python-setuptools \
                          python-numpy python-scipy \
+                         libatlas-dev libatlas3gf-base
+
+If you have Python 3::
+
+    sudo apt-get install build-essential python3-dev python3-setuptools \
+                         python3-numpy python3-scipy \
                          libatlas-dev libatlas3gf-base
 
 On recent Debian and Ubuntu (e.g. Ubuntu 13.04 or later) make sure that ATLAS
