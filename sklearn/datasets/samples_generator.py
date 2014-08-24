@@ -285,10 +285,10 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     sparse : bool, optional (default=False)
         If ``True``, return a sparse feature matrix
 
-    return_indicator : False | True | 'dense' | 'sparse' (default=False),
-        If ``True`` (or ``'dense'``) return ``Y`` in the dense binary indicator
-        format. If ``'sparse'`` return ``Y`` in the sparse binary indicator
-        format. And by default, ``False``, return a tuple of lists of labels.
+    return_indicator : False | 'dense' | 'sparse' (default=False),
+        If ``dense`` return ``Y`` in the dense binary indicator format. If
+        ``'sparse'`` return ``Y`` in the sparse binary indicator format. And
+        by default, ``False``, will return a tuple of lists of labels.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -361,6 +361,7 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     if not sparse:
         X = X.toarray()
 
+    # return_indicator can be True due to backward compatibility
     if (return_indicator == True or return_indicator == 'dense'
                                  or return_indicator == 'sparse'):
         lb = MultiLabelBinarizer(sparse_output=(return_indicator=='sparse'))
@@ -369,7 +370,7 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
         warnings.warn('Support for the sequence of sequences multilabel '
                       'representation is being deprecated and replaced with '
                       'a sparse indicator matrix. '
-                      'return_indicator will default to True from version '
+                      "return_indicator will default to 'dense' from version "
                       '0.17.',
                       DeprecationWarning)
 
