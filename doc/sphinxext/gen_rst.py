@@ -1028,7 +1028,7 @@ def embed_code_links(app, exception):
 
                     # ensure greediness
                     names = sorted(str_repl, key=len, reverse=True)
-                    expr = re.compile(r'(?<!\.)\b' +  # don't follow . or word
+                    expr = re.compile(r'(?<!\.>)' +  # don't follow '.' or '>'
                                       '|'.join(re.escape(name)
                                                for name in names))
 
