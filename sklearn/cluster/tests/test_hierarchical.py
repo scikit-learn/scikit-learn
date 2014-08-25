@@ -11,7 +11,7 @@ import numpy as np
 from scipy import sparse
 from scipy.cluster import hierarchy
 
-from sklearn.utils.testing import assert_true, clean_warning_registry
+from sklearn.utils.testing import assert_true, clean_warning_registry, ignore_warnings
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -43,11 +43,7 @@ def test_linkage_misc():
     FeatureAgglomeration().fit(X)
 
     # Deprecation of Ward class
-    clean_warning_registry()
-    with warnings.catch_warnings(record=True) as warning_list:
-        warnings.simplefilter("always", DeprecationWarning)
-        Ward().fit(X)
-    assert_equal(len(warning_list), 1)
+    assert_warns(DeprecationWarning, Ward).fit(X)
 
     # test hiearchical clustering on a precomputed distances matrix
     dis = cosine_distances(X)
@@ -102,16 +98,10 @@ def test_unstructured_linkage_tree():
 
     for tree_builder in _TREE_BUILDERS.values():
         for this_X in (X, X[0]):
-            clean_warning_registry()
-            with warnings.catch_warnings(record=True) as warning_list:
-                warnings.simplefilter("always", UserWarning)
-                warnings.simplefilter("ignore", DeprecationWarning)
+#            clean_warning_registry()
+            with ignore_warnings():
+                children, n_nodes, n_leaves, parent = assert_warns(UserWarning, tree_builder, this_X.T, n_clusters=10)
 
-                # With specified a number of clusters just for the sake of
-                # raising a warning and testing the warning code
-                children, n_nodes, n_leaves, parent = tree_builder(
-                    this_X.T, n_clusters=10)
-            assert_equal(len(warning_list), 1)
             n_nodes = 2 * X.shape[1] - 1
             assert_equal(len(children) + n_leaves, n_nodes)
 
