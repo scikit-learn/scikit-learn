@@ -870,7 +870,7 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
                     my_stdout = my_stdout.replace(
                         my_globals['__doc__'],
                         '')
-                my_stdout = my_stdout.strip()
+                my_stdout = my_stdout.strip().expandtabs()
                 if my_stdout:
                     stdout = '**Script output**::\n\n  %s\n\n' % (
                         '\n  '.join(my_stdout.split('\n')))
