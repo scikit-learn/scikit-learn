@@ -262,7 +262,7 @@ def test_sparse_classification():
 
     X, y = datasets.make_multilabel_classification(n_classes=1, n_samples=15,
                                                    n_features=5,
-                                                   return_indicator=True,
+                                                   return_indicator='dense',
                                                    random_state=42)
     # Flatten y to a 1d array
     y = np.ravel(y)

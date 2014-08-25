@@ -570,7 +570,7 @@ def test_pickle():
 def test_grid_search_with_multioutput_data():
     """ Test search with multi-output estimator"""
 
-    X, y = make_multilabel_classification(return_indicator=True,
+    X, y = make_multilabel_classification(return_indicator='dense',
                                           random_state=0)
 
     est_parameters = {"max_depth": [1, 2, 3, 4]}
