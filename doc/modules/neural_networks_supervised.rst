@@ -33,10 +33,10 @@ layer transforms the values from the previous layer by a weighted linear summati
 :math:`g(\cdot):R \rightarrow R` - like the hyperbolic tan function. The output layer
 receives the values from the last hidden layer and transforms them into output values.
 
-The module contains the public attributes :math:`layers_coef_` and :math:`layers_intecept_`.
-:math:`layers_coef_` is a list of weight matrices, where weight matrix at index
+The module contains the public attributes ``layers_coef_`` and ``layers_intercept_``.
+``layers_coef_`` is a list of weight matrices, where weight matrix at index
 :math:`i` represents the weights between layer :math:`i` and layer 
-:math:`i+1`. :math:`layers_intercept_` is a list of bias vectors, where the vector
+:math:`i+1`. ``layers_intercept_`` is a list of bias vectors, where the vector
 at index :math:`i` represents the bias values added to layer :math:`i+1`.
 
 The advantages of Multi-layer Perceptron are:
@@ -103,8 +103,8 @@ following command,
 
 use :meth:`MultilayerPerceptronClassifier.decision_function`::
 
-    >>> clf.decision_function([[2., 2.], [1., 2.]])
-    array([ 11.55408143,  11.55408143])
+    >>> clf.decision_function([[2., 2.], [1., 2.]])  # doctest: +ELLIPSIS
+    array([11.55..., 11.55...])
 
 Currently, :class:`MultilayerPerceptronClassifier` supports only the 
 Cross-Entropy loss function, which allows probability estimates by running the 
@@ -114,9 +114,9 @@ MLP trains using backpropagation. For classification, it minimizes the
 Cross-Entropy loss function, giving a vector of probability estimates 
 :math:`P(y|x)` per sample :math:`x`:: 
 
-    >>> clf.predict_proba([[2., 2.], [1., 2.]])
-    array([[  9.59670230e-06,   9.99990403e-01],
-           [  9.59670230e-06,   9.99990403e-01]])
+    >>> clf.predict_proba([[2., 2.], [1., 2.]])  # doctest: +ELLIPSIS
+    array([[9.59...e-06, 9.99...e-01],
+           [9.59...e-06, 9.99...e-01]])
 
 :class:`MultilayerPerceptronClassifier` supports multi-class classification by 
 applying `Softmax <http://en.wikipedia.org/wiki/Softmax_activation_function>`_
