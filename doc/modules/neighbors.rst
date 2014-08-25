@@ -515,24 +515,26 @@ Approximate Nearest Neighbors
 =============================
 
 Even though there are several efficient exact nearest neighbor search
-algorithms known for the case when the dimension `d` is low (eg: up to 50 or 60
-), they tend to suffer from either space or query time that is exponential in
-`d`. For large enough `d`, in practice they often provide only a little
-improvement over linear time algorithm that compares query point to each point
-from the database which is the brute force algorithm discussed in the Nearest
-Neighbor Algorithms. This phenomena is often called “The Curse of
-Dimensionality”.
+algorithms known for the case when the dimension :math:`d` is low (eg: up to 50
+or 60), they tend to suffer from either space or query time that is exponential
+in :math:`d`. For large enough :math:`d`, in practice they often provide only
+a little improvement over the linear time :ref:`brute_force` algorithm that
+compares a query point to each point from the database.
+This phenomenon is often called “The Curse of Dimensionality”.
 
-Approximate nearest neighbor search is a method proposed for overcoming the
-bottleneck of running time of queries. In certain applications which involve
+Approximate nearest neighbor search is attempts to overcome the bottleneck
+of query running time. In certain applications which involve
 high dimensional data, it may be acceptable to retrieve a “good guess” for
-nearest neighbors. In such cases, an algorithm which does not guarantee to
+nearest neighbors. This is also appropriate where it is not as important to
+identify the neighbors themselves so much as to characterize the neighborhood,
+as in k-nearest neighbors classification and regression.
+In such cases, an algorithm which does not guarantee to
 return the actual nearest neighbors can be used, in return for improved speed.
-Algorithms that support approximate nearest neighbor search include locality
+Methods for approximate nearest neighbor search include locality
 sensitive hashing (LSH), best bin fit and balanced box-decomposition tree based
 search.
 
-Locality sensitive hashing algorithm and its variants have been successfully
+Locality sensitive hashing and its variants have been successfully
 applied to many computational problems in many areas. The key idea of LSH is to
 hash the data points using several hash functions to ensure that for each
 function, the probability of collision is much higher for the objects that are
@@ -547,24 +549,24 @@ hold (:math:`D` is the distance function):
 * If :math:`D(p,q) <= r` then :math:`P_H[h(p) = h(q)] >= p_1`,
 * If :math:`D(p,q) > r(1 + e)` then :math:`P_H[h(p) = h(q)] <= p_2`.
 
-The definition states that “nearby” points within a distance :math:`r` of
+The definition states that *nearby* points within a distance :math:`r` of
 each other are likely to collide (with probability :math:`p_1`), while 
-“distant” points more than :math:`r(1 + e)` apart have only a smaller
+*distant* points more than :math:`r(1 + e)` apart have only a smaller
 probability (:math:`p_2`) of colliding. Assuming that there is some family
 of LSH functions :math:`H` available, LSH index is built as follows:
 
-1. Choose :math:`k` functions :math:`h_1, h_2 , . . . h_k` uniformly at
+1. Choose :math:`k` functions :math:`h_1, h_2, … h_k` uniformly at
 random (with replacement) from :math:`H`. For any :math:`p ∈ S`, place
 :math:`p` in the bucket with label
-:math:`g(p) = (h_1(p), h_2(p), . . . h_k(p))`. Observe that if
+:math:`g(p) = (h_1(p), h_2(p), … h_k(p))`. Observe that if
 each :math:`h_i` outputs one “digit”, each bucket has a k-digit label.
 
 2. Independently perform step 1 :math:`l` times to construct :math:`l`
-separate estimators, with hash functions :math:`g_1, g_2 , . . . g_l`.
+separate estimators, with hash functions :math:`g_1, g_2, … g_l`.
 
-In step 1, if two “distant” points had a probability :math:`p_2` of
-collision with one hash function, their collision probability drops by
-just :math:`k`th power of :math:`p_2` with the concatenation, which becomes
+In step 1, if two distant points had a probability :math:`p_2` of
+collision with one hash function, their collision probability drops to
+just :math:`p_2^k` with the concatenation, which becomes
 negligibly small for large :math:`k`. However, a larger value of :math:`k`
 has the side-effect of lowering the chances of even nearby points colliding.
 Therefore, to ensure enough “good” collisions occur, step 2 constructs
@@ -591,33 +593,24 @@ implementation, the length of the sequence of hash functions is kept fixed at
 32. Moreover, a prefix tree is implemented using sorted arrays and binary 
 search.
 
-.. topic:: References:
-
-   * `“LSH Forest: Self-Tuning Indexes for Similarity Search”
-     <http://www2005.org/docs/p651.pdf>`_,
-     Bawa, M., Condie, T., Ganesan, P., WWW '05 Proceedings of the 14th
-     international conference on World Wide Web  Pages 651-660
-
-Nearest Neighbor Queries of LSH Forest
---------------------------------------
-
 A query for the :math:`m` nearest neighbors of a point :math:`q` is answered by
 traversing the LSH trees in two phases. In the first top-down phase, each LSH
-Tree is descended to find the leaf having the largest prefix match(maximum
-depth)  with :math:`q`s label after subject :math:`q` to the same hashing
-functions.  In the second bottom-up phase, :math:`M` points (total candidates)
-from the LSH Forest, moving up from maximum depth towards the root
-synchronously across all LSH trees. :math:`M` is set to :math:`cl` where
-:math:`c` is constant. We call this :math:`c` the number of candidates from a 
-tree. :math:`M >> m`. Finally , similarity of all :math:`M` points to point
+Tree is descended (by binary search) to find the leaf having the largest prefix
+match (maximum depth) with :math:`q`'s label after subjecting :math:`q` to the
+same hashing functions.  In the second bottom-up phase, :math:`M >> m` points
+(total candidates) are extracted from the LSH Forest, moving up from maximum
+depth towards the root synchronously across all LSH trees. :math:`M` is set to
+:math:`cl` where :math:`c`, the number of candidates extracted from each tree,
+is constant.
+Finally , similarity of all :math:`M` points to point
 :math:`q` are calculated and top :math:`m` points are returned as the nearest
-neighbors of :math:`q`. Since much of time is spent calculating the distances
-to candidates, the speedup compared to brute force search is approximately
-:math:`n/M` where :math:`n` is the number of points in database.
+neighbors of :math:`q`. Since much of the time is spent calculating the
+distances to candidates, the speedup compared to brute force search is
+approximately :math:`N/M` where :math:`N` is the number of points in database.
 
 The query time depends mainly on the parameters :math:`l` and :math:`c`
 (``n_estimators`` and ``n_candidates`` in our implementation). The behaviour of
-query time at the variation of these parameters are as follows.
+query time while varying these parameters are as follows.
 
 .. figure:: ../auto_examples/neighbors/images/plot_approximate_nearest_neighbors_001.png
    :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors.html
@@ -628,3 +621,10 @@ query time at the variation of these parameters are as follows.
 
   * :ref:`example_neighbors_plot_approximate_nearest_neighbors.py`: an example of
     approximate nearest neighbor search using LSH Forest.
+
+.. topic:: References:
+
+   * `“LSH Forest: Self-Tuning Indexes for Similarity Search”
+     <http://www2005.org/docs/p651.pdf>`_,
+     Bawa, M., Condie, T., Ganesan, P., WWW '05 Proceedings of the 14th
+     international conference on World Wide Web  Pages 651-660
