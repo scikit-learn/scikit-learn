@@ -29,13 +29,13 @@ dt.fit(train, target)
 
 prediction = dt.predict(test)
 #compute the decision paths from root to leaf for each sample
-paths = dt.predict(test, return_paths = True)
+paths = dt.decision_paths(test)
 
 contribution_list = []
 for path in paths:
     contributions = defaultdict(int)
     for i in range(len(path)):
-        if path[i+1] == -1:
+        if i == len(path) - 1 or path[i+1] == -1:
             break
         node_id = path[i]
         next_node_id = path[i+1]
@@ -43,8 +43,6 @@ for path in paths:
         #decision node, and the mean at the following child node
         contributions[dt.tree_.feature[node_id]] += \
             dt.tree_.value[next_node_id][0][0] - dt.tree_.value[node_id][0][0]
-        
-        
     contribution_list.append(contributions)
   
 print "Training set mean:", np.mean(target)
