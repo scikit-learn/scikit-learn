@@ -87,7 +87,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
             # since we should not destroy the sparsity of such matrices.
             _, _, X_mean, _, X_std = sparse_center_data(X, y, fit_intercept,
                                                         normalize)
-            mean_dot = np.sum(X_mean[:, np.newaxis] * y, axis=1)
+            mean_dot = X_mean * np.sum(y)
 
     if Xy.ndim == 1:
         Xy = Xy[:, np.newaxis]

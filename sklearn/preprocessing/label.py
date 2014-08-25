@@ -668,6 +668,9 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     classes : array-like of shape [n_classes] (optional)
         Indicates an ordering for the class labels
 
+    sparse_output : boolean (default: False),
+        Set to true if output binary array is desired in CSR sparse format
+
     Attributes
     ----------
     classes_ : array of labels

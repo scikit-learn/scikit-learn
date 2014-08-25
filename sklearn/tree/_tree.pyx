@@ -2202,7 +2202,7 @@ cdef class Tree:
     threshold : array of double, shape [node_count]
         threshold[i] holds the threshold for the internal node i.
 
-    value : array of double, shape [node_count, n_outputs, ]
+    value : array of double, shape [node_count, n_outputs, max_n_classes]
         Contains the constant prediction value of each node.
 
     impurity : array of double, shape [node_count]

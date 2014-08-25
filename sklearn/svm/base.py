@@ -596,6 +596,7 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
         'PL1_LL2_D0': 5,  # L1 penalty, L2 Loss, primal form
         'PL1_LLR_D0': 6,  # L1 penalty, logistic regression
         'PL2_LLR_D1': 7,  # L2 penalty, logistic regression, dual form
+        'PL2_MLR_D0': 8,  # L2 penalty, multinomial logistic regression, primal form
     }
 
     @abstractmethod
@@ -635,9 +636,13 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
         elif self.multi_class == 'ovr':
             solver_type = "P%s_L%s_D%d" % (
                 self.penalty.upper(), self.loss.upper(), int(self.dual))
+        elif self.multi_class == 'multinomial':
+            solver_type = "P%s_MLR_D%d" % (
+                self.penalty.upper(), int(self.dual))
         else:
             raise ValueError("`multi_class` must be one of `ovr`, "
-                             "`crammer_singer`, got %r" % self.multi_class)
+                             "`crammer_singer`, `multinomial` got %r" %
+                             self.multi_class)
         if not solver_type in self._solver_type_dict:
             if self.penalty.upper() == 'L1' and self.loss.upper() == 'L1':
                 error_string = ("The combination of penalty='l1' "
@@ -686,6 +691,10 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
                 raise ValueError("newton-cg and lbfgs solvers support only "
                                  "the primal form.")
 
+        if self.C < 0:
+            raise ValueError("Penalty term must be positive; got (C=%r)"
+                             % self.C)
+
         self._enc = LabelEncoder()
         y_ind = self._enc.fit_transform(y)
         if len(self.classes_) < 2:
@@ -706,6 +715,10 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
         if self.solver not in ['liblinear', 'newton-cg', 'lbfgs']:
             raise ValueError("Logistic Regression supports only liblinear,"
                              " newton-cg and lbfgs solvers.")
+
+        if self.solver != 'lbfgs' and self.multi_class == 'multinomial':
+            raise ValueError("Solver %s does not support a multinomial "
+                             "backend.")
 
         if self.solver == 'liblinear':
             liblinear.set_verbosity_wrap(self.verbose)
@@ -752,21 +765,37 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
             self.coef_ = np.empty((n_tasks, X.shape[1]))
             self.intercept_ = np.zeros(n_tasks)
 
-            for ind, class_ in enumerate(classes_):
+            if self.multi_class == 'ovr':
+                for ind, class_ in enumerate(classes_):
+                    coef_, _ = logistic_regression_path(
+                        X, y, pos_class=class_, Cs=[self.C],
+                        fit_intercept=self.fit_intercept,
+                        tol=self.tol, verbose=self.verbose,
+                        solver=self.solver, copy=True, multi_class='ovr',
+                        max_iter=self.max_iter,
+                        class_weight=self.class_weight)
+
+                    coef_ = coef_[0]
+                    if self.fit_intercept:
+                        self.coef_[ind] = coef_[:-1]
+                        self.intercept_[ind] = coef_[-1]
+
+                    else:
+                        self.coef_[ind] = coef_
+
+            else:
                 coef_, _ = logistic_regression_path(
-                    X, y, pos_class=class_, Cs=[self.C],
+                    X, y, Cs=[self.C],
                     fit_intercept=self.fit_intercept,
                     tol=self.tol, verbose=self.verbose,
-                    solver=self.solver, copy=True,
+                    solver=self.solver, multi_class='multinomial',
                     max_iter=self.max_iter, class_weight=self.class_weight)
-
                 coef_ = coef_[0]
                 if self.fit_intercept:
-                    self.coef_[ind] = coef_[:-1]
-                    self.intercept_[ind] = coef_[-1]
-
+                    self.coef_ = coef_[:, :-1]
+                    self.intercept_ = coef_[:, -1]
                 else:
-                    self.coef_[ind] = coef_
+                    self.coef_ = coef_
 
         if self.multi_class == "crammer_singer" and len(self.classes_) == 2:
             self.coef_ = (self.coef_[1] - self.coef_[0]).reshape(1, -1)

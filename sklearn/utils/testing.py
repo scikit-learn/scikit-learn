@@ -120,7 +120,6 @@ def assert_greater_equal(a, b, msg=None):
     assert a >= b, message
 
 
-# To remove when we support numpy 1.7
 def assert_warns(warning_class, func, *args, **kw):
     """Test that a certain warning occurs.
 

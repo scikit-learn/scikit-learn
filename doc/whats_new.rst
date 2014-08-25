@@ -12,7 +12,6 @@ Changelog
 New features
 ............
 
-
    - Incremental fit for :class:`GaussianNB <naive_bayes.GaussianNB>`.
 
    - Add ``sample_weight`` support to :class:`dummy.DummyClassifier`. By
@@ -33,9 +32,9 @@ New features
 Enhancements
 ............
 
-
    - Add support for sample weights in scorer objects.  Metrics with sample
-     weight support will automatically benefit from it.
+     weight support will automatically benefit from it. By `Noel Dawe`_ and
+     `Vlad Niculae`_.
 
    - Added ``newton-cg`` and `lbfgs` solver support in
      :class:`linear_model.LogisticRegression`. By `Manoj Kumar`_.
@@ -47,6 +46,19 @@ Enhancements
    - Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score` and
      `metrics.log_loss`. By `Jatin Shah`_.
 
+   - Support sparse multilabel indicator representation in
+     :class:`preprocessing.LabelBinarizer` and
+     :class:`multiclass.OneVsRestClassifier` (by `Hamzeh Alsalhi`_ with thanks
+     to `Rohit Sivaprasad`_), as well as evaluation metrics (by
+     `Joel Nothman`_).
+
+   - Add ``multi_class="multinomial"`` option in
+     :class:`linear_model.LogisticRegression` to implement a Logistic
+     Regression solver that minimizes the cross-entropy or multinomial loss
+     instead of the default One-vs-Rest setting. By `Lars Buitinck`_ and
+     `Manoj Kumar`_.
+
+
 Documentation improvements
 ..........................
 
@@ -54,9 +66,18 @@ Documentation improvements
 Bug fixes
 .........
 
-    - The :class:`decomposition.PCA` now undoes whitening in its 
+    - The :class:`decomposition.PCA` now undoes whitening in its
      ``inverse_transform``. Also, its ``components_`` now always have unit
      length. By Michael Eickenberg.
+
+    - Fix incomplete download of the dataset when
+      :func:`datasets.download_20newsgroups` is called. By `Manoj Kumar`_.
+
+    - Various fixes to the Gaussian processes subpackage by Vincent Dubourg
+      and Jan Hendrik Metzen.
+
+    - The ``transform`` of :class:`lda.LDA` now projects the input on the most
+      discriminant directions. By Martin Billinger.
 
 
 API changes summary

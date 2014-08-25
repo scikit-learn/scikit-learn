@@ -371,7 +371,8 @@ function or **logistic** function:
     >>> logistic.fit(iris_X_train, iris_y_train)
     LogisticRegression(C=100000.0, class_weight=None, dual=False,
               fit_intercept=True, intercept_scaling=1, max_iter=100,
-              penalty='l2', random_state=None, solver='liblinear', tol=0.0001)
+              multi_class='ovr', penalty='l2', random_state=None,
+              solver='liblinear', tol=0.0001)
 
 This is known as :class:`LogisticRegression`.
 
@@ -400,10 +401,10 @@ This is known as :class:`LogisticRegression`.
    model. Leave out the last 10% and test prediction performance on these
    observations.
 
-   .. literalinclude:: ../../auto_examples/exercises/plot_digits_classification_exercise.py
-       :lines: 12-17
+   .. literalinclude:: ../../auto_examples/exercises/digits_classification_exercise.py
+       :lines: 15-19
 
-   Solution: :download:`../../auto_examples/exercises/plot_digits_classification_exercise.py`
+   Solution: :download:`../../auto_examples/exercises/digits_classification_exercise.py`
 
 
 Support vector machines (SVMs)
@@ -567,6 +568,6 @@ creating a decision energy by positioning *kernels* on observations:
    intuitions.
 
    .. literalinclude:: ../../auto_examples/exercises/plot_iris_exercise.py
-       :lines: 15-22
+       :lines: 18-23
 
    Solution: :download:`../../auto_examples/exercises/plot_iris_exercise.py`
