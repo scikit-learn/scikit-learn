@@ -88,9 +88,7 @@ def test_unstructured_linkage_tree():
     for this_X in (X, X[0]):
         # With specified a number of clusters just for the sake of
         # raising a warning and testing the warning code
-        clean_warning_registry()
-        with warnings.catch_warnings(record=True) as warning_list:
-            warnings.simplefilter("ignore", DeprecationWarning)
+        with ignore_warnings():
             children, n_nodes, n_leaves, parent = assert_warns(
                 UserWarning, ward_tree, this_X.T, n_clusters=10)
         n_nodes = 2 * X.shape[1] - 1
@@ -98,9 +96,9 @@ def test_unstructured_linkage_tree():
 
     for tree_builder in _TREE_BUILDERS.values():
         for this_X in (X, X[0]):
-#            clean_warning_registry()
             with ignore_warnings():
-                children, n_nodes, n_leaves, parent = assert_warns(UserWarning, tree_builder, this_X.T, n_clusters=10)
+                children, n_nodes, n_leaves, parent = assert_warns(
+                    UserWarning, tree_builder, this_X.T, n_clusters=10)
 
             n_nodes = 2 * X.shape[1] - 1
             assert_equal(len(children) + n_leaves, n_nodes)
@@ -200,15 +198,10 @@ def test_ward_agglomeration():
     X = rnd.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
     assert_warns(DeprecationWarning, WardAgglomeration)
-    clean_warning_registry()
-    with warnings.catch_warnings(record=True) as warning_list:
-        warnings.simplefilter("always", DeprecationWarning)
-        if hasattr(np, 'VisibleDeprecationWarning'):
-            # Let's not catch the numpy internal DeprecationWarnings
-            warnings.simplefilter('ignore', np.VisibleDeprecationWarning)
+
+    with ignore_warnings():
         ward = WardAgglomeration(n_clusters=5, connectivity=connectivity)
         ward.fit(X)
-        assert_equal(len(warning_list), 1)
     agglo = FeatureAgglomeration(n_clusters=5, connectivity=connectivity)
     agglo.fit(X)
     assert_array_equal(agglo.labels_, ward.labels_)
