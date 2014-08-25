@@ -101,8 +101,9 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
                      p=2, metric_params=None, **kwargs):
         if kwargs:
             warnings.warn("Passing additional arguments to the metric "
-                          "function as **kwargs is deprecated. "
-                          "Use metric_params dict instead.",
+                          "function as **kwargs is deprecated "
+                          "and will no longer be supported in 0.18. "
+                          "Use metric_params instead.",
                           DeprecationWarning, stacklevel=3)
             if metric_params is None:
                 metric_params = {}

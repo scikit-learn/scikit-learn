@@ -48,6 +48,17 @@ Bug fixes
     - The ``transform`` of :class:`lda.LDA` now projects the input on the most
       discriminant directions. By Martin Billinger.
 
+    - Nearest neighbors estimators now reliably work inside ``GridSearchCV``,
+      thanks to Nikolay Mayorov.
+
+
+API changes summary
+-------------------
+
+    - Nearest neighbors estimators used to take arbitrary keyword arguments
+      and pass these to their distance metric. This will no longer be supported
+      in scikit-learn 0.18; use the ``metric_params`` argument instead.
+
 
 .. _changes_0_15:
 
