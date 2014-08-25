@@ -7,7 +7,6 @@ from .data import Binarizer
 from .data import KernelCenterer
 from .data import MinMaxScaler
 from .data import Normalizer
-from .data import Scaler
 from .data import StandardScaler
 from .data import add_dummy_feature
 from .data import binarize
@@ -20,9 +19,9 @@ from .data import PolynomialFeatures
 from .label import label_binarize
 from .label import LabelBinarizer
 from .label import LabelEncoder
+from .label import MultiLabelBinarizer
 
 from .imputation import Imputer
-from ._weights import balance_weights
 
 __all__ = [
     'Binarizer',
@@ -30,14 +29,13 @@ __all__ = [
     'KernelCenterer',
     'LabelBinarizer',
     'LabelEncoder',
+    'MultiLabelBinarizer',
     'MinMaxScaler',
     'Normalizer',
     'OneHotEncoder',
-    'Scaler',
     'StandardScaler',
     'add_dummy_feature',
     'PolynomialFeatures',
-    'balance_weights',
     'binarize',
     'normalize',
     'scale',

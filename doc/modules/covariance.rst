@@ -24,8 +24,8 @@ Empirical covariance
 ====================
 
 The covariance matrix of a data set is known to be well approximated
-with the classical `Maximum Likelihood Estimator` (or `empirical
-covariance`), provided the number of observations is large enough
+with the classical *maximum likelihood estimator* (or "empirical
+covariance"), provided the number of observations is large enough
 compared to the number of features (the variables describing the
 observations). More precisely, the Maximum Likelihood Estimator of a
 sample is an unbiased estimator of the corresponding population
@@ -36,10 +36,10 @@ The empirical covariance matrix of a sample can be computed using the
 :class:`EmpiricalCovariance` object to the data sample with the
 :meth:`EmpiricalCovariance.fit` method.  Be careful that depending
 whether the data are centered or not, the result will be different, so
-one may want to use the `assume_centered` parameter accurately. More precisely
-if one uses `assume_centered=False`, then the test set is supposed to have the 
+one may want to use the ``assume_centered`` parameter accurately. More precisely
+if one uses ``assume_centered=False``, then the test set is supposed to have the
 same mean vector as the training set. If not so, both should be centered by the 
-user, and `assume_centered=True` should be used.
+user, and ``assume_centered=True`` should be used.
 
 .. topic:: Examples:
 
@@ -62,7 +62,7 @@ eigenvalues of the covariance matrix, so the precision matrix obtained
 from its inversion is not accurate. Sometimes, it even occurs that the
 empirical covariance matrix cannot be inverted for numerical
 reasons. To avoid such an inversion problem, a transformation of the
-empirical covariance matrix has been introduced: the `shrinkage`. 
+empirical covariance matrix has been introduced: the ``shrinkage``.
 
 In the scikit-learn, this transformation (with a user-defined shrinkage
 coefficient) can be directly applied to a pre-computed covariance with
@@ -70,7 +70,7 @@ the :func:`shrunk_covariance` method. Also, a shrunk estimator of the
 covariance can be fitted to data with a :class:`ShrunkCovariance` object
 and its :meth:`ShrunkCovariance.fit` method.  Again, depending whether
 the data are centered or not, the result will be different, so one may
-want to use the `assume_centered` parameter accurately.
+want to use the ``assume_centered`` parameter accurately.
 
 
 Mathematically, this shrinkage consists in reducing the ratio between the
@@ -80,7 +80,7 @@ offset, which is equivalent of finding the l2-penalized Maximum
 Likelihood Estimator of the covariance matrix. In practice, shrinkage
 boils down to a simple a convex transformation : :math:`\Sigma_{\rm
 shrunk} = (1-\alpha)\hat{\Sigma} + \alpha\frac{{\rm
-Tr}\hat{\Sigma}}{p}\rm Id`.  
+Tr}\hat{\Sigma}}{p}\rm Id`.
 
 Choosing the amount of shrinkage, :math:`\alpha` amounts to setting a
 bias/variance trade-off, and is discussed below.
@@ -133,7 +133,7 @@ with the :meth:`oas` function of the `sklearn.covariance`
 package, or it can be otherwise obtained by fitting an :class:`OAS`
 object to the same sample.
 
-.. figure:: ../auto_examples/covariance/images/plot_covariance_estimation_1.png
+.. figure:: ../auto_examples/covariance/images/plot_covariance_estimation_001.png
    :target: ../auto_examples/covariance/plot_covariance_estimation.html
    :align: center
    :scale: 65%
@@ -155,7 +155,7 @@ object to the same sample.
      an :class:`OAS` estimator of the covariance.
 
 
-.. figure:: ../auto_examples/covariance/images/plot_lw_vs_oas_1.png
+.. figure:: ../auto_examples/covariance/images/plot_lw_vs_oas_001.png
    :target: ../auto_examples/covariance/plot_lw_vs_oas.html
    :align: center
    :scale: 75%
@@ -175,19 +175,19 @@ a sparse precision matrix: by learning independence relations from the
 data, the estimation of the covariance matrix is better conditioned. This
 is known as *covariance selection*.
 
-In the small-samples situation, in which `n_samples` is on the order of magnitude
-of `n_features` or smaller, sparse inverse covariance estimators tend to work
+In the small-samples situation, in which ``n_samples`` is on the order
+of ``n_features`` or smaller, sparse inverse covariance estimators tend to work
 better than shrunk covariance estimators. However, in the opposite
 situation, or for very correlated data, they can be numerically unstable.
 In addition, unlike shrinkage estimators, sparse estimators are able to
 recover off-diagonal structure.
 
 The :class:`GraphLasso` estimator uses an l1 penalty to enforce sparsity on
-the precision matrix: the higher its `alpha` parameter, the more sparse
+the precision matrix: the higher its ``alpha`` parameter, the more sparse
 the precision matrix. The corresponding :class:`GraphLassoCV` object uses
-cross-validation to automatically set the `alpha` parameter.
+cross-validation to automatically set the ``alpha`` parameter.
 
-.. figure:: ../auto_examples/covariance/images/plot_sparse_cov_1.png
+.. figure:: ../auto_examples/covariance/images/plot_sparse_cov_001.png
    :target: ../auto_examples/covariance/plot_sparse_cov.html
    :align: center
    :scale: 60%
@@ -219,18 +219,18 @@ cross-validation to automatically set the `alpha` parameter.
 
 The mathematical formulation is the following:
 
-.. math::    
-   
+.. math::
+
     \hat{K} = \mathrm{argmin}_K \big(
                 \mathrm{tr} S K - \mathrm{log} \mathrm{det} K
                 + \alpha \|K\|_1
                 \big)
 
-Where `K` is the precision matrix to be estimated, and `S` is the sample
-covariance matrix. :math:`\|K\|_1` is the sum of the absolute values of
-off-diagonal coefficients of `K`. The algorithm employed to solve this
+Where :math:`K` is the precision matrix to be estimated, and :math:`S` is the
+sample covariance matrix. :math:`\|K\|_1` is the sum of the absolute values of
+off-diagonal coefficients of :math:`K`. The algorithm employed to solve this
 problem is the GLasso algorithm, from the Friedman 2008 Biostatistics
-paper. It is the same algorithm as in the R `glasso` package.
+paper. It is the same algorithm as in the R ``glasso`` package.
 
 
 .. topic:: Examples:
@@ -244,7 +244,7 @@ paper. It is the same algorithm as in the R `glasso` package.
 
 .. topic:: References:
 
-   * Friedman et al, `"Sparse inverse covariance estimation with the 
+   * Friedman et al, `"Sparse inverse covariance estimation with the
      graphical lasso" <http://biostatistics.oxfordjournals.org/content/9/3/432.short>`_,
      Biostatistics 9, pp 432, 2008
 
@@ -264,7 +264,7 @@ sets. Alternatively, robust covariance estimators can be used to
 perform outlier detection and discard/downweight some observations
 according to further processing of the data.
 
-The `sklearn.covariance` package implements a robust estimator of covariance,
+The ``sklearn.covariance`` package implements a robust estimator of covariance,
 the Minimum Covariance Determinant [3].
 
 
@@ -272,7 +272,7 @@ Minimum Covariance Determinant
 ------------------------------
 
 The Minimum Covariance Determinant estimator is a robust estimator of
-a data set's covariance introduced by P.J.Rousseeuw in [3].  The idea
+a data set's covariance introduced by P.J. Rousseeuw in [3].  The idea
 is to find a given proportion (h) of "good" observations which are not
 outliers and compute their empirical covariance matrix.  This
 empirical covariance matrix is then rescaled to compensate the
@@ -288,7 +288,7 @@ in scikit-learn when fitting an MCD object to data. The FastMCD
 algorithm also computes a robust estimate of the data set location at
 the same time.
 
-Raw estimates can be accessed as `raw_location_` and `raw_covariance_`
+Raw estimates can be accessed as ``raw_location_`` and ``raw_covariance_``
 attributes of a :class:`MinCovDet` robust covariance estimator object.
 
 [3] P. J. Rousseeuw. Least median of squares regression.
@@ -303,16 +303,16 @@ attributes of a :class:`MinCovDet` robust covariance estimator object.
      an example on how to fit a :class:`MinCovDet` object to data and see how
      the estimate remains accurate despite the presence of outliers.
 
-   * See :ref:`example_covariance_plot_mahalanobis_distances.py` to 
+   * See :ref:`example_covariance_plot_mahalanobis_distances.py` to
      visualize the difference between :class:`EmpiricalCovariance` and
      :class:`MinCovDet` covariance estimators in terms of Mahalanobis distance
      (so we get a better estimate of the precision matrix too).
 
-.. |robust_vs_emp| image:: ../auto_examples/covariance/images/plot_robust_vs_empirical_covariance_1.png
+.. |robust_vs_emp| image:: ../auto_examples/covariance/images/plot_robust_vs_empirical_covariance_001.png
    :target: ../auto_examples/covariance/plot_robust_vs_empirical_covariance.html
    :scale: 49%
 
-.. |mahalanobis| image:: ../auto_examples/covariance/images/plot_mahalanobis_distances_1.png
+.. |mahalanobis| image:: ../auto_examples/covariance/images/plot_mahalanobis_distances_001.png
    :target: ../auto_examples/covariance/plot_mahalanobis_distances.html
    :scale: 49%
 

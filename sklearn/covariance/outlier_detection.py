@@ -111,17 +111,17 @@ class EllipticEnvelope(ClassifierMixin, OutlierDetectionMixin, MinCovDet):
       The amount of contamination of the data set, i.e. the proportion of \
       outliers in the data set.
 
-    `location_` : array-like, shape (n_features,)
+    location_ : array-like, shape (n_features,)
         Estimated robust location
 
-    `covariance_` : array-like, shape (n_features, n_features)
+    covariance_ : array-like, shape (n_features, n_features)
         Estimated robust covariance matrix
 
-    `precision_` : array-like, shape (n_features, n_features)
+    precision_ : array-like, shape (n_features, n_features)
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
-    `support_` : array-like, shape (n_samples,)
+    support_ : array-like, shape (n_samples,)
         A mask of the observations that have been used to compute the
         robust estimates of location and shape.
 

@@ -3,11 +3,10 @@ from io import BytesIO
 import numpy as np
 import scipy.sparse
 
-import warnings
-
 from sklearn.datasets import load_digits
 from sklearn.cross_validation import cross_val_score
 
+from sklearn.externals.six.moves import zip
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -137,6 +136,20 @@ def test_discretenb_partial_fit():
         yield check_partial_fit, cls
 
 
+def test_gnb_partial_fit():
+    clf = GaussianNB().fit(X, y)
+    clf_pf = GaussianNB().partial_fit(X, y, np.unique(y))
+    assert_array_almost_equal(clf.theta_, clf_pf.theta_)
+    assert_array_almost_equal(clf.sigma_, clf_pf.sigma_)
+    assert_array_almost_equal(clf.class_prior_, clf_pf.class_prior_)
+
+    clf_pf2 = GaussianNB().partial_fit(X[0::2, :], y[0::2], np.unique(y))
+    clf_pf2.partial_fit(X[1::2], y[1::2])
+    assert_array_almost_equal(clf.theta_, clf_pf2.theta_)
+    assert_array_almost_equal(clf.sigma_, clf_pf2.sigma_)
+    assert_array_almost_equal(clf.class_prior_, clf_pf2.class_prior_)
+
+
 def test_discretenb_pickle():
     """Test picklability of discrete naive Bayes classifiers"""
 
@@ -253,27 +266,6 @@ def test_discretenb_provide_prior():
                       classes=[0, 1, 1])
 
 
-def test_deprecated_fit_param():
-    warnings.simplefilter("always", DeprecationWarning)
-    try:
-        for cls in [BernoulliNB, MultinomialNB]:
-            clf = cls()
-            with warnings.catch_warnings(record=True) as w:
-                clf.fit([[0], [1], [2]], [0, 1, 1], class_prior=[0.5, 0.5])
-
-            # Passing class_prior as a fit param should raise a deprecation
-            # warning
-            assert_equal(len(w), 1)
-            assert_equal(w[0].category, DeprecationWarning)
-
-            with warnings.catch_warnings(record=True):
-                # Inconsistent number of classes with prior
-                assert_raises(ValueError, clf.fit, [[0], [1], [2]], [0, 1, 2],
-                              class_prior=[0.5, 0.5])
-    finally:
-        warnings.filters.pop(0)
-
-
 def test_sample_weight_multiclass():
     for cls in [BernoulliNB, MultinomialNB]:
         # check shape consistency for number of samples at fit time
@@ -293,7 +285,7 @@ def check_sample_weight_multiclass(cls):
     clf = cls().fit(X, y, sample_weight=sample_weight)
     assert_array_equal(clf.predict(X), [0, 1, 1, 2])
 
-    # Check wample weight using the partial_fit method
+    # Check sample weight using the partial_fit method
     clf = cls()
     clf.partial_fit(X[:2], y[:2], classes=[0, 1, 2],
                     sample_weight=sample_weight[:2])

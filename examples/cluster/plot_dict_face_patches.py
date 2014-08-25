@@ -22,7 +22,7 @@ print(__doc__)
 
 import time
 
-import pylab as pl
+import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -68,17 +68,17 @@ print('done in %.2fs.' % dt)
 
 ###############################################################################
 # Plot the results
-pl.figure(figsize=(4.2, 4))
+plt.figure(figsize=(4.2, 4))
 for i, patch in enumerate(kmeans.cluster_centers_):
-    pl.subplot(9, 9, i + 1)
-    pl.imshow(patch.reshape(patch_size), cmap=pl.cm.gray,
-              interpolation='nearest')
-    pl.xticks(())
-    pl.yticks(())
+    plt.subplot(9, 9, i + 1)
+    plt.imshow(patch.reshape(patch_size), cmap=plt.cm.gray,
+               interpolation='nearest')
+    plt.xticks(())
+    plt.yticks(())
 
 
-pl.suptitle('Patches of faces\nTrain time %.1fs on %d patches' %
-            (dt, 8 * len(faces.images)), fontsize=16)
-pl.subplots_adjust(0.08, 0.02, 0.92, 0.85, 0.08, 0.23)
+plt.suptitle('Patches of faces\nTrain time %.1fs on %d patches' %
+             (dt, 8 * len(faces.images)), fontsize=16)
+plt.subplots_adjust(0.08, 0.02, 0.92, 0.85, 0.08, 0.23)
 
-pl.show()
+plt.show()

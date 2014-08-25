@@ -4,17 +4,20 @@
 #
 # License: BSD 3 clause
 
-import numpy as np
 import warnings
+
+import numpy as np
+
 from .base import is_classifier, clone
 from .cross_validation import _check_cv
-from .utils import check_arrays
 from .externals.joblib import Parallel, delayed
 from .cross_validation import _safe_split, _score, _fit_and_score
 from .metrics.scorer import check_scoring
+from .utils import indexable
+from .utils.fixes import astype
 
 
-def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
+def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
                    cv=None, scoring=None, exploit_incremental_learning=False,
                    n_jobs=1, pre_dispatch="all", verbose=0):
     """Learning curve.
@@ -49,7 +52,7 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
         Otherwise it is interpreted as absolute sizes of the training sets.
         Note that for classification the number of samples usually have to
         be big enough to contain at least one sample from each class.
-        (default: np.linspace(0.1, 1.0, 10))
+        (default: np.linspace(0.1, 1.0, 5))
 
     cv : integer, cross-validation generator, optional
         If an integer is passed, it is the number of folds (defaults to 3).
@@ -91,13 +94,14 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
 
     Notes
     -----
-    See :ref:`examples/plot_learning_curve.py <example_plot_learning_curve.py>`
+    See :ref:`examples/model_selection/plot_learning_curve.py
+    <example_model_selection_plot_learning_curve.py>`
     """
     if exploit_incremental_learning and not hasattr(estimator, "partial_fit"):
         raise ValueError("An estimator must support the partial_fit interface "
                          "to exploit incremental learning")
 
-    X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
+    X, y = indexable(X, y)
     # Make a list since we will be iterating multiple times over the folds
     cv = list(_check_cv(cv, X, y, classifier=is_classifier(estimator)))
     scorer = check_scoring(estimator, scoring=scoring)
@@ -132,7 +136,7 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
             verbose, parameters=None, fit_params=None, return_train_score=True)
             for train, test in cv for n_train_samples in train_sizes_abs)
         out = np.array(out)[:, :2]
-        n_cv_folds = out.shape[0] / n_unique_ticks
+        n_cv_folds = out.shape[0] // n_unique_ticks
         out = out.reshape(n_cv_folds, n_unique_ticks, 2)
 
     out = np.asarray(out).transpose((2, 1, 0))
@@ -175,8 +179,8 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
                              "must be within (0, 1], but is within [%f, %f]."
                              % (n_min_required_samples,
                                 n_max_required_samples))
-        train_sizes_abs = (train_sizes_abs
-                           * n_max_training_samples).astype(np.int)
+        train_sizes_abs = astype(train_sizes_abs * n_max_training_samples,
+                                 dtype=np.int, copy=False)
         train_sizes_abs = np.clip(train_sizes_abs, 1,
                                   n_max_training_samples)
     else:
@@ -282,9 +286,10 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
     Notes
     -----
     See
-    :ref:`examples/plot_validation_curve.py <example_plot_validation_curve.py>`
+    :ref:`examples/model_selection/plot_validation_curve.py
+    <example_model_selection_plot_validation_curve.py>`
     """
-    X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
+    X, y = indexable(X, y)
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
 
@@ -292,12 +297,12 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
                         verbose=verbose)
     out = parallel(delayed(_fit_and_score)(
         estimator, X, y, scorer, train, test, verbose,
-        parameters={param_name : v}, fit_params=None, return_train_score=True)
+        parameters={param_name: v}, fit_params=None, return_train_score=True)
         for train, test in cv for v in param_range)
 
     out = np.asarray(out)[:, :2]
     n_params = len(param_range)
-    n_cv_folds = out.shape[0] / n_params
+    n_cv_folds = out.shape[0] // n_params
     out = out.reshape(n_cv_folds, n_params, 2).transpose((2, 1, 0))
 
     return out[0], out[1]

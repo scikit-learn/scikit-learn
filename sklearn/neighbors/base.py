@@ -17,7 +17,8 @@ from .kd_tree import KDTree
 from ..base import BaseEstimator
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from ..utils import safe_asarray, atleast2d_or_csr, check_arrays
+from ..utils import check_X_y, check_array
+from ..utils.fixes import argpartition
 from ..utils.validation import DataConversionWarning
 from ..externals import six
 
@@ -173,10 +174,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             self._fit_method = 'kd_tree'
             return self
 
-        X = safe_asarray(X)
-
-        if X.ndim != 2:
-            raise ValueError("data type not understood")
+        X = check_array(X, accept_sparse='csr')
 
         n_samples = X.shape[0]
         if n_samples == 0:
@@ -189,7 +187,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             if self.effective_metric_ not in VALID_METRICS_SPARSE['brute']:
                 raise ValueError("metric '%s' not valid for sparse input"
                                  % self.effective_metric_)
-            self._fit_X = X.tocsr()
+            self._fit_X = X.copy()
             self._tree = None
             self._fit_method = 'brute'
             return self
@@ -281,7 +279,7 @@ class KNeighborsMixin(object):
         if self._fit_method is None:
             raise ValueError("must fit neighbors before querying")
 
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
@@ -296,11 +294,12 @@ class KNeighborsMixin(object):
                                           self.effective_metric_,
                                           **self.effective_metric_kwds_)
 
-            # XXX: should be implemented with a partial sort
-            neigh_ind = dist.argsort(axis=1)
+            neigh_ind = argpartition(dist, n_neighbors - 1, axis=1)
             neigh_ind = neigh_ind[:, :n_neighbors]
+            # argpartition doesn't guarantee sorted order, so we sort again
+            j = np.arange(neigh_ind.shape[0])[:, None]
+            neigh_ind = neigh_ind[j, np.argsort(dist[j, neigh_ind])]
             if return_distance:
-                j = np.arange(neigh_ind.shape[0])[:, None]
                 if self.effective_metric_ == 'euclidean':
                     return np.sqrt(dist[j, neigh_ind]), neigh_ind
                 else:
@@ -346,16 +345,16 @@ class KNeighborsMixin(object):
         >>> neigh.fit(X) # doctest: +ELLIPSIS
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
         >>> A = neigh.kneighbors_graph(X)
-        >>> A.todense()
-        matrix([[ 1.,  0.,  1.],
-                [ 0.,  1.,  1.],
-                [ 1.,  0.,  1.]])
+        >>> A.toarray()
+        array([[ 1.,  0.,  1.],
+               [ 0.,  1.,  1.],
+               [ 1.,  0.,  1.]])
 
         See also
         --------
         NearestNeighbors.radius_neighbors_graph
         """
-        X = safe_asarray(X)
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
@@ -443,7 +442,7 @@ class RadiusNeighborsMixin(object):
         if self._fit_method is None:
             raise ValueError("must fit neighbors before querying")
 
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
 
         if radius is None:
             radius = self.radius
@@ -526,16 +525,16 @@ class RadiusNeighborsMixin(object):
         >>> neigh.fit(X) # doctest: +ELLIPSIS
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
         >>> A = neigh.radius_neighbors_graph(X)
-        >>> A.todense()
-        matrix([[ 1.,  0.,  1.],
-                [ 0.,  1.,  0.],
-                [ 1.,  0.,  1.]])
+        >>> A.toarray()
+        array([[ 1.,  0.,  1.],
+               [ 0.,  1.,  0.],
+               [ 1.,  0.,  1.]])
 
         See also
         --------
         kneighbors_graph
         """
-        X = safe_asarray(X)
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
         if radius is None:
             radius = self.radius
@@ -583,7 +582,7 @@ class SupervisedFloatMixin(object):
              or [n_samples, n_outputs]
         """
         if not isinstance(X, (KDTree, BallTree)):
-            X, y = check_arrays(X, y, sparse_format="csr")
+            X, y = check_X_y(X, y, "csr", multi_output=True)
         self._y = y
         return self._fit(X)
 
@@ -602,7 +601,7 @@ class SupervisedIntegerMixin(object):
 
         """
         if not isinstance(X, (KDTree, BallTree)):
-            X, y = check_arrays(X, y, sparse_format="csr")
+            X, y = check_X_y(X, y, "csr", multi_output=True)
 
         if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
             if y.ndim != 1:

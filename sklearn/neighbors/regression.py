@@ -8,14 +8,12 @@
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 
-import warnings
-
 import numpy as np
 
 from .base import _get_weights, _check_weights, NeighborsBase, KNeighborsMixin
 from .base import RadiusNeighborsMixin, SupervisedFloatMixin
 from ..base import RegressorMixin
-from ..utils import atleast2d_or_csr
+from ..utils import check_array
 
 
 class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
@@ -114,13 +112,6 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     def __init__(self, n_neighbors=5, weights='uniform',
                  algorithm='auto', leaf_size=30,
                  p=2, metric='minkowski', **kwargs):
-        if kwargs:
-            if 'warn_on_equidistant' in kwargs:
-                kwargs.pop('warn_on_equidistant')
-                warnings.warn("The warn_on_equidistant parameter is "
-                              "deprecated and will be removed in the future",
-                              DeprecationWarning,
-                              stacklevel=2)
         self._init_params(n_neighbors=n_neighbors,
                           algorithm=algorithm,
                           leaf_size=leaf_size, metric=metric, p=p, **kwargs)
@@ -139,7 +130,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         y : array of int, shape = [n_samples] or [n_samples, n_outputs]
             Target values
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
 
         neigh_dist, neigh_ind = self.kneighbors(X)
 
@@ -273,7 +264,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         y : array of int, shape = [n_samples] or [n_samples, n_outputs]
             Target values
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
 

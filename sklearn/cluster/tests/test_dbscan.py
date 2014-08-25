@@ -130,6 +130,12 @@ def test_dbscan_balltree():
     assert_equal(n_clusters_5, n_clusters)
 
 
+def test_input_validation():
+    """DBSCAN.fit should accept a list of lists."""
+    X = [[1., 2.], [3., 4.]]
+    DBSCAN().fit(X)             # must not raise exception
+
+
 def test_dbscan_badargs():
     """Test bad argument values: these should all raise ValueErrors"""
     assert_raises(ValueError,

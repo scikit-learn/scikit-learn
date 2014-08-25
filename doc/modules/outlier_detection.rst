@@ -31,7 +31,7 @@ new observations can then be sorted as inliers or outliers with a
 
     estimator.predict(X_test)
 
-Inliers are labeled 0, while outliers are labeled 1.
+Inliers are labeled 1, while outliers are labeled -1.
 
 Novelty Detection
 =================
@@ -53,8 +53,8 @@ coming from the same population than the initial
 observations. Otherwise, if they lay outside the frontier, we can say
 that they are abnormal with a given confidence in our assessment.
 
-The One-Class SVM has been introduced in [1] for that purpose and
-implemented in the :ref:`svm` module in the
+The One-Class SVM has been introduced by Schölkopf et al. for that purpose 
+and implemented in the :ref:`svm` module in the
 :class:`svm.OneClassSVM` object. It requires the choice of a
 kernel and a scalar parameter to define a frontier.  The RBF kernel is
 usually chosen although there exists no exact formula or algorithm to
@@ -63,17 +63,23 @@ implementation. The :math:`\nu` parameter, also known as the margin of
 the One-Class SVM, corresponds to the probability of finding a new,
 but regular, observation outside the frontier.
 
+.. topic:: References:
+
+    * `Estimating the support of a high-dimensional distribution
+      <http://dl.acm.org/citation.cfm?id=1119749>`_ Schölkopf, 
+      Bernhard, et al. Neural computation 13.7 (2001): 1443-1471.
+      
 .. topic:: Examples:
 
    * See :ref:`example_svm_plot_oneclass.py` for visualizing the
      frontier learned around some data by a
      :class:`svm.OneClassSVM` object.
 
-.. figure:: ../auto_examples/svm/images/plot_oneclass_1.png
+.. figure:: ../auto_examples/svm/images/plot_oneclass_001.png
    :target: ../auto_examples/svm/plot_oneclasse.html
    :align: center
    :scale: 75%
-
+   
 
 Outlier Detection
 =================
@@ -84,9 +90,9 @@ polluting ones, called "outliers". Yet, in the case of outlier
 detection, we don't have a clean data set representing the population
 of regular observations that can be used to train any tool.
 
-Fitting an elliptic envelop
------------------------------
 
+Fitting an elliptic envelope
+----------------------------
 
 One common way of performing outlier detection is to assume that the
 regular data come from a known distribution (e.g. data are Gaussian
@@ -105,7 +111,7 @@ whithout being influenced by outliers). The Mahalanobis distances
 obtained from this estimate is used to derive a measure of outlyingness.
 This strategy is illustrated below.
 
-.. figure:: ../auto_examples/covariance/images/plot_mahalanobis_distances_1.png
+.. figure:: ../auto_examples/covariance/images/plot_mahalanobis_distances_001.png
    :target: ../auto_examples/covariance/plot_mahalanobis_distances.html
    :align: center
    :scale: 75%
@@ -123,11 +129,11 @@ This strategy is illustrated below.
     ..  [RD1999] Rousseeuw, P.J., Van Driessen, K. "A fast algorithm for the minimum
         covariance determinant estimator" Technometrics 41(3), 212 (1999)
      
-One-class SVM versus elliptic envelop
+One-class SVM versus elliptic envelope
 --------------------------------------
 
 Strictly-speaking, the One-class SVM is not an outlier-detection method,
-but a novelty-detection method: it's training set should not be
+but a novelty-detection method: its training set should not be
 contaminated by outliers as it may fit them. That said, outlier detection
 in high-dimension, or without any assumptions on the distribution of the
 inlying data is very challenging, and a One-class SVM gives useful
@@ -138,19 +144,19 @@ The examples below illustrate how the performance of the
 less unimodal.  :class:`svm.OneClassSVM` works better on data with
 multiple modes.
 
-.. |outlier1| image:: ../auto_examples/covariance/images/plot_outlier_detection_1.png
+.. |outlier1| image:: ../auto_examples/covariance/images/plot_outlier_detection_001.png
    :target: ../auto_examples/covariance/plot_outlier_detection.html
    :scale: 50%
 
-.. |outlier2| image:: ../auto_examples/covariance/images/plot_outlier_detection_2.png
+.. |outlier2| image:: ../auto_examples/covariance/images/plot_outlier_detection_002.png
    :target: ../auto_examples/covariance/plot_outlier_detection.html
    :scale: 50%
 
-.. |outlier3| image:: ../auto_examples/covariance/images/plot_outlier_detection_3.png
+.. |outlier3| image:: ../auto_examples/covariance/images/plot_outlier_detection_003.png
    :target: ../auto_examples/covariance/plot_outlier_detection.html
    :scale: 50%
 
-.. list-table:: **Comparing One-class SVM approach, and elliptic envelopp**
+.. list-table:: **Comparing One-class SVM approach, and elliptic envelope**
    :widths: 40 60
 
    *

@@ -12,6 +12,7 @@ Generalized Linear models.
 #
 # License: BSD 3 clause
 
+from __future__ import division
 from abc import ABCMeta, abstractmethod
 import numbers
 
@@ -24,11 +25,9 @@ from scipy.sparse.linalg import lsqr
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
-from ..utils import as_float_array, atleast2d_or_csr, safe_asarray
+from ..utils import as_float_array, check_array
 from ..utils.extmath import safe_sparse_dot
-from ..utils.sparsefuncs import (csc_mean_variance_axis0,
-                                 inplace_csc_column_scale)
-from .cd_fast import sparse_std
+from ..utils.sparsefuncs import mean_variance_axis0, inplace_column_scale
 
 
 ###
@@ -46,19 +45,25 @@ def sparse_center_data(X, y, fit_intercept, normalize=False):
     axis 0. Be aware that X will not be centered since it would break
     the sparsity, but will be normalized if asked so.
     """
-    X = safe_asarray(X, dtype=np.float64)
-
     if fit_intercept:
-        X_data = X.data
-        # copy if 'normalize' is True or X is not a csc matrix
-        X = sp.csc_matrix(X, copy=normalize)
-        X_mean, X_std = csc_mean_variance_axis0(X)
+        # we might require not to change the csr matrix sometimes
+        # store a copy if normalize is True.
+        # Change dtype to float64 since mean_variance_axis0 accepts
+        # it that way.
+        if sp.isspmatrix(X) and X.getformat() == 'csr':
+            X = sp.csr_matrix(X, copy=normalize, dtype=np.float64)
+        else:
+            X = sp.csc_matrix(X, copy=normalize, dtype=np.float64)
+
+        X_mean, X_var = mean_variance_axis0(X)
         if normalize:
-            X_std = sparse_std(
-                X.shape[0], X.shape[1],
-                X_data, X.indices, X.indptr, X_mean)
+            # transform variance to std in-place
+            # XXX: currently scaled to variance=n_samples to match center_data
+            X_var *= X.shape[0]
+            X_std = np.sqrt(X_var, X_var)
+            del X_var
             X_std[X_std == 0] = 1
-            inplace_csc_column_scale(X, 1. / X_std)
+            inplace_column_scale(X, 1. / X_std)
         else:
             X_std = np.ones(X.shape[1])
         y_mean = y.mean(axis=0)
@@ -81,36 +86,23 @@ def center_data(X, y, fit_intercept, normalize=False, copy=True,
     is zero, and not the mean itself
     """
     X = as_float_array(X, copy)
-    no_sample_weight = (sample_weight is None
-                        or isinstance(sample_weight, numbers.Number))
-
     if fit_intercept:
+        if isinstance(sample_weight, numbers.Number):
+            sample_weight = None
         if sp.issparse(X):
             X_mean = np.zeros(X.shape[1])
             X_std = np.ones(X.shape[1])
         else:
-            if no_sample_weight:
-                X_mean = X.mean(axis=0)
-            else:
-                X_mean = (np.sum(X * sample_weight[:, np.newaxis], axis=0)
-                          / np.sum(sample_weight))
+            X_mean = np.average(X, axis=0, weights=sample_weight)
             X -= X_mean
             if normalize:
+                # XXX: currently scaled to variance=n_samples
                 X_std = np.sqrt(np.sum(X ** 2, axis=0))
                 X_std[X_std == 0] = 1
                 X /= X_std
             else:
                 X_std = np.ones(X.shape[1])
-        if no_sample_weight:
-            y_mean = y.mean(axis=0)
-        else:
-            if y.ndim <= 1:
-                y_mean = (np.sum(y * sample_weight, axis=0)
-                          / np.sum(sample_weight))
-            else:
-                # cater for multi-output problems
-                y_mean = (np.sum(y * sample_weight[:, np.newaxis], axis=0)
-                          / np.sum(sample_weight))
+        y_mean = np.average(y, axis=0, weights=sample_weight)
         y = y - y_mean
     else:
         X_mean = np.zeros(X.shape[1])
@@ -139,7 +131,7 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
         C : array, shape = (n_samples,)
             Returns predicted values.
         """
-        X = safe_asarray(X)
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         return safe_sparse_dot(X, self.coef_.T,
                                dense_output=True) + self.intercept_
 
@@ -196,7 +188,7 @@ class LinearClassifierMixin(ClassifierMixin):
             case, confidence score for self.classes_[1] where >0 means this
             class would be predicted.
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
 
         n_features = self.coef_.shape[1]
         if X.shape[1] != n_features:
@@ -317,13 +309,13 @@ class LinearRegression(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    `coef_` : array, shape (n_features, ) or (n_targets, n_features)
+    coef_ : array, shape (n_features, ) or (n_targets, n_features)
         Estimated coefficients for the linear regression problem.
         If multiple targets are passed during the fit (y 2D), this
         is a 2D array of shape (n_targets, n_features), while if only
         one target is passed, this is a 1D array of length n_features.
 
-    `intercept_` : array
+    intercept_ : array
         Independent term in the linear model.
 
     Notes
@@ -356,7 +348,7 @@ class LinearRegression(LinearModel, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        X = safe_asarray(X)
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         y = np.asarray(y)
 
         X, y, X_mean, y_mean, X_std = self._center_data(
