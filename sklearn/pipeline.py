@@ -199,7 +199,6 @@ class Pipeline(BaseEstimator):
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].score(Xt, y)
 
-
     @property
     def classes_(self):
         return self.steps[-1][-1].classes_

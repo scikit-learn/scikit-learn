@@ -390,7 +390,6 @@ def test_classes_property():
     reg.fit(X, y)
     assert_raises(AttributeError, getattr, reg, "classes_")
 
-
     clf = make_pipeline(SelectKBest(k=1), LogisticRegression(random_state=0))
     assert_raises(AttributeError, getattr, clf, "classes_")
     clf.fit(X, y)
