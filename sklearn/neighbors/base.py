@@ -9,7 +9,9 @@
 import warnings
 from abc import ABCMeta, abstractmethod
 
+import array
 import numpy as np
+import scipy.sparse as sp
 from scipy.sparse import csr_matrix, issparse
 
 from .ball_tree import BallTree
@@ -615,15 +617,40 @@ class SupervisedIntegerMixin(object):
         else:
             self.outputs_2d_ = True
 
-        self.classes_ = []
-        self._y = np.empty(y.shape, dtype=np.int)
-        for k in range(self._y.shape[1]):
-            classes, self._y[:, k] = np.unique(y[:, k], return_inverse=True)
-            self.classes_.append(classes)
+        self.sparse_target_input_ = sp.issparse(y)
 
-        if not self.outputs_2d_:
-            self.classes_ = self.classes_[0]
-            self._y = self._y.ravel()
+        if not sp.issparse(y):
+            self.classes_ = []
+            self._y = np.empty(y.shape, dtype=np.int)
+            for k in range(self._y.shape[1]):
+                classes, self._y[:, k] = np.unique(y[:, k],
+                                                   return_inverse=True)
+                self.classes_.append(classes)
+
+            if not self.outputs_2d_:
+                self.classes_ = self.classes_[0]
+                self._y = self._y.ravel()
+        else:
+            y = y.tocsc()
+            y.eliminate_zeros()
+            nnz = np.diff(y.indptr)
+            data = array.array('i')
+            self.classes_ = []
+
+            for k in range(y.shape[1]):
+                k_col_data = y.data[y.indptr[k]:y.indptr[k + 1]]
+                classes, data_k = np.unique(k_col_data,  return_inverse=True)
+
+                if not nnz[k] == y.shape[0]:
+                    classes = np.insert(classes, 0, 0)
+                    data_k += 1
+                self.classes_.append(classes)
+                data.extend(data_k)
+
+            _y = sp.csc_matrix((data, y.indices, y.indptr), shape=y.shape,
+                               dtype=int)
+
+            self._y = _y
 
         return self._fit(X)
 

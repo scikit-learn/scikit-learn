@@ -209,7 +209,6 @@ def test_kneighbors_classifier_predict_proba():
     assert_array_almost_equal(real_prob, y_prob)
 
 
-
 def test_radius_neighbors_classifier(n_samples=40,
                                      n_features=5,
                                      n_test_pts=10,
@@ -848,6 +847,58 @@ def test_callable_metric():
 
     assert_array_almost_equal(dist1, dist2)
 
+
+def test_kneighbors_classifier_sparse_target_multioutput():
+    """Test k-NN classifier on multioutput data with sparse target data"""
+    rng = check_random_state(0)
+    n_features = 5
+    n_samples = 50
+    n_output = 4
+
+    X = rng.rand(n_samples, n_features)
+
+    # Consturct target data so that we cover two cases label encoding
+    # case 1: classes are not a 0 to n sequence
+    y_fst = rng.randint(1, 4, (n_samples, n_output//2)).astype(float)
+    # case 2: classes line up with their integer encoding
+    y_snd = rng.randint(0, 3, (n_samples, n_output//2)).astype(float)
+    y = np.hstack((y_fst, y_snd))
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    y_train = csc_matrix(y_train)
+
+    weights = [None, 'uniform', 'distance', _weight_func]
+
+    for algorithm, weights in product(ALGORITHMS, weights):
+        # Stack single output prediction
+        y_pred_so = []
+        y_pred_proba_so = []
+        for o in range(n_output):
+            knn = neighbors.KNeighborsClassifier(weights=weights,
+                                                 algorithm=algorithm)
+            knn.fit(X_train, y_train.getcol(o).toarray().ravel())
+            y_pred_so.append(knn.predict(X_test))
+            y_pred_proba_so.append(knn.predict_proba(X_test))
+
+        y_pred_so = np.vstack(y_pred_so).T
+        assert_equal(y_pred_so.shape, y_test.shape)
+        assert_equal(len(y_pred_proba_so), n_output)
+
+        # Multioutput prediction
+        knn_mo = neighbors.KNeighborsClassifier(weights=weights,
+                                                algorithm=algorithm)
+        knn_mo.fit(X_train, y_train)
+        y_pred_mo = knn_mo.predict(X_test)
+
+        assert_equal(y_pred_mo.dtype, float)
+        assert_array_equal(y_pred_mo.toarray(), y_pred_so)
+
+        # Check proba
+        y_pred_proba_mo = knn_mo.predict_proba(X_test)
+        assert_equal(len(y_pred_proba_mo), n_output)
+
+        for proba_mo, proba_so in zip(y_pred_proba_mo, y_pred_proba_so):
+            assert_array_almost_equal(proba_mo, proba_so)
 
 if __name__ == '__main__':
     import nose

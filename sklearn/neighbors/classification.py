@@ -7,15 +7,20 @@
 #          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
-
+import array
 import numpy as np
+import scipy.sparse as sp
+
 from scipy import stats
 from ..utils.extmath import weighted_mode
 
-from .base import \
-    _check_weights, _get_weights, \
-    NeighborsBase, KNeighborsMixin,\
-    RadiusNeighborsMixin, SupervisedIntegerMixin
+from .base import _check_weights
+from .base import _get_weights
+from .base import NeighborsBase
+from .base import KNeighborsMixin
+from .base import RadiusNeighborsMixin
+from .base import SupervisedIntegerMixin
+
 from ..base import ClassifierMixin
 from ..utils import check_array
 
@@ -146,18 +151,42 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         n_samples = X.shape[0]
         weights = _get_weights(neigh_dist, self.weights)
 
-        y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
-        for k, classes_k in enumerate(classes_):
-            if weights is None:
-                mode, _ = stats.mode(_y[neigh_ind, k], axis=1)
-            else:
-                mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
+        if not self.sparse_target_input_:
+            y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
+            for k, classes_k in enumerate(classes_):
+                if weights is None:
+                    mode, _ = stats.mode(_y[neigh_ind, k], axis=1)
+                else:
+                    mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
 
-            mode = np.asarray(mode.ravel(), dtype=np.intp)
-            y_pred[:, k] = classes_k.take(mode)
+                mode = np.asarray(mode.ravel(), dtype=np.intp)
+                y_pred[:, k] = classes_k.take(mode)
 
-        if not self.outputs_2d_:
-            y_pred = y_pred.ravel()
+            if not self.outputs_2d_:
+                y_pred = y_pred.ravel()
+
+        else:
+
+            data = []
+            indices = array.array('i')
+            indptr = array.array('i', [0])
+
+            for k, classes_k in enumerate(classes_):
+                neigh_lbls_k = _y.getcol(k).toarray().ravel()[neigh_ind]
+                neigh_lbls_k = classes_k[neigh_lbls_k]
+
+                if weights is None:
+                    mode, _ = stats.mode(neigh_lbls_k,  axis=1)
+                else:
+                    mode, _ = weighted_mode(neigh_lbls_k, weights, axis=1)
+
+                data.extend(mode[mode != 0])
+                indices.extend(np.where(mode != 0)[0])
+                indptr.append(len(indices))
+
+            y_pred = sp.csc_matrix((data, indices, indptr),
+                                   (n_samples, n_outputs),
+                                   dtype=classes_[0].dtype)
 
         return y_pred
 
@@ -182,6 +211,10 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         classes_ = self.classes_
         _y = self._y
+
+        if self.sparse_target_input_:
+            _y = _y.toarray()
+
         if not self.outputs_2d_:
             _y = self._y.reshape((-1, 1))
             classes_ = [self.classes_]
