@@ -348,7 +348,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             If a path is shorter than max_depth + 1, it is padded with -1 on the right.
         """
         if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
-            X = array2d(X, dtype=DTYPE)
+            X = check_array(X, dtype=DTYPE)
 
         n_samples, n_features = X.shape
 
