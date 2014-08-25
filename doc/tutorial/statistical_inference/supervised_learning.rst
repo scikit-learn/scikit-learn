@@ -93,9 +93,9 @@ Scikit-learn documentation for more information about this type of classifier.)
     >>> # Create and fit a nearest-neighbor classifier
     >>> from sklearn.neighbors import KNeighborsClassifier
     >>> knn = KNeighborsClassifier()
-    >>> knn.fit(iris_X_train, iris_y_train)
+    >>> knn.fit(iris_X_train, iris_y_train) # doctest: +NORMALIZE_WHITESPACE
     KNeighborsClassifier(algorithm='auto', leaf_size=30, metric='minkowski',
-               n_neighbors=5, p=2, weights='uniform')
+                   metric_params=None, n_neighbors=5, p=2, weights='uniform')
     >>> knn.predict(iris_X_test)
     array([1, 2, 1, 0, 0, 0, 2, 1, 2, 0])
     >>> iris_y_test
