@@ -175,7 +175,7 @@ def test_thresholded_scorers_multilabel_indicator_data():
     """Test that the scorer work with multilabel-indicator format
     for multilabel and multi-output multi-class classifier
     """
-    X, y = make_multilabel_classification(return_indicator=True,
+    X, y = make_multilabel_classification(return_indicator='dense',
                                           allow_unlabeled=False,
                                           random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)

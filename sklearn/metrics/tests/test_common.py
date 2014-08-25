@@ -856,7 +856,7 @@ def test_averaging_multiclass(n_samples=50, n_classes=3):
 def test_averaging_multilabel(n_classes=5, n_samples=40):
     _, y = make_multilabel_classification(n_features=1, n_classes=n_classes,
                                           random_state=5, n_samples=n_samples,
-                                          return_indicator=True,
+                                          return_indicator='dense',
                                           allow_unlabeled=False)
     y_true = y[:20]
     y_pred = y[20:]
@@ -1019,11 +1019,11 @@ def test_sample_weight_invariance(n_samples=50):
     _, ya = make_multilabel_classification(
         n_features=1, n_classes=20,
         random_state=0, n_samples=100,
-        return_indicator=True, allow_unlabeled=False)
+        return_indicator='dense', allow_unlabeled=False)
     _, yb = make_multilabel_classification(
         n_features=1, n_classes=20,
         random_state=1, n_samples=100,
-        return_indicator=True, allow_unlabeled=False)
+        return_indicator='dense', allow_unlabeled=False)
     y_true = np.vstack([ya, yb])
     y_pred = np.vstack([ya, ya])
     y_score = random_state.randint(1, 4, size=y_true.shape)
