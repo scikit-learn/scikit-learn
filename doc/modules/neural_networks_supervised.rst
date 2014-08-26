@@ -104,7 +104,7 @@ following command,
 use :meth:`MultilayerPerceptronClassifier.decision_function`::
 
     >>> clf.decision_function([[2., 2.], [1., 2.]])  # doctest: +ELLIPSIS
-    array([ 11.55..., 11.55...])
+    array([ 11.55...,  11.55...])
 
 Currently, :class:`MultilayerPerceptronClassifier` supports only the 
 Cross-Entropy loss function, which allows probability estimates by running the 
