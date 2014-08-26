@@ -252,12 +252,10 @@ def test_label_encoder_multioutput():
         assert_array_equal(le.classes_[i], classes[i])
 
     # Test transform
-    # XXX test with set of labels that is not y
-    assert_array_equal(le.transform(y),y_enc)
+    assert_array_equal(le.transform(y), y_enc)
 
     # Test inverse transform
-    # XXX test with set of labels that is not y
-    assert_array_equal(le.inverse_transform(y_enc),y)
+    assert_array_equal(le.inverse_transform(y_enc), y)
 
     # Test fit transform
     le = LabelEncoder()
@@ -269,7 +267,40 @@ def test_label_encoder_multioutput():
 
 def test_label_encoder_sparse_multioutput():
     """Test LabelEncoder's with multioutput target data in sparse formats"""
-    pass
+        """Test LabelEncoder's with multioutput target data"""
+    le = LabelEncoder()
+    y = sp.csc_matrix(np.array([[0,2,3,4,0],
+                                [0,0,0,0,0],
+                                [0,1,1,1,0],
+                                [0,-1,2,0,1],
+                                [0,0,1,1,0],
+                                [0,2,3,4,5]]))
+    classes = [[0],[-1,0,1,2],[0,1,2,3],[0,1,4],[0,1,5]]
+    y = sp.csc_matrix(np.array([[0,3,3,2,0],
+                                [0,2,0,0,0],
+                                [0,2,1,1,0],
+                                [0,0,2,0,1],
+                                [0,1,1,1,0],
+                                [0,3,3,2,2]]))
+
+    # Test fit
+    le.fit(y)
+    for i in range(y.shape[1]):
+        assert_array_equal(le.classes_[i], classes[i])
+
+    # Test transform
+    assert_array_equal(le.transform(y).toarray(), y_enc)
+
+    # Test inverse transform
+    assert_array_equal(le.inverse_transform(y_enc).toarray(), y)
+
+    # Test fit transform
+    le = LabelEncoder()
+    ret = le.fit_transform(y)
+    assert_array_equal(ret.toarray(), y_enc)
+
+    # Test unseeen label error
+    assert_raises(ValueError, le.transform, [0, 6])
 
 def test_label_encoder_fit_transform():
     """Test fit_transform"""
