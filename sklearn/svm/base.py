@@ -583,7 +583,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
             self.probability, self.n_support_,
             self.probA_, self.probB_)
 
-def _get_solver_type(multi_class, penalty, loss, dual):
+def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
     """Find the liblinear magic number for the solver.
 
     This number depends on the values of the following attributes:
@@ -674,8 +674,8 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     dual : bool
         Dual or primal formulation,
 
-    verbose : bool | int
-        Amonut of verbosity.
+    verbose : int
+        Set verbose to any positive number for verbosity.
 
     max_iter : int
         Number of iterations.
@@ -728,9 +728,13 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     if fit_intercept:
         bias = intercept_scaling
 
+    libsvm.set_verbosity_wrap(verbose)
+    libsvm_sparse.set_verbosity_wrap(verbose)
+    liblinear.set_verbosity_wrap(verbose)
+
     # LibLinear wants targets as doubles, even for classification
     y_ind = np.asarray(y_ind, dtype=np.float64).ravel()
-    solver_type = _get_solver_type(multi_class, penalty, loss, dual)
+    solver_type = _get_liblinear_solver_type(multi_class, penalty, loss, dual)
     raw_coef_, n_iter_  = liblinear.train_wrap(
         X, y_ind, sp.isspmatrix(X), solver_type, tol, bias, C,
         class_weight_, max_iter, rnd.randint(np.iinfo('i').max)
@@ -752,7 +756,3 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         intercept_ = 0.
 
     return coef_, intercept_, n_iter_
-
-libsvm.set_verbosity_wrap(0)
-libsvm_sparse.set_verbosity_wrap(0)
-liblinear.set_verbosity_wrap(0)
