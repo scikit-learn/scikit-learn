@@ -331,7 +331,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         where ``g_i`` is the i-th component of the gradient.
 
     verbose : int
-        Print convergence message if True.
+        For the liblinear and lbfgs solvers set verbose to any positive
+        number for verbosity.
 
     solver : {'lbfgs', 'newton-cg', 'liblinear'}
         Numerical solver to use.
@@ -405,6 +406,17 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         raise ValueError("Solver %s cannot solve problems with "
                          "a multinomial backend." % solver)
 
+    if solver not in ['liblinear', 'newton-cg', 'lbfgs']:
+        raise ValueError("Logistic Regression supports only liblinear,"
+                         " newton-cg and lbfgs solvers.")
+
+    if solver != 'liblinear':
+        if penalty != 'l2':
+            raise ValueError("newton-cg and lbfgs solvers support only "
+                             "l2 penalties.")
+        if dual:
+            raise ValueError("newton-cg and lbfgs solvers support only "
+                             "the primal form.")
     # Preprocessing.
     X = check_array(X, accept_sparse='csc', dtype=np.float64)
     y = check_array(y, ensure_2d=False, copy=copy)
@@ -601,7 +613,8 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         frequencies in the training set.
 
     verbose : int
-        Amount of verbosity.
+        For the liblinear and lbfgs solvers set verbose to any positive
+        number for verbosity.
 
     solver : {'lbfgs', 'newton-cg', 'liblinear'}
         Decides which solver to use.
@@ -744,6 +757,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         added the decision function.
 
     intercept_scaling : float, default: 1
+        Useful only if solver is liblinear.
         when self.fit_intercept is True, instance vector x becomes
         [x, self.intercept_scaling],
         i.e. a "synthetic" feature with constant value equals to
@@ -781,8 +795,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         the entire probability distribution. Works only for the 'lbfgs'
         solver.
 
-    verbose : bool | int
-        Amount of verbosity.
+    verbose : int
+        For the liblinear and lbfgs solvers set verbose to any positive
+        number for verbosity.
 
     Attributes
     ----------
@@ -829,7 +844,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
                  random_state=None, solver='liblinear', max_iter=100,
-                 multi_class='ovr', verbose=False):
+                 multi_class='ovr', verbose=0):
 
         self.penalty = penalty
         self.dual = dual
@@ -882,56 +897,45 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                 self.class_weight, self.penalty, self.dual, self.verbose,
                 self.max_iter, self.tol
                 )
+            return self
 
-        else:
-            if self.penalty != 'l2':
-                raise ValueError("newton-cg and lbfgs solvers support only "
-                                 "l2 penalties.")
-            if self.dual:
-                raise ValueError("newton-cg and lbfgs solvers support only "
-                                 "the primal form.")
+        n_tasks = len(self.classes_)
+        classes_ = self.classes_
 
-            n_tasks = len(self.classes_)
-            classes_ = self.classes_
+        if len(self.classes_) == 2:
+            n_tasks = 1
+            classes_ = classes_[1:]
 
-            if len(self.classes_) == 2:
-                n_tasks = 1
-                classes_ = classes_[1:]
+        self.coef_ = list()
+        self.intercept_ = np.zeros(n_tasks)
 
-            self.coef_ = np.empty((n_tasks, X.shape[1]))
-            self.intercept_ = np.zeros(n_tasks)
-
-            if self.multi_class == 'ovr':
-                for ind, class_ in enumerate(classes_):
-                    coef_, _ = logistic_regression_path(
-                        X, y, pos_class=class_, Cs=[self.C],
-                        fit_intercept=self.fit_intercept,
-                        tol=self.tol, verbose=self.verbose,
-                        solver=self.solver, copy=True, multi_class='ovr',
-                        max_iter=self.max_iter,
-                        class_weight=self.class_weight)
-
-                    coef_ = coef_[0]
-                    if self.fit_intercept:
-                        self.coef_[ind] = coef_[:-1]
-                        self.intercept_[ind] = coef_[-1]
-
-                    else:
-                        self.coef_[ind] = coef_
-
-            else:
+        if self.multi_class == 'ovr':
+            for ind, class_ in enumerate(classes_):
                 coef_, _ = logistic_regression_path(
-                    X, y, Cs=[self.C],
+                    X, y, pos_class=class_, Cs=[self.C],
                     fit_intercept=self.fit_intercept,
                     tol=self.tol, verbose=self.verbose,
-                    solver=self.solver, multi_class='multinomial',
-                    max_iter=self.max_iter, class_weight=self.class_weight)
-                coef_ = coef_[0]
-                if self.fit_intercept:
-                    self.coef_ = coef_[:, :-1]
-                    self.intercept_ = coef_[:, -1]
-                else:
-                    self.coef_ = coef_
+                    solver=self.solver, copy=True, multi_class='ovr',
+                    max_iter=self.max_iter,
+                    class_weight=self.class_weight)
+                self.coef_.append(coef_[0])
+        elif self.multi_class == 'multinomial':
+            coef_, _ = logistic_regression_path(
+                X, y, Cs=[self.C],
+                fit_intercept=self.fit_intercept,
+                tol=self.tol, verbose=self.verbose,
+                solver=self.solver, multi_class='multinomial',
+                max_iter=self.max_iter, class_weight=self.class_weight)
+            self.coef_ = coef_[0]
+        else:
+            raise ValueError("multi_class should be either multinomial or ovr. "
+                             "got %s" % self.multi_class)
+
+        self.coef_ = np.asarray(self.coef_)
+        if self.fit_intercept:
+            self.intercept_ = self.coef_[:, -1]
+            self.coef_ = self.coef_[:, :-1]
+
         return self
 
     def predict_proba(self, X):
@@ -1050,8 +1054,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         Number of CPU cores used during the cross-validation loop. If given
         a value of -1, all cores are used.
 
-    verbose : bool | int
-        Amount of verbosity.
+    verbose : int
+        For the liblinear and lbfgs solvers set verbose to any positive
+        number for verbosity.
 
     refit : bool
         If set to True, the scores are averaged across all folds, and the
@@ -1068,6 +1073,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         solver.
 
     intercept_scaling : float, default 1.
+        Useful only if solver is liblinear.
         This parameter is useful only when the solver 'liblinear' is used
         and self.fit_intercept is set to True. In this case, x becomes
         [x, self.intercept_scaling],
@@ -1130,7 +1136,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
     def __init__(self, Cs=10, fit_intercept=True, cv=None, dual=False,
                  penalty='l2', scoring=None, solver='lbfgs', tol=1e-4,
-                 max_iter=100, class_weight=None, n_jobs=1, verbose=False,
+                 max_iter=100, class_weight=None, n_jobs=1, verbose=0,
                  refit=True, intercept_scaling=1., multi_class='ovr'):
         self.Cs = Cs
         self.fit_intercept = fit_intercept
@@ -1228,7 +1234,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                           dual=self.dual, solver=self.solver,
                           max_iter=self.max_iter, tol=self.tol,
                           class_weight=self.class_weight,
-                          verbose=max(0, self.verbose - 1),
+                          verbose=self.verbose,
                           scoring=self.scoring, multi_class=self.multi_class,
                           intercept_scaling=self.intercept_scaling)
                 for label in labels
@@ -1242,7 +1248,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                           dual=self.dual, solver=self.solver,
                           max_iter=self.max_iter, tol=self.tol,
                           class_weight=self.class_weight,
-                          verbose=max(0, self.verbose - 1),
+                          verbose=self.verbose,
                           scoring=self.scoring, multi_class=self.multi_class,
                           intercept_scaling=self.intercept_scaling)
                 for train, test in folds)
