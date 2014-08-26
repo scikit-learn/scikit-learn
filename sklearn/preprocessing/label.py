@@ -105,9 +105,12 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         -------
         self : returns an instance of self.
         """
-        y = column_or_1d(y, warn=True)
+        # y = column_or_1d(y, warn=True)
         _check_numpy_unicode_bug(y)
-        self.classes_ = np.unique(y)
+        if 'multioutput' in type_of_target(y):
+            self.classes_ = [np.unique(y[:, k]) for k in range(y.shape[1])]
+        else:
+            self.classes_ = np.unique(y)
         return self
 
     def fit_transform(self, y):
@@ -122,9 +125,17 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         -------
         y : array-like of shape [n_samples]
         """
-        y = column_or_1d(y, warn=True)
+        # y = column_or_1d(y, warn=True)
         _check_numpy_unicode_bug(y)
-        self.classes_, y = np.unique(y, return_inverse=True)
+        if 'multioutput' in type_of_target(y):
+            self.classes_ = []
+            y_enc = np.empty(y.shape, dtype=np.int)
+            for k in range(y_enc.shape[1]):
+                classes, y_enc[:, k] = np.unique(y[:, k], return_inverse=True)
+                self.classes_.append(classes)
+            y = y_enc
+        else:
+            self.classes_, y = np.unique(y, return_inverse=True)
         return y
 
     def transform(self, y):
@@ -141,12 +152,18 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         """
         self._check_fitted()
 
-        classes = np.unique(y)
-        _check_numpy_unicode_bug(classes)
-        if len(np.intersect1d(classes, self.classes_)) < len(classes):
-            diff = np.setdiff1d(classes, self.classes_)
-            raise ValueError("y contains new labels: %s" % str(diff))
-        return np.searchsorted(self.classes_, y)
+        if 'multioutput' in type_of_target(y):
+            y_enc = np.empty(y.shape, dtype=np.int)
+            for k in range(y.shape[1]):
+                y_enc[:, k] = np.searchsorted(self.classes_[k], y[:, k])
+            return y_enc
+        else:
+            classes = np.unique(y)
+            _check_numpy_unicode_bug(classes)
+            if len(np.intersect1d(classes, self.classes_)) < len(classes):
+                diff = np.setdiff1d(classes, self.classes_)
+                raise ValueError("y contains new labels: %s" % str(diff))
+            return np.searchsorted(self.classes_, y)
 
     def inverse_transform(self, y):
         """Transform labels back to original encoding.
@@ -667,9 +684,6 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     ----------
     classes : array-like of shape [n_classes] (optional)
         Indicates an ordering for the class labels
-
-    sparse_output : boolean (default: False),
-        Set to true if output binary array is desired in CSR sparse format
 
     Attributes
     ----------
