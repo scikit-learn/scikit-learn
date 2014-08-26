@@ -104,7 +104,7 @@ following command,
 use :meth:`MultilayerPerceptronClassifier.decision_function`::
 
     >>> clf.decision_function([[2., 2.], [1., 2.]])  # doctest: +ELLIPSIS
-    array([11.55..., 11.55...])
+    array([ 11.55..., 11.55...])
 
 Currently, :class:`MultilayerPerceptronClassifier` supports only the 
 Cross-Entropy loss function, which allows probability estimates by running the 
@@ -115,8 +115,8 @@ Cross-Entropy loss function, giving a vector of probability estimates
 :math:`P(y|x)` per sample :math:`x`:: 
 
     >>> clf.predict_proba([[2., 2.], [1., 2.]])  # doctest: +ELLIPSIS
-    array([[9.59...e-06, 9.99...e-01],
-           [9.59...e-06, 9.99...e-01]])
+    array([[ 9.59...e-06, 9.99...e-01],
+           [ 9.59...e-06, 9.99...e-01]])
 
 :class:`MultilayerPerceptronClassifier` supports multi-class classification by 
 applying `Softmax <http://en.wikipedia.org/wiki/Softmax_activation_function>`_
