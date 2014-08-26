@@ -16,7 +16,7 @@ from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
 from .base import center_data, sparse_center_data
 from ..utils import check_array
-from ..utils.extmath import squared_norm
+from ..utils.extmath import row_norms, norm
 from ..utils.validation import check_random_state
 from ..cross_validation import _check_cv as check_cv
 from ..externals.joblib import Parallel, delayed
@@ -81,7 +81,7 @@ def compute_strong_active_set(X, y, current_alpha, prev_alpha, l1_ratio, coef):
     active_rule = safe_sparse_dot(X.T, y - safe_sparse_dot(X, coef))
     active_rule = np.abs(active_rule, active_rule)
     if multi_output:
-        active_rule = np.sqrt(np.sum(active_rule ** 2, axis=1))
+        active_rule = row_norms(active_rule)
     active_features = (active_rule >= 2*current_alpha - prev_alpha)
     active_features = np.nonzero(active_features)[0]
     del active_rule
@@ -162,9 +162,9 @@ def check_kkt_conditions(X, y, coef, strong_active_set, alpha, l1_ratio,
 
         # XXX: I'm not sure about the multi_output case.
         if multi_output:
-            loss_derivative = np.sqrt(np.sum(loss_derivative**2))
+            loss_derivative = norm(loss_derivative)
             l1_penalty = alpha * l1_ratio * np.sign(np.mean(active_coef))
-            active_coef = squared_norm(active_coef)
+            active_coef = norm(active_coef)
             l2_penalty = alpha * (1 - l1_ratio) * active_coef
         else:
             l1_penalty = alpha * l1_ratio * np.sign(active_coef)
