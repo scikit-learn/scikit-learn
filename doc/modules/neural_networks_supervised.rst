@@ -114,7 +114,7 @@ MLP trains using backpropagation. For classification, it minimizes the
 Cross-Entropy loss function, giving a vector of probability estimates 
 :math:`P(y|x)` per sample :math:`x`:: 
 
-    >>> clf.predict_proba([[2., 2.], [1., 2.]])  # doctest: +ELLIPSIS
+    >>> clf.predict_proba([[2., 2.], [1., 2.]])  # doctest: +SKIP
     array([[ 9.59...e-06, 9.99...e-01],
            [ 9.59...e-06, 9.99...e-01]])
 
