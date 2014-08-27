@@ -89,7 +89,7 @@ def compute_strong_active_set(X, y, current_alpha, prev_alpha, l1_ratio, coef):
 
 
 def check_kkt_conditions(X, y, coef, strong_active_set, alpha, l1_ratio,
-                         active_set=None, return_active_set=True):
+                         active_set=None, return_active_set=True, rtol=1e-3):
     """
     Checks if the KKT conditions are satisfied for ElasticNet and Lasso.
 
@@ -163,16 +163,21 @@ def check_kkt_conditions(X, y, coef, strong_active_set, alpha, l1_ratio,
         # XXX: I'm not sure about the multi_output case.
         if multi_output:
             loss_derivative = norm(loss_derivative)
-            l1_penalty = alpha * l1_ratio * np.sign(np.mean(active_coef))
+            mean_coef = np.mean(active_coef)
+            l1_penalty = alpha * l1_ratio * mean_coef
+            if mean_coef < 0:
+                l1_penalty = -l1_penalty
             active_coef = norm(active_coef)
             l2_penalty = alpha * (1 - l1_ratio) * active_coef
         else:
-            l1_penalty = alpha * l1_ratio * np.sign(active_coef)
+            l1_penalty = alpha * l1_ratio * active_coef
+            if active_coef < 0:
+                l1_penalty = -l1_penalty
             l2_penalty = alpha * (1 - l1_ratio) * active_coef
 
-        if active_coef != 0 and (
-            not np.allclose(loss_derivative, l1_penalty + l2_penalty,
-                            rtol=1e-3, atol=1e-3)):
+        penalty = l1_penalty + l2_penalty
+        tol = 1e-3 + rtol * abs(penalty)
+        if active_coef != 0 and (abs(loss_derivative - penalty) > tol):
             active_set.append(i)
             kkt_violations = True
             if not return_active_set:
@@ -431,8 +436,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     >>> _, coef_path, _ = lasso_path(X, y, alphas=[5., 1., .5],
     ...                               fit_intercept=False)
     >>> print(coef_path)
-    [[ 0.          0.          0.        ]
-     [ 0.2159048   0.4425765   0.47091046]]
+    [[ 0.          0.          0.46882235]
+     [ 0.2159048   0.4425765   0.23685352]]
 
     >>> # Now use lars_path and 1D linear interpolation to compute the
     >>> # same path
