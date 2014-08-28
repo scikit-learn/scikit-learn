@@ -485,7 +485,7 @@ def test_logistic_regression_convergence_warnings():
     """Test that warnings are raised if model does not converge"""
 
     X, y = make_classification(n_samples=20, n_features=20)
-    clf_lib = LogisticRegression(solver='liblinear', max_iter=2)
+    clf_lib = LogisticRegression(solver='liblinear', max_iter=2, verbose=1)
     assert_warns(ConvergenceWarning, clf_lib.fit, X, y)
     assert_equal(clf_lib.n_iter_, 2)
 

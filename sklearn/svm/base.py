@@ -715,8 +715,9 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     y_ind = enc.fit_transform(y)
     classes_ = enc.classes_
     if len(classes_) < 2:
-        raise ValueError("The number of classes has to be greater than"
-                         " one.")
+        raise ValueError("This solver needs samples of at least 2 classes"
+                         " in the data, but the data contains only one"
+                         " class: %r" % classes_[0])
 
     class_weight_ = compute_class_weight(class_weight, classes_, y)
     liblinear.set_verbosity_wrap(verbose)
@@ -744,7 +745,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     # on 32-bit platforms, we can't get to the UINT_MAX limit that
     # srand supports
     n_iter_ = max(n_iter_)
-    if n_iter_ >= max_iter:
+    if n_iter_ >= max_iter and verbose > 0:
         warnings.warn("Liblinear failed to converge, increase "
                       "the number of iterations.", ConvergenceWarning)
 
