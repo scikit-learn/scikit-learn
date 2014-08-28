@@ -25,6 +25,15 @@ def test_compute_class_weight_not_present():
     assert_raises(ValueError, compute_class_weight, "auto", classes, y)
 
 
+def test_compute_class_weight_classes_not_in_y():
+    """Raise error when classes does not contain all y labels"""
+    classes = np.arange(4)
+    y = np.asarray([0, 0, 0, 2, 2])
+    actual = [1.6, 0, 2.4, 0]
+    weights = compute_class_weight("auto", classes, y)
+    assert_almost_equal(actual, weights)
+
+
 def test_compute_class_weight_auto_negative():
     """Test compute_class_weight when labels are negative"""
     # Test with balanced class labels.

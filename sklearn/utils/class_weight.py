@@ -44,10 +44,11 @@ def compute_class_weight(class_weight, classes, y):
         le = LabelEncoder()
         class_ind = le.fit_transform(classes)
         y_ind = le.transform(y).ravel()
+        n_classes = len(class_ind)
 
         # inversely proportional to the number of samples in the class
-        recip_freq = 1. / np.bincount(y_ind)
-        recip_freq.resize(class_ind.shape[0])
+        recip_freq = np.bincount(y_ind, minlength=n_classes).astype(np.float64)
+        recip_freq[recip_freq != 0] = 1 / recip_freq[recip_freq != 0]
         weight = recip_freq[class_ind] / np.mean(recip_freq)
     else:
         # user-defined dictionary
