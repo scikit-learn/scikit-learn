@@ -675,7 +675,7 @@ def test_consistent_proba():
 def test_linear_svc_convergence_warnings():
     """Test that warnings are raised if model does not converge"""
 
-    lsvc = svm.LinearSVC(max_iter=2)
+    lsvc = svm.LinearSVC(max_iter=2, verbose=1)
     assert_warns(ConvergenceWarning, lsvc.fit, X, Y)
     assert_equal(lsvc.n_iter_, 2)
 

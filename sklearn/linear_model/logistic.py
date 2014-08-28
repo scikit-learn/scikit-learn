@@ -408,15 +408,15 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     if solver not in ['liblinear', 'newton-cg', 'lbfgs']:
         raise ValueError("Logistic Regression supports only liblinear,"
-                         " newton-cg and lbfgs solvers.")
+                         " newton-cg and lbfgs solvers. got %s" % solver)
 
     if solver != 'liblinear':
         if penalty != 'l2':
             raise ValueError("newton-cg and lbfgs solvers support only "
-                             "l2 penalties.")
+                             "l2 penalties, got %s penalty." % penalty)
         if dual:
             raise ValueError("newton-cg and lbfgs solvers support only "
-                             "the primal form.")
+                             "dual=False, got dual=%s" % dual)
     # Preprocessing.
     X = check_array(X, accept_sparse='csc', dtype=np.float64)
     y = check_array(y, ensure_2d=False, copy=copy)
@@ -484,7 +484,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             if not coef.size in (n_features, w0.size):
                 raise ValueError(
                     'Initialization coef is of shape %d, expected shape '
-                    '%d or %d' % (n_features, w0.size)
+                    '%d or %d' % (coef.size, n_features, w0.size)
                     )
             w0[:coef.size] = coef
         else:
@@ -526,7 +526,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                     args=(X, target, 1. / C, sample_weight),
                     iprint=(verbose > 0) - 1, pgtol=tol
                     )
-            if info["warnflag"] == 1:
+            if info["warnflag"] == 1 and verbose > 0:
                 warnings.warn("lbfgs failed to converge. Increase the number "
                               "of iterations.")
 
@@ -674,7 +674,8 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     elif multi_class == 'multinomial':
         log_reg.classes_ = np.unique(y_train)
     else:
-        raise ValueError("multi_class should be either multinomial or ovr")
+        raise ValueError("multi_class should be either multinomial or ovr, "
+                         "got %d" % multi_class)
 
     if pos_class is not None:
         mask = (y_test == pos_class)
@@ -880,16 +881,21 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             raise ValueError("Penalty term must be positive; got (C=%r)"
                              % self.C)
 
-        X = check_array(X, accept_sparse='csr', dtype=np.float64, order="C")
-        X, y = check_X_y(X, y, accept_sparse='csr')
+        X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64, order="C")
         self.classes_ = np.unique(y)
         if self.solver not in ['liblinear', 'newton-cg', 'lbfgs']:
-            raise ValueError("Logistic Regression supports only liblinear,"
-                             " newton-cg and lbfgs solvers.")
+            raise ValueError(
+                "Logistic Regression supports only liblinear, newton-cg and "
+                "lbfgs solvers, Got solver=%s" % self.solver
+                )
 
         if self.solver != 'lbfgs' and self.multi_class == 'multinomial':
             raise ValueError("Solver %s does not support a multinomial "
                              "backend.")
+
+        if self.multi_class not in ['ovr', 'multinomial']:
+            raise ValueError("multi_class should be either ovr or multinomial "
+                             "got %s" % self.multi_class)
 
         if self.solver == 'liblinear':
             self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
@@ -899,37 +905,37 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                 )
             return self
 
-        n_tasks = len(self.classes_)
+        n_classes = len(self.classes_)
         classes_ = self.classes_
+        if n_classes < 2:
+            raise ValueError("This solver needs samples of at least 2 classes"
+                             " in the data, but the data contains only one"
+                             " class: %r" % classes_[0])
 
         if len(self.classes_) == 2:
-            n_tasks = 1
+            n_classes = 1
             classes_ = classes_[1:]
 
         self.coef_ = list()
-        self.intercept_ = np.zeros(n_tasks)
+        self.intercept_ = np.zeros(n_classes)
 
-        if self.multi_class == 'ovr':
-            for ind, class_ in enumerate(classes_):
-                coef_, _ = logistic_regression_path(
-                    X, y, pos_class=class_, Cs=[self.C],
-                    fit_intercept=self.fit_intercept,
-                    tol=self.tol, verbose=self.verbose,
-                    solver=self.solver, copy=True, multi_class='ovr',
-                    max_iter=self.max_iter,
-                    class_weight=self.class_weight)
-                self.coef_.append(coef_[0])
-        elif self.multi_class == 'multinomial':
+        # Hack so that we iterate only once for the multinomial case.
+        if self.multi_class == 'multinomial':
+            classes_ = [None]
+
+        for ind, class_ in enumerate(classes_):
             coef_, _ = logistic_regression_path(
-                X, y, Cs=[self.C],
-                fit_intercept=self.fit_intercept,
-                tol=self.tol, verbose=self.verbose,
-                solver=self.solver, multi_class='multinomial',
-                max_iter=self.max_iter, class_weight=self.class_weight)
-            self.coef_ = coef_[0]
-        else:
-            raise ValueError("multi_class should be either multinomial or ovr. "
-                             "got %s" % self.multi_class)
+                X, y, pos_class=class_, Cs=[self.C],
+                fit_intercept=self.fit_intercept, tol=self.tol,
+                verbose=self.verbose, solver=self.solver,
+                multi_class=self.multi_class, max_iter=self.max_iter,
+                class_weight=self.class_weight)
+            self.coef_.append(coef_[0])
+
+        self.coef_ = np.squeeze(self.coef_)
+        # For the binary case, this get squeezed to a 1-D array.
+        if self.coef_.ndim == 1:
+            self.coef_ = self.coef_[np.newaxis, :]
 
         self.coef_ = np.asarray(self.coef_)
         if self.fit_intercept:
@@ -1209,13 +1215,20 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         n_classes = len(labels)
 
         if n_classes < 2:
-            raise ValueError("Number of classes have to be greater than one.")
-
+            raise ValueError("This solver needs samples of at least 2 classes"
+                             " in the data, but the data contains only one"
+                             " class: %r" % self.classes_[0])
         if n_classes == 2:
             # OvR in case of binary problems is as good as fitting
             # the higher label
             n_classes = 1
             labels = labels[1:]
+
+        # We need this hack to iterate only once over labels, in the case of
+        # multi_class = multinomial, without changing the value of the labels.
+        iter_labels = labels
+        if self.multi_class == 'multinomial':
+            iter_labels = [None]
 
         if self.class_weight and not(isinstance(self.class_weight, dict) or
                                      self.class_weight == 'auto'):
@@ -1224,34 +1237,17 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         path_func = delayed(_log_reg_scoring_path)
 
-        # For ovr we iterate across all labels and folds, however for
-        # multinomial we iterate only across all folds.
-        if self.multi_class == 'ovr':
-            fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-                path_func(X, y, train, test, pos_class=label, Cs=self.Cs,
-                          fit_intercept=self.fit_intercept,
-                          penalty=self.penalty,
-                          dual=self.dual, solver=self.solver,
-                          max_iter=self.max_iter, tol=self.tol,
-                          class_weight=self.class_weight,
-                          verbose=self.verbose,
-                          scoring=self.scoring, multi_class=self.multi_class,
-                          intercept_scaling=self.intercept_scaling)
-                for label in labels
-                for train, test in folds)
-
-        else:
-            fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-                path_func(X, y, train, test, Cs=self.Cs,
-                          fit_intercept=self.fit_intercept,
-                          penalty=self.penalty,
-                          dual=self.dual, solver=self.solver,
-                          max_iter=self.max_iter, tol=self.tol,
-                          class_weight=self.class_weight,
-                          verbose=self.verbose,
-                          scoring=self.scoring, multi_class=self.multi_class,
-                          intercept_scaling=self.intercept_scaling)
-                for train, test in folds)
+        fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+            path_func(X, y, train, test, pos_class=label, Cs=self.Cs,
+                      fit_intercept=self.fit_intercept, penalty=self.penalty,
+                      dual=self.dual, solver=self.solver, tol=self.tol,
+                      max_iter=self.max_iter, verbose=self.verbose,
+                      class_weight=self.class_weight, scoring=self.scoring,
+                      multi_class=self.multi_class,
+                      intercept_scaling=self.intercept_scaling
+                      )
+            for label in iter_labels
+            for train, test in folds)
 
         if self.multi_class == 'multinomial':
             multi_coefs_paths, Cs, multi_scores = zip(*fold_coefs_)
@@ -1287,11 +1283,10 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         # hack to iterate only once for multinomial case.
         if self.multi_class == 'multinomial':
-            labels = [1.]
             scores = multi_scores
             coefs_paths = multi_coefs_paths
 
-        for index, label in enumerate(labels):
+        for index, label in enumerate(iter_labels):
             if self.multi_class == 'ovr':
                 scores = self.scores_[label]
                 coefs_paths = self.coefs_paths_[label]
