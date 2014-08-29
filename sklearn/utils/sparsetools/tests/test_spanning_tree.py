@@ -28,16 +28,16 @@ def test_minimum_spanning_tree():
     # Ensure minimum spanning tree code gives this expected output.
     csgraph = csr_matrix(graph)
     mintree = minimum_spanning_tree(csgraph)
-    npt.assert_array_equal(mintree.todense(), expected,
+    npt.assert_array_equal(mintree.toarray(), expected,
                            'Incorrect spanning tree found.')
 
     # Ensure that the original graph was not modified.
-    npt.assert_array_equal(csgraph.todense(), graph,
+    npt.assert_array_equal(csgraph.toarray(), graph,
                            'Original graph was modified.')
 
     # Now let the algorithm modify the csgraph in place.
     mintree = minimum_spanning_tree(csgraph, overwrite=True)
-    npt.assert_array_equal(mintree.todense(), expected,
+    npt.assert_array_equal(mintree.toarray(), expected,
                            'Graph was not properly modified to contain MST.')
 
     np.random.seed(1234)
@@ -61,5 +61,5 @@ def test_minimum_spanning_tree():
         expected = np.zeros((N, N))
         expected[idx, idx + 1] = 1
 
-        npt.assert_array_equal(mintree.todense(), expected,
+        npt.assert_array_equal(mintree.toarray(), expected,
                                'Incorrect spanning tree found.')

@@ -1,5 +1,7 @@
 # Authors: Gilles Louppe <g.louppe@gmail.com>
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
+#          Arnaud Joly <arnaud.v.joly@gmail.com>
+#
 # Licence: BSD 3 clause
 
 # See _utils.pyx for details.
@@ -22,6 +24,7 @@ cdef struct StackRecord:
     SIZE_t parent
     bint is_left
     double impurity
+    SIZE_t n_constant_features
 
 cdef class Stack:
     cdef SIZE_t capacity
@@ -30,7 +33,8 @@ cdef class Stack:
 
     cdef bint is_empty(self) nogil
     cdef int push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent,
-                   bint is_left, double impurity) nogil
+                  bint is_left, double impurity,
+                  SIZE_t n_constant_features) nogil
     cdef int pop(self, StackRecord* res) nogil
 
 
@@ -47,6 +51,8 @@ cdef struct PriorityHeapRecord:
     SIZE_t depth
     bint is_leaf
     double impurity
+    double impurity_left
+    double impurity_right
     double improvement
 
 cdef class PriorityHeap:
@@ -56,6 +62,7 @@ cdef class PriorityHeap:
 
     cdef bint is_empty(self) nogil
     cdef int push(self, SIZE_t node_id, SIZE_t start, SIZE_t end, SIZE_t pos,
-                   SIZE_t depth, bint is_leaf, double improvement,
-                   double impurity) nogil
+                  SIZE_t depth, bint is_leaf, double improvement,
+                  double impurity, double impurity_left,
+                  double impurity_right) nogil
     cdef int pop(self, PriorityHeapRecord* res) nogil

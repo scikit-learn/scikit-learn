@@ -31,11 +31,10 @@ print(__doc__)
 
 from sklearn.externals.six.moves import zip
 
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_gaussian_quantiles
 from sklearn.ensemble import AdaBoostClassifier
-from sklearn.externals.six.moves import xrange
 from sklearn.metrics import accuracy_score
 from sklearn.tree import DecisionTreeClassifier
 
@@ -72,38 +71,50 @@ for real_test_predict, discrete_train_predict in zip(
     discrete_test_errors.append(
         1. - accuracy_score(discrete_train_predict, y_test))
 
-n_trees = xrange(1, len(bdt_discrete) + 1)
+n_trees_discrete = len(bdt_discrete)
+n_trees_real = len(bdt_real)
 
-pl.figure(figsize=(15, 5))
+# Boosting might terminate early, but the following arrays are always
+# n_estimators long. We crop them to the actual number of trees here:
+discrete_estimator_errors = bdt_discrete.estimator_errors_[:n_trees_discrete]
+real_estimator_errors = bdt_real.estimator_errors_[:n_trees_real]
+discrete_estimator_weights = bdt_discrete.estimator_weights_[:n_trees_discrete]
 
-pl.subplot(131)
-pl.plot(n_trees, discrete_test_errors, c='black', label='SAMME')
-pl.plot(n_trees, real_test_errors, c='black',
-        linestyle='dashed', label='SAMME.R')
-pl.legend()
-pl.ylim(0.18, 0.62)
-pl.ylabel('Test Error')
-pl.xlabel('Number of Trees')
+plt.figure(figsize=(15, 5))
 
-pl.subplot(132)
-pl.plot(n_trees, bdt_discrete.estimator_errors_, "b", label='SAMME', alpha=.5)
-pl.plot(n_trees, bdt_real.estimator_errors_, "r", label='SAMME.R', alpha=.5)
-pl.legend()
-pl.ylabel('Error')
-pl.xlabel('Number of Trees')
-pl.ylim((.2,
-        max(bdt_real.estimator_errors_.max(),
-            bdt_discrete.estimator_errors_.max()) * 1.2))
-pl.xlim((-20, len(bdt_discrete) + 20))
+plt.subplot(131)
+plt.plot(range(1, n_trees_discrete + 1),
+         discrete_test_errors, c='black', label='SAMME')
+plt.plot(range(1, n_trees_real + 1),
+         real_test_errors, c='black',
+         linestyle='dashed', label='SAMME.R')
+plt.legend()
+plt.ylim(0.18, 0.62)
+plt.ylabel('Test Error')
+plt.xlabel('Number of Trees')
 
-pl.subplot(133)
-pl.plot(n_trees, bdt_discrete.estimator_weights_, "b", label='SAMME')
-pl.legend()
-pl.ylabel('Weight')
-pl.xlabel('Number of Trees')
-pl.ylim((0, bdt_discrete.estimator_weights_.max() * 1.2))
-pl.xlim((-20, len(bdt_discrete) + 20))
+plt.subplot(132)
+plt.plot(range(1, n_trees_discrete + 1), discrete_estimator_errors,
+         "b", label='SAMME', alpha=.5)
+plt.plot(range(1, n_trees_real + 1), real_estimator_errors,
+         "r", label='SAMME.R', alpha=.5)
+plt.legend()
+plt.ylabel('Error')
+plt.xlabel('Number of Trees')
+plt.ylim((.2,
+         max(real_estimator_errors.max(),
+             discrete_estimator_errors.max()) * 1.2))
+plt.xlim((-20, len(bdt_discrete) + 20))
+
+plt.subplot(133)
+plt.plot(range(1, n_trees_discrete + 1), discrete_estimator_weights,
+         "b", label='SAMME')
+plt.legend()
+plt.ylabel('Weight')
+plt.xlabel('Number of Trees')
+plt.ylim((0, discrete_estimator_weights.max() * 1.2))
+plt.xlim((-20, n_trees_discrete + 20))
 
 # prevent overlapping y-axis labels
-pl.subplots_adjust(wspace=0.25)
-pl.show()
+plt.subplots_adjust(wspace=0.25)
+plt.show()

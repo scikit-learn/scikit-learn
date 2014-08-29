@@ -67,7 +67,7 @@ print(__doc__)
 # License: BSD 3 clause
 
 import numpy as np
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
 
 from sklearn.ensemble import BaggingRegressor
 from sklearn.tree import DecisionTreeRegressor
@@ -125,7 +125,7 @@ for n, (name, estimator) in enumerate(estimators):
     # Compute predictions
     y_predict = np.zeros((n_test, n_repeat))
 
-    for i in xrange(n_repeat):
+    for i in range(n_repeat):
         estimator.fit(X_train[i], y_train[i])
         y_predict[:, i] = estimator.predict(X_test)
 

@@ -8,19 +8,18 @@ import numpy as np
 import scipy.sparse as sp
 
 from abc import ABCMeta, abstractmethod
-import warnings
 
 from ..externals.joblib import Parallel, delayed
 
 from .base import LinearClassifierMixin, SparseCoefMixin
 from ..base import BaseEstimator, RegressorMixin
 from ..feature_selection.from_model import _LearntSelectorMixin
-from ..utils import atleast2d_or_csr, check_arrays, deprecated, column_or_1d
+from ..utils import (check_array, check_random_state, check_X_y)
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..externals import six
 
-from .sgd_fast import plain_sgd as plain_sgd
+from .sgd_fast import plain_sgd
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
 from ..utils import compute_class_weight
 from .sgd_fast import Hinge
@@ -261,10 +260,16 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
     penalty_type = est._get_penalty_type(est.penalty)
     learning_rate_type = est._get_learning_rate_type(learning_rate)
 
+    # XXX should have random_state_!
+    random_state = check_random_state(est.random_state)
+    # numpy mtrand expects a C long which is a signed 32 bit integer under
+    # Windows
+    seed = random_state.randint(0, np.iinfo(np.int32).max)
+
     return plain_sgd(coef, intercept, est.loss_function,
                      penalty_type, alpha, C, est.l1_ratio,
                      dataset, n_iter, int(est.fit_intercept),
-                     int(est.verbose), int(est.shuffle), est.random_state,
+                     int(est.verbose), int(est.shuffle), seed,
                      pos_weight, neg_weight,
                      learning_rate_type, est.eta0,
                      est.power_t, est.t_, intercept_decay)
@@ -291,13 +296,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                  fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
                  epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 class_weight=None, warm_start=False, seed=None):
-
-        if seed is not None:
-            warnings.warn("Parameter 'seed' was renamed to 'random_state' for"
-                          " consistency and will be removed in 0.15",
-                          DeprecationWarning)
-            random_state = seed
+                 class_weight=None, warm_start=False):
 
         super(BaseSGDClassifier, self).__init__(loss=loss, penalty=penalty,
                                                 alpha=alpha, l1_ratio=l1_ratio,
@@ -313,18 +312,11 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         self.classes_ = None
         self.n_jobs = int(n_jobs)
 
-    @property
-    @deprecated("Parameter 'seed' was renamed to 'random_state' for"
-                " consistency and will be removed in 0.15")
-    def seed(self):
-        return self.random_state
-
     def _partial_fit(self, X, y, alpha, C,
                      loss, learning_rate, n_iter,
                      classes, sample_weight,
                      coef_init, intercept_init):
-        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
-        y = column_or_1d(y, warn=True)
+        X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C")
 
         n_samples, n_features = X.shape
         _check_fit_data(X, y)
@@ -335,10 +327,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         n_classes = self.classes_.shape[0]
 
         # Allocate datastructures from input arguments
-        y_ind = np.searchsorted(self.classes_, y)   # XXX use a LabelBinarizer?
         self._expanded_class_weight = compute_class_weight(self.class_weight,
-                                                           self.classes_,
-                                                           y_ind)
+                                                           self.classes_, y)
         sample_weight = self._validate_sample_weight(sample_weight, n_samples)
 
         if self.coef_ is None or coef_init is not None:
@@ -366,21 +356,12 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
         return self
 
-    def _fit(self, X, y, alpha, C, loss, learning_rate,
-             coef_init=None, intercept_init=None, class_weight=None,
-             sample_weight=None):
+    def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
+             intercept_init=None, sample_weight=None):
         if hasattr(self, "classes_"):
             self.classes_ = None
 
-        if class_weight is not None:
-            warnings.warn("Using 'class_weight' as a parameter to the 'fit'"
-                          " method is deprecated and will be removed in 0.13. "
-                          "Set it on initialization instead.",
-                          DeprecationWarning, stacklevel=2)
-
-            self.class_weight = class_weight
-
-        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
+        X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C")
         n_samples, n_features = X.shape
 
         # labels can be encoded as float, int, or string literals
@@ -424,15 +405,15 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         Each binary classifier predicts one class versus all others. This
         strategy is called OVA: One Versus All.
         """
-        # Use joblib to fit OvA in parallel
-        result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+        # Use joblib to fit OvA in parallel.
+        result = Parallel(n_jobs=self.n_jobs, backend="threading",
+                          verbose=self.verbose)(
             delayed(fit_binary)(self, i, X, y, alpha, C, learning_rate,
                                 n_iter, self._expanded_class_weight[i], 1.,
                                 sample_weight)
             for i in range(len(self.classes_)))
 
-        for i, (coef, intercept) in enumerate(result):
-            self.coef_[i] = coef
+        for i, (_, intercept) in enumerate(result):
             self.intercept_[i] = intercept
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
@@ -496,7 +477,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         return self._fit(X, y, alpha=self.alpha, C=1.0,
                          loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init, intercept_init=intercept_init,
-                         class_weight=class_weight,
                          sample_weight=sample_weight)
 
 
@@ -539,7 +519,7 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     penalty : str, 'l2' or 'l1' or 'elasticnet'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
         which is the standard regularizer for linear SVM models. 'l1' and
-        'elasticnet' migh bring sparsity to the model (feature selection)
+        'elasticnet' might bring sparsity to the model (feature selection)
         not achievable with 'l2'.
 
     alpha : float
@@ -611,11 +591,11 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
 
     Attributes
     ----------
-    `coef_` : array, shape = [1, n_features] if n_classes == 2 else [n_classes,
+    coef_ : array, shape = [1, n_features] if n_classes == 2 else [n_classes,
     n_features]
         Weights assigned to the features.
 
-    `intercept_` : array, shape = [1] if n_classes == 2 else [n_classes]
+    intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
     Examples
@@ -645,17 +625,24 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
                  fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
                  epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 class_weight=None, warm_start=False, seed=None):
+                 class_weight=None, warm_start=False):
         super(SGDClassifier, self).__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
             fit_intercept=fit_intercept, n_iter=n_iter, shuffle=shuffle,
             verbose=verbose, epsilon=epsilon, n_jobs=n_jobs,
             random_state=random_state, learning_rate=learning_rate, eta0=eta0,
-            power_t=power_t, class_weight=class_weight, warm_start=warm_start,
-            seed=seed)
+            power_t=power_t, class_weight=class_weight, warm_start=warm_start)
 
-    def predict_proba(self, X):
+    def _check_proba(self):
+        if self.loss not in ("log", "modified_huber"):
+            raise AttributeError("probability estimates are not available for"
+                                 " loss=%r" % self.loss)
+
+    @property
+    def predict_proba(self):
         """Probability estimates.
+
+        This method is only available for log loss and modified Huber loss.
 
         Multiclass probability estimates are derived from binary (one-vs.-rest)
         estimates by simple normalization, as recommended by Zadrozny and
@@ -684,6 +671,10 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         case is in the appendix B in:
         http://jmlr.csail.mit.edu/papers/volume2/zhang02c/zhang02c.pdf
         """
+        self._check_proba()
+        return self._predict_proba
+
+    def _predict_proba(self, X):
         if self.loss == "log":
             return self._predict_proba_lr(X)
 
@@ -724,11 +715,16 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
                                       " loss='log' or loss='modified_huber' "
                                       "(%r given)" % self.loss)
 
-    def predict_log_proba(self, X):
+    @property
+    def predict_log_proba(self):
         """Log of probability estimates.
+
+        This method is only available for log loss and modified Huber loss.
 
         When loss="modified_huber", probability estimates may be hard zeros
         and ones, so taking the logarithm is not possible.
+
+        See ``predict_proba`` for details.
 
         Parameters
         ----------
@@ -741,6 +737,10 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
             model, where classes are ordered as they are in
             `self.classes_`.
         """
+        self._check_proba()
+        return self._predict_log_proba
+
+    def _predict_log_proba(self, X):
         return np.log(self.predict_proba(X))
 
 
@@ -774,9 +774,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
     def _partial_fit(self, X, y, alpha, C, loss, learning_rate,
                      n_iter, sample_weight,
                      coef_init, intercept_init):
-        X, y = check_arrays(X, y, sparse_format="csr", copy=False,
-                            check_ccontiguous=True, dtype=np.float64)
-        y = column_or_1d(y, warn=True)
+        X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
+        y = y.astype(np.float64)
 
         n_samples, n_features = X.shape
         _check_fit_data(X, y)
@@ -883,7 +882,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         array, shape = [n_samples]
            Predicted target values per element in X.
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
         scores = safe_sparse_dot(X, self.coef_.T,
                                  dense_output=True) + self.intercept_
         return scores.ravel()
@@ -913,6 +912,11 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         if self.t_ is None:
             self._init_t(loss_function)
 
+        random_state = check_random_state(self.random_state)
+        # numpy mtrand expects a C long which is a signed 32 bit integer under
+        # Windows
+        seed = random_state.randint(0, np.iinfo(np.int32).max)
+
         self.coef_, intercept = plain_sgd(self.coef_,
                                           self.intercept_[0],
                                           loss_function,
@@ -924,7 +928,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                                           int(self.fit_intercept),
                                           int(self.verbose),
                                           int(self.shuffle),
-                                          self.random_state,
+                                          seed,
                                           1.0, 1.0,
                                           learning_rate_type,
                                           self.eta0, self.power_t, self.t_,
@@ -965,7 +969,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
     penalty : str, 'l2' or 'l1' or 'elasticnet'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
         which is the standard regularizer for linear SVM models. 'l1' and
-        'elasticnet' migh bring sparsity to the model (feature selection)
+        'elasticnet' might bring sparsity to the model (feature selection)
         not achievable with 'l2'.
 
     alpha : float
@@ -1021,10 +1025,10 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
 
     Attributes
     ----------
-    `coef_` : array, shape = [n_features]
+    coef_ : array, shape = [n_features]
         Weights asigned to the features.
 
-    `intercept_` : array, shape = [1]
+    intercept_ : array, shape = [1]
         The intercept term.
 
     Examples

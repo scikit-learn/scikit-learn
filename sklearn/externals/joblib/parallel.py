@@ -20,7 +20,7 @@ try:
 except:
     import pickle
 
-from ._multiprocessing import mp
+from ._multiprocessing_helpers import mp
 if mp is not None:
     from .pool import MemmapingPool
     from multiprocessing.pool import ThreadPool
@@ -103,12 +103,21 @@ class SafeFunction(object):
 
 
 ###############################################################################
-def delayed(function):
-    """ Decorator used to capture the arguments of a function.
+def delayed(function, check_pickle=True):
+    """Decorator used to capture the arguments of a function.
+
+    Pass `check_pickle=False` when:
+
+    - performing a possibly repeated check is too costly and has been done
+      already once outside of the call to delayed.
+
+    - when used in conjunction `Parallel(backend='threading')`.
+
     """
     # Try to pickle the input function, to catch the problems early when
-    # using with multiprocessing
-    pickle.dumps(function)
+    # using with multiprocessing:
+    if check_pickle:
+        pickle.dumps(function)
 
     def delayed_function(*args, **kwargs):
         return function, args, kwargs
@@ -224,7 +233,7 @@ class Parallel(Logger):
             Only active when backend="multiprocessing".
         max_nbytes int, str, or None, optional, 100e6 (100MB) by default
             Threshold on the size of arrays passed to the workers that
-            triggers automated memmory mapping in temp_folder. Can be an int
+            triggers automated memory mapping in temp_folder. Can be an int
             in Bytes, or a human-readable string, e.g., '1M' for 1 megabyte.
             Use None to disable memmaping of large arrays.
             Only active when backend="multiprocessing".
@@ -352,7 +361,7 @@ class Parallel(Logger):
          [Parallel(n_jobs=2)]: Done   6 out of   6 | elapsed:    0.0s finished
     '''
     def __init__(self, n_jobs=1, backend=None, verbose=0, pre_dispatch='all',
-                 temp_folder=None, max_nbytes=100e6, mmap_mode='c'):
+                 temp_folder=None, max_nbytes=100e6, mmap_mode='r'):
         self.verbose = verbose
         self._mp_context = None
         if backend is None:
@@ -519,7 +528,7 @@ class Parallel(Logger):
                         # Capture exception to add information on the local
                         # stack in addition to the distant stack
                         this_report = format_outer_frames(context=10,
-                                                        stack_start=1)
+                                                          stack_start=1)
                         report = """Multiprocessing exception:
     %s
     ---------------------------------------------------------------------------
@@ -577,7 +586,7 @@ class Parallel(Logger):
             else:
                 already_forked = int(os.environ.get('__JOBLIB_SPAWNED_PARALLEL__', 0))
                 if already_forked:
-                    raise ImportError('[joblib] Attempting to do parallel computing'
+                    raise ImportError('[joblib] Attempting to do parallel computing '
                             'without protecting your import on a system that does '
                             'not support forking. To use parallel-computing in a '
                             'script, you must protect you main loop using "if '

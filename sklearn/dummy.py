@@ -1,15 +1,20 @@
-
 # Author: Mathieu Blondel <mathieu@mblondel.org>
 #         Arnaud Joly <a.joly@ulg.ac.be>
+#         Maheshakya Wijewardena <maheshakya.10@cse.mrt.ac.lk>
 # License: BSD 3 clause
+from __future__ import division
 
+import warnings
 import numpy as np
+import scipy.sparse as sp
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .externals.six.moves import xrange
 from .utils import check_random_state
-from .utils.fixes import unique
-from .utils.validation import safe_asarray
+from .utils.validation import check_array
+from sklearn.utils import deprecated
+from sklearn.utils.random import random_choice_csc
+from sklearn.utils.multiclass import class_distribution
 
 
 class DummyClassifier(BaseEstimator, ClassifierMixin):
@@ -21,40 +26,45 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
     Parameters
     ----------
-    strategy: str
+    strategy : str
         Strategy to use to generate predictions.
-            * "stratified": generates predictions by respecting the training
-              set's class distribution.
-            * "most_frequent": always predicts the most frequent label in the
-              training set.
-            * "uniform": generates predictions uniformly at random.
-            * "constant": always predicts a constant label that is provided by
-              the user. This is useful for metrics that evaluate a non-majority
-              class
 
-    random_state: int seed, RandomState instance, or None (default)
+        * "stratified": generates predictions by respecting the training
+          set's class distribution.
+        * "most_frequent": always predicts the most frequent label in the
+          training set.
+        * "uniform": generates predictions uniformly at random.
+        * "constant": always predicts a constant label that is provided by
+          the user. This is useful for metrics that evaluate a non-majority
+          class
+
+    random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use.
 
-    constant: int or str or array of shape = [n_outputs]
+    constant : int or str or array of shape = [n_outputs]
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
 
     Attributes
     ----------
-    `classes_` : array or list of array of shape = [n_classes]
+    classes_ : array or list of array of shape = [n_classes]
         Class labels for each output.
 
-    `n_classes_` : array or list of array of shape = [n_classes]
+    n_classes_ : array or list of array of shape = [n_classes]
         Number of label for each output.
 
-    `class_prior_` : array or list of array of shape = [n_classes]
+    class_prior_ : array or list of array of shape = [n_classes]
         Probability of each class for each output.
 
-    `n_outputs_` : int,
+    n_outputs_ : int,
         Number of outputs.
 
-    `outputs_2d_` : bool,
+    outputs_2d_ : bool,
         True if the output at fit is 2d, else false.
+
+    `sparse_output_` : bool,
+        True if the array returned from predict is to be in sparse CSC format.
+        Is automatically set to True if the input y is passed in sparse format.
 
     """
 
@@ -64,7 +74,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         self.random_state = random_state
         self.constant = constant
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the random classifier.
 
         Parameters
@@ -76,6 +86,9 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             Target values.
 
+        sample_weight : array-like of shape = [n_samples], optional
+            Sample weights.
+
         Returns
         -------
         self : object
@@ -85,16 +98,24 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                                  "constant"):
             raise ValueError("Unknown strategy type.")
 
-        y = np.atleast_1d(y)
-        self.output_2d_ = y.ndim == 2
+        if self.strategy == "uniform" and sp.issparse(y):
+            y = y.toarray()
+            warnings.warn('A local copy of the target data has been converted '
+                          'to a numpy array. Predicting on sparse target data '
+                          'with the uniform strategy would not save memory '
+                          'and would be slower.',
+                          UserWarning)
 
+        self.sparse_output_ = sp.issparse(y)
+
+        if not self.sparse_output_:
+            y = np.atleast_1d(y)
+
+        self.output_2d_ = y.ndim == 2
         if y.ndim == 1:
             y = np.reshape(y, (-1, 1))
 
         self.n_outputs_ = y.shape[1]
-        self.classes_ = []
-        self.n_classes_ = []
-        self.class_prior_ = []
 
         if self.strategy == "constant":
             if self.constant is None:
@@ -106,15 +127,14 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                     raise ValueError("Constant target value should have "
                                      "shape (%d, 1)." % self.n_outputs_)
 
-        for k in xrange(self.n_outputs_):
-            classes, y_k = unique(y[:, k], return_inverse=True)
-            self.classes_.append(classes)
-            self.n_classes_.append(classes.shape[0])
-            self.class_prior_.append(np.bincount(y_k) / float(y_k.shape[0]))
+        (self.classes_,
+         self.n_classes_,
+         self.class_prior_) = class_distribution(y, sample_weight)
 
-            # Checking in case of constant strategy if the constant provided
-            # by the user is in y.
-            if self.strategy == "constant":
+        if self.strategy == "constant":
+            for k in range(self.n_outputs_):
+                # Checking in case of constant strategy if the constant
+                # provided by the user is in y.
                 if constant[k] not in self.classes_[k]:
                     raise ValueError("The constant target value must be "
                                      "present in training data")
@@ -144,8 +164,10 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         if not hasattr(self, "classes_"):
             raise ValueError("DummyClassifier not fitted.")
 
-        X = safe_asarray(X)
-        n_samples = X.shape[0]
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        # numpy random_state expects Python int and not long as size argument
+        # under Windows
+        n_samples = int(X.shape[0])
         rs = check_random_state(self.random_state)
 
         n_classes_ = self.n_classes_
@@ -164,26 +186,42 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             if self.n_outputs_ == 1:
                 proba = [proba]
 
-        y = []
-        for k in xrange(self.n_outputs_):
+        if self.sparse_output_:
+            class_prob = None
             if self.strategy == "most_frequent":
-                ret = np.ones(n_samples, dtype=int) * class_prior_[k].argmax()
+                classes_ = [np.array([cp.argmax()]) for cp in class_prior_]
 
             elif self.strategy == "stratified":
-                ret = proba[k].argmax(axis=1)
+                class_prob = class_prior_
 
             elif self.strategy == "uniform":
-                ret = rs.randint(n_classes_[k], size=n_samples)
+                    raise ValueError("Sparse target prediction is not "
+                                     "supported with the uniform strategy")
 
             elif self.strategy == "constant":
-                ret = np.ones(n_samples, dtype=int) * (
-                    np.where(classes_[k] == constant[k]))
+                classes_ = [np.array([c]) for c in constant]
 
-            y.append(classes_[k][ret])
+            y = random_choice_csc(n_samples, classes_, class_prob,
+                                  self.random_state)
+        else:
+            if self.strategy == "most_frequent":
+                y = np.tile([classes_[k][class_prior_[k].argmax()] for
+                             k in range(self.n_outputs_)], [n_samples, 1])
 
-        y = np.vstack(y).T
-        if self.n_outputs_ == 1 and not self.output_2d_:
-            y = np.ravel(y)
+            elif self.strategy == "stratified":
+                y = np.vstack(classes_[k][proba[k].argmax(axis=1)] for
+                              k in range(self.n_outputs_)).T
+
+            elif self.strategy == "uniform":
+                ret = [classes_[k][rs.randint(n_classes_[k], size=n_samples)]
+                       for k in range(self.n_outputs_)]
+                y = np.vstack(ret).T
+
+            elif self.strategy == "constant":
+                y = np.tile(self.constant, (n_samples, 1))
+
+            if self.n_outputs_ == 1 and not self.output_2d_:
+                y = np.ravel(y)
 
         return y
 
@@ -207,8 +245,10 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         if not hasattr(self, "classes_"):
             raise ValueError("DummyClassifier not fitted.")
 
-        X = safe_asarray(X)
-        n_samples = X.shape[0]
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        # numpy random_state expects Python int and not long as size argument
+        # under Windows
+        n_samples = int(X.shape[0])
         rs = check_random_state(self.random_state)
 
         n_classes_ = self.n_classes_
@@ -274,23 +314,49 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
 class DummyRegressor(BaseEstimator, RegressorMixin):
     """
-    DummyRegressor is a regressor that always predicts the mean of the training
-    targets.
+    DummyRegressor is a regressor that makes predictions using
+    simple rules.
 
     This regressor is useful as a simple baseline to compare with other
     (real) regressors. Do not use it for real problems.
 
+    Parameters
+    ----------
+    strategy : str
+        Strategy to use to generate predictions.
+
+        * "mean": always predicts the mean of the training set
+        * "median": always predicts the median of the training set
+        * "constant": always predicts a constant value that is provided by
+          the user.
+
+    constant : int or float or array of shape = [n_outputs]
+        The explicit constant as predicted by the "constant" strategy. This
+        parameter is useful only for the "constant" strategy.
+
     Attributes
     ----------
-    `y_mean_` : float or array of shape [n_outputs]
-        Mean of the training targets.
+    constant_ : float or array of shape [n_outputs]
+        Mean or median of the training targets or constant value given the by
+        the user.
 
-    `n_outputs_` : int,
+    n_outputs_ : int,
         Number of outputs.
 
-    `outputs_2d_` : bool,
+    outputs_2d_ : bool,
         True if the output at fit is 2d, else false.
     """
+
+    def __init__(self, strategy="mean", constant=None):
+        self.strategy = strategy
+        self.constant = constant
+
+    @property
+    @deprecated('This will be removed in version 0.17')
+    def y_mean_(self):
+        if self.strategy == 'mean':
+            return self.constant_
+        raise AttributeError
 
     def fit(self, X, y):
         """Fit the random regressor.
@@ -309,10 +375,38 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         self : object
             Returns self.
         """
-        y = safe_asarray(y)
-        self.y_mean_ = np.reshape(np.mean(y, axis=0), (1, -1))
-        self.n_outputs_ = np.size(self.y_mean_)  # y.shape[1] is not safe
+
+        if self.strategy not in ("mean", "median", "constant"):
+            raise ValueError("Unknown strategy type: %s, "
+                             "expected 'mean', 'median' or 'constant'"
+                             % self.strategy)
+
+        y = check_array(y, accept_sparse='csr', ensure_2d=False)
         self.output_2d_ = (y.ndim == 2)
+
+        if self.strategy == "mean":
+            self.constant_ = np.reshape(np.mean(y, axis=0), (1, -1))
+
+        elif self.strategy == "median":
+            self.constant_ = np.reshape(np.median(y, axis=0), (1, -1))
+
+        elif self.strategy == "constant":
+            if self.constant is None:
+                raise TypeError("Constant target value has to be specified "
+                                "when the constant strategy is used.")
+
+            self.constant = check_array(self.constant,
+                                        accept_sparse=['csr', 'csc', 'coo'],
+                                        ensure_2d=False)
+
+            if self.output_2d_ and self.constant.shape[0] != y.shape[1]:
+                raise ValueError(
+                    "Constant target value should have "
+                    "shape (%d, 1)." % y.shape[1])
+
+            self.constant_ = np.reshape(self.constant, (1, -1))
+
+        self.n_outputs_ = np.size(self.constant_)  # y.shape[1] is not safe
         return self
 
     def predict(self, X):
@@ -330,12 +424,13 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         y : array, shape = [n_samples]  or [n_samples, n_outputs]
             Predicted target values for X.
         """
-        if not hasattr(self, "y_mean_"):
+        if not hasattr(self, "constant_"):
             raise ValueError("DummyRegressor not fitted.")
 
-        X = safe_asarray(X)
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         n_samples = X.shape[0]
-        y = np.ones((n_samples, 1)) * self.y_mean_
+
+        y = np.ones((n_samples, 1)) * self.constant_
 
         if self.n_outputs_ == 1 and not self.output_2d_:
             y = np.ravel(y)

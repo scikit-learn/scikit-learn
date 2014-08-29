@@ -8,13 +8,16 @@
 #          Arnaud Joly
 #          Denis Engemann
 # License: BSD 3 clause
+import os
 import inspect
 import pkgutil
 import warnings
 import sys
 import re
+import platform
 
 import scipy as sp
+import scipy.io
 from functools import wraps
 try:
     # Python 2
@@ -27,7 +30,6 @@ except ImportError:
 
 import sklearn
 from sklearn.base import BaseEstimator
-from .fixes import savemat
 
 # Conveniently import all assertions in one place.
 from nose.tools import assert_equal
@@ -51,7 +53,9 @@ from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "raises", "with_setup", "assert_true",
            "assert_false", "assert_almost_equal", "assert_array_equal",
-           "assert_array_almost_equal", "assert_array_less"]
+           "assert_array_almost_equal", "assert_array_less",
+           "assert_less", "assert_less_equal",
+           "assert_greater", "assert_greater_equal"]
 
 
 try:
@@ -102,7 +106,20 @@ def _assert_greater(a, b, msg=None):
     assert a > b, message
 
 
-# To remove when we support numpy 1.7
+def assert_less_equal(a, b, msg=None):
+    message = "%r is not lower than or equal to %r" % (a, b)
+    if msg is not None:
+        message += ": " + msg
+    assert a <= b, message
+
+
+def assert_greater_equal(a, b, msg=None):
+    message = "%r is not greater than or equal to %r" % (a, b)
+    if msg is not None:
+        message += ": " + msg
+    assert a >= b, message
+
+
 def assert_warns(warning_class, func, *args, **kw):
     """Test that a certain warning occurs.
 
@@ -137,11 +154,10 @@ def assert_warns(warning_class, func, *args, **kw):
             raise AssertionError("No warning raised when calling %s"
                                  % func.__name__)
 
-        if not w[0].category is warning_class:
-            raise AssertionError("First warning for %s is not a "
-                                 "%s( is %s)"
-                                 % (func.__name__, warning_class, w[0]))
-
+        found = any(warning.category is warning_class for warning in w)
+        if not found:
+            raise AssertionError("%s did not give warning: %s( is %s)"
+                                 % (func.__name__, warning_class, w))
     return result
 
 
@@ -176,6 +192,9 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
         warnings.simplefilter("always")
+        if hasattr(np, 'VisibleDeprecationWarning'):
+            # Let's not catch the numpy internal DeprecationWarnings
+            warnings.simplefilter('ignore', np.VisibleDeprecationWarning)
         # Trigger a warning.
         result = func(*args, **kw)
         # Verify some things
@@ -384,7 +403,7 @@ def fake_mldata(columns_dict, dataname, matfile, ordering=None):
     for i, name in enumerate(ordering):
         datasets['mldata_descr_ordering'][0, i] = name
 
-    savemat(matfile, datasets, oned_as='column')
+    scipy.io.savemat(matfile, datasets, oned_as='column')
 
 
 class mock_mldata_urlopen(object):
@@ -437,15 +456,22 @@ def uninstall_mldata_mock():
 
 
 # Meta estimators need another estimator to be instantiated.
-meta_estimators = ["OneVsOneClassifier",
+META_ESTIMATORS = ["OneVsOneClassifier",
                    "OutputCodeClassifier", "OneVsRestClassifier", "RFE",
                    "RFECV", "BaseEnsemble"]
 # estimators that there is no way to default-construct sensibly
-other = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV"]
+OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV"]
+
+# some trange ones
+DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
+             'LabelBinarizer', 'LabelEncoder', 'MultiLabelBinarizer',
+             'TfidfTransformer', 'IsotonicRegression', 'OneHotEncoder',
+             'RandomTreesEmbedding', 'FeatureHasher', 'DummyClassifier',
+             'DummyRegressor', 'TruncatedSVD', 'PolynomialFeatures']
 
 
 def all_estimators(include_meta_estimators=False, include_other=False,
-                   type_filter=None):
+                   type_filter=None, include_dont_test=False):
     """Get a list of all estimators from sklearn.
 
     This function crawls the module and gets all classes that inherit
@@ -461,10 +487,13 @@ def all_estimators(include_meta_estimators=False, include_other=False,
         BaseEnsemble, OneVsOneClassifier, OutputCodeClassifier,
         OneVsRestClassifier, RFE, RFECV.
 
-    include_others : boolean, default=False
+    include_other : boolean, default=False
         Wether to include meta-estimators that are somehow special and can
         not be default-constructed sensibly. These are currently
         Pipeline, FeatureUnion and GridSearchCV
+
+    include_dont_test : boolean, default=False
+        Whether to include "special" label estimator or test processors.
 
     type_filter : string or None, default=None
         Which kind of estimators should be returned. If None, no filter is
@@ -504,11 +533,14 @@ def all_estimators(include_meta_estimators=False, include_other=False,
     # get rid of abstract base classes
     estimators = [c for c in estimators if not is_abstract(c[1])]
 
+    if not include_dont_test:
+        estimators = [c for c in estimators if not c[0] in DONT_TEST]
+
     if not include_other:
-        estimators = [c for c in estimators if not c[0] in other]
+        estimators = [c for c in estimators if not c[0] in OTHER]
     # possibly get rid of meta estimators
     if not include_meta_estimators:
-        estimators = [c for c in estimators if not c[0] in meta_estimators]
+        estimators = [c for c in estimators if not c[0] in META_ESTIMATORS]
 
     if type_filter == 'classifier':
         estimators = [est for est in estimators
@@ -553,10 +585,44 @@ def if_matplotlib(func):
     return run_test
 
 
+def if_not_mac_os(versions=('10.7', '10.8', '10.9'),
+                  message='Multi-process bug in Mac OS X >= 10.7 '
+                          '(see issue #636)'):
+    """Test decorator that skips test if OS is Mac OS X and its
+    major version is one of ``versions``.
+    """
+    mac_version, _, _ = platform.mac_ver()
+    skip = '.'.join(mac_version.split('.')[:2]) in versions
+
+    def decorator(func):
+        if skip:
+            @wraps(func)
+            def func(*args, **kwargs):
+                raise SkipTest(message)
+        return func
+    return decorator
+
+
 def clean_warning_registry():
-    """Safe way to reset warniings """
+    """Safe way to reset warnings """
     warnings.resetwarnings()
     reg = "__warningregistry__"
-    for mod in sys.modules.values():
+    for mod_name, mod in list(sys.modules.items()):
+        if 'six.moves' in mod_name:
+            continue
         if hasattr(mod, reg):
             getattr(mod, reg).clear()
+
+
+def check_skip_network():
+    if int(os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', 0)):
+        raise SkipTest("Text tutorial requires large dataset download")
+
+
+def check_skip_travis():
+    """Skip test if being run on Travis."""
+    if os.environ.get('TRAVIS') == "true":
+        raise SkipTest("This test needs to be skipped on Travis")
+
+with_network = with_setup(check_skip_network)
+with_travis = with_setup(check_skip_travis)

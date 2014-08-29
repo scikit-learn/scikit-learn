@@ -7,6 +7,8 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_greater_equal
+from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
@@ -61,6 +63,12 @@ def test_polynomial_features():
         P_test = PolynomialFeatures(deg, include_bias=False).fit_transform(X)
         assert_array_almost_equal(P_test, P[:, 1:])
 
+    interact = PolynomialFeatures(2, interaction_only=True, include_bias=True)
+    X_poly = interact.fit_transform(X)
+    assert_array_almost_equal(X_poly, P2[:, [0, 1, 2, 4]])
+
+    assert_raises(ValueError, interact.transform, X[:, 1:])
+
 
 def test_scaler_1d():
     """Test scaling of dataset along single axis"""
@@ -87,6 +95,9 @@ def test_scaler_1d():
     X_scaled = scale(X)
     assert_array_almost_equal(X_scaled.mean(axis=0), 0.0)
     assert_array_almost_equal(X_scaled.std(axis=0), 1.0)
+
+    X = np.ones(5)
+    assert_array_equal(scale(X, with_mean=False), X)
 
 
 def test_scaler_2d_arrays():
@@ -203,6 +214,36 @@ def test_min_max_scaler_zero_variance_features():
                       [1., 1., 1.0],
                       [1., 1., 2.0]]
     assert_array_almost_equal(X_trans, X_expected_1_2)
+
+
+def test_min_max_scaler_1d():
+    """Test scaling of dataset along single axis"""
+    rng = np.random.RandomState(0)
+    X = rng.randn(5)
+    X_orig_copy = X.copy()
+
+    scaler = MinMaxScaler()
+    X_scaled = scaler.fit(X).transform(X)
+    assert_array_almost_equal(X_scaled.min(axis=0), 0.0)
+    assert_array_almost_equal(X_scaled.max(axis=0), 1.0)
+
+    # check inverse transform
+    X_scaled_back = scaler.inverse_transform(X_scaled)
+    assert_array_almost_equal(X_scaled_back, X_orig_copy)
+
+    # Test with 1D list
+    X = [0., 1., 2, 0.4, 1.]
+    scaler = MinMaxScaler()
+    X_scaled = scaler.fit(X).transform(X)
+    assert_array_almost_equal(X_scaled.min(axis=0), 0.0)
+    assert_array_almost_equal(X_scaled.max(axis=0), 1.0)
+
+    # Constant feature.
+    X = np.zeros(5)
+    scaler = MinMaxScaler()
+    X_scaled = scaler.fit(X).transform(X)
+    assert_greater_equal(X_scaled.min(), 0.)
+    assert_less_equal(X_scaled.max(), 1.)
 
 
 def test_scaler_without_centering():
@@ -507,8 +548,12 @@ def test_normalizer_l2():
         assert_almost_equal(la.norm(X_norm[3]), 0.0)
 
 
-def test_normalize_errors():
-    """Check that invalid arguments yield ValueError"""
+def test_normalize():
+    """Test normalize function"""
+    # Only tests functionality not used by the tests for Normalizer.
+    X = np.random.RandomState(37).randn(3, 2)
+    assert_array_equal(normalize(X, copy=False),
+                       normalize(X.T, axis=0, copy=False).T)
     assert_raises(ValueError, normalize, [[0]], axis=2)
     assert_raises(ValueError, normalize, [[0]], norm='l3')
 
@@ -622,7 +667,7 @@ def test_add_dummy_feature_csr():
     assert_array_equal(X.toarray(), [[1, 1, 0], [1, 0, 1], [1, 0, 1]])
 
 
-def test_one_hot_encoder():
+def test_one_hot_encoder_sparse():
     """Test OneHotEncoder's fit and transform."""
     X = [[3, 2, 1], [0, 1, 1]]
     enc = OneHotEncoder()
@@ -654,9 +699,10 @@ def test_one_hot_encoder():
     X = np.array([[2, 0, 1], [0, 1, 1]])
     enc.transform(X)
 
-    # test that an error is raise when out of bounds:
+    # test that an error is raised when out of bounds:
     X_too_large = [[0, 2, 1], [0, 1, 1]]
     assert_raises(ValueError, enc.transform, X_too_large)
+    assert_raises(ValueError, OneHotEncoder(n_values=2).fit_transform, X)
 
     # test that error is raised when wrong number of features
     assert_raises(ValueError, enc.transform, X[:, :-1])
@@ -673,6 +719,22 @@ def test_one_hot_encoder():
     # test negative input to transform
     enc.fit([[0], [1]])
     assert_raises(ValueError, enc.transform, [[0], [-1]])
+
+def test_one_hot_encoder_dense():
+    """check for sparse=False"""
+    X = [[3, 2, 1], [0, 1, 1]]
+    enc = OneHotEncoder(sparse=False)
+    # discover max values automatically
+    X_trans = enc.fit_transform(X)
+    assert_equal(X_trans.shape, (2, 5))
+    assert_array_equal(enc.active_features_,
+                       np.where([1, 0, 0, 1, 0, 1, 1, 0, 1])[0])
+    assert_array_equal(enc.feature_indices_, [0, 4, 7, 9])
+
+    # check outcome
+    assert_array_equal(X_trans,
+                       np.array([[0., 1., 0., 1., 1.],
+                                 [1., 0., 1., 0., 1.]]))
 
 
 def _check_transform_selected(X, X_expected, sel):

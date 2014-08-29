@@ -9,7 +9,7 @@ It will plot the decision boundaries for each class.
 print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from sklearn import neighbors, datasets
 
@@ -42,14 +42,14 @@ for weights in ['uniform', 'distance']:
 
     # Put the result into a color plot
     Z = Z.reshape(xx.shape)
-    pl.figure()
-    pl.pcolormesh(xx, yy, Z, cmap=cmap_light)
+    plt.figure()
+    plt.pcolormesh(xx, yy, Z, cmap=cmap_light)
 
     # Plot also the training points
-    pl.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold)
-    pl.xlim(xx.min(), xx.max())
-    pl.ylim(yy.min(), yy.max())
-    pl.title("3-Class classification (k = %i, weights = '%s')"
-             % (n_neighbors, weights))
+    plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold)
+    plt.xlim(xx.min(), xx.max())
+    plt.ylim(yy.min(), yy.max())
+    plt.title("3-Class classification (k = %i, weights = '%s')"
+              % (n_neighbors, weights))
 
-pl.show()
+plt.show()

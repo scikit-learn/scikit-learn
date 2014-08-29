@@ -18,7 +18,7 @@ from sklearn.cluster.bicluster.spectral import _scale_normalize
 from sklearn.cluster.bicluster.spectral import _bistochastic_normalize
 from sklearn.cluster.bicluster.spectral import _log_normalize
 
-from sklearn.metrics.cluster.bicluster import consensus_score
+from sklearn.metrics import consensus_score
 
 from sklearn.datasets import make_biclusters, make_checkerboard
 
@@ -52,37 +52,41 @@ def test_spectral_coclustering():
 
 def test_spectral_biclustering():
     """Test Kluger methods on a checkerboard dataset."""
-    param_grid = {'method': ['scale', 'bistochastic', 'log'],
-                  'svd_method': ['randomized', 'arpack'],
-                  'n_svd_vecs': [None, 20],
-                  'mini_batch': [False, True],
-                  'init': ['k-means++'],
-                  'n_init': [3],
-                  'n_jobs': [1]}
-    random_state = 0
     S, rows, cols = make_checkerboard((30, 30), 3, noise=0.5,
-                                      random_state=random_state)
+                                      random_state=0)
+
+    non_default_params = {'method': ['scale', 'log'],
+                          'svd_method': ['arpack'],
+                          'n_svd_vecs': [20],
+                          'mini_batch': [True]}
+
     for mat in (S, csr_matrix(S)):
-        for kwargs in ParameterGrid(param_grid):
-            model = SpectralBiclustering(n_clusters=3,
-                                         random_state=random_state,
-                                         **kwargs)
+        for param_name, param_values in non_default_params.items():
+            for param_value in param_values:
 
-            if issparse(mat) and kwargs['method'] == 'log':
-                # cannot take log of sparse matrix
-                assert_raises(ValueError, model.fit, mat)
-                continue
-            else:
-                model.fit(mat)
+                model = SpectralBiclustering(
+                    n_clusters=3,
+                    n_init=3,
+                    init='k-means++',
+                    random_state=0,
+                )
+                model.set_params(**dict([(param_name, param_value)]))
 
-            assert_equal(model.rows_.shape, (9, 30))
-            assert_equal(model.columns_.shape, (9, 30))
-            assert_array_equal(model.rows_.sum(axis=0),
-                               np.repeat(3, 30))
-            assert_array_equal(model.columns_.sum(axis=0),
-                               np.repeat(3, 30))
-            assert_equal(consensus_score(model.biclusters_,
-                                         (rows, cols)), 1)
+                if issparse(mat) and model.get_params().get('method') == 'log':
+                    # cannot take log of sparse matrix
+                    assert_raises(ValueError, model.fit, mat)
+                    continue
+                else:
+                    model.fit(mat)
+
+                assert_equal(model.rows_.shape, (9, 30))
+                assert_equal(model.columns_.shape, (9, 30))
+                assert_array_equal(model.rows_.sum(axis=0),
+                                   np.repeat(3, 30))
+                assert_array_equal(model.columns_.sum(axis=0),
+                                   np.repeat(3, 30))
+                assert_equal(consensus_score(model.biclusters_,
+                                             (rows, cols)), 1)
 
 
 def _do_scale_test(scaled):

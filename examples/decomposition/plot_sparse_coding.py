@@ -6,7 +6,7 @@ Sparse coding with a precomputed dictionary
 Transform a signal as a sparse combination of Ricker wavelets. This example
 visually compares different sparse coding methods using the
 :class:`sklearn.decomposition.SparseCoder` estimator. The Ricker (also known
-as mexican hat or the second derivative of a gaussian) is not a particularly
+as Mexican hat or the second derivative of a Gaussian) is not a particularly
 good kernel to represent piecewise constant signals like this one. It can
 therefore be seen how much adding different widths of atoms matters and it
 therefore motivates learning the dictionary to best fit your type of signals.
@@ -23,7 +23,7 @@ from sklearn.decomposition import SparseCoder
 
 
 def ricker_function(resolution, center, width):
-    """Discrete sub-sampled Ricker (mexican hat) wavelet"""
+    """Discrete sub-sampled Ricker (Mexican hat) wavelet"""
     x = np.linspace(0, resolution - 1, resolution)
     x = ((2 / ((np.sqrt(3 * width) * np.pi ** 1 / 4)))
          * (1 - ((x - center) ** 2 / width ** 2))
@@ -32,7 +32,7 @@ def ricker_function(resolution, center, width):
 
 
 def ricker_matrix(width, resolution, n_components):
-    """Dictionary of Ricker (mexican hat) wavelets"""
+    """Dictionary of Ricker (Mexican hat) wavelets"""
     centers = np.linspace(0, resolution - 1, n_components)
     D = np.empty((n_components, resolution))
     for i, center in enumerate(centers):

@@ -24,7 +24,7 @@ from sklearn.utils.extmath import make_nonnegative
 from sklearn.utils.extmath import norm
 
 from sklearn.utils.validation import assert_all_finite
-from sklearn.utils.validation import check_arrays
+from sklearn.utils.validation import check_array
 
 from .utils import check_array_ndim
 
@@ -120,7 +120,7 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
         X : array-like, shape (n_samples, n_features)
 
         """
-        X, = check_arrays(X, sparse_format='csr', dtype=np.float64)
+        X = check_array(X, accept_sparse='csr', dtype=np.float64)
         check_array_ndim(X)
         self._check_parameters()
         self._fit(X)
@@ -236,17 +236,17 @@ class SpectralCoclustering(BaseSpectral):
 
     Attributes
     ----------
-    `rows_` : array-like, shape (n_row_clusters, n_rows)
+    rows_ : array-like, shape (n_row_clusters, n_rows)
         Results of the clustering. `rows[i, r]` is True if
         cluster `i` contains row `r`. Available only after calling ``fit``.
 
-    `columns_` : array-like, shape (n_column_clusters, n_columns)
+    columns_ : array-like, shape (n_column_clusters, n_columns)
         Results of the clustering, like `rows`.
 
-    `row_labels_` : array-like, shape (n_rows,)
+    row_labels_ : array-like, shape (n_rows,)
         The bicluster label of each row.
 
-    `column_labels_` : array-like, shape (n_cols,)
+    column_labels_ : array-like, shape (n_cols,)
         The bicluster label of each column.
 
     References
@@ -364,17 +364,17 @@ class SpectralBiclustering(BaseSpectral):
 
     Attributes
     ----------
-    `rows_` : array-like, shape (n_row_clusters, n_rows)
+    rows_ : array-like, shape (n_row_clusters, n_rows)
         Results of the clustering. `rows[i, r]` is True if
         cluster `i` contains row `r`. Available only after calling ``fit``.
 
-    `columns_` : array-like, shape (n_column_clusters, n_columns)
+    columns_ : array-like, shape (n_column_clusters, n_columns)
         Results of the clustering, like `rows`.
 
-    `row_labels_` : array-like, shape (n_rows,)
+    row_labels_ : array-like, shape (n_rows,)
         Row partition labels.
 
-    `column_labels_` : array-like, shape (n_cols,)
+    column_labels_ : array-like, shape (n_cols,)
         Column partition labels.
 
     References

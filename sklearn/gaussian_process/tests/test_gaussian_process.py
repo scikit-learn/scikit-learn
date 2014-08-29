@@ -58,14 +58,20 @@ def test_2d(regr=regression.constant, corr=correlation.squared_exponential,
                   [-2.87600388, 6.74310541],
                   [5.21301203, 4.26386883]])
     y = g(X).ravel()
+
+    thetaL = [1e-4] * 2
+    thetaU = [1e-1] * 2
     gp = GaussianProcess(regr=regr, corr=corr, beta0=beta0,
-                         theta0=[1e-2] * 2, thetaL=[1e-4] * 2,
-                         thetaU=[1e-1] * 2,
+                         theta0=[1e-2] * 2, thetaL=thetaL,
+                         thetaU=thetaU,
                          random_start=random_start, verbose=False)
     gp.fit(X, y)
     y_pred, MSE = gp.predict(X, eval_MSE=True)
 
     assert_true(np.allclose(y_pred, y) and np.allclose(MSE, 0.))
+
+    assert_true(np.all(gp.theta_ >= thetaL)) # Lower bounds of hyperparameters
+    assert_true(np.all(gp.theta_ <= thetaU)) # Upper bounds of hyperparameters
 
 
 def test_2d_2d(regr=regression.constant, corr=correlation.squared_exponential,
@@ -135,3 +141,27 @@ def test_no_normalize():
     gp = GaussianProcess(normalize=False).fit(X, y)
     y_pred = gp.predict(X)
     assert_true(np.allclose(y_pred, y))
+
+
+def test_random_starts():
+    """
+    Test that an increasing number of random-starts of GP fitting only
+    increases the reduced likelihood function of the optimal theta.
+    """
+    n_input_dims = 3
+    n_samples = 100
+    np.random.seed(0)
+    X = np.random.random(n_input_dims*n_samples).reshape(n_samples,
+                                                         n_input_dims) * 2 - 1
+    y = np.sin(X).sum(axis=1) + np.sin(3*X).sum(axis=1)
+    best_likelihood = -np.inf
+    for random_start in range(1, 10):
+        gp = GaussianProcess(regr="constant", corr="squared_exponential",
+                             theta0=[1e-0]*n_input_dims,
+                             thetaL=[1e-4]*n_input_dims,
+                             thetaU=[1e+1]*n_input_dims,
+                             random_start=random_start, random_state=0,
+                             verbose=False).fit(X, y)
+        rlf = gp.reduced_likelihood_function()[0]
+        assert_true(rlf >= best_likelihood)
+        best_likelihood = rlf

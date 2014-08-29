@@ -15,7 +15,6 @@ from sklearn.datasets.samples_generator import make_classification
 from sklearn.metrics import f1_score
 from sklearn.utils import check_random_state
 from sklearn.utils import ConvergenceWarning
-from sklearn.utils.fixes import unique
 from sklearn.utils.testing import assert_greater, assert_in, assert_less
 from sklearn.utils.testing import assert_warns
 
@@ -295,11 +294,11 @@ def test_decision_function():
     clf.fit(X, Y)
     dec = np.dot(X, clf.coef_.T) + clf.intercept_
     prediction = clf.predict(X)
-    assert_array_almost_equal(dec, clf.decision_function(X))
+    assert_array_almost_equal(dec.ravel(), clf.decision_function(X))
     assert_array_almost_equal(
         prediction,
-        clf.classes_[(clf.decision_function(X) > 0).astype(np.int).ravel()])
-    expected = np.array([[-1.], [-0.66], [-1.], [0.66], [1.], [1.]])
+        clf.classes_[(clf.decision_function(X) > 0).astype(np.int)])
+    expected = np.array([-1., -0.66, -1., 0.66, 1., 1.])
     assert_array_almost_equal(clf.decision_function(X), expected, 2)
 
 
@@ -358,8 +357,8 @@ def test_auto_weight():
     X, y = iris.data[:, :2], iris.target + 1
     unbalanced = np.delete(np.arange(y.size), np.where(y > 2)[0][::2])
 
-    classes, y_ind = unique(y[unbalanced], return_inverse=True)
-    class_weights = compute_class_weight('auto', classes, y_ind)
+    classes = np.unique(y[unbalanced])
+    class_weights = compute_class_weight('auto', classes, y[unbalanced])
     assert_true(np.argmax(class_weights) == 2)
 
     for clf in (svm.SVC(kernel='linear'), svm.LinearSVC(random_state=0),
@@ -673,6 +672,14 @@ def test_consistent_proba():
     a = svm.SVC(probability=True, max_iter=1, random_state=0)
     proba_2 = a.fit(X, Y).predict_proba(X)
     assert_array_almost_equal(proba_1, proba_2)
+
+
+def test_linear_svc_convergence_warnings():
+    """Test that warnings are raised if model does not converge"""
+
+    lsvc = svm.LinearSVC(max_iter=2)
+    assert_warns(ConvergenceWarning, lsvc.fit, X, Y)
+    assert_equal(lsvc.n_iter_, 2)
 
 
 if __name__ == '__main__':

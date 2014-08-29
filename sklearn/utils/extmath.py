@@ -8,75 +8,68 @@ Extended math utilities.
 #          Lars Buitinck
 # License: BSD 3 clause
 
+from functools import partial
 import warnings
+
 import numpy as np
 from scipy import linalg
 from scipy.sparse import issparse
-from distutils.version import LooseVersion
 
 from . import check_random_state, deprecated
-from .fixes import qr_economic
+from .fixes import np_version
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
-from .sparsefuncs import csr_row_norms
-from .validation import array2d, NonBLASDotWarning
+from .sparsefuncs_fast import csr_row_norms
+from .validation import check_array, NonBLASDotWarning
 
 
 def norm(x):
     """Compute the Euclidean or Frobenius norm of x.
 
     Returns the Euclidean norm when x is a vector, the Frobenius norm when x
-    is a matrix (2-d array).
+    is a matrix (2-d array). More precise than sqrt(squared_norm(x)).
     """
     x = np.asarray(x)
     nrm2, = linalg.get_blas_funcs(['nrm2'], [x])
     return nrm2(x)
 
 
-_have_einsum = hasattr(np, "einsum")
+# Newer NumPy has a ravel that needs less copying.
+if np_version < (1, 7, 1):
+    _ravel = np.ravel
+else:
+    _ravel = partial(np.ravel, order='K')
+
+
+def squared_norm(x):
+    """Squared Euclidean or Frobenius norm of x.
+
+    Returns the Euclidean norm when x is a vector, the Frobenius norm when x
+    is a matrix (2-d array). Faster than norm(x) ** 2.
+    """
+    x = _ravel(x)
+    return np.dot(x, x)
 
 
 def row_norms(X, squared=False):
     """Row-wise (squared) Euclidean norm of X.
 
-    Equivalent to (X * X).sum(axis=1), but also supports CSR sparse matrices.
-    With newer NumPy versions, prevents an X.shape-sized temporary.
+    Equivalent to np.sqrt((X * X).sum(axis=1)), but also supports CSR sparse
+    matrices and does not create an X.shape-sized temporary.
 
     Performs no input validation.
     """
     if issparse(X):
         norms = csr_row_norms(X)
-    elif _have_einsum:
-        # einsum avoids the creation of a temporary the size of X,
-        # but it's only available in NumPy >= 1.6.
-        norms = np.einsum('ij,ij->i', X, X)
     else:
-        norms = (X * X).sum(axis=1)
+        norms = np.einsum('ij,ij->i', X, X)
 
     if not squared:
         np.sqrt(norms, norms)
     return norms
 
 
-def _fast_logdet(A):
-    """Compute log(det(A)) for A symmetric
-
-    Equivalent to : np.log(np.linalg.det(A)) but more robust.
-    It returns -Inf if det(A) is non positive or is not defined.
-    """
-    # XXX: Should be implemented as in numpy, using ATLAS
-    # http://projects.scipy.org/numpy/browser/ \
-    #        trunk/numpy/linalg/linalg.py#L1559
-    ld = np.sum(np.log(np.diag(A)))
-    a = np.exp(ld / A.shape[0])
-    d = np.linalg.det(A / a)
-    ld += np.log(d)
-    if not np.isfinite(ld):
-        return -np.inf
-    return ld
-
-
-def _fast_logdet_numpy(A):
+def fast_logdet(A):
     """Compute log(det(A)) for A symmetric
 
     Equivalent to : np.log(nl.det(A)) but more robust.
@@ -88,21 +81,14 @@ def _fast_logdet_numpy(A):
     return ld
 
 
-# Numpy >= 1.5 provides a fast logdet
-if hasattr(np.linalg, 'slogdet'):
-    fast_logdet = _fast_logdet_numpy
-else:
-    fast_logdet = _fast_logdet
-
-
 def _impose_f_order(X):
     """Helper Function"""
     # important to access flags instead of calling np.isfortran,
     # this catches corner cases.
     if X.flags.c_contiguous:
-        return array2d(X.T, copy=False, order='F'), True
+        return check_array(X.T, copy=False, order='F'), True
     else:
-        return array2d(X, copy=False, order='F'), False
+        return check_array(X, copy=False, order='F'), False
 
 
 def _fast_dot(A, B):
@@ -136,7 +122,7 @@ def _have_blas_gemm():
 
 
 # Only use fast_dot for older NumPy; newer ones have tackled the speed issue.
-if LooseVersion(np.__version__) < '1.7.2' and _have_blas_gemm():
+if np_version < (1, 7, 2) and _have_blas_gemm():
     def fast_dot(A, B):
         """Compute fast dot products directly calling BLAS.
 
@@ -185,8 +171,7 @@ def safe_sparse_dot(a, b, dense_output=False):
     Uses BLAS GEMM as replacement for numpy.dot where possible
     to avoid unnecessary copies.
     """
-    from scipy import sparse
-    if sparse.issparse(a) or sparse.issparse(b):
+    if issparse(a) or issparse(b):
         ret = a * b
         if dense_output and hasattr(ret, "toarray"):
             ret = ret.toarray()
@@ -238,13 +223,12 @@ def randomized_range_finder(A, size, n_iter, random_state=None):
         Y = safe_sparse_dot(A, safe_sparse_dot(A.T, Y))
 
     # extracting an orthonormal basis of the A range samples
-    Q, R = qr_economic(Y)
+    Q, R = linalg.qr(Y, mode='economic')
     return Q
 
 
 def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
-                   transpose='auto', flip_sign=True, random_state=0,
-                   n_iterations=None):
+                   transpose='auto', flip_sign=True, random_state=0):
     """Computes a truncated randomized SVD
 
     Parameters
@@ -296,11 +280,6 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
     * A randomized algorithm for the decomposition of matrices
       Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
     """
-    if n_iterations is not None:
-        warnings.warn("n_iterations was renamed to n_iter for consistency "
-                      "and will be removed in 0.16.", DeprecationWarning)
-        n_iter = n_iterations
-
     random_state = check_random_state(random_state)
     n_random = n_components + n_oversamples
     n_samples, n_features = M.shape
@@ -534,7 +513,7 @@ def cartesian(arrays, out=None):
     if out is None:
         out = np.empty([n, len(arrays)], dtype=dtype)
 
-    m = n / arrays[0].size
+    m = n // arrays[0].size
     out[:, 0] = np.repeat(arrays[0], m)
     if arrays[1:]:
         cartesian(arrays[1:], out=out[0:m, 1:])
@@ -575,7 +554,6 @@ def logistic_sigmoid(X, log=False, out=None):
     return fn(X, out)
 
 
-
 def log_logistic(X, out=None):
     """Compute the log of the logistic function, ``log(1 / (1 + e ** -x))``.
 
@@ -606,7 +584,7 @@ def log_logistic(X, out=None):
     http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression/
     """
     is_1d = X.ndim == 1
-    X = array2d(X, dtype=np.float)
+    X = check_array(X, dtype=np.float)
 
     n_samples, n_features = X.shape
 

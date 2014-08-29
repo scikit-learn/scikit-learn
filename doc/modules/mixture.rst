@@ -14,7 +14,7 @@ matrices supported), sample them, and estimate them from
 data. Facilities to help determine the appropriate number of
 components are also provided.
 
- .. figure:: ../auto_examples/mixture/images/plot_gmm_pdf_1.png
+ .. figure:: ../auto_examples/mixture/images/plot_gmm_pdf_001.png
    :target: ../auto_examples/mixture/plot_gmm_pdf.html
    :align: center
    :scale: 50%
@@ -29,7 +29,7 @@ mixture models as generalizing k-means clustering to incorporate
 information about the covariance structure of the data as well as the
 centers of the latent Gaussians.
 
-The `scikit-learn` implements different classes to estimate Gaussian
+Scikit-learn implements different classes to estimate Gaussian
 mixture models, that correspond to different estimation strategies,
 detailed below.
 
@@ -55,7 +55,7 @@ The :class:`GMM` comes with different options to constrain the covariance
 of the difference classes estimated: spherical, diagonal, tied or full
 covariance.
 
-.. figure:: ../auto_examples/mixture/images/plot_gmm_classifier_1.png
+.. figure:: ../auto_examples/mixture/images/plot_gmm_classifier_001.png
    :target: ../auto_examples/mixture/plot_gmm_classifier.html
    :align: center
    :scale: 75%
@@ -102,7 +102,7 @@ only in the asymptotic regime (i.e. if much data is available).
 Note that using a :ref:`DPGMM <dpgmm>` avoids the specification of the
 number of components for a Gaussian mixture model.
 
-.. figure:: ../auto_examples/mixture/images/plot_gmm_selection_1.png
+.. figure:: ../auto_examples/mixture/images/plot_gmm_selection_001.png
    :target: ../auto_examples/mixture/plot_gmm_selection.html
    :align: center
    :scale: 50%
@@ -190,7 +190,7 @@ much so as to render usage unpractical.
 
 Due to its Bayesian nature, the variational algorithm needs more
 hyper-parameters than expectation-maximization, the most
-important of these being the concentration parameter `alpha`. Specifying
+important of these being the concentration parameter ``alpha``. Specifying
 a high value of alpha leads more often to uniformly-sized mixture
 components, while specifying small (between 0 and 1) values will lead
 to some mixture components getting almost all the points while most
@@ -210,11 +210,11 @@ components, and at the expense of extra computational time the user
 only needs to specify a loose upper bound on this number and a
 concentration parameter.
 
-.. |plot_gmm| image:: ../auto_examples/mixture/images/plot_gmm_1.png
+.. |plot_gmm| image:: ../auto_examples/mixture/images/plot_gmm_001.png
    :target: ../auto_examples/mixture/plot_gmm.html
    :scale: 48%
 
-.. |plot_gmm_sin| image:: ../auto_examples/mixture/images/plot_gmm_sin_1.png
+.. |plot_gmm_sin| image:: ../auto_examples/mixture/images/plot_gmm_sin_001.png
    :target: ../auto_examples/mixture/plot_gmm_sin.html
    :scale: 48%
 
@@ -239,7 +239,7 @@ data.
     * :ref:`example_mixture_plot_gmm_sin.py` shows using :class:`GMM` and
       :class:`DPGMM` to fit a sine wave
 
-Pros and cons of class :class:`DPGMM`: Diriclet process mixture model
+Pros and cons of class :class:`DPGMM`: Dirichlet process mixture model
 ----------------------------------------------------------------------
 
 Pros

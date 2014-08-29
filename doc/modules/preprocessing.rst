@@ -343,7 +343,7 @@ Continuing the example above::
   >>> enc = preprocessing.OneHotEncoder()
   >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])  # doctest: +ELLIPSIS
   OneHotEncoder(categorical_features='all', dtype=<... 'float'>,
-         n_values='auto')
+         n_values='auto', sparse=True)
   >>> enc.transform([[0, 1, 3]]).toarray()
   array([[ 1.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  1.]])
 
@@ -370,15 +370,16 @@ matrix from a list of multi-class labels::
 
     >>> lb = preprocessing.LabelBinarizer()
     >>> lb.fit([1, 2, 6, 4, 2])
-    LabelBinarizer(neg_label=0, pos_label=1)
+    LabelBinarizer(neg_label=0, pos_label=1, sparse_output=False)
     >>> lb.classes_
     array([1, 2, 4, 6])
     >>> lb.transform([1, 6])
     array([[1, 0, 0, 0],
            [0, 0, 0, 1]])
 
-:class:`LabelBinarizer` also supports multiple labels per instance::
+For multiple labels per instance, use :class:`MultiLabelBinarizer`::
 
+    >>> lb = preprocessing.MultiLabelBinarizer()
     >>> lb.fit_transform([(1, 2), (3,)])
     array([[1, 1, 0],
            [0, 0, 1]])
@@ -469,3 +470,62 @@ values than observed values.
 
 :class:`Imputer` can be used in a Pipeline as a way to build a composite
 estimator that supports imputation. See :ref:`example_imputation.py`
+
+.. _data_reduction:
+
+Unsupervised data reduction
+============================
+
+If your number of features is high, it may be useful to reduce it with an
+unsupervised step prior to supervised steps. Many of the
+:ref:`unsupervised-learning` methods implement a ``transform`` method that
+can be used to reduce the dimensionality. Below we discuss two specific
+example of this pattern that are heavily used.
+
+.. topic:: **Pipelining**
+
+    The unsupervised data reduction and the supervised estimator can be
+    chained in one step. See :ref:`pipeline`.
+
+.. currentmodule:: sklearn
+
+PCA: principal component analysis
+----------------------------------
+
+:class:`decomposition.PCA` looks for a combination of features that
+capture well the variance of the original features.
+
+.. topic:: **Examples**
+
+   * :ref:`example_applications_face_recognition.py`
+
+Random projections
+-------------------
+
+The module: :mod:`random_projection` provides several tools for data
+reduction by random projections. See the relevant section of the
+documentation: :ref:`random_projection`.
+
+.. topic:: **Examples**
+
+   * :ref:`example_plot_johnson_lindenstrauss_bound.py`
+
+Feature agglometration
+------------------------
+
+:class:`cluster.FeatureAgglomeration` applies
+:ref:`hierarchical_clustering` to group together features that behave
+similarly.
+
+.. topic:: **Examples**
+
+   * :ref:`example_cluster_plot_feature_agglomeration_vs_univariate_selection.py`
+   * :ref:`example_cluster_plot_digits_agglomeration.py`
+
+.. topic:: **Feature scaling**
+
+   Note that if features have very different scaling or statistical
+   properties, :class:`cluster.FeatureAgglomeration` maye not be able to
+   capture the links between related features. Using a 
+   :class:`preprocessing.StandardScaler` can be useful in these settings.
+

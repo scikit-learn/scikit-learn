@@ -2,12 +2,19 @@
 
 A classic dataset for classification benchmarks, featuring categorical and
 real-valued features.
+
+The dataset page is available from UCI Machine Learning Repository
+
+    http://archive.ics.uci.edu/ml/datasets/Covertype
+
+Courtesy of Jock A. Blackard and Colorado State University.
 """
 
 # Author: Lars Buitinck <L.J.Buitinck@uva.nl>
 #         Peter Prettenhofer <peter.prettenhofer@gmail.com>
 # License: BSD 3 clause
 
+import sys
 import errno
 from gzip import GzipFile
 from io import BytesIO
@@ -57,17 +64,40 @@ def fetch_covtype(data_home=None, download_if_missing=True,
 
     shuffle : bool, default=False
         Whether to shuffle dataset.
+
+    Returns
+    -------
+    dataset : dict-like object with the following attributes:
+
+    dataset.data : numpy array of shape (581012, 54)
+        Each row corresponds to the 54 features in the dataset.
+
+    dataset.target : numpy array of shape (581012,)
+        Each value corresponds to one of the 7 forest covertypes with values
+        ranging between 1 to 7.
+
+    dataset.DESCR : string
+        Description of the forest covertype dataset.
+
     """
 
     data_home = get_data_home(data_home=data_home)
-    covtype_dir = join(data_home, "covertype")
+    if sys.version_info[0] == 3:
+        # The zlib compression format use by joblib is not compatible when
+        # switching from Python 2 to Python 3, let us use a separate folder
+        # under Python 3:
+        dir_suffix = "-py3"
+    else:
+        # Backward compat for Python 2 users
+        dir_suffix = ""
+    covtype_dir = join(data_home, "covertype" + dir_suffix)
     samples_path = join(covtype_dir, "samples")
     targets_path = join(covtype_dir, "targets")
     available = exists(samples_path)
 
     if download_if_missing and not available:
         _mkdirp(covtype_dir)
-        logger.warn("Downloading %s" % URL)
+        logger.warning("Downloading %s" % URL)
         f = BytesIO(urlopen(URL).read())
         Xy = np.genfromtxt(GzipFile(fileobj=f), delimiter=',')
 

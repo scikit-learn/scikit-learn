@@ -10,9 +10,10 @@ of Gaussian Mixture Models.
 #         Bertrand Thirion <bertrand.thirion@inria.fr>
 
 import numpy as np
+from scipy import linalg
 
 from ..base import BaseEstimator
-from ..utils import check_random_state, deprecated
+from ..utils import check_random_state
 from ..utils.extmath import logsumexp, pinvh
 from .. import cluster
 
@@ -96,11 +97,11 @@ def sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
     elif covariance_type == 'diag':
         rand = np.dot(np.diag(np.sqrt(covar)), rand)
     else:
-        from scipy import linalg
-        U, s, V = linalg.svd(covar)
-        sqrtS = np.diag(np.sqrt(s))
-        sqrt_covar = np.dot(U, np.dot(sqrtS, V))
-        rand = np.dot(sqrt_covar, rand)
+        s, U = linalg.eigh(covar)
+        s.clip(0, out=s)        # get rid of tiny negatives
+        np.sqrt(s, out=s)
+        U *= s
+        rand = np.dot(U, rand)
 
     return (rand.T + mean).T
 
@@ -154,13 +155,13 @@ class GMM(BaseEstimator):
 
     Attributes
     ----------
-    `weights_` : array, shape (`n_components`,)
+    weights_ : array, shape (`n_components`,)
         This attribute stores the mixing weights for each mixture component.
 
-    `means_` : array, shape (`n_components`, `n_features`)
+    means_ : array, shape (`n_components`, `n_features`)
         Mean parameters for each mixture component.
 
-    `covars_` : array
+    covars_ : array
         Covariance parameters for each mixture component.  The shape
         depends on `covariance_type`::
 
@@ -169,7 +170,7 @@ class GMM(BaseEstimator):
             (n_components, n_features)             if 'diag',
             (n_components, n_features, n_features) if 'full'
 
-    `converged_` : bool
+    converged_ : bool
         True when convergence was reached in fit(), False otherwise.
 
 
@@ -272,11 +273,6 @@ class GMM(BaseEstimator):
         covars = np.asarray(covars)
         _validate_covars(covars, self.covariance_type, self.n_components)
         self.covars_ = covars
-
-    @deprecated("GMM.eval was renamed to GMM.score_samples in 0.14 and will be"
-                " removed in 0.16.")
-    def eval(self, X):
-        return self.score_samples(X)
 
     def score_samples(self, X):
         """Return the per-sample likelihood of the data under the model.
@@ -555,7 +551,7 @@ class GMM(BaseEstimator):
 #########################################################################
 
 
-def _log_multivariate_normal_density_diag(X, means=0.0, covars=1.0):
+def _log_multivariate_normal_density_diag(X, means, covars):
     """Compute Gaussian log-density at X for a diagonal model"""
     n_samples, n_dim = X.shape
     lpr = -0.5 * (n_dim * np.log(2 * np.pi) + np.sum(np.log(covars), 1)
@@ -565,7 +561,7 @@ def _log_multivariate_normal_density_diag(X, means=0.0, covars=1.0):
     return lpr
 
 
-def _log_multivariate_normal_density_spherical(X, means=0.0, covars=1.0):
+def _log_multivariate_normal_density_spherical(X, means, covars):
     """Compute Gaussian log-density at X for a spherical model"""
     cv = covars.copy()
     if covars.ndim == 1:
@@ -577,7 +573,6 @@ def _log_multivariate_normal_density_spherical(X, means=0.0, covars=1.0):
 
 def _log_multivariate_normal_density_tied(X, means, covars):
     """Compute Gaussian log-density at X for a tied model"""
-    from scipy import linalg
     n_samples, n_dim = X.shape
     icv = pinvh(covars)
     lpr = -0.5 * (n_dim * np.log(2 * np.pi) + np.log(linalg.det(covars) + 0.1)
@@ -590,13 +585,6 @@ def _log_multivariate_normal_density_tied(X, means, covars):
 def _log_multivariate_normal_density_full(X, means, covars, min_covar=1.e-7):
     """Log probability for full covariance matrices.
     """
-    from scipy import linalg
-    if hasattr(linalg, 'solve_triangular'):
-        # only in scipy since 0.9
-        solve_triangular = linalg.solve_triangular
-    else:
-        # slower, but works
-        solve_triangular = linalg.solve
     n_samples, n_dim = X.shape
     nmix = len(means)
     log_prob = np.empty((n_samples, nmix))
@@ -609,7 +597,7 @@ def _log_multivariate_normal_density_full(X, means, covars, min_covar=1.e-7):
             cv_chol = linalg.cholesky(cv + min_covar * np.eye(n_dim),
                                       lower=True)
         cv_log_det = 2 * np.sum(np.log(np.diagonal(cv_chol)))
-        cv_sol = solve_triangular(cv_chol, (X - mu).T, lower=True).T
+        cv_sol = linalg.solve_triangular(cv_chol, (X - mu).T, lower=True).T
         log_prob[:, c] = - .5 * (np.sum(cv_sol ** 2, axis=1) +
                                  n_dim * np.log(2 * np.pi) + cv_log_det)
 

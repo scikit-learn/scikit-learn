@@ -6,6 +6,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.decomposition import DictionaryLearning
 from sklearn.decomposition import MiniBatchDictionaryLearning
@@ -91,19 +92,23 @@ def test_dict_learning_online_verbosity():
     # test verbosity
     from sklearn.externals.six.moves import cStringIO as StringIO
     import sys
+
     old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    dico = MiniBatchDictionaryLearning(n_components, n_iter=20, verbose=1,
-                                       random_state=0)
-    dico.fit(X)
-    dico = MiniBatchDictionaryLearning(n_components, n_iter=20, verbose=2,
-                                       random_state=0)
-    dico.fit(X)
-    dict_learning_online(X, n_components=n_components, alpha=1, verbose=1,
-                         random_state=0)
-    dict_learning_online(X, n_components=n_components, alpha=1, verbose=2,
-                         random_state=0)
-    sys.stdout = old_stdout
+    try:
+        sys.stdout = StringIO()
+        dico = MiniBatchDictionaryLearning(n_components, n_iter=20, verbose=1,
+                                           random_state=0)
+        dico.fit(X)
+        dico = MiniBatchDictionaryLearning(n_components, n_iter=20, verbose=2,
+                                           random_state=0)
+        dico.fit(X)
+        dict_learning_online(X, n_components=n_components, alpha=1, verbose=1,
+                             random_state=0)
+        dict_learning_online(X, n_components=n_components, alpha=1, verbose=2,
+                             random_state=0)
+    finally:
+        sys.stdout = old_stdout
+
     assert_true(dico.components_.shape == (n_components, n_features))
 
 
@@ -170,6 +175,15 @@ def test_sparse_encode_error():
     code = sparse_encode(X, V, alpha=0.001)
     assert_true(not np.all(code == 0))
     assert_less(np.sqrt(np.sum((np.dot(code, V) - X) ** 2)), 0.1)
+
+
+def test_sparse_encode_error_default_sparsity():
+    rng = np.random.RandomState(0)
+    X = rng.randn(100, 64)
+    D = rng.randn(2, 64)
+    code = ignore_warnings(sparse_encode)(X, D, algorithm='omp',
+                                          n_nonzero_coefs=None)
+    assert_equal(code.shape, (100, 2))
 
 
 def test_unknown_method():

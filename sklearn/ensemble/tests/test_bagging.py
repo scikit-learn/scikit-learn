@@ -28,6 +28,8 @@ from sklearn.cross_validation import train_test_split
 from sklearn.datasets import load_boston, load_iris
 from sklearn.utils import check_random_state
 
+from scipy.sparse import csc_matrix, csr_matrix
+
 rng = check_random_state(0)
 
 # also load the iris dataset
@@ -52,7 +54,7 @@ def test_classification():
                                                         iris.target,
                                                         random_state=rng)
     grid = ParameterGrid({"max_samples": [0.5, 1.0],
-                          "max_features": [1, 2, 3, 4],
+                          "max_features": [1, 2, 4],
                           "bootstrap": [True, False],
                           "bootstrap_features": [True, False]})
 
@@ -68,11 +70,70 @@ def test_classification():
                               **params).fit(X_train, y_train).predict(X_test)
 
 
+def test_sparse_classification():
+    """Check classification for various parameter settings on sparse input."""
+
+    class CustomSVC(SVC):
+        """SVC variant that records the nature of the training set"""
+
+        def fit(self, X, y):
+            super(CustomSVC, self).fit(X, y)
+            self.data_type_ = type(X)
+            return self
+
+    rng = check_random_state(0)
+    X_train, X_test, y_train, y_test = train_test_split(iris.data,
+                                                        iris.target,
+                                                        random_state=rng)
+    parameter_sets = [
+        {"max_samples": 0.5,
+         "max_features": 2,
+         "bootstrap": True,
+         "bootstrap_features": True},
+        {"max_samples": 1.0,
+         "max_features": 4,
+         "bootstrap": True,
+         "bootstrap_features": True},
+        {"max_features": 2,
+         "bootstrap": False,
+         "bootstrap_features": True},
+        {"max_samples": 0.5,
+         "bootstrap": True,
+         "bootstrap_features": False},
+    ]
+
+    for sparse_format in [csc_matrix, csr_matrix]:
+        X_train_sparse = sparse_format(X_train)
+        X_test_sparse = sparse_format(X_test)
+        for params in parameter_sets:
+
+            # Trained on sparse format
+            sparse_classifier = BaggingClassifier(
+                base_estimator=CustomSVC(),
+                random_state=1,
+                **params
+            ).fit(X_train_sparse, y_train)
+            sparse_results = sparse_classifier.predict(X_test_sparse)
+
+            # Trained on dense format
+            dense_results = BaggingClassifier(
+                base_estimator=CustomSVC(),
+                random_state=1,
+                **params
+            ).fit(X_train, y_train).predict(X_test)
+
+            sparse_type = type(X_train_sparse)
+            types = [i.data_type_ for i in sparse_classifier.estimators_]
+
+            assert_array_equal(sparse_results, dense_results)
+            assert all([t == sparse_type for t in types])
+
+
 def test_regression():
     """Check regression for various parameter settings."""
     rng = check_random_state(0)
-    X_train, X_test, y_train, y_test = train_test_split(boston.data,
-                                                        boston.target,
+    X_train, X_test, y_train, y_test = train_test_split(boston.data[:50],
+                                                        boston.target[:50],
                                                         random_state=rng)
     grid = ParameterGrid({"max_samples": [0.5, 1.0],
                           "max_features": [0.5, 1.0],
@@ -88,6 +149,66 @@ def test_regression():
             BaggingRegressor(base_estimator=base_estimator,
                              random_state=rng,
                              **params).fit(X_train, y_train).predict(X_test)
+
+
+def test_sparse_regression():
+    """Check regression for various parameter settings on sparse input."""
+    rng = check_random_state(0)
+    X_train, X_test, y_train, y_test = train_test_split(boston.data[:50],
+                                                        boston.target[:50],
+                                                        random_state=rng)
+
+    class CustomSVR(SVR):
+        """SVC variant that records the nature of the training set"""
+
+        def fit(self, X, y):
+            super(CustomSVR, self).fit(X, y)
+            self.data_type_ = type(X)
+            return self
+
+    parameter_sets = [
+        {"max_samples": 0.5,
+         "max_features": 2,
+         "bootstrap": True,
+         "bootstrap_features": True},
+        {"max_samples": 1.0,
+         "max_features": 4,
+         "bootstrap": True,
+         "bootstrap_features": True},
+        {"max_features": 2,
+         "bootstrap": False,
+         "bootstrap_features": True},
+        {"max_samples": 0.5,
+         "bootstrap": True,
+         "bootstrap_features": False},
+    ]
+
+    for sparse_format in [csc_matrix, csr_matrix]:
+        X_train_sparse = sparse_format(X_train)
+        X_test_sparse = sparse_format(X_test)
+        for params in parameter_sets:
+
+            # Trained on sparse format
+            sparse_classifier = BaggingRegressor(
+                base_estimator=CustomSVR(),
+                random_state=1,
+                **params
+            ).fit(X_train_sparse, y_train)
+            sparse_results = sparse_classifier.predict(X_test_sparse)
+
+            # Trained on dense format
+            dense_results = BaggingRegressor(
+                base_estimator=CustomSVR(),
+                random_state=1,
+                **params
+            ).fit(X_train, y_train).predict(X_test)
+
+            sparse_type = type(X_train_sparse)
+            types = [i.data_type_ for i in sparse_classifier.estimators_]
+
+            assert_array_equal(sparse_results, dense_results)
+            assert all([t == sparse_type for t in types])
+            assert_array_equal(sparse_results, dense_results)
 
 
 def test_bootstrap_samples():
@@ -285,8 +406,8 @@ def test_error():
                   BaggingClassifier(base).fit(X, y).decision_function, X)
 
 
-def test_parallel():
-    """Check parallel computations."""
+def test_parallel_classification():
+    """Check parallel classification."""
     rng = check_random_state(0)
 
     # Classification
@@ -294,65 +415,67 @@ def test_parallel():
                                                         iris.target,
                                                         random_state=rng)
 
-    for n_jobs in [-1, 3]:
-        ensemble = BaggingClassifier(DecisionTreeClassifier(),
-                                     n_jobs=n_jobs,
-                                     random_state=0).fit(X_train, y_train)
+    ensemble = BaggingClassifier(DecisionTreeClassifier(),
+                                 n_jobs=3,
+                                 random_state=0).fit(X_train, y_train)
 
-        # predict_proba
-        ensemble.set_params(n_jobs=1)
-        y1 = ensemble.predict_proba(X_test)
-        ensemble.set_params(n_jobs=2)
-        y2 = ensemble.predict_proba(X_test)
-        assert_array_almost_equal(y1, y2)
+    # predict_proba
+    ensemble.set_params(n_jobs=1)
+    y1 = ensemble.predict_proba(X_test)
+    ensemble.set_params(n_jobs=2)
+    y2 = ensemble.predict_proba(X_test)
+    assert_array_almost_equal(y1, y2)
 
-        ensemble = BaggingClassifier(DecisionTreeClassifier(),
-                                     n_jobs=1,
-                                     random_state=0).fit(X_train, y_train)
+    ensemble = BaggingClassifier(DecisionTreeClassifier(),
+                                 n_jobs=1,
+                                 random_state=0).fit(X_train, y_train)
 
-        y3 = ensemble.predict_proba(X_test)
-        assert_array_almost_equal(y1, y3)
+    y3 = ensemble.predict_proba(X_test)
+    assert_array_almost_equal(y1, y3)
 
-        # decision_function
-        ensemble = BaggingClassifier(SVC(),
-                                     n_jobs=n_jobs,
-                                     random_state=0).fit(X_train, y_train)
+    # decision_function
+    ensemble = BaggingClassifier(SVC(),
+                                 n_jobs=3,
+                                 random_state=0).fit(X_train, y_train)
 
-        ensemble.set_params(n_jobs=1)
-        decisions1 = ensemble.decision_function(X_test)
-        ensemble.set_params(n_jobs=2)
-        decisions2 = ensemble.decision_function(X_test)
-        assert_array_almost_equal(decisions1, decisions2)
+    ensemble.set_params(n_jobs=1)
+    decisions1 = ensemble.decision_function(X_test)
+    ensemble.set_params(n_jobs=2)
+    decisions2 = ensemble.decision_function(X_test)
+    assert_array_almost_equal(decisions1, decisions2)
 
-        ensemble = BaggingClassifier(SVC(),
-                                     n_jobs=1,
-                                     random_state=0).fit(X_train, y_train)
+    ensemble = BaggingClassifier(SVC(),
+                                 n_jobs=1,
+                                 random_state=0).fit(X_train, y_train)
 
-        decisions3 = ensemble.decision_function(X_test)
-        assert_array_almost_equal(decisions1, decisions3)
+    decisions3 = ensemble.decision_function(X_test)
+    assert_array_almost_equal(decisions1, decisions3)
 
-    # Regression
+
+def test_parallel_regression():
+    """Check parallel regression."""
+    rng = check_random_state(0)
+
     X_train, X_test, y_train, y_test = train_test_split(boston.data,
                                                         boston.target,
                                                         random_state=rng)
 
-    for n_jobs in [-1, 3]:
-        ensemble = BaggingRegressor(DecisionTreeRegressor(),
-                                    n_jobs=3,
-                                    random_state=0).fit(X_train, y_train)
+    ensemble = BaggingRegressor(DecisionTreeRegressor(),
+                                n_jobs=3,
+                                random_state=0).fit(X_train, y_train)
 
-        ensemble.set_params(n_jobs=1)
-        y1 = ensemble.predict(X_test)
-        ensemble.set_params(n_jobs=2)
-        y2 = ensemble.predict(X_test)
-        assert_array_almost_equal(y1, y2)
+    ensemble.set_params(n_jobs=1)
+    y1 = ensemble.predict(X_test)
+    ensemble.set_params(n_jobs=2)
+    y2 = ensemble.predict(X_test)
+    assert_array_almost_equal(y1, y2)
 
-        ensemble = BaggingRegressor(DecisionTreeRegressor(),
-                                    n_jobs=1,
-                                    random_state=0).fit(X_train, y_train)
+    ensemble = BaggingRegressor(DecisionTreeRegressor(),
+                                n_jobs=1,
+                                random_state=0).fit(X_train, y_train)
 
-        y3 = ensemble.predict(X_test)
-        assert_array_almost_equal(y1, y3)
+    y3 = ensemble.predict(X_test)
+    assert_array_almost_equal(y1, y3)
 
 
 def test_gridsearch():

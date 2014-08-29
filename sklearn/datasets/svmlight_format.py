@@ -27,7 +27,7 @@ from .. import __version__
 from ..externals import six
 from ..externals.six import u, b
 from ..externals.six.moves import range, zip
-from ..utils import atleast2d_or_csr
+from ..utils import check_array
 
 
 def load_svmlight_file(f, n_features=None, dtype=np.float64,
@@ -356,7 +356,7 @@ def dump_svmlight_file(X, y, f, zero_based=True, comment=None, query_id=None):
         raise ValueError("expected y of shape (n_samples,), got %r"
                          % (y.shape,))
 
-    Xval = atleast2d_or_csr(X)
+    Xval = check_array(X, accept_sparse='csr')
     if Xval.shape[0] != y.shape[0]:
         raise ValueError("X.shape[0] and y.shape[0] should be the same, got"
                          " %r and %r instead." % (Xval.shape[0], y.shape[0]))

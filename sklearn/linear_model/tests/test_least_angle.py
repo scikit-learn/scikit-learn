@@ -9,6 +9,8 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import ignore_warnings, assert_warns_message
+from sklearn.utils.testing import assert_warns
+from sklearn.utils import ConvergenceWarning
 from sklearn import linear_model, datasets
 
 diabetes = datasets.load_diabetes()
@@ -26,24 +28,27 @@ def test_simple():
     from sklearn.externals.six.moves import cStringIO as StringIO
     import sys
     old_stdout = sys.stdout
-    sys.stdout = StringIO()
+    try:
+        sys.stdout = StringIO()
 
-    alphas_, active, coef_path_ = linear_model.lars_path(
-        diabetes.data, diabetes.target, method="lar", verbose=10)
+        alphas_, active, coef_path_ = linear_model.lars_path(
+            diabetes.data, diabetes.target, method="lar", verbose=10)
 
-    sys.stdout = old_stdout
+        sys.stdout = old_stdout
 
-    for (i, coef_) in enumerate(coef_path_.T):
-        res = y - np.dot(X, coef_)
-        cov = np.dot(X.T, res)
-        C = np.max(abs(cov))
-        eps = 1e-3
-        ocur = len(cov[C - eps < abs(cov)])
-        if i < X.shape[1]:
-            assert_true(ocur == i + 1)
-        else:
-            # no more than max_pred variables can go into the active set
-            assert_true(ocur == X.shape[1])
+        for (i, coef_) in enumerate(coef_path_.T):
+            res = y - np.dot(X, coef_)
+            cov = np.dot(X.T, res)
+            C = np.max(abs(cov))
+            eps = 1e-3
+            ocur = len(cov[C - eps < abs(cov)])
+            if i < X.shape[1]:
+                assert_true(ocur == i + 1)
+            else:
+                # no more than max_pred variables can go into the active set
+                assert_true(ocur == X.shape[1])
+    finally:
+        sys.stdout = old_stdout
 
 
 def test_simple_precomputed():
@@ -184,7 +189,7 @@ def test_singular_matrix():
     y1 = np.array([1, 1])
     in_warn_message = 'Dropping a regressor'
     f = assert_warns_message
-    alphas, active, coef_path = f(UserWarning, in_warn_message,
+    alphas, active, coef_path = f(ConvergenceWarning, in_warn_message,
                                   linear_model.lars_path, X1, y1)
     assert_array_almost_equal(coef_path.T, [[0, 0], [1, 0]])
 
@@ -213,7 +218,7 @@ def test_rank_deficient_design():
         coef_cd_ = coord_descent.fit(X, y).coef_
         obj_cd = ((1. / (2. * 3.)) * linalg.norm(y - np.dot(X, coef_cd_)) ** 2
                   + .1 * linalg.norm(coef_cd_, 1))
-        assert_array_almost_equal(obj_lars, obj_cd)
+        assert_less(obj_lars, obj_cd * (1. + 1e-8))
 
 
 def test_lasso_lars_vs_lasso_cd(verbose=False):
@@ -230,15 +235,15 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
             continue
         lasso_cd.alpha = a
         lasso_cd.fit(X, y)
-        error = np.linalg.norm(c - lasso_cd.coef_)
+        error = linalg.norm(c - lasso_cd.coef_)
         assert_less(error, 0.01)
 
     # similar test, with the classifiers
-    for alpha in np.linspace(1e-2, 1 - 1e-2):
+    for alpha in np.linspace(1e-2, 1 - 1e-2, 20):
         clf1 = linear_model.LassoLars(alpha=alpha, normalize=False).fit(X, y)
         clf2 = linear_model.Lasso(alpha=alpha, tol=1e-8,
                                   normalize=False).fit(X, y)
-        err = np.linalg.norm(clf1.coef_ - clf2.coef_)
+        err = linalg.norm(clf1.coef_ - clf2.coef_)
         assert_less(err, 1e-3)
 
     # same test, with normalized data
@@ -251,7 +256,7 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
             continue
         lasso_cd.alpha = a
         lasso_cd.fit(X, y)
-        error = np.linalg.norm(c - lasso_cd.coef_)
+        error = linalg.norm(c - lasso_cd.coef_)
         assert_less(error, 0.01)
 
 
@@ -268,7 +273,7 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
         lasso_cd = linear_model.Lasso(fit_intercept=False, tol=1e-8)
         lasso_cd.alpha = alphas[-1]
         lasso_cd.fit(X, y)
-        error = np.linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
+        error = linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
         assert_less(error, 0.01)
 
     alphas_min = [10, 0.9, 1e-4]
@@ -280,7 +285,7 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
                                       tol=1e-8)
         lasso_cd.alpha = alphas[-1]
         lasso_cd.fit(X, y)
-        error = np.linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
+        error = linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
         assert_less(error, 0.01)
 
 
@@ -290,7 +295,7 @@ def test_lasso_lars_path_length():
     lasso.fit(X, y)
     lasso2 = linear_model.LassoLars(alpha=lasso.alphas_[2])
     lasso2.fit(X, y)
-    np.testing.assert_array_equal(lasso.alphas_[:3], lasso2.alphas_)
+    assert_array_almost_equal(lasso.alphas_[:3], lasso2.alphas_)
     # Also check that the sequence of alphas is always decreasing
     assert_true(np.all(np.diff(lasso.alphas_) < 0))
 
@@ -305,7 +310,7 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
     rng = np.random.RandomState(42)
 
     # Generate data
-    n, m = 80, 100
+    n, m = 70, 100
     k = 5
     X = rng.randn(n, m)
     w = np.zeros((m, 1))
@@ -321,8 +326,8 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
     f = assert_warns_message
 
     def in_warn_message(msg):
-        return 'Early stopping' in msg or 'Dropping regressor' in msg
-    lars_alphas, _, lars_coef = f(UserWarning,
+        return 'Early stopping' in msg or 'Dropping a regressor' in msg
+    lars_alphas, _, lars_coef = f(ConvergenceWarning,
                                   in_warn_message,
                                   linear_model.lars_path, X, y, method='lasso')
 
@@ -347,22 +352,30 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
 
 
 def test_lars_drop_for_good():
-    # Create an ill-conditioned situation in which the LARS has to good
+    # Create an ill-conditioned situation in which the LARS has to go
     # far in the path to converge, and check that LARS and coordinate
     # descent give the same answers
-    X = [[10,     10,  0],
+    X = [[1e20,  1e20,  0],
          [-1e-32,  0,  0],
          [1,       1,  1]]
-    y = [100, -100, 1]
-    lars = linear_model.LassoLars(.001, normalize=False)
-    lars_coef_ = lars.fit(X, y).coef_
-    lars_obj = ((1. / (2. * 3.)) * linalg.norm(y - np.dot(X, lars_coef_)) ** 2
-                + .1 * linalg.norm(lars_coef_, 1))
-    coord_descent = linear_model.Lasso(.001, tol=1e-10, normalize=False)
-    cd_coef_ = coord_descent.fit(X, y).coef_
-    cd_obj = ((1. / (2. * 3.)) * linalg.norm(y - np.dot(X, cd_coef_)) ** 2
-              + .1 * linalg.norm(cd_coef_, 1))
-    assert_array_almost_equal(lars_obj / cd_obj, 1.0, decimal=3)
+    y = [10, 10, 1]
+    alpha = .0001
+
+    def objective_function(coef):
+        return (1. / (2. * len(X)) * linalg.norm(y - np.dot(X, coef)) ** 2
+                + alpha * linalg.norm(coef, 1))
+
+    lars = linear_model.LassoLars(alpha=alpha, normalize=False)
+    assert_warns(ConvergenceWarning, lars.fit, X, y)
+    lars_coef_ = lars.coef_
+    lars_obj = objective_function(lars_coef_)
+
+    coord_descent = linear_model.Lasso(alpha=alpha, tol=1e-10, normalize=False)
+    with ignore_warnings():
+        cd_coef_ = coord_descent.fit(X, y).coef_
+    cd_obj = objective_function(cd_coef_)
+
+    assert_less(lars_obj, cd_obj * (1. + 1e-8))
 
 
 def test_lars_add_features():

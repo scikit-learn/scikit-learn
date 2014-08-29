@@ -8,13 +8,13 @@ import warnings
 import numpy as np
 
 from scipy import sparse
+from scipy.linalg import eigh
 from scipy.sparse.linalg import lobpcg
-from scipy.sparse.linalg.eigen.lobpcg.lobpcg import symeig
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator
 from ..externals import six
 from ..utils import check_random_state
-from ..utils.validation import atleast2d_or_csr
+from ..utils.validation import check_array
 from ..utils.graph import graph_laplacian
 from ..utils.sparsetools import connected_components
 from ..utils.arpack import eigsh
@@ -37,21 +37,21 @@ def _graph_connected_component(graph, node_id):
 
     Returns
     -------
-    connected_components : array-like, shape: (n_samples,)
+    connected_components_matrix : array-like, shape: (n_samples,)
         An array of bool value indicates the indexes of the nodes
         belong to the largest connected components of the given query
         node
     """
-    connected_components = np.zeros(shape=(graph.shape[0]), dtype=np.bool)
-    connected_components[node_id] = True
+    connected_components_matrix = np.zeros(shape=(graph.shape[0]), dtype=np.bool)
+    connected_components_matrix[node_id] = True
     n_node = graph.shape[0]
     for i in range(n_node):
-        last_num_component = connected_components.sum()
-        _, node_to_add = np.where(graph[connected_components] != 0)
-        connected_components[node_to_add] = True
-        if last_num_component >= connected_components.sum():
+        last_num_component = connected_components_matrix.sum()
+        _, node_to_add = np.where(graph[connected_components_matrix] != 0)
+        connected_components_matrix[node_to_add] = True
+        if last_num_component >= connected_components_matrix.sum():
             break
-    return connected_components
+    return connected_components_matrix
 
 
 def _graph_is_connected(graph):
@@ -192,15 +192,9 @@ def _solve_eigenvalue_problem(adjacency, n_components=1, eigen_solver=None,
     try:
         from pyamg import smoothed_aggregation_solver
     except ImportError:
-        if eigen_solver == "amg" or mode == "amg":
+        if eigen_solver == "amg":
             raise ValueError("The eigen_solver was set to 'amg', but pyamg is "
                              "not available.")
-
-    if not mode is None:
-        warnings.warn("'mode' was renamed to eigen_solver "
-                      "and will be removed in 0.15.",
-                      DeprecationWarning)
-        eigen_solver = mode
 
     if eigen_solver is None:
         eigen_solver = 'arpack'
@@ -273,7 +267,7 @@ def _solve_eigenvalue_problem(adjacency, n_components=1, eigen_solver=None,
             warnings.warn("AMG works better for sparse matrices")
         laplacian = laplacian.astype(np.float)  # lobpcg needs native floats
         laplacian = _set_diag(laplacian, 1)
-        ml = smoothed_aggregation_solver(atleast2d_or_csr(laplacian))
+        ml = smoothed_aggregation_solver(check_array(laplacian, 'csr'))
         M = ml.aspreconditioner()
         X = random_state.rand(laplacian.shape[0], n_components + 1)
         X[:, 0] = dd.ravel()
@@ -288,10 +282,10 @@ def _solve_eigenvalue_problem(adjacency, n_components=1, eigen_solver=None,
         if n_nodes < 5 * n_components + 1:
             # see note above under arpack why lobpcg has problems with small
             # number of nodes
-            # lobpcg will fallback to symeig, so we short circuit it
+            # lobpcg will fallback to eigh, so we short circuit it
             if sparse.isspmatrix(laplacian):
                 laplacian = laplacian.todense()
-            lambdas, diffusion_map = symeig(laplacian)
+            lambdas, diffusion_map = eigh(laplacian)
             vectors = diffusion_map.T[:n_components]
         else:
             # lobpcg needs native floats
@@ -397,8 +391,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         return embedding.T
 
 
-class SpectralEmbedding(BaseEstimator, TransformerMixin):
-    """Spectral Embedding for Non-linear Dimensionality Reduction.
+class SpectralEmbedding(BaseEstimator):
+    """Spectral embedding for non-linear dimensionality reduction.
 
     Forms an affinity matrix given by the specified function and
     applies spectral decomposition to the corresponding graph laplacian.
@@ -437,10 +431,10 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
     Attributes
     ----------
 
-    `embedding_` : array, shape = (n_samples, n_components)
+    embedding_ : array, shape = (n_samples, n_components)
         Spectral embedding of the training matrix.
 
-    `affinity_matrix_` : array, shape = (n_samples, n_samples)
+    affinity_matrix_ : array, shape = (n_samples, n_samples)
         Affinity_matrix constructed from samples or precomputed.
 
     References
