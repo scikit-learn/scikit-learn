@@ -469,7 +469,7 @@ in the matrix. This format is thus suitable when there are many more missing
 values than observed values.
 
 :class:`Imputer` can be used in a Pipeline as a way to build a composite
-estimator that supports imputation. See :ref:`example_imputation.py`
+estimator that supports imputation. See :ref:`example_missing_values.py`.
 
 .. _data_reduction:
 
