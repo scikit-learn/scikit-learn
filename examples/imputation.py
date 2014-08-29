@@ -48,7 +48,7 @@ missing_features = rng.randint(0, n_features, n_missing_samples)
 
 # Estimate the score without the lines containing missing values
 X_filtered = X_full[~missing_samples, :]
-y_filtered = y_full[~missing_samples, :]
+y_filtered = y_full[~missing_samples]
 estimator = RandomForestRegressor(random_state=0, n_estimators=100)
 score = cross_val_score(estimator, X_filtered, y_filtered).mean()
 print("Score without the samples containing missing values = %.2f" % score)
