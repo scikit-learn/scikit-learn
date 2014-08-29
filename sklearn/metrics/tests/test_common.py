@@ -220,6 +220,8 @@ METRICS_WITH_POS_LABEL = [
 ]
 
 # Metrics with a "labels" argument
+# XXX: Handle multi_class metrics that has a labels argument as well as a
+# decision function argument. e.g hinge_loss
 METRICS_WITH_LABELS = [
     "confusion_matrix",
 
