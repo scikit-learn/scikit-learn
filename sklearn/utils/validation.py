@@ -306,6 +306,10 @@ def check_X_y(X, y, accept_sparse=None, dtype=None, order=None, copy=False,
     allow_nd : boolean (default=False)
         Whether to allow X.ndim > 2.
 
+    multi_output : boolean (default=False)
+        Whether to allow 2-d y (array or sparse matrix). If false, y will be
+        validated as a vector.
+
     Returns
     -------
     X_converted : object
