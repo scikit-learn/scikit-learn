@@ -156,6 +156,9 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, order, copy,
         matrix input will raise an error.  If the input is sparse but not in
         the allowed format, it will be converted to the first listed format.
 
+    dtype : string, type or None (default=none)
+        Data type of result. If None, the dtype of the input is preserved.
+
     order : 'F', 'C' or None (default=None)
         Whether an array will be forced to be fortran or c-style.
 
@@ -217,6 +220,9 @@ def check_array(array, accept_sparse=None, dtype=None, order=None, copy=False,
         'csr', etc.  None means that sparse matrix input will raise an error.
         If the input is sparse but not in the allowed format, it will be
         converted to the first listed format.
+
+    dtype : string, type or None (default=none)
+        Data type of result. If None, the dtype of the input is preserved.
 
     order : 'F', 'C' or None (default=None)
         Whether an array will be forced to be fortran or c-style.
@@ -280,6 +286,9 @@ def check_X_y(X, y, accept_sparse=None, dtype=None, order=None, copy=False,
         'csr', etc.  None means that sparse matrix input will raise an error.
         If the input is sparse but not in the allowed format, it will be
         converted to the first listed format.
+
+    dtype : string, type or None (default=none)
+        Data type of result. If None, the dtype of the input is preserved.
 
     order : 'F', 'C' or None (default=None)
         Whether an array will be forced to be fortran or c-style.
