@@ -240,11 +240,6 @@ def test_label_encoder_new_label_replace():
     assert_array_equal(le.inverse_transform([3, 1, 0]), ["d", "b", "a"])
 
 
-def test_label_encoder_new_label_arg():
-    """Test LabelEncoder's new_labels argument handling"""
-    assert_raises(ValueError, LabelEncoder, "xyz")
-
-
 def test_label_encoder_fit_transform():
     """Test fit_transform"""
     le = LabelEncoder()
@@ -261,7 +256,7 @@ def test_label_encoder_errors():
     le = LabelEncoder()
     assert_raises(ValueError, le.transform, [])
     assert_raises(ValueError, le.inverse_transform, [])
-    # Fail on unrecognized vlaue for the 'new_label' parameter 
+    # Fail on unrecognized vlaue for the 'new_label' parameter
     assert_raises(ValueError, LabelEncoder, "xyz")
 
 
