@@ -435,18 +435,16 @@ def test_linearsvc_parameters():
     params = [(dual, loss, penalty) for dual in [True, False]
               for loss in ['l1', 'l2', 'lr'] for penalty in ['l1', 'l2']]
 
+    X, y = make_classification(n_samples=5, n_features=5)
+
     for dual, loss, penalty in params:
-            if loss == 'l1' and penalty == 'l1':
-                assert_raises(ValueError, svm.LinearSVC, penalty=penalty,
-                              loss=loss, dual=dual)
-            elif loss == 'l1' and penalty == 'l2' and not dual:
-                assert_raises(ValueError, svm.LinearSVC, penalty=penalty,
-                              loss=loss, dual=dual)
-            elif penalty == 'l1' and dual:
-                assert_raises(ValueError, svm.LinearSVC, penalty=penalty,
-                              loss=loss, dual=dual)
+            clf = svm.LinearSVC(penalty=penalty, loss=loss, dual=dual)
+            if (loss == 'l1' and penalty == 'l1') or (
+                loss == 'l1' and penalty == 'l2' and not dual) or (
+                penalty == 'l1' and dual):
+                assert_raises(ValueError, clf.fit, X, y)
             else:
-                svm.LinearSVC(penalty=penalty, loss=loss, dual=dual)
+                clf.fit(X, y)
 
 
 def test_linearsvc():
@@ -677,7 +675,7 @@ def test_consistent_proba():
 def test_linear_svc_convergence_warnings():
     """Test that warnings are raised if model does not converge"""
 
-    lsvc = svm.LinearSVC(max_iter=2)
+    lsvc = svm.LinearSVC(max_iter=2, verbose=1)
     assert_warns(ConvergenceWarning, lsvc.fit, X, Y)
     assert_equal(lsvc.n_iter_, 2)
 
