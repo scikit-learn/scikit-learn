@@ -434,7 +434,7 @@ below).
     >>> le.transform(["tokyo", "tokyo", "paris", "rome"])
     array([ 2,  2,  1, -1])
     >>> list(le.classes_)
-    ['amsterdam', 'paris', 'tokyo', 'rome']
+    ['amsterdam', 'paris', 'rome', 'tokyo']
 
 Imputation of missing values
 ============================

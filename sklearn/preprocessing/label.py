@@ -168,22 +168,29 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         classes = np.unique(y)
         _check_numpy_unicode_bug(classes)
         if len(np.intersect1d(classes, self.classes_)) < len(classes):
-            # # Get the new classes
-            diff_fit = np.setdiff1d(classes, self.classes_)
-            # diff_new = np.setdiff1d(classes, self.get_classes())
+            # Get the new labels
+            unseen = np.setdiff1d(classes, self.classes_)
 
             # If we are mapping new labels, get "new" ID and change in copy.
             if self.new_labels == "update":
                 # Update the new label mapping
+
                 # XXX there is a more efficient way to do this by inserting
                 # new labels into the sorted .classes_
                 self.classes_ = np.unique(np.concatenate((np.asarray(y),
                                                          self.classes_)))
-            elif type(self.new_labels) in [int]:
+            elif type(self.new_labels) is int:
                 # Update the new label mapping
-                pass
+                ret = np.searchsorted(self.classes_, y)
+                ret[np.in1d(y, unseen)] = self.new_labels
+
+                # XXX there is a more efficient way to do this by inserting
+                # new labels into the sorted .classes_
+                self.classes_ = np.unique(np.concatenate((np.asarray(y),
+                                                         self.classes_)))
+                return ret
             elif self.new_labels == "raise":
-                raise ValueError("y contains new label(s): %s" % str(diff_fit))
+                raise ValueError("y contains new label(s): %s" % str(unseen))
             else:
                 # Raise on invalid argument.
                 raise ValueError("Value of argument `new_labels`={0} is "
@@ -215,15 +222,6 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
         y = np.asarray(y)
         return self.classes_[y]
-        # try:
-        #     return self.get_classes()[y]
-        # except IndexError:
-        #     # Raise exception
-        #     num_classes = len(self.get_classes())
-        #     raise ValueError("Classes were passed to ``inverse_transform`` "
-        #                      "with integer new_labels strategy ``fit``-time: "
-        #                      "{0}"
-        #                      .format(np.setdiff1d(y, range(num_classes))))
 
 
 class LabelBinarizer(BaseEstimator, TransformerMixin):

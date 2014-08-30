@@ -229,18 +229,15 @@ def test_label_encoder_new_label_update():
                        ["d", "z", "a"])
 
 
-# def test_label_encoder_new_label_replace():
-#     """Test LabelEncoder's transform on new labels"""
-#     le = LabelEncoder(new_labels=-99)
-#     le.fit(["a", "b", "b", "c"])
-#     assert_array_equal(le.classes_, ["a", "b", "c"])
-#     assert_array_equal(le.transform(["a", "a", "c"]),
-#                        [0, 0, 2])
-#     assert_array_equal(le.inverse_transform([2, 1, 0]),
-#                        ["c", "b", "a"])
-#     assert_array_equal(le.transform(["b", "c", "d"]),
-#                        [1, 2, -99])
-#     assert_warns(UserWarning, le.inverse_transform, [2, 1, 0])
+def test_label_encoder_new_label_replace():
+    """Test LabelEncoder's transform on new labels"""
+    le = LabelEncoder(new_labels=-99)
+    le.fit(["a", "b", "b", "c"])
+    assert_array_equal(le.classes_, ["a", "b", "c"])
+    assert_array_equal(le.transform(["a", "a", "c"]), [0, 0, 2])
+    assert_array_equal(le.inverse_transform([2, 1, 0]), ["c", "b", "a"])
+    assert_array_equal(le.transform(["b", "c", "d"]), [1, 2, -99])
+    assert_array_equal(le.inverse_transform([3, 1, 0]), ["d", "b", "a"])
 
 
 def test_label_encoder_new_label_arg():
@@ -264,7 +261,6 @@ def test_label_encoder_errors():
     le = LabelEncoder()
     assert_raises(ValueError, le.transform, [])
     assert_raises(ValueError, le.inverse_transform, [])
-
     # Fail on unrecognized vlaue for the 'new_label' parameter 
     assert_raises(ValueError, LabelEncoder, "xyz")
 
