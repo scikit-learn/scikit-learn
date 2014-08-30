@@ -1,6 +1,6 @@
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# Mathieu Blondel <mathieu@mblondel.org>
-# Olivier Grisel <olivier.grisel@ensta.org>
+#          Mathieu Blondel <mathieu@mblondel.org>
+#          Olivier Grisel <olivier.grisel@ensta.org>
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Hamzeh Alsalhi <ha258@cornell.edu>
@@ -74,15 +74,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     `classes_` : array of shape (n_class,)
-        Property that holds the label for each class that were seen at fit.
-          See ``get_classes()`` and ``set_classes()`` to retrieve all
-          view getter and setter for observed labels.
-
-    `fit_labels` : array of shape (n_class,)
-        Stores the labels seen at ``fit``-time.
-
-    `new_label_mapping_` : dictionary
-        Stores the mapping for classes not seen during original ``fit``.
+        Holds the label for each class.
 
     Examples
     --------
@@ -115,40 +107,15 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, new_labels="raise"):
-        """Constructor"""
+        # Check new_labels parameter
+        if new_labels not in ["update", "raise"] and type(new_labels) is not int:
+            raise ValueError("Value of argument `new_labels`={0} is unknown "
+                             "and not an integer.".format(new_labels))
         self.new_labels = new_labels
-        self.new_label_mapping_ = {}
-        self.fit_labels_ = []
 
     def _check_fitted(self):
-        if len(self.fit_labels_) == 0:
+        if not hasattr(self, "classes_"):
             raise ValueError("LabelEncoder was not fitted yet.")
-
-    def get_classes(self):
-        """Get classes that have been observed by the encoder.  Note that this
-        method returns classes seen both at original ``fit`` time (i.e.,
-        ``self.classes_``) and classes seen after ``fit`` (i.e.,
-        ``self.new_label_mapping_.keys()``) for applicable values of
-        ``new_labels``.
-
-        Returns
-        -------
-        classes : array-like of shape [n_classes]
-        """
-        # If we've seen updates, include them in the order they were added.
-        if len(self.new_label_mapping_) > 0:
-            # Sort the post-fit time labels to return into the class array.
-            sorted_new, _ = zip(*sorted(self.new_label_mapping_.items(),
-                                        key=operator.itemgetter(1)))
-            return np.append(self.fit_labels_, sorted_new)
-        else:
-            return self.fit_labels_
-
-    def set_classes(self, classes):
-        """Set the classes via property."""
-        self.fit_labels_ = classes
-
-    classes_ = property(get_classes, set_classes)
 
     def fit(self, y):
         """Fit label encoder
@@ -162,17 +129,9 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         -------
         self : returns an instance of self.
         """
-        # Check new_labels parameter
-        if self.new_labels not in ["update", "raise"] and \
-                type(self.new_labels) not in [int]:
-            # Raise on invalid argument.
-            raise ValueError("Value of argument `new_labels`={0} "
-                             "is unknown and not integer."
-                             .format(self.new_labels))
-
         y = column_or_1d(y, warn=True)
         _check_numpy_unicode_bug(y)
-        self.fit_labels_ = np.unique(y)
+        self.classes_ = np.unique(y)
         return self
 
     def fit_transform(self, y):
@@ -187,17 +146,9 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         -------
         y : array-like of shape [n_samples]
         """
-        # Check new_labels parameter
-        if self.new_labels not in ["update", "raise"] and \
-                type(self.new_labels) not in [int]:
-            # Raise on invalid argument.
-            raise ValueError("Value of argument `new_labels`={0} "
-                             "is unknown and not integer."
-                             .format(self.new_labels))
-
         y = column_or_1d(y, warn=True)
         _check_numpy_unicode_bug(y)
-        self.fit_labels_, y = np.unique(y, return_inverse=True)
+        self.classes_, y = np.unique(y, return_inverse=True)
         return y
 
     def transform(self, y):
@@ -216,53 +167,29 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
         classes = np.unique(y)
         _check_numpy_unicode_bug(classes)
-        if len(np.intersect1d(classes, self.get_classes())) < len(classes):
-            # Get the new classes
-            diff_fit = np.setdiff1d(classes, self.fit_labels_)
-            diff_new = np.setdiff1d(classes, self.get_classes())
-
-            # Create copy of array and return
-            y = np.array(y)
+        if len(np.intersect1d(classes, self.classes_)) < len(classes):
+            # # Get the new classes
+            diff_fit = np.setdiff1d(classes, self.classes_)
+            # diff_new = np.setdiff1d(classes, self.get_classes())
 
             # If we are mapping new labels, get "new" ID and change in copy.
             if self.new_labels == "update":
                 # Update the new label mapping
-                next_label = len(self.get_classes())
-                self.new_label_mapping_.update(dict(zip(diff_new,
-                                                        range(next_label,
-                                                              next_label +
-                                                              len(diff_new)))))
-
-                # Find entries with new labels
-                missing_mask = np.in1d(y, diff_fit)
-
-                # Populate return array properly by mask and return
-                out = np.searchsorted(self.fit_labels_, y)
-                out[missing_mask] = [self.new_label_mapping_[value]
-                                     for value in y[missing_mask]]
-                return out
+                # XXX there is a more efficient way to do this by inserting
+                # new labels into the sorted .classes_
+                self.classes_ = np.unique(np.concatenate((np.asarray(y),
+                                                         self.classes_)))
             elif type(self.new_labels) in [int]:
                 # Update the new label mapping
-                self.new_label_mapping_.update(dict(zip(diff_new,
-                                                        [self.new_labels]
-                                                        * len(diff_new))))
-
-                # Find entries with new labels
-                missing_mask = np.in1d(y, diff_fit)
-
-                # Populate return array properly by mask and return
-                out = np.searchsorted(self.fit_labels_, y)
-                out[missing_mask] = self.new_labels
-                return out
+                pass
             elif self.new_labels == "raise":
-                # Return ValueError, original behavior.
-                raise ValueError("y contains new labels: %s" % str(diff_fit))
+                raise ValueError("y contains new label(s): %s" % str(diff_fit))
             else:
                 # Raise on invalid argument.
-                raise ValueError("Value of argument `new_labels`={0} "
-                                 "is unknown.".format(self.new_labels))
+                raise ValueError("Value of argument `new_labels`={0} is "
+                                 "unknown.".format(self.new_labels))
 
-        return np.searchsorted(self.fit_labels_, y)
+        return np.searchsorted(self.classes_, y)
 
     def inverse_transform(self, y):
         """Transform labels back to original encoding.
@@ -278,7 +205,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         """
         self._check_fitted()
 
-        if type(self.new_labels) in [int]:
+        if type(self.new_labels) is int:
             warnings.warn('When ``new_labels`` uses an integer '
                           're-labeling strategy, the ``inverse_transform`` '
                           'is not necessarily one-to-one mapping; any '
@@ -287,15 +214,16 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
                           UserWarning)
 
         y = np.asarray(y)
-        try:
-            return self.get_classes()[y]
-        except IndexError:
-            # Raise exception
-            num_classes = len(self.get_classes())
-            raise ValueError("Classes were passed to ``inverse_transform`` "
-                             "with integer new_labels strategy ``fit``-time: "
-                             "{0}"
-                             .format(np.setdiff1d(y, range(num_classes))))
+        return self.classes_[y]
+        # try:
+        #     return self.get_classes()[y]
+        # except IndexError:
+        #     # Raise exception
+        #     num_classes = len(self.get_classes())
+        #     raise ValueError("Classes were passed to ``inverse_transform`` "
+        #                      "with integer new_labels strategy ``fit``-time: "
+        #                      "{0}"
+        #                      .format(np.setdiff1d(y, range(num_classes))))
 
 
 class LabelBinarizer(BaseEstimator, TransformerMixin):
