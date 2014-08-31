@@ -16,6 +16,7 @@ from .ranking import roc_curve
 from .classification import accuracy_score
 from .classification import classification_report
 from .classification import cohen_kappa_score
+from .classification import binarized_multilabel_confusion_matrix
 from .classification import confusion_matrix
 from .classification import f1_score
 from .classification import fbeta_score
@@ -70,6 +71,7 @@ __all__ = [
     'classification_report',
     'cluster',
     'completeness_score',
+    'binarized_multilabel_confusion_matrix',
     'confusion_matrix',
     'consensus_score',
     'coverage_error',

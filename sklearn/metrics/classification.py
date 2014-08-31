@@ -275,6 +275,70 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     return CM
 
 
+def binarized_multilabel_confusion_matrix(y_true, y_pred):
+    """Compute True positive, False positive, True negative, False negative
+    for a multilabel classification problem
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+        Ground truth (correct) target values.
+
+    y_pred : array, shape = [n_samples]
+        Estimated targets as returned by a classifier.
+
+    Returns
+    -------
+    C : array, shape = [n_classes, ]
+        where you can access the value by
+        using keys 'tp', 'fp', 'fn' ,'tn'
+        for example:
+        C['tp'] returns an array a, where
+        a[i] contains the true positives
+        for the class a
+        Multi-label Confusion matrix
+
+    References
+    ----------
+    .. [1] `Wikipedia entry for the Confusion matrix
+           <http://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
+       [2] http://www.cnts.ua.ac.be/~vincent/pdf/microaverage.pdf
+
+    Examples
+    --------
+    >>> from sklearn.metrics import binarized_multilabel_confusion_matrix
+    >>> y_true = np.array([[1, 0], [0, 1]])
+    >>> y_pred = np.array([[1, 1], [1, 0]])
+    >>> binarized_multilabel_confusion_matrix(y_true, y_pred)['tp']
+    array([1, 0])
+    """
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    if not (y_type == 'multilabel-indicator'):
+        raise ValueError("%s is not supported" % y_type)
+
+    n_labels = y_true.get_shape()[1]
+    data = np.array([])
+    for label_idx in range(0, n_labels):
+        y_pred_col = y_pred.getcol(label_idx)
+        y_true_col = y_true.getcol(label_idx)
+        # tp can be get by dot product
+        t_pos = y_true_col.transpose().dot(y_pred_col).toarray()[0][0]
+        # fp are the ones in y_pred that
+        # match zeros in y_true
+        f_pos = y_pred_col.getnnz() - t_pos
+        f_neg = y_true_col.getnnz() - t_pos
+        zeros = y_true_col.get_shape()[0] - y_true_col.getnnz()
+        t_neg = zeros - f_pos
+        data = np.hstack([data, [t_pos, f_pos, f_neg, t_neg]])
+    rows = np.tile([0, 1, 2, 3], n_labels)
+    columns = np.repeat(range(0, n_labels), 4)
+    mcm = coo_matrix((data, (rows, columns)), shape=(4, n_labels)).\
+        toarray()
+    return (np.array(list(map(tuple, np.transpose(mcm))),
+                     dtype=[('tp', int), ('fp', int),
+                            ('fn', int), ('tn', int)]))
+
+
 def cohen_kappa_score(y1, y2, labels=None, weights=None):
     """Cohen's kappa: a statistic that measures inter-annotator agreement.
 
