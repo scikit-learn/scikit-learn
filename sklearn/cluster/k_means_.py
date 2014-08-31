@@ -18,7 +18,7 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import euclidean_distances
-from ..utils.extmath import row_norms
+from ..utils.extmath import row_norms, squared_norm
 from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis0
 from ..utils.fixes import astype
@@ -407,7 +407,7 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
             best_centers = centers.copy()
             best_inertia = inertia
 
-        if np.sum((centers_old - centers) ** 2) <= tol:
+        if squared_norm(centers_old - centers) <= tol:
             if verbose:
                 print("Converged at iteration %d" % i)
             break
