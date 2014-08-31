@@ -186,6 +186,9 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
         If a callable is passed, it should take arguments X, k and
         and a random state and return an initialization.
 
+    precompute_distances : boolean, default: True
+        Precompute distances (faster but takes more memory).
+
     tol : float, optional
         The relative increment in the results before declaring convergence.
 
@@ -348,6 +351,9 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
 
     x_squared_norms: array
         Precomputed x_squared_norms.
+
+    precompute_distances : boolean, default: True
+        Precompute distances (faster but takes more memory).
 
     random_state: integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
@@ -625,8 +631,16 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
 
-    precompute_distances : boolean, default: True
+    precompute_distances : {'auto', 'always', 'never'}
         Precompute distances (faster but takes more memory).
+
+        'auto' : do not precompute distances if n_samples * n_clusters > 25
+        Millionen. This corresponds to about 100MB overhead per job using
+        double precision.
+
+        'always' : always precompute distances
+
+        'never' : never precompute distances
 
     tol : float, default: 1e-4
         Relative tolerance with regards to inertia to declare convergence
@@ -684,7 +698,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     """
 
     def __init__(self, n_clusters=8, init='k-means++', n_init=10, max_iter=300,
-                 tol=1e-4, precompute_distances=True,
+                 tol=1e-4, precompute_distances='auto',
                  verbose=0, random_state=None, copy_x=True, n_jobs=1):
 
         if hasattr(init, '__array__'):
@@ -740,12 +754,26 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         random_state = check_random_state(self.random_state)
         X = self._check_fit_data(X)
 
+        # If the distances are precomputed every job will create a matrix of
+        # shape (n_clusters, n_samples). To stop KMeans from eating up memory
+        # when multiply jobs are started we only activate this if the created
+        # matrix is guaranteed to be under 100MB. 25 Million entries consume a
+        # little under 100MB if they are of type double.
+        precompute_distances = True
+        if self.precompute_distances == 'auto':
+            n_samples = X.shape[0]
+            precompute_distances = (self.n_clusters * n_samples) < 25e6
+        elif self.precompute_distances == 'always':
+            precompute_distances = True
+        elif self.precompute_distances == 'never':
+            precompute_distances = False
+
         self.cluster_centers_, self.labels_, self.inertia_, self.n_iter_ = \
             k_means(
                 X, n_clusters=self.n_clusters, init=self.init,
                 n_init=self.n_init, max_iter=self.max_iter,
                 verbose=self.verbose, return_n_iter=True,
-                precompute_distances=self.precompute_distances,
+                precompute_distances=precompute_distances,
                 tol=self.tol, random_state=random_state, copy_x=self.copy_x,
                 n_jobs=self.n_jobs)
         return self
