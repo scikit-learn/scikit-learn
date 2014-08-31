@@ -315,8 +315,9 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         Notes
         -----
-        The long-standing behavior of this method changed in version 0.16.
-        It no longer uses the metric provided by ``estimator.score``.
+         * The long-standing behavior of this method changed in version 0.16.
+         * It no longer uses the metric provided by ``estimator.score`` if the
+           ``scoring`` parameter was set when fitting.
 
         """
         if self.scorer_ is None:
