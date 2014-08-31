@@ -718,7 +718,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
             raise ValueError("Incorrect number of features. "
                              "Got %d features, expected %d" % (
                                  n_features, expected_n_features))
-        if not X.dtype.kind is 'f':
+        if X.dtype.kind is not 'f':
             warnings.warn("Got data type %s, converted to float "
                           "to avoid overflows" % X.dtype,
                           RuntimeWarning, stacklevel=2)
@@ -911,7 +911,7 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
                                  random_state=random_state)
             if verbose:
                 print("[MiniBatchKMeans] Reassigning %i cluster centers."
-                        % n_reassigns)
+                      % n_reassigns)
 
             if sp.issparse(X) and not sp.issparse(centers):
                 assign_rows_csr(X,
