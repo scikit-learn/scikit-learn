@@ -243,6 +243,18 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
     X = as_float_array(X, copy=copy_x)
     tol = _tolerance(X, tol)
 
+    # If the distances are precomputed every job will create a matrix of shape
+    # (n_clusters, n_samples). To stop KMeans from eating up memory we only
+    # activate this if the created matrix is guaranteed to be under 100MB. 25
+    # million entries consume a little under 100MB if they are of type double.
+    if precompute_distances == 'auto':
+        n_samples = X.shape[0]
+        precompute_distances = (n_clusters * n_samples) < 25e6
+    elif isinstance(precompute_distances, bool):
+        pass
+    else:
+        raise ValueError("precompute_distances should be 'auto' or True/False")
+
     # subtract of mean of x for more accurate distance computations
     if not sp.issparse(X) or hasattr(init, '__array__'):
         X_mean = X.mean(axis=0)
@@ -635,12 +647,12 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         Precompute distances (faster but takes more memory).
 
         'auto' : do not precompute distances if n_samples * n_clusters > 25
-        Millionen. This corresponds to about 100MB overhead per job using
+        million. This corresponds to about 100MB overhead per job using
         double precision.
 
-        'always' : always precompute distances
+        True : always precompute distances
 
-        'never' : never precompute distances
+        False : never precompute distances
 
     tol : float, default: 1e-4
         Relative tolerance with regards to inertia to declare convergence
@@ -754,26 +766,12 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         random_state = check_random_state(self.random_state)
         X = self._check_fit_data(X)
 
-        # If the distances are precomputed every job will create a matrix of
-        # shape (n_clusters, n_samples). To stop KMeans from eating up memory
-        # when multiply jobs are started we only activate this if the created
-        # matrix is guaranteed to be under 100MB. 25 Million entries consume a
-        # little under 100MB if they are of type double.
-        precompute_distances = True
-        if self.precompute_distances == 'auto':
-            n_samples = X.shape[0]
-            precompute_distances = (self.n_clusters * n_samples) < 25e6
-        elif self.precompute_distances == 'always':
-            precompute_distances = True
-        elif self.precompute_distances == 'never':
-            precompute_distances = False
-
         self.cluster_centers_, self.labels_, self.inertia_, self.n_iter_ = \
             k_means(
                 X, n_clusters=self.n_clusters, init=self.init,
                 n_init=self.n_init, max_iter=self.max_iter,
                 verbose=self.verbose, return_n_iter=True,
-                precompute_distances=precompute_distances,
+                precompute_distances=self.precompute_distances,
                 tol=self.tol, random_state=random_state, copy_x=self.copy_x,
                 n_jobs=self.n_jobs)
         return self
