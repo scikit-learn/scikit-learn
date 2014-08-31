@@ -184,6 +184,81 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     return _weighted_sum(score, sample_weight, normalize)
 
 
+def multilabel_confusion_matrix(y_true, y_pred, labels=None):
+    """Compute True positive, False positive, True negative, False negative
+    for a multilabel classification problem
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+        Ground truth (correct) target values.
+
+    y_pred : array, shape = [n_samples]
+        Estimated targets as returned by a classifier.
+
+    labels : array, shape = [n_classes], optional
+        List of labels to index the matrix. This may be used to reorder
+        or select a subset of labels.
+        If none is given, those that appear at least once
+        in ``y_true`` or ``y_pred`` are used in sorted order.
+
+    Returns
+    -------
+    C : array, shape = [n_classes, 4]
+        where the columns are as follows
+        0 : True positive for class i
+        1 : False positives for class i
+        2 : False negatives for class i
+        3 : True negatives for class i
+        Multi-label Confusion matrix
+
+    References
+    ----------
+    .. [1] `Wikipedia entry for the Confusion matrix
+           <http://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
+       [2] http://www.cnts.ua.ac.be/~vincent/pdf/microaverage.pdf
+
+    Examples
+    --------
+    >>> from sklearn.metrics import confusion_matrix
+    >>> y_true = [2, 0, 2, 2, 0, 1]
+    >>> y_pred = [0, 0, 2, 2, 0, 2]
+    >>> multilabel_confusion_matrix(y_true, y_pred)
+    array([[2, 1, 0, 3],
+           [0, 0, 1, 5],
+           [2, 1, 1, 2]])
+    """
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    if y_type not in ("binary", "multiclass"):
+        raise ValueError("%s is not supported" % y_type)
+
+    if labels is None:
+        labels = unique_labels(y_true, y_pred)
+    else:
+        labels = np.asarray(labels)
+
+    n_labels = labels.size
+    labels_confusion_matrix = \
+        np.transpose(confusion_matrix(y_true, y_pred, labels))
+    # True positives are on the diagonal of the confusion matrix
+    t_pos = np.diagonal(labels_confusion_matrix)
+    # To get false negatives we count elements not on diagonal
+    row_sum = np.sum(labels_confusion_matrix, axis=0)
+    f_neg = np.subtract(row_sum, t_pos)
+    # To calculate false positive we sum each row and
+    # remove the diagonal from it
+    column_sum = np.sum(labels_confusion_matrix, axis=1)
+    f_pos = np.subtract(column_sum, t_pos)
+    t_neg = np.subtract(np.repeat(np.sum(labels_confusion_matrix), n_labels),
+                        np.subtract(np.add(column_sum, row_sum), t_pos))
+    all_vals = np.hstack([t_pos, f_pos, f_neg, t_neg])
+    rows = np.tile(range(0, n_labels), 4)
+    columns = np.repeat(np.array([0, 1, 2, 3]), n_labels)
+    mcm = coo_matrix((all_vals, (rows, columns)), shape=(n_labels, 4)).\
+        toarray()
+    return mcm
+
+
 def confusion_matrix(y_true, y_pred, labels=None):
     """Compute confusion matrix to evaluate the accuracy of a classification
 
