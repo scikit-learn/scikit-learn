@@ -299,6 +299,9 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
     def score(self, X, y=None):
         """Returns the score on the given data, if the estimator has been refit
 
+        This uses the score defined by ``scoring`` where provided, and the
+        ``best_estimator_.score`` method otherwise.
+
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
