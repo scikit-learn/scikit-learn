@@ -6,6 +6,12 @@
 ======
 
 
+Enhancements
+------------
+
+   - Minor performance improvements to k-means by `Gael Varoquaux`_.
+
+
 Bug fixes
 ---------
 

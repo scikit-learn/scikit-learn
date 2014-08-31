@@ -237,8 +237,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
     if not sp.issparse(X) or hasattr(init, '__array__'):
         X_mean = X.mean(axis=0)
     if not sp.issparse(X):
-        if copy_x:
-            X = X.copy()
+        # The copy was already done above
         X -= X_mean
 
     if hasattr(init, '__array__'):
