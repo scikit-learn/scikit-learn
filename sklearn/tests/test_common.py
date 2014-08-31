@@ -189,7 +189,8 @@ def test_configure():
             # Blas/Atlas development headers
             warnings.simplefilter('ignore', UserWarning)
             if PY3:
-                exec(open('setup.py').read(), dict(__name__='__main__'))
+                with open('setup.py') as f:
+                    exec(f.read(), dict(__name__='__main__'))
             else:
                 execfile('setup.py', dict(__name__='__main__'))
     finally:

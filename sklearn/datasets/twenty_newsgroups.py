@@ -201,7 +201,8 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     cache = None
     if os.path.exists(cache_path):
         try:
-            compressed_content = open(cache_path, 'rb').read()
+            with open(cache_path, 'rb') as f:
+                compressed_content = f.read()
             uncompressed_content = codecs.decode(
                 compressed_content, 'zlib_codec')
             cache = pickle.loads(uncompressed_content)
