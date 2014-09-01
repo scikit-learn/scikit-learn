@@ -196,6 +196,8 @@ class CommonTest(object):
         assert_true(hasattr(clf, 'average_coef_'))
         assert_true(hasattr(clf, 'previously_seen_'))
         assert_true(hasattr(clf, 'average_intercept_'))
+        assert_true(hasattr(clf, 'standard_intercept_'))
+        assert_true(hasattr(clf, 'standard_coef_'))
 
         clf = self.factory()
         clf.fit(X, Y)
@@ -203,6 +205,8 @@ class CommonTest(object):
         assert_false(hasattr(clf, 'average_coef_'))
         assert_false(hasattr(clf, 'previously_seen_'))
         assert_false(hasattr(clf, 'average_intercept_'))
+        assert_false(hasattr(clf, 'standard_intercept_'))
+        assert_false(hasattr(clf, 'standard_coef_'))
 
 
 class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):

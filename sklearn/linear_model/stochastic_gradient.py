@@ -73,9 +73,9 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         self._validate_params()
 
         self.coef_ = None
-        self.standard_coef_ = None
 
         if self.average:
+            self.standard_coef_ = None
             self.average_coef_ = None
             self.previously_seen_ = None
         # iteration count for learning rate schedule
@@ -174,9 +174,9 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                 coef_init = np.asarray(coef_init, order="C")
                 if coef_init.shape != (n_classes, n_features):
                     raise ValueError("Provided coef_ does not match dataset. ")
-                self.standard_coef_ = coef_init
+                self.coef_ = coef_init
             else:
-                self.standard_coef_ = np.zeros((n_classes, n_features),
+                self.coef_ = np.zeros((n_classes, n_features),
                                                dtype=np.float64, order="C")
 
             # allocate intercept_ for multi-class
@@ -185,9 +185,9 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                 if intercept_init.shape != (n_classes, ):
                     raise ValueError("Provided intercept_init "
                                      "does not match dataset.")
-                self.standard_intercept_ = intercept_init
+                self.intercept_ = intercept_init
             else:
-                self.standard_intercept_ = np.zeros(n_classes,
+                self.intercept_ = np.zeros(n_classes,
                                                     dtype=np.float64,
                                                     order="C")
         else:
@@ -199,11 +199,11 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                 if coef_init.shape != (n_features,):
                     raise ValueError("Provided coef_init does not "
                                      "match dataset.")
-                self.standard_coef_ = coef_init
+                self.coef_ = coef_init
             else:
-                self.standard_coef_ = np.zeros(n_features,
-                                               dtype=np.float64,
-                                               order="C")
+                self.coef_ = np.zeros(n_features,
+                                      dtype=np.float64,
+                                      order="C")
 
             # allocate intercept_ for binary problem
             if intercept_init is not None:
@@ -211,20 +211,22 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                 if intercept_init.shape != (1,) and intercept_init.shape != ():
                     raise ValueError("Provided intercept_init "
                                      "does not match dataset.")
-                self.standard_intercept_ = intercept_init.reshape(1,)
+                self.intercept_ = intercept_init.reshape(1,)
             else:
-                self.standard_intercept_ = np.zeros(1,
-                                                    dtype=np.float64,
-                                                    order="C")
+                self.intercept_ = np.zeros(1,
+                                           dtype=np.float64,
+                                           order="C")
         #initialize average parameters
         if self.average:
-            self.average_coef_ = np.zeros(self.standard_coef_.shape,
+            self.standard_coef_ = self.coef_
+            self.standard_intercept_ = self.intercept_
+            self.average_coef_ = np.zeros(self.coef_.shape,
                                           dtype=np.float64,
                                           order="C")
             self.average_intercept_ = np.zeros(self.standard_intercept_.shape,
                                                dtype=np.float64,
                                                order="C")
-            self.previously_seen_ = np.zeros(self.standard_coef_.shape,
+            self.previously_seen_ = np.zeros(self.coef_.shape,
                                              dtype=np.float64,
                                              order="c")
 
@@ -263,16 +265,22 @@ def _prepare_fit_binary(est, y, i):
     previously_seen = None
 
     if len(est.classes_) == 2:
-        coef = est.standard_coef_.ravel()
-        intercept = est.standard_intercept_[0]
-        if est.average:
+        if not est.average:
+            coef = est.coef_.ravel()
+            intercept = est.intercept_[0]
+        else:
+            coef = est.standard_coef_.ravel()
+            intercept = est.standard_intercept_[0]
             average_coef = est.average_coef_.ravel()
             previously_seen = est.previously_seen_.ravel()
             average_intercept = est.average_intercept_[0]
     else:
-        coef = est.standard_coef_[i]
-        intercept = est.standard_intercept_[i]
-        if est.average:
+        if not est.average:
+            coef = est.coef_[i]
+            intercept = est.intercept_[i]
+        else:
+            coef = est.standard_coef_[i]
+            intercept = est.standard_intercept_[i]
             average_coef = est.average_coef_[i]
             previously_seen = est.previously_seen_[i]
             average_intercept = est.average_intercept_[i]
@@ -287,6 +295,8 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
 
     The i'th class is considered the "positive" class.
     """
+    # if average is not true, average_coef, average_intercept, and previously
+    # seen will be unused
     y_i, coef, intercept, average_coef, average_intercept, previously_seen = \
         _prepare_fit_binary(est, y, i)
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
@@ -390,7 +400,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                                                            y_ind)
         sample_weight = self._validate_sample_weight(sample_weight, n_samples)
 
-        if self.standard_coef_ is None or coef_init is not None:
+        if self.coef_ is None or coef_init is not None:
             self._allocate_parameter_mem(n_classes, n_features,
                                          coef_init, intercept_init)
 
@@ -427,19 +437,21 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         # np.unique sorts in asc order; largest class id is positive class
         classes = np.unique(y)
 
-        if self.warm_start and self.standard_coef_ is not None:
+        if self.warm_start and self.coef_ is not None:
             if coef_init is None:
-                coef_init = self.standard_coef_
+                coef_init = self.coef_
             if intercept_init is None:
-                intercept_init = self.standard_intercept_
+                intercept_init = self.intercept_
         else:
-            self.standard_coef_ = None
-            self.standard_intercept_ = None
+            self.coef_ = None
+            self.intercept_ = None
 
-            if self.average:
-                self.average_coef_ = None
-                self.average_intercept_ = None
-                self.previously_seen_ = None
+        if self.average:
+            self.standard_coef_ = self.coef_
+            self.standard_intercept_ = self.intercept_
+            self.average_coef_ = None
+            self.average_intercept_ = None
+            self.previously_seen_ = None
 
         # Clear iteration count for multiple call to fit.
         self.t_ = None
@@ -452,15 +464,12 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
     def _fit_binary(self, X, y, alpha, C, sample_weight,
                     learning_rate, n_iter):
         """Fit a binary classifier on X and y. """
-        coef, self.standard_intercept_ = \
+        coef, intercept = \
             fit_binary(self, 1, X, y, alpha, C,
                        learning_rate, n_iter,
                        self._expanded_class_weight[1],
                        self._expanded_class_weight[0],
                        sample_weight)
-
-        # intercept is a float, need to convert it to an array of length 1
-        self.standard_intercept_ = np.atleast_1d(self.standard_intercept_)
 
         # need to be 2d
         if self.average:
@@ -468,7 +477,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
             self.intercept_ = self.average_intercept_
         else:
             self.coef_ = coef.reshape(1, -1)
-            self.intercept_ = self.standard_intercept_
+            # intercept is a float, need to convert it to an array of length 1
+            self.intercept_ = np.atleast_1d(intercept)
 
     def _fit_multiclass(self, X, y, alpha, C, learning_rate,
                         sample_weight, n_iter):
@@ -485,15 +495,12 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                                 sample_weight)
             for i in range(len(self.classes_)))
 
-        for i, (_, standard_intercept) in enumerate(result):
-            self.standard_intercept_[i] = standard_intercept
+        for i, (_, intercept) in enumerate(result):
+            self.intercept_[i] = intercept
 
         if self.average:
             self.coef_ = self.average_coef_
             self.intercept_ = self.average_intercept_
-        else:
-            self.coef_ = self.standard_coef_
-            self.intercept_ = self.standard_intercept_
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Fit linear model with Stochastic Gradient Descent.
@@ -870,7 +877,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         # Allocate datastructures from input arguments
         sample_weight = self._validate_sample_weight(sample_weight, n_samples)
 
-        if self.standard_coef_ is None:
+        if self.coef_ is None:
             self._allocate_parameter_mem(1, n_features,
                                          coef_init, intercept_init)
         if self.average and self.average_coef_ is None:
@@ -918,21 +925,21 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
     def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
              intercept_init=None, sample_weight=None):
-        if self.warm_start and self.standard_coef_ is not None:
+        if self.warm_start and self.coef_ is not None:
             if coef_init is None:
-                coef_init = self.standard_coef_
+                coef_init = self.coef_
             if intercept_init is None:
-                intercept_init = self.standard_intercept_
+                intercept_init = self.intercept_
         else:
             self.coef_ = None
             self.intercept_ = None
-            self.standard_intercept_ = None
-            self.standard_coef_ = None
 
-            if self.average:
-                self.average_coef_ = None
-                self.average_intercept_ = None
-                self.previously_seen_ = None
+        if self.average:
+            self.standard_intercept_ = self.intercept_
+            self.standard_coef_ = self.coef_
+            self.average_coef_ = None
+            self.average_intercept_ = None
+            self.previously_seen_ = None
 
         # Clear iteration count for multiple call to fit.
         self.t_ = None
@@ -1044,11 +1051,15 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                             intercept_decay)
 
             self.average_intercept_ = np.atleast_1d(self.average_intercept_)
+            self.standard_intercept_ = np.atleast_1d(self.standard_intercept_)
+
+            self.coef_ = self.average_coef_
+            self.intercept_ = self.average_intercept_
 
         else:
-            self.standard_coef_, self.standard_intercept_ = \
-                plain_sgd(self.standard_coef_,
-                          self.standard_intercept_[0],
+            self.coef_, self.intercept_ = \
+                plain_sgd(self.coef_,
+                          self.intercept_[0],
                           loss_function,
                           penalty_type,
                           alpha, C,
@@ -1064,14 +1075,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                           self.eta0, self.power_t, self.t_,
                           intercept_decay)
 
-        self.standard_intercept_ = np.atleast_1d(self.standard_intercept_)
-
-        if self.average:
-            self.coef_ = self.average_coef_
-            self.intercept_ = self.average_intercept_
-        else:
-            self.coef_ = self.standard_coef_
-            self.intercept_ = self.standard_intercept_
+            self.intercept_ = np.atleast_1d(self.intercept_)
 
 
 class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
