@@ -343,7 +343,7 @@ def sparse_enet_coordinate_descent(double[:] w,
 
     with nogil:
         # center = (X_mean != 0).any()
-        for ii in range(n_samples):
+        for ii in range(n_features):
             if X_mean[ii]:
                 center = True
                 break

@@ -1,8 +1,8 @@
 .. _scaling_strategies:
 
-==================
-Scaling Strategies
-==================
+=================================================
+Strategies to scale computationally: bigger data
+=================================================
 
 For some applications the amount of examples, features (or both) and/or the 
 speed at which they need to be processed are challenging for traditional 

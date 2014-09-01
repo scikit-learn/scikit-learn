@@ -583,9 +583,18 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
             self.probability, self.n_support_,
             self.probA_, self.probB_)
 
+def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
+    """Find the liblinear magic number for the solver.
 
-class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
-    """Base for classes binding liblinear (dense and sparse versions)"""
+    This number depends on the values of the following attributes:
+      - multi_class
+      - penalty
+      - loss
+      - dual
+
+    The same number is internally by LibLinear to determine which
+    solver to use.
+    """
 
     _solver_type_dict = {
         'PL2_LLR_D0': 0,  # L2 penalty, logistic regression
@@ -596,226 +605,155 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
         'PL1_LL2_D0': 5,  # L1 penalty, L2 Loss, primal form
         'PL1_LLR_D0': 6,  # L1 penalty, logistic regression
         'PL2_LLR_D1': 7,  # L2 penalty, logistic regression, dual form
-        'PL2_MLR_D0': 8,  # L2 penalty, multinomial logistic regression, primal form
     }
 
-    @abstractmethod
-    def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
-                 multi_class='ovr', fit_intercept=True, intercept_scaling=1,
-                 class_weight=None, verbose=0, random_state=None, max_iter=100,
-                 solver='liblinear'):
-
-        self.penalty = penalty
-        self.loss = loss
-        self.dual = dual
-        self.tol = tol
-        self.C = C
-        self.fit_intercept = fit_intercept
-        self.intercept_scaling = intercept_scaling
-        self.multi_class = multi_class
-        self.class_weight = class_weight
-        self.verbose = verbose
-        self.random_state = random_state
-        self.solver = solver
-        self.max_iter = max_iter
-
-        # Check that the arguments given are valid:
-        self._get_solver_type()
-
-    def _get_solver_type(self):
-        """Find the liblinear magic number for the solver.
-
-        This number depends on the values of the following attributes:
-          - multi_class
-          - penalty
-          - loss
-          - dual
-        """
-        if self.multi_class == 'crammer_singer':
-            solver_type = 'MC_SVC'
-        elif self.multi_class == 'ovr':
-            solver_type = "P%s_L%s_D%d" % (
-                self.penalty.upper(), self.loss.upper(), int(self.dual))
-        elif self.multi_class == 'multinomial':
-            solver_type = "P%s_MLR_D%d" % (
-                self.penalty.upper(), int(self.dual))
+    if multi_class == 'crammer_singer':
+        solver_type = 'MC_SVC'
+    elif multi_class == 'ovr':
+        solver_type = "P%s_L%s_D%d" % (
+            penalty.upper(), loss.upper(), int(dual))
+    else:
+        raise ValueError("`multi_class` must be one of `ovr`, "
+                         "`crammer_singer`, got %r" % multi_class)
+    if not solver_type in _solver_type_dict:
+        if penalty.upper() == 'L1' and loss.upper() == 'L1':
+            error_string = ("The combination of penalty='l1' "
+                            "and loss='l1' is not supported.")
+        elif penalty.upper() == 'L2' and loss.upper() == 'L1':
+            # this has to be in primal
+            error_string = ("penalty='l2' and loss='l1' is "
+                            "only supported when dual='true'.")
         else:
-            raise ValueError("`multi_class` must be one of `ovr`, "
-                             "`crammer_singer`, `multinomial` got %r" %
-                             self.multi_class)
-        if not solver_type in self._solver_type_dict:
-            if self.penalty.upper() == 'L1' and self.loss.upper() == 'L1':
-                error_string = ("The combination of penalty='l1' "
-                                "and loss='l1' is not supported.")
-            elif self.penalty.upper() == 'L2' and self.loss.upper() == 'L1':
-                # this has to be in primal
-                error_string = ("penalty='l2' and loss='l1' is "
-                                "only supported when dual='true'.")
-            else:
-                # only PL1 in dual remains
-                error_string = ("penalty='l1' is only supported "
-                                "when dual='false'.")
-            raise ValueError('Unsupported set of arguments: %s, '
-                             'Parameters: penalty=%r, loss=%r, dual=%r'
-                             % (error_string, self.penalty,
-                                self.loss, self.dual))
-        return self._solver_type_dict[solver_type]
-
-    def fit(self, X, y):
-        """Fit the model according to the given training data.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training vector, where n_samples in the number of samples and
-            n_features is the number of features.
-
-        y : array-like, shape = [n_samples]
-            Target vector relative to X
-
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
-
-        # Circular import, logistic_regression_path depends on LogisticRegression
-        # and hence BaseLibLinear.
-        from ..linear_model import logistic_regression_path
-
-        if self.solver != 'liblinear':
-            if self.penalty != 'l2':
-                raise ValueError("newton-cg and lbfgs solvers support only "
-                                 "l2 penalties.")
-            if self.dual:
-                raise ValueError("newton-cg and lbfgs solvers support only "
-                                 "the primal form.")
-
-        if self.C < 0:
-            raise ValueError("Penalty term must be positive; got (C=%r)"
-                             % self.C)
-
-        self._enc = LabelEncoder()
-        y_ind = self._enc.fit_transform(y)
-        if len(self.classes_) < 2:
-            raise ValueError("The number of classes has to be greater than"
-                             " one.")
-
-        X = check_array(X, accept_sparse='csr', dtype=np.float64, order="C")
-
-        # Used in the liblinear solver.
-        self.class_weight_ = compute_class_weight(self.class_weight,
-                                                  self.classes_, y)
-
-        if X.shape[0] != y_ind.shape[0]:
-            raise ValueError("X and y have incompatible shapes.\n"
-                             "X has %s samples, but y has %s." %
-                             (X.shape[0], y_ind.shape[0]))
-
-        if self.solver not in ['liblinear', 'newton-cg', 'lbfgs']:
-            raise ValueError("Logistic Regression supports only liblinear,"
-                             " newton-cg and lbfgs solvers.")
-
-        if self.solver != 'lbfgs' and self.multi_class == 'multinomial':
-            raise ValueError("Solver %s does not support a multinomial "
-                             "backend.")
-
-        if self.solver == 'liblinear':
-            liblinear.set_verbosity_wrap(self.verbose)
-
-            rnd = check_random_state(self.random_state)
-            if self.verbose:
-                print('[LibLinear]', end='')
-
-            # LibLinear wants targets as doubles, even for classification
-            y_ind = np.asarray(y_ind, dtype=np.float64).ravel()
-            raw_coef_, n_iter_  = liblinear.train_wrap(
-                X, y_ind, sp.isspmatrix(X), self._get_solver_type(),
-                self.tol, self._get_bias(), self.C, self.class_weight_,
-                self.max_iter, rnd.randint(np.iinfo('i').max)
-                )
-            # Regarding rnd.randint(..) in the above signature:
-            # seed for srand in range [0..INT_MAX); due to limitations in Numpy
-            # on 32-bit platforms, we can't get to the UINT_MAX limit that
-            # srand supports
-            self.n_iter_ = max(n_iter_)
-            if self.n_iter_ >= self.max_iter:
-                warnings.warn("Liblinear failed to converge, increase "
-                              "the number of iterations.", ConvergenceWarning)
-
-            if self.fit_intercept:
-                self.coef_ = raw_coef_[:, :-1]
-                self.intercept_ = self.intercept_scaling * raw_coef_[:, -1]
-            else:
-                self.coef_ = raw_coef_
-                self.intercept_ = 0.
-
-        else:
-            if self.penalty != 'l2':
-                raise ValueError("newton-cg and lbfgs solvers support only "
-                                 "l2 penalties.")
-
-            n_tasks = len(self.classes_)
-            classes_ = self.classes_
-
-            if len(self.classes_) == 2:
-                n_tasks = 1
-                classes_ = classes_[1:]
-
-            self.coef_ = np.empty((n_tasks, X.shape[1]))
-            self.intercept_ = np.zeros(n_tasks)
-
-            if self.multi_class == 'ovr':
-                for ind, class_ in enumerate(classes_):
-                    coef_, _ = logistic_regression_path(
-                        X, y, pos_class=class_, Cs=[self.C],
-                        fit_intercept=self.fit_intercept,
-                        tol=self.tol, verbose=self.verbose,
-                        solver=self.solver, copy=True, multi_class='ovr',
-                        max_iter=self.max_iter,
-                        class_weight=self.class_weight)
-
-                    coef_ = coef_[0]
-                    if self.fit_intercept:
-                        self.coef_[ind] = coef_[:-1]
-                        self.intercept_[ind] = coef_[-1]
-
-                    else:
-                        self.coef_[ind] = coef_
-
-            else:
-                coef_, _ = logistic_regression_path(
-                    X, y, Cs=[self.C],
-                    fit_intercept=self.fit_intercept,
-                    tol=self.tol, verbose=self.verbose,
-                    solver=self.solver, multi_class='multinomial',
-                    max_iter=self.max_iter, class_weight=self.class_weight)
-                coef_ = coef_[0]
-                if self.fit_intercept:
-                    self.coef_ = coef_[:, :-1]
-                    self.intercept_ = coef_[:, -1]
-                else:
-                    self.coef_ = coef_
-
-        if self.multi_class == "crammer_singer" and len(self.classes_) == 2:
-            self.coef_ = (self.coef_[1] - self.coef_[0]).reshape(1, -1)
-            if self.fit_intercept:
-                intercept = self.intercept_[1] - self.intercept_[0]
-                self.intercept_ = np.array([intercept])
-
-        return self
-
-    @property
-    def classes_(self):
-        return self._enc.classes_
-
-    def _get_bias(self):
-        if self.fit_intercept:
-            return self.intercept_scaling
-        else:
-            return -1.0
+            # only PL1 in dual remains
+            error_string = ("penalty='l1' is only supported "
+                            "when dual='false'.")
+        raise ValueError('Unsupported set of arguments: %s, '
+                         'Parameters: penalty=%r, loss=%r, dual=%r'
+                         % (error_string, penalty, loss, dual))
+    return _solver_type_dict[solver_type]
 
 
-libsvm.set_verbosity_wrap(0)
-libsvm_sparse.set_verbosity_wrap(0)
-liblinear.set_verbosity_wrap(0)
+def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
+                   penalty, dual, verbose, max_iter, tol,
+                   random_state=None, multi_class='ovr', loss='lr'):
+    """Used by Logistic Regression (and CV) and LinearSVC.
+
+    Preprocessing is done in this function before supplying it to liblinear.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        Training vector, where n_samples in the number of samples and
+        n_features is the number of features.
+
+    y : array-like, shape = [n_samples]
+        Target vector relative to X
+
+    C : float
+        Inverse of cross-validation parameter. Lower the C, the more
+        the penalization.
+
+    fit_intercept : bool
+        Whether or not to fit the intercept, that is to add a intercept
+        term to the decision function.
+
+    intercept_scaling : float
+        LibLinear internally penalizes the intercept and this term is subject
+        to regularization just like the other terms of the feature vector.
+        In order to avoid this, one should increase the intercept_scaling.
+        such that the feature vector becomes [x, intercept_scaling].
+
+    class_weight : {dict, 'auto'}, optional
+        Weight assigned to each class. If class_weight provided is 'auto',
+        then the weights provided are inverses of the frequency in the
+        target vector.
+
+    penalty : str, {'l1', 'l2'}
+        The norm of the penalty used in regularization.
+
+    dual : bool
+        Dual or primal formulation,
+
+    verbose : int
+        Set verbose to any positive number for verbosity.
+
+    max_iter : int
+        Number of iterations.
+
+    tol : float
+        Stopping condition.
+
+    random_state : int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use when
+        shuffling the data.
+
+    multi_class : str, {'ovr', 'crammer_singer'}
+        `ovr` trains n_classes one-vs-rest classifiers, while `crammer_singer`
+        optimizes a joint objective over all classes.
+        While `crammer_singer` is interesting from an theoretical perspective
+        as it is consistent it is seldom used in practice and rarely leads to
+        better accuracy and is more expensive to compute.
+        If `crammer_singer` is chosen, the options loss, penalty and dual will
+        be ignored.
+
+    loss : str, {'lr', 'l1', 'l2'}
+        The loss function. 'l1' is the hinge loss while 'l2' is the squared
+        hinge loss and 'lr' is the Logistic loss.
+
+    Returns
+    -------
+    coef_ : ndarray, shape (n_features, n_features + 1)
+        The coefficent vector got by minimizing the objective function.
+
+    intercept_ : float
+        The intercept term added to the vector.
+
+    n_iter_ : int
+        Maximum number of iterations run across all classes.
+    """
+    enc = LabelEncoder()
+    y_ind = enc.fit_transform(y)
+    classes_ = enc.classes_
+    if len(classes_) < 2:
+        raise ValueError("This solver needs samples of at least 2 classes"
+                         " in the data, but the data contains only one"
+                         " class: %r" % classes_[0])
+
+    class_weight_ = compute_class_weight(class_weight, classes_, y)
+    liblinear.set_verbosity_wrap(verbose)
+    rnd = check_random_state(random_state)
+    if verbose:
+        print('[LibLinear]', end='')
+
+    bias = -1.0
+    if fit_intercept:
+        bias = intercept_scaling
+
+    libsvm.set_verbosity_wrap(verbose)
+    libsvm_sparse.set_verbosity_wrap(verbose)
+    liblinear.set_verbosity_wrap(verbose)
+
+    # LibLinear wants targets as doubles, even for classification
+    y_ind = np.asarray(y_ind, dtype=np.float64).ravel()
+    solver_type = _get_liblinear_solver_type(multi_class, penalty, loss, dual)
+    raw_coef_, n_iter_  = liblinear.train_wrap(
+        X, y_ind, sp.isspmatrix(X), solver_type, tol, bias, C,
+        class_weight_, max_iter, rnd.randint(np.iinfo('i').max)
+        )
+    # Regarding rnd.randint(..) in the above signature:
+    # seed for srand in range [0..INT_MAX); due to limitations in Numpy
+    # on 32-bit platforms, we can't get to the UINT_MAX limit that
+    # srand supports
+    n_iter_ = max(n_iter_)
+    if n_iter_ >= max_iter and verbose > 0:
+        warnings.warn("Liblinear failed to converge, increase "
+                      "the number of iterations.", ConvergenceWarning)
+
+    if fit_intercept:
+        coef_ = raw_coef_[:, :-1]
+        intercept_ = intercept_scaling * raw_coef_[:, -1]
+    else:
+        coef_ = raw_coef_
+        intercept_ = 0.
+
+    return coef_, intercept_, n_iter_

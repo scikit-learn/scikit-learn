@@ -94,6 +94,10 @@ API changes summary
       :func:`multiclass.fit_ecoc` and :func:`multiclass.predict_ecoc`
       are deprecated. Use the underlying estimators instead.
 
+    - Nearest neighbors estimators used to take arbitrary keyword arguments
+      and pass these to their distance metric. This will no longer be supported
+      in scikit-learn 0.18; use the ``metric_params`` argument instead.
+
 
 .. _changes_0_15_1:
 
