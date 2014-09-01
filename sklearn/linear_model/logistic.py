@@ -307,6 +307,47 @@ def _multinomial_loss_grad(w, X, Y, alpha, sample_weight):
     return loss, grad.ravel()
 
 def _multinomial_loss_grad_hess(w, X, Y, alpha, sample_weight):
+    """
+    Provides multinomial loss, gradient, and a function for computing hessian
+    vector product.
+
+    Parameters
+    ----------
+    w : ndarray, shape (n_classes * n_features,) or
+        (n_classes * (n_features + 1),)
+        Coefficient vector.
+
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Training data.
+
+    y : ndarray, shape (n_samples, n_classes)
+        Transformed labels according to the output of LabelBinarizer.
+
+    alpha : float
+        Regularization parameter. alpha is equal to 1 / C.
+
+    sample_weight : ndarray, shape (n_samples,) optional
+        Array of weights that are assigned to individual samples.
+
+    Returns
+    -------
+    loss : float
+        Multinomial loss.
+
+    grad : array, shape (n_classes * n_features,) or
+        (n_classes * (n_features + 1),)
+        Ravelled gradient of the multinomial loss.
+    
+    hessp: Callable
+        Function that takes in a vector input of shape (n_classes * n_features)
+        or (n_classes * (n_features + 1)) and returns matrix-vector product
+        with hessian.
+    
+    References
+    ----------
+    Barak A. Pearlmutter (1993). Fast Exact Multiplication by the Hessian.
+        http://www.bcl.hamilton.ie/~barak/papers/nc-hessian.pdf
+    """
     n_samples, n_features = X.shape
     n_classes = Y.shape[1]
     fit_intercept = w.size == (n_classes * (n_features + 1))
@@ -332,6 +373,8 @@ def _multinomial_loss_grad_hess(w, X, Y, alpha, sample_weight):
     if(fit_intercept):
         grad[:,-1] = -np.sum(err, axis=0)
 
+    #Hessian-vector product derived by applying the R-operator on the gradient
+    #of the multinomial loss function.
     def hessp(v):
         v = v.reshape(n_classes, -1)
         if(fit_intercept):
