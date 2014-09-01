@@ -43,37 +43,33 @@ import matplotlib.pyplot as plt
 # Initialize size of the database, iterations and required neighbors.
 n_samples = 10000
 n_features = 100
-n_iter = 30
-n_neighbors = 100
+n_queries = 30
 rng = np.random.RandomState(42)
 
 # Generate sample data
-X, _ = make_blobs(n_samples=n_samples, n_features=n_features,
-                  centers=10, cluster_std=5, random_state=0)
-
+X, _ = make_blobs(n_samples=n_samples + n_queries,
+                  n_features=n_features, centers=10,
+                  cluster_std=5, random_state=0)
+X_index = X[:n_samples]
+X_query = X[n_samples:]
 # Set `n_candidate` values
 n_candidates_values = np.linspace(10, 500, 5).astype(np.int)
 accuracies_c = np.zeros(n_candidates_values.shape[0], dtype=float)
 
 # Calculate average accuracy for each value of `n_candidates`
 for i, n_candidates in enumerate(n_candidates_values):
-    lshf = LSHForest(n_candidates=n_candidates, n_neighbors=n_neighbors)
-    nbrs = NearestNeighbors(n_neighbors=n_neighbors, algorithm='brute')
+    lshf = LSHForest(n_candidates=n_candidates, n_neighbors=1)
+    nbrs = NearestNeighbors(n_neighbors=1)
     # Fit the Nearest neighbor models
-    lshf.fit(X)
-    nbrs.fit(X)
-    for j in range(n_iter):
-        query = X[rng.randint(0, n_samples)]
-        # Get neighbors
-        neighbors_approx = lshf.kneighbors(query, return_distance=False)
-        neighbors_exact = nbrs.kneighbors(query, return_distance=False)
+    lshf.fit(X_index)
+    nbrs.fit(X_index)
+    # Get neighbors
+    neighbors_approx = lshf.kneighbors(X_query, return_distance=False)
+    neighbors_exact = nbrs.kneighbors(X_query, return_distance=False)
 
-        intersection = np.intersect1d(neighbors_approx,
-                                      neighbors_exact).shape[0]
-        ratio = intersection / float(n_neighbors)
-        accuracies_c[i] += ratio
-
-    accuracies_c[i] = accuracies_c[i] / float(n_iter)
+    ratio = np.sum(np.equal(neighbors_approx,
+                            neighbors_exact))/float(n_queries)
+    accuracies_c[i] = accuracies_c[i] + ratio
 
 # Set `n_estimators` values
 n_estimators_values = np.linspace(1, 30, 5).astype(np.int)
@@ -81,42 +77,39 @@ accuracies_trees = np.zeros(n_estimators_values.shape[0], dtype=float)
 
 # Calculate average accuracy for each value of `n_estimators`
 for i, n_estimators in enumerate(n_estimators_values):
-    lshf = LSHForest(n_candidates=500, n_estimators=n_estimators,
-                     n_neighbors=n_neighbors)
-    nbrs = NearestNeighbors(n_neighbors=n_neighbors, algorithm='brute')
+    lshf = LSHForest(n_estimators=n_estimators, n_neighbors=1)
+    nbrs = NearestNeighbors(n_neighbors=1)
+    # Fit the Nearest neighbor models
+    lshf.fit(X_index)
+    nbrs.fit(X_index)
+    # Get neighbors
+    neighbors_approx = lshf.kneighbors(X_query, return_distance=False)
+    neighbors_exact = nbrs.kneighbors(X_query, return_distance=False)
 
-    lshf.fit(X)
-    nbrs.fit(X)
-    for j in range(n_iter):
-        query = X[rng.randint(0, n_samples)]
-        neighbors_approx = lshf.kneighbors(query, return_distance=False)
-        neighbors_exact = nbrs.kneighbors(query, return_distance=False)
-
-        intersection = np.intersect1d(neighbors_approx,
-                                      neighbors_exact).shape[0]
-        ratio = intersection / float(n_neighbors)
-        accuracies_trees[i] += ratio
-
-    accuracies_trees[i] = accuracies_trees[i] / float(n_iter)
+    ratio = np.sum(np.equal(neighbors_approx,
+                            neighbors_exact))/float(n_queries)
+    accuracies_trees[i] = accuracies_trees[i] + ratio
 
 ###############################################################################
 # Plot the accuracy variation with `n_estimators`
-plt.subplot(2, 1, 0)
-plt.scatter(n_candidates_values, accuracies_c, c='k')
-plt.plot(n_candidates_values, accuracies_c, c='g')
-plt.ylim([0, 1])
-plt.xlim(min(n_candidates_values), max(n_candidates_values))
-plt.ylabel("Accuracy")
-plt.title("Accuracy variation with n_candidates")
-
-# Plot the accuracy variation with `n_candidates`
-plt.subplot(2, 1, 1)
+plt.figure()
 plt.scatter(n_estimators_values, accuracies_trees, c='k')
-plt.plot(n_estimators_values, accuracies_trees, c='r')
+plt.plot(n_estimators_values, accuracies_trees, c='g')
 plt.ylim([0, 1])
 plt.xlim(min(n_estimators_values), max(n_estimators_values))
 plt.ylabel("Accuracy")
+plt.xlabel("n_estimators")
 plt.title("Accuracy variation with n_estimators")
+
+# Plot the accuracy variation with `n_candidates`
+plt.figure()
+plt.scatter(n_candidates_values, accuracies_c, c='k')
+plt.plot(n_candidates_values, accuracies_c, c='r')
+plt.ylim([0, 1])
+plt.xlim(min(n_candidates_values), max(n_candidates_values))
+plt.ylabel("Accuracy")
+plt.xlabel("n_candidates")
+plt.title("Accuracy variation with n_candidates")
 
 plt.show()
 
@@ -124,6 +117,7 @@ plt.show()
 # Initialize the range of `n_samples`
 n_samples_values = [10, 100, 1000, 10000, 100000]
 average_times = []
+n_iter = 30
 # Calculate the average query time
 for n_samples in n_samples_values:
     X, labels_true = make_blobs(n_samples=n_samples, n_features=10,

@@ -1,7 +1,4 @@
-"""
-Locality Sensitive Hashing Forest for Approximate Nearest Neighbor Search
--------------------------------------------------------------------------
-"""
+"""Approximate nearest neighbor search"""
 # Author: Maheshakya Wijewardena <maheshakya.10@cse.mrt.ac.lk>
 
 import numpy as np
