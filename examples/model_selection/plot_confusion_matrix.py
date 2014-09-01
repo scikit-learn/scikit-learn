@@ -69,7 +69,7 @@ plot_confusion_matrix(cm)
 
 # Normalize the confusion matrix by row (i.e by the number of samples
 # in each class)
-cm_normalized = cm.astype('float') / cm.sum(axis=1)
+cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
 print('Normalized confusion matrix')
 print(cm_normalized)
 plt.figure()
