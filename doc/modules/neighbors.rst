@@ -617,6 +617,11 @@ query time while varying these parameters are as follows.
    :align: center
    :scale: 75
 
+.. figure:: ../auto_examples/neighbors/images/plot_approximate_nearest_neighbors_002.png
+   :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors.html
+   :align: center
+   :scale: 75
+
 .. topic:: Examples:
 
   * :ref:`example_neighbors_plot_approximate_nearest_neighbors.py`: an example of
