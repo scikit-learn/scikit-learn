@@ -151,13 +151,24 @@ def check_kkt_conditions(X, y, coef, strong_active_set, alpha, l1_ratio,
 
     X_sparse = sparse.isspmatrix(X)
     residual = y - safe_sparse_dot(X, coef)
+    if X_sparse:
+        X_indices = X.indices
+        X_data = X.data
+        X_indptr = X.indptr
     for i in strong_active_set:
-        # Slicing returns a matrix type object for sparse matrices.
-        feature = X[:, i]
-        if X_sparse:
-            feature = np.squeeze(feature.toarray())
 
-        loss_derivative = np.dot(feature, residual)
+        if X_sparse:
+            startptr = X_indptr[i]
+            endptr = X_indptr[i + 1]
+            dot_data = X_data[startptr: endptr]
+            residual_data = residual.take(X_indices[startptr: endptr],
+                                          mode='clip')
+            loss_derivative = np.dot(dot_data, residual_data)
+            #startptr = endptr
+
+        else:
+            feature = X[:, i]
+            loss_derivative = np.dot(feature, residual)
         active_coef = coef[i]
 
         # XXX: I'm not sure about the multi_output case.
