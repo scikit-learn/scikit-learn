@@ -147,7 +147,7 @@ def _tolerance(X, tol):
     return np.mean(variances) * tol
 
 
-def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
+def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
             n_init=10, max_iter=300, verbose=False,
             tol=1e-4, random_state=None, copy_x=True, n_jobs=1,
             return_n_iter=False):
@@ -186,8 +186,16 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
         If a callable is passed, it should take arguments X, k and
         and a random state and return an initialization.
 
-    precompute_distances : boolean, default: True
+    precompute_distances : {'auto', True, False}
         Precompute distances (faster but takes more memory).
+
+        'auto' : do not precompute distances if n_samples * n_clusters > 25
+        million. This corresponds to about 100MB overhead per job using
+        double precision.
+
+        True : always precompute distances
+
+        False : never precompute distances
 
     tol : float, optional
         The relative increment in the results before declaring convergence.
@@ -253,7 +261,9 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
     elif isinstance(precompute_distances, bool):
         pass
     else:
-        raise ValueError("precompute_distances should be 'auto' or True/False")
+        raise ValueError("precompute_distances should be 'auto' or True/False"
+                         ", but a value of %r was passed" %
+                         precompute_distances)
 
     # subtract of mean of x for more accurate distance computations
     if not sp.issparse(X) or hasattr(init, '__array__'):
@@ -643,7 +653,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
 
-    precompute_distances : {'auto', 'always', 'never'}
+    precompute_distances : {'auto', True, False}
         Precompute distances (faster but takes more memory).
 
         'auto' : do not precompute distances if n_samples * n_clusters > 25
