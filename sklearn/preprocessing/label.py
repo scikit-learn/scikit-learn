@@ -145,7 +145,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         self.classes_, y = np.unique(y, return_inverse=True)
         return y
 
-    def transform(self, y):
+    def transform(self, y, classes=None):
         """Transform labels to normalized encoding.
 
         Parameters
@@ -153,20 +153,27 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y : array-like of shape [n_samples]
             Target values.
 
+        classes : array-like, optional (default: None)
+            List of unique sorted labels to encode the target data against.
+            If None the LabelEncoder must have already been fit and the unique
+            labels from the fit will be used.
+
         Returns
         -------
         y : array-like of shape [n_samples]
         """
-        self._check_fitted()
+        if classes is None:
+            self._check_fitted()
+            classes = self.classes_
 
-        classes = np.unique(y)
-        _check_numpy_unicode_bug(classes)
-        if len(np.intersect1d(classes, self.classes_)) < len(classes):
+        y_classes = np.unique(y)
+        _check_numpy_unicode_bug(y_classes)
+        if len(np.intersect1d(y_classes, classes)) < len(y_classes):
             # Get the new labels
-            unseen = np.setdiff1d(classes, self.classes_)
+            unseen = np.setdiff1d(y_classes, classes)
 
             if type(self.new_labels) is int:
-                ret = np.searchsorted(self.classes_, y)
+                ret = np.searchsorted(classes, y)
                 ret[np.in1d(y, unseen)] = self.new_labels
                 return ret
             elif self.new_labels is None:
@@ -176,7 +183,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
                 raise ValueError("Value of argument `new_labels`={0} is "
                                  "unknown.".format(self.new_labels))
 
-        return np.searchsorted(self.classes_, y)
+        return np.searchsorted(classes, y)
 
     def inverse_transform(self, y):
         """Transform labels back to original encoding.

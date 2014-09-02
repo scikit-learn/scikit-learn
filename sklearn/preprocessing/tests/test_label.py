@@ -220,6 +220,18 @@ def test_label_encoder_new_label_replace():
     assert_array_equal(le.transform(["b", "c", "d"]), [1, 2, -99])
 
 
+def test_label_encoder_transform_classes_parameter():
+    """Test LabelEncoder's transform using the classes parameter"""
+    le = LabelEncoder(new_labels=None)
+    le.fit(["a", "b", "b", "c"])
+    assert_array_equal(le.classes_, ["a", "b", "c"])
+    assert_array_equal(le.transform(["d", "f", "e", "e"],
+                                    classes=["d", "e", "f"]),
+                       [0, 2, 1, 1])
+    assert_array_equal(le.inverse_transform([2, 1, 0]), ["c", "b", "a"])
+    assert_raises(ValueError, le.transform, ["b", "c", "d"])
+
+
 def test_label_encoder_fit_transform():
     """Test fit_transform"""
     le = LabelEncoder()
