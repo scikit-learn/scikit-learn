@@ -8,6 +8,11 @@
 
 set -e
 
+# Fix the compilers to workaround avoid having the Python 3.4 build
+# lookup for g++44 unexpectedly.
+export CC=gcc
+export CXX=g++
+
 sudo apt-get update -qq
 if [[ "$INSTALL_ATLAS" == "true" ]]; then
     sudo apt-get install -qq libatlas3gf-base libatlas-dev
