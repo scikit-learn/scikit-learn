@@ -6,8 +6,8 @@ import scipy.sparse as sp
 import numpy as np
 
 from .fixes import sparse_min_max
-from .sparsefuncs_fast import (csr_mean_variance_axis0,
-                               csc_mean_variance_axis0)
+from .sparsefuncs_fast import csr_mean_variance_axis0 as _csr_mean_var_axis0
+from .sparsefuncs_fast import csc_mean_variance_axis0 as _csc_mean_var_axis0
 
 
 def _raise_typeerror(X):
@@ -53,13 +53,16 @@ def inplace_csr_row_scale(X, scale):
     X.data *= np.repeat(scale, np.diff(X.indptr))
 
 
-def mean_variance_axis0(X):
+def mean_variance_axis(X, axis):
     """Compute mean and variance along axis 0 on a CSR or CSC matrix
 
     Parameters
     ----------
     X: CSR or CSC sparse matrix, shape (n_samples, n_features)
         Input data.
+
+    axis: int (either 0 or 1)
+        Axis along which the axis should be computed.
 
     Returns
     -------
@@ -71,10 +74,20 @@ def mean_variance_axis0(X):
         Feature-wise variances
 
     """
+    if axis not in (0, 1):
+        raise ValueError(
+            "Unknown axis value: %d. Use 0 for rows, or 1 for columns" % axis)
+
     if isinstance(X, sp.csr_matrix):
-        return csr_mean_variance_axis0(X)
+        if axis == 0:
+            return _csr_mean_var_axis0(X)
+        else:
+            return _csc_mean_var_axis0(X.T)
     elif isinstance(X, sp.csc_matrix):
-        return csc_mean_variance_axis0(X)
+        if axis == 0:
+            return _csc_mean_var_axis0(X)
+        else:
+            return _csr_mean_var_axis0(X.T)
     else:
         _raise_typeerror(X)
 
@@ -258,12 +271,15 @@ def inplace_swap_column(X, m, n):
 
 
 def min_max_axis(X, axis):
-    """Compute minimum and maximum along axis 0 on a CSR or CSC matrix
+    """Compute minimum and maximum along an axis on a CSR or CSC matrix
 
     Parameters
     ----------
     X : CSR or CSC sparse matrix, shape (n_samples, n_features)
         Input data.
+
+    axis: int (either 0 or 1)
+        Axis along which the axis should be computed.
 
     Returns
     -------
