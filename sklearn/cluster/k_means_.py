@@ -20,7 +20,7 @@ from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import euclidean_distances
 from ..utils.extmath import row_norms, squared_norm
 from ..utils.sparsefuncs_fast import assign_rows_csr
-from ..utils.sparsefuncs import mean_variance_axis0
+from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.fixes import astype
 from ..utils import check_array
 from ..utils import check_random_state
@@ -141,7 +141,7 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
 def _tolerance(X, tol):
     """Return a tolerance which is independent of the dataset"""
     if sp.issparse(X):
-        variances = mean_variance_axis0(X)[1]
+        variances = mean_variance_axis(X, axis=0)[1]
     else:
         variances = np.var(X, axis=0)
     return np.mean(variances) * tol
