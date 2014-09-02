@@ -210,25 +210,6 @@ def test_label_encoder():
     assert_raises(ValueError, le.transform, [0, 6])
 
 
-def test_label_encoder_new_label_update():
-    """Test LabelEncoder's transform on new labels"""
-    le = LabelEncoder(new_labels="update")
-    le.fit(["a", "b", "b", "c"])
-    assert_array_equal(le.classes_, ["a", "b", "c"])
-    assert_array_equal(le.transform(["a", "a", "c"]),
-                       [0, 0, 2])
-    assert_array_equal(le.inverse_transform([2, 1, 0]),
-                       ["c", "b", "a"])
-    # Unseen label "d"
-    assert_array_equal(le.transform(["b", "c", "d"]),
-                       [1, 2, 3])
-    assert_array_equal(le.classes_, ["a", "b", "c", "d"])
-    assert_array_equal(le.transform(["d", "z", "a"]),
-                       [3, 4, 0])
-    assert_array_equal(le.inverse_transform([3, 4, 0]),
-                       ["d", "z", "a"])
-
-
 def test_label_encoder_new_label_replace():
     """Test LabelEncoder's transform on new labels"""
     le = LabelEncoder(new_labels=-99)
@@ -237,7 +218,6 @@ def test_label_encoder_new_label_replace():
     assert_array_equal(le.transform(["a", "a", "c"]), [0, 0, 2])
     assert_array_equal(le.inverse_transform([2, 1, 0]), ["c", "b", "a"])
     assert_array_equal(le.transform(["b", "c", "d"]), [1, 2, -99])
-    assert_array_equal(le.inverse_transform([3, 1, 0]), ["d", "b", "a"])
 
 
 def test_label_encoder_fit_transform():

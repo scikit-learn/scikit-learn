@@ -57,14 +57,8 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     Parameters
     ----------
 
-    new_labels : string, optional (default: "raise")
-        Determines how to handle new labels, i.e., data
-        not seen in the training domain.
-
-        - If ``"raise"``, then raise ValueError.
-        - If ``"update"``, then re-map the new labels to
-          classes ``[N, ..., N+m-1]``, where ``m`` is the number of new labels.
-        - If an integer value is passed, then re-label with this value.
+    new_labels : Int, optional (default: None)
+          re-label with this value.
           N.B. that default values are in [0, 1, ...], so caution should be
           taken if a non-negative value is passed to not accidentally
           intersect.  Additionally, ``inverse_transform`` will fail for a
@@ -82,7 +76,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     >>> from sklearn import preprocessing
     >>> le = preprocessing.LabelEncoder()
     >>> le.fit([1, 2, 2, 6])
-    LabelEncoder(new_labels='raise')
+    LabelEncoder()
     >>> le.classes_
     array([1, 2, 6])
     >>> le.transform([1, 1, 2, 6]) #doctest: +ELLIPSIS
@@ -95,7 +89,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
     >>> le = preprocessing.LabelEncoder()
     >>> le.fit(["paris", "paris", "tokyo", "amsterdam"])
-    LabelEncoder(new_labels='raise')
+    LabelEncoder()
     >>> list(le.classes_)
     ['amsterdam', 'paris', 'tokyo']
     >>> le.transform(["tokyo", "tokyo", "paris"]) #doctest: +ELLIPSIS
@@ -105,10 +99,9 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, new_labels="raise"):
+    def __init__(self, new_labels=None):
         # Check new_labels parameter
-        if (new_labels not in ["update", "raise"] and
-            type(new_labels) is not int):
+        if new_labels is not None and type(new_labels) is not int:
                 raise ValueError("Value of argument `new_labels`={0} is "
                                  "unknown and not an "
                                  "integer.".format(new_labels))
@@ -172,25 +165,11 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
             # Get the new labels
             unseen = np.setdiff1d(classes, self.classes_)
 
-            # If we are mapping new labels, get "new" ID and change in copy.
-            if self.new_labels == "update":
-                # Update the new label mapping
-
-                # XXX there is a more efficient way to do this by inserting
-                # new labels into the sorted .classes_
-                self.classes_ = np.unique(np.concatenate((np.asarray(y),
-                                                         self.classes_)))
-            elif type(self.new_labels) is int:
-                # Update the new label mapping
+            if type(self.new_labels) is int:
                 ret = np.searchsorted(self.classes_, y)
                 ret[np.in1d(y, unseen)] = self.new_labels
-
-                # XXX there is a more efficient way to do this by inserting
-                # new labels into the sorted .classes_
-                self.classes_ = np.unique(np.concatenate((np.asarray(y),
-                                                         self.classes_)))
                 return ret
-            elif self.new_labels == "raise":
+            elif self.new_labels is None:
                 raise ValueError("y contains new label(s): %s" % str(unseen))
             else:
                 # Raise on invalid argument.
