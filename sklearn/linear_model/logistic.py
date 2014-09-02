@@ -238,7 +238,7 @@ def _multinomial_loss(w, X, Y, alpha, sample_weight):
         Training data.
 
     y : ndarray, shape (n_samples, n_classes)
-        Array of labels.
+        Transformed labels according to the output of LabelBinarizer.
 
     alpha : float
         Regularization parameter. alpha is equal to 1 / C.
