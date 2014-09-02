@@ -102,7 +102,7 @@ class Isomap(BaseEstimator, TransformerMixin):
         kng = kneighbors_graph(self.nbrs_, self.n_neighbors,
                                mode='distance')
 
-        self.dist_matrix_ = graph_shortest_path(kng,
+        self.dist_matrix_, _ = graph_shortest_path(kng,
                                                 method=self.path_method,
                                                 directed=False)
         G = self.dist_matrix_ ** 2

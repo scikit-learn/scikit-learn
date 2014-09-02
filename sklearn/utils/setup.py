@@ -48,6 +48,10 @@ def configuration(parent_package='', top_path=None):
                          sources=['graph_shortest_path.c'],
                          include_dirs=[numpy.get_include()])
 
+    config.add_extension("minibatch_isomap_utilities",
+                         sources=["minibatch_isomap_utilities.cpp"],
+                         include_dirs=[numpy.get_include()])
+
     config.add_extension('fast_dict',
                          sources=['fast_dict.cpp'],
                          language="c++",

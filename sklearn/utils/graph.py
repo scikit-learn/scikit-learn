@@ -14,6 +14,7 @@ import numpy as np
 from scipy import sparse
 
 from .graph_shortest_path import graph_shortest_path
+from .graph_shortest_path import modified_graph_shortest_path
 
 
 ###############################################################################
