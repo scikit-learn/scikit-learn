@@ -227,6 +227,31 @@ def _logistic_loss_grad_hess(w, X, y, alpha, sample_weight=None):
     return out, grad, Hs
 
 def _multinomial_loss(w, X, Y, alpha, sample_weight):
+    """Computes multinomial loss.
+
+    Parameters
+    ----------
+    w : ndarray, shape (n_classes * n_features,) or 
+        (n_classes * (n_features + 1),) Coefficient vector.
+
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Training data.
+
+    y : ndarray, shape (n_samples, n_classes)
+        Array of labels.
+
+    alpha : float
+        Regularization parameter. alpha is equal to 1 / C.
+
+    sample_weight : ndarray, shape (n_samples,) optional
+        Array of weights that are assigned to individual samples.
+        If not provided, then each sample is given unit weight.
+
+    Returns
+    -------
+    out : float
+        Multinomial loss.
+    """    
     n_samples, n_features = X.shape
     n_classes = Y.shape[1]
     fit_intercept = w.size == (n_classes * (n_features + 1))
@@ -235,12 +260,12 @@ def _multinomial_loss(w, X, Y, alpha, sample_weight):
         sample_weight = np.ones(n_samples)
     sample_weight = sample_weight[:, np.newaxis]
     if(fit_intercept):
-        intercept = w[:,-1]
-        w = w[:,:-1]
+        intercept = w[:, -1]
+        w = w[:, :-1]
     else:
         intercept = np.zeros(n_classes)
     a_k = safe_sparse_dot(X, w.T)
-    a_k = a_k + intercept[np.newaxis, :]
+    a_k = a_k + intercept[np.newaxis,:]
     log_yhat = a_k - logsumexp(a_k, axis=1)[:, np.newaxis]
     loss = -(sample_weight * Y * log_yhat).sum()
     loss += 0.5 * alpha * squared_norm(w)
@@ -357,46 +382,46 @@ def _multinomial_loss_grad_hess(w, X, Y, alpha, sample_weight):
         sample_weight = np.ones(n_samples)
     sample_weight = sample_weight[:, np.newaxis]
     if(fit_intercept):
-        intercept = w[:,-1]
-        w = w[:,:-1]
+        intercept = w[:, -1]
+        w = w[:, :-1]
     else:
         intercept = np.zeros(n_classes)
     a_k = safe_sparse_dot(X, w.T)
-    a_k = a_k + intercept[np.newaxis, :]
+    a_k = a_k + intercept[np.newaxis,:]
     log_yhat = a_k - logsumexp(a_k, axis=1)[:, np.newaxis]
     y_hat = np.exp(log_yhat)
     loss = -(sample_weight * Y * log_yhat).sum()
     loss += 0.5 * alpha * squared_norm(w)
     err = np.multiply(Y - y_hat, sample_weight)
-    grad[:,:n_features] = -safe_sparse_dot(err.T, X)
-    grad[:,:n_features] += w[:,:n_features] * alpha
+    grad[:, :n_features] = -safe_sparse_dot(err.T, X)
+    grad[:, :n_features] += w[:, :n_features] * alpha
     if(fit_intercept):
-        grad[:,-1] = -np.sum(err, axis=0)
+        grad[:, -1] = -np.sum(err, axis=0)
 
     #Hessian-vector product derived by applying the R-operator on the gradient
     #of the multinomial loss function.
     def hessp(v):
         v = v.reshape(n_classes, -1)
         if(fit_intercept):
-            inter_terms = v[:,-1]
-            v = v[:,:-1]
+            inter_terms = v[:, -1]
+            v = v[:, :-1]
         else:
             inter_terms = np.zeros(n_classes)
         vec_prod = safe_sparse_dot(X, v.T)
         vec_prod += inter_terms[np.newaxis,:]
         r_yhat= np.multiply(-y_hat, vec_prod)
         r_yhat = r_yhat.sum(axis=1)
-        r_yhat = r_yhat[:,np.newaxis] + vec_prod
+        r_yhat = r_yhat[:, np.newaxis] + vec_prod
         r_yhat = np.multiply(r_yhat, y_hat)
         r_yhat = np.multiply(r_yhat, sample_weight)
         hessProd = np.zeros((grad.shape))
-        hessProd[:,:n_features] = safe_sparse_dot(r_yhat.T, X)
-        hessProd[:,:n_features] += v * alpha
+        hessProd[:, :n_features] = safe_sparse_dot(r_yhat.T, X)
+        hessProd[:, :n_features] += v * alpha
         if(fit_intercept):
-            hessProd[:,-1] = r_yhat.sum(axis=0)
+            hessProd[:, -1] = r_yhat.sum(axis=0)
         return hessProd.ravel()    
         
-    return loss, grad.ravel(), hessp;
+    return loss, grad.ravel(), hessp
 
 def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              max_iter=100, tol=1e-4, verbose=0,
