@@ -220,6 +220,15 @@ def test_label_encoder_new_label_replace():
     assert_array_equal(le.transform(["b", "c", "d"]), [1, 2, -99])
 
 
+def test_label_encoder_classes_parameter():
+    """Test LabelEncoder's classes parameter"""
+    le = LabelEncoder(classes=["a", "b", "c"], new_labels=None)
+    assert_array_equal(le.classes_, ["a", "b", "c"])
+    assert_array_equal(le.transform(["c", "a", "b", "c"],), [2, 0, 1, 2])
+    assert_array_equal(le.inverse_transform([2, 1, 0]), ["c", "b", "a"])
+    assert_raises(ValueError, le.transform, ["b", "c", "d"])
+
+
 def test_label_encoder_transform_classes_parameter():
     """Test LabelEncoder's transform using the classes parameter"""
     le = LabelEncoder(new_labels=None)
@@ -248,8 +257,8 @@ def test_label_encoder_errors():
     le = LabelEncoder()
     assert_raises(ValueError, le.transform, [])
     assert_raises(ValueError, le.inverse_transform, [])
-    # Fail on unrecognized vlaue for the 'new_label' parameter
-    assert_raises(ValueError, LabelEncoder, "xyz")
+    # Fail on unrecognized value for the 'new_label' parameter
+    assert_raises(ValueError, LabelEncoder, new_labels="xyz")
 
 
 def test_sparse_output_multilabel_binarizer():

@@ -57,6 +57,12 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     Parameters
     ----------
 
+    classes : array-like of shape [n_class], optional (default: None)
+        Holds the label for each class. List of unique sorted labels to encode
+        the target data against. Using this parameter in initilization will
+        allow skipping a call fit before calling transform.
+
+
     new_labels : Int, optional (default: None)
           re-label with this value.
           N.B. that default values are in [0, 1, ...], so caution should be
@@ -76,7 +82,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     >>> from sklearn import preprocessing
     >>> le = preprocessing.LabelEncoder()
     >>> le.fit([1, 2, 2, 6])
-    LabelEncoder(new_labels=None)
+    LabelEncoder(classes=None, new_labels=None)
     >>> le.classes_
     array([1, 2, 6])
     >>> le.transform([1, 1, 2, 6]) #doctest: +ELLIPSIS
@@ -89,7 +95,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
     >>> le = preprocessing.LabelEncoder()
     >>> le.fit(["paris", "paris", "tokyo", "amsterdam"])
-    LabelEncoder(new_labels=None)
+    LabelEncoder(classes=None, new_labels=None)
     >>> list(le.classes_)
     ['amsterdam', 'paris', 'tokyo']
     >>> le.transform(["tokyo", "tokyo", "paris"]) #doctest: +ELLIPSIS
@@ -99,12 +105,15 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, new_labels=None):
-        # Check new_labels parameter
+    def __init__(self, classes=None, new_labels=None):
+        if classes is not None:
+            self.classes_ = classes
+
         if new_labels is not None and type(new_labels) is not int:
                 raise ValueError("Value of argument `new_labels`={0} is "
                                  "unknown and not an "
                                  "integer.".format(new_labels))
+
         self.new_labels = new_labels
 
     def _check_fitted(self):
@@ -153,7 +162,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y : array-like of shape [n_samples]
             Target values.
 
-        classes : array-like, optional (default: None)
+        classes : array-like of shape [n_class], optional (default: None)
             List of unique sorted labels to encode the target data against.
             If None the LabelEncoder must have already been fit and the unique
             labels from the fit will be used.
