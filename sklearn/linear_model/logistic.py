@@ -826,7 +826,12 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     to have slightly different results for the same input data. If
     that happens, try with a smaller tol parameter.
 
-    References:
+    Predict output may not match that of standalone liblinear in certain
+    cases. See :ref:`differences from liblinear <liblinear_differences>`
+    in the narrative documentation.
+
+    References
+    ----------
 
     LIBLINEAR -- A Library for Large Linear Classification
         http://www.csie.ntu.edu.tw/~cjlin/liblinear/
