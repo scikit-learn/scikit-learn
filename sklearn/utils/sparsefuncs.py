@@ -74,7 +74,7 @@ def mean_variance_axis(X, axis):
         Feature-wise variances
 
     """
-    if axis != 0 and axis != 1:
+    if axis not in (0, 1):
         raise ValueError(
             "Unknown axis value: %d. Use 0 for rows, or 1 for columns" % axis)
 
