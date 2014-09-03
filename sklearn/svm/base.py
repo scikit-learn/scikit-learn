@@ -308,8 +308,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             cache_size=self.cache_size)
 
     def _sparse_predict(self, X):
-        X = sp.csr_matrix(X, dtype=np.float64)
-
+        # Precondition: X is a csr_matrix of dtype np.float64.
         kernel = self.kernel
         if callable(kernel):
             kernel = 'precomputed'
