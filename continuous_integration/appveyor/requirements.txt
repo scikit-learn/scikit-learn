@@ -12,3 +12,4 @@ numpy==1.8.1
 scipy==0.14.0
 nose
 wheel
+wheelhouse_uploader

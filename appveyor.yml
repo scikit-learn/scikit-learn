@@ -7,6 +7,9 @@ environment:
     # /E:ON and /V:ON options are not enabled in the batch script intepreter
     # See: http://stackoverflow.com/a/13751649/163740
     CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\continuous_integration\\appveyor\\run_with_env.cmd"
+    WHEELHOUSE_UPLOADER_USERNAME: sklearn-appveyor
+    WHEELHOUSE_UPLOADER_SECRET:
+      secure: BQm8KfEj6v2Y+dQxb2syQvTFxDnHXvaNktkLcYSq7jfbTOO6eH9n09tfQzFUVcWZ
 
   matrix:
     - PYTHON: "C:\\Python27_32"
@@ -24,11 +27,6 @@ environment:
     - PYTHON: "C:\\Python34_64"
       PYTHON_VERSION: "3.4.1"
       PYTHON_ARCH: "64"
-
-branches:
-  only:
-    - master
-    - 0.15.X
 
 install:
   # Install Python (from the official .msi of http://python.org) and pip when
@@ -54,15 +52,22 @@ build: false
 test_script:
   # Change to a non-source folder to make sure we run the tests on the
   # installed library.
-  - "cd C:\\"
+  - "mkdir empty_folder"
+  - "cd empty_folder"
 
   # Skip joblib tests that require multiprocessing as they are prone to random
   # slow down
   - "python -c \"import nose; nose.main()\" -s sklearn"
 
+  # Move back to the project folder
+  - "cd .."
+
 artifacts:
   # Archive the generated wheel package in the ci.appveyor.com build report.
   - path: dist\*
 
-#on_success:
-#  - TODO: upload the content of dist/*.whl to a public wheelhouse
+on_success:
+  # Upload the generated wheel package to Rackspace
+  # On Windows, Apache Libcloud cannot find a standard CA cert bundle so we
+  # disable the ssl checks.
+  - "python -m wheelhouse_uploader --no-ssl-check --local-folder=dist sklearn-windows-wheels"
