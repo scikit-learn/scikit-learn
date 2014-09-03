@@ -107,7 +107,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
     def __init__(self, classes=None, new_labels=None):
         if classes is not None:
-            self.classes_ = classes
+            self.classes_ = np.asarray(classes)
 
         if new_labels is not None and type(new_labels) is not int:
                 raise ValueError("Value of argument `new_labels`={0} is "
