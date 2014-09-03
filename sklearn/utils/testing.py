@@ -85,7 +85,7 @@ except ImportError:
             error_message = str(e)
             if not re.compile(expected_regexp).match(error_message):
                 raise AssertionError("Error message should match pattern "
-                                     "'%s'. '%s' does not." %
+                                     "%r. %r does not." %
                                      (expected_regexp, error_message))
         if not_raised:
             raise AssertionError("Should have raised %r" %
