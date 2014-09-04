@@ -1,4 +1,4 @@
-"""Implements spectral biclustering algorithms.
+"""Spectral biclustering algorithms.
 
 Authors : Kemal Eren
 License: BSD 3 clause
@@ -11,22 +11,19 @@ import numpy as np
 from scipy.sparse import dia_matrix
 from scipy.sparse import issparse
 
-from sklearn.base import BaseEstimator, BiclusterMixin
-from sklearn.externals import six
-from sklearn.utils.arpack import svds
-from sklearn.utils.arpack import eigsh
-from sklearn.cluster import KMeans
-from sklearn.cluster import MiniBatchKMeans
+from . import KMeans, MiniBatchKMeans
+from ..base import BaseEstimator, BiclusterMixin
+from ..externals import six
+from ..utils.arpack import eigsh, svds
 
-from sklearn.utils.extmath import randomized_svd
-from sklearn.utils.extmath import safe_sparse_dot
-from sklearn.utils.extmath import make_nonnegative
-from sklearn.utils.extmath import norm
+from ..utils.extmath import (make_nonnegative, norm, randomized_svd,
+                             safe_sparse_dot)
 
-from sklearn.utils.validation import assert_all_finite
-from sklearn.utils.validation import check_array
+from ..utils.validation import assert_all_finite, check_array
 
-from .utils import check_array_ndim
+
+__all__ = ['SpectralCoclustering',
+           'SpectralBiclustering']
 
 
 def _scale_normalize(X):
@@ -121,7 +118,6 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
 
         """
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
-        check_array_ndim(X)
         self._check_parameters()
         self._fit(X)
 
