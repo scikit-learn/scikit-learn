@@ -15,7 +15,7 @@ See http://scikit-learn.org for complete documentation.
 import sys
 import re
 import warnings
-__version__ = '0.15.1'
+__version__ = '0.15.2'
 
 # Make sure that DeprecationWarning within this package always gets printed
 warnings.filterwarnings('always', category=DeprecationWarning,
