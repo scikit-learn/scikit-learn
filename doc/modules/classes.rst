@@ -166,6 +166,7 @@ Classes
    cross_validation.LeaveOneOut
    cross_validation.LeavePLabelOut
    cross_validation.LeavePOut
+   cross_validation.RollingWindow
    cross_validation.StratifiedKFold
    cross_validation.ShuffleSplit
    cross_validation.StratifiedShuffleSplit

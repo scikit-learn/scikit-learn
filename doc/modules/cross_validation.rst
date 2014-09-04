@@ -261,7 +261,7 @@ training set::
   [0 1 2] [3]
 
 
-Potential users of LOO for model selection should weigh a few known caveats. 
+Potential users of LOO for model selection should weigh a few known caveats.
 When compared with :math:`k`-fold cross validation, one builds :math:`n` models
 from :math:`n` samples instead of :math:`k` models, where :math:`n > k`.
 Moreover, each is trained on :math:`n - 1` samples rather than
@@ -275,10 +275,10 @@ the :math:`n` samples are used to build each model, models constructed from
 folds are virtually identical to each other and to the model built from the
 entire training set.
 
-However, if the learning curve is steep for the training size in question, 
+However, if the learning curve is steep for the training size in question,
 then 5- or 10- fold cross validation can overestimate the generalization error.
 
-As a general rule, most authors, and empirical evidence, suggest that 5- or 10- 
+As a general rule, most authors, and empirical evidence, suggest that 5- or 10-
 fold cross validation should be preferred to LOO.
 
 
@@ -290,7 +290,7 @@ fold cross validation should be preferred to LOO.
  * L. Breiman, P. Spector `Submodel selection and evaluation in regression: The X-random case
    <http://digitalassets.lib.berkeley.edu/sdtr/ucb/text/197.pdf>`_, International Statistical Review 1992
  * R. Kohavi, `A Study of Cross-Validation and Bootstrap for Accuracy Estimation and Model Selection
-   <http://www.cs.iastate.edu/~jtian/cs573/Papers/Kohavi-IJCAI-95.pdf>`_, Intl. Jnt. Conf. AI   
+   <http://www.cs.iastate.edu/~jtian/cs573/Papers/Kohavi-IJCAI-95.pdf>`_, Intl. Jnt. Conf. AI
  * R. Bharat Rao, G. Fung, R. Rosales, `On the Dangers of Cross-Validation. An Experimental Evaluation
    <http://www.siam.org/proceedings/datamining/2008/dm08_54_Rao.pdf>`_, SIAM 2008
  * G. James, D. Witten, T. Hastie, R Tibshirani, `An Introduction to
@@ -383,8 +383,6 @@ Example of Leave-2-Label Out::
 Random permutations cross-validation a.k.a. Shuffle & Split
 -----------------------------------------------------------
 
-:class:`ShuffleSplit`
-
 The :class:`ShuffleSplit` iterator will generate a user defined number of
 independent train / test dataset splits. Samples are first shuffled and
 then split into a pair of train and test sets.
@@ -408,11 +406,28 @@ Here is a usage example::
 validation that allows a finer control on the number of iterations and
 the proportion of samples in on each side of the train / test split.
 
-See also
---------
-:class:`StratifiedShuffleSplit` is a variation of *ShuffleSplit*, which returns
-stratified splits, *i.e* which creates splits by preserving the same
-percentage for each target class as in the complete set.
+.. note::
+
+    See also :class:`StratifiedShuffleSplit`: this is a variation of
+    *ShuffleSplit*, which returns stratified splits, *i.e* which creates
+    splits by preserving the same percentage for each target class as in
+    the complete set.
+
+Rolling window
+--------------
+
+:class:`RollingWindow` is a strategy suited for timeseries.
+
+Here is a usage example::
+
+  >>> rw = cross_validation.RollingWindow(5)
+  >>> for train_index, test_index in rw:
+  ...     print("%s %s" % (train_index, test_index))
+  ...
+  [0] [1]
+  [0 1] [2]
+  [0 1 2] [3]
+  [0 1 2 3] [4]
 
 A note on shuffling
 ===================

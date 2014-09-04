@@ -27,7 +27,7 @@ from .utils.validation import _num_samples, check_array
 from .utils.multiclass import type_of_target
 from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
-from .externals.six.moves import zip
+from .externals.six.moves import zip, xrange
 from .metrics.scorer import check_scoring
 
 __all__ = ['Bootstrap',
@@ -36,6 +36,7 @@ __all__ = ['Bootstrap',
            'LeaveOneOut',
            'LeavePLabelOut',
            'LeavePOut',
+           'RollingWindow',
            'ShuffleSplit',
            'StratifiedKFold',
            'StratifiedShuffleSplit',
@@ -1071,6 +1072,107 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     def __len__(self):
         return self.n_iter
+
+
+class RollingWindow(object):
+    """Rolling window cross-validation strategy for timeseries
+
+    Provides train/test indices increasing with time.
+
+    Parameters
+    ----------
+    n : int
+        Total number of elements in the dataset.
+
+    test_size : float, int (default is 1)
+        If float, should be between 0.0 and 1.0 and represent the
+        proportion of the dataset to include in the test split. If
+        int, Represents the absolute number of test samples.
+
+    train_size : float, int, or None (default is None)
+        If float, should be between 0.0 and 1.0 and represent the
+        proportion of the dataset to include in the test split. If
+        int, represents the absolute number of test samples. If None,
+        the train size grows progressively.
+
+    delay : int (default is 0)
+        Delay between the train and the test sets.
+
+    step : float, int, or None (default is None)
+        Increment. If None, step is set equal to test_size.
+
+    Examples
+    --------
+    >>> from sklearn import cross_validation
+    >>> rw = cross_validation.RollingWindow(5)
+    >>> len(rw)
+    4
+    >>> print(rw)
+    RollingWindow(5, test_size=1, train_size=None, delay=0, step=None)
+    >>> for train_index, test_index in rw:
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
+    ...
+    TRAIN: [0] TEST: [1]
+    TRAIN: [0 1] TEST: [2]
+    TRAIN: [0 1 2] TEST: [3]
+    TRAIN: [0 1 2 3] TEST: [4]
+
+    References
+    ----------
+    See http://robjhyndman.com/hyndsight/tscvexample
+    """
+
+    def __init__(self, n, test_size=1, train_size=None, delay=0, step=None):
+        self.n = n
+        self.test_size = test_size
+        self.train_size = train_size
+        self.delay = delay
+        self.step = step
+
+        self.n_train, self.n_test = _validate_shuffle_split(n,
+                                    test_size,
+                                    train_size)
+        self.step_ = self.n_test
+        if np.asarray(step).dtype.kind == 'f':
+            self.step_ = int(ceil(step * n))
+        elif np.asarray(step).dtype.kind == 'i':
+            self.step_ = step
+
+    def __iter__(self):
+        start_train = 0
+
+        first_idx = 1 if self.train_size is None else self.n_train
+        first_idx += self.delay
+
+        for start_test in xrange(first_idx, self.n, self.step_):
+
+            end_test = min(start_test + self.n_test, self.n)
+
+            if self.train_size is not None:
+                start_train = start_test - self.delay - self.n_train
+
+            train = np.arange(start_train, start_test - self.delay)
+            test = np.arange(start_test, end_test)
+
+            yield train, test
+
+    def __len__(self):
+        first_idx = self.n_train if self.train_size is not None else 1
+        first_idx += self.delay
+
+        l = (self.n - first_idx) / self.step_
+        return int(ceil(l))
+
+    def __repr__(self):
+        return ('%s(%i, test_size=%i, train_size=%s, delay=%i, '
+            'step=%s)' % (
+                self.__class__.__name__,
+                self.n,
+                self.test_size,
+                str(self.train_size),
+                self.delay,
+                str(self.step),
+            ))
 
 
 ##############################################################################

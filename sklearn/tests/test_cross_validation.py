@@ -461,6 +461,33 @@ def test_leave_label_out_changing_labels():
             assert_array_equal(test, test_chan)
 
 
+def test_rolling_window_split():
+    rw1 = cval.RollingWindow(10, test_size=0.2)
+    rw2 = cval.RollingWindow(10, test_size=2)
+    rw3 = cval.RollingWindow(10, test_size=np.int32(2))
+    for typ in six.integer_types:
+        rw4 = cval.RollingWindow(10, test_size=typ(2))
+    for t1, t2, t3, t4 in zip(rw1, rw2, rw3, rw4):
+        assert_array_equal(t1[0], t2[0])
+        assert_array_equal(t2[0], t3[0])
+        assert_array_equal(t3[0], t4[0])
+        assert_array_equal(t1[1], t2[1])
+        assert_array_equal(t2[1], t3[1])
+        assert_array_equal(t3[1], t4[1])
+    rw5 = cval.RollingWindow(5, train_size=2)
+    assert_equal(len(rw5), 3)
+    for t in rw5:
+        assert_equal(len(t[0]), 2)
+        assert_equal(len(t[1]), 1)
+    rw6 = cval.RollingWindow(10, step=0.2)
+    rw7 = cval.RollingWindow(10, step=2)
+    for t1, t6, t7 in zip(rw1, rw6, rw7):
+        assert_array_equal(t1[0], t6[0])
+        assert_array_equal(t1[0], t7[0])
+        assert_equal(t1[1][0], t6[1][0])
+        assert_equal(t1[1][0], t7[1][0])
+
+
 def test_cross_val_score():
     clf = MockClassifier()
     for a in range(-10, 10):
