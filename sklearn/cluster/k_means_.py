@@ -147,7 +147,7 @@ def _tolerance(X, tol):
     return np.mean(variances) * tol
 
 
-def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
+def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
             n_init=10, max_iter=300, verbose=False,
             tol=1e-4, random_state=None, copy_x=True, n_jobs=1,
             return_n_iter=False):
@@ -185,6 +185,17 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
 
         If a callable is passed, it should take arguments X, k and
         and a random state and return an initialization.
+
+    precompute_distances : {'auto', True, False}
+        Precompute distances (faster but takes more memory).
+
+        'auto' : do not precompute distances if n_samples * n_clusters > 12
+        million. This corresponds to about 100MB overhead per job using
+        double precision.
+
+        True : always precompute distances
+
+        False : never precompute distances
 
     tol : float, optional
         The relative increment in the results before declaring convergence.
@@ -239,6 +250,20 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
     best_inertia = np.infty
     X = as_float_array(X, copy=copy_x)
     tol = _tolerance(X, tol)
+
+    # If the distances are precomputed every job will create a matrix of shape
+    # (n_clusters, n_samples). To stop KMeans from eating up memory we only
+    # activate this if the created matrix is guaranteed to be under 100MB. 12
+    # million entries consume a little under 100MB if they are of type double.
+    if precompute_distances == 'auto':
+        n_samples = X.shape[0]
+        precompute_distances = (n_clusters * n_samples) < 12e6
+    elif isinstance(precompute_distances, bool):
+        pass
+    else:
+        raise ValueError("precompute_distances should be 'auto' or True/False"
+                         ", but a value of %r was passed" %
+                         precompute_distances)
 
     # subtract of mean of x for more accurate distance computations
     if not sp.issparse(X) or hasattr(init, '__array__'):
@@ -347,6 +372,9 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
 
     x_squared_norms: array
         Precomputed x_squared_norms.
+
+    precompute_distances : boolean, default: True
+        Precompute distances (faster but takes more memory).
 
     random_state: integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
@@ -624,8 +652,16 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
 
-    precompute_distances : boolean, default: True
+    precompute_distances : {'auto', True, False}
         Precompute distances (faster but takes more memory).
+
+        'auto' : do not precompute distances if n_samples * n_clusters > 12
+        million. This corresponds to about 100MB overhead per job using
+        double precision.
+
+        True : always precompute distances
+
+        False : never precompute distances
 
     tol : float, default: 1e-4
         Relative tolerance with regards to inertia to declare convergence
@@ -683,7 +719,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     """
 
     def __init__(self, n_clusters=8, init='k-means++', n_init=10, max_iter=300,
-                 tol=1e-4, precompute_distances=True,
+                 tol=1e-4, precompute_distances='auto',
                  verbose=0, random_state=None, copy_x=True, n_jobs=1):
 
         if hasattr(init, '__array__'):
@@ -717,7 +753,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
             raise ValueError("Incorrect number of features. "
                              "Got %d features, expected %d" % (
                                  n_features, expected_n_features))
-        if not X.dtype.kind is 'f':
+        if X.dtype.kind is not 'f':
             warnings.warn("Got data type %s, converted to float "
                           "to avoid overflows" % X.dtype,
                           RuntimeWarning, stacklevel=2)
@@ -910,7 +946,7 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
                                  random_state=random_state)
             if verbose:
                 print("[MiniBatchKMeans] Reassigning %i cluster centers."
-                        % n_reassigns)
+                      % n_reassigns)
 
             if sp.issparse(X) and not sp.issparse(centers):
                 assign_rows_csr(X,
