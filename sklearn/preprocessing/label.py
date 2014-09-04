@@ -187,10 +187,6 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
                 return ret
             elif self.new_labels is None:
                 raise ValueError("y contains new label(s): %s" % str(unseen))
-            else:
-                # Raise on invalid argument.
-                raise ValueError("Value of argument `new_labels`={0} is "
-                                 "unknown.".format(self.new_labels))
 
         return np.searchsorted(classes, y)
 
