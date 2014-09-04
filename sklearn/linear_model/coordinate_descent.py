@@ -30,7 +30,13 @@ from . import cd_fast
 
 ###############################################################################
 # Paths functions
-def compute_strong_active_set(X, y, current_alpha, prev_alpha, l1_ratio, coef):
+def compute_residual(X, y, w):
+    if y.ndim == 1:
+        return y - safe_sparse_dot(X, w)
+    return y - np.dot(X, w.T)
+
+def compute_strong_active_set(X, y, current_alpha, prev_alpha, l1_ratio, coef,
+                              residual):
     """
     Compute the features that are active along a regularization path.
 
@@ -78,7 +84,7 @@ def compute_strong_active_set(X, y, current_alpha, prev_alpha, l1_ratio, coef):
         # We need n_features * n_outputs.
         coef = coef.T
 
-    active_rule = safe_sparse_dot(X.T, y - safe_sparse_dot(X, coef))
+    active_rule = safe_sparse_dot(X.T, residual)
     active_rule = np.abs(active_rule, active_rule)
     if multi_output:
         active_rule = row_norms(active_rule)
@@ -89,7 +95,8 @@ def compute_strong_active_set(X, y, current_alpha, prev_alpha, l1_ratio, coef):
 
 
 def check_kkt_conditions(X, y, coef, strong_active_set, alpha, l1_ratio,
-                         active_set=None, return_active_set=True, rtol=1e-3):
+                         residual, active_set=None,
+                         return_active_set=True, rtol=1e-3):
     """
     Checks if the KKT conditions are satisfied for ElasticNet and Lasso.
 
@@ -150,7 +157,6 @@ def check_kkt_conditions(X, y, coef, strong_active_set, alpha, l1_ratio,
         coef = coef.T
 
     X_sparse = sparse.isspmatrix(X)
-    residual = y - safe_sparse_dot(X, coef)
     if X_sparse:
         X_indices = X.indices
         X_data = X.data
@@ -719,7 +725,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         else:
             strong_active_set = compute_strong_active_set(
                 X, y, n_samples*alpha, n_samples*alphas[i-1],
-                l1_ratio, coef_
+                l1_ratio, coef_, residual,
                 )
 
         l1_reg = alpha * l1_ratio * n_samples
@@ -728,7 +734,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             X, y, coef_, l1_reg, l2_reg, active_set, max_iter, tol,
             rng, random, positive, precompute, Xy, X_sparse_scaling
             )
-
+        residual = compute_residual(X, y, coef_)
         coef_, dual_gap_, eps_, n_iter_ = model
         dual_gaps[i] = dual_gap_
         n_iters.append(n_iter_)
@@ -749,14 +755,14 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         if np.any(not_in_active):
             active_set, kkt_violations = check_kkt_conditions(
                 X, y, coef_, not_in_active, n_samples*alpha, l1_ratio,
-                active_set, return_active_set=True)
+                residual, active_set, return_active_set=True)
 
         # If kkt conditions are not violated check active features.
         if not kkt_violations:
             in_active = strong_active_set[common_features]
             kkt_violations = check_kkt_conditions(
                 X, y, coef_, in_active, n_samples*alpha, l1_ratio,
-                active_set=None, return_active_set=False)
+                residual, active_set=None, return_active_set=False)
 
         if kkt_violations:
             # If kkt violations are violated compute coef_ again
@@ -764,6 +770,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 X, y, coef_, l1_reg, l2_reg, active_set, max_iter, tol,
                 rng, random, positive, precompute, Xy, X_sparse_scaling
                 )[0]
+            residual = compute_residual(X, y, coef_)
         else:
             active_set = np.where(coef_ != 0.0)[0]
 
@@ -777,12 +784,12 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         if np.any(non_active):
             active_set, kkt_violations = check_kkt_conditions(
                 X, y, coef_, non_active, n_samples*alpha, l1_ratio,
-                active_set, return_active_set=True)
+                residual, active_set, return_active_set=True)
 
         if not kkt_violations:
             kkt_violations = check_kkt_conditions(
                 X, y, coef_, active_set, n_samples*alpha, l1_ratio,
-                active_set=None, return_active_set=False)
+                residual, active_set=None, return_active_set=False)
 
         if kkt_violations:
             # If kkt violations are violated compute coef_ again
@@ -790,6 +797,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 X, y, coef_, l1_reg, l2_reg, active_set, max_iter, tol,
                 rng, random, positive, precompute, Xy, X_sparse_scaling
                 )[0]
+            residual = compute_residual(X, y, coef_)
         else:
             active_set = np.where(coef_ != 0.0)[0]
 
