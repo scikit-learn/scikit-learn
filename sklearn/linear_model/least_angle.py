@@ -1287,7 +1287,8 @@ class LassoLarsIC(LassoLars):
             df[k] = np.sum(mask)
 
         self.alphas_ = alphas_
-        self.criterion_ = n_samples * np.log(mean_squared_error) + K * df
+        with np.errstate(divide='ignore'):
+            self.criterion_ = n_samples * np.log(mean_squared_error) + K * df
         n_best = np.argmin(self.criterion_)
 
         self.alpha_ = alphas_[n_best]
