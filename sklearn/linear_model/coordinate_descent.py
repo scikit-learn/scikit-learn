@@ -88,6 +88,7 @@ def compute_strong_active_set(X, y, current_alpha, prev_alpha, l1_ratio, coef,
     active_rule = np.abs(active_rule, active_rule)
     if multi_output:
         active_rule = row_norms(active_rule)
+
     active_features = (active_rule >= 2*current_alpha - prev_alpha)
     active_features = np.nonzero(active_features)[0]
     del active_rule
@@ -161,8 +162,8 @@ def check_kkt_conditions(X, y, coef, strong_active_set, alpha, l1_ratio,
         X_indices = X.indices
         X_data = X.data
         X_indptr = X.indptr
-    for i in strong_active_set:
 
+    for i in strong_active_set:
         if X_sparse:
             startptr = X_indptr[i]
             endptr = X_indptr[i + 1]
@@ -170,8 +171,6 @@ def check_kkt_conditions(X, y, coef, strong_active_set, alpha, l1_ratio,
             residual_data = residual.take(X_indices[startptr: endptr],
                                           mode='clip')
             loss_derivative = np.dot(dot_data, residual_data)
-            #startptr = endptr
-
         else:
             feature = X[:, i]
             loss_derivative = np.dot(feature, residual)
@@ -181,19 +180,20 @@ def check_kkt_conditions(X, y, coef, strong_active_set, alpha, l1_ratio,
         if multi_output:
             loss_derivative = norm(loss_derivative)
             mean_coef = np.mean(active_coef)
-            l1_penalty = alpha * l1_ratio * mean_coef
+            l1_penalty = alpha * l1_ratio
             if mean_coef < 0:
                 l1_penalty = -l1_penalty
             active_coef = norm(active_coef)
             l2_penalty = alpha * (1 - l1_ratio) * active_coef
         else:
-            l1_penalty = alpha * l1_ratio * active_coef
+            l1_penalty = alpha * l1_ratio
             if active_coef < 0:
                 l1_penalty = -l1_penalty
             l2_penalty = alpha * (1 - l1_ratio) * active_coef
 
         penalty = l1_penalty + l2_penalty
         tol = 1e-3 + rtol * abs(penalty)
+
         if active_coef != 0 and (abs(loss_derivative - penalty) > tol):
             active_set.append(i)
             kkt_violations = True
@@ -293,7 +293,7 @@ def _cd_fast_path(X, y, coef_, l1_reg, l2_reg, active_set, max_iter, tol, rng,
     """
 
     multi_output = (y.ndim >= 2)
-    active_set = np.array(active_set, dtype=np.int32)
+    active_set = np.asarray(active_set, dtype=np.int32)
     if not multi_output and sparse.isspmatrix(X):
         model = cd_fast.sparse_enet_coordinate_descent(
             coef_, l1_reg, l2_reg, X.data, X.indices,
@@ -699,109 +699,87 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     else:
         coef_ = np.asfortranarray(coef_init)
 
-    # The strong rules algorithm is as follows.
-    # There are two sets of features, active and strong_active features.
-    # 1. Compute the set of features which satisfy the strong rules,
-    #    This is the strong active set, corresponding to the present alpha.
-    # 2. Compute coefficients using the active_set corresponding to the
-    #    previous alpha. If it is the first alpha, then the active set
-    #    is the set of n_features
-    # 3. Check if the KKT conditions are satisfied for the strong_active_set.
-    #    If they are violated, then add those features to the active_set,
-    #    if they are not already present.
-    # 4. If the KKT conditions are violated, then compute the coefficients
-    #    again. If they are not, then the non zero features become the active
-    #    features.
-    # 5. Check again for all n_features. If the KKT conditions are violated.
-    #    add those features to the active_set and compute the coefficients
-    #    again. If they are not, then the non zero features become the active
-    #    features.
-
+    # Compute the non zero coefficient for the first alpha, which we assume
+    # is the active set, that is checked on further across other alpha.
+    l1_reg = alphas[0] * l1_ratio * n_samples
+    l2_reg = alphas[0] * (1.0 - l1_ratio) * n_samples
     active_set = np.arange(n_features, dtype=np.int32)
-    for i, alpha in enumerate(alphas):
+    model = _cd_fast_path(
+        X, y, coef_, l1_reg, l2_reg, active_set, max_iter, tol,
+        rng, random, positive, precompute, Xy, X_sparse_scaling
+        )
+    coef_, dual_gap_, eps_, n_iter_ = model
+    n_iters.append(n_iter_)
+    dual_gaps[0] = dual_gap_
+    coefs[..., 0] = coef_
 
-        if i == 0:
-            strong_active_set = np.arange(n_features)
-        else:
-            strong_active_set = compute_strong_active_set(
-                X, y, n_samples*alpha, n_samples*alphas[i-1],
-                l1_ratio, coef_, residual,
-                )
+    if multi_output:
+        active_set = np.nonzero(np.abs(coef_.T) > 1e-12)[0]
+        active_set = np.nonzero(np.bincount(active_set) == n_outputs)[0]
+    else:
+        active_set = np.nonzero(np.abs(coef_) > 1e-12)[0]
 
+    for i, alpha in enumerate(alphas[1:]):
+
+        kkt_violations = True
+        residual = None
         l1_reg = alpha * l1_ratio * n_samples
         l2_reg = alpha * (1.0 - l1_ratio) * n_samples
-        model = _cd_fast_path(
-            X, y, coef_, l1_reg, l2_reg, active_set, max_iter, tol,
-            rng, random, positive, precompute, Xy, X_sparse_scaling
-            )
-        residual = compute_residual(X, y, coef_)
-        coef_, dual_gap_, eps_, n_iter_ = model
-        dual_gaps[i] = dual_gap_
-        n_iters.append(n_iter_)
+
+        while kkt_violations:
+            eligible_features = np.copy(active_set)
+            if residual is None:
+                residual = compute_residual(X, y, coef_)
+            strong_active_set = compute_strong_active_set(
+                X, y, n_samples*alpha, n_samples*alphas[i-1], l1_ratio,
+                coef_, residual,
+                )
+            while kkt_violations:
+                if isinstance(eligible_features, list):
+                    eligible_features = np.asarray(eligible_features,
+                                                   dtype=np.int32)
+                model = _cd_fast_path(
+                    X, y, coef_, l1_reg, l2_reg, eligible_features,
+                    max_iter, tol, rng, random, positive, precompute,
+                    Xy, X_sparse_scaling
+                    )
+                residual = compute_residual(X, y, coef_)
+                coef_, dual_gap_, eps_, n_iter_ = model
+
+                # Check KKT conditions for features present in strong_active_set.
+                # and not in eligible predictors. If KKT conditions are violated add them
+                # to the eligible features, and optimize again.
+                kkt_violations = False
+                common_features = np.in1d(strong_active_set, eligible_features,
+                                          assume_unique=True)
+                not_in_active = strong_active_set[~common_features]
+
+                if np.any(not_in_active):
+                    eligible_features, kkt_violations = check_kkt_conditions(
+                        X, y, coef_, not_in_active, n_samples*alpha, l1_ratio,
+                        residual, eligible_features, return_active_set=True)
+
+            # Check KKT conditions for all predictors. The strong and eligible
+            # predictors have been removed since they have already been optimized
+            # for in the above while loop.
+            kkt_violations = False
+            non_active = np.setdiff1d(feature_array, eligible_features,
+                                      assume_unique=True)
+            non_active = np.setdiff1d(non_active, strong_active_set,
+                                      assume_unique=True)
+            if np.any(non_active):
+                active_set, kkt_violations = check_kkt_conditions(
+                    X, y, coef_, non_active, n_samples*alpha, l1_ratio,
+                    residual, active_set, return_active_set=True)
+
         if dual_gap_ > eps_:
             warnings.warn('Objective did not converge.' +
                           ' You might want' +
                           ' to increase the number of iterations',
                           ConvergenceWarning)
-
-        # Check KKT conditions for features present in strong_active_set.
-        # and not in active set. If KKT conditions are violated add them
-        # to the active set.
-        kkt_violations = False
-        common_features = np.in1d(strong_active_set, active_set,
-                                  assume_unique=True)
-        not_in_active = strong_active_set[~common_features]
-
-        if np.any(not_in_active):
-            active_set, kkt_violations = check_kkt_conditions(
-                X, y, coef_, not_in_active, n_samples*alpha, l1_ratio,
-                residual, active_set, return_active_set=True)
-
-        # If kkt conditions are not violated check active features.
-        if not kkt_violations:
-            in_active = strong_active_set[common_features]
-            kkt_violations = check_kkt_conditions(
-                X, y, coef_, in_active, n_samples*alpha, l1_ratio,
-                residual, active_set=None, return_active_set=False)
-
-        if kkt_violations:
-            # If kkt violations are violated compute coef_ again
-            coef_ = _cd_fast_path(
-                X, y, coef_, l1_reg, l2_reg, active_set, max_iter, tol,
-                rng, random, positive, precompute, Xy, X_sparse_scaling
-                )[0]
-            residual = compute_residual(X, y, coef_)
-        else:
-            active_set = np.where(coef_ != 0.0)[0]
-
-        # Check KKT conditions for "non-active" features and if violated
-        # add them to active features.
-        kkt_violations = False
-        if not isinstance(active_set, list):
-            active_set = active_set.tolist()
-        non_active = np.setdiff1d(feature_array, active_set,
-                                  assume_unique=True)
-        if np.any(non_active):
-            active_set, kkt_violations = check_kkt_conditions(
-                X, y, coef_, non_active, n_samples*alpha, l1_ratio,
-                residual, active_set, return_active_set=True)
-
-        if not kkt_violations:
-            kkt_violations = check_kkt_conditions(
-                X, y, coef_, active_set, n_samples*alpha, l1_ratio,
-                residual, active_set=None, return_active_set=False)
-
-        if kkt_violations:
-            # If kkt violations are violated compute coef_ again
-            coef_ = _cd_fast_path(
-                X, y, coef_, l1_reg, l2_reg, active_set, max_iter, tol,
-                rng, random, positive, precompute, Xy, X_sparse_scaling
-                )[0]
-            residual = compute_residual(X, y, coef_)
-        else:
-            active_set = np.where(coef_ != 0.0)[0]
-
-        coefs[..., i] = coef_
+        coefs[..., i + 1] = coef_
+        dual_gaps[i + 1] = dual_gap_
+        n_iters.append(n_iter_)
         if return_models:
             if not multi_output:
                 model = ElasticNet(
@@ -812,9 +790,9 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             else:
                 model = MultiTaskElasticNet(
                     alpha=alpha, l1_ratio=l1_ratio, fit_intercept=False)
-            model.dual_gap_ = dual_gaps[i]
-            model.coef_ = coefs[..., i]
-            model.n_iter_ = n_iters[i]
+            model.dual_gap_ = dual_gaps[i + 1]
+            model.coef_ = coefs[..., i + 1]
+            model.n_iter_ = n_iters[i + 1]
             if (fit_intercept and not sparse.isspmatrix(X)) or multi_output:
                 model.fit_intercept = True
                 model._set_intercept(X_mean, y_mean, X_std)
