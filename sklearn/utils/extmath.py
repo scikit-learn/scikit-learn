@@ -511,11 +511,11 @@ def cartesian(arrays, out=None):
     shape = (len(x) for x in arrays)
     dtype = arrays[0].dtype
 
-    ix = np.indices(shape, dtype=dtype)
+    ix = np.indices(shape)
     ix = ix.reshape(len(arrays), -1).T
 
     if out is None:
-        out = ix
+        out = np.empty_like(ix, dtype=dtype)
 
     for n, arr in enumerate(arrays):
         out[:, n] = arrays[n][ix[:, n]]
