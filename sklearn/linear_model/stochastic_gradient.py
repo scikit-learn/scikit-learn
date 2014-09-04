@@ -443,6 +443,12 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         -------
         self : returns an instance of self.
         """
+        if self.class_weight == 'auto':
+            raise ValueError("class_weight 'auto' is not supported for "
+                             "partial_fit. In order to use 'auto' weights, "
+                             "use compute_class_weight('auto', classes, y) "
+                             "and pass the resulting weights as the "
+                             "class_weight parameter.")
         return self._partial_fit(X, y, alpha=self.alpha, C=1.0, loss=self.loss,
                                  learning_rate=self.learning_rate, n_iter=1,
                                  classes=classes, sample_weight=sample_weight,
