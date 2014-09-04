@@ -184,7 +184,7 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     return _weighted_sum(score, sample_weight, normalize)
 
 
-def multilabel_confusion_matrix(y_true, y_pred, labels=None):
+def binarized_multilabel_confusion_matrix(y_true, y_pred):
     """Compute True positive, False positive, True negative, False negative
     for a multilabel classification problem
 
@@ -221,40 +221,35 @@ def multilabel_confusion_matrix(y_true, y_pred, labels=None):
     Examples
     --------
     >>> from sklearn.metrics import confusion_matrix
-    >>> y_true = [2, 0, 2, 2, 0, 1]
-    >>> y_pred = [0, 0, 2, 2, 0, 2]
-    >>> multilabel_confusion_matrix(y_true, y_pred)
-    array([[2, 1, 0, 3],
-           [0, 0, 1, 5],
-           [2, 1, 1, 2]])
+    >>> y_true = np.array([[1, 0], [0, 1]])
+    >>> y_pred = np.array([[1, 1], [1, 0]])
+    >>> binarized_multilabel_confusion_matrix(y_true, y_pred)
+    array([[ 1.,  0.],
+           [ 1.,  1.],
+           [ 0.,  1.],
+           [ 0.,  0.]])
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-    if y_type not in ("binary", "multiclass"):
+    if not (y_type == 'multilabel-indicator'):
         raise ValueError("%s is not supported" % y_type)
 
-    if labels is None:
-        labels = unique_labels(y_true, y_pred)
-    else:
-        labels = np.asarray(labels)
-
-    n_labels = labels.size
-    labels_confusion_matrix = \
-        np.transpose(confusion_matrix(y_true, y_pred, labels))
-    # True positives are on the diagonal of the confusion matrix
-    t_pos = np.diagonal(labels_confusion_matrix)
-    # To get false negatives we count elements not on diagonal
-    row_sum = np.sum(labels_confusion_matrix, axis=0)
-    f_neg = np.subtract(row_sum, t_pos)
-    # To calculate false positive we sum each row and
-    # remove the diagonal from it
-    column_sum = np.sum(labels_confusion_matrix, axis=1)
-    f_pos = np.subtract(column_sum, t_pos)
-    t_neg = np.subtract(np.repeat(np.sum(labels_confusion_matrix), n_labels),
-                        np.subtract(np.add(column_sum, row_sum), t_pos))
-    all_vals = np.hstack([t_pos, f_pos, f_neg, t_neg])
-    rows = np.tile(range(0, n_labels), 4)
-    columns = np.repeat(np.array([0, 1, 2, 3]), n_labels)
-    mcm = coo_matrix((all_vals, (rows, columns)), shape=(n_labels, 4)).\
+    n_labels = y_true.get_shape()[1]
+    data = np.array([])
+    for label_idx in range(0, n_labels):
+        y_pred_col = y_pred.getcol(label_idx)
+        y_true_col = y_true.getcol(label_idx)
+        # tp can be get by dot product
+        t_pos = y_true_col.transpose().dot(y_pred_col).toarray()[0][0]
+        # fp are the ones in y_pred that
+        # match zeros in y_true
+        f_pos = y_pred_col.getnnz() - t_pos
+        f_neg = y_true_col.getnnz() - t_pos
+        zeros = y_true_col.get_shape()[0] - y_true_col.getnnz()
+        t_neg = zeros - f_pos
+        data = np.hstack([data, [t_pos, f_pos, f_neg, t_neg]])
+    rows = np.tile([0, 1, 2, 3], n_labels)
+    columns = np.repeat(range(0, n_labels), 4)
+    mcm = coo_matrix((data, (rows, columns)), shape=(4, n_labels)).\
         toarray()
     return mcm
 
