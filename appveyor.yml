@@ -57,7 +57,7 @@ test_script:
 
   # Skip joblib tests that require multiprocessing as they are prone to random
   # slow down
-  - "python -c \"import nose; nose.main()\" -s --with-noseexclude --exclude-test-file=%PROJECT_DIR%/continuous_integration/exclude_joblib_mp.txt sklearn"
+  - "python -c \"import nose; nose.main()\" -s --with-noseexclude --exclude-test-file=../continuous_integration/exclude_joblib_mp.txt sklearn"
 
   # Move back to the project folder
   - "cd .."
