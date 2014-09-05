@@ -119,14 +119,11 @@ def _breakdown_point(n_samples, n_subsamples):
                 n_subsamples - 1) / n_samples
 
 
-def _lstsq(weights, X, y, indices, start, intercept):
+def _lstsq(X, y, indices, intercept):
     """Least Squares Estimator for TheilSen class.
 
     Parameters
     ----------
-    weights : array, shape = [n_subpopulation, n_dim]
-        Weights array that holds the coefficients of i-th subpopulation.
-
     X : array, shape = [n_samples, n_features]
         Design matrix, where n_samples is the number of samples and
         n_features is the number of features.
@@ -138,24 +135,23 @@ def _lstsq(weights, X, y, indices, start, intercept):
         Indices of all subsamples with respect to the chosen subpopulation.
         n_ss is the number of subsamples used to calculate least squares.
 
-    start : int
-        Start index for storing results in weights array.
-
     intercept : bool
         Fit intercept or not.
     """
     fst = 1 if intercept else 0
-    n_dim = weights.shape[1]
+    n_dim = X.shape[1] + fst
     n_ss = indices.shape[1]
+    weights = np.empty((indices.shape[0], n_dim))
     X_sub = np.ones((n_ss, n_dim))
     # gelss need to pad y to be of the max dim of X
     this_y = np.zeros((max(n_ss, n_dim)))
     lstsq, = get_lapack_funcs(('gelss',), (X_sub, this_y))
-    for i, ix in enumerate(indices, start):
+    for i, ix in enumerate(indices):
         ix = list(ix)
         X_sub[:, fst:] = X[ix, :]
         this_y[:n_ss] = y[ix]
         weights[i, :] = lstsq(X_sub, this_y)[1][:n_dim]
+    return weights
 
 
 class TheilSen(LinearModel, RegressorMixin):
@@ -294,24 +290,21 @@ class TheilSen(LinearModel, RegressorMixin):
         self._print_verbose(n_samples, n_sp)
         indices = self._get_indices(n_samples, n_ss, n_sp)
         n_jobs = self._get_n_jobs()
-        idx_list, starts = self._split_indices(indices, n_jobs)
-
-        with tempfile.NamedTemporaryFile() as fh:
-            weights = np.memmap(fh.name, dtype=np.float, shape=(n_sp, n_dim),
-                                mode="w+")
-            Parallel(n_jobs=n_jobs,
-                     backend="multiprocessing",
-                     max_nbytes=10e6,
-                     verbose=self.verbose)(
-                delayed(_lstsq)(weights, X, y, idx_list[job], starts[job],
-                                self.fit_intercept) for job in xrange(n_jobs))
-            coefs = _spatial_median(weights, n_iter=self.n_iter, tol=self.tol)
+        idx_list, _ = self._split_indices(indices, n_jobs)
+        weights = Parallel(n_jobs=n_jobs,
+                           backend="multiprocessing",
+                           max_nbytes=10e6,
+                           verbose=self.verbose)(
+            delayed(_lstsq)(X, y, idx_list[job], self.fit_intercept)
+            for job in xrange(n_jobs))
+        weights = np.vstack(weights)
+        coefs = _spatial_median(weights, n_iter=self.n_iter, tol=self.tol)
 
         if self.fit_intercept:
             self.intercept_ = coefs[0]
-            self.coef_ = np.array(coefs[1:])  # memmap to array
+            self.coef_ = coefs[1:]
         else:
             self.intercept_ = 0.
-            self.coef_ = np.array(coefs)  # memmap to array
+            self.coef_ = coefs
 
         return self
