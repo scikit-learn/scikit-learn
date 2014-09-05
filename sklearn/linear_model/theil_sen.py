@@ -258,12 +258,6 @@ class TheilSen(LinearModel, RegressorMixin):
         for s in xrange(n_sp):
             yield self.random_state_.randint(0, n_samples, n_ss)
 
-    def _split_indices(self, indices, n):
-        idx_lst = np.array_split(np.array(list(indices)), n)
-        starts = [0] + [arr.shape[0] for arr in idx_lst[:-1]]
-        starts = np.cumsum(starts)
-        return idx_lst, starts
-
     def fit(self, X, y):
         self.random_state_ = check_random_state(self.random_state)
         X, y = check_arrays(X, y, sparse_format='dense', dtype=np.float)
@@ -282,7 +276,7 @@ class TheilSen(LinearModel, RegressorMixin):
         else:
             indices = self._subpop_iter(n_samples, n_ss, n_sp)
         n_jobs = self._get_n_jobs()
-        idx_list, _ = self._split_indices(indices, n_jobs)
+        idx_list = np.array_split(np.array(list(indices)), n_jobs)
         weights = Parallel(n_jobs=n_jobs,
                            backend="multiprocessing",
                            max_nbytes=10e6,

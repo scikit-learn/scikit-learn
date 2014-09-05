@@ -257,30 +257,6 @@ def test_get_n_jobs():
     assert n_jobs == cpu_count() - 1
 
 
-def test_split_indices():
-    random_state = np.random.RandomState(0)
-
-    def gen_indices(n):
-        for _ in xrange(n):
-            yield random_state.randint(n, size=10)
-
-    theil_sen = TheilSen()
-    indices, starts = theil_sen._split_indices(gen_indices(10), 3)
-    assert len(indices) == 3
-    assert indices[0].shape[0] == 4
-    assert indices[1].shape[0] == 3
-    assert indices[2].shape[0] == 3
-    assert_array_equal(starts, np.array([0, 4, 7]))
-
-    # Test if more splits than elements in indices
-    indices, starts = theil_sen._split_indices(gen_indices(2), 4)
-    assert indices[0].shape[0] == 1
-    assert indices[1].shape[0] == 1
-    assert indices[2].shape[0] == 0
-    assert indices[2].shape[0] == 0
-    assert_array_equal(starts, np.array([0, 1, 2, 2]))
-
-
 def test_less_samples_than_features():
     random_state = np.random.RandomState(0)
     n_samples, n_features = 10, 20
