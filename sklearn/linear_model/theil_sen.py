@@ -9,7 +9,6 @@ A Theil-Sen Estimator for Multiple Linear Regression Model
 from __future__ import division, print_function, absolute_import
 
 import logging
-import tempfile
 from itertools import combinations
 
 import numpy as np
@@ -229,14 +228,6 @@ class TheilSen(LinearModel, RegressorMixin):
         self.n_jobs = n_jobs
         self.verbose = verbose
 
-    def _print_verbose(self, n_samples, n_sp):
-        if self.verbose:
-            print("Breakdown point: {0}".format(self.breakdown_))
-            print("Number of samples: {0}".format(n_samples))
-            tol_outliers = int(self.breakdown_ * n_samples)
-            print("Tolerable outliers: {0}".format(tol_outliers))
-            print("Number of subpopulations: {0}".format(n_sp))
-
     def _check_subparams(self, n_samples, n_features):
         if self.fit_intercept:
             n_dim = n_features + 1
@@ -269,12 +260,6 @@ class TheilSen(LinearModel, RegressorMixin):
         for s in xrange(n_sp):
             yield self.random_state_.randint(0, n_samples, n_ss)
 
-    def _get_indices(self, n_samples, n_ss, n_sp):
-        if np.rint(binom(n_samples, n_ss)) <= self.max_subpopulation:
-            return combinations(xrange(n_samples), n_ss)
-        else:
-            return self._subpop_iter(n_samples, n_ss, n_sp)
-
     def _split_indices(self, indices, n):
         idx_lst = np.array_split(np.array(list(indices)), n)
         starts = [0] + [arr.shape[0] for arr in idx_lst[:-1]]
@@ -287,8 +272,17 @@ class TheilSen(LinearModel, RegressorMixin):
         n_samples, n_features = X.shape
         n_dim, n_ss, n_sp = self._check_subparams(n_samples, n_features)
         self.breakdown_ = _breakdown_point(n_samples, n_ss)
-        self._print_verbose(n_samples, n_sp)
-        indices = self._get_indices(n_samples, n_ss, n_sp)
+        if self.verbose:
+            print("Breakdown point: {0}".format(self.breakdown_))
+            print("Number of samples: {0}".format(n_samples))
+            tol_outliers = int(self.breakdown_ * n_samples)
+            print("Tolerable outliers: {0}".format(tol_outliers))
+            print("Number of subpopulations: {0}".format(n_sp))
+        # Determine indices of subpopulation
+        if np.rint(binom(n_samples, n_ss)) <= self.max_subpopulation:
+            indices = combinations(xrange(n_samples), n_ss)
+        else:
+            indices = self._subpop_iter(n_samples, n_ss, n_sp)
         n_jobs = self._get_n_jobs()
         idx_list, _ = self._split_indices(indices, n_jobs)
         weights = Parallel(n_jobs=n_jobs,
