@@ -8,7 +8,7 @@ A Theil-Sen Estimator for Multiple Linear Regression Model
 
 from __future__ import division, print_function, absolute_import
 
-import logging
+import warnings
 from itertools import combinations
 
 import numpy as np
@@ -18,11 +18,9 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import check_arrays, check_random_state
+from ..utils import check_arrays, check_random_state, ConvergenceWarning
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals.six.moves import xrange
-
-_logger = logging.getLogger(__name__)
 
 
 def _modweiszfeld_step(X, y):
@@ -94,7 +92,7 @@ def _spatial_median(X, n_iter=300, tol=1.e-3):
             return spmed
         else:
             spmed_old = spmed
-    _logger.warn("Maximum number of iterations reached.")
+    warnings.warn("Maximum number of iterations reached.", ConvergenceWarning)
     return spmed
 
 

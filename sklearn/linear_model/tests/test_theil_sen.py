@@ -12,10 +12,11 @@ from os import devnull
 
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_less, \
-    assert_array_almost_equal
+    assert_array_almost_equal, assert_warns
 from scipy.linalg import norm
 from scipy.optimize import fmin_bfgs
 from nose.tools import raises
+from sklearn.utils import ConvergenceWarning
 from sklearn.externals.joblib import cpu_count
 from sklearn.externals.six.moves import xrange
 from sklearn.linear_model import LinearRegression, TheilSen
@@ -127,10 +128,8 @@ def test_spatial_median_1d():
     true_median = 2.
     median = _spatial_median(X)
     assert_array_almost_equal(median, true_median)
-    # Check when maximum iteration is exceeded
-    logging.basicConfig(filename=devnull)
-    median = _spatial_median(X, n_iter=30, tol=0.)
-    assert_array_almost_equal(median, true_median)
+    # Check when maximum iteration is exceeded a warning is emitted
+    assert_warns(ConvergenceWarning, _spatial_median, X, n_iter=30, tol=0.)
 
 
 def test_spatial_median_2d():
