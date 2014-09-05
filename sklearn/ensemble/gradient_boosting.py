@@ -389,7 +389,7 @@ class BinomialDeviance(LossFunction):
         y = y.take(terminal_region, axis=0)
 
         numerator = residual.sum()
-        denominator = np.sum((y - residual) * (1 - y + residual))
+        denominator = np.dot(y - residual, 1 - y + residual)
 
         if denominator == 0.0:
             tree.value[leaf, 0, 0] = 0.0
