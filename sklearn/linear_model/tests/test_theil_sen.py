@@ -19,90 +19,85 @@ from nose.tools import raises
 from sklearn.externals.joblib import cpu_count
 from sklearn.externals.six.moves import xrange
 from sklearn.linear_model import LinearRegression, TheilSen
-from sklearn.linear_model.theil_sen import _spatial_median, _modweiszfeld_step,\
-    _breakdown_point
+from sklearn.linear_model.theil_sen import _spatial_median, _breakdown_point, \
+    _modweiszfeld_step
 
 
-def gen_toy_problem_1d():
-    np.random.seed(0)
-    n_samples = 50
+def gen_toy_problem_1d(intercept=True):
+    random_state = np.random.RandomState(0)
+    if intercept:
+        n_samples = 50
+    else:
+        n_samples = 100
     # Linear model y = 3*x + N(2, 0.1**2)
-    x = np.random.randn(n_samples)
-    w = np.array([3.])
-    c = np.array([2.])
-    noise = 0.1 * np.random.randn(n_samples)
+    x = random_state.normal(size=n_samples)
+    w = 3.
+    if intercept:
+        c = 2.
+    else:
+        c = 0.1
+    noise = 0.1 * random_state.normal(size=n_samples)
     y = w * x + c + noise
     # Add some outliers
-    x[42], y[42] = (-2, 4)
-    x[43], y[43] = (-2.5, 8)
-    x[33], y[33] = (2.5, 1)
-    x[49], y[49] = (2.1, 2)
-    return x[:, np.newaxis], y, w, c
-
-
-def gen_toy_problem_1d_no_intercept():
-    np.random.seed(0)
-    n_samples = 100
-    # Linear model y = 3*x + N(2, 0.1**2)
-    x = np.abs(np.random.randn(n_samples))
-    w = np.array([3.])
-    c = np.array([0.1])
-    noise = 0.1 * np.random.randn(n_samples)
-    y = w * x + c + noise
-    # Add some outliers
-    x[42], y[42] = (-2, 4)
-    x[43], y[43] = (-2.5, 8)
-    x[53], y[53] = (2.5, 1)
-    x[60], y[60] = (2.1, 2)
-    x[72], y[72] = (1.8, -7)
+    if intercept:
+        x[42], y[42] = (-2, 4)
+        x[43], y[43] = (-2.5, 8)
+        x[33], y[33] = (2.5, 1)
+        x[49], y[49] = (2.1, 2)
+    else:
+        x[42], y[42] = (-2, 4)
+        x[43], y[43] = (-2.5, 8)
+        x[53], y[53] = (2.5, 1)
+        x[60], y[60] = (2.1, 2)
+        x[72], y[72] = (1.8, -7)
     return x[:, np.newaxis], y, w, c
 
 
 def gen_toy_problem_2d():
-    np.random.seed(0)
+    random_state = np.random.RandomState(0)
     n_samples = 100
     # Linear model y = 5*x_1 + 10*x_2 + N(1, 0.1**2)
-    X = np.random.randn(2*n_samples).reshape(n_samples, 2)
+    X = random_state.normal(size=(n_samples, 2))
     w = np.array([5., 10.])
-    c = np.array([1.])
-    noise = 0.1*np.random.randn(n_samples)
+    c = 1.
+    noise = 0.1*random_state.normal(size=n_samples)
     y = np.dot(X, w) + c + noise
     # Add some outliers
     n_outliers = n_samples // 10
-    ix = np.random.randint(0, n_samples, n_outliers)
-    y[ix] = 50*np.random.randn(n_outliers)
+    ix = random_state.randint(0, n_samples, size=n_outliers)
+    y[ix] = 50*random_state.normal(size=n_outliers)
     return X, y, w, c
 
 
 def gen_toy_problem_4d():
-    np.random.seed(0)
+    random_state = np.random.RandomState(0)
     n_samples = 10000
     # Linear model y = 5*x_1 + 10*x_2  + 42*x_3 + 7*x_4 + N(1, 0.1**2)
-    X = np.random.randn(4*n_samples).reshape(n_samples, 4)
+    X = random_state.normal(size=(n_samples, 4))
     w = np.array([5., 10., 42., 7.])
-    c = np.array([1.])
-    noise = 0.1*np.random.randn(n_samples)
+    c = 1.
+    noise = 0.1*random_state.normal(size=n_samples)
     y = np.dot(X, w) + c + noise
     # Add some outliers
     n_outliers = n_samples // 10
-    ix = np.random.randint(0, n_samples, n_outliers)
-    y[ix] = 50*np.random.randn(n_outliers)
+    ix = random_state.randint(0, n_samples, size=n_outliers)
+    y[ix] = 50*random_state.normal(size=n_outliers)
     return X, y, w, c
 
 
 def test_modweiszfeld_step_1d():
     X = np.array([1., 2., 3.]).reshape(3, 1)
     # Check startvalue is element of X and solution
-    median = np.array([2.])
+    median = 2.
     new_y = _modweiszfeld_step(X, median)
     assert_array_almost_equal(new_y, median)
     # Check startvalue is not the solution
-    y = np.array([2.5])
+    y = 2.5
     new_y = _modweiszfeld_step(X, y)
     assert_array_less(median, new_y)
     assert_array_less(new_y, y)
     # Check startvalue is not the solution but element of X
-    y = np.array([3.])
+    y = 3.
     new_y = _modweiszfeld_step(X, y)
     assert_array_less(median, new_y)
     assert_array_less(new_y, y)
@@ -129,7 +124,7 @@ def test_modweiszfeld_step_2d():
 
 def test_spatial_median_1d():
     X = np.array([1., 2., 3.]).reshape(3, 1)
-    true_median = np.array([2.])
+    true_median = 2.
     median = _spatial_median(X)
     assert_array_almost_equal(median, true_median)
     # Check when maximum iteration is exceeded
@@ -159,11 +154,11 @@ def test_theil_sen_1d():
     # Check that Theil-Sen works
     theil_sen = TheilSen().fit(X, y)
     assert_array_almost_equal(theil_sen.coef_, w, 1)
-    assert_array_almost_equal(theil_sen.intercept_, c, 2)
+    assert_array_almost_equal(theil_sen.intercept_, c, 1)
 
 
 def test_theil_sen_1d_no_intercept():
-    X, y, w, c = gen_toy_problem_1d_no_intercept()
+    X, y, w, c = gen_toy_problem_1d(intercept=False)
     # Check that Least Squares fails
     lstq = LinearRegression(fit_intercept=False).fit(X, y)
     assert np.abs(lstq.coef_ - w - c) > 0.5
@@ -209,10 +204,10 @@ def test_checksubparams_too_many_subsamples():
 
 @raises(AssertionError)
 def test_checksubparams_n_subsamples_if_less_samples_than_features():
-    np.random.seed(0)
+    random_state = np.random.RandomState(0)
     n_samples, n_features = 10, 20
-    X = np.random.randn(n_samples*n_features).reshape(n_samples, n_features)
-    y = np.random.randn(n_samples)
+    X = random_state.normal(size=(n_samples, n_features))
+    y = random_state.normal(size=n_samples)
     TheilSen(n_subsamples=9).fit(X, y)
 
 
@@ -245,8 +240,8 @@ def test_theil_sen_parallel():
     assert norm(lstq.coef_ - w) > 1.0
     # Check that Theil-Sen works
     theil_sen = TheilSen(n_jobs=-1,
-                        random_state=0,
-                        max_subpopulation=2e3).fit(X, y)
+                         random_state=0,
+                         max_subpopulation=2e3).fit(X, y)
     assert_array_almost_equal(theil_sen.coef_, w, 1)
     assert_array_almost_equal(theil_sen.intercept_, c, 1)
 
@@ -264,11 +259,11 @@ def test_get_n_jobs():
 
 
 def test_split_indices():
-    np.random.seed(0)
+    random_state = np.random.RandomState(0)
 
     def gen_indices(n):
         for _ in xrange(n):
-            yield np.random.randint(n, size=10)
+            yield random_state.randint(n, size=10)
 
     theil_sen = TheilSen()
     indices, starts = theil_sen._split_indices(gen_indices(10), 3)
@@ -288,10 +283,10 @@ def test_split_indices():
 
 
 def test_less_samples_than_features():
-    np.random.seed(0)
+    random_state = np.random.RandomState(0)
     n_samples, n_features = 10, 20
-    X = np.random.randn(n_samples*n_features).reshape(n_samples, n_features)
-    y = np.random.randn(n_samples)
+    X = random_state.normal(size=(n_samples, n_features))
+    y = random_state.normal(size=n_samples)
     # Check that Theil-Sen falls back to Least Squares if fit_intercept=False
     theil_sen = TheilSen(fit_intercept=False).fit(X, y)
     lstq = LinearRegression(fit_intercept=False).fit(X, y)
