@@ -119,7 +119,7 @@ def _breakdown_point(n_samples, n_subsamples):
                 n_subsamples - 1) / n_samples
 
 
-def _lse(weights, X, y, indices, start, intercept):
+def _lstsq(weights, X, y, indices, start, intercept):
     """Least Squares Estimator for TheilSen class.
 
     Parameters
@@ -303,8 +303,8 @@ class TheilSen(LinearModel, RegressorMixin):
                      backend="multiprocessing",
                      max_nbytes=10e6,
                      verbose=self.verbose)(
-                delayed(_lse)(weights, X, y, idx_list[job], starts[job],
-                              self.fit_intercept) for job in xrange(n_jobs))
+                delayed(_lstsq)(weights, X, y, idx_list[job], starts[job],
+                                self.fit_intercept) for job in xrange(n_jobs))
             coefs = _spatial_median(weights, n_iter=self.n_iter, tol=self.tol)
 
         if self.fit_intercept:
