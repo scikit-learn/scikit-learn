@@ -23,6 +23,33 @@ from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals.six.moves import xrange
 
 
+def _get_n_jobs(n_jobs):
+    """Get number of jobs
+
+    This function reimplements the logic of joblib to determine the actual
+    number of jobs depending on the cpu count. If -1 all CPUs are used.
+    If 1 is given, no parallel computing code is used at all, which is useful
+    for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are used.
+    Thus for n_jobs = -2, all CPUs but one are used.
+
+    Parameters
+    ----------
+    n_jobs : int
+        Number of jobs stated in joblib convention.
+
+    Returns
+    -------
+    n_jobs: int
+        The actual number of jobs as a positive integer.
+    """
+    if n_jobs < 0:
+        return max(cpu_count() + 1 + n_jobs, 1)
+    elif n_jobs == 0:
+        raise ValueError('Parameter n_jobs == 0 has no meaning.')
+    else:
+        return n_jobs
+
+
 def _modweiszfeld_step(X, y):
     """Modified Weiszfeld step.
 
@@ -246,14 +273,6 @@ class TheilSen(LinearModel, RegressorMixin):
         n_sp = int(min(self.max_subpopulation, n_all))
         return n_dim, n_subsamples, n_sp
 
-    def _get_n_jobs(self):
-        if self.n_jobs < 0:
-            return max(cpu_count() + 1 + self.n_jobs, 1)
-        elif self.n_jobs == 0:
-            raise ValueError('Parameter n_jobs == 0 has no meaning.')
-        else:
-            return self.n_jobs
-
     def _subpop_iter(self, n_samples, n_ss, n_sp):
         for s in xrange(n_sp):
             yield self.random_state_.randint(0, n_samples, n_ss)
@@ -275,7 +294,7 @@ class TheilSen(LinearModel, RegressorMixin):
             indices = combinations(xrange(n_samples), n_ss)
         else:
             indices = self._subpop_iter(n_samples, n_ss, n_sp)
-        n_jobs = self._get_n_jobs()
+        n_jobs = _get_n_jobs(self.n_jobs)
         idx_list = np.array_split(np.array(list(indices)), n_jobs)
         weights = Parallel(n_jobs=n_jobs,
                            backend="multiprocessing",

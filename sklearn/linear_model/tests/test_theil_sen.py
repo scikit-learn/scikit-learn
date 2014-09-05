@@ -7,9 +7,6 @@ Testing for Theil-Sen module (sklearn.linear_model.theil_sen)
 
 from __future__ import division, print_function, absolute_import
 
-import logging
-from os import devnull
-
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_less, \
     assert_array_almost_equal, assert_warns
@@ -18,10 +15,9 @@ from scipy.optimize import fmin_bfgs
 from nose.tools import raises
 from sklearn.utils import ConvergenceWarning
 from sklearn.externals.joblib import cpu_count
-from sklearn.externals.six.moves import xrange
 from sklearn.linear_model import LinearRegression, TheilSen
 from sklearn.linear_model.theil_sen import _spatial_median, _breakdown_point, \
-    _modweiszfeld_step
+    _modweiszfeld_step, _get_n_jobs
 
 
 def gen_toy_problem_1d(intercept=True):
@@ -247,13 +243,13 @@ def test_theil_sen_parallel():
 
 @raises(ValueError)
 def test_get_n_jobs_with_0_CPUs():
-    TheilSen(n_jobs=0)._get_n_jobs()
+    _get_n_jobs(n_jobs=0)
 
 
 def test_get_n_jobs():
-    n_jobs = TheilSen(n_jobs=2)._get_n_jobs()
+    n_jobs = _get_n_jobs(n_jobs=2)
     assert n_jobs == 2
-    n_jobs = TheilSen(n_jobs=-2)._get_n_jobs()
+    n_jobs = _get_n_jobs(n_jobs=-2)
     assert n_jobs == cpu_count() - 1
 
 
