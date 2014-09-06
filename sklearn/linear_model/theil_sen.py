@@ -246,10 +246,6 @@ class TheilSen(LinearModel, RegressorMixin):
         n_subpop = int(min(self.max_subpopulation, n_all))
         return n_dim, n_subsamples, n_subpop
 
-    def _subpop_iter(self, n_samples, n_subsamples, n_subpop):
-        for s in xrange(n_subpop):
-            yield self.random_state_.randint(0, n_samples, n_subsamples)
-
     def fit(self, X, y):
         self.random_state_ = check_random_state(self.random_state)
         X = check_array(X)
@@ -267,11 +263,12 @@ class TheilSen(LinearModel, RegressorMixin):
             print("Number of subpopulations: {0}".format(n_subpop))
         # Determine indices of subpopulation
         if np.rint(binom(n_samples, n_subsample)) <= self.max_subpopulation:
-            indices = combinations(xrange(n_samples), n_subsample)
+            indices = list(combinations(xrange(n_samples), n_subsample))
         else:
-            indices = self._subpop_iter(n_samples, n_subsample, n_subpop)
+            indices = [self.random_state_.randint(0, n_samples, n_subsample)
+                       for _ in xrange(n_subpop)]
         n_jobs = get_n_jobs(self.n_jobs)
-        idx_list = np.array_split(list(indices), n_jobs)
+        idx_list = np.array_split(indices, n_jobs)
         weights = Parallel(n_jobs=n_jobs,
                            backend="multiprocessing",
                            max_nbytes=10e6,
