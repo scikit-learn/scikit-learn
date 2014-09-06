@@ -18,7 +18,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import check_arrays, check_random_state, ConvergenceWarning
+from ..utils import check_array, check_random_state, ConvergenceWarning
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals.six.moves import xrange
 
@@ -278,7 +278,8 @@ class TheilSen(LinearModel, RegressorMixin):
 
     def fit(self, X, y):
         self.random_state_ = check_random_state(self.random_state)
-        X, y = check_arrays(X, y, sparse_format='dense', dtype=np.float)
+        X = check_array(X)
+        y = check_array(y, ensure_2d=False)
         n_samples, n_features = X.shape
         n_dim, n_subsample, n_subpop = self._check_subparams(n_samples,
                                                              n_features)
