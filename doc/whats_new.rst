@@ -76,9 +76,6 @@ Bug fixes
     - Various fixes to the Gaussian processes subpackage by Vincent Dubourg
       and Jan Hendrik Metzen.
 
-    - The ``transform`` of :class:`lda.LDA` now projects the input on the most
-      discriminant directions. By Martin Billinger.
-
 
 API changes summary
 -------------------
@@ -98,6 +95,48 @@ API changes summary
       and pass these to their distance metric. This will no longer be supported
       in scikit-learn 0.18; use the ``metric_params`` argument instead.
 
+
+.. _changes_0_15_2:
+
+0.15.2
+======
+
+Bug fixes
+---------
+
+  - Fixed handling of the ``p`` parameter of the Minkowski distance that was
+    previously ignored in nearest neighbors models. By `Nikolay Mayorov`_.
+
+  - Fixed duplicated alphas in :class:`linear_model.LassoLars` with early
+    stopping on 32 bit Python. By `Olivier Grisel`_ and `Fabian Pedregosa`_.
+
+  - Fixed the build under Windows when scikit-learn is built with MSVC while
+    NumPy is built with MinGW. By `Olivier Grisel`_ and Federico Vaggi.
+
+  - Fixed an array index overflow bug in the coordinate descent solver. By
+    `Gael Varoquaux`_.
+
+  - Better handling of numpy 1.9 deprecation warnings. By `Gael Varoquaux`_.
+
+  - Removed unnecessary data copy in :class:`cluster.KMeans`.
+    By `Gael Varoquaux`_.
+
+  - Explicitly close open files to avoid ``ResourceWarnings`` under Python 3.
+    By Calvin Giles.
+
+  - The ``transform`` of :class:`lda.LDA` now projects the input on the most
+    discriminant directions. By Martin Billinger.
+
+  - Fixed potential overflow in ``_tree.safe_realloc`` by `Lars Buitinck`_.
+
+  - Performance optimization in :class:`istonic.IsotonicRegression`.
+    By Robert Bradshaw.
+
+  - ``nose`` is non-longer a runtime dependency to import ``sklearn``, only for
+    running the tests. By `Joel Nothman`_.
+
+  - Many documentation and website fixes by `Joel Nothman`_, `Lars Buitinck`_
+    and others.
 
 .. _changes_0_15_1:
 

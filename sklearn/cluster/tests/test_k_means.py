@@ -211,6 +211,13 @@ def test_k_means_plus_plus_init_2_jobs():
     _check_fitted_model(km)
 
 
+def test_k_means_precompute_distances_flag():
+    # check that a warning is raised if the precompute_distances flag is not
+    # supported
+    km = KMeans(precompute_distances="wrong")
+    assert_raises(ValueError, km.fit, X)
+
+
 def test_k_means_plus_plus_init_sparse():
     km = KMeans(init="k-means++", n_clusters=n_clusters, random_state=42)
     km.fit(X_csr)

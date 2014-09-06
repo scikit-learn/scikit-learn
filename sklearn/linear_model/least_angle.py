@@ -202,7 +202,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
         alpha[0] = C / n_samples
         if alpha[0] <= alpha_min:  # early stopping
-            if not (abs(alpha[0] - alpha_min) < tiny):
+            if not (abs(alpha[0] - alpha_min) < 10 * np.finfo(np.float32).eps):
                 # interpolation factor 0 <= ss < 1
                 if n_iter > 0:
                     # In the first iteration, all alphas are zero, the formula
@@ -1287,7 +1287,8 @@ class LassoLarsIC(LassoLars):
             df[k] = np.sum(mask)
 
         self.alphas_ = alphas_
-        self.criterion_ = n_samples * np.log(mean_squared_error) + K * df
+        with np.errstate(divide='ignore'):
+            self.criterion_ = n_samples * np.log(mean_squared_error) + K * df
         n_best = np.argmin(self.criterion_)
 
         self.alpha_ = alphas_[n_best]

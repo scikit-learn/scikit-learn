@@ -17,7 +17,9 @@ from sklearn.externals.six.moves import zip
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import ignore_warnings
 
 import sklearn
 from sklearn.base import (ClassifierMixin, RegressorMixin,
@@ -286,12 +288,14 @@ def test_estimators_overwrite_params():
                 yield check_estimators_overwrite_params, name, Estimator
 
 
+@ignore_warnings
 def test_import_all_consistency():
     # Smoke test to check that any name in a __all__ list is actually defined
     # in the namespace of the module or package.
     pkgs = pkgutil.walk_packages(path=sklearn.__path__, prefix='sklearn.',
                                  onerror=lambda _: None)
-    for importer, modname, ispkg in pkgs:
+    submods = [modname for _, modname, _ in pkgs]
+    for modname in submods + ['sklearn']:
         if ".tests." in modname:
             continue
         package = __import__(modname, fromlist="dummy")
@@ -300,6 +304,15 @@ def test_import_all_consistency():
                 raise AttributeError(
                     "Module '{0}' has no attribute '{1}'".format(
                         modname, name))
+
+
+def test_root_import_all_completeness():
+    EXCEPTIONS = ('utils', 'tests', 'base', 'setup')
+    for _, modname, _ in pkgutil.walk_packages(path=sklearn.__path__,
+                                               onerror=lambda _: None):
+        if '.' in modname or modname.startswith('_') or modname in EXCEPTIONS:
+            continue
+        assert_in(modname, sklearn.__all__)
 
 
 def test_sparsify_estimators():

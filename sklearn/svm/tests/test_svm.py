@@ -16,7 +16,7 @@ from sklearn.metrics import f1_score
 from sklearn.utils import check_random_state
 from sklearn.utils import ConvergenceWarning
 from sklearn.utils.testing import assert_greater, assert_in, assert_less
-from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_raises_regexp, assert_warns
 
 
 # toy sample
@@ -662,6 +662,18 @@ def test_timeout():
     a = svm.SVC(kernel=lambda x, y: np.dot(x, y.T), probability=True,
                 random_state=0, max_iter=1)
     assert_warns(ConvergenceWarning, a.fit, X, Y)
+
+
+def test_unfitted():
+    X = "foo!"      # input validation not required when SVM not fitted
+
+    clf = svm.SVC()
+    assert_raises_regexp(Exception, r".*\bSVC\b.*\bnot\b.*\bfitted\b",
+                         clf.predict, X)
+
+    clf = svm.NuSVR()
+    assert_raises_regexp(Exception, r".*\bNuSVR\b.*\bnot\b.*\bfitted\b",
+                         clf.predict, X)
 
 
 def test_consistent_proba():

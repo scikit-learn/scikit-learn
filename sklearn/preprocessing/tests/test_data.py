@@ -14,7 +14,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns
 
-from sklearn.utils.sparsefuncs import mean_variance_axis0
+from sklearn.utils.sparsefuncs import mean_variance_axis
 from sklearn.preprocessing.data import _transform_selected
 from sklearn.preprocessing.data import Binarizer
 from sklearn.preprocessing.data import KernelCenterer
@@ -283,7 +283,7 @@ def test_scaler_without_centering():
         X_scaled.mean(axis=0), [0., -0.01, 2.24, -0.35, -0.78], 2)
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
 
-    X_csr_scaled_mean, X_csr_scaled_std = mean_variance_axis0(X_csr_scaled)
+    X_csr_scaled_mean, X_csr_scaled_std = mean_variance_axis(X_csr_scaled, 0)
     assert_array_almost_equal(X_csr_scaled_mean, X_scaled.mean(axis=0))
     assert_array_almost_equal(X_csr_scaled_std, X_scaled.std(axis=0))
 
@@ -349,8 +349,8 @@ def test_scaler_int():
         [0., 1.109, 1.856, 21., 1.559], 2)
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
 
-    X_csr_scaled_mean, X_csr_scaled_std = mean_variance_axis0(
-        X_csr_scaled.astype(np.float))
+    X_csr_scaled_mean, X_csr_scaled_std = mean_variance_axis(
+        X_csr_scaled.astype(np.float), 0)
     assert_array_almost_equal(X_csr_scaled_mean, X_scaled.mean(axis=0))
     assert_array_almost_equal(X_csr_scaled_std, X_scaled.std(axis=0))
 
@@ -432,7 +432,7 @@ def test_scale_function_without_centering():
     # Check that X has not been copied
     assert_true(X_scaled is not X)
 
-    X_csr_scaled_mean, X_csr_scaled_std = mean_variance_axis0(X_csr_scaled)
+    X_csr_scaled_mean, X_csr_scaled_std = mean_variance_axis(X_csr_scaled, 0)
     assert_array_almost_equal(X_csr_scaled_mean, X_scaled.mean(axis=0))
     assert_array_almost_equal(X_csr_scaled_std, X_scaled.std(axis=0))
 
