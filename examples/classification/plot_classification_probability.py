@@ -4,8 +4,9 @@ Plot classification probability
 ===============================
 
 Plot the classification probability for different classifiers. We use a 3
-class dataset, and we classify it with a Support Vector classifier, as
-well as L1 and L2 penalized logistic regression.
+class dataset, and we classify it with a Support Vector classifier, L1
+and L2 penalized logistic regression with either a One-Vs-Rest or multinomial
+setting.
 
 The logistic regression is not a multiclass classifier out of the box. As
 a result it can identify only the first class.
@@ -33,14 +34,22 @@ C = 1.0
 # Create different classifiers. The logistic regression cannot do
 # multiclass out of the box.
 classifiers = {'L1 logistic': LogisticRegression(C=C, penalty='l1'),
-               'L2 logistic': LogisticRegression(C=C, penalty='l2'),
+               'L2 logistic (OvR)': LogisticRegression(C=C, penalty='l2'),
                'Linear SVC': SVC(kernel='linear', C=C, probability=True,
-                                 random_state=0)}
+                                 random_state=0),
+               'L2 logistic (Multinomial)': LogisticRegression(
+                C=C, solver='lbfgs', multi_class='multinomial'
+                )}
 
 n_classifiers = len(classifiers)
 
 plt.figure(figsize=(3 * 2, n_classifiers * 2))
 plt.subplots_adjust(bottom=.2, top=.95)
+
+xx = np.linspace(3, 9, 100)
+yy = np.linspace(1, 5, 100).T
+xx, yy = np.meshgrid(xx, yy)
+Xfull = np.c_[xx.ravel(), yy.ravel()]
 
 for index, (name, classifier) in enumerate(classifiers.items()):
     classifier.fit(X, y)
@@ -50,10 +59,6 @@ for index, (name, classifier) in enumerate(classifiers.items()):
     print("classif_rate for %s : %f " % (name, classif_rate))
 
     # View probabilities=
-    xx = np.linspace(3, 9, 100)
-    yy = np.linspace(1, 5, 100).T
-    xx, yy = np.meshgrid(xx, yy)
-    Xfull = np.c_[xx.ravel(), yy.ravel()]
     probas = classifier.predict_proba(Xfull)
     n_classes = np.unique(y_pred).size
     for k in range(n_classes):

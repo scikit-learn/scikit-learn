@@ -13,7 +13,7 @@ from scipy import linalg
 from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
 from ..base import BaseEstimator
-from ..utils import check_arrays
+from ..utils import check_array
 from ..utils import check_random_state
 from ..utils.extmath import _ravel
 from ..decomposition import RandomizedPCA
@@ -359,10 +359,10 @@ class TSNE(BaseEstimator):
 
     Attributes
     ----------
-    `embedding_` : array-like, shape (n_samples, n_components)
+    embedding_ : array-like, shape (n_samples, n_components)
         Stores the embedding vectors.
 
-    `training_data_` : array-like, shape (n_samples, n_features)
+    training_data_ : array-like, shape (n_samples, n_features)
         Stores the training data.
 
     Examples
@@ -412,7 +412,7 @@ class TSNE(BaseEstimator):
             If the metric is 'precomputed' X must be a square distance
             matrix. Otherwise it contains a sample per row.
         """
-        X, = check_arrays(X)
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         random_state = check_random_state(self.random_state)
 
         if self.early_exaggeration < 1.0:

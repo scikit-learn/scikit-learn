@@ -27,20 +27,21 @@ should be used when applicable.
 
 - :func:`assert_all_finite`: Throw an error if array contains NaNs or Infs.
 
-- :func:`safe_asarray`: Convert input to array or sparse matrix.  Equivalent
-  to ``np.asarray``, but sparse matrices are passed through.
-
 - :func:`as_float_array`: convert input to an array of floats.  If a sparse
   matrix is passed, a sparse matrix will be returned.
 
-- :func:`array2d`: equivalent to ``np.atleast_2d``, but the ``order`` and
-  ``dtype`` of the input are maintained.
+- :func:`check_array`: convert input to 2d array, raise error on sparse
+  matrices.  Allowed sparse matrix formats can be given optionally, as well as
+  allowing 1d or nd arrays.  Calls :func:`assert_all_finite` by default.
 
-- :func:`atleast2d_or_csr`: equivalent to ``array2d``, but if a sparse matrix
-  is passed, will convert to csr format.  Also calls ``assert_all_finite``.
+- :func:`check_X_y`: check that X and y have consistent length, calls
+  check_array on X, and column_or_1d on y. For multilabel classification or
+  multitarget regression, specify multi_ouput=True, in which case check_array
+  will be called on y.
 
-- :func:`check_arrays`: check that all input arrays have consistent first
-  dimensions.  This will work for an arbitrary number of arrays.
+- :func:`indexable`: check that all input arrays have consistent length and can
+  be sliced or indexed using safe_index.  This is used to validate input for
+  cross-validation.
 
 - :func:`warn_if_not_float`: Warn if input is not a floating-point value.
   the input ``X`` is assumed to have ``X.dtype``.
@@ -139,8 +140,8 @@ Efficient Routines for Sparse Matrices
 The ``sklearn.utils.sparsefuncs`` cython module hosts compiled extensions to
 efficiently process ``scipy.sparse`` data.
 
-- :func:`sparsefuncs.mean_variance_axis0`: compute the means and
-  variances along axis 0 of a CSR matrix.
+- :func:`sparsefuncs.mean_variance_axis`: compute the means and
+  variances along a specified axis of a CSR matrix.
   Used for normalizing the tolerance stopping criterion in
   :class:`sklearn.cluster.k_means_.KMeans`.
 

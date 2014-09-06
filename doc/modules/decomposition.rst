@@ -113,11 +113,6 @@ The memory footprint of :class:`RandomizedPCA` is also proportional to
 :math:`2 \cdot n_{max} \cdot n_{components}` instead of :math:`n_{max}
 \cdot n_{min}` for the exact method.
 
-Furthermore :class:`RandomizedPCA` is able to work with
-`scipy.sparse` matrices as input which make it suitable for reducing
-the dimensionality of features extracted from text documents for
-instance.
-
 Note: the implementation of ``inverse_transform`` in :class:`RandomizedPCA`
 is not the exact inverse transform of ``transform`` even when
 ``whiten=False`` (default).

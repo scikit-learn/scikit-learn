@@ -18,7 +18,7 @@ from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
 from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_random_state, check_arrays, column_or_1d
+from ..utils import check_random_state, check_X_y, check_array, column_or_1d
 from ..utils.random import sample_without_replacement
 
 from .base import BaseEnsemble, _partition_estimators
@@ -244,7 +244,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         random_state = check_random_state(self.random_state)
 
         # Convert data
-        X, y = check_arrays(X, y)
+        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'])
 
         # Remap output
         n_samples, self.n_features_ = X.shape
@@ -277,7 +277,8 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         self.estimators_ = None
 
         # Parallel loop
-        n_jobs, n_estimators, starts = _partition_estimators(self)
+        n_jobs, n_estimators, starts = _partition_estimators(self.n_estimators,
+                                                             self.n_jobs)
         seeds = random_state.randint(MAX_INT, size=self.n_estimators)
 
         all_results = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
@@ -377,29 +378,29 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
     Attributes
     ----------
-    `base_estimator_`: list of estimators
+    base_estimator_ : list of estimators
         The base estimator from which the ensemble is grown.
 
-    `estimators_`: list of estimators
+    estimators_ : list of estimators
         The collection of fitted base estimators.
 
-    `estimators_samples_`: list of arrays
+    estimators_samples_ : list of arrays
         The subset of drawn samples (i.e., the in-bag samples) for each base
         estimator.
 
-    `estimators_features_`: list of arrays
+    estimators_features_ : list of arrays
         The subset of drawn features for each base estimator.
 
-    `classes_`: array of shape = [n_classes]
+    classes_ : array of shape = [n_classes]
         The classes labels.
 
-    `n_classes_`: int or list
+    n_classes_ : int or list
         The number of classes.
 
-    `oob_score_` : float
+    oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
 
-    `oob_decision_function_` : array of shape = [n_samples, n_classes]
+    oob_decision_function_ : array of shape = [n_samples, n_classes]
         Decision function computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
@@ -540,7 +541,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             classes corresponds to that in the attribute `classes_`.
         """
         # Check data
-        X, = check_arrays(X)
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
         if self.n_features_ != X.shape[1]:
             raise ValueError("Number of features of the model must "
@@ -549,7 +550,8 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
                              "".format(self.n_features_, X.shape[1]))
 
         # Parallel loop
-        n_jobs, n_estimators, starts = _partition_estimators(self)
+        n_jobs, n_estimators, starts = _partition_estimators(self.n_estimators,
+                                                             self.n_jobs)
 
         all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_predict_proba)(
@@ -585,7 +587,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         """
         if hasattr(self.base_estimator_, "predict_log_proba"):
             # Check data
-            X, = check_arrays(X)
+            X = check_array(X)
 
             if self.n_features_ != X.shape[1]:
                 raise ValueError("Number of features of the model must "
@@ -594,7 +596,8 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
                                  "".format(self.n_features_, X.shape[1]))
 
             # Parallel loop
-            n_jobs, n_estimators, starts = _partition_estimators(self)
+            n_jobs, n_estimators, starts = _partition_estimators(
+                self.n_estimators, self.n_jobs)
 
             all_log_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
                 delayed(_parallel_predict_log_proba)(
@@ -640,7 +643,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             raise NotImplementedError
 
         # Check data
-        X, = check_arrays(X)
+        X = check_array(X)
 
         if self.n_features_ != X.shape[1]:
             raise ValueError("Number of features of the model must "
@@ -649,7 +652,8 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
                              "".format(self.n_features_, X.shape[1]))
 
         # Parallel loop
-        n_jobs, n_estimators, starts = _partition_estimators(self)
+        n_jobs, n_estimators, starts = _partition_estimators(self.n_estimators,
+                                                             self.n_jobs)
 
         all_decisions = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_decision_function)(
@@ -728,20 +732,20 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
     Attributes
     ----------
-    `estimators_`: list of estimators
+    estimators_ : list of estimators
         The collection of fitted sub-estimators.
 
-    `estimators_samples_`: list of arrays
+    estimators_samples_ : list of arrays
         The subset of drawn samples (i.e., the in-bag samples) for each base
         estimator.
 
-    `estimators_features_`: list of arrays
+    estimators_features_ : list of arrays
         The subset of drawn features for each base estimator.
 
-    `oob_score_` : float
+    oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
 
-    `oob_decision_function_` : array of shape = [n_samples, n_classes]
+    oob_decision_function_ : array of shape = [n_samples, n_classes]
         Decision function computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
@@ -805,10 +809,11 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
             The predicted values.
         """
         # Check data
-        X, = check_arrays(X)
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
         # Parallel loop
-        n_jobs, n_estimators, starts = _partition_estimators(self)
+        n_jobs, n_estimators, starts = _partition_estimators(self.n_estimators,
+                                                             self.n_jobs)
 
         all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_predict_regression)(

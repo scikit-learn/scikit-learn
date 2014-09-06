@@ -639,6 +639,7 @@ From text
    linear_model.LassoLarsIC
    linear_model.LinearRegression
    linear_model.LogisticRegression
+   linear_model.LogisticRegressionCV
    linear_model.MultiTaskLasso
    linear_model.MultiTaskElasticNet
    linear_model.MultiTaskLassoCV

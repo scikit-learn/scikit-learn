@@ -32,7 +32,9 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import f1_score
 from sklearn.metrics import fbeta_score
 from sklearn.metrics import hamming_loss
+from sklearn.metrics import hinge_loss
 from sklearn.metrics import jaccard_similarity_score
+from sklearn.metrics import log_loss
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import precision_score
@@ -40,7 +42,7 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import zero_one_loss
 
 
-from sklearn.metrics.classification import _check_clf_targets
+from sklearn.metrics.classification import _check_targets
 from sklearn.metrics.base import UndefinedMetricWarning
 
 
@@ -954,8 +956,8 @@ def test_fscore_warnings():
 
 
 @ignore_warnings  # sequence of sequences is deprecated
-def test__check_clf_targets():
-    """Check that _check_clf_targets correctly merges target types, squeezes
+def test__check_targets():
+    """Check that _check_targets correctly merges target types, squeezes
     output and fails if input lengths differ."""
     IND = 'multilabel-indicator'
     SEQ = 'multilabel-sequences'
@@ -983,7 +985,7 @@ def test__check_clf_targets():
     # (types will be tried in either order)
     EXPECTED = {
         (IND, IND): IND,
-        (SEQ, SEQ): SEQ,
+        (SEQ, SEQ): IND,
         (MC, MC): MC,
         (BIN, BIN): BIN,
 
@@ -1021,24 +1023,75 @@ def test__check_clf_targets():
         except KeyError:
             expected = EXPECTED[type2, type1]
         if expected is None:
-            assert_raises(ValueError, _check_clf_targets, y1, y2)
+            assert_raises(ValueError, _check_targets, y1, y2)
 
             if type1 != type2:
                 assert_raise_message(
                     ValueError,
                     "Can't handle mix of {0} and {1}".format(type1, type2),
-                    _check_clf_targets, y1, y2)
+                    _check_targets, y1, y2)
 
             else:
                 if type1 not in (BIN, MC, SEQ, IND):
                     assert_raise_message(ValueError,
                                          "{0} is not supported".format(type1),
-                                         _check_clf_targets, y1, y2)
+                                         _check_targets, y1, y2)
 
         else:
-            merged_type, y1out, y2out = _check_clf_targets(y1, y2)
+            merged_type, y1out, y2out = _check_targets(y1, y2)
             assert_equal(merged_type, expected)
-            if not merged_type.startswith('multilabel'):
+            if merged_type.startswith('multilabel'):
+                assert_equal(y1out.format, 'csr')
+                assert_equal(y2out.format, 'csr')
+            else:
                 assert_array_equal(y1out, np.squeeze(y1))
                 assert_array_equal(y2out, np.squeeze(y2))
-            assert_raises(ValueError, _check_clf_targets, y1[:-1], y2)
+            assert_raises(ValueError, _check_targets, y1[:-1], y2)
+
+
+def test_hinge_loss_binary():
+    y_true = np.array([-1, 1, 1, -1])
+    pred_decision = np.array([-8.5, 0.5, 1.5, -0.3])
+    assert_equal(hinge_loss(y_true, pred_decision), 1.2 / 4)
+
+    y_true = np.array([0, 2, 2, 0])
+    pred_decision = np.array([-8.5, 0.5, 1.5, -0.3])
+    assert_equal(hinge_loss(y_true, pred_decision), 1.2 / 4)
+
+
+def test_log_loss():
+    # binary case with symbolic labels ("no" < "yes")
+    y_true = ["no", "no", "no", "yes", "yes", "yes"]
+    y_pred = np.array([[0.5, 0.5], [0.1, 0.9], [0.01, 0.99],
+                       [0.9, 0.1], [0.75, 0.25], [0.001, 0.999]])
+    loss = log_loss(y_true, y_pred)
+    assert_almost_equal(loss, 1.8817971)
+
+    # multiclass case; adapted from http://bit.ly/RJJHWA
+    y_true = [1, 0, 2]
+    y_pred = [[0.2, 0.7, 0.1], [0.6, 0.2, 0.2], [0.6, 0.1, 0.3]]
+    loss = log_loss(y_true, y_pred, normalize=True)
+    assert_almost_equal(loss, 0.6904911)
+
+    # check that we got all the shapes and axes right
+    # by doubling the length of y_true and y_pred
+    y_true *= 2
+    y_pred *= 2
+    loss = log_loss(y_true, y_pred, normalize=False)
+    assert_almost_equal(loss, 0.6904911 * 6, decimal=6)
+
+    # check eps and handling of absolute zero and one probabilities
+    y_pred = np.asarray(y_pred) > .5
+    loss = log_loss(y_true, y_pred, normalize=True, eps=.1)
+    assert_almost_equal(loss, log_loss(y_true, np.clip(y_pred, .1, .9)))
+
+    # raise error if number of classes are not equal.
+    y_true = [1, 0, 2]
+    y_pred = [[0.2, 0.7], [0.6, 0.5], [0.4, 0.1]]
+    assert_raises(ValueError, log_loss, y_true, y_pred)
+
+    # case when y_true is a string array object
+    y_true = ["ham", "spam", "spam", "ham"]
+    y_pred = [[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]]
+    loss = log_loss(y_true, y_pred)
+    assert_almost_equal(loss, 1.0383217, decimal=6)

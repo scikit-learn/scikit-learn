@@ -1,4 +1,4 @@
-"""Implements spectral biclustering algorithms.
+"""Spectral biclustering algorithms.
 
 Authors : Kemal Eren
 License: BSD 3 clause
@@ -11,22 +11,19 @@ import numpy as np
 from scipy.sparse import dia_matrix
 from scipy.sparse import issparse
 
-from sklearn.base import BaseEstimator, BiclusterMixin
-from sklearn.externals import six
-from sklearn.utils.arpack import svds
-from sklearn.utils.arpack import eigsh
-from sklearn.cluster import KMeans
-from sklearn.cluster import MiniBatchKMeans
+from . import KMeans, MiniBatchKMeans
+from ..base import BaseEstimator, BiclusterMixin
+from ..externals import six
+from ..utils.arpack import eigsh, svds
 
-from sklearn.utils.extmath import randomized_svd
-from sklearn.utils.extmath import safe_sparse_dot
-from sklearn.utils.extmath import make_nonnegative
-from sklearn.utils.extmath import norm
+from ..utils.extmath import (make_nonnegative, norm, randomized_svd,
+                             safe_sparse_dot)
 
-from sklearn.utils.validation import assert_all_finite
-from sklearn.utils.validation import check_arrays
+from ..utils.validation import assert_all_finite, check_array
 
-from .utils import check_array_ndim
+
+__all__ = ['SpectralCoclustering',
+           'SpectralBiclustering']
 
 
 def _scale_normalize(X):
@@ -120,8 +117,7 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
         X : array-like, shape (n_samples, n_features)
 
         """
-        X, = check_arrays(X, sparse_format='csr', dtype=np.float64)
-        check_array_ndim(X)
+        X = check_array(X, accept_sparse='csr', dtype=np.float64)
         self._check_parameters()
         self._fit(X)
 
@@ -236,17 +232,17 @@ class SpectralCoclustering(BaseSpectral):
 
     Attributes
     ----------
-    `rows_` : array-like, shape (n_row_clusters, n_rows)
+    rows_ : array-like, shape (n_row_clusters, n_rows)
         Results of the clustering. `rows[i, r]` is True if
         cluster `i` contains row `r`. Available only after calling ``fit``.
 
-    `columns_` : array-like, shape (n_column_clusters, n_columns)
+    columns_ : array-like, shape (n_column_clusters, n_columns)
         Results of the clustering, like `rows`.
 
-    `row_labels_` : array-like, shape (n_rows,)
+    row_labels_ : array-like, shape (n_rows,)
         The bicluster label of each row.
 
-    `column_labels_` : array-like, shape (n_cols,)
+    column_labels_ : array-like, shape (n_cols,)
         The bicluster label of each column.
 
     References
@@ -364,17 +360,17 @@ class SpectralBiclustering(BaseSpectral):
 
     Attributes
     ----------
-    `rows_` : array-like, shape (n_row_clusters, n_rows)
+    rows_ : array-like, shape (n_row_clusters, n_rows)
         Results of the clustering. `rows[i, r]` is True if
         cluster `i` contains row `r`. Available only after calling ``fit``.
 
-    `columns_` : array-like, shape (n_column_clusters, n_columns)
+    columns_ : array-like, shape (n_column_clusters, n_columns)
         Results of the clustering, like `rows`.
 
-    `row_labels_` : array-like, shape (n_rows,)
+    row_labels_ : array-like, shape (n_rows,)
         Row partition labels.
 
-    `column_labels_` : array-like, shape (n_cols,)
+    column_labels_ : array-like, shape (n_cols,)
         Column partition labels.
 
     References

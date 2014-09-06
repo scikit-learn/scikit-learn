@@ -13,7 +13,7 @@ import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator
-from ..utils import check_random_state, deprecated
+from ..utils import check_random_state
 from ..utils.extmath import logsumexp, pinvh
 from .. import cluster
 
@@ -155,13 +155,13 @@ class GMM(BaseEstimator):
 
     Attributes
     ----------
-    `weights_` : array, shape (`n_components`,)
+    weights_ : array, shape (`n_components`,)
         This attribute stores the mixing weights for each mixture component.
 
-    `means_` : array, shape (`n_components`, `n_features`)
+    means_ : array, shape (`n_components`, `n_features`)
         Mean parameters for each mixture component.
 
-    `covars_` : array
+    covars_ : array
         Covariance parameters for each mixture component.  The shape
         depends on `covariance_type`::
 
@@ -170,7 +170,7 @@ class GMM(BaseEstimator):
             (n_components, n_features)             if 'diag',
             (n_components, n_features, n_features) if 'full'
 
-    `converged_` : bool
+    converged_ : bool
         True when convergence was reached in fit(), False otherwise.
 
 
@@ -273,11 +273,6 @@ class GMM(BaseEstimator):
         covars = np.asarray(covars)
         _validate_covars(covars, self.covariance_type, self.n_components)
         self.covars_ = covars
-
-    @deprecated("GMM.eval was renamed to GMM.score_samples in 0.14 and will be"
-                " removed in 0.16.")
-    def eval(self, X):
-        return self.score_samples(X)
 
     def score_samples(self, X):
         """Return the per-sample likelihood of the data under the model.

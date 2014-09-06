@@ -12,7 +12,6 @@ Changelog
 New features
 ............
 
-
    - Incremental fit for :class:`GaussianNB <naive_bayes.GaussianNB>`.
 
    - Add ``sample_weight`` support to :class:`dummy.DummyClassifier`. By
@@ -21,13 +20,43 @@ New features
    - Add the :func:`metrics.label_ranking_average_precision_score` metrics. By
      `Arnaud Joly`_.
 
+   - Added :class:`linear_model.LogisticRegressionCV`. By
+     `Manoj Kumar`_, `Fabian Pedregosa`_, `Gael Varoquaux`_
+     and `Alexandre Gramfort`_.
+
+   - Added ``warm_start`` constructor parameter to make it possible for any
+     trained forest model to grow additional trees incrementally. By
+     `Laurent Direr`_.
+
 
 Enhancements
 ............
 
-
    - Add support for sample weights in scorer objects.  Metrics with sample
-     weight support will automatically benefit from it.
+     weight support will automatically benefit from it. By `Noel Dawe`_ and
+     `Vlad Niculae`_.
+
+   - Added ``newton-cg`` and `lbfgs` solver support in
+     :class:`linear_model.LogisticRegression`. By `Manoj Kumar`_.
+
+   - Add ``selection="random"`` parameter to implement stochastic coordinate
+     descent for :class:`linear_model.Lasso`, :class:`linear_model.ElasticNet`
+     and related. By `Manoj Kumar`_.
+
+   - Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score` and
+     `metrics.log_loss`. By `Jatin Shah`_.
+
+   - Support sparse multilabel indicator representation in
+     :class:`preprocessing.LabelBinarizer` and
+     :class:`multiclass.OneVsRestClassifier` (by `Hamzeh Alsalhi`_ with thanks
+     to `Rohit Sivaprasad`_), as well as evaluation metrics (by
+     `Joel Nothman`_).
+
+   - Add ``multi_class="multinomial"`` option in
+     :class:`linear_model.LogisticRegression` to implement a Logistic
+     Regression solver that minimizes the cross-entropy or multinomial loss
+     instead of the default One-vs-Rest setting. By `Lars Buitinck`_ and
+     `Manoj Kumar`_.
 
 
 Documentation improvements
@@ -36,6 +65,17 @@ Documentation improvements
 
 Bug fixes
 .........
+
+    - The :class:`decomposition.PCA` now undoes whitening in its
+     ``inverse_transform``. Also, its ``components_`` now always have unit
+     length. By Michael Eickenberg.
+
+    - Fix incomplete download of the dataset when
+      :func:`datasets.download_20newsgroups` is called. By `Manoj Kumar`_.
+
+    - Various fixes to the Gaussian processes subpackage by Vincent Dubourg
+      and Jan Hendrik Metzen.
+
 
 API changes summary
 -------------------
@@ -50,6 +90,92 @@ API changes summary
       :func:`multiclass.fit_ovo`, :func:`multiclass.predict_ovo`,
       :func:`multiclass.fit_ecoc` and :func:`multiclass.predict_ecoc`
       are deprecated. Use the underlying estimators instead.
+
+    - Nearest neighbors estimators used to take arbitrary keyword arguments
+      and pass these to their distance metric. This will no longer be supported
+      in scikit-learn 0.18; use the ``metric_params`` argument instead.
+
+
+.. _changes_0_15_2:
+
+0.15.2
+======
+
+Bug fixes
+---------
+
+  - Fixed handling of the ``p`` parameter of the Minkowski distance that was
+    previously ignored in nearest neighbors models. By `Nikolay Mayorov`_.
+
+  - Fixed duplicated alphas in :class:`linear_model.LassoLars` with early
+    stopping on 32 bit Python. By `Olivier Grisel`_ and `Fabian Pedregosa`_.
+
+  - Fixed the build under Windows when scikit-learn is built with MSVC while
+    NumPy is built with MinGW. By `Olivier Grisel`_ and Federico Vaggi.
+
+  - Fixed an array index overflow bug in the coordinate descent solver. By
+    `Gael Varoquaux`_.
+
+  - Better handling of numpy 1.9 deprecation warnings. By `Gael Varoquaux`_.
+
+  - Removed unnecessary data copy in :class:`cluster.KMeans`.
+    By `Gael Varoquaux`_.
+
+  - Explicitly close open files to avoid ``ResourceWarnings`` under Python 3.
+    By Calvin Giles.
+
+  - The ``transform`` of :class:`lda.LDA` now projects the input on the most
+    discriminant directions. By Martin Billinger.
+
+  - Fixed potential overflow in ``_tree.safe_realloc`` by `Lars Buitinck`_.
+
+  - Performance optimization in :class:`istonic.IsotonicRegression`.
+    By Robert Bradshaw.
+
+  - ``nose`` is non-longer a runtime dependency to import ``sklearn``, only for
+    running the tests. By `Joel Nothman`_.
+
+  - Many documentation and website fixes by `Joel Nothman`_, `Lars Buitinck`_
+    and others.
+
+.. _changes_0_15_1:
+
+0.15.1
+======
+
+Bug fixes
+---------
+
+   - Made :func:`cross_validation.cross_val_score` use
+     :class:`cross_validation.KFold` instead of
+     :class:`cross_validation.StratifiedKFold` on multi-output classification
+     problems. By `Nikolay Mayorov`_.
+
+   - Support unseen labels :class:`preprocessing.LabelBinarizer` to restore
+     the default behavior of 0.14.1 for backward compatibility. By
+     `Hamzeh Alsalhi`_.
+
+   - Fixed the :class:`cluster.KMeans` stopping criterion that prevented early
+     convergence detection. By Edward Raff and `Gael Varoquaux`_.
+
+   - Fixed the behavior of :class:`multiclass.OneVsOneClassifier`.
+     in case of ties at the per-class vote level by computing the correct
+     per-class sum of prediction scores. By `Andreas Müller`_.
+
+   - Made :func:`cross_validation.cross_val_score` and
+     :class:`grid_search.GridSearchCV` accept Python lists as input data.
+     This is especially useful for cross-validation and model selection of
+     text processing pipelines. By `Andreas Müller`_.
+
+   - Fixed data input checks of most estimators to accept input data that
+     implements the NumPy ``__array__`` protocol. This is the case for
+     for ``pandas.Series`` and ``pandas.DataFrame`` in recent versions of
+     pandas. By `Gael Varoquaux`_.
+
+   - Fixed a regression for :class:`linear_model.SGDClassifier` with
+     ``class_weight="auto"`` on data with non-contiguous labels. By
+     `Olivier Grisel`_.
+
 
 .. _changes_0_15:
 
@@ -2820,3 +2946,9 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Hamzeh Alsalhi: https://github.com/hamsal
 
 .. _Ronald Phlypo: https://github.com/rphlypo
+
+.. _Laurent Direr: https://github.com/ldirer
+
+.. _Nikolay Mayorov: https://github.com/nmayorov
+
+.. _Jatin Shah: http://jatinshah.org/

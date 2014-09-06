@@ -210,7 +210,6 @@ def test_kneighbors_classifier_predict_proba():
     assert_array_almost_equal(real_prob, y_prob)
 
 
-
 def test_radius_neighbors_classifier(n_samples=40,
                                      n_features=5,
                                      n_test_pts=10,
@@ -789,14 +788,6 @@ def test_neighbors_badargs():
                   X, mode='blah')
 
 
-def test_neighbors_deprecation_arg():
-    """Test that passing the deprecated parameter will cause a
-    warning to be raised, as well as not crash the estimator."""
-    for cls in (neighbors.KNeighborsClassifier,
-                neighbors.KNeighborsRegressor):
-        assert_warns(DeprecationWarning, cls, warn_on_equidistant=True)
-
-
 def test_neighbors_metrics(n_samples=20, n_features=3,
                            n_query_pts=2, n_neighbors=5):
     """Test computing the neighbors for various metrics"""
@@ -819,9 +810,9 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
 
     test = rng.rand(n_query_pts, n_features)
 
-    for metric, kwds in metrics:
+    for metric, metric_params in metrics:
         results = []
-
+        p = metric_params.pop('p', 2)
         for algorithm in algorithms:
             # KD tree doesn't support all metrics
             if (algorithm == 'kd_tree' and
@@ -829,12 +820,13 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
                 assert_raises(ValueError,
                               neighbors.NearestNeighbors,
                               algorithm=algorithm,
-                              metric=metric, **kwds)
+                              metric=metric, metric_params=metric_params)
                 continue
 
             neigh = neighbors.NearestNeighbors(n_neighbors=n_neighbors,
                                                algorithm=algorithm,
-                                               metric=metric, **kwds)
+                                               metric=metric, p=p,
+                                               metric_params=metric_params)
             neigh.fit(X)
             results.append(neigh.kneighbors(test, return_distance=True))
 
@@ -856,6 +848,13 @@ def test_callable_metric():
     dist2, ind2 = nbrs2.kneighbors(X)
 
     assert_array_almost_equal(dist1, dist2)
+
+
+def test_metric_params_interface():
+    assert_warns(DeprecationWarning, neighbors.KNeighborsClassifier,
+                 metric='wminkowski', w=np.ones(10))
+    assert_warns(SyntaxWarning, neighbors.KNeighborsClassifier,
+                 metric_params={'p': 3})
 
 
 if __name__ == '__main__':

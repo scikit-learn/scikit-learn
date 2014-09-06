@@ -136,15 +136,6 @@ def check_regressors_classifiers_sparse_data(name, Estimator):
 
 
 def check_transformer(name, Transformer):
-    if name in ('CCA', 'LocallyLinearEmbedding', 'KernelPCA') and _is_32bit():
-        # Those transformers yield non-deterministic output when executed on
-        # a 32bit Python. The same transformers are stable on 64bit Python.
-        # FIXME: try to isolate a minimalistic reproduction case only depending
-        # on numpy & scipy and/or maybe generate a test dataset that does not
-        # cause such unstable behaviors.
-        msg = name + ' is non deterministic on 32bit Python'
-        raise SkipTest(msg)
-
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
     X = StandardScaler().fit_transform(X)
@@ -166,6 +157,14 @@ def check_transformer_data_not_an_array(name, Transformer):
 
 
 def _check_transformer(name, Transformer, X, y):
+    if name in ('CCA', 'LocallyLinearEmbedding', 'KernelPCA') and _is_32bit():
+        # Those transformers yield non-deterministic output when executed on
+        # a 32bit Python. The same transformers are stable on 64bit Python.
+        # FIXME: try to isolate a minimalistic reproduction case only depending
+        # on numpy & scipy and/or maybe generate a test dataset that does not
+        # cause such unstable behaviors.
+        msg = name + ' is non deterministic on 32bit Python'
+        raise SkipTest(msg)
     n_samples, n_features = np.asarray(X).shape
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
@@ -528,7 +527,7 @@ def check_classifiers_input_shapes(name, Classifier):
 
 
 def check_classifiers_classes(name, Classifier):
-    X, y = make_blobs(n_samples=30, random_state=0)
+    X, y = make_blobs(n_samples=30, random_state=0, cluster_std=0.1)
     X, y = shuffle(X, y, random_state=7)
     X = StandardScaler().fit_transform(X)
     # We need to make sure that we have non negative data, for things
@@ -726,6 +725,36 @@ def check_class_weight_auto_classifiers(name, Classifier, X_train, y_train,
                    f1_score(y_test, y_pred))
 
 
+def check_class_weight_auto_linear_classifier(name, Classifier):
+    """Test class weights with non-contiguous class labels."""
+    X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
+                  [1.0, 1.0], [1.0, 0.0]])
+    y = [1, 1, 1, -1, -1]
+
+    with warnings.catch_warnings(record=True):
+        classifier = Classifier()
+    if hasattr(classifier, "n_iter"):
+        # This is a very small dataset, default n_iter are likely to prevent
+        # convergence
+        classifier.set_params(n_iter=1000)
+    set_random_state(classifier)
+
+    # Let the model compute the class frequencies
+    classifier.set_params(class_weight='auto')
+    coef_auto = classifier.fit(X, y).coef_.copy()
+
+    # Count each label occurrence to reweight manually
+    mean_weight = (1. / 3 + 1. / 2) / 2
+    class_weight = {
+        1: 1. / 3 / mean_weight,
+        -1: 1. / 2 / mean_weight,
+    }
+    classifier.set_params(class_weight=class_weight)
+    coef_manual = classifier.fit(X, y).coef_.copy()
+
+    assert_array_almost_equal(coef_auto, coef_manual)
+
+
 def check_estimators_overwrite_params(name, Estimator):
     X, y = make_blobs(random_state=0, n_samples=9)
     y = multioutput_estimator_convert_y_2d(name, y)
@@ -771,8 +800,9 @@ def check_cluster_overwrite_params(name, Clustering):
 
 
 def check_sparsify_multiclass_classifier(name, Classifier):
-    X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
-    y = [1, 1, 1, 2, 2, 3]
+    X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1],
+                  [-1, -2], [2, 2], [-2, -2]])
+    y = [1, 1, 1, 2, 2, 2, 3, 3, 3]
     est = Classifier()
 
     est.fit(X, y)
@@ -910,3 +940,41 @@ def multioutput_estimator_convert_y_2d(name, y):
                  'MultiTaskLasso', 'MultiTaskElasticNet']):
         return y[:, np.newaxis]
     return y
+
+
+def check_non_transformer_estimators_n_iter(name, estimator, multi_output=False):
+    # Check if all iterative solvers, run for more than one iteratiom
+
+    iris = load_iris()
+    X, y_ = iris.data, iris.target
+
+    if multi_output:
+        y_ = y_[:, np.newaxis]
+
+    set_random_state(estimator, 0)
+    if name == 'AffinityPropagation':
+        estimator.fit(X)
+    else:
+        estimator.fit(X, y_)
+    assert_greater(estimator.n_iter_, 0)
+
+
+def check_transformer_n_iter(name, estimator):
+    if name in CROSS_DECOMPOSITION:
+        # Check using default data
+        X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
+        y_ = [[0.1, -0.2], [0.9, 1.1], [0.1, -0.5], [0.3, -0.2]]
+
+    else:
+        X, y_ = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
+                          random_state=0, n_features=2, cluster_std=0.1)
+        X -= X.min() - 0.1
+    set_random_state(estimator, 0)
+    estimator.fit(X, y_)
+
+    # These return a n_iter per component.
+    if name in CROSS_DECOMPOSITION:
+        for iter_ in estimator.n_iter_:
+            assert_greater(iter_, 1)
+    else:
+        assert_greater(estimator.n_iter_, 1)

@@ -21,11 +21,12 @@ from __future__ import division
 
 import warnings
 import numpy as np
+from scipy.sparse import csr_matrix
 
 from ..preprocessing import LabelBinarizer
-from ..utils import check_arrays
+from ..utils import check_consistent_length
 from ..utils import deprecated
-from ..utils import column_or_1d
+from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.fixes import isclose
 from ..utils.stats import rankdata
@@ -74,7 +75,10 @@ def auc(x, y, reorder=False):
         Compute precision-recall pairs for different probability thresholds
 
     """
-    x, y = check_arrays(x, y)
+    check_consistent_length(x, y)
+    x = column_or_1d(x)
+    y = column_or_1d(y)
+
     if x.shape[0] < 2:
         raise ValueError('At least 2 points are needed to compute'
                          ' area under curve, but x.shape = %s' % x.shape)
@@ -97,74 +101,6 @@ def auc(x, y, reorder=False):
     area = direction * np.trapz(y, x)
 
     return area
-
-
-def hinge_loss(y_true, pred_decision, pos_label=None, neg_label=None):
-    """Average hinge loss (non-regularized)
-
-    Assuming labels in y_true are encoded with +1 and -1, when a prediction
-    mistake is made, ``margin = y_true * pred_decision`` is always negative
-    (since the signs disagree), implying ``1 - margin`` is always greater than
-    1.  The cumulated hinge loss is therefore an upper bound of the number of
-    mistakes made by the classifier.
-
-    Parameters
-    ----------
-    y_true : array, shape = [n_samples]
-        True target, consisting of integers of two values. The positive label
-        must be greater than the negative label.
-
-    pred_decision : array, shape = [n_samples] or [n_samples, n_classes]
-        Predicted decisions, as output by decision_function (floats).
-
-    Returns
-    -------
-    loss : float
-
-    References
-    ----------
-    .. [1] `Wikipedia entry on the Hinge loss
-            <http://en.wikipedia.org/wiki/Hinge_loss>`_
-
-    Examples
-    --------
-    >>> from sklearn import svm
-    >>> from sklearn.metrics import hinge_loss
-    >>> X = [[0], [1]]
-    >>> y = [-1, 1]
-    >>> est = svm.LinearSVC(random_state=0)
-    >>> est.fit(X, y)
-    LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-         intercept_scaling=1, loss='l2', multi_class='ovr', penalty='l2',
-         random_state=0, tol=0.0001, verbose=0)
-    >>> pred_decision = est.decision_function([[-2], [3], [0.5]])
-    >>> pred_decision  # doctest: +ELLIPSIS
-    array([-2.18...,  2.36...,  0.09...])
-    >>> hinge_loss([-1, 1, 1], pred_decision)  # doctest: +ELLIPSIS
-    0.30...
-
-    """
-    # TODO: multi-class hinge-loss
-    y_true, pred_decision = check_arrays(y_true, pred_decision)
-
-    # the rest of the code assumes that positive and negative labels
-    # are encoded as +1 and -1 respectively
-    lbin = LabelBinarizer(neg_label=-1)
-    y_true = lbin.fit_transform(y_true)[:, 0]
-
-    if len(lbin.classes_) > 2 or (pred_decision.ndim == 2
-                                  and pred_decision.shape[1] != 1):
-        raise ValueError("Multi-class hinge loss not supported")
-    pred_decision = np.ravel(pred_decision)
-
-    try:
-        margin = y_true * pred_decision
-    except TypeError:
-        raise TypeError("pred_decision should be an array of floats.")
-    losses = 1 - margin
-    # The hinge doesn't penalize good enough predictions.
-    losses[losses <= 0] = 0
-    return np.mean(losses)
 
 
 def average_precision_score(y_true, y_score, average="macro",
@@ -391,7 +327,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     thresholds : array, shape = [n_thresholds]
         Decreasing score values.
     """
-    y_true, y_score = check_arrays(y_true, y_score)
+    check_consistent_length(y_true, y_score)
     y_true = column_or_1d(y_true)
     y_score = column_or_1d(y_score)
     if sample_weight is not None:
@@ -612,84 +548,6 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None):
     return fpr, tpr, thresholds
 
 
-def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
-    """Log loss, aka logistic loss or cross-entropy loss.
-
-    This is the loss function used in (multinomial) logistic regression
-    and extensions of it such as neural networks, defined as the negative
-    log-likelihood of the true labels given a probabilistic classifier's
-    predictions. For a single sample with true label yt in {0,1} and
-    estimated probability yp that yt = 1, the log loss is
-
-        -log P(yt|yp) = -(yt log(yp) + (1 - yt) log(1 - yp))
-
-    Parameters
-    ----------
-    y_true : array-like or label indicator matrix
-        Ground truth (correct) labels for n_samples samples.
-
-    y_pred : array-like of float, shape = (n_samples, n_classes)
-        Predicted probabilities, as returned by a classifier's
-        predict_proba method.
-
-    eps : float
-        Log loss is undefined for p=0 or p=1, so probabilities are
-        clipped to max(eps, min(1 - eps, p)).
-
-    normalize : bool, optional (default=True)
-        If true, return the mean loss per sample.
-        Otherwise, return the sum of the per-sample losses.
-
-    Returns
-    -------
-    loss : float
-
-    Examples
-    --------
-    >>> log_loss(["spam", "ham", "ham", "spam"],  # doctest: +ELLIPSIS
-    ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
-    0.21616...
-
-    References
-    ----------
-    C.M. Bishop (2006). Pattern Recognition and Machine Learning. Springer,
-    p. 209.
-
-    Notes
-    -----
-    The logarithm used is the natural logarithm (base-e).
-    """
-    lb = LabelBinarizer()
-    T = lb.fit_transform(y_true)
-    if T.shape[1] == 1:
-        T = np.append(1 - T, T, axis=1)
-
-    # Clipping
-    Y = np.clip(y_pred, eps, 1 - eps)
-
-    # This happens in cases when elements in y_pred have type "str".
-    if not isinstance(Y, np.ndarray):
-        raise ValueError("y_pred should be an array of floats.")
-
-    # If y_pred is of single dimension, assume y_true to be binary
-    # and then check.
-    if Y.ndim == 1:
-        Y = Y[:, np.newaxis]
-    if Y.shape[1] == 1:
-        Y = np.append(1 - Y, Y, axis=1)
-
-    # Check if dimensions are consistent.
-    T, Y = check_arrays(T, Y)
-    if T.shape[1] != Y.shape[1]:
-        raise ValueError("y_true and y_pred have different number of classes "
-                         "%d, %d" % (T.shape[1], Y.shape[1]))
-
-    # Renormalize
-    Y /= Y.sum(axis=1)[:, np.newaxis]
-    loss = -(T * np.log(Y)).sum()
-    return loss / T.shape[0] if normalize else loss
-
-
 def label_ranking_average_precision_score(y_true, y_score):
     """Compute ranking-based average precision
 
@@ -705,15 +563,15 @@ def label_ranking_average_precision_score(y_true, y_score):
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples, n_labels]
+    y_true : array or sparse matrix, shape = [n_samples, n_labels]
         True binary labels in binary indicator format.
 
     y_score : array, shape = [n_samples, n_labels]
         Target scores, can either be probability estimates of the positive
         class, confidence values, or binary decisions.
 
-    Return
-    ------
+    Returns
+    -------
     score : float
 
     Examples
@@ -727,7 +585,9 @@ def label_ranking_average_precision_score(y_true, y_score):
     0.416...
 
     """
-    y_true, y_score = check_arrays(y_true, y_score)
+    check_consistent_length(y_true, y_score)
+    y_true = check_array(y_true, ensure_2d=False)
+    y_score = check_array(y_score, ensure_2d=False)
 
     if y_true.shape != y_score.shape:
         raise ValueError("y_true and y_score have different shape")
@@ -738,11 +598,14 @@ def label_ranking_average_precision_score(y_true, y_score):
             and not (y_type == "binary" and y_true.ndim == 2)):
         raise ValueError("{0} format is not supported".format(y_type))
 
+    y_true = csr_matrix(y_true)
+    y_score = -y_score
+
     n_samples, n_labels = y_true.shape
 
     out = 0.
-    for i in range(n_samples):
-        relevant = y_true[i].nonzero()[0]
+    for i, (start, stop) in enumerate(zip(y_true.indptr, y_true.indptr[1:])):
+        relevant = y_true.indices[start:stop]
 
         if (relevant.size == 0 or relevant.size == n_labels):
             # If all labels are relevant or unrelevant, the score is also
@@ -750,10 +613,9 @@ def label_ranking_average_precision_score(y_true, y_score):
             out += 1.
             continue
 
-        scores_i = - y_score[i]
-        true_mask = y_true[i].astype(bool)
-        rank = rankdata(scores_i, 'max')[true_mask]
-        L = rankdata(scores_i[true_mask], 'max')
+        scores_i = y_score[i]
+        rank = rankdata(scores_i, 'max')[relevant]
+        L = rankdata(scores_i[relevant], 'max')
         out += np.divide(L, rank, dtype=float).mean()
 
     return out / n_samples

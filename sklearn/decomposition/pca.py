@@ -5,24 +5,20 @@
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Mathieu Blondel <mathieu@mblondel.org>
 #         Denis A. Engemann <d.engemann@fz-juelich.de>
+#         Michael Eickenberg <michael.eickenberg@inria.fr>
 #
 # License: BSD 3 clause
 
 from math import log, sqrt
-import warnings
 
 import numpy as np
 from scipy import linalg
-from scipy import sparse
 from scipy.special import gammaln
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import array2d, check_random_state, as_float_array
-from ..utils import atleast2d_or_csr, check_arrays
-from ..utils import deprecated
-from ..utils.sparsefuncs import mean_variance_axis0
-from ..utils.extmath import (fast_logdet, safe_sparse_dot, randomized_svd,
-                             fast_dot)
+from ..utils import check_random_state, as_float_array
+from ..utils import check_array
+from ..utils.extmath import fast_dot, fast_logdet, randomized_svd
 
 
 def _assess_dimension_(spectrum, rank, n_samples, n_features):
@@ -143,23 +139,23 @@ class PCA(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `components_` : array, [n_components, n_features]
+    components_ : array, [n_components, n_features]
         Components with maximum variance.
 
-    `explained_variance_ratio_` : array, [n_components]
+    explained_variance_ratio_ : array, [n_components]
         Percentage of variance explained by each of the selected components. \
         k is not set then all components are stored and the sum of explained \
         variances is equal to 1.0
 
-    `mean_` : array, [n_features]
+    mean_ : array, [n_features]
         Per-feature empirical mean, estimated from the training set.
 
-    `n_components_` : int
+    n_components_ : int
         The estimated number of components. Relevant when n_components is set
         to 'mle' or a number between 0 and 1 to select using explained
         variance.
 
-    `noise_variance_` : float
+    noise_variance_ : float
         The estimated noise covariance following the Probabilistic PCA model
         from Tipping and Bishop 1999. See "Pattern Recognition and
         Machine Learning" by C. Bishop, 12.2.1 p. 574 or
@@ -197,7 +193,6 @@ class PCA(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    ProbabilisticPCA
     RandomizedPCA
     KernelPCA
     SparsePCA
@@ -266,7 +261,7 @@ class PCA(BaseEstimator, TransformerMixin):
             The SVD of the input data, copied and centered when
             requested.
         """
-        X = array2d(X)
+        X = check_array(X)
         n_samples, n_features = X.shape
         X = as_float_array(X, copy=self.copy)
         # Center data
@@ -277,10 +272,7 @@ class PCA(BaseEstimator, TransformerMixin):
         explained_variance_ratio_ = (explained_variance_ /
                                      explained_variance_.sum())
 
-        if self.whiten:
-            components_ = V / (S[:, np.newaxis] / sqrt(n_samples))
-        else:
-            components_ = V
+        components_ = V
 
         n_components = self.n_components
         if n_components is None:
@@ -362,8 +354,6 @@ class PCA(BaseEstimator, TransformerMixin):
         # Get precision using matrix inversion lemma
         components_ = self.components_
         exp_var = self.explained_variance_
-        if self.whiten:
-            components_ = components_ * np.sqrt(exp_var[:, np.newaxis])
         exp_var_diff = np.maximum(exp_var - self.noise_variance_, 0.)
         precision = np.dot(components_, components_.T) / self.noise_variance_
         precision.flat[::len(precision) + 1] += 1. / exp_var_diff
@@ -390,10 +380,12 @@ class PCA(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
 
         """
-        X = array2d(X)
+        X = check_array(X)
         if self.mean_ is not None:
             X = X - self.mean_
         X_transformed = fast_dot(X, self.components_.T)
+        if self.whiten:
+            X_transformed /= np.sqrt(self.explained_variance_)
         return X_transformed
 
     def inverse_transform(self, X):
@@ -409,13 +401,15 @@ class PCA(BaseEstimator, TransformerMixin):
         Returns
         -------
         X_original array-like, shape (n_samples, n_features)
-
-        Notes
-        -----
-        If whitening is enabled, inverse_transform does not compute the
-        exact inverse operation as transform.
         """
-        return fast_dot(X, self.components_) + self.mean_
+        if self.whiten:
+            return fast_dot(
+                X,
+                np.sqrt(self.explained_variance_[:, np.newaxis]) *
+                self.components_) + self.mean_
+        else:
+            return fast_dot(X, self.components_) + self.mean_
+
 
     def score_samples(self, X):
         """Return the log-likelihood of each sample
@@ -434,7 +428,7 @@ class PCA(BaseEstimator, TransformerMixin):
         ll: array, shape (n_samples,)
             Log-likelihood of each sample under the current model
         """
-        X = array2d(X)
+        X = check_array(X)
         Xr = X - self.mean_
         n_features = X.shape[1]
         log_like = np.zeros(X.shape[0])
@@ -462,80 +456,6 @@ class PCA(BaseEstimator, TransformerMixin):
             Average log-likelihood of the samples under the current model
         """
         return np.mean(self.score_samples(X))
-
-
-@deprecated("ProbabilisticPCA will be removed in 0.16. WARNING: the "
-            "covariance estimation was previously incorrect, your "
-            "output might be different than under the previous versions. "
-            "Use PCA that implements score and score_samples. To work with "
-            "homoscedastic=False, you should use FactorAnalysis.")
-class ProbabilisticPCA(PCA):
-    """Additional layer on top of PCA that adds a probabilistic evaluation"""
-    __doc__ += PCA.__doc__
-
-    def fit(self, X, y=None, homoscedastic=True):
-        """Additionally to PCA.fit, learns a covariance model
-
-        Parameters
-        ----------
-        X : array of shape(n_samples, n_features)
-            The data to fit
-
-        homoscedastic : bool, optional,
-            If True, average variance across remaining dimensions
-        """
-        X, = check_arrays(X)
-        PCA.fit(self, X)
-
-        n_samples, n_features = X.shape
-        n_components = self.n_components
-        if n_components is None:
-            n_components = n_features
-
-        explained_variance = self.explained_variance_.copy()
-        if homoscedastic:
-            explained_variance -= self.noise_variance_
-
-        # Make the low rank part of the estimated covariance
-        self.covariance_ = np.dot(self.components_[:n_components].T *
-                                  explained_variance,
-                                  self.components_[:n_components])
-
-        if n_features == n_components:
-            delta = 0.
-        elif homoscedastic:
-            delta = self.noise_variance_
-        else:
-            Xr = X - self.mean_
-            Xr -= np.dot(np.dot(Xr, self.components_.T), self.components_)
-            delta = (Xr ** 2).mean(axis=0) / (n_features - n_components)
-
-        # Add delta to the diagonal without extra allocation
-        self.covariance_.flat[::n_features + 1] += delta
-
-        return self
-
-    def score(self, X, y=None):
-        """Return a score associated to new data
-
-        Parameters
-        ----------
-        X: array of shape(n_samples, n_features)
-            The data to test
-
-        Returns
-        -------
-        ll: array of shape (n_samples),
-            log-likelihood of each row of X under the current model
-        """
-        Xr = X - self.mean_
-        n_features = X.shape[1]
-        log_like = np.zeros(X.shape[0])
-        self.precision_ = linalg.inv(self.covariance_)
-        log_like = -.5 * (Xr * (np.dot(Xr, self.precision_))).sum(axis=1)
-        log_like -= .5 * (fast_logdet(self.covariance_)
-                          + n_features * log(2. * np.pi))
-        return log_like
 
 
 class RandomizedPCA(BaseEstimator, TransformerMixin):
@@ -575,15 +495,15 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `components_` : array, [n_components, n_features]
+    components_ : array, [n_components, n_features]
         Components with maximum variance.
 
-    `explained_variance_ratio_` : array, [n_components]
+    explained_variance_ratio_ : array, [n_components]
         Percentage of variance explained by each of the selected components. \
         k is not set then all components are stored and the sum of explained \
         variances is equal to 1.0
 
-    `mean_` : array, [n_features]
+    mean_ : array, [n_features]
         Per-feature empirical mean, estimated from the training set.
 
     Examples
@@ -601,7 +521,6 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     See also
     --------
     PCA
-    ProbabilisticPCA
     TruncatedSVD
 
     References
@@ -613,13 +532,6 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
     .. [MRT] `A randomized algorithm for the decomposition of matrices
       Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert`
-
-    Notes
-    -----
-    This class supports sparse matrix input for backward compatibility, but
-    actually computes a truncated SVD instead of a PCA in that case (i.e. no
-    centering is performed). This support is deprecated; use the class
-    TruncatedSVD for sparse matrix support.
 
     """
 
@@ -645,7 +557,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         self : object
             Returns the instance itself.
         """
-        self._fit(X)
+        self._fit(check_array(X))
         return self
 
     def _fit(self, X):
@@ -663,23 +575,13 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
             The input data, copied, centered and whitened when requested.
         """
         random_state = check_random_state(self.random_state)
-        if sparse.issparse(X):
-            warnings.warn("Sparse matrix support is deprecated"
-                          " and will be dropped in 0.16."
-                          " Use TruncatedSVD instead.",
-                          DeprecationWarning)
-        else:
-            # not a sparse matrix, ensure this is a 2D array
-            X = np.atleast_2d(as_float_array(X, copy=self.copy))
+        X = np.atleast_2d(as_float_array(X, copy=self.copy))
 
         n_samples = X.shape[0]
 
-        if sparse.issparse(X):
-            self.mean_ = None
-        else:
-            # Center data
-            self.mean_ = np.mean(X, axis=0)
-            X -= self.mean_
+        # Center data
+        self.mean_ = np.mean(X, axis=0)
+        X -= self.mean_
         if self.n_components is None:
             n_components = X.shape[1]
         else:
@@ -690,11 +592,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
                                  random_state=random_state)
 
         self.explained_variance_ = exp_var = (S ** 2) / n_samples
-        if sparse.issparse(X):
-            _, full_var = mean_variance_axis0(X)
-            full_var = full_var.sum()
-        else:
-            full_var = np.var(X, axis=0).sum()
+        full_var = np.var(X, axis=0).sum()
         self.explained_variance_ratio_ = exp_var / full_var
 
         if self.whiten:
@@ -721,12 +619,11 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
 
         """
-        # XXX remove scipy.sparse support here in 0.16
-        X = atleast2d_or_csr(X)
+        X = check_array(X)
         if self.mean_ is not None:
             X = X - self.mean_
 
-        X = safe_sparse_dot(X, self.components_.T)
+        X = fast_dot(X, self.components_.T)
         return X
 
     def fit_transform(self, X, y=None):
@@ -743,9 +640,9 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
 
         """
-        X = self._fit(atleast2d_or_csr(X))
-        X = safe_sparse_dot(X, self.components_.T)
-        return X
+        X = check_array(X)
+        X = self._fit(X)
+        return fast_dot(X, self.components_.T)
 
     def inverse_transform(self, X, y=None):
         """Transform data back to its original space.
@@ -767,8 +664,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         If whitening is enabled, inverse_transform does not compute the
         exact inverse operation of transform.
         """
-        # XXX remove scipy.sparse support here in 0.16
-        X_original = safe_sparse_dot(X, self.components_)
+        X_original = fast_dot(X, self.components_)
         if self.mean_ is not None:
             X_original = X_original + self.mean_
         return X_original

@@ -6,7 +6,7 @@
 import numpy as np
 from ..base import BaseEstimator, TransformerMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
-from ..utils import check_arrays
+from ..utils import check_array
 from ..utils.graph import graph_shortest_path
 from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
@@ -53,20 +53,20 @@ class Isomap(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `embedding_` : array-like, shape (n_samples, n_components)
+    embedding_ : array-like, shape (n_samples, n_components)
         Stores the embedding vectors.
 
-    `kernel_pca_` : object
+    kernel_pca_ : object
         `KernelPCA` object used to implement the embedding.
 
-    `training_data_` : array-like, shape (n_samples, n_features)
+    training_data_ : array-like, shape (n_samples, n_features)
         Stores the training data.
 
-    `nbrs_` : sklearn.neighbors.NearestNeighbors instance
+    nbrs_ : sklearn.neighbors.NearestNeighbors instance
         Stores nearest neighbors instance, including BallTree or KDtree
         if applicable.
 
-    `dist_matrix_` : array-like, shape (n_samples, n_samples)
+    dist_matrix_ : array-like, shape (n_samples, n_samples)
         Stores the geodesic distance matrix of training data.
 
     References
@@ -91,7 +91,7 @@ class Isomap(BaseEstimator, TransformerMixin):
                                       algorithm=neighbors_algorithm)
 
     def _fit_transform(self, X):
-        X, = check_arrays(X, sparse_format='dense')
+        X = check_array(X)
         self.nbrs_.fit(X)
         self.training_data_ = self.nbrs_._fit_X
         self.kernel_pca_ = KernelPCA(n_components=self.n_components,
@@ -186,7 +186,7 @@ class Isomap(BaseEstimator, TransformerMixin):
         -------
         X_new: array-like, shape (n_samples, n_components)
         """
-        X, = check_arrays(X)
+        X = check_array(X)
         distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
 
         #Create the graph of shortest distances from X to self.training_data_

@@ -17,7 +17,9 @@ from sklearn.externals.six.moves import zip
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import ignore_warnings
 
 import sklearn
 from sklearn.base import (ClassifierMixin, RegressorMixin,
@@ -26,6 +28,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import make_classification
 
 from sklearn.cross_validation import train_test_split
+from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.utils.estimator_checks import (
     check_parameters_default_constructible,
     check_regressors_classifiers_sparse_data,
@@ -44,6 +47,7 @@ from sklearn.utils.estimator_checks import (
     check_classifiers_pickle,
     check_class_weight_classifiers,
     check_class_weight_auto_classifiers,
+    check_class_weight_auto_linear_classifier,
     check_estimators_overwrite_params,
     check_cluster_overwrite_params,
     check_sparsify_binary_classifier,
@@ -51,6 +55,8 @@ from sklearn.utils.estimator_checks import (
     check_classifier_data_not_an_array,
     check_regressor_data_not_an_array,
     check_transformer_data_not_an_array,
+    check_transformer_n_iter,
+    check_non_transformer_estimators_n_iter,
     CROSS_DECOMPOSITION)
 
 
@@ -185,7 +191,8 @@ def test_configure():
             # Blas/Atlas development headers
             warnings.simplefilter('ignore', UserWarning)
             if PY3:
-                exec(open('setup.py').read(), dict(__name__='__main__'))
+                with open('setup.py') as f:
+                    exec(f.read(), dict(__name__='__main__'))
             else:
                 execfile('setup.py', dict(__name__='__main__'))
     finally:
@@ -212,7 +219,7 @@ def test_class_weight_classifiers():
         yield check_class_weight_classifiers, name, Classifier
 
 
-def test_class_weight_auto_classifies():
+def test_class_weight_auto_classifiers():
     """Test that class_weight="auto" improves f1-score"""
 
     # This test is broken; its success depends on:
@@ -249,6 +256,26 @@ def test_class_weight_auto_classifies():
                        X_train, y_train, X_test, y_test, weights)
 
 
+def test_class_weight_auto_linear_classifiers():
+    classifiers = all_estimators(type_filter='classifier')
+
+    with warnings.catch_warnings(record=True):
+        linear_classifiers = [
+            (name, clazz)
+            for name, clazz in classifiers
+            if 'class_weight' in clazz().get_params().keys()
+               and issubclass(clazz, LinearClassifierMixin)]
+
+    for name, Classifier in linear_classifiers:
+        if name == "LogisticRegressionCV":
+            # Contrary to RidgeClassifierCV, LogisticRegressionCV use actual
+            # CV folds and fit a model for each CV iteration before averaging
+            # the coef. Therefore it is expected to not behave exactly as the
+            # other linear model.
+            continue
+        yield check_class_weight_auto_linear_classifier, name, Classifier
+
+
 def test_estimators_overwrite_params():
     # test whether any classifier overwrites his init parameters during fit
     for est_type in ["classifier", "regressor", "transformer"]:
@@ -261,12 +288,14 @@ def test_estimators_overwrite_params():
                 yield check_estimators_overwrite_params, name, Estimator
 
 
+@ignore_warnings
 def test_import_all_consistency():
     # Smoke test to check that any name in a __all__ list is actually defined
     # in the namespace of the module or package.
     pkgs = pkgutil.walk_packages(path=sklearn.__path__, prefix='sklearn.',
                                  onerror=lambda _: None)
-    for importer, modname, ispkg in pkgs:
+    submods = [modname for _, modname, _ in pkgs]
+    for modname in submods + ['sklearn']:
         if ".tests." in modname:
             continue
         package = __import__(modname, fromlist="dummy")
@@ -275,6 +304,15 @@ def test_import_all_consistency():
                 raise AttributeError(
                     "Module '{0}' has no attribute '{1}'".format(
                         modname, name))
+
+
+def test_root_import_all_completeness():
+    EXCEPTIONS = ('utils', 'tests', 'base', 'setup')
+    for _, modname, _ in pkgutil.walk_packages(path=sklearn.__path__,
+                                               onerror=lambda _: None):
+        if '.' in modname or modname.startswith('_') or modname in EXCEPTIONS:
+            continue
+        assert_in(modname, sklearn.__all__)
 
 
 def test_sparsify_estimators():
@@ -298,3 +336,50 @@ def test_sparsify_estimators():
             yield check_sparsify_multiclass_classifier, name, Classifier
         except:
             pass
+
+
+def test_non_transformer_estimators_n_iter():
+    # Test that all estimators of type which are non-transformer
+    # and which have an attribute of max_iter, return the attribute
+    # of n_iter atleast 1.
+    for est_type in ['regressor', 'classifier', 'cluster']:
+        regressors = all_estimators(type_filter=est_type)
+        for name, Estimator in regressors:
+            # LassoLars stops early for the default alpha=1.0 for
+            # the iris dataset.
+            if name == 'LassoLars':
+                estimator = Estimator(alpha=0.)
+            else:
+                estimator = Estimator()
+            if hasattr(estimator, "max_iter"):
+                # These models are dependent on external solvers like
+                # libsvm and accessing the iter parameter is non-trivial.
+                if name in (['Ridge', 'SVR', 'NuSVR', 'NuSVC',
+                             'RidgeClassifier', 'SVC', 'RandomizedLasso',
+                             'LogisticRegressionCV']):
+                    continue
+
+                # Tested in test_transformer_n_iter below
+                elif name in CROSS_DECOMPOSITION or (
+                    name in ['LinearSVC', 'LogisticRegression']
+                    ):
+                    continue
+
+                else:
+                    # Multitask models related to ENet cannot handle
+                    # if y is mono-output.
+                    yield (check_non_transformer_estimators_n_iter,
+                           name, estimator, 'Multi' in name)
+
+
+def test_transformer_n_iter():
+    transformers = all_estimators(type_filter='transformer')
+    for name, Estimator in transformers:
+        estimator = Estimator()
+        # Dependent on external solvers and hence accessing the iter
+        # param is non-trivial.
+        external_solver = ['Isomap', 'KernelPCA', 'LocallyLinearEmbedding',
+                           'RandomizedLasso', 'LogisticRegressionCV']
+
+        if hasattr(estimator, "max_iter") and name not in external_solver:
+            yield check_transformer_n_iter, name, estimator

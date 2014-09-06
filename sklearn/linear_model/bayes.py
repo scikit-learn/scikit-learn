@@ -13,7 +13,7 @@ from scipy import linalg
 from .base import LinearModel
 from ..base import RegressorMixin
 from ..utils.extmath import fast_logdet, pinvh
-from ..utils import check_arrays
+from ..utils import check_X_y
 
 
 ###############################################################################
@@ -73,16 +73,16 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    `coef_` : array, shape = (n_features)
+    coef_ : array, shape = (n_features)
         Coefficients of the regression model (mean of distribution)
 
-    `alpha_` : float
+    alpha_ : float
        estimated precision of the noise.
 
-    `lambda_` : array, shape = (n_features)
+    lambda_ : array, shape = (n_features)
        estimated precisions of the weights.
 
-    `scores_` : float
+    scores_ : float
         if computed, value of the objective function (to be maximized)
 
     Examples
@@ -132,8 +132,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        X, y = check_arrays(X, y, sparse_format='dense',
-                            dtype=np.float)
+        X, y = check_X_y(X, y, dtype=np.float)
         X, y, X_mean, y_mean, X_std = self._center_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X)
         n_samples, n_features = X.shape
@@ -275,19 +274,19 @@ class ARDRegression(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    `coef_` : array, shape = (n_features)
+    coef_ : array, shape = (n_features)
         Coefficients of the regression model (mean of distribution)
 
-    `alpha_` : float
+    alpha_ : float
        estimated precision of the noise.
 
-    `lambda_` : array, shape = (n_features)
+    lambda_ : array, shape = (n_features)
        estimated precisions of the weights.
 
-    `sigma_` : array, shape = (n_features, n_features)
+    sigma_ : array, shape = (n_features, n_features)
         estimated variance-covariance matrix of the weights
 
-    `scores_` : float
+    scores_ : float
         if computed, value of the objective function (to be maximized)
 
     Examples
@@ -343,8 +342,7 @@ class ARDRegression(LinearModel, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        X, y = check_arrays(X, y, sparse_format='dense',
-                            dtype=np.float)
+        X, y = check_X_y(X, y, dtype=np.float)
 
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features)

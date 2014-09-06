@@ -18,6 +18,7 @@ from .empirical_covariance_ import (empirical_covariance, EmpiricalCovariance,
 
 from ..utils import ConvergenceWarning
 from ..utils.extmath import pinvh
+from ..utils.validation import check_random_state
 from ..linear_model import lars_path
 from ..linear_model import cd_fast
 from ..cross_validation import _check_cv as check_cv, cross_val_score
@@ -79,7 +80,7 @@ def alpha_max(emp_cov):
 
 def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                 max_iter=100, verbose=False, return_costs=False,
-                eps=np.finfo(np.float).eps):
+                eps=np.finfo(np.float).eps, return_n_iter=False):
     """l1-penalized covariance estimator
 
     Parameters
@@ -119,6 +120,9 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems.
 
+    return_n_iter : bool, optional
+        Whether or not to return the number of iterations.
+
     Returns
     -------
     covariance : 2D ndarray, shape (n_features, n_features)
@@ -130,6 +134,9 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
     costs : list of (objective, dual_gap) pairs
         The list of values of the objective function and the dual gap at
         each iteration. Returned only if return_costs is True.
+
+    n_iter : int
+        Number of iterations. Returned only if `return_n_iter` is set to True.
 
     See Also
     --------
@@ -152,9 +159,15 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
             cost = - 2. * log_likelihood(emp_cov, precision_)
             cost += n_features * np.log(2 * np.pi)
             d_gap = np.sum(emp_cov * precision_) - n_features
-            return emp_cov, precision_, (cost, d_gap)
+            if return_n_iter:
+                return emp_cov, precision_, (cost, d_gap), 0
+            else:
+                return emp_cov, precision_, (cost, d_gap)
         else:
-            return emp_cov, linalg.inv(emp_cov)
+            if return_n_iter:
+                return emp_cov, linalg.inv(emp_cov), 0
+            else:
+                return emp_cov, linalg.inv(emp_cov)
     if cov_init is None:
         covariance_ = emp_cov.copy()
     else:
@@ -189,7 +202,7 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                                   / (precision_[idx, idx] + 1000 * eps))
                         coefs, _, _, _ = cd_fast.enet_coordinate_descent_gram(
                             coefs, alpha, 0, sub_covariance, row, row,
-                            max_iter, tol)
+                            max_iter, tol, check_random_state(None), False)
                     else:
                         # Use LARS
                         _, _, coefs = lars_path(
@@ -229,9 +242,17 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
         e.args = (e.args[0]
                   + '. The system is too ill-conditioned for this solver',)
         raise e
+
     if return_costs:
-        return covariance_, precision_, costs
-    return covariance_, precision_
+        if return_n_iter:
+            return covariance_, precision_, costs, i + 1
+        else:
+            return covariance_, precision_, costs
+    else:
+        if return_n_iter:
+            return covariance_, precision_, i + 1
+        else:
+            return covariance_, precision_
 
 
 class GraphLasso(EmpiricalCovariance):
@@ -264,11 +285,14 @@ class GraphLasso(EmpiricalCovariance):
 
     Attributes
     ----------
-    `covariance_` : array-like, shape (n_features, n_features)
+    covariance_ : array-like, shape (n_features, n_features)
         Estimated covariance matrix
 
-    `precision_` : array-like, shape (n_features, n_features)
+    precision_ : array-like, shape (n_features, n_features)
         Estimated pseudo inverse matrix.
+
+    n_iter_ : int
+        Number of iterations run.
 
     See Also
     --------
@@ -294,9 +318,10 @@ class GraphLasso(EmpiricalCovariance):
             self.location_ = X.mean(0)
         emp_cov = empirical_covariance(
             X, assume_centered=self.assume_centered)
-        self.covariance_, self.precision_ = graph_lasso(
+        self.covariance_, self.precision_, self.n_iter_ = graph_lasso(
             emp_cov, alpha=self.alpha, mode=self.mode, tol=self.tol,
-            max_iter=self.max_iter, verbose=self.verbose,)
+            max_iter=self.max_iter, verbose=self.verbose,
+            return_n_iter=True)
         return self
 
 
@@ -334,13 +359,13 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
 
     Returns
     -------
-    `covariances_` : List of 2D ndarray, shape (n_features, n_features)
+    covariances_ : List of 2D ndarray, shape (n_features, n_features)
         The estimated covariance matrices.
 
-    `precisions_` : List of 2D ndarray, shape (n_features, n_features)
+    precisions_ : List of 2D ndarray, shape (n_features, n_features)
         The estimated (sparse) precision matrices.
 
-    `scores_` : List of float
+    scores_ : List of float
         The generalisation error (log-likelihood) on the test data.
         Returned only if test data is passed.
     """
@@ -428,20 +453,23 @@ class GraphLassoCV(GraphLasso):
 
     Attributes
     ----------
-    `covariance_` : numpy.ndarray, shape (n_features, n_features)
+    covariance_ : numpy.ndarray, shape (n_features, n_features)
         Estimated covariance matrix.
 
-    `precision_` : numpy.ndarray, shape (n_features, n_features)
+    precision_ : numpy.ndarray, shape (n_features, n_features)
         Estimated precision matrix (inverse covariance).
 
-    `alpha_`: float
+    alpha_ : float
         Penalization parameter selected.
 
-    `cv_alphas_`: list of float
+    cv_alphas_ : list of float
         All penalization parameters explored.
 
     `grid_scores`: 2D numpy.ndarray (n_alphas, n_folds)
         Log-likelihood score on left-out data across folds.
+
+    n_iter_ : int
+        Number of iterations run for the optimal alpha.
 
     See Also
     --------
@@ -590,7 +618,8 @@ class GraphLassoCV(GraphLasso):
         self.cv_alphas_ = alphas
 
         # Finally fit the model with the selected alpha
-        self.covariance_, self.precision_ = graph_lasso(
+        self.covariance_, self.precision_, self.n_iter_ = graph_lasso(
             emp_cov, alpha=best_alpha, mode=self.mode, tol=self.tol,
-            max_iter=self.max_iter, verbose=inner_verbose)
+            max_iter=self.max_iter, verbose=inner_verbose,
+            return_n_iter=True)
         return self

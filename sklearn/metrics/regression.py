@@ -21,7 +21,7 @@ from __future__ import division
 
 import numpy as np
 
-from ..utils.validation import check_arrays
+from ..utils.validation import check_array, check_consistent_length
 from ..utils.validation import column_or_1d
 
 __ALL__ = [
@@ -54,7 +54,9 @@ def _check_reg_targets(y_true, y_pred):
     y_pred : array-like of shape = [n_samples, n_outputs]
         Estimated target values.
     """
-    y_true, y_pred = check_arrays(y_true, y_pred)
+    check_consistent_length(y_true, y_pred)
+    y_true = check_array(y_true, ensure_2d=False)
+    y_pred = check_array(y_pred, ensure_2d=False)
 
     if y_true.ndim == 1:
         y_true = y_true.reshape((-1, 1))

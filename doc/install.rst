@@ -80,11 +80,17 @@ Installing build dependencies
 
 Installing from source requires you to have installed the scikit-learn runtime
 dependencies, Python development headers and a working C/C++ compiler.
-Under Debian-based operating systems, which include Ubuntu,
-you can install all these requirements by issuing::
+Under Debian-based operating systems, which include Ubuntu, if you have
+Python 2 you can install all these requirements by issuing::
 
     sudo apt-get install build-essential python-dev python-setuptools \
                          python-numpy python-scipy \
+                         libatlas-dev libatlas3gf-base
+
+If you have Python 3::
+
+    sudo apt-get install build-essential python3-dev python3-setuptools \
+                         python3-numpy python3-scipy \
                          libatlas-dev libatlas3gf-base
 
 On recent Debian and Ubuntu (e.g. Ubuntu 13.04 or later) make sure that ATLAS
@@ -290,7 +296,7 @@ PATH environment variable.
 
 
 32-bit Python
-~~~~~~~~~~~~~
+-------------
 
 For 32-bit Python it is possible use the standalone installers for
 `Microsoft Visual C++ Express 2008 <http://go.microsoft.com/?linkid=7729279>`_
@@ -306,7 +312,7 @@ folder::
 
 
 64-bit Python
-~~~~~~~~~~~~~
+-------------
 
 For the 64-bit architecture, you either need the full Visual Studio or
 the free Windows SDKs that can be downloaded from the links below.
@@ -348,7 +354,7 @@ Python.
 
 
 Building binary packages and installers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------------
 
 The ``.whl`` package and ``.exe`` installers can be built with::
 
@@ -359,7 +365,7 @@ The resulting packages are generated in the ``dist/`` folder.
 
 
 Using an alternative compiler
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------
 
 It is possible to use `MinGW <http://www.mingw.org>`_ (a port of GCC to Windows
 OS) as an alternative to MSVC for 32-bit Python. Not that extensions built with

@@ -14,7 +14,7 @@ from scipy.sparse.linalg import lobpcg
 from ..base import BaseEstimator
 from ..externals import six
 from ..utils import check_random_state
-from ..utils.validation import atleast2d_or_csr
+from ..utils.validation import check_array
 from ..utils.graph import graph_laplacian
 from ..utils.sparsetools import connected_components
 from ..utils.arpack import eigsh
@@ -264,7 +264,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             warnings.warn("AMG works better for sparse matrices")
         laplacian = laplacian.astype(np.float)  # lobpcg needs native floats
         laplacian = _set_diag(laplacian, 1)
-        ml = smoothed_aggregation_solver(atleast2d_or_csr(laplacian))
+        ml = smoothed_aggregation_solver(check_array(laplacian, 'csr'))
         M = ml.aspreconditioner()
         X = random_state.rand(laplacian.shape[0], n_components + 1)
         X[:, 0] = dd.ravel()
@@ -343,10 +343,10 @@ class SpectralEmbedding(BaseEstimator):
     Attributes
     ----------
 
-    `embedding_` : array, shape = (n_samples, n_components)
+    embedding_ : array, shape = (n_samples, n_components)
         Spectral embedding of the training matrix.
 
-    `affinity_matrix_` : array, shape = (n_samples, n_samples)
+    affinity_matrix_ : array, shape = (n_samples, n_samples)
         Affinity_matrix constructed from samples or precomputed.
 
     References

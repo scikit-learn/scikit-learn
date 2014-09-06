@@ -13,7 +13,7 @@ from ..utils.extmath import cartesian
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import map, range, zip
-from ..utils import array2d
+from ..utils import check_array
 from ..tree._tree import DTYPE
 
 from ._gradient_boosting import _partial_dependence_tree
@@ -133,7 +133,7 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
                          % (gbrt.n_features - 1))
 
     if X is not None:
-        X = array2d(X, dtype=DTYPE, order='C')
+        X = check_array(X, dtype=DTYPE, order='C')
         grid, axes = _grid_from_X(X[:, target_variables], percentiles,
                                   grid_resolution)
     else:
@@ -252,7 +252,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         # regression and binary classification
         label_idx = 0
 
-    X = array2d(X, dtype=DTYPE, order='C')
+    X = check_array(X, dtype=DTYPE, order='C')
     if gbrt.n_features != X.shape[1]:
         raise ValueError('X.shape[1] does not match gbrt.n_features')
 

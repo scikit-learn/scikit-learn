@@ -6,6 +6,7 @@ Extended math utilities.
 #          Alexandre T. Passos
 #          Olivier Grisel
 #          Lars Buitinck
+#          Stefan van der Walt
 # License: BSD 3 clause
 
 from functools import partial
@@ -20,7 +21,7 @@ from .fixes import np_version
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
-from .validation import array2d, NonBLASDotWarning
+from .validation import check_array, NonBLASDotWarning
 
 
 def norm(x):
@@ -54,8 +55,8 @@ def squared_norm(x):
 def row_norms(X, squared=False):
     """Row-wise (squared) Euclidean norm of X.
 
-    Equivalent to (X * X).sum(axis=1), but also supports CSR sparse matrices
-    and does not create an X.shape-sized temporary.
+    Equivalent to np.sqrt((X * X).sum(axis=1)), but also supports CSR sparse
+    matrices and does not create an X.shape-sized temporary.
 
     Performs no input validation.
     """
@@ -86,9 +87,9 @@ def _impose_f_order(X):
     # important to access flags instead of calling np.isfortran,
     # this catches corner cases.
     if X.flags.c_contiguous:
-        return array2d(X.T, copy=False, order='F'), True
+        return check_array(X.T, copy=False, order='F'), True
     else:
-        return array2d(X, copy=False, order='F'), False
+        return check_array(X, copy=False, order='F'), False
 
 
 def _fast_dot(A, B):
@@ -228,8 +229,7 @@ def randomized_range_finder(A, size, n_iter, random_state=None):
 
 
 def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
-                   transpose='auto', flip_sign=True, random_state=0,
-                   n_iterations=None):
+                   transpose='auto', flip_sign=True, random_state=0):
     """Computes a truncated randomized SVD
 
     Parameters
@@ -281,11 +281,6 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
     * A randomized algorithm for the decomposition of matrices
       Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
     """
-    if n_iterations is not None:
-        warnings.warn("n_iterations was renamed to n_iter for consistency "
-                      "and will be removed in 0.16.", DeprecationWarning)
-        n_iter = n_iterations
-
     random_state = check_random_state(random_state)
     n_random = n_components + n_oversamples
     n_samples, n_features = M.shape
@@ -507,24 +502,20 @@ def cartesian(arrays, out=None):
            [3, 5, 6],
            [3, 5, 7]])
 
-    References
-    ----------
-    http://stackoverflow.com/q/1208118
-
     """
-    arrays = [np.asarray(x).ravel() for x in arrays]
+    arrays = [np.asarray(x) for x in arrays]
+    shape = (len(x) for x in arrays)
     dtype = arrays[0].dtype
 
-    n = np.prod([x.size for x in arrays])
-    if out is None:
-        out = np.empty([n, len(arrays)], dtype=dtype)
+    ix = np.indices(shape)
+    ix = ix.reshape(len(arrays), -1).T
 
-    m = n // arrays[0].size
-    out[:, 0] = np.repeat(arrays[0], m)
-    if arrays[1:]:
-        cartesian(arrays[1:], out=out[0:m, 1:])
-        for j in xrange(1, arrays[0].size):
-            out[j * m:(j + 1) * m, 1:] = out[0:m, 1:]
+    if out is None:
+        out = np.empty_like(ix, dtype=dtype)
+
+    for n, arr in enumerate(arrays):
+        out[:, n] = arrays[n][ix[:, n]]
+
     return out
 
 
@@ -560,7 +551,6 @@ def logistic_sigmoid(X, log=False, out=None):
     return fn(X, out)
 
 
-
 def log_logistic(X, out=None):
     """Compute the log of the logistic function, ``log(1 / (1 + e ** -x))``.
 
@@ -591,7 +581,7 @@ def log_logistic(X, out=None):
     http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression/
     """
     is_1d = X.ndim == 1
-    X = array2d(X, dtype=np.float)
+    X = check_array(X, dtype=np.float)
 
     n_samples, n_features = X.shape
 

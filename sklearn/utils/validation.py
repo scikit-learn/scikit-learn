@@ -14,7 +14,6 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..externals import six
-from .fixes import safe_copy
 
 
 class DataConversionWarning(UserWarning):
@@ -54,32 +53,6 @@ def assert_all_finite(X):
     _assert_all_finite(X.data if sp.issparse(X) else X)
 
 
-def safe_asarray(X, dtype=None, order=None, copy=False, force_all_finite=True):
-    """Convert X to an array or CSC/CSR/COO sparse matrix.
-
-    Prevents copying X when possible. Sparse matrices in CSR, CSC and COO
-    formats are passed through. Other sparse formats are converted to CSR
-    (somewhat arbitrarily).
-
-    If a specific compressed sparse format is required, use atleast2d_or_cs{c,r}
-    instead.
-    """
-    if sp.issparse(X):
-        if not isinstance(X, (sp.coo_matrix, sp.csc_matrix, sp.csr_matrix)):
-            X = X.tocsr()
-        elif copy:
-            X = X.copy()
-        if force_all_finite:
-            _assert_all_finite(X.data)
-        # enforces dtype on data array (order should be kept the same).
-        X.data = np.asarray(X.data, dtype=dtype)
-    else:
-        X = np.array(X, dtype=dtype, order=order, copy=copy)
-        if force_all_finite:
-            _assert_all_finite(X)
-    return X
-
-
 def as_float_array(X, copy=True, force_all_finite=True):
     """Converts an array-like to an array of floats
 
@@ -102,67 +75,15 @@ def as_float_array(X, copy=True, force_all_finite=True):
     """
     if isinstance(X, np.matrix) or (not isinstance(X, np.ndarray)
                                     and not sp.issparse(X)):
-        return safe_asarray(X, dtype=np.float64, copy=copy,
-                            force_all_finite=force_all_finite)
+        return check_array(X, ['csr', 'csc', 'coo'], dtype=np.float64,
+                           copy=copy, force_all_finite=force_all_finite,
+                           ensure_2d=False)
     elif sp.issparse(X) and X.dtype in [np.float32, np.float64]:
         return X.copy() if copy else X
     elif X.dtype in [np.float32, np.float64]:  # is numpy array
         return X.copy('F' if X.flags['F_CONTIGUOUS'] else 'C') if copy else X
     else:
         return X.astype(np.float32 if X.dtype == np.int32 else np.float64)
-
-
-def array2d(X, dtype=None, order=None, copy=False, force_all_finite=True):
-    """Returns at least 2-d array with data from X"""
-    if sp.issparse(X):
-        raise TypeError('A sparse matrix was passed, but dense data '
-                        'is required. Use X.toarray() to convert to dense.')
-    X_2d = np.asarray(np.atleast_2d(X), dtype=dtype, order=order)
-    if force_all_finite:
-        _assert_all_finite(X_2d)
-    if X is X_2d and copy:
-        X_2d = safe_copy(X_2d)
-    return X_2d
-
-
-def _atleast2d_or_sparse(X, dtype, order, copy, sparse_class, convmethod,
-                         check_same_type, force_all_finite):
-    if sp.issparse(X):
-        if check_same_type(X) and X.dtype == dtype:
-            X = getattr(X, convmethod)(copy=copy)
-        elif dtype is None or X.dtype == dtype:
-            X = getattr(X, convmethod)()
-        else:
-            X = sparse_class(X, dtype=dtype)
-        if force_all_finite:
-            _assert_all_finite(X.data)
-        X.data = np.array(X.data, copy=False, order=order)
-    else:
-        X = array2d(X, dtype=dtype, order=order, copy=copy,
-                    force_all_finite=force_all_finite)
-    return X
-
-
-def atleast2d_or_csc(X, dtype=None, order=None, copy=False,
-                     force_all_finite=True):
-    """Like numpy.atleast_2d, but converts sparse matrices to CSC format.
-
-    Also, converts np.matrix to np.ndarray.
-    """
-    return _atleast2d_or_sparse(X, dtype, order, copy, sp.csc_matrix,
-                                "tocsc", sp.isspmatrix_csc,
-                                force_all_finite)
-
-
-def atleast2d_or_csr(X, dtype=None, order=None, copy=False,
-                     force_all_finite=True):
-    """Like numpy.atleast_2d, but converts sparse matrices to CSR format
-
-    Also, converts np.matrix to np.ndarray.
-    """
-    return _atleast2d_or_sparse(X, dtype, order, copy, sp.csr_matrix,
-                                "tocsr", sp.isspmatrix_csr,
-                                force_all_finite)
 
 
 def _num_samples(x):
@@ -175,125 +96,236 @@ def _num_samples(x):
     return x.shape[0] if hasattr(x, 'shape') else len(x)
 
 
-def check_arrays(*arrays, **options):
+def check_consistent_length(*arrays):
     """Check that all arrays have consistent first dimensions.
 
     Checks whether all objects in arrays have the same shape or length.
-    By default lists and tuples are converted to numpy arrays.
-
-    It is possible to enforce certain properties, such as dtype, continguity
-    and sparse matrix format (if a sparse matrix is passed).
-
-    Converting lists to arrays can be disabled by setting ``force_arrays=False``.
-    Lists or pandas dataframes can then contain arbitrary objects and are not
-    checked for dtype, finiteness or anything else but length. Arrays are still
-    checked and possibly converted.
-
 
     Parameters
     ----------
-    *arrays : sequence of arrays or scipy.sparse matrices with same shape[0]
-        Python lists or tuples occurring in arrays are converted to 1D numpy
-        arrays, unless force_arrays=False is specified.
-
-    sparse_format : 'csr', 'csc' or 'dense', None by default
-        If not None, any scipy.sparse matrix is converted to
-        Compressed Sparse Rows or Compressed Sparse Columns representations.
-        If 'dense', an error is raised when a sparse array is
-        passed.
-
-    copy : boolean, False by default
-        If copy is True, ensure that returned arrays are copies of the original
-        (if not already converted to another format earlier in the process).
-
-    check_ccontiguous : boolean, False by default
-        Check that the arrays are C contiguous
-
-    dtype : a numpy dtype instance, None by default
-        Enforce a specific dtype.
-
-    force_arrays : bool, default=True
-        Allow lists of arbitrary objects as input, just check their length.
-        Disables
-
-    allow_nans : boolean, False by default
-        Allows nans in the arrays
-
-    allow_nd : boolean, False by default
-        Allows arrays of more than 2 dimensions.
+    arrays : list or tuple of input objects.
+        Objects that will be checked for consistent length.
     """
-    sparse_format = options.pop('sparse_format', None)
-    if sparse_format not in (None, 'csr', 'csc', 'dense'):
-        raise ValueError('Unexpected sparse format: %r' % sparse_format)
-    copy = options.pop('copy', False)
-    check_ccontiguous = options.pop('check_ccontiguous', False)
-    dtype = options.pop('dtype', None)
-    force_arrays = options.pop('force_arrays', True)
-    allow_nans = options.pop('allow_nans', False)
-    allow_nd = options.pop('allow_nd', False)
 
-    if options:
-        raise TypeError("Unexpected keyword arguments: %r" % options.keys())
+    uniques = np.unique([_num_samples(X) for X in arrays if X is not None])
+    if len(uniques) > 1:
+        raise ValueError("Found arrays with inconsistent numbers of samples: %s"
+                         % str(uniques))
 
-    if len(arrays) == 0:
-        return None
 
-    n_samples = _num_samples(arrays[0])
+def indexable(*iterables):
+    """Make arrays indexable for cross-validation.
 
-    checked_arrays = []
-    for array in arrays:
-        array_orig = array
-        if array is None:
-            # special case: ignore optional y=None kwarg pattern
-            checked_arrays.append(array)
-            continue
-        size = _num_samples(array)
+    Checks consistent length, passes through None, and ensures that everything
+    can be indexed by converting sparse matrices to csr and converting
+    non-interable objects to arrays.
 
-        if size != n_samples:
-            raise ValueError("Found array with dim %d. Expected %d"
-                             % (size, n_samples))
+    Parameters
+    ----------
+    iterables : lists, dataframes, arrays, sparse matrices
+        List of objects to ensure sliceability.
+    """
+    result = []
+    for X in iterables:
+        if sp.issparse(X):
+            result.append(X.tocsr())
+        elif hasattr(X, "__getitem__") or hasattr(X, "iloc"):
+            result.append(X)
+        elif X is None:
+            result.append(X)
+        else:
+            result.append(np.array(X))
+    check_consistent_length(*result)
+    return result
 
-        if (force_arrays or hasattr(array, "__array__")
-                or hasattr(array, "shape")):
-            if sp.issparse(array):
-                if sparse_format == 'csr':
-                    array = array.tocsr()
-                elif sparse_format == 'csc':
-                    array = array.tocsc()
-                elif sparse_format == 'dense':
-                    raise TypeError('A sparse matrix was passed, but dense '
-                                    'data is required. Use X.toarray() to '
-                                    'convert to a dense numpy array.')
-                if check_ccontiguous:
-                    array.data = np.ascontiguousarray(array.data, dtype=dtype)
-                elif hasattr(array, 'data'):
-                    array.data = np.asarray(array.data, dtype=dtype)
-                elif array.dtype != dtype:
-                    # Cast on the required dtype
-                    array = array.astype(dtype)
-                if not allow_nans:
-                    if hasattr(array, 'data'):
-                        _assert_all_finite(array.data)
-                    else:
-                        # DOK sparse matrices
-                        _assert_all_finite(array.values())
-            else:
-                if check_ccontiguous:
-                    array = np.ascontiguousarray(array, dtype=dtype)
-                elif dtype is not None or force_arrays:
-                    array = np.asarray(array, dtype=dtype)
-                if not allow_nans:
-                    _assert_all_finite(array)
 
-            if force_arrays and not allow_nd and array.ndim >= 3:
-                raise ValueError("Found array with dim %d. Expected <= 2" %
-                                 array.ndim)
+def _ensure_sparse_format(spmatrix, accept_sparse, dtype, order, copy,
+                          force_all_finite):
+    """Convert a sparse matrix to a given format.
 
-        if copy and array is array_orig:
-            array = array.copy()
-        checked_arrays.append(array)
+    Checks the sparse format of spmatrix and converts if necessary.
 
-    return checked_arrays
+    Parameters
+    ----------
+    spmatrix : scipy sparse matrix
+        Input to validate and convert.
+
+    accept_sparse : string, list of string or None (default=None)
+        String[s] representing allowed sparse matrix formats ('csc',
+        'csr', 'coo', 'dok', 'bsr', 'lil', 'dia'). None means that sparse
+        matrix input will raise an error.  If the input is sparse but not in
+        the allowed format, it will be converted to the first listed format.
+
+    dtype : string, type or None (default=none)
+        Data type of result. If None, the dtype of the input is preserved.
+
+    order : 'F', 'C' or None (default=None)
+        Whether an array will be forced to be fortran or c-style.
+
+    copy : boolean (default=False)
+        Whether a forced copy will be triggered. If copy=False, a copy might
+        be triggered by a conversion.
+
+    force_all_finite : boolean (default=True)
+        Whether to raise an error on np.inf and np.nan in X.
+
+    Returns
+    -------
+    spmatrix_converted : scipy sparse matrix.
+        Matrix that is ensured to have an allowed type.
+    """
+    if accept_sparse is None:
+        raise TypeError('A sparse matrix was passed, but dense '
+                        'data is required. Use X.toarray() to '
+                        'convert to a dense numpy array.')
+    sparse_type = spmatrix.format
+    if dtype is None:
+        dtype = spmatrix.dtype
+    if sparse_type in accept_sparse:
+        # correct type
+        if dtype == spmatrix.dtype:
+            # correct dtype
+            if copy:
+                spmatrix = spmatrix.copy()
+        else:
+            # convert dtype
+            spmatrix = spmatrix.astype(dtype)
+    else:
+        # create new
+        spmatrix = spmatrix.asformat(accept_sparse[0]).astype(dtype)
+    if force_all_finite:
+        if not hasattr(spmatrix, "data"):
+            warnings.warn("Can't check %s sparse matrix for nan or inf."
+                          % spmatrix.format)
+        else:
+            _assert_all_finite(spmatrix.data)
+    if hasattr(spmatrix, "data"):
+        spmatrix.data = np.array(spmatrix.data, copy=False, order=order)
+    return spmatrix
+
+
+def check_array(array, accept_sparse=None, dtype=None, order=None, copy=False,
+                force_all_finite=True, ensure_2d=True, allow_nd=False):
+    """Input validation on an array, list, sparse matrix or similar.
+
+    By default, the input is converted to an at least 2nd numpy array.
+
+    Parameters
+    ----------
+    array : object
+        Input object to check / convert.
+
+    accept_sparse : string, list of string or None (default=None)
+        String[s] representing allowed sparse matrix formats, such as 'csc',
+        'csr', etc.  None means that sparse matrix input will raise an error.
+        If the input is sparse but not in the allowed format, it will be
+        converted to the first listed format.
+
+    dtype : string, type or None (default=none)
+        Data type of result. If None, the dtype of the input is preserved.
+
+    order : 'F', 'C' or None (default=None)
+        Whether an array will be forced to be fortran or c-style.
+
+    copy : boolean (default=False)
+        Whether a forced copy will be triggered. If copy=False, a copy might
+        be triggered by a conversion.
+
+    force_all_finite : boolean (default=True)
+        Whether to raise an error on np.inf and np.nan in X.
+
+    ensure_2d : boolean (default=True)
+        Whether to make X at least 2d.
+
+    allow_nd : boolean (default=False)
+        Whether to allow X.ndim > 2.
+
+    Returns
+    -------
+    X_converted : object
+        The converted and validated X.
+    """
+    if isinstance(accept_sparse, str):
+        accept_sparse = [accept_sparse]
+
+    if sp.issparse(array):
+        array = _ensure_sparse_format(array, accept_sparse, dtype, order,
+                                      copy, force_all_finite)
+    else:
+        if ensure_2d:
+            array = np.atleast_2d(array)
+        array = np.array(array, dtype=dtype, order=order, copy=copy)
+        if not allow_nd and array.ndim >= 3:
+            raise ValueError("Found array with dim %d. Expected <= 2" %
+                             array.ndim)
+        if force_all_finite:
+            _assert_all_finite(array)
+
+    return array
+
+
+def check_X_y(X, y, accept_sparse=None, dtype=None, order=None, copy=False,
+              force_all_finite=True, ensure_2d=True, allow_nd=False,
+              multi_output=False):
+    """Input validation for standard estimators.
+
+    Checks X and y for consistent length, enforces X 2d and y 1d.
+    Standard input checks are only applied to y. For multi-label y,
+    set multi_ouput=True to allow 2d and sparse y.
+
+    Parameters
+    ----------
+    X : nd-array, list or sparse matrix
+        Input data.
+
+    y : nd-array, list or sparse matrix
+        Labels.
+
+    accept_sparse : string, list of string or None (default=None)
+        String[s] representing allowed sparse matrix formats, such as 'csc',
+        'csr', etc.  None means that sparse matrix input will raise an error.
+        If the input is sparse but not in the allowed format, it will be
+        converted to the first listed format.
+
+    dtype : string, type or None (default=none)
+        Data type of result. If None, the dtype of the input is preserved.
+
+    order : 'F', 'C' or None (default=None)
+        Whether an array will be forced to be fortran or c-style.
+
+    copy : boolean (default=False)
+        Whether a forced copy will be triggered. If copy=False, a copy might
+        be triggered by a conversion.
+
+    force_all_finite : boolean (default=True)
+        Whether to raise an error on np.inf and np.nan in X.
+
+    ensure_2d : boolean (default=True)
+        Whether to make X at least 2d.
+
+    allow_nd : boolean (default=False)
+        Whether to allow X.ndim > 2.
+
+    multi_output : boolean (default=False)
+        Whether to allow 2-d y (array or sparse matrix). If false, y will be
+        validated as a vector.
+
+    Returns
+    -------
+    X_converted : object
+        The converted and validated X.
+    """
+    X = check_array(X, accept_sparse, dtype, order, copy, force_all_finite,
+                    ensure_2d, allow_nd)
+    if multi_output:
+        y = check_array(y, 'csr', force_all_finite=True, ensure_2d=False)
+    else:
+        y = column_or_1d(y, warn=True)
+        _assert_all_finite(y)
+
+    check_consistent_length(X, y)
+
+    return X, y
 
 
 def column_or_1d(y, warn=False):

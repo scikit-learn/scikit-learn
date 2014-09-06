@@ -184,8 +184,8 @@ for another implementation::
     >>> clf = linear_model.Lasso(alpha = 0.1)
     >>> clf.fit([[0, 0], [1, 1]], [0, 1])
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-       normalize=False, positive=False, precompute='auto', tol=0.0001,
-       warm_start=False)
+       normalize=False, positive=False, precompute='auto', random_state=None,
+       selection='cyclic', tol=0.0001, warm_start=False)
     >>> clf.predict([[1, 1]])
     array([ 0.8])
 
@@ -649,10 +649,10 @@ rather than regression. Logistic regression is also known in the literature as
 logit regression, maximum-entropy classification (MaxEnt)
 or the log-linear classifier. In this model, the probabilities describing the possible outcomes of a single trial are modeled using a `logistic function <http://en.wikipedia.org/wiki/Logistic_function>`_.
 
-The implementation of logistic regression in scikit-learn can be accessed from 
-class :class:`LogisticRegression`. This 
+The implementation of logistic regression in scikit-learn can be accessed from
+class :class:`LogisticRegression`. This
 implementation can fit a multiclass (one-vs-rest) logistic regression with optional
-L2 or L1 regularization. 
+L2 or L1 regularization.
 
 As an optimization problem, binary class L2 penalized logistic regression minimizes
 the following cost function:
@@ -663,15 +663,37 @@ Similarly, L1 regularized logistic regression solves the following optimization 
 
 .. math:: \underset{w, c}{min\,} \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
 
-L1 penalization yields sparse predicting weights.
-For L1 penalization :func:`sklearn.svm.l1_min_c` allows to calculate
-the lower bound for C in order to get a non "null" (all feature weights to
-zero) model.
+The solvers implemented in the class :class:`LogisticRegression`
+are "liblinear" (which is a wrapper around the C++ library,
+LIBLINEAR), "newton-cg" and "lbfgs".
 
-The implementation of Logistic Regression relies on the excellent
+The lbfgs and newton-cg solvers only support L2 penalization and are found
+to converge faster for some high dimensional data. L1 penalization yields
+sparse predicting weights.
+
+Several estimators are available for logistic regression.
+
+:class:`LogisticRegression` has an option of using three solvers,
+"liblinear", "lbfgs" and "newton-cg".
+
+The solver "liblinear" uses a coordinate descent (CD) algorithm based on
+Liblinear. For L1 penalization :func:`sklearn.svm.l1_min_c` allows to
+calculate the lower bound for C in order to get a non "null" (all feature weights to
+zero) model. This relies on the excellent
 `LIBLINEAR library <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_,
-which is shipped with scikit-learn.
+which is shipped with scikit-learn. However, the CD algorithm implemented in
+liblinear cannot learn a true multinomial (multiclass) model;
+instead, the optimization problem is decomposed in a "one-vs-rest" fashion
+so separate binary classifiers are trained for all classes.
+This happens under the hood, so :class:`LogisticRegression` instances
+using this solver behave as multiclass classifiers.
 
+Setting `multi_class` to "multinomial" with the "lbfgs" solver
+in :class:`LogisticRegression` learns a true multinomial logistic
+regression model, which means that its probability estimates should
+be better calibrated than the default "one-vs-rest" setting.
+L-BFGS cannot optimize L1-penalized models, though,
+so the "multinomial" setting does not learn sparse models.
 
 .. topic:: Examples:
 
@@ -679,11 +701,34 @@ which is shipped with scikit-learn.
 
   * :ref:`example_linear_model_plot_logistic_path.py`
 
+.. _liblinear_differences:
+
+.. topic:: Differences from liblinear:
+
+   There might be a difference in the scores obtained between
+   :class:`LogisticRegression` with ``solver=liblinear``
+   or :class:`LinearSVC` and the external liblinear library directly,
+   when ``fit_intercept=False`` and the fit ``coef_`` (or) the data to
+   be predicted are zeroes. This is because for the sample(s) with
+   ``decision_function`` zero, :class:`LogisticRegression` and :class:`LinearSVC`
+   predict the negative class, while liblinear predicts the positive class.
+   Note that a model with ``fit_intercept=False`` and having many samples with
+   ``decision_function`` zero, is likely to be a underfit, bad model and you are
+   advised to set ``fit_intercept=True`` and increase the intercept_scaling.
+
 .. note:: **Feature selection with sparse logistic regression**
 
    A logistic regression with L1 penalty yields sparse models, and can
    thus be used to perform feature selection, as detailed in
    :ref:`l1_feature_selection`.
+
+:class:`LogisticRegressionCV` implements Logistic Regression with
+builtin cross-validation to find out the optimal C parameter. In
+general the "newton-cg" and "lbfgs" solvers are found to be faster
+due to warm-starting. For the multiclass case, if `multi_class`
+option is set to "ovr", an optimal C is obtained for each class and if
+the `multi_class` option is set to "multinomial", an optimal C is
+obtained that minimizes the cross-entropy loss.
 
 
 Stochastic Gradient Descent - SGD

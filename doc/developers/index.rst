@@ -214,8 +214,9 @@ and are viewable in a web browser. See the README file in the doc/ directory
 for more information.
 
 For building the documentation, you will need `sphinx
-<http://sphinx.pocoo.org/>`_ and `matplotlib
-<http://matplotlib.sourceforge.net/>`_.
+<http://sphinx.pocoo.org/>`_,
+`matplotlib <http://matplotlib.sourceforge.net/>`_ and
+`pillow <http://pillow.readthedocs.org/en/latest/>`_.
 
 **When you are writing documentation**, it is important to keep a good
 compromise between mathematical and algorithmic details, and give
@@ -401,10 +402,9 @@ do *not* use ``np.asanyarray`` or ``np.atleast_2d``, since those let NumPy's
 (e.g., ``*`` means dot product on ``np.matrix``,
 but Hadamard product on ``np.ndarray``).
 
-In other cases, be sure to call :func:`safe_asarray`, :func:`atleast2d_or_csr`,
-:func:`as_float_array` or :func:`array2d` on any array-like argument passed to a
-scikit-learn API function. The exact function to use depends mainly on whether
-``scipy.sparse`` matrices must be accepted.
+In other cases, be sure to call :func:`check_array` on any array-like argument
+passed to a scikit-learn API function. The exact parameters to use depends
+mainly on whether and which ``scipy.sparse`` matrices must be accepted.
 
 For more information, refer to the :ref:`developers-utils` page.
 
@@ -490,7 +490,7 @@ E.g., if the function ``zero_one`` is renamed to ``zero_one_loss``,
 we add the decorator ``deprecated`` (from ``sklearn.utils``)
 to ``zero_one`` and call ``zero_one_loss`` from that function::
 
-    from ..utils import check_arrays, deprecated
+    from ..utils import deprecated
 
     def zero_one_loss(y_true, y_pred, normalize=True):
         # actual implementation

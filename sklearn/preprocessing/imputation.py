@@ -9,9 +9,7 @@ from scipy import sparse
 from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import array2d
-from ..utils import atleast2d_or_csr
-from ..utils import atleast2d_or_csc
+from ..utils import check_array
 from ..utils import as_float_array
 from ..utils.fixes import astype
 
@@ -130,7 +128,7 @@ class Imputer(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `statistics_` : array of shape (n_features,)
+    statistics_ : array of shape (n_features,)
         The imputation fill value for each feature if axis == 0.
 
     Notes
@@ -178,7 +176,8 @@ class Imputer(BaseEstimator, TransformerMixin):
         # transform(X), the imputation data will be computed in transform()
         # when the imputation is done per sample (i.e., when axis=1).
         if self.axis == 0:
-            X = atleast2d_or_csc(X, dtype=np.float64, force_all_finite=False)
+            X = check_array(X, accept_sparse='csc', dtype=np.float64,
+                            force_all_finite=False)
 
             if sparse.issparse(X):
                 self.statistics_ = self._sparse_fit(X,
@@ -275,7 +274,7 @@ class Imputer(BaseEstimator, TransformerMixin):
 
     def _dense_fit(self, X, strategy, missing_values, axis):
         """Fit the transformer on dense data."""
-        X = array2d(X, force_all_finite=False)
+        X = check_array(X, force_all_finite=False)
         mask = _get_mask(X, missing_values)
         masked_X = ma.masked_array(X, mask=mask)
 
@@ -339,7 +338,8 @@ class Imputer(BaseEstimator, TransformerMixin):
         # transform(X), the imputation data need to be recomputed
         # when the imputation is done per sample
         if self.axis == 1:
-            X = atleast2d_or_csr(X, force_all_finite=False, copy=False)
+            X = check_array(X, accept_sparse='csr', force_all_finite=False,
+                            copy=False)
 
             if sparse.issparse(X):
                 statistics = self._sparse_fit(X,
@@ -353,7 +353,8 @@ class Imputer(BaseEstimator, TransformerMixin):
                                              self.missing_values,
                                              self.axis)
         else:
-            X = atleast2d_or_csc(X, force_all_finite=False, copy=False)
+            X = check_array(X, accept_sparse='csc', force_all_finite=False,
+                            copy=False)
             statistics = self.statistics_
 
         # Delete the invalid rows/columns

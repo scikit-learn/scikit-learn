@@ -24,7 +24,7 @@ from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
-from .utils import array2d, atleast2d_or_csr, column_or_1d, check_arrays
+from .utils import check_X_y, check_array
 from .utils.extmath import safe_sparse_dot, logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
 from .externals import six
@@ -112,16 +112,16 @@ class GaussianNB(BaseNB):
 
     Attributes
     ----------
-    `class_prior_` : array, shape (n_classes,)
+    class_prior_ : array, shape (n_classes,)
         probability of each class.
 
-    `class_count_` : array, shape (n_classes,)
+    class_count_ : array, shape (n_classes,)
         number of training samples observed in each class.
 
-    `theta_` : array, shape (n_classes, n_features)
+    theta_ : array, shape (n_classes, n_features)
         mean of each feature per class
 
-    `sigma_` : array, shape (n_classes, n_features)
+    sigma_ : array, shape (n_classes, n_features)
         variance of each feature per class
 
     Examples
@@ -159,7 +159,7 @@ class GaussianNB(BaseNB):
         self : object
             Returns self.
         """
-        X, y = check_arrays(X, y)
+        X, y = check_X_y(X, y)
         return self._partial_fit(X, y, np.unique(y), _refit=True)
 
     @staticmethod
@@ -281,8 +281,7 @@ class GaussianNB(BaseNB):
             Returns self.
         """
 
-        X, y = check_arrays(X, y, sparse_format='dense')
-        y = column_or_1d(y, warn=True)
+        X, y = check_X_y(X, y)
         epsilon = 1e-9
 
         if _refit:
@@ -320,11 +319,11 @@ class GaussianNB(BaseNB):
         return self
 
     def _joint_log_likelihood(self, X):
-        X = array2d(X)
+        X = check_array(X)
         joint_log_likelihood = []
         for i in range(np.size(self.classes_)):
             jointi = np.log(self.class_prior_[i])
-            n_ij = - 0.5 * np.sum(np.log(np.pi * self.sigma_[i, :]))
+            n_ij = - 0.5 * np.sum(np.log(2. * np.pi * self.sigma_[i, :]))
             n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) /
                                  (self.sigma_[i, :]), 1)
             joint_log_likelihood.append(jointi + n_ij)
@@ -393,7 +392,7 @@ class BaseDiscreteNB(BaseNB):
         self : object
             Returns self.
         """
-        X = atleast2d_or_csr(X, dtype=np.float64)
+        X = check_array(X, accept_sparse='csr', dtype=np.float64)
         _, n_features = X.shape
 
         if _check_partial_fit_first_call(self, classes):
@@ -417,7 +416,7 @@ class BaseDiscreteNB(BaseNB):
         # convert to float to support sample weight consistently
         Y = Y.astype(np.float64)
         if sample_weight is not None:
-            Y *= array2d(sample_weight).T
+            Y *= check_array(sample_weight).T
 
         # Count raw events from data before updating the class log prior
         # and feature log probas
@@ -451,8 +450,7 @@ class BaseDiscreteNB(BaseNB):
         self : object
             Returns self.
         """
-        X, y = check_arrays(X, y, sparse_format='csr')
-        y = column_or_1d(y, warn=True)
+        X, y = check_X_y(X, y, 'csr')
         _, n_features = X.shape
 
         labelbin = LabelBinarizer()
@@ -465,7 +463,7 @@ class BaseDiscreteNB(BaseNB):
         # this means we also don't have to cast X to floating point
         Y = Y.astype(np.float64)
         if sample_weight is not None:
-            Y *= array2d(sample_weight).T
+            Y *= check_array(sample_weight).T
 
         class_prior = self.class_prior
 
@@ -519,26 +517,26 @@ class MultinomialNB(BaseDiscreteNB):
 
     Attributes
     ----------
-    `class_log_prior_` : array, shape (n_classes, )
+    class_log_prior_ : array, shape (n_classes, )
         Smoothed empirical log probability for each class.
 
-    `intercept_` : property
+    intercept_ : property
         Mirrors ``class_log_prior_`` for interpreting MultinomialNB
         as a linear model.
 
-    `feature_log_prob_`: array, shape (n_classes, n_features)
+    feature_log_prob_ : array, shape (n_classes, n_features)
         Empirical log probability of features
         given a class, ``P(x_i|y)``.
 
-    `coef_` : property
+    coef_ : property
         Mirrors ``feature_log_prob_`` for interpreting MultinomialNB
         as a linear model.
 
-    `class_count_` : array, shape (n_classes,)
+    class_count_ : array, shape (n_classes,)
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
-    `feature_count_` : array, shape (n_classes, n_features)
+    feature_count_ : array, shape (n_classes, n_features)
         Number of samples encountered for each (class, feature)
         during fitting. This value is weighted by the sample weight when
         provided.
@@ -591,7 +589,7 @@ class MultinomialNB(BaseDiscreteNB):
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
         return (safe_sparse_dot(X, self.feature_log_prob_.T)
                 + self.class_log_prior_)
 
@@ -623,17 +621,17 @@ class BernoulliNB(BaseDiscreteNB):
 
     Attributes
     ----------
-    `class_log_prior_` : array, shape = [n_classes]
+    class_log_prior_ : array, shape = [n_classes]
         Log probability of each class (smoothed).
 
-    `feature_log_prob_` : array, shape = [n_classes, n_features]
+    feature_log_prob_ : array, shape = [n_classes, n_features]
         Empirical log probability of features given a class, P(x_i|y).
 
-    `class_count_` : array, shape = [n_classes]
+    class_count_ : array, shape = [n_classes]
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
-    `feature_count_` : array, shape = [n_classes, n_features]
+    feature_count_ : array, shape = [n_classes, n_features]
         Number of samples encountered for each (class, feature)
         during fitting. This value is weighted by the sample weight when
         provided.
@@ -691,7 +689,7 @@ class BernoulliNB(BaseDiscreteNB):
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
 
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
 
         if self.binarize is not None:
             X = binarize(X, threshold=self.binarize)

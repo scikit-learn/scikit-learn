@@ -7,7 +7,7 @@ import numpy as np
 from scipy import interpolate
 from scipy.stats import spearmanr
 from .base import BaseEstimator, TransformerMixin, RegressorMixin
-from .utils import as_float_array, check_arrays
+from .utils import as_float_array, check_array, check_consistent_length
 from ._isotonic import _isotonic_regression
 import warnings
 import math
@@ -71,7 +71,7 @@ def check_increasing(x, y):
 
 
 def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
-                        weight=None, increasing=True):
+                        increasing=True):
     """Solve the isotonic regression model::
 
         min sum w[i] (y[i] - y_[i]) ** 2
@@ -104,7 +104,7 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
 
     Returns
     -------
-    `y_` : list of floating-point values
+    y_ : list of floating-point values
         Isotonic fit of y.
 
     References
@@ -112,12 +112,6 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
     "Active set algorithms for isotonic regression; A unifying framework"
     by Michael J. Best and Nilotpal Chakravarti, section 3.
     """
-    if weight is not None:
-        warnings.warn("'weight' was renamed to 'sample_weight' and will "
-                      "be removed in 0.16.",
-                      DeprecationWarning)
-        sample_weight = weight
-
     y = np.asarray(y, dtype=np.float)
     if sample_weight is None:
         sample_weight = np.ones(len(y), dtype=y.dtype)
@@ -190,19 +184,19 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
     Attributes
     ----------
-    `X_` : ndarray (n_samples, )
+    X_ : ndarray (n_samples, )
         A copy of the input X.
 
-    `y_` : ndarray (n_samples, )
+    y_ : ndarray (n_samples, )
         Isotonic fit of y.
 
-    `X_min_` : float
+    X_min_ : float
         Minimum value of input array `X_` for left bound.
 
-    `X_max_` : float
+    X_max_ : float
         Maximum value of input array `X_` for right bound.
 
-    `f_` : function
+    f_ : function
         The stepwise interpolating function that covers the domain
         X_.
 
@@ -239,8 +233,11 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
     def _build_y(self, X, y, sample_weight):
         """Build the y_ IsotonicRegression."""
-        X, y, sample_weight = check_arrays(X, y, sample_weight,
-                                           sparse_format='dense')
+        check_consistent_length(X, y, sample_weight)
+        X, y = [check_array(x, ensure_2d=False) for x in [X, y]]
+        if sample_weight is not None:
+            sample_weight = check_array(sample_weight, ensure_2d=False)
+
         y = as_float_array(y)
         self._check_fit_data(X, y, sample_weight)
 
@@ -258,7 +255,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         return order_inv
 
-    def fit(self, X, y, sample_weight=None, weight=None):
+    def fit(self, X, y, sample_weight=None):
         """Fit the model using X, y as training data.
 
         Parameters
@@ -283,14 +280,8 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         X is stored for future use, as `transform` needs X to interpolate
         new input data.
         """
-        if weight is not None:
-            warnings.warn("'weight' was renamed to 'sample_weight' and will "
-                          "be removed in 0.16.",
-                          DeprecationWarning)
-            sample_weight = weight
-
         # Build y_
-        order_inv = self._build_y(X, y, sample_weight)
+        self._build_y(X, y, sample_weight)
 
         # Handle the left and right bounds on X
         self.X_min_ = np.min(self.X_)
@@ -311,7 +302,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         Returns
         -------
-        `T_` : array, shape=(n_samples,)
+        T_ : array, shape=(n_samples,)
             The transformed data
         """
         T = as_float_array(T)
@@ -328,7 +319,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             T = np.clip(T, self.X_min_, self.X_max_)
         return self.f_(T)
 
-    def fit_transform(self, X, y, sample_weight=None, weight=None):
+    def fit_transform(self, X, y, sample_weight=None):
         """Fit model and transform y by linear interpolation.
 
         Parameters
@@ -345,7 +336,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         Returns
         -------
-        `y_` : array, shape=(n_samples,)
+        y_ : array, shape=(n_samples,)
             The transformed data.
 
         Notes
@@ -354,12 +345,6 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         for future use, as `transform` needs X to interpolate new input
         data.
         """
-        if weight is not None:
-            warnings.warn("'weight' was renamed to 'sample_weight' and will "
-                          "be removed in 0.16.",
-                          DeprecationWarning)
-            sample_weight = weight
-
         # Build y_
         order_inv = self._build_y(X, y, sample_weight)
 
@@ -382,7 +367,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         Returns
         -------
-        `T_` : array, shape=(n_samples,)
+        T_ : array, shape=(n_samples,)
             Transformed data.
         """
         return self.transform(T)

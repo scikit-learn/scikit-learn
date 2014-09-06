@@ -223,15 +223,15 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     Attributes
     ----------
-    `estimators_` : list of `n_classes` estimators
+    estimators_ : list of `n_classes` estimators
         Estimators used for predictions.
 
-    `classes_` : array, shape = [`n_classes`]
+    classes_ : array, shape = [`n_classes`]
         Class labels.
-    `label_binarizer_` : LabelBinarizer object
+    label_binarizer_ : LabelBinarizer object
         Object used to transform multiclass labels to binary labels and
         vice-versa.
-    `multilabel_` : boolean
+    multilabel_ : boolean
         Whether a OneVsRestClassifier is a multilabel classifier.
     """
 
@@ -269,7 +269,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         # of spawning threads.  See joblib issue #112.
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(delayed(_fit_binary)
              (self.estimator, X, column,
-              classes=["not %s" % i, self.label_binarizer_.classes_[i]])
+              classes=["not %s" % self.label_binarizer_.classes_[i],
+                       self.label_binarizer_.classes_[i]])
               for i, column in enumerate(columns))
 
         return self
@@ -459,10 +460,10 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     Attributes
     ----------
-    `estimators_` : list of `n_classes * (n_classes - 1) / 2` estimators
+    estimators_ : list of `n_classes * (n_classes - 1) / 2` estimators
         Estimators used for predictions.
 
-    `classes_` : numpy array of shape [n_classes]
+    classes_ : numpy array of shape [n_classes]
         Array containing labels.
     """
 
@@ -565,7 +566,7 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None, n_jobs=1):
     classes : numpy array of shape [n_classes]
         Array containing labels.
 
-    `code_book_`: numpy array of shape [n_classes, code_size]
+    code_book_ : numpy array of shape [n_classes, code_size]
         Binary array containing the code of each class.
     """
     ecoc =  OutputCodeClassifier(estimator, random_state=random_state,
@@ -621,13 +622,13 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     Attributes
     ----------
-    `estimators_` : list of `int(n_classes * code_size)` estimators
+    estimators_ : list of `int(n_classes * code_size)` estimators
         Estimators used for predictions.
 
-    `classes_` : numpy array of shape [n_classes]
+    classes_ : numpy array of shape [n_classes]
         Array containing labels.
 
-    `code_book_` : numpy array of shape [n_classes, code_size]
+    code_book_ : numpy array of shape [n_classes, code_size]
         Binary array containing the code of each class.
 
     References

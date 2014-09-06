@@ -14,7 +14,7 @@ from scipy import linalg
 import scipy.sparse as sp
 
 from ..preprocessing import MultiLabelBinarizer
-from ..utils import array2d, check_random_state
+from ..utils import check_array, check_random_state
 from ..utils import shuffle as util_shuffle
 from ..utils.fixes import astype
 from ..utils.random import sample_without_replacement
@@ -76,7 +76,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         The number of redundant features. These features are generated as
         random linear combinations of the informative features.
 
-    n_repeated : int, optional (default=2)
+    n_repeated : int, optional (default=0)
         The number of duplicated features, drawn randomly from the informative
         and the redundant features.
 
@@ -138,6 +138,11 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     ----------
     .. [1] I. Guyon, "Design of experiments for the NIPS 2003 variable
            selection benchmark", 2003.
+
+    See also
+    --------
+    make_blobs: simplified variant
+    make_multilabel_classification: unrelated generator for multilabel tasks
     """
     generator = check_random_state(random_state)
 
@@ -244,6 +249,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
                                    n_labels=2, length=50, allow_unlabeled=True,
                                    sparse=False, return_indicator=False,
+                                   return_distributions=False,
                                    random_state=None):
     """Generate a random multilabel classification problem.
 
@@ -269,11 +275,15 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
         The number of classes of the classification problem.
 
     n_labels : int, optional (default=2)
-        The average number of labels per instance. Number of labels follows
-        a Poisson distribution that never takes the value 0.
+        The average number of labels per instance. More precisely, the number
+        of labels per sample is drawn from a Poisson distribution with
+        ``n_labels`` as its expected value, but samples are bounded (using
+        rejection sampling) by ``n_classes``, and must be nonzero if
+        ``allow_unlabeled`` is False.
 
     length : int, optional (default=50)
-        Sum of the features (number of words if documents).
+        The sum of the features (number of words if documents) is drawn from
+        a Poisson distribution with this expected value.
 
     allow_unlabeled : bool, optional (default=True)
         If ``True``, some instances might not belong to any class.
@@ -284,6 +294,11 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     return_indicator : bool, optional (default=False),
         If ``True``, return ``Y`` in the binary indicator format, else
         return a tuple of lists of labels.
+
+    return_distributions : bool, optional (default=False)
+        If ``True``, return the prior class probability and conditional
+        probabilities of features given classes, from which the data was
+        drawn.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -298,6 +313,14 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
 
     Y : tuple of lists or array of shape [n_samples, n_classes]
         The label sets.
+
+    p_c : array, shape [n_classes]
+        The probability of each class being drawn. Only returned if
+        ``return_distributions=True``.
+
+    p_w_c : array, shape [n_features, n_classes]
+        The probability of each feature being drawn given each class.
+        Only returned if ``return_distributions=True``.
 
     """
     generator = check_random_state(random_state)
@@ -367,6 +390,8 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
                       '0.17.',
                       DeprecationWarning)
 
+    if return_distributions:
+        return X, Y, p_c, p_w_c
     return X, Y
 
 
@@ -402,6 +427,10 @@ def make_hastie_10_2(n_samples=12000, random_state=None):
     ----------
     .. [1] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
            Learning Ed. 2", Springer, 2009.
+
+    See also
+    --------
+    make_gaussian_quantiles: a generalization of this dataset approach
     """
     rs = check_random_state(random_state)
 
@@ -420,7 +449,7 @@ def make_regression(n_samples=100, n_features=100, n_informative=10,
     """Generate a random regression problem.
 
     The input set can either be well conditioned (by default) or have a low
-    rank-fat tail singular profile. See the `make_low_rank_matrix` for
+    rank-fat tail singular profile. See :func:`make_low_rank_matrix` for
     more details.
 
     The output is generated by applying a (potentially biased) random linear
@@ -688,6 +717,10 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
     (10, 2)
     >>> y
     array([0, 0, 1, 0, 2, 2, 2, 1, 1, 0])
+
+    See also
+    --------
+    make_classification: a more intricate variant
     """
     generator = check_random_state(random_state)
 
@@ -695,7 +728,7 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
         centers = generator.uniform(center_box[0], center_box[1],
                                     size=(centers, n_features))
     else:
-        centers = array2d(centers)
+        centers = check_array(centers)
         n_features = centers.shape[1]
 
     X = []
@@ -1106,6 +1139,10 @@ def make_spd_matrix(n_dim, random_state=None):
     -------
     X : array of shape [n_dim, n_dim]
         The random symmetric, positive-definite matrix.
+
+    See also
+    --------
+    make_sparse_spd_matrix
     """
     generator = check_random_state(random_state)
 
@@ -1144,6 +1181,10 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
     The sparsity is actually imposed on the cholesky factor of the matrix.
     Thus alpha does not translate directly into the filling fraction of
     the matrix itself.
+
+    See also
+    --------
+    make_spd_matrix
     """
     random_state = check_random_state(random_state)
 
@@ -1407,6 +1448,9 @@ def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
         of the seventh ACM SIGKDD international conference on Knowledge
         discovery and data mining (pp. 269-274). ACM.
 
+    See also
+    --------
+    make_checkerboard
     """
     generator = check_random_state(random_state)
     n_rows, n_cols = shape
@@ -1494,6 +1538,9 @@ def make_checkerboard(shape, n_clusters, noise=0.0, minval=10,
         Spectral biclustering of microarray data: coclustering genes
         and conditions. Genome research, 13(4), 703-716.
 
+    See also
+    --------
+    make_biclusters
     """
     generator = check_random_state(random_state)
 

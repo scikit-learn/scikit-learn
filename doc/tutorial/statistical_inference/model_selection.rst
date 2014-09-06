@@ -99,7 +99,7 @@ of the computer.
 
     - Split it K folds, train on K-1 and then test on left-out
 
-    - It preserves the class ratios / label distribution within each fold. 
+    - It preserves the class ratios / label distribution within each fold.
 
     - Leave one observation out
 
@@ -155,7 +155,7 @@ estimator during the construction and exposes an estimator API::
     0.94228356336260977
 
 
-By default, the :class:`GridSearchCV` uses a 3-fold cross-validation. However, 
+By default, the :class:`GridSearchCV` uses a 3-fold cross-validation. However,
 if it detects that a classifier is passed, rather than a regressor, it uses
 a stratified 3-fold.
 
@@ -196,7 +196,8 @@ automatically by cross-validation::
     >>> lasso.fit(X_diabetes, y_diabetes)
     LassoCV(alphas=None, copy_X=True, cv=None, eps=0.001, fit_intercept=True,
         max_iter=1000, n_alphas=100, n_jobs=1, normalize=False, positive=False,
-        precompute='auto', tol=0.0001, verbose=False)
+        precompute='auto', random_state=None, selection='cyclic', tol=0.0001,
+        verbose=False)
     >>> # The estimator chose automatically its lambda:
     >>> lasso.alpha_ # doctest: +ELLIPSIS
     0.01229...
@@ -213,7 +214,7 @@ appended to their name.
    **Bonus**: How much can you trust the selection of alpha?
 
    .. literalinclude:: ../../auto_examples/exercises/plot_cv_diabetes.py
-       :lines: 11-22
+       :lines: 17-24
 
    **Solution:** :ref:`example_exercises_plot_cv_diabetes.py`
 

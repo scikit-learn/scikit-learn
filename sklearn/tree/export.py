@@ -9,15 +9,13 @@ This module defines export functions for decision trees.
 #          Satrajit Gosh <satrajit.ghosh@gmail.com>
 # Licence: BSD 3 clause
 
-from warnings import warn
-
 from ..externals import six
 
 from . import _tree
 
 
 def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
-                    max_depth=None, close=None):
+                    max_depth=None):
     """Export a decision tree in DOT format.
 
     This function generates a GraphViz representation of the decision tree,
@@ -54,10 +52,6 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
     >>> tree.export_graphviz(clf,
     ...     out_file='tree.dot')                # doctest: +SKIP
     """
-    if close is not None:
-        warn("The close parameter is deprecated as of version 0.14 "
-             "and will be removed in 0.16.", DeprecationWarning)
-
     def node_to_str(tree, node_id, criterion):
         if not isinstance(criterion, six.string_types):
             criterion = "impurity"

@@ -17,7 +17,7 @@ from .kd_tree import KDTree
 from ..base import BaseEstimator
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from ..utils import safe_asarray, atleast2d_or_csr, check_arrays
+from ..utils import check_X_y, check_array
 from ..utils.fixes import argpartition
 from ..utils.validation import DataConversionWarning
 from ..externals import six
@@ -98,13 +98,23 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     def _init_params(self, n_neighbors=None, radius=None,
                      algorithm='auto', leaf_size=30, metric='minkowski',
-                     p=2, **kwargs):
+                     p=2, metric_params=None, **kwargs):
+        if kwargs:
+            warnings.warn("Passing additional arguments to the metric "
+                          "function as **kwargs is deprecated "
+                          "and will no longer be supported in 0.18. "
+                          "Use metric_params instead.",
+                          DeprecationWarning, stacklevel=3)
+            if metric_params is None:
+                metric_params = {}
+            metric_params.update(kwargs)
+
         self.n_neighbors = n_neighbors
         self.radius = radius
         self.algorithm = algorithm
         self.leaf_size = leaf_size
         self.metric = metric
-        self.metric_kwds = kwargs
+        self.metric_params = metric_params
         self.p = p
 
         if algorithm not in ['auto', 'brute',
@@ -126,24 +136,35 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("Metric '%s' not valid for algorithm '%s'"
                              % (metric, algorithm))
 
-        if self.metric in ['wminkowski', 'minkowski']:
-            self.metric_kwds['p'] = p
-            if p < 1:
-                raise ValueError("p must be greater than one "
-                                 "for minkowski metric")
+        if self.metric_params is not None and 'p' in self.metric_params:
+            warnings.warn("Parameter p is found in metric_params. "
+                          "The corresponding parameter from __init__ "
+                          "is ignored.", SyntaxWarning, stacklevel=3)
+            effective_p = metric_params['p']
+        else:
+            effective_p = self.p
+
+        if self.metric in ['wminkowski', 'minkowski'] and effective_p < 1:
+            raise ValueError("p must be greater than one for minkowski metric")
 
         self._fit_X = None
         self._tree = None
         self._fit_method = None
 
     def _fit(self, X):
-        self.effective_metric_ = self.metric
-        self.effective_metric_kwds_ = self.metric_kwds
+        if self.metric_params is None:
+            self.effective_metric_params_ = {}
+        else:
+            self.effective_metric_params_ = self.metric_params.copy()
 
+        effective_p = self.effective_metric_params_.get('p', self.p)
+        if self.metric in ['wminkowski', 'minkowski']:
+            self.effective_metric_params_['p'] = effective_p
+
+        self.effective_metric_ = self.metric
         # For minkowski distance, use more efficient methods where available
         if self.metric == 'minkowski':
-            self.effective_metric_kwds_ = self.metric_kwds.copy()
-            p = self.effective_metric_kwds_.pop('p', 2)
+            p = self.effective_metric_params_.pop('p', 2)
             if p < 1:
                 raise ValueError("p must be greater than one "
                                  "for minkowski metric")
@@ -154,7 +175,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             elif p == np.inf:
                 self.effective_metric_ = 'chebyshev'
             else:
-                self.effective_metric_kwds_['p'] = p
+                self.effective_metric_params_['p'] = p
 
         if isinstance(X, NeighborsBase):
             self._fit_X = X._fit_X
@@ -174,7 +195,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             self._fit_method = 'kd_tree'
             return self
 
-        X = atleast2d_or_csr(X, copy=False)
+        X = check_array(X, accept_sparse='csr')
 
         n_samples = X.shape[0]
         if n_samples == 0:
@@ -210,11 +231,11 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         if self._fit_method == 'ball_tree':
             self._tree = BallTree(X, self.leaf_size,
                                   metric=self.effective_metric_,
-                                  **self.effective_metric_kwds_)
+                                  **self.effective_metric_params_)
         elif self._fit_method == 'kd_tree':
             self._tree = KDTree(X, self.leaf_size,
                                 metric=self.effective_metric_,
-                                **self.effective_metric_kwds_)
+                                **self.effective_metric_params_)
         elif self._fit_method == 'brute':
             self._tree = None
         else:
@@ -279,7 +300,7 @@ class KNeighborsMixin(object):
         if self._fit_method is None:
             raise ValueError("must fit neighbors before querying")
 
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
@@ -292,7 +313,7 @@ class KNeighborsMixin(object):
             else:
                 dist = pairwise_distances(X, self._fit_X,
                                           self.effective_metric_,
-                                          **self.effective_metric_kwds_)
+                                          **self.effective_metric_params_)
 
             neigh_ind = argpartition(dist, n_neighbors - 1, axis=1)
             neigh_ind = neigh_ind[:, :n_neighbors]
@@ -354,7 +375,7 @@ class KNeighborsMixin(object):
         --------
         NearestNeighbors.radius_neighbors_graph
         """
-        X = safe_asarray(X)
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
@@ -442,7 +463,7 @@ class RadiusNeighborsMixin(object):
         if self._fit_method is None:
             raise ValueError("must fit neighbors before querying")
 
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
 
         if radius is None:
             radius = self.radius
@@ -456,7 +477,7 @@ class RadiusNeighborsMixin(object):
             else:
                 dist = pairwise_distances(X, self._fit_X,
                                           self.effective_metric_,
-                                          **self.effective_metric_kwds_)
+                                          **self.effective_metric_params_)
             neigh_ind = [np.where(d < radius)[0] for d in dist]
 
             # if there are the same number of neighbors for each point,
@@ -534,7 +555,7 @@ class RadiusNeighborsMixin(object):
         --------
         kneighbors_graph
         """
-        X = safe_asarray(X)
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
         if radius is None:
             radius = self.radius
@@ -582,7 +603,7 @@ class SupervisedFloatMixin(object):
              or [n_samples, n_outputs]
         """
         if not isinstance(X, (KDTree, BallTree)):
-            X, y = check_arrays(X, y, sparse_format="csr")
+            X, y = check_X_y(X, y, "csr", multi_output=True)
         self._y = y
         return self._fit(X)
 
@@ -601,7 +622,7 @@ class SupervisedIntegerMixin(object):
 
         """
         if not isinstance(X, (KDTree, BallTree)):
-            X, y = check_arrays(X, y, sparse_format="csr")
+            X, y = check_X_y(X, y, "csr", multi_output=True)
 
         if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
             if y.ndim != 1:

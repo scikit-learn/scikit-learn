@@ -19,6 +19,7 @@ import sys
 import gzip
 import posixpath
 import subprocess
+from textwrap import dedent
 
 
 # Try Python 2 first, otherwise load from Python 3
@@ -467,7 +468,11 @@ def generate_example_rst(app):
         examples.
     """
     root_dir = os.path.join(app.builder.srcdir, 'auto_examples')
-    example_dir = os.path.abspath(app.builder.srcdir + '/../' + 'examples')
+    example_dir = os.path.abspath(os.path.join(app.builder.srcdir, '..',
+                                               'examples'))
+    generated_dir = os.path.abspath(os.path.join(app.builder.srcdir,
+                                                 'modules', 'generated'))
+
     try:
         plot_gallery = eval(app.builder.config.plot_gallery)
     except TypeError:
@@ -476,10 +481,12 @@ def generate_example_rst(app):
         os.makedirs(example_dir)
     if not os.path.exists(root_dir):
         os.makedirs(root_dir)
+    if not os.path.exists(generated_dir):
+        os.makedirs(generated_dir)
 
     # we create an index.rst with all examples
     fhindex = open(os.path.join(root_dir, 'index.rst'), 'w')
-    #Note: The sidebar button has been removed from the examples page for now
+    # Note: The sidebar button has been removed from the examples page for now
     #      due to how it messes up the layout. Will be fixed at a later point
     fhindex.write("""\
 
@@ -489,128 +496,12 @@ def generate_example_rst(app):
 
 
     <style type="text/css">
-
     div#sidebarbutton {
-        display: none;
+        /* hide the sidebar collapser, while ensuring vertical arrangement */
+        width: 0px;
+        overflow: hidden;
     }
-
-    .figure {
-        float: left;
-        margin: 10px;
-        -webkit-border-radius: 10px; /* Saf3-4, iOS 1-3.2, Android <1.6 */
-        -moz-border-radius: 10px; /* FF1-3.6 */
-        border-radius: 10px; /* Opera 10.5, IE9, Saf5, Chrome, FF4, iOS 4, Android 2.1+ */
-        border: 2px solid #fff;
-        background-color: white;
-        /* --> Thumbnail image size */
-        width: 150px;
-        height: 100px;
-        -webkit-background-size: 150px 100px; /* Saf3-4 */
-        -moz-background-size: 150px 100px; /* FF3.6 */
-    }
-
-    .figure img {
-        display: inline;
-    }
-
-    div.docstringWrapper p.caption {
-        display: block;
-        -webkit-box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.0);
-        -moz-box-shadow: 0px 0px 20px rgba(0, 0, 0, .0); /* FF3.5 - 3.6 */
-        box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.0); /* Opera 10.5, IE9, FF4+, Chrome 10+ */
-        padding: 0px;
-        border: white;
-    }
-
-    div.docstringWrapper p {
-        display: none;
-        background-color: white;
-        -webkit-box-shadow: 0px 0px 20px rgba(0, 0, 0, 1.00);
-        -moz-box-shadow: 0px 0px 20px rgba(0, 0, 0, 1.00); /* FF3.5 - 3.6 */
-        box-shadow: 0px 0px 20px rgba(0, 0, 0, 1.00); /* Opera 10.5, IE9, FF4+, Chrome 10+ */
-        padding: 13px;
-        margin-top: 0px;
-        border-style: solid;
-        border-width: 1px;
-    }
-
-
     </style>
-
-
-.. raw:: html
-
-
-        <script type="text/javascript">
-
-        function animateClone(e){
-          var position;
-          position = $(this).position();
-          var clone = $(this).closest('.thumbnailContainer').find('.clonedItem');
-          var clone_fig = clone.find('.figure');
-          clone.css("left", position.left - 70).css("top", position.top - 70).css("position", "absolute").css("z-index", 1000).css("background-color", "white");
-
-          var cloneImg = clone_fig.find('img');
-
-          clone.show();
-          clone.animate({
-                height: "270px",
-                width: "320px"
-            }, 0
-          );
-          cloneImg.css({
-                'max-height': "200px",
-                'max-width': "280px"
-          });
-          cloneImg.animate({
-                height: "200px",
-                width: "280px"
-            }, 0
-           );
-          clone_fig.css({
-               'margin-top': '20px',
-          });
-          clone_fig.show();
-          clone.find('p').css("display", "block");
-          clone_fig.css({
-               height: "240",
-               width: "305px"
-          });
-          cloneP_height = clone.find('p.caption').height();
-          clone_fig.animate({
-               height: (200 + cloneP_height)
-           }, 0
-          );
-
-          clone.bind("mouseleave", function(e){
-              clone.animate({
-                  height: "100px",
-                  width: "150px"
-              }, 10, function(){$(this).hide();});
-              clone_fig.animate({
-                  height: "100px",
-                  width: "150px"
-              }, 10, function(){$(this).hide();});
-          });
-        } //end animateClone()
-
-
-        $(window).load(function () {
-            $(".figure").css("z-index", 1);
-
-            $(".docstringWrapper").each(function(i, obj){
-                var clone;
-                var $obj = $(obj);
-                clone = $obj.clone();
-                clone.addClass("clonedItem");
-                clone.appendTo($obj.closest(".thumbnailContainer"));
-                clone.hide();
-                $obj.bind("mouseenter", animateClone);
-            }); // end each
-        }); // end
-
-        </script>
-
 
 
 Examples
@@ -620,10 +511,11 @@ Examples
 """)
     # Here we don't use an os.walk, but we recurse only twice: flat is
     # better than nested.
-    generate_dir_rst('.', fhindex, example_dir, root_dir, plot_gallery)
+    seen_backrefs = set()
+    generate_dir_rst('.', fhindex, example_dir, root_dir, plot_gallery, seen_backrefs)
     for dir in sorted(os.listdir(example_dir)):
         if os.path.isdir(os.path.join(example_dir, dir)):
-            generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery)
+            generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery, seen_backrefs)
     fhindex.flush()
 
 
@@ -665,7 +557,47 @@ def line_count_sort(file_list, target_dir):
     return np.array(unsorted[index][:, 0]).tolist()
 
 
-def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
+def _thumbnail_div(subdir, full_dir, fname, snippet):
+    """Generates RST to place a thumbnail in a gallery"""
+    thumb = os.path.join(full_dir, 'images', 'thumb', fname[:-3] + '.png')
+    link_name = os.path.join(full_dir, fname).replace(os.path.sep, '_')
+    ref_name = os.path.join(subdir, fname).replace(os.path.sep, '_')
+    if ref_name.startswith('._'):
+        ref_name = ref_name[2:]
+    out = []
+    out.append("""
+
+.. raw:: html
+
+
+    <div class="thumbnailContainer">
+        <div class="docstringWrapper">
+
+
+""")
+
+    out.append('.. figure:: %s\n' % thumb)
+    if link_name.startswith('._'):
+        link_name = link_name[2:]
+    if full_dir != '.':
+        out.append('   :target: ./%s/%s.html\n\n' % (full_dir, fname[:-3]))
+    else:
+        out.append('   :target: ./%s.html\n\n' % link_name[:-3])
+    out.append("""   :ref:`example_%s`
+
+
+.. raw:: html
+
+
+    <p>%s
+    </p></div>
+    </div>
+
+""" % (ref_name, snippet))
+    return ''.join(out)
+
+
+def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery, seen_backrefs):
     """ Generate the rst file for an example directory.
     """
     if not dir == '.':
@@ -675,12 +607,8 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
         target_dir = root_dir
         src_dir = example_dir
     if not os.path.exists(os.path.join(src_dir, 'README.txt')):
-        print(80 * '_')
-        print('Example directory %s does not have a README.txt file' %
-               src_dir)
-        print('Skipping this directory')
-        print(80 * '_')
-        return
+        raise ValueError('Example directory %s does not have a README.txt' %
+                         src_dir)
 
     fhindex.write("""
 
@@ -697,51 +625,36 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
         os.makedirs(os.path.join(dir, 'images', 'thumb'))
     for fname in sorted_listdir:
         if fname.endswith('py'):
-            generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery)
+            backrefs = generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery)
             new_fname = os.path.join(src_dir, fname)
-            _, fdocstring, _ = extract_docstring(new_fname, True)
-            thumb = os.path.join(dir, 'images', 'thumb', fname[:-3] + '.png')
-            link_name = os.path.join(dir, fname).replace(os.path.sep, '_')
+            _, snippet, _ = extract_docstring(new_fname, True)
+            fhindex.write(_thumbnail_div(dir, dir, fname, snippet))
             fhindex.write("""
-
-.. raw:: html
-
-
-    <div class="thumbnailContainer">
-        <div class="docstringWrapper">
-
-
-""")
-
-            fhindex.write('.. figure:: %s\n' % thumb)
-            if link_name.startswith('._'):
-                link_name = link_name[2:]
-            if dir != '.':
-                fhindex.write('   :target: ./%s/%s.html\n\n' % (dir,
-                                                                fname[:-3]))
-            else:
-                fhindex.write('   :target: ./%s.html\n\n' % link_name[:-3])
-            fhindex.write("""   :ref:`example_%s`
-
-
-.. raw:: html
-
-
-    <p>%s
-    </p></div>
-    </div>
-
 
 .. toctree::
    :hidden:
 
    %s/%s
 
-""" % (link_name, fdocstring, dir, fname[:-3]))
+""" % (dir, fname[:-3]))
+            for backref in backrefs:
+                include_path = os.path.join(root_dir, '../modules/generated/%s.examples' % backref)
+                seen = backref in seen_backrefs
+                with open(include_path, 'a' if seen else 'w') as ex_file:
+                    if not seen:
+                        # heading
+                        print(file=ex_file)
+                        print('Examples using ``%s``' % backref, file=ex_file)
+                        print('-----------------%s--' % ('-' * len(backref)),
+                              file=ex_file)
+                        print(file=ex_file)
+                    rel_dir = os.path.join('../../auto_examples', dir)
+                    ex_file.write(_thumbnail_div(dir, rel_dir, fname, snippet))
+                    seen_backrefs.add(backref)
     fhindex.write("""
 .. raw:: html
 
-    <div style="clear: both"></div>
+    <div class="clearer"></div>
     """)  # clear at the end of the section
 
 # modules for which we embed links into example code
@@ -881,6 +794,8 @@ def identify_names(code):
 
 def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
     """ Generate the rst file for a given example.
+
+    Returns the set of sklearn functions/classes imported in the example.
     """
     base_image_name = os.path.splitext(fname)[0]
     image_fname = '%s_%%03d.png' % base_image_name
@@ -955,7 +870,7 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
                     my_stdout = my_stdout.replace(
                         my_globals['__doc__'],
                         '')
-                my_stdout = my_stdout.strip()
+                my_stdout = my_stdout.strip().expandtabs()
                 if my_stdout:
                     stdout = '**Script output**::\n\n  %s\n\n' % (
                         '\n  '.join(my_stdout.split('\n')))
@@ -969,13 +884,13 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
                 #    incrementally: 1, 2, 3 and not 1, 2, 5)
                 # * iterate over [fig_mngr.num for fig_mngr in
                 #   matplotlib._pylab_helpers.Gcf.get_all_fig_managers()]
-                for fig_num in (fig_mngr.num for fig_mngr in
-                    matplotlib._pylab_helpers.Gcf.get_all_fig_managers()):
+                fig_managers = matplotlib._pylab_helpers.Gcf.get_all_fig_managers()
+                for fig_mngr in fig_managers:
                     # Set the fig_num figure as the current figure as we can't
                     # save a figure that's not the current figure.
-                    plt.figure(fig_num)
-                    plt.savefig(image_path % fig_num)
-                    figure_list.append(image_fname % fig_num)
+                    plt.figure(fig_mngr.num)
+                    plt.savefig(image_path % fig_mngr.num)
+                    figure_list.append(image_fname % fig_mngr.num)
             except:
                 print(80 * '_')
                 print('%s is not compiling:' % fname)
@@ -994,7 +909,7 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
 
         # generate thumb file
         this_template = plot_rst_template
-        car_thumb_path =  os.path.join(os.path.split(root_dir)[0], '_build/html/stable/_images/')
+        car_thumb_path = os.path.join(os.path.split(root_dir)[0], '_build/html/stable/_images/')
         # Note: normaly, make_thumbnail is used to write to the path contained in `thumb_file`
         # which is within `auto_examples/../images/thumbs` depending on the example.
         # Because the carousel has different dimensions than those of the examples gallery,
@@ -1044,6 +959,11 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
         codeobj_fname = example_file[:-3] + '_codeobj.pickle'
         with open(codeobj_fname, 'wb') as fid:
             pickle.dump(example_code_obj, fid, pickle.HIGHEST_PROTOCOL)
+
+    backrefs = set('{module_short}.{name}'.format(**entry)
+                   for entry in example_code_obj.values()
+                   if entry['module'].startswith('sklearn'))
+    return backrefs
 
 
 def embed_code_links(app, exception):
@@ -1108,7 +1028,7 @@ def embed_code_links(app, exception):
 
                     # ensure greediness
                     names = sorted(str_repl, key=len, reverse=True)
-                    expr = re.compile(r'(?<!\.)\b' +  # don't follow . or word
+                    expr = re.compile(r'(?<!\.>)' +  # don't follow '.' or '>'
                                       '|'.join(re.escape(name)
                                                for name in names))
 

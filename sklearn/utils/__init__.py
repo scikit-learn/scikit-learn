@@ -8,22 +8,20 @@ from scipy.sparse import issparse
 import warnings
 
 from .murmurhash import murmurhash3_32
-from .validation import (as_float_array, check_arrays, safe_asarray,
-                         assert_all_finite, array2d, atleast2d_or_csc,
-                         atleast2d_or_csr, warn_if_not_float,
-                         check_random_state, column_or_1d)
+from .validation import (as_float_array,
+                         assert_all_finite, warn_if_not_float,
+                         check_random_state, column_or_1d, check_array,
+                         check_consistent_length, check_X_y, indexable)
 from .class_weight import compute_class_weight
-from sklearn.utils.sparsetools import minimum_spanning_tree
 
 
-__all__ = ["murmurhash3_32", "as_float_array", "check_arrays", "safe_asarray",
-           "assert_all_finite", "array2d", "atleast2d_or_csc",
-           "atleast2d_or_csr",
+__all__ = ["murmurhash3_32", "as_float_array",
+           "assert_all_finite", "check_array",
            "warn_if_not_float",
            "check_random_state",
            "compute_class_weight",
-           "minimum_spanning_tree",
-           "column_or_1d", "safe_indexing"]
+           "column_or_1d", "safe_indexing",
+           "check_consistent_length", "check_X_y", 'indexable']
 
 
 class deprecated(object):
@@ -150,7 +148,12 @@ def safe_indexing(X, indices):
         # Pandas Dataframes and Series
         return X.iloc[indices]
     elif hasattr(X, "shape"):
-        return X[indices]
+        if hasattr(X, 'take') and (hasattr(indices, 'dtype') and
+                                   indices.dtype.kind == 'i'):
+            # This is often substantially faster than X[indices]
+            return X.take(indices, axis=0)
+        else:
+            return X[indices]
     else:
         return [X[idx] for idx in indices]
 
@@ -238,7 +241,9 @@ def resample(*arrays, **options):
         raise ValueError("Cannot sample %d out of arrays with dim %d" % (
             max_n_samples, n_samples))
 
-    arrays = check_arrays(*arrays, sparse_format='csr')
+    check_consistent_length(*arrays)
+    arrays = [check_array(x, accept_sparse='csr', ensure_2d=False)
+              for x in arrays]
 
     if replace:
         indices = random_state.randint(0, n_samples, size=(max_n_samples,))
@@ -333,7 +338,7 @@ def safe_sqr(X, copy=True):
     -------
     X ** 2 : element wise square
     """
-    X = safe_asarray(X)
+    X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
     if issparse(X):
         if copy:
             X = X.copy()

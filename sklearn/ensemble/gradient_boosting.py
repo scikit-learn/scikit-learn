@@ -35,7 +35,7 @@ from .base import BaseEnsemble
 from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
-from ..utils import check_random_state, array2d, check_arrays, column_or_1d
+from ..utils import check_random_state, check_array, check_X_y, column_or_1d
 from ..utils.extmath import logsumexp
 from ..externals import six
 from ..feature_selection.from_model import _LearntSelectorMixin
@@ -389,7 +389,7 @@ class BinomialDeviance(LossFunction):
         y = y.take(terminal_region, axis=0)
 
         numerator = residual.sum()
-        denominator = np.sum((y - residual) * (1 - y + residual))
+        denominator = np.dot(y - residual, 1 - y + residual)
 
         if denominator == 0.0:
             tree.value[leaf, 0, 0] = 0.0
@@ -751,8 +751,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             self._clear_state()
 
         # Check input
-        X, = check_arrays(X, dtype=DTYPE, sparse_format="dense")
-        y = column_or_1d(y, warn=True)
+        X, y = check_X_y(X, y, dtype=DTYPE)
         n_samples, n_features = X.shape
         self.n_features = n_features
         random_state = check_random_state(self.random_state)
@@ -823,6 +822,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             verbose_reporter.init(self, begin_at_stage)
 
         # perform boosting iterations
+        i = begin_at_stage
         for i in range(begin_at_stage, self.n_estimators):
 
             # subsampling
@@ -895,7 +895,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             Regression and binary classification produce an array of shape
             [n_samples].
         """
-        X = array2d(X, dtype=DTYPE, order="C")
+        X = check_array(X, dtype=DTYPE, order="C")
         score = self._decision_function(X)
         if score.shape[1] == 1:
             return score.ravel()
@@ -920,7 +920,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             Regression and binary classification are special cases with
             ``k == 1``, otherwise ``k==n_classes``.
         """
-        X = array2d(X, dtype=DTYPE, order="C")
+        X = check_array(X, dtype=DTYPE, order="C")
         score = self._init_decision_function(X)
         for i in range(self.estimators_.shape[0]):
             predict_stage(self.estimators_, i, X, self.learning_rate, score)
@@ -1051,34 +1051,34 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
     Attributes
     ----------
-    `feature_importances_` : array, shape = [n_features]
+    feature_importances_ : array, shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
-    `oob_improvement_` : array, shape = [n_estimators]
+    oob_improvement_ : array, shape = [n_estimators]
         The improvement in loss (= deviance) on the out-of-bag samples
         relative to the previous iteration.
         ``oob_improvement_[0]`` is the improvement in
         loss of the first stage over the ``init`` estimator.
 
-    `oob_score_` : array, shape = [n_estimators]
+    oob_score_ : array, shape = [n_estimators]
         Score of the training dataset obtained using an out-of-bag estimate.
         The i-th score ``oob_score_[i]`` is the deviance (= loss) of the
         model at iteration ``i`` on the out-of-bag sample.
         Deprecated: use `oob_improvement_` instead.
 
-    `train_score_` : array, shape = [n_estimators]
+    train_score_ : array, shape = [n_estimators]
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the
         model at iteration ``i`` on the in-bag sample.
         If ``subsample == 1`` this is the deviance on the training data.
 
-    `loss_` : LossFunction
+    loss_ : LossFunction
         The concrete ``LossFunction`` object.
 
     `init` : BaseEstimator
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 
-    `estimators_`: list of DecisionTreeRegressor
+    estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
 
     See also
@@ -1323,34 +1323,34 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     Attributes
     ----------
-    `feature_importances_` : array, shape = [n_features]
+    feature_importances_ : array, shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
-    `oob_improvement_` : array, shape = [n_estimators]
+    oob_improvement_ : array, shape = [n_estimators]
         The improvement in loss (= deviance) on the out-of-bag samples
         relative to the previous iteration.
         ``oob_improvement_[0]`` is the improvement in
         loss of the first stage over the ``init`` estimator.
 
-    `oob_score_` : array, shape = [n_estimators]
+    oob_score_ : array, shape = [n_estimators]
         Score of the training dataset obtained using an out-of-bag estimate.
         The i-th score ``oob_score_[i]`` is the deviance (= loss) of the
         model at iteration ``i`` on the out-of-bag sample.
         Deprecated: use `oob_improvement_` instead.
 
-    `train_score_` : array, shape = [n_estimators]
+    train_score_ : array, shape = [n_estimators]
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the
         model at iteration ``i`` on the in-bag sample.
         If ``subsample == 1`` this is the deviance on the training data.
 
-    `loss_` : LossFunction
+    loss_ : LossFunction
         The concrete ``LossFunction`` object.
 
     `init` : BaseEstimator
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 
-    `estimators_`: list of DecisionTreeRegressor
+    estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
 
     See also
