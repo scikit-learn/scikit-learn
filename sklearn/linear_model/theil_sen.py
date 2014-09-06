@@ -19,36 +19,9 @@ from scipy.linalg.lapack import get_lapack_funcs
 from .base import LinearModel
 from ..base import RegressorMixin
 from ..utils import check_array, check_random_state, ConvergenceWarning, \
-    check_consistent_length
-from ..externals.joblib import Parallel, delayed, cpu_count
+    check_consistent_length, get_n_jobs
+from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange
-
-
-def _get_n_jobs(n_jobs):
-    """Get number of jobs for the computation.
-
-    This function reimplements the logic of joblib to determine the actual
-    number of jobs depending on the cpu count. If -1 all CPUs are used.
-    If 1 is given, no parallel computing code is used at all, which is useful
-    for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are used.
-    Thus for n_jobs = -2, all CPUs but one are used.
-
-    Parameters
-    ----------
-    n_jobs : int
-        Number of jobs stated in joblib convention.
-
-    Returns
-    -------
-    n_jobs : int
-        The actual number of jobs as positive integer.
-    """
-    if n_jobs < 0:
-        return max(cpu_count() + 1 + n_jobs, 1)
-    elif n_jobs == 0:
-        raise ValueError('Parameter n_jobs == 0 has no meaning.')
-    else:
-        return n_jobs
 
 
 def _modweiszfeld_step(X, y):
@@ -297,7 +270,7 @@ class TheilSen(LinearModel, RegressorMixin):
             indices = combinations(xrange(n_samples), n_subsample)
         else:
             indices = self._subpop_iter(n_samples, n_subsample, n_subpop)
-        n_jobs = _get_n_jobs(self.n_jobs)
+        n_jobs = get_n_jobs(self.n_jobs)
         idx_list = np.array_split(list(indices), n_jobs)
         weights = Parallel(n_jobs=n_jobs,
                            backend="multiprocessing",

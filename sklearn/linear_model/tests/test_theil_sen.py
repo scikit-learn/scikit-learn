@@ -14,25 +14,22 @@ from scipy.linalg import norm
 from scipy.optimize import fmin_bfgs
 from nose.tools import raises
 from sklearn.utils import ConvergenceWarning
-from sklearn.externals.joblib import cpu_count
 from sklearn.linear_model import LinearRegression, TheilSen
 from sklearn.linear_model.theil_sen import _spatial_median, _breakdown_point, \
-    _modweiszfeld_step, _get_n_jobs
+    _modweiszfeld_step
 
 
 def gen_toy_problem_1d(intercept=True):
     random_state = np.random.RandomState(0)
-    if intercept:
-        n_samples = 50
-    else:
-        n_samples = 100
     # Linear model y = 3*x + N(2, 0.1**2)
-    x = random_state.normal(size=n_samples)
     w = 3.
     if intercept:
         c = 2.
+        n_samples = 50
     else:
         c = 0.1
+        n_samples = 100
+    x = random_state.normal(size=n_samples)
     noise = 0.1 * random_state.normal(size=n_samples)
     y = w * x + c + noise
     # Add some outliers
@@ -239,18 +236,6 @@ def test_theil_sen_parallel():
                          max_subpopulation=2e3).fit(X, y)
     assert_array_almost_equal(theil_sen.coef_, w, 1)
     assert_array_almost_equal(theil_sen.intercept_, c, 1)
-
-
-@raises(ValueError)
-def test_get_n_jobs_with_0_CPUs():
-    _get_n_jobs(n_jobs=0)
-
-
-def test_get_n_jobs():
-    n_jobs = _get_n_jobs(n_jobs=2)
-    assert n_jobs == 2
-    n_jobs = _get_n_jobs(n_jobs=-2)
-    assert n_jobs == cpu_count() - 1
 
 
 def test_less_samples_than_features():
