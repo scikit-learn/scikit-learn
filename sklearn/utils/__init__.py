@@ -430,11 +430,11 @@ def get_n_jobs(n_jobs):
     Examples
     --------
     >>> from sklearn.utils import get_n_jobs
-    >>> jobs = get_n_jobs(4)
-    >>> assert jobs == max(4, cpu_count())
+    >>> get_n_jobs(4)
+    4
     >>> jobs = get_n_jobs(-2)
     >>> assert jobs == max(cpu_count() - 1, 1)
-    >>> jobs = get_n_jobs(0)
+    >>> get_n_jobs(0)
     Traceback (most recent call last):
     ...
     ValueError: Parameter n_jobs == 0 has no meaning.
