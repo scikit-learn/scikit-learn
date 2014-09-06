@@ -24,7 +24,7 @@ from ..externals.six.moves import xrange
 
 
 def _get_n_jobs(n_jobs):
-    """Get number of jobs
+    """Get number of jobs for the computation.
 
     This function reimplements the logic of joblib to determine the actual
     number of jobs depending on the cpu count. If -1 all CPUs are used.
@@ -39,8 +39,8 @@ def _get_n_jobs(n_jobs):
 
     Returns
     -------
-    n_jobs: int
-        The actual number of jobs as a positive integer.
+    n_jobs : int
+        The actual number of jobs as positive integer.
     """
     if n_jobs < 0:
         return max(cpu_count() + 1 + n_jobs, 1)
@@ -111,7 +111,7 @@ def _spatial_median(X, n_iter=300, tol=1.e-3):
         Spatial median.
     """
     # We are computing the tol on the squared norm
-    tol = tol ** 2
+    tol **= 2
     spmed_old = np.mean(X, axis=0)
     for _ in xrange(n_iter):
         spmed = _modweiszfeld_step(X, spmed_old)
@@ -155,25 +155,24 @@ def _lstsq(X, y, indices, intercept):
     y : array, shape = [n_samples]
         Target vector, where n_samples is the number of samples.
 
-    indices : array, shape = [n_subpopulation, n_ss]
+    indices : array, shape = [n_subpopulation, n_subsamples]
         Indices of all subsamples with respect to the chosen subpopulation.
-        n_ss is the number of subsamples used to calculate least squares.
 
     intercept : bool
         Fit intercept or not.
     """
     fst = 1 if intercept else 0
     n_dim = X.shape[1] + fst
-    n_ss = indices.shape[1]
+    n_subsamples = indices.shape[1]
     weights = np.empty((indices.shape[0], n_dim))
-    X_sub = np.ones((n_ss, n_dim))
+    X_sub = np.ones((n_subsamples, n_dim))
     # gelss need to pad y to be of the max dim of X
-    this_y = np.zeros((max(n_ss, n_dim)))
+    this_y = np.zeros((max(n_subsamples, n_dim)))
     lstsq, = get_lapack_funcs(('gelss',), (X_sub, this_y))
     for i, ix in enumerate(indices):
         ix = list(ix)
         X_sub[:, fst:] = X[ix, :]
-        this_y[:n_ss] = y[ix]
+        this_y[:n_subsamples] = y[ix]
         weights[i, :] = lstsq(X_sub, this_y)[1][:n_dim]
     return weights
 
@@ -270,30 +269,31 @@ class TheilSen(LinearModel, RegressorMixin):
         if self.max_subpopulation <= 0:
             raise ValueError("Subpopulation must be positive.")
         n_all = max(1, np.rint(binom(n_samples, n_subsamples)))
-        n_sp = int(min(self.max_subpopulation, n_all))
-        return n_dim, n_subsamples, n_sp
+        n_subpop = int(min(self.max_subpopulation, n_all))
+        return n_dim, n_subsamples, n_subpop
 
-    def _subpop_iter(self, n_samples, n_ss, n_sp):
-        for s in xrange(n_sp):
-            yield self.random_state_.randint(0, n_samples, n_ss)
+    def _subpop_iter(self, n_samples, n_subsamples, n_subpop):
+        for s in xrange(n_subpop):
+            yield self.random_state_.randint(0, n_samples, n_subsamples)
 
     def fit(self, X, y):
         self.random_state_ = check_random_state(self.random_state)
         X, y = check_arrays(X, y, sparse_format='dense', dtype=np.float)
         n_samples, n_features = X.shape
-        n_dim, n_ss, n_sp = self._check_subparams(n_samples, n_features)
-        self.breakdown_ = _breakdown_point(n_samples, n_ss)
+        n_dim, n_subsample, n_subpop = self._check_subparams(n_samples,
+                                                             n_features)
+        self.breakdown_ = _breakdown_point(n_samples, n_subsample)
         if self.verbose:
             print("Breakdown point: {0}".format(self.breakdown_))
             print("Number of samples: {0}".format(n_samples))
             tol_outliers = int(self.breakdown_ * n_samples)
             print("Tolerable outliers: {0}".format(tol_outliers))
-            print("Number of subpopulations: {0}".format(n_sp))
+            print("Number of subpopulations: {0}".format(n_subpop))
         # Determine indices of subpopulation
-        if np.rint(binom(n_samples, n_ss)) <= self.max_subpopulation:
-            indices = combinations(xrange(n_samples), n_ss)
+        if np.rint(binom(n_samples, n_subsample)) <= self.max_subpopulation:
+            indices = combinations(xrange(n_samples), n_subsample)
         else:
-            indices = self._subpop_iter(n_samples, n_ss, n_sp)
+            indices = self._subpop_iter(n_samples, n_subsample, n_subpop)
         n_jobs = _get_n_jobs(self.n_jobs)
         idx_list = np.array_split(np.array(list(indices)), n_jobs)
         weights = Parallel(n_jobs=n_jobs,
