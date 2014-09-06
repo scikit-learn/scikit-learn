@@ -18,7 +18,8 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import check_array, check_random_state, ConvergenceWarning
+from ..utils import check_array, check_random_state, ConvergenceWarning, \
+    check_consistent_length
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals.six.moves import xrange
 
@@ -280,6 +281,7 @@ class TheilSen(LinearModel, RegressorMixin):
         self.random_state_ = check_random_state(self.random_state)
         X = check_array(X)
         y = check_array(y, ensure_2d=False)
+        check_consistent_length(X, y)
         n_samples, n_features = X.shape
         n_dim, n_subsample, n_subpop = self._check_subparams(n_samples,
                                                              n_features)
@@ -296,7 +298,7 @@ class TheilSen(LinearModel, RegressorMixin):
         else:
             indices = self._subpop_iter(n_samples, n_subsample, n_subpop)
         n_jobs = _get_n_jobs(self.n_jobs)
-        idx_list = np.array_split(np.array(list(indices)), n_jobs)
+        idx_list = np.array_split(list(indices), n_jobs)
         weights = Parallel(n_jobs=n_jobs,
                            backend="multiprocessing",
                            max_nbytes=10e6,
