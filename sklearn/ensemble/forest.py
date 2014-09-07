@@ -38,7 +38,6 @@ Single and multi-output problems are both handled.
 
 from __future__ import division
 
-from itertools import chain
 import numpy as np
 from warnings import warn
 from abc import ABCMeta, abstractmethod
@@ -524,7 +523,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             verbose=verbose,
             warm_start=warm_start)
 
-    def predict(self, X):
+    def predict(self, X, with_std=False):
         """Predict regression target for X.
 
         The predicted regression target of an input sample is computed as the
@@ -535,10 +534,19 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
         X : array-like of shape = [n_samples, n_features]
             The input samples.
 
+        with_std : boolean, optional, default=False
+            A boolean specifying whether the standard deviation of the
+            predictions is evaluated or not.
+            Default assumes with_std = False and evaluates only the mean
+            prediction.
+
         Returns
         -------
         y: array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted values.
+
+        y_std : array of shape = [n_samples]
+            The standard deviation of the predicted values.
         """
         # Check data
         if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
@@ -554,10 +562,11 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             delayed(_parallel_helper)(e, 'predict', X)
             for e in self.estimators_)
 
-        # Reduce
-        y_hat = sum(all_y_hat) / len(self.estimators_)
-
-        return y_hat
+        y_hat = np.mean(all_y_hat, axis=0)
+        if with_std:
+            return y_hat, np.std(all_y_hat, axis=0)
+        else:
+            return y_hat
 
     def _set_oob_score(self, X, y):
         n_samples = y.shape[0]

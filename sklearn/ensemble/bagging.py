@@ -180,9 +180,8 @@ def _parallel_decision_function(estimators, estimators_features, X):
 
 def _parallel_predict_regression(estimators, estimators_features, X):
     """Private function used to compute predictions within a job."""
-    return sum(estimator.predict(X[:, features])
-               for estimator, features in zip(estimators,
-                                              estimators_features))
+    return [estimator.predict(X[:, features])
+            for estimator, features in zip(estimators, estimators_features)]
 
 
 class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
@@ -791,7 +790,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
             random_state=random_state,
             verbose=verbose)
 
-    def predict(self, X):
+    def predict(self, X, with_std=False):
         """Predict regression target for X.
 
         The predicted regression target of an input sample is computed as the
@@ -803,10 +802,19 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
             The training input samples. Sparse matrices are accepted only if
             they are supported by the base estimator.
 
+        with_std : boolean, optional, default=False
+            A boolean specifying whether the standard deviation of the
+            predictions is evaluated or not.
+            Default assumes with_std = False and evaluates only the mean
+            prediction.
+
         Returns
         -------
         y : array of shape = [n_samples]
             The predicted values.
+
+        y_std : array of shape = [n_samples]
+            The standard deviation of the predicted values.
         """
         # Check data
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
@@ -820,12 +828,14 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
                 self.estimators_[starts[i]:starts[i + 1]],
                 self.estimators_features_[starts[i]:starts[i + 1]],
                 X)
-            for i in range(n_jobs))
+            for i in range(n_jobs))[0]
 
         # Reduce
-        y_hat = sum(all_y_hat) / self.n_estimators
-
-        return y_hat
+        y_hat = np.mean(all_y_hat, axis=0)
+        if with_std:
+            return y_hat, np.std(all_y_hat, axis=0)
+        else:
+            return y_hat
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
