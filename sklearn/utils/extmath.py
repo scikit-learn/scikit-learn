@@ -54,8 +54,8 @@ def squared_norm(x):
 def row_norms(X, squared=False):
     """Row-wise (squared) Euclidean norm of X.
 
-    Equivalent to (X * X).sum(axis=1), but also supports CSR sparse matrices
-    and does not create an X.shape-sized temporary.
+    Equivalent to np.sqrt((X * X).sum(axis=1)), but also supports CSR sparse
+    matrices and does not create an X.shape-sized temporary.
 
     Performs no input validation.
     """
@@ -519,7 +519,7 @@ def cartesian(arrays, out=None):
     if out is None:
         out = np.empty([n, len(arrays)], dtype=dtype)
 
-    m = n / arrays[0].size
+    m = n // arrays[0].size
     out[:, 0] = np.repeat(arrays[0], m)
     if arrays[1:]:
         cartesian(arrays[1:], out=out[0:m, 1:])

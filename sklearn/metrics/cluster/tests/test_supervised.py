@@ -177,8 +177,8 @@ def test_contingency_matrix():
 
 
 def test_exactly_zero_info_score():
-    """Check numerical stabability when information is exactly zero"""
-    for i in np.logspace(1, 4, 4):
+    """Check numerical stability when information is exactly zero"""
+    for i in np.logspace(1, 4, 4).astype(np.int):
         labels_a, labels_b = np.ones(i, dtype=np.int),\
             np.arange(i, dtype=np.int)
         assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)

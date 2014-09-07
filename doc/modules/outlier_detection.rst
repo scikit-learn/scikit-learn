@@ -31,7 +31,7 @@ new observations can then be sorted as inliers or outliers with a
 
     estimator.predict(X_test)
 
-Inliers are labeled 0, while outliers are labeled 1.
+Inliers are labeled 1, while outliers are labeled -1.
 
 Novelty Detection
 =================
@@ -53,8 +53,8 @@ coming from the same population than the initial
 observations. Otherwise, if they lay outside the frontier, we can say
 that they are abnormal with a given confidence in our assessment.
 
-The One-Class SVM has been introduced in [1] for that purpose and
-implemented in the :ref:`svm` module in the
+The One-Class SVM has been introduced by Schölkopf et al. for that purpose 
+and implemented in the :ref:`svm` module in the
 :class:`svm.OneClassSVM` object. It requires the choice of a
 kernel and a scalar parameter to define a frontier.  The RBF kernel is
 usually chosen although there exists no exact formula or algorithm to
@@ -63,6 +63,12 @@ implementation. The :math:`\nu` parameter, also known as the margin of
 the One-Class SVM, corresponds to the probability of finding a new,
 but regular, observation outside the frontier.
 
+.. topic:: References:
+
+    * `Estimating the support of a high-dimensional distribution
+      <http://dl.acm.org/citation.cfm?id=1119749>`_ Schölkopf, 
+      Bernhard, et al. Neural computation 13.7 (2001): 1443-1471.
+      
 .. topic:: Examples:
 
    * See :ref:`example_svm_plot_oneclass.py` for visualizing the
@@ -73,7 +79,7 @@ but regular, observation outside the frontier.
    :target: ../auto_examples/svm/plot_oneclasse.html
    :align: center
    :scale: 75%
-
+   
 
 Outlier Detection
 =================
@@ -127,7 +133,7 @@ One-class SVM versus elliptic envelope
 --------------------------------------
 
 Strictly-speaking, the One-class SVM is not an outlier-detection method,
-but a novelty-detection method: it's training set should not be
+but a novelty-detection method: its training set should not be
 contaminated by outliers as it may fit them. That said, outlier detection
 in high-dimension, or without any assumptions on the distribution of the
 inlying data is very challenging, and a One-class SVM gives useful

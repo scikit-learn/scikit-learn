@@ -2,6 +2,12 @@
 
 A classic dataset for classification benchmarks, featuring categorical and
 real-valued features.
+
+The dataset page is available from UCI Machine Learning Repository
+
+    http://archive.ics.uci.edu/ml/datasets/Covertype
+
+Courtesy of Jock A. Blackard and Colorado State University.
 """
 
 # Author: Lars Buitinck <L.J.Buitinck@uva.nl>
@@ -58,6 +64,21 @@ def fetch_covtype(data_home=None, download_if_missing=True,
 
     shuffle : bool, default=False
         Whether to shuffle dataset.
+
+    Returns
+    -------
+    dataset : dict-like object with the following attributes:
+
+    dataset.data : numpy array of shape (581012, 54)
+        Each row corresponds to the 54 features in the dataset.
+
+    dataset.target : numpy array of shape (581012,)
+        Each value corresponds to one of the 7 forest covertypes with values
+        ranging between 1 to 7.
+
+    dataset.DESCR : string
+        Description of the forest covertype dataset.
+
     """
 
     data_home = get_data_home(data_home=data_home)

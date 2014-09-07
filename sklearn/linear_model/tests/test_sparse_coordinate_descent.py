@@ -153,8 +153,8 @@ def _test_sparse_enet_not_as_toy_dataset(alpha, fit_intercept, positive):
     X, y = make_sparse_data(n_samples, n_features, n_informative,
                             positive=positive)
 
-    X_train, X_test = X[n_samples / 2:], X[:n_samples / 2]
-    y_train, y_test = y[n_samples / 2:], y[:n_samples / 2]
+    X_train, X_test = X[n_samples // 2:], X[:n_samples // 2]
+    y_train, y_test = y[n_samples // 2:], y[:n_samples // 2]
 
     s_clf = ElasticNet(alpha=alpha, l1_ratio=0.8, fit_intercept=fit_intercept,
                        max_iter=max_iter, tol=1e-7, positive=positive,
@@ -197,8 +197,8 @@ def test_sparse_lasso_not_as_toy_dataset():
     n_informative = 10
     X, y = make_sparse_data(n_samples=n_samples, n_informative=n_informative)
 
-    X_train, X_test = X[n_samples / 2:], X[:n_samples / 2]
-    y_train, y_test = y[n_samples / 2:], y[:n_samples / 2]
+    X_train, X_test = X[n_samples // 2:], X[:n_samples // 2]
+    y_train, y_test = y[n_samples // 2:], y[:n_samples // 2]
 
     s_clf = Lasso(alpha=0.1, fit_intercept=False, max_iter=max_iter, tol=1e-7)
     s_clf.fit(X_train, y_train)

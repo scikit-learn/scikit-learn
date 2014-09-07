@@ -11,11 +11,10 @@ at which the fixe is no longer needed.
 # License: BSD 3 clause
 
 import inspect
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
-
-from .testing import ignore_warnings
 
 np_version = []
 for x in np.__version__.split('.'):
@@ -39,7 +38,8 @@ except ImportError:
         See sklearn.utils.extmath.log_logistic for the log of this function.
         """
         if out is None:
-            out = np.copy(x)
+            out = np.empty(np.atleast_1d(x).shape, dtype=np.float64)
+        out[:] = x
 
         # 1 / (1 + exp(-x)) = (1 + tanh(x / 2)) / 2
         # This way of computing the logistic is both fast and stable.
@@ -48,7 +48,7 @@ except ImportError:
         out += 1
         out *= .5
 
-        return out
+        return out.reshape(np.shape(x))
 
 
 # little danse to see if np.copy has an 'order' keyword argument
@@ -102,9 +102,10 @@ else:
 
 
 try:
-    with ignore_warnings():
+    with warnings.catch_warnings(record=True):
         # Don't raise the numpy deprecation warnings that appear in
-        # 1.9
+        # 1.9, but avoid Python bug due to simplefilter('ignore')
+        warnings.simplefilter('always')
         sp.csr_matrix([1.0, 2.0, 3.0]).max(axis=0)
 except (TypeError, AttributeError):
     # in scipy < 14.0, sparse matrix min/max doesn't accept an `axis` argument

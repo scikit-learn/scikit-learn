@@ -455,6 +455,7 @@ From text
    feature_selection.SelectFwe
    feature_selection.RFE
    feature_selection.RFECV
+   feature_selection.VarianceThreshold
 
 .. autosummary::
    :toctree: generated/
@@ -649,6 +650,7 @@ From text
    linear_model.Perceptron
    linear_model.RandomizedLasso
    linear_model.RandomizedLogisticRegression
+   linear_model.RANSACRegressor
    linear_model.Ridge
    linear_model.RidgeClassifier
    linear_model.RidgeClassifierCV
@@ -835,6 +837,9 @@ Pairwise metrics
    metrics.pairwise.pairwise_kernels
    metrics.pairwise.polynomial_kernel
    metrics.pairwise.rbf_kernel
+   metrics.pairwise_distances
+   metrics.pairwise_distances_argmin
+   metrics.pairwise_distances_argmin_min
 
 
 .. _mixture_ref:
