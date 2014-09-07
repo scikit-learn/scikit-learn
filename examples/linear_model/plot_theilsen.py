@@ -87,7 +87,7 @@ noise = 0.1 * np.random.randn(n_samples)
 y = 3 * x + 2 + noise
 # 10% outliers
 x[-20:] = 9.9
-y[-20:] += 15
+y[-20:] += 22
 X = x[:, np.newaxis]
 
 pl.figure()
