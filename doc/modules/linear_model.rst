@@ -701,6 +701,21 @@ so the "multinomial" setting does not learn sparse models.
 
   * :ref:`example_linear_model_plot_logistic_path.py`
 
+.. _liblinear_differences:
+
+.. topic:: Differences from liblinear:
+
+   There might be a difference in the scores obtained between
+   :class:`LogisticRegression` with ``solver=liblinear``
+   or :class:`LinearSVC` and the external liblinear library directly,
+   when ``fit_intercept=False`` and the fit ``coef_`` (or) the data to
+   be predicted are zeroes. This is because for the sample(s) with
+   ``decision_function`` zero, :class:`LogisticRegression` and :class:`LinearSVC`
+   predict the negative class, while liblinear predicts the positive class.
+   Note that a model with ``fit_intercept=False`` and having many samples with
+   ``decision_function`` zero, is likely to be a underfit, bad model and you are
+   advised to set ``fit_intercept=True`` and increase the intercept_scaling.
+
 .. note:: **Feature selection with sparse logistic regression**
 
    A logistic regression with L1 penalty yields sparse models, and can
