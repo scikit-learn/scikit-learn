@@ -1,15 +1,57 @@
 .. currentmodule:: sklearn
 
+.. _changes_0_15_2:
+
+0.15.2
+======
+
+Bug fixes
+---------
+
+  - Fixed handling of the ``p`` parameter of the Minkowski distance that was
+    previously ignored in nearest neighbors models. By `Nikolay Mayorov`_.
+
+  - Fixed duplicated alphas in :class:`linear_model.LassoLars` with early
+    stopping on 32 bit Python. By `Olivier Grisel`_ and `Fabian Pedregosa`_.
+
+  - Fixed the build under Windows when scikit-learn is built with MSVC while
+    NumPy is built with MinGW. By `Olivier Grisel`_ and Federico Vaggi.
+
+  - Fixed an array index overflow bug in the coordinate descent solver. By
+    `Gael Varoquaux`_.
+
+  - Better handling of numpy 1.9 deprecation warnings. By `Gael Varoquaux`_.
+
+  - Removed unnecessary data copy in :class:`cluster.KMeans`.
+    By `Gael Varoquaux`_.
+
+  - Explicitly close open files to avoid ``ResourceWarnings`` under Python 3.
+    By Calvin Giles.
+
+  - The ``transform`` of :class:`lda.LDA` now projects the input on the most
+    discriminant directions. By Martin Billinger.
+
+  - Fixed potential overflow in ``_tree.safe_realloc`` by `Lars Buitinck`_.
+
+  - Performance optimization in :class:`istonic.IsotonicRegression`.
+    By Robert Bradshaw.
+
+  - ``nose`` is non-longer a runtime dependency to import ``sklearn``, only for
+    running the tests. By `Joel Nothman`_.
+
+  - Many documentation and website fixes by `Joel Nothman`_, `Lars Buitinck`_
+    and others.
+
+
 .. _changes_0_15_1:
 
 0.15.1
 ======
 
-
 Bug fixes
 ---------
 
-   - Make :func:`cross_validation.cross_val_score` use
+   - Made :func:`cross_validation.cross_val_score` use
      :class:`cross_validation.KFold` instead of
      :class:`cross_validation.StratifiedKFold` on multi-output classification
      problems. By `Nikolay Mayorov`_.
@@ -18,26 +60,46 @@ Bug fixes
      the default behavior of 0.14.1 for backward compatibility. By
      `Hamzeh Alsalhi`_.
 
-   - Fixed :class:`cluster.KMeans` stopping criterion that prevented early
+   - Fixed the :class:`cluster.KMeans` stopping criterion that prevented early
      convergence detection. By Edward Raff and `Gael Varoquaux`_.
 
    - Fixed the behavior of :class:`multiclass.OneVsOneClassifier`.
      in case of ties at the per-class vote level by computing the correct
      per-class sum of prediction scores. By `Andreas Müller`_.
 
-   - Made :func:`cross_valiation.cross_val_score` and
+   - Made :func:`cross_validation.cross_val_score` and
      :class:`grid_search.GridSearchCV` accept Python lists as input data.
      This is especially useful for cross-validation and model selection of
      text processing pipelines. By `Andreas Müller`_.
 
    - Fixed data input checks of most estimators to accept input data that
-     implements the NumPy ``__array__`` protocol such as ``pandas.Series``
-     and ``pandas.DataFrame`` in recent versions of pandas. By
-     `Gael Varoquaux`_.
+     implements the NumPy ``__array__`` protocol. This is the case for
+     for ``pandas.Series`` and ``pandas.DataFrame`` in recent versions of
+     pandas. By `Gael Varoquaux`_.
 
    - Fixed a regression for :class:`linear_model.SGDClassifier` with
      ``class_weight="auto"`` on data with non-contiguous labels. By
      `Olivier Grisel`_.
+
+    - Fix incomplete download of the dataset when
+      :func:`datasets.download_20newsgroups` is called. By `Manoj Kumar`_.
+
+    - Various fixes to the Gaussian processes subpackage by Vincent Dubourg
+      and Jan Hendrik Metzen.
+
+    - The ``transform`` of :class:`lda.LDA` now projects the input on the most
+      discriminant directions. By Martin Billinger.
+
+    - Nearest neighbors estimators now reliably work inside ``GridSearchCV``,
+      thanks to Nikolay Mayorov.
+
+
+API changes summary
+-------------------
+
+    - Nearest neighbors estimators used to take arbitrary keyword arguments
+      and pass these to their distance metric. This will no longer be supported
+      in scikit-learn 0.18; use the ``metric_params`` argument instead.
 
 
 .. _changes_0_15:

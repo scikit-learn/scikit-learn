@@ -3,7 +3,7 @@
 A demo of K-Means clustering on the handwritten digits data
 ===========================================================
 
-In this example with compare the various initialization strategies for
+In this example we compare the various initialization strategies for
 K-means in terms of runtime and quality of the results.
 
 As the ground truth is known here, we also apply different cluster

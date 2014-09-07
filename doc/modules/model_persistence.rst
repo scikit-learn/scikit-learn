@@ -51,7 +51,7 @@ with::
 .. note::
 
    joblib.dump returns a list of filenames. Each individual numpy array
-   contained in the `clf` object is serialized as a separate file on the
+   contained in the ``clf`` object is serialized as a separate file on the
    filesystem. All files are required in the same folder when reloading the
    model with joblib.load.
 

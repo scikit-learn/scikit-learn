@@ -101,3 +101,11 @@ def test_rfecv():
     rfecv.fit(X, y)
     X_r = rfecv.transform(X)
     assert_array_equal(X_r, iris.data)
+
+    # Test fix on grid_scores
+    def test_scorer(estimator, X, y):
+        return 1.0
+    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=5,
+                  scoring=test_scorer)
+    rfecv.fit(X, y)
+    assert_array_equal(rfecv.grid_scores_, np.ones(len(rfecv.grid_scores_)))

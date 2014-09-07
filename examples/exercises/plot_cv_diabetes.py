@@ -9,20 +9,18 @@ This exercise is used in the :ref:`cv_estimators_tut` part of the
 :ref:`model_selection_tut` section of the :ref:`stat_learn_tut_index`.
 """
 from __future__ import print_function
+print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn import cross_validation, datasets, linear_model
 
-print(__doc__)
-
 diabetes = datasets.load_diabetes()
 X = diabetes.data[:150]
 y = diabetes.target[:150]
 
 lasso = linear_model.Lasso()
-
 alphas = np.logspace(-4, -.5, 30)
 
 scores = list()

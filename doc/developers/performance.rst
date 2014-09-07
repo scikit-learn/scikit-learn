@@ -360,8 +360,8 @@ directory::
          7     13.61 MB -152.59 MB       del b
          8     13.61 MB    0.00 MB       return a
 
-Another useful magic that ``memory_profiler`` defines is `%memit`, which is
-analogous to `%timeit`. It can be used as follows::
+Another useful magic that ``memory_profiler`` defines is ``%memit``, which is
+analogous to ``%timeit``. It can be used as follows::
 
     In [1]: import numpy as np
 

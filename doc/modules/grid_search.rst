@@ -39,8 +39,8 @@ Exhaustive Grid Search
 ======================
 
 The grid search provided by :class:`GridSearchCV` exhaustively generates
-candidates from a grid of parameter values specified with the `param_grid`
-attribute. For instance, the following `param_grid`::
+candidates from a grid of parameter values specified with the ``param_grid``
+parameter. For instance, the following ``param_grid``::
 
   param_grid = [
     {'C': [1, 10, 100, 1000], 'kernel': ['linear']},

@@ -40,7 +40,7 @@ gp = GaussianProcess(regr='constant', corr='absolute_exponential',
 gp.fit(X, y)
 
 # Deactivate maximum likelihood estimation for the cross-validation loop
-gp.theta0 = gp.theta  # Given correlation parameter = MLE
+gp.theta0 = gp.theta_  # Given correlation parameter = MLE
 gp.thetaL, gp.thetaU = None, None  # None bounds deactivate MLE
 
 # Perform a cross-validation estimate of the coefficient of determination using

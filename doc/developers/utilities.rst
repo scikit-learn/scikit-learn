@@ -129,7 +129,7 @@ Efficient Random Sampling
 =========================
 
 - :func:`random.sample_without_replacement`: implements efficient algorithms
-  for sampling `n_samples` integers from a population of size `n_population`
+  for sampling ``n_samples`` integers from a population of size ``n_population``
   without replacement.
 
 
@@ -272,7 +272,7 @@ Hash Functions
 ==============
 
 - :func:`murmurhash3_32` provides a python wrapper for the
-  `MurmurHash3_x86_32` C++ non cryptographic hash function. This hash
+  ``MurmurHash3_x86_32`` C++ non cryptographic hash function. This hash
   function is suitable for implementing lookup tables, Bloom filters,
   Count Min Sketch, feature hashing and implicitly defined sparse
   random projections::
