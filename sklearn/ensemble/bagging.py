@@ -827,9 +827,10 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
                 self.estimators_[starts[i]:starts[i + 1]],
                 self.estimators_features_[starts[i]:starts[i + 1]],
                 X)
-            for i in range(n_jobs))[0]
+            for i in range(n_jobs))
 
         # Reduce
+        all_y_hat = np.array(all_y_hat).reshape(self.n_estimators, -1)
         y_mean = np.mean(all_y_hat, axis=0)
         if with_std:
             return y_mean, np.std(all_y_hat, axis=0)
