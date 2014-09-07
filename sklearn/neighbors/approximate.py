@@ -155,9 +155,8 @@ class LSHForest(BaseEstimator):
         `n_components=hash_size and n_features=n_dim.
         """
         random_state = check_random_state(self.random_state)
-        rng_seed = random_state.randint(0, np.iinfo(np.int32).max)
         grp = GaussianRandomProjection(n_components=self.max_label_length,
-                                       random_state=rng_seed)
+                                       random_state=random_state)
         X = np.zeros((1, self._fit_X.shape[1]), dtype=float)
         grp.fit(X)
         return grp
