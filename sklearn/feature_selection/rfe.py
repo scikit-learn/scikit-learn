@@ -348,7 +348,7 @@ class RFECV(RFE, MetaEstimatorMixin):
 
                 if self.verbose > 0:
                     print("Finished fold with %d / %d feature ranks, score=%f"
-                          % (k, max(ranking_), score))
+                          % (k + 1, max(ranking_), score))
                 scores[k] += score
 
         # Pick the best number of features on average
@@ -370,5 +370,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         self.estimator_.set_params(**self.estimator_params)
         self.estimator_.fit(self.transform(X), y)
 
-        self.grid_scores_ = scores / n
+        # Fixing a normalization error, n is equal to len(cv) - 1
+        # here, the scores are normalized by len(cv)
+        self.grid_scores_ = scores / len(cv)
         return self

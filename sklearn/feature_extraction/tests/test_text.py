@@ -18,6 +18,7 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 
+from sklearn.base import clone
 
 import numpy as np
 from nose import SkipTest
@@ -30,7 +31,7 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_raises
 from sklearn.utils.testing import (assert_in, assert_less, assert_greater,
-                                   assert_warns_message)
+                                   assert_warns_message, assert_raise_message)
 
 from collections import defaultdict, Mapping
 from functools import partial
@@ -291,7 +292,8 @@ def test_countvectorizer_stop_words():
 
 def test_countvectorizer_empty_vocabulary():
     try:
-        CountVectorizer(vocabulary=[])
+        vect = CountVectorizer(vocabulary=[])
+        vect.fit(["foo"])
         assert False, "we shouldn't get here"
     except ValueError as e:
         assert_in("empty vocabulary", str(e).lower())
@@ -448,10 +450,10 @@ def test_vectorizer():
     # (equivalent to term count vectorizer + tfidf transformer)
     train_data = iter(ALL_FOOD_DOCS[:-1])
     tv = TfidfVectorizer(norm='l1')
-    assert_false(tv.fixed_vocabulary)
 
     tv.max_df = v1.max_df
     tfidf2 = tv.fit_transform(train_data).toarray()
+    assert_false(tv.fixed_vocabulary_)
     assert_array_almost_equal(tfidf, tfidf2)
 
     # test the direct tfidf vectorizer with new data
@@ -775,7 +777,7 @@ def test_vectorizer_pipeline_grid_selection():
     best_vectorizer = grid_search.best_estimator_.named_steps['vect']
     assert_equal(best_vectorizer.ngram_range, (1, 1))
     assert_equal(best_vectorizer.norm, 'l2')
-    assert_false(best_vectorizer.fixed_vocabulary)
+    assert_false(best_vectorizer.fixed_vocabulary_)
 
 
 def test_vectorizer_pipeline_cross_validation():
@@ -784,7 +786,6 @@ def test_vectorizer_pipeline_cross_validation():
 
     # label junk food as -1, the others as +1
     target = [-1] * len(JUNK_FOOD_DOCS) + [1] * len(NOTJUNK_FOOD_DOCS)
-
 
     pipeline = Pipeline([('vect', TfidfVectorizer()),
                          ('svc', LinearSVC())])
@@ -832,11 +833,10 @@ def test_tfidf_vectorizer_with_fixed_vocabulary():
     # non regression smoke test for inheritance issues
     vocabulary = ['pizza', 'celeri']
     vect = TfidfVectorizer(vocabulary=vocabulary)
-    assert_true(vect.fixed_vocabulary)
     X_1 = vect.fit_transform(ALL_FOOD_DOCS)
     X_2 = vect.transform(ALL_FOOD_DOCS)
     assert_array_almost_equal(X_1.toarray(), X_2.toarray())
-    assert_true(vect.fixed_vocabulary)
+    assert_true(vect.fixed_vocabulary_)
 
 
 def test_pickling_vectorizer():
@@ -878,7 +878,21 @@ def test_pickling_transformer():
 
 def test_non_unique_vocab():
     vocab = ['a', 'b', 'c', 'a', 'a']
-    assert_raises(ValueError, CountVectorizer, vocabulary=vocab)
+    vect = CountVectorizer(vocabulary=vocab)
+    assert_raises(ValueError, vect.fit, [])
+
+
+def test_hashingvectorizer_nan_in_docs():
+    # np.nan can appear when using pandas to load text fields from a csv file
+    # with missing values.
+    message = "np.nan is an invalid document, expected byte or unicode string."
+    exception = ValueError
+
+    def func():
+        hv = HashingVectorizer()
+        hv.fit_transform(['hello world', np.nan, 'hello hello'])
+
+    assert_raise_message(exception, message, func)
 
 
 def test_tfidfvectorizer_binary():
@@ -896,3 +910,11 @@ def test_tfidfvectorizer_export_idf():
     vect = TfidfVectorizer(use_idf=True)
     vect.fit(JUNK_FOOD_DOCS)
     assert_array_almost_equal(vect.idf_, vect._tfidf.idf_)
+
+
+def test_vectorizer_vocab_clone():
+    vect_vocab = TfidfVectorizer(vocabulary=["the"])
+    vect_vocab_clone = clone(vect_vocab)
+    vect_vocab.fit(ALL_FOOD_DOCS)
+    vect_vocab_clone.fit(ALL_FOOD_DOCS)
+    assert_equal(vect_vocab_clone.vocabulary_, vect_vocab.vocabulary_)

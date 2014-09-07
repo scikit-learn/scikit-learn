@@ -257,6 +257,7 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
     return best_pos, best_stress
 
 
+
 class MDS(BaseEstimator):
     """Multidimensional scaling
 
@@ -349,7 +350,8 @@ class MDS(BaseEstimator):
 
         Parameters
         ----------
-        X : array, shape=[n_samples, n_features]
+        X : array, shape=[n_samples, n_features], or [n_samples, n_samples] \
+                if dissimilarity='precomputed'
             Input data.
 
         init : {None or ndarray, shape (n_samples,)}, optional
@@ -365,7 +367,8 @@ class MDS(BaseEstimator):
 
         Parameters
         ----------
-        X : array, shape=[n_samples, n_features]
+        X : array, shape=[n_samples, n_features], or [n_samples, n_samples] \
+                if dissimilarity='precomputed'
             Input data.
 
         init : {None or ndarray, shape (n_samples,)}, optional

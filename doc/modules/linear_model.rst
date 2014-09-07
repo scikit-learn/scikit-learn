@@ -38,9 +38,9 @@ solves a problem of the form:
    :align: center
    :scale: 50%
 
-:class:`LinearRegression` will take in its `fit` method arrays X, y
+:class:`LinearRegression` will take in its ``fit`` method arrays X, y
 and will store the coefficients :math:`w` of the linear model in its
-`coef\_` member::
+``coef_`` member::
 
     >>> from sklearn import linear_model
     >>> clf = linear_model.LinearRegression()
@@ -96,9 +96,9 @@ of shrinkage and thus the coefficients become more robust to collinearity.
    :scale: 50%
 
 
-As with other linear models, :class:`Ridge` will take in its `fit` method
+As with other linear models, :class:`Ridge` will take in its ``fit`` method
 arrays X, y and will store the coefficients :math:`w` of the linear model in
-its `coef\_` member::
+its ``coef_`` member::
 
     >>> from sklearn import linear_model
     >>> clf = linear_model.Ridge (alpha = .5)
@@ -213,13 +213,13 @@ computes the coefficients along the full path of possible values.
 Setting regularization parameter
 --------------------------------
 
-The `alpha` parameter controls the degree of sparsity of the coefficients
+The ``alpha`` parameter controls the degree of sparsity of the coefficients
 estimated.
 
 Using cross-validation
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-scikit-learn exposes objects that set the Lasso `alpha` parameter by
+scikit-learn exposes objects that set the Lasso ``alpha`` parameter by
 cross-validation: :class:`LassoCV` and :class:`LassoLarsCV`.
 :class:`LassoLarsCV` is based on the :ref:`least_angle_regression` algorithm
 explained below.
@@ -272,7 +272,7 @@ Elastic Net
 as regularizer. This combination allows for learning a sparse model where
 few of the weights are non-zero like :class:`Lasso`, while still maintaining
 the regularization properties of :class:`Ridge`. We control the convex
-combination of L1 and L2 using the `l1_ratio` parameter.
+combination of L1 and L2 using the ``l1_ratio`` parameter.
 
 Elastic-net is useful when there are multiple features which are
 correlated with one another. Lasso is likely to pick one of these
@@ -309,7 +309,7 @@ Multi-task Lasso
 ================
 
 The :class:`MultiTaskLasso` is a linear model that estimates sparse
-coefficients for multiple regression problems jointly: `y` is a 2D array,
+coefficients for multiple regression problems jointly: ``y`` is a 2D array,
 of shape (n_samples, n_tasks). The constraint is that the selected
 features are the same for all the regression problems, also called tasks.
 
@@ -645,18 +645,33 @@ Logistic regression
 ===================
 
 Logistic regression, despite its name, is a linear model for classification
-rather than regression.
-As such, it minimizes a "hit or miss" cost function
-rather than the sum of square residuals (as in ordinary regression).
-Logistic regression is also known in the literature as
+rather than regression. Logistic regression is also known in the literature as
 logit regression, maximum-entropy classification (MaxEnt)
-or the log-linear classifier.
+or the log-linear classifier. In this model, the probabilities describing the possible outcomes of a single trial are modeled using a `logistic function <http://en.wikipedia.org/wiki/Logistic_function>`_.
 
-The :class:`LogisticRegression` class can be used to do L1 or L2 penalized
-logistic regression. L1 penalization yields sparse predicting weights.
+The implementation of logistic regression in scikit-learn can be accessed from 
+class :class:`LogisticRegression`. This 
+implementation can fit a multiclass (one-vs-rest) logistic regression with optional
+L2 or L1 regularization. 
+
+As an optimization problem, binary class L2 penalized logistic regression minimizes
+the following cost function:
+
+.. math:: \underset{w, c}{min\,} \frac{1}{2}w^T w + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
+
+Similarly, L1 regularized logistic regression solves the following optimization problem
+
+.. math:: \underset{w, c}{min\,} \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
+
+L1 penalization yields sparse predicting weights.
 For L1 penalization :func:`sklearn.svm.l1_min_c` allows to calculate
 the lower bound for C in order to get a non "null" (all feature weights to
 zero) model.
+
+The implementation of Logistic Regression relies on the excellent
+`LIBLINEAR library <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_,
+which is shipped with scikit-learn.
+
 
 .. topic:: Examples:
 
@@ -669,6 +684,7 @@ zero) model.
    A logistic regression with L1 penalty yields sparse models, and can
    thus be used to perform feature selection, as detailed in
    :ref:`l1_feature_selection`.
+
 
 Stochastic Gradient Descent - SGD
 =================================
@@ -731,7 +747,7 @@ For classification, :class:`PassiveAggressiveClassifier` can be used with
 Robustness to outliers: RANSAC
 ==============================
 
-The RANSAC (RANdom SAmple Consensus) is an iterative algorithm for the robust
+RANSAC (RANdom SAmple Consensus) is an iterative algorithm for the robust
 estimation of parameters from a subset of inliers from the complete data set.
 
 It is an iterative method to estimate the parameters of a mathematical model.
@@ -753,26 +769,26 @@ estimated only from the determined inliers.
 
 Each iteration performs the following steps:
 
-1. Select `min_samples` random samples from the original data and check
-   whether the set of data is valid (see `is_data_valid`).
-2. Fit a model to the random subset (`base_estimator.fit`) and check
-   whether the estimated model is valid (see `is_model_valid`).
+1. Select ``min_samples`` random samples from the original data and check
+   whether the set of data is valid (see ``is_data_valid``).
+2. Fit a model to the random subset (``base_estimator.fit``) and check
+   whether the estimated model is valid (see ``is_model_valid``).
 3. Classify all data as inliers or outliers by calculating the residuals
-   to the estimated model (`base_estimator.predict(X) - y`) - all data
-   samples with absolute residuals smaller than the `residual_threshold`
+   to the estimated model (``base_estimator.predict(X) - y``) - all data
+   samples with absolute residuals smaller than the ``residual_threshold``
    are considered as inliers.
 4. Save fitted model as best model if number of inlier samples is
    maximal. In case the current estimated model has the same number of
    inliers, it is only considered as the best model if it has better score.
 
-These steps are performed either a maximum number of times (`max_trials`) or
-until one of the special stop criteria are met (see `stop_n_inliers` and
-`stop_score`). The final model is estimated using all inlier samples (consensus
+These steps are performed either a maximum number of times (``max_trials``) or
+until one of the special stop criteria are met (see ``stop_n_inliers`` and
+``stop_score``). The final model is estimated using all inlier samples (consensus
 set) of the previously determined best model.
 
-The `is_data_valid` and `is_model_valid` functions allow to identify and reject
+The ``is_data_valid`` and ``is_model_valid`` functions allow to identify and reject
 degenerate combinations of random sub-samples. If the estimated model is not
-needed for identifying degenerate cases, `is_data_valid` should be used as it
+needed for identifying degenerate cases, ``is_data_valid`` should be used as it
 is called prior to fitting the model and thus leading to better computational
 performance.
 

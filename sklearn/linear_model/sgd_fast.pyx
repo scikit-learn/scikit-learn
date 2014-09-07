@@ -17,8 +17,8 @@ from time import time
 cimport cython
 from libc.math cimport exp, log, sqrt, pow, fabs
 cimport numpy as np
-cdef extern from "numpy/npy_math.h":
-    bint isfinite "npy_isfinite"(double) nogil
+cdef extern from "sgd_fast_helpers.h":
+    bint skl_isfinite(double) nogil
 
 from sklearn.utils.weight_vector cimport WeightVector
 from sklearn.utils.seq_dataset cimport SequentialDataset
@@ -513,7 +513,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                           % (time() - t_start))
 
             # floating-point under-/overflow check.
-            if (not isfinite(intercept)
+            if (not skl_isfinite(intercept)
                 or any_nonfinite(<double *>weights.data, n_features)):
                 infinity = True
                 break
@@ -530,7 +530,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
 
 cdef bint any_nonfinite(double *w, int n) nogil:
     for i in range(n):
-        if not isfinite(w[i]):
+        if not skl_isfinite(w[i]):
             return True
     return 0
 

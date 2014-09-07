@@ -74,9 +74,8 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-    **kwargs :
-        additional keyword arguments are passed to the distance function as
-        additional arguments.
+    metric_params: dict, optional (default = None)
+        additional keyword arguments for the metric function.
 
     Examples
     --------
@@ -113,7 +112,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
 
     def __init__(self, n_neighbors=5, weights='uniform',
                  algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', **kwargs):
+                 p=2, metric='minkowski', metric_params=None, **kwargs):
         if kwargs:
             if 'warn_on_equidistant' in kwargs:
                 kwargs.pop('warn_on_equidistant')
@@ -123,7 +122,8 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
                               stacklevel=2)
         self._init_params(n_neighbors=n_neighbors,
                           algorithm=algorithm,
-                          leaf_size=leaf_size, metric=metric, p=p, **kwargs)
+                          leaf_size=leaf_size, metric=metric, p=p,
+                          metric_params=metric_params, **kwargs)
         self.weights = _check_weights(weights)
 
     def predict(self, X):
@@ -222,9 +222,8 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-    **kwargs :
-        additional keyword arguments are passed to the distance function as
-        additional arguments.
+    metric_params: dict, optional (default = None)
+        additional keyword arguments for the metric function.
 
     Examples
     --------
@@ -254,11 +253,12 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 
     def __init__(self, radius=1.0, weights='uniform',
                  algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', **kwargs):
+                 p=2, metric='minkowski', metric_params=None, **kwargs):
         self._init_params(radius=radius,
                           algorithm=algorithm,
                           leaf_size=leaf_size,
-                          p=p, metric=metric, **kwargs)
+                          p=p, metric=metric, metric_params=metric_params,
+                          **kwargs)
         self.weights = _check_weights(weights)
 
     def predict(self, X):
