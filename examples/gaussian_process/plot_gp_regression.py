@@ -52,7 +52,7 @@ X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
 y = f(X).ravel()
 
 # Mesh the input space for evaluations of the real function, the prediction and
-# its MSE
+# its standard deviation
 x = np.atleast_2d(np.linspace(0, 10, 1000)).T
 
 # Instanciate a Gaussian Process model
@@ -62,12 +62,11 @@ gp = GaussianProcess(corr='cubic', theta0=1e-2, thetaL=1e-4, thetaU=1e-1,
 # Fit to data using Maximum Likelihood Estimation of the parameters
 gp.fit(X, y)
 
-# Make the prediction on the meshed x-axis (ask for MSE as well)
-y_pred, MSE = gp.predict(x, eval_MSE=True)
-sigma = np.sqrt(MSE)
+# Make the prediction on the meshed x-axis (ask for standard deviation as well)
+y_pred, sigma = gp.predict(x, with_std=True)
 
 # Plot the function, the prediction and the 95% confidence interval based on
-# the MSE
+# the standard deviation
 fig = pl.figure()
 pl.plot(x, f(x), 'r:', label=u'$f(x) = x\,\sin(x)$')
 pl.plot(X, y, 'r.', markersize=10, label=u'Observations')
@@ -93,7 +92,7 @@ noise = np.random.normal(0, dy)
 y += noise
 
 # Mesh the input space for evaluations of the real function, the prediction and
-# its MSE
+# its standard deviation
 x = np.atleast_2d(np.linspace(0, 10, 1000)).T
 
 # Instanciate a Gaussian Process model
@@ -105,12 +104,11 @@ gp = GaussianProcess(corr='squared_exponential', theta0=1e-1,
 # Fit to data using Maximum Likelihood Estimation of the parameters
 gp.fit(X, y)
 
-# Make the prediction on the meshed x-axis (ask for MSE as well)
-y_pred, MSE = gp.predict(x, eval_MSE=True)
-sigma = np.sqrt(MSE)
+# Make the prediction on the meshed x-axis (ask for standard deviation as well)
+y_pred, sigma = gp.predict(x, with_std=True)
 
 # Plot the function, the prediction and the 95% confidence interval based on
-# the MSE
+# the standard deviation
 fig = pl.figure()
 pl.plot(x, f(x), 'r:', label=u'$f(x) = x\,\sin(x)$')
 pl.errorbar(X.ravel(), y, dy, fmt='r.', markersize=10, label=u'Observations')

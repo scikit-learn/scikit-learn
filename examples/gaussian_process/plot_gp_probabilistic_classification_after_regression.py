@@ -65,8 +65,7 @@ x1, x2 = np.meshgrid(np.linspace(- lim, lim, res),
 xx = np.vstack([x1.reshape(x1.size), x2.reshape(x2.size)]).T
 
 y_true = g(xx)
-y_pred, MSE = gp.predict(xx, eval_MSE=True)
-sigma = np.sqrt(MSE)
+y_pred, sigma = gp.predict(xx, with_std=True)
 y_true = y_true.reshape((res, res))
 y_pred = y_pred.reshape((res, res))
 sigma = sigma.reshape((res, res))
