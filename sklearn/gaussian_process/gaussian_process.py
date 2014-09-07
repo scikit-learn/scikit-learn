@@ -6,6 +6,8 @@
 
 from __future__ import print_function
 
+import warnings
+
 import numpy as np
 from scipy import linalg, optimize
 
@@ -374,7 +376,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         return self
 
-    def predict(self, X, eval_MSE=False, batch_size=None):
+    def predict(self, X, eval_MSE=False, batch_size=None, with_std=False):
         """
         This function evaluates the Gaussian Process model at x.
 
@@ -396,6 +398,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             Default is None so that all given points are evaluated at the same
             time.
 
+        with_std : boolean, optional, default=False
+            A boolean specifying whether the standard deviation of the
+            predictions is evaluated or not.
+            Default assumes with_std = False and evaluates only the mean
+            prediction.
+
         Returns
         -------
         y : array_like, shape (n_samples, ) or (n_samples, n_targets)
@@ -405,10 +413,20 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             of shape (n_samples, n_targets) with the Best Linear Unbiased
             Prediction at x.
 
-        MSE : array_like, optional (if eval_MSE == True)
+        y_std : array_like, optional (if with_std == True)
             An array with shape (n_eval, ) or (n_eval, n_targets) as with y,
-            with the Mean Squared Error at x.
+            containing the standard deviation of the prediction at x. Only
+            returned when with_std is True. If the deprecated eval_MSE is True,
+            the variance (MSE) of the prediction is returned instead.
         """
+        if eval_MSE:
+            warnings.warn("The eval_MSE parameter is deprecated as of version "
+                          "0.16 and will be removed in 0.18. Use the parameter"
+                          " with_std instead, which returns the standard "
+                          "deviation of the prediction.", DeprecationWarning)
+            assert with_std is False, \
+                "with_std and eval_MSE cannot both be True at the same time."
+            with_std = True
 
         # Check input shapes
         X = check_array(X)
@@ -432,11 +450,6 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             # Normalize input
             X = (X - self.X_mean) / self.X_std
 
-            # Initialize output
-            y = np.zeros(n_eval)
-            if eval_MSE:
-                MSE = np.zeros(n_eval)
-
             # Get pairwise componentwise L1-distances to the input training set
             dx = manhattan_distances(X, Y=self.X, sum_over_features=False)
             # Get regression function and correlation
@@ -453,7 +466,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 y = y.ravel()
 
             # Mean Squared Error
-            if eval_MSE:
+            if with_std:
                 C = self.C
                 if C is None:
                     # Light storage mode (need to recompute C, F, Ft and G)
@@ -489,39 +502,36 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 if self.y_ndim_ == 1:
                     MSE = MSE.ravel()
 
-                return y, MSE
-
+                if eval_MSE:  # deprecated
+                    return y, MSE
+                else:
+                    return y, np.sqrt(MSE)
             else:
-
                 return y
-
         else:
             # Memory management
-
             if type(batch_size) is not int or batch_size <= 0:
                 raise Exception("batch_size must be a positive integer")
 
-            if eval_MSE:
-
-                y, MSE = np.zeros(n_eval), np.zeros(n_eval)
+            if with_std:
+                y, y_std = np.zeros(n_eval), np.zeros(n_eval)
                 for k in range(max(1, n_eval / batch_size)):
                     batch_from = k * batch_size
                     batch_to = min([(k + 1) * batch_size + 1, n_eval + 1])
                     y[batch_from:batch_to], MSE[batch_from:batch_to] = \
                         self.predict(X[batch_from:batch_to],
-                                     eval_MSE=eval_MSE, batch_size=None)
-
-                return y, MSE
-
+                                     with_std=with_std, batch_size=None)
+                if eval_MSE:  # Deprecated
+                    return y, y_std ** 2
+                else:
+                    return y, y_std
             else:
-
                 y = np.zeros(n_eval)
                 for k in range(max(1, n_eval / batch_size)):
                     batch_from = k * batch_size
                     batch_to = min([(k + 1) * batch_size + 1, n_eval + 1])
                     y[batch_from:batch_to] = \
-                        self.predict(X[batch_from:batch_to],
-                                     eval_MSE=eval_MSE, batch_size=None)
+                        self.predict(X[batch_from:batch_to], batch_size=None)
 
                 return y
 
