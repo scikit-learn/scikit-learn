@@ -399,10 +399,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             time.
 
         with_std : boolean, optional, default=False
-            A boolean specifying whether the standard deviation of the
-            predictions is evaluated or not.
-            Default assumes with_std = False and evaluates only the mean
-            prediction.
+            When True, the standard deviation of predictions across the
+            ensemble is returned in addition to the mean.
 
         Returns
         -------

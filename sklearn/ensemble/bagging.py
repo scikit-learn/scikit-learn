@@ -795,6 +795,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
         The predicted regression target of an input sample is computed as the
         mean predicted regression targets of the estimators in the ensemble.
+        Optionally, the standard deviation is computed in addition.
 
         Parameters
         ----------
@@ -803,15 +804,13 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
             they are supported by the base estimator.
 
         with_std : boolean, optional, default=False
-            A boolean specifying whether the standard deviation of the
-            predictions is evaluated or not.
-            Default assumes with_std = False and evaluates only the mean
-            prediction.
+            When True, the standard deviation of predictions across the
+            ensemble is returned in addition to the mean.
 
         Returns
         -------
-        y : array of shape = [n_samples]
-            The predicted values.
+        y_mean : array of shape = [n_samples]
+            The mean of the predicted values.
 
         y_std : array of shape = [n_samples]
             The standard deviation of the predicted values.
@@ -831,11 +830,11 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
             for i in range(n_jobs))[0]
 
         # Reduce
-        y_hat = np.mean(all_y_hat, axis=0)
+        y_mean = np.mean(all_y_hat, axis=0)
         if with_std:
-            return y_hat, np.std(all_y_hat, axis=0)
+            return y_mean, np.std(all_y_hat, axis=0)
         else:
-            return y_hat
+            return y_mean
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
