@@ -1,8 +1,14 @@
-cdef LearningRate get_learning_rate(str learning_rate):
-    if learning_rate == "constant":
-        return Constant()
+cdef char* c = "constant"
+cdef LearningRate constant = LearningRate()
 
-cdef class LearningRate(object):
+cdef extern from "stdlib.h":
+    int strcmp(const char*, const char*)
+
+cdef LearningRate get_learning_rate(char* learning_rate):
+    if(strcmp(learning_rate, c)):
+        return constant
+
+cdef class LearningRate:
     cdef double step(self, double eta0):
         pass
 
