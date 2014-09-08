@@ -79,6 +79,9 @@ Bug fixes
     - The ``transform`` of :class:`lda.LDA` now projects the input on the most
       discriminant directions. By Martin Billinger.
 
+    - Calling ``partial_fit`` with ``class_weight=='auto'`` throws an
+      appropriate error message and suggests a work around. By Danny Sullivan.
+
 
 API changes summary
 -------------------
