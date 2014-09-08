@@ -1,3 +1,12 @@
+scikit-learn (0.15.2-2) unstable; urgency=medium
+
+  * debian/rules
+    - fixed version for comparison against sphinx. Now documentation should
+      get built on recent releases (Closes: #760730).
+      Thanks Federico Ceratto for the report
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 08 Sep 2014 09:47:41 -0400
+
 scikit-learn (0.15.2-1) unstable; urgency=medium
 
   * Fresh upstream minor release

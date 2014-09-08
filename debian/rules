@@ -8,7 +8,7 @@ PYVERS = $(shell pyversions -vr)
 PYVER = $(shell pyversions  -vd)
 
 SPHINX_VER := $(shell python -c 'from sphinx import __version__; print __version__')
-NODOC = $(shell dpkg --compare-versions $(SPHINX_VER) lt 10.1.3 && echo "nodoc" || echo "")
+NODOC = $(shell dpkg --compare-versions $(SPHINX_VER) lt 1.1.3 && echo "nodoc" || echo "")
 export DEB_BUILD_OPTIONS += $(NODOC)
 
 CYTHON_VER := $(shell dpkg -l cython 2>/dev/null | awk '/^ii/{print $$3;}' || echo 0)
