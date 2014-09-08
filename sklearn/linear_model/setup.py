@@ -32,6 +32,11 @@ def configuration(parent_package='', top_path=None):
                          libraries=libraries,
                          )
 
+    config.add_extension('learning_rates',
+                         sources=['learning_rates.c'],
+                         libraries=libraries,
+                         )
+
     # add other directories
     config.add_subpackage('tests')
 

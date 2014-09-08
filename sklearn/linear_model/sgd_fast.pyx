@@ -17,6 +17,8 @@ from time import time
 cimport cython
 from libc.math cimport exp, log, sqrt, pow, fabs
 cimport numpy as np
+from learning_rates cimport get_learning_rate
+from learning_rates cimport LearningRate
 cdef extern from "sgd_fast_helpers.h":
     bint skl_isfinite(double) nogil
 
@@ -402,7 +404,9 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         The fitted intercept term.
 
     """
-
+    cdef LearningRate lr = get_learning_rate(learning_rate)
+    cdef test = lr.step(2.3)
+    print(test)
     # get the data information into easy vars
     cdef Py_ssize_t n_samples = dataset.n_samples
     cdef Py_ssize_t n_features = weights.shape[0]
