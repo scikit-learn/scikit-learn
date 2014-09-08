@@ -254,6 +254,8 @@ features::
  _`Faster API-compatible implementation`: https://github.com/mblondel/svmlight-loader
 
 
+.. include:: sparse_data_loading.rst
+
 .. include:: olivetti_faces.rst
 
 .. include:: twenty_newsgroups.rst
