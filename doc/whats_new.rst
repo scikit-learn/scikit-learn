@@ -76,6 +76,12 @@ Bug fixes
     - Various fixes to the Gaussian processes subpackage by Vincent Dubourg
       and Jan Hendrik Metzen.
 
+    - The ``transform`` of :class:`lda.LDA` now projects the input on the most
+      discriminant directions. By Martin Billinger.
+
+    - Calling ``partial_fit`` with ``class_weight=='auto'`` throws an
+      appropriate error message and suggests a work around. By Danny Sullivan.
+
 
 API changes summary
 -------------------
