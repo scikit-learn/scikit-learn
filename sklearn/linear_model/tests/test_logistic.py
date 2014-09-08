@@ -514,3 +514,21 @@ def test_logistic_regression_multinomial():
     clf_path.fit(X, y)
     assert_array_almost_equal(clf_path.coef_, clf_int.coef_, decimal=3)
     assert_almost_equal(clf_path.intercept_, clf_int.intercept_, decimal=3)
+
+
+def test_liblinear_decision_function_zero():
+    """Test negative prediction when decision_function values are zero.
+
+    Liblinear predicts the positive class when decision_function values
+    are zero. This is a test to verify that we do not do the same.
+    See Issue: https://github.com/scikit-learn/scikit-learn/issues/3600
+    and the PR https://github.com/scikit-learn/scikit-learn/pull/3623
+    """
+    rng = np.random.RandomState(0)
+    X, y = make_classification(n_samples=5, n_features=5)
+    clf = LogisticRegression(fit_intercept=False)
+    clf.fit(X, y)
+
+    # Dummy data such that the decision function becomes zero.
+    X = np.zeros((5, 5))
+    assert_array_equal(clf.predict(X), np.zeros(5))
