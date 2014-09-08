@@ -544,7 +544,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
         y_mean: array of shape = [n_samples] or [n_samples, n_outputs]
             The mean of the predicted values.
 
-        y_std : array of shape = [n_samples]
+        y_std : array of shape = [n_samples], optional (if with_std == True)
             The standard deviation of the predicted values.
         """
         # Check data
