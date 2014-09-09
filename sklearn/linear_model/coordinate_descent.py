@@ -35,6 +35,7 @@ def compute_residual(X, y, w):
         return y - safe_sparse_dot(X, w)
     return y - np.dot(X, w.T)
 
+
 def compute_strong_active_set(X, y, current_alpha, prev_alpha, l1_ratio, coef,
                               residual):
     """
@@ -206,7 +207,7 @@ def check_kkt_conditions(X, y, coef, strong_active_set, alpha, l1_ratio,
                 break
 
     if return_active_set:
-        return active_set, kkt_violations
+        return np.sort(active_set), kkt_violations
     else:
         return kkt_violations
 
@@ -763,9 +764,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             # predictors have been removed since they have already been optimized
             # for in the above while loop.
             kkt_violations = False
-            non_active = np.setdiff1d(feature_array, eligible_features,
-                                      assume_unique=True)
-            non_active = np.setdiff1d(non_active, strong_active_set,
+            non_active = np.setdiff1d(feature_array, active_set,
                                       assume_unique=True)
             if np.any(non_active):
                 active_set, kkt_violations = check_kkt_conditions(
