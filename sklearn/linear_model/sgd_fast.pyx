@@ -344,7 +344,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
               int learning_rate, double eta0,
               double power_t,
               double t=1.0,
-              double intercept_decay=1.0, char* str_lr):
+              double intercept_decay=1.0):
     """Plain SGD for generic loss functions and penalties.
 
     Parameters
@@ -404,9 +404,10 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         The fitted intercept term.
 
     """
-    cdef LearningRate lr = get_learning_rate(str_lr)
-    cdef test = lr.step(2.3)
-    print(test)
+    cdef LearningRate lr = get_learning_rate(3)
+    a = lr.step(eta0=.1, alpha=.1, t=2, power_t=3)
+    print(a)
+
     # get the data information into easy vars
     cdef Py_ssize_t n_samples = dataset.n_samples
     cdef Py_ssize_t n_features = weights.shape[0]
