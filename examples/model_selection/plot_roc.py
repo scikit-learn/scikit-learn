@@ -20,7 +20,8 @@ a classifier. In order to extend ROC curve and ROC area to multi-class
 or multi-label classification, it is necessary to binarize the output. One ROC
 curve can be drawn per label, but one can also draw a ROC curve by considering
 each element of the label indicator matrix as a binary prediction
-(micro-averaging).
+(micro-averaging). Another evaluation measure for multi-class classification is
+macro-averaging, which gives equal weight to the classification of each label.
 
 .. note::
 
@@ -90,6 +91,19 @@ plt.figure()
 plt.plot(fpr["micro"], tpr["micro"],
          label='micro-average ROC curve (area = {0:0.2f})'
                ''.format(roc_auc["micro"]))
+# Compute macro-average ROC curve and ROC area
+fpr["macro"] = np.mean([fpr[i] for i in range(n_classes)], axis=0)
+tpr["macro"] = np.mean([tpr[i] for i in range(n_classes)], axis=0)
+roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
+
+# Plot ROC curve
+plt.clf()
+plt.plot(fpr["micro"], tpr["micro"],
+        label='micro-average ROC curve (area = {0:0.2f})'
+              ''.format(roc_auc["micro"]))
+plt.plot(fpr["macro"], tpr["macro"],
+        label='macro-average ROC curve (area = {0:0.2f})'
+              ''.format(roc_auc["macro"]))
 for i in range(n_classes):
     plt.plot(fpr[i], tpr[i], label='ROC curve of class {0} (area = {1:0.2f})'
                                    ''.format(i, roc_auc[i]))
