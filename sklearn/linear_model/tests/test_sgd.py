@@ -254,9 +254,12 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         assert_raises_regexp(ValueError,
                              "class_weight 'auto' is not supported for "
                              "partial_fit. In order to use 'auto' weights, "
-                             "use compute_class_weight\('auto', classes, y\) "
-                             "and pass the resulting weights as the "
-                             "class_weight parameter.",
+                             "use compute_class_weight('auto', classes, y). "
+                             "In place of y you can us a large enough sample "
+                             "of the full training set target to properly "
+                             "estimate the class frequency distributions. "
+                             "Pass the resulting weights as the class_weight "
+                             "parameter.",
                              self.factory(class_weight='auto').partial_fit,
                              X, Y, classes=np.unique(Y))
 
