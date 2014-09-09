@@ -250,25 +250,23 @@ def _multinomial_loss(w, X, Y, alpha, sample_weight):
 
     Returns
     -------
-    out : float
+    loss : float
         Multinomial loss.
     """
     n_samples, n_features = X.shape
     n_classes = Y.shape[1]
     fit_intercept = w.size == (n_classes * (n_features + 1))
     w = w.reshape(n_classes, -1)
-    if(sample_weight is None):
-        sample_weight = np.ones(n_samples)
     sample_weight = sample_weight[:, np.newaxis]
-    if(fit_intercept):
+    if fit_intercept:
         intercept = w[:, -1]
         w = w[:, :-1]
     else:
-        intercept = np.zeros(n_classes)
-    a_k = safe_sparse_dot(X, w.T)
-    a_k = a_k + intercept[np.newaxis, :]
-    log_yhat = a_k - logsumexp(a_k, axis=1)[:, np.newaxis]
-    loss = -(sample_weight * Y * log_yhat).sum()
+        intercept = 0
+    p = safe_sparse_dot(X, w.T)
+    p += intercept
+    p -= logsumexp(p, axis=1)[:, np.newaxis]
+    loss = -(sample_weight * Y * p).sum()
     loss += 0.5 * alpha * squared_norm(w)
     return loss
 
@@ -379,25 +377,24 @@ def _multinomial_loss_grad_hess(w, X, Y, alpha, sample_weight):
     n_samples, n_features = X.shape
     n_classes = Y.shape[1]
     fit_intercept = w.size == (n_classes * (n_features + 1))
-    grad = np.zeros(w.size).reshape(n_classes, -1)
+    grad = np.zeros((n_classes, n_features + bool(fit_intercept)))
     w = w.reshape(n_classes, -1)
-    if(sample_weight is None):
-        sample_weight = np.ones(n_samples)
     sample_weight = sample_weight[:, np.newaxis]
-    if(fit_intercept):
+    if fit_intercept:
         intercept = w[:, -1]
         w = w[:, :-1]
     else:
-        intercept = np.zeros(n_classes)
-    a_k = safe_sparse_dot(X, w.T)
-    a_k = a_k + intercept[np.newaxis, :]
-    log_yhat = a_k - logsumexp(a_k, axis=1)[:, np.newaxis]
-    y_hat = np.exp(log_yhat)
-    loss = -(sample_weight * Y * log_yhat).sum()
+        intercept = 0
+    p = safe_sparse_dot(X, w.T)
+    p += intercept
+    p -= logsumexp(p, axis=1)[:, np.newaxis]
+    loss = -(sample_weight * Y * p).sum()
     loss += 0.5 * alpha * squared_norm(w)
-    err = np.multiply(Y - y_hat, sample_weight)
+    p = np.exp(p, p)
+    # At this point the variable p holds the predicted class probabilities.
+    err = (Y - p) * sample_weight
     grad[:, :n_features] = -safe_sparse_dot(err.T, X)
-    grad[:, :n_features] += w[:, :n_features] * alpha
+    grad[:, :n_features] += w * alpha
     if(fit_intercept):
         grad[:, -1] = -np.sum(err, axis=0)
 
@@ -411,12 +408,12 @@ def _multinomial_loss_grad_hess(w, X, Y, alpha, sample_weight):
         else:
             inter_terms = np.zeros(n_classes)
         vec_prod = safe_sparse_dot(X, v.T)
-        vec_prod += inter_terms[np.newaxis, :]
-        r_yhat = np.multiply(-y_hat, vec_prod)
+        vec_prod += inter_terms
+        r_yhat = np.multiply(-p, vec_prod)
         r_yhat = r_yhat.sum(axis=1)
         r_yhat = r_yhat[:, np.newaxis] + vec_prod
-        r_yhat = np.multiply(r_yhat, y_hat)
-        r_yhat = np.multiply(r_yhat, sample_weight)
+        r_yhat = r_yhat * p
+        r_yhat = r_yhat * sample_weight
         hessProd = np.zeros((grad.shape))
         hessProd[:, :n_features] = safe_sparse_dot(r_yhat.T, X)
         hessProd[:, :n_features] += v * alpha
