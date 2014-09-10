@@ -190,7 +190,7 @@ class CommonTest(object):
         assert_array_equal(clf.coef_, clf2.coef_)
 
     def test_plain_has_no_average_attr(self):
-        clf = self.factory(average=True)
+        clf = self.factory(average=True, eta0=.01)
         clf.fit(X, Y)
 
         assert_true(hasattr(clf, 'average_coef_'))

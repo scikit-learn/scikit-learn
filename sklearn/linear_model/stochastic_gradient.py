@@ -104,6 +104,9 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         if self.learning_rate in ("constant", "invscaling"):
             if self.eta0 <= 0.0:
                 raise ValueError("eta0 must be > 0")
+        if self.learning_rate == "optimal" and self.average:
+            if self.eta0 <= 0.0:
+                raise ValueError("eta0 must be > 0")
 
         # raises ValueError if not registered
         self._get_penalty_type(self.penalty)
@@ -651,7 +654,8 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     learning_rate : string, optional
         The learning rate:
         constant: eta = eta0
-        optimal: eta = 1.0 / (t + t0) [default]
+        optimal: eta = 1.0 / (t + t0) if average==False.
+        If average==True eta = eta0 [default]
         invscaling: eta = eta0 / pow(t, power_t)
 
     eta0 : double
@@ -1151,7 +1155,8 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
     learning_rate : string, optional
         The learning rate:
         constant: eta = eta0
-        optimal: eta = 1.0/(t+t0)
+        optimal: eta = 1.0/(alpha * t) if average==False. If average==True,
+        eta = eta0.
         invscaling: eta = eta0 / pow(t, power_t) [default]
 
     eta0 : double, optional

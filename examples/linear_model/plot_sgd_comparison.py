@@ -23,8 +23,7 @@ digits = datasets.load_digits()
 
 classifiers = [
     ("SGD", SGDClassifier()),
-    ("ASGD", SGDClassifier(average=True, n_iter=1,
-                           learning_rate='constant', eta0=.1)),
+    ("ASGD", SGDClassifier(average=True, eta0=.001, n_iter=1)),
     ("Perceptron", Perceptron()),
     ("Passive-Aggressive I", PassiveAggressiveClassifier(loss='hinge',
                                                          C=1.0)),
