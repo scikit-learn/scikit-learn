@@ -229,6 +229,37 @@ def test_label_encoder():
     assert_raises(ValueError, le.transform, [0, 6])
 
 
+def test_label_encoder_new_label_replace():
+    """Test LabelEncoder's transform on new labels"""
+    le = LabelEncoder(new_labels=-99)
+    le.fit(["a", "b", "b", "c"])
+    assert_array_equal(le.classes_, ["a", "b", "c"])
+    assert_array_equal(le.transform(["a", "a", "c"]), [0, 0, 2])
+    assert_array_equal(le.inverse_transform([2, 1, 0]), ["c", "b", "a"])
+    assert_array_equal(le.transform(["b", "c", "d"]), [1, 2, -99])
+
+
+def test_label_encoder_classes_parameter():
+    """Test LabelEncoder's classes parameter"""
+    le = LabelEncoder(classes=["a", "b", "c"], new_labels=None)
+    assert_array_equal(le.classes_, ["a", "b", "c"])
+    assert_array_equal(le.transform(["c", "a", "b", "c"],), [2, 0, 1, 2])
+    assert_array_equal(le.inverse_transform([2, 1, 0]), ["c", "b", "a"])
+    assert_raises(ValueError, le.transform, ["b", "c", "d"])
+
+
+def test_label_encoder_transform_classes_parameter():
+    """Test LabelEncoder's transform using the classes parameter"""
+    le = LabelEncoder(new_labels=None)
+    le.fit(["a", "b", "b", "c"])
+    assert_array_equal(le.classes_, ["a", "b", "c"])
+    assert_array_equal(le.transform(["d", "f", "e", "e"],
+                                    classes=["d", "e", "f"]),
+                       [0, 2, 1, 1])
+    assert_array_equal(le.inverse_transform([2, 1, 0]), ["c", "b", "a"])
+    assert_raises(ValueError, le.transform, ["b", "c", "d"])
+
+
 def test_label_encoder_fit_transform():
     """Test fit_transform"""
     le = LabelEncoder()
@@ -245,6 +276,8 @@ def test_label_encoder_errors():
     le = LabelEncoder()
     assert_raises(ValueError, le.transform, [])
     assert_raises(ValueError, le.inverse_transform, [])
+    # Fail on unrecognized value for the 'new_label' parameter
+    assert_raises(ValueError, LabelEncoder, new_labels="xyz")
 
 
 def test_sparse_output_multilabel_binarizer():

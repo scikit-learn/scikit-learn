@@ -4,6 +4,7 @@
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Hamzeh Alsalhi <ha258@cornell.edu>
+#          Michael Bommarito <michael@bommaritollc.com>
 # License: BSD 3 clause
 
 from collections import defaultdict
@@ -54,6 +55,22 @@ def _check_numpy_unicode_bug(labels):
 class LabelEncoder(BaseEstimator, TransformerMixin):
     """Encode labels with value between 0 and n_classes-1.
 
+    Parameters
+    ----------
+
+    classes : array-like of shape [n_class], optional (default: None)
+        Holds the label for each class. List of unique sorted labels to encode
+        the target data against. Using this parameter in initilization will
+        allow skipping a call fit before calling transform.
+
+
+    new_labels : Int, optional (default: None)
+          re-label with this value.
+          N.B. that default values are in [0, 1, ...], so caution should be
+          taken if a non-negative value is passed to not accidentally
+          intersect.  Additionally, ``inverse_transform`` will fail for a
+          value that does not intersect with the ``fit``-time label set.
+
     Attributes
     ----------
     classes_ : array of shape (n_class,)
@@ -66,7 +83,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     >>> from sklearn import preprocessing
     >>> le = preprocessing.LabelEncoder()
     >>> le.fit([1, 2, 2, 6])
-    LabelEncoder()
+    LabelEncoder(classes=None, new_labels=None)
     >>> le.classes_
     array([1, 2, 6])
     >>> le.transform([1, 1, 2, 6]) #doctest: +ELLIPSIS
@@ -79,7 +96,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
     >>> le = preprocessing.LabelEncoder()
     >>> le.fit(["paris", "paris", "tokyo", "amsterdam"])
-    LabelEncoder()
+    LabelEncoder(classes=None, new_labels=None)
     >>> list(le.classes_)
     ['amsterdam', 'paris', 'tokyo']
     >>> le.transform(["tokyo", "tokyo", "paris"]) #doctest: +ELLIPSIS
@@ -88,6 +105,17 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     ['tokyo', 'tokyo', 'paris']
 
     """
+
+    def __init__(self, classes=None, new_labels=None):
+        if classes is not None:
+            self.classes_ = np.asarray(classes)
+
+        if new_labels is not None and type(new_labels) is not int:
+                raise ValueError("Value of argument `new_labels`={0} is "
+                                 "unknown and not an "
+                                 "integer.".format(new_labels))
+
+        self.new_labels = new_labels
 
     def _check_fitted(self):
         if not hasattr(self, "classes_"):
@@ -127,7 +155,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         self.classes_, y = np.unique(y, return_inverse=True)
         return y
 
-    def transform(self, y):
+    def transform(self, y, classes=None):
         """Transform labels to normalized encoding.
 
         Parameters
@@ -135,18 +163,33 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y : array-like of shape [n_samples]
             Target values.
 
+        classes : array-like of shape [n_class], optional (default: None)
+            List of unique sorted labels to encode the target data against.
+            If None the LabelEncoder must have already been fit and the unique
+            labels from the fit will be used.
+
         Returns
         -------
         y : array-like of shape [n_samples]
         """
-        self._check_fitted()
+        if classes is None:
+            self._check_fitted()
+            classes = self.classes_
 
-        classes = np.unique(y)
-        _check_numpy_unicode_bug(classes)
-        if len(np.intersect1d(classes, self.classes_)) < len(classes):
-            diff = np.setdiff1d(classes, self.classes_)
-            raise ValueError("y contains new labels: %s" % str(diff))
-        return np.searchsorted(self.classes_, y)
+        y_classes = np.unique(y)
+        _check_numpy_unicode_bug(y_classes)
+        if len(np.intersect1d(y_classes, classes)) < len(y_classes):
+            # Get the new labels
+            unseen = np.setdiff1d(y_classes, classes)
+
+            if type(self.new_labels) is int:
+                ret = np.searchsorted(classes, y)
+                ret[np.in1d(y, unseen)] = self.new_labels
+                return ret
+            elif self.new_labels is None:
+                raise ValueError("y contains new label(s): %s" % str(unseen))
+
+        return np.searchsorted(classes, y)
 
     def inverse_transform(self, y):
         """Transform labels back to original encoding.
@@ -161,6 +204,14 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y : numpy array of shape [n_samples]
         """
         self._check_fitted()
+
+        if type(self.new_labels) is int:
+            warnings.warn('When ``new_labels`` uses an integer '
+                          're-labeling strategy, the ``inverse_transform`` '
+                          'is not necessarily one-to-one mapping; any '
+                          'labels not present during initial ``fit`` will '
+                          'not be mapped.',
+                          UserWarning)
 
         y = np.asarray(y)
         return self.classes_[y]
