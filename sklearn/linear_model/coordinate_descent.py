@@ -30,188 +30,6 @@ from . import cd_fast
 
 ###############################################################################
 # Paths functions
-def compute_residual(X, y, w):
-    if y.ndim == 1:
-        return y - safe_sparse_dot(X, w)
-    return y - np.dot(X, w.T)
-
-
-def compute_strong_active_set(X, y, current_alpha, prev_alpha, l1_ratio, coef,
-                              residual):
-    """
-    Compute the features that are active along a regularization path.
-
-    An active feature satisfies the following criteria.
-    |X_{j} * (y - X*w)| < 2 * current_alpha - prev_alpha
-
-    Parameters
-    ----------
-    X : {ndarray, sparse matrix}, shape (n_samples, n_features)
-        Training data.
-
-    y : ndarray, shape (n_samples,) or (n_samples, n_outputs)
-        Target values.
-
-    current_alpha : float
-        Current regularization parameter.
-
-    prev_alpha : float
-        Previous regularization parameter while fitting along the grid of
-        alphas.
-
-    l1_ratio : float
-        ElasticNet mixing parameter. A l1_ratio of 1.0 implies a l1 penalty
-        while that of 0.0 indicates a l2 penalty.
-
-    coef : ndarray, shape (n_features)
-        Initial feature vector along the regularization path.
-
-    Returns
-    -------
-    active_features : ndarray
-        Array of active features.
-    """
-    prev_alpha, current_alpha = prev_alpha * l1_ratio, current_alpha * l1_ratio
-
-    # If the right hand side is negative, there is no point doing
-    # the remaining computation as the left hand side is always positive.
-    if 2*current_alpha - prev_alpha < 0:
-        return np.arange(X.shape[1])
-
-    multi_output = (y.ndim >= 2)
-
-    if multi_output:
-        # coef is of shape n_outputs * n_features.
-        # We need n_features * n_outputs.
-        coef = coef.T
-
-    active_rule = safe_sparse_dot(X.T, residual)
-    active_rule = np.abs(active_rule, active_rule)
-    if multi_output:
-        active_rule = row_norms(active_rule)
-
-    active_features = (active_rule >= 2*current_alpha - prev_alpha)
-    active_features = np.nonzero(active_features)[0]
-    del active_rule
-    return active_features
-
-
-def check_kkt_conditions(X, y, coef, strong_active_set, alpha, l1_ratio,
-                         residual, active_set=None,
-                         return_active_set=True, rtol=1e-3):
-    """
-    Checks if the KKT conditions are satisfied for ElasticNet and Lasso.
-
-    These necessary conditions are used to check if a given feature vector
-    minimizes the loss function.
-    If return_active_set is set to True, then it returns the set of
-    features for which the KKT conditions are violated (active_features).
-    Else it returns False when the conditions are violated for the first
-    feature.
-
-    Parameters
-    ----------
-    X : {ndarray, sparse matrix}, shape (n_samples, n_features)
-        Training data.
-
-    y : ndarray, shape (n_samples,) or (n_samples, n_outputs)
-        Target values.
-
-    coef : ndarray, shape (n_features,)
-        Feature vector.
-
-    strong_active_set : array-like
-        The features indices for which the KKT conditions are to be verified.
-
-    alpha : float
-        Regularization parameter.
-
-    l1_ratio : float
-        ElasticNet mixing parameter. A l1_ratio of 1.0 implies a l1 penalty
-        while that of 0.0 indicates a l2 penalty.
-
-    active_set : array-like, optional
-        If supplied, the features for which the KKT conditions are violated
-        are appended to this.
-
-    return_active_set : bool
-        Whether or not to return the active_set.
-
-    Returns
-    -------
-    kkt_violations : bool
-        Whether or not the KKT violations are violated across the
-        strong_active_set.
-
-    active_set : ndarray
-        Active features across the strong_active_set. Returned only if
-        return_active_set is set to True.
-    """
-    kkt_violations = False
-
-    if active_set is None:
-        active_set = []
-    if not isinstance(active_set, list):
-        active_set = active_set.tolist()
-
-    multi_output = (y.ndim >= 2)
-    if multi_output:
-        coef = coef.T
-
-    X_sparse = sparse.isspmatrix(X)
-    if X_sparse:
-        X_indices = X.indices
-        X_data = X.data
-        X_indptr = X.indptr
-
-    for i in strong_active_set:
-        if X_sparse:
-            startptr = X_indptr[i]
-            endptr = X_indptr[i + 1]
-            dot_data = X_data[startptr: endptr]
-            residual_data = residual.take(X_indices[startptr: endptr],
-                                          mode='clip')
-            loss_derivative = np.dot(dot_data, residual_data)
-        else:
-            feature = X[:, i]
-            loss_derivative = np.dot(feature, residual)
-        active_coef = coef[i]
-
-        # XXX: I'm not sure about the multi_output case.
-        if multi_output:
-            loss_derivative = norm(loss_derivative)
-            mean_coef = np.mean(active_coef)
-            l1_penalty = alpha * l1_ratio
-            if mean_coef < 0:
-                l1_penalty = -l1_penalty
-            active_coef = norm(active_coef)
-            l2_penalty = alpha * (1 - l1_ratio) * active_coef
-        else:
-            l1_penalty = alpha * l1_ratio
-            if active_coef < 0:
-                l1_penalty = -l1_penalty
-            l2_penalty = alpha * (1 - l1_ratio) * active_coef
-
-        penalty = l1_penalty + l2_penalty
-        tol = 1e-3 + rtol * abs(penalty)
-
-        if active_coef != 0 and (abs(loss_derivative - penalty) > tol):
-            active_set.append(i)
-            kkt_violations = True
-            if not return_active_set:
-                break
-        elif active_coef == 0 and abs(loss_derivative) > alpha*l1_ratio:
-            active_set.append(i)
-            kkt_violations = True
-            if not return_active_set:
-                break
-
-    if return_active_set:
-        return np.sort(active_set), kkt_violations
-    else:
-        return kkt_violations
-
-
 def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
                 eps=1e-3, n_alphas=100, normalize=False, copy_X=True):
     """ Compute the grid of alpha values for elastic net parameter search
@@ -709,7 +527,9 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         X, y, coef_, l1_reg, l2_reg, active_set, max_iter, tol,
         rng, random, positive, precompute, Xy, X_sparse_scaling
         )
-    coef_, dual_gap_, eps_, n_iter_ = model
+    coef_, dual_gap_, eps_, n_iter_, XtR = model
+    if XtR.ndim == 2:
+        XtR = row_norms(XtR)
     n_iters.append(n_iter_)
     dual_gaps[0] = dual_gap_
     coefs[..., 0] = coef_
@@ -720,20 +540,16 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     else:
         active_set = np.nonzero(np.abs(coef_) > 1e-12)[0]
 
+    active_set = np.asarray(active_set, dtype=np.int32)
     for i, alpha in enumerate(alphas[1:]):
 
         kkt_violations = True
-        residual = None
         l1_reg = alpha * l1_ratio * n_samples
         l2_reg = alpha * (1.0 - l1_ratio) * n_samples
-
         while kkt_violations:
             eligible_features = np.copy(active_set)
-            if residual is None:
-                residual = compute_residual(X, y, coef_)
-            strong_active_set = compute_strong_active_set(
-                X, y, n_samples*alpha, n_samples*alphas[i-1], l1_ratio,
-                coef_, residual,
+            strong_active_set = cd_fast.compute_strong_active_set(
+                n_samples*alpha*l1_ratio, n_samples*alphas[i-1]*l1_ratio, XtR
                 )
             while kkt_violations:
                 if isinstance(eligible_features, list):
@@ -744,8 +560,9 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                     max_iter, tol, rng, random, positive, precompute,
                     Xy, X_sparse_scaling
                     )
-                residual = compute_residual(X, y, coef_)
-                coef_, dual_gap_, eps_, n_iter_ = model
+                coef_, dual_gap_, eps_, n_iter_, XtR = model
+                if XtR.ndim == 2:
+                    XtR = row_norms(XtR)
 
                 # Check KKT conditions for features present in strong_active_set.
                 # and not in eligible predictors. If KKT conditions are violated add them
@@ -754,11 +571,12 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 common_features = np.in1d(strong_active_set, eligible_features,
                                           assume_unique=True)
                 not_in_active = strong_active_set[~common_features]
-
                 if np.any(not_in_active):
-                    eligible_features, kkt_violations = check_kkt_conditions(
-                        X, y, coef_, not_in_active, n_samples*alpha, l1_ratio,
-                        residual, eligible_features, return_active_set=True)
+                    #print eligible_features
+                    eligible_features, kkt_violations = cd_fast.check_kkt_conditions_fast(
+                        XtR, coef_, not_in_active, eligible_features,
+                        l1_ratio, n_samples*alpha, 1e-3
+                        )
 
             # Check KKT conditions for all predictors. The strong and eligible
             # predictors have been removed since they have already been optimized
@@ -767,9 +585,12 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             non_active = np.setdiff1d(feature_array, active_set,
                                       assume_unique=True)
             if np.any(non_active):
-                active_set, kkt_violations = check_kkt_conditions(
-                    X, y, coef_, non_active, n_samples*alpha, l1_ratio,
-                    residual, active_set, return_active_set=True)
+                if XtR.ndim == 2:
+                    XtR = row_norms(XtR)
+                active_set, kkt_violations = cd_fast.check_kkt_conditions_fast(
+                    XtR, coef_, non_active, active_set,
+                    l1_ratio, n_samples*alpha, 1e-3
+                    )
 
         if dual_gap_ > eps_:
             warnings.warn('Objective did not converge.' +
@@ -1928,7 +1749,7 @@ class MultiTaskElasticNet(Lasso):
         random = (self.selection == 'random')
         active_features = np.arange(n_features, dtype=np.int32)
 
-        self.coef_, self.dual_gap_, self.eps_, self.n_iter_ = \
+        self.coef_, self.dual_gap_, self.eps_, self.n_iter_, _  = \
             cd_fast.enet_coordinate_descent_multi_task(
                 self.coef_, l1_reg, l2_reg, X, y, active_features,
                 self.max_iter, self.tol,
