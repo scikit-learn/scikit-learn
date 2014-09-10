@@ -553,13 +553,13 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    `coef_` : array, shape (n_features,) or (n_features, n_targets)
+    coef_ : array, shape (n_features,) or (n_features, n_targets)
         parameter vector (w in the formula)
 
-    `intercept_` : float or array, shape (n_targets,)
+    intercept_ : float or array, shape (n_targets,)
         independent term in decision function.
 
-    `n_iter_` : int or array-like
+    n_iter_ : int or array-like
         Number of active features across every target.
 
     Notes
@@ -752,17 +752,17 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    `intercept_` : float or array, shape (n_targets,)
+    intercept_ : float or array, shape (n_targets,)
         Independent term in decision function.
 
-    `coef_` : array, shape (n_features,) or (n_features, n_targets)
+    coef_ : array, shape (n_features,) or (n_features, n_targets)
         Parameter vector (w in the problem formulation).
 
-    `n_nonzero_coefs_` : int
+    n_nonzero_coefs_ : int
         Estimated number of non-zero coefficients giving the best mean squared
         error over the cross-validation folds.
 
-    `n_iter_` : int or array-like
+    n_iter_ : int or array-like
         Number of active features across every target for the model refit with
         the best hyperparameters got by cross-validating across all folds.
 

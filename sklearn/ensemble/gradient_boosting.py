@@ -389,7 +389,7 @@ class BinomialDeviance(LossFunction):
         y = y.take(terminal_region, axis=0)
 
         numerator = residual.sum()
-        denominator = np.sum((y - residual) * (1 - y + residual))
+        denominator = np.dot(y - residual, 1 - y + residual)
 
         if denominator == 0.0:
             tree.value[leaf, 0, 0] = 0.0
@@ -822,6 +822,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             verbose_reporter.init(self, begin_at_stage)
 
         # perform boosting iterations
+        i = begin_at_stage
         for i in range(begin_at_stage, self.n_estimators):
 
             # subsampling
@@ -1050,34 +1051,34 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
     Attributes
     ----------
-    `feature_importances_` : array, shape = [n_features]
+    feature_importances_ : array, shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
-    `oob_improvement_` : array, shape = [n_estimators]
+    oob_improvement_ : array, shape = [n_estimators]
         The improvement in loss (= deviance) on the out-of-bag samples
         relative to the previous iteration.
         ``oob_improvement_[0]`` is the improvement in
         loss of the first stage over the ``init`` estimator.
 
-    `oob_score_` : array, shape = [n_estimators]
+    oob_score_ : array, shape = [n_estimators]
         Score of the training dataset obtained using an out-of-bag estimate.
         The i-th score ``oob_score_[i]`` is the deviance (= loss) of the
         model at iteration ``i`` on the out-of-bag sample.
         Deprecated: use `oob_improvement_` instead.
 
-    `train_score_` : array, shape = [n_estimators]
+    train_score_ : array, shape = [n_estimators]
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the
         model at iteration ``i`` on the in-bag sample.
         If ``subsample == 1`` this is the deviance on the training data.
 
-    `loss_` : LossFunction
+    loss_ : LossFunction
         The concrete ``LossFunction`` object.
 
     `init` : BaseEstimator
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 
-    `estimators_`: list of DecisionTreeRegressor
+    estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
 
     See also
@@ -1322,34 +1323,34 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     Attributes
     ----------
-    `feature_importances_` : array, shape = [n_features]
+    feature_importances_ : array, shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
-    `oob_improvement_` : array, shape = [n_estimators]
+    oob_improvement_ : array, shape = [n_estimators]
         The improvement in loss (= deviance) on the out-of-bag samples
         relative to the previous iteration.
         ``oob_improvement_[0]`` is the improvement in
         loss of the first stage over the ``init`` estimator.
 
-    `oob_score_` : array, shape = [n_estimators]
+    oob_score_ : array, shape = [n_estimators]
         Score of the training dataset obtained using an out-of-bag estimate.
         The i-th score ``oob_score_[i]`` is the deviance (= loss) of the
         model at iteration ``i`` on the out-of-bag sample.
         Deprecated: use `oob_improvement_` instead.
 
-    `train_score_` : array, shape = [n_estimators]
+    train_score_ : array, shape = [n_estimators]
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the
         model at iteration ``i`` on the in-bag sample.
         If ``subsample == 1`` this is the deviance on the training data.
 
-    `loss_` : LossFunction
+    loss_ : LossFunction
         The concrete ``LossFunction`` object.
 
     `init` : BaseEstimator
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 
-    `estimators_`: list of DecisionTreeRegressor
+    estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
 
     See also

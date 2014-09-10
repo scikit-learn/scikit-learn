@@ -31,6 +31,7 @@ struct parameter
 	int nr_weight;
 	int *weight_label;
 	double* weight;
+	int max_iter;
 	double p;
 };
 
@@ -42,6 +43,7 @@ struct model
 	double *w;
 	int *label;		/* label of each class */
 	double bias;
+	int *n_iter;    /* no. of iterations of each class */
 };
 
 struct model* train(const struct problem *prob, const struct parameter *param);
@@ -57,6 +59,7 @@ struct model *load_model(const char *model_file_name);
 int get_nr_feature(const struct model *model_);
 int get_nr_class(const struct model *model_);
 void get_labels(const struct model *model_, int* label);
+void get_n_iter(const struct model *model_, int* n_iter);
 
 void free_model_content(struct model *model_ptr);
 void free_and_destroy_model(struct model **model_ptr_ptr);

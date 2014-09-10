@@ -6,6 +6,7 @@ Extended math utilities.
 #          Alexandre T. Passos
 #          Olivier Grisel
 #          Lars Buitinck
+#          Stefan van der Walt
 # License: BSD 3 clause
 
 from functools import partial
@@ -54,8 +55,8 @@ def squared_norm(x):
 def row_norms(X, squared=False):
     """Row-wise (squared) Euclidean norm of X.
 
-    Equivalent to (X * X).sum(axis=1), but also supports CSR sparse matrices
-    and does not create an X.shape-sized temporary.
+    Equivalent to np.sqrt((X * X).sum(axis=1)), but also supports CSR sparse
+    matrices and does not create an X.shape-sized temporary.
 
     Performs no input validation.
     """
@@ -501,24 +502,20 @@ def cartesian(arrays, out=None):
            [3, 5, 6],
            [3, 5, 7]])
 
-    References
-    ----------
-    http://stackoverflow.com/q/1208118
-
     """
-    arrays = [np.asarray(x).ravel() for x in arrays]
+    arrays = [np.asarray(x) for x in arrays]
+    shape = (len(x) for x in arrays)
     dtype = arrays[0].dtype
 
-    n = np.prod([x.size for x in arrays])
-    if out is None:
-        out = np.empty([n, len(arrays)], dtype=dtype)
+    ix = np.indices(shape)
+    ix = ix.reshape(len(arrays), -1).T
 
-    m = n // arrays[0].size
-    out[:, 0] = np.repeat(arrays[0], m)
-    if arrays[1:]:
-        cartesian(arrays[1:], out=out[0:m, 1:])
-        for j in xrange(1, arrays[0].size):
-            out[j * m:(j + 1) * m, 1:] = out[0:m, 1:]
+    if out is None:
+        out = np.empty_like(ix, dtype=dtype)
+
+    for n, arr in enumerate(arrays):
+        out[:, n] = arrays[n][ix[:, n]]
+
     return out
 
 

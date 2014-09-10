@@ -17,7 +17,7 @@ can predict variables. We can also create combined estimators:
    :align: right
 
 .. literalinclude:: ../../auto_examples/plot_digits_pipe.py
-    :lines: 24-67
+    :lines: 26-66
 
 
 

@@ -202,7 +202,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
         alpha[0] = C / n_samples
         if alpha[0] <= alpha_min:  # early stopping
-            if not (abs(alpha[0] - alpha_min) < tiny):
+            if not (abs(alpha[0] - alpha_min) < 10 * np.finfo(np.float32).eps):
                 # interpolation factor 0 <= ss < 1
                 if n_iter > 0:
                     # In the first iteration, all alphas are zero, the formula
@@ -494,26 +494,26 @@ class Lars(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    ``alphas_`` : array, shape (n_alphas + 1,) | list of n_targets such arrays
+    alphas_ : array, shape (n_alphas + 1,) | list of n_targets such arrays
         Maximum of covariances (in absolute value) at each iteration. \
         ``n_alphas`` is either ``n_nonzero_coefs`` or ``n_features``, \
         whichever is smaller.
 
-    ``active_`` : list, length = n_alphas | list of n_targets such lists
+    active_ : list, length = n_alphas | list of n_targets such lists
         Indices of active variables at the end of the path.
 
-    ``coef_path_`` : array, shape (n_features, n_alphas + 1) \
+    coef_path_ : array, shape (n_features, n_alphas + 1) \
         | list of n_targets such arrays
         The varying values of the coefficients along the path. It is not
         present if the ``fit_path`` parameter is ``False``.
 
-    ``coef_`` : array, shape (n_features,) or (n_targets, n_features)
+    coef_ : array, shape (n_features,) or (n_targets, n_features)
         Parameter vector (w in the formulation formula).
 
-    ``intercept_`` : float | array, shape (n_targets,)
+    intercept_ : float | array, shape (n_targets,)
         Independent term in decision function.
 
-    ``n_iter_`` : array-like or int
+    n_iter_ : array-like or int
         The number of iterations taken by lars_path to find the
         grid of alphas for each target.
 
@@ -708,27 +708,27 @@ class LassoLars(Lars):
 
     Attributes
     ----------
-    ``alphas_`` : array, shape (n_alphas + 1,) | list of n_targets such arrays
+    alphas_ : array, shape (n_alphas + 1,) | list of n_targets such arrays
         Maximum of covariances (in absolute value) at each iteration. \
         ``n_alphas`` is either ``max_iter``, ``n_features``, or the number of \
         nodes in the path with correlation greater than ``alpha``, whichever \
         is smaller.
 
-    ``active_`` : list, length = n_alphas | list of n_targets such lists
+    active_ : list, length = n_alphas | list of n_targets such lists
         Indices of active variables at the end of the path.
 
-    ``coef_path_`` : array, shape (n_features, n_alphas + 1) or list
+    coef_path_ : array, shape (n_features, n_alphas + 1) or list
         If a list is passed it's expected to be one of n_targets such arrays.
         The varying values of the coefficients along the path. It is not
         present if the ``fit_path`` parameter is ``False``.
 
-    ``coef_`` : array, shape (n_features,) or (n_targets, n_features)
+    coef_ : array, shape (n_features,) or (n_targets, n_features)
         Parameter vector (w in the formulation formula).
 
-    ``intercept_`` : float | array, shape (n_targets,)
+    intercept_ : float | array, shape (n_targets,)
         Independent term in decision function.
 
-    ``n_iter_`` : array-like or int.
+    n_iter_ : array-like or int.
         The number of iterations taken by lars_path to find the
         grid of alphas for each target.
 
@@ -910,29 +910,29 @@ class LarsCV(Lars):
 
     Attributes
     ----------
-    ``coef_`` : array, shape (n_features,)
+    coef_ : array, shape (n_features,)
         parameter vector (w in the formulation formula)
 
-    ``intercept_`` : float
+    intercept_ : float
         independent term in decision function
 
-    ``coef_path_`` : array, shape (n_features, n_alphas)
+    coef_path_ : array, shape (n_features, n_alphas)
         the varying values of the coefficients along the path
 
-    ``alpha_`` : float
+    alpha_ : float
         the estimated regularization parameter alpha
 
-    ``alphas_`` : array, shape (n_alphas,)
+    alphas_ : array, shape (n_alphas,)
         the different values of alpha along the path
 
-    ``cv_alphas_`` : array, shape (n_cv_alphas,)
+    cv_alphas_ : array, shape (n_cv_alphas,)
         all the values of alpha along the path for the different folds
 
-    ``cv_mse_path_`` : array, shape (n_folds, n_cv_alphas)
+    cv_mse_path_ : array, shape (n_folds, n_cv_alphas)
         the mean square error on left-out for each fold along the path
         (alpha values given by ``cv_alphas``)
 
-    ``n_iter_`` : array-like or int
+    n_iter_ : array-like or int
         the number of iterations run by Lars with the optimal alpha.
 
     See also
@@ -1085,29 +1085,29 @@ class LassoLarsCV(LarsCV):
 
     Attributes
     ----------
-    ``coef_`` : array, shape (n_features,)
+    coef_ : array, shape (n_features,)
         parameter vector (w in the formulation formula)
 
-    ``intercept_`` : float
+    intercept_ : float
         independent term in decision function.
 
-    ``coef_path_`` : array, shape (n_features, n_alphas)
+    coef_path_ : array, shape (n_features, n_alphas)
         the varying values of the coefficients along the path
 
-    ``alpha_`` : float
+    alpha_ : float
         the estimated regularization parameter alpha
 
-    ``alphas_`` : array, shape (n_alphas,)
+    alphas_ : array, shape (n_alphas,)
         the different values of alpha along the path
 
-    ``cv_alphas_`` : array, shape (n_cv_alphas,)
+    cv_alphas_ : array, shape (n_cv_alphas,)
         all the values of alpha along the path for the different folds
 
-    ``cv_mse_path_`` : array, shape (n_folds, n_cv_alphas)
+    cv_mse_path_ : array, shape (n_folds, n_cv_alphas)
         the mean square error on left-out for each fold along the path
         (alpha values given by ``cv_alphas``)
 
-    ``n_iter_`` : array-like or int
+    n_iter_ : array-like or int
         the number of iterations run by Lars with the optimal alpha.
 
     Notes
@@ -1181,16 +1181,16 @@ class LassoLarsIC(LassoLars):
 
     Attributes
     ----------
-    ``coef_`` : array, shape (n_features,)
+    coef_ : array, shape (n_features,)
         parameter vector (w in the formulation formula)
 
-    ``intercept_`` : float
+    intercept_ : float
         independent term in decision function.
 
-    ``alpha_`` : float
+    alpha_ : float
         the alpha parameter chosen by the information criterion
 
-    ``n_iter_`` : int
+    n_iter_ : int
         number of iterations run by lars_path to find the grid of
         alphas.
 
@@ -1287,7 +1287,8 @@ class LassoLarsIC(LassoLars):
             df[k] = np.sum(mask)
 
         self.alphas_ = alphas_
-        self.criterion_ = n_samples * np.log(mean_squared_error) + K * df
+        with np.errstate(divide='ignore'):
+            self.criterion_ = n_samples * np.log(mean_squared_error) + K * df
         n_best = np.argmin(self.criterion_)
 
         self.alpha_ = alphas_[n_best]

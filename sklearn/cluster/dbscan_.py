@@ -201,13 +201,13 @@ class DBSCAN(BaseEstimator, ClusterMixin):
 
     Attributes
     ----------
-    `core_sample_indices_` : array, shape = [n_core_samples]
+    core_sample_indices_ : array, shape = [n_core_samples]
         Indices of core samples.
 
-    `components_` : array, shape = [n_core_samples, n_features]
+    components_ : array, shape = [n_core_samples, n_features]
         Copy of each core sample found by training.
 
-    `labels_` : array, shape = [n_samples]
+    labels_ : array, shape = [n_samples]
         Cluster labels for each point in the dataset given to fit().
         Noisy samples are given the label -1.
 

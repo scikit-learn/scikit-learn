@@ -21,6 +21,7 @@ from __future__ import division
 
 import warnings
 import numpy as np
+from scipy.sparse import csr_matrix
 
 from ..preprocessing import LabelBinarizer
 from ..utils import check_consistent_length
@@ -562,7 +563,7 @@ def label_ranking_average_precision_score(y_true, y_score):
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples, n_labels]
+    y_true : array or sparse matrix, shape = [n_samples, n_labels]
         True binary labels in binary indicator format.
 
     y_score : array, shape = [n_samples, n_labels]
@@ -597,11 +598,14 @@ def label_ranking_average_precision_score(y_true, y_score):
             and not (y_type == "binary" and y_true.ndim == 2)):
         raise ValueError("{0} format is not supported".format(y_type))
 
+    y_true = csr_matrix(y_true)
+    y_score = -y_score
+
     n_samples, n_labels = y_true.shape
 
     out = 0.
-    for i in range(n_samples):
-        relevant = y_true[i].nonzero()[0]
+    for i, (start, stop) in enumerate(zip(y_true.indptr, y_true.indptr[1:])):
+        relevant = y_true.indices[start:stop]
 
         if (relevant.size == 0 or relevant.size == n_labels):
             # If all labels are relevant or unrelevant, the score is also
@@ -609,10 +613,9 @@ def label_ranking_average_precision_score(y_true, y_score):
             out += 1.
             continue
 
-        scores_i = - y_score[i]
-        true_mask = y_true[i].astype(bool)
-        rank = rankdata(scores_i, 'max')[true_mask]
-        L = rankdata(scores_i[true_mask], 'max')
+        scores_i = y_score[i]
+        rank = rankdata(scores_i, 'max')[relevant]
+        L = rankdata(scores_i[relevant], 'max')
         out += np.divide(L, rank, dtype=float).mean()
 
     return out / n_samples

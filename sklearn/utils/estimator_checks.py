@@ -527,7 +527,7 @@ def check_classifiers_input_shapes(name, Classifier):
 
 
 def check_classifiers_classes(name, Classifier):
-    X, y = make_blobs(n_samples=30, random_state=0)
+    X, y = make_blobs(n_samples=30, random_state=0, cluster_std=0.1)
     X, y = shuffle(X, y, random_state=7)
     X = StandardScaler().fit_transform(X)
     # We need to make sure that we have non negative data, for things
@@ -723,6 +723,36 @@ def check_class_weight_auto_classifiers(name, Classifier, X_train, y_train,
     y_pred_auto = classifier.predict(X_test)
     assert_greater(f1_score(y_test, y_pred_auto),
                    f1_score(y_test, y_pred))
+
+
+def check_class_weight_auto_linear_classifier(name, Classifier):
+    """Test class weights with non-contiguous class labels."""
+    X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
+                  [1.0, 1.0], [1.0, 0.0]])
+    y = [1, 1, 1, -1, -1]
+
+    with warnings.catch_warnings(record=True):
+        classifier = Classifier()
+    if hasattr(classifier, "n_iter"):
+        # This is a very small dataset, default n_iter are likely to prevent
+        # convergence
+        classifier.set_params(n_iter=1000)
+    set_random_state(classifier)
+
+    # Let the model compute the class frequencies
+    classifier.set_params(class_weight='auto')
+    coef_auto = classifier.fit(X, y).coef_.copy()
+
+    # Count each label occurrence to reweight manually
+    mean_weight = (1. / 3 + 1. / 2) / 2
+    class_weight = {
+        1: 1. / 3 / mean_weight,
+        -1: 1. / 2 / mean_weight,
+    }
+    classifier.set_params(class_weight=class_weight)
+    coef_manual = classifier.fit(X, y).coef_.copy()
+
+    assert_array_almost_equal(coef_auto, coef_manual)
 
 
 def check_estimators_overwrite_params(name, Estimator):
@@ -921,6 +951,7 @@ def check_non_transformer_estimators_n_iter(name, estimator, multi_output=False)
     if multi_output:
         y_ = y_[:, np.newaxis]
 
+    set_random_state(estimator, 0)
     if name == 'AffinityPropagation':
         estimator.fit(X)
     else:
@@ -932,12 +963,13 @@ def check_transformer_n_iter(name, estimator):
     if name in CROSS_DECOMPOSITION:
         # Check using default data
         X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
-        y_ = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
+        y_ = [[0.1, -0.2], [0.9, 1.1], [0.1, -0.5], [0.3, -0.2]]
 
     else:
         X, y_ = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                           random_state=0, n_features=2, cluster_std=0.1)
         X -= X.min() - 0.1
+    set_random_state(estimator, 0)
     estimator.fit(X, y_)
 
     # These return a n_iter per component.

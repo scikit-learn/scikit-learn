@@ -16,10 +16,9 @@ from ..utils import check_array
 from ..utils import warn_if_not_float
 from ..utils.extmath import row_norms
 from ..utils.fixes import combinations_with_replacement as combinations_w_r
-from ..utils.sparsefuncs_fast import inplace_csr_row_normalize_l1
-from ..utils.sparsefuncs_fast import inplace_csr_row_normalize_l2
-from ..utils.sparsefuncs import inplace_column_scale
-from ..utils.sparsefuncs import mean_variance_axis0
+from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
+                                      inplace_csr_row_normalize_l2)
+from ..utils.sparsefuncs import (inplace_column_scale, mean_variance_axis)
 
 zip = six.moves.zip
 map = six.moves.map
@@ -124,7 +123,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
             copy = False
         if copy:
             X = X.copy()
-        _, var = mean_variance_axis0(X)
+        _, var = mean_variance_axis(X, axis=0)
         var[var == 0.0] = 1.0
         inplace_column_scale(X, 1 / np.sqrt(var))
     else:
@@ -171,10 +170,10 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `min_` : ndarray, shape (n_features,)
+    min_ : ndarray, shape (n_features,)
         Per feature adjustment for minimum.
 
-    `scale_` : ndarray, shape (n_features,)
+    scale_ : ndarray, shape (n_features,)
         Per feature relative scaling of the data.
     """
 
@@ -279,10 +278,10 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `mean_` : array of floats with shape [n_features]
+    mean_ : array of floats with shape [n_features]
         The mean value for each feature in the training set.
 
-    `std_` : array of floats with shape [n_features]
+    std_ : array of floats with shape [n_features]
         The standard deviation for each feature in the training set.
 
     See also
@@ -319,7 +318,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             self.mean_ = None
 
             if self.with_std:
-                var = mean_variance_axis0(X)[1]
+                var = mean_variance_axis(X, axis=0)[1]
                 self.std_ = np.sqrt(var)
                 self.std_[var == 0.0] = 1.0
             else:
@@ -432,7 +431,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     Attributes
     ----------
 
-    `powers_`:
+    powers_ :
          powers_[i, j] is the exponent of the jth input in the ith output.
 
     Notes
@@ -928,17 +927,17 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `active_features_` : array
+    active_features_ : array
         Indices for active features, meaning values that actually occur
         in the training set. Only available when n_values is ``'auto'``.
 
-    `feature_indices_` : array of shape (n_features,)
+    feature_indices_ : array of shape (n_features,)
         Indices to feature ranges.
         Feature ``i`` in the original data is mapped to features
         from ``feature_indices_[i]`` to ``feature_indices_[i+1]``
         (and then potentially masked by `active_features_` afterwards)
 
-    `n_values_` : array of shape (n_features,)
+    n_values_ : array of shape (n_features,)
         Maximum number of values per feature.
 
     Examples

@@ -27,7 +27,7 @@ from ..externals.joblib import Parallel, delayed
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..utils import as_float_array, check_array
 from ..utils.extmath import safe_sparse_dot
-from ..utils.sparsefuncs import mean_variance_axis0, inplace_column_scale
+from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 
 
 ###
@@ -48,14 +48,14 @@ def sparse_center_data(X, y, fit_intercept, normalize=False):
     if fit_intercept:
         # we might require not to change the csr matrix sometimes
         # store a copy if normalize is True.
-        # Change dtype to float64 since mean_variance_axis0 accepts
+        # Change dtype to float64 since mean_variance_axis accepts
         # it that way.
         if sp.isspmatrix(X) and X.getformat() == 'csr':
             X = sp.csr_matrix(X, copy=normalize, dtype=np.float64)
         else:
             X = sp.csc_matrix(X, copy=normalize, dtype=np.float64)
 
-        X_mean, X_var = mean_variance_axis0(X)
+        X_mean, X_var = mean_variance_axis(X, axis=0)
         if normalize:
             # transform variance to std in-place
             # XXX: currently scaled to variance=n_samples to match center_data
@@ -309,13 +309,13 @@ class LinearRegression(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    `coef_` : array, shape (n_features, ) or (n_targets, n_features)
+    coef_ : array, shape (n_features, ) or (n_targets, n_features)
         Estimated coefficients for the linear regression problem.
         If multiple targets are passed during the fit (y 2D), this
         is a 2D array of shape (n_targets, n_features), while if only
         one target is passed, this is a 1D array of length n_features.
 
-    `intercept_` : array
+    intercept_ : array
         Independent term in the linear model.
 
     Notes

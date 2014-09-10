@@ -36,14 +36,19 @@ if __SKLEARN_SETUP__:
 else:
     from . import __check_build
     from .base import clone
+    __check_build  # avoid flakes unused variable error
 
-    __all__ = ['cross_validation', 'cluster', 'covariance',
-               'datasets', 'decomposition', 'feature_extraction',
-               'feature_selection', 'semi_supervised',
-               'gaussian_process', 'grid_search', 'hmm', 'lda', 'linear_model',
-               'metrics', 'mixture', 'naive_bayes', 'neighbors', 'pipeline',
-               'preprocessing', 'qda', 'svm', 'clone',
-               'cross_decomposition', 'isotonic']
+    __all__ = ['cluster', 'covariance', 'cross_decomposition',
+               'cross_validation', 'datasets', 'decomposition', 'dummy',
+               'ensemble', 'externals', 'feature_extraction',
+               'feature_selection', 'gaussian_process', 'grid_search', 'hmm',
+               'isotonic', 'kernel_approximation', 'lda', 'learning_curve',
+               'linear_model', 'manifold', 'metrics', 'mixture', 'multiclass',
+               'naive_bayes', 'neighbors', 'neural_network', 'pipeline',
+               'preprocessing', 'qda', 'random_projection', 'semi_supervised',
+               'svm', 'tree',
+               # Non-modules:
+               'clone']
 
 
 def setup_module(module):

@@ -17,7 +17,7 @@ except ImportError:
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, as_float_array, check_random_state
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
-from ..utils.sparsefuncs import mean_variance_axis0
+from ..utils.sparsefuncs import mean_variance_axis
 
 __all__ = ["TruncatedSVD"]
 
@@ -64,12 +64,12 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `components_` : array, shape (n_components, n_features)
+    components_ : array, shape (n_components, n_features)
 
-    `explained_variance_ratio_` : array, [n_components]
+    explained_variance_ratio_ : array, [n_components]
         Percentage of variance explained by each of the selected components.
 
-    `explained_variance_` : array, [n_components]
+    explained_variance_ : array, [n_components]
         The variance of the training samples transformed by a projection to
         each component.
 
@@ -175,7 +175,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         X_transformed = np.dot(U, np.diag(Sigma))
         self.explained_variance_ = exp_var = np.var(X_transformed, axis=0)
         if sp.issparse(X):
-            _, full_var = mean_variance_axis0(X)
+            _, full_var = mean_variance_axis(X, axis=0)
             full_var = full_var.sum()
         else:
             full_var = np.var(X, axis=0).sum()

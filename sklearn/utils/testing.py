@@ -85,7 +85,7 @@ except ImportError:
             error_message = str(e)
             if not re.compile(expected_regexp).match(error_message):
                 raise AssertionError("Error message should match pattern "
-                                     "'%s'. '%s' does not." %
+                                     "%r. %r does not." %
                                      (expected_regexp, error_message))
         if not_raised:
             raise AssertionError("Should have raised %r" %
@@ -120,7 +120,6 @@ def assert_greater_equal(a, b, msg=None):
     assert a >= b, message
 
 
-# To remove when we support numpy 1.7
 def assert_warns(warning_class, func, *args, **kw):
     """Test that a certain warning occurs.
 
@@ -150,6 +149,11 @@ def assert_warns(warning_class, func, *args, **kw):
         warnings.simplefilter("always")
         # Trigger a warning.
         result = func(*args, **kw)
+        if hasattr(np, 'VisibleDeprecationWarning'):
+            # Filter out numpy-specific warnings in numpy >= 1.9
+            w = [e for e in w
+                 if not e.category is np.VisibleDeprecationWarning]
+
         # Verify some things
         if not len(w) > 0:
             raise AssertionError("No warning raised when calling %s"
@@ -193,6 +197,9 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
         warnings.simplefilter("always")
+        if hasattr(np, 'VisibleDeprecationWarning'):
+            # Let's not catch the numpy internal DeprecationWarnings
+            warnings.simplefilter('ignore', np.VisibleDeprecationWarning)
         # Trigger a warning.
         result = func(*args, **kw)
         # Verify some things
@@ -231,6 +238,11 @@ def assert_no_warnings(func, *args, **kw):
         warnings.simplefilter('always')
 
         result = func(*args, **kw)
+        if hasattr(np, 'VisibleDeprecationWarning'):
+            # Filter out numpy-specific warnings in numpy >= 1.9
+            w = [e for e in w
+                 if not e.category is np.VisibleDeprecationWarning]
+
         if len(w) > 0:
             raise AssertionError("Got warnings when calling %s: %s"
                                  % (func.__name__, w))
@@ -470,7 +482,7 @@ DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
 
 def all_estimators(include_meta_estimators=False, include_other=False,
                    type_filter=None, include_dont_test=False):
-    """Get a list of all  from sklearn.
+    """Get a list of all estimators from sklearn.
 
     This function crawls the module and gets all classes that inherit
     from BaseEstimator. Classes that are defined in test-modules are not
@@ -485,7 +497,7 @@ def all_estimators(include_meta_estimators=False, include_other=False,
         BaseEnsemble, OneVsOneClassifier, OutputCodeClassifier,
         OneVsRestClassifier, RFE, RFECV.
 
-    include_others : boolean, default=False
+    include_other : boolean, default=False
         Wether to include meta-estimators that are somehow special and can
         not be default-constructed sensibly. These are currently
         Pipeline, FeatureUnion and GridSearchCV
@@ -605,7 +617,9 @@ def clean_warning_registry():
     """Safe way to reset warnings """
     warnings.resetwarnings()
     reg = "__warningregistry__"
-    for mod in sys.modules.copy().values():
+    for mod_name, mod in list(sys.modules.items()):
+        if 'six.moves' in mod_name:
+            continue
         if hasattr(mod, reg):
             getattr(mod, reg).clear()
 

@@ -9,8 +9,10 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import raises
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils import ConvergenceWarning
 
 from sklearn.linear_model.logistic import (
     LogisticRegression,
@@ -19,6 +21,7 @@ from sklearn.linear_model.logistic import (
     )
 from sklearn.cross_validation import StratifiedKFold
 from sklearn.datasets import load_iris, make_classification
+
 
 X = [[-1, 0], [0, 1], [1, 1]]
 X_sp = sp.csr_matrix(X)
@@ -77,17 +80,49 @@ def test_predict_iris():
     n_samples, n_features = iris.data.shape
 
     target = iris.target_names[iris.target]
-    clf = LogisticRegression(C=len(iris.data)).fit(iris.data, target)
-    assert_array_equal(np.unique(target), clf.classes_)
 
-    pred = clf.predict(iris.data)
-    assert_greater(np.mean(pred == target), .95)
+    # Test that both multinomial and OvR solvers handle
+    # multiclass data correctly and give good accuracy
+    # score (>0.95) for the training data.
+    for clf in [LogisticRegression(C=len(iris.data)),
+                LogisticRegression(C=len(iris.data), solver='lbfgs',
+                                   multi_class='multinomial')]:
+        clf.fit(iris.data, target)
+        assert_array_equal(np.unique(target), clf.classes_)
 
-    probabilities = clf.predict_proba(iris.data)
-    assert_array_almost_equal(probabilities.sum(axis=1), np.ones(n_samples))
+        pred = clf.predict(iris.data)
+        assert_greater(np.mean(pred == target), .95)
 
-    pred = iris.target_names[probabilities.argmax(axis=1)]
-    assert_greater(np.mean(pred == target), .95)
+        probabilities = clf.predict_proba(iris.data)
+        assert_array_almost_equal(probabilities.sum(axis=1),
+                                  np.ones(n_samples))
+
+        pred = iris.target_names[probabilities.argmax(axis=1)]
+        assert_greater(np.mean(pred == target), .95)
+
+
+def test_multinomial_validation():
+    lr = LogisticRegression(C=-1, solver='lbfgs', multi_class='multinomial')
+    assert_raises(ValueError, lr.fit, [[0, 1], [1, 0]], [0, 1])
+
+
+def test_multinomial_binary():
+    """Test multinomial LR on a binary problem."""
+    target = (iris.target > 0).astype(np.intp)
+    target = np.array(["setosa", "not-setosa"])[target]
+
+    clf = LogisticRegression(solver='lbfgs', multi_class='multinomial')
+    clf.fit(iris.data, target)
+
+    assert_equal(clf.coef_.shape, (1, iris.data.shape[1]))
+    assert_equal(clf.intercept_.shape, (1,))
+    assert_array_equal(clf.predict(iris.data), target)
+
+    mlr = LogisticRegression(solver='lbfgs', multi_class='multinomial',
+                             fit_intercept=False)
+    mlr.fit(iris.data, target)
+    pred = clf.classes_[np.argmax(clf.predict_log_proba(iris.data), axis=1)]
+    assert_greater(np.mean(pred == target), .9)
 
 
 def test_sparsify():
@@ -137,7 +172,7 @@ def test_write_parameters():
     clf.fit(X, Y1)
     clf.coef_[:] = 0
     clf.intercept_[:] = 0
-    assert_array_equal(clf.decision_function(X), 0)
+    assert_array_almost_equal(clf.decision_function(X), 0)
 
 
 @raises(ValueError)
@@ -345,8 +380,8 @@ def test_intercept_logistic_helper():
     assert_almost_equal(hess_interp[-1] + alpha * grad[-1], hess[-1])
 
 
-def test_ova_iris():
-    """Test that our OvA implementation is correct using the iris dataset."""
+def test_ovr_multinomial_iris():
+    """Test that OvR and multinomial are correct using the iris dataset."""
     train, target = iris.data, iris.target
     n_samples, n_features = train.shape
 
@@ -356,23 +391,40 @@ def test_ova_iris():
     clf.fit(train, target)
 
     clf1 = LogisticRegressionCV(cv=cv)
-    target[target == 0] = 1
-    clf1.fit(train, target)
+    target_copy = target.copy()
+    target_copy[target_copy == 0] = 1
+    clf1.fit(train, target_copy)
 
-    assert_array_equal(clf.scores_[2], clf1.scores_[2])
-    assert_array_equal(clf.intercept_[2:], clf1.intercept_)
-    assert_array_equal(clf.coef_[2][np.newaxis, :], clf1.coef_)
+    assert_array_almost_equal(clf.scores_[2], clf1.scores_[2])
+    assert_array_almost_equal(clf.intercept_[2:], clf1.intercept_)
+    assert_array_almost_equal(clf.coef_[2][np.newaxis, :], clf1.coef_)
 
     # Test the shape of various attributes.
-    assert_array_equal(clf.coef_.shape, (3, n_features))
+    assert_equal(clf.coef_.shape, (3, n_features))
     assert_array_equal(clf.classes_, [0, 1, 2])
-    assert_equal(len(clf.classes_), 3)
-
     coefs_paths = np.asarray(list(clf.coefs_paths_.values()))
-    assert_array_equal(coefs_paths.shape, (3, 3, 10, n_features + 1))
-    assert_array_equal(clf.Cs_.shape, (10, ))
+    assert_array_almost_equal(coefs_paths.shape, (3, 3, 10, n_features + 1))
+    assert_equal(clf.Cs_.shape, (10, ))
     scores = np.asarray(list(clf.scores_.values()))
-    assert_array_equal(scores.shape, (3, 3, 10))
+    assert_equal(scores.shape, (3, 3, 10))
+
+    # Test that for the iris data multinomial gives a better accuracy than OvR
+    clf_multi = LogisticRegressionCV(
+        solver='lbfgs', multi_class='multinomial', max_iter=5
+        )
+    clf_multi.fit(train, target)
+    multi_score = clf_multi.score(train, target)
+    ovr_score = clf.score(train, target)
+    assert_greater(multi_score, ovr_score)
+
+    # Test attributes of LogisticRegressionCV
+    assert_equal(clf.coef_.shape, clf_multi.coef_.shape)
+    assert_array_equal(clf_multi.classes_, [0, 1, 2])
+    coefs_paths = np.asarray(list(clf_multi.coefs_paths_.values()))
+    assert_array_almost_equal(coefs_paths.shape, (3, 3, 10, n_features + 1))
+    assert_equal(clf_multi.Cs_.shape, (10, ))
+    scores = np.asarray(list(clf_multi.scores_.values()))
+    assert_equal(scores.shape, (3, 3, 10))
 
 
 def test_logistic_regression_solvers():
@@ -407,10 +459,15 @@ def test_logistic_regressioncv_class_weights():
                                n_classes=3, random_state=0)
 
     # Test the liblinear fails when class_weight of type dict is
-    # provided, when it is multiclass
+    # provided, when it is multiclass. However it can handle
+    # binary problems.
     clf_lib = LogisticRegressionCV(class_weight={0: 0.1, 1: 0.2},
                                    solver='liblinear')
     assert_raises(ValueError, clf_lib.fit, X, y)
+    y_ = y.copy()
+    y_[y == 2] = 1
+    clf_lib.fit(X, y_)
+    assert_array_equal(clf_lib.classes_, [0, 1])
 
     # Test for class_weight=auto
     X, y = make_classification(n_samples=20, n_features=20, n_informative=10,
@@ -422,3 +479,56 @@ def test_logistic_regressioncv_class_weights():
                                    class_weight='auto')
     clf_lib.fit(X, y)
     assert_array_almost_equal(clf_lib.coef_, clf_lbf.coef_, decimal=4)
+
+
+def test_logistic_regression_convergence_warnings():
+    """Test that warnings are raised if model does not converge"""
+
+    X, y = make_classification(n_samples=20, n_features=20)
+    clf_lib = LogisticRegression(solver='liblinear', max_iter=2, verbose=1)
+    assert_warns(ConvergenceWarning, clf_lib.fit, X, y)
+    assert_equal(clf_lib.n_iter_, 2)
+
+
+def test_logistic_regression_multinomial():
+    """Tests for the multinomial option in logistic regression"""
+
+    # Some basic attributes of Logistic Regression
+    n_samples, n_features, n_classes = 50, 20, 3
+    X, y = make_classification(n_samples=50, n_features=20, n_informative=10,
+                               n_classes=3, random_state=0)
+    clf_int = LogisticRegression(solver='lbfgs', multi_class='multinomial')
+    clf_int.fit(X, y)
+    assert_array_equal(clf_int.coef_.shape, (n_classes, n_features))
+
+    clf_wint = LogisticRegression(solver='lbfgs', multi_class='multinomial',
+                                  fit_intercept=False)
+    clf_wint.fit(X, y)
+    assert_array_equal(clf_wint.coef_.shape, (n_classes, n_features))
+
+    # Test that the path give almost the same results. However since in this
+    # case we take the average of the coefs after fitting across all the
+    # folds, it need not be exactly the same.
+    clf_path = LogisticRegressionCV(solver='lbfgs', multi_class='multinomial',
+                                    Cs=[1.])
+    clf_path.fit(X, y)
+    assert_array_almost_equal(clf_path.coef_, clf_int.coef_, decimal=3)
+    assert_almost_equal(clf_path.intercept_, clf_int.intercept_, decimal=3)
+
+
+def test_liblinear_decision_function_zero():
+    """Test negative prediction when decision_function values are zero.
+
+    Liblinear predicts the positive class when decision_function values
+    are zero. This is a test to verify that we do not do the same.
+    See Issue: https://github.com/scikit-learn/scikit-learn/issues/3600
+    and the PR https://github.com/scikit-learn/scikit-learn/pull/3623
+    """
+    rng = np.random.RandomState(0)
+    X, y = make_classification(n_samples=5, n_features=5)
+    clf = LogisticRegression(fit_intercept=False)
+    clf.fit(X, y)
+
+    # Dummy data such that the decision function becomes zero.
+    X = np.zeros((5, 5))
+    assert_array_equal(clf.predict(X), np.zeros(5))

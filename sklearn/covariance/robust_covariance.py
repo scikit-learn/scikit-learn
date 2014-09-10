@@ -217,7 +217,7 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
 
     See Also
     ---------
-    `c_step` function
+    c_step
 
     Returns
     -------
@@ -523,32 +523,32 @@ class MinCovDet(EmpiricalCovariance):
 
     Attributes
     ----------
-    `raw_location_` : array-like, shape (n_features,)
+    raw_location_ : array-like, shape (n_features,)
         The raw robust estimated location before correction and re-weighting.
 
-    `raw_covariance_` : array-like, shape (n_features, n_features)
+    raw_covariance_ : array-like, shape (n_features, n_features)
         The raw robust estimated covariance before correction and re-weighting.
 
-    `raw_support_` : array-like, shape (n_samples,)
+    raw_support_ : array-like, shape (n_samples,)
         A mask of the observations that have been used to compute
         the raw robust estimates of location and shape, before correction
         and re-weighting.
 
-    `location_` : array-like, shape (n_features,)
+    location_ : array-like, shape (n_features,)
         Estimated robust location
 
-    `covariance_` : array-like, shape (n_features, n_features)
+    covariance_ : array-like, shape (n_features, n_features)
         Estimated robust covariance matrix
 
-    `precision_` : array-like, shape (n_features, n_features)
+    precision_ : array-like, shape (n_features, n_features)
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
-    `support_` : array-like, shape (n_samples,)
+    support_ : array-like, shape (n_samples,)
         A mask of the observations that have been used to compute
         the robust estimates of location and shape.
 
-    `dist_` : array-like, shape (n_samples,)
+    dist_ : array-like, shape (n_samples,)
         Mahalanobis distances of the training set (on which `fit` is called)
         observations.
 

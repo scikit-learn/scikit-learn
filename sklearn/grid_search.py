@@ -15,6 +15,7 @@ from collections import Mapping, namedtuple, Sized
 from functools import partial, reduce
 from itertools import product
 import operator
+import warnings
 
 import numpy as np
 
@@ -272,6 +273,10 @@ class _CVScoreTuple (namedtuple('_CVScoreTuple',
             self.parameters)
 
 
+class ChangedBehaviorWarning(UserWarning):
+    pass
+
+
 class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                       MetaEstimatorMixin)):
     """Base class for hyper parameter search with cross-validation."""
@@ -292,9 +297,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.pre_dispatch = pre_dispatch
 
     def score(self, X, y=None):
-        """Returns the score on the given test data and labels, if the search
-        estimator has been refit. The ``score`` function of the best estimator
-        is used, or the ``scoring`` parameter where unavailable.
+        """Returns the score on the given data, if the estimator has been refit
+
+        This uses the score defined by ``scoring`` where provided, and the
+        ``best_estimator_.score`` method otherwise.
 
         Parameters
         ----------
@@ -310,13 +316,23 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         -------
         score : float
 
+        Notes
+        -----
+         * The long-standing behavior of this method changed in version 0.16.
+         * It no longer uses the metric provided by ``estimator.score`` if the
+           ``scoring`` parameter was set when fitting.
+
         """
-        if hasattr(self.best_estimator_, 'score'):
-            return self.best_estimator_.score(X, y)
         if self.scorer_ is None:
             raise ValueError("No score function explicitly defined, "
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
+        if self.scoring is not None and hasattr(self.best_estimator_, 'score'):
+            warnings.warn("The long-standing behavior to use the estimator's "
+                          "score function in {0}.score has changed. The "
+                          "scoring parameter is now used."
+                          "".format(self.__class__.__name__),
+                          ChangedBehaviorWarning)
         return self.scorer_(self.best_estimator_, X, y)
 
     @property
@@ -511,7 +527,7 @@ class GridSearchCV(BaseSearchCV):
 
     Attributes
     ----------
-    `grid_scores_` : list of named tuples
+    grid_scores_ : list of named tuples
         Contains scores for all parameter combinations in param_grid.
         Each entry corresponds to one parameter setting.
         Each named tuple has the attributes:
@@ -521,18 +537,18 @@ class GridSearchCV(BaseSearchCV):
               cross-validation folds
             * ``cv_validation_scores``, the list of scores for each fold
 
-    `best_estimator_` : estimator
+    best_estimator_ : estimator
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data.
 
-    `best_score_` : float
+    best_score_ : float
         Score of best_estimator on the left out data.
 
-    `best_params_` : dict
+    best_params_ : dict
         Parameter setting that gave the best results on the hold out data.
 
-    `scorer_` : function
+    scorer_ : function
         Scorer function used on the held out data to choose the best
         parameters for the model.
 
@@ -667,7 +683,7 @@ class RandomizedSearchCV(BaseSearchCV):
 
     Attributes
     ----------
-    `grid_scores_` : list of named tuples
+    grid_scores_ : list of named tuples
         Contains scores for all parameter combinations in param_grid.
         Each entry corresponds to one parameter setting.
         Each named tuple has the attributes:
@@ -677,15 +693,15 @@ class RandomizedSearchCV(BaseSearchCV):
               cross-validation folds
             * ``cv_validation_scores``, the list of scores for each fold
 
-    `best_estimator_` : estimator
+    best_estimator_ : estimator
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data.
 
-    `best_score_` : float
+    best_score_ : float
         Score of best_estimator on the left out data.
 
-    `best_params_` : dict
+    best_params_ : dict
         Parameter setting that gave the best results on the hold out data.
 
     Notes

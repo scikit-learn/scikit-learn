@@ -438,7 +438,7 @@ class Ridge(_BaseRidge, RegressorMixin):
 
     Attributes
     ----------
-    `coef_` : array, shape = [n_features] or [n_targets, n_features]
+    coef_ : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
 
     See also
@@ -531,7 +531,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     Attributes
     ----------
-    `coef_` : array, shape = [n_features] or [n_classes, n_features]
+    coef_ : array, shape = [n_features] or [n_classes, n_features]
         Weight vector(s).
 
     See also
@@ -923,20 +923,20 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
     Attributes
     ----------
-    `cv_values_` : array, shape = [n_samples, n_alphas] or \
+    cv_values_ : array, shape = [n_samples, n_alphas] or \
         shape = [n_samples, n_targets, n_alphas], optional
         Cross-validation values for each alpha (if `store_cv_values=True` and \
         `cv=None`). After `fit()` has been called, this attribute will \
         contain the mean squared errors (by default) or the values of the \
         `{loss,score}_func` function (if provided in the constructor).
 
-    `coef_` : array, shape = [n_features] or [n_targets, n_features]
+    coef_ : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
 
-    `alpha_` : float
+    alpha_ : float
         Estimated regularization parameter.
 
-    `intercept_` : float | array, shape = (n_targets,)
+    intercept_ : float | array, shape = (n_targets,)
         Independent term in decision function. Set to 0.0 if
         ``fit_intercept = False``.
 
@@ -989,17 +989,17 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     Attributes
     ----------
-    `cv_values_` : array, shape = [n_samples, n_alphas] or \
+    cv_values_ : array, shape = [n_samples, n_alphas] or \
     shape = [n_samples, n_responses, n_alphas], optional
         Cross-validation values for each alpha (if `store_cv_values=True` and
     `cv=None`). After `fit()` has been called, this attribute will contain \
     the mean squared errors (by default) or the values of the \
     `{loss,score}_func` function (if provided in the constructor).
 
-    `coef_` : array, shape = [n_features] or [n_targets, n_features]
+    coef_ : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
 
-    `alpha_` : float
+    alpha_ : float
         Estimated regularization parameter
 
     See also

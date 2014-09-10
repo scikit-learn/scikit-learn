@@ -60,13 +60,13 @@ class SparsePCA(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `components_` : array, [n_components, n_features]
+    components_ : array, [n_components, n_features]
         Sparse components extracted from the data.
 
-    `error_` : array
+    error_ : array
         Vector of errors at each iteration.
 
-    `n_iter_` : int
+    n_iter_ : int
         Number of iterations run.
 
     See also
@@ -212,13 +212,13 @@ class MiniBatchSparsePCA(SparsePCA):
 
     Attributes
     ----------
-    `components_` : array, [n_components, n_features]
+    components_ : array, [n_components, n_features]
         Sparse components extracted from the data.
 
-    `error_` : array
+    error_ : array
         Vector of errors at each iteration.
 
-    `n_iter_` : int
+    n_iter_ : int
         Number of iterations run.
 
     See also

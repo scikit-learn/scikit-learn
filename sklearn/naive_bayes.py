@@ -112,16 +112,16 @@ class GaussianNB(BaseNB):
 
     Attributes
     ----------
-    `class_prior_` : array, shape (n_classes,)
+    class_prior_ : array, shape (n_classes,)
         probability of each class.
 
-    `class_count_` : array, shape (n_classes,)
+    class_count_ : array, shape (n_classes,)
         number of training samples observed in each class.
 
-    `theta_` : array, shape (n_classes, n_features)
+    theta_ : array, shape (n_classes, n_features)
         mean of each feature per class
 
-    `sigma_` : array, shape (n_classes, n_features)
+    sigma_ : array, shape (n_classes, n_features)
         variance of each feature per class
 
     Examples
@@ -323,7 +323,7 @@ class GaussianNB(BaseNB):
         joint_log_likelihood = []
         for i in range(np.size(self.classes_)):
             jointi = np.log(self.class_prior_[i])
-            n_ij = - 0.5 * np.sum(np.log(np.pi * self.sigma_[i, :]))
+            n_ij = - 0.5 * np.sum(np.log(2. * np.pi * self.sigma_[i, :]))
             n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) /
                                  (self.sigma_[i, :]), 1)
             joint_log_likelihood.append(jointi + n_ij)
@@ -517,26 +517,26 @@ class MultinomialNB(BaseDiscreteNB):
 
     Attributes
     ----------
-    `class_log_prior_` : array, shape (n_classes, )
+    class_log_prior_ : array, shape (n_classes, )
         Smoothed empirical log probability for each class.
 
-    `intercept_` : property
+    intercept_ : property
         Mirrors ``class_log_prior_`` for interpreting MultinomialNB
         as a linear model.
 
-    `feature_log_prob_`: array, shape (n_classes, n_features)
+    feature_log_prob_ : array, shape (n_classes, n_features)
         Empirical log probability of features
         given a class, ``P(x_i|y)``.
 
-    `coef_` : property
+    coef_ : property
         Mirrors ``feature_log_prob_`` for interpreting MultinomialNB
         as a linear model.
 
-    `class_count_` : array, shape (n_classes,)
+    class_count_ : array, shape (n_classes,)
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
-    `feature_count_` : array, shape (n_classes, n_features)
+    feature_count_ : array, shape (n_classes, n_features)
         Number of samples encountered for each (class, feature)
         during fitting. This value is weighted by the sample weight when
         provided.
@@ -621,17 +621,17 @@ class BernoulliNB(BaseDiscreteNB):
 
     Attributes
     ----------
-    `class_log_prior_` : array, shape = [n_classes]
+    class_log_prior_ : array, shape = [n_classes]
         Log probability of each class (smoothed).
 
-    `feature_log_prob_` : array, shape = [n_classes, n_features]
+    feature_log_prob_ : array, shape = [n_classes, n_features]
         Empirical log probability of features given a class, P(x_i|y).
 
-    `class_count_` : array, shape = [n_classes]
+    class_count_ : array, shape = [n_classes]
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
-    `feature_count_` : array, shape = [n_classes, n_features]
+    feature_count_ : array, shape = [n_classes, n_features]
         Number of samples encountered for each (class, feature)
         during fitting. This value is weighted by the sample weight when
         provided.

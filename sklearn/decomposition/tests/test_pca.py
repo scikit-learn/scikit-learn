@@ -151,8 +151,7 @@ def test_pca_inverse():
     pca.fit(X)
     Y = pca.transform(X)
     Y_inverse = pca.inverse_transform(Y)
-    relative_max_delta = (np.abs(X - Y_inverse) / np.abs(X).mean()).max()
-    assert_almost_equal(relative_max_delta, 0.11, decimal=2)
+    assert_almost_equal(X, Y_inverse, decimal=3)
 
 
 def test_pca_validation():

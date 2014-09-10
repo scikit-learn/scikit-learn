@@ -374,8 +374,9 @@ class BiclusterMixin(object):
             Indices of columns in the dataset that belong to the bicluster.
 
         """
-        from .cluster.bicluster.utils import get_indices
-        return get_indices(self.rows_[i], self.columns_[i])
+        rows = self.rows_[i]
+        columns = self.columns_[i]
+        return np.nonzero(rows)[0], np.nonzero(columns)[0]
 
     def get_shape(self, i):
         """Shape of the i'th bicluster.
@@ -385,8 +386,8 @@ class BiclusterMixin(object):
         shape : (int, int)
             Number of rows and columns (resp.) in the bicluster.
         """
-        from .cluster.bicluster.utils import get_shape
-        return get_shape(self.rows_[i], self.columns_[i])
+        indices = self.get_indices(i)
+        return tuple(len(i) for i in indices)
 
     def get_submatrix(self, i, data):
         """Returns the submatrix corresponding to bicluster `i`.
@@ -395,8 +396,10 @@ class BiclusterMixin(object):
         ``columns_`` attributes exist.
 
         """
-        from .cluster.bicluster.utils import get_submatrix
-        return get_submatrix(self.rows_[i], self.columns_[i], data)
+        from .utils.validation import check_array
+        data = check_array(data, accept_sparse='csr')
+        row_ind, col_ind = self.get_indices(i)
+        return data[row_ind[:, np.newaxis], col_ind]
 
 
 ###############################################################################

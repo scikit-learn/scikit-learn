@@ -1,8 +1,10 @@
 from __future__ import division, print_function
 
-import numpy as np
 from functools import partial
 from itertools import product
+
+import numpy as np
+import scipy.sparse as sp
 
 from sklearn.datasets import make_multilabel_classification
 from sklearn.preprocessing import LabelBinarizer, MultiLabelBinarizer
@@ -136,6 +138,8 @@ CLASSIFICATION_METRICS = {
 
 THRESHOLDED_METRICS = {
     "log_loss": log_loss,
+    "unnormalized_log_loss": partial(log_loss, normalize=False),
+
     "hinge_loss": hinge_loss,
 
     "roc_auc_score": roc_auc_score,
@@ -239,6 +243,7 @@ METRICS_WITH_NORMALIZE_OPTION = [
 # Threshold-based metrics with "multilabel-indicator" format support
 THRESHOLDED_MULTILABEL_METRICS = [
     "log_loss",
+    "unnormalized_log_loss",
 
     "roc_auc_score", "weighted_roc_auc", "samples_roc_auc",
     "micro_roc_auc", "macro_roc_auc",
@@ -315,8 +320,6 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = [
     "confusion_matrix",
     "hamming_loss",
     "hinge_loss",
-    "jaccard_similarity_score", "unnormalized_jaccard_similarity_score",
-    "log_loss",
     "matthews_corrcoef_score",
 ]
 
@@ -533,7 +536,7 @@ def test_invariance_string_vs_numbers_labels():
                                        "invariance test".format(name))
 
     for name, metric in THRESHOLDED_METRICS.items():
-        if name in ("log_loss", "hinge_loss"):
+        if name in ("log_loss", "hinge_loss", "unnormalized_log_loss"):
             measure_with_number = metric(y1, y2)
             measure_with_str = metric(y1_str, y2)
             assert_array_equal(measure_with_number, measure_with_str,
@@ -613,7 +616,6 @@ def test_multioutput_regression_invariance_to_dimension_shuffling():
 
 
 def test_multilabel_representation_invariance():
-
     # Generate some data
     n_classes = 4
     n_samples = 50
@@ -636,13 +638,15 @@ def test_multilabel_representation_invariance():
     y2_shuffle = [shuffled(x) for x in y2]
 
     # Let's have redundant labels
-    y1_redundant = [x * rng.randint(1, 4) for x in y1]
     y2_redundant = [x * rng.randint(1, 4) for x in y2]
 
     # Binary indicator matrix format
     lb = MultiLabelBinarizer().fit([range(n_classes)])
     y1_binary_indicator = lb.transform(y1)
     y2_binary_indicator = lb.transform(y2)
+
+    y1_sparse_indicator = sp.coo_matrix(y1_binary_indicator)
+    y2_sparse_indicator = sp.coo_matrix(y2_binary_indicator)
 
     y1_shuffle_binary_indicator = lb.transform(y1_shuffle)
     y2_shuffle_binary_indicator = lb.transform(y2_shuffle)
@@ -654,38 +658,16 @@ def test_multilabel_representation_invariance():
         if isinstance(metric, partial):
             metric.__module__ = 'tmp'
             metric.__name__ = name
-        # Check warning for sequence of sequences
-        measure = assert_warns(DeprecationWarning, metric, y1, y2)
-        metric = ignore_warnings(metric)
+
+        measure = metric(y1_binary_indicator, y2_binary_indicator)
 
         # Check representation invariance
-        assert_almost_equal(metric(y1_binary_indicator,
-                                   y2_binary_indicator),
+        assert_almost_equal(metric(y1_sparse_indicator,
+                                   y2_sparse_indicator),
                             measure,
                             err_msg="%s failed representation invariance  "
-                                    "between list of list of labels "
-                                    "format and dense binary indicator "
-                                    "format." % name)
-
-        with ignore_warnings():  # sequence of sequences is deprecated
-            # Check invariance with redundant labels with list of labels
-            assert_almost_equal(metric(y1, y2_redundant), measure,
-                                err_msg="%s failed rendundant label invariance"
-                                        % name)
-
-            assert_almost_equal(metric(y1_redundant, y2_redundant), measure,
-                                err_msg="%s failed rendundant label invariance"
-                                        % name)
-
-            assert_almost_equal(metric(y1_redundant, y2), measure,
-                                err_msg="%s failed rendundant label invariance"
-                                        % name)
-
-            # Check shuffling invariance with list of labels
-            assert_almost_equal(metric(y1_shuffle, y2_shuffle), measure,
-                                err_msg="%s failed shuffling invariance "
-                                        "with list of list of labels format."
-                                        % name)
+                                    "between dense and sparse indicator "
+                                    "formats." % name)
 
         # Check shuffling invariance with dense binary indicator matrix
         assert_almost_equal(metric(y1_shuffle_binary_indicator,
@@ -694,10 +676,31 @@ def test_multilabel_representation_invariance():
                                     " with dense binary indicator format."
                                     % name)
 
-        with ignore_warnings():  # sequence of sequences is deprecated
-            # Check raises error with mix input representation
-            assert_raises(ValueError, metric, y1, y2_binary_indicator)
-            assert_raises(ValueError, metric, y1_binary_indicator, y2)
+        # Check deprecation warnings related to sequence of sequences
+        deprecated_metric = partial(assert_warns, DeprecationWarning, metric)
+
+        # Check representation invariance
+        assert_almost_equal(deprecated_metric(y1, y2),
+                            measure,
+                            err_msg="%s failed representation invariance  "
+                                    "between list of list of labels "
+                                    "format and dense binary indicator "
+                                    "format." % name)
+
+        # Check invariance with redundant labels with list of labels
+        assert_almost_equal(deprecated_metric(y1, y2_redundant), measure,
+                            err_msg="%s failed rendundant label invariance"
+                                    % name)
+
+        # Check shuffling invariance with list of labels
+        assert_almost_equal(deprecated_metric(y1_shuffle, y2_shuffle), measure,
+                            err_msg="%s failed shuffling invariance "
+                                    "with list of list of labels format."
+                                    % name)
+
+        # Check raises error with mix input representation
+        assert_raises(ValueError, deprecated_metric, y1, y2_binary_indicator)
+        assert_raises(ValueError, deprecated_metric, y1_binary_indicator, y2)
 
 
 def test_normalize_option_binary_classification(n_samples=20):
@@ -904,10 +907,10 @@ def check_sample_weight_invariance(name, metric, y1, y2):
 
     # check that unit weights gives the same score as no weight
     unweighted_score = metric(y1, y2, sample_weight=None)
-    assert_equal(
+    assert_almost_equal(
         unweighted_score,
         metric(y1, y2, sample_weight=np.ones(shape=len(y1))),
-        msg="For %s sample_weight=None is not equivalent to "
+        err_msg="For %s sample_weight=None is not equivalent to "
             "sample_weight=ones" % name)
 
     # check that the weighted and unweighted scores are unequal
@@ -920,9 +923,9 @@ def check_sample_weight_invariance(name, metric, y1, y2):
     # check that sample_weight can be a list
     weighted_score_list = metric(y1, y2,
                                  sample_weight=sample_weight.tolist())
-    assert_equal(
+    assert_almost_equal(
         weighted_score, weighted_score_list,
-        msg="Weighted scores for array and list sample_weight input are "
+        err_msg="Weighted scores for array and list sample_weight input are "
             "not equal (%f != %f) for %s" % (
                 weighted_score, weighted_score_list, name))
 
@@ -969,23 +972,31 @@ def test_sample_weight_invariance(n_samples=50):
     random_state = check_random_state(0)
     y_true = random_state.randint(0, 2, size=(n_samples, ))
     y_pred = random_state.randint(0, 2, size=(n_samples, ))
+    y_score = random_state.random_sample(size=(n_samples,))
     for name in ALL_METRICS:
         if (name in METRICS_WITHOUT_SAMPLE_WEIGHT or
                 name in METRIC_UNDEFINED_MULTICLASS):
             continue
         metric = ALL_METRICS[name]
-        yield check_sample_weight_invariance, name, metric, y_true, y_pred
+        if name in THRESHOLDED_METRICS:
+            yield check_sample_weight_invariance, name, metric, y_true, y_score
+        else:
+            yield check_sample_weight_invariance, name, metric, y_true, y_pred
 
     # multiclass
     random_state = check_random_state(0)
     y_true = random_state.randint(0, 5, size=(n_samples, ))
     y_pred = random_state.randint(0, 5, size=(n_samples, ))
+    y_score = random_state.random_sample(size=(n_samples, 5))
     for name in ALL_METRICS:
         if (name in METRICS_WITHOUT_SAMPLE_WEIGHT or
                 name in METRIC_UNDEFINED_MULTICLASS):
             continue
         metric = ALL_METRICS[name]
-        yield check_sample_weight_invariance, name, metric, y_true, y_pred
+        if name in THRESHOLDED_METRICS:
+            yield check_sample_weight_invariance, name, metric, y_true, y_score
+        else:
+            yield check_sample_weight_invariance, name, metric, y_true, y_pred
 
     # multilabel sequence
     y_true = 2 * [(1, 2, ), (1, ), (0, ), (0, 1), (1, 2)]
