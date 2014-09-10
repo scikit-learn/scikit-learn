@@ -181,7 +181,7 @@ def test_radius_neighbors():
     distances_approx, _ = lshf.radius_neighbors(query, radius=mean_dist)
     distances_exact, _ = nbrs.radius_neighbors(query, radius=mean_dist)
     # Distances of exact neighbors is less than or equal to approximate
-    assert_true(all(np.less_equal(distances_exact[0],
+    assert_true(np.all(np.less_equal(distances_exact[0],
                                   distances_approx[0])))
 
 
@@ -203,13 +203,13 @@ def test_distances():
                                                n_neighbors=n_neighbors,
                                                return_distance=True)
         # Returned distances should be in sorted in descending order.
-        assert_true(all(np.diff(distances[0]) <= 0))
+        assert_true(np.all(np.diff(distances[0]) <= 0))
 
         mean_dist = np.mean(euclidean_distances(query, X))
         distances, neighbors = lshf.radius_neighbors(query,
                                                      radius=mean_dist,
                                                      return_distance=True)
-        assert_true(all(np.diff(distances[0]) <= 0))
+        assert_true(np.all(np.diff(distances[0]) <= 0))
 
 
 def test_fit():
