@@ -153,6 +153,9 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
             y_pred = np.mean(_y[neigh_ind], axis=1)
         else:
             y_pred = np.empty((X.shape[0], _y.shape[1]), dtype=np.float)
+            # Some weights may be infinite (zero distance), which can cause
+            # downstream NaN values when used for normalization.
+            weights[np.isinf(weights)] = np.finfo('f').max
             denom = np.sum(weights, axis=1)
 
             for j in range(_y.shape[1]):
