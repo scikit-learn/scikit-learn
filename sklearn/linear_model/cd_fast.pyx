@@ -442,9 +442,8 @@ def sparse_enet_coordinate_descent(double[:] w,
                     for jj in range(n_samples):
                         R_sum += R[jj]
                     X_T_R[ii] -= X_mean[ii] * R_sum
+                    XtA[ii] = X_T_R[ii] - beta * w[ii]
 
-                for jj in range(n_features):
-                    XtA[jj] = X_T_R[jj] - beta * w[jj]
                 if positive:
                     dual_norm_XtA = max(n_features, &XtA[0])
                 else:
