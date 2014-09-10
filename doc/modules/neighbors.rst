@@ -556,13 +556,13 @@ probability (:math:`p_2`) of colliding. Assuming that there is some family
 of LSH functions :math:`H` available, LSH index is built as follows:
 
 1. Choose :math:`k` functions :math:`h_1, h_2, … h_k` uniformly at
-random (with replacement) from :math:`H`. For any :math:`p ∈ S`, place
-:math:`p` in the bucket with label
-:math:`g(p) = (h_1(p), h_2(p), … h_k(p))`. Observe that if
-each :math:`h_i` outputs one “digit”, each bucket has a k-digit label.
+   random (with replacement) from :math:`H`. For any :math:`p ∈ S`, place
+   :math:`p` in the bucket with label
+   :math:`g(p) = (h_1(p), h_2(p), … h_k(p))`. Observe that if
+   each :math:`h_i` outputs one “digit”, each bucket has a k-digit label.
 
 2. Independently perform step 1 :math:`l` times to construct :math:`l`
-separate estimators, with hash functions :math:`g_1, g_2, … g_l`.
+   separate estimators, with hash functions :math:`g_1, g_2, … g_l`.
 
 In step 1, if two distant points had a probability :math:`p_2` of
 collision with one hash function, their collision probability drops to
@@ -583,7 +583,7 @@ multiple estimators.
 Locality Sensitive Hashing Forest
 ---------------------------------
 
-scikit-learn implements Locality sensitive hashing forest (LSH Forest) which
+scikit-learn implements :class:`LSHForest` which
 is one of the most promising variants of LSH. Logically, a tree in the LSH
 forest is a prefix tree, with each leaf corresponding to a point in the data
 base. This data structure simply consists of :math:`l` such LSH trees, each
