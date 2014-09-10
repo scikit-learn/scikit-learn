@@ -143,20 +143,17 @@ def compute_strong_active_set(double current_alpha, double prev_alpha,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def sort_violations(np.ndarray[np.int32_t, ndim=1] new_active_set,
-                    int n_violations):
+cdef void insert(int* new_active_set, int size) nogil:
 
-    cdef unsigned int count
     cdef unsigned int tmp
-    count = n_violations
-    while count >= 1:
-        if new_active_set[count - 1] > new_active_set[count]:
-            tmp = new_active_set[count - 1]
-            new_active_set[count - 1] = new_active_set[count]
-            new_active_set[count] = tmp
+    while size >= 1:
+        if new_active_set[size - 1] > new_active_set[size]:
+            tmp = new_active_set[size - 1]
+            new_active_set[size - 1] = new_active_set[size]
+            new_active_set[size] = tmp
         else:
             break
-        count -= 1
+        size -= 1
 
 
 @cython.boundscheck(False)
@@ -170,34 +167,39 @@ def check_kkt_conditions_fast(np.ndarray[DOUBLE, ndim=1] XtR,
                               ):
 
     cdef bint kkt_violations = 0
-    cdef int i
+    cdef unsigned int i
     cdef double active_coef
     cdef double penalty
     cdef double tol
+    cdef int strong_feature
     cdef unsigned int n_active = active_set.size
     cdef np.ndarray[np.int32_t, ndim=1] new_active_set = np.zeros(
         n_active + strong_active_set.size, dtype=np.intc)
+    cdef unsigned int n_strong = strong_active_set.size
     cdef unsigned int n_violations = n_active
     cdef unsigned int count
+    cdef int* active_set_ptr = <int*>&new_active_set[0]
 
-    for i in range(n_active):
-        new_active_set[i] = active_set[i]
+    with nogil:
+        for i in range(n_active):
+            new_active_set[i] = active_set[i]
 
-    for i in strong_active_set:
+        for i in range(n_strong):
+            strong_feature = strong_active_set[i]
 
-        active_coef = coef[i]
-        penalty = alpha * (l1_ratio * fsign(active_coef) + (1 - l1_ratio) * active_coef)
-        tol = 1e-3 + rtol * fabs(penalty)
+            active_coef = coef[strong_feature]
+            penalty = alpha * (
+                l1_ratio * fsign(active_coef) +
+                (1 - l1_ratio) * active_coef
+                )
+            tol = 1e-3 + rtol * fabs(penalty)
 
-        if active_coef != 0 and (fabs(XtR[i] - penalty) > tol):
-            new_active_set[n_violations] = i
-            sort_violations(new_active_set, n_violations)
-            n_violations += 1
-
-        elif active_coef == 0 and fabs(XtR[i]) > alpha*l1_ratio:
-            new_active_set[n_violations] = i
-            sort_violations(new_active_set, n_violations)
-            n_violations += 1
+            if ((active_coef != 0 and (fabs(XtR[strong_feature] - penalty) > tol)) or
+                   (active_coef == 0 and fabs(XtR[strong_feature]) > alpha*l1_ratio)):
+                kkt_violations = 1
+                new_active_set[n_violations] = strong_feature
+                insert(active_set_ptr, n_violations)
+                n_violations += 1
 
     return new_active_set[:n_violations], kkt_violations
 

@@ -552,9 +552,6 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 n_samples*alpha*l1_ratio, n_samples*alphas[i-1]*l1_ratio, XtR
                 )
             while kkt_violations:
-                if isinstance(eligible_features, list):
-                    eligible_features = np.asarray(eligible_features,
-                                                   dtype=np.int32)
                 model = _cd_fast_path(
                     X, y, coef_, l1_reg, l2_reg, eligible_features,
                     max_iter, tol, rng, random, positive, precompute,
@@ -572,7 +569,6 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                                           assume_unique=True)
                 not_in_active = strong_active_set[~common_features]
                 if np.any(not_in_active):
-                    #print eligible_features
                     eligible_features, kkt_violations = cd_fast.check_kkt_conditions_fast(
                         XtR, coef_, not_in_active, eligible_features,
                         l1_ratio, n_samples*alpha, 1e-3
