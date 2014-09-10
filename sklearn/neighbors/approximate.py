@@ -149,30 +149,26 @@ class LSHForest(BaseEstimator):
         self.min_hash_length = min_hash_length
         self.radius_cutoff_ratio = radius_cutoff_ratio
 
-    def _generate_hash_function(self):
-        """Fits a `GaussianRandomProjection`.
+    def _create_tree(self):
+        """Builds a single tree.
 
+        Here, it creates a sorted array of binary hashes.
+        Hashing is done on an array of data points.
+        `GaussianRandomProjection` is used for hashing.
         `n_components=hash_size and n_features=n_dim.
+
+        This creates binary hashes by getting the dot product of
+        input points and hash_function then transforming the projection
+        into a binary string array based on the sign (positive/negative)
+        of the projection.
         """
         random_state = check_random_state(self.random_state)
         grp = GaussianRandomProjection(n_components=self.max_label_length,
                                        random_state=random_state)
         X = np.zeros((1, self._fit_X.shape[1]), dtype=float)
         grp.fit(X)
-        return grp
 
-    def _create_tree(self):
-        """Builds a single tree.
-
-        Here, it creates a sorted array of binary hashes.
-        Hashing is done on an array of data points.
-        This creates a binary hashes by getting the dot product of
-        input points and hash_function then transforming the projection
-        into a binary string array based on the sign (positive/negative)
-        of the projection.
-        """
-        grp = self._generate_hash_function()
-        hashes = np.array(grp.transform(self._fit_X) > 0, dtype=int)
+        hashes = (grp.transform(self._fit_X) > 0).astype(int)
         hash_function = grp.components_
 
         binary_hashes = np.packbits(hashes).view(dtype='>u4')
@@ -200,7 +196,7 @@ class LSHForest(BaseEstimator):
         self._left_mask = np.packbits(left_mask).view(dtype='>u4')
         self._right_mask = np.packbits(right_mask).view(dtype='>u4')
 
-    def _get_candidates(self, query, max_depth, bin_queries, m):
+    def _get_candidates(self, query, max_depth, bin_queries, n_neighbors):
         """Performs the Synchronous ascending phase.
 
         Returns an array of candidates, their distance ranks and
@@ -211,7 +207,7 @@ class LSHForest(BaseEstimator):
         while max_depth > self.min_hash_length and (len(candidates)
                                                     < max_candidates or
                                                     len(set(candidates))
-                                                    < m):
+                                                    < n_neighbors):
 
             for i in range(self.n_estimators):
                 candidates.extend(
@@ -268,8 +264,8 @@ class LSHForest(BaseEstimator):
         Value of the integer is the value represented by the
         binary hashed value.
         """
-        projections = np.array(np.dot(self.hash_functions_[tree_n],
-                                      y) > 0, dtype=int)
+        projections = (np.dot(self.hash_functions_[tree_n],
+                              y) > 0).astype(int)
 
         return np.packbits(projections).view(dtype='>u4')[0]
 
@@ -303,7 +299,7 @@ class LSHForest(BaseEstimator):
 
         return self
 
-    def _query(self, query, m=None, radius=None, is_radius=False):
+    def _query(self, query, n_neighbors=None, radius=None, is_radius=False):
         """Finds neighbors and distances.
         Returns the neighbors whose distances from the query is less
         than radius if is_radius is True.
@@ -332,9 +328,10 @@ class LSHForest(BaseEstimator):
             candidates, ranks, distances = self._get_candidates(query,
                                                                 max_depth,
                                                                 bin_queries,
-                                                                m)
+                                                                n_neighbors)
 
-            return candidates[ranks[:m]][::-1], distances[:m][::-1]
+            return (candidates[ranks[:n_neighbors]][::-1],
+                    distances[:n_neighbors][::-1])
 
     def kneighbors(self, X, n_neighbors=None, return_distance=True):
         """

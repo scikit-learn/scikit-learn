@@ -47,7 +47,7 @@ def test_neighbors_accuracy_with_n_candidates():
 
         accuracies[i] = accuracies[i] / float(n_iter)
     # Sorted accuracies should be equal to original accuracies
-    assert_true(all(np.diff(accuracies) >= 0),
+    assert_true(np.all(np.diff(accuracies) >= 0),
                 msg="Accuracies are not non-decreasing.")
 
 
@@ -78,7 +78,7 @@ def test_neighbors_accuracy_with_n_estimators():
 
         accuracies[i] = accuracies[i] / float(n_iter)
     # Sorted accuracies should be equal to original accuracies
-    assert_true(all(np.diff(accuracies) >= 0),
+    assert_true(np.all(np.diff(accuracies) >= 0),
                 msg="Accuracies are not non-decreasing.")
 
 
