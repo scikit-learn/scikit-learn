@@ -346,7 +346,7 @@ def _multinomial_loss_grad_hess(w, X, Y, alpha, sample_weight):
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
         Training data.
 
-    y : ndarray, shape (n_samples, n_classes)
+    Y : ndarray, shape (n_samples, n_classes)
         Transformed labels according to the output of LabelBinarizer.
 
     alpha : float
