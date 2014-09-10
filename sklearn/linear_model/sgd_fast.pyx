@@ -450,7 +450,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 double intercept,
                 np.ndarray[double, ndim=1, mode='c'] average_weights,
                 double average_intercept,
-                np.ndarray[double, ndim=1, mode='c'] previously_seen,
+                np.ndarray[double, ndim=1, mode='c'] previous_weights,
                 LossFunction loss,
                 int penalty_type,
                 double alpha, double C,
@@ -475,7 +475,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         The average weights as computed for ASGD
     average_intercept : double
         The average intercept for ASGD
-    previously_seen : ndarray[double, ndim=1]
+    previous_weights : ndarray[double, ndim=1]
         The last seen value of the weight vector, used to calculate
         the average_weights
     loss : LossFunction
@@ -536,7 +536,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                       intercept,
                       average_weights,
                       average_intercept,
-                      previously_seen,
+                      previous_weights,
                       loss,
                       penalty_type,
                       alpha, C,
@@ -556,7 +556,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                double intercept,
                np.ndarray[double, ndim=1, mode='c'] average_weights,
                double average_intercept,
-               np.ndarray[double, ndim=1, mode='c'] previously_seen,
+               np.ndarray[double, ndim=1, mode='c'] previous_weights,
                LossFunction loss,
                int penalty_type,
                double alpha, double C,
@@ -585,10 +585,10 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     #initialize components needed for averaging
     if average:
         aw_ptr = &average_weights[0]
-        ps_ptr = &previously_seen[0]
+        ps_ptr = &previous_weights[0]
         # average_weights_ *= t - 1
         dscal(n_features, t - 1, aw_ptr, 1)
-        # average_weights_ += previously_seen_ * n_samples
+        # average_weights_ += previous_weights_ * n_samples
         daxpy(n_features, n_samples, ps_ptr, 1, aw_ptr, 1)
 
     # helper variables
@@ -639,10 +639,8 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
 
                 p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
 
-                if learning_rate == OPTIMAL:
-                    if not average:
-                        eta = 1.0 / (alpha * t)
-
+                if learning_rate == OPTIMAL and not average:
+                    eta = 1.0 / (alpha * t)
                 elif learning_rate == INVSCALING:
                     eta = eta0 / pow(t, power_t)
 
@@ -730,7 +728,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
 
     # divide the average weights by total iterations
     if average:
-        # average_weights_ /= t
+        # average_weights_ /= t - 1
         dscal(n_features, 1. / (t - 1), aw_ptr, 1)
 
     return weights, intercept, average_weights, average_intercept

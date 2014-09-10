@@ -163,9 +163,11 @@ further information.
  - :ref:`example_linear_model_plot_sgd_weighted_samples.py`
  - :ref:`example_svm_plot_separating_hyperplane_unbalanced.py` (See the `Note`)
 
-:class:`SGDClassifier` supports averaging SGD. This will average the results
-of the plain SGD over each iteration over a sample. Averaging can be enabled
-by setting ```average=True```
+:class:`SGDClassifier` supports averaged SGD (ASGD). Averaging can be enabled
+by setting ```average=True```. ASGD works by averaging the coefficients
+of the plain SGD over each iteration over a sample. When using ASGD
+the learning rate can be larger and even constant leading on some
+datasets to a speed up in training time.
 
 Regression
 ==========
@@ -189,9 +191,8 @@ robust regression. The width of the insensitive region has to be
 specified via the parameter ``epsilon``. This parameter depends on the
 scale of the target variables.
 
-:class:`SGDRegressor` supports averaging SGD. This will average the results
-of the plain SGD over each iteration over a sample. Averaging can be enabled
-by setting ```average=True```
+:class:`SGDRegressor` supports averaged SGD as :class:`SGDClassifier`.
+Averaging can be enabled by setting ```average=True```
 
 
 Stochastic Gradient Descent for sparse data

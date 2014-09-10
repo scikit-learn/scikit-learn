@@ -54,10 +54,8 @@ class SparseSGDRegressor(SGDRegressor):
         X = sp.csr_matrix(X)
         return SGDRegressor.decision_function(self, X, *args, **kw)
 
-##
-## Test Data
-##
 
+# Test Data
 
 # test sample 1
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -95,10 +93,7 @@ Y5 = [1, 1, 1, 2, 2, 2]
 true_result5 = [0, 1, 1]
 
 
-##
-## Classification Test Case
-##
-
+# Classification Test Case
 
 class CommonTest(object):
 
@@ -112,8 +107,8 @@ class CommonTest(object):
         decay = 1
 
         # sparse data has a fixed decay of .01
-        if isinstance(self, SparseSGDClassifierTestCase) or \
-            isinstance(self, SparseSGDRegressorTestCase):
+        if (isinstance(self, SparseSGDClassifierTestCase) or
+                isinstance(self, SparseSGDRegressorTestCase)):
             decay = .01
 
         for i, entry in enumerate(X):
@@ -144,7 +139,7 @@ class CommonTest(object):
                  coef_init=clf.coef_.copy(),
                  intercept_init=clf.intercept_.copy())
 
-        #... and implicit warm restart are equivalent.
+        # ... and implicit warm restart are equivalent.
         clf3 = self.factory(alpha=0.01, eta0=0.01, n_iter=5, shuffle=False,
                             warm_start=True, learning_rate=lr)
         clf3.fit(X, Y)
@@ -194,7 +189,7 @@ class CommonTest(object):
         clf.fit(X, Y)
 
         assert_true(hasattr(clf, 'average_coef_'))
-        assert_true(hasattr(clf, 'previously_seen_'))
+        assert_true(hasattr(clf, 'previous_coef_'))
         assert_true(hasattr(clf, 'average_intercept_'))
         assert_true(hasattr(clf, 'standard_intercept_'))
         assert_true(hasattr(clf, 'standard_coef_'))
@@ -203,7 +198,7 @@ class CommonTest(object):
         clf.fit(X, Y)
 
         assert_false(hasattr(clf, 'average_coef_'))
-        assert_false(hasattr(clf, 'previously_seen_'))
+        assert_false(hasattr(clf, 'previous_coef_'))
         assert_false(hasattr(clf, 'average_intercept_'))
         assert_false(hasattr(clf, 'standard_intercept_'))
         assert_false(hasattr(clf, 'standard_coef_'))
@@ -221,7 +216,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
             clf = self.factory(penalty='l2', alpha=0.01, fit_intercept=True,
                                loss=loss, n_iter=10, shuffle=True)
             clf.fit(X, Y)
-            #assert_almost_equal(clf.coef_[0], clf.coef_[1], decimal=7)
+            # assert_almost_equal(clf.coef_[0], clf.coef_[1], decimal=7)
             assert_array_equal(clf.predict(T), true_result)
 
     @raises(ValueError)
