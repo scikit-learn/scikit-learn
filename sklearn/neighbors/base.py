@@ -293,8 +293,9 @@ class KNeighborsMixin(object):
                                           squared=True)
             else:
                 dist = pairwise_distances(X, self._fit_X,
-                                          metric=self.effective_metric_,
+                                          self.effective_metric_,
                                           **self.effective_metric_kwds_)
+
             # XXX: should be implemented with a partial sort
             neigh_ind = dist.argsort(axis=1)
             neigh_ind = neigh_ind[:, :n_neighbors]
