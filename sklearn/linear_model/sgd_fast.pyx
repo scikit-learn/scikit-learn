@@ -404,9 +404,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         The fitted intercept term.
 
     """
-    cdef LearningRate lr = get_learning_rate(3)
-    a = lr.step(eta0=.1, alpha=.1, t=2, power_t=3)
-    print(a)
+    cdef LearningRate lr = get_learning_rate(learning_rate)
 
     # get the data information into easy vars
     cdef Py_ssize_t n_samples = dataset.n_samples
@@ -431,6 +429,9 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef unsigned int epoch = 0
     cdef unsigned int i = 0
     cdef int is_hinge = isinstance(loss, Hinge)
+    cdef double current_loss = 0.0
+    cdef double gradient = 0.0
+    cdef double norm = 0.0
 
     # q vector is only used for L1 regularization
     cdef np.ndarray[double, ndim = 1, mode = "c"] q = None
@@ -459,30 +460,14 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 dataset.next(&x_data_ptr, &x_ind_ptr, &xnnz, &y, &sample_weight)
 
                 p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
-
-                if learning_rate == OPTIMAL:
-                    eta = 1.0 / (alpha * t)
-                elif learning_rate == INVSCALING:
-                    eta = eta0 / pow(t, power_t)
+                gradient = loss._dloss(p, y)
+                norm = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
+                current_loss = loss.loss(p, y)
+                eta = lr.eta(eta0, alpha, t, power_t)
+                update = lr.update(gradient, current_loss, eta, norm, C)
 
                 if verbose > 0:
-                    sumloss += loss.loss(p, y)
-
-                if y > 0.0:
-                    class_weight = weight_pos
-                else:
-                    class_weight = weight_neg
-
-                if learning_rate == PA1:
-                    update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
-                    if update == 0:
-                        continue
-                    update = min(C, loss.loss(p, y) / update)
-                elif learning_rate == PA2:
-                    update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
-                    update = loss.loss(p, y) / (update + 0.5 / C)
-                else:
-                    update = -eta * loss._dloss(p, y)
+                    sumloss += current_loss
 
                 if learning_rate >= PA1:
                     if is_hinge:
@@ -491,6 +476,10 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     elif y - p < 0:
                         # regression
                         update *= -1
+                if y > 0.0:
+                    class_weight = weight_pos
+                else:
+                    class_weight = weight_neg
 
                 update *= class_weight * sample_weight
 

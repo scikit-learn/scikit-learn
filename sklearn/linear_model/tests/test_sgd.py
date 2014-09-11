@@ -20,6 +20,9 @@ from sklearn.base import clone
 from sklearn.linear_model import SGDClassifier, SGDRegressor
 from sklearn.preprocessing import LabelEncoder, scale
 
+def test_delete():
+    clf = SGDClassifier(learning_rate='invscaling', eta0=.234)
+    clf.fit([[1], [2]], [2, 3])
 
 class SparseSGDClassifier(SGDClassifier):
 
