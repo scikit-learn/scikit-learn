@@ -112,7 +112,6 @@ def _cd_fast_path(X, y, coef_, l1_reg, l2_reg, active_set, max_iter, tol, rng,
     """
 
     multi_output = (y.ndim >= 2)
-    active_set = np.asarray(active_set, dtype=np.int32)
     if not multi_output and sparse.isspmatrix(X):
         model = cd_fast.sparse_enet_coordinate_descent(
             coef_, l1_reg, l2_reg, X.data, X.indices,
@@ -527,9 +526,10 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         X, y, coef_, l1_reg, l2_reg, active_set, max_iter, tol,
         rng, random, positive, precompute, Xy, X_sparse_scaling
         )
-    coef_, dual_gap_, eps_, n_iter_, XtR = model
-    if XtR.ndim == 2:
-        XtR = row_norms(XtR)
+    if multi_output:
+        coef_, dual_gap_, eps_, n_iter_, XtR, w_norm = model
+    else:
+        coef_, dual_gap_, eps_, n_iter_, XtR = model
     n_iters.append(n_iter_)
     dual_gaps[0] = dual_gap_
     coefs[..., 0] = coef_
@@ -557,9 +557,12 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                     max_iter, tol, rng, random, positive, precompute,
                     Xy, X_sparse_scaling
                     )
-                coef_, dual_gap_, eps_, n_iter_, XtR = model
-                if XtR.ndim == 2:
-                    XtR = row_norms(XtR)
+                if multi_output:
+                    coef_, dual_gap_, eps_, n_iter_, XtR, w_norm = model
+                    normed_coef = w_norm
+                else:
+                    coef_, dual_gap_, eps_, n_iter_, XtR = model
+                    normed_coef = coef_
 
                 # Check KKT conditions for features present in strong_active_set.
                 # and not in eligible predictors. If KKT conditions are violated add them
@@ -570,7 +573,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 not_in_active = strong_active_set[~common_features]
                 if np.any(not_in_active):
                     eligible_features, kkt_violations = cd_fast.check_kkt_conditions_fast(
-                        XtR, coef_, not_in_active, eligible_features,
+                        XtR, normed_coef, not_in_active, eligible_features,
                         l1_ratio, n_samples*alpha, 1e-3
                         )
 
@@ -581,10 +584,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             non_active = np.setdiff1d(feature_array, active_set,
                                       assume_unique=True)
             if np.any(non_active):
-                if XtR.ndim == 2:
-                    XtR = row_norms(XtR)
                 active_set, kkt_violations = cd_fast.check_kkt_conditions_fast(
-                    XtR, coef_, non_active, active_set,
+                    XtR, normed_coef, non_active, active_set,
                     l1_ratio, n_samples*alpha, 1e-3
                     )
 
@@ -1745,12 +1746,11 @@ class MultiTaskElasticNet(Lasso):
         random = (self.selection == 'random')
         active_features = np.arange(n_features, dtype=np.int32)
 
-        self.coef_, self.dual_gap_, self.eps_, self.n_iter_, _  = \
+        self.coef_, self.dual_gap_, self.eps_, self.n_iter_, XtR, _ = \
             cd_fast.enet_coordinate_descent_multi_task(
                 self.coef_, l1_reg, l2_reg, X, y, active_features,
                 self.max_iter, self.tol,
                 check_random_state(self.random_state), random)
-
         self._set_intercept(X_mean, y_mean, X_std)
 
         if self.dual_gap_ > self.eps_:

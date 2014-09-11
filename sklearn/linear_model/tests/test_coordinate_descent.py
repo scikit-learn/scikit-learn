@@ -429,8 +429,8 @@ def test_1d_multioutput_enet_and_multitask_enet_cv():
     clf1.fit(X, y)
     assert_almost_equal(clf.l1_ratio_, clf1.l1_ratio_)
     assert_almost_equal(clf.alpha_, clf1.alpha_)
-    assert_almost_equal(clf.coef_, clf1.coef_[0], decimal=3)
-    assert_almost_equal(clf.intercept_, clf1.intercept_[0], decimal=3)
+    assert_almost_equal(clf.coef_, clf1.coef_[0])
+    assert_almost_equal(clf.intercept_, clf1.intercept_[0])
 
 
 def test_1d_multioutput_lasso_and_multitask_lasso_cv():
@@ -441,8 +441,8 @@ def test_1d_multioutput_lasso_and_multitask_lasso_cv():
     clf1 = MultiTaskLassoCV(n_alphas=5, eps=2e-3)
     clf1.fit(X, y)
     assert_almost_equal(clf.alpha_, clf1.alpha_)
-    assert_almost_equal(clf.coef_, clf1.coef_[0], decimal=3)
-    assert_almost_equal(clf.intercept_, clf1.intercept_[0], decimal=3)
+    assert_almost_equal(clf.coef_, clf1.coef_[0])
+    assert_almost_equal(clf.intercept_, clf1.intercept_[0])
 
 
 def test_sparse_input_dtype_enet_and_lassocv():

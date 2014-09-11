@@ -614,7 +614,7 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
     cdef unsigned int ii
     cdef unsigned int n_iter
     cdef unsigned int f_iter
-    cdef unsigned n_active = active_features.size
+    cdef unsigned int n_active = active_features.size
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
 
@@ -742,9 +742,11 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
 
     # to store XtA
     cdef double[:, ::1] XtA = np.zeros((n_features, n_tasks))
-    cdef double[:, ::1] loss_deriv = np.zeros((n_features, n_tasks))
+    cdef double[:] XtA_norm_output = np.empty(n_features)
+    cdef double[:] w_norm_output = np.empty(n_features)
     cdef double XtA_axis1norm
     cdef double dual_norm_XtA
+    cdef double w_tmp
 
     # initial value of the residuals
     cdef double[:, ::1] R = np.zeros((n_samples, n_tasks))
@@ -854,17 +856,19 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
                 # XtA = np.dot(X.T, R) - l2_reg * W.T
                 for ii in range(n_features):
                     for jj in range(n_tasks):
-                        loss_deriv[ii, jj] = ddot(
+                        XtA[ii, jj] = ddot(
                             n_samples, X_ptr + ii * n_samples, 1,
                             &R[0, 0] + jj, n_tasks
                             ) - l2_reg * W[jj, ii]
-                        XtA[ii, jj] = loss_deriv[ii, jj] - l2_reg * W[jj, ii]
 
                 # dual_norm_XtA = np.max(np.sqrt(np.sum(XtA ** 2, axis=1)))
                 dual_norm_XtA = 0.0
                 for ii in range(n_features):
                     # np.sqrt(np.sum(XtA ** 2, axis=1))
                     XtA_axis1norm = dnrm2(n_tasks, &XtA[0, 0] + ii * n_tasks, 1)
+                    # Use this to store the value of norm across all outputs.
+                    # Note that there is an extra l2_reg * W_axis1_norm term.
+                    XtA_norm_output[ii] = XtA_axis1norm
                     if XtA_axis1norm > dual_norm_XtA:
                         dual_norm_XtA = XtA_axis1norm
 
@@ -891,7 +895,10 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
                 l21_norm = 0.0
                 for ii in range(n_features):
                     # np.sqrt(np.sum(W ** 2, axis=0))
-                    l21_norm += dnrm2(n_tasks, W_ptr + n_tasks * ii, 1)
+                    w_tmp = dnrm2(n_tasks, W_ptr + n_tasks * ii, 1)
+                    w_norm_output[ii] = w_tmp
+                    l21_norm += w_tmp
+                    XtA_norm_output[ii] -= l2_reg * w_tmp
 
                 gap += l1_reg * l21_norm - const * ry_sum + \
                      0.5 * l2_reg * (1 + const ** 2) * (w_norm ** 2)
@@ -900,4 +907,4 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
                     # return if we reached desired tolerance
                     break
 
-    return np.asarray(W), gap, tol, n_iter + 1, np.asarray(loss_deriv)
+    return np.asarray(W), gap, tol, n_iter + 1, np.asarray(XtA_norm_output), np.asarray(w_norm_output)

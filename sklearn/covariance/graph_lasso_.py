@@ -200,11 +200,11 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                         # Use coordinate descent
                         coefs = -(precision_[indices != idx, idx]
                                   / (precision_[idx, idx] + 1000 * eps))
-                        #active_features = np.arange(n_features, dtype=np.int32)
-                        coefs, _, _, _ = cd_fast.enet_coordinate_descent_gram(
+                        active_features = np.arange(sub_covariance.shape[0], dtype=np.intc)
+                        coefs, _, _, _, _  = cd_fast.enet_coordinate_descent_gram(
                             coefs, alpha, 0, sub_covariance, row, row,
-                            #active_features,
-                            max_iter, tol, check_random_state(None), False)
+                            active_features,
+                            max_iter, tol, check_random_state(None), 0, 0)
                     else:
                         # Use LARS
                         _, _, coefs = lars_path(
