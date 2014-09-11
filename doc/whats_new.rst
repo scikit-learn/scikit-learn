@@ -87,6 +87,13 @@ Bug fixes
       appropriate error message and suggests a work around.
       By `Danny Sullivan`_.
 
+    - :class:`RBFSampler <kernel_approximation.RBFSampler>` with ``gamma=g``
+      formerly approximated :func:`rbf_kernel <metrics.pairwise.rbf_kernel>`
+      with ``gamma=g/2.``; the definition of ``gamma`` is now consistent,
+      which may substantially change your results if you use a fixed value.
+      (If you cross-validated over ``gamma``, it probably doesn't matter
+      too much.) By `Dougal Sutherland`_.
+
 
 API changes summary
 -------------------
@@ -2965,3 +2972,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Nikolay Mayorov: https://github.com/nmayorov
 
 .. _Jatin Shah: http://jatinshah.org/
+
+.. _Dougal Sutherland: https://github.com/dougalsutherland
