@@ -193,7 +193,6 @@ def check_kkt_conditions_fast(np.ndarray[DOUBLE, ndim=1] XtR,
                 (1 - l1_ratio) * active_coef
                 )
             tol = 1e-3 + rtol * fabs(penalty)
-
             if ((active_coef != 0 and (fabs(XtR[strong_feature] - penalty) > tol)) or
                    (active_coef == 0 and fabs(XtR[strong_feature]) > alpha*l1_ratio)):
                 kkt_violations = 1
@@ -898,7 +897,7 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
                     w_tmp = dnrm2(n_tasks, W_ptr + n_tasks * ii, 1)
                     w_norm_output[ii] = w_tmp
                     l21_norm += w_tmp
-                    XtA_norm_output[ii] -= l2_reg * w_tmp
+                    XtA_norm_output[ii] += l2_reg * w_tmp
 
                 gap += l1_reg * l21_norm - const * ry_sum + \
                      0.5 * l2_reg * (1 + const ** 2) * (w_norm ** 2)

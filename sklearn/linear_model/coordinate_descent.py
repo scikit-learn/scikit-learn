@@ -541,15 +541,19 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         active_set = np.nonzero(np.abs(coef_) > 1e-12)[0]
 
     active_set = np.asarray(active_set, dtype=np.int32)
-    for i, alpha in enumerate(alphas[1:]):
-
+    alphas_ = alphas[1:]
+    for i, alpha in enumerate(alphas_):
         kkt_violations = True
         l1_reg = alpha * l1_ratio * n_samples
         l2_reg = alpha * (1.0 - l1_ratio) * n_samples
+        if i == 0:
+            prev_alpha = n_samples * l1_ratio * alphas[0]
+        else:
+            prev_alpha = n_samples * l1_ratio * alphas_[i - 1]
         while kkt_violations:
             eligible_features = np.copy(active_set)
             strong_active_set = cd_fast.compute_strong_active_set(
-                n_samples*alpha*l1_ratio, n_samples*alphas[i-1]*l1_ratio, XtR
+                n_samples * l1_ratio * alpha, prev_alpha, XtR
                 )
             while kkt_violations:
                 model = _cd_fast_path(
