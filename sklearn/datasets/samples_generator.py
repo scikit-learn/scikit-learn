@@ -291,9 +291,10 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     sparse : bool, optional (default=False)
         If ``True``, return a sparse feature matrix
 
-    return_indicator : bool, optional (default=False),
-        If ``True``, return ``Y`` in the binary indicator format, else
-        return a tuple of lists of labels.
+    return_indicator : False | 'dense' | 'sparse' (default=False),
+        If ``dense`` return ``Y`` in the dense binary indicator format. If
+        ``'sparse'`` return ``Y`` in the sparse binary indicator format. And
+        by default, ``False``, will return a tuple of lists of labels.
 
     return_distributions : bool, optional (default=False)
         If ``True``, return the prior class probability and conditional
@@ -379,14 +380,16 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     if not sparse:
         X = X.toarray()
 
-    if return_indicator:
-        lb = MultiLabelBinarizer()
+    # return_indicator can be True due to backward compatibility
+    if (return_indicator == True or return_indicator == 'dense'
+                                 or return_indicator == 'sparse'):
+        lb = MultiLabelBinarizer(sparse_output=(return_indicator=='sparse'))
         Y = lb.fit([range(n_classes)]).transform(Y)
     else:
         warnings.warn('Support for the sequence of sequences multilabel '
                       'representation is being deprecated and replaced with '
                       'a sparse indicator matrix. '
-                      'return_indicator will default to True from version '
+                      "return_indicator will default to 'dense' from version "
                       '0.17.',
                       DeprecationWarning)
 
