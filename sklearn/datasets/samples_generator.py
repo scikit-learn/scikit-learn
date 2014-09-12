@@ -249,7 +249,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
 def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
                                    n_labels=2, length=50, allow_unlabeled=True,
-                                   sparse=False, return_indicator=True,
+                                   sparse=False, return_indicator='dense',
                                    return_distributions=False,
                                    random_state=None):
     """Generate a random multilabel classification problem.
@@ -294,9 +294,10 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     sparse : bool, optional (default=False)
         If ``True``, return a sparse feature matrix
 
-    return_indicator : bool, optional (default=False),
-        If ``True``, return ``Y`` in the binary indicator format, else
-        return a tuple of lists of labels.
+    return_indicator : 'dense' (default) | 'sparse' | False
+        If ``dense`` return ``Y`` in the dense binary indicator format. If
+        ``'sparse'`` return ``Y`` in the sparse binary indicator format.
+        ``False`` returns a list of lists of labels.
 
     return_distributions : bool, optional (default=False)
         If ``True``, return the prior class probability and conditional
@@ -311,10 +312,10 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
 
     Returns
     -------
-    X : array or sparse CSR matrix of shape [n_samples, n_features]
+    X : array of shape [n_samples, n_features]
         The generated samples.
 
-    Y : tuple of lists or array of shape [n_samples, n_classes]
+    Y : array or sparse CSR matrix of shape [n_samples, n_classes]
         The label sets.
 
     p_c : array, shape [n_classes]
@@ -381,8 +382,14 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     X.sum_duplicates()
     if not sparse:
         X = X.toarray()
-    if return_indicator:
-        Y = MultiLabelBinarizer().fit([range(n_classes)]).transform(Y)
+
+    # return_indicator can be True due to backward compatibility
+    if return_indicator in (True, 'sparse', 'dense'):
+        lb = MultiLabelBinarizer(sparse_output=(return_indicator == 'sparse'))
+        Y = lb.fit([range(n_classes)]).transform(Y)
+    else:
+        raise ValueError("return_indicator must be either 'sparse', 'dense' "
+                         'or False.')
     if return_distributions:
         return X, Y, p_c, p_w_c
     return X, Y

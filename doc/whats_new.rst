@@ -118,6 +118,9 @@ Enhancements
    - Parallel processing (threaded) for queries of nearest neighbors
      (using the ball-tree) by Nikolay Mayorov.
 
+   - Allow :func:`datasets.make_multilabel_classification` to output
+     a sparse ``y``. By Kashif Rasul.
+
 Bug fixes
 .........
 
