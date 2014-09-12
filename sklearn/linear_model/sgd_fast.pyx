@@ -575,7 +575,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef Py_ssize_t n_samples = dataset.n_samples
     cdef Py_ssize_t n_features = weights.shape[0]
 
-    cdef WeightVector w = WeightVector(weights)
+    cdef WeightVector w = WeightVector(weights, average_weights)
     cdef double* w_ptr = &weights[0]
     cdef double *x_data_ptr = NULL
     cdef int *x_ind_ptr = NULL
@@ -583,13 +583,13 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef double* ps_ptr = NULL
 
     #initialize components needed for averaging
-    if average:
-        aw_ptr = &average_weights[0]
-        ps_ptr = &previous_weights[0]
-        # average_weights_ *= t - 1
-        dscal(n_features, t - 1, aw_ptr, 1)
-        # average_weights_ += previous_weights_ * n_samples
-        daxpy(n_features, n_samples, ps_ptr, 1, aw_ptr, 1)
+    # if average:
+    #     aw_ptr = &average_weights[0]
+    #     ps_ptr = &previous_weights[0]
+    #     # average_weights_ *= t - 1
+    #     dscal(n_features, t - 1, aw_ptr, 1)
+    #     # average_weights_ += previous_weights_ * n_samples
+    #     daxpy(n_features, n_samples, ps_ptr, 1, aw_ptr, 1)
 
     # helper variables
     cdef bint infinity = False
@@ -605,6 +605,9 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef unsigned int epoch = 0
     cdef unsigned int i = 0
     cdef int is_hinge = isinstance(loss, Hinge)
+    cdef double avg_mu = 1.0
+    cdef double avg_alpha = 0
+    cdef double avg_beta = 1.0
 
     # q vector is only used for L1 regularization
     cdef np.ndarray[double, ndim = 1, mode = "c"] q = None
@@ -638,7 +641,6 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                              &sample_weight)
 
                 p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
-
                 if learning_rate == OPTIMAL and not average:
                     eta = 1.0 / (alpha * t)
                 elif learning_rate == INVSCALING:
@@ -676,7 +678,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 if penalty_type >= L2:
                     w.scale(1.0 - ((1.0 - l1_ratio) * eta * alpha))
                 if update != 0.0:
-                    w.add(x_data_ptr, x_ind_ptr, xnnz, update)
+                    w.add(x_data_ptr, x_ind_ptr, xnnz, update, t)
                     if fit_intercept == 1:
                         intercept += update * intercept_decay
 
@@ -688,17 +690,25 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 if average:
                     # compute the average for the weights
                     # average_weights_ += weights
-                    for j in range(xnnz):
-                        index = x_ind_ptr[j]
-                        entry = w_ptr[index]
-                        aw_ptr[index] -= ps_ptr[index] * (n_samples - i)
-                        aw_ptr[index] += entry * (n_samples - i)
-                        ps_ptr[index] = entry
+                    # if t > 1:
+                    #     for j in range(xnnz):
+                    #         index = x_ind_ptr[j]
+                    #         entry = x_data_ptr[index]
+
+                    #         aw_ptr[index] += (avg_alpha * entry *
+                    #                           -update / w.wscale)
+
+                    #         # aw_ptr[index] -= ps_ptr[index] * (n_samples - i)
+                    #         # aw_ptr[index] += entry * (n_samples - i)
+                    #         # ps_ptr[index] = entry
+
+                    #     avg_mu = 1.0 / t
+                    #     avg_beta /= 1.0 - avg_mu
+
+                    # avg_alpha += avg_mu * avg_beta * w.wscale
 
                     # compute the average for the intercept
-                    average_intercept *= t - 1
-                    average_intercept += intercept
-                    average_intercept /= t
+                    average_intercept += (intercept - average_intercept) / t
 
                 t += 1
                 count += 1
@@ -724,12 +734,16 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                           " #%d. Scaling input data with StandardScaler or"
                           " MinMaxScaler might help.") % (epoch + 1))
 
-    w.reset_wscale()
-
     # divide the average weights by total iterations
-    if average:
+    # if average:
         # average_weights_ /= t - 1
-        dscal(n_features, 1. / (t - 1), aw_ptr, 1)
+        # dscal(n_features, 1. / (t - 1), aw_ptr, 1)
+        # for j in range(n_features):
+        # print(w.alpha)
+            # aw_ptr[j] += w.alpha * w.w[j]
+            # aw_ptr[j] /= w.beta
+
+    w.reset_wscale()
 
     return weights, intercept, average_weights, average_intercept
 

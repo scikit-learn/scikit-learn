@@ -13,9 +13,29 @@ from libc.math cimport sqrt
 import numpy as np
 cimport numpy as np
 
+# Import CBLAS Functions
 cdef extern from "cblas.h":
-    double ddot "cblas_ddot"(int, double *, int, double *, int) nogil
-    void dscal "cblas_dscal"(int, double, double *, int) nogil
+
+    # dot product of two n elemenet vectors x and y
+    double ddot "cblas_ddot" (int n,
+                              const double* x,
+                              int incrx,
+                              double* y,
+                              int incry) nogil
+
+    # scale the passed in n element vector x at scale
+    void dscal "cblas_dscal" (int n,
+                              double scale,
+                              double* x,
+                              int incrx) nogil
+
+    # adds an n element vector x * scale to another n element vector y
+    void daxpy "cblas_daxpy" (int n,
+                              double scale,
+                              const double* x,
+                              int incrx,
+                              double* y,
+                              int incry) nogil
 
 
 np.import_array()
@@ -43,7 +63,9 @@ cdef class WeightVector(object):
         The squared norm of ``w``.
     """
 
-    def __cinit__(self, np.ndarray[double, ndim=1, mode='c'] w):
+    def __cinit__(self,
+                  np.ndarray[double, ndim=1, mode='c'] w,
+                  np.ndarray[double, ndim=1, mode='c'] aw):
         cdef double *wdata = <double *>w.data
 
         if w.shape[0] > INT_MAX:
@@ -55,8 +77,14 @@ cdef class WeightVector(object):
         self.n_features = w.shape[0]
         self.sq_norm = ddot(<int>w.shape[0], wdata, 1, wdata, 1)
 
+        self.aw = aw
+        if self.aw is not None:
+            self.aw_data_ptr = <double *>aw.data
+            self.alpha = 0.0
+            self.beta = 1.0
+
     cdef void add(self, double *x_data_ptr, int *x_ind_ptr, int xnnz,
-                  double c) nogil:
+                  double c, double t) nogil:
         """Scales sample x by constant c and adds it to the weight vector.
 
         This operation updates ``sq_norm``.
@@ -75,12 +103,17 @@ cdef class WeightVector(object):
         cdef int j
         cdef int idx
         cdef double val
+        cdef double mu = 1.0 / t
+        cdef double alpha = self.alpha
         cdef double innerprod = 0.0
         cdef double xsqnorm = 0.0
 
         # the next two lines save a factor of 2!
         cdef double wscale = self.wscale
         cdef double* w_data_ptr = self.w_data_ptr
+        cdef double* aw_data_ptr
+        if self.aw is not None:
+            aw_data_ptr = self.aw_data_ptr
 
         for j in range(xnnz):
             idx = x_ind_ptr[j]
@@ -88,6 +121,13 @@ cdef class WeightVector(object):
             innerprod += (w_data_ptr[idx] * val)
             xsqnorm += (val * val)
             w_data_ptr[idx] += val * (c / wscale)
+            if self.aw is not None:
+                aw_data_ptr[idx] += (self.alpha * val * (-c / wscale))
+
+        if self.aw is not None:
+            if t > 1:
+                self.beta /= (1 - mu)
+            self.alpha += mu * self.beta * wscale
 
         self.sq_norm += (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
 
@@ -131,6 +171,14 @@ cdef class WeightVector(object):
 
     cdef void reset_wscale(self) nogil:
         """Scales each coef of ``w`` by ``wscale`` and resets it to 1. """
+        if self.aw is not None:
+            daxpy(<int>self.aw.shape[0], self.alpha, <double *>self.w.data,
+                  1, <double *>self.aw.data, 1)
+            dscal(<int>self.aw.shape[0], 1.0 / self.beta,
+                  <double *>self.aw.data, 1)
+            self.alpha = 0.0
+            self.beta = 1.0
+
         dscal(<int>self.w.shape[0], self.wscale, <double *>self.w.data, 1)
         self.wscale = 1.0
 
