@@ -16,6 +16,7 @@ from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
 from .base import center_data, sparse_center_data
 from ..utils import check_array
+from ..utils.extmath import row_norms, norm
 from ..utils.validation import check_random_state
 from ..cross_validation import _check_cv as check_cv
 from ..externals.joblib import Parallel, delayed
@@ -29,7 +30,6 @@ from . import cd_fast
 
 ###############################################################################
 # Paths functions
-
 def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
                 eps=1e-3, n_alphas=100, normalize=False, copy_X=True):
     """ Compute the grid of alpha values for elastic net parameter search
@@ -101,6 +101,39 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
     alphas = np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max),
                          num=n_alphas)[::-1]
     return alphas
+
+
+def _cd_fast_path(X, y, coef_, l1_reg, l2_reg, active_set, max_iter, tol, rng,
+                 random, positive, precompute, Xy, X_sparse_scaling):
+    """
+    Helper function that calls the respective functions in cd_fast.
+
+    This prevents a lot of repetitive code in enet_path.
+    """
+
+    multi_output = (y.ndim >= 2)
+    if not multi_output and sparse.isspmatrix(X):
+        model = cd_fast.sparse_enet_coordinate_descent(
+            coef_, l1_reg, l2_reg, X.data, X.indices,
+            X.indptr, y, X_sparse_scaling, active_set,
+            max_iter, tol, rng, random, positive)
+    elif multi_output:
+        model = cd_fast.enet_coordinate_descent_multi_task(
+            coef_, l1_reg, l2_reg, X, y, active_set,
+            max_iter, tol, rng, random)
+    elif isinstance(precompute, np.ndarray):
+        model = cd_fast.enet_coordinate_descent_gram(
+            coef_, l1_reg, l2_reg, precompute, Xy, y, active_set,
+            max_iter, tol, rng, random, positive)
+    elif precompute is False:
+        model = cd_fast.enet_coordinate_descent(
+            coef_, l1_reg, l2_reg, X, y, active_set, max_iter, tol,
+            rng, random, positive)
+    else:
+        raise ValueError("Precompute should be one of True, False, "
+                         "'auto' or array-like")
+
+    return model
 
 
 def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
@@ -238,8 +271,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     >>> _, coef_path, _ = lasso_path(X, y, alphas=[5., 1., .5],
     ...                               fit_intercept=False)
     >>> print(coef_path)
-    [[ 0.          0.          0.46874778]
-     [ 0.2159048   0.4425765   0.23689075]]
+    [[ 0.          0.          0.46882235]
+     [ 0.2159048   0.4425765   0.23685352]]
 
     >>> # Now use lars_path and 1D linear interpolation to compute the
     >>> # same path
@@ -438,6 +471,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         _, n_outputs = y.shape
 
     # MultiTaskElasticNet does not support sparse matrices
+    X_sparse_scaling = None
     if not multi_output and sparse.isspmatrix(X):
         if 'X_mean' in params:
             # As sparse matrices are not actually centered we need this
@@ -457,6 +491,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     else:
         alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
 
+    feature_array = np.arange(X.shape[1], dtype=np.int32)
     n_alphas = len(alphas)
     tol = params.get('tol', 1e-4)
     positive = params.get('positive', False)
@@ -482,38 +517,90 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     else:
         coef_ = np.asfortranarray(coef_init)
 
-    for i, alpha in enumerate(alphas):
+    # Compute the non zero coefficient for the first alpha, which we assume
+    # is the active set, that is checked on further across other alpha.
+    l1_reg = alphas[0] * l1_ratio * n_samples
+    l2_reg = alphas[0] * (1.0 - l1_ratio) * n_samples
+    active_set = np.arange(n_features, dtype=np.int32)
+    model = _cd_fast_path(
+        X, y, coef_, l1_reg, l2_reg, active_set, max_iter, tol,
+        rng, random, positive, precompute, Xy, X_sparse_scaling
+        )
+    if multi_output:
+        coef_, dual_gap_, eps_, n_iter_, XtR, w_norm = model
+    else:
+        coef_, dual_gap_, eps_, n_iter_, XtR = model
+    n_iters.append(n_iter_)
+    dual_gaps[0] = dual_gap_
+    coefs[..., 0] = coef_
+
+    if multi_output:
+        active_set = np.nonzero(np.abs(coef_.T) > 1e-12)[0]
+        active_set = np.nonzero(np.bincount(active_set) == n_outputs)[0]
+    else:
+        active_set = np.nonzero(np.abs(coef_) > 1e-12)[0]
+
+    active_set = np.asarray(active_set, dtype=np.int32)
+    alphas_ = alphas[1:]
+    for i, alpha in enumerate(alphas_):
+        kkt_violations = True
         l1_reg = alpha * l1_ratio * n_samples
         l2_reg = alpha * (1.0 - l1_ratio) * n_samples
-        if not multi_output and sparse.isspmatrix(X):
-            model = cd_fast.sparse_enet_coordinate_descent(
-                coef_, l1_reg, l2_reg, X.data, X.indices,
-                X.indptr, y, X_sparse_scaling,
-                max_iter, tol, rng, random, positive)
-        elif multi_output:
-            model = cd_fast.enet_coordinate_descent_multi_task(
-                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random)
-        elif isinstance(precompute, np.ndarray):
-            model = cd_fast.enet_coordinate_descent_gram(
-                coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
-                tol, rng, random, positive)
-        elif precompute is False:
-            model = cd_fast.enet_coordinate_descent(
-                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random,
-                positive)
+        if i == 0:
+            prev_alpha = n_samples * l1_ratio * alphas[0]
         else:
-            raise ValueError("Precompute should be one of True, False, "
-                             "'auto' or array-like")
-        coef_, dual_gap_, eps_, n_iter_ = model
-        coefs[..., i] = coef_
-        dual_gaps[i] = dual_gap_
-        n_iters.append(n_iter_)
+            prev_alpha = n_samples * l1_ratio * alphas_[i - 1]
+        while kkt_violations:
+            eligible_features = np.copy(active_set)
+            strong_active_set = cd_fast.compute_strong_active_set(
+                n_samples * l1_ratio * alpha, prev_alpha, XtR
+                )
+            while kkt_violations:
+                model = _cd_fast_path(
+                    X, y, coef_, l1_reg, l2_reg, eligible_features,
+                    max_iter, tol, rng, random, positive, precompute,
+                    Xy, X_sparse_scaling
+                    )
+                if multi_output:
+                    coef_, dual_gap_, eps_, n_iter_, XtR, w_norm = model
+                    normed_coef = w_norm
+                else:
+                    coef_, dual_gap_, eps_, n_iter_, XtR = model
+                    normed_coef = coef_
+
+                # Check KKT conditions for features present in strong_active_set.
+                # and not in eligible predictors. If KKT conditions are violated add them
+                # to the eligible features, and optimize again.
+                kkt_violations = False
+                common_features = np.in1d(strong_active_set, eligible_features,
+                                          assume_unique=True)
+                not_in_active = strong_active_set[~common_features]
+                if np.any(not_in_active):
+                    eligible_features, kkt_violations = cd_fast.check_kkt_conditions_fast(
+                        XtR, normed_coef, not_in_active, eligible_features,
+                        l1_ratio, n_samples*alpha, 1e-3
+                        )
+
+            # Check KKT conditions for all predictors. The strong and eligible
+            # predictors have been removed since they have already been optimized
+            # for in the above while loop.
+            kkt_violations = False
+            non_active = np.setdiff1d(feature_array, active_set,
+                                      assume_unique=True)
+            if np.any(non_active):
+                active_set, kkt_violations = cd_fast.check_kkt_conditions_fast(
+                    XtR, normed_coef, non_active, active_set,
+                    l1_ratio, n_samples*alpha, 1e-3
+                    )
+
         if dual_gap_ > eps_:
             warnings.warn('Objective did not converge.' +
                           ' You might want' +
                           ' to increase the number of iterations',
                           ConvergenceWarning)
-
+        coefs[..., i + 1] = coef_
+        dual_gaps[i + 1] = dual_gap_
+        n_iters.append(n_iter_)
         if return_models:
             if not multi_output:
                 model = ElasticNet(
@@ -524,9 +611,9 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             else:
                 model = MultiTaskElasticNet(
                     alpha=alpha, l1_ratio=l1_ratio, fit_intercept=False)
-            model.dual_gap_ = dual_gaps[i]
-            model.coef_ = coefs[..., i]
-            model.n_iter_ = n_iters[i]
+            model.dual_gap_ = dual_gaps[i + 1]
+            model.coef_ = coefs[..., i + 1]
+            model.n_iter_ = n_iters[i + 1]
             if (fit_intercept and not sparse.isspmatrix(X)) or multi_output:
                 model.fit_intercept = True
                 model._set_intercept(X_mean, y_mean, X_std)
@@ -1661,12 +1748,13 @@ class MultiTaskElasticNet(Lasso):
         if self.selection not in ['random', 'cyclic']:
             raise ValueError("selection should be either random or cyclic.")
         random = (self.selection == 'random')
+        active_features = np.arange(n_features, dtype=np.int32)
 
-        self.coef_, self.dual_gap_, self.eps_, self.n_iter_ = \
+        self.coef_, self.dual_gap_, self.eps_, self.n_iter_, XtR, _ = \
             cd_fast.enet_coordinate_descent_multi_task(
-                self.coef_, l1_reg, l2_reg, X, y, self.max_iter, self.tol,
+                self.coef_, l1_reg, l2_reg, X, y, active_features,
+                self.max_iter, self.tol,
                 check_random_state(self.random_state), random)
-
         self._set_intercept(X_mean, y_mean, X_std)
 
         if self.dual_gap_ > self.eps_:
