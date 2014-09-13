@@ -292,7 +292,7 @@ def homogeneity_score(labels_true, labels_pred):
 
     .. [1] `Andrew Rosenberg and Julia Hirschberg, 2007. V-Measure: A
        conditional entropy-based external cluster evaluation measure
-       <http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf>`_
+       <http://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
 
     See also
     --------
@@ -364,7 +364,7 @@ def completeness_score(labels_true, labels_pred):
 
     .. [1] `Andrew Rosenberg and Julia Hirschberg, 2007. V-Measure: A
        conditional entropy-based external cluster evaluation measure
-       <http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf>`_
+       <http://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
 
     See also
     --------
@@ -436,7 +436,7 @@ def v_measure_score(labels_true, labels_pred):
 
     .. [1] `Andrew Rosenberg and Julia Hirschberg, 2007. V-Measure: A
        conditional entropy-based external cluster evaluation measure
-       <http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf>`_
+       <http://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
 
     See also
     --------
@@ -596,8 +596,8 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
     Returns
     -------
     ami: float(upperlimited by 1.0)
-       The AMI returns a value of 1 when the two partitions are identical 
-       (ie perfectly matched). Random partitions (independent labellings) have 
+       The AMI returns a value of 1 when the two partitions are identical
+       (ie perfectly matched). Random partitions (independent labellings) have
        an expected AMI around 0 on average hence can be negative.
 
     See also
