@@ -13,189 +13,323 @@ Link: http://www.cs.princeton.edu/~mdhoffma/code/onlineldavb.tar
 
 import numpy as np
 import scipy.sparse as sp
-from scipy.special import gammaln, psi
+from scipy.special import gammaln
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import (check_random_state, check_array,
-                           gen_batches, gen_even_slices)
+                     gen_batches, gen_even_slices)
+from ..utils.validation import NotFittedError
+
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals.six.moves import xrange
 
+from ._online_lda import (mean_change, _dirichlet_expectation_1d,
+                          _dirichlet_expectation_2d)
 
-def _dirichlet_expectation(alpha):
+
+def check_non_negative(X, whom):
     """
-    For a vector theta ~ Dir(alpha), computes E[log(theta)] given alpha.
+    make sure no Negative data in X
+    (copy from NMF directly)
     """
-    if (len(alpha.shape) == 1):
-        return(psi(alpha) - psi(np.sum(alpha)))
-    return(psi(alpha) - psi(np.sum(alpha, 1))[:, np.newaxis])
+    X = X.data if sp.issparse(X) else X
+    if (X < 0).any():
+        raise ValueError("Negative values in data passed to %s" % whom)
 
 
-def _update_gamma(X, expElogbeta, alpha, rng, max_iters,
-                  mean_change_tol, cal_delta):
+def _dirichlet_expectation(X):
     """
-    E-step: update latent variable gamma
+    For an array theta ~ Dir(X), computes `E[log(theta)]` given X.
+
+    Parameters
+    ----------
+    X : array-like
+        1 or 2 dimention vector
+
+    Returns
+    -------
+    dirichlet_expect: array-like
+        Dirichlet expectation of input array X
     """
 
-    n_docs, n_vocabs = X.shape
-    n_topics = expElogbeta.shape[0]
+    if len(X.shape) == 1:
+        dirichlet_expect = _dirichlet_expectation_1d(X)
+    else:
+        dirichlet_expect = _dirichlet_expectation_2d(X)
+    return dirichlet_expect
 
-    # gamma is non-normailzed topic distribution
-    gamma = rng.gamma(100., 1. / 100., (n_docs, n_topics))
-    expElogtheta = np.exp(_dirichlet_expectation(gamma))
-    # diff on component (only calculate it when keep_comp_change is True)
-    delta_component = np.zeros(expElogbeta.shape) if cal_delta else None
+
+def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior, max_iters,
+                             mean_change_tol, cal_diff):
+    """
+    E-step: update document topic distribution.
+    (In the literature, this is called `gamma`.)
+
+    Parameters
+    ----------
+    X : sparse matrix, shape=(n_samples, n_features)
+        Document word matrix.
+
+    exp_topic_word_distr : dense matrrix, shape=(n_topics, n_features)
+        Exponential value of expection of log topic word distribution.
+        In the literature, this is `exp(E[log(beta)])`.
+
+    doc_topic_prior : float
+        Prior of document topic distribution `theta`.
+
+    max_iters : int
+        Max number of iterations for updating document topic distribution in E-step.
+
+    mean_change_tol : float
+        Stopping tolerance for updating document topic distribution in E-setp.
+
+    cal_diff : boolean
+        Parameter that indicate to calculate differene in `component_` or not.
+        Set `cal_diff` to `True` when we need to run M-step.
+
+    Returns
+    -------
+    (doc_topic_distr, component_diff) :
+        `doc_topic_distr` is unnormailzed topic distribution for each document.
+        In the literature, this is `gamma`. we can calcuate `E[log(theta)]`
+        from it.
+        `component_diff` is the difference of `component_` when `cal_diff` is True.
+        Otherwise, it is None.
+
+    """
+
+    n_samples, n_features = X.shape
+    n_topics = exp_topic_word_distr.shape[0]
+
+    doc_topic_distr = np.ones((n_samples, n_topics))
+    # In the literature, this is `exp(E[log(theta)])`
+    exp_doc_topic = np.exp(_dirichlet_expectation(doc_topic_distr))
+
+    # diff on `component_` (only calculate it when `cal_diff` is True)
+    component_diff = np.zeros(exp_topic_word_distr.shape) if cal_diff else None
 
     X_data = X.data
     X_indices = X.indices
     X_indptr = X.indptr
 
-    for d in xrange(n_docs):
+    for d in xrange(n_samples):
         ids = X_indices[X_indptr[d]:X_indptr[d + 1]]
         cnts = X_data[X_indptr[d]:X_indptr[d + 1]]
-        gammad = gamma[d, :]
-        expElogthetad = expElogtheta[d, :]
-        expElogbetad = expElogbeta[:, ids]
-        # The optimal phi_{dwk} is proportional to
-        # expElogthetad_k * expElogbetad_w. phinorm is the normalizer.
-        phinorm = np.dot(expElogthetad, expElogbetad) + 1e-100
 
-        # Iterate between gamma and phi until convergence
+        doc_topic_d = doc_topic_distr[d, :]
+        exp_doc_topic_d = exp_doc_topic[d, :]
+        exp_topic_word_d = exp_topic_word_distr[:, ids]
+
+        # The optimal phi_{dwk} is proportional to 
+        # exp(E[log(theta_{dk})]) * exp(E[log(beta_{dw})]).
+        norm_phi = np.dot(exp_doc_topic_d, exp_topic_word_d) + 1e-100
+
+        # Iterate between `doc_topic_d` and `norm_phi` until convergence
         for it in xrange(0, max_iters):
-            lastgamma = gammad
-            # We represent phi implicitly to save memory and time.
-            # Substituting the value of the optimal phi back into
-            # the update for gamma gives this update. Cf. Lee&Seung 2001.
-            gammad = alpha + expElogthetad * \
-                np.dot(cnts / phinorm, expElogbetad.T)
-            expElogthetad = np.exp(_dirichlet_expectation(gammad))
-            phinorm = np.dot(expElogthetad, expElogbetad) + 1e-100
+            last_d = doc_topic_d
 
-            meanchange = np.mean(abs(gammad - lastgamma))
-            if (meanchange < mean_change_tol):
+            doc_topic_d = doc_topic_prior + exp_doc_topic_d * \
+                np.dot(cnts / norm_phi, exp_topic_word_d.T)
+            exp_doc_topic_d = np.exp(_dirichlet_expectation(doc_topic_d))
+            norm_phi = np.dot(exp_doc_topic_d, exp_topic_word_d) + 1e-100
+
+            meanchange = mean_change(last_d, doc_topic_d)
+            if meanchange < mean_change_tol:
                 break
-        gamma[d, :] = gammad
+        doc_topic_distr[d, :] = doc_topic_d
+
         # Contribution of document d to the expected sufficient
         # statistics for the M step.
-        if cal_delta:
-            delta_component[:, ids] += np.outer(expElogthetad, cnts / phinorm)
+        if cal_diff:
+            component_diff[:, ids] += np.outer(exp_doc_topic_d, cnts / norm_phi)
 
-    return (gamma, delta_component)
+    return (doc_topic_distr, component_diff)
 
 
-class OnlineLDA(BaseEstimator, TransformerMixin):
+class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
     """
     Online Latent Dirichlet Allocation implementation with variational inference
 
-    References
-    ----------
-    [1] "Online Learning for Latent Dirichlet Allocation", Matthew D. Hoffman, 
-        David M. Blei, Francis Bach
-
-    [2] Matthew D. Hoffman's onlineldavb code. Link:
-        http://www.cs.princeton.edu/~mdhoffma/code/onlineldavb.tar
-
-
     Parameters
     ----------
-    n_topics: int, optional (default: 10)
-        number of topics.
+    n_topics : int, optional (default=10)
+        Number of topics.
 
-    alpha: float, optional (defalut: 0.1)
-        Hyperparameter for prior on weight vectors theta. In general, it is `1 / n_topics`.
+    doc_topic_prior : float, optional (defalut=None)
+        Prior of document topic distribution `theta`. If the value is None, default
+        to `1 / n_topics`.
+        In the literature, this is called `alpha`.
 
-    eta: float, optional (default: 0.1)
-        Hyperparameter for prior on topics beta. In general, it is `1 / n_topics`.
+    topic_word_prior : float, optional (default=None)
+        Prior of topic word distribution `beta`. If the value is None, default
+        to `1 / n_topics`.
+        In the literature, this is called `eta`.
 
-    kappa: float, optional (default: 0.7)
-        weight for _component: it controls the weight for previous value of _component.
-        The value hould be between (0.5, 1.0] to guarantee asymptotic convergence for online learning.
-        It is only used in partial_fit.
-        When we set kappa to 0.0 and batch_size to n_docs, then the udpate is batch VB.
+    learning_method : 'batch' | 'online', default='online'
+        Method used to update `_component`. Only used in `fit` method.
+        In general, if the data size is large, online update will be much faster than
+        batch udpate.
+        Valid options::
 
-    tau: float, optional (default: 1024.)
-        A (positive) learning parameter that downweights early iterations. It should be greater than 1.0.
-        It is only used in partial_fit
+            'batch': Batch variational bayes method. Use all training data in each EM udpate.
+                Old `components_` will be overrided in each iteration.
+            'online': Online variational bayes method. In each EM update, use min batch of
+                training data to update `components_` variable incrementally. The weight in
+                each udpate is controlled by `learning_decay` and `learning_offset` parameter
 
-    n_docs: int, optional (default: 1e6)
-        Total umber of document. It is only used in online learing(partial_fit).
-        In batch learning, n_docs is X.shape[0]
+    learning_decay : float, optional (default=0.7)
+        It is a parameter that control learning weight for `_component` in online learning.
+        The value should be set between (0.5, 1.0] to guarantee asymptotic convergence.
+        When the value is 0.0 and batch_size is `n_samples`, the update is same as batch learning.
+        In the literature, this is called `kappa`.
 
-    batch_size: int, optional (default: 128)
-        Number of document to udpate in each EM-step
+    learning_offset : float, optional (default=1000.)
+        A (positive) parameter that downweights early iterations in online learning.
+        It should be greater than 1.0. In the literature, this is called `tau0`.
 
-    normalize_doc: boolean, optional (default: True)
-        normalize the topic distribution for transformed document or not.
-        if True, sum of topic distribution for each document will be 1.0
+    max_iter : integer, optional (default=10)
+        The maximum number of iterations.
 
-    e_step_tol: float, optional (default: 1e-4)
-        Tolerance value used in e-step break conditions.
+    total_samples : int, optional (default=1e6)
+        Total umber of documents. It is only used in `partial_fit` method.
 
-    prex_tol: float, optional (default: 1e-1)
-        Tolerance value used in preplexity break conditions.
+    batch_size : int, optional (default=128)
+        Number of documents to use in each EM iteration. Only used in online learning method.
 
-    mean_change_tol: float, optional (default: 1e-3)
-        Tolerance value used in e-step break conditions.
+    evaluate_every : int optional (default=-1)
+        How often to evaluate perplexity. Only used in `fit` method.
+        set it to -1 to not evalute perplexity in training at all.
+        Evaluating perplexity can help you check convergence in training process, but it
+        will also increase total training time.
+        Evaluating perplexity in every iteration will increase training time up to 2X.
 
-    n_jobs: int, optional (default: 1)
-        Number of parallel jobs to run on e-step. -1 for autodetect.
+    normalize_doc : boolean, optional (default=False)
+        Whether to normalize the topic distribution for each document.
+        If `True`, sum of topic distribution will be 1.0 for each document.
 
-    verbose : int, optional (default: 0)
+    perp_tol : float, optional (default=1e-1)
+        Perplexity tolerance in batch learning.
+
+    mean_change_tol : float, optional (default=1e-3)
+        Stopping tolerance for updating document topic distribution in E-setp.
+
+    max_doc_update_iter : int (default=100)
+        Max number of iterations for updating document topic distribution in E-step.
+
+    n_jobs : int, optional (default=1)
+        The number of jobs to use in E-step. If -1 all CPUs are used.
+
+    verbose : int, optional (default=0)
         Verbosity level.
 
-    random_state: int or RandomState instance or None, optional (default: None)
+    random_state : int or RandomState instance or None, optional (default=None)
         Pseudo Random Number generator seed control.
 
 
     Attributes
     ----------
-    components_: array, [n_topics, n_vocabs]
-        vocab distribution for each topic. components_[i, j] represents
-        vocab `j` in topic `i`
+    components_ : array, [n_topics, n_features]
+        Topic word distribution. components_[i, j] represents word `j` in topic `i`.
+        In the literature, this is called `lambda`, and we can calcuate `E[log(beta)]` from it.
 
-    n_iter_: int
-        number of iteration
+    n_iter_ : int
+        Number of iteration.
+
+
+    References
+    ----------
+    [1] "Online Learning for Latent Dirichlet Allocation", Matthew D. Hoffman,
+        David M. Blei, Francis Bach
+
+    [2] Matthew D. Hoffman's onlineldavb code. Link:
+        http://www.cs.princeton.edu/~mdhoffma/code/onlineldavb.tar
 
     """
 
-    def __init__(self, n_topics=10, alpha=.1, eta=.1, kappa=.7, tau=1000.,
-                 batch_size=128, n_docs=1e6, normalize_doc=True,
-                 e_step_tol=1e-3, prex_tol=1e-1, mean_change_tol=1e-3,
-                 n_jobs=1, verbose=0, random_state=None):
+    def __init__(self, n_topics=10, doc_topic_prior=None, topic_word_prior=None,
+                 learning_method='online', learning_decay=.7, learning_offset=1000.,
+                 max_iter=10, batch_size=128, evaluate_every=-1, total_samples=1e6,
+                 normalize_doc=False, perp_tol=1e-1, mean_change_tol=1e-3,
+                 max_doc_update_iter=100, n_jobs=1, verbose=0,
+                 random_state=None):
         self.n_topics = n_topics
-        self.alpha = alpha
-        self.eta = eta
-        self.kappa = kappa
-        self.tau = tau
+        if n_topics <= 0:
+            raise ValueError(
+                'Invalid n_topics parameter: %r' %
+                learning_method)
+
+        self.doc_topic_prior = doc_topic_prior
+        if self.doc_topic_prior is None:
+            self.doc_topic_prior_ = 1. / self.n_topics
+        else:
+            self.doc_topic_prior_ = self.doc_topic_prior
+
+        self.topic_word_prior = topic_word_prior
+        if self.topic_word_prior is None:
+            self.topic_word_prior_ = 1. / self.n_topics
+        else:
+            self.topic_word_prior_ = self.topic_word_prior
+
+        self.learning_method = learning_method
+        if learning_method not in ('batch', 'online'):
+            raise ValueError(
+                'Invalid learning_method parameter: %r' %
+                learning_method)
+        self.learning_decay = learning_decay
+        self.learning_offset = learning_offset
+        self.max_iter = max_iter
         self.batch_size = batch_size
-        self.n_docs = n_docs
+        self.evaluate_every = evaluate_every
+        self.total_samples = total_samples
         self.normalize_doc = normalize_doc
-        self.e_step_tol = e_step_tol
-        self.prex_tol = prex_tol
+        self.perp_tol = perp_tol
         self.mean_change_tol = mean_change_tol
+        self.max_doc_update_iter = max_doc_update_iter
         self.n_jobs = n_jobs
         self.verbose = verbose
         self.random_state = random_state
 
-    def _init_latent_vars(self, n_vocabs):
+    def _init_latent_vars(self, n_features):
+        """
+        Initialize latent variables.
+        """
         self.rng = check_random_state(self.random_state)
         self.n_iter_ = 1
-        self.n_vocabs = n_vocabs
+        self.n_features = n_features
         init_gamma = 100.
         init_var = 1. / init_gamma
+
+        # In the literature, this is called `lambda`
         self.components_ = self.rng.gamma(
-            init_gamma, init_var, (self.n_topics, n_vocabs))
+            init_gamma, init_var, (self.n_topics, n_features))
+        # In the literature, this is `E[log(beta)]`
+        self.dirichlet_component_ = _dirichlet_expectation(self.components_)
+        # In the literature, this is `exp(E[log(beta)])`
+        self.exp_dirichlet_component_ = np.exp(self.dirichlet_component_)
 
-        self.Elogbeta = _dirichlet_expectation(self.components_)
-        self.expElogbeta = np.exp(self.Elogbeta)
-
-    def _e_step(self, X, cal_delta):
+    def _e_step(self, X, cal_diff):
         """
         E-step
 
-        set `cal_delta == True` when we need to run _m_step
-        for inference, set it to False
+        parameters
+        ----------
+        X : sparse matrix, shape=(n_samples, n_features)
+            Document word matrix.
+
+        cal_diff : boolean
+            parameter that indicate to calculate differene in `component_` or not.
+            Set `cal_diff` to `True` when we need to run M-step.
+
+        Returns
+        -------
+        (doc_topic_distr, component_diff) :
+            `doc_topic_distr` is unnormailzed topic distribution for each document.
+            In the literature, this is called `gamma` and we can calcuate `E[log(theta)]`
+            from it.
+            `component_diff` is the difference of `component_` when `cal_diff == True`.
+            Otherwise, it is None.
+
         """
 
         # parell run e-step
@@ -205,306 +339,330 @@ class OnlineLDA(BaseEstimator, TransformerMixin):
             n_jobs = self.n_jobs
 
         results = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
-            delayed(_update_gamma)
-            (X[idx_slice, :], self.expElogbeta, self.alpha,
-             self.rng, 100, self.mean_change_tol, cal_delta)
+            delayed(_update_doc_distribution)
+            (X[idx_slice, :], self.exp_dirichlet_component_, self.doc_topic_prior_,
+             self.max_doc_update_iter, self.mean_change_tol, cal_diff)
             for idx_slice in gen_even_slices(X.shape[0], n_jobs))
 
         # merge result
-        gammas, deltas = zip(*results)
-        gamma = np.vstack(gammas)
+        doc_topics, comp_diffs = zip(*results)
+        doc_topic_distr = np.vstack(doc_topics)
 
-        if cal_delta:
-            # This step finishes computing the sufficient statistics for the
-            # M step, so that
-            # sstats[k, w] = \sum_d n_{dw} * phi_{dwk}
-            # = \sum_d n_{dw} * exp{Elogtheta_{dk} + Elogbeta_{kw}} / phinorm_{dw}.
-            delta_component = np.zeros(self.components_.shape)
-            for delta in deltas:
-                delta_component += delta
-            delta_component *= self.expElogbeta
+        if cal_diff:
+            # This step finishes computing the sufficient statistics for the M step
+            component_diff = np.zeros(self.components_.shape)
+            for comp_diff in comp_diffs:
+                component_diff += comp_diff
+            component_diff *= self.exp_dirichlet_component_
         else:
-            delta_component = None
+            component_diff = None
 
-        return (gamma, delta_component)
+        return (doc_topic_distr, component_diff)
 
-    def _em_step(self, X, batch_update):
+    def _em_step(self, X, total_samples, batch_update):
         """
         EM update for 1 iteration
+        update `_component` by bath VB or online VB
 
         parameters
         ----------
-        X:  sparse matrix
+        X : sparse matrix, shape=(n_samples, n_features)
+            Document word matrix.
 
-        batch_update: boolean
-        update `_component` by bath VB or online VB
+        total_samples : integer
+            Total umber of document. It is only used when
+            batch_update is `False`.
+
+        batch_update : boolean
+            parameter that control updating method.
+            `True` for batch learning, `False` for online learning
+
+        Returns
+        -------
+        doc_topic_distr : array, shape=(n_samples, n_topics)
+            Unnormailzed document topic distribution.
         """
-        # e-step
-        gamma, delta_component = self._e_step(X, cal_delta=True)
 
-        # m-step
+        # E-step
+        doc_topic_distr, component_diff = self._e_step(X, cal_diff=True)
+
+        # M-step
         if batch_update:
-            self.components_ = self.eta + delta_component
+            self.components_ = self.topic_word_prior_ + component_diff
         else:
             # online update
-            rhot = np.power(self.tau + self.n_iter_, -self.kappa)
-            doc_ratio = float(self.n_docs) / X.shape[0]
-            self.components_ *= (1 - rhot)
-            self.components_ += (rhot *
-                                 (self.eta + doc_ratio * delta_component))
+            # In the literature, the weight is `rho`
+            weight = np.power(self.learning_offset + self.n_iter_, -self.learning_decay)
+            doc_ratio = float(total_samples) / X.shape[0]
+            self.components_ *= (1 - weight)
+            self.components_ += (weight *
+                                 (self.topic_word_prior_ + doc_ratio * component_diff))
 
-        self.Elogbeta = _dirichlet_expectation(self.components_)
-        self.expElogbeta = np.exp(self.Elogbeta)
+        # update `component_` related variables
+        self.dirichlet_component_ = _dirichlet_expectation(self.components_)
+        self.exp_dirichlet_component_ = np.exp(self.dirichlet_component_)
         self.n_iter_ += 1
+        return doc_topic_distr
 
-        return gamma
-
-    def _to_csr(self, X):
+    def _to_csr(self, X, whom):
         """
-        check & convert X to csr format
+        check & convert X to csr format, and make sure no negative value in X.
+
+        parameters
+        ----------
+        X :  array-like
+        
         """
         X = check_array(X, accept_sparse='csr')
+        check_non_negative(X, whom)
         if not sp.issparse(X):
             X = sp.csr_matrix(X)
 
         return X
 
-    def fit_transform(self, X, y=None, max_iters=10):
+    def fit_transform(self, X, y=None):
         """
         Learn a model for X and returns the transformed data
 
         Parameters
         ----------
-        X: array or sparse matrix, shape = [n_docs, n_vocabs]
-            Data matrix to be transformed by the model
-
-        max_iters: int, (default: 10)
-            Max number of iterations
+        X : array or sparse matrix, shape=(n_samples, n_features)
+            Document word matrix.
 
         Returns
         -------
-        gamma: array, [n_dics, n_topics]
-            Topic distribution for each doc
+        doc_topic_distr : array, [n_samples, n_topics]
+            Topic distribution for each document.
         """
-
-        """
-        X = self._to_csr(X)
-        n_docs, n_vocabs = X.shape
-
-        if not hasattr(self, 'components_'):
-            # initialize vocabulary & latent variables
-
-            self.Elogbeta = _dirichlet_expectation(self.components_)
-            self.expElogbeta = np.exp(self.Elogbeta)
-        else:
-            # make sure vacabulary size matched
-            if self.components_.shape[1] != X.shape[1]:
-                raise ValueError("dimension not match")
-
-        # EM update
-        gamma, delta_component = self._e_step(X)
-        # self._m_step(delta_component, self.n_docs, n_docs)
-        self._m_step(delta_component, self.n_docs, n_docs)
-
-        if self.normalize_doc:
-            gamma /= gamma.sum(axis=1)[:, np.newaxis]
-
-        return gamma
-        """
-        X = self._to_csr(X)
-        return self.fit(X, max_iters).transform(X)
+        X = self._to_csr(X, "LatentDirichletAllocation.fit_transform")
+        return self.fit(X).transform(X)
 
     def partial_fit(self, X, y=None):
         """
-        Online Learning with Min-Batch update
+        Online VB with Min-Batch update.
 
         Parameters
         ----------
-        X: sparse matrix, shape = [n_docs, n_vocabs]
-            Data matrix to be decomposed
+        X : array or sparse matrix, shape=(n_samples, n_features)
+            Document word matrix.
 
         Returns
         -------
         self
         """
 
-        X = self._to_csr(X)
-        n_docs, n_vocabs = X.shape
+        X = self._to_csr(X, "LatentDirichletAllocation.partial_fit")
+        n_samples, n_features = X.shape
         batch_size = self.batch_size
 
         # initialize parameters or check
         if not hasattr(self, 'components_'):
-            self._init_latent_vars(n_vocabs)
+            self._init_latent_vars(n_features)
 
-        if n_vocabs != self.n_vocabs:
+        if n_features != self.n_features:
             raise ValueError(
                 "feature dimension(vocabulary size) doesn't match.")
 
-        for idx_slice in gen_batches(n_docs, batch_size):
-            self._em_step(X[idx_slice, :], batch_update=False)
+        for idx_slice in gen_batches(n_samples, batch_size):
+            self._em_step(X[idx_slice, :], total_samples=self.total_samples, batch_update=False)
 
         return self
 
-    def fit(self, X, y=None, max_iters=10):
+    def fit(self, X, y=None):
         """
-        Learn model from X. This function is for batch learning.
-        So it will override the old _component variables
+        Learn model from X with variational bayes method.
+        when `learning_method` is 'online', use min batch udpate.
+        Otherwise, use batch update.
 
         Parameters
         ----------
-        X: sparse matrix, shape = (n_docs, n_vocabs)
-            Data matrix to be transformed by the model
-
-        max_iters: int, (default: 10)
-            Max number of iterations
+        X : sparse matrix, shape=(n_samples, n_features)
+            Document word matrix.
 
         Returns
         -------
         self
         """
 
-        X = self._to_csr(X)
-        n_docs, n_vocabs = X.shape
+        X = self._to_csr(X, "LatentDirichletAllocation.fit")
+        n_samples, n_features = X.shape
+        max_iter = self.max_iter
+        total_samples = n_samples * max_iter
+        evaluate_every = self.evaluate_every
+        learning_method = self.learning_method
+        batch_size = self.batch_size
 
         # initialize parameters
-        self._init_latent_vars(n_vocabs)
-
-        # change to preplexity later
+        self._init_latent_vars(n_features)
+        # change to perplexity later
         last_bound = None
-        for i in xrange(max_iters):
-            gamma = self._em_step(X, batch_update=True)
+        for i in xrange(max_iter):
+            if learning_method == 'online':
+                for idx_slice in gen_batches(n_samples, batch_size):
+                    self._em_step(X[idx_slice, :], total_samples=total_samples, batch_update=False)
+            else:
+                # batch update
+                doc_topics = self._em_step(X, total_samples=total_samples, batch_update=False)
 
-            # check preplexity
-            bound = self.preplexity(X, gamma, sub_sampling=False)
-            if self.verbose:
-                print('iteration: %d, preplexity: %.4f' % (i, bound))
+            # check perplexity
+            if evaluate_every > 0 and (i + 1) % evaluate_every == 0:
+                if learning_method == 'online':
+                    doc_topics, _ = self._e_step(X, False)
 
-            if i > 0 and abs(last_bound - bound) < self.prex_tol:
-                break
-            last_bound = bound
+                bound = self.perplexity(X, doc_topics, sub_sampling=False)
+                if self.verbose:
+                    print('iteration: %d, perplexity: %.4f' % (i + 1, bound))
+
+                if last_bound and abs(last_bound - bound) < self.perp_tol:
+                    break
+                last_bound = bound
 
         return self
 
     def transform(self, X):
         """
-        Transform the data X according to the fitted model (run inference)
+        Transform data X according to the fitted model.
 
         Parameters
         ----------
-        X: sparse matrix, shape = [n_docs, n_vocabs]
-            Data matrix to be transformed by the model
-            n_vacabs must be the same as n_vocabs in fitted model
-
-        max_iters: int, (default: 20)
-            Max number of iterations
+        X : sparse matrix, shape=(n_samples, n_features)
+            Document word matrix.
+            `n_features` must be the same as `self.n_features`
 
         Returns
         -------
-        data: array, [n_docs, n_topics]
-            Document distribution
+        doc_topic_distr : array, [n_samples, n_topics]
+            Document topic distribution for X.
         """
 
-        X = self._to_csr(X)
-        n_docs, n_vocabs = X.shape
-
         if not hasattr(self, 'components_'):
-            raise AttributeError(
-                "no 'components_' attr in model. Please fit model first.")
-        # make sure vocabulary size is the same in fitted model and new doc
+            raise NotFittedError(
+                "no 'components_' attribute in model. Please fit model first.")
+
+        # make sure word size is the same in fitted model and new doc
         # matrix
-        if n_vocabs != self.n_vocabs:
+        X = self._to_csr(X, "LatentDirichletAllocation.transform")
+        n_samples, n_features = X.shape
+        if n_features != self.n_features:
             raise ValueError(
                 "feature dimension(vocabulary size) does not match.")
 
-        gamma, _ = self._e_step(X, False)
+        doc_topic_distr, _ = self._e_step(X, False)
 
         if self.normalize_doc:
-            gamma /= gamma.sum(axis=1)[:, np.newaxis]
+            doc_topic_distr /= doc_topic_distr.sum(axis=1)[:, np.newaxis]
+        return doc_topic_distr
 
-        return gamma
-
-    def _approx_bound(self, X, gamma, sub_sampling):
+    def _approx_bound(self, X, doc_topic_distr, sub_sampling):
         """
-        calculate approximate bound for data X and topic distribution gamma
-
+        Calculate approximate bound for data X and document topic distribution
+        Since log-likelihood cannot be computed directly, we use this bound
+        estimate it.
 
         Parameters
         ----------
-        X: sparse matrix, [n_docs, n_vocabs]
+        X : sparse matrix, [n_samples, n_features]
+            Document word matrix.
 
-        gamma: array, shape = [n_docs, n_topics]
-            document distribution (can be either normalized & un-normalized)
+        doc_topic_distr : array, shape=(n_samples, n_topics)
+            Document topic distribution. In the literature, this is called `gamma`.
 
-        sub_sampling: boolean, optional, (default: False)
-            Compensate for the subsampling of the population of documents
-            set subsampling to `True` for online learning
+        sub_sampling : boolean, optional, (default=False)
+            Compensate for subsampling of documents.
+            It is used in calcuate bound in online learning.
 
         Returns
         -------
-        score: float, score of gamma
+        score : float
+
         """
-        X = self._to_csr(X)
-        n_docs, n_topics = gamma.shape
+
+        n_samples, n_topics = doc_topic_distr.shape
         score = 0
-        Elogtheta = _dirichlet_expectation(gamma)
+        dirichlet_doc_topic = _dirichlet_expectation(doc_topic_distr)
 
         X_data = X.data
         X_indices = X.indices
         X_indptr = X.indptr
 
         # E[log p(docs | theta, beta)]
-        for d in xrange(0, n_docs):
+        for d in xrange(0, n_samples):
             ids = X_indices[X_indptr[d]:X_indptr[d + 1]]
             cnts = X_data[X_indptr[d]:X_indptr[d + 1]]
-            phinorm = np.zeros(len(ids))
-            for i in xrange(0, len(ids)):
-                temp = Elogtheta[d, :] + self.Elogbeta[:, ids[i]]
-                tmax = max(temp)
-                phinorm[i] = np.log(sum(np.exp(temp - tmax))) + tmax
-            score += np.sum(cnts * phinorm)
+            id_length = len(ids)
+            norm_phi = np.zeros(id_length)
+            for i in xrange(0, id_length):
+                temp = dirichlet_doc_topic[d, :] + self.dirichlet_component_[:, ids[i]]
+                tmax = temp.max()
+                norm_phi[i] = np.log(np.sum(np.exp(temp - tmax))) + tmax
+            score += np.sum(cnts * norm_phi)
 
-        # E[log p(theta | alpha) - log q(theta | gamma)]
-        score += np.sum((self.alpha - gamma) * Elogtheta)
-        score += np.sum(gammaln(gamma) - gammaln(self.alpha))
-        score += sum(
-            gammaln(self.alpha * self.n_topics) - gammaln(np.sum(gamma, 1)))
+        # compute E[log p(theta | alpha) - log q(theta | gamma)]
+        score += np.sum((self.doc_topic_prior_ - doc_topic_distr) * dirichlet_doc_topic)
+        score += np.sum(gammaln(doc_topic_distr) - gammaln(self.doc_topic_prior_))
+        score += np.sum(
+            gammaln(self.doc_topic_prior_ * self.n_topics) - gammaln(np.sum(doc_topic_distr, 1)))
 
         # Compensate for the subsampling of the population of documents
         # E[log p(beta | eta) - log q (beta | lambda)]
-        score += np.sum((self.eta - self.components_) * self.Elogbeta)
-        score += np.sum(gammaln(self.components_) - gammaln(self.eta))
-        score += np.sum(gammaln(self.eta * self.n_vocabs)
+        score += np.sum((self.topic_word_prior_ - self.components_) * self.dirichlet_component_)
+        score += np.sum(gammaln(self.components_) - gammaln(self.topic_word_prior_))
+        score += np.sum(gammaln(self.topic_word_prior_ * self.n_features)
                         - gammaln(np.sum(self.components_, 1)))
 
         # Compensate for the subsampling of the population of documents
         if sub_sampling:
-            doc_ratio = float(self.n_docs) / n_docs
+            doc_ratio = float(self.n_samples) / n_samples
             score *= doc_ratio
 
         return score
 
-    def preplexity(self, X, gamma, sub_sampling=False):
+    def score(self, X, y=None):
         """
-        calculate approximate bound for data X and topic distribution gamma
-
+        use approximate log-likelihood as score
 
         Parameters
         ----------
-        X: sparse matrix, [n_docs, n_vocabs]
-
-        gamma: array, shape = [n_docs, n_topics]
-            document distribution (can be either normalized & un-normalized)
+        X : sparse matrix, shape=(n_samples, n_features)
+             Document word matrix.
 
         Returns
         -------
-        score: float, score of gamma
+        score : float
+            Use approximate bound as score.
         """
-        X = self._to_csr(X)
-        n_doc = X.shape[0]
-        bound = self._approx_bound(X, gamma, sub_sampling)
+
+        X = self._to_csr(X, "LatentDirichletAllocation.score")
+
+        doc_topic_distr = self.transform(X)
+        score = self._approx_bound(X, doc_topic_distr, sub_sampling=False)
+        return score
+
+    def perplexity(self, X, doc_topic_distr, sub_sampling=False):
+        """
+        calculate approximate perplexity for data X and topic distribution `gamma`.
+        Perplexity is defined as exp(-1. * log-likelihood per word)
+
+        Parameters
+        ----------
+        X : sparse matrix, [n_samples, n_features]
+            Document word matrix.
+
+        doc_topic_distr : array, shape=(n_samples, n_topics)
+            Document topic distribution.
+
+        Returns
+        -------
+        score : float
+            Perplexity score.
+        """
+        X = self._to_csr(X, "LatentDirichletAllocation.perplexity")
+
+        current_samples = X.shape[0]
+        bound = self._approx_bound(X, doc_topic_distr, sub_sampling)
         perword_bound = bound / np.sum(X.data)
 
         if sub_sampling:
-            perword_bound = perword_bound * (float(n_doc) / self.n_docs)
+            perword_bound = perword_bound * (float(current_samples) / self.n_samples)
 
         return np.exp(-1.0 * perword_bound)
