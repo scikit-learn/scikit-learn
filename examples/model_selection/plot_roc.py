@@ -91,13 +91,8 @@ fpr["macro"] = np.mean([fpr[i] for i in range(n_classes)], axis=0)
 tpr["macro"] = np.mean([tpr[i] for i in range(n_classes)], axis=0)
 roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
 
-# Compute macro-average ROC curve and ROC area
-fpr["macro"] = np.mean([fpr[i] for i in range(n_classes)], axis=0)
-tpr["macro"] = np.mean([tpr[i] for i in range(n_classes)], axis=0)
-roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
-
 # Plot ROC curve
-plt.clf()
+plt.figure()
 plt.plot(fpr["micro"], tpr["micro"],
         label='micro-average ROC curve (area = {0:0.2f})'
               ''.format(roc_auc["micro"]))
