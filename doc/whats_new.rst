@@ -76,6 +76,10 @@ Bug fixes
     - Various fixes to the Gaussian processes subpackage by Vincent Dubourg
       and Jan Hendrik Metzen.
 
+    - Calling ``partial_fit`` with ``class_weight=='auto'`` throws an
+      appropriate error message and suggests a work around.
+      By `Danny Sullivan`_.
+
 
 API changes summary
 -------------------
@@ -2937,7 +2941,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Maheshakya Wijewardena: https://github.com/maheshakya
 
-.. _Danny Sullivan: http://dannysullivan.co
+.. _Danny Sullivan: https://github.com/dsullivan7
 
 .. _Michael Eickenberg: https://github.com/eickenberg
 
