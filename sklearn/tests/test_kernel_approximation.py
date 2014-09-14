@@ -207,7 +207,8 @@ def test_nystroem_callable():
              kernel_params={'log': kernel_log}).fit(X)
     assert_equal(len(kernel_log), n_samples * (n_samples - 1) / 2)
 
-### Fastfood ###
+# Fastfood
+
 
 def test_enforce_dimensionality_constraint():
 
@@ -225,6 +226,7 @@ def test_enforce_dimensionality_constraint():
 def assert_all_equal(array_, value):
     for i in array_:
         assert_almost_equal(i, value)
+
 
 def test_hadamard_equivalence():
     # Ensure that the fht along axes 0 is equivalent an explicit hadamard
@@ -247,17 +249,19 @@ def test_hadamard_equivalence():
 
         # fht with vector with matrix
         four = np.dot(fht.fht(g, axes=0), vector)
-        
+
         # fht without diagonal matrix
         a = np.diag(g)*vector
-        print "a",a,g, a.shape,vector.shape
+        print "a", a, g, a.shape, vector.shape
         five = fht.fht(a, axes=0)
-        
+
         yield assert_array_almost_equal, one, two
         yield assert_array_almost_equal, three, four
         yield assert_array_almost_equal, four, five
 
-########     Performance Analysis    #################
+
+# Performance Analysis
+
 
 def test_fastfood():
     """test that Fastfood fast approximates kernel on random data"""
@@ -274,8 +278,7 @@ def test_fastfood():
     X_trans = pars.transform(X)
     Y_trans = ff_transform.transform(Y)
 
-
-    #print X_trans, Y_trans
+    # print X_trans, Y_trans
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
     print 'approximation:', kernel_approx[:5, :5]
@@ -313,10 +316,11 @@ def test_fastfood():
 #     print "Timimg fastfood memory: \t\t", fastfood_mem_spent_time
 #
 #     assert_greater(fastfood_spent_time, fastfood_mem_spent_time)
-#
+
+
 def test_fastfood_performance_comparison_between_methods():
     """compares the performance of Fastfood and RKS"""
-    #generate data
+    # generate data
     X = rng.random_sample(size=(1000, 4096))
     Y = rng.random_sample(size=(10000, 4096))
     X /= X.sum(axis=1)[:, np.newaxis]
@@ -327,36 +331,38 @@ def test_fastfood_performance_comparison_between_methods():
     sigma = np.sqrt(1 / (2 * gamma))
     number_of_features_to_generate = 4096*4
 
-
     exact_start = datetime.datetime.utcnow()
     # original rbf kernel method:
-    #rbf_kernel(X, X, gamma=gamma)
-    #rbf_kernel(X, Y, gamma=gamma)
+    # rbf_kernel(X, X, gamma=gamma)
+    # rbf_kernel(X, Y, gamma=gamma)
     exact_end = datetime.datetime.utcnow()
-    exact_spent_time = exact_end- exact_start
+    exact_spent_time = exact_end - exact_start
     print "Timimg exact rbf: \t\t", exact_spent_time
 
-
-    rbf_transform = Fastfood(sigma=sigma, n_components=number_of_features_to_generate,
-                             tradeoff_less_mem_or_higher_accuracy='mem', random_state=42)
+    rbf_transform = Fastfood(sigma=sigma,
+                             n_components=number_of_features_to_generate,
+                             tradeoff_less_mem_or_higher_accuracy='mem',
+                             random_state=42)
     _ = rbf_transform.fit(X)
     fastfood_fast_vec_start = datetime.datetime.utcnow()
     # Fastfood: approximate kernel mapping
     _ = rbf_transform.transform(X)
     _ = rbf_transform.transform(Y)
     fastfood_fast_vec_end = datetime.datetime.utcnow()
-    fastfood_fast_vec_spent_time =fastfood_fast_vec_end- fastfood_fast_vec_start
+    fastfood_fast_vec_spent_time = fastfood_fast_vec_end - \
+        fastfood_fast_vec_start
     print "Timimg fastfood fast vectorized: \t\t", fastfood_fast_vec_spent_time
 
-
-    rks_rbf_transform = RBFSampler(gamma=gamma, n_components=number_of_features_to_generate, random_state=42)
+    rks_rbf_transform = RBFSampler(gamma=gamma,
+                                   n_components=number_of_features_to_generate,
+                                   random_state=42)
     _ = rks_rbf_transform.fit(X)
     rks_start = datetime.datetime.utcnow()
     # Random Kitchens Sinks: approximate kernel mapping
     _ = rks_rbf_transform.transform(X)
     _ = rks_rbf_transform.transform(Y)
     rks_end = datetime.datetime.utcnow()
-    rks_spent_time =rks_end- rks_start
+    rks_spent_time = rks_end - rks_start
     print "Timimg rks: \t\t\t", rks_spent_time
 
     assert_greater(rks_spent_time, fastfood_fast_vec_spent_time)
