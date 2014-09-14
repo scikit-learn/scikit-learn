@@ -1,3 +1,4 @@
+import numpy as np
 cimport numpy as np
 cimport cython
 from libc.math cimport log2
@@ -48,4 +49,6 @@ cdef _fht2(np.ndarray[DTYPE_t, ndim=2] array_):
     cdef double temp
     n = array_.shape[0]
     for x in xrange(n):
+        # TODO: This call still shows up as yellow in cython -a presumably due
+        # to the [] access, but the array_ is already typed...
         _fht(array_[x])
