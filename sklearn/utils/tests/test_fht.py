@@ -3,6 +3,7 @@ import numpy.testing as npt
 import nose.tools as nt
 from scipy.linalg import hadamard
 from sklearn.utils.cyfht import fht as cyfht
+from sklearn.utils.cyfht import fht2 as cyfht2
 
 
 def test_wikipedia_example():
@@ -34,3 +35,4 @@ def test_numerical_fuzzing_fht2():
 
 def test_exception_when_input_not_power_two():
     nt.assert_raises(ValueError, cyfht, np.zeros(9, dtype=np.float64))
+    nt.assert_raises(ValueError, cyfht2, np.zeros((2, 9), dtype=np.float64))
