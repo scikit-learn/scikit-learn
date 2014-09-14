@@ -18,7 +18,7 @@ def fht(np.ndarray[DTYPE_t] array_):
     if not is_power_of_two(array_.shape[0]):
         raise ValueError('Length of input for fht must be a power of two')
     else:
-        fht(array_)
+        _fht(array_)
 
 @cython.boundscheck(False)
 cdef _fht(np.ndarray[DTYPE_t] array_):
