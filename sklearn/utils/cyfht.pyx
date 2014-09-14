@@ -11,13 +11,20 @@ def is_power_of_two(input_integer):
 #DTYPE = np.double
 ctypedef np.double_t DTYPE_t
 
-@cython.boundscheck(False)
+
+
 def fht(np.ndarray[DTYPE_t] array_):
+    """ Single dimensional fht. """
+    if not is_power_of_two(array_.shape[0]):
+        raise ValueError('Length of input for fht must be a power of two')
+    else:
+        fht(array_)
+
+@cython.boundscheck(False)
+cdef _fht(np.ndarray[DTYPE_t] array_):
     cdef unsigned int bit, length, _, i, j
     cdef double temp
     bit = length = array_.shape[0]
-    if not is_power_of_two(length):
-        raise ValueError('Length of input for fht must be a power of two')
     for _ in xrange(<unsigned int>(log2(length))):
         bit >>= 1
         for i in xrange(length):
