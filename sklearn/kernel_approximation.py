@@ -536,6 +536,12 @@ class Fastfood(BaseEstimator, TransformerMixin):
     See "Fastfood | Approximating Kernel Expansions in Loglinear Time" by
     Quoc Le, Tamas Sarl and Alex Smola.
 
+    Examples
+    ----
+    See scikit-learn-fastfood/examples/plot_digits_classification_fastfood.py
+    for an example how to use fastfood with a primal classifier in comparison
+    to an usual rbf-kernel with a dual classifier.
+
     """
 
     def __init__(self,
