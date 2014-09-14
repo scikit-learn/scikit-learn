@@ -1,4 +1,3 @@
-import timeit
 import numpy as np
 from scipy.sparse import csr_matrix
 import datetime
@@ -7,15 +6,12 @@ from scipy.fftpack import dct
 
 
 import fht
-from scipy.fftpack import dct
 from scipy.linalg import hadamard
 
 from sklearn.utils.testing import assert_array_equal, assert_equal, assert_greater
 from sklearn.utils.testing import assert_not_equal, assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal, assert_raises
 
-
-from sklearn.utils import check_random_state
 
 from sklearn.metrics.pairwise import kernel_metrics
 from sklearn.kernel_approximation import RBFSampler
