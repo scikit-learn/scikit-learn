@@ -341,7 +341,7 @@ def test_fastfood_performance_comparison_between_methods():
 
     rbf_transform = Fastfood(sigma=sigma,
                              n_components=number_of_features_to_generate,
-                             tradeoff_less_mem_or_higher_accuracy='mem',
+                             tradeoff_mem_accuracy='mem',
                              random_state=42)
     _ = rbf_transform.fit(X)
     fastfood_fast_vec_start = datetime.datetime.utcnow()

@@ -521,7 +521,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
         Number of Monte Carlo samples per original feature.
         Equals the dimensionality of the computed feature space.
 
-    tradeoff_less_mem_or_higher_accuracy : "accuracy" or "mem"
+    tradeoff_mem_accuracy : "accuracy" or "mem"
         mem:        This version is not as accurate as the option "accuracy",
                     but is consuming less memory.
         accuracy:   The final feature space is of dimension 2*n_components,
@@ -547,7 +547,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
     def __init__(self,
                  sigma=np.sqrt(1/2),
                  n_components=100,
-                 tradeoff_less_mem_or_higher_accuracy='accuracy',
+                 tradeoff_mem_accuracy='accuracy',
                  random_state=None):
         self.sigma = sigma
         self.n_components = n_components
@@ -556,17 +556,11 @@ class Fastfood(BaseEstimator, TransformerMixin):
         # map to 2*n_components features or to n_components features with less
         # accuracy
         self.tradeoff_less_mem_or_higher_accuracy = \
-            tradeoff_less_mem_or_higher_accuracy
+            tradeoff_mem_accuracy
 
     @staticmethod
     def is_number_power_of_two(n):
         return n != 0 and ((n & (n - 1)) == 0)
-
-    def uniform_vector(self):
-        if self.tradeoff_less_mem_or_higher_accuracy != 'accuracy':
-            return self.rng.uniform(0, 2 * np.pi, size=self.n)
-        else:
-            return None
 
     @staticmethod
     def enforce_dimensionality_constraints(d, n):
@@ -581,11 +575,6 @@ class Fastfood(BaseEstimator, TransformerMixin):
             times_to_stack_v = int(divisor+1)
         return int(d), int(n), times_to_stack_v
 
-    @staticmethod
-    def approx_fourier_transformation_multi_dim(result):
-        cyfht(result)
-        return result
-
     def pad_with_zeros(self, X):
         X_padded = np.pad(X,
                           ((0, 0),
@@ -593,26 +582,36 @@ class Fastfood(BaseEstimator, TransformerMixin):
                           'constant')
         return X_padded
 
-    def create_gaussian_iid_matrix_fast_vectorized(self, B, G, P, X):
-        """ Create mapping of a specific x from B, G and P"""
+    @staticmethod
+    def approx_fourier_transformation_multi_dim(result):
+        cyfht(result)
+
+    def uniform_vector(self):
+        if self.tradeoff_less_mem_or_higher_accuracy != 'accuracy':
+            return self.rng.uniform(0, 2 * np.pi, size=self.n)
+        else:
+            return None
+
+    def apply_approximate_gaussian_matrix(self, B, G, P, X):
+        """ Create mapping of all x_i by applying B, G and P step-wise """
         num_examples = X.shape[0]
 
         result = np.multiply(B, X.reshape((1, num_examples, 1, self.d)))
         result = result.reshape((num_examples*self.times_to_stack_v, self.d))
-        result = Fastfood.approx_fourier_transformation_multi_dim(result)
+        Fastfood.approx_fourier_transformation_multi_dim(result)
         result = result.reshape((num_examples, -1))
         np.take(result, P, axis=1, mode='wrap', out=result)
         np.multiply(np.ravel(G), result.reshape(num_examples, self.n), 
                     out=result)
         result = result.reshape(num_examples*self.times_to_stack_v, self.d)
-        result = Fastfood.approx_fourier_transformation_multi_dim(result)
+        Fastfood.approx_fourier_transformation_multi_dim(result)
         return result
 
-    def create_approximation_matrix_fast_vectorized(self, S, V):
-        """ Create V from HGPHB and S """
-        V = V.reshape(-1, self.times_to_stack_v*self.d)
+    def scale_transformed_data(self, S, VX):
+        """ Scale mapped data VX to match kernel(e.g. RBF-Kernel) """
+        VX = VX.reshape(-1, self.times_to_stack_v*self.d)
 
-        return 1 / (self.sigma * np.sqrt(self.d)) * np.multiply(np.ravel(S), V)
+        return 1 / (self.sigma * np.sqrt(self.d)) * np.multiply(np.ravel(S), VX)
 
     def phi(self, X):
         if self.tradeoff_less_mem_or_higher_accuracy == 'accuracy':
@@ -675,11 +674,10 @@ class Fastfood(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
         """
         X = array2d(X)
-        # np.isnan()
         X_padded = self.pad_with_zeros(X)
-        HGPHBX = self.create_gaussian_iid_matrix_fast_vectorized(self.B,
-                                                                 self.G,
-                                                                 self.P,
-                                                                 X_padded)
-        VX = self.create_approximation_matrix_fast_vectorized(self.S, HGPHBX)
+        HGPHBX = self.apply_approximate_gaussian_matrix(self.B,
+                                                        self.G,
+                                                        self.P,
+                                                        X_padded)
+        VX = self.scale_transformed_data(self.S, HGPHBX)
         return self.phi(VX)
