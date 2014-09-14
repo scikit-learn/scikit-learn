@@ -528,7 +528,8 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
 
         The predicted regression target of an input sample is computed as the
         mean predicted regression targets of the trees in the forest.
-        Optionally, the standard deviation is computed in addition.
+        Optionally, the standard deviation of the predictions of the ensemble's
+        estimators is computed in addition.
 
         Parameters
         ----------
@@ -536,8 +537,8 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             The input samples.
 
         with_std : boolean, optional, default=False
-            When True, the standard deviation of predictions across the
-            ensemble is returned in addition to the mean.
+            When True, the standard deviation of the predictions of the
+            ensemble's estimators is returned in addition to the mean.
 
         Returns
         -------

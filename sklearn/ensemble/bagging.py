@@ -795,7 +795,8 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
         The predicted regression target of an input sample is computed as the
         mean predicted regression targets of the estimators in the ensemble.
-        Optionally, the standard deviation is computed in addition.
+        Optionally, the standard deviation of the predictions of the ensemble's
+        estimators is computed in addition.
 
         Parameters
         ----------
@@ -804,8 +805,8 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
             they are supported by the base estimator.
 
         with_std : boolean, optional, default=False
-            When True, the standard deviation of predictions across the
-            ensemble is returned in addition to the mean.
+            When True, the standard deviation of the predictions of the
+            ensemble's estimators is returned in addition to the mean.
 
         Returns
         -------
@@ -813,7 +814,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
             The mean of the predicted values.
 
         y_std : array of shape = [n_samples], optional (if with_std == True)
-            The standard deviation of the predicted values.
+            The standard deviation of the ensemble's predicted values.
         """
         # Check data
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
