@@ -13,5 +13,14 @@ def test_wikipedia_example():
     npt.assert_array_equal(np.dot(copy, H), input_)
 
 
+def test_numerical_fuzzing_fht():
+    for length in [2, 4, 8, 16, 32, 64]:
+        input_ = np.random.normal(size=length)
+        copy = input_.copy()
+        H = hadamard(length)
+        cyfht(input_)
+        npt.assert_array_almost_equal(np.dot(copy, H), input_)
+
+
 def test_exception_when_input_not_power_two():
     nt.assert_raises(ValueError, cyfht, np.zeros(9, dtype=np.float64))
