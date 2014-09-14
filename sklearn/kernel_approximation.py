@@ -584,7 +584,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
         offset = np.arange(0, num_examples*self.times_to_stack_v*self.d - 1, self.d)
         offset = offset.reshape(-1, 1)
         perm = np.tile(P, (num_examples, 1)) + offset
-        np.take(result, perm, out=result)
+        np.take(result, perm, mode='wrap', out=result)
         result = result.reshape(num_examples, self.n)
         np.multiply(np.ravel(G), result.reshape(num_examples, self.n), out=result)
         result = result.reshape(num_examples*self.times_to_stack_v, self.d)
@@ -651,7 +651,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
         """
         X = array2d(X)
-        np.isnan()
+        #np.isnan()
         X_padded = self.pad_with_zeros(X)
         HGPHBX = self.create_gaussian_iid_matrix_fast_vectorized(self.B, self.G, self.P, X_padded)
         VX = self.create_approximation_matrix_fast_vectorized(self.S, HGPHBX)
