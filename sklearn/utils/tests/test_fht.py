@@ -13,8 +13,7 @@ def single(fht_type):
     npt.assert_array_equal(np.dot(copy, H), input_)
 
 def test_exception_when_input_not_power_two():
-    for fht_type in  [fht, cyfht]:
-        yield nt.assert_raises, ValueError, fht_type, np.zeros(9, dtype=np.float64)
+    nt.assert_raises(ValueError, cyfht, np.zeros(9, dtype=np.float64))
 
 def test_all():
     single(fht)

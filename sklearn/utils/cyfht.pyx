@@ -2,6 +2,11 @@ cimport numpy as np
 cimport cython
 from libc.math cimport log2
 
+def is_power_of_two(input_integer):
+    """Test if an integer is a power of two"""
+    if input_integer == 1:
+        return False
+    return input_integer != 0 and ((input_integer & (input_integer - 1)) == 0)
 
 #DTYPE = np.double
 ctypedef np.double_t DTYPE_t
@@ -11,6 +16,8 @@ def fht(np.ndarray[DTYPE_t] array_):
     cdef unsigned int bit, length, _, i, j
     cdef double temp
     bit = length = array_.shape[0]
+    if not is_power_of_two(length):
+        raise ValueError('Length of input for fht must be a power of two')
     for _ in xrange(<unsigned int>(log2(length))):
         bit >>= 1
         for i in xrange(length):
