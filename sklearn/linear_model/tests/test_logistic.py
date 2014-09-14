@@ -17,7 +17,8 @@ from sklearn.utils import ConvergenceWarning
 from sklearn.linear_model.logistic import (
     LogisticRegression,
     logistic_regression_path, LogisticRegressionCV,
-    _logistic_loss_and_grad, _logistic_loss_grad_hess
+    _logistic_loss_and_grad, _logistic_loss_grad_hess,
+    _multinomial_loss_grad_hess
     )
 from sklearn.cross_validation import StratifiedKFold
 from sklearn.datasets import load_iris, make_classification
@@ -506,6 +507,22 @@ def test_logistic_regression_multinomial():
     clf_wint.fit(X, y)
     assert_array_equal(clf_wint.coef_.shape, (n_classes, n_features))
 
+    # Similar tests for newton-cg solver option
+    clf_ncg_int = LogisticRegression(solver='newton-cg',
+                                     multi_class='multinomial')
+    clf_ncg_int.fit(X, y)
+    assert_array_equal(clf_ncg_int.coef_.shape, (n_classes, n_features))
+
+    clf_ncg_wint = LogisticRegression(solver='newton-cg', fit_intercept=False,
+                                      multi_class='multinomial')
+    clf_ncg_wint.fit(X, y)
+    assert_array_equal(clf_ncg_wint.coef_.shape, (n_classes, n_features))
+
+    # Compare solutions between lbfgs and newton-cg
+    assert_almost_equal(clf_int.coef_, clf_ncg_int.coef_, decimal=3)
+    assert_almost_equal(clf_wint.coef_, clf_ncg_wint.coef_, decimal=3)
+    assert_almost_equal(clf_int.intercept_, clf_ncg_int.intercept_, decimal=3)
+
     # Test that the path give almost the same results. However since in this
     # case we take the average of the coefs after fitting across all the
     # folds, it need not be exactly the same.
@@ -514,6 +531,37 @@ def test_logistic_regression_multinomial():
     clf_path.fit(X, y)
     assert_array_almost_equal(clf_path.coef_, clf_int.coef_, decimal=3)
     assert_almost_equal(clf_path.intercept_, clf_int.intercept_, decimal=3)
+
+
+def test_multinomial_loss_grad_hess():
+    rng = np.random.RandomState(0)
+    n_samples, n_features, n_classes = 100, 5, 3
+    X = rng.randn(n_samples, n_features)
+    w = rng.rand(n_classes, n_features)
+    Y = np.zeros((n_samples, n_classes))
+    ind = np.argmax(np.dot(X, w.T), axis=1)
+    Y[range(0, n_samples), ind] = 1
+    w = w.ravel()
+    sample_weights = np.ones(X.shape[0])
+    _, grad, hessp = _multinomial_loss_grad_hess(w, X, Y, alpha=1.,
+                                                 sample_weight=sample_weights)
+    # extract first column of hessian matrix
+    vec = np.zeros(n_features * n_classes)
+    vec[0] = 1
+    hess_col = hessp(vec)
+
+    # Estimate hessian using least squares as done in
+    # test_logistic_loss_grad_hess
+    e = 1e-3
+    d_x = np.linspace(-e, e, 30)
+    d_grad = np.array([
+        _multinomial_loss_grad_hess(w + t * vec, X, Y, alpha=1.,
+                                    sample_weight=sample_weights)[1]
+        for t in d_x
+        ])
+    d_grad -= d_grad.mean(axis=0)
+    approx_hess_col = linalg.lstsq(d_x[:, np.newaxis], d_grad)[0].ravel()
+    assert_array_almost_equal(hess_col, approx_hess_col)
 
 
 def test_liblinear_decision_function_zero():
