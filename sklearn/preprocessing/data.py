@@ -993,6 +993,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         X = check_array(X, dtype=np.int)
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
+        if X.ndim == 1:
+            X = X[:, np.newaxis]
         n_samples, n_features = X.shape
         if self.n_values == 'auto':
             n_values = np.max(X, axis=0) + 1
@@ -1048,8 +1050,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         X = check_array(X, dtype=np.int)
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
+        if X.ndim == 1:
+            X = X[:, np.newaxis]
         n_samples, n_features = X.shape
-
         indices = self.feature_indices_
         if n_features != indices.shape[0] - 1:
             raise ValueError("X has different shape than during fitting."
