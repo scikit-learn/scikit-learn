@@ -594,13 +594,9 @@ class Fastfood(BaseEstimator, TransformerMixin):
         result = np.multiply(B, X.reshape((1, num_examples, 1, self.d)))
         result = result.reshape((num_examples*self.times_to_stack_v, self.d))
         result = Fastfood.approx_fourier_transformation_multi_dim(result)
-        offset = np.arange(0, num_examples*self.times_to_stack_v*self.d - 1,
-                           self.d)
-        offset = offset.reshape(-1, 1)
-        perm = np.tile(P, (num_examples, 1)) + offset
-        np.take(result, perm, mode='wrap', out=result)
-        result = result.reshape(num_examples, self.n)
-        np.multiply(np.ravel(G), result.reshape(num_examples, self.n),
+        result = result.reshape((num_examples, -1))
+        np.take(result, P, axis=1, mode='wrap', out=result)
+        np.multiply(np.ravel(G), result.reshape(num_examples, self.n), 
                     out=result)
         result = result.reshape(num_examples*self.times_to_stack_v, self.d)
         result = Fastfood.approx_fourier_transformation_multi_dim(result)
@@ -648,11 +644,11 @@ class Fastfood(BaseEstimator, TransformerMixin):
 
         self.G = self.rng.normal(size=(self.times_to_stack_v, self.d))
         self.B = self.rng.choice([-1, 1], size=(self.times_to_stack_v, self.d))
-        self.P = [self.rng.permutation(self.d)
-                  for _ in range(self.times_to_stack_v)]
-        self.S = np.multiply(1 / np.linalg.norm(self.G,
-                                                axis=1).reshape((-1, 1)),
-                             chi.rvs(self.d,
+        self.P = np.hstack([(i*self.d)+self.rng.permutation(self.d) 
+                            for i in range(self.times_to_stack_v)])
+        self.S = np.multiply(1 / np.linalg.norm(self.G, axis=1)
+                             .reshape((-1, 1)),
+                             chi.rvs(self.d, 
                                      size=(self.times_to_stack_v, self.d)))
 
         self.U = self.uniform_vector()
