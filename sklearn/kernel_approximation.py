@@ -621,6 +621,8 @@ class Fastfood(BaseEstimator, TransformerMixin):
         self : object
             Returns the transformer.
         """
+        X = array2d(X)
+
         d_orig = X.shape[1]
 
         self.d, self.n, self.times_to_stack_v = \
