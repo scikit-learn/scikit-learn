@@ -1053,6 +1053,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         if X.ndim == 1:
             X = X[:, np.newaxis]
         n_samples, n_features = X.shape
+        
         indices = self.feature_indices_
         if n_features != indices.shape[0] - 1:
             raise ValueError("X has different shape than during fitting."
