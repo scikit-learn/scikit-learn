@@ -21,7 +21,7 @@ def fht(np.ndarray[DTYPE_t] array_):
         _fht(array_)
 
 @cython.boundscheck(False)
-cdef _fht(np.ndarray[DTYPE_t] array_):
+cdef _fht(np.ndarray[DTYPE_t, ndim=1] array_):
     cdef unsigned int bit, length, _, i, j
     cdef double temp
     bit = length = array_.shape[0]
@@ -36,13 +36,13 @@ cdef _fht(np.ndarray[DTYPE_t] array_):
 
 
 
-@cython.boundscheck(False)
 def fht2(np.ndarray[DTYPE_t, ndim=2] array_):
     if not is_power_of_two(array_.shape[1]):
         raise ValueError('Length of rows for fht2 must be a power of two')
     else:
         _fht2(array_)
 
+@cython.boundscheck(False)
 cdef _fht2(np.ndarray[DTYPE_t, ndim=2] array_):
     cdef unsigned int bit, length, _, i, j, n
     cdef double temp
