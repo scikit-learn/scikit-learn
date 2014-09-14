@@ -509,8 +509,8 @@ class Fastfood(BaseEstimator, TransformerMixin):
     significant speed and storage advantages.  The computational complexity for
     mapping a single example is O(n_components log d).  The space complexity is
     O(n_components).  Hint: n_components should be a power of two. If this is
-    not the case, the next higher number that fulfills this contraint is chosen
-    automatically.
+    not the case, the next higher number that fulfills this constraint is
+    chosen automatically.
 
     Parameters
     ----------
