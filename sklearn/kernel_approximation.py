@@ -638,7 +638,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
         self : object
             Returns the transformer.
         """
-        X = array2d(X)
+        X = check_array(X)
 
         d_orig = X.shape[1]
 
@@ -673,7 +673,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        X = array2d(X)
+        X = check_array(X)
         X_padded = self.pad_with_zeros(X)
         HGPHBX = self.apply_approximate_gaussian_matrix(self.B,
                                                         self.G,
