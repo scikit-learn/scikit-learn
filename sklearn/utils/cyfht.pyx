@@ -12,6 +12,16 @@ def is_power_of_two(input_integer):
 #DTYPE = np.double
 ctypedef np.double_t DTYPE_t
 
+def pure_python_fht(array_):
+    bit = length = len(array_)
+    for _ in xrange(int(np.log2(length))):
+        bit >>= 1
+        for i in xrange(length):
+            if i & bit == 0:
+                j = i | bit
+                temp = array_[i]
+                array_[i] += array_[j]
+                array_[j] = temp - array_[j]
 
 
 def fht(np.ndarray[DTYPE_t] array_):
