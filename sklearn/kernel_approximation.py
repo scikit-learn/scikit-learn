@@ -14,6 +14,7 @@ import scipy.sparse as sp
 from sklearn.utils.cyfht import fht2 as cyfht
 from scipy.linalg import svd
 from scipy.stats import chi
+from utils.random import choice
 
 from .base import BaseEstimator
 from .base import TransformerMixin
@@ -648,7 +649,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
         self.number_of_features_to_pad_with_zeros = self.d - d_orig
 
         self.G = self.rng.normal(size=(self.times_to_stack_v, self.d))
-        self.B = self.rng.choice([-1, 1], size=(self.times_to_stack_v, self.d))
+        self.B = choice([-1, 1], size=(self.times_to_stack_v, self.d), replace=True, random_state=self.random_state)
         self.P = np.hstack([(i*self.d)+self.rng.permutation(self.d)
                             for i in range(self.times_to_stack_v)])
         self.S = np.multiply(1 / np.linalg.norm(self.G, axis=1)
