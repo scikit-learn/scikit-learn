@@ -520,7 +520,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
         Number of Monte Carlo samples per original feature.
         Equals the dimensionality of the computed feature space.
 
-    tradeoff_mem_accuracy : "accuracy" or "mem"
+    tradeoff_mem_accuracy : "accuracy" or "mem", default: 'accuracy'
         mem:        This version is not as accurate as the option "accuracy",
                     but is consuming less memory.
         accuracy:   The final feature space is of dimension 2*n_components,
@@ -554,7 +554,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
         self.rng = check_random_state(self.random_state)
         # map to 2*n_components features or to n_components features with less
         # accuracy
-        self.tradeoff_less_mem_or_higher_accuracy = \
+        self.tradeoff_mem_accuracy = \
             tradeoff_mem_accuracy
 
     @staticmethod
@@ -586,7 +586,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
         cyfht(result)
 
     def uniform_vector(self):
-        if self.tradeoff_less_mem_or_higher_accuracy != 'accuracy':
+        if self.tradeoff_mem_accuracy != 'accuracy':
             return self.rng.uniform(0, 2 * np.pi, size=self.n)
         else:
             return None
@@ -614,7 +614,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
                 np.multiply(np.ravel(S), VX))
 
     def phi(self, X):
-        if self.tradeoff_less_mem_or_higher_accuracy == 'accuracy':
+        if self.tradeoff_mem_accuracy == 'accuracy':
             return (1 / np.sqrt(X.shape[1])) * \
                 np.hstack([np.cos(X), np.sin(X)])
         else:
