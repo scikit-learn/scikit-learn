@@ -161,7 +161,6 @@ Classes
    :toctree: generated/
    :template: class.rst
 
-   cross_validation.Bootstrap
    cross_validation.KFold
    cross_validation.LeaveOneLabelOut
    cross_validation.LeaveOneOut
@@ -456,6 +455,7 @@ From text
    feature_selection.SelectFwe
    feature_selection.RFE
    feature_selection.RFECV
+   feature_selection.VarianceThreshold
 
 .. autosummary::
    :toctree: generated/
@@ -523,27 +523,6 @@ From text
    grid_search.RandomizedSearchCV
 
 
-.. _hmm_ref:
-
-:mod:`sklearn.hmm`: Hidden Markov Models
-========================================
-
-.. automodule:: sklearn.hmm
-   :no-members:
-   :no-inherited-members:
-
-**User guide:** See the :ref:`hmm` section for further details.
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   hmm.GaussianHMM
-   hmm.MultinomialHMM
-   hmm.GMMHMM
-
 .. _isotonic_ref:
 
 :mod:`sklearn.isotonic`: Isotonic regression
@@ -568,6 +547,7 @@ From text
    :template: function.rst
 
    isotonic.isotonic_regression
+   isotonic.check_increasing
 
 .. _kernel_approximation_ref:
 
@@ -659,6 +639,7 @@ From text
    linear_model.LassoLarsIC
    linear_model.LinearRegression
    linear_model.LogisticRegression
+   linear_model.LogisticRegressionCV
    linear_model.MultiTaskLasso
    linear_model.MultiTaskElasticNet
    linear_model.MultiTaskLassoCV
@@ -670,6 +651,7 @@ From text
    linear_model.Perceptron
    linear_model.RandomizedLasso
    linear_model.RandomizedLogisticRegression
+   linear_model.RANSACRegressor
    linear_model.Ridge
    linear_model.RidgeClassifier
    linear_model.RidgeClassifierCV
@@ -709,6 +691,7 @@ From text
     manifold.Isomap
     manifold.MDS
     manifold.SpectralEmbedding
+    manifold.TSNE
 
 .. autosummary::
     :toctree: generated
@@ -788,6 +771,18 @@ details.
    metrics.mean_squared_error
    metrics.r2_score
 
+Multilabel ranking metrics
+--------------------------
+See the :ref:`multilabel_ranking_metrics` section of the user guide for further
+details.
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   metrics.label_ranking_average_precision_score
+
+
 
 Clustering metrics
 ------------------
@@ -855,6 +850,9 @@ Pairwise metrics
    metrics.pairwise.pairwise_kernels
    metrics.pairwise.polynomial_kernel
    metrics.pairwise.rbf_kernel
+   metrics.pairwise_distances
+   metrics.pairwise_distances_argmin
+   metrics.pairwise_distances_argmin_min
 
 
 .. _mixture_ref:
@@ -899,17 +897,6 @@ Pairwise metrics
     multiclass.OneVsRestClassifier
     multiclass.OneVsOneClassifier
     multiclass.OutputCodeClassifier
-
-.. autosummary::
-    :toctree: generated
-    :template: function.rst
-
-    multiclass.fit_ovr
-    multiclass.predict_ovr
-    multiclass.fit_ovo
-    multiclass.predict_ovo
-    multiclass.fit_ecoc
-    multiclass.predict_ecoc
 
 .. _naive_bayes_ref:
 
@@ -1059,6 +1046,7 @@ Pairwise metrics
    preprocessing.KernelCenterer
    preprocessing.LabelBinarizer
    preprocessing.LabelEncoder
+   preprocessing.MultiLabelBinarizer
    preprocessing.MinMaxScaler
    preprocessing.Normalizer
    preprocessing.OneHotEncoder

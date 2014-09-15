@@ -26,7 +26,7 @@ from .cross_validation import _fit_and_score
 from .externals.joblib import Parallel, delayed
 from .externals import six
 from .utils import check_random_state
-from .utils.validation import _num_samples, check_arrays
+from .utils.validation import _num_samples, indexable
 from .metrics.scorer import check_scoring
 
 
@@ -75,9 +75,8 @@ class ParameterGrid(object):
 
     def __init__(self, param_grid):
         if isinstance(param_grid, Mapping):
-            # wrap dictionary in a singleton list
-            # XXX Why? The behavior when passing a list is undocumented,
-            # but not doing this breaks one of the tests.
+            # wrap dictionary in a singleton list to support either dict
+            # or list of dicts
             param_grid = [param_grid]
         self.param_grid = param_grid
 
@@ -274,19 +273,21 @@ class _CVScoreTuple (namedtuple('_CVScoreTuple',
             self.parameters)
 
 
+class ChangedBehaviorWarning(UserWarning):
+    pass
+
+
 class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                       MetaEstimatorMixin)):
     """Base class for hyper parameter search with cross-validation."""
 
     @abstractmethod
-    def __init__(self, estimator, scoring=None, loss_func=None,
-                 score_func=None, fit_params=None, n_jobs=1, iid=True,
+    def __init__(self, estimator, scoring=None,
+                 fit_params=None, n_jobs=1, iid=True,
                  refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs'):
 
         self.scoring = scoring
         self.estimator = estimator
-        self.loss_func = loss_func
-        self.score_func = score_func
         self.n_jobs = n_jobs
         self.fit_params = fit_params if fit_params is not None else {}
         self.iid = iid
@@ -296,9 +297,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.pre_dispatch = pre_dispatch
 
     def score(self, X, y=None):
-        """Returns the score on the given test data and labels, if the search
-        estimator has been refit. The ``score`` function of the best estimator
-        is used, or the ``scoring`` parameter where unavailable.
+        """Returns the score on the given data, if the estimator has been refit
+
+        This uses the score defined by ``scoring`` where provided, and the
+        ``best_estimator_.score`` method otherwise.
 
         Parameters
         ----------
@@ -314,13 +316,23 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         -------
         score : float
 
+        Notes
+        -----
+         * The long-standing behavior of this method changed in version 0.16.
+         * It no longer uses the metric provided by ``estimator.score`` if the
+           ``scoring`` parameter was set when fitting.
+
         """
-        if hasattr(self.best_estimator_, 'score'):
-            return self.best_estimator_.score(X, y)
         if self.scorer_ is None:
             raise ValueError("No score function explicitly defined, "
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
+        if self.scoring is not None and hasattr(self.best_estimator_, 'score'):
+            warnings.warn("The long-standing behavior to use the estimator's "
+                          "score function in {0}.score has changed. The "
+                          "scoring parameter is now used."
+                          "".format(self.__class__.__name__),
+                          ChangedBehaviorWarning)
         return self.scorer_(self.best_estimator_, X, y)
 
     @property
@@ -344,20 +356,16 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         estimator = self.estimator
         cv = self.cv
-        self.scorer_ = check_scoring(self.estimator, scoring=self.scoring,
-                                     loss_func=self.loss_func,
-                                     score_func=self.score_func)
+        self.scorer_ = check_scoring(self.estimator, scoring=self.scoring)
 
         n_samples = _num_samples(X)
-        X, y = check_arrays(X, y, allow_lists=True, sparse_format='csr',
-                            allow_nans=True)
+        X, y = indexable(X, y)
 
         if y is not None:
             if len(y) != n_samples:
                 raise ValueError('Target variable (y) has a different number '
                                  'of samples (%i) than data (X: %i samples)'
                                  % (len(y), n_samples))
-            y = np.asarray(y)
         cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
 
         if self.verbose > 0:
@@ -512,14 +520,14 @@ class GridSearchCV(BaseSearchCV):
                          degree=..., gamma=..., kernel='rbf', max_iter=-1,
                          probability=False, random_state=None, shrinking=True,
                          tol=..., verbose=False),
-           fit_params={}, iid=..., loss_func=..., n_jobs=1,
-           param_grid=..., pre_dispatch=..., refit=..., score_func=...,
+           fit_params={}, iid=..., n_jobs=1,
+           param_grid=..., pre_dispatch=..., refit=...,
            scoring=..., verbose=...)
 
 
     Attributes
     ----------
-    `grid_scores_` : list of named tuples
+    grid_scores_ : list of named tuples
         Contains scores for all parameter combinations in param_grid.
         Each entry corresponds to one parameter setting.
         Each named tuple has the attributes:
@@ -529,18 +537,18 @@ class GridSearchCV(BaseSearchCV):
               cross-validation folds
             * ``cv_validation_scores``, the list of scores for each fold
 
-    `best_estimator_` : estimator
+    best_estimator_ : estimator
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data.
 
-    `best_score_` : float
+    best_score_ : float
         Score of best_estimator on the left out data.
 
-    `best_params_` : dict
+    best_params_ : dict
         Parameter setting that gave the best results on the hold out data.
 
-    `scorer_` : function
+    scorer_ : function
         Scorer function used on the held out data to choose the best
         parameters for the model.
 
@@ -572,11 +580,11 @@ class GridSearchCV(BaseSearchCV):
 
     """
 
-    def __init__(self, estimator, param_grid, scoring=None, loss_func=None,
-                 score_func=None, fit_params=None, n_jobs=1, iid=True,
+    def __init__(self, estimator, param_grid, scoring=None,
+                 fit_params=None, n_jobs=1, iid=True,
                  refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs'):
         super(GridSearchCV, self).__init__(
-            estimator, scoring, loss_func, score_func, fit_params, n_jobs, iid,
+            estimator, scoring, fit_params, n_jobs, iid,
             refit, cv, verbose, pre_dispatch)
         self.param_grid = param_grid
         _check_param_grid(param_grid)
@@ -675,7 +683,7 @@ class RandomizedSearchCV(BaseSearchCV):
 
     Attributes
     ----------
-    `grid_scores_` : list of named tuples
+    grid_scores_ : list of named tuples
         Contains scores for all parameter combinations in param_grid.
         Each entry corresponds to one parameter setting.
         Each named tuple has the attributes:
@@ -685,15 +693,15 @@ class RandomizedSearchCV(BaseSearchCV):
               cross-validation folds
             * ``cv_validation_scores``, the list of scores for each fold
 
-    `best_estimator_` : estimator
+    best_estimator_ : estimator
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data.
 
-    `best_score_` : float
+    best_score_ : float
         Score of best_estimator on the left out data.
 
-    `best_params_` : dict
+    best_params_ : dict
         Parameter setting that gave the best results on the hold out data.
 
     Notes

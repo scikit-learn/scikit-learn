@@ -27,20 +27,21 @@ should be used when applicable.
 
 - :func:`assert_all_finite`: Throw an error if array contains NaNs or Infs.
 
-- :func:`safe_asarray`: Convert input to array or sparse matrix.  Equivalent
-  to ``np.asarray``, but sparse matrices are passed through.
-
 - :func:`as_float_array`: convert input to an array of floats.  If a sparse
   matrix is passed, a sparse matrix will be returned.
 
-- :func:`array2d`: equivalent to ``np.atleast_2d``, but the ``order`` and
-  ``dtype`` of the input are maintained.
+- :func:`check_array`: convert input to 2d array, raise error on sparse
+  matrices.  Allowed sparse matrix formats can be given optionally, as well as
+  allowing 1d or nd arrays.  Calls :func:`assert_all_finite` by default.
 
-- :func:`atleast2d_or_csr`: equivalent to ``array2d``, but if a sparse matrix
-  is passed, will convert to csr format.  Also calls ``assert_all_finite``.
+- :func:`check_X_y`: check that X and y have consistent length, calls
+  check_array on X, and column_or_1d on y. For multilabel classification or
+  multitarget regression, specify multi_ouput=True, in which case check_array
+  will be called on y.
 
-- :func:`check_arrays`: check that all input arrays have consistent first
-  dimensions.  This will work for an arbitrary number of arrays.
+- :func:`indexable`: check that all input arrays have consistent length and can
+  be sliced or indexed using safe_index.  This is used to validate input for
+  cross-validation.
 
 - :func:`warn_if_not_float`: Warn if input is not a floating-point value.
   the input ``X`` is assumed to have ``X.dtype``.
@@ -129,7 +130,7 @@ Efficient Random Sampling
 =========================
 
 - :func:`random.sample_without_replacement`: implements efficient algorithms
-  for sampling `n_samples` integers from a population of size `n_population`
+  for sampling ``n_samples`` integers from a population of size ``n_population``
   without replacement.
 
 
@@ -139,8 +140,8 @@ Efficient Routines for Sparse Matrices
 The ``sklearn.utils.sparsefuncs`` cython module hosts compiled extensions to
 efficiently process ``scipy.sparse`` data.
 
-- :func:`sparsefuncs.mean_variance_axis0`: compute the means and
-  variances along axis 0 of a CSR matrix.
+- :func:`sparsefuncs.mean_variance_axis`: compute the means and
+  variances along a specified axis of a CSR matrix.
   Used for normalizing the tolerance stopping criterion in
   :class:`sklearn.cluster.k_means_.KMeans`.
 
@@ -188,6 +189,11 @@ Backports
   (backported from ``scipy.sparse.connected_components`` in scipy 0.12).
   Used in ``sklearn.cluster.hierarchical``, as well as in tests for
   :mod:`sklearn.feature_extraction`.
+
+- :func:`fixes.isclose`
+  (backported from ``numpy.isclose`` in numpy 1.8.1).
+  In versions before 1.7, this function was not available in
+  numpy. Used in ``sklearn.metrics``.
 
 
 ARPACK
@@ -244,7 +250,7 @@ Multiclass and multilabel utility function
   a classification output is in label indicator matrix format.
 
 - :func:`multiclass.unique_labels`: Helper function to extract an ordered
-  array of unique labels from a list of labels.
+  array of unique labels from different formats of target.
 
 
 Helper Functions
@@ -267,7 +273,7 @@ Hash Functions
 ==============
 
 - :func:`murmurhash3_32` provides a python wrapper for the
-  `MurmurHash3_x86_32` C++ non cryptographic hash function. This hash
+  ``MurmurHash3_x86_32`` C++ non cryptographic hash function. This hash
   function is suitable for implementing lookup tables, Bloom filters,
   Count Min Sketch, feature hashing and implicitly defined sparse
   random projections::

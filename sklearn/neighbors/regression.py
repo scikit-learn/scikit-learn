@@ -8,14 +8,12 @@
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 
-import warnings
-
 import numpy as np
 
 from .base import _get_weights, _check_weights, NeighborsBase, KNeighborsMixin
 from .base import RadiusNeighborsMixin, SupervisedFloatMixin
 from ..base import RegressorMixin
-from ..utils import atleast2d_or_csr
+from ..utils import check_array
 
 
 class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
@@ -74,9 +72,8 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-    **kwargs :
-        additional keyword arguments are passed to the distance function as
-        additional arguments.
+    metric_params: dict, optional (default = None)
+        additional keyword arguments for the metric function.
 
     Examples
     --------
@@ -113,17 +110,11 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
 
     def __init__(self, n_neighbors=5, weights='uniform',
                  algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', **kwargs):
-        if kwargs:
-            if 'warn_on_equidistant' in kwargs:
-                kwargs.pop('warn_on_equidistant')
-                warnings.warn("The warn_on_equidistant parameter is "
-                              "deprecated and will be removed in the future",
-                              DeprecationWarning,
-                              stacklevel=2)
+                 p=2, metric='minkowski', metric_params=None, **kwargs):
         self._init_params(n_neighbors=n_neighbors,
                           algorithm=algorithm,
-                          leaf_size=leaf_size, metric=metric, p=p, **kwargs)
+                          leaf_size=leaf_size, metric=metric, p=p,
+                          metric_params=metric_params, **kwargs)
         self.weights = _check_weights(weights)
 
     def predict(self, X):
@@ -139,7 +130,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         y : array of int, shape = [n_samples] or [n_samples, n_outputs]
             Target values
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
 
         neigh_dist, neigh_ind = self.kneighbors(X)
 
@@ -222,9 +213,8 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-    **kwargs :
-        additional keyword arguments are passed to the distance function as
-        additional arguments.
+    metric_params: dict, optional (default = None)
+        additional keyword arguments for the metric function.
 
     Examples
     --------
@@ -254,11 +244,12 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 
     def __init__(self, radius=1.0, weights='uniform',
                  algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', **kwargs):
+                 p=2, metric='minkowski', metric_params=None, **kwargs):
         self._init_params(radius=radius,
                           algorithm=algorithm,
                           leaf_size=leaf_size,
-                          p=p, metric=metric, **kwargs)
+                          p=p, metric=metric, metric_params=metric_params,
+                          **kwargs)
         self.weights = _check_weights(weights)
 
     def predict(self, X):
@@ -273,7 +264,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         y : array of int, shape = [n_samples] or [n_samples, n_outputs]
             Target values
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
 

@@ -51,9 +51,9 @@ Univariate feature selection
 Univariate feature selection works by selecting the best features based on
 univariate statistical tests. It can be seen as a preprocessing step
 to an estimator. Scikit-learn exposes feature selection routines
-as objects that implement the `transform` method:
+as objects that implement the ``transform`` method:
 
- * :class:`SelectKBest` removes all but the `k` highest scoring features
+ * :class:`SelectKBest` removes all but the :math:`k` highest scoring features
 
  * :class:`SelectPercentile` removes all but a user-specified highest scoring
    percentage of features
@@ -66,20 +66,19 @@ as objects that implement the `transform` method:
     selection with a configurable strategy. This allows to select the best
     univariate selection strategy with hyper-parameter search estimator.
 
-Using the boolean-feature example given above,
-we can perform a :math:`\chi^2` test to the samples
+For instance, we can perform a :math:`\chi^2` test to the samples
 to retrieve only the two best features as follows:
 
-  >>> from sklearn.feature_selection import VarianceThreshold
-  >>> X = [[0, 0, 1], [0, 1, 0], [1, 0, 0], [0, 1, 1], [0, 1, 0], [0, 1, 1]]
-  >>> sel = VarianceThreshold(threshold=(.8 * (1 - .8)))
-  >>> sel.fit_transform(X)
-  array([[0, 1],
-         [1, 0],
-         [0, 0],
-         [1, 1],
-         [1, 0],
-         [1, 1]])
+  >>> from sklearn.datasets import load_iris
+  >>> from sklearn.feature_selection import SelectKBest
+  >>> from sklearn.feature_selection import chi2
+  >>> iris = load_iris()
+  >>> X, y = iris.data, iris.target
+  >>> X.shape
+  (150, 4)
+  >>> X_new = SelectKBest(chi2, k=2).fit_transform(X, y)
+  >>> X_new.shape
+  (150, 2)
 
 These objects take as input a scoring function that returns
 univariate p-values:
@@ -100,7 +99,7 @@ univariate p-values:
 
 .. topic:: Examples:
 
-    :ref:`example_plot_feature_selection.py`
+    :ref:`example_feature_selection_plot_feature_selection.py`
 
 
 Recursive feature elimination
@@ -120,10 +119,10 @@ number of features.
 
 .. topic:: Examples:
 
-    * :ref:`example_plot_rfe_digits.py`: A recursive feature elimination example
+    * :ref:`example_feature_selection_plot_rfe_digits.py`: A recursive feature elimination example
       showing the relevance of pixels in a digit classification task.
 
-    * :ref:`example_plot_rfe_with_cross_validation.py`: A recursive feature
+    * :ref:`example_feature_selection_plot_rfe_with_cross_validation.py`: A recursive feature
       elimination example with automatic tuning of the number of features
       selected with cross-validation.
 
@@ -141,7 +140,7 @@ Selecting non-zero coefficients
 :ref:`Linear models <linear_model>` penalized with the L1 norm have
 sparse solutions: many of their estimated coefficients are zero. When the goal
 is to reduce the dimensionality of the data to use with another classifier,
-they expose a `transform` method to select the non-zero coefficient. In
+they expose a ``transform`` method to select the non-zero coefficient. In
 particular, sparse estimators useful for this purpose are the
 :class:`linear_model.Lasso` for regression, and
 of :class:`linear_model.LogisticRegression` and :class:`svm.LinearSVC`
@@ -163,7 +162,7 @@ alpha parameter, the fewer features selected.
 
 .. topic:: Examples:
 
-    * :ref:`example_document_classification_20newsgroups.py`: Comparison
+    * :ref:`example_text_document_classification_20newsgroups.py`: Comparison
       of different algorithms for document classification including L1-based
       feature selection.
 
@@ -189,7 +188,7 @@ alpha parameter, the fewer features selected.
    (:class:`LassoLarsIC`) tends, on the opposite, to set high values of
    alpha.
 
-   **Reference** Richard G. Baraniuk `Compressive Sensing`, IEEE Signal
+   **Reference** Richard G. Baraniuk "Compressive Sensing", IEEE Signal
    Processing Magazine [120] July 2007
    http://dsp.rice.edu/files/cs/baraniukCSlecture07.pdf
 
@@ -211,8 +210,8 @@ settings, using the Lasso, while :class:`RandomizedLogisticRegression` uses the
 logistic regression and is suitable for classification tasks.  To get a full
 path of stability scores you can use :func:`lasso_stability_path`.
 
-.. figure:: ../auto_examples/linear_model/images/plot_sparse_recovery_2.png
-   :target: ../auto_examples/linear_model/plot_sparse_recovery.html
+.. figure:: ../auto_examples/linear_model/linear_model.png
+   :target: ../auto_examples/linear_model/linear_model.html
    :align: center
    :scale: 60
 

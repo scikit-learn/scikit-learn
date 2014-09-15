@@ -24,12 +24,12 @@ print(__doc__)
 
 from sklearn import datasets
 
-import pylab as pl
+import matplotlib.pyplot as plt
 
 #Load the digits dataset
 digits = datasets.load_digits()
 
 #Display the first digit
-pl.figure(1, figsize=(3, 3))
-pl.imshow(digits.images[-1], cmap=pl.cm.gray_r, interpolation='nearest')
-pl.show()
+plt.figure(1, figsize=(3, 3))
+plt.imshow(digits.images[-1], cmap=plt.cm.gray_r, interpolation='nearest')
+plt.show()

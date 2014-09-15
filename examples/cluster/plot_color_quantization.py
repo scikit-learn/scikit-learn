@@ -26,7 +26,7 @@ randomly) is also shown.
 
 print(__doc__)
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 from sklearn.metrics import pairwise_distances_argmin
 from sklearn.datasets import load_sample_image
@@ -39,7 +39,7 @@ n_colors = 64
 china = load_sample_image("china.jpg")
 
 # Convert to floats instead of the default 8 bits integer coding. Dividing by
-# 255 is important so that pl.imshow behaves works well on float data (need to
+# 255 is important so that plt.imshow behaves works well on float data (need to
 # be in the range [0-1]
 china = np.array(china, dtype=np.float64) / 255
 
@@ -82,24 +82,24 @@ def recreate_image(codebook, labels, w, h):
     return image
 
 # Display all results, alongside original image
-pl.figure(1)
-pl.clf()
-ax = pl.axes([0, 0, 1, 1])
-pl.axis('off')
-pl.title('Original image (96,615 colors)')
-pl.imshow(china)
+plt.figure(1)
+plt.clf()
+ax = plt.axes([0, 0, 1, 1])
+plt.axis('off')
+plt.title('Original image (96,615 colors)')
+plt.imshow(china)
 
-pl.figure(2)
-pl.clf()
-ax = pl.axes([0, 0, 1, 1])
-pl.axis('off')
-pl.title('Quantized image (64 colors, K-Means)')
-pl.imshow(recreate_image(kmeans.cluster_centers_, labels, w, h))
+plt.figure(2)
+plt.clf()
+ax = plt.axes([0, 0, 1, 1])
+plt.axis('off')
+plt.title('Quantized image (64 colors, K-Means)')
+plt.imshow(recreate_image(kmeans.cluster_centers_, labels, w, h))
 
-pl.figure(3)
-pl.clf()
-ax = pl.axes([0, 0, 1, 1])
-pl.axis('off')
-pl.title('Quantized image (64 colors, Random)')
-pl.imshow(recreate_image(codebook_random, labels_random, w, h))
-pl.show()
+plt.figure(3)
+plt.clf()
+ax = plt.axes([0, 0, 1, 1])
+plt.axis('off')
+plt.title('Quantized image (64 colors, Random)')
+plt.imshow(recreate_image(codebook_random, labels_random, w, h))
+plt.show()

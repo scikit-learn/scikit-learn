@@ -18,8 +18,11 @@ print(__doc__)
 #
 # License: BSD 3 clause
 
+# importing necessary libraries
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import AdaBoostRegressor
 
 # Create a the dataset
 rng = np.random.RandomState(1)
@@ -27,9 +30,6 @@ X = np.linspace(0, 6, 100)[:, np.newaxis]
 y = np.sin(X).ravel() + np.sin(6 * X).ravel() + rng.normal(0, 0.1, X.shape[0])
 
 # Fit regression model
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.ensemble import AdaBoostRegressor
-
 clf_1 = DecisionTreeRegressor(max_depth=4)
 
 clf_2 = AdaBoostRegressor(DecisionTreeRegressor(max_depth=4),

@@ -24,13 +24,34 @@ Documentation of scikit-learn 0.15
                       	to apply them.
                     </blockquote>
                 </div>
-                <div class="span4 box">
-                    <h2><a href="tutorial/machine_learning_map/index.html">Flow Chart</a></h2>
-                    <blockquote>A graphical overview of basic areas of machine
-                        learning, and guidance which kind of algorithms
-                        to use in a given situation.
-                    </blockquote>
-                </div>
+			<div class="span4 box">
+			<!-- doc versions -->
+			    <h2>Other Versions</h2>
+                        <ul>
+                            <li><a href="http://scikit-learn.org/stable/user_guide.html">scikit-learn 0.15 (stable)</a></li>
+                            <li>scikit-learn 0.16 (development)</li>
+                            <li><a href="http://scikit-learn.org/0.14/user_guide.html">scikit-learn 0.14</a></li>
+                            <li><a href="http://scikit-learn.org/0.13/user_guide.html">scikit-learn 0.13</a></li>
+                            <li><a href="http://scikit-learn.org/0.12/user_guide.html">scikit-learn 0.12</a></li>
+			    <li id="other-versions">Older versions
+			    	<a class="btn dropdown-toggle" data-toggle="dropdown">
+			           <span class="caret"></span>
+			    	   </a>
+		      	    <ul class="dropdown-menu">
+                               <li><a href="http://scikit-learn.org/0.11/user_guide.html">scikit-learn 0.11</a></li>
+                               <li><a href="http://scikit-learn.org/0.10/user_guide.html">scikit-learn 0.10</a></li>
+                               <li><a href="http://scikit-learn.org/0.9/user_guide.html">scikit-learn 0.9</a></li>
+                               <li><a href="http://scikit-learn.org/0.8/user_guide.html">scikit-learn 0.8</a></li>
+                               <li><a href="http://scikit-learn.org/0.7/user_guide.html">scikit-learn 0.7</a></li>
+                               <li><a href="http://scikit-learn.org/0.6/user_guide.html">scikit-learn 0.6</a></li>
+                               <li><a href="http://scikit-learn.org/0.5/user_guide.html">scikit-learn 0.5</a></li>
+		      	    </ul>
+			</li>
+                    </ul>
+
+			</div>
+                        <!-- row -->
+                    </div>
             </div>
 
           <!-- row -->
@@ -51,33 +72,6 @@ Documentation of scikit-learn 0.15
                     	    and all parameters available for the algorithms.
                     	    </blockquote>
                         </div>
-			<div class="span4 box">
-			<!-- doc versions -->
-			    <h2>Other Versions</h2>
-                        <ul>
-                            <li><a href="http://scikit-learn.org/stable/user_guide.html">scikit-learn 0.14 (stable)</a></li>
-                            <li>scikit-learn 0.15 (development)</li>
-                            <li><a href="http://scikit-learn.org/0.13/user_guide.html">scikit-learn 0.13</a></li>
-                            <li><a href="http://scikit-learn.org/0.12/user_guide.html">scikit-learn 0.12</a></li>
-                            <li><a href="http://scikit-learn.org/0.11/user_guide.html">scikit-learn 0.11</a></li>
-			    <li id="other-versions">Older versions
-			    	<a class="btn dropdown-toggle" data-toggle="dropdown">
-			           <span class="caret"></span>
-			    	   </a>
-		      	    <ul class="dropdown-menu">
-			        <li><a href="http://scikit-learn.org/0.10/user_guide.html">scikit-learn 0.10</a></li>
-                            	<li><a href="http://scikit-learn.org/0.9/user_guide.html">scikit-learn 0.9</a></li>
-				<li><a href="http://scikit-learn.org/0.8/user_guide.html">scikit-learn 0.8</a></li>
-                        	<li><a href="http://scikit-learn.org/0.7/user_guide.html">scikit-learn 0.7</a></li>
-                        	<li><a href="http://scikit-learn.org/0.6/user_guide.html">scikit-learn 0.6</a></li>
-                        	<li><a href="http://scikit-learn.org/0.5/user_guide.html">scikit-learn 0.5</a></li>
-		      	    </ul>
-			</li>
-                    </ul>
-
-			</div>
-                        <!-- row -->
-                    </div>
 	    </div>
 
           <!-- row -->
@@ -94,6 +88,21 @@ Documentation of scikit-learn 0.15
                     how to build their own estimators.
                     </blockquote>
                 </div>
-		
+
             </div>
 
+            <div class="row-fluid">
+                <div class="span4 box">
+                    <h2><a href="tutorial/machine_learning_map/index.html">Flow Chart</a></h2>
+                    <blockquote>A graphical overview of basic areas of machine
+                        learning, and guidance which kind of algorithms
+                        to use in a given situation.
+                    </blockquote>
+                </div>
+                <div class="span4 box">
+                    <h2><a href="faq.html">FAQ</a></h2>
+                    <blockquote>Frequently asked questions about the project and contributing.
+                    </blockquote>
+                </div>
+
+            </div>

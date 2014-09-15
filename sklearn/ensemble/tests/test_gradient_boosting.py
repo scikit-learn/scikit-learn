@@ -88,6 +88,13 @@ def test_parameter_checks():
                   GradientBoostingClassifier(min_samples_leaf=-1.).fit, X, y)
 
     assert_raises(ValueError,
+                  GradientBoostingClassifier(min_weight_fraction_leaf=-1.).fit,
+                  X, y)
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(min_weight_fraction_leaf=0.6).fit,
+                  X, y)
+
+    assert_raises(ValueError,
                   GradientBoostingClassifier(subsample=0.0).fit, X, y)
     assert_raises(ValueError,
                   GradientBoostingClassifier(subsample=1.1).fit, X, y)
@@ -330,8 +337,8 @@ def test_max_feature_auto():
     X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
     _, n_features = X.shape
 
-    X_train, X_test = X[:2000], X[2000:]
-    y_train, y_test = y[:2000], y[2000:]
+    X_train = X[:2000]
+    y_train = y[:2000]
 
     gbrt = GradientBoostingClassifier(n_estimators=1, max_features='auto')
     gbrt.fit(X_train, y_train)
@@ -361,7 +368,7 @@ def test_staged_predict():
     X, y = datasets.make_friedman1(n_samples=1200,
                                    random_state=1, noise=1.0)
     X_train, y_train = X[:200], y[:200]
-    X_test, y_test = X[200:], y[200:]
+    X_test = X[200:]
     clf = GradientBoostingRegressor()
     # test raise ValueError if not fitted
     assert_raises(ValueError, lambda X: np.fromiter(
@@ -668,7 +675,7 @@ def test_warm_start_n_estimators():
 
 
 def test_warm_start_max_depth():
-    """Test if possible to fit trees of differet depth in ensemble. """
+    """Test if possible to fit trees of different depth in ensemble. """
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
         est = Cls(n_estimators=100, max_depth=1, warm_start=True)
@@ -778,7 +785,7 @@ def test_monitor_early_stopping():
 
     for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
         est = Cls(n_estimators=20, max_depth=1, random_state=1, subsample=0.5)
-        _ = est.fit(X, y, monitor=early_stopping_monitor)
+        est.fit(X, y, monitor=early_stopping_monitor)
         assert_equal(est.n_estimators, 20)  # this is not altered
         assert_equal(est.estimators_.shape[0], 10)
         assert_equal(est.train_score_.shape[0], 10)
@@ -907,6 +914,18 @@ def test_max_leaf_nodes_max_depth():
         est = GBEstimator(max_depth=1).fit(X, y)
         tree = est.estimators_[0, 0].tree_
         assert_equal(tree.max_depth, 1)
+
+
+def test_warm_start_wo_nestimators_change():
+    """Test if warm_start does nothing if n_estimators is not changed.
+
+    Regression test for #3513.
+    """
+    clf = GradientBoostingClassifier(n_estimators=10, warm_start=True)
+    clf.fit([[0, 1], [2, 3]], [0, 1])
+    assert clf.estimators_.shape[0] == 10
+    clf.fit([[0, 1], [2, 3]], [0, 1])
+    assert clf.estimators_.shape[0] == 10
 
 
 if __name__ == "__main__":

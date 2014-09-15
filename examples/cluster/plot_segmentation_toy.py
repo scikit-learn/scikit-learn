@@ -31,7 +31,7 @@ print(__doc__)
 # License: BSD 3 clause
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn.feature_extraction import image
 from sklearn.cluster import spectral_clustering
@@ -74,8 +74,8 @@ labels = spectral_clustering(graph, n_clusters=4, eigen_solver='arpack')
 label_im = -np.ones(mask.shape)
 label_im[mask] = labels
 
-pl.matshow(img)
-pl.matshow(label_im)
+plt.matshow(img)
+plt.matshow(label_im)
 
 ###############################################################################
 # 2 circles
@@ -92,7 +92,7 @@ labels = spectral_clustering(graph, n_clusters=2, eigen_solver='arpack')
 label_im = -np.ones(mask.shape)
 label_im[mask] = labels
 
-pl.matshow(img)
-pl.matshow(label_im)
+plt.matshow(img)
+plt.matshow(label_im)
 
-pl.show()
+plt.show()

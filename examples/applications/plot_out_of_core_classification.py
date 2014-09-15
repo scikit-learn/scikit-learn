@@ -33,15 +33,16 @@ from glob import glob
 import itertools
 import os.path
 import re
-import sgmllib
 import tarfile
 import time
-import urllib
 
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 
+from sklearn.externals import six
+from sklearn.externals.six.moves import html_parser
+from sklearn.externals.six.moves import urllib
 from sklearn.datasets import get_data_home
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.linear_model.stochastic_gradient import SGDClassifier
@@ -59,13 +60,22 @@ def _not_in_sphinx():
 # Reuters Dataset related routines
 ###############################################################################
 
-class ReutersParser(sgmllib.SGMLParser):
 
+class ReutersParser(html_parser.HTMLParser):
     """Utility class to parse a SGML file and yield documents one at a time."""
 
-    def __init__(self, verbose=0):
-        sgmllib.SGMLParser.__init__(self, verbose)
+    def __init__(self, encoding='latin-1'):
+        html_parser.HTMLParser.__init__(self)
         self._reset()
+        self.encoding = encoding
+
+    def handle_starttag(self, tag, attrs):
+        method = 'start_' + tag
+        getattr(self, method, lambda x: None)(attrs)
+
+    def handle_endtag(self, tag):
+        method = 'end_' + tag
+        getattr(self, method, lambda: None)()
 
     def _reset(self):
         self.in_title = 0
@@ -80,7 +90,7 @@ class ReutersParser(sgmllib.SGMLParser):
     def parse(self, fd):
         self.docs = []
         for chunk in fd:
-            self.feed(chunk)
+            self.feed(chunk.decode(self.encoding))
             for doc in self.docs:
                 yield doc
             self.docs = []
@@ -162,8 +172,8 @@ def stream_reuters_documents(data_path=None):
                       end='')
 
         archive_path = os.path.join(data_path, ARCHIVE_FILENAME)
-        urllib.urlretrieve(DOWNLOAD_URL, filename=archive_path,
-                           reporthook=progress)
+        urllib.request.urlretrieve(DOWNLOAD_URL, filename=archive_path,
+                                   reporthook=progress)
         if _not_in_sphinx():
             print('\r', end='')
         print("untarring Reuters dataset...")
@@ -172,7 +182,7 @@ def stream_reuters_documents(data_path=None):
 
     parser = ReutersParser()
     for filename in glob(os.path.join(data_path, "*.sgm")):
-        for doc in parser.parse(open(filename)):
+        for doc in parser.parse(open(filename, 'rb')):
             yield doc
 
 
@@ -210,7 +220,7 @@ def get_minibatch(doc_iter, size, pos_class=positive_class):
     Note: size is before excluding invalid docs with no topics assigned.
 
     """
-    data = [('{title}\n\n{body}'.format(**doc), pos_class in doc['topics'])
+    data = [(u'{title}\n\n{body}'.format(**doc), pos_class in doc['topics'])
             for doc in itertools.islice(doc_iter, size)
             if doc['topics']]
     if not len(data):

@@ -181,12 +181,13 @@ It is advisable to evaluate both models, if time permits.
 Out-of-core naive Bayes model fitting
 -------------------------------------
 
-Discrete naive Bayes models can be used to tackle large scale text
-classification problems for which the full training set might not fit in
-memory. To handle this case both :class:`MultinomialNB` and
-:class:`BernoulliNB` expose a ``partial_fit`` method that can be used
+Naive Bayes models can be used to tackle large scale classification problems
+for which the full training set might not fit in memory. To handle this case,
+:class:`MultinomialNB`, :class:`BernoulliNB`, and :class:`GaussianNB`
+expose a ``partial_fit`` method that can be used
 incrementally as done with other classifiers as demonstrated in
-:ref:`example_applications_plot_out_of_core_classification.py`.
+:ref:`example_applications_plot_out_of_core_classification.py`. Both discrete
+classifiers support sample weighting; :class:`GaussianNB` does not.
 
 Contrary to the ``fit`` method, the first call to ``partial_fit`` needs to be
 passed the list of all the expected class labels.

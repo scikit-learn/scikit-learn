@@ -22,7 +22,8 @@ from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 from .stochastic_gradient import SGDClassifier, SGDRegressor
 from .ridge import (Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV,
                     ridge_regression)
-from .logistic import LogisticRegression
+from .logistic import (LogisticRegression, LogisticRegressionCV,
+                       logistic_regression_path)
 from .omp import (orthogonal_mp, orthogonal_mp_gram, OrthogonalMatchingPursuit,
                   OrthogonalMatchingPursuitCV)
 from .passive_aggressive import PassiveAggressiveClassifier
@@ -48,6 +49,7 @@ __all__ = ['ARDRegression',
            'LinearRegression',
            'Log',
            'LogisticRegression',
+           'LogisticRegressionCV',
            'ModifiedHuber',
            'MultiTaskElasticNet',
            'MultiTaskElasticNetCV',
@@ -71,6 +73,7 @@ __all__ = ['ARDRegression',
            'lars_path',
            'lasso_path',
            'lasso_stability_path',
+           'logistic_regression_path',
            'orthogonal_mp',
            'orthogonal_mp_gram',
            'ridge_regression',

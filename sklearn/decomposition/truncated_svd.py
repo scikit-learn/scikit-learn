@@ -6,8 +6,6 @@
 #         Michael Becker <mike@beckerfuffle.com>
 # License: 3-clause BSD.
 
-import warnings
-
 import numpy as np
 import scipy.sparse as sp
 
@@ -17,10 +15,9 @@ except ImportError:
     from ..utils.arpack import svds
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import (array2d, as_float_array, atleast2d_or_csr,
-                     check_random_state)
+from ..utils import check_array, as_float_array, check_random_state
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
-from ..utils.sparsefuncs import mean_variance_axis0
+from ..utils.sparsefuncs import mean_variance_axis
 
 __all__ = ["TruncatedSVD"]
 
@@ -48,29 +45,33 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         Must be strictly less than the number of features.
         The default value is useful for visualisation. For LSA, a value of
         100 is recommended.
+
     algorithm : string, default = "randomized"
         SVD solver to use. Either "arpack" for the ARPACK wrapper in SciPy
         (scipy.sparse.linalg.svds), or "randomized" for the randomized
         algorithm due to Halko (2009).
+
     n_iter : int, optional
         Number of iterations for randomized SVD solver. Not used by ARPACK.
+
     random_state : int or RandomState, optional
         (Seed for) pseudo-random number generator. If not given, the
         numpy.random singleton is used.
+
     tol : float, optional
         Tolerance for ARPACK. 0 means machine precision. Ignored by randomized
         SVD solver.
 
     Attributes
     ----------
-    `components_` : array, shape (n_components, n_features)
+    components_ : array, shape (n_components, n_features)
 
-    `explained_variance_` : array, [n_components]
+    explained_variance_ratio_ : array, [n_components]
+        Percentage of variance explained by each of the selected components.
+
+    explained_variance_ : array, [n_components]
         The variance of the training samples transformed by a projection to
         each component.
-
-    `explained_variance_ratio_` : array, [n_components]
-        Percentage of variance explained by each of the selected components.
 
     Examples
     --------
@@ -105,12 +106,8 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     class to data once, then keep the instance around to do transformations.
 
     """
-    def __init__(self, n_components=2, algorithm="randomized",
-                 n_iter=5, random_state=None, tol=0., n_iterations=None):
-        if n_iterations is not None:
-            warnings.warn("n_iterations was renamed to n_iter for consistency "
-                          "and will be removed in 0.16.", DeprecationWarning)
-            n_iter = n_iterations
+    def __init__(self, n_components=2, algorithm="randomized", n_iter=5,
+                 random_state=None, tol=0.):
         self.algorithm = algorithm
         self.n_components = n_components
         self.n_iter = n_iter
@@ -175,11 +172,10 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         self.components_ = VT
 
         # Calculate explained variance & explained variance ratio
-        n_samples = X.shape[0]
         X_transformed = np.dot(U, np.diag(Sigma))
         self.explained_variance_ = exp_var = np.var(X_transformed, axis=0)
         if sp.issparse(X):
-            _, full_var = mean_variance_axis0(X)
+            _, full_var = mean_variance_axis(X, axis=0)
             full_var = full_var.sum()
         else:
             full_var = np.var(X, axis=0).sum()
@@ -199,7 +195,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         X_new : array, shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
         return safe_sparse_dot(X, self.components_.T)
 
     def inverse_transform(self, X):
@@ -217,11 +213,5 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         X_original : array, shape (n_samples, n_features)
             Note that this is always a dense array.
         """
-        X = array2d(X)
+        X = check_array(X)
         return np.dot(X, self.components_)
-
-    @property
-    def n_iterations(self):
-        warnings.warn("n_iterations was renamed to n_iter for consistency "
-                      "and will be removed in 0.16.", DeprecationWarning)
-        return self.n_iter
