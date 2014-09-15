@@ -959,15 +959,6 @@ def test_probability_exponential():
     assert_raises(TypeError, lambda : next(clf.staged_predict_proba(T)))
 
 
-def test_sample_weight_robust():
-    """Test that robost regression loss raise ValueError. """
-    sample_weight = np.ones(len(boston.target))
-    for loss in ('lad', 'huber', 'quantile'):
-        est = GradientBoostingRegressor(n_estimators=1, loss=loss)
-        assert_raises(NotImplementedError, est.fit, boston.data, boston.target,
-                      sample_weight=sample_weight)
-
-
 if __name__ == "__main__":
     import nose
     nose.runmodule()

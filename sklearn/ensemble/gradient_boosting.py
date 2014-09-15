@@ -50,6 +50,18 @@ from ._gradient_boosting import predict_stage
 from ._gradient_boosting import _random_sample_mask
 
 
+def _weighted_percentile(arr, sample_weight, percentile=50):
+    """Compute the weighted ``percentile`` of ``arr`` with ``sample_weight``. """
+    sorted_idx = np.argsort(arr)
+
+    # Find index of median prediction for each sample
+    weight_cdf = sample_weight[sorted_idx].cumsum()
+    percentile_or_above = weight_cdf >= (percentile / 100.0) * weight_cdf[-1]
+    percentile_idx = percentile_or_above.argmax()
+
+    return arr[sorted_idx[percentile_idx]]
+
+
 class QuantileEstimator(BaseEstimator):
     """An estimator predicting the alpha-quantile of the training targets."""
     def __init__(self, alpha=0.9):
@@ -286,8 +298,9 @@ class LeastAbsoluteError(RegressionLossFunction):
                                 residual, pred, sample_weight):
         """LAD updates terminal regions to median estimates. """
         terminal_region = np.where(terminal_regions == leaf)[0]
-        tree.value[leaf, 0, 0] = np.median(y.take(terminal_region, axis=0) -
-                                           pred.take(terminal_region, axis=0))
+        sample_weight = sample_weight.take(terminal_region, axis=0)
+        diff = y.take(terminal_region, axis=0) - pred.take(terminal_region, axis=0)
+        tree.value[leaf, 0, 0] = _weighted_percentile(diff, sample_weight, percentile=50)
 
 
 class HuberLossFunction(RegressionLossFunction):
@@ -314,11 +327,20 @@ class HuberLossFunction(RegressionLossFunction):
         diff = y - pred
         gamma = self.gamma
         if gamma is None:
-            gamma = stats.scoreatpercentile(np.abs(diff), self.alpha * 100)
+            if sample_weight is None:
+                gamma = stats.scoreatpercentile(np.abs(diff), self.alpha * 100)
+            else:
+                gamma = _weighted_percentile(np.abs(diff), sample_weight, self.alpha * 100)
+
         gamma_mask = np.abs(diff) <= gamma
-        sq_loss = np.sum(0.5 * diff[gamma_mask] ** 2.0)
-        lin_loss = np.sum(gamma * (np.abs(diff[~gamma_mask]) - gamma / 2.0))
-        return (sq_loss + lin_loss) / y.shape[0]
+        if sample_weight is None:
+            sq_loss = np.sum(0.5 * diff[gamma_mask] ** 2.0)
+            lin_loss = np.sum(gamma * (np.abs(diff[~gamma_mask]) - gamma / 2.0))
+        else:
+            sq_loss = np.sum(0.5 * sample_weight[gamma_mask] * diff[gamma_mask] ** 2.0)
+            lin_loss = np.sum(gamma * sample_weight[~gamma_mask] *
+                              (np.abs(diff[~gamma_mask]) - gamma / 2.0))
+        return (sq_loss + lin_loss) / sample_weight.sum()
 
     def negative_gradient(self, y, pred, **kargs):
         pred = pred.ravel()
@@ -334,13 +356,16 @@ class HuberLossFunction(RegressionLossFunction):
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
                                 residual, pred, sample_weight):
         terminal_region = np.where(terminal_regions == leaf)[0]
+        sample_weight = sample_weight.take(terminal_region, axis=0)
         gamma = self.gamma
         diff = (y.take(terminal_region, axis=0)
                 - pred.take(terminal_region, axis=0))
-        median = np.median(diff)
+        median = _weighted_percentile(diff, sample_weight, percentile=50)
+        #median = np.median(diff)
         diff_minus_median = diff - median
         tree.value[leaf, 0] = median + np.mean(
             np.sign(diff_minus_median) *
+            sample_weight *
             np.minimum(np.abs(diff_minus_median), gamma))
 
 
@@ -366,8 +391,13 @@ class QuantileLossFunction(RegressionLossFunction):
         alpha = self.alpha
 
         mask = y > pred
-        return (alpha * diff[mask].sum() +
-                (1.0 - alpha) * diff[~mask].sum()) / y.shape[0]
+        if sample_weight is None:
+            loss = (alpha * diff[mask].sum() +
+                    (1.0 - alpha) * diff[~mask].sum()) / y.shape[0]
+        else:
+            loss = (alpha * np.sum(sample_weight[mask] * diff[mask]) +
+                    (1.0 - alpha) * np.sum(sample_weight[~mask] * diff[~mask])) / sample_weight.sum()
+        return loss
 
     def negative_gradient(self, y, pred, **kargs):
         alpha = self.alpha
@@ -380,7 +410,9 @@ class QuantileLossFunction(RegressionLossFunction):
         terminal_region = np.where(terminal_regions == leaf)[0]
         diff = (y.take(terminal_region, axis=0)
                 - pred.take(terminal_region, axis=0))
-        val = stats.scoreatpercentile(diff, self.percentile)
+        sample_weight = sample_weight.take(terminal_region, axis=0)
+
+        val = _weighted_percentile(diff, sample_weight, self.percentile)
         tree.value[leaf, 0] = val
 
 
@@ -903,9 +935,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             sample_weight = np.ones(n_samples, dtype=np.float32)
         else:
             sample_weight = column_or_1d(sample_weight, warn=True)
-            if self.loss in ('lad', 'huber', 'quantile'):
-                raise NotImplementedError('sample_weight not supported for loss=%r' %
-                                          self.loss)
 
         if y.shape[0] != n_samples:
             raise ValueError('Shape mismatch of X and y: %d != %d' %
