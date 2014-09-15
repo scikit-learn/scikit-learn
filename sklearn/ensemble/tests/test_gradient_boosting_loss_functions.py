@@ -82,10 +82,8 @@ def test_sample_weight_init_estimators():
     X = rng.rand(100, 2)
     sample_weight = np.ones(100)
     reg_y = rng.rand(100)
-    #reg_pred = rng.rand(100)
 
     clf_y = rng.randint(0, 2, size=100)
-    #clf_pred = rng.randint(0, 1, size=100)
 
     for Loss in LOSS_FUNCTIONS.values():
         if Loss is None:

@@ -162,9 +162,8 @@ def test_classification_synthetic():
                                           random_state=0)
         gbrt.fit(X_train, y_train)
         error_rate = (1.0 - gbrt.score(X_test, y_test))
-        assert error_rate < 0.08, \
-            "Stochastic GB(loss={} failed with error {}".format(loss,
-                                                                error_rate)
+        assert error_rate < 0.08, ("Stochastic GradientBoostingClassifier(loss={}) "
+                                   "failed with error {}".format(loss, error_rate))
 
 
 def test_boston():

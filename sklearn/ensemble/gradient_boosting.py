@@ -291,7 +291,7 @@ class LeastAbsoluteError(RegressionLossFunction):
 
 
 class HuberLossFunction(RegressionLossFunction):
-    """Huber loss function forrobust regression.
+    """Huber loss function for robust regression.
 
     M-Regression proposed in Friedman 2001.
 
@@ -392,7 +392,7 @@ class ClassificationLossFunction(six.with_metaclass(ABCMeta, LossFunction)):
 
         If the loss does not support probabilites raises AttributeError.
         """
-        raise AttributeError('Loss does not support predict_proba')
+        raise TypeError('%s does not support predict_proba' % type(self).__name__)
 
     @abstractmethod
     def _score_to_decision(self, score):
@@ -425,8 +425,8 @@ class BinomialDeviance(ClassificationLossFunction):
         if sample_weight is None:
             return -2.0 * np.mean((y * pred) - np.logaddexp(0.0, pred))
         else:
-            return (-2.0 / sample_weight.sum()) * \
-              np.sum(sample_weight * ((y * pred) - np.logaddexp(0.0, pred)))
+            return (-2.0 / sample_weight.sum() *
+                    np.sum(sample_weight * ((y * pred) - np.logaddexp(0.0, pred))))
 
     def negative_gradient(self, y, pred, **kargs):
         """Compute the residual (= negative gradient). """
@@ -904,8 +904,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         else:
             sample_weight = column_or_1d(sample_weight, warn=True)
             if self.loss in ('lad', 'huber', 'quantile'):
-                raise ValueError('sample_weight not supported for loss=%r' %
-                                 self.loss)
+                raise NotImplementedError('sample_weight not supported for loss=%r' %
+                                          self.loss)
 
         if y.shape[0] != n_samples:
             raise ValueError('Shape mismatch of X and y: %d != %d' %
