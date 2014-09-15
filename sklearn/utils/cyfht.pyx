@@ -12,10 +12,14 @@ https://github.com/nbarbey/fht
 
 """
 
+
 import numpy as np
 cimport numpy as np
 cimport cython
 from libc.math cimport log2
+
+
+ctypedef np.double_t DTYPE_t
 
 
 def is_power_of_two(input_integer):
@@ -24,8 +28,6 @@ def is_power_of_two(input_integer):
         return False
     return input_integer != 0 and ((input_integer & (input_integer - 1)) == 0)
 
-#DTYPE = np.double
-ctypedef np.double_t DTYPE_t
 
 def pure_python_fht(array_):
     """ Pure Python implementation for educational purposes. """
@@ -47,6 +49,7 @@ def fht(np.ndarray[DTYPE_t] array_):
     else:
         _fht(array_)
 
+
 @cython.boundscheck(False)
 cdef _fht(np.ndarray[DTYPE_t, ndim=1] array_):
     cdef unsigned int bit, length, _, i, j
@@ -62,13 +65,13 @@ cdef _fht(np.ndarray[DTYPE_t, ndim=1] array_):
                 array_[j] = temp - array_[j]
 
 
-
 def fht2(np.ndarray[DTYPE_t, ndim=2] array_):
     """ Two dimensional row-wise FHT. """
     if not is_power_of_two(array_.shape[1]):
         raise ValueError('Length of rows for fht2 must be a power of two')
     else:
         _fht2(array_)
+
 
 @cython.boundscheck(False)
 cdef _fht2(np.ndarray[DTYPE_t, ndim=2] array_):
