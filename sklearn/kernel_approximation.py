@@ -6,7 +6,6 @@ approximate kernel feature maps base on Fourier transforms.
 # Author: Andreas Mueller <amueller@ais.uni-bonn.de>
 #
 # License: BSD 3 clause
-from __builtin__ import staticmethod
 
 import warnings
 
@@ -601,7 +600,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
         Fastfood.approx_fourier_transformation_multi_dim(result)
         result = result.reshape((num_examples, -1))
         np.take(result, P, axis=1, mode='wrap', out=result)
-        np.multiply(np.ravel(G), result.reshape(num_examples, self.n), 
+        np.multiply(np.ravel(G), result.reshape(num_examples, self.n),
                     out=result)
         result = result.reshape(num_examples*self.times_to_stack_v, self.d)
         Fastfood.approx_fourier_transformation_multi_dim(result)
@@ -611,7 +610,8 @@ class Fastfood(BaseEstimator, TransformerMixin):
         """ Scale mapped data VX to match kernel(e.g. RBF-Kernel) """
         VX = VX.reshape(-1, self.times_to_stack_v*self.d)
 
-        return 1 / (self.sigma * np.sqrt(self.d)) * np.multiply(np.ravel(S), VX)
+        return (1 / (self.sigma * np.sqrt(self.d)) *
+                np.multiply(np.ravel(S), VX))
 
     def phi(self, X):
         if self.tradeoff_less_mem_or_higher_accuracy == 'accuracy':
@@ -649,11 +649,11 @@ class Fastfood(BaseEstimator, TransformerMixin):
 
         self.G = self.rng.normal(size=(self.times_to_stack_v, self.d))
         self.B = self.rng.choice([-1, 1], size=(self.times_to_stack_v, self.d))
-        self.P = np.hstack([(i*self.d)+self.rng.permutation(self.d) 
+        self.P = np.hstack([(i*self.d)+self.rng.permutation(self.d)
                             for i in range(self.times_to_stack_v)])
         self.S = np.multiply(1 / np.linalg.norm(self.G, axis=1)
                              .reshape((-1, 1)),
-                             chi.rvs(self.d, 
+                             chi.rvs(self.d,
                                      size=(self.times_to_stack_v, self.d)))
 
         self.U = self.uniform_vector()
