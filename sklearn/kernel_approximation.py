@@ -586,6 +586,10 @@ class Fastfood(BaseEstimator, TransformerMixin):
     def approx_fourier_transformation_multi_dim(result):
         cyfht(result)
 
+    @staticmethod
+    def l2norm_along_axis1(X):
+        return np.sqrt(np.einsum('ij,ij->i', X, X))
+
     def uniform_vector(self):
         if self.tradeoff_mem_accuracy != 'accuracy':
             return self.rng.uniform(0, 2 * np.pi, size=self.n)
@@ -655,7 +659,7 @@ class Fastfood(BaseEstimator, TransformerMixin):
                         random_state=self.random_state)
         self.P = np.hstack([(i*self.d)+self.rng.permutation(self.d)
                             for i in range(self.times_to_stack_v)])
-        self.S = np.multiply(1 / np.linalg.norm(self.G, axis=1)
+        self.S = np.multiply(1 / self.l2norm_along_axis1(self.G)
                              .reshape((-1, 1)),
                              chi.rvs(self.d,
                                      size=(self.times_to_stack_v, self.d)))
