@@ -15,7 +15,7 @@ data.
 print __doc__
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
-# Modified By: Felix Maximilan Möller
+# Modified By: Felix Maximilian Möller
 # License: Simplified BSD
 
 # Standard scientific Python imports
