@@ -955,8 +955,8 @@ def test_probability_exponential():
 
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
-    assert_raises(AttributeError, clf.predict_proba, T)
-    assert_raises(AttributeError, lambda : next(clf.staged_predict_proba(T)))
+    assert_raises(TypeError, clf.predict_proba, T)
+    assert_raises(TypeError, lambda : next(clf.staged_predict_proba(T)))
 
 
 def test_sample_weight_robust():
@@ -964,7 +964,7 @@ def test_sample_weight_robust():
     sample_weight = np.ones(len(boston.target))
     for loss in ('lad', 'huber', 'quantile'):
         est = GradientBoostingRegressor(n_estimators=1, loss=loss)
-        assert_raises(ValueError, est.fit, boston.data, boston.target,
+        assert_raises(NotImplementedError, est.fit, boston.data, boston.target,
                       sample_weight=sample_weight)
 
 
