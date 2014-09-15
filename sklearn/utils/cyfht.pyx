@@ -1,4 +1,4 @@
-""" Implemntation of the Fast Hadamard Transform.
+""" Implementation of the Fast Hadamard Transform.
 
 https://en.wikipedia.org/wiki/Hadamard_transform
 
@@ -6,7 +6,7 @@ This module supplies a single dimensional and two-dimensional row-wise
 implementation. Both are non-normalized, operate in-place and can only handle
 the double/float64 type.
 
-Inspired by a Python-C-API implemtation at:
+Inspired by a Python-C-API implementation at:
 
 https://github.com/nbarbey/fht
 
