@@ -1,10 +1,25 @@
+""" Implemntation of the Fast Hadamard Transform.
+
+https://en.wikipedia.org/wiki/Hadamard_transform
+
+This module supplies a single dimensional and two-dimensional row-wise
+implementation. Both are non-normalized, operate in-place and can only handle
+the double/float64 type.
+
+Inspired by a Python-C-API implemtation at:
+
+https://github.com/nbarbey/fht
+
+"""
+
 import numpy as np
 cimport numpy as np
 cimport cython
 from libc.math cimport log2
 
+
 def is_power_of_two(input_integer):
-    """Test if an integer is a power of two"""
+    """ Test if an integer is a power of two. """
     if input_integer == 1:
         return False
     return input_integer != 0 and ((input_integer & (input_integer - 1)) == 0)
@@ -13,6 +28,7 @@ def is_power_of_two(input_integer):
 ctypedef np.double_t DTYPE_t
 
 def pure_python_fht(array_):
+    """ Pure Python implementation for educational purposes. """
     bit = length = len(array_)
     for _ in xrange(int(np.log2(length))):
         bit >>= 1
@@ -25,7 +41,7 @@ def pure_python_fht(array_):
 
 
 def fht(np.ndarray[DTYPE_t] array_):
-    """ Single dimensional fht. """
+    """ Single dimensional FHT. """
     if not is_power_of_two(array_.shape[0]):
         raise ValueError('Length of input for fht must be a power of two')
     else:
@@ -48,6 +64,7 @@ cdef _fht(np.ndarray[DTYPE_t, ndim=1] array_):
 
 
 def fht2(np.ndarray[DTYPE_t, ndim=2] array_):
+    """ Two dimensional row-wise FHT. """
     if not is_power_of_two(array_.shape[1]):
         raise ValueError('Length of rows for fht2 must be a power of two')
     else:
