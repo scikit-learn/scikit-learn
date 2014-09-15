@@ -1,15 +1,8 @@
 import numpy as np
 from scipy.sparse import csr_matrix
-import datetime
-import fht as fht
-from scipy.fftpack import dct
 
-
-import fht
-from scipy.linalg import hadamard
-
-from sklearn.utils.testing import assert_array_equal, assert_equal, assert_greater
-from sklearn.utils.testing import assert_not_equal, assert_almost_equal
+from sklearn.utils.testing import assert_array_equal, assert_equal
+from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal, assert_raises
 
 
@@ -221,43 +214,6 @@ def test_enforce_dimensionality_constraint():
         d, n = input
         output = Fastfood.enforce_dimensionality_constraints(d, n)
         yield assert_equal, expected, output, message
-
-
-def assert_all_equal(array_, value):
-    for i in array_:
-        assert_almost_equal(i, value)
-
-
-def test_hadamard_equivalence():
-    # Ensure that the fht along axes 0 is equivalent an explicit hadamard
-    # transform for random diagonal gaussian matrices
-    for i, d in ((x, 2 ** x) for x in xrange(1, 8)):
-        vector = np.random.normal(size=d)
-
-        g = np.diag(np.random.normal(size=d))
-        h = hadamard(d)
-        normalization = (1 / np.power(2, i / 2.0))
-        # explicit
-        one = normalization * np.dot(h, g)
-        # fht
-        two = fht.fht(g, axes=0)
-
-        # fht with vector without matrix
-        a = np.dot(g, vector)
-        print "a", a, g, a.shape, vector.shape
-        three = fht.fht(a, axes=0)
-
-        # fht with vector with matrix
-        four = np.dot(fht.fht(g, axes=0), vector)
-
-        # fht without diagonal matrix
-        a = np.diag(g)*vector
-        print "a", a, g, a.shape, vector.shape
-        five = fht.fht(a, axes=0)
-
-        yield assert_array_almost_equal, one, two
-        yield assert_array_almost_equal, three, four
-        yield assert_array_almost_equal, four, five
 
 
 # Performance Analysis
