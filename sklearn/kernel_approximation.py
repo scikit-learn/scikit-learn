@@ -576,10 +576,16 @@ class Fastfood(BaseEstimator, TransformerMixin):
         return int(d), int(n), times_to_stack_v
 
     def pad_with_zeros(self, X):
-        X_padded = np.pad(X,
-                          ((0, 0),
-                           (0, self.number_of_features_to_pad_with_zeros)),
-                          'constant')
+        try:
+            X_padded = np.pad(X,
+                              ((0, 0),
+                               (0, self.number_of_features_to_pad_with_zeros)),
+                              'constant')
+        except AttributeError:
+            zeros = np.zeros((X.shape[0],
+                              self.number_of_features_to_pad_with_zeros))
+            X_padded = np.concatenate((X, zeros), axis=1)
+
         return X_padded
 
     @staticmethod
