@@ -14,7 +14,7 @@ import scipy.sparse as sp
 from sklearn.utils.cyfht import fht2 as cyfht
 from scipy.linalg import svd
 from scipy.stats import chi
-from utils.random import choice
+from sklearn.utils.random import choice
 
 from .base import BaseEstimator
 from .base import TransformerMixin
