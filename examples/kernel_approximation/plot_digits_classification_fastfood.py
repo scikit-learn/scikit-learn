@@ -52,7 +52,7 @@ test__idx = range(n_samples / 2, n_samples)
 
 # map data into featurespace
 rbf_transform = Fastfood(sigma=sigma, n_components=number_of_features_to_generate)
-data_transformed_train = rbf_transform.fit(data[train__idx]).transform(data[train__idx])
+data_transformed_train = rbf_transform.fit_transform(data[train__idx])
 data_transformed_test = rbf_transform.transform(data[test__idx])
 
 # Create a classifier: a support vector classifier
