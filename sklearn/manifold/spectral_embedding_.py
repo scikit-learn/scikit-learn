@@ -643,6 +643,8 @@ def diffusion_embedding(adjacency, n_components=8, diffusion_time=None,
     v = np.sqrt(np.sum(adjacency, axis=1))
     A = adjacency/(v[:, None] * v[None, :])
     A = np.squeeze(A * [A > 1e-5])
+    print A.shape
+    print n_components
     if n_components is not None:
         lambdas, vectors = eigsh(A, k=n_components)
     else:

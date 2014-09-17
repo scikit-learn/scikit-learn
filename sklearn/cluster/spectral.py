@@ -454,10 +454,10 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         return self.affinity == "precomputed"
 
 
-def diffusion_clustering(affinity, n_clusters=8, n_components='auto',
+def diffusion_clustering(affinity, n_clusters=8, n_components=None,
                         eigen_solver=None, random_state=None, n_init=10,
                         eigen_tol=0.0, assign_labels='kmeans',
-                        diffusion_time=None, method=1):
+                        diffusion_time=0):
     """Apply clustering to a projection to the normalized laplacian.
 
     In practice Spectral Clustering is very useful when the structure of
@@ -549,11 +549,12 @@ def diffusion_clustering(affinity, n_clusters=8, n_components='auto',
 
     random_state = check_random_state(random_state)
     n_components = n_clusters if n_components is None else n_components
-    maps = diffusion_embedding(affinity, n_components=n_components,
-                              eigen_solver=eigen_solver,
-                              random_state=random_state,
-                              eigen_tol=eigen_tol,
-                              diffusion_time=diffusion_time)
+    maps = diffusion_embedding(affinity,
+                               n_components=n_components,
+                               eigen_solver=eigen_solver,
+                               random_state=random_state,
+                               eigen_tol=eigen_tol,
+                               diffusion_time=diffusion_time)
 
     if assign_labels == 'kmeans':
         _, labels, _ = k_means(maps, n_clusters, random_state=random_state,
