@@ -571,7 +571,7 @@ class SpectralEmbedding(BaseEstimator):
 
 def diffusion_embedding(adjacency, n_components=8, diffusion_time=None,
                         eigen_solver=None, random_state=None, eigen_tol=0.0,
-                        norm_laplacian=True, drop_first=True):
+                        norm_laplacian=True):
     """Project the sample on the first eigenvectors of the graph Laplacian
 
     The adjacency matrix is used to compute a normalized graph Laplacian
@@ -613,12 +613,6 @@ def diffusion_embedding(adjacency, n_components=8, diffusion_time=None,
         Stopping criterion for eigendecomposition of the Laplacian matrix
         when using arpack eigen_solver.
 
-    drop_first : bool, optional, default=True
-        Whether to drop the first eigenvector. For spectral embedding, this
-        should be True as the first eigenvector should be constant vector for
-        connected graph, but for spectral clustering, this should be kept as
-        False to retain the first eigenvector.
-
     Returns
     -------
     embedding : array, shape=(n_samples, n_components)
@@ -641,26 +635,32 @@ def diffusion_embedding(adjacency, n_components=8, diffusion_time=None,
       Computational Harmonic Analysis 21.1 (2006): 5-30.
 
     """
-    # Whether to drop the first eigenvector
-    if drop_first:
-        n_components += 1
-    lambdas, vectors, dd = _solve_eigenvalue_problem(adjacency=adjacency,
-                                                     n_components=n_components,
-                                                     eigen_solver=eigen_solver,
-                                                     random_state=random_state,
-                                                     eigen_tol=eigen_tol,
-                                                     norm_laplacian=norm_laplacian)
-    norm_factor = np.sqrt(np.sum(dd))
-    psi = (norm_factor * np.diag(1. / (np.sqrt(dd)))).dot(vectors.T)
-    if diffusion_time is None:
-        embedding = psi
+
+    if not _graph_is_connected(adjacency):
+        warnings.warn("Graph is not fully connected, spectral embedding"
+                      " may not work as expected.")
+    ndim = adjacency.shape[0]
+    v = np.sqrt(np.sum(adjacency, axis=1))
+    A = adjacency/(v[:, None] * v[None, :])
+    A = np.squeeze(A * [A > 1e-5])
+    if n_components is not None:
+        lambdas, vectors = eigsh(A, k=n_components)
     else:
-        Lt = np.power(1 + lambdas, diffusion_time)
-        embedding = psi * Lt
-    if drop_first:
-        return embedding[:, 1:]
+        lambdas, vectors = eigsh(A, k=max(2, int(np.sqrt(ndim/2))))
+    lambdas = lambdas[::-1]
+    vectors = vectors[:, ::-1]
+
+    psi = vectors/vectors[:, 0][:, None]
+    if diffusion_time <= 0:
+        lambdas = lambdas[1:] / (1 - lambdas[1:])
     else:
-        return embedding
+        lambdas = lambdas[1:]**diffusion_time
+    if n_components is None:
+        lambda_ratio = lambdas/lambdas[0]
+        n_components = np.amin(np.nonzero(lambda_ratio < .05)[0])
+        n_components = min(n_components, ndim)
+    embedding = psi[:, 1:(n_components + 1)] * lambdas[:n_components][None, :]
+    return embedding
 
 
 class DiffusionEmbedding(SpectralEmbedding):
@@ -688,7 +688,7 @@ class DiffusionEmbedding(SpectralEmbedding):
 
     """
 
-    def __init__(self, diffusion_time=0., n_components=2,
+    def __init__(self, diffusion_time=0., n_components='auto',
                  affinity="nearest_neighbors", gamma=None, random_state=None,
                  eigen_solver=None, n_neighbors=None):
         super(DiffusionEmbedding, self).__init__(n_components=n_components,
@@ -721,19 +721,25 @@ class DiffusionEmbedding(SpectralEmbedding):
         random_state = check_random_state(self.random_state)
         if isinstance(self.affinity, basestring):
             if self.affinity not in set(("nearest_neighbors", "rbf",
-                                         "precomputed")):
-                raise ValueError(("%s is not a valid affinity. Expected "
+                                         "precomputed", "markov")):
+                raise ValueError(("%s is not a valid affinity. Expected  'markov', "
                                   "'precomputed', 'rbf', 'nearest_neighbors' "
                                   "or a callable.") % self.affinity)
         elif not hasattr(self.affinity, "__call__"):
             raise ValueError(("'affinity' is expected to be an an affinity "
                               "name or a callable. Got: %s") % self.affinity)
 
-        affinity_matrix = self._get_affinity_matrix(X)
+        if self.affinity == 'markov':
+            from ..metrics import pairwise_distances
+            D = pairwise_distances(X)
+            k = int(max(2, np.round(D.shape[0] * 0.01)))
+            eps = 2 * np.median(np.sort(D, axis=0)[k+1, :])**2
+            affinity_matrix = np.exp(-(D * D) / eps)
+        else:
+            affinity_matrix = self._get_affinity_matrix(X)
         self.embedding_ = diffusion_embedding(affinity_matrix,
                                               n_components=self.n_components,
                                               eigen_solver=self.eigen_solver,
                                               random_state=random_state,
-                                              diffusion_time=self.diffusion_time,
-                                              drop_first=True)
+                                              diffusion_time=self.diffusion_time)
         return self
