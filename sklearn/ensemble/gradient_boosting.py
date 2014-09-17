@@ -70,7 +70,10 @@ class QuantileEstimator(BaseEstimator):
         self.alpha = alpha
 
     def fit(self, X, y, sample_weight=None):
-        self.quantile = stats.scoreatpercentile(y, self.alpha * 100.0)
+        if sample_weight is None:
+            self.quantile = stats.scoreatpercentile(y, self.alpha * 100.0)
+        else:
+            self.quantile = _weighted_percentile(y, sample_weight, self.alpha * 100.0)
 
     def predict(self, X):
         y = np.empty((X.shape[0], 1), dtype=np.float64)
@@ -342,10 +345,13 @@ class HuberLossFunction(RegressionLossFunction):
                               (np.abs(diff[~gamma_mask]) - gamma / 2.0))
         return (sq_loss + lin_loss) / sample_weight.sum()
 
-    def negative_gradient(self, y, pred, **kargs):
+    def negative_gradient(self, y, pred, sample_weight=None, **kargs):
         pred = pred.ravel()
         diff = y - pred
-        gamma = stats.scoreatpercentile(np.abs(diff), self.alpha * 100)
+        if sample_weight is None:
+            gamma = stats.scoreatpercentile(np.abs(diff), self.alpha * 100)
+        else:
+            gamma = _weighted_percentile(np.abs(diff), sample_weight, self.alpha * 100)
         gamma_mask = np.abs(diff) <= gamma
         residual = np.zeros((y.shape[0],), dtype=np.float64)
         residual[gamma_mask] = diff[gamma_mask]
@@ -395,8 +401,9 @@ class QuantileLossFunction(RegressionLossFunction):
             loss = (alpha * diff[mask].sum() +
                     (1.0 - alpha) * diff[~mask].sum()) / y.shape[0]
         else:
-            loss = (alpha * np.sum(sample_weight[mask] * diff[mask]) +
-                    (1.0 - alpha) * np.sum(sample_weight[~mask] * diff[~mask])) / sample_weight.sum()
+            loss = ((alpha * np.sum(sample_weight[mask] * diff[mask]) +
+                    (1.0 - alpha) * np.sum(sample_weight[~mask] * diff[~mask])) /
+                    sample_weight.sum())
         return loss
 
     def negative_gradient(self, y, pred, **kargs):
@@ -723,7 +730,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             if loss.is_multi_class:
                 y = np.array(original_y == k, dtype=np.float64)
 
-            residual = loss.negative_gradient(y, y_pred, k=k)
+            residual = loss.negative_gradient(y, y_pred, k=k,
+                                              sample_weight=sample_weight)
 
             # induce regression tree on residuals
             tree = DecisionTreeRegressor(
