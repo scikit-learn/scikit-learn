@@ -367,7 +367,6 @@ class HuberLossFunction(RegressionLossFunction):
         diff = (y.take(terminal_region, axis=0)
                 - pred.take(terminal_region, axis=0))
         median = _weighted_percentile(diff, sample_weight, percentile=50)
-        #median = np.median(diff)
         diff_minus_median = diff - median
         tree.value[leaf, 0] = median + np.mean(
             np.sign(diff_minus_median) *
