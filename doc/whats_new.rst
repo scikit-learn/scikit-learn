@@ -28,6 +28,10 @@ New features
      trained forest model to grow additional trees incrementally. By
      `Laurent Direr`_.
 
+   - Add ``sample_weight`` support to :class:`ensemble.GradientBoostingClassifier` and
+     :class:`ensemble.GradientBoostingRegressor`. By
+     `Peter Prettenhofer`_.
+
 
 Enhancements
 ............
