@@ -644,7 +644,7 @@ def diffusion_embedding(adjacency, n_components=8, diffusion_time=None,
     A = adjacency/(v[:, None] * v[None, :])
     A = np.squeeze(A * [A > 1e-5])
     if n_components is not None:
-        lambdas, vectors = eigsh(A, k=n_components)
+        lambdas, vectors = eigsh(A, k=n_components + 1)
     else:
         lambdas, vectors = eigsh(A, k=max(2, int(np.sqrt(ndim/2))))
     lambdas = lambdas[::-1]
@@ -688,7 +688,7 @@ class DiffusionEmbedding(SpectralEmbedding):
 
     """
 
-    def __init__(self, diffusion_time=0., n_components='auto',
+    def __init__(self, diffusion_time=0., n_components=None,
                  affinity="nearest_neighbors", gamma=None, random_state=None,
                  eigen_solver=None, n_neighbors=None):
         super(DiffusionEmbedding, self).__init__(n_components=n_components,
