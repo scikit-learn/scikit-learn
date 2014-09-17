@@ -172,7 +172,6 @@ def test_boston():
     for loss in ("ls", "lad", "huber"):
         for subsample in (1.0, 0.5):
             for sample_weight in (None, np.ones(len(boston.target))):
-
                 clf = GradientBoostingRegressor(n_estimators=100, loss=loss,
                                                 max_depth=4, subsample=subsample,
                                                 min_samples_split=1,
