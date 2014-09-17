@@ -1,4 +1,5 @@
 import numpy as np
+import pickle
 
 from sklearn.isotonic import check_increasing, isotonic_regression,\
     IsotonicRegression
