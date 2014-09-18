@@ -171,7 +171,9 @@ def test_boston():
     and least absolute deviation. """
     for loss in ("ls", "lad", "huber"):
         for subsample in (1.0, 0.5):
-            for sample_weight in (None, np.ones(len(boston.target))):
+            last_y_pred = None
+            for i, sample_weight in enumerate((None, np.ones(len(boston.target)),
+                                            2 * np.ones(len(boston.target)))):
                 clf = GradientBoostingRegressor(n_estimators=100, loss=loss,
                                                 max_depth=4, subsample=subsample,
                                                 min_samples_split=1,
@@ -184,6 +186,14 @@ def test_boston():
                 mse = mean_squared_error(boston.target, y_pred)
                 assert mse < 6.0, "Failed with loss %s and " \
                     "mse = %.4f" % (loss, mse)
+
+                if last_y_pred is not None:
+                    np.testing.assert_array_almost_equal(
+                        last_y_pred, y_pred,
+                        err_msg='pred_%d doesnt match last pred_%d for loss %r and subsample %r. '
+                        % (i, i - 1, loss, subsample))
+
+                last_y_pred = y_pred
 
 
 def test_iris():
@@ -953,6 +963,20 @@ def test_probability_exponential():
     assert_array_equal(clf.predict(T), true_result)
     assert_raises(TypeError, clf.predict_proba, T)
     assert_raises(TypeError, lambda : next(clf.staged_predict_proba(T)))
+
+
+def test_non_uniform_weights_toy_edge_case():
+    X = [[1, 0],
+         [1, 0],
+         [1, 0],
+         [0, 1],
+        ]
+    y = [0, 0, 1, 0]
+    # ignore the first 2 training samples by setting their weight to 0
+    sample_weight = [0, 0, 1, 1]
+    gb = GradientBoostingClassifier(n_estimators=5)
+    gb.fit(X, y, sample_weight=sample_weight)
+    assert_array_equal(gb.predict([[1, 0]]), [1])
 
 
 if __name__ == "__main__":

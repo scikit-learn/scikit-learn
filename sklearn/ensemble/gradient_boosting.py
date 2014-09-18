@@ -339,11 +339,13 @@ class HuberLossFunction(RegressionLossFunction):
         if sample_weight is None:
             sq_loss = np.sum(0.5 * diff[gamma_mask] ** 2.0)
             lin_loss = np.sum(gamma * (np.abs(diff[~gamma_mask]) - gamma / 2.0))
+            loss = (sq_loss + lin_loss) / y.shape[0]
         else:
             sq_loss = np.sum(0.5 * sample_weight[gamma_mask] * diff[gamma_mask] ** 2.0)
             lin_loss = np.sum(gamma * sample_weight[~gamma_mask] *
                               (np.abs(diff[~gamma_mask]) - gamma / 2.0))
-        return (sq_loss + lin_loss) / sample_weight.sum()
+            loss = (sq_loss + lin_loss) / sample_weight.sum()
+        return loss
 
     def negative_gradient(self, y, pred, sample_weight=None, **kargs):
         pred = pred.ravel()
@@ -370,7 +372,6 @@ class HuberLossFunction(RegressionLossFunction):
         diff_minus_median = diff - median
         tree.value[leaf, 0] = median + np.mean(
             np.sign(diff_minus_median) *
-            sample_weight *
             np.minimum(np.abs(diff_minus_median), gamma))
 
 

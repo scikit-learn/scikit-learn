@@ -142,3 +142,37 @@ def test_weighted_percentile_zero_weight():
     sw.fill(0.0)
     score = _weighted_percentile(y, sw, 50)
     assert score == 1.0
+
+
+def test_sample_weight_deviance():
+    """Test if deviance supports sample weights. """
+    rng = check_random_state(13)
+    X = rng.rand(100, 2)
+    sample_weight = np.ones(100)
+    reg_y = rng.rand(100)
+    clf_y = rng.randint(0, 2, size=100)
+    mclf_y = rng.randint(0, 3, size=100)
+
+    for Loss in LOSS_FUNCTIONS.values():
+        if Loss is None:
+            continue
+        if issubclass(Loss, RegressionLossFunction):
+            k = 1
+            y = reg_y
+            p = reg_y
+        else:
+            k = 2
+            y = clf_y
+            p = clf_y
+            if Loss.is_multi_class:
+                k = 3
+                y = mclf_y
+                # one-hot encoding
+                p = np.zeros((y.shape[0], k), dtype=np.float64)
+                for i in range(k):
+                    p[:, i] = y == i
+
+        loss = Loss(k)
+        deviance_w_w = loss(y, p, sample_weight)
+        deviance_wo_w = loss(y, p)
+        assert deviance_wo_w == deviance_w_w
