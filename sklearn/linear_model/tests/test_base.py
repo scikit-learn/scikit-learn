@@ -41,6 +41,10 @@ def test_linear_regression():
     assert_array_almost_equal(clf.intercept_, [0])
     assert_array_almost_equal(clf.predict(X), [0])
 
+    clf = LinearRegression()
+    clf_fit = clf.fit(X, Y, 4)
+    assert_equal (clf_fit.n_jobs, clf.n_jobs)
+    assert_equal(clf.n_jobs, 4)
 
 def test_fit_intercept():
     """
