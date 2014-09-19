@@ -310,6 +310,10 @@ class LinearRegression(LinearModel, RegressorMixin):
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
 
+    n_jobs : The number of jobs to use for the computation.
+        If -1 all CPUs are used. This will only provide speedup for
+        n_targets > 1 and sufficient large problems.
+
     Attributes
     ----------
     coef_ : array, shape (n_features, ) or (n_targets, n_features)
@@ -328,10 +332,11 @@ class LinearRegression(LinearModel, RegressorMixin):
 
     """
 
-    def __init__(self, fit_intercept=True, normalize=False, copy_X=True):
+    def __init__(self, fit_intercept=True, normalize=False, copy_X=True, n_jobs=1):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.copy_X = copy_X
+        self.n_jobs = n_jobs
 
     def fit(self, X, y, n_jobs=1):
         """
@@ -343,9 +348,6 @@ class LinearRegression(LinearModel, RegressorMixin):
             Training data
         y : numpy array of shape [n_samples, n_targets]
             Target values
-        n_jobs : The number of jobs to use for the computation.
-            If -1 all CPUs are used. This will only provide speedup for
-            n_targets > 1 and sufficient large problems
 
         Returns
         -------
@@ -364,7 +366,7 @@ class LinearRegression(LinearModel, RegressorMixin):
                 self.residues_ = out[3]
             else:
                 # sparse_lstsq cannot handle y with shape (M, K)
-                outs = Parallel(n_jobs=n_jobs)(
+                outs = Parallel(n_jobs=self.n_jobs)(
                     delayed(lsqr)(X, y[:, j].ravel())
                     for j in range(y.shape[1]))
                 self.coef_ = np.vstack(out[0] for out in outs)
