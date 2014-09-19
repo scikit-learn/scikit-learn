@@ -8,7 +8,8 @@ Incremental principal component analysis (IPCA) is typically used as a
 replacement for principal component analysis (PCA) when the dataset to be
 decomposed is too large to fit in memory. IPCA builds a low-rank approximation
 for the input data using an amount of memory which is independent of the
-input data size.
+number of input data samples. It is still dependent on the input data features,
+but changing the batch size allows for control of memory usage.
 
 This example serves as a visual check that IPCA is able to find a similar
 projection of the data to PCA (to a sign flip), while only processing a

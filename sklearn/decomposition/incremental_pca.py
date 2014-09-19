@@ -137,7 +137,6 @@ class IncrementalPCA(_BasePCA):
         self.whiten = whiten
         self.copy = copy
         self.batch_size = batch_size
-        self.components_ = None
 
     def fit(self, X, y=None):
         """Fit the model with X, using minibatches of size batch_size.
@@ -191,6 +190,8 @@ class IncrementalPCA(_BasePCA):
         """
         X = check_array(X, copy=self.copy, dtype=np.float)
         n_samples, n_features = X.shape
+        if not hasattr(self, 'components_'):
+            self.components_ = None
 
         if self.n_components is None:
             self.n_components_ = n_features

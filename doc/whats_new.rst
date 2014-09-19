@@ -32,6 +32,10 @@ New features
      :class:`ensemble.GradientBoostingRegressor`. By
      `Peter Prettenhofer`_.
 
+   - Added :class:`decomposition.IncrementalPCA`, an implementation of the PCA
+     algorithm that supports out-of-core learning with a ``partial_fit``
+     method. By `Kyle Kastner`_.
+
 
 Enhancements
 ............
