@@ -15,6 +15,7 @@ Generalized Linear models.
 from __future__ import division
 from abc import ABCMeta, abstractmethod
 import numbers
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -310,6 +311,10 @@ class LinearRegression(LinearModel, RegressorMixin):
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
 
+    n_jobs : The number of jobs to use for the computation.
+        If -1 all CPUs are used. This will only provide speedup for
+        n_targets > 1 and sufficient large problems.
+
     Attributes
     ----------
     coef_ : array, shape (n_features, ) or (n_targets, n_features)
@@ -328,10 +333,12 @@ class LinearRegression(LinearModel, RegressorMixin):
 
     """
 
-    def __init__(self, fit_intercept=True, normalize=False, copy_X=True):
+    def __init__(self, fit_intercept=True, normalize=False, copy_X=True,
+                 n_jobs=1):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.copy_X = copy_X
+        self.n_jobs = n_jobs
 
     def fit(self, X, y, n_jobs=1):
         """
@@ -343,14 +350,18 @@ class LinearRegression(LinearModel, RegressorMixin):
             Training data
         y : numpy array of shape [n_samples, n_targets]
             Target values
-        n_jobs : The number of jobs to use for the computation.
-            If -1 all CPUs are used. This will only provide speedup for
-            n_targets > 1 and sufficient large problems
 
         Returns
         -------
         self : returns an instance of self.
         """
+        if n_jobs != 1:
+            warnings.warn("The n_jobs parameter has been moved from the fit"
+                          " method to the LinearRegression class constructor",
+                          DeprecationWarning, stacklevel=2)
+            n_jobs_ = n_jobs
+        else:
+            n_jobs_ = self.n_jobs
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         y = np.asarray(y)
 
@@ -364,7 +375,7 @@ class LinearRegression(LinearModel, RegressorMixin):
                 self.residues_ = out[3]
             else:
                 # sparse_lstsq cannot handle y with shape (M, K)
-                outs = Parallel(n_jobs=n_jobs)(
+                outs = Parallel(n_jobs=n_jobs_)(
                     delayed(lsqr)(X, y[:, j].ravel())
                     for j in range(y.shape[1]))
                 self.coef_ = np.vstack(out[0] for out in outs)
