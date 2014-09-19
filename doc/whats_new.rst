@@ -99,6 +99,8 @@ API changes summary
       and pass these to their distance metric. This will no longer be supported
       in scikit-learn 0.18; use the ``metric_params`` argument instead.
 
+    - `n_jobs` parameter of the fit method shifted to the constructor of the
+       LinearRegression class.
 
 .. _changes_0_15_2:
 

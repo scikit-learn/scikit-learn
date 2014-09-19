@@ -375,7 +375,7 @@ class LinearRegression(LinearModel, RegressorMixin):
                 self.residues_ = out[3]
             else:
                 # sparse_lstsq cannot handle y with shape (M, K)
-                outs = Parallel(n_jobs = n_jobs_)(
+                outs = Parallel(n_jobs=n_jobs_)(
                     delayed(lsqr)(X, y[:, j].ravel())
                     for j in range(y.shape[1]))
                 self.coef_ = np.vstack(out[0] for out in outs)

@@ -50,7 +50,7 @@ def test_linear_regression_n_jobs():
     Y = [1, 2]
     clf = LinearRegression()
     clf_fit = clf.fit(X, Y, 4)
-    assert_equal (clf_fit.n_jobs, clf.n_jobs)
+    assert_equal(clf_fit.n_jobs, clf.n_jobs)
     assert_equal(clf.n_jobs, 1)
 
 
