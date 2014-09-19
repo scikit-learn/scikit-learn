@@ -15,6 +15,7 @@ Generalized Linear models.
 from __future__ import division
 from abc import ABCMeta, abstractmethod
 import numbers
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -332,13 +333,14 @@ class LinearRegression(LinearModel, RegressorMixin):
 
     """
 
-    def __init__(self, fit_intercept=True, normalize=False, copy_X=True, n_jobs=1):
+    def __init__(self, fit_intercept=True, normalize=False, copy_X=True,
+                 n_jobs=1):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.copy_X = copy_X
         self.n_jobs = n_jobs
 
-    def fit(self, X, y, n_jobs=1):
+    def fit(self, X, y, n_jobs):
         """
         Fit linear model.
 
@@ -353,6 +355,10 @@ class LinearRegression(LinearModel, RegressorMixin):
         -------
         self : returns an instance of self.
         """
+        if n_jobs:
+            warnings.warn("The n_jobs parameter has been moved from the fit"
+                          " method to the LinearRegression class constructor",
+                          DeprecationWarning, stacklevel=2)
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         y = np.asarray(y)
 
