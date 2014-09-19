@@ -355,13 +355,13 @@ class LinearRegression(LinearModel, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        if self.n_jobs != 1:
-            n_jobs = self.n_jobs
         if n_jobs != 1:
             warnings.warn("The n_jobs parameter has been moved from the fit"
                           " method to the LinearRegression class constructor",
                           DeprecationWarning, stacklevel=2)
             n_jobs_ = n_jobs
+        else:
+            n_jobs_ = self.n_jobs
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         y = np.asarray(y)
 
