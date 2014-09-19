@@ -355,13 +355,13 @@ class LinearRegression(LinearModel, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        warnings.warn("The n_jobs parameter has been moved from the fit"
-                      " method to the LinearRegression class constructor",
-                      DeprecationWarning, stacklevel=2)
-        if n_jobs != 1:
-            self.n_jobs = n_jobs
-        else:
+        if self.n_jobs != 1:
             n_jobs = self.n_jobs
+        if n_jobs != 1:
+            warnings.warn("The n_jobs parameter has been moved from the fit"
+                          " method to the LinearRegression class constructor",
+                          DeprecationWarning, stacklevel=2)
+            n_jobs_ = n_jobs
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         y = np.asarray(y)
 
@@ -375,7 +375,7 @@ class LinearRegression(LinearModel, RegressorMixin):
                 self.residues_ = out[3]
             else:
                 # sparse_lstsq cannot handle y with shape (M, K)
-                outs = Parallel(n_jobs)(
+                outs = Parallel(n_jobs = n_jobs_)(
                     delayed(lsqr)(X, y[:, j].ravel())
                     for j in range(y.shape[1]))
                 self.coef_ = np.vstack(out[0] for out in outs)
