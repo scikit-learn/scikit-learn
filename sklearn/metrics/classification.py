@@ -84,16 +84,15 @@ def _check_targets(y_true, y_pred):
     # We can't have more than one value on y_type => The set is no more needed
     y_type = y_type.pop()
 
-    # No metrics support "multiclass-multioutput" format
     if (y_type not in ["binary", "multiclass", "multilabel-indicator",
-                       "multilabel-sequences"]):
+                       "multilabel-sequences", "multiclass-multioutput"]):
         raise ValueError("{0} is not supported".format(y_type))
 
     if y_type in ["binary", "multiclass"]:
         y_true = column_or_1d(y_true)
         y_pred = column_or_1d(y_pred)
 
-    if y_type.startswith('multilabel'):
+    if y_type.startswith('multilabel') or y_type.startswith('multiclass'):
         if y_type == 'multilabel-sequences':
             labels = unique_labels(y_true, y_pred)
             binarizer = MultiLabelBinarizer(classes=labels, sparse_output=True)
@@ -171,11 +170,17 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     In the multilabel case with binary label indicators:
     >>> accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
     0.5
+
+    In the case of multiclass multioutput:
+    >>> accuracy_score(np.array([[1, 2], [3, 1]]),np.array([[4, 3], [3, 2]]))
+    0.0
+    >>>  accuracy_score(np.array([[1, 2], [3, 1]]),np.array([[1, 2], [3, 2]]))
+    0.5
     """
 
     # Compute accuracy for each possible representation
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-    if y_type.startswith('multilabel'):
+    if y_type.startswith('multilabel') or y_type.startswith('multiclass'):
         differing_labels = count_nonzero(y_true - y_pred, axis=1)
         score = differing_labels == 0
     else:
@@ -459,6 +464,10 @@ def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
 
     >>> zero_one_loss(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
     0.5
+
+    In the case of multiclass multioutput:
+    >>> zero_one_loss(np.array([[1, 2], [3, 1]]),np.array([[2, 1], [3, 3]]))
+    1.0
     """
     score = accuracy_score(y_true, y_pred,
                            normalize=normalize,
