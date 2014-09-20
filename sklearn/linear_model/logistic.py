@@ -406,15 +406,15 @@ def _multinomial_loss_grad_hess(w, X, Y, alpha, sample_weight):
             inter_terms = v[:, -1]
             v = v[:, :-1]
         else:
-            inter_terms = np.zeros(n_classes)
-        vec_prod = safe_sparse_dot(X, v.T)
-        vec_prod += inter_terms
-        r_yhat = np.multiply(-p, vec_prod)
-        r_yhat = r_yhat.sum(axis=1)
-        r_yhat = r_yhat[:, np.newaxis] + vec_prod
-        r_yhat = r_yhat * p
-        r_yhat = r_yhat * sample_weight
-        hessProd = np.zeros((grad.shape))
+            inter_terms = 0
+        # r_yhat holds the result of applying the R-operator on the multinomial
+        # estimator.
+        r_yhat = safe_sparse_dot(X, v.T)
+        r_yhat += inter_terms
+        r_yhat += (-p * r_yhat).sum(axis=1)[:, np.newaxis]
+        r_yhat *= p
+        r_yhat *= sample_weight
+        hessProd = np.empty_like(grad)
         hessProd[:, :n_features] = safe_sparse_dot(r_yhat.T, X)
         hessProd[:, :n_features] += v * alpha
         if(fit_intercept):
@@ -538,14 +538,13 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         raise ValueError("multi_class can be either 'multinomial' or 'ovr'"
                          "got %s" % multi_class)
 
-    if multi_class == 'multinomial' and solver != 'lbfgs' and \
-            solver != 'newton-cg':
-        raise ValueError("Solver %s cannot solve problems with "
-                         "a multinomial backend." % solver)
-
     if solver not in ['liblinear', 'newton-cg', 'lbfgs']:
         raise ValueError("Logistic Regression supports only liblinear,"
                          " newton-cg and lbfgs solvers. got %s" % solver)
+
+    if multi_class == 'multinomial' and solver == 'liblinear':
+        raise ValueError("Solver %s cannot solve problems with "
+                         "a multinomial backend." % solver)
 
     if solver != 'liblinear':
         if penalty != 'l2':
@@ -636,20 +635,29 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                     )
             w0[:, :coef.shape[1]] = coef
 
-    # fmin_l_bfgs_b accepts only ravelled parameters.
     if multi_class == 'multinomial':
+        # fmin_l_bfgs_b and newton-cg accepts only ravelled parameters.
         w0 = w0.ravel()
+        target = Y_bin
+        if solver == 'lbfgs':
+            func = _multinomial_loss_grad
+        elif solver == 'newton-cg':
+            func = _multinomial_loss
+            grad = lambda x, *args: _multinomial_loss_grad(x, *args)[1]
+            hess = _multinomial_loss_grad_hess
+    else:
+        target = y
+        if solver == 'lbfgs':
+            func = _logistic_loss_and_grad
+        elif solver == 'newton-cg':
+            func = _logistic_loss
+            grad = lambda x, *args: _logistic_loss_and_grad(x, *args)[1]
+            hess = _logistic_loss_grad_hess
 
     coefs = list()
 
     for C in Cs:
         if solver == 'lbfgs':
-            if multi_class == 'multinomial':
-                target = Y_bin
-                func = _multinomial_loss_grad
-            else:
-                target = y
-                func = _logistic_loss_and_grad
             try:
                 w0, loss, info = optimize.fmin_l_bfgs_b(
                     func, w0, fprime=None,
@@ -666,18 +674,10 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             if info["warnflag"] == 1 and verbose > 0:
                 warnings.warn("lbfgs failed to converge. Increase the number "
                               "of iterations.")
-
         elif solver == 'newton-cg':
-            if multi_class == 'multinomial':
-                grad = lambda x, *args: _multinomial_loss_grad(x, *args)[1]
-                args = (X, Y_bin, 1. / C, sample_weight)
-                w0 = newton_cg(_multinomial_loss_grad_hess, _multinomial_loss,
-                               grad, w0, args=args, maxiter=max_iter, tol=tol)
-            else:
-                grad = lambda x, *args: _logistic_loss_and_grad(x, *args)[1]
-                w0 = newton_cg(_logistic_loss_grad_hess, _logistic_loss, grad,
-                               w0, args=(X, y, 1. / C, sample_weight),
-                               maxiter=max_iter, tol=tol)
+            args = (X, target, 1. / C, sample_weight)
+            w0 = newton_cg(hess, func, grad, w0, args=args, maxiter=max_iter,
+                           tol=tol)
         elif solver == 'liblinear':
             coef_, intercept_, _, = _fit_liblinear(
                 X, y, C, fit_intercept, intercept_scaling, class_weight,
@@ -867,8 +867,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     In the multiclass case, the training algorithm uses the one-vs-rest (OvR)
     scheme if the 'multi_class' option is set to 'ovr' and uses the
     cross-entropy loss, if the 'multi_class' option is set to 'multinomial'.
-    (Currently the 'multinomial' option is supported only by the 'lbfgs'
-    solver.)
+    (Currently the 'multinomial' option is supported only by the 'lbfgs' and
+    'newton-cg' solvers.)
 
     This class implements regularized logistic regression using the
     `liblinear` library, newton-cg and lbfgs solvers. It can handle both
@@ -1037,8 +1037,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                 "lbfgs solvers, Got solver=%s" % self.solver
                 )
 
-        if (self.solver != 'lbfgs' and self.solver != 'newton-cg') and \
-                self.multi_class == 'multinomial':
+        if self.solver == 'liblinear' and self.multi_class == 'multinomial':
             raise ValueError("Solver %s does not support a multinomial "
                              "backend." % self.solver)
         if self.multi_class not in ['ovr', 'multinomial']:
