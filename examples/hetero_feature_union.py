@@ -3,15 +3,23 @@
 Feature Union with Heterogeneos Data Sources
 ============================================
 
-Demonstrate combined use of `sklearn.feature_extraction.FeatureUnion` and
-`sklearn.pipeline.Pipeline` on a data source with different types of features.
-In this example we use the 20-newsgroups dataset and compute features for the
-subject line and body in separate pipelines then combine them with a
-FeatureUnion and train a learner on the combined set of features.
+Datasets can often contain components of heterogeneous types that require
+different feature extraction and processing pipelines.  For example, if we were
+considering data taken from Flikr Creative Commons dataset, you might need to
+extract features from rasterized images (pictures), text (picture description),
+and spatial data (location).  Similarly, if your dataset is stored in a Pandas
+DataFrame, you may need to do different transformations on the individual
+columns before combining them and passing them to a classifier.
+
+This example demonstrates how to use `sklearn.feature_extraction.FeatureUnion`
+on a dataset containing different types of features.  We use the 20-newsgroups
+dataset and compute features for the subject line and body in separate
+pipelines. We combine them with a FeatureUnion and finally train a classifier
+on the combined set of features.
 
 The choice of features is not particularly helpful, but serves to illustrate
 the technique. One could imagine that instead of considering subject & body,
-we are considering image and caption or some other heterogeneous datasource.
+we are considering image and caption or some other heterogeneous data source.
 """
 
 # Author: Matt Terry <matt.terry@gmail.com>

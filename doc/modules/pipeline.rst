@@ -158,3 +158,4 @@ Like pipelines, feature unions have a shorthand constructor called
 .. topic:: Examples:
 
  * :ref:`example_feature_stacker.py`
+ * :ref:`example_hetero_feature_union.py`
