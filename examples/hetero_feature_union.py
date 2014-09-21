@@ -7,10 +7,10 @@ Demonstrate combined use of `sklearn.feature_extraction.FeatureUnion` and
 `sklearn.pipeline.Pipeline` on a data source with different types of features.
 In this example we use the 20-newsgroups dataset and compute features for the
 subject line and body in separate pipelines then combine them with a
-FeatureUnion and train an learner on the combined set of features.
+FeatureUnion and train a learner on the combined set of features.
 
 The choice of features is not particularly helpful, but serves to illustrate
-the technique.  One could imagine that instead of considering subject & body,
+the technique. One could imagine that instead of considering subject & body,
 we are considering image and caption or some other heterogeneous datasource.
 """
 
