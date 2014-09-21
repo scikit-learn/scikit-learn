@@ -165,6 +165,15 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         max_leaf_nodes = (-1 if self.max_leaf_nodes is None
                           else self.max_leaf_nodes)
 
+        min_samples_leaf = (int(np.ceil(self.min_samples_leaf * n_samples))
+                            if isinstance(self.min_samples_leaf, float)
+                            else self.min_samples_leaf)
+
+        # Set min_samples_split sensibly
+        min_samples_split = (max(int(np.ceil(self.min_samples_split * n_samples)), 2)
+                             if isinstance(self.min_samples_split, float)
+                             else self.min_samples_split)
+
         if isinstance(self.max_features, six.string_types):
             if self.max_features == "auto":
                 if is_classification:
@@ -191,6 +200,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         self.max_features_ = max_features
 
+        if n_samples < 2:
+            raise ValueError("number of samples should be greater than one")
         if len(y) != n_samples:
             raise ValueError("Number of labels=%d does not match "
                              "number of samples=%d" % (len(y), n_samples))
@@ -198,6 +209,16 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             raise ValueError("min_samples_split must be greater than zero.")
         if self.min_samples_leaf <= 0:
             raise ValueError("min_samples_leaf must be greater than zero.")
+        if (isinstance(self.min_samples_leaf, float)
+            and self.min_samples_leaf == 1.0):
+            raise ValueError("min_samples_leaf cannot be 1.0 "
+                             "in order to avoid ambiguity")
+        if not 0 < min_samples_leaf <= n_samples:
+            raise ValueError("min_samples_leaf must in (0, n_samples], "
+                             "check both the value and type of input parameter")
+        if not 1 < min_samples_split <= n_samples:
+            raise ValueError("min_samples_split must in [2, n_samples], "
+                             "check both the value and type of input parameter")
         if not 0 <= self.min_weight_fraction_leaf <= 0.5:
             raise ValueError("min_weight_fraction_leaf must in [0, 0.5]")
         if max_depth <= 0:
@@ -232,9 +253,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         else:
             min_weight_leaf = 0.
 
-        # Set min_samples_split sensibly
-        min_samples_split = max(self.min_samples_split,
-                                2 * self.min_samples_leaf)
+        min_samples_split = max(min_samples_split, 2 * self.min_samples_leaf)
 
         # Build tree
         criterion = self.criterion
@@ -249,7 +268,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         if not isinstance(self.splitter, Splitter):
             splitter = SPLITTERS[self.splitter](criterion,
                                                 self.max_features_,
-                                                self.min_samples_leaf,
+                                                min_samples_leaf,
                                                 min_weight_leaf,
                                                 random_state)
 
@@ -258,12 +277,12 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
         if max_leaf_nodes < 0:
             builder = DepthFirstTreeBuilder(splitter, min_samples_split,
-                                            self.min_samples_leaf,
+                                            min_samples_leaf,
                                             min_weight_leaf,
                                             max_depth)
         else:
             builder = BestFirstTreeBuilder(splitter, min_samples_split,
-                                           self.min_samples_leaf,
+                                           min_samples_leaf,
                                            min_weight_leaf,
                                            max_depth,
                                            max_leaf_nodes)
@@ -371,14 +390,15 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
     max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
-          - If int, then consider `max_features` features at each split.
-          - If float, then `max_features` is a percentage and
-            `int(max_features * n_features)` features are considered at each
-            split.
-          - If "auto", then `max_features=sqrt(n_features)`.
-          - If "sqrt", then `max_features=sqrt(n_features)`.
-          - If "log2", then `max_features=log2(n_features)`.
-          - If None, then `max_features=n_features`.
+
+        - If int, then consider `max_features` features at each split.
+        - If float, then `max_features` is a percentage and
+          `int(max_features * n_features)` features are considered at each
+          split.
+        - If "auto", then `max_features=sqrt(n_features)`.
+        - If "sqrt", then `max_features=sqrt(n_features)`.
+        - If "log2", then `max_features=log2(n_features)`.
+        - If None, then `max_features=n_features`.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -390,11 +410,21 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         min_samples_split samples.
         Ignored if ``max_samples_leaf`` is not None.
 
-    min_samples_split : int, optional (default=2)
-        The minimum number of samples required to split an internal node.
+    min_samples_split : int, float, optional (default=2)
+        The minimum number of samples required to split an internal node:
 
-    min_samples_leaf : int, optional (default=1)
-        The minimum number of samples required to be at a leaf node.
+        - If int, then consider `min_samples_split` as the minimum number.
+        - If float, then `min_samples_split` is a percentage and
+          `int(min_samples_split * n_samples)` are the minimum
+          number of samples for each split.
+
+    min_samples_leaf : int, float, optional (default=1)
+        The minimum number of samples required to be at a leaf node:
+
+        - If int, then consider `min_samples_leaf` as the minimum number.
+        - If float, then `min_samples_leaf` is a percentage and
+          `int(min_samples_leaf * n_samples)` are the minimum
+          number of samples for each node.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the input samples required to be at a
@@ -581,14 +611,15 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
     max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
-          - If int, then consider `max_features` features at each split.
-          - If float, then `max_features` is a percentage and
-            `int(max_features * n_features)` features are considered at each
-            split.
-          - If "auto", then `max_features=n_features`.
-          - If "sqrt", then `max_features=sqrt(n_features)`.
-          - If "log2", then `max_features=log2(n_features)`.
-          - If None, then `max_features=n_features`.
+
+        - If int, then consider `max_features` features at each split.
+        - If float, then `max_features` is a percentage and
+          `int(max_features * n_features)` features are considered at each
+          split.
+        - If "auto", then `max_features=n_features`.
+        - If "sqrt", then `max_features=sqrt(n_features)`.
+        - If "log2", then `max_features=log2(n_features)`.
+        - If None, then `max_features=n_features`.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -600,11 +631,21 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         min_samples_split samples.
         Ignored if ``max_samples_leaf`` is not None.
 
-    min_samples_split : int, optional (default=2)
-        The minimum number of samples required to split an internal node.
+    min_samples_split : int, float, optional (default=2)
+        The minimum number of samples required to split an internal node:
 
-    min_samples_leaf : int, optional (default=1)
-        The minimum number of samples required to be at a leaf node.
+        - If int, then consider `min_samples_split` as the minimum number.
+        - If float, then `min_samples_split` is a percentage and
+          `int(min_samples_split * n_samples)` are the minimum
+          number of samples for each split.
+
+    min_samples_leaf : int, float, optional (default=1)
+        The minimum number of samples required to be at a leaf node:
+
+        - If int, then consider `min_samples_leaf` as the minimum number.
+        - If float, then `min_samples_leaf` is a percentage and
+          `int(min_samples_leaf * n_samples)` are the minimum
+          number of samples for each node.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the input samples required to be at a

@@ -81,11 +81,15 @@ def test_parameter_checks():
                   GradientBoostingClassifier(min_samples_split=0.0).fit, X, y)
     assert_raises(ValueError,
                   GradientBoostingClassifier(min_samples_split=-1.0).fit, X, y)
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(min_samples_split=1.1).fit, X, y)
 
     assert_raises(ValueError,
                   GradientBoostingClassifier(min_samples_leaf=0).fit, X, y)
     assert_raises(ValueError,
-                  GradientBoostingClassifier(min_samples_leaf=-1.).fit, X, y)
+                  GradientBoostingClassifier(min_samples_leaf=-1.0).fit, X, y)
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(min_samples_leaf=1.0).fit, X, y)
 
     assert_raises(ValueError,
                   GradientBoostingClassifier(min_weight_fraction_leaf=-1.).fit,
@@ -141,7 +145,7 @@ def test_classification_synthetic():
     X_train, X_test = X[:2000], X[2000:]
     y_train, y_test = y[:2000], y[2000:]
 
-    gbrt = GradientBoostingClassifier(n_estimators=100, min_samples_split=1,
+    gbrt = GradientBoostingClassifier(n_estimators=100, min_samples_split=2,
                                       max_depth=1,
                                       learning_rate=1.0, random_state=0)
     gbrt.fit(X_train, y_train)
@@ -149,7 +153,7 @@ def test_classification_synthetic():
     assert error_rate < 0.085, \
         "GB failed with error %.4f" % error_rate
 
-    gbrt = GradientBoostingClassifier(n_estimators=200, min_samples_split=1,
+    gbrt = GradientBoostingClassifier(n_estimators=200, min_samples_split=2,
                                       max_depth=1,
                                       learning_rate=1.0, subsample=0.5,
                                       random_state=0)
@@ -166,7 +170,7 @@ def test_boston():
         for subsample in (1.0, 0.5):
             clf = GradientBoostingRegressor(n_estimators=100, loss=loss,
                                             max_depth=4, subsample=subsample,
-                                            min_samples_split=1,
+                                            min_samples_split=2,
                                             random_state=1)
 
             assert_raises(ValueError, clf.predict, boston.data)
@@ -193,7 +197,7 @@ def test_regression_synthetic():
     `Bagging Predictors?. Machine Learning 24(2): 123-140 (1996). """
     random_state = check_random_state(1)
     regression_params = {'n_estimators': 100, 'max_depth': 4,
-                         'min_samples_split': 1, 'learning_rate': 0.1,
+                         'min_samples_split': 2, 'learning_rate': 0.1,
                          'loss': 'ls'}
 
     # Friedman1
@@ -230,7 +234,7 @@ def test_feature_importances():
     y = np.array(boston.target, dtype=np.float32)
 
     clf = GradientBoostingRegressor(n_estimators=100, max_depth=5,
-                                    min_samples_split=1, random_state=1)
+                                    min_samples_split=2, random_state=1)
     clf.fit(X, y)
     #feature_importances = clf.feature_importances_
     assert_true(hasattr(clf, 'feature_importances_'))
