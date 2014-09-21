@@ -266,7 +266,7 @@ def test_feature_importances():
     # assert_array_equal(true_ranking, feature_importances.argsort())
 
 
-def test_probability():
+def test_probability_log():
     """Predict probabilities."""
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
 
@@ -961,8 +961,18 @@ def test_probability_exponential():
 
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
-    assert_raises(TypeError, clf.predict_proba, T)
-    assert_raises(TypeError, lambda : next(clf.staged_predict_proba(T)))
+
+    # check if probabilities are in [0, 1].
+    y_proba = clf.predict_proba(T)
+    assert np.all(y_proba >= 0.0)
+    assert np.all(y_proba <= 1.0)
+    score = clf.decision_function(T).ravel()
+    assert_array_equal(y_proba[:, 1],
+                       1.0 / (1.0 + np.exp(-2 * score)))
+
+    # derive predictions from probabilities
+    y_pred = clf.classes_.take(y_proba.argmax(axis=1), axis=0)
+    assert_array_equal(y_pred, true_result)
 
 
 def test_non_uniform_weights_toy_edge_case_reg():

@@ -617,6 +617,12 @@ class ExponentialLoss(ClassificationLossFunction):
         else:
             tree.value[leaf, 0, 0] = numerator / denominator
 
+    def _score_to_proba(self, score):
+        proba = np.ones((score.shape[0], 2), dtype=np.float64)
+        proba[:, 1] = 1.0 / (1.0 + np.exp(-2.0 * score.ravel()))
+        proba[:, 0] -= proba[:, 1]
+        return proba
+
     def _score_to_decision(self, score):
         return (score.ravel() >= 0.0).astype(np.int)
 
