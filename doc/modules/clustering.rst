@@ -1221,7 +1221,7 @@ mean of homogeneity and completeness**:
 .. topic:: References
 
  .. [RH2007] `V-Measure: A conditional entropy-based external cluster evaluation
-   measure <http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf>`_
+   measure <http://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
    Andrew Rosenberg and Julia Hirschberg, 2007
 
  .. [B2011] `Identication and Characterization of Events in Social Media

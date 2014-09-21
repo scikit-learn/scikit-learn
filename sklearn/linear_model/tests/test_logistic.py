@@ -1,6 +1,6 @@
 import numpy as np
 import scipy.sparse as sp
-from scipy import linalg, optimize
+from scipy import linalg, optimize, sparse
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -532,3 +532,11 @@ def test_liblinear_decision_function_zero():
     # Dummy data such that the decision function becomes zero.
     X = np.zeros((5, 5))
     assert_array_equal(clf.predict(X), np.zeros(5))
+
+
+def test_liblinear_logregcv_sparse():
+    """Test LogRegCV with solver='liblinear' works for sparse matrices"""
+
+    X, y = make_classification(n_samples=10, n_features=5)
+    clf = LogisticRegressionCV(solver='liblinear')
+    clf.fit(sparse.csr_matrix(X), y)

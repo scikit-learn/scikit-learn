@@ -76,6 +76,10 @@ Bug fixes
     - Various fixes to the Gaussian processes subpackage by Vincent Dubourg
       and Jan Hendrik Metzen.
 
+    - Calling ``partial_fit`` with ``class_weight=='auto'`` throws an
+      appropriate error message and suggests a work around.
+      By `Danny Sullivan`_.
+
 
 API changes summary
 -------------------
@@ -95,6 +99,8 @@ API changes summary
       and pass these to their distance metric. This will no longer be supported
       in scikit-learn 0.18; use the ``metric_params`` argument instead.
 
+    - `n_jobs` parameter of the fit method shifted to the constructor of the
+       LinearRegression class.
 
 .. _changes_0_15_2:
 
@@ -2937,7 +2943,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Maheshakya Wijewardena: https://github.com/maheshakya
 
-.. _Danny Sullivan: http://dannysullivan.co
+.. _Danny Sullivan: https://github.com/dsullivan7
 
 .. _Michael Eickenberg: https://github.com/eickenberg
 
