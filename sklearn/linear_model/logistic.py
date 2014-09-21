@@ -7,6 +7,7 @@ Logistic Regression
 #         Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 #         Manoj Kumar <manojkumarsivaraj334@gmail.com>
 #         Lars Buitinck
+#         Simon Wu <s8wu@uwaterloo.ca>
 
 import numbers
 import warnings
