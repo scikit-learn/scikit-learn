@@ -651,8 +651,8 @@ the parameter ``loss``:
       inefficient for data sets with a large number of classes.
     * Exponential loss (``'exponential'``): The same loss function
       as :class:`AdaBoostClassifier`. Less robust to mislabeled
-      examples than ``'deviance'``; cannot provide probability
-      estimates and can only be used for binary classification.
+      examples than ``'deviance'``; can only be used for binary
+      classification.
 
 Regularization
 ----------------
@@ -892,4 +892,3 @@ averaged.
  .. [HTF2009] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical Learning Ed. 2", Springer, 2009.
 
  .. [R2007] G. Ridgeway, "Generalized Boosted Models: A guide to the gbm package", 2007
-
