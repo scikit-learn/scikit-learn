@@ -92,7 +92,7 @@ def _check_targets(y_true, y_pred):
         y_true = column_or_1d(y_true)
         y_pred = column_or_1d(y_pred)
 
-    if y_type.startswith('multilabel') or y_type.startswith('multiclass'):
+    if y_type.startswith('multilabel') or y_type == 'multiclass-multioutput':
         if y_type == 'multilabel-sequences':
             labels = unique_labels(y_true, y_pred)
             binarizer = MultiLabelBinarizer(classes=labels, sparse_output=True)
@@ -172,15 +172,15 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     0.5
 
     In the case of multiclass multioutput:
-    >>> accuracy_score(np.array([[1, 2], [3, 1]]),np.array([[4, 3], [3, 2]]))
+    >>> accuracy_score(np.array([[1, 2], [3, 1]]), np.array([[4, 3], [3, 2]]))
     0.0
-    >>>  accuracy_score(np.array([[1, 2], [3, 1]]),np.array([[1, 2], [3, 2]]))
+    >>> accuracy_score(np.array([[1, 2], [3, 1]]), np.array([[1, 2], [3, 2]]))
     0.5
     """
 
     # Compute accuracy for each possible representation
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-    if y_type.startswith('multilabel') or y_type.startswith('multiclass'):
+    if y_type.startswith('multilabel') or y_type == 'multiclass-multioutput':
         differing_labels = count_nonzero(y_true - y_pred, axis=1)
         score = differing_labels == 0
     else:
@@ -466,7 +466,7 @@ def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
     0.5
 
     In the case of multiclass multioutput:
-    >>> zero_one_loss(np.array([[1, 2], [3, 1]]),np.array([[2, 1], [3, 3]]))
+    >>> zero_one_loss(np.array([[1, 2], [3, 1]]), np.array([[2, 1], [3, 3]]))
     1.0
     """
     score = accuracy_score(y_true, y_pred,

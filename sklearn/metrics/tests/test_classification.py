@@ -1010,6 +1010,7 @@ def test__check_targets():
         (SEQ, SEQ): IND,
         (MC, MC): MC,
         (BIN, BIN): BIN,
+        (MMC, MMC): MMC,
 
         (IND, SEQ): None,
         (MC, SEQ): None,
@@ -1020,7 +1021,6 @@ def test__check_targets():
 
         # Disallowed types
         (CNT, CNT): None,
-        (MMC, MMC): None,
         (MCN, MCN): None,
         (IND, CNT): None,
         (SEQ, CNT): None,
@@ -1054,7 +1054,7 @@ def test__check_targets():
                     _check_targets, y1, y2)
 
             else:
-                if type1 not in (BIN, MC, SEQ, IND):
+                if type1 not in (BIN, MC, SEQ, IND, MMC):
                     assert_raise_message(ValueError,
                                          "{0} is not supported".format(type1),
                                          _check_targets, y1, y2)
