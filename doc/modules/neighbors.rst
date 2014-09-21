@@ -520,7 +520,9 @@ or 60), they tend to suffer from either space or query time that is exponential
 in :math:`d`. For large enough :math:`d`, in practice they often provide only
 a little improvement over the linear time :ref:`brute_force` algorithm that
 compares a query point to each point from the database.
-This phenomenon is often called “The Curse of Dimensionality”.
+This phenomenon is often called “The Curse of Dimensionality”. When answers do
+not have to be exact, the :class:`LSHForest` implements an approximate nearest
+neighbor search which is useful in high dimensional problems.
 
 Approximate nearest neighbor search is attempts to overcome the bottleneck
 of query running time. In certain applications which involve
