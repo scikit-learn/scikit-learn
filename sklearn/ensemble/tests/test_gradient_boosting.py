@@ -965,7 +965,7 @@ def test_probability_exponential():
     assert_raises(TypeError, lambda : next(clf.staged_predict_proba(T)))
 
 
-def test_non_uniform_weights_toy_edge_case():
+def test_non_uniform_weights_toy_edge_case_reg():
     X = [[1, 0],
          [1, 0],
          [1, 0],
@@ -974,9 +974,25 @@ def test_non_uniform_weights_toy_edge_case():
     y = [0, 0, 1, 0]
     # ignore the first 2 training samples by setting their weight to 0
     sample_weight = [0, 0, 1, 1]
-    gb = GradientBoostingClassifier(n_estimators=5)
-    gb.fit(X, y, sample_weight=sample_weight)
-    assert_array_equal(gb.predict([[1, 0]]), [1])
+    for loss in ('ls', 'huber', 'lad', 'quantile'):
+        gb = GradientBoostingRegressor(n_estimators=5)
+        gb.fit(X, y, sample_weight=sample_weight)
+        assert_true(gb.predict([[1, 0]])[0] > 0.5)
+
+
+def test_non_uniform_weights_toy_edge_case_clf():
+    X = [[1, 0],
+         [1, 0],
+         [1, 0],
+         [0, 1],
+        ]
+    y = [0, 0, 1, 0]
+    # ignore the first 2 training samples by setting their weight to 0
+    sample_weight = [0, 0, 1, 1]
+    for loss in ('deviance', 'exponential'):
+        gb = GradientBoostingClassifier(n_estimators=5)
+        gb.fit(X, y, sample_weight=sample_weight)
+        assert_array_equal(gb.predict([[1, 0]]), [1])
 
 
 if __name__ == "__main__":
