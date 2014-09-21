@@ -92,16 +92,17 @@ def _check_targets(y_true, y_pred):
         y_true = column_or_1d(y_true)
         y_pred = column_or_1d(y_pred)
 
-    if y_type.startswith('multilabel') or y_type == 'multiclass-multioutput':
+    if y_type.startswith('multilabel') or y_type == ('multiclass-multioutput'):
         if y_type == 'multilabel-sequences':
             labels = unique_labels(y_true, y_pred)
             binarizer = MultiLabelBinarizer(classes=labels, sparse_output=True)
             y_true = binarizer.fit_transform(y_true)
             y_pred = binarizer.fit_transform(y_pred)
-
+            y_type = 'multilabel-indicator'
+        if y_type == 'multiclass-multioutput':
+            y_type = 'multiclass-multioutput'
         y_true = csr_matrix(y_true)
         y_pred = csr_matrix(y_pred)
-        y_type = 'multilabel-indicator'
 
     return y_type, y_true, y_pred
 
