@@ -3,23 +3,25 @@
 Feature Union with Heterogeneos Data Sources
 ============================================
 
-Datasets can often contain components of heterogeneous types that require
-different feature extraction and processing pipelines.  For example, if we were
-considering data taken from Flikr Creative Commons dataset, you might need to
-extract features from rasterized images (pictures), text (picture description),
-and spatial data (location).  Similarly, if your dataset is stored in a Pandas
-DataFrame, you may need to do different transformations on the individual
-columns before combining them and passing them to a classifier.
+Datasets can often contain components of that require different feature
+extraction and processing pipelines.  This scenario might occur when:
+    1) Your dataset consists of heterogeneous data types (e.g. raster images
+    and text captions)
+
+    2) Your dataset is stored in a Pandas DataFrame and different columns
+    require different processing pipelines.
+
+    3) Groups of features require weighting relative to each other.
 
 This example demonstrates how to use `sklearn.feature_extraction.FeatureUnion`
 on a dataset containing different types of features.  We use the 20-newsgroups
-dataset and compute features for the subject line and body in separate
-pipelines. We combine them with a FeatureUnion and finally train a classifier
-on the combined set of features.
+dataset and compute standard bag-of-words features for the subject line and
+body in separate pipelines as well as ad hoc features on the body. We combine
+them (with weights) using a FeatureUnion and finally train a classifier on the
+combined set of features.
 
 The choice of features is not particularly helpful, but serves to illustrate
-the technique. One could imagine that instead of considering subject & body,
-we are considering image and caption or some other heterogeneous data source.
+the technique.
 """
 
 # Author: Matt Terry <matt.terry@gmail.com>
@@ -27,11 +29,14 @@ we are considering image and caption or some other heterogeneous data source.
 # License: BSD 3 clause
 from __future__ import print_function
 
+import re
+
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.datasets.twenty_newsgroups import strip_newsgroup_footer
 from sklearn.datasets.twenty_newsgroups import strip_newsgroup_quoting
 from sklearn.decomposition import TruncatedSVD
+from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import classification_report
 from sklearn.pipeline import FeatureUnion
@@ -76,6 +81,19 @@ class ItemSelector(BaseEstimator, TransformerMixin):
         return data_dict[self.key]
 
 
+class TextStats(BaseEstimator, TransformerMixin):
+    def fit(self, x, y=None):
+        return self
+
+    def transform(self, posts):
+        def get_features(text):
+            dot_re = re.compile('\.')
+            return {'length': len(text),
+                    'num_sentences': len(dot_re.findall(text))}
+
+        return [get_features(text) for text in posts]
+
+
 class SubjectBodyExtractor(BaseEstimator, TransformerMixin):
     """Extract the subject & body from a usenet post in a single pass.
 
@@ -110,28 +128,53 @@ pipeline = Pipeline([
     ('subjectbody', SubjectBodyExtractor()),
 
     # Use FeatureUnion to combine the features from subject and body
-    ('union', FeatureUnion([
+    ('union', FeatureUnion(
+        transformer_list=[
 
-        # Pipeline for pulling features from the post's subject line
-        ('subject', Pipeline([
-            ('selector', ItemSelector(key='subject')),
-            ('tfidf', TfidfVectorizer(min_df=50)),
-        ])),
+            # Pipeline for pulling features from the post's subject line
+            ('subject', Pipeline([
+                ('selector', ItemSelector(key='subject')),
+                ('tfidf', TfidfVectorizer(min_df=50)),
+            ])),
 
-        # Pipeline for pulling features from post's body
-        ('body', Pipeline([
-            ('selector', ItemSelector(key='body')),
-            ('tfidf', TfidfVectorizer()),
-            ('best', TruncatedSVD(n_components=50)),
-        ])),
-    ])),
+            # Pipeline for standard bag-of-words model for body
+            ('body_bow', Pipeline([
+                ('selector', ItemSelector(key='body')),
+                ('tfidf', TfidfVectorizer()),
+                ('best', TruncatedSVD(n_components=50)),
+            ])),
+
+            # Pipeline for pulling ad hoc features from post's body
+            ('body_stats', Pipeline([
+                ('selector', ItemSelector(key='body')),
+                ('stats', TextStats()),  # returns a list of dicts
+                ('vect', DictVectorizer()),  # list of dicts -> feature matrix
+            ])),
+
+        ],
+
+        # weight components in FeatureUnion
+        transformer_weights={
+            'subject': 0.8,
+            'body_bow': 0.5,
+            'body_stats': 1.0,
+        },
+    )),
 
     # Use a SVC classifier on the combined features
     ('svc', SVC(kernel='linear')),
 ])
 
-train = fetch_20newsgroups(random_state=1, subset='train')
-test = fetch_20newsgroups(random_state=1, subset='test')
+# limit the list of categories to make running this exmaple faster.
+categories = ['alt.atheism', 'talk.religion.misc']
+train = fetch_20newsgroups(random_state=1,
+                           subset='train',
+                           categories=categories,
+                           )
+test = fetch_20newsgroups(random_state=1,
+                          subset='test',
+                          categories=categories,
+                          )
 
 pipeline.fit(train.data, train.target)
 y = pipeline.predict(test.data)
