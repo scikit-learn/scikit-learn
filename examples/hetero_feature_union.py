@@ -39,22 +39,27 @@ from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 
 
-class DictSelector(BaseEstimator, TransformerMixin):
-    """Transform a mappable object into a the value at specified key.
+class ItemSelector(BaseEstimator, TransformerMixin):
+    """For data grouped by feature, select dataset at a provided key.
 
-    If your data is organized as a dict of sequences, this is helpful for
-    selecting data for a specified key.  It is also useful for selecting
-    a single column from a pandas DataFrame.
+    The data is expected to be stored in a 2D data structure, where the first
+    index is over features and the second is over samples.  i.e.
 
-    DictSelects expect a dict of sequences.
-    i.e.
+    >> len(data) == n_features
+    >> len(data[key]) == n_samples
+
+    ItemSelector only requres that the collection implement getitem
+    (data[key]).  Examples include: a dict of lists, 2D numpy array, Pandas
+    DataFrame, numpy record array, etc.
+
     >> data = {'a': [1, 5, 2, 5, 2, 8],
                'b': [9, 4, 1, 4, 1, 3]}
-    >> ds = DictSelector(key='a')
+    >> ds = ItemSelector(key='a')
     >> data['a'] == ds.transform(data)
 
-    DictSelector expects a dict of sequences.  If you have a sequence of dicts,
-    you should use `sklearn.feature_extraction.DictVectorizer`.
+    ItemSelector is not designed to handle data grouped by sample.  (e.g. a
+    list of dicts).  If your data is structured this way, consider a
+    transformer along the lines of `sklearn.feature_extraction.DictVectorizer`.
 
     Parameters
     ----------
@@ -109,13 +114,13 @@ pipeline = Pipeline([
 
         # Pipeline for pulling features from the post's subject line
         ('subject', Pipeline([
-            ('selector', DictSelector(key='subject')),
+            ('selector', ItemSelector(key='subject')),
             ('tfidf', TfidfVectorizer(min_df=50)),
         ])),
 
         # Pipeline for pulling features from post's body
         ('body', Pipeline([
-            ('selector', DictSelector(key='body')),
+            ('selector', ItemSelector(key='body')),
             ('tfidf', TfidfVectorizer()),
             ('best', TruncatedSVD(n_components=50)),
         ])),
