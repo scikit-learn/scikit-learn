@@ -31,6 +31,8 @@ from __future__ import print_function
 
 import re
 
+import numpy as np
+
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.datasets.twenty_newsgroups import strip_newsgroup_footer
@@ -104,13 +106,13 @@ class SubjectBodyExtractor(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, posts):
-        subject = []
-        body = []
-        for text in posts:
+        features = np.recarray(shape=(len(posts),),
+                               dtype=[('subject', object), ('body', object)])
+        for i, text in enumerate(posts):
             headers, _, bod = text.partition('\n\n')
             bod = strip_newsgroup_footer(bod)
             bod = strip_newsgroup_quoting(bod)
-            body.append(bod)
+            features['body'][i] = bod
 
             prefix = 'Subject:'
             sub = ''
@@ -118,9 +120,9 @@ class SubjectBodyExtractor(BaseEstimator, TransformerMixin):
                 if line.startswith(prefix):
                     sub = line[len(prefix):]
                     break
-            subject.append(sub)
+            features['subject'][i] = sub
 
-        return {'subject': subject, 'body': body}
+        return features
 
 
 pipeline = Pipeline([
