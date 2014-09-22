@@ -114,13 +114,12 @@ class CommonTest(object):
 
         for i, entry in enumerate(X):
             p = np.dot(entry, weights)
-            # p *= wscale
             p += intercept
+
             gradient = p - y[i]
             wscale *= 1.0 - (eta * alpha)
             weights *= 1.0 - (eta * alpha)
             weights += -(eta * gradient * entry)
-            # weights += -(eta * gradient * entry) / wscale
             intercept += -(eta * gradient) * decay
 
             average_weights *= i
@@ -131,9 +130,7 @@ class CommonTest(object):
             average_intercept += intercept
             average_intercept /= i + 1
 
-        # weights *= wscale
         return average_weights, average_intercept
-        # return weights, intercept
 
     def _test_warm_start(self, X, Y, lr):
         # Test that explicit warm restart...
@@ -197,7 +194,6 @@ class CommonTest(object):
         clf.fit(X, Y)
 
         assert_true(hasattr(clf, 'average_coef_'))
-        assert_true(hasattr(clf, 'previous_coef_'))
         assert_true(hasattr(clf, 'average_intercept_'))
         assert_true(hasattr(clf, 'standard_intercept_'))
         assert_true(hasattr(clf, 'standard_coef_'))
@@ -206,7 +202,6 @@ class CommonTest(object):
         clf.fit(X, Y)
 
         assert_false(hasattr(clf, 'average_coef_'))
-        assert_false(hasattr(clf, 'previous_coef_'))
         assert_false(hasattr(clf, 'average_intercept_'))
         assert_false(hasattr(clf, 'standard_intercept_'))
         assert_false(hasattr(clf, 'standard_coef_'))

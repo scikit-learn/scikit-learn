@@ -4,6 +4,7 @@
 #
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Lars Buitinck <larsmans@gmail.com>
+#         Danny Sullivan <dsullivan7@hotmail.com>
 #
 # Licence: BSD 3 clause
 
@@ -53,6 +54,8 @@ cdef class WeightVector(object):
     ----------
     w : ndarray, dtype=double, order='C'
         The numpy array which backs the weight vector.
+    aw : ndarray, dtype=double, order='C'
+        The numpy array which backs the average_weight vector.
     w_data_ptr : double*
         A pointer to the data of the numpy array.
     wscale : double
@@ -121,9 +124,13 @@ cdef class WeightVector(object):
             innerprod += (w_data_ptr[idx] * val)
             xsqnorm += (val * val)
             w_data_ptr[idx] += val * (c / wscale)
+
+            # Update the average weights according to the sparse trick defined
+            # here: http://research.microsoft.com/pubs/192769/tricks-2012.pdf
             if self.aw is not None:
                 aw_data_ptr[idx] += (self.alpha * val * (-c / wscale))
 
+        # Once the the sample has been processed, update the alpha and beta
         if self.aw is not None:
             if t > 1:
                 self.beta /= (1 - mu)

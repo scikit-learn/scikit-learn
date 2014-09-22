@@ -25,30 +25,6 @@ from sklearn.utils.seq_dataset cimport SequentialDataset
 
 np.import_array()
 
-# Import CBLAS Functions
-cdef extern from "cblas.h":
-
-    # dot product of two n elemenet vectors x and y
-    double ddot "cblas_ddot" (int n,
-                              const double* x,
-                              int incrx,
-                              double* y,
-                              int incry) nogil
-
-    # scale the passed in n element vector x at scale
-    void dscal "cblas_dscal" (int n,
-                              double scale,
-                              double* x,
-                              int incrx) nogil
-
-    # adds a vector x * scaler scale to another vector y
-    void daxpy "cblas_daxpy" (int n,
-                              double scale,
-                              const double* x,
-                              int incrx,
-                              double* y,
-                              int incry) nogil
-
 # Penalty constants
 DEF NO_PENALTY = 0
 DEF L1 = 1
@@ -429,7 +405,6 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                           intercept,
                           None,
                           0,
-                          None,
                           loss,
                           penalty_type,
                           alpha, C,
@@ -450,7 +425,6 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 double intercept,
                 np.ndarray[double, ndim=1, mode='c'] average_weights,
                 double average_intercept,
-                np.ndarray[double, ndim=1, mode='c'] previous_weights,
                 LossFunction loss,
                 int penalty_type,
                 double alpha, double C,
@@ -475,9 +449,6 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         The average weights as computed for ASGD
     average_intercept : double
         The average intercept for ASGD
-    previous_weights : ndarray[double, ndim=1]
-        The last seen value of the weight vector, used to calculate
-        the average_weights
     loss : LossFunction
         A concrete ``LossFunction`` object.
     penalty_type : int
@@ -536,7 +507,6 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                       intercept,
                       average_weights,
                       average_intercept,
-                      previous_weights,
                       loss,
                       penalty_type,
                       alpha, C,
@@ -556,7 +526,6 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                double intercept,
                np.ndarray[double, ndim=1, mode='c'] average_weights,
                double average_intercept,
-               np.ndarray[double, ndim=1, mode='c'] previous_weights,
                LossFunction loss,
                int penalty_type,
                double alpha, double C,
@@ -579,17 +548,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef double* w_ptr = &weights[0]
     cdef double *x_data_ptr = NULL
     cdef int *x_ind_ptr = NULL
-    cdef double* aw_ptr = NULL
     cdef double* ps_ptr = NULL
-
-    #initialize components needed for averaging
-    # if average:
-    #     aw_ptr = &average_weights[0]
-    #     ps_ptr = &previous_weights[0]
-    #     # average_weights_ *= t - 1
-    #     dscal(n_features, t - 1, aw_ptr, 1)
-    #     # average_weights_ += previous_weights_ * n_samples
-    #     daxpy(n_features, n_samples, ps_ptr, 1, aw_ptr, 1)
 
     # helper variables
     cdef bint infinity = False
@@ -605,9 +564,6 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef unsigned int epoch = 0
     cdef unsigned int i = 0
     cdef int is_hinge = isinstance(loss, Hinge)
-    cdef double avg_mu = 1.0
-    cdef double avg_alpha = 0
-    cdef double avg_beta = 1.0
 
     # q vector is only used for L1 regularization
     cdef np.ndarray[double, ndim = 1, mode = "c"] q = None
@@ -686,27 +642,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     u += (l1_ratio * eta * alpha)
                     l1penalty(w, q_data_ptr, x_ind_ptr, xnnz, u)
 
-                # update the average weights and intercept if needed
                 if average:
-                    # compute the average for the weights
-                    # average_weights_ += weights
-                    # if t > 1:
-                    #     for j in range(xnnz):
-                    #         index = x_ind_ptr[j]
-                    #         entry = x_data_ptr[index]
-
-                    #         aw_ptr[index] += (avg_alpha * entry *
-                    #                           -update / w.wscale)
-
-                    #         # aw_ptr[index] -= ps_ptr[index] * (n_samples - i)
-                    #         # aw_ptr[index] += entry * (n_samples - i)
-                    #         # ps_ptr[index] = entry
-
-                    #     avg_mu = 1.0 / t
-                    #     avg_beta /= 1.0 - avg_mu
-
-                    # avg_alpha += avg_mu * avg_beta * w.wscale
-
                     # compute the average for the intercept
                     average_intercept += (intercept - average_intercept) / t
 
@@ -733,15 +669,6 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         raise ValueError(("Floating-point under-/overflow occurred at epoch"
                           " #%d. Scaling input data with StandardScaler or"
                           " MinMaxScaler might help.") % (epoch + 1))
-
-    # divide the average weights by total iterations
-    # if average:
-        # average_weights_ /= t - 1
-        # dscal(n_features, 1. / (t - 1), aw_ptr, 1)
-        # for j in range(n_features):
-        # print(w.alpha)
-            # aw_ptr[j] += w.alpha * w.w[j]
-            # aw_ptr[j] /= w.beta
 
     w.reset_wscale()
 

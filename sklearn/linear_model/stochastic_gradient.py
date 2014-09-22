@@ -77,7 +77,6 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         if self.average:
             self.standard_coef_ = None
             self.average_coef_ = None
-            self.previous_coef_ = None
         # iteration count for learning rate schedule
         # must not be int (e.g. if ``learning_rate=='optimal'``)
         self.t_ = None
@@ -227,9 +226,6 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
             self.average_intercept_ = np.zeros(self.standard_intercept_.shape,
                                                dtype=np.float64,
                                                order="C")
-            self.previous_coef_ = np.zeros(self.coef_.shape,
-                                           dtype=np.float64,
-                                           order="c")
 
 
 def _check_fit_data(X, y):
@@ -263,7 +259,6 @@ def _prepare_fit_binary(est, y, i):
     y_i[y != est.classes_[i]] = -1.0
     average_intercept = 0
     average_coef = None
-    previous_coef = None
 
     if len(est.classes_) == 2:
         if not est.average:
@@ -273,7 +268,6 @@ def _prepare_fit_binary(est, y, i):
             coef = est.standard_coef_.ravel()
             intercept = est.standard_intercept_[0]
             average_coef = est.average_coef_.ravel()
-            previous_coef = est.previous_coef_.ravel()
             average_intercept = est.average_intercept_[0]
     else:
         if not est.average:
@@ -283,11 +277,9 @@ def _prepare_fit_binary(est, y, i):
             coef = est.standard_coef_[i]
             intercept = est.standard_intercept_[i]
             average_coef = est.average_coef_[i]
-            previous_coef = est.previous_coef_[i]
             average_intercept = est.average_intercept_[i]
 
-    return y_i, coef, intercept, average_coef,\
-        average_intercept, previous_coef
+    return y_i, coef, intercept, average_coef, average_intercept
 
 
 def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
@@ -296,9 +288,9 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
 
     The i'th class is considered the "positive" class.
     """
-    # if average is not true, average_coef, average_intercept, and previously
-    # seen will be unused
-    y_i, coef, intercept, average_coef, average_intercept, previous_coef = \
+    # if average is not true, average_coef, and average_intercept will be
+    # unused
+    y_i, coef, intercept, average_coef, average_intercept = \
         _prepare_fit_binary(est, y, i)
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
     dataset, intercept_decay = _make_dataset(X, y_i, sample_weight)
@@ -324,7 +316,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
     else:
         standard_coef, standard_intercept, average_coef, \
             average_intercept = average_sgd(coef, intercept, average_coef,
-                                            average_intercept, previous_coef,
+                                            average_intercept,
                                             est.loss_function, penalty_type,
                                             alpha, C, est.l1_ratio, dataset,
                                             n_iter, int(est.fit_intercept),
@@ -450,7 +442,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
             self.standard_intercept_ = self.intercept_
             self.average_coef_ = None
             self.average_intercept_ = None
-            self.previous_coef_ = None
 
         # Clear iteration count for multiple call to fit.
         self.t_ = None
@@ -886,9 +877,6 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
             self.average_intercept_ = np.zeros(1,
                                                dtype=np.float64,
                                                order="C")
-            self.previous_coef_ = np.zeros(n_features,
-                                           dtype=np.float64,
-                                           order="C")
 
         self._fit_regressor(X, y, alpha, C, loss, learning_rate,
                             sample_weight, n_iter)
@@ -938,7 +926,6 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
             self.standard_coef_ = self.coef_
             self.average_coef_ = None
             self.average_intercept_ = None
-            self.previous_coef_ = None
 
         # Clear iteration count for multiple call to fit.
         self.t_ = None
@@ -1033,7 +1020,6 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                             self.standard_intercept_[0],
                             self.average_coef_,
                             self.average_intercept_[0],
-                            self.previous_coef_,
                             loss_function,
                             penalty_type,
                             alpha, C,
