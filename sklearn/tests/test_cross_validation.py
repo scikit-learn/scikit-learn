@@ -48,7 +48,8 @@ class MockClassifier(BaseEstimator):
         self.a = a
         self.allow_nd = allow_nd
 
-    def fit(self, X, Y=None, sample_weight=None, class_prior=None):
+    def fit(self, X, Y=None, sample_weight=None, class_prior=None,
+            sparse_sample_weight=None, sparse_param=None):
         if self.allow_nd:
             X = X.reshape(len(X), -1)
         if X.ndim >= 3 and not self.allow_nd:
@@ -63,6 +64,19 @@ class MockClassifier(BaseEstimator):
                         'MockClassifier extra fit_param class_prior.shape[0]'
                         ' is {0}, should be {1}'.format(class_prior.shape[0],
                                                         len(np.unique(y))))
+        if sparse_sample_weight is not None:
+            assert_true(sparse_sample_weight.shape[0] == X.shape[0],
+                        'MockClassifier extra fit_param sparse_sample_weight'
+                        '.shape[0] is {0}, should be {1}'
+                            .format(sparse_sample_weight.shape[0], X.shape[0]))
+        if sparse_param is not None:
+            assert_true(sparse_param.shape == P_sparse.shape,
+                        'MockClassifier extra fit_param sparse_param.shape '
+                        'is ({0}, {1}), should be ({2}, {3})'
+                            .format(sparse_param.shape[0],
+                                    sparse_param.shape[1],
+                                    P_sparse.shape[0],
+                                    P_sparse.shape[1]))
         return self
 
     def predict(self, T):
@@ -76,6 +90,9 @@ class MockClassifier(BaseEstimator):
 
 X = np.ones((10, 2))
 X_sparse = coo_matrix(X)
+W_sparse = coo_matrix((np.array([1]), (np.array([1]), np.array([0]))),
+                      shape=(10,1))
+P_sparse = coo_matrix(np.eye(5))
 y = np.arange(10) // 2
 
 ##############################################################################
@@ -555,7 +572,9 @@ def test_cross_val_score_fit_params():
     n_samples = X.shape[0]
     n_classes = len(np.unique(y))
     fit_params = {'sample_weight': np.ones(n_samples),
-                  'class_prior': np.ones(n_classes) / n_classes}
+                  'class_prior': np.ones(n_classes) / n_classes,
+                  'sparse_sample_weight': W_sparse,
+                  'sparse_param': P_sparse}
     cval.cross_val_score(clf, X, y, fit_params=fit_params)
 
 

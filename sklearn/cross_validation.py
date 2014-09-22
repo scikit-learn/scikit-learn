@@ -1220,8 +1220,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
     # Adjust lenght of sample weights
     n_samples = _num_samples(X)
     fit_params = fit_params if fit_params is not None else {}
-    fit_params = dict([(k, np.asarray(v)[train]
-                       if hasattr(v, '__len__') and len(v) == n_samples else v)
+    fit_params = dict([(k, (v.tocsr()[train] if sp.issparse(v)
+                            else np.asarray(v)[train])
+                        if _num_samples(v) == n_samples else v)
                        for k, v in fit_params.items()])
 
     if parameters is not None:
