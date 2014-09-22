@@ -25,6 +25,7 @@ we are considering image and caption or some other heterogeneous data source.
 # Author: Matt Terry <matt.terry@gmail.com>
 #
 # License: BSD 3 clause
+from __future__ import print_function
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.datasets import fetch_20newsgroups
@@ -129,4 +130,4 @@ test = fetch_20newsgroups(random_state=1, subset='test')
 
 pipeline.fit(train.data, train.target)
 y = pipeline.predict(test.data)
-print classification_report(y, test.target)
+print(classification_report(y, test.target))
