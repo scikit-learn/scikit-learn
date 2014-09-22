@@ -796,6 +796,13 @@ def test_big_input():
         assert_in("float32", str(e))
 
 
-def test_memoryerror():
+def test_realloc():
     from sklearn.tree._tree import _realloc_test
     assert_raises(MemoryError, _realloc_test)
+
+
+def test_resize_memoryerror():
+    clf = DecisionTreeClassifier(splitter='best', max_leaf_nodes=(2 ** 31))
+    X = np.random.randn(10, 2)
+    y = np.random.randint(0, 2, 10)
+    assert_raises(MemoryError, clf.fit, X, y)
