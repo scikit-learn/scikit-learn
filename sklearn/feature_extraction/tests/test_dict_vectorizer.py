@@ -42,8 +42,6 @@ def test_dictvectorizer():
                     if sort:
                         assert_equal(v.feature_names_,
                                      sorted(v.feature_names_))
-                        assert_equal(list(v.vocabulary_.items()),
-                                     sorted(v.vocabulary_.items()))
 
 
 def test_feature_selection():
