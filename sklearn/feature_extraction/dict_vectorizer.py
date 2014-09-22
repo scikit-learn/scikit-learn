@@ -117,9 +117,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
                 if isinstance(v, six.string_types):
                     f = "%s%s%s" % (f, self.separator, v)
                 if f not in vocab:
-                    self.feature_names_.append(f)
-                    if not self.sort:
-                        vocab[f] = len(vocab)
+                    vocab[f] = len(vocab)
 
         if self.sort:
             self.feature_names_.sort()
@@ -178,8 +176,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
                     f = "%s%s%s" % (f, self.separator, v)
                     v = 1
                 if f not in vocab:
-                    vocab[f] = len(vocab)
                     self.feature_names_.append(f)
+                    vocab[f] = len(vocab)
                 indices.append(vocab[f])
                 values.append(dtype(v))
 
