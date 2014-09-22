@@ -748,6 +748,9 @@ def test_normalize_option_multiclass_multioutput_classification():
         measure = metrics(y_true, y_pred)
         assert_almost_equal(metrics(y_true, y_pred, normalize=False)
                             / n_samples, measure)
+    for name in THRESHOLDED_MULTILABEL_METRICS:
+        metrics = ALL_METRICS[name]
+        assert_raises(ValueError, metrics, y_true, y_pred)
 
 
 def test_normalize_option_multilabel_classification():

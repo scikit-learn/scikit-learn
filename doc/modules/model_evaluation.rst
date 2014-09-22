@@ -223,6 +223,13 @@ And some work with binary and multilabel indicator format:
    average_precision_score
    roc_auc_score
 
+And some metrics also work with multiclass-multioutput indicator format:
+
+.. autosummary::
+   :template: function.rst
+
+   accuracy_score
+   zero_one_loss
 
 In the following sub-sections, we will describe each of those functions.
 
@@ -261,6 +268,12 @@ where :math:`1(x)` is the `indicator function
 In the multilabel case with binary label indicators: ::
 
   >>> accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
+  0.5
+
+In the case of multiclass-multioutput: ::
+  >>> accuracy_score(np.array([[1, 2], [3, 1]]), np.array([[4, 3], [3, 2]]))
+  0.0
+  >>> accuracy_score(np.array([[1, 2], [3, 1]]), np.array([[1, 2], [3, 2]]))
   0.5
 
 .. topic:: Example:
@@ -892,6 +905,9 @@ In the multilabel case with binary label indicators: ::
   >>> zero_one_loss(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
   0.5
 
+In the case of multiclass-multioutput indicators: ::
+  >>> zero_one_loss(np.array([[1, 2], [3, 1]]), np.array([[2, 1], [3, 3]]))
+  1.0
 
 .. topic:: Example:
 

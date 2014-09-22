@@ -74,9 +74,8 @@ tasks :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
 
 .. warning::
 
-    At present, metrics such as accuracy_score and zero_one_loss in
-    :mod:`sklearn.metrics` support the multioutput-multiclass
-    classification task.
+    At present, only the :fun:`accuracy_score`and :fun:`zero_one_loss`
+    support multioutput-multiclass classification task.
 
 Multilabel classification format
 ================================
