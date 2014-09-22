@@ -753,7 +753,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
             raise ValueError("Incorrect number of features. "
                              "Got %d features, expected %d" % (
                                  n_features, expected_n_features))
-        if X.dtype.kind is not 'f':
+        if X.dtype.kind != 'f':
             warnings.warn("Got data type %s, converted to float "
                           "to avoid overflows" % X.dtype,
                           RuntimeWarning, stacklevel=2)
