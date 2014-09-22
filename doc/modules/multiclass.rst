@@ -72,10 +72,6 @@ Some estimators also support multioutput-multiclass classification
 tasks :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
 :ref:`Nearest Neighbors <neighbors>`.
 
-.. warning::
-
-    At present, only the :fun:`accuracy_score`and :fun:`zero_one_loss`
-    support multioutput-multiclass classification task.
 
 Multilabel classification format
 ================================

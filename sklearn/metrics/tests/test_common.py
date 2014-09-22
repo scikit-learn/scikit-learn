@@ -742,16 +742,20 @@ def test_normalize_option_multiclass_multioutput_classification():
     y_true = random_state.randint(0, 4, size=(20, 5))
     y_pred = random_state.randint(0, 4, size=(20, 5))
     n_samples = y_true.shape[0]
+    exceptions = ["accuracy_score", "zero_one_loss", "mean_absolute_error",
+                   "unnormalized_accuracy_score", "unnormalized_zero_one_loss",
+                   "unnormalized_jaccard_similarity_score", "r2_score",
+                   "mean_squared_error"]
 
     for name in METRICS_WITH_MULTICLASS_MULITOUTPUT:
         metrics = ALL_METRICS[name]
         measure = metrics(y_true, y_pred)
         assert_almost_equal(metrics(y_true, y_pred, normalize=False)
                             / n_samples, measure)
-    for name in THRESHOLDED_MULTILABEL_METRICS:
-        metrics = ALL_METRICS[name]
-        assert_raises(ValueError, metrics, y_true, y_pred)
-
+    for name in ALL_METRICS.keys():
+        if name not in exceptions:
+            metrics = ALL_METRICS[name]
+            assert_raises(Exception, metrics, y_true, y_pred)
 
 def test_normalize_option_multilabel_classification():
     # Test in the multilabel case
