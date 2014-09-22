@@ -132,12 +132,11 @@ def test_multiclass_multioutput_accuracy_score():
      assert_equal(accuracy_score(y1, y2), 0.5)
      assert_equal(accuracy_score(y1, y1), 1)
      assert_equal(accuracy_score(y2, y2), 1)
-     assert_raises(ValueError, accuracy_score, y2, [(), ()])
+     assert_equal(accuracy_score(y2, y1), 0.5)
      assert_equal(accuracy_score(y1, y2, normalize=False), 1)
      assert_equal(accuracy_score(y1, y1, normalize=False), 2)
      assert_equal(accuracy_score(y2, y2, normalize=False), 2)
-     assert_raises(ValueError, accuracy_score,
-                   y2, [(), ()])
+     assert_equal(accuracy_score(y2, y1, normalize=False), 1)
 
 def test_precision_recall_f1_score_binary():
     """Test Precision Recall and F1 Score for binary classification task"""
@@ -548,7 +547,7 @@ def test_multiclass_multioutput_zero_one_loss():
     assert_equal(zero_one_loss(y1, y2), 0.5)
     assert_equal(zero_one_loss(y1, y1), 0)
     assert_equal(zero_one_loss(y2, y2), 0)
-    assert_raises(ValueError, zero_one_loss, y2, [(), ()])
+    assert_equal(zero_one_loss(y2, y1), 0.5)
 
 
 def test_multilabel_hamming_loss():
