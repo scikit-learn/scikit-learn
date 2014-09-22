@@ -281,6 +281,8 @@ MULTIOUTPUT_METRICS = [
     "mean_absolute_error", "mean_squared_error", "r2_score",
 ]
 
+METRICS_WITH_MULTICLASS_MULITOUTPUT = ["accuracy_score", "zero_one_loss"]
+
 # Symmetric with respect to their input arguments y_true and y_pred
 # metric(y_true, y_pred) == metric(y_pred, y_true).
 SYMMETRIC_METRICS = [
@@ -741,7 +743,7 @@ def test_normalize_option_multiclass_multioutput_classification():
     y_pred = random_state.randint(0, 4, size=(20, 5))
     n_samples = y_true.shape[0]
 
-    for name in ["accuracy_score","zero_one_loss"]:
+    for name in METRICS_WITH_MULTICLASS_MULITOUTPUT:
         metrics = ALL_METRICS[name]
         measure = metrics(y_true, y_pred)
         assert_almost_equal(metrics(y_true, y_pred, normalize=False)
