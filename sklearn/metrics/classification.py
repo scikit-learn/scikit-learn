@@ -99,8 +99,6 @@ def _check_targets(y_true, y_pred):
             y_true = binarizer.fit_transform(y_true)
             y_pred = binarizer.fit_transform(y_pred)
             y_type = 'multilabel-indicator'
-        if y_type == 'multiclass-multioutput':
-            y_type = 'multiclass-multioutput'
         y_true = csr_matrix(y_true)
         y_pred = csr_matrix(y_pred)
 

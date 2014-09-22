@@ -734,6 +734,20 @@ def test_normalize_option_multiclasss_classification():
                             / n_samples, measure)
 
 
+def test_normalize_option_multiclass_multioutput_classification():
+    # Test in the multiclass-multioutput case
+    random_state = check_random_state(0)
+    y_true = random_state.randint(0, 4, size=(20, 5))
+    y_pred = random_state.randint(0, 4, size=(20, 5))
+    n_samples = y_true.shape[0]
+
+    for name in ["accuracy_score","zero_one_loss"]:
+        metrics = ALL_METRICS[name]
+        measure = metrics(y_true, y_pred)
+        assert_almost_equal(metrics(y_true, y_pred, normalize=False)
+                            / n_samples, measure)
+
+
 def test_normalize_option_multilabel_classification():
     # Test in the multilabel case
     n_classes = 4

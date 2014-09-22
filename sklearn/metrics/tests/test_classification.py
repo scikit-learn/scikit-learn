@@ -125,18 +125,19 @@ def test_multilabel_accuracy_score_subset_accuracy():
         assert_equal(accuracy_score(y2, [(), ()], normalize=False), 0)
 
 
-def multiclass_multioutput_accuracy_score():
+def test_multiclass_multioutput_accuracy_score():
      y1 = np.array([[1, 2], [3, 1]])
      y2 = np.array([[1, 2], [1, 3]])
 
      assert_equal(accuracy_score(y1, y2), 0.5)
      assert_equal(accuracy_score(y1, y1), 1)
      assert_equal(accuracy_score(y2, y2), 1)
-     assert_equal(accuracy_score(y2, [(), ()]), 0)
+     assert_raises(ValueError, accuracy_score, y2, [(), ()])
      assert_equal(accuracy_score(y1, y2, normalize=False), 1)
      assert_equal(accuracy_score(y1, y1, normalize=False), 2)
      assert_equal(accuracy_score(y2, y2, normalize=False), 2)
-     assert_equal(accuracy_score(y2, [(), ()], normalize=False), 0)
+     assert_raises(ValueError, accuracy_score,
+                   y2, [(), ()])
 
 def test_precision_recall_f1_score_binary():
     """Test Precision Recall and F1 Score for binary classification task"""
@@ -541,13 +542,13 @@ def test_multilabel_zero_one_loss_subset():
         assert_equal(zero_one_loss(y2, [tuple(), (10, )]), 1)
 
 
-def multiclass_multioutput_zero_one_loss():
+def test_multiclass_multioutput_zero_one_loss():
     y1 = np.array([[3, 1, 2], [1, 5, 7]])
     y2 = np.array([[3, 1, 2], [3, 4, 5]])
     assert_equal(zero_one_loss(y1, y2), 0.5)
     assert_equal(zero_one_loss(y1, y1), 0)
     assert_equal(zero_one_loss(y2, y2), 0)
-    assert_equal(zero_one_loss(y2, [(), ()]), 1)
+    assert_raises(ValueError, zero_one_loss, y2, [(), ()])
 
 
 def test_multilabel_hamming_loss():
