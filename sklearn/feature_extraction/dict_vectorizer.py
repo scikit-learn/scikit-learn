@@ -208,7 +208,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
         # Convert to dense if asked
         if not self.sparse:
-            result_matrix = np.asarray(result_matrix.todense())
+            result_matrix = result_matrix.toarray()
 
         return result_matrix
 
