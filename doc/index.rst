@@ -62,7 +62,7 @@
 
     </h2>
     <blockquote>
-    <p>Identifying to which category an object belongs too.</p>
+    <p>Identifying to which category an object belongs to.</p>
     <div class="box-links">
     <strong>Applications</strong>: Spam detection, Image recognition.</br>
     <strong>Algorithms</strong>:&nbsp;
