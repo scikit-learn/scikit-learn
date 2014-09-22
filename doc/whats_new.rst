@@ -62,6 +62,9 @@ Enhancements
      instead of the default One-vs-Rest setting. By `Lars Buitinck`_ and
      `Manoj Kumar`_.
 
+   - ``DictVectorizer`` can now perform ``fit_transform`` on an iterable in a
+     single pass, when giving the option ``sort=False``. By Dan Blanchard.
+
 
 Documentation improvements
 ..........................
@@ -139,7 +142,7 @@ Bug fixes
 
   - Fixed potential overflow in ``_tree.safe_realloc`` by `Lars Buitinck`_.
 
-  - Performance optimization in :class:`istonic.IsotonicRegression`.
+  - Performance optimization in :class:`isotonic.IsotonicRegression`.
     By Robert Bradshaw.
 
   - ``nose`` is non-longer a runtime dependency to import ``sklearn``, only for
