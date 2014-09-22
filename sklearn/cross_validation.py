@@ -1221,7 +1221,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
     n_samples = _num_samples(X)
     fit_params = fit_params if fit_params is not None else {}
     fit_params = dict([(k, np.asarray(v)[train]
-                       if hasattr(v, '__len__') and len(v) == n_samples else v)
+                        if not sp.issparse(v) and hasattr(v, '__len__') and
+                        len(v) == n_samples else v[train]
+                        if sp.issparse(v) and v.shape[0] == n_samples else v)
                        for k, v in fit_params.items()])
 
     if parameters is not None:
