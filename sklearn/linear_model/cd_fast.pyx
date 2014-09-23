@@ -171,6 +171,10 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef unsigned int f_iter
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
+    cdef double obj
+    cdef double prev_obj
+    cdef double diff
+    cdef double max_diff
 
     if alpha == 0:
         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
@@ -183,6 +187,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             R[i] = y[i] - ddot(n_features,
                                <DOUBLE*>(X.data + i * sizeof(DOUBLE)),
                                n_samples, <DOUBLE*>w.data, 1)
+        l1_norm = dasum(n_features, <DOUBLE*>w.data, 1)
+        w_norm2 = ddot(n_features, <DOUBLE*>w.data, 1, <DOUBLE*>w.data, 1)
 
         # tol *= np.dot(y, y)
         tol *= ddot(n_samples, <DOUBLE*>y.data, n_tasks,
@@ -233,6 +239,28 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 if fabs(w[ii]) > w_max:
                     w_max = fabs(w[ii])
 
+                if w[ii] != w_ii:
+                    # R_norm2 = np.dot(R, R)
+                    R_norm2 = ddot(n_samples, <DOUBLE*>R.data, 1,
+                                   <DOUBLE*>R.data, 1)
+
+                    l1_norm -= (fabs(w_ii) - fabs(w[ii]))
+                    w_norm2 -= (w_ii*w_ii - w[ii]*w[ii])
+
+                    obj = 0.5 * R_norm2 + alpha * l1_norm + 0.5 * beta * w_norm2
+                    if f_iter == 0:
+                        prev_obj = obj
+                    else:
+                        diff = fabs(obj - prev_obj)
+                    prev_obj = obj
+
+                if f_iter == 1 or diff > max_diff:
+                    max_diff = diff
+
+            if max_diff < tol:
+                break
+
+            """
             if (w_max == 0.0
                     or d_w_max / w_max < d_w_tol
                     or n_iter == max_iter - 1):
@@ -252,10 +280,6 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 else:
                     dual_norm_XtA = abs_max(n_features, <DOUBLE*>XtA.data)
 
-                # R_norm2 = np.dot(R, R)
-                R_norm2 = ddot(n_samples, <DOUBLE*>R.data, 1,
-                               <DOUBLE*>R.data, 1)
-
                 # w_norm2 = np.dot(w, w)
                 w_norm2 = ddot(n_features, <DOUBLE*>w.data, 1,
                                <DOUBLE*>w.data, 1)
@@ -268,8 +292,6 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                     const = 1.0
                     gap = R_norm2
 
-                l1_norm = dasum(n_features, <DOUBLE*>w.data, 1)
-
                 # np.dot(R.T, y)
                 gap += (alpha * l1_norm - const * ddot(
                             n_samples,
@@ -280,7 +302,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 if gap < tol:
                     # return if we reached desired tolerance
                     break
-
+            """
     return w, gap, tol, n_iter + 1
 
 
@@ -340,6 +362,12 @@ def sparse_enet_coordinate_descent(double[:] w,
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
     cdef bint center = False
+    cdef double l1_norm
+    cdef double w_norm2
+    cdef double obj
+    cdef double prev_obj
+    cdef double diff
+    cdef double max_diff
 
     with nogil:
         # center = (X_mean != 0).any()
@@ -367,6 +395,9 @@ def sparse_enet_coordinate_descent(double[:] w,
 
         # tol *= np.dot(y, y)
         tol *= ddot(n_samples, <DOUBLE*>&y[0], 1, <DOUBLE*>&y[0], 1)
+
+        l1_norm = dasum(n_features, &w[0], 1)
+        w_norm2 = ddot(n_features, &w[0], 1, &w[0], 1)
 
         for n_iter in range(max_iter):
 
@@ -428,6 +459,28 @@ def sparse_enet_coordinate_descent(double[:] w,
 
                 if w[ii] > w_max:
                     w_max = w[ii]
+
+                if w[ii] != w_ii:
+                    # R_norm2 = np.dot(R, R)
+                    R_norm2 = ddot(n_samples, &R[0], 1, &R[0], 1)
+
+                    l1_norm -= (fabs(w_ii) - fabs(w[ii]))
+                    w_norm2 -= (w_ii*w_ii - w[ii]*w[ii])
+
+                    obj = 0.5 * R_norm2 + alpha * l1_norm + 0.5 * beta * w_norm2
+                    if f_iter == 0:
+                        prev_obj = obj
+                    else:
+                        diff = fabs(obj - prev_obj)
+                    prev_obj = obj
+
+                if f_iter == 1 or diff > max_diff:
+                    max_diff = diff
+
+            if max_diff < tol:
+                break
+
+            """
             if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
@@ -475,6 +528,7 @@ def sparse_enet_coordinate_descent(double[:] w,
                 if gap < tol:
                     # return if we reached desired tolerance
                     break
+            """
 
     return w, gap, tol, n_iter + 1
 
@@ -517,6 +571,8 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
     cdef double gap = tol + 1.0
     cdef double d_w_tol = tol
     cdef double dual_norm_XtA
+    cdef double w_norm2
+    cdef double l1_norm
     cdef unsigned int ii
     cdef unsigned int n_iter
     cdef unsigned int f_iter
@@ -528,12 +584,34 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
     cdef double* H_ptr = &H[0]
     cdef double* XtA_ptr = &XtA[0]
     tol = tol * y_norm2
+    cdef double obj
+    cdef double prev_obj
+    cdef double diff
+    cdef double max_diff
+    cdef double q_dot_w
 
     if alpha == 0:
         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
             " results and is discouraged.")
 
     with nogil:
+
+        # w_norm2 = np.dot(w, w)
+        w_norm2 = ddot(n_features, &w[0], 1, &w[0], 1)
+
+        # l1_norm = np.sum(np.abs(w))
+        l1_norm =  dasum(n_features, &w[0], 1)
+
+        # q_dot_w = np.dot(w, q)
+        # Note that increment in q is not 1 because the strides
+        # vary if q is sliced from a 2-D array.
+        q_dot_w = ddot(n_features, &w[0], 1, &q[0], n_tasks)
+
+        # temp = np.sum(w * H)
+        tmp = 0.0
+        for ii in range(n_features):
+            tmp += w[ii] * H[ii]
+
         for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
@@ -574,6 +652,29 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
                 if fabs(w[ii]) > w_max:
                     w_max = fabs(w[ii])
 
+                if w[ii] != w_ii:
+
+                    # Intelligent updates.
+                    q_dot_w -= (w_ii*q[ii] - w[ii]*q[ii])
+                    l1_norm -= (fabs(w_ii) - fabs(w[ii]))
+                    w_norm2 -= (w_ii*w_ii - w[ii]*w[ii])
+                    tmp -= (w_ii*H[ii] - w[ii]*H[ii])
+                    # R_norm2 = np.dot(R, R)
+                    R_norm2 = y_norm2 + tmp - 2.0 * q_dot_w
+
+                    obj = 0.5 * R_norm2 + alpha * l1_norm + 0.5 * beta * w_norm2
+                    if f_iter == 0:
+                        prev_obj = obj
+                    else:
+                        diff = fabs(obj - prev_obj)
+                    prev_obj = obj
+
+                if f_iter == 1 or diff > max_diff:
+                    max_diff = diff
+
+            if max_diff < tol:
+                break
+            """
             if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
@@ -591,10 +692,6 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
                 else:
                     dual_norm_XtA = abs_max(n_features, XtA_ptr)
 
-                # temp = np.sum(w * H)
-                tmp = 0.0
-                for ii in range(n_features):
-                    tmp += w[ii] * H[ii]
                 R_norm2 = y_norm2 + tmp - 2.0 * q_dot_w
 
                 # w_norm2 = np.dot(w, w)
@@ -616,9 +713,10 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
                 if gap < tol:
                     # return if we reached desired tolerance
                     break
+            """
+
 
     return np.asarray(w), gap, tol, n_iter + 1
-
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
