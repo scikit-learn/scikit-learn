@@ -339,6 +339,9 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
             # the jaccard to 1: lim_{x->0} x/x = 1
             # Note with py2.6 and np 1.3: we can't check safely for nan.
             score[pred_or_true == 0.0] = 1.0
+    elif y_type == 'multiclass-multioutput':
+        raise (ValueError, 'multiclass-multioutput classification is not'
+               'supported')
     else:
         score = y_true == y_pred
 

@@ -128,7 +128,10 @@ def test_multilabel_accuracy_score_subset_accuracy():
 def test_multiclass_multioutput_accuracy_score():
      y1 = np.array([[1, 2], [3, 1]])
      y2 = np.array([[1, 2], [1, 3]])
+     y3 = np.array([[1, 0], [1, 5]])
 
+     assert_equal(accuracy_score(y1, y3), 0.0)
+     assert_equal(accuracy_score(y2, y3), 0.0)
      assert_equal(accuracy_score(y1, y2), 0.5)
      assert_equal(accuracy_score(y1, y1), 1)
      assert_equal(accuracy_score(y2, y2), 1)

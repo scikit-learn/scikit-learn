@@ -281,7 +281,8 @@ MULTIOUTPUT_METRICS = [
     "mean_absolute_error", "mean_squared_error", "r2_score",
 ]
 
-METRICS_WITH_MULTICLASS_MULITOUTPUT = ["accuracy_score", "zero_one_loss"]
+METRICS_WITH_MULTICLASS_MULITOUTPUT = ["accuracy_score", "zero_one_loss",
+    "unnormalized_accuracy_score", "unnormalized_zero_one_loss"]
 
 # Symmetric with respect to their input arguments y_true and y_pred
 # metric(y_true, y_pred) == metric(y_pred, y_true).
@@ -742,20 +743,16 @@ def test_normalize_option_multiclass_multioutput_classification():
     y_true = random_state.randint(0, 4, size=(20, 5))
     y_pred = random_state.randint(0, 4, size=(20, 5))
     n_samples = y_true.shape[0]
-    exceptions = ["accuracy_score", "zero_one_loss", "mean_absolute_error",
-                   "unnormalized_accuracy_score", "unnormalized_zero_one_loss",
-                   "unnormalized_jaccard_similarity_score", "r2_score",
-                   "mean_squared_error"]
 
     for name in METRICS_WITH_MULTICLASS_MULITOUTPUT:
         metrics = ALL_METRICS[name]
         measure = metrics(y_true, y_pred)
-        assert_almost_equal(metrics(y_true, y_pred, normalize=False)
-                            / n_samples, measure)
-    for name in ALL_METRICS.keys():
-        if name not in exceptions:
-            metrics = ALL_METRICS[name]
-            assert_raises(Exception, metrics, y_true, y_pred)
+        if name.startswith('unnormalized'):
+            assert_almost_equal(metrics(y_true, y_pred, normalize=False)
+                           , measure)
+        else:
+            assert_almost_equal(metrics(y_true, y_pred, normalize=False)
+                           / n_samples , measure)
 
 def test_normalize_option_multilabel_classification():
     # Test in the multilabel case
@@ -799,6 +796,17 @@ def test_normalize_option_multilabel_classification():
                                     y_pred_binary_indicator, normalize=False)
                             / n_samples, measure,
                             err_msg="Failed with %s" % name)
+
+
+def test_multiclass_multioutput_support():
+    random_state = check_random_state(0)
+    y_true = random_state.randint(0, 4, size=(20, 5))
+    y_pred = random_state.randint(0, 4, size=(20, 5))
+    for name in ALL_METRICS.keys():
+        if (name not in METRICS_WITH_MULTICLASS_MULITOUTPUT and
+                        name not in REGRESSION_METRICS.keys()):
+            metrics = ALL_METRICS[name]
+            assert_raises(Exception, metrics, y_true, y_pred)
 
 
 @ignore_warnings
