@@ -39,6 +39,7 @@ kernel:
 # License: BSD 3 clause
 
 import numpy as np
+import warnings
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
@@ -474,6 +475,11 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
     array([[ 1.,  1.],
            [ 1.,  1.]]...)
     """
+    if sum_over_features is not None:
+        warnings.warn("'sum_over_features' will be"
+                      "removed in 0.16", DeprecationWarning)
+
+
     X, Y = check_pairwise_arrays(X, Y)
 
     if issparse(X) or issparse(Y):
@@ -493,19 +499,7 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
     # Convert to bytes
     temporary_size *= X.itemsize
     if temporary_size > size_threshold and sum_over_features:
-        # Broadcasting the full thing would be too big: it's on the order
-        # of magnitude of the gigabyte
-        D = np.empty((X.shape[0], Y.shape[0]), dtype=X.dtype)
-        index = 0
-        increment = 1 + int(size_threshold / float(temporary_size) *
-                            X.shape[0])
-        while index < X.shape[0]:
-            this_slice = slice(index, index + increment)
-            tmp = X[this_slice, np.newaxis, :] - Y[np.newaxis, :, :]
-            tmp = np.abs(tmp, tmp)
-            tmp = np.sum(tmp, axis=2)
-            D[this_slice] = tmp
-            index += increment
+        return distance.cdist(X, Y, 'cityblock')
     else:
         D = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
         D = np.abs(D, D)
