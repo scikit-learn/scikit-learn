@@ -107,24 +107,23 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         -------
         self
         """
-        # collect all the possible feature names
-        self.feature_names_ = []
-        self.vocabulary_ = {}
-
-        vocab = self.vocabulary_
+        feature_names = []
+        vocab = {}
 
         for x in X:
             for f, v in six.iteritems(x):
                 if isinstance(v, six.string_types):
                     f = "%s%s%s" % (f, self.separator, v)
                 if f not in vocab:
-                    self.feature_names_.append(f)
+                    feature_names.append(f)
                     vocab[f] = len(vocab)
 
         if self.sort:
-            self.feature_names_.sort()
-            self.vocabulary_ = dict((f, i) for i, f in
-                                    enumerate(self.feature_names_))
+            feature_names.sort()
+            vocab = dict((f, i) for i, f in enumerate(feature_names))
+
+        self.feature_names_ = feature_names
+        self.vocabulary_ = vocab
 
         return self
 
