@@ -180,6 +180,4 @@ def test_safe_indexing_mock_pandas():
 
 def test_shuffle_on_ndim_equals_three():
     A = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])  # A.shape = (2,2,2)
-    B = shuffle(A, random_state=100)
-    # should be shuffled, and shouldn't raise a ValueError for dim > 2
-    assert_true(not (A == B).all())
+    shuffle(A)  # shouldn't raise a ValueError for dim = 3
