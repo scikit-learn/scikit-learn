@@ -86,7 +86,7 @@ class _PredictScorer(_BaseScorer):
         else:
             return self._sign * self._score_func(y_true, y_pred,
                                                  **self._kwargs)
-                
+
 
 class _ProbaScorer(_BaseScorer):
     def __call__(self, clf, X, y, sample_weight=None):

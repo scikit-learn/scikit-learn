@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 A Theil-Sen Estimator for Multiple Linear Regression Model
 """
@@ -43,7 +44,6 @@ def _modified_weiszfeld_step(X, y):
 
     Notes
     -----
-
     This function defines one iteration step in order to approximate the
     spatial median (L1 median). It is a form of an iteratively re-weighted
     least squares method.
@@ -71,7 +71,7 @@ def _modified_weiszfeld_step(X, y):
     return max(0., 1. - eta / r) * T + min(1., eta / r) * y
 
 
-def _spatial_median(X, n_iter=300, tol=1.e-3):
+def _spatial_median(X, max_iter=300, tol=1.e-3):
     """Spatial median (L1 median).
 
     Parameters
@@ -80,7 +80,7 @@ def _spatial_median(X, n_iter=300, tol=1.e-3):
         Training vector, where n_samples in the number of samples and
         n_features is the number of features.
 
-    n_iter : int, optional
+    max_iter : int, optional
         Maximum number of iterations.  Default is 300.
 
     tol : float, optional
@@ -91,9 +91,11 @@ def _spatial_median(X, n_iter=300, tol=1.e-3):
     spmed : array, shape = [n_features]
         Spatial median.
 
+    n_iter: int
+        Number of iterations needed.
+
     References
     ----------
-
     - On Computation of Spatial Median for Robust Data Mining, 2005
       T. Kärkkäinen and S. Äyrämö
       http://users.jyu.fi/~samiayr/pdf/ayramo_eurogen05.pdf
@@ -101,14 +103,16 @@ def _spatial_median(X, n_iter=300, tol=1.e-3):
     # We are computing the tol on the squared norm
     tol **= 2
     spmed_old = np.mean(X, axis=0)
-    for _ in xrange(n_iter):
+    for n_iter in xrange(max_iter):
         spmed = _modified_weiszfeld_step(X, spmed_old)
         if np.sum((spmed_old - spmed) ** 2) < tol:
-            return spmed
+            return n_iter, spmed
         else:
             spmed_old = spmed
-    warnings.warn("Maximum number of iterations reached.", ConvergenceWarning)
-    return spmed
+    warnings.warn("Maximum number of iterations {max_iter} reached in spatial "
+                  "median for TheilSen regressor.".format(max_iter=max_iter),
+                  ConvergenceWarning)
+    return n_iter, spmed
 
 
 def _breakdown_point(n_samples, n_subsamples):
@@ -164,14 +168,13 @@ def _lstsq(X, y, indices, intercept):
     this_y = np.zeros((max(n_subsamples, n_dim)))
     lstsq, = get_lapack_funcs(('gelss',), (X_sub, this_y))
     for i, ix in enumerate(indices):
-        ix = list(ix)
         X_sub[:, first_elem:] = X[ix, :]
         this_y[:n_subsamples] = y[ix]
         weights[i, :] = lstsq(X_sub, this_y)[1][:n_dim]
     return weights
 
 
-class TheilSen(LinearModel, RegressorMixin):
+class TheilSenRegressor(LinearModel, RegressorMixin):
     """Theil-Sen Estimator: robust multivariate regression model.
 
     Parameters
@@ -201,7 +204,7 @@ class TheilSen(LinearModel, RegressorMixin):
         If n_subsamples is set to n_samples, Theil-Sen is identical to least
         squares.
 
-    n_iter : int, optional, default 300
+    max_iter : int, optional, default 300
         Maximum number of iterations for the calculation of spatial median.
 
     tol : float, optional, default 1.e-3
@@ -229,12 +232,11 @@ class TheilSen(LinearModel, RegressorMixin):
     `breakdown_` : float
         Approximated breakdown point.
 
-    `random_state_` : RandomState
-        The current random state.
+    `n_iter_` : int
+        Number of iterations needed for the spatial median.
 
     References
     ----------
-
     - Theil-Sen Estimators in a Multiple Linear Regression Model, 2009
       Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang
       http://www.math.iupui.edu/~hpeng/MTSE_0908.pdf
@@ -252,13 +254,13 @@ class TheilSen(LinearModel, RegressorMixin):
     """
 
     def __init__(self, fit_intercept=True, copy_X=True,
-                 max_subpopulation=1e4, n_subsamples=None, n_iter=300,
+                 max_subpopulation=1e4, n_subsamples=None, max_iter=300,
                  tol=1.e-3, random_state=None, n_jobs=1, verbose=False):
         self.fit_intercept = fit_intercept
         self.copy_X = copy_X
         self.max_subpopulation = int(max_subpopulation)
         self.n_subsamples = n_subsamples
-        self.n_iter = n_iter
+        self.max_iter = max_iter
         self.tol = tol
         self.random_state = random_state
         self.n_jobs = n_jobs
@@ -282,16 +284,29 @@ class TheilSen(LinearModel, RegressorMixin):
             raise ValueError("Subpopulation must be positive.")
         n_all = max(1, np.rint(binom(n_samples, n_subsamples)))
         n_subpop = int(min(self.max_subpopulation, n_all))
-        return n_dim, n_subsamples, n_subpop
+        return n_subsamples, n_subpop
 
     def fit(self, X, y):
-        self.random_state_ = check_random_state(self.random_state)
+        """
+        Fit linear model.
+
+        Parameters
+        ----------
+        X : numpy array of shape [n_samples, n_features]
+            Training data
+        y : numpy array of shape [n_samples]
+            Target values
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        random_state = check_random_state(self.random_state)
         X = check_array(X)
         y = check_array(y, ensure_2d=False)
         check_consistent_length(X, y)
         n_samples, n_features = X.shape
-        n_dim, n_subsample, n_subpop = self._check_subparams(n_samples,
-                                                             n_features)
+        n_subsample, n_subpop = self._check_subparams(n_samples, n_features)
         self.breakdown_ = _breakdown_point(n_samples, n_subsample)
         if self.verbose:
             print("Breakdown point: {0}".format(self.breakdown_))
@@ -303,19 +318,18 @@ class TheilSen(LinearModel, RegressorMixin):
         if np.rint(binom(n_samples, n_subsample)) <= self.max_subpopulation:
             indices = list(combinations(xrange(n_samples), n_subsample))
         else:
-            indices = [self.random_state_.randint(0, n_samples, n_subsample)
+            indices = [random_state.randint(0, n_samples, n_subsample)
                        for _ in xrange(n_subpop)]
         n_jobs = _get_n_jobs(self.n_jobs)
         idx_list = np.array_split(indices, n_jobs)
         weights = Parallel(n_jobs=n_jobs,
-                           backend="multiprocessing",
-                           max_nbytes=10e6,
                            verbose=self.verbose)(
             delayed(_lstsq)(X, y, idx_list[job], self.fit_intercept)
             for job in xrange(n_jobs))
         weights = np.vstack(weights)
-        coefs = _spatial_median(weights, n_iter=self.n_iter, tol=self.tol)
-
+        self.n_iter_, coefs = _spatial_median(weights,
+                                              max_iter=self.max_iter,
+                                              tol=self.tol)
         if self.fit_intercept:
             self.intercept_ = coefs[0]
             self.coef_ = coefs[1:]

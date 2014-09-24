@@ -40,12 +40,13 @@ it then works on a random subset.
 import time
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.linear_model import LinearRegression, TheilSen, RANSACRegressor
+from sklearn.linear_model import LinearRegression, TheilSenRegressor
+from sklearn.linear_model import RANSACRegressor
 
 print(__doc__)
 
 estimators = [('OLS', LinearRegression()),
-              ('Theil-Sen', TheilSen()),
+              ('Theil-Sen', TheilSenRegressor()),
               ('RANSAC', RANSACRegressor(random_state=42)), ]
 
 ##############################################################################
@@ -71,7 +72,7 @@ for name, estimator in estimators:
     elapsed_time = time.time() - t0
     y_pred = estimator.predict(line_x.reshape(2, 1))
     plt.plot(line_x, y_pred,
-            label='%s (fit time: %.2fs)' % (name, elapsed_time))
+             label='%s (fit time: %.2fs)' % (name, elapsed_time))
 
 plt.axis('tight')
 plt.legend(loc='upper left')
@@ -100,7 +101,7 @@ for name, estimator in estimators:
     elapsed_time = time.time() - t0
     y_pred = estimator.predict(line_x.reshape(2, 1))
     plt.plot(line_x, y_pred,
-            label='%s (fit time: %.2fs)' % (name, elapsed_time))
+             label='%s (fit time: %.2fs)' % (name, elapsed_time))
 
 plt.axis('tight')
 plt.legend(loc='upper left')

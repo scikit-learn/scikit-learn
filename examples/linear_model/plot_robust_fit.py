@@ -67,8 +67,7 @@ for title, this_X, this_y in [
         ('Corrupt X, small deviants', X_errors, y),
         ('Corrupt y, small deviants', X, y_errors),
         ('Corrupt X, large deviants', X_errors_large, y),
-        ('Corrupt y, large deviants', X, y_errors_large),
-       ]:
+        ('Corrupt y, large deviants', X, y_errors_large)]:
     plt.figure(figsize=(5, 4))
     plt.plot(this_X[:, 0], this_y, 'k+')
 
@@ -78,10 +77,10 @@ for title, this_X, this_y in [
         mse = metrics.mean_squared_error(model.predict(X_test), y_test)
         y_plot = model.predict(x_plot[:, np.newaxis])
         plt.plot(x_plot, y_plot,
-                    label='%s: error = %.3f' % (name, mse))
+                 label='%s: error = %.3f' % (name, mse))
 
     plt.legend(loc='best', frameon=False,
-            title='Error: mean absolute deviation\n to non corrupt data')
+               title='Error: mean absolute deviation\n to non corrupt data')
     plt.xlim(-4, 10.2)
     plt.ylim(-2, 10.2)
     plt.title(title)
