@@ -317,7 +317,7 @@ mean_squared_error_scorer = make_scorer(mean_squared_error,
 mean_absolute_error_scorer = make_scorer(mean_absolute_error,
                                          greater_is_better=False)
 median_absolute_error_scorer = make_scorer(median_absolute_error,
-                                         greater_is_better=False)
+                                           greater_is_better=False)
 
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)

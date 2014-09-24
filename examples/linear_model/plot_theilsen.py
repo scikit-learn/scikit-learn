@@ -39,7 +39,7 @@ it then works on a random subset.
 
 import time
 import numpy as np
-import matplotlib.pylab as pl
+import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression, TheilSen, RANSACRegressor
 
 print(__doc__)
@@ -63,18 +63,18 @@ y = w * x + c + noise
 y[-20:] += -20 * x[-20:]
 X = x[:, np.newaxis]
 
-pl.plot(x, y, 'k+', mew=2, ms=8)
+plt.plot(x, y, 'k+', mew=2, ms=8)
 line_x = np.array([-3, 3])
 for name, estimator in estimators:
     t0 = time.time()
     estimator.fit(X, y)
     elapsed_time = time.time() - t0
     y_pred = estimator.predict(line_x.reshape(2, 1))
-    pl.plot(line_x, y_pred,
+    plt.plot(line_x, y_pred,
             label='%s (fit time: %.2fs)' % (name, elapsed_time))
 
-pl.axis('tight')
-pl.legend(loc='upper left')
+plt.axis('tight')
+plt.legend(loc='upper left')
 
 
 ##############################################################################
@@ -90,8 +90,8 @@ x[-20:] = 9.9
 y[-20:] += 22
 X = x[:, np.newaxis]
 
-pl.figure()
-pl.plot(x, y, 'k+', mew=2, ms=8)
+plt.figure()
+plt.plot(x, y, 'k+', mew=2, ms=8)
 
 line_x = np.array([-3, 10])
 for name, estimator in estimators:
@@ -99,9 +99,9 @@ for name, estimator in estimators:
     estimator.fit(X, y)
     elapsed_time = time.time() - t0
     y_pred = estimator.predict(line_x.reshape(2, 1))
-    pl.plot(line_x, y_pred,
+    plt.plot(line_x, y_pred,
             label='%s (fit time: %.2fs)' % (name, elapsed_time))
 
-pl.axis('tight')
-pl.legend(loc='upper left')
-pl.show()
+plt.axis('tight')
+plt.legend(loc='upper left')
+plt.show()

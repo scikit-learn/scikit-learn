@@ -15,8 +15,8 @@ from scipy.optimize import fmin_bfgs
 from nose.tools import raises
 from sklearn.utils import ConvergenceWarning
 from sklearn.linear_model import LinearRegression, TheilSen
-from sklearn.linear_model.theil_sen import _spatial_median, _breakdown_point, \
-    _modweiszfeld_step
+from sklearn.linear_model.theil_sen import _spatial_median, _breakdown_point
+from sklearn.linear_model.theil_sen import _modified_weiszfeld_step
 
 
 def gen_toy_problem_1d(intercept=True):
@@ -83,22 +83,22 @@ def test_modweiszfeld_step_1d():
     X = np.array([1., 2., 3.]).reshape(3, 1)
     # Check startvalue is element of X and solution
     median = 2.
-    new_y = _modweiszfeld_step(X, median)
+    new_y = _modified_weiszfeld_step(X, median)
     assert_array_almost_equal(new_y, median)
     # Check startvalue is not the solution
     y = 2.5
-    new_y = _modweiszfeld_step(X, y)
+    new_y = _modified_weiszfeld_step(X, y)
     assert_array_less(median, new_y)
     assert_array_less(new_y, y)
     # Check startvalue is not the solution but element of X
     y = 3.
-    new_y = _modweiszfeld_step(X, y)
+    new_y = _modified_weiszfeld_step(X, y)
     assert_array_less(median, new_y)
     assert_array_less(new_y, y)
     # Check that a single vector is identity
     X = np.array([1., 2., 3.]).reshape(1, 3)
     y = X[0, ]
-    new_y = _modweiszfeld_step(X, y)
+    new_y = _modified_weiszfeld_step(X, y)
     assert_array_equal(y, new_y)
 
 
@@ -106,13 +106,13 @@ def test_modweiszfeld_step_2d():
     X = np.array([0., 0., 1., 1., 0., 1.]).reshape(3, 2)
     y = np.array([0.5, 0.5])
     # Check first two iterations
-    new_y = _modweiszfeld_step(X, y)
+    new_y = _modified_weiszfeld_step(X, y)
     assert_array_almost_equal(new_y, np.array([1 / 3, 2 / 3]))
-    new_y = _modweiszfeld_step(X, new_y)
+    new_y = _modified_weiszfeld_step(X, new_y)
     assert_array_almost_equal(new_y, np.array([0.2792408, 0.7207592]))
     # Check fix point
     y = np.array([0.21132505, 0.78867497])
-    new_y = _modweiszfeld_step(X, y)
+    new_y = _modified_weiszfeld_step(X, y)
     assert_array_almost_equal(new_y, y)
 
 

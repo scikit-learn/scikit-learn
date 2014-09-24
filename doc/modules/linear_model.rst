@@ -942,7 +942,7 @@ Theil-Sen estimator: generalized-median-based estimator
 The :class:`TheilSen` estimator uses a generalization of the median in multiple
 dimensions. It is thus robust to multivariate outliers. Note however that
 the robustness of the estimator decreases quickly with the dimensionality
-of the problem. It looses it's robustness properties and becomes no
+of the problem. It looses its robustness properties and becomes no
 better than an ordinary least squares in high dimension.
 
 .. topic:: Examples:

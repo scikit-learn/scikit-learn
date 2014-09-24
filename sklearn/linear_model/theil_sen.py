@@ -18,13 +18,13 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import check_array, check_random_state, ConvergenceWarning, \
-    check_consistent_length, get_n_jobs
+from ..utils import check_array, check_random_state, ConvergenceWarning
+from ..utils import check_consistent_length, _get_n_jobs
 from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange
 
 
-def _modweiszfeld_step(X, y):
+def _modified_weiszfeld_step(X, y):
     """Modified Weiszfeld step.
 
     Parameters
@@ -88,7 +88,7 @@ def _spatial_median(X, n_iter=300, tol=1.e-3):
     tol **= 2
     spmed_old = np.mean(X, axis=0)
     for _ in xrange(n_iter):
-        spmed = _modweiszfeld_step(X, spmed_old)
+        spmed = _modified_weiszfeld_step(X, spmed_old)
         if np.sum((spmed_old - spmed) ** 2) < tol:
             return spmed
         else:
@@ -135,8 +135,8 @@ def _lstsq(X, y, indices, intercept):
     intercept : bool
         Fit intercept or not.
     """
-    fst = 1 if intercept else 0
-    n_dim = X.shape[1] + fst
+    first_elem = 1 if intercept else 0
+    n_dim = X.shape[1] + first_elem
     n_subsamples = indices.shape[1]
     weights = np.empty((indices.shape[0], n_dim))
     X_sub = np.ones((n_subsamples, n_dim))
@@ -145,7 +145,7 @@ def _lstsq(X, y, indices, intercept):
     lstsq, = get_lapack_funcs(('gelss',), (X_sub, this_y))
     for i, ix in enumerate(indices):
         ix = list(ix)
-        X_sub[:, fst:] = X[ix, :]
+        X_sub[:, first_elem:] = X[ix, :]
         this_y[:n_subsamples] = y[ix]
         weights[i, :] = lstsq(X_sub, this_y)[1][:n_dim]
     return weights
@@ -267,7 +267,7 @@ class TheilSen(LinearModel, RegressorMixin):
         else:
             indices = [self.random_state_.randint(0, n_samples, n_subsample)
                        for _ in xrange(n_subpop)]
-        n_jobs = get_n_jobs(self.n_jobs)
+        n_jobs = _get_n_jobs(self.n_jobs)
         idx_list = np.array_split(indices, n_jobs)
         weights = Parallel(n_jobs=n_jobs,
                            backend="multiprocessing",

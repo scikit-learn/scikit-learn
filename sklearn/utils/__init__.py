@@ -408,7 +408,7 @@ def gen_even_slices(n, n_packs, n_samples=None):
             start = end
 
 
-def get_n_jobs(n_jobs):
+def _get_n_jobs(n_jobs):
     """Get number of jobs for the computation.
 
     This function reimplements the logic of joblib to determine the actual
@@ -429,12 +429,12 @@ def get_n_jobs(n_jobs):
 
     Examples
     --------
-    >>> from sklearn.utils import get_n_jobs
-    >>> get_n_jobs(4)
+    >>> from sklearn.utils import _get_n_jobs
+    >>> _get_n_jobs(4)
     4
-    >>> jobs = get_n_jobs(-2)
+    >>> jobs = _get_n_jobs(-2)
     >>> assert jobs == max(cpu_count() - 1, 1)
-    >>> get_n_jobs(0)
+    >>> _get_n_jobs(0)
     Traceback (most recent call last):
     ...
     ValueError: Parameter n_jobs == 0 has no meaning.
