@@ -40,6 +40,13 @@ def _modified_weiszfeld_step(X, y):
     -------
     new_y : array, shape = [n_features]
         New iteration step.
+
+    Notes
+    -----
+
+    This function defines one iteration step in order to approximate the
+    spatial median (L1 median). It is a form of an iteratively re-weighted
+    least squares method.
     """
     X = X.T
     diff = X.T - y
@@ -83,6 +90,13 @@ def _spatial_median(X, n_iter=300, tol=1.e-3):
     -------
     spmed : array, shape = [n_features]
         Spatial median.
+
+    References
+    ----------
+
+    - On Computation of Spatial Median for Robust Data Mining, 2005
+      T. Kärkkäinen and S. Äyrämö
+      http://users.jyu.fi/~samiayr/pdf/ayramo_eurogen05.pdf
     """
     # We are computing the tol on the squared norm
     tol **= 2
@@ -134,6 +148,12 @@ def _lstsq(X, y, indices, intercept):
 
     intercept : bool
         Fit intercept or not.
+
+    Notes
+    -----
+    This function calculates the least squares method on a subset of rows of X
+    and y defined by the indices array. Optionally, an intercept column is
+    added if intercept is set to true.
     """
     first_elem = 1 if intercept else 0
     n_dim = X.shape[1] + first_elem
@@ -211,6 +231,24 @@ class TheilSen(LinearModel, RegressorMixin):
 
     `random_state_` : RandomState
         The current random state.
+
+    References
+    ----------
+
+    - Theil-Sen Estimators in a Multiple Linear Regression Model, 2009
+      Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang
+      http://www.math.iupui.edu/~hpeng/MTSE_0908.pdf
+
+    Notes
+    -----
+    The algorithm calculates least square solutions on subsets with size
+    n_subsamples of the samples in X. Any value of n_subsamples between the
+    number of features and samples leads to an estimator with a compromise
+    between robustness and efficiency. Since the number of least square
+    solutions is "n_samples choose n_subsamples", it can be extremely large
+    and can therefore be limited with max_subpopulation. If this limit is
+    reached, the subsets are chosen randomly. In a final step, the spatial
+    median (or L1 median) is calculated of all least square solutions.
     """
 
     def __init__(self, fit_intercept=True, copy_X=True,
