@@ -1264,8 +1264,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
 
     n_jobs : integer, optional
         Number of CPUs to use during the cross validation. If ``-1``, use
-        all the CPUs. Note that this is used only if multiple values for
-        l1_ratio are given.
+        all the CPUs.
 
     positive : bool, optional
         If positive, restrict regression coefficients to be positive
@@ -1391,8 +1390,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 
     n_jobs : integer, optional
         Number of CPUs to use during the cross validation. If ``-1``, use
-        all the CPUs. Note that this is used only if multiple values for
-        l1_ratio are given.
+        all the CPUs.
 
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.

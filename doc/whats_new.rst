@@ -28,6 +28,14 @@ New features
      trained forest model to grow additional trees incrementally. By
      `Laurent Direr`_.
 
+   - Add ``sample_weight`` support to :class:`ensemble.GradientBoostingClassifier` and
+     :class:`ensemble.GradientBoostingRegressor`. By
+     `Peter Prettenhofer`_.
+
+   - Added :class:`decomposition.IncrementalPCA`, an implementation of the PCA
+     algorithm that supports out-of-core learning with a ``partial_fit``
+     method. By `Kyle Kastner`_.
+
 
 Enhancements
 ............
@@ -58,6 +66,9 @@ Enhancements
      instead of the default One-vs-Rest setting. By `Lars Buitinck`_ and
      `Manoj Kumar`_.
 
+   - ``DictVectorizer`` can now perform ``fit_transform`` on an iterable in a
+     single pass, when giving the option ``sort=False``. By Dan Blanchard.
+
 
 Documentation improvements
 ..........................
@@ -75,6 +86,10 @@ Bug fixes
 
     - Various fixes to the Gaussian processes subpackage by Vincent Dubourg
       and Jan Hendrik Metzen.
+
+    - Calling ``partial_fit`` with ``class_weight=='auto'`` throws an
+      appropriate error message and suggests a work around.
+      By `Danny Sullivan`_.
 
 
 API changes summary
@@ -95,6 +110,8 @@ API changes summary
       and pass these to their distance metric. This will no longer be supported
       in scikit-learn 0.18; use the ``metric_params`` argument instead.
 
+    - `n_jobs` parameter of the fit method shifted to the constructor of the
+       LinearRegression class.
 
 .. _changes_0_15_2:
 
@@ -129,7 +146,7 @@ Bug fixes
 
   - Fixed potential overflow in ``_tree.safe_realloc`` by `Lars Buitinck`_.
 
-  - Performance optimization in :class:`istonic.IsotonicRegression`.
+  - Performance optimization in :class:`isotonic.IsotonicRegression`.
     By Robert Bradshaw.
 
   - ``nose`` is non-longer a runtime dependency to import ``sklearn``, only for
@@ -2937,7 +2954,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Maheshakya Wijewardena: https://github.com/maheshakya
 
-.. _Danny Sullivan: http://dannysullivan.co
+.. _Danny Sullivan: https://github.com/dsullivan7
 
 .. _Michael Eickenberg: https://github.com/eickenberg
 

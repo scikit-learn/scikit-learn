@@ -270,6 +270,7 @@ Samples generator
    :template: class.rst
 
    decomposition.PCA
+   decomposition.IncrementalPCA
    decomposition.ProjectedGradientNMF
    decomposition.RandomizedPCA
    decomposition.KernelPCA

@@ -35,6 +35,11 @@ all parameter combinations, while :class:`RandomizedSearchCV` can sample a
 given number of candidates from a parameter space with a specified
 distribution.
 
+.. seealso
+
+   :ref:`pipeline` describes building composite estimators whose
+   parameter space can be searched with these tools.
+
 Exhaustive Grid Search
 ======================
 
@@ -179,12 +184,16 @@ Here is the list of such models:
    :toctree: generated/
    :template: class.rst
 
+   linear_model.ElasticNetCV
+   linear_model.LarsCV
+   linear_model.LassoCV
+   linear_model.LassoLarsCV
+   linear_model.LogisticRegressionCV
+   linear_model.MultiTaskElasticNetCV
+   linear_model.MultiTaskLassoCV
+   linear_model.OrthogonalMatchingPursuitCV
    linear_model.RidgeCV
    linear_model.RidgeClassifierCV
-   linear_model.LarsCV
-   linear_model.LassoLarsCV
-   linear_model.LassoCV
-   linear_model.ElasticNetCV
 
 
 Information Criterion
