@@ -179,6 +179,9 @@ def resample(*arrays, **options):
     random_state : int or RandomState instance
         Control the shuffling for reproducible behavior.
 
+    allow_nd : boolean, False by default
+        Allow the input arrays to have > 2 dimensions.
+
     Returns
     -------
     Sequence of resampled views of the collections. The original arrays are
@@ -225,6 +228,7 @@ def resample(*arrays, **options):
     random_state = check_random_state(options.pop('random_state', None))
     replace = options.pop('replace', True)
     max_n_samples = options.pop('n_samples', None)
+    allow_nd = options.pop('allow_nd', False)
     if options:
         raise ValueError("Unexpected kw arguments: %r" % options.keys())
 
@@ -241,8 +245,12 @@ def resample(*arrays, **options):
         raise ValueError("Cannot sample %d out of arrays with dim %d" % (
             max_n_samples, n_samples))
 
+    if not isinstance(allow_nd, bool):
+        raise ValueError("Parameter allow_nd expected to be <type 'bool'>,\
+                         was given %s" % type(allow_nd))
+
     check_consistent_length(*arrays)
-    arrays = [check_array(x, accept_sparse='csr', ensure_2d=False)
+    arrays = [check_array(x, accept_sparse='csr', ensure_2d=False, allow_nd=allow_nd)
               for x in arrays]
 
     if replace:
@@ -281,6 +289,9 @@ def shuffle(*arrays, **options):
     n_samples : int, None by default
         Number of samples to generate. If left to None this is
         automatically set to the first dimension of the arrays.
+
+    allow_nd : boolean, False by default
+        Allow the input arrays to have > 2 dimensions.
 
     Returns
     -------
