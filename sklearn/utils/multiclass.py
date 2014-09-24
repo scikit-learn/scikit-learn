@@ -15,6 +15,7 @@ from scipy.sparse import issparse
 from scipy.sparse.base import spmatrix
 from scipy.sparse import dok_matrix
 from scipy.sparse import lil_matrix
+from scipy.sparse import csr_matrix
 
 import numpy as np
 
@@ -277,7 +278,11 @@ def type_of_target(y):
     'continuous-multioutput'
     >>> type_of_target(np.array([[0, 1], [1, 1]]))
     'multilabel-indicator'
+    >>> type_of_target(csr_matrix(np.random.randint(0, 4, size=(20, 5))))
+    'multiclass-multioutput'
     """
+    if issparse(y):
+        y = np.array(y.todense())
     valid = ((isinstance(y, (Sequence, spmatrix)) or hasattr(y, '__array__'))
              and not isinstance(y, string_types))
     if not valid:

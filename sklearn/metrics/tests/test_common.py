@@ -746,13 +746,23 @@ def test_normalize_option_multiclass_multioutput_classification():
 
     for name in METRICS_WITH_MULTICLASS_MULITOUTPUT:
         metrics = ALL_METRICS[name]
-        measure = metrics(y_true, y_pred)
-        if name.startswith('unnormalized'):
-            assert_almost_equal(metrics(y_true, y_pred, normalize=False)
-                           , measure)
-        else:
-            assert_almost_equal(metrics(y_true, y_pred, normalize=False)
-                           / n_samples , measure)
+        measure = metrics(y_true, y_pred, normalize=True)
+        assert_almost_equal(metrics(y_true, y_pred, normalize=False)
+                            / n_samples, measure)
+
+
+def test_invariance_sparse_vs_dense_multioutput_multiclass():
+    # Test in the multiclass-multioutput case
+    random_state = check_random_state(0)
+    y_true = sp.csr_matrix(random_state.randint(0, 4, size=(20,5)))
+    y_pred = sp.csr_matrix(random_state.randint(0, 4, size=(20,5)))
+    n_samples = y_true.shape[0]
+
+    for name in METRICS_WITH_MULTICLASS_MULITOUTPUT:
+        metrics = ALL_METRICS[name]
+        measure = metrics(y_true, y_pred, normalize=True)
+        assert_almost_equal(metrics(y_true, y_pred, normalize=False)
+                            / n_samples, measure)
 
 def test_normalize_option_multilabel_classification():
     # Test in the multilabel case
@@ -804,7 +814,7 @@ def test_multiclass_multioutput_support():
     y_pred = random_state.randint(0, 4, size=(20, 5))
     for name in ALL_METRICS.keys():
         if (name not in METRICS_WITH_MULTICLASS_MULITOUTPUT and
-                        name not in REGRESSION_METRICS.keys()):
+                        name not in MULTIOUTPUT_METRICS):
             metrics = ALL_METRICS[name]
             assert_raises(Exception, metrics, y_true, y_pred)
 
