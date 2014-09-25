@@ -179,5 +179,10 @@ def test_safe_indexing_mock_pandas():
 
 
 def test_shuffle_on_ndim_equals_three():
+    def to_tuple(A):    # to make the inner arrays hashable
+        return tuple(tuple(tuple(C) for C in B) for B in A)
+
     A = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])  # A.shape = (2,2,2)
+    S = set(to_tuple(A))
     shuffle(A)  # shouldn't raise a ValueError for dim = 3
+    assert_equal(set(to_tuple(A)), S)
