@@ -36,6 +36,7 @@ from sklearn.externals.six.moves import zip
 from sklearn.linear_model import Ridge
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
+from sklearn.cluster import KMeans
 
 from sklearn.preprocessing import Imputer, LabelBinarizer
 from sklearn.pipeline import Pipeline
@@ -998,3 +999,25 @@ def test_cross_val_score_multilabel():
     assert_almost_equal(score_micro, [1, 1/2, 3/4, 1/2, 1/3])
     assert_almost_equal(score_macro, [1, 1/2, 3/4, 1/2, 1/4])
     assert_almost_equal(score_samples, [1, 1/2, 3/4, 1/2, 1/4])
+
+def test_cross_val_predict():
+    iris = load_iris()
+    X,y = iris.data, iris.target
+    cv = cval.KFold(len(iris.target))
+
+    est = Ridge()
+
+    # Naive loop (should be same as cross_val_prediction): 
+    preds2 = np.zeros_like(y)
+    for train,test in cv:
+        est.fit(X[train], y[train])
+        preds2[test] = est.predict(X[test])
+        
+    preds = cval.cross_val_prediction(est, X, y, cv=cv)
+    assert_array_almost_equal(preds, preds2)
+
+    preds = cval.cross_val_prediction(est, X, y)
+    assert_equal(len(preds), len(y))
+
+    preds = cval.cross_val_prediction(KMeans(), X)
+    assert_equal(len(preds), len(y))
