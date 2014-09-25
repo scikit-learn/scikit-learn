@@ -282,7 +282,7 @@ def type_of_target(y):
     'multiclass-multioutput'
     """
     if issparse(y):
-        y = np.array(y.todense())
+        y = y.toarray()
     valid = ((isinstance(y, (Sequence, spmatrix)) or hasattr(y, '__array__'))
              and not isinstance(y, string_types))
     if not valid:
@@ -299,7 +299,7 @@ def type_of_target(y):
     except ValueError:
         # known to fail in numpy 1.3 for array of arrays
         return 'unknown'
-    if y.ndim > 2 or (y.dtype == object and len(y) and
+    if y.ndim > 2 or (y.dtype == object and y.shape[0] and
                       not isinstance(y.flat[0], string_types)):
         return 'unknown'
     if y.ndim == 2 and y.shape[1] == 0:
