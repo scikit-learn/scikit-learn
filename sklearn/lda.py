@@ -328,6 +328,8 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         elif self.solver == 'eigen':
             self._solve_eigen(X, y, self.alpha)
 
+        return self
+
     def _decision_function(self, X):
         X = check_array(X)
         return np.dot(X - self.xbar_, self.coef_.T) + self.intercept_
