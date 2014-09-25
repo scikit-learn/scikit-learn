@@ -144,8 +144,6 @@ validation iterator instead, for instance::
   ...                                                     # doctest: +ELLIPSIS
   array([ 0.97...,  0.97...,  1.        ])
 
-The available cross validation iterators are introduced in the following
-section.
 
 .. topic:: Data transformation with held out data
 
@@ -175,6 +173,28 @@ section.
 
     See :ref:`combining_estimators`.
 
+Obtaining predictions by cross-validation
+-----------------------------------------
+
+The function :func:`cross_val_predict` has a similar interface to
+:func:`cross_val_score`, but returns, for each element in the input, the
+prediction that was obtained for that element when it was in the test set. Only
+cross-validation strategies that assign all elements to a test set exactly once
+can be used (otherwise, an exception is raised).
+
+These prediction can then be used to evalute the classifier::
+
+  >>> predicted = cross_validation.cross_val_predict(clf, iris.data,
+  ...                                                iris.target, cv=10)
+  >>> metrics.accuracy_score(iris.target, predicted) # doctest: +ELLIPSIS
+  0.97...
+
+Note that the result of this computation may be slightly different from those
+obtained using :func:`cross_val_score` as the elements are grouped in different
+ways.
+
+The available cross validation iterators are introduced in the following
+section.
 
 .. topic:: Examples
 
@@ -182,6 +202,7 @@ section.
     * :ref:`example_feature_selection_plot_rfe_with_cross_validation.py`,
     * :ref:`example_model_selection_grid_search_digits.py`,
     * :ref:`example_model_selection_grid_search_text_feature_extraction.py`,
+    * :ref:`example_plot_cv_predict.py`,
 
 Cross validation iterators
 ==========================

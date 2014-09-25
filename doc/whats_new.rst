@@ -40,6 +40,9 @@ New features
      and :class:`SGDRegressor <linear_model.SGDRegressor>` By
      `Danny Sullivan`_.
 
+   - Added :func:`cross_val_predict <cross_validation.cross_val_predict>`
+     function which computes cross-validated estimates. By `Luis Pedro Coelho`_
+
 
 Enhancements
 ............
@@ -3034,3 +3037,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Ian Gilmore: https://github.com/agileminor
 
 .. _Aaron Staple: https://github.com/staple
+
+.. _Luis Pedro Coelho: http://luispedro.org
