@@ -449,6 +449,8 @@ def check_classifiers_train(name, Classifier):
             classifier = Classifier()
         if name in ['BernoulliNB', 'MultinomialNB']:
             X -= X.min()
+        if name in ['PoissonNB']:
+            X = np.floor((10 * X) ** 2)  # Forces positive integers
         set_fast_parameters(classifier)
         # raises error on malformed input for fit
         assert_raises(ValueError, classifier.fit, X, y[:-1])
@@ -461,7 +463,7 @@ def check_classifiers_train(name, Classifier):
         y_pred = classifier.predict(X)
         assert_equal(y_pred.shape, (n_samples,))
         # training set performance
-        if name not in ['BernoulliNB', 'MultinomialNB']:
+        if name not in ['BernoulliNB', 'MultinomialNB', 'PoissonNB']:
             assert_greater(accuracy_score(y, y_pred), 0.85)
 
         # raises error on malformed input for predict
@@ -506,7 +508,8 @@ def check_classifiers_input_shapes(name, Classifier):
     iris = load_iris()
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=1)
-    X = StandardScaler().fit_transform(X)
+    if name is not 'PoissonNB':
+        X = StandardScaler().fit_transform(X)
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
         classifier = Classifier()
