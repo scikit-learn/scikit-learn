@@ -100,6 +100,8 @@ def _spatial_median(X, max_iter=300, tol=1.e-3):
       T. Kärkkäinen and S. Äyrämö
       http://users.jyu.fi/~samiayr/pdf/ayramo_eurogen05.pdf
     """
+    if X.shape[1] == 1:
+        return 1, np.median(X.ravel())
     # We are computing the tol on the squared norm
     tol **= 2
     spmed_old = np.mean(X, axis=0)

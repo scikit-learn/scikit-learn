@@ -121,8 +121,12 @@ def test_spatial_median_1d():
     true_median = 2.
     _, median = _spatial_median(X)
     assert_array_almost_equal(median, true_median)
-    # Check when maximum iteration is exceeded a warning is emitted
-    assert_warns(ConvergenceWarning, _spatial_median, X, max_iter=30, tol=0.)
+    # Test larger problem and for exact solution in 1d case
+    random_state = np.random.RandomState(0)
+    X = random_state.randint(100, size=(1000, 1))
+    true_median = np.median(X.ravel())
+    _, median = _spatial_median(X)
+    assert_array_equal(median, true_median)
 
 
 def test_spatial_median_2d():
@@ -136,6 +140,8 @@ def test_spatial_median_2d():
     # Check if median is solution of the Fermat-Weber location problem
     fermat_weber = fmin_bfgs(cost_func, median, disp=False)
     assert_array_almost_equal(median, fermat_weber)
+    # Check when maximum iteration is exceeded a warning is emitted
+    assert_warns(ConvergenceWarning, _spatial_median, X, max_iter=30, tol=0.)
 
 
 def test_theil_sen_1d():
