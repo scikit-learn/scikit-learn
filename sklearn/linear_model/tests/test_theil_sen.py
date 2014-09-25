@@ -8,8 +8,8 @@ Testing for Theil-Sen module (sklearn.linear_model.theil_sen)
 from __future__ import division, print_function, absolute_import
 
 import numpy as np
-from numpy.testing import assert_array_equal, assert_array_less, \
-    assert_array_almost_equal, assert_warns
+from numpy.testing import assert_array_equal, assert_array_less
+from numpy.testing import assert_array_almost_equal, assert_warns
 from scipy.linalg import norm
 from scipy.optimize import fmin_bfgs
 from nose.tools import raises
