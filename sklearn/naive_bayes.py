@@ -29,8 +29,7 @@ from .utils.extmath import safe_sparse_dot, logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
 from .externals import six
 
-__all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB']
-
+__all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'PoissonNB']
 
 class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
     """Abstract base class for naive Bayes estimators"""
@@ -331,6 +330,83 @@ class GaussianNB(BaseNB):
         joint_log_likelihood = np.array(joint_log_likelihood).T
         return joint_log_likelihood
 
+
+class PoissonNB(BaseNB):
+    """
+    Poisson Naive Bayes (PoissonNB)
+
+    Attributes
+    ----------
+    class_prior_ : array, shape (n_classes,)
+        probability of each class.
+
+    class_count_ : array, shape (n_classes,)
+        number of training samples observed in each class.
+
+    lambda_ : array, shape (n_classes, n_features)
+        mean of each feature per class
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> X = np.array([[5, 2, 6, 1, 8, 1], [0, 0, 1, 3, 3, 1]]).T
+    >>> y = np.array([1, 1, 1, 2, 2, 2])
+    >>> from sklearn.naive_bayes import PoissonNB
+    >>> clf = PoissonNB()
+    >>> clf.fit(X, Y)
+    PoissonNB()
+    >>> print(clf.predict(X))
+    [1 1 1 2 2 2]
+    """
+
+    def fit(self, X, y):
+        """Fit Poisson Naive Bayes according to X, y
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training vectors, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape (n_samples,)
+            Target values.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        X, y = check_X_y(X, y)
+
+        n_samples, n_features = X.shape
+
+        self.classes_ = unique_y = np.unique(y)
+        n_classes = unique_y.shape[0]
+
+        self.lambda_ = np.zeros((n_classes, n_features))
+        self.class_prior_ = np.zeros(n_classes)
+
+        epsilon = 1e-9
+
+        for i, y_i in enumerate(unique_y):
+            Xi = X[y == y_i, :]
+            self.lambda_[i, :] = np.mean(Xi, axis=0)
+            self.class_prior_[i] = np.float(Xi.shape[0]) / n_samples
+
+        return self
+
+    def _joint_log_likelihood(self, X):
+        X = check_array(X)
+
+        joint_log_likelihood = []
+        for i in range(np.size(self.classes_)):
+            jointi = np.log(self.class_prior_[i])
+            n_ij = np.sum(X * np.log(self.lambda_[i, :]), axis=1)
+            n_ij -= np.sum(self.lambda_[i, :])
+            joint_log_likelihood.append(jointi + n_ij)
+
+        joint_log_likelihood = np.array(joint_log_likelihood).T
+        return joint_log_likelihood
 
 class BaseDiscreteNB(BaseNB):
     """Abstract base class for naive Bayes on discrete/categorical data
