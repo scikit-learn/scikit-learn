@@ -20,12 +20,30 @@ from .covariance import ledoit_wolf, empirical_covariance
 from .utils.extmath import logsumexp
 from .utils.multiclass import unique_labels
 from .utils import check_array, check_X_y
-from .preprocessing import StandardScaler
+from .preprocessing import StandardScaler, LabelEncoder
 
 
-def _cov(X, estimator):
+def _cov(X, estimator='empirical'):
+    """
+    Estimate the covariance matrix using a specified estimator.
+
+    Parameters
+    ----------
+    X : array-like, shape = [n_samples, n_features]
+        Data vector
+
+    estimator : string
+        Covariance estimator, possible values:
+          - 'empirical': empirical covariance matrix (default)
+          - 'ledoit_wolf': shrunk covariance matrix using the Ledoit-Wolf lemma
+
+    Returns
+    -------
+    s : array-like, shape = [n_features, n_features]
+        Estimated covariance matrix
+    """
     if estimator == 'ledoit_wolf':
-        # standardize features because ledoit_wolf() does not support other shrinkage targets yet
+        # standardize features
         sc = StandardScaler()
         X = sc.fit_transform(X)
         std = np.diag(sc.std_)
@@ -52,40 +70,56 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     Parameters
     ----------
-    n_components : int
-        Number of components (< n_classes - 1) for dimensionality reduction
+    solver : string, optional
+        Solver to use, possible values:
+          - 'svd': Singular value decomposition (default). Does not need to
+                   compute the covariance matrix, therefore this solver is
+                   recommended for very large feature dimensions.
+          - 'lsqr': Least squares solution, can be combined with shrinkage (see
+                    below)
+          - 'eigen': Eigenvalue decomposition, can be combined with shrinkage
+                    (see below)
+
+    alpha : string or float, optional
+        Shrinkage parameter, possible values:
+          - None: No shrinkage (default)
+          - 'ledoit_wolf': Ledoit-Wolf shrinkage (determines optimal shrinkage
+                           parameter analytically)
+          - 'empirical': Equivalent with no shrinkage (or a value of 0)
+          - 0..1: If set to a number between 0 and 1, the shrinkage parameter is
+                  set to this value (0 means no shrinkage)
 
     priors : array, optional, shape = [n_classes]
         Priors on classes
 
-    use_covariance : string, optional
-        Compute LDA based on covariance estimation, default None (uses SVD).
-        Possible values are 'ledoit_wolf', which employs analytic shrinkage based
-        on Ledoit-Wolf, and 'empirical' (no shrinkage).
+    n_comps : int
+        Number of components (< n_classes - 1) for dimensionality reduction
 
     Attributes
     ----------
-    coef_ : array-like, shape = [rank, n_classes - 1]
-        Coefficients of the features in the linear decision
-        function. rank is min(rank_features, n_classes) where
-        rank_features is the dimensionality of the spaces spanned
-        by the features (i.e. n_features excluding redundant features).
+    coef_ : array, shape = [n_features] or [n_classes, n_features]
+        Weight vector(s)
 
-    covariance_ : array-like, shape = [n_features, n_features]
-        Covariance matrix (shared by all classes).
+    intercept_ : array, shape = [n_features]
+        Intercept term
+
+    cov_ : array-like, shape = [n_features, n_features]
+        Covariance matrix (shared by all classes)
 
     means_ : array-like, shape = [n_classes, n_features]
-        Class means.
+        Class means
 
     priors_ : array-like, shape = [n_classes]
-        Class priors (sum to 1).
+        Class priors (sum to 1)
 
     scalings_ : array-like, shape = [rank, n_classes - 1]
-        Scaling of the features in the space spanned by the class
-        centroids.
+        Scaling of the features in the space spanned by the class centroids
 
-    xbar_ : float, shape = [n_features]
-        Overall mean.
+    xbar_ : array-like, shape = [n_features]
+        Overall mean
+
+    classes_ : array-like, shape = [n_classes]
+        Unique class labels
 
     Examples
     --------
@@ -95,20 +129,19 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = LDA()
     >>> clf.fit(X, y)
-    LDA(n_components=None, priors=None, use_covariance=None)
     >>> print(clf.predict([[-0.8, -1]]))
-    [1]
+    [0]
 
     See also
     --------
     sklearn.qda.QDA: Quadratic discriminant analysis
-
     """
 
-    def __init__(self, solver='svd', alpha=None, priors=None):
+    def __init__(self, solver='svd', alpha=None, priors=None, n_comps=None):
         self.solver = solver
         self.alpha = alpha
         self.priors = priors
+        self.n_comps = n_comps
         
     def _solve_lsqr(self, X, y, cov_estimator):
         classes = unique_labels(y)
@@ -122,17 +155,17 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             covg = np.atleast_2d(covg)
             covs.append(covg)
     
-        self.covariance_ = np.mean(covs, 0)
-        means = np.asarray(means)
-        self.xbar_ = np.dot(self.priors, means)
+        self.cov_ = np.mean(covs, 0)
+        self.means_ = np.asarray(means)
+        self.xbar_ = np.dot(self.priors_, self.means_)
     
         # TODO: weight covariances with priors?
         Sw = np.mean(covs, 0)  # Within-class scatter
-        means = means - self.xbar_
+        means = self.means_ - self.xbar_
     
         self.coef_ = np.linalg.lstsq(Sw, means.T, rcond=1e-11)[0].T
         self.intercept_ = (-0.5 * np.diag(np.dot(means, self.coef_.T))
-                           + np.log(self.priors))
+                           + np.log(self.priors_))
 
     def _solve_eigen(self, X, y, cov_estimator):
         classes = unique_labels(y)
@@ -146,22 +179,22 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             covg = np.atleast_2d(covg)
             covs.append(covg)
 
-        self.covariance_ = np.mean(covs, 0)
-        means = np.asarray(means)
-        self.xbar_ = np.dot(self.priors, means)
+        self.cov_ = np.mean(covs, 0)
+        self.means_ = np.asarray(means)
+        self.xbar_ = np.dot(self.priors_, means)
 
         # TODO: weight covariances with priors?
         Sw = np.mean(covs, 0)  # Within-class scatter
         St = _cov(X, cov_estimator)
         Sb = St - Sw
-        means = means - self.xbar_
+        means = self.means_ - self.xbar_
 
         _, self.scalings_ = linalg.eigh(Sb, Sw)
         
         coef = np.dot(means, self.scalings_)
         self.coef_ = np.dot(coef, self.scalings_.T)
         self.intercept_ = (-0.5 * np.diag(np.dot(means, coef.T))
-                           + np.log(self.priors))
+                           + np.log(self.priors_))
     
     def _solve_svd(self, X, y, alpha, tol=1.0e-4):
         n_samples, n_features = X.shape
@@ -180,8 +213,8 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             # covg = _cov(Xg, self.estimator)
             # covg = np.atleast_2d(covg)
             # covs.append(covg)
-        means = np.asarray(means)
-        self.xbar_ = np.dot(self.priors, means)
+        self.means_ = np.asarray(means)
+        self.xbar_ = np.dot(self.priors_, self.means_)
         # cov_ = np.mean(covs, 0)
     
         Xc = np.concatenate(Xc, axis=0)
@@ -205,8 +238,8 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
     
         # 3) Between variance scaling
         # Scale weighted centers
-        X = np.dot(((np.sqrt((n_samples * self.priors) * fac)) *
-                    (means - self.xbar_).T).T, scalings)
+        X = np.dot(((np.sqrt((n_samples * self.priors_) * fac)) *
+                    (self.means_ - self.xbar_).T).T, scalings)
         # Centers are living in a space with n_classes-1 dim (maximum)
         # Use SVD to find projection in the space spanned by the
         # (n_classes) centers
@@ -214,8 +247,9 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
     
         rank = np.sum(S > tol * S[0])
         self.scalings_ = np.dot(scalings, V.T[:, :rank])
-        coef = np.dot(means - self.xbar_, self.scalings_)
-        self.intercept_ = (-0.5 * np.sum(coef**2, axis=1) + np.log(self.priors))
+        coef = np.dot(self.means_ - self.xbar_, self.scalings_)
+        self.intercept_ = (-0.5 * np.sum(coef**2, axis=1)
+                           + np.log(self.priors_))
         self.coef_ = np.dot(coef, self.scalings_.T)
 
     def fit(self, X, y):
@@ -239,9 +273,19 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             Threshold used for rank estimation (for LDA implemented with SVD).
         """
         X, y = check_X_y(X, y)
+        le = LabelEncoder()
+        y = le.fit_transform(y)
         self.classes_ = unique_labels(y)
         n_samples, n_features = X.shape
-        self.priors = np.bincount(y) / float(n_samples)
+
+        # TODO: support equal priors (should probably be the default)
+        if self.priors is None:
+            self.priors_ = np.bincount(y) / float(n_samples)
+        else:
+            self.priors_ = self.priors
+
+        if self.alpha is None:
+            self.alpha = 'empirical'
 
         if self.solver == 'svd':
             self._solve_svd(X, y, self.alpha)
