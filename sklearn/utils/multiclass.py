@@ -281,8 +281,6 @@ def type_of_target(y):
     >>> type_of_target(csr_matrix(np.random.randint(0, 4, size=(20, 5))))
     'multiclass-multioutput'
     """
-    if issparse(y):
-        y = y.toarray()
     valid = ((isinstance(y, (Sequence, spmatrix)) or hasattr(y, '__array__'))
              and not isinstance(y, string_types))
     if not valid:
@@ -293,15 +291,17 @@ def type_of_target(y):
         return 'multilabel-sequences'
     elif is_label_indicator_matrix(y):
         return 'multilabel-indicator'
-
-    try:
-        y = np.asarray(y)
-    except ValueError:
-        # known to fail in numpy 1.3 for array of arrays
+    if not issparse(y):
+        try:
+            y = np.asarray(y)
+        except ValueError:
+            #known to fail in numpy 1.3 for array of arrays
+            return 'unknown'
+    if y.ndim > 2:
         return 'unknown'
-    if y.ndim > 2 or (y.dtype == object and y.shape[0] and
-                      not isinstance(y.flat[0], string_types)):
-        return 'unknown'
+    if not issparse(y):
+        if y.dtype == object and not isinstance(y.flat[0], string_types):
+             return 'unknown'
     if y.ndim == 2 and y.shape[1] == 0:
         return 'unknown'
     elif y.ndim == 2 and y.shape[1] > 1:
@@ -313,7 +313,7 @@ def type_of_target(y):
     # check float and contains non-integer float values:
     if y.dtype.kind == 'f' and np.any(y != y.astype(int)):
         return 'continuous' + suffix
-    if len(np.unique(y)) <= 2:
+    if not issparse(y) and len(np.unique(y)) <= 2:
         assert not suffix, "2d binary array-like should be multilabel"
         return 'binary'
     else:
