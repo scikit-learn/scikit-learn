@@ -20,7 +20,7 @@ from .covariance import ledoit_wolf, empirical_covariance
 from .utils.extmath import logsumexp
 from .utils.multiclass import unique_labels
 from .utils import check_array, check_X_y
-from .preprocessing import StandardScaler, LabelEncoder
+from .preprocessing import StandardScaler
 
 
 def _cov(X, estimator='empirical'):
@@ -158,10 +158,9 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
               - 'empirical': Empirical covariance matrix
               - 'ledoit_wolf': Shrunk covariance matrix using Ledoit-Wolf
         """
-        classes = unique_labels(y)
         means = []
         covs = []
-        for group in classes:
+        for group in self.classes_:
             Xg = X[y == group, :]
             meang = Xg.mean(0)
             means.append(meang)
@@ -197,10 +196,10 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
               - 'empirical': Empirical covariance matrix
               - 'ledoit_wolf': Shrunk covariance matrix using Ledoit-Wolf
         """
-        classes = unique_labels(y)
+        n_classes = len(self.classes_)
         means = []
         covs = []
-        for group in classes:
+        for group in self.classes_:
             Xg = X[y == group, :]
             meang = Xg.mean(0)
             means.append(meang)
@@ -218,14 +217,17 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         Sb = St - Sw
         means = self.means_ - self.xbar_
 
-        _, self.scalings_ = linalg.eigh(Sb, Sw)
+        e, v = linalg.eigh(Sb, Sw)
+        idx = e.argsort()[::-1]
+        #self.scalings_ = np.atleast_2d(v[:, idx[n_classes - 1]]).T
+        self.scalings_ = v        
         
         coef = np.dot(means, self.scalings_)
-        self.coef_ = np.dot(coef, self.scalings_.T)
         self.intercept_ = (-0.5 * np.diag(np.dot(means, coef.T))
                            + np.log(self.priors_))
+        self.coef_ = np.dot(coef, self.scalings_.T)
     
-    def _solve_svd(self, X, y, tol=1.0e-4):
+    def _solve_svd(self, X, y, alpha=None, tol=1.0e-4):
         """SVD solver
 
         Parameters
@@ -307,14 +309,12 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             Target values
         """
         X, y = check_X_y(X, y)
-        le = LabelEncoder()
-        y = le.fit_transform(y)
         self.classes_ = unique_labels(y)
-        n_samples, n_features = X.shape
+        n_classes = len(self.classes_)
 
-        # TODO: support equal priors (should probably be the default)
-        if self.priors is None:
-            self.priors_ = np.bincount(y) / float(n_samples)
+        # TODO: support priors estimated from data
+        if self.priors is None:  # equal priors
+            self.priors_ = np.ones(n_classes) / n_classes
         else:
             self.priors_ = self.priors
 
@@ -327,6 +327,8 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             self._solve_lsqr(X, y, self.alpha)
         elif self.solver == 'eigen':
             self._solve_eigen(X, y, self.alpha)
+        else:
+            raise ValueError('unknown solver')
 
         return self
 
@@ -370,6 +372,8 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         """
         X = check_array(X)
         # center and scale data
+        if self.solver == 'lsqr':
+            raise NotImplementedError('transform not supported for lsqr solver')
         X_new = np.dot(X - self.xbar_, self.scalings_)
         n_components = X.shape[1] if self.n_components is None \
             else self.n_components
