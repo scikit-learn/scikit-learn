@@ -290,8 +290,7 @@ reasonable (please see  the :ref:`reference documentation
 
   >>> vectorizer = CountVectorizer(min_df=1)
   >>> vectorizer                     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  CountVectorizer(analyzer=...'word', binary=False, charset=None,
-          charset_error=None, decode_error=...'strict',
+  CountVectorizer(analyzer=...'word', binary=False, decode_error=...'strict',
           dtype=<... 'numpy.int64'>, encoding=...'utf-8', input=...'content',
           lowercase=True, max_df=1.0, max_features=None, min_df=1,
           ngram_range=(1, 1), preprocessor=None, stop_words=None,
@@ -471,7 +470,7 @@ As usual the best way to adjust the feature extraction parameters
 is to use a cross-validated grid search, for instance by pipelining the
 feature extractor with a classifier:
 
- * :ref:`example_grid_search_text_feature_extraction.py`
+ * :ref:`example_model_selection_grid_search_text_feature_extraction.py`
 
 
 Decoding text files
@@ -565,12 +564,12 @@ In particular in a **supervised setting** it can be successfully combined
 with fast and scalable linear models to train **document classifiers**,
 for instance:
 
- * :ref:`example_document_classification_20newsgroups.py`
+ * :ref:`example_text_document_classification_20newsgroups.py`
 
 In an **unsupervised setting** it can be used to group similar documents
 together by applying clustering algorithms such as :ref:`k_means`:
 
-  * :ref:`example_document_clustering.py`
+  * :ref:`example_text_document_clustering.py`
 
 Finally it is possible to discover the main topics of a corpus by
 relaxing the hard assignment constraint of clustering, for instance by
@@ -748,7 +747,7 @@ An interesting development of using a :class:`HashingVectorizer` is the ability
 to perform `out-of-core`_ scaling. This means that we can learn from data that
 does not fit into the computer's main memory.
 
-.. _out-of-core: http://en.wikipedia.org/wiki/Out-of-core_algorithm. 
+.. _out-of-core: http://en.wikipedia.org/wiki/Out-of-core_algorithm 
 
 A strategy to implement out-of-core scaling is to stream data to the estimator 
 in mini-batches. Each mini-batch is vectorized using :class:`HashingVectorizer`
@@ -890,7 +889,7 @@ features or samples. For instance Ward clustering
 (:ref:`hierarchical_clustering`) can cluster together only neighboring pixels
 of an image, thus forming contiguous patches:
 
-.. figure:: ../auto_examples/cluster/images/plot_lena_ward_segmentation_1.png
+.. figure:: ../auto_examples/cluster/images/plot_lena_ward_segmentation_001.png
    :target: ../auto_examples/cluster/plot_lena_ward_segmentation.html
    :align: center
    :scale: 40

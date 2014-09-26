@@ -10,7 +10,7 @@ There are several ways to get in touch with the developers.
 Mailing List
 ============
 
-- The main mailing list is `scikit-learn-general 
+- The main mailing list is `scikit-learn-general
   <https://lists.sourceforge.net/lists/listinfo/scikit-learn-general>`_.
 
 - There is also a commit list `scikit-learn-commits
@@ -67,7 +67,7 @@ Don't forget to include:
 To help developers fix your bug faster, please link to a https://gist.github.com
 holding a standalone minimalistic python script that reproduces your bug and
 optionally a minimalistic subsample of your dataset (for instance exported
-as CSV files using `numpy.savetxt`).
+as CSV files using ``numpy.savetxt``).
 
 Note: gists are git cloneable repositories and thus you can use git to
 push datafiles to them.
@@ -93,7 +93,8 @@ Documentation resources
 This documentation is relative to |release|. Documentation for other
 versions can be found here:
 
-    * `Development version <http://scikit-learn.org/dev/>`_
+    * `0.15 <http://scikit-learn.org/0.15/>`_
+    * `0.14 <http://scikit-learn.org/0.14/>`_
     * `0.13 <http://scikit-learn.org/0.13/>`_
     * `0.12 <http://scikit-learn.org/0.12/>`_
     * `0.11 <http://scikit-learn.org/0.11/>`_

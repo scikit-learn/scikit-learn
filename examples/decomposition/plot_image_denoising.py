@@ -15,7 +15,7 @@ available.
 
 A common practice for evaluating the results of image denoising is by looking
 at the difference between the reconstruction and the original image. If the
-reconstruction is perfect this will look like gaussian noise.
+reconstruction is perfect this will look like Gaussian noise.
 
 It can be seen from the plots that the results of :ref:`omp` with two
 non-zero coefficients is a bit less biased than when keeping only one
@@ -57,13 +57,13 @@ height, width = lena.shape
 # Distort the right half of the image
 print('Distorting image...')
 distorted = lena.copy()
-distorted[:, height / 2:] += 0.075 * np.random.randn(width, height / 2)
+distorted[:, height // 2:] += 0.075 * np.random.randn(width, height // 2)
 
 # Extract all reference patches from the left half of the image
 print('Extracting reference patches...')
 t0 = time()
 patch_size = (7, 7)
-data = extract_patches_2d(distorted[:, :height / 2], patch_size)
+data = extract_patches_2d(distorted[:, :height // 2], patch_size)
 data = data.reshape(data.shape[0], -1)
 data -= np.mean(data, axis=0)
 data /= np.std(data, axis=0)
@@ -121,7 +121,7 @@ show_with_diff(distorted, lena, 'Distorted image')
 
 print('Extracting noisy patches... ')
 t0 = time()
-data = extract_patches_2d(distorted[:, height / 2:], patch_size)
+data = extract_patches_2d(distorted[:, height // 2:], patch_size)
 data = data.reshape(data.shape[0], -1)
 intercept = np.mean(data, axis=0)
 data -= intercept
@@ -154,8 +154,8 @@ for title, transform_algorithm, kwargs in transform_algorithms:
     if transform_algorithm == 'threshold':
         patches -= patches.min()
         patches /= patches.max()
-    reconstructions[title][:, height / 2:] = reconstruct_from_patches_2d(
-        patches, (width, height / 2))
+    reconstructions[title][:, height // 2:] = reconstruct_from_patches_2d(
+        patches, (width, height // 2))
     dt = time() - t0
     print('done in %.2fs.' % dt)
     show_with_diff(reconstructions[title], lena,

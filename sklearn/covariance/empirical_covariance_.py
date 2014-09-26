@@ -16,7 +16,7 @@ import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator
-from ..utils import array2d
+from ..utils import check_array
 from ..utils.extmath import fast_logdet, pinvh
 
 
@@ -97,10 +97,10 @@ class EmpiricalCovariance(BaseEstimator):
 
     Attributes
     ----------
-    `covariance_` : 2D ndarray, shape (n_features, n_features)
+    covariance_ : 2D ndarray, shape (n_features, n_features)
         Estimated covariance matrix
 
-    `precision_` : 2D ndarray, shape (n_features, n_features)
+    precision_ : 2D ndarray, shape (n_features, n_features)
         Estimated pseudo-inverse matrix.
         (stored only if store_precision is True)
 
@@ -122,7 +122,7 @@ class EmpiricalCovariance(BaseEstimator):
             is computed.
 
         """
-        covariance = array2d(covariance)
+        covariance = check_array(covariance)
         # set covariance
         self.covariance_ = covariance
         # set precision
@@ -136,7 +136,7 @@ class EmpiricalCovariance(BaseEstimator):
 
         Returns
         -------
-        `precision_` : array-like,
+        precision_ : array-like,
             The precision matrix associated to the current covariance object.
 
         """

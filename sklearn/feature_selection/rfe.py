@@ -7,7 +7,7 @@
 """Recursive feature elimination for feature ranking"""
 
 import numpy as np
-from ..utils import check_arrays, safe_sqr
+from ..utils import check_X_y, safe_sqr
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
@@ -53,22 +53,23 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
     estimator_params : dict
         Parameters for the external estimator.
-        Useful for doing grid searches.
+        Useful for doing grid searches when an `RFE` object is passed as an
+        argument to, e.g., a `sklearn.grid_search.GridSearchCV` object.
 
     Attributes
     ----------
-    `n_features_` : int
+    n_features_ : int
         The number of selected features.
 
-    `support_` : array of shape [n_features]
+    support_ : array of shape [n_features]
         The mask of selected features.
 
-    `ranking_` : array of shape [n_features]
+    ranking_ : array of shape [n_features]
         The feature ranking, such that `ranking_[i]` corresponds to the \
         ranking position of the i-th feature. Selected (i.e., estimated \
         best) features are assigned rank 1.
 
-    `estimator_` : object
+    estimator_ : object
         The external estimator fit on the reduced dataset.
 
     Examples
@@ -116,7 +117,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         y : array-like, shape = [n_samples]
             The target values.
         """
-        X, y = check_arrays(X, y, sparse_format="csc")
+        X, y = check_X_y(X, y, "csc")
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
@@ -243,31 +244,32 @@ class RFECV(RFE, MetaEstimatorMixin):
 
     estimator_params : dict
         Parameters for the external estimator.
-        Useful for doing grid searches.
+        Useful for doing grid searches when an `RFE` object is passed as an
+        argument to, e.g., a `sklearn.grid_search.GridSearchCV` object.
 
     verbose : int, default=0
         Controls verbosity of output.
 
     Attributes
     ----------
-    `n_features_` : int
+    n_features_ : int
         The number of selected features with cross-validation.
-    `support_` : array of shape [n_features]
+    support_ : array of shape [n_features]
         The mask of selected features.
 
-    `ranking_` : array of shape [n_features]
+    ranking_ : array of shape [n_features]
         The feature ranking, such that `ranking_[i]`
         corresponds to the ranking
         position of the i-th feature.
         Selected (i.e., estimated best)
         features are assigned rank 1.
 
-    `grid_scores_` : array of shape [n_subsets_of_features]
+    grid_scores_ : array of shape [n_subsets_of_features]
         The cross-validation scores such that
         `grid_scores_[i]` corresponds to
         the CV score of the i-th subset of features.
 
-    `estimator_` : object
+    estimator_ : object
         The external estimator fit on the reduced dataset.
 
     Examples
@@ -296,12 +298,11 @@ class RFECV(RFE, MetaEstimatorMixin):
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
     def __init__(self, estimator, step=1, cv=None, scoring=None,
-                 loss_func=None, estimator_params={}, verbose=0):
+                 estimator_params={}, verbose=0):
         self.estimator = estimator
         self.step = step
         self.cv = cv
         self.scoring = scoring
-        self.loss_func = loss_func
         self.estimator_params = estimator_params
         self.verbose = verbose
 
@@ -319,15 +320,14 @@ class RFECV(RFE, MetaEstimatorMixin):
             Target values (integers for classification, real numbers for
             regression).
         """
-        X, y = check_arrays(X, y, sparse_format="csr")
+        X, y = check_X_y(X, y, "csr")
         # Initialization
         rfe = RFE(estimator=self.estimator, n_features_to_select=1,
                   step=self.step, estimator_params=self.estimator_params,
                   verbose=self.verbose - 1)
 
         cv = check_cv(self.cv, X, y, is_classifier(self.estimator))
-        scorer = check_scoring(self.estimator, scoring=self.scoring,
-                               loss_func=self.loss_func)
+        scorer = check_scoring(self.estimator, scoring=self.scoring)
         scores = np.zeros(X.shape[1])
 
         # Cross-validation
@@ -346,7 +346,7 @@ class RFECV(RFE, MetaEstimatorMixin):
 
                 if self.verbose > 0:
                     print("Finished fold with %d / %d feature ranks, score=%f"
-                          % (k, max(ranking_), score))
+                          % (k + 1, max(ranking_), score))
                 scores[k] += score
 
         # Pick the best number of features on average
@@ -368,5 +368,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         self.estimator_.set_params(**self.estimator_params)
         self.estimator_.fit(self.transform(X), y)
 
-        self.grid_scores_ = scores / n
+        # Fixing a normalization error, n is equal to len(cv) - 1
+        # here, the scores are normalized by len(cv)
+        self.grid_scores_ = scores / len(cv)
         return self

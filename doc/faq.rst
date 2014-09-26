@@ -17,7 +17,7 @@ sy-kit learn. sci stands for science!
 Why scikit?
 ------------
 There are multiple scikits, which are scientific toolboxes build around SciPy.
-You can find a list at `https://scikits.appspot.com/scikits`_.
+You can find a list at `<https://scikits.appspot.com/scikits>`_.
 Apart from scikit-learn, another popular one is `scikit-image <http://scikit-image.org/>`_.
 
 How can I contribute to scikit-learn?
@@ -47,7 +47,7 @@ Not in the forseeable future.
 scikit-learn tries to provide a unified API for the basic tasks in machine
 learning, with pipelines and meta-algorithms like grid search to tie
 everything together. The required concepts, APIs, algorithms and
-expertise required for stuctured learning are different from what
+expertise required for structured learning are different from what
 scikit-learn has to offer. If we started doing arbitrary structured
 learning, we'd need to redesign the whole package and the project
 would likely collapse under its own weight.

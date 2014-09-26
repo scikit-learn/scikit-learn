@@ -42,13 +42,11 @@ def test_linkage_misc():
     # Smoke test FeatureAgglomeration
     FeatureAgglomeration().fit(X)
 
+    # Deprecation of Ward class
     with warnings.catch_warnings(record=True) as warning_list:
         warnings.simplefilter("always", DeprecationWarning)
-        # Use the copy argument, to raise a warning
-        Ward(copy=True).fit(X)
-    # We should be getting 2 warnings: one for using Ward that is
-    # deprecated, one for using the copy argument
-    assert_equal(len(warning_list), 2)
+        Ward().fit(X)
+    assert_equal(len(warning_list), 1)
 
     # test hiearchical clustering on a precomputed distances matrix
     dis = cosine_distances(X)
@@ -167,7 +165,7 @@ def test_agglomerative_clustering():
         clustering = AgglomerativeClustering(
             n_clusters=10,
             connectivity=sparse.lil_matrix(
-                connectivity.todense()[:10, :10]),
+                connectivity.toarray()[:10, :10]),
             linkage=linkage)
         assert_raises(ValueError, clustering.fit, X)
 
@@ -175,7 +173,7 @@ def test_agglomerative_clustering():
     # exception
     clustering = AgglomerativeClustering(
         n_clusters=10,
-        connectivity=connectivity.todense(),
+        connectivity=connectivity.toarray(),
         affinity="manhattan",
         linkage="ward")
     assert_raises(ValueError, clustering.fit, X)
@@ -211,6 +209,9 @@ def test_ward_agglomeration():
     assert_warns(DeprecationWarning, WardAgglomeration)
     with warnings.catch_warnings(record=True) as warning_list:
         warnings.simplefilter("always", DeprecationWarning)
+        if hasattr(np, 'VisibleDeprecationWarning'):
+            # Let's not catch the numpy internal DeprecationWarnings
+            warnings.simplefilter('ignore', np.VisibleDeprecationWarning)
         ward = WardAgglomeration(n_clusters=5, connectivity=connectivity)
         ward.fit(X)
         assert_equal(len(warning_list), 1)

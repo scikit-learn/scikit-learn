@@ -20,7 +20,7 @@ def test_sparse_coef():
     clf.coef_ = [1, 2, 3]
 
     assert_true(sp.isspmatrix(clf.sparse_coef_))
-    assert_equal(clf.sparse_coef_.todense().tolist()[0], clf.coef_)
+    assert_equal(clf.sparse_coef_.toarray().tolist()[0], clf.coef_)
 
 
 def test_normalize_option():
@@ -153,8 +153,8 @@ def _test_sparse_enet_not_as_toy_dataset(alpha, fit_intercept, positive):
     X, y = make_sparse_data(n_samples, n_features, n_informative,
                             positive=positive)
 
-    X_train, X_test = X[n_samples / 2:], X[:n_samples / 2]
-    y_train, y_test = y[n_samples / 2:], y[:n_samples / 2]
+    X_train, X_test = X[n_samples // 2:], X[:n_samples // 2]
+    y_train, y_test = y[n_samples // 2:], y[:n_samples // 2]
 
     s_clf = ElasticNet(alpha=alpha, l1_ratio=0.8, fit_intercept=fit_intercept,
                        max_iter=max_iter, tol=1e-7, positive=positive,
@@ -168,7 +168,7 @@ def _test_sparse_enet_not_as_toy_dataset(alpha, fit_intercept, positive):
     d_clf = ElasticNet(alpha=alpha, l1_ratio=0.8, fit_intercept=fit_intercept,
                        max_iter=max_iter, tol=1e-7, positive=positive,
                        warm_start=True)
-    d_clf.fit(X_train.todense(), y_train)
+    d_clf.fit(X_train.toarray(), y_train)
 
     assert_almost_equal(d_clf.dual_gap_, 0, 4)
     assert_greater(d_clf.score(X_test, y_test), 0.85)
@@ -197,8 +197,8 @@ def test_sparse_lasso_not_as_toy_dataset():
     n_informative = 10
     X, y = make_sparse_data(n_samples=n_samples, n_informative=n_informative)
 
-    X_train, X_test = X[n_samples / 2:], X[:n_samples / 2]
-    y_train, y_test = y[n_samples / 2:], y[:n_samples / 2]
+    X_train, X_test = X[n_samples // 2:], X[:n_samples // 2]
+    y_train, y_test = y[n_samples // 2:], y[:n_samples // 2]
 
     s_clf = Lasso(alpha=0.1, fit_intercept=False, max_iter=max_iter, tol=1e-7)
     s_clf.fit(X_train, y_train)
@@ -207,7 +207,7 @@ def test_sparse_lasso_not_as_toy_dataset():
 
     # check the convergence is the same as the dense version
     d_clf = Lasso(alpha=0.1, fit_intercept=False, max_iter=max_iter, tol=1e-7)
-    d_clf.fit(X_train.todense(), y_train)
+    d_clf.fit(X_train.toarray(), y_train)
     assert_almost_equal(d_clf.dual_gap_, 0, 4)
     assert_greater(d_clf.score(X_test, y_test), 0.85)
 
@@ -254,7 +254,7 @@ def test_same_output_sparse_dense_lasso_and_enet_cv():
         clfs = ElasticNetCV(max_iter=100, cv=5, normalize=normalize)
         ignore_warnings(clfs.fit)(X, y)
         clfd = ElasticNetCV(max_iter=100, cv=5, normalize=normalize)
-        ignore_warnings(clfd.fit)(X.todense(), y)
+        ignore_warnings(clfd.fit)(X.toarray(), y)
         assert_almost_equal(clfs.alpha_, clfd.alpha_, 7)
         assert_almost_equal(clfs.intercept_, clfd.intercept_, 7)
         assert_array_almost_equal(clfs.mse_path_, clfd.mse_path_)
@@ -263,7 +263,7 @@ def test_same_output_sparse_dense_lasso_and_enet_cv():
         clfs = LassoCV(max_iter=100, cv=4, normalize=normalize)
         ignore_warnings(clfs.fit)(X, y)
         clfd = LassoCV(max_iter=100, cv=4, normalize=normalize)
-        ignore_warnings(clfd.fit)(X.todense(), y)
+        ignore_warnings(clfd.fit)(X.toarray(), y)
         assert_almost_equal(clfs.alpha_, clfd.alpha_, 7)
         assert_almost_equal(clfs.intercept_, clfd.intercept_, 7)
         assert_array_almost_equal(clfs.mse_path_, clfd.mse_path_)

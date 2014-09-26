@@ -4,6 +4,7 @@ Testing for Gaussian Process module (sklearn.gaussian_process)
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 # Licence: BSD 3 clause
+
 from nose.tools import raises
 from nose.tools import assert_true
 
@@ -12,6 +13,7 @@ import numpy as np
 from sklearn.gaussian_process import GaussianProcess
 from sklearn.gaussian_process import regression_models as regression
 from sklearn.gaussian_process import correlation_models as correlation
+from sklearn.utils.testing import assert_greater
 
 
 f = lambda x: x * np.sin(x)
@@ -50,14 +52,20 @@ def check2d(X, regr=regression.constant, corr=correlation.squared_exponential,
     g = lambda x: b - x[:, 1] - kappa * (x[:, 0] - e) ** 2.
 
     y = g(X).ravel()
+
+    thetaL = [1e-4] * 2
+    thetaU = [1e-1] * 2
     gp = GaussianProcess(regr=regr, corr=corr, beta0=beta0,
-                         theta0=[1e-2] * 2, thetaL=[1e-4] * 2,
-                         thetaU=[1e-1] * 2,
+                         theta0=[1e-2] * 2, thetaL=thetaL,
+                         thetaU=thetaU,
                          random_start=random_start, verbose=False)
     gp.fit(X, y)
     y_pred, MSE = gp.predict(X, eval_MSE=True)
 
     assert_true(np.allclose(y_pred, y) and np.allclose(MSE, 0.))
+
+    assert_true(np.all(gp.theta_ >= thetaL)) # Lower bounds of hyperparameters
+    assert_true(np.all(gp.theta_ <= thetaU)) # Upper bounds of hyperparameters
 
 
 def check2d_2d(X, regr=regression.constant, corr=correlation.squared_exponential,
@@ -139,6 +147,29 @@ def test_no_normalize():
     gp = GaussianProcess(normalize=False).fit(X, y)
     y_pred = gp.predict(X)
     assert_true(np.allclose(y_pred, y))
+
+
+def test_random_starts():
+    """
+    Test that an increasing number of random-starts of GP fitting only
+    increases the reduced likelihood function of the optimal theta.
+    """
+    n_samples, n_features = 50, 3
+    np.random.seed(0)
+    rng = np.random.RandomState(0)
+    X = rng.randn(n_samples, n_features) * 2 - 1
+    y = np.sin(X).sum(axis=1) + np.sin(3 * X).sum(axis=1)
+    best_likelihood = -np.inf
+    for random_start in range(1, 5):
+        gp = GaussianProcess(regr="constant", corr="squared_exponential",
+                             theta0=[1e-0] * n_features,
+                             thetaL=[1e-4] * n_features,
+                             thetaU=[1e+1] * n_features,
+                             random_start=random_start, random_state=0,
+                             verbose=False).fit(X, y)
+        rlf = gp.reduced_likelihood_function()[0]
+        assert_greater(rlf, best_likelihood - np.finfo(np.float32).eps)
+        best_likelihood = rlf
 
 
 @raises(ValueError)

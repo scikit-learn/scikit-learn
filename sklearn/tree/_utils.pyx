@@ -10,21 +10,9 @@
 
 from libc.stdlib cimport free, malloc, realloc
 
-
 # =============================================================================
 # Stack data structure
 # =============================================================================
-
-cdef inline void copy_stack(StackRecord* a, StackRecord* b) nogil:
-    """Assigns ``a := b`` for StackRecord. """
-    a.start = b.start
-    a.end = b.end
-    a.depth = b.depth
-    a.parent = b.parent
-    a.is_left = b.is_left
-    a.impurity = b.impurity
-    a.n_constant_features = b.n_constant_features
-
 
 cdef class Stack:
     """A LIFO data structure.
@@ -100,7 +88,7 @@ cdef class Stack:
         if top <= 0:
             return -1
 
-        copy_stack(res, stack + top - 1)
+        res[0] = stack[top - 1]
         self.top = top - 1
 
         return 0
@@ -109,28 +97,6 @@ cdef class Stack:
 # =============================================================================
 # PriorityHeap data structure
 # =============================================================================
-
-cdef inline void copy_heap(PriorityHeapRecord* a, PriorityHeapRecord* b) nogil:
-    """Assigns ``a := b``. """
-    a.node_id = b.node_id
-    a.start = b.start
-    a.end = b.end
-    a.pos = b.pos
-    a.depth = b.depth
-    a.is_leaf = b.is_leaf
-    a.impurity = b.impurity
-    a.impurity_left = b.impurity_left
-    a.impurity_right = b.impurity_right
-    a.improvement = b.improvement
-
-
-cdef void swap_heap(PriorityHeapRecord* heap, SIZE_t a, SIZE_t b) nogil:
-    """Swap record ``a`` and ``b`` in ``heap``. """
-    cdef PriorityHeapRecord tmp
-    copy_heap(&tmp, heap + a)
-    copy_heap(heap + a, heap + b)
-    copy_heap(heap + b, &tmp)
-
 
 cdef void heapify_up(PriorityHeapRecord* heap, SIZE_t pos) nogil:
     """Restore heap invariant parent.improvement > child.improvement from
@@ -141,7 +107,7 @@ cdef void heapify_up(PriorityHeapRecord* heap, SIZE_t pos) nogil:
     cdef SIZE_t parent_pos = (pos - 1) / 2
 
     if heap[parent_pos].improvement < heap[pos].improvement:
-        swap_heap(heap, parent_pos, pos)
+        heap[parent_pos], heap[pos] = heap[pos], heap[parent_pos]
         heapify_up(heap, parent_pos)
 
 
@@ -162,7 +128,7 @@ cdef void heapify_down(PriorityHeapRecord* heap, SIZE_t pos,
         largest = right_pos
 
     if largest != pos:
-        swap_heap(heap, pos, largest)
+        heap[pos], heap[largest] = heap[largest], heap[pos]
         heapify_down(heap, largest, heap_length)
 
 
@@ -250,10 +216,10 @@ cdef class PriorityHeap:
             return -1
 
         # Take first element
-        copy_heap(res, heap)
+        res[0] = heap[0]
 
         # Put last element to the front
-        swap_heap(heap, 0, heap_ptr - 1)
+        heap[0], heap[heap_ptr - 1] = heap[heap_ptr - 1], heap[0]
 
         # Restore heap invariant
         if heap_ptr > 1:

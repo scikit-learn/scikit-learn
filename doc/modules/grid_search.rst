@@ -35,12 +35,17 @@ all parameter combinations, while :class:`RandomizedSearchCV` can sample a
 given number of candidates from a parameter space with a specified
 distribution.
 
+.. seealso
+
+   :ref:`pipeline` describes building composite estimators whose
+   parameter space can be searched with these tools.
+
 Exhaustive Grid Search
 ======================
 
 The grid search provided by :class:`GridSearchCV` exhaustively generates
-candidates from a grid of parameter values specified with the `param_grid`
-attribute. For instance, the following `param_grid`::
+candidates from a grid of parameter values specified with the ``param_grid``
+parameter. For instance, the following ``param_grid``::
 
   param_grid = [
     {'C': [1, 10, 100, 1000], 'kernel': ['linear']},
@@ -88,10 +93,10 @@ can be specified via the ``scoring`` parameter to :class:`GridSearchCV`.  See
 
 .. topic:: Examples:
 
-    - See :ref:`example_grid_search_digits.py` for an example of
+    - See :ref:`example_model_selection_grid_search_digits.py` for an example of
       Grid Search computation on the digits dataset.
 
-    - See :ref:`example_grid_search_text_feature_extraction.py` for an example
+    - See :ref:`example_model_selection_grid_search_text_feature_extraction.py` for an example
       of Grid Search coupling parameters from a text documents feature
       extractor (n-gram count vectorizer and TF-IDF transformer) with a
       classifier (here a linear SVM trained with SGD with either elastic
@@ -145,7 +150,7 @@ increasing ``n_iter`` will always lead to a finer search.
 
 .. topic:: Examples:
 
-    * :ref:`example_randomized_search.py` compares the usage and efficiency
+    * :ref:`example_model_selection_randomized_search.py` compares the usage and efficiency
       of randomized search and grid search.
 
 .. topic:: References:
@@ -179,12 +184,16 @@ Here is the list of such models:
    :toctree: generated/
    :template: class.rst
 
+   linear_model.ElasticNetCV
+   linear_model.LarsCV
+   linear_model.LassoCV
+   linear_model.LassoLarsCV
+   linear_model.LogisticRegressionCV
+   linear_model.MultiTaskElasticNetCV
+   linear_model.MultiTaskLassoCV
+   linear_model.OrthogonalMatchingPursuitCV
    linear_model.RidgeCV
    linear_model.RidgeClassifierCV
-   linear_model.LarsCV
-   linear_model.LassoLarsCV
-   linear_model.LassoCV
-   linear_model.ElasticNetCV
 
 
 Information Criterion

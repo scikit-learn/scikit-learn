@@ -249,6 +249,20 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         """Target must have at least two labels"""
         self.factory(alpha=0.01, n_iter=20).fit(X2, np.ones(9))
 
+    def test_partial_fit_weight_class_auto(self):
+        """partial_fit with class_weight='auto' not supported"""
+        assert_raises_regexp(ValueError,
+                             "class_weight 'auto' is not supported for "
+                             "partial_fit. In order to use 'auto' weights, "
+                             "use compute_class_weight\('auto', classes, y\). "
+                             "In place of y you can us a large enough sample "
+                             "of the full training set target to properly "
+                             "estimate the class frequency distributions. "
+                             "Pass the resulting weights as the class_weight "
+                             "parameter.",
+                             self.factory(class_weight='auto').partial_fit,
+                             X, Y, classes=np.unique(Y))
+
     def test_sgd_multiclass(self):
         """Multi-class test case"""
         clf = self.factory(alpha=0.01, n_iter=20).fit(X2, Y2)
@@ -847,7 +861,7 @@ def test_underflow_or_overlow():
     assert_array_equal(np.unique(y), [0, 1])
 
     model = SGDClassifier(alpha=0.1, loss='squared_hinge', n_iter=500)
-    
+
     # smoke test: model is stable on scaled data
     model.fit(scale(X), y)
 

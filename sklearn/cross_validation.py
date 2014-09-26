@@ -22,8 +22,9 @@ import numpy as np
 import scipy.sparse as sp
 
 from .base import is_classifier, clone
-from .utils import check_arrays, check_random_state, safe_mask
-from .utils.validation import _num_samples
+from .utils import indexable, check_random_state, safe_indexing
+from .utils.validation import _num_samples, check_array
+from .utils.multiclass import type_of_target
 from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
 from .externals.six.moves import zip
@@ -676,6 +677,11 @@ class Bootstrap(object):
 
     def __init__(self, n, n_iter=3, train_size=.5, test_size=None,
                  random_state=None, n_bootstraps=None):
+        # See, e.g., http://youtu.be/BzHz0J9a6k0?t=9m38s for a motivation
+        # behind this deprecation
+        warnings.warn("Bootstrap will no longer be supported as a " +
+                      "cross-validation method as of version 0.15 and " +
+                      "will be removed in 0.17", DeprecationWarning)
         self.n = n
         if n_bootstraps is not None:  # pragma: no cover
             warnings.warn("n_bootstraps was renamed to n_iter and will "
@@ -702,9 +708,10 @@ class Bootstrap(object):
             self.test_size = self.n - self.train_size
         else:
             raise ValueError("Invalid value for test_size: %r" % test_size)
-        if self.test_size > n:
-            raise ValueError("test_size=%d should not be larger than n=%d" %
-                             (self.test_size, n))
+        if self.test_size > n - self.train_size:
+            raise ValueError(("test_size + train_size=%d, should not be " +
+                              "larger than n=%d") %
+                             (self.test_size + self.train_size, n))
 
         self.random_state = random_state
 
@@ -1070,8 +1077,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
 
 def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
-                    verbose=0, fit_params=None, score_func=None,
-                    pre_dispatch='2*n_jobs'):
+                    verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
     """Evaluate a score by cross-validation
 
     Parameters
@@ -1079,8 +1085,8 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     estimator : estimator object implementing 'fit'
         The object to use to fit the data.
 
-    X : array-like of shape at least 2D
-        The data to fit.
+    X : array-like
+        The data to fit. Can be, for example a list, or an array at least 2d.
 
     y : array-like, optional, default: None
         The target variable to try to predict in the case of
@@ -1091,10 +1097,11 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    cv : cross-validation generator, optional, default: None
-        A cross-validation generator. If None, a 3-fold cross
-        validation is used or 3-fold stratified cross-validation
-        when y is supplied and estimator is a classifier.
+    cv : cross-validation generator or int, optional, default: None
+        A cross-validation generator to use. If int, determines
+        the number of folds in StratifiedKFold if y is binary
+        or multiclass and estimator is a classifier, or the number
+        of folds in KFold otherwise. If None, it is equivalent to cv=3.
 
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
@@ -1128,13 +1135,10 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     scores : array of float, shape=(len(list(cv)),)
         Array of scores of the estimator for each run of the cross validation.
     """
-    X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True,
-                        allow_nans=True)
-    if y is not None:
-        y = np.asarray(y)
+    X, y = indexable(X, y)
 
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
-    scorer = check_scoring(estimator, score_func=score_func, scoring=scoring)
+    scorer = check_scoring(estimator, scoring=scoring)
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
@@ -1191,8 +1195,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
     Returns
     -------
     train_score : float, optional
-        Score on training set, returned only if `return_train_score` is `True`. 
-        
+        Score on training set, returned only if `return_train_score` is `True`.
+
     test_score : float
         Score on test set.
 
@@ -1272,10 +1276,10 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
             else:
                 X_subset = X[np.ix_(indices, train_indices)]
         else:
-            X_subset = X[safe_mask(X, indices)]
+            X_subset = safe_indexing(X, indices)
 
     if y is not None:
-        y_subset = y[safe_mask(y, indices)]
+        y_subset = safe_indexing(y, indices)
     else:
         y_subset = None
 
@@ -1358,7 +1362,10 @@ def _check_cv(cv, X=None, y=None, classifier=False, warn_mask=False):
         else:
             needs_indices = None
         if classifier:
-            cv = StratifiedKFold(y, cv, indices=needs_indices)
+            if type_of_target(y) in ['binary', 'multiclass']:
+                cv = StratifiedKFold(y, cv, indices=needs_indices)
+            else:
+                cv = KFold(_num_samples(y), cv, indices=needs_indices)
         else:
             if not is_sparse:
                 n_samples = len(X)
@@ -1371,7 +1378,7 @@ def _check_cv(cv, X=None, y=None, classifier=False, warn_mask=False):
     return cv
 
 
-def permutation_test_score(estimator, X, y, score_func=None, cv=None,
+def permutation_test_score(estimator, X, y, cv=None,
                            n_permutations=100, n_jobs=1, labels=None,
                            random_state=0, verbose=0, scoring=None):
     """Evaluate the significance of a cross-validated score with permutations
@@ -1425,8 +1432,8 @@ def permutation_test_score(estimator, X, y, score_func=None, cv=None,
         The scores obtained for each permutations.
 
     pvalue : float
-        The returned value equals p-value if `score_func` returns bigger
-        numbers for better scores (e.g., accuracy_score). If `score_func` is
+        The returned value equals p-value if `scoring` returns bigger
+        numbers for better scores (e.g., accuracy_score). If `scoring` is
         rather a loss function (i.e. when lower is better such as with
         `mean_squared_error`) then this is actually the complement of the
         p-value:  1 - p-value.
@@ -1440,9 +1447,9 @@ def permutation_test_score(estimator, X, y, score_func=None, cv=None,
         vol. 11
 
     """
-    X, y = check_arrays(X, y, sparse_format='csr', allow_nans=True)
+    X, y = indexable(X, y)
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
-    scorer = check_scoring(estimator, scoring=scoring, score_func=score_func)
+    scorer = check_scoring(estimator, scoring=scoring)
     random_state = check_random_state(random_state)
 
     # We clone the estimator to make sure that all the folds are
@@ -1464,7 +1471,7 @@ permutation_test_score.__test__ = False  # to avoid a pb with nosetests
 def train_test_split(*arrays, **options):
     """Split arrays or matrices into random train and test subsets
 
-    Quick utility that wraps calls to ``check_arrays`` and
+    Quick utility that wraps input validation and
     ``next(iter(ShuffleSplit(n_samples)))`` and application to input
     data into a single call for splitting (and optionally subsampling)
     data in a oneliner.
@@ -1490,9 +1497,6 @@ def train_test_split(*arrays, **options):
 
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
-
-    dtype : a numpy dtype instance, None by default
-        Enforce a specific dtype.
 
     Returns
     -------
@@ -1521,12 +1525,12 @@ def train_test_split(*arrays, **options):
            [0, 1],
            [6, 7]])
     >>> b_train
-    array([2, 0, 3])
+    [2, 0, 3]
     >>> a_test
     array([[2, 3],
            [8, 9]])
     >>> b_test
-    array([1, 4])
+    [1, 4]
 
     """
     n_arrays = len(arrays)
@@ -1536,20 +1540,30 @@ def train_test_split(*arrays, **options):
     test_size = options.pop('test_size', None)
     train_size = options.pop('train_size', None)
     random_state = options.pop('random_state', None)
-    options['sparse_format'] = 'csr'
-    options['allow_nans'] = True
+    dtype = options.pop('dtype', None)
+    if dtype is not None:
+        warnings.warn("dtype option is ignored and will be removed in 0.18.")
+
+    force_arrays = options.pop('force_arrays', False)
+    if options:
+        raise TypeError("Invalid parameters passed: %s" % str(options))
+    if force_arrays:
+        warnings.warn("The force_arrays option is deprecated and will be "
+                      "removed in 0.18.", DeprecationWarning)
+        arrays = [check_array(x, 'csr', ensure_2d=False, force_all_finite=False)
+                  if x is not None else x for x in arrays]
 
     if test_size is None and train_size is None:
         test_size = 0.25
-
-    arrays = check_arrays(*arrays, **options)
-    n_samples = arrays[0].shape[0]
+    arrays = indexable(*arrays)
+    n_samples = _num_samples(arrays[0])
     cv = ShuffleSplit(n_samples, test_size=test_size,
                       train_size=train_size,
                       random_state=random_state)
 
     train, test = next(iter(cv))
-    return list(chain.from_iterable((a[train], a[test]) for a in arrays))
+    return list(chain.from_iterable((safe_indexing(a, train),
+                                     safe_indexing(a, test)) for a in arrays))
 
 
 train_test_split.__test__ = False  # to avoid a pb with nosetests

@@ -59,7 +59,7 @@ data. Depending on the number of parameters provided at instantiation, the
 fitting procedure may recourse to maximum likelihood estimation for the
 parameters or alternatively it uses the given parameters.
 
-.. figure:: ../auto_examples/gaussian_process/images/plot_gp_regression_1.png
+.. figure:: ../auto_examples/gaussian_process/images/plot_gp_regression_001.png
    :target: ../auto_examples/gaussian_process/plot_gp_regression.html
    :align: center
 
@@ -100,7 +100,7 @@ equivalent to specifying a fractional variance in the input.  That is
 With ``nugget`` and ``corr`` properly set, Gaussian Processes can be
 used to robustly recover an underlying function from noisy data:
 
-.. figure:: ../auto_examples/gaussian_process/images/plot_gp_regression_2.png
+.. figure:: ../auto_examples/gaussian_process/images/plot_gp_regression_002.png
    :target: ../auto_examples/gaussian_process/plot_gp_regression.html
    :align: center
 

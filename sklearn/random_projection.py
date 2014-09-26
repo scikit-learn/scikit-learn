@@ -41,7 +41,7 @@ from .externals.six.moves import xrange
 from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
-from .utils.validation import check_arrays
+from .utils.validation import check_array
 
 
 __all__ = ["SparseRandomProjection",
@@ -334,10 +334,7 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
         self
 
         """
-        X, y = check_arrays(X, y)
-
-        if not sp.issparse(X):
-            X = np.atleast_2d(X)
+        X = check_array(X, accept_sparse=['csr', 'csc'])
 
         n_samples, n_features = X.shape
 
@@ -400,7 +397,7 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
             Projected array.
 
         """
-        X, y = check_arrays(X, y)
+        X = check_array(X, accept_sparse=['csr', 'csc'])
 
         if self.components_ is None:
             raise ValueError('No random projection matrix had been fit.')
@@ -410,9 +407,6 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
                 'Impossible to perform projection:'
                 'X at fit stage had a different number of features. '
                 '(%s != %s)' % (X.shape[1], self.components_.shape[1]))
-
-        if not sp.issparse(X):
-            X = np.atleast_2d(X)
 
         X_new = safe_sparse_dot(X, self.components_.T,
                                 dense_output=self.dense_output)
@@ -452,10 +446,10 @@ class GaussianRandomProjection(BaseRandomProjection):
 
     Attributes
     ----------
-    ``n_component_`` : int
+    n_component_ : int
         Concrete number of components computed when n_components="auto".
 
-    ``components_`` : numpy array of shape [n_components, n_features]
+    components_ : numpy array of shape [n_components, n_features]
         Random matrix used for the projection.
 
     See Also
@@ -556,13 +550,13 @@ class SparseRandomProjection(BaseRandomProjection):
 
     Attributes
     ----------
-    ``n_component_`` : int
+    n_component_ : int
         Concrete number of components computed when n_components="auto".
 
-    ``components_`` : CSR matrix with shape [n_components, n_features]
+    components_ : CSR matrix with shape [n_components, n_features]
         Random matrix used for the projection.
 
-    ``density_`` : float in range 0.0 - 1.0
+    density_ : float in range 0.0 - 1.0
         Concrete density computed from when density = "auto".
 
     See Also

@@ -42,14 +42,15 @@ def test_f_oneway_vs_scipy_stats():
 def test_f_oneway_ints():
     # Smoke test f_oneway on integers: that it does raise casting errors
     # with recent numpys
-    X = np.random.randint(10, size=(10, 10))
+    rng = np.random.RandomState(0)
+    X = rng.randint(10, size=(10, 10))
     y = np.arange(10)
     fint, pint = f_oneway(X, y)
 
     # test that is gives the same result as with float
     f, p = f_oneway(X.astype(np.float), y)
-    assert_array_almost_equal(f, fint, decimal=5)
-    assert_array_almost_equal(p, pint, decimal=5)
+    assert_array_almost_equal(f, fint, decimal=4)
+    assert_array_almost_equal(p, pint, decimal=4)
 
 
 def test_f_classif():
@@ -118,7 +119,7 @@ def test_f_regression_center():
     F-score with variates centering and F-score without variates centering.
     """
     # Create toy example
-    X = np.arange(-5, 6)  # X has zero mean
+    X = np.arange(-5, 6).reshape(-1, 1)  # X has zero mean
     n_samples = X.size
     Y = np.ones(n_samples)
     Y[::2] *= -1.

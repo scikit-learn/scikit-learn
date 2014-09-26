@@ -9,28 +9,32 @@ import sys
 
 
 class JoblibException(Exception):
-    """ A simple exception with an error message that you can get to.
-    """
+    """A simple exception with an error message that you can get to."""
 
-    def __init__(self, message):
-        self.message = message
+    def __init__(self, *args):
+        self.args = args
 
     def __reduce__(self):
         # For pickling
-        return self.__class__, (self.message,), {}
+        return self.__class__, self.args, {}
 
     def __repr__(self):
-        return '%s\n%s\n%s\n%s' % (
-                    self.__class__.__name__,
-                    75 * '_',
-                    self.message,
-                    75 * '_')
+        if hasattr(self, 'args'):
+            message = self.args[0]
+        else:
+            # Python 2 compat: instances of JoblibException can be created
+            # without calling JoblibException __init__ in case of
+            # multi-inheritance: in that case the message is stored as an
+            # explicit attribute under Python 2 (only)
+            message = self.message
+        name = self.__class__.__name__
+        return '%s\n%s\n%s\n%s' % (name, 75 * '_', message, 75 * '_')
 
     __str__ = __repr__
 
 
 class TransportableException(JoblibException):
-    """ An exception containing all the info to wrap an original
+    """An exception containing all the info to wrap an original
         exception and recreate it.
     """
 
@@ -56,9 +60,13 @@ def _mk_exception(exception, name=None):
         # Avoid creating twice the same exception
         this_exception = _exception_mapping[this_name]
     else:
+        if exception is Exception:
+            # We cannot create a subclass: we are already a trivial
+            # subclass
+            return JoblibException, this_name
         this_exception = type(this_name, (exception, JoblibException),
                     dict(__repr__=JoblibException.__repr__,
-                         __str__=JoblibException.__str__),
+                        __str__=JoblibException.__str__),
                     )
         _exception_mapping[this_name] = this_exception
     return this_exception, this_name

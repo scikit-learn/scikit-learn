@@ -21,4 +21,4 @@ def test_graph_laplacian():
                                                      np.zeros(n_nodes))
             np.testing.assert_array_almost_equal(laplacian.T, laplacian)
             np.testing.assert_array_almost_equal(
-                laplacian, graph_laplacian(sp_mat, normed=normed).todense())
+                laplacian, graph_laplacian(sp_mat, normed=normed).toarray())

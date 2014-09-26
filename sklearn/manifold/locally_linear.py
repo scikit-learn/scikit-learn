@@ -8,7 +8,7 @@ import numpy as np
 from scipy.linalg import eigh, svd, qr, solve
 from scipy.sparse import eye, csr_matrix
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import array2d, check_random_state, check_arrays
+from ..utils import check_random_state, check_array
 from ..utils.arpack import eigsh
 from ..neighbors import NearestNeighbors
 
@@ -304,7 +304,7 @@ def locally_linear_embedding(
             M.flat[::M.shape[0] + 1] += 1  # W = W - I = W - I
 
     elif method == 'hessian':
-        dp = n_components * (n_components + 1) / 2
+        dp = n_components * (n_components + 1) // 2
 
         if n_neighbors <= n_components + dp:
             raise ValueError("for method='hessian', n_neighbors must be "
@@ -562,13 +562,13 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `embedding_vectors_` : array-like, shape [n_components, n_samples]
+    embedding_vectors_ : array-like, shape [n_components, n_samples]
         Stores the embedding vectors
 
-    `reconstruction_error_` : float
+    reconstruction_error_ : float
         Reconstruction error associated with `embedding_vectors_`
 
-    `nbrs_` : NearestNeighbors object
+    nbrs_ : NearestNeighbors object
         Stores nearest neighbors instance, including BallTree or KDtree
         if applicable.
 
@@ -610,7 +610,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
                                       algorithm=self.neighbors_algorithm)
 
         random_state = check_random_state(self.random_state)
-        X, = check_arrays(X, sparse_format='dense')
+        X = check_array(X)
         self.nbrs_.fit(X)
         self.embedding_, self.reconstruction_error_ = \
             locally_linear_embedding(
@@ -667,7 +667,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         Because of scaling performed by this method, it is discouraged to use
         it together with methods that are not scale-invariant (like SVMs)
         """
-        X = array2d(X)
+        X = check_array(X)
         ind = self.nbrs_.kneighbors(X, n_neighbors=self.n_neighbors,
                                     return_distance=False)
         weights = barycenter_weights(X, self.nbrs_._fit_X[ind],

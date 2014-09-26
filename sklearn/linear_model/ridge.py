@@ -20,7 +20,7 @@ from scipy.sparse import linalg as sp_linalg
 from .base import LinearClassifierMixin, LinearModel
 from ..base import RegressorMixin
 from ..utils.extmath import safe_sparse_dot
-from ..utils import safe_asarray
+from ..utils import check_X_y
 from ..utils import compute_class_weight
 from ..utils import column_or_1d
 from ..preprocessing import LabelBinarizer
@@ -178,7 +178,6 @@ def _solve_svd(X, y, alpha):
 
 def _deprecate_dense_cholesky(solver):
     if solver == 'dense_cholesky':
-        import warnings
         warnings.warn(DeprecationWarning("The name 'dense_cholesky' is "
                                          "deprecated. Using 'cholesky' "
                                          "instead. Changed in 0.15"))
@@ -294,7 +293,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
             solver = 'cholesky'
 
     # There should be either 1 or n_targets penalties
-    alpha = safe_asarray(alpha).ravel()
+    alpha = np.asarray(alpha).ravel()
     if alpha.size not in [1, n_targets]:
         raise ValueError("Number of targets and number of penalties "
                          "do not correspond: %d != %d"
@@ -355,11 +354,10 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
         self.solver = solver
 
     def fit(self, X, y, sample_weight=None):
-        X = safe_asarray(X, dtype=np.float)
-        y = np.asarray(y, dtype=np.float)
+        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float, multi_output=True)
 
         if ((sample_weight is not None) and
-            np.atleast_1d(sample_weight).ndim > 1):
+                np.atleast_1d(sample_weight).ndim > 1):
             raise ValueError("Sample weights must be 1D array or scalar")
 
         X, y, X_mean, y_mean, X_std = self._center_data(
@@ -440,7 +438,7 @@ class Ridge(_BaseRidge, RegressorMixin):
 
     Attributes
     ----------
-    `coef_` : array, shape = [n_features] or [n_targets, n_features]
+    coef_ : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
 
     See also
@@ -533,7 +531,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     Attributes
     ----------
-    `coef_` : array, shape = [n_features] or [n_classes, n_features]
+    coef_ : array, shape = [n_features] or [n_classes, n_features]
         Weight vector(s).
 
     See also
@@ -571,7 +569,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         """
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
-        if not self._label_binarizer.multilabel_:
+        if not self._label_binarizer.y_type_.startswith('multilabel'):
             y = column_or_1d(y, warn=True)
 
         if self.class_weight:
@@ -631,15 +629,12 @@ class _RidgeGCV(LinearModel):
 
     def __init__(self, alphas=[0.1, 1.0, 10.0],
                  fit_intercept=True, normalize=False,
-                 scoring=None, score_func=None,
-                 loss_func=None, copy_X=True,
+                 scoring=None, copy_X=True,
                  gcv_mode=None, store_cv_values=False):
         self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.scoring = scoring
-        self.score_func = score_func
-        self.loss_func = loss_func
         self.copy_X = copy_X
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
@@ -726,8 +721,7 @@ class _RidgeGCV(LinearModel):
         -------
         self : Returns self.
         """
-        X = safe_asarray(X, dtype=np.float)
-        y = np.asarray(y, dtype=np.float)
+        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float, multi_output=True)
 
         n_samples, n_features = X.shape
 
@@ -767,8 +761,6 @@ class _RidgeGCV(LinearModel):
         C = []
 
         scorer = check_scoring(self, scoring=self.scoring, allow_none=True,
-                               loss_func=self.loss_func,
-                               score_func=self.score_func,
                                score_overrides_loss=True)
         error = scorer is None
 
@@ -817,14 +809,12 @@ class _RidgeGCV(LinearModel):
 class _BaseRidgeCV(LinearModel):
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]),
                  fit_intercept=True, normalize=False, scoring=None,
-                 score_func=None, loss_func=None, cv=None, gcv_mode=None,
+                 cv=None, gcv_mode=None,
                  store_cv_values=False):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.scoring = scoring
-        self.score_func = score_func
-        self.loss_func = loss_func
         self.cv = cv
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
@@ -852,8 +842,6 @@ class _BaseRidgeCV(LinearModel):
                                   fit_intercept=self.fit_intercept,
                                   normalize=self.normalize,
                                   scoring=self.scoring,
-                                  score_func=self.score_func,
-                                  loss_func=self.loss_func,
                                   gcv_mode=self.gcv_mode,
                                   store_cv_values=self.store_cv_values)
             estimator.fit(X, y, sample_weight=sample_weight)
@@ -935,20 +923,20 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
     Attributes
     ----------
-    `cv_values_` : array, shape = [n_samples, n_alphas] or \
+    cv_values_ : array, shape = [n_samples, n_alphas] or \
         shape = [n_samples, n_targets, n_alphas], optional
         Cross-validation values for each alpha (if `store_cv_values=True` and \
         `cv=None`). After `fit()` has been called, this attribute will \
         contain the mean squared errors (by default) or the values of the \
         `{loss,score}_func` function (if provided in the constructor).
 
-    `coef_` : array, shape = [n_features] or [n_targets, n_features]
+    coef_ : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
 
-    `alpha_` : float
+    alpha_ : float
         Estimated regularization parameter.
 
-    `intercept_` : float | array, shape = (n_targets,)
+    intercept_ : float | array, shape = (n_targets,)
         Independent term in decision function. Set to 0.0 if
         ``fit_intercept = False``.
 
@@ -1001,17 +989,17 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     Attributes
     ----------
-    `cv_values_` : array, shape = [n_samples, n_alphas] or \
+    cv_values_ : array, shape = [n_samples, n_alphas] or \
     shape = [n_samples, n_responses, n_alphas], optional
         Cross-validation values for each alpha (if `store_cv_values=True` and
     `cv=None`). After `fit()` has been called, this attribute will contain \
     the mean squared errors (by default) or the values of the \
     `{loss,score}_func` function (if provided in the constructor).
 
-    `coef_` : array, shape = [n_features] or [n_targets, n_features]
+    coef_ : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
 
-    `alpha_` : float
+    alpha_ : float
         Estimated regularization parameter
 
     See also
@@ -1027,14 +1015,13 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     advantage of the multi-variate response support in Ridge.
     """
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
-                 normalize=False, score_func=None, loss_func=None, cv=None,
-                 class_weight=None):
+                 normalize=False, scoring=None, cv=None, class_weight=None):
         super(RidgeClassifierCV, self).__init__(
             alphas=alphas, fit_intercept=fit_intercept, normalize=normalize,
-            score_func=score_func, loss_func=loss_func, cv=cv)
+            scoring=scoring, cv=cv)
         self.class_weight = class_weight
 
-    def fit(self, X, y, sample_weight=None, class_weight=None):
+    def fit(self, X, y, sample_weight=None):
         """Fit the ridge classifier.
 
         Parameters
@@ -1049,32 +1036,19 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         sample_weight : float or numpy array of shape (n_samples,)
             Sample weight.
 
-        class_weight : dict, optional
-            Weights associated with classes in the form
-            ``{class_label : weight}``. If not given, all classes are
-            supposed to have weight one. This is parameter is
-            deprecated.
-
         Returns
         -------
         self : object
             Returns self.
         """
-        if class_weight is None:
-            class_weight = self.class_weight
-        else:
-            warnings.warn("'class_weight' is now an initialization parameter."
-                          " Using it in the 'fit' method is deprecated and "
-                          "will be removed in 0.15.", DeprecationWarning,
-                          stacklevel=2)
         if sample_weight is None:
             sample_weight = 1.
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
-        if not self._label_binarizer.multilabel_:
+        if not self._label_binarizer.y_type_.startswith('multilabel'):
             y = column_or_1d(y, warn=True)
-        cw = compute_class_weight(class_weight,
+        cw = compute_class_weight(self.class_weight,
                                   self.classes_, Y)
         # modify the sample weights with the corresponding class weight
         sample_weight *= cw[np.searchsorted(self.classes_, y)]

@@ -119,7 +119,7 @@ def plot_influence(conf, mse_values, prediction_times, complexities):
 
 
 def _count_nonzero_coefficients(estimator):
-    a = estimator.coef_.todense()
+    a = estimator.coef_.toarray()
     return np.count_nonzero(a)
 
 ###############################################################################
