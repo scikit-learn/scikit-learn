@@ -111,7 +111,7 @@ measuring a prediction error given ground truth and prediction:
 - functions ending with ``_error`` or ``_loss`` return a
   value to minimize, the lower the better.  When converting
   into a scorer object using :func:`make_scorer`, set
-  the greater_is_better to False (True by default). 
+  the greater_is_better parameter to False (True by default). 
 
 Metrics available for various machine learning tasks are detailed in sections
 below.
@@ -136,6 +136,7 @@ the :func:`fbeta_score` function::
 The second use case is to build a completely custom scorer object
 from a simple python function using :func:`make_scorer`, which can 
 take several parameters: 
+
 * the python function you want to use (my_custom_loss_func 
   in the example below)
 
@@ -773,7 +774,7 @@ the MCC coefficient is defined as
 
   MCC = \frac{tp \times tn - fp \times fn}{\sqrt{(tp + fp)(tp + fn)(tn + fp)(tn + fn)}}.
 
-Here a small example illustrating the usage of the :func:`matthews_corrcoef`
+Here is a small example illustrating the usage of the :func:`matthews_corrcoef`
 function:
 
     >>> from sklearn.metrics import matthews_corrcoef
