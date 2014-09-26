@@ -110,7 +110,7 @@ measuring a prediction error given ground truth and prediction:
   value to minimize, the lower the better.  When converting
   into a scorer object using :func:`make_scorer`, set
   the greater_is_better parameter to False (True by default). 
-
+ 
 Metrics available for various machine learning tasks are detailed in sections
 below.
 
