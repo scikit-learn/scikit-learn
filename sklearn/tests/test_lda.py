@@ -13,52 +13,50 @@ X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]], dtype='f')
 y = np.array([1, 1, 1, 2, 2, 2])
 y3 = np.array([1, 1, 2, 2, 3, 3])
 
-# Degenerate data with 1 feature (still should be separable)
+# Degenerate data with only one feature (still should be separable)
 X1 = np.array([[-2, ], [-1, ], [-1, ], [1, ], [1, ], [2, ]], dtype='f')
 
 
-covariance_methods = [None, 'empirical', 'ledoit_wolf']
+solvers = ['svd', 'lsqr', 'eigen']
 
 
 def test_lda_predict():
-    """
-    LDA classification.
+    """Test LDA classification.
 
-    This checks that LDA implements fit and predict and returns
-    correct values for a simple toy dataset.
+    This checks that LDA implements fit and predict and returns correct values
+    for simple toy data.
     """
-    for cov_method in covariance_methods:
-        clf = lda.LDA(use_covariance=cov_method)
+    for solver in solvers:
+        clf = lda.LDA(solver=solver)
         y_pred = clf.fit(X, y).predict(X)
+        assert_array_equal(y_pred, y, 'using solver ' + str(solver))
 
-        assert_array_equal(y_pred, y, 'using covariance: ' + str(cov_method))
-
-        # Assure that it works with 1D data
+        # Assert that it works with 1D data
         y_pred1 = clf.fit(X1, y).predict(X1)
-        assert_array_equal(y_pred1, y,
-                           'using covariance: ' + str(cov_method))
+        assert_array_equal(y_pred1, y, 'using solver ' + str(solver))
 
-        # Test probas estimates
+        # Test probability estimates
         y_proba_pred1 = clf.predict_proba(X1)
         assert_array_equal((y_proba_pred1[:, 1] > 0.5) + 1, y,
-                           'using covariance: ' + str(cov_method))
+                           'using solver ' + str(solver))
         y_log_proba_pred1 = clf.predict_log_proba(X1)
         assert_array_almost_equal(np.exp(y_log_proba_pred1), y_proba_pred1, 8,
-                                  'using covariance: ' + str(cov_method))
+                                  'using solver ' + str(solver))
 
         # Primarily test for commit 2f34950 -- "reuse" of priors
         y_pred3 = clf.fit(X, y3).predict(X)
         # LDA shouldn't be able to separate those
-        assert_true(np.any(y_pred3 != y3),
-                    'using covariance: ' + str(cov_method))
+        assert_true(np.any(y_pred3 != y3), 'using solver ' + str(solver))
 
 
 def test_lda_transform():
-    for cov_method in covariance_methods:
-        clf = lda.LDA(use_covariance=cov_method)
-        X_transformed = clf.fit(X, y).transform(X)
-        assert_equal(X_transformed.shape[1], 1,
-                     'using covariance: ' + str(cov_method))
+    for solver in solvers:
+        clf = lda.LDA(solver=solver)
+        try:
+            X_transformed = clf.fit(X, y).transform(X)
+        except NotImplementedError:
+            pass
+        assert_equal(X_transformed.shape[1], 1, 'using solver ' + str(solver))
 
 
 def test_lda_orthogonality():
@@ -75,9 +73,9 @@ def test_lda_orthogonality():
     X = (means[:, np.newaxis, :] + scatter[np.newaxis, :, :]).reshape((-1, 3))
     y = np.repeat(np.arange(means.shape[0]), scatter.shape[0])
 
-    for cov_method in covariance_methods:
+    for solver in solvers:
         # Fit LDA and transform the means
-        clf = lda.LDA(use_covariance=cov_method).fit(X, y)
+        clf = lda.LDA(solver=solver).fit(X, y)
         means_transformed = clf.transform(means)
 
         d1 = means_transformed[3] - means_transformed[0]
@@ -107,8 +105,8 @@ def test_lda_scaling():
     x = np.vstack((x1, x2)) * [1, 100, 10000]
     y = [-1] * n + [1] * n
 
-    for cov_method in covariance_methods:
-        clf = lda.LDA(use_covariance=cov_method)
+    for solver in solvers:
+        clf = lda.LDA(solver=solver)
         # should be able to separate the data perfectly
         assert_equal(clf.fit(x, y).score(x, y), 1.0,
                      'using covariance: ' + str(cov_method))
