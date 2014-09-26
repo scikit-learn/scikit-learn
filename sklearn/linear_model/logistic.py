@@ -239,7 +239,7 @@ def _multinomial_loss(w, X, Y, alpha, sample_weight):
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
         Training data.
 
-    y : ndarray, shape (n_samples, n_classes)
+    Y : ndarray, shape (n_samples, n_classes)
         Transformed labels according to the output of LabelBinarizer.
 
     alpha : float
@@ -284,7 +284,7 @@ def _multinomial_loss_grad(w, X, Y, alpha, sample_weight):
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
         Training data.
 
-    y : ndarray, shape (n_samples, n_classes)
+    Y : ndarray, shape (n_samples, n_classes)
         Transformed labels according to the output of LabelBinarizer.
 
     alpha : float
@@ -365,7 +365,7 @@ def _multinomial_loss_grad_hess(w, X, Y, alpha, sample_weight):
         (n_classes * (n_features + 1),)
         Ravelled gradient of the multinomial loss.
 
-    hessp: Callable
+    hessp: callable
         Function that takes in a vector input of shape (n_classes * n_features)
         or (n_classes * (n_features + 1)) and returns matrix-vector product
         with hessian.
@@ -396,14 +396,14 @@ def _multinomial_loss_grad_hess(w, X, Y, alpha, sample_weight):
     err = (Y - p) * sample_weight
     grad[:, :n_features] = -safe_sparse_dot(err.T, X)
     grad[:, :n_features] += w * alpha
-    if(fit_intercept):
+    if fit_intercept:
         grad[:, -1] = -np.sum(err, axis=0)
 
     # Hessian-vector product derived by applying the R-operator on the gradient
     # of the multinomial loss function.
     def hessp(v):
         v = v.reshape(n_classes, -1)
-        if(fit_intercept):
+        if fit_intercept:
             inter_terms = v[:, -1]
             v = v[:, :-1]
         else:
@@ -418,7 +418,7 @@ def _multinomial_loss_grad_hess(w, X, Y, alpha, sample_weight):
         hessProd = np.empty_like(grad)
         hessProd[:, :n_features] = safe_sparse_dot(r_yhat.T, X)
         hessProd[:, :n_features] += v * alpha
-        if(fit_intercept):
+        if fit_intercept:
             hessProd[:, -1] = r_yhat.sum(axis=0)
         return hessProd.ravel()
 
