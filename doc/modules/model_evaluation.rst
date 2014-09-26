@@ -46,8 +46,12 @@ controls what metric they apply to estimators evaluated.
 Common cases: predefined values
 -------------------------------
 
-For the most common usecases, you can simply provide a string as the
-``scoring`` parameter. Possible values are:
+For the most common use cases, you can designate a scorer object with the
+``scoring`` parameter; the table below shows all possible values.
+All scorer ojects follow the convention that higher return values are better 
+than lower return values.  Thus the returns from mean_absolute_error 
+and mean_squared_error, which measure the distance between the model 
+and the data, are negated.
 
 ======================     =================================================
 Scoring                    Function
@@ -100,10 +104,12 @@ The module :mod:`sklearn.metric` also exposes a set of simple functions
 measuring a prediction error given ground truth and prediction:
 
 - functions ending with ``_score`` return a value to
-  maximize (the higher the better).
+  maximize, the higher the better.
 
 - functions ending with ``_error`` or ``_loss`` return a
-  value to minimize (the lower the better).
+  value to minimize, the lower the better.  When converting
+  into a scorer object using :func:`make_scorer`, set
+  the greater_is_better to False (True by default). 
 
 Metrics available for various machine learning tasks are detailed in sections
 below.
@@ -125,28 +131,45 @@ the :func:`fbeta_score` function::
     >>> from sklearn.svm import LinearSVC
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=ftwo_scorer)
 
-The second use case is to build a completely new and custom scorer object
-from a simple python function::
+The second use case is to build a completely custom scorer object
+from a simple python function using :func:`make_scorer`, which can 
+take several parameters: 
+* the python function you want to use (my_custom_loss_func 
+  in the example below)
 
-    >>> def my_custom_loss_func(ground_truth, predictions):
-    ...     diff = np.abs(ground_truth - predictions).max()
-    ...     return np.log(1 + diff)
-    ...
-    >>> my_custom_scorer = make_scorer(my_custom_loss_func, greater_is_better=False)
-    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=my_custom_scorer)
-
-:func:`make_scorer` takes as parameters:
-
-* the function you want to use
-
-* whether it is a score (``greater_is_better=True``) or a loss
-  (``greater_is_better=False``),
+* whether the python function returns a score (``greater_is_better=True``) 
+  or a loss (``greater_is_better=False``).  If a loss, the output 
+  of the python function is negated by the scorer object, so that small 
+  losses will be greater than large losses.
 
 * whether the function you provided takes predictions as input
   (``needs_threshold=False``) or needs confidence scores \
   (``needs_threshold=True``)
 
 * any additional parameters, such as ``beta`` in an :func:`f1_score`.
+
+Here is an example of building custom scorers, and of using the 
+greater_is_better parameter::
+
+    >>> def my_custom_loss_func(ground_truth, predictions):
+    ...     diff = np.abs(ground_truth - predictions).max()		
+    ...     return np.log(1 + diff)
+    ...
+    # loss_func will negate the return value of my_custom_loss_func, 
+    #  which will be np.log(2), 0.693, given the values for ground_truth 
+    #  and predictions defined below.
+    >>> loss  = make_scorer(my_custom_loss_func, greater_is_better=False)
+    >>> score = make_scorer(my_custom_loss_func, greater_is_better=True)
+    >>> ground_truth = [1,1]
+    >>> predictions  = [0,1]
+    >>> from sklearn.dummy import DummyClassifier
+    >>> clf = DummyClassifier(strategy='most_frequent',random_state=0)
+    >>> clf = clf.fit(ground_truth, predictions)
+    >>> loss(clf,ground_truth,predictions)
+    -0.693
+    >>> score(clf,ground_truth,predictions)
+    0.693
+
 
 
 .. _diy_scoring:
@@ -165,7 +188,8 @@ the following two rules:
 
 - It returns a floating point number that quantifies the quality of
   ``estimator``'s predictions on ``X`` which reference to ``y``.
-  Again, higher numbers are better.
+  Again, by convention higher numbers are better, so if your scorer 
+  returns loss, that value should be negated.
 
 .. _classification_metrics:
 
