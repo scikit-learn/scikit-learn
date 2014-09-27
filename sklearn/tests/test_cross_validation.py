@@ -1012,7 +1012,7 @@ def test_cross_val_predict():
     preds2 = np.zeros_like(y)
     for train,test in cv:
         est.fit(X[train], y[train])
-        preds2[test] = est.predict(X[test])
+        preds2[test] = est.predict(X[test]).astype(preds2.dtype)
 
     preds = cval.cross_val_predict(est, X, y, cv=cv)
     assert_array_almost_equal(preds, preds2)
