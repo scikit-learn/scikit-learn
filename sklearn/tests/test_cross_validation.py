@@ -1000,6 +1000,7 @@ def test_cross_val_score_multilabel():
     assert_almost_equal(score_macro, [1, 1/2, 3/4, 1/2, 1/4])
     assert_almost_equal(score_samples, [1, 1/2, 3/4, 1/2, 1/4])
 
+
 def test_cross_val_predict():
     iris = load_iris()
     X,y = iris.data, iris.target
@@ -1007,17 +1008,17 @@ def test_cross_val_predict():
 
     est = Ridge()
 
-    # Naive loop (should be same as cross_val_prediction): 
+    # Naive loop (should be same as cross_val_predict):
     preds2 = np.zeros_like(y)
     for train,test in cv:
         est.fit(X[train], y[train])
         preds2[test] = est.predict(X[test])
-        
-    preds = cval.cross_val_prediction(est, X, y, cv=cv)
+
+    preds = cval.cross_val_predict(est, X, y, cv=cv)
     assert_array_almost_equal(preds, preds2)
 
-    preds = cval.cross_val_prediction(est, X, y)
+    preds = cval.cross_val_predict(est, X, y)
     assert_equal(len(preds), len(y))
 
-    preds = cval.cross_val_prediction(KMeans(), X)
+    preds = cval.cross_val_predict(KMeans(), X)
     assert_equal(len(preds), len(y))

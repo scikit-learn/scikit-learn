@@ -41,7 +41,7 @@ __all__ = ['Bootstrap',
            'StratifiedShuffleSplit',
            'check_cv',
            'cross_val_score',
-           'cross_val_prediction',
+           'cross_val_predict',
            'permutation_test_score',
            'train_test_split']
 
@@ -1075,9 +1075,9 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
 
 ##############################################################################
-def cross_val_prediction(estimator, X, y=None, cv=None, n_jobs=1,
+def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
                          verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
-    """Evaluate a score by cross-validation
+    """Generate cross-validated estimates for each input data point
 
     Parameters
     ----------
@@ -1096,7 +1096,7 @@ def cross_val_prediction(estimator, X, y=None, cv=None, n_jobs=1,
         the number of folds in StratifiedKFold if y is binary
         or multiclass and estimator is a classifier, or the number
         of folds in KFold otherwise. If None, it is equivalent to cv=3.
-        Note that this function does not makes sense when elements are included
+        Note that this function does not make sense when elements are included
         in multiple test sets.
 
     n_jobs : integer, optional
