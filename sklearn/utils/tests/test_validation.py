@@ -205,8 +205,4 @@ def test_has_fit_parameter():
     assert_false(has_fit_parameter(KNeighborsClassifier, "sample_weight"))
     assert_true(has_fit_parameter(RandomForestRegressor, "sample_weight"))
     assert_true(has_fit_parameter(SVR, "sample_weight"))
-    assert_true(has_fit_parameter(SVR(C=1.0, cache_size=200, coef0=0.0,
-                                      degree=3, epsilon=0.1, gamma=0.0,
-                                      kernel='rbf', max_iter=-1,
-                                      probability=False, random_state=None),
-                                      "sample_weight"))
+    assert_true(has_fit_parameter(SVR(), "sample_weight"))
