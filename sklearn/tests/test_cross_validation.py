@@ -23,6 +23,7 @@ from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 from sklearn import cross_validation as cval
 from sklearn.base import BaseEstimator
 from sklearn.datasets import make_regression
+from sklearn.datasets import load_boston
 from sklearn.datasets import load_digits
 from sklearn.datasets import load_iris
 from sklearn.metrics import accuracy_score
@@ -1002,9 +1003,9 @@ def test_cross_val_score_multilabel():
 
 
 def test_cross_val_predict():
-    iris = load_iris()
-    X,y = iris.data, iris.target
-    cv = cval.KFold(len(iris.target))
+    boston = load_boston()
+    X,y = boston.data, boston.target
+    cv = cval.KFold(len(boston.target))
 
     est = Ridge()
 
@@ -1012,7 +1013,7 @@ def test_cross_val_predict():
     preds2 = np.zeros_like(y)
     for train,test in cv:
         est.fit(X[train], y[train])
-        preds2[test] = est.predict(X[test]).astype(preds2.dtype)
+        preds2[test] = est.predict(X[test])
 
     preds = cval.cross_val_predict(est, X, y, cv=cv)
     assert_array_almost_equal(preds, preds2)
