@@ -247,6 +247,9 @@ def test_base_estimator():
     clf = AdaBoostRegressor(SVR(), random_state=0)
     clf.fit(X, y_regr)
 
+    from sklearn.linear_model import LinearRegression
+    clf = AdaBoostClassifier(LinearRegression(), algorithm="SAMME")
+    assert_raises(ValueError, clf.fit, X, y_regr)
 
 def test_sparse_classification():
     """Check classification with sparse input."""

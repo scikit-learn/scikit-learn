@@ -36,6 +36,7 @@ from ..tree.tree import BaseDecisionTree
 from ..tree._tree import DTYPE
 from ..utils import check_array, check_X_y, check_random_state
 from ..metrics import accuracy_score, r2_score
+from sklearn.utils.validation import has_fit_parameter
 
 __all__ = [
     'AdaBoostClassifier',
@@ -401,6 +402,11 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                     "probabilities with a predict_proba method.\n"
                     "Please change the base estimator or set "
                     "algorithm='SAMME' instead.")
+        support_sample_weight = has_fit_parameter(self.base_estimator_,
+                                                  "sample_weight")
+        if not support_sample_weight:
+            raise ValueError("base estimator / weak learner doesn't support"
+                             "sample_weight")
 
     def _boost(self, iboost, X, y, sample_weight):
         """Implement a single boost.
@@ -927,6 +933,11 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         """Check the estimator and set the base_estimator_ attribute."""
         super(AdaBoostRegressor, self)._validate_estimator(
             default=DecisionTreeRegressor(max_depth=3))
+        support_sample_weight = has_fit_parameter(self.base_estimator_,
+                                                  "sample_weight")
+        if not support_sample_weight:
+            raise ValueError("base estimator / weak learner doesn't support"
+                             "sample_weight")
 
     def _boost(self, iboost, X, y, sample_weight):
         """Implement a single boost for regression

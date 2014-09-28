@@ -10,7 +10,7 @@ import numbers
 import numpy as np
 from warnings import warn
 from abc import ABCMeta, abstractmethod
-from sklearn.utils.validation import has_fit_parameter
+from ..utils.validation import has_fit_parameter
 
 from ..base import ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed
@@ -20,7 +20,6 @@ from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, check_X_y, check_array, column_or_1d
 from ..utils.random import sample_without_replacement
-from .weight_boosting import AdaBoostClassifier, AdaBoostRegressor
 
 from .base import BaseEnsemble, _partition_estimators
 
@@ -50,10 +49,6 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
     bootstrap_features = ensemble.bootstrap_features
     support_sample_weight = has_fit_parameter(ensemble.base_estimator_,
                                               "sample_weight")
-    if ensemble == AdaBoostClassifier or ensemble == AdaBoostRegressor:
-        if not support_sample_weight:
-            raise ValueError("base estimator / weak learner doesn't support"
-            "sample_weight")
 
 
     # Build estimators

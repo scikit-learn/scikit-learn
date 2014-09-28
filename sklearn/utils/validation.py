@@ -387,11 +387,17 @@ def check_random_state(seed):
                      ' instance' % seed)
 
 def has_fit_parameter(estimator, parameter):
-    """ Checks whether the base estimator supports the given parameter.
-    Returns True if the base estimator supports parameter
-    Retuns False otherwise
+    """ Checks whether the estimator's fit method supports the given parameter.
+
+    Parameters
+    ----------
+    estimator: Estimator
+
+    parameter: string
+    Checking is done on this parameter
+
+    Returns
+    -------
+    Boolean
     """
-    if (parameter in getargspec(estimator.fit)[0]):
-        return True
-    else:
-        return False
+    return parameter in getargspec(estimator.fit)[0]

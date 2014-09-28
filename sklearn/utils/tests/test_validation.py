@@ -14,6 +14,8 @@ from sklearn.utils.estimator_checks import NotAnArray
 from sklearn.random_projection import sparse_random_matrix
 
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.svm import SVR
 from sklearn.utils.validation import has_fit_parameter
 
 
@@ -201,3 +203,10 @@ def test_check_array():
 
 def test_has_fit_parameter():
     assert_false(has_fit_parameter(KNeighborsClassifier, "sample_weight"))
+    assert_true(has_fit_parameter(RandomForestRegressor, "sample_weight"))
+    assert_true(has_fit_parameter(SVR, "sample_weight"))
+    assert_true(has_fit_parameter(SVR(C=1.0, cache_size=200, coef0=0.0,
+                                      degree=3, epsilon=0.1, gamma=0.0,
+                                      kernel='rbf', max_iter=-1,
+                                      probability=False, random_state=None),
+                                      "sample_weight"))
