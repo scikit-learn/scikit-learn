@@ -250,6 +250,11 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 "since base_estimator does not have a "
                 "feature_importances_ attribute")
 
+    def _check_sample_weight(self):
+        if not has_fit_parameter(self.base_estimator_, "sample_weight"):
+            raise ValueError("%s doesn't support sample_weight."
+                             % self.base_estimator_.__class__.__name__)
+
 
 def _samme_proba(estimator, n_classes, X):
     """Calculate algorithm 4, step 2, equation c) of Zhu et al [1].
@@ -270,11 +275,6 @@ def _samme_proba(estimator, n_classes, X):
     return (n_classes - 1) * (log_proba - (1. / n_classes)
                               * log_proba.sum(axis=1)[:, np.newaxis])
 
-def _check_sample_weight(estimator, parameter):
-    a = has_fit_parameter(estimator, parameter)
-    if not a:
-        raise ValueError("base estimator / weak learner doesn't support"
-                         "sample_weight")
 
 class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     """An AdaBoost classifier.
@@ -407,7 +407,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                     "probabilities with a predict_proba method.\n"
                     "Please change the base estimator or set "
                     "algorithm='SAMME' instead.")
-        _check_sample_weight(self.base_estimator_, "sample_weight")
+        self._check_sample_weight()
 
     def _boost(self, iboost, X, y, sample_weight):
         """Implement a single boost.
@@ -934,7 +934,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         """Check the estimator and set the base_estimator_ attribute."""
         super(AdaBoostRegressor, self)._validate_estimator(
             default=DecisionTreeRegressor(max_depth=3))
-        _check_sample_weight(self.base_estimator_, "sample_weight")
+        self._check_sample_weight()
 
     def _boost(self, iboost, X, y, sample_weight):
         """Implement a single boost for regression

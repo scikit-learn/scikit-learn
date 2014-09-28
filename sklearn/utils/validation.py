@@ -389,15 +389,11 @@ def check_random_state(seed):
 def has_fit_parameter(estimator, parameter):
     """ Checks whether the estimator's fit method supports the given parameter.
 
-    Parameters
-    ----------
-    estimator: Estimator
-
-    parameter: string
-    Checking is done on this parameter
-
-    Returns
+    Example
     -------
-    Boolean
+    >>> from sklearn.svm import SVC
+    >>> has_fit_parameter(SVC(), "sample_weight")
+    True
+
     """
     return parameter in getargspec(estimator.fit)[0]
