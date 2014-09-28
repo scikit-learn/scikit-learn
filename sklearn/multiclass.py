@@ -347,7 +347,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         # In the multi-label case, these are not disjoint.
         Y = np.array([e.predict_proba(X)[:, 1] for e in self.estimators_]).T
 
-        if not self.multilabel_:
+        if not self.label_binarizer_.y_type_.startswith('multilabel'):
             # Then, probabilities should be normalized to 1.
             Y /= np.sum(Y, axis=1)[:, np.newaxis]
         return Y
