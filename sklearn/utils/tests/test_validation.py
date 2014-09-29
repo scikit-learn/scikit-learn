@@ -13,6 +13,11 @@ from sklearn.utils.estimator_checks import NotAnArray
 
 from sklearn.random_projection import sparse_random_matrix
 
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.svm import SVR
+from sklearn.utils.validation import has_fit_parameter
+
 
 def test_as_float_array():
     """Test function for as_float_array"""
@@ -195,3 +200,9 @@ def test_check_array():
     X_no_array = NotAnArray(X_dense)
     result = check_array(X_no_array)
     assert_true(isinstance(result, np.ndarray))
+
+def test_has_fit_parameter():
+    assert_false(has_fit_parameter(KNeighborsClassifier, "sample_weight"))
+    assert_true(has_fit_parameter(RandomForestRegressor, "sample_weight"))
+    assert_true(has_fit_parameter(SVR, "sample_weight"))
+    assert_true(has_fit_parameter(SVR(), "sample_weight"))
