@@ -102,9 +102,9 @@ class CommonTest(object):
     def asgd(self, X, y, eta, alpha):
         weights = np.zeros(X.shape[1])
         average_weights = np.zeros(X.shape[1])
-        intercept = 0
-        average_intercept = 0
-        decay = 1
+        intercept = 0.0
+        average_intercept = 0.0
+        decay = 1.0
         wscale = 1.0
 
         # sparse data has a fixed decay of .01
@@ -124,11 +124,11 @@ class CommonTest(object):
 
             average_weights *= i
             average_weights += weights
-            average_weights /= i + 1
+            average_weights /= i + 1.0
 
             average_intercept *= i
             average_intercept += intercept
-            average_intercept /= i + 1
+            average_intercept /= i + 1.0
 
         return average_weights, average_intercept
 
@@ -347,16 +347,13 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
                            fit_intercept=True,
                            n_iter=1, average=True)
 
-        # TODO: remove label encoding when class bug is fixed
-        le = LabelEncoder()
-        y_encoded = le.fit_transform(Y2)
-        classes = np.unique(y_encoded)
-
-        clf.fit(X2, y_encoded)
+        np_Y2 = np.array(Y2)
+        clf.fit(X2, np_Y2)
+        classes = np.unique(np_Y2)
 
         for i, cl in enumerate(classes):
-            y_i = np.ones(y_encoded.shape)
-            y_i[y_encoded != cl] = -1
+            y_i = np.ones(np_Y2.shape[0])
+            y_i[np_Y2 != cl] = -1
             average_coef, average_intercept = self.asgd(X2, y_i, eta, alpha)
             assert_array_almost_equal(average_coef, clf.coef_[i], decimal=8)
             assert_almost_equal(average_intercept,

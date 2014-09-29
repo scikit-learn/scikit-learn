@@ -380,7 +380,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     learning_rate : int
         The learning rate:
         (1) constant, eta = eta0
-        (2) optimal, eta = 1.0/(alpha * t). (average) eta = eta0
+        (2) optimal, eta = 1.0/(alpha * t).
         (3) inverse scaling, eta = eta0 / pow(t, power_t)
         (4) Passive Agressive-I, eta = min(alpha, loss/norm(x))
         (5) Passive Agressive-II, eta = 1.0 / (norm(x) + 0.5*alpha)
@@ -479,7 +479,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     learning_rate : int
         The learning rate:
         (1) constant, eta = eta0
-        (2) optimal, eta = 1.0/(alpha * t). (average) eta = eta0
+        (2) optimal, eta = 1.0/(alpha * t).
         (3) inverse scaling, eta = eta0 / pow(t, power_t)
         (4) Passive Agressive-I, eta = min(alpha, loss/norm(x))
         (5) Passive Agressive-II, eta = 1.0 / (norm(x) + 0.5*alpha)
@@ -597,7 +597,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                              &sample_weight)
 
                 p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
-                if learning_rate == OPTIMAL and not average:
+                if learning_rate == OPTIMAL:
                     eta = 1.0 / (alpha * t)
                 elif learning_rate == INVSCALING:
                     eta = eta0 / pow(t, power_t)

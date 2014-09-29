@@ -103,9 +103,6 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         if self.learning_rate in ("constant", "invscaling"):
             if self.eta0 <= 0.0:
                 raise ValueError("eta0 must be > 0")
-        if self.learning_rate == "optimal" and self.average:
-            if self.eta0 <= 0.0:
-                raise ValueError("eta0 must be > 0")
 
         # raises ValueError if not registered
         self._get_penalty_type(self.penalty)
@@ -454,12 +451,11 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
     def _fit_binary(self, X, y, alpha, C, sample_weight,
                     learning_rate, n_iter):
         """Fit a binary classifier on X and y. """
-        coef, intercept = \
-            fit_binary(self, 1, X, y, alpha, C,
-                       learning_rate, n_iter,
-                       self._expanded_class_weight[1],
-                       self._expanded_class_weight[0],
-                       sample_weight)
+        coef, intercept = fit_binary(self, 1, X, y, alpha, C,
+                                     learning_rate, n_iter,
+                                     self._expanded_class_weight[1],
+                                     self._expanded_class_weight[0],
+                                     sample_weight)
 
         # need to be 2d
         if self.average:
@@ -1162,7 +1158,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
         The intercept term.
 
     `average_coef_` : array shape = [n_features]
-        Averaged weights asigned to the features.
+        Averaged weights assigned to the features.
 
     `average_intercept_` : array, shape = [1]
         The averaged intercept term.

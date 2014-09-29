@@ -13,6 +13,7 @@ on the hand-written digits dataset.
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import datasets
+
 from sklearn.cross_validation import train_test_split
 from sklearn.linear_model import SGDClassifier, Perceptron
 from sklearn.linear_model import PassiveAggressiveClassifier
@@ -24,7 +25,7 @@ X, y = digits.data, digits.target
 
 classifiers = [
     ("SGD", SGDClassifier()),
-    ("ASGD", SGDClassifier(average=True, eta0=.001, n_iter=1)),
+    ("ASGD", SGDClassifier(average=True)),
     ("Perceptron", Perceptron()),
     ("Passive-Aggressive I", PassiveAggressiveClassifier(loss='hinge',
                                                          C=1.0)),
@@ -33,9 +34,9 @@ classifiers = [
 ]
 
 xx = 1. - np.array(heldout)
-rng = np.random.RandomState(42)
 
 for name, clf in classifiers:
+    rng = np.random.RandomState(42)
     yy = []
     for i in heldout:
         yy_ = []
