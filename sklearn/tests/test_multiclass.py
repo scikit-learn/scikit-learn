@@ -193,8 +193,11 @@ def test_ovr_binary():
         assert_equal(set(y_pred), set("eggs"))
 
         if test_predict_proba:
-            probabilities = clf.predict_proba(np.array([[0, 0, 4]]))
+            X_test = np.array([[0, 0, 4]])
+            probabilities = clf.predict_proba(X_test)
             assert_equal(2, len(probabilities[0]))
+            assert_equal(clf.classes_[np.argmax(probabilities, axis=1)],
+                         clf.predict(X_test))
 
         # test input as label indicator matrix
         clf = OneVsRestClassifier(base_clf).fit(X, Y)
@@ -207,7 +210,7 @@ def test_ovr_binary():
 
     for base_clf in (MultinomialNB(), SVC(probability=True),
                      LogisticRegression()):
-        conduct_test(base_clf, True)
+        conduct_test(base_clf, test_predict_proba=True)
 
 
 @ignore_warnings

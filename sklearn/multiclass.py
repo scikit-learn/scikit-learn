@@ -351,7 +351,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         if len(self.estimators_) == 1:
             # Only one estimator, but we still want to return probabilities
             # for two classes.
-            Y = np.concatenate((Y, (1 - Y)), 1)
+            Y = np.concatenate(((1 - Y), Y), axis=1)
 
         if not self.multilabel_:
             # Then, probabilities should be normalized to 1.

@@ -120,6 +120,13 @@ API changes summary
     - `n_jobs` parameter of the fit method shifted to the constructor of the
        LinearRegression class.
 
+    - The ``predict_proba`` method of :class:`multiclass.OneVsRestClassifier`
+      now returns two probabilities per sample in the multiclass case; this
+      is consistent with other estimators and with the method's documentation,
+      but previous versions accidentally returned only the positive
+      probability. Fixed by Will Lamond and `Lars Buitinck`_.
+
+
 .. _changes_0_15_2:
 
 0.15.2
