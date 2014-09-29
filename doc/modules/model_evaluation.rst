@@ -77,7 +77,8 @@ Scoring                    Function
 
 
 Setting the ``scoring`` parameter to a wrong value should give you a list
-of acceptable values::
+of acceptable values.  To use :func:`log_loss` as the scorer, enable 
+probability estimates when creating the support vector classifier model::
 
     >>> from sklearn import svm, cross_validation, datasets
     >>> iris = datasets.load_iris()
@@ -86,22 +87,17 @@ of acceptable values::
     >>> cross_validation.cross_val_score(model, X, y, scoring='wrong_choice')
     Traceback (most recent call last):
     ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'log_loss', 'mean_absolute_error', 'mean_squared_error', 'precision', 'r2', 'recall', 'roc_auc']
+    >>> prob_model = svm.SVC(probability=True)
+    >>> #typical cross_val_score using log_loss on X, y:  array([-0.07366283, -0.1691692 , -0.07100679])
+    >>> cross_validation.cross_val_score(prob_model, X, y, scoring='log_loss') # doctest: +ELLIPSIS
+    array...
 
 .. note::
 
+    The choices listed by the ValueError exception above are all functions for 
+    measuring prediction accuracy, as described in the following sections.
     The corresponding scorer objects are stored in the dictionary
     ``sklearn.metrics.SCORERS``.
-
-The choices listed by the ValueError exception above are all functions for 
-measuring prediction accuracy; see the following sections for details.
-
-To use :func:`log_loss` as the scorer, enable probability estimates when
-creating the support vector classifier model::
-
-    >>> prob_model = svm.SVC(probability=True)
-    >>> cross_validation.cross_val_score(prob_model, X, y, scoring='log_loss')
-    array([-0.07366283, -0.1691692 , -0.07100679])
-
 
 .. currentmodule:: sklearn.metrics
 
@@ -162,13 +158,14 @@ take several parameters:
 Here is an example of building custom scorers, and of using the 
 ``greater_is_better`` parameter::
 
+    >>> import numpy as np
     >>> def my_custom_loss_func(ground_truth, predictions):
     ...     diff = np.abs(ground_truth - predictions).max()		
     ...     return np.log(1 + diff)
     ...
-    # loss_func will negate the return value of my_custom_loss_func, 
-    #  which will be np.log(2), 0.693, given the values for ground_truth 
-    #  and predictions defined below.
+    >>> # loss_func will negate the return value of my_custom_loss_func, 
+    >>> #  which will be np.log(2), 0.693, given the values for ground_truth 
+    >>> #  and predictions defined below.
     >>> loss  = make_scorer(my_custom_loss_func, greater_is_better=False)
     >>> score = make_scorer(my_custom_loss_func, greater_is_better=True)
     >>> ground_truth = [1,1]
@@ -177,13 +174,10 @@ Here is an example of building custom scorers, and of using the
     >>> clf = DummyClassifier(strategy='most_frequent',random_state=0)
     >>> clf = clf.fit(ground_truth, predictions)
     >>> loss(clf,ground_truth,predictions)
-    -0.693
+    -0.69314718055994529
     >>> score(clf,ground_truth,predictions)
-    0.693
+    0.69314718055994529
     
-
-
-
 
 .. _diy_scoring:
 
