@@ -34,10 +34,17 @@ from sklearn.base import BaseEstimator
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
-from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
-                                 ParameterGrid, ParameterSampler,
-                                 ChangedBehaviorWarning)
-from sklearn.svm import LinearSVC, SVC
+from sklearn.datasets import load_diabetes
+
+from sklearn.grid_search import GridSearchCV
+from sklearn.grid_search import GridSearchOOB
+from sklearn.grid_search import RandomizedSearchCV
+from sklearn.grid_search import ParameterGrid
+from sklearn.grid_search import ParameterSampler
+from sklearn.grid_search import ChangedBehaviorWarning
+from sklearn.grid_search import ParameterSampler
+
+from sklearn.svm import LinearSVC, SVC, SVR
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.cluster import KMeans, SpectralClustering
@@ -47,6 +54,7 @@ from sklearn.metrics import roc_auc_score
 from sklearn.cross_validation import KFold, StratifiedKFold
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
+from sklearn.ensemble import BaggingRegressor
 
 
 # Neither of the following two estimators inherit from BaseEstimator,
@@ -674,3 +682,17 @@ def test_grid_search_allows_nans():
         ('classifier', MockClassifier()),
     ])
     GridSearchCV(p, {'classifier__foo_param': [1, 2, 3]}, cv=2).fit(X, y)
+
+
+def test_grid_search_oob():
+    data = load_diabetes()
+    X, y = data.data, data.target
+    param_grid = {"base_estimator__C": [0.1, 1, 10],
+                  "base_estimator__gamma": [0.1, 1, 10]}
+    reg = BaggingRegressor(SVR(kernel="rbf"), n_estimators=50, oob_score=True,
+                           random_state=0)
+
+    gs = GridSearchOOB(reg, param_grid, scoring="r2")
+    gs.fit(X, y)
+    assert_equal(gs.best_estimator_.estimators_[0].C, 10)
+    assert_equal(gs.best_estimator_.estimators_[0].gamma, 10)

@@ -758,3 +758,41 @@ class RandomizedSearchCV(BaseSearchCV):
                                           self.n_iter,
                                           random_state=self.random_state)
         return self._fit(X, y, sampled_params)
+
+
+class GridSearchOOB(BaseEstimator):
+
+    def __init__(self, estimator, param_grid, scoring):
+        self.estimator = estimator
+        self.param_grid = param_grid
+        self.scoring = scoring
+
+    def _score(self, y, y_pred):
+        s = self.scorer_
+        # Need this hack because the current scorer API recomputes the
+        # predictions: scoring(estimator, X, y)...
+        return s._score_func(y, y_pred, **s._kwargs) * s._sign
+
+    def fit(self, X, y):
+        self.scorer_ = check_scoring(self.estimator, scoring=self.scoring)
+
+        best_score = None
+        best_estimator = None
+
+        for params in ParameterGrid(self.param_grid):
+            estimator = clone(self.estimator)
+            estimator.set_params(**params)
+            estimator.fit(X, y)
+
+            score = self._score(y, estimator.oob_prediction_)
+
+            if best_score is None or score > best_score:
+                best_estimator = estimator
+                best_score = score
+
+        self.best_estimator_ = best_estimator
+
+        return self
+
+    def predict(self, X):
+        return self.best_estimator_.predict(X)
