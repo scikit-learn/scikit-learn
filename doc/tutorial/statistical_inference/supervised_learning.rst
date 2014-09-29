@@ -93,9 +93,9 @@ Scikit-learn documentation for more information about this type of classifier.)
     >>> # Create and fit a nearest-neighbor classifier
     >>> from sklearn.neighbors import KNeighborsClassifier
     >>> knn = KNeighborsClassifier()
-    >>> knn.fit(iris_X_train, iris_y_train)
+    >>> knn.fit(iris_X_train, iris_y_train) # doctest: +NORMALIZE_WHITESPACE
     KNeighborsClassifier(algorithm='auto', leaf_size=30, metric='minkowski',
-               n_neighbors=5, p=2, weights='uniform')
+                   metric_params=None, n_neighbors=5, p=2, weights='uniform')
     >>> knn.predict(iris_X_test)
     array([1, 2, 1, 0, 0, 0, 2, 1, 2, 0])
     >>> iris_y_test
@@ -175,7 +175,7 @@ Linear models: :math:`y = X\beta + \epsilon`
     >>> from sklearn import linear_model
     >>> regr = linear_model.LinearRegression()
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
-    LinearRegression(copy_X=True, fit_intercept=True, normalize=False)
+    LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=False)
     >>> print(regr.coef_)
     [   0.30349955 -237.63931533  510.53060544  327.73698041 -814.13170937
       492.81458798  102.84845219  184.60648906  743.51961675   76.09517222]
@@ -371,7 +371,8 @@ function or **logistic** function:
     >>> logistic.fit(iris_X_train, iris_y_train)
     LogisticRegression(C=100000.0, class_weight=None, dual=False,
               fit_intercept=True, intercept_scaling=1, max_iter=100,
-              penalty='l2', random_state=None, solver='liblinear', tol=0.0001)
+              multi_class='ovr', penalty='l2', random_state=None,
+              solver='liblinear', tol=0.0001, verbose=0)
 
 This is known as :class:`LogisticRegression`.
 
@@ -400,10 +401,10 @@ This is known as :class:`LogisticRegression`.
    model. Leave out the last 10% and test prediction performance on these
    observations.
 
-   .. literalinclude:: ../../auto_examples/exercises/plot_digits_classification_exercise.py
-       :lines: 12-17
+   .. literalinclude:: ../../auto_examples/exercises/digits_classification_exercise.py
+       :lines: 15-19
 
-   Solution: :download:`../../auto_examples/exercises/plot_digits_classification_exercise.py`
+   Solution: :download:`../../auto_examples/exercises/digits_classification_exercise.py`
 
 
 Support vector machines (SVMs)
@@ -567,6 +568,6 @@ creating a decision energy by positioning *kernels* on observations:
    intuitions.
 
    .. literalinclude:: ../../auto_examples/exercises/plot_iris_exercise.py
-       :lines: 15-22
+       :lines: 18-23
 
    Solution: :download:`../../auto_examples/exercises/plot_iris_exercise.py`

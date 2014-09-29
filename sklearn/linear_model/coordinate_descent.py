@@ -87,7 +87,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
             # since we should not destroy the sparsity of such matrices.
             _, _, X_mean, _, X_std = sparse_center_data(X, y, fit_intercept,
                                                         normalize)
-            mean_dot = np.sum(X_mean[:, np.newaxis] * y, axis=1)
+            mean_dot = X_mean * np.sum(y)
 
     if Xy.ndim == 1:
         Xy = Xy[:, np.newaxis]
@@ -1264,8 +1264,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
 
     n_jobs : integer, optional
         Number of CPUs to use during the cross validation. If ``-1``, use
-        all the CPUs. Note that this is used only if multiple values for
-        l1_ratio are given.
+        all the CPUs.
 
     positive : bool, optional
         If positive, restrict regression coefficients to be positive
@@ -1391,8 +1390,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 
     n_jobs : integer, optional
         Number of CPUs to use during the cross validation. If ``-1``, use
-        all the CPUs. Note that this is used only if multiple values for
-        l1_ratio are given.
+        all the CPUs.
 
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.

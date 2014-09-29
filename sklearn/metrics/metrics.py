@@ -33,4 +33,3 @@ from .regression import r2_score
 
 # Deprecated in 0.16
 from .ranking import auc_score
-

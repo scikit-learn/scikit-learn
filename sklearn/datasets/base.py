@@ -183,7 +183,10 @@ def load_files(container_path, description=None, categories=None,
         target = target[indices]
 
     if load_content:
-        data = [open(filename, 'rb').read() for filename in filenames]
+        data = []
+        for filename in filenames:
+            with open(filename, 'rb') as f:
+                data.append(f.read())
         if encoding is not None:
             data = [d.decode(encoding, decode_error) for d in data]
         return Bunch(data=data,
@@ -301,7 +304,8 @@ def load_digits(n_class=10):
     module_path = dirname(__file__)
     data = np.loadtxt(join(module_path, 'data', 'digits.csv.gz'),
                       delimiter=',')
-    descr = open(join(module_path, 'descr', 'digits.rst')).read()
+    with open(join(module_path, 'descr', 'digits.rst')) as f:
+        descr = f.read()
     target = data[:, -1]
     flat_data = data[:, :-1]
     images = flat_data.view()
@@ -402,26 +406,31 @@ def load_boston():
     (506, 13)
     """
     module_path = dirname(__file__)
-    data_file = csv.reader(open(join(module_path, 'data',
-                                     'boston_house_prices.csv')))
-    fdescr = open(join(module_path, 'descr', 'boston_house_prices.rst'))
-    temp = next(data_file)
-    n_samples = int(temp[0])
-    n_features = int(temp[1])
-    data = np.empty((n_samples, n_features))
-    target = np.empty((n_samples,))
-    temp = next(data_file)  # names of features
-    feature_names = np.array(temp)
 
-    for i, d in enumerate(data_file):
-        data[i] = np.asarray(d[:-1], dtype=np.float)
-        target[i] = np.asarray(d[-1], dtype=np.float)
+    fdescr_name = join(module_path, 'descr', 'boston_house_prices.rst')
+    with open(fdescr_name) as f:
+        descr_text = f.read()
+    
+    data_file_name = join(module_path, 'data', 'boston_house_prices.csv')
+    with open(data_file_name) as f:
+        data_file = csv.reader(f)
+        temp = next(data_file)
+        n_samples = int(temp[0])
+        n_features = int(temp[1])
+        data = np.empty((n_samples, n_features))
+        target = np.empty((n_samples,))
+        temp = next(data_file)  # names of features
+        feature_names = np.array(temp)
+
+        for i, d in enumerate(data_file):
+            data[i] = np.asarray(d[:-1], dtype=np.float)
+            target[i] = np.asarray(d[-1], dtype=np.float)
 
     return Bunch(data=data,
                  target=target,
                  # last column is target value
                  feature_names=feature_names[:-1],
-                 DESCR=fdescr.read())
+                 DESCR=descr_text)
 
 
 def load_sample_images():

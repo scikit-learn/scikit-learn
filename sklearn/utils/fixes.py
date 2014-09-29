@@ -245,6 +245,18 @@ except ImportError:
                 cond[np.isnan(x) & np.isnan(y)] = True
             return cond
 
+
+if np_version < (1, 7):
+    # Prior to 1.7.0, np.frombuffer wouldn't work for empty first arg.
+    def frombuffer_empty(buf, dtype):
+        if len(buf) == 0:
+            return np.empty(0, dtype=dtype)
+        else:
+            return np.frombuffer(buf, dtype=dtype)
+else:
+    frombuffer_empty = np.frombuffer
+
+
 if np_version < (1, 8):
     def in1d(ar1, ar2, assume_unique=False, invert=False):
         # Backport of numpy function in1d 1.8.1 to support numpy 1.6.2

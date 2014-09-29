@@ -12,7 +12,6 @@ Changelog
 New features
 ............
 
-
    - Incremental fit for :class:`GaussianNB <naive_bayes.GaussianNB>`.
 
    - Add ``sample_weight`` support to :class:`dummy.DummyClassifier`. By
@@ -29,13 +28,21 @@ New features
      trained forest model to grow additional trees incrementally. By
      `Laurent Direr`_.
 
+   - Add ``sample_weight`` support to :class:`ensemble.GradientBoostingClassifier` and
+     :class:`ensemble.GradientBoostingRegressor`. By
+     `Peter Prettenhofer`_.
+
+   - Added :class:`decomposition.IncrementalPCA`, an implementation of the PCA
+     algorithm that supports out-of-core learning with a ``partial_fit``
+     method. By `Kyle Kastner`_.
+
 
 Enhancements
 ............
 
-
    - Add support for sample weights in scorer objects.  Metrics with sample
-     weight support will automatically benefit from it.
+     weight support will automatically benefit from it. By `Noel Dawe`_ and
+     `Vlad Niculae`_.
 
    - Added ``newton-cg`` and `lbfgs` solver support in
      :class:`linear_model.LogisticRegression`. By `Manoj Kumar`_.
@@ -47,6 +54,22 @@ Enhancements
    - Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score` and
      `metrics.log_loss`. By `Jatin Shah`_.
 
+   - Support sparse multilabel indicator representation in
+     :class:`preprocessing.LabelBinarizer` and
+     :class:`multiclass.OneVsRestClassifier` (by `Hamzeh Alsalhi`_ with thanks
+     to `Rohit Sivaprasad`_), as well as evaluation metrics (by
+     `Joel Nothman`_).
+
+   - Add ``multi_class="multinomial"`` option in
+     :class:`linear_model.LogisticRegression` to implement a Logistic
+     Regression solver that minimizes the cross-entropy or multinomial loss
+     instead of the default One-vs-Rest setting. By `Lars Buitinck`_ and
+     `Manoj Kumar`_.
+
+   - ``DictVectorizer`` can now perform ``fit_transform`` on an iterable in a
+     single pass, when giving the option ``sort=False``. By Dan Blanchard.
+
+
 Documentation improvements
 ..........................
 
@@ -54,9 +77,26 @@ Documentation improvements
 Bug fixes
 .........
 
-    - The :class:`decomposition.PCA` now undoes whitening in its 
+    - The :class:`decomposition.PCA` now undoes whitening in its
      ``inverse_transform``. Also, its ``components_`` now always have unit
      length. By Michael Eickenberg.
+
+    - Fix incomplete download of the dataset when
+      :func:`datasets.download_20newsgroups` is called. By `Manoj Kumar`_.
+
+    - Various fixes to the Gaussian processes subpackage by Vincent Dubourg
+      and Jan Hendrik Metzen.
+
+    - Calling ``partial_fit`` with ``class_weight=='auto'`` throws an
+      appropriate error message and suggests a work around.
+      By `Danny Sullivan`_.
+
+    - :class:`RBFSampler <kernel_approximation.RBFSampler>` with ``gamma=g``
+      formerly approximated :func:`rbf_kernel <metrics.pairwise.rbf_kernel>`
+      with ``gamma=g/2.``; the definition of ``gamma`` is now consistent,
+      which may substantially change your results if you use a fixed value.
+      (If you cross-validated over ``gamma``, it probably doesn't matter
+      too much.) By `Dougal Sutherland`_.
 
 
 API changes summary
@@ -73,6 +113,61 @@ API changes summary
       :func:`multiclass.fit_ecoc` and :func:`multiclass.predict_ecoc`
       are deprecated. Use the underlying estimators instead.
 
+    - Nearest neighbors estimators used to take arbitrary keyword arguments
+      and pass these to their distance metric. This will no longer be supported
+      in scikit-learn 0.18; use the ``metric_params`` argument instead.
+
+    - `n_jobs` parameter of the fit method shifted to the constructor of the
+       LinearRegression class.
+
+    - The ``predict_proba`` method of :class:`multiclass.OneVsRestClassifier`
+      now returns two probabilities per sample in the multiclass case; this
+      is consistent with other estimators and with the method's documentation,
+      but previous versions accidentally returned only the positive
+      probability. Fixed by Will Lamond and `Lars Buitinck`_.
+
+
+.. _changes_0_15_2:
+
+0.15.2
+======
+
+Bug fixes
+---------
+
+  - Fixed handling of the ``p`` parameter of the Minkowski distance that was
+    previously ignored in nearest neighbors models. By `Nikolay Mayorov`_.
+
+  - Fixed duplicated alphas in :class:`linear_model.LassoLars` with early
+    stopping on 32 bit Python. By `Olivier Grisel`_ and `Fabian Pedregosa`_.
+
+  - Fixed the build under Windows when scikit-learn is built with MSVC while
+    NumPy is built with MinGW. By `Olivier Grisel`_ and Federico Vaggi.
+
+  - Fixed an array index overflow bug in the coordinate descent solver. By
+    `Gael Varoquaux`_.
+
+  - Better handling of numpy 1.9 deprecation warnings. By `Gael Varoquaux`_.
+
+  - Removed unnecessary data copy in :class:`cluster.KMeans`.
+    By `Gael Varoquaux`_.
+
+  - Explicitly close open files to avoid ``ResourceWarnings`` under Python 3.
+    By Calvin Giles.
+
+  - The ``transform`` of :class:`lda.LDA` now projects the input on the most
+    discriminant directions. By Martin Billinger.
+
+  - Fixed potential overflow in ``_tree.safe_realloc`` by `Lars Buitinck`_.
+
+  - Performance optimization in :class:`isotonic.IsotonicRegression`.
+    By Robert Bradshaw.
+
+  - ``nose`` is non-longer a runtime dependency to import ``sklearn``, only for
+    running the tests. By `Joel Nothman`_.
+
+  - Many documentation and website fixes by `Joel Nothman`_, `Lars Buitinck`_
+    and others.
 
 .. _changes_0_15_1:
 
@@ -2873,7 +2968,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Maheshakya Wijewardena: https://github.com/maheshakya
 
-.. _Danny Sullivan: http://dannysullivan.co
+.. _Danny Sullivan: https://github.com/dsullivan7
 
 .. _Michael Eickenberg: https://github.com/eickenberg
 
@@ -2888,3 +2983,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Nikolay Mayorov: https://github.com/nmayorov
 
 .. _Jatin Shah: http://jatinshah.org/
+
+.. _Dougal Sutherland: https://github.com/dougalsutherland

@@ -10,7 +10,7 @@ import numbers
 import numpy as np
 from warnings import warn
 from abc import ABCMeta, abstractmethod
-from inspect import getargspec
+from ..utils.validation import has_fit_parameter
 
 from ..base import ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed
@@ -47,8 +47,9 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
 
     bootstrap = ensemble.bootstrap
     bootstrap_features = ensemble.bootstrap_features
-    support_sample_weight = ("sample_weight" in
-                             getargspec(ensemble.base_estimator_.fit)[0])
+    support_sample_weight = has_fit_parameter(ensemble.base_estimator_,
+                                              "sample_weight")
+
 
     # Build estimators
     estimators = []
@@ -745,11 +746,11 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
     oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
 
-    oob_decision_function_ : array of shape = [n_samples, n_classes]
-        Decision function computed with out-of-bag estimate on the training
+    oob_prediction_ : array of shape = [n_samples]
+        Prediction computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
-        `oob_decision_function_` might contain NaN.
+        `oob_prediction_` might contain NaN.
 
     References
     ----------

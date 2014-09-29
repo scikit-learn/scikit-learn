@@ -183,7 +183,7 @@ clustering an image:
     :align: right
 
 .. literalinclude:: ../../auto_examples/cluster/plot_lena_ward_segmentation.py
-    :lines: 21-44
+    :lines: 21-45
 
 ..
     >>> from sklearn.feature_extraction.image import grid_to_graph

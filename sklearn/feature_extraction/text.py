@@ -24,11 +24,13 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
+from ..externals import six
 from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
-from sklearn.externals import six
+from ..utils import deprecated
+from ..utils.fixes import frombuffer_empty
 
 __all__ = ['CountVectorizer',
            'ENGLISH_STOP_WORDS',
@@ -236,6 +238,38 @@ class VectorizerMixin(object):
             raise ValueError('%s is not a valid tokenization scheme/analyzer' %
                              self.analyzer)
 
+    def _check_vocabulary(self):
+        vocabulary = self.vocabulary
+        if vocabulary is not None:
+            if not isinstance(vocabulary, Mapping):
+                vocab = {}
+                for i, t in enumerate(vocabulary):
+                    if vocab.setdefault(t, i) != i:
+                        msg = "Duplicate term in vocabulary: %r" % t
+                        raise ValueError(msg)
+                vocabulary = vocab
+            else:
+                indices = set(six.itervalues(vocabulary))
+                if len(indices) != len(vocabulary):
+                    raise ValueError("Vocabulary contains repeated indices.")
+                for i in xrange(len(vocabulary)):
+                    if i not in indices:
+                        msg = ("Vocabulary of size %d doesn't contain index "
+                               "%d." % (len(vocabulary), i))
+                        raise ValueError(msg)
+            if not vocabulary:
+                raise ValueError("empty vocabulary passed to fit")
+            self.fixed_vocabulary_ = True
+            self.vocabulary_ = dict(vocabulary)
+        else:
+            self.fixed_vocabulary_ = False
+
+    @property
+    @deprecated("The `fixed_vocabulary` attribute is deprecated and will be "
+                "removed in 0.18.  Please use `fixed_vocabulary_` instead.")
+    def fixed_vocabulary(self):
+        return self.fixed_vocabulary_
+
 
 class HashingVectorizer(BaseEstimator, VectorizerMixin):
     """Convert a collection of text documents to a matrix of token occurrences
@@ -327,9 +361,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         will be used.
 
     stop_words: string {'english'}, list, or None (default)
-        If a string, it is passed to _check_stop_list and the appropriate stop
-        list is returned. 'english' is currently the only supported string
-        value.
+        If 'english', a built-in stop word list for English is used.
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
@@ -514,9 +546,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         will be used.
 
     stop_words : string {'english'}, list, or None (default)
-        If a string, it is passed to _check_stop_list and the appropriate stop
-        list is returned. 'english' is currently the only supported string
-        value.
+        If 'english', a built-in stop word list for English is used.
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
@@ -616,29 +646,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                     "max_features=%r, neither a positive integer nor None"
                     % max_features)
         self.ngram_range = ngram_range
-        if vocabulary is not None:
-            if not isinstance(vocabulary, Mapping):
-                vocab = {}
-                for i, t in enumerate(vocabulary):
-                    if vocab.setdefault(t, i) != i:
-                        msg = "Duplicate term in vocabulary: %r" % t
-                        raise ValueError(msg)
-                vocabulary = vocab
-            else:
-                indices = set(six.itervalues(vocabulary))
-                if len(indices) != len(vocabulary):
-                    raise ValueError("Vocabulary contains repeated indices.")
-                for i in xrange(len(vocabulary)):
-                    if i not in indices:
-                        msg = ("Vocabulary of size %d doesn't contain index "
-                               "%d." % (len(vocabulary), i))
-                        raise ValueError(msg)
-            if not vocabulary:
-                raise ValueError("empty vocabulary passed to fit")
-            self.fixed_vocabulary = True
-            self.vocabulary_ = dict(vocabulary)
-        else:
-            self.fixed_vocabulary = False
+        self.vocabulary = vocabulary
         self.binary = binary
         self.dtype = dtype
 
@@ -725,11 +733,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 raise ValueError("empty vocabulary; perhaps the documents only"
                                  " contain stop words")
 
-        # some Python/Scipy versions won't accept an array.array:
-        if j_indices:
-            j_indices = np.frombuffer(j_indices, dtype=np.intc)
-        else:
-            j_indices = np.array([], dtype=np.int32)
+        j_indices = frombuffer_empty(j_indices, dtype=np.intc)
         indptr = np.frombuffer(indptr, dtype=np.intc)
         values = np.ones(len(j_indices))
 
@@ -773,16 +777,18 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         # We intentionally don't call the transform method to make
         # fit_transform overridable without unwanted side effects in
         # TfidfVectorizer.
+        self._check_vocabulary()
         max_df = self.max_df
         min_df = self.min_df
         max_features = self.max_features
 
-        vocabulary, X = self._count_vocab(raw_documents, self.fixed_vocabulary)
+        vocabulary, X = self._count_vocab(raw_documents,
+                                          self.fixed_vocabulary_)
 
         if self.binary:
             X.data.fill(1)
 
-        if not self.fixed_vocabulary:
+        if not self.fixed_vocabulary_:
             X = self._sort_features(X, vocabulary)
 
             n_doc = X.shape[0]
@@ -820,6 +826,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         X : sparse matrix, [n_samples, n_features]
             Document-term matrix.
         """
+        if not hasattr(self, 'vocabulary_'):
+            self._check_vocabulary()
+
         if not hasattr(self, 'vocabulary_') or len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary wasn't fitted or is empty!")
 
@@ -1079,14 +1088,14 @@ class TfidfVectorizer(CountVectorizer):
         and always treated as a token separator).
 
     max_df : float in range [0.0, 1.0] or int, optional, 1.0 by default
-        When building the vocabulary ignore terms that have a term frequency
+        When building the vocabulary ignore terms that have a document frequency
         strictly higher than the given threshold (corpus specific stop words).
         If float, the parameter represents a proportion of documents, integer
         absolute counts.
         This parameter is ignored if vocabulary is not None.
 
     min_df : float in range [0.0, 1.0] or int, optional, 1 by default
-        When building the vocabulary ignore terms that have a term frequency
+        When building the vocabulary ignore terms that have a document frequency
         strictly lower than the given threshold.
         This value is also called cut-off in the literature.
         If float, the parameter represents a proportion of documents, integer

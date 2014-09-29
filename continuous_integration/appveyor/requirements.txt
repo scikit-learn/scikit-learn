@@ -4,7 +4,12 @@
 # This is a temporary solution. As soon as numpy and scipy provide official
 # wheel for windows we ca delete this --find-links line.
 --find-links http://28daf2247a33ed269873-7b1aad3fab3cc330e1fd9d109892382a.r6.cf2.rackcdn.com/index.html
-numpy
-scipy
+
+# fix the versions of numpy to force the use of numpy and scipy to use the whl
+# of the rackspace folder instead of trying to install from more recent
+# source tarball published on PyPI
+numpy==1.8.1
+scipy==0.14.0
 nose
 wheel
+wheelhouse_uploader

@@ -85,7 +85,7 @@ except ImportError:
             error_message = str(e)
             if not re.compile(expected_regexp).match(error_message):
                 raise AssertionError("Error message should match pattern "
-                                     "'%s'. '%s' does not." %
+                                     "%r. %r does not." %
                                      (expected_regexp, error_message))
         if not_raised:
             raise AssertionError("Should have raised %r" %
@@ -120,7 +120,6 @@ def assert_greater_equal(a, b, msg=None):
     assert a >= b, message
 
 
-# To remove when we support numpy 1.7
 def assert_warns(warning_class, func, *args, **kw):
     """Test that a certain warning occurs.
 
@@ -150,6 +149,11 @@ def assert_warns(warning_class, func, *args, **kw):
         warnings.simplefilter("always")
         # Trigger a warning.
         result = func(*args, **kw)
+        if hasattr(np, 'VisibleDeprecationWarning'):
+            # Filter out numpy-specific warnings in numpy >= 1.9
+            w = [e for e in w
+                 if not e.category is np.VisibleDeprecationWarning]
+
         # Verify some things
         if not len(w) > 0:
             raise AssertionError("No warning raised when calling %s"
@@ -234,6 +238,11 @@ def assert_no_warnings(func, *args, **kw):
         warnings.simplefilter('always')
 
         result = func(*args, **kw)
+        if hasattr(np, 'VisibleDeprecationWarning'):
+            # Filter out numpy-specific warnings in numpy >= 1.9
+            w = [e for e in w
+                 if not e.category is np.VisibleDeprecationWarning]
+
         if len(w) > 0:
             raise AssertionError("Got warnings when calling %s: %s"
                                  % (func.__name__, w))

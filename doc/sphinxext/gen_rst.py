@@ -870,7 +870,7 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
                     my_stdout = my_stdout.replace(
                         my_globals['__doc__'],
                         '')
-                my_stdout = my_stdout.strip()
+                my_stdout = my_stdout.strip().expandtabs()
                 if my_stdout:
                     stdout = '**Script output**::\n\n  %s\n\n' % (
                         '\n  '.join(my_stdout.split('\n')))
@@ -1028,7 +1028,7 @@ def embed_code_links(app, exception):
 
                     # ensure greediness
                     names = sorted(str_repl, key=len, reverse=True)
-                    expr = re.compile(r'(?<!\.)\b' +  # don't follow . or word
+                    expr = re.compile(r'(?<!\.>)' +  # don't follow '.' or '>'
                                       '|'.join(re.escape(name)
                                                for name in names))
 
