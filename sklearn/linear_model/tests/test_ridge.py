@@ -452,10 +452,11 @@ def test_ridge_cv_sparse_svd():
 
 
 def test_ridge_sparse_svd():
-    X = sp.csc_matrix(np.random.rand(100, 10))
+    X = sp.csc_matrix(rng.rand(100, 10))
     y = np.random.rand(100)
     ridge = Ridge(solver='svd')
-    assert_raises(Exception, ridge.fit, X, y)
+    assert_raises(NotImplementedError, ridge.fit, X, y)
+
 
 def test_class_weights():
     """
