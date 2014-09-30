@@ -1057,6 +1057,24 @@ cdef class DenseSplitter(Splitter):
         self.X_fx_stride = <SIZE_t> X.strides[1] / <SIZE_t> X.itemsize
 
 
+    cdef inline void _partition():
+            partition_end = end
+            p = start
+
+            while p < partition_end:
+                if X[X_sample_stride * samples[p] +
+                     X_fx_stride * best.feature] <= best.threshold:
+                    p += 1
+
+                else:
+                    partition_end -= 1
+
+                    tmp = samples[partition_end]
+                    samples[partition_end] = samples[p]
+                    samples[p] = tmp
+
+
+
 cdef class BestSplitter(DenseSplitter):
     """Splitter for finding the best split."""
     def __reduce__(self):
@@ -2153,14 +2171,14 @@ cdef class BestSparseSplitter(SparseSplitter):
                                     ((end - current.pos) < min_samples_leaf)):
                                 continue
 
+                            self.criterion.update(current.pos)
+
                             # Reject if min_weight_leaf is not satisfied
                             if ((self.criterion.weighted_n_left < min_weight_leaf) or
                                     (self.criterion.weighted_n_right < min_weight_leaf)):
                                 continue
 
-                            self.criterion.update(current.pos)
                             current.improvement = self.criterion.impurity_improvement(impurity)
-
                             if current.improvement > best.improvement:
                                 self.criterion.children_impurity(&current.impurity_left,
                                                                  &current.impurity_right)
