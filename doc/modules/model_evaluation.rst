@@ -87,9 +87,9 @@ probability estimates when creating the support vector classifier model::
     >>> cross_validation.cross_val_score(model, X, y, scoring='wrong_choice')
     Traceback (most recent call last):
     ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'log_loss', 'mean_absolute_error', 'mean_squared_error', 'precision', 'r2', 'recall', 'roc_auc']
-    >>> clf = svm.SVC(probability=True,random_state=42)
-    >>> cross_validation.cross_val_score(clf, X, y, scoring='log_loss') 
-    array([-0.08116113, -0.16760959, -0.07226303])
+    >>> clf = svm.SVC(probability=True,random_state=0)
+    >>> cross_validation.cross_val_score(clf, X, y, scoring='log_loss')
+    array([-0.07490352, -0.16449405, -0.06685511]) 
 
 .. note::
 
