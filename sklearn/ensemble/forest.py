@@ -48,7 +48,7 @@ from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..feature_selection.from_model import _LearntSelectorMixin
-from ..metrics import r2_score
+from ..metrics.scorer import get_scorer
 from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
@@ -101,6 +101,21 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
 def _parallel_helper(obj, methodname, *args, **kwargs):
     """Private helper to workaround Python 2 pickle limitations"""
     return getattr(obj, methodname)(*args, **kwargs)
+
+
+class _DummyPredictor:
+    """ Private class returning a precomputed prediction. Used to provide out-
+    of-bag training predictions to a scorer.
+    """
+
+    def __init__(self, prediction):
+        self._prediction = prediction
+
+    def predict(self, X):
+        return self._prediction
+
+    def predict_proba(self, X):
+        return self._prediction
 
 
 class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
@@ -324,12 +339,16 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             warm_start=warm_start)
 
     def _set_oob_score(self, X, y):
+        scoring = 'accuracy' if self.oob_score == True else self.oob_score
+        scorer = get_scorer(scoring)
+
         n_classes_ = self.n_classes_
         n_samples = y.shape[0]
 
         oob_decision_function = []
         oob_score = 0.0
         predictions = []
+        predicted_classes = []
 
         for k in xrange(self.n_outputs_):
             predictions.append(np.zeros((n_samples,
@@ -355,15 +374,15 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             decision = (predictions[k] /
                         predictions[k].sum(axis=1)[:, np.newaxis])
             oob_decision_function.append(decision)
-            oob_score += np.mean(y[:, k] ==
-                                 np.argmax(predictions[k], axis=1), axis=0)
+            predicted_classes.append(np.argmax(predictions[k], axis=1))
 
         if self.n_outputs_ == 1:
             self.oob_decision_function_ = oob_decision_function[0]
+            predicted_classes = predicted_classes[0]
         else:
             self.oob_decision_function_ = oob_decision_function
 
-        self.oob_score_ = oob_score / self.n_outputs_
+        self.oob_score_ = scorer(_DummyPredictor(predicted_classes), X, y)
 
     def _validate_y(self, y):
         y = np.copy(y)
@@ -560,6 +579,9 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
         return y_hat
 
     def _set_oob_score(self, X, y):
+        scoring = 'r2' if self.oob_score == True else self.oob_score
+        scorer = get_scorer(scoring)
+
         n_samples = y.shape[0]
 
         predictions = np.zeros((n_samples, self.n_outputs_))
@@ -589,13 +611,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             self.oob_prediction_ = \
                 self.oob_prediction_.reshape((n_samples, ))
 
-        self.oob_score_ = 0.0
-
-        for k in xrange(self.n_outputs_):
-            self.oob_score_ += r2_score(y[:, k],
-                                        predictions[:, k])
-
-        self.oob_score_ /= self.n_outputs_
+        self.oob_score_ = scorer(_DummyPredictor(self.oob_prediction_), X, y)
 
 
 class RandomForestClassifier(ForestClassifier):
@@ -664,9 +680,14 @@ class RandomForestClassifier(ForestClassifier):
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
 
-    oob_score : bool
-        Whether to use out-of-bag samples to estimate
-        the generalization error.
+    oob_score : bool, string, or callable, optional, default: False
+        Whether and how to estimate the generalization error using out-
+        of-bag samples.
+        If False, no oob_score_ is calculated;
+        If True, calculate oob_score_ using the ``accuracy`` scorer;
+        If string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``, calculate oob_score_ as specified.
 
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
@@ -824,9 +845,14 @@ class RandomForestRegressor(ForestRegressor):
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
 
-    oob_score : bool
-        whether to use out-of-bag samples to estimate
-        the generalization error.
+    oob_score : bool, string, or callable, optional, default: False
+        Whether and how to estimate the generalization error using out-
+        of-bag samples.
+        If False, no oob_score_ is calculated;
+        If True, calculate oob_score_ using the ``r2`` scorer;
+        If string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``, calculate oob_score_ as specified.
 
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
@@ -974,9 +1000,14 @@ class ExtraTreesClassifier(ForestClassifier):
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
 
-    oob_score : bool
-        Whether to use out-of-bag samples to estimate
-        the generalization error.
+    oob_score : bool, string, or callable, optional, default: False
+        Whether and how to estimate the generalization error using out-
+        of-bag samples.
+        If False, no oob_score_ is calculated;
+        If True, calculate oob_score_ using the ``accuracy`` scorer;
+        If string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``, calculate oob_score_ as specified.
 
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
@@ -1138,9 +1169,14 @@ class ExtraTreesRegressor(ForestRegressor):
         Whether bootstrap samples are used when building trees.
         Note: this parameter is tree-specific.
 
-    oob_score : bool
-        Whether to use out-of-bag samples to estimate
-        the generalization error.
+    oob_score : bool, string, or callable, optional, default: False
+        Whether and how to estimate the generalization error using out-
+        of-bag samples.
+        If False, no oob_score_ is calculated;
+        If True, calculate oob_score_ using the ``r2`` scorer;
+        If string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``, calculate oob_score_ as specified.
 
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
