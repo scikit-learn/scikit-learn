@@ -99,6 +99,10 @@ def test_scaler_1d():
     X = np.ones(5)
     assert_array_equal(scale(X, with_mean=False), X)
 
+    X = np.zeros(22) + np.log(1e-5)
+    X_scaled = scale(X)
+    assert_array_almost_equal(X_scaled.mean(axis=0), 0.0)
+
 
 def test_scaler_2d_arrays():
     """Test scaling of 2d array along first axis"""
