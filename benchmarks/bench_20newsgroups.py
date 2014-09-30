@@ -15,10 +15,10 @@ from sklearn.ensemble import ExtraTreesClassifier
 
 ESTIMATORS = {
     "dummy": DummyClassifier(),
-    "random_forest": RandomForestClassifier(n_estimators=250,
+    "random_forest": RandomForestClassifier(n_estimators=200,
                                             max_features="log2",
                                             min_samples_split=10),
-    "extra_trees": ExtraTreesClassifier(n_estimators=250,
+    "extra_trees": ExtraTreesClassifier(n_estimators=200,
                                         max_features="log2",
                                         min_samples_split=10),
 }
