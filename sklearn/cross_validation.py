@@ -1096,8 +1096,8 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
         the number of folds in StratifiedKFold if y is binary
         or multiclass and estimator is a classifier, or the number
         of folds in KFold otherwise. If None, it is equivalent to cv=3.
-        Note that this function does not make sense when elements are included
-        in multiple test sets.
+        This generator must include all elements in the test set exactly once.
+        Otherwise, a ValueError is raised.
 
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
