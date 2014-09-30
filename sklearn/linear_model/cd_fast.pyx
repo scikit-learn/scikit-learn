@@ -128,7 +128,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             np.ndarray[DOUBLE, ndim=2] X,
                             np.ndarray[DOUBLE, ndim=1] y,
                             int max_iter, double tol,
-                            object rng, bint random=0, bint positive=0):
+                            object rng, bint random=0, bint positive=0,
+                            bint stopping_obj=0):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -231,47 +232,50 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                           <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)),
                           1, <DOUBLE*>R.data, 1)
 
-                # Update the objective value only if the feature
-                # vector is changed.
-                # This checking condition for glmnet verifies that the
+                # This checking condition borrowed from glmnet verifies that the
                 # maximum change in objective is lesser than the tol.
-                if w[ii] != w_ii:
-                    # R_norm2 = np.dot(R, R)
-                    R_norm2 = ddot(n_samples, <DOUBLE*>R.data, 1,
-                                   <DOUBLE*>R.data, 1)
+                if stopping_obj:
+                    # Update the objective value only if the feature vector
+                    # is changed.
 
-                    # l1_norm = sum(abs(w_ii))
-                    l1_norm -= (fabs(w_ii) - fabs(w[ii]))
+                    if w[ii] != w_ii:
+                        # R_norm2 = np.dot(R, R)
+                        R_norm2 = ddot(n_samples, <DOUBLE*>R.data, 1,
+                                       <DOUBLE*>R.data, 1)
 
-                    # w_norm = sum(w_ii ** 2)
-                    w_norm2 -= (w_ii*w_ii - w[ii]*w[ii])
+                        # l1_norm = sum(abs(w_ii))
+                        l1_norm -= (fabs(w_ii) - fabs(w[ii]))
 
-                    obj = 0.5 * R_norm2 + alpha * l1_norm + 0.5 * beta * w_norm2
+                        # w_norm = sum(w_ii ** 2)
+                        w_norm2 -= (w_ii*w_ii - w[ii]*w[ii])
 
-                    if f_iter == 0:
+                        obj = 0.5 * R_norm2 + alpha * l1_norm + 0.5 * beta * w_norm2
+
+                        if f_iter == 0:
+                            prev_obj = obj
+                        else:
+                            diff = fabs(obj - prev_obj)
                         prev_obj = obj
-                    else:
-                        diff = fabs(obj - prev_obj)
-                    prev_obj = obj
 
-                if f_iter == 1 or diff > max_diff:
-                    max_diff = diff
+                    if f_iter == 1 or diff > max_diff:
+                        max_diff = diff
 
-            if max_diff < tol:
+                else:
+                    # update the maximum absolute coefficient update
+                    d_w_ii = fabs(w[ii] - w_ii)
+                    if d_w_ii > d_w_max:
+                        d_w_max = d_w_ii
+
+                    if fabs(w[ii]) > w_max:
+                        w_max = fabs(w[ii])
+
+            # Stopping criteria equals objective
+            if stopping_obj and max_diff < tol:
                 break
 
-            """
-            # update the maximum absolute coefficient update
-            d_w_ii = fabs(w[ii] - w_ii)
-            if d_w_ii > d_w_max:
-                d_w_max = d_w_ii
-
-            if fabs(w[ii]) > w_max:
-                w_max = fabs(w[ii])
-
-            if (w_max == 0.0
-                    or d_w_max / w_max < d_w_tol
-                    or n_iter == max_iter - 1):
+            elif (w_max == 0.0
+                      or d_w_max / w_max < d_w_tol
+                      or n_iter == max_iter - 1):
                 # the biggest coordinate update of this iteration was smaller
                 # than the tolerance: check the duality gap as ultimate
                 # stopping criterion
@@ -288,6 +292,10 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 else:
                     dual_norm_XtA = abs_max(n_features, <DOUBLE*>XtA.data)
 
+                # R_norm2 = np.dot(R, R)
+                R_norm2 = ddot(n_samples, <DOUBLE*>R.data, 1,
+                               <DOUBLE*>R.data, 1)
+
                 # w_norm2 = np.dot(w, w)
                 w_norm2 = ddot(n_features, <DOUBLE*>w.data, 1,
                                <DOUBLE*>w.data, 1)
@@ -300,6 +308,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                     const = 1.0
                     gap = R_norm2
 
+                l1_norm = dasum(n_features, <DOUBLE*>w.data, 1)
+
                 # np.dot(R.T, y)
                 gap += (alpha * l1_norm - const * ddot(
                             n_samples,
@@ -310,7 +320,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 if gap < tol:
                     # return if we reached desired tolerance
                     break
-            """
+
     return w, gap, tol, n_iter + 1
 
 
@@ -323,7 +333,7 @@ def sparse_enet_coordinate_descent(double[:] w,
                             int[:] X_indptr, double[:] y,
                             double[:] X_mean, int max_iter,
                             double tol, object rng, bint random=0,
-                            bint positive=0):
+                            bint positive=0, bint stopping_obj=0):
     """Cython version of the coordinate descent algorithm for Elastic-Net
 
     We minimize:
@@ -460,44 +470,45 @@ def sparse_enet_coordinate_descent(double[:] w,
                         for jj in range(n_samples):
                             R[jj] += X_mean_ii * w[ii]
 
-                # Update the objective value only if the feature
-                # vector is changed.
-                # This checking condition for glmnet verifies that the
+                # This checking condition borrowed from glmnet verifies that the
                 # maximum change in objective is lesser than the tol.
-                if w[ii] != w_ii:
+                if stopping_obj:
+                    # Update the objective value only if the feature vector
+                    # is changed.
+                    if w[ii] != w_ii:
 
-                    # R_norm2 = np.dot(R, R)
-                    R_norm2 = ddot(n_samples, &R[0], 1, &R[0], 1)
+                        # R_norm2 = np.dot(R, R)
+                        R_norm2 = ddot(n_samples, &R[0], 1, &R[0], 1)
 
-                    # l1_norm = sum(abs(w_ii))
-                    l1_norm -= (fabs(w_ii) - fabs(w[ii]))
+                        # l1_norm = sum(abs(w_ii))
+                        l1_norm -= (fabs(w_ii) - fabs(w[ii]))
 
-                    # w_norm = sum(w_ii ** 2)
-                    w_norm2 -= (w_ii*w_ii - w[ii]*w[ii])
+                        # w_norm = sum(w_ii ** 2)
+                        w_norm2 -= (w_ii*w_ii - w[ii]*w[ii])
 
-                    obj = 0.5 * R_norm2 + alpha * l1_norm + 0.5 * beta * w_norm2
-                    if f_iter == 0:
+                        obj = 0.5 * R_norm2 + alpha * l1_norm + 0.5 * beta * w_norm2
+                        if f_iter == 0:
+                            prev_obj = obj
+                        else:
+                            diff = fabs(obj - prev_obj)
                         prev_obj = obj
-                    else:
-                        diff = fabs(obj - prev_obj)
-                    prev_obj = obj
 
-                if f_iter == 1 or diff > max_diff:
-                    max_diff = diff
+                    if f_iter == 1 or diff > max_diff:
+                        max_diff = diff
 
-            if max_diff < tol:
+                else:
+                    # update the maximum absolute coefficient update
+                    d_w_ii = fabs(w[ii] - w_ii)
+                    if d_w_ii > d_w_max:
+                        d_w_max = d_w_ii
+
+                    if w[ii] > w_max:
+                        w_max = w[ii]
+
+            if stopping_obj and max_diff < tol:
                 break
 
-            """
-            # update the maximum absolute coefficient update
-            d_w_ii = fabs(w[ii] - w_ii)
-            if d_w_ii > d_w_max:
-                d_w_max = d_w_ii
-
-            if w[ii] > w_max:
-                w_max = w[ii]
-
-            if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
+            elif w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
@@ -544,7 +555,6 @@ def sparse_enet_coordinate_descent(double[:] w,
                 if gap < tol:
                     # return if we reached desired tolerance
                     break
-            """
 
     return w, gap, tol, n_iter + 1
 
@@ -555,7 +565,8 @@ def sparse_enet_coordinate_descent(double[:] w,
 def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
                                  double[:, :] Q, double[:] q, double[:] y,
                                  int max_iter, double tol, object rng,
-                                 bint random=0, bint positive=0):
+                                 bint random=0, bint positive=0,
+                                 bint stopping_obj=0):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -660,50 +671,52 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
                     daxpy(n_features, w[ii], Q_ptr + ii * n_features, 1,
                           H_ptr, 1)
 
-                # Update the objective value only if the feature
-                # vector is changed.
-                # This checking condition for glmnet verifies that the
+                # This checking condition borrowed from glmnet verifies that the
                 # maximum change in objective is lesser than the tol.
-                if w[ii] != w_ii:
+                if stopping_obj:
+                    # Update the objective value only if the feature vector
+                    # is changed.
+                    if w[ii] != w_ii:
 
-                    # Intelligent updates.
-                    # Update qw
-                    q_dot_w -= (w_ii*q[ii] - w[ii]*q[ii])
+                        # Intelligent updates.
+                        # Update qw
+                        q_dot_w -= (w_ii*q[ii] - w[ii]*q[ii])
 
-                    # l1_norm = sum(abs(w_ii))
-                    l1_norm -= (fabs(w_ii) - fabs(w[ii]))
+                        # l1_norm = sum(abs(w_ii))
+                        l1_norm -= (fabs(w_ii) - fabs(w[ii]))
 
-                    # w_norm = sum(w**2)
-                    w_norm2 -= (w_ii*w_ii - w[ii]*w[ii])
+                        # w_norm = sum(w**2)
+                        w_norm2 -= (w_ii*w_ii - w[ii]*w[ii])
 
-                    # Update wH
-                    wH -= (w_ii*H[ii] - w[ii]*H[ii])
+                        # Update wH
+                        wH -= (w_ii*H[ii] - w[ii]*H[ii])
 
-                    # R_norm2 = np.dot(R, R)
-                    R_norm2 = y_norm2 + wH - 2.0 * q_dot_w
+                        # R_norm2 = np.dot(R, R)
+                        R_norm2 = y_norm2 + wH - 2.0 * q_dot_w
 
-                    obj = 0.5 * R_norm2 + alpha * l1_norm + 0.5 * beta * w_norm2
-                    if f_iter == 0:
+                        obj = 0.5 * R_norm2 + alpha * l1_norm + 0.5 * beta * w_norm2
+                        if f_iter == 0:
+                            prev_obj = obj
+                        else:
+                            diff = fabs(obj - prev_obj)
                         prev_obj = obj
-                    else:
-                        diff = fabs(obj - prev_obj)
-                    prev_obj = obj
 
-                if f_iter == 1 or diff > max_diff:
-                    max_diff = diff
+                    if f_iter == 1 or diff > max_diff:
+                        max_diff = diff
 
-            if max_diff < tol:
+                else:
+                    # update the maximum absolute coefficient update
+                    d_w_ii = fabs(w[ii] - w_ii)
+                    if d_w_ii > d_w_max:
+                        d_w_max = d_w_ii
+
+                    if fabs(w[ii]) > w_max:
+                        w_max = fabs(w[ii])
+
+            if stopping_obj and max_diff < tol:
                 break
-            """
-            # update the maximum absolute coefficient update
-            d_w_ii = fabs(w[ii] - w_ii)
-            if d_w_ii > d_w_max:
-                d_w_max = d_w_ii
 
-            if fabs(w[ii]) > w_max:
-                w_max = fabs(w[ii])
-
-            if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
+            elif w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
@@ -720,6 +733,10 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
                 else:
                     dual_norm_XtA = abs_max(n_features, XtA_ptr)
 
+                # temp = np.sum(w * H)
+                tmp = 0.0
+                for ii in range(n_features):
+                    tmp += w[ii] * H[ii]
                 R_norm2 = y_norm2 + tmp - 2.0 * q_dot_w
 
                 # w_norm2 = np.dot(w, w)
@@ -741,8 +758,6 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
                 if gap < tol:
                     # return if we reached desired tolerance
                     break
-            """
-
 
     return np.asarray(w), gap, tol, n_iter + 1
 
@@ -753,7 +768,7 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
                                        double l2_reg, double[::1, :] X,
                                        double[:, :] Y, int max_iter,
                                        double tol, object rng,
-                                       bint random=0):
+                                       bint random=0, bint stopping_obj=0):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net mult-task regression
 
@@ -881,48 +896,49 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
                          X_ptr + ii * n_samples, 1, W_ptr + ii * n_tasks, 1,
                          &R[0, 0], n_tasks)
 
-                # Update the objective value only if the feature
-                # vector is changed.
-                # This checking condition for glmnet verifies that the
+                # This checking condition borrowed from glmnet verifies that the
                 # maximum change in objective is lesser than the tol.
-                if prev_wii_norm != current_wii_norm:
+                if stopping_obj:
+                    # Update the objective value only if the feature vector
+                    # is changed.
 
-                    # R_norm = linalg.norm(R, ord='fro')
-                    R_norm = dnrm2(n_samples * n_tasks, &R[0, 0], 1)
+                    if prev_wii_norm != current_wii_norm:
+                        # R_norm = linalg.norm(R, ord='fro')
+                        R_norm = dnrm2(n_samples * n_tasks, &R[0, 0], 1)
 
-                    # Update w_norm
-                    w_norm -= ((prev_wii_norm * prev_wii_norm) - (
-                                current_wii_norm * current_wii_norm))
+                        # Update w_norm
+                        w_norm -= ((prev_wii_norm * prev_wii_norm) - (
+                                    current_wii_norm * current_wii_norm))
 
-                    # Update l21_norm
-                    l21_norm -= (prev_wii_norm - current_wii_norm)
+                        # Update l21_norm
+                        l21_norm -= (prev_wii_norm - current_wii_norm)
 
-                    obj = 0.5 * R_norm * R_norm + 0.5 * l2_reg * w_norm + l1_reg * l21_norm
+                        obj = 0.5 * R_norm * R_norm + 0.5 * l2_reg * w_norm + l1_reg * l21_norm
 
-                    if f_iter == 0:
+                        if f_iter == 0:
+                            prev_obj = obj
+                        else:
+                            diff = fabs(obj - prev_obj)
                         prev_obj = obj
-                    else:
-                        diff = fabs(obj - prev_obj)
-                    prev_obj = obj
 
-                if f_iter == 1 or diff > max_diff:
-                    max_diff = diff
+                    if f_iter == 1 or diff > max_diff:
+                        max_diff = diff
 
-            if max_diff < tol:
+                else:
+                    # update the maximum absolute coefficient update
+                    d_w_ii = diff_abs_max(n_tasks, W_ptr + ii * n_tasks, wii_ptr)
+
+                    if d_w_ii > d_w_max:
+                        d_w_max = d_w_ii
+
+                    W_ii_abs_max = abs_max(n_tasks, W_ptr + ii * n_tasks)
+                    if W_ii_abs_max > w_max:
+                        w_max = W_ii_abs_max
+
+            if stopping_obj and max_diff < tol:
                 break
-            """
-            # update the maximum absolute coefficient update
-            d_w_ii = diff_abs_max(n_tasks, W_ptr + ii * n_tasks, wii_ptr)
 
-            if d_w_ii > d_w_max:
-                d_w_max = d_w_ii
-
-            W_ii_abs_max = abs_max(n_tasks, W_ptr + ii * n_tasks)
-            if W_ii_abs_max > w_max:
-                w_max = W_ii_abs_max
-
-
-            if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
+            elif w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
@@ -974,5 +990,5 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
                 if gap < tol:
                     # return if we reached desired tolerance
                     break
-            """
+
     return np.asarray(W), gap, tol, n_iter + 1

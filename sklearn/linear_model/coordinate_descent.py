@@ -182,6 +182,9 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     params : kwargs
         keyword arguments passed to the coordinate descent solver.
 
+    return_n_iter : bool
+        whether to return the number of iterations or not.
+
     Returns
     -------
     models : a list of models along the regularization path
@@ -266,7 +269,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                      alphas=alphas, precompute=precompute, Xy=Xy,
                      fit_intercept=fit_intercept, normalize=normalize,
                      copy_X=copy_X, coef_init=coef_init, verbose=verbose,
-                     return_models=return_models, **params)
+                     return_models=return_models, return_n_iter=return_n_iter,
+                     **params)
 
 
 def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
@@ -469,6 +473,11 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     if selection not in ['random', 'cyclic']:
         raise ValueError("selection should be either random or cyclic.")
     random = (selection == 'random')
+
+    stopping = params.get('stopping', 'dual_gap')
+    if stopping not in ['dual_gap', 'objective']:
+        raise ValueError("stopping should be in 'dual_gap' or 'objective'")
+    stopping = (stopping == 'objective')
     models = []
 
     if not multi_output:
@@ -490,18 +499,19 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             model = cd_fast.sparse_enet_coordinate_descent(
                 coef_, l1_reg, l2_reg, X.data, X.indices,
                 X.indptr, y, X_sparse_scaling,
-                max_iter, tol, rng, random, positive)
+                max_iter, tol, rng, random, positive, stopping)
         elif multi_output:
             model = cd_fast.enet_coordinate_descent_multi_task(
-                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random)
+                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random,
+                stopping)
         elif isinstance(precompute, np.ndarray):
             model = cd_fast.enet_coordinate_descent_gram(
                 coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
-                tol, rng, random, positive)
+                tol, rng, random, positive, stopping)
         elif precompute is False:
             model = cd_fast.enet_coordinate_descent(
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random,
-                positive)
+                positive, stopping)
         else:
             raise ValueError("Precompute should be one of True, False, "
                              "'auto' or array-like")
@@ -670,8 +680,8 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, precompute=False, max_iter=1000,
-                 copy_X=True, tol=1e-4, warm_start=False, positive=False,
-                 random_state=None, selection='cyclic'):
+                 copy_X=True, tol="auto", warm_start=False, positive=False,
+                 random_state=None, selection='cyclic', stopping='dual_gap'):
         self.alpha = alpha
         self.l1_ratio = l1_ratio
         self.coef_ = None
@@ -686,6 +696,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.intercept_ = 0.0
         self.random_state = random_state
         self.selection = selection
+        self.stopping = stopping
 
     def fit(self, X, y):
         """Fit model with coordinate descent.
@@ -738,6 +749,16 @@ class ElasticNet(LinearModel, RegressorMixin):
         if self.selection not in ['cyclic', 'random']:
             raise ValueError("selection should be either random or cyclic.")
 
+        if self.stopping not in ['dual_gap', 'objective']:
+            raise ValueError("stopping should be either dual_gap or objective"
+                             "got %s" % self.stopping)
+
+        tol = self.tol
+        if self.tol == "auto":
+            tol = 1e-7
+            if self.stopping == "dual_gap":
+                tol = 1e-4
+
         if not self.warm_start or self.coef_ is None:
             coef_ = np.zeros((n_targets, n_features), dtype=np.float64,
                              order='F')
@@ -760,7 +781,7 @@ class ElasticNet(LinearModel, RegressorMixin):
                           n_alphas=None, alphas=[self.alpha],
                           precompute=precompute, Xy=this_Xy,
                           fit_intercept=False, normalize=False, copy_X=True,
-                          verbose=False, tol=self.tol, positive=self.positive,
+                          verbose=False, tol=tol, positive=self.positive,
                           X_mean=X_mean, X_std=X_std, return_n_iter=True,
                           coef_init=coef_[k], max_iter=self.max_iter,
                           random_state=self.random_state,
@@ -1044,9 +1065,10 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
 
     @abstractmethod
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
-                 normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
+                 normalize=False, precompute='auto', max_iter=1000, tol="auto",
                  copy_X=True, cv=None, verbose=False, n_jobs=1,
-                 positive=False, random_state=None, selection='cyclic'):
+                 positive=False, random_state=None, selection='cyclic',
+                 stopping='objective'):
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
@@ -1062,6 +1084,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
+        self.stopping = stopping
 
     def fit(self, X, y):
         """Fit linear model with coordinate descent
@@ -1107,6 +1130,16 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
 
         if self.selection not in ["random", "cyclic"]:
             raise ValueError("selection should be either random or cyclic.")
+
+        if self.stopping not in ['dual_gap', 'objective']:
+            raise ValueError("stopping should be either dual_gap or objective"
+                             "got %s" % self.stopping)
+
+        tol = self.tol
+        if self.tol == "auto":
+            tol = 1e-7
+            if self.stopping == "dual_gap":
+                tol = 1e-4
 
         # This makes sure that there is no duplication in memory.
         # Dealing right with copy_X is important in the following:
@@ -1167,6 +1200,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         path_params.update({'n_alphas': n_alphas})
 
         path_params['copy_X'] = copy_X
+        path_params['tol'] = tol
         # We are not computing in parallel, we can modify X
         # inplace in the folds
         if not (self.n_jobs == 1 or self.n_jobs is None):
@@ -1218,6 +1252,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         model.set_params(**common_params)
         model.alpha = best_alpha
         model.l1_ratio = best_l1_ratio
+        model.tol = tol
         model.copy_X = copy_X
         model.precompute = False
         model.fit(X, y)
@@ -1337,15 +1372,17 @@ class LassoCV(LinearModelCV, RegressorMixin):
     path = staticmethod(lasso_path)
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
-                 normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
+                 normalize=False, precompute='auto', max_iter=1000, tol="auto",
                  copy_X=True, cv=None, verbose=False, n_jobs=1,
-                 positive=False, random_state=None, selection='cyclic'):
+                 positive=False, random_state=None, selection='cyclic',
+                 stopping="dual_gap"):
         super(LassoCV, self).__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
             fit_intercept=fit_intercept, normalize=normalize,
             precompute=precompute, max_iter=max_iter, tol=tol, copy_X=copy_X,
             cv=cv, verbose=verbose, n_jobs=n_jobs, positive=positive,
-            random_state=random_state, selection=selection)
+            random_state=random_state, selection=selection,
+            stopping=stopping)
 
 
 class ElasticNetCV(LinearModelCV, RegressorMixin):
@@ -1480,9 +1517,9 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',
-                 max_iter=1000, tol=1e-4, cv=None, copy_X=True,
+                 max_iter=1000, tol="auto", cv=None, copy_X=True,
                  verbose=0, n_jobs=1, positive=False, random_state=None,
-                 selection='cyclic'):
+                 selection='cyclic', stopping='dual_gap'):
         self.l1_ratio = l1_ratio
         self.eps = eps
         self.n_alphas = n_alphas
@@ -1499,6 +1536,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
+        self.stopping = stopping
 
 ###############################################################################
 # Multi Task ElasticNet and Lasso models (with joint feature selection)
@@ -1604,8 +1642,9 @@ class MultiTaskElasticNet(Lasso):
     should be directly passed as a Fortran-contiguous numpy array.
     """
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
-                 normalize=False, copy_X=True, max_iter=1000, tol=1e-4,
-                 warm_start=False, random_state=None, selection='cyclic'):
+                 normalize=False, copy_X=True, max_iter=1000, tol="auto",
+                 warm_start=False, random_state=None, selection='cyclic',
+                 stopping='dual_gap'):
         self.l1_ratio = l1_ratio
         self.alpha = alpha
         self.coef_ = None
@@ -1617,6 +1656,7 @@ class MultiTaskElasticNet(Lasso):
         self.warm_start = warm_start
         self.random_state = random_state
         self.selection = selection
+        self.stopping = stopping
 
     def fit(self, X, y):
         """Fit MultiTaskLasso model with coordinate descent
@@ -1664,6 +1704,17 @@ class MultiTaskElasticNet(Lasso):
             self.coef_ = np.zeros((n_tasks, n_features), dtype=np.float64,
                                   order='F')
 
+        if self.stopping not in ['dual_gap', 'objective']:
+            raise ValueError("stopping should be either dual_gap or objective"
+                             "got %s" % self.stopping)
+        stopping = (self.stopping == 'objective')
+
+        tol = self.tol
+        if self.tol == "auto":
+            tol = 1e-7
+            if self.stopping == "dual_gap":
+                tol = 1e-4
+
         l1_reg = self.alpha * self.l1_ratio * n_samples
         l2_reg = self.alpha * (1.0 - self.l1_ratio) * n_samples
 
@@ -1675,8 +1726,9 @@ class MultiTaskElasticNet(Lasso):
 
         self.coef_, self.dual_gap_, self.eps_, self.n_iter_ = \
             cd_fast.enet_coordinate_descent_multi_task(
-                self.coef_, l1_reg, l2_reg, X, y, self.max_iter, self.tol,
-                check_random_state(self.random_state), random)
+                self.coef_, l1_reg, l2_reg, X, y, self.max_iter, tol,
+                check_random_state(self.random_state), random,
+                stopping)
 
         self._set_intercept(X_mean, y_mean, X_std)
 
@@ -1779,8 +1831,8 @@ class MultiTaskLasso(MultiTaskElasticNet):
     should be directly passed as a Fortran-contiguous numpy array.
     """
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
-                 copy_X=True, max_iter=1000, tol=1e-4, warm_start=False,
-                 random_state=None, selection='cyclic'):
+                 copy_X=True, max_iter=1000, tol="auto", warm_start=False,
+                 random_state=None, selection='cyclic', stopping='dual_gap'):
         self.alpha = alpha
         self.coef_ = None
         self.fit_intercept = fit_intercept
@@ -1792,6 +1844,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
         self.l1_ratio = 1.0
         self.random_state = random_state
         self.selection = selection
+        self.stopping = stopping
 
 
 class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
@@ -1932,8 +1985,9 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False,
-                 max_iter=1000, tol=1e-4, cv=None, copy_X=True,
-                 verbose=0, n_jobs=1, random_state=None, selection='cyclic'):
+                 max_iter=1000, tol="auto", cv=None, copy_X=True,
+                 verbose=0, n_jobs=1, random_state=None, selection='cyclic',
+                 stopping="dual_gap"):
         self.l1_ratio = l1_ratio
         self.eps = eps
         self.n_alphas = n_alphas
@@ -1948,6 +2002,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.selection = selection
+        self.stopping = stopping
 
 
 class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
@@ -2058,12 +2113,12 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
     path = staticmethod(lasso_path)
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
-                 normalize=False, max_iter=1000, tol=1e-4, copy_X=True,
+                 normalize=False, max_iter=1000, tol="auto", copy_X=True,
                  cv=None, verbose=False, n_jobs=1, random_state=None,
-                 selection='cyclic'):
+                 selection='cyclic', stopping="dual_gap"):
         super(MultiTaskLassoCV, self).__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
             fit_intercept=fit_intercept, normalize=normalize,
             max_iter=max_iter, tol=tol, copy_X=copy_X,
             cv=cv, verbose=verbose, n_jobs=n_jobs, random_state=random_state,
-            selection=selection)
+            selection=selection, stopping=stopping)
