@@ -231,23 +231,23 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                           <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)),
                           1, <DOUBLE*>R.data, 1)
 
-                # update the maximum absolute coefficient update
-                d_w_ii = fabs(w[ii] - w_ii)
-                if d_w_ii > d_w_max:
-                    d_w_max = d_w_ii
-
-                if fabs(w[ii]) > w_max:
-                    w_max = fabs(w[ii])
-
+                # Update the objective value only if the feature
+                # vector is changed.
+                # This checking condition for glmnet verifies that the
+                # maximum change in objective is lesser than the tol.
                 if w[ii] != w_ii:
                     # R_norm2 = np.dot(R, R)
                     R_norm2 = ddot(n_samples, <DOUBLE*>R.data, 1,
                                    <DOUBLE*>R.data, 1)
 
+                    # l1_norm = sum(abs(w_ii))
                     l1_norm -= (fabs(w_ii) - fabs(w[ii]))
+
+                    # w_norm = sum(w_ii ** 2)
                     w_norm2 -= (w_ii*w_ii - w[ii]*w[ii])
 
                     obj = 0.5 * R_norm2 + alpha * l1_norm + 0.5 * beta * w_norm2
+
                     if f_iter == 0:
                         prev_obj = obj
                     else:
@@ -261,6 +261,14 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 break
 
             """
+            # update the maximum absolute coefficient update
+            d_w_ii = fabs(w[ii] - w_ii)
+            if d_w_ii > d_w_max:
+                d_w_max = d_w_ii
+
+            if fabs(w[ii]) > w_max:
+                w_max = fabs(w[ii])
+
             if (w_max == 0.0
                     or d_w_max / w_max < d_w_tol
                     or n_iter == max_iter - 1):
@@ -452,19 +460,19 @@ def sparse_enet_coordinate_descent(double[:] w,
                         for jj in range(n_samples):
                             R[jj] += X_mean_ii * w[ii]
 
-                # update the maximum absolute coefficient update
-                d_w_ii = fabs(w[ii] - w_ii)
-                if d_w_ii > d_w_max:
-                    d_w_max = d_w_ii
-
-                if w[ii] > w_max:
-                    w_max = w[ii]
-
+                # Update the objective value only if the feature
+                # vector is changed.
+                # This checking condition for glmnet verifies that the
+                # maximum change in objective is lesser than the tol.
                 if w[ii] != w_ii:
+
                     # R_norm2 = np.dot(R, R)
                     R_norm2 = ddot(n_samples, &R[0], 1, &R[0], 1)
 
+                    # l1_norm = sum(abs(w_ii))
                     l1_norm -= (fabs(w_ii) - fabs(w[ii]))
+
+                    # w_norm = sum(w_ii ** 2)
                     w_norm2 -= (w_ii*w_ii - w[ii]*w[ii])
 
                     obj = 0.5 * R_norm2 + alpha * l1_norm + 0.5 * beta * w_norm2
@@ -481,6 +489,14 @@ def sparse_enet_coordinate_descent(double[:] w,
                 break
 
             """
+            # update the maximum absolute coefficient update
+            d_w_ii = fabs(w[ii] - w_ii)
+            if d_w_ii > d_w_max:
+                d_w_max = d_w_ii
+
+            if w[ii] > w_max:
+                w_max = w[ii]
+
             if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
@@ -580,6 +596,7 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
 
     cdef double y_norm2 = np.dot(y, y)
+    cdef double wH = 0.0
     cdef double* Q_ptr = &Q[0, 0]
     cdef double* H_ptr = &H[0]
     cdef double* XtA_ptr = &XtA[0]
@@ -607,10 +624,9 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
         # vary if q is sliced from a 2-D array.
         q_dot_w = ddot(n_features, &w[0], 1, &q[0], n_tasks)
 
-        # temp = np.sum(w * H)
-        tmp = 0.0
+        # wH = np.sum(w * H)
         for ii in range(n_features):
-            tmp += w[ii] * H[ii]
+            wH += w[ii] * H[ii]
 
         for n_iter in range(max_iter):
             w_max = 0.0
@@ -644,23 +660,27 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
                     daxpy(n_features, w[ii], Q_ptr + ii * n_features, 1,
                           H_ptr, 1)
 
-                # update the maximum absolute coefficient update
-                d_w_ii = fabs(w[ii] - w_ii)
-                if d_w_ii > d_w_max:
-                    d_w_max = d_w_ii
-
-                if fabs(w[ii]) > w_max:
-                    w_max = fabs(w[ii])
-
+                # Update the objective value only if the feature
+                # vector is changed.
+                # This checking condition for glmnet verifies that the
+                # maximum change in objective is lesser than the tol.
                 if w[ii] != w_ii:
 
                     # Intelligent updates.
+                    # Update qw
                     q_dot_w -= (w_ii*q[ii] - w[ii]*q[ii])
+
+                    # l1_norm = sum(abs(w_ii))
                     l1_norm -= (fabs(w_ii) - fabs(w[ii]))
+
+                    # w_norm = sum(w**2)
                     w_norm2 -= (w_ii*w_ii - w[ii]*w[ii])
-                    tmp -= (w_ii*H[ii] - w[ii]*H[ii])
+
+                    # Update wH
+                    wH -= (w_ii*H[ii] - w[ii]*H[ii])
+
                     # R_norm2 = np.dot(R, R)
-                    R_norm2 = y_norm2 + tmp - 2.0 * q_dot_w
+                    R_norm2 = y_norm2 + wH - 2.0 * q_dot_w
 
                     obj = 0.5 * R_norm2 + alpha * l1_norm + 0.5 * beta * w_norm2
                     if f_iter == 0:
@@ -675,6 +695,14 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
             if max_diff < tol:
                 break
             """
+            # update the maximum absolute coefficient update
+            d_w_ii = fabs(w[ii] - w_ii)
+            if d_w_ii > d_w_max:
+                d_w_max = d_w_ii
+
+            if fabs(w[ii]) > w_max:
+                w_max = fabs(w[ii])
+
             if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
@@ -761,6 +789,13 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
     cdef double d_w_tol = tol
     cdef double ry_sum
     cdef double l21_norm
+    cdef double prev_wii_norm
+    cdef double current_wii_norm
+    cdef double w_norm
+    cdef double obj
+    cdef double prev_obj
+    cdef double diff
+    cdef double max_diff
     cdef unsigned int ii
     cdef unsigned int jj
     cdef unsigned int n_iter
@@ -793,6 +828,15 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
         # tol = tol * linalg.norm(Y, ord='fro') ** 2
         tol = tol * dnrm2(n_samples * n_tasks, Y_ptr, 1) ** 2
 
+        # w_norm = linalg.norm(W, ord='fro')
+        w_norm = dnrm2(n_features * n_tasks, W_ptr, 1) ** 2
+
+        # l21_norm = np.sqrt(np.sum(W ** 2, axis=0)).sum()
+        l21_norm = 0.0
+        for ii in range(n_features):
+            # np.sqrt(np.sum(W ** 2, axis=0))
+            l21_norm += dnrm2(n_tasks, W_ptr + n_tasks * ii, 1)
+
         for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
@@ -809,7 +853,8 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
                 dcopy(n_tasks, W_ptr + ii * n_tasks, 1, wii_ptr, 1)
 
                 # if np.sum(w_ii ** 2) != 0.0:  # can do better
-                if dnrm2(n_tasks, wii_ptr, 1) != 0.0:
+                prev_wii_norm = dnrm2(n_tasks, wii_ptr, 1)
+                if prev_wii_norm != 0.0:
                     # R += np.dot(X[:, ii][:, None], w_ii[None, :]) # rank 1 update
                     dger(CblasRowMajor, n_samples, n_tasks, 1.0,
                          X_ptr + ii * n_samples, 1,
@@ -829,21 +874,53 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
                           W_ptr + ii * n_tasks, 1)
 
                 # if np.sum(W[:, ii] ** 2) != 0.0:  # can do better
-                if dnrm2(n_tasks, W_ptr + ii * n_tasks, 1) != 0.0:
+                current_wii_norm = dnrm2(n_tasks, W_ptr + ii * n_tasks, 1)
+                if current_wii_norm != 0.0:
                     # R -= np.dot(X[:, ii][:, None], W[:, ii][None, :]) # Update residual : rank 1 update
                     dger(CblasRowMajor, n_samples, n_tasks, -1.0,
                          X_ptr + ii * n_samples, 1, W_ptr + ii * n_tasks, 1,
                          &R[0, 0], n_tasks)
 
-                # update the maximum absolute coefficient update
-                d_w_ii = diff_abs_max(n_tasks, W_ptr + ii * n_tasks, wii_ptr)
+                # Update the objective value only if the feature
+                # vector is changed.
+                # This checking condition for glmnet verifies that the
+                # maximum change in objective is lesser than the tol.
+                if prev_wii_norm != current_wii_norm:
 
-                if d_w_ii > d_w_max:
-                    d_w_max = d_w_ii
+                    # R_norm = linalg.norm(R, ord='fro')
+                    R_norm = dnrm2(n_samples * n_tasks, &R[0, 0], 1)
 
-                W_ii_abs_max = abs_max(n_tasks, W_ptr + ii * n_tasks)
-                if W_ii_abs_max > w_max:
-                    w_max = W_ii_abs_max
+                    # Update w_norm
+                    w_norm -= ((prev_wii_norm * prev_wii_norm) - (
+                                current_wii_norm * current_wii_norm))
+
+                    # Update l21_norm
+                    l21_norm -= (prev_wii_norm - current_wii_norm)
+
+                    obj = 0.5 * R_norm * R_norm + 0.5 * l2_reg * w_norm + l1_reg * l21_norm
+
+                    if f_iter == 0:
+                        prev_obj = obj
+                    else:
+                        diff = fabs(obj - prev_obj)
+                    prev_obj = obj
+
+                if f_iter == 1 or diff > max_diff:
+                    max_diff = diff
+
+            if max_diff < tol:
+                break
+            """
+            # update the maximum absolute coefficient update
+            d_w_ii = diff_abs_max(n_tasks, W_ptr + ii * n_tasks, wii_ptr)
+
+            if d_w_ii > d_w_max:
+                d_w_max = d_w_ii
+
+            W_ii_abs_max = abs_max(n_tasks, W_ptr + ii * n_tasks)
+            if W_ii_abs_max > w_max:
+                w_max = W_ii_abs_max
+
 
             if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
                 # the biggest coordinate update of this iteration was smaller than
@@ -897,5 +974,5 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
                 if gap < tol:
                     # return if we reached desired tolerance
                     break
-
+            """
     return np.asarray(W), gap, tol, n_iter + 1
