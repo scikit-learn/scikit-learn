@@ -87,10 +87,9 @@ probability estimates when creating the support vector classifier model::
     >>> cross_validation.cross_val_score(model, X, y, scoring='wrong_choice')
     Traceback (most recent call last):
     ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'log_loss', 'mean_absolute_error', 'mean_squared_error', 'precision', 'r2', 'recall', 'roc_auc']
-    >>> prob_model = svm.SVC(probability=True)
-    >>> #typical cross_val_score using log_loss on X, y:  array([-0.07366283, -0.1691692 , -0.07100679])
-    >>> cross_validation.cross_val_score(prob_model, X, y, scoring='log_loss') # doctest: +ELLIPSIS
-    array...
+    >>> clf = svm.SVC(probability=True,random_state=42)
+    >>> cross_validation.cross_val_score(clf, X, y, scoring='log_loss') 
+    array([-0.08116113, -0.16760959, -0.07226303])
 
 .. note::
 
@@ -415,7 +414,7 @@ In the multilabel case with binary label indicators: ::
     distance between ``y_true`` and ``y_pred`` which is similar to the
     :ref:`zero_one_loss` function.  However, while zero-one loss penalizes
     prediction sets that do not strictly match true sets, the Hamming loss
-    penalizes individual labels.  Thus the Hamming loss, bounded by the zero-one
+    penalizes individual labels.  Thus the Hamming loss, upper bounded by the zero-one
     loss, is always between zero and one, inclusive; and predicting a proper subset
     or superset of the true labels will give a Hamming loss between
     zero and one, exclusive.
@@ -664,7 +663,7 @@ Then the metrics are defined as:
 
 
 Hinge loss 
------------
+----------
 
 The :func:`hinge_loss` function computes the average distance between
 the model and the data using 
