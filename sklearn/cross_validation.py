@@ -1166,10 +1166,10 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
         The target variable to try to predict in the case of
         supervised learning.
 
-    train : array-like, shape = (n_train_samples,)
+    train : array-like, shape (n_train_samples,)
         Indices of training samples.
 
-    test : array-like, shape = (n_test_samples,)
+    test : array-like, shape (n_test_samples,)
         Indices of test samples.
 
     verbose : integer
@@ -1327,10 +1327,10 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         A scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    train : array-like, shape = (n_train_samples,)
+    train : array-like, shape (n_train_samples,)
         Indices of training samples.
 
-    test : array-like, shape = (n_test_samples,)
+    test : array-like, shape (n_test_samples,)
         Indices of test samples.
 
     verbose : integer
@@ -1610,7 +1610,7 @@ def permutation_test_score(estimator, X, y, cv=None,
     score : float
         The true score without permuting targets.
 
-    permutation_scores : array, shape = [n_permutations]
+    permutation_scores : array, shape [n_permutations]
         The scores obtained for each permutations.
 
     pvalue : float
