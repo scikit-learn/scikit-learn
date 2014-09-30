@@ -2369,14 +2369,15 @@ cdef class RandomSparseSplitter(SparseSplitter):
                             ((end - current.pos) < min_samples_leaf)):
                         continue
 
+                    # Evaluate split
+                    self.criterion.reset()
+                    self.criterion.update(current.pos)
+
                     # Reject if min_weight_leaf is not satisfied
                     if ((self.criterion.weighted_n_left < min_weight_leaf) or
                             (self.criterion.weighted_n_right < min_weight_leaf)):
                         continue
 
-                    # Evaluate split
-                    self.criterion.reset()
-                    self.criterion.update(current.pos)
                     current.improvement = self.criterion.impurity_improvement(impurity)
 
                     if current.improvement > best.improvement:
