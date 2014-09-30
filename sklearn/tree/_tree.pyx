@@ -1879,7 +1879,7 @@ cdef class SparseSplitter(Splitter):
         for p in range(n_samples):
             index_to_samples[samples[p]] = p
 
-    cdef inline SIZE_t _partition(self, DTYPE_t* Xf, double threshold,
+    cdef inline SIZE_t _partition(self, double threshold,
                                   SIZE_t start, SIZE_t end,
                                   SIZE_t end_negative, SIZE_t start_positive,
                                   SIZE_t zero_pos) nogil:
@@ -1889,6 +1889,7 @@ cdef class SparseSplitter(Splitter):
         cdef SIZE_t partition_end
         cdef SIZE_t tmp, p
 
+        cdef DTYPE_t* Xf = self.feature_values
         cdef SIZE_t* samples = self.samples
         cdef SIZE_t* index_to_samples = self.index_to_samples
 
@@ -2175,7 +2176,7 @@ cdef class BestSparseSplitter(SparseSplitter):
             self.extract_nnz(best.feature, &end_negative, &start_positive,
                              &is_samples_sorted)
 
-            self._partition(Xf, best.threshold, start, end,
+            self._partition(best.threshold, start, end,
                             end_negative, start_positive, best.pos)
 
         # Respect invariant for constant features: the original order of
@@ -2357,7 +2358,7 @@ cdef class RandomSparseSplitter(SparseSplitter):
                         current.threshold = min_feature_value
 
                     # Partition
-                    current.pos = self._partition(Xf, current.threshold,
+                    current.pos = self._partition(current.threshold,
                                                   start, end, end_negative,
                                                   start_positive,
                                                   start_positive +
@@ -2388,7 +2389,7 @@ cdef class RandomSparseSplitter(SparseSplitter):
             self.extract_nnz(best.feature, &end_negative, &start_positive,
                              &is_samples_sorted)
 
-            self._partition(Xf, best.threshold, start, end, end_negative,
+            self._partition(best.threshold, start, end, end_negative,
                             start_positive, best.pos)
 
         # Respect invariant for constant features: the original order of
