@@ -1973,6 +1973,156 @@ cdef class SparseSplitter(Splitter):
                                          end_negative, start_positive)
 
 
+cdef int compare_SIZE_t(const void* a, const void* b) nogil:
+    """Comparison function for sort"""
+    return <int>((<SIZE_t*>a)[0] - (<SIZE_t*>b)[0])
+
+
+cdef inline void binary_search(INT32_t* sorted_array,
+                               INT32_t start, INT32_t end,
+                               SIZE_t value, SIZE_t* index,
+                               INT32_t* new_start) nogil:
+    """Return the index of value in the sorted array
+
+    If not found, return -1. new_start is the last pivot + 1
+    """
+    cdef INT32_t pivot
+    index[0] = -1
+    while start < end:
+        pivot = start + (end - start) / 2
+
+        if sorted_array[pivot] == value:
+            index[0] = pivot
+            start = pivot + 1
+            break
+
+        if sorted_array[pivot] < value:
+            start = pivot + 1
+        else:
+            end = pivot
+    new_start[0] = start
+
+
+cdef inline void extract_nnz_index_to_samples(INT32_t* X_indices,
+                                              DTYPE_t* X_data,
+                                              INT32_t indptr_start,
+                                              INT32_t indptr_end,
+                                              SIZE_t* samples,
+                                              SIZE_t start,
+                                              SIZE_t end,
+                                              SIZE_t* index_to_samples,
+                                              DTYPE_t* Xf,
+                                              SIZE_t* end_negative,
+                                              SIZE_t* start_positive) nogil:
+    """Extract and partition values for a feature using index_to_samples
+
+    Complexity is O(indptr_end - indptr_start).
+    """
+    cdef INT32_t k
+    cdef SIZE_t index
+    cdef SIZE_t end_negative_ = start
+    cdef SIZE_t start_positive_ = end
+
+    for k in range(indptr_start, indptr_end):
+        if start <= index_to_samples[X_indices[k]] < end:
+            if X_data[k] > 0:
+                start_positive_ -= 1
+                Xf[start_positive_] = X_data[k]
+                index = index_to_samples[X_indices[k]]
+                sparse_swap(index_to_samples, samples, index, start_positive_)
+
+
+            elif X_data[k] < 0:
+                Xf[end_negative_] = X_data[k]
+                index = index_to_samples[X_indices[k]]
+                sparse_swap(index_to_samples, samples, index, end_negative_)
+                end_negative_ += 1
+
+    # Returned values
+    end_negative[0] = end_negative_
+    start_positive[0] = start_positive_
+
+
+cdef inline void extract_nnz_binary_search(INT32_t* X_indices,
+                                           DTYPE_t* X_data,
+                                           INT32_t indptr_start,
+                                           INT32_t indptr_end,
+                                           SIZE_t* samples,
+                                           SIZE_t start,
+                                           SIZE_t end,
+                                           SIZE_t* index_to_samples,
+                                           DTYPE_t* Xf,
+                                           SIZE_t* end_negative,
+                                           SIZE_t* start_positive,
+                                           SIZE_t* sorted_samples,
+                                           bint* is_samples_sorted) nogil:
+    """Extract and partition values for a given feature using binary search
+
+    If n_samples = end - start and n_indices = indptr_end - indptr_start,
+    the complexity is
+
+        O((1 - is_samples_sorted[0]) * n_samples * log(n_samples) +
+          n_samples * log(n_indices)).
+    """
+    cdef SIZE_t n_samples
+
+    if not is_samples_sorted[0]:
+        n_samples = end - start
+        memcpy(sorted_samples + start, samples + start,
+               n_samples * sizeof(SIZE_t))
+        qsort(sorted_samples + start, n_samples, sizeof(SIZE_t),
+              compare_SIZE_t)
+        is_samples_sorted[0] = 1
+
+    while (indptr_start < indptr_end and
+           sorted_samples[start] > X_indices[indptr_start]):
+        indptr_start += 1
+
+    while (indptr_start < indptr_end and
+           sorted_samples[end - 1] < X_indices[indptr_end - 1]):
+        indptr_end -= 1
+
+    cdef SIZE_t p = start
+    cdef SIZE_t index
+    cdef SIZE_t k
+    cdef SIZE_t end_negative_ = start
+    cdef SIZE_t start_positive_ = end
+
+    while (p < end and indptr_start < indptr_end):
+        # Find index of sorted_samples[p] in X_indices
+        binary_search(X_indices, indptr_start, indptr_end,
+                      sorted_samples[p], &k, &indptr_start)
+
+        if k != -1:
+             # If k != -1, we have found a non zero value
+
+            if X_data[k] > 0:
+                start_positive_ -= 1
+                Xf[start_positive_] = X_data[k]
+                index = index_to_samples[X_indices[k]]
+                sparse_swap(index_to_samples, samples, index, start_positive_)
+
+
+            elif X_data[k] < 0:
+                Xf[end_negative_] = X_data[k]
+                index = index_to_samples[X_indices[k]]
+                sparse_swap(index_to_samples, samples, index, end_negative_)
+                end_negative_ += 1
+        p += 1
+
+    # Returned values
+    end_negative[0] = end_negative_
+    start_positive[0] = start_positive_
+
+
+cdef inline void sparse_swap(SIZE_t* index_to_samples, SIZE_t* samples,
+                             SIZE_t pos_1, SIZE_t pos_2) nogil  :
+    """Swap sample pos_1 and pos_2 preserving sparse invariant"""
+    samples[pos_1], samples[pos_2] =  samples[pos_2], samples[pos_1]
+    index_to_samples[samples[pos_1]] = pos_1
+    index_to_samples[samples[pos_2]] = pos_2
+
+
 cdef class BestSparseSplitter(SparseSplitter):
     """Splitter for finding the best split, using the sparse data."""
 
@@ -3323,154 +3473,3 @@ cdef inline double log(double x) nogil:
     return ln(x) / ln(2.0)
 
 
-# =============================================================================
-# Non zero value extraction with sparse matrices
-# =============================================================================
-cdef int compare_SIZE_t(const void* a, const void* b) nogil:
-    """Comparison function for sort"""
-    return <int>((<SIZE_t*>a)[0] - (<SIZE_t*>b)[0])
-
-
-cdef inline void binary_search(INT32_t* sorted_array,
-                               INT32_t start, INT32_t end,
-                               SIZE_t value, SIZE_t* index,
-                               INT32_t* new_start) nogil:
-    """Return the index of value in the sorted array
-
-    If not found, return -1. new_start is the last pivot + 1
-    """
-    cdef INT32_t pivot
-    index[0] = -1
-    while start < end:
-        pivot = start + (end - start) / 2
-
-        if sorted_array[pivot] == value:
-            index[0] = pivot
-            start = pivot + 1
-            break
-
-        if sorted_array[pivot] < value:
-            start = pivot + 1
-        else:
-            end = pivot
-    new_start[0] = start
-
-
-cdef inline void extract_nnz_index_to_samples(INT32_t* X_indices,
-                                              DTYPE_t* X_data,
-                                              INT32_t indptr_start,
-                                              INT32_t indptr_end,
-                                              SIZE_t* samples,
-                                              SIZE_t start,
-                                              SIZE_t end,
-                                              SIZE_t* index_to_samples,
-                                              DTYPE_t* Xf,
-                                              SIZE_t* end_negative,
-                                              SIZE_t* start_positive) nogil:
-    """Extract and partition values for a feature using index_to_samples
-
-    Complexity is O(indptr_end - indptr_start).
-    """
-    cdef INT32_t k
-    cdef SIZE_t index
-    cdef SIZE_t end_negative_ = start
-    cdef SIZE_t start_positive_ = end
-
-    for k in range(indptr_start, indptr_end):
-        if start <= index_to_samples[X_indices[k]] < end:
-            if X_data[k] > 0:
-                start_positive_ -= 1
-                Xf[start_positive_] = X_data[k]
-                index = index_to_samples[X_indices[k]]
-                sparse_swap(index_to_samples, samples, index, start_positive_)
-
-
-            elif X_data[k] < 0:
-                Xf[end_negative_] = X_data[k]
-                index = index_to_samples[X_indices[k]]
-                sparse_swap(index_to_samples, samples, index, end_negative_)
-                end_negative_ += 1
-
-    # Returned values
-    end_negative[0] = end_negative_
-    start_positive[0] = start_positive_
-
-
-cdef inline void extract_nnz_binary_search(INT32_t* X_indices,
-                                           DTYPE_t* X_data,
-                                           INT32_t indptr_start,
-                                           INT32_t indptr_end,
-                                           SIZE_t* samples,
-                                           SIZE_t start,
-                                           SIZE_t end,
-                                           SIZE_t* index_to_samples,
-                                           DTYPE_t* Xf,
-                                           SIZE_t* end_negative,
-                                           SIZE_t* start_positive,
-                                           SIZE_t* sorted_samples,
-                                           bint* is_samples_sorted) nogil:
-    """Extract and partition values for a given feature using binary search
-
-    If n_samples = end - start and n_indices = indptr_end - indptr_start,
-    the complexity is
-
-        O((1 - is_samples_sorted[0]) * n_samples * log(n_samples) +
-          n_samples * log(n_indices)).
-    """
-    cdef SIZE_t n_samples
-
-    if not is_samples_sorted[0]:
-        n_samples = end - start
-        memcpy(sorted_samples + start, samples + start,
-               n_samples * sizeof(SIZE_t))
-        qsort(sorted_samples + start, n_samples, sizeof(SIZE_t),
-              compare_SIZE_t)
-        is_samples_sorted[0] = 1
-
-    while (indptr_start < indptr_end and
-           sorted_samples[start] > X_indices[indptr_start]):
-        indptr_start += 1
-
-    while (indptr_start < indptr_end and
-           sorted_samples[end - 1] < X_indices[indptr_end - 1]):
-        indptr_end -= 1
-
-    cdef SIZE_t p = start
-    cdef SIZE_t index
-    cdef SIZE_t k
-    cdef SIZE_t end_negative_ = start
-    cdef SIZE_t start_positive_ = end
-
-    while (p < end and indptr_start < indptr_end):
-        # Find index of sorted_samples[p] in X_indices
-        binary_search(X_indices, indptr_start, indptr_end,
-                      sorted_samples[p], &k, &indptr_start)
-
-        if k != -1:
-             # If k != -1, we have found a non zero value
-
-            if X_data[k] > 0:
-                start_positive_ -= 1
-                Xf[start_positive_] = X_data[k]
-                index = index_to_samples[X_indices[k]]
-                sparse_swap(index_to_samples, samples, index, start_positive_)
-
-
-            elif X_data[k] < 0:
-                Xf[end_negative_] = X_data[k]
-                index = index_to_samples[X_indices[k]]
-                sparse_swap(index_to_samples, samples, index, end_negative_)
-                end_negative_ += 1
-        p += 1
-
-    # Returned values
-    end_negative[0] = end_negative_
-    start_positive[0] = start_positive_
-
-
-cdef inline void sparse_swap(SIZE_t* index_to_samples, SIZE_t* samples,
-                             SIZE_t pos_1, SIZE_t pos_2) nogil  :
-    """Swap sample pos_1 and pos_2 preserving sparse invariant"""
-    samples[pos_1], samples[pos_2] =  samples[pos_2], samples[pos_1]
-    index_to_samples[samples[pos_1]] = pos_1
-    index_to_samples[samples[pos_2]] = pos_2
