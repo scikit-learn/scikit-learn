@@ -104,18 +104,27 @@ def _parallel_helper(obj, methodname, *args, **kwargs):
 
 
 class _DummyPredictor:
-    """ Private class returning a precomputed prediction. Used to provide out-
+    """ Private class returning precomputed predictions. Used to provide out-
     of-bag training predictions to a scorer.
     """
 
-    def __init__(self, prediction):
+    def __init__(self, prediction, proba_prediction=None, decision_function=None):
         self._prediction = prediction
+        self._proba_prediction = proba_prediction
+        self._decision_function = decision_function
 
     def predict(self, X):
         return self._prediction
 
     def predict_proba(self, X):
-        return self._prediction
+        if not self._proba_prediction:
+            raise NotImplementedError
+        return self._proba_prediction
+
+    def decision_function(self, X):
+        if not self._decision_function:
+            raise NotImplementedError
+        return self._decision_function
 
 
 class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
@@ -348,7 +357,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         oob_decision_function = []
         oob_score = 0.0
         predictions = []
-        predicted_classes = []
+        oob_prediction = []
 
         for k in xrange(self.n_outputs_):
             predictions.append(np.zeros((n_samples,
@@ -374,15 +383,20 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             decision = (predictions[k] /
                         predictions[k].sum(axis=1)[:, np.newaxis])
             oob_decision_function.append(decision)
-            predicted_classes.append(np.argmax(predictions[k], axis=1))
+            oob_prediction.append(np.argmax(predictions[k], axis=1))
 
         if self.n_outputs_ == 1:
+            self.oob_prediction_ = oob_prediction[0]
             self.oob_decision_function_ = oob_decision_function[0]
-            predicted_classes = predicted_classes[0]
         else:
+            self.oob_prediction_ = oob_prediction
             self.oob_decision_function_ = oob_decision_function
+        self.oob_prediction_proba_ = self.oob_decision_function_
 
-        self.oob_score_ = scorer(_DummyPredictor(predicted_classes), X, y)
+        predictor = _DummyPredictor(self.oob_prediction_,
+                                    self.oob_prediction_proba_,
+                                    self.oob_decision_function_)
+        self.oob_score_ = scorer(predictor, X, y)
 
     def _validate_y(self, y):
         y = np.copy(y)
@@ -726,6 +740,15 @@ class RandomForestClassifier(ForestClassifier):
     oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
 
+    oob_prediction_ : array of shape = [n_samples]
+        Prediction computed with out-of-bag estimate on the training set.
+
+    oob_prediction_proba_ : array of shape = [n_samples, n_classes]
+        Prediction probabilities computed with out-of-bag estimate on the training
+        set. If n_estimators is small it might be possible that a data point
+        was never left out during the bootstrap. In this case,
+        `oob_decision_function_` might contain NaN.
+
     oob_decision_function_ : array of shape = [n_samples, n_classes]
         Decision function computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
@@ -1045,6 +1068,15 @@ class ExtraTreesClassifier(ForestClassifier):
 
     oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
+
+    oob_prediction_ : array of shape = [n_samples]
+        Prediction computed with out-of-bag estimate on the training set.
+
+    oob_prediction_proba_ : array of shape = [n_samples, n_classes]
+        Prediction probabilities computed with out-of-bag estimate on the training
+        set. If n_estimators is small it might be possible that a data point
+        was never left out during the bootstrap. In this case,
+        `oob_decision_function_` might contain NaN.
 
     oob_decision_function_ : array of shape = [n_samples, n_classes]
         Decision function computed with out-of-bag estimate on the training
