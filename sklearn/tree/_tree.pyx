@@ -3316,8 +3316,8 @@ cdef inline SIZE_t rand_int(SIZE_t low, SIZE_t high,
 cdef inline double rand_uniform(double low, double high,
                                 UINT32_t* random_state) nogil:
     """Generate a random double in [low; high)."""
-    return (low + (high - low) * <double> our_rand_r(random_state)
-                               / <double> RAND_R_MAX)
+    return ((high - low) * <double> our_rand_r(random_state) /
+            <double> RAND_R_MAX) + low
 
 cdef inline double log(double x) nogil:
     return ln(x) / ln(2.0)
