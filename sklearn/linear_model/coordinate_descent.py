@@ -492,7 +492,6 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         coef_ = np.asfortranarray(coef_init)
 
     for i, alpha in enumerate(alphas):
-        #print alpha 
         l1_reg = alpha * l1_ratio * n_samples
         l2_reg = alpha * (1.0 - l1_ratio) * n_samples
         if not multi_output and sparse.isspmatrix(X):
