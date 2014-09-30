@@ -1104,7 +1104,7 @@ class MiniBatchKMeans(KMeans):
         Number of samples to randomly sample for speeding up the
         initialization (sometimes at the expense of accuracy): the
         only algorithm is initialized by running a batch KMeans on a
-        random subset of the data. This needs to be larger than k.
+        random subset of the data. This needs to be larger than n_clusters.
 
     init : {'k-means++', 'random' or an ndarray}, default: 'k-means++'
         Method for initialization, defaults to 'k-means++':
