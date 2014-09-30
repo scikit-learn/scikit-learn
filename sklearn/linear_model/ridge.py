@@ -332,7 +332,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     if solver == 'svd':
         if sparse.issparse(X):
-            raise NotImplementedError('SVD solver does not support sparse'
+            raise TypeError('SVD solver does not support sparse'
                                       ' inputs currently')
         coef = _solve_svd(X, y, alpha)
 
