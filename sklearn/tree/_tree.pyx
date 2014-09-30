@@ -1812,7 +1812,6 @@ cdef class PresortBestSplitter(DenseSplitter):
 
 
 cdef class SparseSplitter(Splitter):
-
     # The sparse splitter works only with csc sparse matrix format
     cdef DTYPE_t* X_data
     cdef INT32_t* X_indices
@@ -2321,26 +2320,22 @@ cdef class RandomSparseSplitter(SparseSplitter):
                 min_feature_value = Xf[start]
                 max_feature_value = min_feature_value
 
-                p = start
-                while p < end_negative:
+                for p in range(start, end_negative):
                     current_feature_value = Xf[p]
 
                     if current_feature_value < min_feature_value:
                         min_feature_value = current_feature_value
                     elif current_feature_value > max_feature_value:
                         max_feature_value = current_feature_value
-                    p += 1
 
                 # Find min, max in Xf[start_positive:end]
-                p = start_positive
-                while p < end:
+                for p in range(start_positive, end):
                     current_feature_value = Xf[p]
 
                     if current_feature_value < min_feature_value:
                         min_feature_value = current_feature_value
                     elif current_feature_value > max_feature_value:
                         max_feature_value = current_feature_value
-                    p += 1
 
                 if max_feature_value <= min_feature_value + FEATURE_THRESHOLD:
                     features[f_j] = features[n_total_constants]
