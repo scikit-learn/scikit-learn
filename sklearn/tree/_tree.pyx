@@ -2023,7 +2023,6 @@ cdef class BestSparseSplitter(SparseSplitter):
         cdef SIZE_t n_total_constants = n_known_constants
         cdef DTYPE_t current_feature_value
 
-        cdef SIZE_t k
         cdef SIZE_t p_next
         cdef SIZE_t p_prev
         cdef bint is_samples_sorted = 0  # indicate is sorted_samples is
@@ -2120,14 +2119,19 @@ cdef class BestSparseSplitter(SparseSplitter):
                     p = start
 
                     while p < end:
-                        p_next = (p + 1 if p + 1 != end_negative
-                                  else start_positive)
+                        if p + 1 != end_negative:
+                            p_next = p + 1
+                        else:
+                            p_next = start_positive
 
                         while (p_next < end and
                                Xf[p_next] <= Xf[p] + FEATURE_THRESHOLD):
                             p = p_next
-                            p_next = (p + 1 if p + 1 != end_negative
-                                      else start_positive)
+                            if p + 1 != end_negative:
+                                p_next = p + 1
+                            else:
+                                p_next = start_positive
+
 
                         # (p_next >= end) or (X[samples[p_next], current.feature] >
                         #                     X[samples[p], current.feature])
