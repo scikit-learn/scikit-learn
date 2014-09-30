@@ -107,8 +107,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             dtype = None
             accept_sparse = ['csr', 'csc']
 
-        X, y = check_X_y(X, y, accept_sparse=accept_sparse, dtype=dtype,
-                         order='C')
+        X, y = check_X_y(X, y, accept_sparse=accept_sparse, dtype=dtype)
 
         if sample_weight is None:
             # Initialize weights to 1 / n_samples
