@@ -56,6 +56,10 @@ cdef DTYPE_t MIN_IMPURITY_SPLIT = 1e-7
 # Mitigate precision differences between 32 bit and 64 bit
 cdef DTYPE_t FEATURE_THRESHOLD = 1e-7
 
+# Constant to switch between algorithm non zero value extract algorithm
+# in SparseSplitter
+cdef DTYPE_t EXTRACT_NNZ_SWITCH = 0.1
+
 # Some handy constants (BestFirstTreeBuilder)
 cdef int IS_FIRST = 1
 cdef int IS_NOT_FIRST = 0
@@ -1953,7 +1957,7 @@ cdef class SparseSplitter(Splitter):
         # search and O(n_indices) is the running time of index_to_samples
         # approach.
         if ((1 - is_samples_sorted[0]) * n_samples * log(n_samples) +
-                n_samples * log(n_indices) < 0.1 * n_indices):
+                n_samples * log(n_indices) < EXTRACT_NNZ_SWITCH * n_indices):
             extract_nnz_binary_search(self.X_indices, self.X_data,
                                       indptr_start, indptr_end,
                                       self.samples, self.start, self.end,
