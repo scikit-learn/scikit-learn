@@ -1812,6 +1812,8 @@ cdef class PresortBestSplitter(DenseSplitter):
 
 
 cdef class SparseSplitter(Splitter):
+
+    # The sparse splitter works only with csc sparse matrix format
     cdef DTYPE_t* X_data
     cdef INT32_t* X_indices
     cdef INT32_t* X_indptr
@@ -1915,6 +1917,68 @@ cdef class SparseSplitter(Splitter):
                 sparse_swap(index_to_samples, samples, p, partition_end)
 
         return partition_end
+
+    cdef inline void extract_nnz(self, SIZE_t feature,
+                                 SIZE_t* end_negative, SIZE_t* start_positive,
+                                 bint* is_samples_sorted) nogil:
+        """Extract and partition values for a given feature
+
+        The extracted values are partitioned between negative values
+        Xf[start:end_negative[0]] and positive values Xf[start_positive[0]:end].
+        The samples and index_to_samples are modified according to this
+        partition.
+
+        The extraction corresponds to the intersection between the arrays
+        X_indices[indptr_start:indptr_end] and samples[start:end].
+        This is done efficiently using either an index_to_samples based approach
+        or binary search based approach.
+
+        Parameters
+        ----------
+        feature : SIZE_t,
+            Index of the feature we want to extract non zero value.
+
+
+        end_negative, start_positive : SIZE_t*, SIZE_t*,
+            Return extracted non zero values in self.samples[start:end] where
+            negative values are in self.feature_values[start:end_negative[0]]
+            and positive values are in
+            self.feature_values[start_positive[0]:end].
+
+        is_samples_sorted : bint*,
+            If is_samples_sorted, then self.sorted_samples[start:end] will be
+            the sorted version of self.samples[start:end].
+
+        """
+        cdef SIZE_t indptr_start = self.X_indptr[feature],
+        cdef SIZE_t indptr_end = self.X_indptr[feature + 1]
+        cdef SIZE_t n_indices = <SIZE_t>(indptr_end - indptr_start)
+        cdef SIZE_t n_samples = self.end - self.start
+
+        # Use binary search if n_samples * log(n_indices) <
+        # n_indices and index_to_samples approach otherwise.
+        # O(n_samples * log(n_indices)) is the running time of binary
+        # search and O(n_indices) is the running time of index_to_samples
+        # approach.
+        if ((1 - is_samples_sorted[0]) * n_samples * log(n_samples) +
+                n_samples * log(n_indices) < 0.1 * n_indices):
+            extract_nnz_binary_search(self.X_indices, self.X_data,
+                                      indptr_start, indptr_end,
+                                      self.samples, self.start, self.end,
+                                      self.index_to_samples,
+                                      self.feature_values,
+                                      end_negative, start_positive,
+                                      self.sorted_samples, is_samples_sorted)
+
+        # Using an index to samples  technique to extract non zero values
+        # index_to_samples is a mapping from X_indices to samples
+        else:
+            extract_nnz_index_to_samples(self.X_indices, self.X_data,
+                                         indptr_start, indptr_end,
+                                         self.samples, self.start, self.end,
+                                         self.index_to_samples,
+                                         self.feature_values,
+                                         end_negative, start_positive)
 
 
 cdef class BestSparseSplitter(SparseSplitter):
@@ -2024,11 +2088,9 @@ cdef class BestSparseSplitter(SparseSplitter):
                 # f_j in the interval [n_total_constants, f_i[
 
                 current.feature = features[f_j]
-                extract_nnz(X_indices, X_data, X_indptr[current.feature],
-                            X_indptr[current.feature + 1],
-                            samples, start, end, index_to_samples,  Xf,
-                            &end_negative, &start_positive, sorted_samples,
-                            &is_samples_sorted)
+                self.extract_nnz(current.feature,
+                                 &end_negative, &start_positive,
+                                 &is_samples_sorted)
 
                 # Sort the positive and negative parts of `Xf`
                 sort(Xf + start, samples + start, end_negative - start)
@@ -2111,11 +2173,8 @@ cdef class BestSparseSplitter(SparseSplitter):
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
         if best.pos < end:
-            extract_nnz(X_indices, X_data, X_indptr[best.feature],
-                        X_indptr[best.feature + 1],
-                        samples, start, end, index_to_samples,  Xf,
-                        &end_negative, &start_positive, sorted_samples,
-                        &is_samples_sorted)
+            self.extract_nnz(best.feature, &end_negative, &start_positive,
+                             &is_samples_sorted)
 
             self._partition(Xf, best.threshold, start, end,
                             end_negative, start_positive, best.pos)
@@ -2245,11 +2304,9 @@ cdef class RandomSparseSplitter(SparseSplitter):
 
                 current.feature = features[f_j]
 
-                extract_nnz(X_indices, X_data, X_indptr[current.feature],
-                            X_indptr[current.feature + 1],
-                            samples, start, end, index_to_samples,  Xf,
-                            &end_negative, &start_positive, sorted_samples,
-                            &is_samples_sorted)
+                self.extract_nnz(current.feature,
+                                 &end_negative, &start_positive,
+                                 &is_samples_sorted)
 
                 # Add one or two zeros in Xf, if there is any
                 if end_negative < start_positive:
@@ -2333,11 +2390,8 @@ cdef class RandomSparseSplitter(SparseSplitter):
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
         if best.pos < end and current.feature != best.feature:
-            extract_nnz(X_indices, X_data, X_indptr[best.feature],
-                        X_indptr[best.feature + 1],
-                        samples, start, end, index_to_samples,  Xf,
-                        &end_negative, &start_positive, sorted_samples,
-                        &is_samples_sorted)
+            self.extract_nnz(best.feature, &end_negative, &start_positive,
+                             &is_samples_sorted)
 
             self._partition(Xf, best.threshold, start, end, end_negative,
                             start_positive, best.pos)
@@ -3287,7 +3341,8 @@ cdef int compare_SIZE_t(const void* a, const void* b) nogil:
     return <int>((<SIZE_t*>a)[0] - (<SIZE_t*>b)[0])
 
 
-cdef inline void binary_search(INT32_t* sorted_array, INT32_t start, INT32_t end,
+cdef inline void binary_search(INT32_t* sorted_array,
+                               INT32_t start, INT32_t end,
                                SIZE_t value, SIZE_t* index,
                                INT32_t* new_start) nogil:
     """Return the index of value in the sorted array
@@ -3309,7 +3364,6 @@ cdef inline void binary_search(INT32_t* sorted_array, INT32_t start, INT32_t end
         else:
             end = pivot
     new_start[0] = start
-
 
 
 cdef inline void extract_nnz_index_to_samples(INT32_t* X_indices,
@@ -3422,84 +3476,6 @@ cdef inline void extract_nnz_binary_search(INT32_t* X_indices,
     # Returned values
     end_negative[0] = end_negative_
     start_positive[0] = start_positive_
-
-
-cdef inline void extract_nnz(INT32_t* X_indices,
-                             DTYPE_t* X_data,
-                             INT32_t indptr_start,
-                             INT32_t indptr_end,
-                             SIZE_t* samples,
-                             SIZE_t start,
-                             SIZE_t end,
-                             SIZE_t* index_to_samples,
-                             DTYPE_t* Xf,
-                             SIZE_t* end_negative,
-                             SIZE_t* start_positive,
-                             SIZE_t* sorted_samples,
-                             bint* is_samples_sorted) nogil:
-    """Extract and partition values for a given feature
-
-    The extracted values are partitioned between negative values
-    Xf[start:end_negative[0]] and positive values Xf[start_positive[0]:end].
-    The samples and index_to_samples are modified according to this
-    partition.
-
-    The extraction corresponds to the intersection between the arrays
-    X_indices[indptr_start:indptr_end] and samples[start:end].
-    This is done efficiently using either an index_to_samples based approach
-    or binary search based approach.
-
-    Parameters
-    ----------
-    X_indices : c-array of INT32_t,
-        Indices of the csc matrix which are in sorted order
-
-    X_data : c-array of INT32_t,
-        Data of the csc matrix
-
-    indptr_start, indptr_end : INT32_t,
-        indptr_start, indptr_end = X_indptr[feature], X_indptr[feature + 1]
-        where X_indptr would be the indptr of the csc matrix.
-
-    samples, start, end : c-array of SIZE_t, SIZE_t, SIZE_t
-         samples[start:end] is the subset of samples to split
-
-    index_to_samples : c-array of SIZE_t,
-        Mapping between row indices of the csr matrix and the samples array.
-
-    Xf, end_negative, start_positive : c-array of DTYPE_t, SIZE_t*, SIZE_t*,
-        Return extracted non zero values in samples[start:end] where
-        negative values are in [start:end_negative[0]] and positive values
-        are in [start_positive[0]:end].
-
-    sorted_samples, is_samples_sorted : c-array of SIZE_t, bint,
-        If is_samples_sorted, then sorted_samples[start:end] will be the sorted
-        version of samples[start:end], else is_samples_sorted is set to True
-        and samples[start:end]
-
-    """
-    cdef SIZE_t n_indices = <SIZE_t>(indptr_end - indptr_start)
-    cdef SIZE_t n_samples = end - start
-
-    # Use binary search if n_samples * log(n_indices) <
-    # n_indices and index_to_samples approach otherwise.
-    # O(n_samples * log(n_indices)) is the running time of binary
-    # search and O(n_indices) is the running time of index_to_samples
-    # approach.
-    if ((1 - is_samples_sorted[0]) * n_samples * log(n_samples) +
-            n_samples * log(n_indices) < 0.1 * n_indices):
-        extract_nnz_binary_search(X_indices, X_data, indptr_start, indptr_end,
-                                  samples, start, end, index_to_samples,
-                                  Xf, end_negative, start_positive,
-                                  sorted_samples, is_samples_sorted)
-
-    # Using an index to samples  technique to extract non zero values
-    # index_to_samples is a mapping from X_indices to samples
-    else:
-        extract_nnz_index_to_samples(X_indices, X_data, indptr_start,
-                                     indptr_end, samples, start, end,
-                                     index_to_samples, Xf, end_negative,
-                                     start_positive)
 
 
 cdef inline void sparse_swap(SIZE_t* index_to_samples, SIZE_t* samples,
