@@ -1076,7 +1076,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
 ##############################################################################
 def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
-                         verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
+                      verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
     """Generate cross-validated estimates for each input data point
 
     Parameters
@@ -1145,7 +1145,7 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
     p = np.concatenate([p for p, _ in preds_blocks])
     locs = np.concatenate([loc for _, loc in preds_blocks])
     if not _check_is_partition(locs, X.shape[0]):
-        raise ValueError('cross_val_predict only works well for partitions of the data')
+        raise ValueError('cross_val_predict only works for partitions')
     preds = p.copy()
     preds[locs] = p
     return preds
