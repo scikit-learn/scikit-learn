@@ -1021,5 +1021,18 @@ def test_cross_val_predict():
     preds = cval.cross_val_predict(est, X, y)
     assert_equal(len(preds), len(y))
 
+
+    cv = cval.LeaveOneOut(len(y))
+    preds = cval.cross_val_predict(est, X, y, cv=cv)
+    assert_equal(len(preds), len(y))
+
+
+    Xsp = X.copy()
+    Xsp *= (Xsp > np.median(Xsp))
+    Xsp = coo_matrix(Xsp)
+    preds = cval.cross_val_predict(est, Xsp, y)
+    assert_array_almost_equal(len(preds), len(y))
+
+
     preds = cval.cross_val_predict(KMeans(), X)
     assert_equal(len(preds), len(y))
