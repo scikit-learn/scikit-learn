@@ -7,6 +7,7 @@ from scipy.sparse import coo_matrix
 from scipy import stats
 
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
@@ -1036,3 +1037,19 @@ def test_cross_val_predict():
 
     preds = cval.cross_val_predict(KMeans(), X)
     assert_equal(len(preds), len(y))
+
+    def bad_cv():
+        for i in range(4):
+            yield np.array([0,1,2,3]), np.array([4,5,6,7,8])
+
+    assert_raises(ValueError, cval.cross_val_predict, est, X, y, cv=bad_cv())
+
+
+def test_check_is_partition():
+    p = np.arange(100)
+    assert_true(cval._check_is_partition(p, 100))
+    assert_false(cval._check_is_partition(np.delete(p, 23), 100))
+
+    p[0] = 23
+    assert_false(cval._check_is_partition(p, 100))
+

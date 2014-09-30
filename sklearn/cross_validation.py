@@ -1144,6 +1144,8 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
                             for train, test in cv)
     p = np.concatenate([p for p, _ in preds_blocks])
     locs = np.concatenate([loc for _, loc in preds_blocks])
+    if not _check_is_partition(locs, X.shape[0]):
+        raise ValueError('cross_val_predict only works well for partitions of the data')
     preds = p.copy()
     preds[locs] = p
     return preds
@@ -1200,6 +1202,30 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
         estimator.fit(X_train, y_train, **fit_params)
     preds = estimator.predict(X_test)
     return preds, test
+
+
+def _check_is_partition(locs, n):
+    """Check whether locs is a reordering of the array np.arange(n)
+
+    Parameters
+    ----------
+    locs : ndarray
+        integer array to test
+    n : int
+        number of expected elements
+
+    Returns
+    -------
+    is_partition : bool
+        True iff sorted(locs) is range(n)
+    """
+    if len(locs) != n:
+        return False
+    hit = np.zeros(n, bool)
+    hit[locs] = True
+    if not np.all(hit):
+        return False
+    return True
 
 
 def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
