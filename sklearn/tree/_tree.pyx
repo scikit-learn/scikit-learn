@@ -1010,9 +1010,7 @@ cdef class Splitter:
 
         weighted_n_node_samples[0] = self.criterion.weighted_n_node_samples
 
-    cdef void node_split(self,
-                         double impurity,
-                         SplitRecord* split,
+    cdef void node_split(self, double impurity, SplitRecord* split,
                          SIZE_t* n_constant_features) nogil:
         """Find a split on node samples[start:end]."""
         pass
@@ -1875,25 +1873,24 @@ cdef class SparseSplitter(Splitter):
             index_to_samples[samples[p]] = p
 
     cdef inline SIZE_t _partition(self, double threshold,
-                                  SIZE_t start, SIZE_t end,
                                   SIZE_t end_negative, SIZE_t start_positive,
                                   SIZE_t zero_pos) nogil:
         """Partition samples[start:end] based on threshold"""
 
         cdef double value
         cdef SIZE_t partition_end
-        cdef SIZE_t tmp, p
+        cdef SIZE_t p
 
         cdef DTYPE_t* Xf = self.feature_values
         cdef SIZE_t* samples = self.samples
         cdef SIZE_t* index_to_samples = self.index_to_samples
 
         if threshold < 0.:
-            p = start
+            p = self.start
             partition_end = end_negative
         elif threshold > 0.:
             p = start_positive
-            partition_end = end
+            partition_end = self.end
         else:
             # Data are already split
             return zero_pos
@@ -2171,8 +2168,8 @@ cdef class BestSparseSplitter(SparseSplitter):
             self.extract_nnz(best.feature, &end_negative, &start_positive,
                              &is_samples_sorted)
 
-            self._partition(best.threshold, start, end,
-                            end_negative, start_positive, best.pos)
+            self._partition(best.threshold, end_negative, start_positive,
+                            best.pos)
 
         # Respect invariant for constant features: the original order of
         # element in features[:n_known_constants] must be preserved for sibling
@@ -2354,7 +2351,7 @@ cdef class RandomSparseSplitter(SparseSplitter):
 
                     # Partition
                     current.pos = self._partition(current.threshold,
-                                                  start, end, end_negative,
+                                                  end_negative,
                                                   start_positive,
                                                   start_positive +
                                                   (Xf[start_positive] == 0.))
@@ -2385,8 +2382,8 @@ cdef class RandomSparseSplitter(SparseSplitter):
             self.extract_nnz(best.feature, &end_negative, &start_positive,
                              &is_samples_sorted)
 
-            self._partition(best.threshold, start, end, end_negative,
-                            start_positive, best.pos)
+            self._partition(best.threshold, end_negative, start_positive,
+                            best.pos)
 
         # Respect invariant for constant features: the original order of
         # element in features[:n_known_constants] must be preserved for sibling
