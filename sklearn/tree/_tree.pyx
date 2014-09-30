@@ -2324,7 +2324,7 @@ cdef class RandomSparseSplitter(SparseSplitter):
                     elif current_feature_value > max_feature_value:
                         max_feature_value = current_feature_value
 
-                # Find min, max in Xf[start_positive:end]
+                # Update min, max given Xf[start_positive:end]
                 for p in range(start_positive, end):
                     current_feature_value = Xf[p]
 
@@ -2448,8 +2448,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
     """Build a decision tree in depth-first fashion."""
 
     def __cinit__(self, Splitter splitter, SIZE_t min_samples_split,
-                  SIZE_t min_samples_leaf,
-                  double min_weight_leaf,
+                  SIZE_t min_samples_leaf, double min_weight_leaf,
                   SIZE_t max_depth):
         self.splitter = splitter
         self.min_samples_split = min_samples_split
@@ -2602,10 +2601,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
     cdef SIZE_t max_leaf_nodes
 
     def __cinit__(self, Splitter splitter, SIZE_t min_samples_split,
-                  SIZE_t min_samples_leaf,
-                  double min_weight_leaf,
-                  SIZE_t max_depth,
-                  SIZE_t max_leaf_nodes):
+                  SIZE_t min_samples_leaf,  min_weight_leaf,
+                  SIZE_t max_depth, SIZE_t max_leaf_nodes):
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
