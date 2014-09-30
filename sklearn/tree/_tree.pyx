@@ -1197,6 +1197,7 @@ cdef class BestSparseSplitter(SparseSplitter):
         cdef SIZE_t* index_to_samples = self.index_to_samples
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
+        cdef double min_weight_leaf = self.min_weight_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
 
         cdef SplitRecord best, current
@@ -1338,6 +1339,11 @@ cdef class BestSparseSplitter(SparseSplitter):
                                     ((end - current.pos) < min_samples_leaf)):
                                 continue
 
+                            # Reject if min_weight_leaf is not satisfied
+                            if ((self.criterion.weighted_n_left < min_weight_leaf) or
+                                    (self.criterion.weighted_n_right < min_weight_leaf)):
+                                continue
+
                             self.criterion.update(current.pos)
                             current.improvement = self.criterion.impurity_improvement(impurity)
 
@@ -1409,6 +1415,7 @@ cdef class RandomSparseSplitter(SparseSplitter):
         cdef SIZE_t* index_to_samples = self.index_to_samples
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
+        cdef double min_weight_leaf = self.min_weight_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
 
         cdef SplitRecord best, current
@@ -1557,6 +1564,11 @@ cdef class RandomSparseSplitter(SparseSplitter):
                             ((end - current.pos) < min_samples_leaf)):
                         continue
 
+                    # Reject if min_weight_leaf is not satisfied
+                    if ((self.criterion.weighted_n_left < min_weight_leaf) or
+                            (self.criterion.weighted_n_right < min_weight_leaf)):
+                        continue
+
                     # Evaluate split
                     self.criterion.reset()
                     self.criterion.update(current.pos)
@@ -1621,7 +1633,6 @@ cdef class BestSplitter(DenseSplitter):
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
-        cdef double weighted_n_samples = self.weighted_n_samples
         cdef UINT32_t* random_state = &self.rand_r_state
 
         cdef SplitRecord best, current
@@ -1730,6 +1741,11 @@ cdef class BestSplitter(DenseSplitter):
                             # Reject if min_samples_leaf is not guaranteed
                             if (((current.pos - start) < min_samples_leaf) or
                                     ((end - current.pos) < min_samples_leaf)):
+                                continue
+
+                            # Reject if min_weight_leaf is not satisfied
+                            if ((self.criterion.weighted_n_left < min_weight_leaf) or
+                                    (self.criterion.weighted_n_right < min_weight_leaf)):
                                 continue
 
                             self.criterion.update(current.pos)
@@ -1921,7 +1937,6 @@ cdef class RandomSplitter(DenseSplitter):
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
-        cdef double weighted_n_samples = self.weighted_n_samples
         cdef UINT32_t* random_state = &self.rand_r_state
 
         cdef SplitRecord best, current
@@ -2175,7 +2190,6 @@ cdef class PresortBestSplitter(DenseSplitter):
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
-        cdef double weighted_n_samples = self.weighted_n_samples
         cdef UINT32_t* random_state = &self.rand_r_state
 
         cdef SplitRecord best, current

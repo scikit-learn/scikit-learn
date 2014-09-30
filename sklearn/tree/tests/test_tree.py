@@ -567,26 +567,34 @@ def test_min_samples_leaf():
                            "Failed with {0}".format(name))
 
 
-def test_min_weight_fraction_leaf():
+def check_min_weight_fraction_leaf(name, datasets, sparse=False):
     """Test if leaves contain at least min_weight_fraction_leaf of the
     training set"""
-    X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
-    y = iris.target
-    rng = np.random.RandomState(0)
+    if sparse:
+        X = DATASETS[datasets]["X_sparse"].astype(np.float32)
+    else:
+        X = DATASETS[datasets]["X"].astype(np.float32)
+    y = DATASETS[datasets]["y"]
+
     weights = rng.rand(X.shape[0])
     total_weight = np.sum(weights)
 
+    TreeEstimator = ALL_TREES[name]
+
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
     # by setting max_leaf_nodes
-    for max_leaf_nodes, name, frac in product((None, 1000),
-                                              ALL_TREES,
-                                              np.linspace(0, 0.5, 6)):
-        TreeEstimator = ALL_TREES[name]
+    for max_leaf_nodes, frac in product((None, 1000), np.linspace(0, 0.5, 6)):
         est = TreeEstimator(min_weight_fraction_leaf=frac,
                             max_leaf_nodes=max_leaf_nodes,
                             random_state=0)
         est.fit(X, y, sample_weight=weights)
-        out = est.tree_.apply(X)
+
+        if sparse:
+            out = est.tree_.apply(X.tocsr())
+
+        else:
+            out = est.tree_.apply(X)
+
         node_weights = np.bincount(out, weights=weights)
         # drop inner nodes
         leaf_weights = node_weights[node_weights != 0]
@@ -596,6 +604,16 @@ def test_min_weight_fraction_leaf():
             "Failed with {0} "
             "min_weight_fraction_leaf={1}".format(
                 name, est.min_weight_fraction_leaf))
+
+
+def test_min_weight_fraction_leaf():
+    # Check on dense input
+    for name in ALL_TREES:
+        yield check_min_weight_fraction_leaf, name, "iris"
+
+    # Check on sparse input
+    for name in SPARSE_TREES:
+        yield check_min_weight_fraction_leaf, name, "multilabel", True
 
 
 def test_pickle():
