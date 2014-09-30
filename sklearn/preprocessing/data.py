@@ -42,14 +42,15 @@ __all__ = [
 def _replace_nearly_value(X, base, replace_to):
     """Fit close value to avoid division by nearly zero.
     """
-    def _fit(scalar):
-        if isclose(scalar, base):
+    def _replace(value):
+        if isclose(value, base):
             return replace_to
         else:
-            return scalar
+            return value
 
+    X = np.asarray(X)
     otypes = [np.float64]*X.ndim
-    return np.vectorize(_fit, otypes=otypes)(X)
+    return np.vectorize(_replace, otypes=otypes)(X)
 
 
 def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
