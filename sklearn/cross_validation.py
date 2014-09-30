@@ -1142,16 +1142,10 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
                                                       train, test, verbose,
                                                       fit_params)
                             for train, test in cv)
-    if y is not None:
-        preds = np.empty_like(y)
-        for p, loc in preds_blocks:
-            preds[loc] = p
-    else:
-        preds = [None for _ in X]
-        for ps, loc in preds_blocks:
-            for p, ell in zip(ps, loc):
-                preds[ell] = p
-        preds = np.array(preds)
+    p = np.concatenate([p for p, _ in preds_blocks])
+    locs = np.concatenate([loc for _, loc in preds_blocks])
+    preds = p.copy()
+    preds[locs] = p
     return preds
 
 
