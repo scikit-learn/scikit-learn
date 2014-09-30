@@ -278,7 +278,7 @@ def type_of_target(y):
     'continuous-multioutput'
     >>> type_of_target(np.array([[0, 1], [1, 1]]))
     'multilabel-indicator'
-    >>> type_of_target(csr_matrix(np.random.randint(0, 4, size=(20, 5))))
+    >>> type_of_target(np.random.randint(0, 4, size=(20, 5)))
     'multiclass-multioutput'
     """
     valid = ((isinstance(y, (Sequence, spmatrix)) or hasattr(y, '__array__'))
@@ -299,12 +299,15 @@ def type_of_target(y):
             return 'unknown'
     if y.ndim > 2:
         return 'unknown'
-    if not issparse(y):
-        if y.dtype == object and not isinstance(y.flat[0], string_types):
-             return 'unknown'
+    if (y.ndim > 2 or not issparse(y) and y.dtype == object and
+        not isinstance(y.flat[0], string_types)):
+        return 'unknown'
     if y.ndim == 2 and y.shape[1] == 0:
         return 'unknown'
     elif y.ndim == 2 and y.shape[1] > 1:
+        if issparse(y):
+            raise NotImplementedError('Sparse Multiclass-Multioutput inputs'
+                                      ' are not handled currently')
         suffix = '-multioutput'
     else:
         # column vector or 1d
