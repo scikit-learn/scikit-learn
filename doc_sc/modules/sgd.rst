@@ -1,60 +1,42 @@
 .. _sgd:
 
 ===========================
-Stochastic Gradient Descent
+随机梯度下降法
 ===========================
 
 .. currentmodule:: sklearn.linear_model
 
-**Stochastic Gradient Descent (SGD)** is a simple yet very efficient
-approach to discriminative learning of linear classifiers under
-convex loss functions such as (linear) `Support Vector Machines
-<http://en.wikipedia.org/wiki/Support_vector_machine>`_ and `Logistic
-Regression <http://en.wikipedia.org/wiki/Logistic_regression>`_.
-Even though SGD has been around in the machine learning community for
-a long time, it has received a considerable amount of attention just
-recently in the context of large-scale learning.
+**随机梯度下降法 Stochastic Gradient Descent (SGD)** 是一个简单且有效的线性分类方法。其采用凸的损失函数，如线性 `Support Vector Machines <http://en.wikipedia.org/wiki/Support_vector_machine>`_ 和 `Logistic Regression <http://en.wikipedia.org/wiki/Logistic_regression>`_ 。尽管 SGD 已经在机器学习界存在了很长时间，目前其还是在大尺度学习领域的重要研究对象。
 
-SGD has been successfully applied to large-scale and sparse machine
-learning problems often encountered in text classification and natural
-language processing.  Given that the data is sparse, the classifiers
-in this module easily scale to problems with more than 10^5 training
-examples and more than 10^5 features.
+SGD在大尺度学习和稀疏问题上，尤其是文本分类和语言学习上有着成功的应用。由于数据的稀疏，常常会有10^5的样本，而其特征有10^5。
 
-The advantages of Stochastic Gradient Descent are:
+随机梯度下降法的优势在于:
 
-    + Efficiency.
+    + 快速
 
-    + Ease of implementation (lots of opportunities for code tuning).
+    + 实现简单
 
-The disadvantages of Stochastic Gradient Descent include:
+劣势在于：
 
-    + SGD requires a number of hyperparameters such as the regularization
-      parameter and the number of iterations.
+    + SGD 需要一些超参数，如复杂度参数，和重复步数。
 
-    + SGD is sensitive to feature scaling.
+    + SGD 对于特征的大小敏感。
 
-Classification
+分类
 ==============
 
 .. warning::
 
-  Make sure you permute (shuffle) your training data before fitting the
-  model or use ``shuffle=True`` to shuffle after each iterations.
+  确定每次都对样本进行重新的排序，或者使用 ``shuffle=True`` 。
 
-The class :class:`SGDClassifier` implements a plain stochastic gradient
-descent learning routine which supports different loss functions and
-penalties for classification.
+:class:`SGDClassifier` 类采用一个直接的随机梯度下降方法，并支持不同的损失函数和惩罚的分类。
 
 .. figure:: ../auto_examples/linear_model/images/plot_sgd_separating_hyperplane_001.png
    :target: ../auto_examples/linear_model/plot_sgd_separating_hyperplane.html
    :align: center
    :scale: 75
 
-As other classifiers, SGD has to be fitted with two arrays: an array X
-of size [n_samples, n_features] holding the training samples, and an
-array Y of size [n_samples] holding the target values (class labels)
-for the training samples::
+如同其他的分类方法，SGD需要两个输入变量，大小为 [n_samples, n_features] 的训练样本X和大小为[n_samples]的目标分类::
 
     >>> from sklearn.linear_model import SGDClassifier
     >>> X = [[0., 0.], [1., 1.]]
@@ -67,161 +49,106 @@ for the training samples::
            random_state=None, shuffle=False, verbose=0, warm_start=False)
 
 
-After being fitted, the model can then be used to predict new values::
+拟合结束后，模型可以被用作预测::
 
     >>> clf.predict([[2., 2.]])
     array([1])
 
-SGD fits a linear model to the training data. The member ``coef_`` holds
-the model parameters::
+以上 SGD拟合一个线性模型，其成员 ``coef_`` 包含模型的系数::
 
     >>> clf.coef_
     array([[ 9.91080278,  9.91080278]])
 
-Member ``intercept_`` holds the intercept (aka offset or bias)::
+成员 ``intercept_`` 为模型的截距（或者偏差）::
 
     >>> clf.intercept_                                    # doctest: +ELLIPSIS
     array([-9.990...])
 
-Whether or not the model should use an intercept, i.e. a biased
-hyperplane, is controlled by the parameter ``fit_intercept``.
+是否使用截距可以通过 ``fit_intercept`` 来调节。
 
-To get the signed distance to the hyperplane use :meth:`SGDClassifier.decision_function`::
+通过 :meth:`SGDClassifier.decision_function` 可以得到距离超平面的距离::
 
     >>> clf.decision_function([[2., 2.]])
     array([ 29.65318117])
 
-The concrete loss function can be set via the ``loss``
-parameter. :class:`SGDClassifier` supports the following loss functions:
+具体的损失函数可以通过 ``loss`` 来调节。 :class:`SGDClassifier` 已包含如下的损失函数::
 
   * ``loss="hinge"``: (soft-margin) linear Support Vector Machine,
   * ``loss="modified_huber"``: smoothed hinge loss,
   * ``loss="log"``: logistic regression,
   * and all regression losses below.
 
-The first two loss functions are lazy, they only update the model
-parameters if an example violates the margin constraint, which makes
-training very efficient and may result in sparser models, even when L2 penalty
-is used.
+前两个损失函数只会在样本违反了边界限制的事后才会更新模型的系数。这样可以使得拟合过程非常迅速，且模型比较疏散，即使采用L2的惩罚方式。
 
-Using ``loss="log"`` or ``loss="modified_huber"`` enables the
-``predict_proba`` method, which gives a vector of probability estimates
-:math:`P(y|x)` per sample :math:`x`::
+选择 ``loss="log"`` 或者 ``loss="modified_huber"`` 则可以使用 ``predict_proba`` 方法来估计每个样本 :math:`x` 预测值的概率 :math:`P(y|x)`::
 
     >>> clf = SGDClassifier(loss="log").fit(X, y)
     >>> clf.predict_proba([[1., 1.]])
     array([[ 0.0000005,  0.9999995]])
 
-The concrete penalty can be set via the ``penalty`` parameter.
-SGD supports the following penalties:
+具体的惩罚方式可以通过 ``penalty`` 参数调节，SGD 包含如下方式::
 
   * ``penalty="l2"``: L2 norm penalty on ``coef_``.
   * ``penalty="l1"``: L1 norm penalty on ``coef_``.
   * ``penalty="elasticnet"``: Convex combination of L2 and L1;
     ``(1 - l1_ratio) * L2 + l1_ratio * L1``.
 
-The default setting is ``penalty="l2"``. The L1 penalty leads to sparse
-solutions, driving most coefficients to zero. The Elastic Net solves
-some deficiencies of the L1 penalty in the presence of highly correlated
-attributes. The parameter ``l1_ratio`` controls the convex combination
-of L1 and L2 penalty.
+默认设置为 ``penalty="l2"`` 。 L1方法会导致稀疏的模型，使得大部分系数为0。弹性网络可以解决一定程度上L1带来的低效。参数 ``l1_ratio`` 用来调节L1与L2惩罚的相对权重。
 
-:class:`SGDClassifier` supports multi-class classification by combining
-multiple binary classifiers in a "one versus all" (OVA) scheme. For each
-of the :math:`K` classes, a binary classifier is learned that discriminates
-between that and all other :math:`K-1` classes. At testing time, we compute the
-confidence score (i.e. the signed distances to the hyperplane) for each
-classifier and choose the class with the highest confidence. The Figure
-below illustrates the OVA approach on the iris dataset.  The dashed
-lines represent the three OVA classifiers; the background colors show
-the decision surface induced by the three classifiers.
+:class:`SGDClassifier` 支持多类别分类，其策略是“一对所有”（OVA）。对 :math:`K` 分类中的每一个类别，构建一个分类器来区分其与其他 :math:`K-1` 个类别。在测试阶段，我们可以计算每一个预测的置信评分（如距离超平面的距离），并从中选择得分最高的分类。下图展示了本方法在iris数据中的应用。其中虚线表示三个分类器。背景颜色代表由分类器决定的分类空间。
 
 .. figure:: ../auto_examples/linear_model/images/plot_sgd_iris_001.png
    :target: ../auto_examples/linear_model/plot_sgd_iris.html
    :align: center
    :scale: 75
 
-In the case of multi-class classification ``coef_`` is a two-dimensionally
-array of ``shape=[n_classes, n_features]`` and ``intercept_`` is a one
-dimensional array of ``shape=[n_classes]``. The i-th row of ``coef_`` holds
-the weight vector of the OVA classifier for the i-th class; classes are
-indexed in ascending order (see attribute ``classes_``).
-Note that, in principle, since they allow to create a probability model,
-``loss="log"`` and ``loss="modified_huber"`` are more suitable for
-one-vs-all classification.
+对于多类别情况 ``coef_`` 是一个大小为 ``shape=[n_classes, n_features]`` 二维矩阵， ``intercept_`` 是一个大小为 ``shape=[n_classes]`` 的向量。 ``coef_`` 的第i行表示OVA的第i个分类器的权重向量。类别是按照升序排列（参见属性 ``classes_`` ）。注意，原则上， ``loss="log"`` 和 ``loss="modified_huber"`` 更适用于OVA分类，因为他们会计算概率模型。
 
-:class:`SGDClassifier` supports both weighted classes and weighted
-instances via the fit parameters ``class_weight`` and ``sample_weight``. See
-the examples below and the doc string of :meth:`SGDClassifier.fit` for
-further information.
+:class:`SGDClassifier` 通过 ``class_weight`` 和 ``sample_weight`` 可以赋予类别或者样本更多的权重。参考下面的例子和函数 :meth:`SGDClassifier.fit` 的说明。
 
-.. topic:: Examples:
+.. topic:: 示例:
 
  - :ref:`example_linear_model_plot_sgd_separating_hyperplane.py`,
  - :ref:`example_linear_model_plot_sgd_iris.py`
  - :ref:`example_linear_model_plot_sgd_weighted_samples.py`
  - :ref:`example_svm_plot_separating_hyperplane_unbalanced.py` (See the `Note`)
 
-Regression
+回归
 ==========
 
-The class :class:`SGDRegressor` implements a plain stochastic gradient
-descent learning routine which supports different loss functions and
-penalties to fit linear regression models. :class:`SGDRegressor` is
-well suited for regression problems with a large number of training
-samples (> 10.000), for other problems we recommend :class:`Ridge`,
-:class:`Lasso`, or :class:`ElasticNet`.
+:class:`SGDRegressor` 采用一个直接的随机梯度下降方法来支持不同的损失函数和惩罚的分类来进行线性回归。 :class:`SGDRegressor` 适用于大数据情形 (> 10.000)，而其他情况，我们建议使用 :class:`Ridge` ， :class:`Lasso` 或者 :class:`ElasticNet` 。
 
-The concrete loss function can be set via the ``loss``
-parameter. :class:`SGDRegressor` supports the following loss functions:
+具体的损失函数可以通过参数 ``loss`` 进行设定。 :class:`SGDRegressor` 包含以下几种情况：
 
   * ``loss="squared_loss"``: Ordinary least squares,
   * ``loss="huber"``: Huber loss for robust regression,
   * ``loss="epsilon_insensitive"``: linear Support Vector Regression.
 
-The Huber and epsilon-insensitive loss functions can be used for
-robust regression. The width of the insensitive region has to be
-specified via the parameter ``epsilon``. This parameter depends on the
-scale of the target variables.
+Huber and epsilon-insensitive 损失函数可以被用作稳健回归。其中不敏感区域的大小由 ``epsilon`` 确定。其大小与样本特征的大小相关。
 
 
-Stochastic Gradient Descent for sparse data
+随机梯度下降方法方法在稀疏样本中应用
 ===========================================
 
-.. note:: The sparse implementation produces slightly different results
-  than the dense implementation due to a shrunk learning rate for the
-  intercept.
+.. note:: 这个针对稀疏样本的方法会以上的方法产生略微不同的结果。这是由于降低了对截距的学习速率。
 
-There is built-in support for sparse data given in any matrix in a format
-supported by `scipy.sparse <http://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.html>`_. For maximum efficiency, however, use the CSR
-matrix format as defined in `scipy.sparse.csr_matrix
-<http://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html>`_.
+对于稀疏数据，我们利用 `scipy.sparse <http://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.html>`_. 构建稀疏矩阵。为了最大化效率，建议使用CSR矩阵格式 `scipy.sparse.csr_matrix <http://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.html>`_.
 
-.. topic:: Examples:
+.. topic:: 示例:
 
  - :ref:`example_text_document_classification_20newsgroups.py`
 
-Complexity
+计算复杂度
 ==========
 
-The major advantage of SGD is its efficiency, which is basically
-linear in the number of training examples. If X is a matrix of size (n, p)
-training has a cost of :math:`O(k n \bar p)`, where k is the number
-of iterations (epochs) and :math:`\bar p` is the average number of
-non-zero attributes per sample.
+SGD的主要优势在于计算效率，其计算复杂度正比于样本数目。对于大小为 (n, p) 的训练样本，其复杂度为 :math:`O(k n \bar p)` ，其中 :math:`k` 是重复次数， :math:`\bar p` 是单个样本非零特征的数目。
 
-Recent theoretical results, however, show that the runtime to get some
-desired optimization accuracy does not increase as the training set size increases.
+最近的理论研究表明，计算时间并不是严的随着样本的增大而增加。
 
-Tips on Practical Use
+使用技巧
 =====================
 
-  * Stochastic Gradient Descent is sensitive to feature scaling, so it
-    is highly recommended to scale your data. For example, scale each
-    attribute on the input vector X to [0,1] or [-1,+1], or standardize
-    it to have mean 0 and variance 1. Note that the *same* scaling
-    must be applied to the test vector to obtain meaningful
-    results. This can be easily done using :class:`StandardScaler`::
+  * 随机梯度下降方法对于数据特征的大小敏感，因此建议对在拟合之前对数据进行重整化。如将输入变量 X 整理到 [0,1] 或 [-1,+1] 区间，或者使其中值为0，方差为1。 注意同样的重整化需要应用到测试样本中。此不可以通过类 :class:`StandardScaler` 完成::
 
       from sklearn.preprocessing import StandardScaler
       scaler = StandardScaler()
@@ -229,24 +156,16 @@ Tips on Practical Use
       X_train = scaler.transform(X_train)
       X_test = scaler.transform(X_test)  # apply same transformation to test data
 
-    If your attributes have an intrinsic scale (e.g. word frequencies or
-    indicator features) scaling is not needed.
+    如果样本属性有一些本征特质（如词频，特征），那么重整化是不必要的。
 
-  * Finding a reasonable regularization term :math:`\alpha` is
-    best done using :class:`GridSearchCV`, usually in the
-    range ``10.0**-np.arange(1,7)``.
+  * 找到适合的复杂度参数 :math:`\alpha` 。可以通过 :class:`GridSearchCV` 来自动寻找，通常取值范围为 ``10.0**-np.arange(1,7)`` 。
 
-  * Empirically, we found that SGD converges after observing
-    approx. 10^6 training samples. Thus, a reasonable first guess
-    for the number of iterations is ``n_iter = np.ceil(10**6 / n)``,
-    where ``n`` is the size of the training set.
+  * 经验上讲，我们发现 SGD 在观测10^6个样本后收敛。因此一个对于步数的合理估计为 ``n_iter = np.ceil(10**6 / n)`` ，其中 ``n`` 是样本大小。
 
-  * If you apply SGD to features extracted using PCA we found that
-    it is often wise to scale the feature values by some constant `c`
-    such that the average L2 norm of the training data equals one.
+  * 如果你用SGD来作PCA分析，那么通常将特征乘以一个系数 `c` 来使得其方差为1。
 
 
-.. topic:: References:
+.. topic:: 参考:
 
  * `"Efficient BackProp" <yann.lecun.com/exdb/publis/pdf/lecun-98b.pdf>`_
    Y. LeCun, L. Bottou, G. Orr, K. Müller - In Neural Networks: Tricks
@@ -254,48 +173,41 @@ Tips on Practical Use
 
 .. _sgd_mathematical_formulation:
 
-Mathematical formulation
+数学基础
 ========================
 
-Given a set of training examples :math:`(x_1, y_1), \ldots, (x_n, y_n)` where
-:math:`x_i \in \mathbf{R}^n` and :math:`y_i \in \{-1,1\}`, our goal is to
-learn a linear scoring function :math:`f(x) = w^T x + b` with model parameters
-:math:`w \in \mathbf{R}^m` and intercept :math:`b \in \mathbf{R}`. In order
-to make predictions, we simply look at the sign of :math:`f(x)`.
-A common choice to find the model parameters is by minimizing the regularized
-training error given by
+给定一系列训练样本 :math:`(x_1, y_1), \ldots, (x_n, y_n)` 其中 :math:`x_i \in \mathbf{R}^n` 和 :math:`y_i \in \{-1,1\}` ， 我们的目标是寻找一个线性评分函数 :math:`f(x) = w^T x + b` 其中系数为 :math:`w \in \mathbf{R}^m` ，截距为 :math:`b \in \mathbf{R}` 。为了做预测，我们简单地判断 :math:`f(x)` 的符号。  一个常用的标准是最小化训练误差：
 
 .. math::
 
     E(w,b) = \frac{1}{n}\sum_{i=1}^{n} L(y_i, f(x_i)) + \alpha R(w)
 
-where :math:`L` is a loss function that measures model (mis)fit and
-:math:`R` is a regularization term (aka penalty) that penalizes model
-complexity; :math:`\alpha > 0` is a non-negative hyperparameter.
+其中 :math:`L` 是损失函数，用以测量预测的准确程度。
+:math:`R` 是惩罚函数来控制模型的复杂度。 :math:`\alpha > 0` 是一个大于
+0的超系数。
 
-Different choices for :math:`L` entail different classifiers such as
+:math:`L` 的不同选择会产生不同的分类方法：
 
    - Hinge: (soft-margin) Support Vector Machines.
    - Log:   Logistic Regression.
    - Least-Squares: Ridge Regression.
    - Epsilon-Insensitive: (soft-margin) Support Vector Regression.
 
-All of the above loss functions can be regarded as an upper bound on the
-misclassification error (Zero-one loss) as shown in the Figure below.
+以上损失函数所对应的误差上限展示如下::
 
 .. figure:: ../auto_examples/linear_model/images/plot_sgd_loss_functions_001.png
    :align: center
    :scale: 75
 
-Popular choices for the regularization term :math:`R` include:
+常用的复杂度参数:math:`R` 选择如下：
 
    - L2 norm: :math:`R(w) := \frac{1}{2} \sum_{i=1}^{n} w_i^2`,
-   - L1 norm: :math:`R(w) := \sum_{i=1}^{n} |w_i|`, which leads to sparse
-     solutions.
-   - Elastic Net: :math:`R(w) := \frac{\rho}{2} \sum_{i=1}^{n} w_i^2 + (1-\rho) \sum_{i=1}^{n} |w_i|`, a convex combination of L2 and L1, where :math:`\rho` is given by ``1 - l1_ratio``.
+   - L1 norm: :math:`R(w) := \sum_{i=1}^{n} |w_i|`, 导致稀疏模型
+   - 弹性网络: :math:`R(w) := \frac{\rho}{2} \sum_{i=1}^{n} w_i^2 +
+     (1-\rho) \sum_{i=1}^{n} |w_i|`, 通过 :math:`\rho` 来调节 L1与L2的
+     权重
 
-The Figure below shows the contours of the different regularization terms
-in the parameter space when :math:`R(w) = 1`.
+下图展示了在系数空间中不同复杂度参数选择的影响 :math:`R(w) = 1`.
 
 .. figure:: ../auto_examples/linear_model/images/plot_sgd_penalties_001.png
    :align: center
@@ -304,60 +216,41 @@ in the parameter space when :math:`R(w) = 1`.
 SGD
 ---
 
-Stochastic gradient descent is an optimization method for unconstrained
-optimization problems. In contrast to (batch) gradient descent, SGD
-approximates the true gradient of :math:`E(w,b)` by considering a
-single training example at a time.
-
-The class :class:`SGDClassifier` implements a first-order SGD learning
-routine.  The algorithm iterates over the training examples and for each
-example updates the model parameters according to the update rule given by
+随机下降方法是一个无限制条件的优化方法。对比一般的梯度下降方法，SGD每次只通过一个样本数据来近似计算真实的梯度 :math:`E(w,b)` 。 :class:`SGDClassifier` 采用一阶SGD学习方法。此方法重复应用到训练样本上，对于每一个样本，其按照如下方法更新模型系数::
 
 .. math::
 
     w \leftarrow w - \eta (\alpha \frac{\partial R(w)}{\partial w}
     + \frac{\partial L(w^T x_i + b, y_i)}{\partial w})
 
-where :math:`\eta` is the learning rate which controls the step-size in
-the parameter space.  The intercept :math:`b` is updated similarly but
-without regularization.
+其中 :math:`\eta` 是学习效率，控制在系数空间的步长。 截距 :math:`b` 用同样的办法更新，但是不需要控制步长。
 
-The learning rate :math:`\eta` can be either constant or gradually decaying. For
-classification, the default learning rate schedule (``learning_rate='optimal'``)
-is given by
+学习速率 :math:`\eta` 可以是个常数，也可以逐步降低。例如，对于分类，默认的学习效率按照如下方法更新 (``learning_rate='optimal'``)::
 
 .. math::
 
     \eta^{(t)} = \frac {1}{\alpha  (t_0 + t)}
 
-where :math:`t` is the time step (there are a total of `n_samples * n_iter`
-time steps), :math:`t_0` is determined based on a heuristic proposed by Léon Bottou
-such that the expected initial updates are comparable with the expected
-size of the weights (this assuming that the norm of the training samples is
-approx. 1). The exact definition can be found in ``_init_t`` in :class:`BaseSGD`.
+其中 :math:`t` 是时间步数，（一共会有 `n_samples * n_iter` 时间步）， :math:`t_0` 由乐观估计（参见 Léon Bottou）。预期的初始更新和预期的权重大小相一致（假设训练样本的方差为1）其具体的定义可以参见 :class:`BaseSGD` 中的  ``_init_t`` 。
 
 
-For regression the default learning rate schedule is inverse scaling
-(``learning_rate='invscaling'``), given by
+对于回归问题，默认的学习效率如下 (``learning_rate='invscaling'``)
 
 .. math::
 
     \eta^{(t)} = \frac{eta_0}{t^{power\_t}}
 
-where :math:`eta_0` and :math:`power\_t` are hyperparameters chosen by the
-user via ``eta0`` and ``power_t``, resp.
+其中 :math:`eta_0` 和 :math:`power\_t` 是超系数，由 ``eta0`` 和 ``power_t`` 设定。
 
-For a constant learning rate use ``learning_rate='constant'`` and use ``eta0``
-to specify the learning rate.
+设定 ``learning_rate='constant'`` 和 ``eta0`` 来选择恒定学习效率。
 
-The model parameters can be accessed through the members ``coef_`` and
-``intercept_``:
+模型的系数可以通过 ``coef_`` 和 ``intercept_`` 来获得::
 
-     - Member ``coef_`` holds the weights :math:`w`
+     - ``coef_`` 对应权重 :math:`w`
 
-     - Member ``intercept_`` holds :math:`b`
+     -  ``intercept_`` 对应截距 :math:`b`
 
-.. topic:: References:
+.. topic:: 参考:
 
  * `"Solving large scale linear prediction problems using stochastic
    gradient descent algorithms"
@@ -370,24 +263,13 @@ The model parameters can be accessed through the members ``coef_`` and
    67 (2), 301-320.
 
 
-Implementation details
+实现细节
 ======================
 
-The implementation of SGD is influenced by the `Stochastic Gradient SVM
-<http://leon.bottou.org/projects/sgd>`_  of Léon Bottou. Similar to SvmSGD,
-the weight vector is represented as the product of a scalar and a vector
-which allows an efficient weight update in the case of L2 regularization.
-In the case of sparse feature vectors, the intercept is updated with a
-smaller learning rate (multiplied by 0.01) to account for the fact that
-it is updated more frequently. Training examples are picked up sequentially
-and the learning rate is lowered after each observed example. We adopted the
-learning rate schedule from Shalev-Shwartz et al. 2007.
-For multi-class classification, a "one versus all" approach is used.
-We use the truncated gradient algorithm proposed by Tsuruoka et al. 2009
-for L1 regularization (and the Elastic Net).
-The code is written in Cython.
+SGD方法的实现是基于 Léon Bottou `Stochastic Gradient SVM
+<http://leon.bottou.org/projects/sgd>`_  。 类似于 SvmSGD 权重向量是一个标量与向量的乘积，这样可以有效地在L2调控下更新权重。 对于稀疏特征向量，由于更频繁的更新，截距会采用一个更小的学习效率下（一般情况的1%）。训练样本会按照顺序进行分析，而学习效率会按照 Shalev-Shwartz et al. 2007 逐步降低。对于多类别分类的情况，我们采用“一对多”的方案。我们采用 Tsuruoka et al. 2009 的限定梯度方法来控制L1权重（以及弹性网络）。程序由Cython完成。
 
-.. topic:: References:
+.. topic:: 参考:
 
  * `"Stochastic Gradient Descent" <http://leon.bottou.org/projects/sgd>`_ L. Bottou - Website, 2010.
 
