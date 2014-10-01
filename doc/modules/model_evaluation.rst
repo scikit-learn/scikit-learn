@@ -89,7 +89,7 @@ probability estimates when creating the support vector classifier model::
     ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'log_loss', 'mean_absolute_error', 'mean_squared_error', 'precision', 'r2', 'recall', 'roc_auc']
     >>> clf = svm.SVC(probability=True,random_state=0)
     >>> cross_validation.cross_val_score(clf, X, y, scoring='log_loss') # doctest: +ELLIPSIS
-    array([-0.07..., -0.16..., -0.066...])
+    array([-0.07..., -0.16..., -0.06...])
 
 .. note::
 
@@ -173,9 +173,9 @@ Here is an example of building custom scorers, and of using the
     >>> clf = DummyClassifier(strategy='most_frequent',random_state=0)
     >>> clf = clf.fit(ground_truth, predictions)
     >>> loss(clf,ground_truth,predictions) # doctest: +ELLIPSIS
-    -0.693...
+    -0.69...
     >>> score(clf,ground_truth,predictions) # doctest: +ELLIPSIS
-    0.693...
+    0.69...
     
 
 .. _diy_scoring:
