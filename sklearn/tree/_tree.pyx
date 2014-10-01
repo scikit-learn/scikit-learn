@@ -58,7 +58,7 @@ cdef DTYPE_t FEATURE_THRESHOLD = 1e-7
 
 # Constant to switch between algorithm non zero value extract algorithm
 # in SparseSplitter
-cdef DTYPE_t EXTRACT_NNZ_SWITCH = 0.1
+cdef DTYPE_t EXTRACT_NNZ_SWITCH = 0.15
 
 # Some handy constants (BestFirstTreeBuilder)
 cdef int IS_FIRST = 1
