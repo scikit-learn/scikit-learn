@@ -88,8 +88,8 @@ probability estimates when creating the support vector classifier model::
     Traceback (most recent call last):
     ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'log_loss', 'mean_absolute_error', 'mean_squared_error', 'precision', 'r2', 'recall', 'roc_auc']
     >>> clf = svm.SVC(probability=True,random_state=0)
-    >>> cross_validation.cross_val_score(clf, X, y, scoring='log_loss')
-    array([-0.07490352, -0.16449405, -0.06685511])
+    >>> cross_validation.cross_val_score(clf, X, y, scoring='log_loss') # doctest: +ELLIPSIS
+    array([-0.07..., -0.16..., -0.066...])
 
 .. note::
 
@@ -172,10 +172,10 @@ Here is an example of building custom scorers, and of using the
     >>> from sklearn.dummy import DummyClassifier
     >>> clf = DummyClassifier(strategy='most_frequent',random_state=0)
     >>> clf = clf.fit(ground_truth, predictions)
-    >>> loss(clf,ground_truth,predictions)
-    -0.69314718055994529
-    >>> score(clf,ground_truth,predictions)
-    0.69314718055994529
+    >>> loss(clf,ground_truth,predictions) # doctest: +ELLIPSIS
+    -0.693...
+    >>> score(clf,ground_truth,predictions) # doctest: +ELLIPSIS
+    0.693...
     
 
 .. _diy_scoring:
@@ -889,7 +889,6 @@ The :func:`zero_one_loss` function computes the sum or the average of the 0-1
 classification loss (:math:`L_{0-1}`) over :math:`n_{\text{samples}}`. By
 default, the function normalizes over the sample. To get the sum of the
 :math:`L_{0-1}`, set ``normalize`` to ``False``.
-
 
 In multilabel classification, the :func:`zero_one_loss` scores a subset as
 one if its labels strictly match the predictions, and as a zero if there
