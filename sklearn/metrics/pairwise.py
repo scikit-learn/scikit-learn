@@ -441,9 +441,7 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
         Not supported for sparse matrix inputs.
 
     size_threshold : int, default=5e8
-        Avoid creating temporary matrices bigger than size_threshold (in
-        bytes). If the problem size gets too big, the implementation then
-        breaks it down in smaller problems.
+        Unused parameter.
 
     Returns
     -------
@@ -489,31 +487,12 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
                           X.shape[1], D)
         return D
 
-    temporary_size = X.size * Y.shape[-1]
-    # Convert to bytes
-    temporary_size *= X.itemsize
-    if temporary_size > size_threshold and sum_over_features:
-        # Broadcasting the full thing would be too big: it's on the order
-        # of magnitude of the gigabyte
-        D = np.empty((X.shape[0], Y.shape[0]), dtype=X.dtype)
-        index = 0
-        increment = 1 + int(size_threshold / float(temporary_size) *
-                            X.shape[0])
-        while index < X.shape[0]:
-            this_slice = slice(index, index + increment)
-            tmp = X[this_slice, np.newaxis, :] - Y[np.newaxis, :, :]
-            tmp = np.abs(tmp, tmp)
-            tmp = np.sum(tmp, axis=2)
-            D[this_slice] = tmp
-            index += increment
-    else:
-        D = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
-        D = np.abs(D, D)
-        if sum_over_features:
-            D = np.sum(D, axis=2)
-        else:
-            D = D.reshape((-1, X.shape[1]))
-    return D
+    if sum_over_features:
+        return distance.cdist(X, Y, 'cityblock')
+
+    D = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
+    D = np.abs(D, D)
+    return D.reshape((-1, X.shape[1]))
 
 
 def cosine_distances(X, Y=None):

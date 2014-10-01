@@ -141,8 +141,8 @@ class KernelDensity(BaseEstimator):
 
         Returns
         -------
-        density : ndarray
-            The array of log(density) evaluations.  This has shape X.shape[:-1]
+        density : ndarray, shape (n_samples,)
+            The array of log(density) evaluations.
         """
         # The returned density is normalized to the number of points.
         # For it to be a probability, we must scale it.  For this reason
@@ -157,7 +157,7 @@ class KernelDensity(BaseEstimator):
         return log_density
 
     def score(self, X):
-        """Compute the log probability under the model.
+        """Compute the total log probability under the model.
 
         Parameters
         ----------
@@ -167,8 +167,8 @@ class KernelDensity(BaseEstimator):
 
         Returns
         -------
-        logprob : array_like, shape (n_samples,)
-            Log probabilities of each data point in X.
+        logprob : float
+            Total log-likelihood of the data in X.
         """
         return np.sum(self.score_samples(X))
 
