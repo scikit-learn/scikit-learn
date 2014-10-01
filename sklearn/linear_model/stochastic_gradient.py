@@ -637,7 +637,7 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     learning_rate : string, optional
         The learning rate:
         constant: eta = eta0
-        optimal: eta = 1.0 / (t + t0) if average is False else eta0 [default]
+        optimal: eta = 1.0 / (t + t0) [default]
         invscaling: eta = eta0 / pow(t, power_t)
 
     eta0 : double
@@ -1132,7 +1132,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
     learning_rate : string, optional
         The learning rate:
         constant: eta = eta0
-        optimal: eta = 1.0/(alpha * t) if average is False else eta0.
+        optimal: eta = 1.0/(alpha * t)
         invscaling: eta = eta0 / pow(t, power_t) [default]
 
     eta0 : double, optional
