@@ -12,21 +12,30 @@ environment:
       secure: BQm8KfEj6v2Y+dQxb2syQvTFxDnHXvaNktkLcYSq7jfbTOO6eH9n09tfQzFUVcWZ
 
   matrix:
-    - PYTHON: "C:\\Python27_32"
+    - PYTHON: "C:\\Python27"
       PYTHON_VERSION: "2.7.8"
       PYTHON_ARCH: "32"
 
-    - PYTHON: "C:\\Python27_64"
+    - PYTHON: "C:\\Python27-x64"
       PYTHON_VERSION: "2.7.8"
       PYTHON_ARCH: "64"
 
-    - PYTHON: "C:\\Python34_32"
+    - PYTHON: "C:\\Python33"
+      PYTHON_VERSION: "3.3.5"
+      PYTHON_ARCH: "32"
+
+    - PYTHON: "C:\\Python33-x64"
+      PYTHON_VERSION: "3.3.5"
+      PYTHON_ARCH: "64"
+
+    - PYTHON: "C:\\Python34"
       PYTHON_VERSION: "3.4.1"
       PYTHON_ARCH: "32"
 
-    - PYTHON: "C:\\Python34_64"
+    - PYTHON: "C:\\Python34-x64"
       PYTHON_VERSION: "3.4.1"
       PYTHON_ARCH: "64"
+
 
 install:
   # Install Python (from the official .msi of http://python.org) and pip when
