@@ -33,7 +33,8 @@ class ClassifierChain(BaseEstimator):
 
     References
     ----------
-    .. [1] J Read, "Classifier Chains for Multi-label Classification"
+    .. [1] Jesse Read, Bernhard Pfahringer, Geoff Holmes, Eibe Frank,
+           "Classifier Chains for Multi-label Classification", 2009.
 
     Examples
     --------
