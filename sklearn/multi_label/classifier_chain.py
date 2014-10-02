@@ -25,7 +25,7 @@ class ClassifierChain(BaseEstimator):
 
     Attributes
     ----------
-    n_labels : int
+    n_labels_ : int
         How many labels are there in this model.
 
     classifiers_ : array
@@ -99,7 +99,7 @@ class ClassifierChain(BaseEstimator):
         for clf in self.classifiers_:
             X = self._predict_and_chain(clf, X)
 
-        return X[:, -self.n_labels:]
+        return X[:, -self.n_labels_:]
 
     def _predict_and_chain(self, clf, X):
         return np.hstack((X, clf.predict(X).reshape(-1, 1)))
