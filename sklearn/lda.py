@@ -370,8 +370,8 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         """
         X = check_array(X)
         # center and scale data
-        if self.solver == 'lsqr':
-            raise NotImplementedError('transform not supported for lsqr solver')
+        if self.solver == 'lsqr' or self.solver == 'eigen':
+            raise NotImplementedError('transform not implemented for this solver')
         X_new = np.dot(X - self.xbar_, self.scalings_)
         n_components = X.shape[1] if self.n_components is None \
             else self.n_components
