@@ -659,7 +659,7 @@ From text
    linear_model.RidgeCV
    linear_model.SGDClassifier
    linear_model.SGDRegressor
-   linear_model.TheilSen
+   linear_model.TheilSenRegressor
 
 .. autosummary::
    :toctree: generated/

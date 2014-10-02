@@ -939,9 +939,9 @@ performance.
 Theil-Sen estimator: generalized-median-based estimator
 --------------------------------------------------------
 
-The :class:`TheilSen` estimator uses a generalization of the median in multiple
-dimensions. It is thus robust to multivariate outliers. Note however that
-the robustness of the estimator decreases quickly with the dimensionality
+The :class:`TheilSenRegressor` estimator uses a generalization of the median in
+multiple dimensions. It is thus robust to multivariate outliers. Note however
+that the robustness of the estimator decreases quickly with the dimensionality
 of the problem. It looses its robustness properties and becomes no
 better than an ordinary least squares in high dimension.
 
@@ -957,8 +957,8 @@ better than an ordinary least squares in high dimension.
 Theoretical considerations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:class:`TheilSen` is comparable to the :ref:`Ordinary Least Squares (OLS)
-<ordinary_least_squares>` in terms of asymptotic efficiency and as an
+:class:`TheilSenRegressor` is comparable to the :ref:`Ordinary Least Squares
+(OLS) <ordinary_least_squares>` in terms of asymptotic efficiency and as an
 unbiased estimator. In contrast to OLS, Theil-Sen is a non-parametric
 method which means it makes no assumption about the underlying
 distribution of the data. Since Theil-Sen is a median-based estimator, it
@@ -972,7 +972,7 @@ corrupted data of up to 29.3%.
    :align: center
    :scale: 50%
 
-The implementation of :class:`TheilSen` in scikit-learn follows a
+The implementation of :class:`TheilSenRegressor` in scikit-learn follows a
 generalization to a multivariate linear regression model [#f1]_ using the
 spatial median which is a generalization of the median to multiple
 dimensions [#f2]_.

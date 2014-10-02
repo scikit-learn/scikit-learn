@@ -138,7 +138,7 @@ def _breakdown_point(n_samples, n_subsamples):
 
 
 def _lstsq(X, y, indices, intercept):
-    """Least Squares Estimator for TheilSen class.
+    """Least Squares Estimator for TheilSenRegressor class.
 
     Parameters
     ----------

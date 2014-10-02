@@ -57,7 +57,7 @@ X_errors_large = X.copy()
 X_errors_large[::3] = 10
 
 estimators = [('OLS', linear_model.LinearRegression()),
-              ('Theil-Sen', linear_model.TheilSen(random_state=42)),
+              ('Theil-Sen', linear_model.TheilSenRegressor(random_state=42)),
               ('RANSAC', linear_model.RANSACRegressor(random_state=42)), ]
 
 x_plot = np.linspace(X.min(), X.max())
