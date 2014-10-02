@@ -29,8 +29,6 @@ the technique.
 # License: BSD 3 clause
 from __future__ import print_function
 
-import re
-
 import numpy as np
 
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -89,9 +87,7 @@ class TextStats(BaseEstimator, TransformerMixin):
 
     def transform(self, posts):
         def get_features(text):
-            dot_re = re.compile('\.')
-            return {'length': len(text),
-                    'num_sentences': len(dot_re.findall(text))}
+            return {'length': len(text), 'num_sentences': text.count('.')}
 
         return [get_features(text) for text in posts]
 
