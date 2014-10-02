@@ -9,7 +9,7 @@ combine classifiers for each label.
 
 import numpy as np
 
-from ..base import BaseEstimator
+from ..base import BaseEstimator, clone
 
 
 class ClassifierChain(BaseEstimator):
@@ -44,9 +44,11 @@ class ClassifierChain(BaseEstimator):
     >>> from sklearn.multi_label import ClassifierChain
     >>> from sklearn.svm import LinearSVC
     >>> X, Y = make_multilabel_classification(return_indicator=True, random_state=0)
-    >>> cc = ClassifierChain(base_estimator=LinearSVC)
-    >>> cc.fit(X, Y)
-    ClassifierChain(base_estimator=<class 'sklearn.svm.classes.LinearSVC'>)
+    >>> cc = ClassifierChain(base_estimator=LinearSVC())
+    >>> cc.fit(X, Y) #doctest: +NORMALIZE_WHITESPACE
+    ClassifierChain(base_estimator=LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
+        intercept_scaling=1, loss='l2', max_iter=1000, multi_class='ovr',
+        penalty='l2', random_state=None, tol=0.0001, verbose=0))
     """
 
     def __init__(self, base_estimator):
@@ -74,7 +76,7 @@ class ClassifierChain(BaseEstimator):
         for i in xrange(self.n_labels_):
             y = Y[:, i]
 
-            clf = self.base_estimator()
+            clf = clone(self.base_estimator)
             clf.fit(X, y)
             self.classifiers_.append(clf)
 
