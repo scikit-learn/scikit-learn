@@ -5,20 +5,20 @@ Feature Union with Heterogeneos Data Sources
 
 Datasets can often contain components of that require different feature
 extraction and processing pipelines.  This scenario might occur when:
-    1) Your dataset consists of heterogeneous data types (e.g. raster images
-    and text captions)
 
-    2) Your dataset is stored in a Pandas DataFrame and different columns
-    require different processing pipelines.
+1. Your dataset consists of heterogeneous data types (e.g. raster images and
+   text captions)
 
-    3) Groups of features require weighting relative to each other.
+2. Your dataset is stored in a Pandas DataFrame and different columns
+   require different processing pipelines.
 
-This example demonstrates how to use `sklearn.feature_extraction.FeatureUnion`
-on a dataset containing different types of features.  We use the 20-newsgroups
-dataset and compute standard bag-of-words features for the subject line and
-body in separate pipelines as well as ad hoc features on the body. We combine
-them (with weights) using a FeatureUnion and finally train a classifier on the
-combined set of features.
+This example demonstrates how to use
+:class:`sklearn.feature_extraction.FeatureUnion` on a dataset containing
+different types of features.  We use the 20-newsgroups dataset and compute
+standard bag-of-words features for the subject line and body in separate
+pipelines as well as ad hoc features on the body. We combine them (with
+weights) using a FeatureUnion and finally train a classifier on the combined
+set of features.
 
 The choice of features is not particularly helpful, but serves to illustrate
 the technique.
@@ -45,13 +45,16 @@ from sklearn.svm import SVC
 
 
 class ItemSelector(BaseEstimator, TransformerMixin):
-    """For data grouped by feature, select dataset at a provided key.
+    """For data grouped by feature, select subset of data at a provided key.
 
     The data is expected to be stored in a 2D data structure, where the first
     index is over features and the second is over samples.  i.e.
 
     >> len(data) == n_features
     >> len(data[key]) == n_samples
+
+    Please note that this is the opposite convention to sklearn feature
+    matrixes (where the first index corresponds to sample).
 
     ItemSelector only requres that the collection implement getitem
     (data[key]).  Examples include: a dict of lists, 2D numpy array, Pandas
