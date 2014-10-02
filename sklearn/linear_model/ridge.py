@@ -29,7 +29,7 @@ from ..externals import six
 from ..metrics.scorer import check_scoring
 
 
-def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3):
+def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0):
     n_samples, n_features = X.shape
     X1 = sp_linalg.aslinearoperator(X)
     coefs = np.empty((y.shape[1], n_features))
@@ -64,8 +64,12 @@ def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3):
                 (n_features, n_features), matvec=mv, dtype=X.dtype)
             coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
                                           tol=tol)
-        if info != 0:
+        if info < 0:
             raise ValueError("Failed with error code %d" % info)
+
+        if max_iter is None and info > 0 and verbose:
+            warnings.warn("sparse_cg did not converge after %d iterations." %
+                          info)
 
     return coefs
 
@@ -187,7 +191,7 @@ def _deprecate_dense_cholesky(solver):
 
 
 def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
-                     max_iter=None, tol=1e-3):
+                     max_iter=None, tol=1e-3, verbose=0):
     """Solve the ridge equation by the method of normal equations.
 
     Parameters
@@ -238,6 +242,10 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     tol: float
         Precision of the solution.
+
+    verbose: int
+        Verbosity level. Setting verbose > 0 will display additional information
+        depending on the solver used.
 
     Returns
     -------
@@ -306,7 +314,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         raise ValueError('Solver %s not understood' % solver)
 
     if solver == 'sparse_cg':
-        coef = _solve_sparse_cg(X, y, alpha, max_iter, tol)
+        coef = _solve_sparse_cg(X, y, alpha, max_iter, tol, verbose)
 
     elif solver == "lsqr":
         coef = _solve_lsqr(X, y, alpha, max_iter, tol)
