@@ -109,4 +109,4 @@ def test_lda_scaling():
         clf = lda.LDA(solver=solver)
         # should be able to separate the data perfectly
         assert_equal(clf.fit(x, y).score(x, y), 1.0,
-                     'using covariance: ' + str(cov_method))
+                     'using covariance: ' + str(solver))
