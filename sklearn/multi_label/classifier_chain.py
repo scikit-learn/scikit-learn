@@ -1,7 +1,7 @@
 """
 Classifier Chain.
 
-Use CC (classifier chain) as a meta-algorithm to
+Use classifier chain as a meta-algorithm to
 combine classifiers for each label.
 """
 
@@ -12,7 +12,7 @@ import numpy as np
 from ..base import BaseEstimator
 
 
-class CC(BaseEstimator):
+class ClassifierChain(BaseEstimator):
     """Classifier Chain
 
     Classifier chain [1] fit classifiers for each label,
@@ -40,12 +40,12 @@ class CC(BaseEstimator):
 
     >>> import numpy as np
     >>> from sklearn.datasets import make_multilabel_classification
-    >>> from sklearn.multi_label import CC
+    >>> from sklearn.multi_label import ClassifierChain
     >>> from sklearn.svm import LinearSVC
     >>> X, Y = make_multilabel_classification(return_indicator=True, random_state=0)
-    >>> cc = CC(base_estimator=LinearSVC)
+    >>> cc = ClassifierChain(base_estimator=LinearSVC)
     >>> cc.fit(X, Y)
-    CC(base_estimator=<class 'sklearn.svm.classes.LinearSVC'>)
+    ClassifierChain(base_estimator=<class 'sklearn.svm.classes.LinearSVC'>)
     """
 
     def __init__(self, base_estimator):
