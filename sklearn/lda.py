@@ -16,7 +16,7 @@ import numpy as np
 from scipy import linalg
 
 from .base import BaseEstimator, ClassifierMixin, TransformerMixin
-from .covariance import ledoit_wolf, empirical_covariance
+from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
 from .utils.extmath import logsumexp
 from .utils.multiclass import unique_labels
 from .utils import check_array, check_X_y
@@ -42,16 +42,22 @@ def _cov(X, estimator='empirical'):
     s : array-like, shape = [n_features, n_features]
         Estimated covariance matrix
     """
-    if estimator == 'ledoit_wolf':
-        # standardize features
-        sc = StandardScaler()
-        X = sc.fit_transform(X)
-        std = np.diag(sc.std_)
-        s = std.dot(ledoit_wolf(X)[0]).dot(std)  # rescale covariance matrix
-    elif estimator == 'empirical':
+    if isinstance(estimator, str):    
+        if estimator == 'ledoit_wolf':
+            # standardize features
+            sc = StandardScaler()
+            X = sc.fit_transform(X)
+            std = np.diag(sc.std_)
+            s = std.dot(ledoit_wolf(X)[0]).dot(std)  # rescale covariance matrix
+        elif estimator == 'empirical':
+            s = empirical_covariance(X)
+        else:
+            raise ValueError('unknown covariance estimation method')
+    elif isinstance(estimator, float) or isinstance(estimator, int):
+        if estimator < 0 or estimator > 1:
+            raise ValueError('shrinkage parameter must be between 0 and 1')
         s = empirical_covariance(X)
-    else:
-        raise ValueError('unknown covariance estimation method')
+        s = shrunk_covariance(s, estimator)
     return s
 
 
@@ -106,8 +112,8 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
           - 'ledoit_wolf': Ledoit-Wolf shrinkage (determines optimal shrinkage
                            parameter analytically)
           - 'empirical': Equivalent with no shrinkage (or a value of 0)
-          - 0..1: If set to a number between 0 and 1, the shrinkage parameter is
-                  set to this value (0 means no shrinkage)
+          - 0..1: If set to a number between 0 and 1, the shrinkage parameter
+                  is set to this value (0 means no shrinkage)
 
     priors : array, optional, shape = [n_classes]
         Priors on classes
