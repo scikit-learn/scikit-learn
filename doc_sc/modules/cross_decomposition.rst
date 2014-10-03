@@ -1,17 +1,14 @@
 .. _cross_decomposition:
 
 ===================
-Cross decomposition
+交叉分解
 ===================
 
 .. currentmodule:: sklearn.cross_decomposition
 
-The cross decomposition module contains two main families of algorithms: the
-partial least squares (PLS) and the canonical correlation analysis (CCA).
+交叉分解模块包含两类算法：部分最小二乘法（partial least squares PLS） 和正则相关分析（canonical correlation analysis CCA）。
 
-These families of algorithms are useful to find linear relations between two
-multivariate datasets: the ``X`` and ``Y`` arguments of the ``fit`` method
-are 2D arrays.
+这两个算法都是用来寻找两个多变量样本数据间的线性关系:  ``fit`` 函数的输入变量 ``X`` 和 ``Y`` 都是二维向量。
 
 .. figure:: ../auto_examples/cross_decomposition/images/plot_compare_cross_decomposition_001.png
    :target: ../auto_examples/cross_decomposition/plot_compare_cross_decomposition.html
@@ -19,24 +16,16 @@ are 2D arrays.
    :align: center
 
 
-Cross decomposition algorithms find the fundamental relations between two
-matrices (X and Y). They are latent variable approaches to modeling the
-covariance structures in these two spaces. They will try to find the
-multidimensional direction in the X space that explains the maximum
-multidimensional variance direction in the Y space. PLS-regression is
-particularly suited when the matrix of predictors has more variables than
-observations, and when there is multicollinearity among X values. By contrast,
-standard regression will fail in these cases.
+交叉分解算法尝试寻找两个矩阵(X and Y)间的基本关系。他们是通过隐变量来刻画其间的协变关系。他们试图在X空间中寻找一个高维的方向来最大化的解释Y在沿该方向上的方差。PLS回归适用于样本的特征多于样本数目的时候，而标准的回归方法将会失效。
 
-Classes included in this module are :class:`PLSRegression`
-:class:`PLSCanonical`, :class:`CCA` and :class:`PLSSVD`
+在本模块中包含 :class:`PLSRegression` ， :class:`PLSCanonical` ， :class:`CCA` 和 :class:`PLSSVD` 。
 
 
-.. topic:: Reference:
+.. topic:: 参考：
 
    * JA Wegelin
      `A survey of Partial Least Squares (PLS) methods, with emphasis on the two-block case <https://www.stat.washington.edu/research/reports/2000/tr371.pdf>`_
 
-.. topic:: Examples:
+.. topic:: 文献：
 
     * :ref:`example_cross_decomposition_plot_compare_cross_decomposition.py`
