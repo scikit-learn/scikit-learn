@@ -564,6 +564,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef unsigned int epoch = 0
     cdef unsigned int i = 0
     cdef int is_hinge = isinstance(loss, Hinge)
+    cdef double optimal_init = 0.0
 
     # q vector is only used for L1 regularization
     cdef np.ndarray[double, ndim = 1, mode = "c"] q = None
@@ -580,6 +581,13 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
 
     eta = eta0
 
+    if learning_rate == OPTIMAL:
+        typw = np.sqrt(1.0 / np.sqrt(alpha))
+        # computing eta0, the initial learning rate
+        initial_eta0 = typw / max(1.0, loss.dloss(-typw, 1.0))
+        # initialize t such that eta at first sample equals eta0
+        optimal_init = 1.0 / (initial_eta0 * alpha)
+
     t_start = time()
     with nogil:
         for epoch in range(n_iter):
@@ -589,7 +597,6 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
             if shuffle:
                 dataset.shuffle(seed)
             for i in range(n_samples):
-
                 dataset.next(&x_data_ptr,
                              &x_ind_ptr,
                              &xnnz,
@@ -598,7 +605,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
 
                 p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
                 if learning_rate == OPTIMAL:
-                    eta = 1.0 / (alpha * t)
+                    eta = 1.0 / (alpha * (optimal_init + t - 1))
                 elif learning_rate == INVSCALING:
                     eta = eta0 / pow(t, power_t)
 
@@ -634,17 +641,21 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 if penalty_type >= L2:
                     w.scale(1.0 - ((1.0 - l1_ratio) * eta * alpha))
                 if update != 0.0:
-                    w.add(x_data_ptr, x_ind_ptr, xnnz, update, t)
+                    w.add(x_data_ptr, x_ind_ptr, xnnz, update)
                     if fit_intercept == 1:
                         intercept += update * intercept_decay
+
+                if average:
+                    # compute the average for the intercept and update the
+                    # average weights, this is done regardless as to whther
+                    # the update is 0
+
+                    w.add_average(x_data_ptr, x_ind_ptr, xnnz, update, t)
+                    average_intercept += (intercept - average_intercept) / t
 
                 if penalty_type == L1 or penalty_type == ELASTICNET:
                     u += (l1_ratio * eta * alpha)
                     l1penalty(w, q_data_ptr, x_ind_ptr, xnnz, u)
-
-                if average:
-                    # compute the average for the intercept
-                    average_intercept += (intercept - average_intercept) / t
 
                 t += 1
                 count += 1

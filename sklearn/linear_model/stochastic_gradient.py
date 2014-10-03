@@ -111,20 +111,6 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         if self.loss not in self.loss_functions:
             raise ValueError("The loss %s is not supported. " % self.loss)
 
-    def _init_t(self, loss_function):
-        """Initialize iteration counter attr ``t_``.
-
-        If ``self.learning_rate=='optimal'`` initialize ``t_`` such that
-        ``eta`` at first sample equals ``self.eta0``.
-        """
-        self.t_ = 1.0
-        if self.learning_rate == "optimal":
-            typw = np.sqrt(1.0 / np.sqrt(self.alpha))
-            # computing eta0, the initial learning rate
-            eta0 = typw / max(1.0, loss_function.dloss(-typw, 1.0))
-            # initialize t such that eta at first sample equals eta0
-            self.t_ = 1.0 / (eta0 * self.alpha)
-
     def _get_loss_function(self, loss):
         """Get concrete ``LossFunction`` object for str ``loss``. """
         try:
@@ -394,7 +380,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
         self.loss_function = self._get_loss_function(loss)
         if self.t_ is None:
-            self._init_t(self.loss_function)
+            self.t_ = 1.0
 
         # delegate to concrete training procedure
         if n_classes > 2:
@@ -1002,7 +988,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         learning_rate_type = self._get_learning_rate_type(learning_rate)
 
         if self.t_ is None:
-            self._init_t(loss_function)
+            self.t_ = 1.0
 
         random_state = check_random_state(self.random_state)
         # numpy mtrand expects a C long which is a signed 32 bit integer under

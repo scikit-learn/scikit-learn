@@ -87,7 +87,7 @@ cdef class WeightVector(object):
             self.beta = 1.0
 
     cdef void add(self, double *x_data_ptr, int *x_ind_ptr, int xnnz,
-                  double c, double t) nogil:
+                  double c) nogil:
         """Scales sample x by constant c and adds it to the weight vector.
 
         This operation updates ``sq_norm``.
@@ -106,17 +106,12 @@ cdef class WeightVector(object):
         cdef int j
         cdef int idx
         cdef double val
-        cdef double mu = 1.0 / t
-        cdef double alpha = self.alpha
         cdef double innerprod = 0.0
         cdef double xsqnorm = 0.0
 
         # the next two lines save a factor of 2!
         cdef double wscale = self.wscale
         cdef double* w_data_ptr = self.w_data_ptr
-        cdef double* aw_data_ptr
-        if self.aw is not None:
-            aw_data_ptr = self.aw_data_ptr
 
         for j in range(xnnz):
             idx = x_ind_ptr[j]
@@ -125,18 +120,42 @@ cdef class WeightVector(object):
             xsqnorm += (val * val)
             w_data_ptr[idx] += val * (c / wscale)
 
-            # Update the average weights according to the sparse trick defined
-            # here: http://research.microsoft.com/pubs/192769/tricks-2012.pdf
-            if self.aw is not None:
-                aw_data_ptr[idx] += (self.alpha * val * (-c / wscale))
+        self.sq_norm += (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
+
+    cdef void add_average(self, double *x_data_ptr, int *x_ind_ptr, int xnnz,
+                          double c, double num_iter) nogil:
+        """Updates the average weight vector.
+
+        Parameters
+        ----------
+        x_data_ptr : double*
+            The array which holds the feature values of ``x``.
+        x_ind_ptr : np.intc*
+            The array which holds the feature indices of ``x``.
+        xnnz : int
+            The number of non-zero features of ``x``.
+        c : double
+            The scaling constant for the example.
+        num_iter : double
+            The total number of iterations.
+        """
+        cdef int j
+        cdef int idx
+        cdef double val
+        cdef double mu = 1.0 / num_iter
+        cdef double alpha = self.alpha
+        cdef double wscale = self.wscale
+        cdef double* aw_data_ptr = self.aw_data_ptr
+
+        for j in range(xnnz):
+            idx = x_ind_ptr[j]
+            val = x_data_ptr[j]
+            aw_data_ptr[idx] += (self.alpha * val * (-c / wscale))
 
         # Once the the sample has been processed, update the alpha and beta
-        if self.aw is not None:
-            if t > 1:
-                self.beta /= (1 - mu)
-            self.alpha += mu * self.beta * wscale
-
-        self.sq_norm += (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
+        if num_iter > 1:
+            self.beta /= (1.0 - mu)
+        self.alpha += mu * self.beta * wscale
 
     cdef double dot(self, double *x_data_ptr, int *x_ind_ptr,
                     int xnnz) nogil:
