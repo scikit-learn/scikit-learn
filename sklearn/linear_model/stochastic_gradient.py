@@ -593,7 +593,8 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         data is assumed to be already centered. Defaults to True.
 
     n_iter: int, optional
-        The number of passes over the training data (aka epochs).
+        The number of passes over the training data (aka epochs). The number
+        of iterations is set to 1 if using partial_fit.
         Defaults to 5.
 
     shuffle: bool, optional
@@ -1092,8 +1093,9 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
-    n_iter: int, optional
-        The number of passes over the training data (aka epochs).
+    n_iter : int, optional
+        The number of passes over the training data (aka epochs). The number
+        of iterations is set to 1 if using partial_fit.
         Defaults to 5.
 
     shuffle: bool, optional
