@@ -963,7 +963,25 @@ Regression metrics
 The :mod:`sklearn.metrics` implements several losses, scores and utility
 functions to measure regression performance. Some of those have been enhanced
 to handle the multioutput case: :func:`mean_absolute_error`,
-:func:`mean_absolute_error` and :func:`r2_score`.
+:func:`mean_absolute_error`, :func:`explained_variance_score` and 
+:func:`r2_score`.
+
+
+These functions have an ``output_weights`` keyword argument which specifies
+the way the scores for each individual target should be averaged. The default
+is ``'uniform'``, which entails a uniformly weighted mean over outputs. If
+an ``ndarray`` of shape ``(n_outputs,)`` is passed, then its entries are
+interpreted as weights and an according weighted average is returned. If
+``output_weights=None`` is specified, then all unaltered individual scores
+will be returned in an array of shape ``(n_outputs,)``.
+
+
+The :func:`r2_score` and :func:`explained_variance_score` additionally
+accept ``output_weights='variance'``, which will lead to a weighting of 
+each individual score by the variance of the corresponding target variable.
+This setting quantifies the globally captured unscaled variance. If the 
+target variables are of different scale, then this score puts more
+importance on well explaining the higher variance variables.
 
 
 Explained variance score
@@ -982,6 +1000,7 @@ variance is  estimated  as follow:
 
 The best possible score is 1.0, lower values are worse.
 
+
 Here a small example of usage of the :func:`explained_variance_score`
 function::
 
@@ -990,6 +1009,14 @@ function::
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> explained_variance_score(y_true, y_pred)  # doctest: +ELLIPSIS
     0.957...
+    >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+    >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
+    >>> explained_variance_score(y_true, y_pred, output_weights=None)
+    ... # doctest: +ELLIPSIS
+    array([ 0.967...,  1.        ])
+    >>> explained_variance_score(y_true, y_pred, output_weights=[0.3, 0.7])
+    ... # doctest: +ELLIPSIS
+    0.990...
 
 Mean absolute error
 -------------------
@@ -1007,6 +1034,7 @@ and :math:`y_i` is the corresponding true value, then the mean absolute error
 
   \text{MAE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1} \left| y_i - \hat{y}_i \right|.
 
+
 Here a small example of usage of the :func:`mean_absolute_error` function::
 
   >>> from sklearn.metrics import mean_absolute_error
@@ -1018,7 +1046,11 @@ Here a small example of usage of the :func:`mean_absolute_error` function::
   >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
   >>> mean_absolute_error(y_true, y_pred)
   0.75
-
+  >>> mean_absolute_error(y_true, y_pred, output_weights=None)
+  array([ 0.5,  1. ])
+  >>> mean_absolute_error(y_true, y_pred, output_weights=[0.3, 0.7])
+  ... # doctest: +ELLIPSIS
+  0.849...
 
 
 Mean squared error
@@ -1074,6 +1106,7 @@ over :math:`n_{\text{samples}}` is defined as
 
 where :math:`\bar{y} =  \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}} - 1} y_i`.
 
+
 Here a small example of usage of the :func:`r2_score` function::
 
   >>> from sklearn.metrics import r2_score
@@ -1083,8 +1116,18 @@ Here a small example of usage of the :func:`r2_score` function::
   0.948...
   >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
   >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
-  >>> r2_score(y_true, y_pred)  # doctest: +ELLIPSIS
+  >>> r2_score(y_true, y_pred, output_weights='variance')  # doctest: +ELLIPSIS
   0.938...
+  >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+  >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
+  >>> r2_score(y_true, y_pred)  # doctest: +ELLIPSIS
+  0.936...
+  >>> r2_score(y_true, y_pred, output_weights=None)
+  ... # doctest: +ELLIPSIS
+  array([ 0.965...,  0.908...])
+  >>> r2_score(y_true, y_pred, output_weights=[0.3, 0.7])
+  ... # doctest: +ELLIPSIS
+  0.925...
 
 
 .. topic:: Example:
