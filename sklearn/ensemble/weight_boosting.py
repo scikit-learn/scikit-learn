@@ -5,7 +5,7 @@ regression.
 
 The module structure is the following:
 
-- The ``BaseAdaBoost`` base class implements a common ``fit`` method
+- The ``BaseWeightBoosting`` base class implements a common ``fit`` method
   for all the estimators in the module. Regression and classification
   only differ from each other in the loss function that is optimized.
 
