@@ -51,17 +51,17 @@ For the most common use cases, you can designate a scorer object with the
 All scorer ojects follow the convention that higher return values are better 
 than lower return values.  Thus the returns from mean_absolute_error 
 and mean_squared_error, which measure the distance between the model 
-and the data, are negated. 
+and the data, are negated.  
 
 
-======================     =================================================
-Scoring                    Function
-======================     =================================================
+======================     =================================================     ==================================
+Scoring                    Function                                              Comment
+======================     =================================================     ==================================
 **Classification**
 'accuracy'                 :func:`sklearn.metrics.accuracy_score`
 'average_precision'        :func:`sklearn.metrics.average_precision_score`
-'f1'                       :func:`sklearn.metrics.f1_score`
-'log_loss'                 :func:`sklearn.metrics.log_loss`
+'f1'                       :func:`sklearn.metrics.f1_score`                    
+'log_loss'                 :func:`sklearn.metrics.log_loss`                      requires ``predict_proba`` support
 'precision'                :func:`sklearn.metrics.precision_score`
 'recall'                   :func:`sklearn.metrics.recall_score`
 'roc_auc'                  :func:`sklearn.metrics.roc_auc_score`
@@ -73,12 +73,9 @@ Scoring                    Function
 'mean_absolute_error'      :func:`sklearn.metrics.mean_absolute_error`
 'mean_squared_error'       :func:`sklearn.metrics.mean_squared_error`
 'r2'                       :func:`sklearn.metrics.r2_score`
-======================     =================================================
+======================     =================================================     ==================================
 
-
-Setting the ``scoring`` parameter to a wrong value should give you a list
-of acceptable values.  To use :func:`log_loss` as the scorer, enable 
-probability estimates when creating the support vector classifier model::
+Usage examples:
 
     >>> from sklearn import svm, cross_validation, datasets
     >>> iris = datasets.load_iris()
@@ -87,16 +84,16 @@ probability estimates when creating the support vector classifier model::
     >>> cross_validation.cross_val_score(model, X, y, scoring='wrong_choice')
     Traceback (most recent call last):
     ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'log_loss', 'mean_absolute_error', 'mean_squared_error', 'precision', 'r2', 'recall', 'roc_auc']
-    >>> clf = svm.SVC(probability=True,random_state=0)
+    >>> clf = svm.SVC(probability=True, random_state=0)
     >>> cross_validation.cross_val_score(clf, X, y, scoring='log_loss') # doctest: +ELLIPSIS
-    array([-0.07..., -0.16..., -0.06...])
+    Array([-0.07..., -0.16..., -0.06...])
 
 .. note::
 
-    The choices listed by the ValueError exception above are all functions for 
-    measuring prediction accuracy, as described in the following sections.
-    The corresponding scorer objects are stored in the dictionary
-    ``sklearn.metrics.SCORERS``.
+    The values listed by the ValueError exception correspond to the functions measuring 
+    prediction accuracy described in the following sections.
+    The scorer objects for those functions are stored in the dictionary
+    ``sklearn.metrics.SCORERS``.  
 
 .. currentmodule:: sklearn.metrics
 
@@ -114,7 +111,8 @@ measuring a prediction error given ground truth and prediction:
 - functions ending with ``_error`` or ``_loss`` return a
   value to minimize, the lower the better.  When converting
   into a scorer object using :func:`make_scorer`, set
-  the ``greater_is_better`` parameter to False (True by default). 
+  the ``greater_is_better`` parameter to False (True by default; see the 
+  parameter description below). 
 
 Metrics available for various machine learning tasks are detailed in sections
 below.
@@ -145,10 +143,10 @@ take several parameters:
 
 * whether the python function returns a score (``greater_is_better=True``, 
   the default) or a loss (``greater_is_better=False``).  If a loss, the output 
-  of the python function is negated by the scorer object, so that small 
-  losses will be greater than large losses.
+  of the python function is negated by the scorer object, conforming to
+  the cross validation convention that scorers return higher values for better models. 
 
-* whether the python function you provided requires continuous decision 
+* for classification metrics only: whether the python function you provided requires continuous decision 
   certainties (``needs_threshold=True``).  The default value is 
   False.
 
@@ -167,14 +165,14 @@ Here is an example of building custom scorers, and of using the
     >>> #  and predictions defined below.
     >>> loss  = make_scorer(my_custom_loss_func, greater_is_better=False)
     >>> score = make_scorer(my_custom_loss_func, greater_is_better=True)
-    >>> ground_truth = [1,1]
-    >>> predictions  = [0,1]
+    >>> ground_truth = [1, 1]
+    >>> predictions  = [0, 1]
     >>> from sklearn.dummy import DummyClassifier
-    >>> clf = DummyClassifier(strategy='most_frequent',random_state=0)
+    >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
     >>> clf = clf.fit(ground_truth, predictions)
-    >>> loss(clf,ground_truth,predictions) # doctest: +ELLIPSIS
+    >>> loss(clf,ground_truth, predictions) # doctest: +ELLIPSIS
     -0.69...
-    >>> score(clf,ground_truth,predictions) # doctest: +ELLIPSIS
+    >>> score(clf,ground_truth, predictions) # doctest: +ELLIPSIS
     0.69...
     
 
@@ -205,7 +203,7 @@ Classification metrics
 
 .. currentmodule:: sklearn.metrics
 
-The :mod:`sklearn.metrics` module implements several loss, scorer, and utility
+The :mod:`sklearn.metrics` module implements several loss, score, and utility
 functions to measure classification performance.
 Some metrics might require probability estimates of the positive class,
 confidence values, or binary decisions values.
@@ -246,7 +244,7 @@ Some also work in the multilabel case:
    recall_score
    zero_one_loss
 
-And some work with binary and multilabel indicator formats:
+And some work with binary and multilabel (but not multiclass) problems:
 
 .. autosummary::
    :template: function.rst
@@ -265,7 +263,7 @@ The :func:`accuracy_score` function computes the
 (default) or the count (normalize=False) of correct predictions.
 
 
-In multilabel classification, the function returns the subset accuracy. if
+In multilabel classification, the function returns the subset accuracy. If
 the entire set of predicted labels for a sample strictly match with the true
 set of labels, then the subset accuracy is 1.0; otherwise it is 0.0.
 
@@ -308,8 +306,8 @@ The :func:`confusion_matrix` function evaluates
 classification accuracy by computing the `confusion matrix
 <http://en.wikipedia.org/wiki/Confusion_matrix>`_.
 
-By definition, entry :math:`i, j` in confusion matrix :math:`C` is 
-equal to the number of observations actually in group :math:`i`, but
+By definition, entry :math:`i, j` in a confusion matrix is 
+the number of observations actually in group :math:`i`, but
 predicted to be in group :math:`j`. Here is an example::
 
   >>> from sklearn.metrics import confusion_matrix
@@ -521,7 +519,7 @@ Binary classification
 ^^^^^^^^^^^^^^^^^^^^^
 
 In a binary classification task, the terms ''positive'' and ''negative'' refer
-to the classifier's prediction,	and the terms ''true'' and ''false'' refer to
+to the classifier's prediction, and the terms ''true'' and ''false'' refer to
 whether that prediction corresponds to the external judgment (sometimes known
 as the ''observation''). Given these definitions, we can formulate the
 following table:
@@ -992,7 +990,7 @@ Regression metrics
 
 .. currentmodule:: sklearn.metrics
 
-The :mod:`sklearn.metrics` module implements several loss, scorer, and utility
+The :mod:`sklearn.metrics` module implements several loss, score, and utility
 functions to measure regression performance. Some of those have been enhanced
 to handle the multioutput case: :func:`mean_absolute_error`,
 :func:`mean_absolute_error` and :func:`r2_score`.
@@ -1133,7 +1131,7 @@ Clustering metrics
 
 .. currentmodule:: sklearn.metrics
 
-The :mod:`sklearn.metrics` module implements several loss, scorer, and utility
+The :mod:`sklearn.metrics` module implements several loss, score, and utility
 functions. For more information see the :ref:`clustering_evaluation`
 section for instance clustering, and :ref:`biclustering_evaluation` for
 biclustering.
