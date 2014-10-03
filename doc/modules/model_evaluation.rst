@@ -86,7 +86,7 @@ Usage examples:
     ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'log_loss', 'mean_absolute_error', 'mean_squared_error', 'precision', 'r2', 'recall', 'roc_auc']
     >>> clf = svm.SVC(probability=True, random_state=0)
     >>> cross_validation.cross_val_score(clf, X, y, scoring='log_loss') # doctest: +ELLIPSIS
-    Array([-0.07..., -0.16..., -0.06...])
+    array([-0.07..., -0.16..., -0.06...])
 
 .. note::
 
