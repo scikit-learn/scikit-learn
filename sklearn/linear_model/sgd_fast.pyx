@@ -417,7 +417,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                           power_t,
                           t,
                           intercept_decay,
-                          False)
+                          0)
     return standard_weights, standard_intercept
 
 
@@ -436,7 +436,8 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 int learning_rate, double eta0,
                 double power_t,
                 double t=1.0,
-                double intercept_decay=1.0):
+                double intercept_decay=1.0,
+                int average=1):
     """Average SGD for generic loss functions and penalties.
 
     Parameters
@@ -491,6 +492,9 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         Initial state of the learning rate. This value is equal to the
         iteration count except when the learning rate is set to `optimal`.
         Default: 1.0.
+    average : int
+        The number of iterations before averaging starts. average=1 is
+        equivalent to averaging for all iterations.
 
     Returns
     -------
@@ -519,7 +523,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                       power_t,
                       t,
                       intercept_decay,
-                      True)
+                      average)
 
 
 def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
@@ -538,7 +542,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                double power_t,
                double t=1.0,
                double intercept_decay=1.0,
-               bint average=False):
+               int average=0):
 
     # get the data information into easy vars
     cdef Py_ssize_t n_samples = dataset.n_samples
@@ -645,13 +649,15 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     if fit_intercept == 1:
                         intercept += update * intercept_decay
 
-                if average:
+                if average > 0 and average <= t:
                     # compute the average for the intercept and update the
                     # average weights, this is done regardless as to whther
                     # the update is 0
 
-                    w.add_average(x_data_ptr, x_ind_ptr, xnnz, update, t)
-                    average_intercept += (intercept - average_intercept) / t
+                    w.add_average(x_data_ptr, x_ind_ptr, xnnz,
+                                  update, (t - average + 1))
+                    average_intercept += ((intercept - average_intercept) /
+                                          (t - average + 1))
 
                 if penalty_type == L1 or penalty_type == ELASTICNET:
                     u += (l1_ratio * eta * alpha)

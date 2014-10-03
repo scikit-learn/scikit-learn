@@ -74,7 +74,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
 
         self.coef_ = None
 
-        if self.average:
+        if self.average > 0:
             self.standard_coef_ = None
             self.average_coef_ = None
         # iteration count for learning rate schedule
@@ -200,7 +200,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                 self.intercept_ = np.zeros(1, dtype=np.float64, order="C")
 
         # initialize average parameters
-        if self.average:
+        if self.average > 0:
             self.standard_coef_ = self.coef_
             self.standard_intercept_ = self.intercept_
             self.average_coef_ = np.zeros(self.coef_.shape,
@@ -307,7 +307,8 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
                                             seed, pos_weight, neg_weight,
                                             learning_rate_type, est.eta0,
                                             est.power_t, est.t_,
-                                            intercept_decay)
+                                            intercept_decay,
+                                            est.average)
 
         if len(est.classes_) == 2:
             est.average_intercept_[0] = average_intercept
@@ -395,7 +396,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
             raise ValueError("The number of class labels must be "
                              "greater than one.")
 
-        self.t_ += n_iter * n_samples
 
         return self
 
@@ -420,7 +420,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
             self.coef_ = None
             self.intercept_ = None
 
-        if self.average:
+        if self.average > 0:
             self.standard_coef_ = self.coef_
             self.standard_intercept_ = self.intercept_
             self.average_coef_ = None
@@ -443,10 +443,16 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                                      self._expanded_class_weight[0],
                                      sample_weight)
 
+        self.t_ += n_iter * X.shape[0]
+
         # need to be 2d
-        if self.average:
-            self.coef_ = self.average_coef_.reshape(1, -1)
-            self.intercept_ = self.average_intercept_
+        if self.average > 0:
+            if self.average <= self.t_ - 1:
+                self.coef_ = self.average_coef_.reshape(1, -1)
+                self.intercept_ = self.average_intercept_
+            else:
+                self.coef_ = self.standard_coef_.reshape(1, -1)
+                self.intercept_ = self.standard_intercept_
         else:
             self.coef_ = coef.reshape(1, -1)
             # intercept is a float, need to convert it to an array of length 1
@@ -470,9 +476,15 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         for i, (_, intercept) in enumerate(result):
             self.intercept_[i] = intercept
 
-        if self.average:
-            self.coef_ = self.average_coef_
-            self.intercept_ = self.average_intercept_
+        self.t_ += n_iter * X.shape[0]
+
+        if self.average > 0:
+            if self.average <= self.t_ - 1.0:
+                self.coef_ = self.average_coef_
+                self.intercept_ = self.average_intercept_
+            else:
+                self.coef_ = self.standard_coef_
+                self.intercept_ = self.standard_intercept_
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Fit linear model with Stochastic Gradient Descent.
@@ -648,9 +660,11 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
-    average : bool, optional
+    average : bool or int, optional
         When set to True, computes the averaged SGD weights and stores the
-        result in the average_coef_ attribute
+        result in the coef_ attribute. If set to an int greater than 1,
+        averaging will begin once the total number of samples seen reaches
+        average. So average=10 will begin averaging after seeing 10 samples.
 
     Attributes
     ----------
@@ -853,7 +867,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         if self.coef_ is None:
             self._allocate_parameter_mem(1, n_features,
                                          coef_init, intercept_init)
-        if self.average and self.average_coef_ is None:
+        if self.average > 0 and self.average_coef_ is None:
             self.average_coef_ = np.zeros(n_features,
                                           dtype=np.float64,
                                           order="C")
@@ -863,8 +877,6 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
         self._fit_regressor(X, y, alpha, C, loss, learning_rate,
                             sample_weight, n_iter)
-
-        self.t_ += n_iter * n_samples
 
         return self
 
@@ -904,7 +916,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
             self.coef_ = None
             self.intercept_ = None
 
-        if self.average:
+        if self.average > 0:
             self.standard_intercept_ = self.intercept_
             self.standard_coef_ = self.coef_
             self.average_coef_ = None
@@ -996,7 +1008,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         # Windows
         seed = random_state.randint(0, np.iinfo(np.int32).max)
 
-        if self.average:
+        if self.average > 0:
             self.standard_coef_, self.standard_intercept_, \
                 self.average_coef_, self.average_intercept_ =\
                 average_sgd(self.standard_coef_,
@@ -1016,13 +1028,18 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                             1.0, 1.0,
                             learning_rate_type,
                             self.eta0, self.power_t, self.t_,
-                            intercept_decay)
+                            intercept_decay, self.average)
 
             self.average_intercept_ = np.atleast_1d(self.average_intercept_)
             self.standard_intercept_ = np.atleast_1d(self.standard_intercept_)
+            self.t_ += n_iter * X.shape[0]
 
-            self.coef_ = self.average_coef_
-            self.intercept_ = self.average_intercept_
+            if self.average <= self.t_ - 1.0:
+                self.coef_ = self.average_coef_
+                self.intercept_ = self.average_intercept_
+            else:
+                self.coef_ = self.standard_coef_
+                self.intercept_ = self.standard_intercept_
 
         else:
             self.coef_, self.intercept_ = \
@@ -1043,6 +1060,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                           self.eta0, self.power_t, self.t_,
                           intercept_decay)
 
+            self.t_ += n_iter * X.shape[0]
             self.intercept_ = np.atleast_1d(self.intercept_)
 
 
@@ -1133,9 +1151,11 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
-    average : bool, optional
-        When set to True, computes the averaged SGD and stores the weights
-        in the average_coef_ attribute
+    average : bool or int, optional
+        When set to True, computes the averaged SGD weights and stores the
+        result in the coef_ attribute. If set to an int greater than 1,
+        averaging will begin once the total number of samples seen reaches
+        average. So average=10 will begin averaging after seeing 10 samples.
 
     Attributes
     ----------

@@ -99,13 +99,16 @@ class CommonTest(object):
 
     # a simple implementation of ASGD to use for testing
     # uses squared loss to find the gradient
-    def asgd(self, X, y, eta, alpha):
-        weights = np.zeros(X.shape[1])
+    def asgd(self, X, y, eta, alpha, weight_init=None, intercept_init=0.0):
+        if weight_init is None:
+            weights = np.zeros(X.shape[1])
+        else:
+            weights = weight_init
+
         average_weights = np.zeros(X.shape[1])
-        intercept = 0.0
+        intercept = intercept_init
         average_intercept = 0.0
         decay = 1.0
-        wscale = 1.0
 
         # sparse data has a fixed decay of .01
         if (isinstance(self, SparseSGDClassifierTestCase) or
@@ -115,9 +118,7 @@ class CommonTest(object):
         for i, entry in enumerate(X):
             p = np.dot(entry, weights)
             p += intercept
-
             gradient = p - y[i]
-            wscale *= 1.0 - (eta * alpha)
             weights *= 1.0 - (eta * alpha)
             weights += -(eta * gradient * entry)
             intercept += -(eta * gradient) * decay
@@ -206,6 +207,50 @@ class CommonTest(object):
         assert_false(hasattr(clf, 'standard_intercept_'))
         assert_false(hasattr(clf, 'standard_coef_'))
 
+    def test_late_onset_averaging_not_reached(self):
+        eta0 = .001
+        clf1 = self.factory(average=12, learning_rate="constant",
+                            eta0=eta0, n_iter=2)
+        clf2 = self.factory(learning_rate="constant", eta0=eta0, n_iter=2)
+
+        clf1.fit(X, Y)
+        clf2.fit(X, Y)
+
+        assert_array_almost_equal(clf1.coef_, clf2.coef_)
+        assert_almost_equal(clf1.intercept_, clf1.intercept_)
+
+        clf1 = self.factory(average=13, learning_rate="constant",
+                            eta0=eta0, n_iter=2)
+        clf1.fit(X, Y)
+
+        assert_array_almost_equal(clf1.coef_, clf2.coef_)
+        assert_almost_equal(clf1.intercept_, clf2.intercept_)
+
+    def test_late_onset_averaging_reached(self):
+        eta0 = .001
+        alpha = .0001
+        Y_encode = np.array(Y)
+        Y_encode[Y_encode == 1] = -1.0
+        Y_encode[Y_encode == 2] = 1.0
+
+        clf1 = self.factory(average=7, learning_rate="constant",
+                            loss='squared_loss', eta0=eta0,
+                            alpha=alpha, n_iter=2)
+        clf2 = self.factory(average=0, learning_rate="constant",
+                            loss='squared_loss', eta0=eta0,
+                            alpha=alpha, n_iter=1)
+
+        clf1.fit(X, Y_encode)
+        clf2.fit(X, Y_encode)
+
+        average_weights, average_intercept = \
+            self.asgd(X, Y_encode, eta0, alpha,
+                      weight_init=clf2.coef_.ravel(),
+                      intercept_init=clf2.intercept_)
+
+        assert_array_almost_equal(clf1.coef_.ravel(), average_weights.ravel())
+        assert_almost_equal(clf1.intercept_, average_intercept)
+
 
 class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     """Test suite for the dense representation variant of SGD"""
@@ -291,7 +336,6 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         n_samples = 20
         n_features = 10
         rng = np.random.RandomState(0)
-        # X = np.array([[2, 2], [4, 2], [2, 1]])
         X = rng.normal(size=(n_samples, n_features))
         w = rng.normal(size=n_features)
 
@@ -304,7 +348,6 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # simple linear function without noise
         y = np.dot(X, w)
         y = np.sign(y)
-        # y = np.array([1, -1, 1])
 
         clf.fit(X, y)
 

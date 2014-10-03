@@ -14,29 +14,11 @@ from libc.math cimport sqrt
 import numpy as np
 cimport numpy as np
 
-# Import CBLAS Functions
 cdef extern from "cblas.h":
-
-    # dot product of two n elemenet vectors x and y
-    double ddot "cblas_ddot" (int n,
-                              const double* x,
-                              int incrx,
-                              double* y,
-                              int incry) nogil
-
-    # scale the passed in n element vector x at scale
-    void dscal "cblas_dscal" (int n,
-                              double scale,
-                              double* x,
-                              int incrx) nogil
-
-    # adds an n element vector x * scale to another n element vector y
-    void daxpy "cblas_daxpy" (int n,
-                              double scale,
-                              const double* x,
-                              int incrx,
-                              double* y,
-                              int incry) nogil
+    double ddot "cblas_ddot"(int, double *, int, double *, int) nogil
+    void dscal "cblas_dscal"(int, double, double *, int) nogil
+    void daxpy "cblas_daxpy" (int, double, const double*,
+                              int, double*, int) nogil
 
 
 np.import_array()
@@ -83,8 +65,8 @@ cdef class WeightVector(object):
         self.aw = aw
         if self.aw is not None:
             self.aw_data_ptr = <double *>aw.data
-            self.alpha = 0.0
-            self.beta = 1.0
+            self.average_a = 0.0
+            self.average_b = 1.0
 
     cdef void add(self, double *x_data_ptr, int *x_ind_ptr, int xnnz,
                   double c) nogil:
@@ -122,6 +104,9 @@ cdef class WeightVector(object):
 
         self.sq_norm += (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
 
+    # Update the average weights according to the sparse trick defined
+    # here: http://research.microsoft.com/pubs/192769/tricks-2012.pdf
+    # by Leon Bottou
     cdef void add_average(self, double *x_data_ptr, int *x_ind_ptr, int xnnz,
                           double c, double num_iter) nogil:
         """Updates the average weight vector.
@@ -143,19 +128,20 @@ cdef class WeightVector(object):
         cdef int idx
         cdef double val
         cdef double mu = 1.0 / num_iter
-        cdef double alpha = self.alpha
+        cdef double average_a = self.average_a
         cdef double wscale = self.wscale
         cdef double* aw_data_ptr = self.aw_data_ptr
 
         for j in range(xnnz):
             idx = x_ind_ptr[j]
             val = x_data_ptr[j]
-            aw_data_ptr[idx] += (self.alpha * val * (-c / wscale))
+            aw_data_ptr[idx] += (self.average_a * val * (-c / wscale))
 
-        # Once the the sample has been processed, update the alpha and beta
+        # Once the the sample has been processed
+        # update the average_a and average_b
         if num_iter > 1:
-            self.beta /= (1.0 - mu)
-        self.alpha += mu * self.beta * wscale
+            self.average_b /= (1.0 - mu)
+        self.average_a += mu * self.average_b * wscale
 
     cdef double dot(self, double *x_data_ptr, int *x_ind_ptr,
                     int xnnz) nogil:
@@ -198,12 +184,12 @@ cdef class WeightVector(object):
     cdef void reset_wscale(self) nogil:
         """Scales each coef of ``w`` by ``wscale`` and resets it to 1. """
         if self.aw is not None:
-            daxpy(<int>self.aw.shape[0], self.alpha, <double *>self.w.data,
-                  1, <double *>self.aw.data, 1)
-            dscal(<int>self.aw.shape[0], 1.0 / self.beta,
+            daxpy(<int>self.aw.shape[0], self.average_a,
+                  <double *>self.w.data, 1, <double *>self.aw.data, 1)
+            dscal(<int>self.aw.shape[0], 1.0 / self.average_b,
                   <double *>self.aw.data, 1)
-            self.alpha = 0.0
-            self.beta = 1.0
+            self.average_a = 0.0
+            self.average_b = 1.0
 
         dscal(<int>self.w.shape[0], self.wscale, <double *>self.w.data, 1)
         self.wscale = 1.0
