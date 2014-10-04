@@ -149,7 +149,7 @@ class LSHForest(BaseEstimator):
         self.min_hash_length = min_hash_length
         self.radius_cutoff_ratio = radius_cutoff_ratio
 
-    def _create_tree(self):
+    def _create_tree(self, seed):
         """Builds a single tree.
 
         Here, it creates a sorted array of binary hashes.
@@ -162,9 +162,8 @@ class LSHForest(BaseEstimator):
         into a binary string array based on the sign (positive/negative)
         of the projection.
         """
-        random_state = check_random_state(self.random_state)
         grp = GaussianRandomProjection(n_components=self.max_label_length,
-                                       random_state=random_state)
+                                       random_state=seed)
         X = np.zeros((1, self._fit_X.shape[1]), dtype=float)
         grp.fit(X)
 
@@ -173,6 +172,8 @@ class LSHForest(BaseEstimator):
 
         binary_hashes = np.packbits(hashes).view(dtype='>u4')
         original_indices = np.argsort(binary_hashes)
+
+        return original_indices, binary_hashes[original_indices], hash_function
 
         return original_indices, binary_hashes[original_indices], hash_function
 
@@ -287,9 +288,12 @@ class LSHForest(BaseEstimator):
         self._trees = []
         self._original_indices = []
 
+        random_state = check_random_state(self.random_state)
+
         for i in range(self.n_estimators):
             # This is g(p,x) for a particular tree.
-            original_index, bin_hashes, hash_function = self._create_tree()
+            original_index, bin_hashes, hash_function = self._create_tree(
+                random_state.randint(0, np.iinfo(np.int32).max))
             self._original_indices.append(original_index)
             self._trees.append(bin_hashes)
             self.hash_functions_.append(hash_function)
