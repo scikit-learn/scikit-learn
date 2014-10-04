@@ -1,37 +1,30 @@
 .. _ensemble:
 
 ================
-Ensemble methods
+集成方法
 ================
 
 .. currentmodule:: sklearn.ensemble
 
-The goal of **ensemble methods** is to combine the predictions of several
-base estimators built with a given learning algorithm in order to improve
-generalizability / robustness over a single estimator.
+**集成方法** 的目标是通过结合某一种算法的若干个基本统计来提高预测的准确性。
 
-Two families of ensemble methods are usually distinguished:
+有两类集成方法需要区别
 
-- In **averaging methods**, the driving principle is to build several
-  estimators independently and then to average their predictions. On average,
-  the combined estimator is usually better than any of the single base
-  estimator because its variance is reduced.
+- **平均方法** 其核心是构建若干个独立的模型，在平均他们的预测。平均而言，由于方差的降低，综合结果一般比任何一个单一的结果要好。
 
-  **Examples:** :ref:`Bagging methods <bagging>`, :ref:`Forests of randomized trees <forest>`, ...
+  **示例：** :ref:`Bagging methods <bagging>`, :ref:`Forests of randomized trees <forest>`, ...
 
-- By contrast, in **boosting methods**, base estimators are built sequentially
-  and one tries to reduce the bias of the combined estimator. The motivation is
-  to combine several weak models to produce a powerful ensemble.
+- 相对而言， **增强方法** 是按顺序构建基本的统计来降低综合模型的误差。其想法是综合一般的模型来或等更好的模型。
 
-  **Examples:** :ref:`AdaBoost <adaboost>`, :ref:`Gradient Tree Boosting <gradient_boosting>`, ...
+  **示例** :ref:`AdaBoost <adaboost>`, :ref:`Gradient Tree Boosting <gradient_boosting>`, ...
 
 
 .. _bagging:
 
-Bagging meta-estimator
+Bagging的元统计
 ======================
 
-In ensemble algorithms, bagging methods form a class of algorithms which build
+在集成方法中，bagging是一类算法。其通过原训练数据的随机子集来构建若干基本黑盒统计，在将他们合并成为最终的预测。这些方法是在降低每一个基本统计的。 which build
 several instances of a black-box estimator on random subsets of the original
 training set and then aggregate their individual predictions to form a final
 prediction. These methods are used as a way to reduce the variance of a base
@@ -434,7 +427,7 @@ Classification
 ---------------
 
 :class:`GradientBoostingClassifier` supports both binary and multi-class
-classification via the deviance loss function (``loss='deviance'``).
+classification.
 The following example shows how to fit a gradient boosting classifier
 with 100 decision stumps as weak learners::
 
@@ -649,6 +642,10 @@ the parameter ``loss``:
       prior probability of each class. At each iteration ``n_classes``
       regression trees have to be constructed which makes GBRT rather
       inefficient for data sets with a large number of classes.
+    * Exponential loss (``'exponential'``): The same loss function
+      as :class:`AdaBoostClassifier`. Less robust to mislabeled
+      examples than ``'deviance'``; can only be used for binary
+      classification.
 
 Regularization
 ----------------
@@ -864,7 +861,7 @@ dependence is given by a weighted average of all visited leaves. For
 tree ensembles the results of each individual tree are again
 averaged.
 
-.. rubric:: Footnotes
+.. rubric:: 脚注
 
 .. [1] For classification with ``loss='deviance'``  the target
    response is logit(p).
@@ -873,12 +870,12 @@ averaged.
    accounting for the initial model; partial dependence plots
    do not include the ``init`` model.
 
-.. topic:: Examples:
+.. topic:: 示例:
 
  * :ref:`example_ensemble_plot_partial_dependence.py`
 
 
-.. topic:: References
+.. topic:: 参考
 
  .. [F2001] J. Friedman, "Greedy Function Approximation: A Gradient Boosting Machine",
    The Annals of Statistics, Vol. 29, No. 5, 2001.
@@ -888,4 +885,3 @@ averaged.
  .. [HTF2009] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical Learning Ed. 2", Springer, 2009.
 
  .. [R2007] G. Ridgeway, "Generalized Boosted Models: A guide to the gbm package", 2007
-

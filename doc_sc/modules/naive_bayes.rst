@@ -1,38 +1,32 @@
 .. _naive_bayes:
 
 ===========
-Naive Bayes
+朴素贝叶斯
 ===========
 
 .. currentmodule:: sklearn.naive_bayes
 
-
-Naive Bayes methods are a set of supervised learning algorithms
-based on applying Bayes' theorem with the "naive" assumption of independence
-between every pair of features. Given a class variable :math:`y` and a
-dependent feature vector :math:`x_1` through :math:`x_n`,
-Bayes' theorem states the following relationship:
+朴素贝叶斯方法是一个基于贝叶斯定力的监督学习算法，其名字是由于采用了一个简单地假设：特征之间不存在相关性。对于一个类别变量 :math:`y` 和一系列特征 :math:`x_1` 至 :math:`x_n`  ，贝叶斯定理可以导出：
 
 .. math::
 
    P(y \mid x_1, \dots, x_n) = \frac{P(y) P(x_1, \dots x_n \mid y)}
                                     {P(x_1, \dots, x_n)}
 
-Using the naive independence assumption that
+利用相互独立的假设：
 
 .. math::
 
    P(x_i | y, x_1, \dots, x_{i-1}, x_{i+1}, \dots, x_n) = P(x_i | y),
 
-for all :math:`i`, this relationship is simplified to
+对于所有的 :math:`i` 我们可以进一步简化
 
 .. math::
 
    P(y \mid x_1, \dots, x_n) = \frac{P(y) \prod_{i=1}^{n} P(x_i \mid y)}
                                     {P(x_1, \dots, x_n)}
 
-Since :math:`P(x_1, \dots, x_n)` is constant given the input,
-we can use the following classification rule:
+因为 :math:`P(x_1, \dots, x_n)` 是输入的常量，因此我们可以采用如下的分类规则：
 
 .. math::
 
@@ -42,51 +36,34 @@ we can use the following classification rule:
 
    \hat{y} = \arg\max_y P(y) \prod_{i=1}^{n} P(x_i \mid y),
 
-and we can use Maximum A Posteriori (MAP) estimation to estimate
-:math:`P(y)` and :math:`P(x_i \mid y)`;
-the former is then the relative frequency of class :math:`y`
-in the training set.
+其中，我们可以采用最大后验概率（Maximum A Posteriori MAP）来估计 :math:`P(y)` 和 :math:`P(x_i \mid y)` 。前者是 :math:`y` 类别在训练样本中的频率。
 
-The different naive Bayes classifiers differ mainly by the assumptions they
-make regarding the distribution of :math:`P(x_i \mid y)`.
+不同的朴素贝叶斯分类器的区别在于它们对于概率分布 :math:`P(x_i \mid y)` 的假设。
 
-In spite of their apparently over-simplified assumptions, naive Bayes
-classifiers have worked quite well in many real-world situations, famously
-document classification and spam filtering. They require a small amount
-of training data to estimate the necessary parameters. (For theoretical
-reasons why naive Bayes works well, and on which types of data it does, see
-the references below.)
+尽管其假设是过度简化的，但是朴素贝叶斯分类器在实际应用的表现很好，例如文档分类，垃圾邮件检测。他们只需要一小部分训练样本就可以统计出必要的系数（关于这点的理论讨论见参考）。
 
-Naive Bayes learners and classifiers can be extremely fast compared to more
-sophisticated methods.
-The decoupling of the class conditional feature distributions means that each
-distribution can be independently estimated as a one dimensional distribution.
-This in turn helps to alleviate problems stemming from the curse of
-dimensionality.
+朴素贝叶斯分类器相比复杂的模型非常迅速。将分类的条件特征分离意味着假设每个分布都是独立的一维分布。这意味着可以减轻高维度带来的“诅咒”。
 
-On the flip side, although naive Bayes is known as a decent classifier,
-it is known to be a bad estimator, so the probability outputs from
-``predict_proba`` are not to be taken too seriously.
+另一方面，尽管朴素贝叶斯的分类很有效，但是并不是很好的预测器。因此其输出地预测概率 ``predict_proba`` 并不可靠。
 
-.. topic:: References:
+
+.. topic:: 参考:
 
  * H. Zhang (2004). `The optimality of Naive Bayes.
    <http://www.cs.unb.ca/profs/hzhang/publications/FLAIRS04ZhangH.pdf>`_
    Proc. FLAIRS.
 
 
-Gaussian Naive Bayes
+高斯朴素贝叶斯
 --------------------
 
-:class:`GaussianNB` implements the Gaussian Naive Bayes algorithm for
-classification. The likelihood of the features is assumed to be Gaussian:
+:class:`GaussianNB` 采用高斯朴素贝叶斯算法进行分类。其假设特征的分布式高斯型的。
 
 .. math::
 
    P(x_i \mid y) &= \frac{1}{\sqrt{2\pi\sigma^2_y}} \exp\left(-\frac{(x_i - \mu_y)^2}{2\sigma^2_y}\right)
 
-The parameters :math:`\sigma_y` and :math:`\mu_y`
-are estimated using maximum likelihood.
+其中参数 :math:`\sigma_y` 赫尔 :math:`\mu_y` 是通过最大似然方法进行统计的。
 
     >>> from sklearn import datasets
     >>> iris = datasets.load_iris()
@@ -99,70 +76,40 @@ are estimated using maximum likelihood.
 
 .. _multinomial_naive_bayes:
 
-Multinomial Naive Bayes
+多项式贝叶斯
 -----------------------
 
-:class:`MultinomialNB` implements the naive Bayes algorithm for multinomially
-distributed data, and is one of the two classic naive Bayes variants used in
-text classification (where the data are typically represented as word vector
-counts, although tf-idf vectors are also known to work well in practice).
-The distribution is parametrized by vectors
-:math:`\theta_y = (\theta_{y1},\ldots,\theta_{yn})`
-for each class :math:`y`, where :math:`n` is the number of features
-(in text classification, the size of the vocabulary)
-and :math:`\theta_{yi}` is the probability :math:`P(x_i \mid y)`
-of feature :math:`i` appearing in a sample belonging to class :math:`y`.
+:class:`MultinomialNB` 采用朴素贝叶斯算法针对多形式分布的概率。这是两个经典的处理文本分类的朴素贝叶斯算法。分布是有向量 :math:`\theta_y = (\theta_{y1},\ldots,\theta_{yn})` 来代表每一个类别 :math:`y` ， 其中 :math:`n` 是特征的数目，而 :math:`\theta_{yi}` 是 特征 :math:`i` 在样本被分类为 :math:`y` 中的概率 :math:`P(x_i \mid y)` 。
 
-The parameters :math:`\theta_y` is estimated by a smoothed
-version of maximum likelihood, i.e. relative frequency counting:
+系数 :math:`\theta_y` 是通过平滑的最大似然概率方法，譬如相对频率计数：
 
 .. math::
 
     \hat{\theta}_{yi} = \frac{ N_{yi} + \alpha}{N_y + \alpha n}
 
-where :math:`N_{yi} = \sum_{x \in T} x_i` is
-the number of times feature :math:`i` appears in a sample of class :math:`y`
-in the training set :math:`T`,
-and :math:`N_{y} = \sum_{i=1}^{|T|} N_{yi}` is the total count of
-all features for class :math:`y`.
+其中 :math:`N_{yi} = \sum_{x \in T} x_i` 是特征 :math:`i` 在样本 :math:`T` 中被分为特征 :math:`y` 的次数，而 :`N_{y} = \sum_{i=1}^{|T|} N_{yi}` 是样本被分为 :math:`y` 类的总数。
 
-The smoothing priors :math:`\alpha \ge 0` accounts for
-features not present in the learning samples and prevents zero probabilities
-in further computations.
-Setting :math:`\alpha = 1` is called Laplace smoothing,
-while :math:`\alpha < 1` is called Lidstone smoothing.
+平滑的先验参数 :math:`\alpha \ge 0` 用来代表没有在样本中体现的特征，从而避免计算过程中出现0的情况。设置 :math:`\alpha = 1` 被称为拉普拉斯平滑，而 :math:`\alpha < 1` Lidstone平滑。
 
 
 .. _bernoulli_naive_bayes:
 
-Bernoulli Naive Bayes
+伯努利朴素贝叶斯
 ---------------------
 
-:class:`BernoulliNB` implements the naive Bayes training and classification
-algorithms for data that is distributed according to multivariate Bernoulli
-distributions; i.e., there may be multiple features but each one is assumed
-to be a binary-valued (Bernoulli, boolean) variable.
-Therefore, this class requires samples to be represented as binary-valued
-feature vectors; if handed any other kind of data, a ``BernoulliNB`` instance
-may binarize its input (depending on the ``binarize`` parameter).
+:class:`BernoulliNB` 通过朴素贝叶斯算法来解决数据服从多变量伯努利分布的情况，如某一个变量只有两个类别，且满足伯努利分布。因此这个算法要求样本有二值特征的特征向量，否则 ``BernoulliNB`` 将按照参数 ``binarize`` 进行分类。
 
-The decision rule for Bernoulli naive Bayes is based on
+伯努利朴素贝叶斯的分类规则依据如下；
 
 .. math::
 
     P(x_i \mid y) = P(i \mid y) x_i + (1 - P(i \mid y)) (1 - x_i)
 
-which differs from multinomial NB's rule
-in that it explicitly penalizes the non-occurrence of a feature :math:`i`
-that is an indicator for class :math:`y`,
-where the multinomial variant would simply ignore a non-occurring feature.
+这与多项式朴素贝叶斯方法不同之处在于其对于没有出现的特征 :math:`i` 会加以惩罚，而多项式朴素贝叶斯不会。
 
-In the case of text classification, word occurrence vectors (rather than word
-count vectors) may be used to train and use this classifier. ``BernoulliNB``
-might perform better on some datasets, especially those with shorter documents.
-It is advisable to evaluate both models, if time permits.
+对于文本分类，词频向量可以用来训练这个分类器。 ``BernoulliNB`` 有时会表现更好，尤其是文本较短的情况。如果时间允许，建议尝试两个方法。
 
-.. topic:: References:
+.. topic:: 参考:
 
  * C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
    Information Retrieval. Cambridge University Press, pp. 234-265.
@@ -178,25 +125,15 @@ It is advisable to evaluate both models, if time permits.
    3rd Conf. on Email and Anti-Spam (CEAS).
 
 
-Out-of-core naive Bayes model fitting
+Out-of-core 朴素贝叶斯模型拟合
 -------------------------------------
 
-Naive Bayes models can be used to tackle large scale classification problems
-for which the full training set might not fit in memory. To handle this case,
-:class:`MultinomialNB`, :class:`BernoulliNB`, and :class:`GaussianNB`
-expose a ``partial_fit`` method that can be used
-incrementally as done with other classifiers as demonstrated in
-:ref:`example_applications_plot_out_of_core_classification.py`. Both discrete
-classifiers support sample weighting; :class:`GaussianNB` does not.
+对于大数据的文类问题，朴素贝叶斯方法可能会超出内存的容量。对于这个问题 :class:`MultinomialNB` ， :class:`BernoulliNB` 和 :class:`GaussianNB` 可以通过采用 ``partial_fit`` 来避免（参见 :ref:`example_applications_plot_out_of_core_classification.py` ）。除了 :class:`GaussianNB` 其他两个分类器均支持取样权重。
 
-Contrary to the ``fit`` method, the first call to ``partial_fit`` needs to be
-passed the list of all the expected class labels.
+区别于 ``fit`` ，当使用 ``partial_fit`` 需要传递所有的类别信息。
 
-For an overview of available strategies in scikit-learn, see also the
-:ref:`out-of-core learning <scaling_strategies>` documentation.
+对于所有scikit-learn采用的策略，请参见 :ref:`out-of-core learning <scaling_strategies>` 。
 
 note::
 
-  The ``partial_fit`` method call of naive Bayes models introduces some
-  computational overhead. It is recommended to use data chunk sizes that are as
-  large as possible, that is as the available RAM allows.
+  ``partial_fit`` 会导致冗余。因此建议使用内存所允许的最大样本大小进行拟合。
