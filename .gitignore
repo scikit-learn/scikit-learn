@@ -53,3 +53,13 @@ benchmarks/bench_covertype_data/
 *.prefs
 .pydevproject
 .idea
+
+
+doc_sc/_build/
+doc_sc/auto_examples/
+doc_sc/modules/generated/
+doc_sc/datasets/generated/
+doc_sc/coverages.zip
+doc_sc/samples.zip
+doc_sc/coverages
+doc_sc/samples
