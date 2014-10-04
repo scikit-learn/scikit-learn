@@ -618,12 +618,12 @@ query time while varying these parameters are as follows.
 .. figure:: ../auto_examples/neighbors/images/plot_approximate_nearest_neighbors_001.png
    :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors.html
    :align: center
-   :scale: 75
+   :scale: 50
 
 .. figure:: ../auto_examples/neighbors/images/plot_approximate_nearest_neighbors_002.png
    :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors.html
    :align: center
-   :scale: 75
+   :scale: 50
 
 .. topic:: Examples:
 

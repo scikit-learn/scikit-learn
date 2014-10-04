@@ -18,12 +18,14 @@ neighbors are selected from this pool of candidates.
 In the second plot, the number of candidates is fixed at 500. Number of trees
 is varied and the accuracy is plotted against those values. To measure the
 accuracy, the true nearest neighbors are required, therefore
-`sklearn.neighbors.NearestNeighbors` is used to compute the exact neighbors.
+:class:`sklearn.neighbors.NearestNeighbors` is used to compute the exact
+neighbors.
 
 Third plot demonstrates the behavior of approximate nearest neighbor queries
 of LSHForest as the size of the dataset varies. Here, average query time for
 a single neighbor vs number of samples is plotted.
 """
+from __future__ import division
 print(__doc__)
 
 # Author: Maheshakya Wijewardena <maheshakya.10@cse.mrt.ac.lk>
@@ -54,25 +56,28 @@ X_index = X[:n_samples]
 X_query = X[n_samples:]
 # Set `n_candidate` values
 n_candidates_values = np.linspace(10, 500, 5).astype(np.int)
-accuracies_c = np.zeros(n_candidates_values.shape[0], dtype=float)
+n_estimators_for_candidate_value = [1, 5, 10]
+accuracies_c = np.zeros((len(n_estimators_for_candidate_value),
+                         n_candidates_values.shape[0]), dtype=float)
 
 # Calculate average accuracy for each value of `n_candidates`
-for i, n_candidates in enumerate(n_candidates_values):
-    lshf = LSHForest(n_candidates=n_candidates, n_neighbors=1)
-    nbrs = NearestNeighbors(n_neighbors=1)
-    # Fit the Nearest neighbor models
-    lshf.fit(X_index)
-    nbrs.fit(X_index)
-    # Get neighbors
-    neighbors_approx = lshf.kneighbors(X_query, return_distance=False)
-    neighbors_exact = nbrs.kneighbors(X_query, return_distance=False)
+for j, value in enumerate(n_estimators_for_candidate_value):
+    for i, n_candidates in enumerate(n_candidates_values):
+        lshf = LSHForest(n_estimators=value,
+                         n_candidates=n_candidates, n_neighbors=1)
+        nbrs = NearestNeighbors(n_neighbors=1)
+        # Fit the Nearest neighbor models
+        lshf.fit(X_index)
+        nbrs.fit(X_index)
+        # Get neighbors
+        neighbors_approx = lshf.kneighbors(X_query, return_distance=False)
+        neighbors_exact = nbrs.kneighbors(X_query, return_distance=False)
 
-    ratio = np.sum(np.equal(neighbors_approx,
-                            neighbors_exact))/float(n_queries)
-    accuracies_c[i] = accuracies_c[i] + ratio
+        accuracies_c[j, i] = np.sum(np.equal(neighbors_approx,
+                                             neighbors_exact))/n_queries
 
 # Set `n_estimators` values
-n_estimators_values = np.linspace(1, 30, 5).astype(np.int)
+n_estimators_values = np.arange(1, 11, 1).astype(np.int)
 accuracies_trees = np.zeros(n_estimators_values.shape[0], dtype=float)
 
 # Calculate average accuracy for each value of `n_estimators`
@@ -86,9 +91,8 @@ for i, n_estimators in enumerate(n_estimators_values):
     neighbors_approx = lshf.kneighbors(X_query, return_distance=False)
     neighbors_exact = nbrs.kneighbors(X_query, return_distance=False)
 
-    ratio = np.sum(np.equal(neighbors_approx,
-                            neighbors_exact))/float(n_queries)
-    accuracies_trees[i] = accuracies_trees[i] + ratio
+    accuracies_trees[i] = np.sum(np.equal(neighbors_approx,
+                                          neighbors_exact))/n_queries
 
 ###############################################################################
 # Plot the accuracy variation with `n_estimators`
@@ -99,16 +103,32 @@ plt.ylim([0, 1])
 plt.xlim(min(n_estimators_values), max(n_estimators_values))
 plt.ylabel("Accuracy")
 plt.xlabel("n_estimators")
+plt.grid(which='both')
 plt.title("Accuracy variation with n_estimators")
 
+plt.show()
+
 # Plot the accuracy variation with `n_candidates`
+colors = ['c', 'm', 'y']
+p1 = plt.Rectangle((0, 0), 0.1, 0.1, fc=colors[0])
+p2 = plt.Rectangle((0, 0), 0.1, 0.1, fc=colors[1])
+p3 = plt.Rectangle((0, 0), 0.1, 0.1, fc=colors[2])
+
+labels = ['n_estimators = ' + str(n_estimators_for_candidate_value[0]),
+          'n_estimators = ' + str(n_estimators_for_candidate_value[1]),
+          'n_estimators = ' + str(n_estimators_for_candidate_value[2])]
+
 plt.figure()
-plt.scatter(n_candidates_values, accuracies_c, c='k')
-plt.plot(n_candidates_values, accuracies_c, c='r')
+plt.legend((p1, p2, p3), (labels[0], labels[1], labels[2]), loc='upper left')
+
+for i in range(len(n_estimators_for_candidate_value)):
+    plt.scatter(n_candidates_values, accuracies_c[i, :], c=colors[i])
+    plt.plot(n_candidates_values, accuracies_c[i, :], c=colors[i])
 plt.ylim([0, 1])
 plt.xlim(min(n_candidates_values), max(n_candidates_values))
 plt.ylabel("Accuracy")
 plt.xlabel("n_candidates")
+plt.grid(which='both')
 plt.title("Accuracy variation with n_candidates")
 
 plt.show()
