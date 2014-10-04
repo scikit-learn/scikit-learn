@@ -712,7 +712,7 @@ class ElasticNet(LinearModel, RegressorMixin):
                           "estimator", stacklevel=2)
 
         if self.precompute == 'auto':
-            warnings.warn("Setting precompute to 'auto', has found to be "
+            warnings.warn("Setting precompute to 'auto', was found to be "
                           "slower even when n_samples > n_features. Hence "
                           "it will be removed in 0.18.",
                           DeprecationWarning, stacklevel=2)
@@ -1217,6 +1217,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         model.alpha = best_alpha
         model.l1_ratio = best_l1_ratio
         model.copy_X = copy_X
+        model.precompute = False
         model.fit(X, y)
         if not hasattr(self, 'l1_ratio'):
             del self.l1_ratio_
