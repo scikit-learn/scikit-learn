@@ -751,17 +751,6 @@ def test_normalize_option_multiclass_multioutput_classification():
                             / n_samples, measure)
 
 
-def test_invariance_sparse_vs_dense_multioutput_multiclass():
-    # Test in the multiclass-multioutput case
-    random_state = check_random_state(0)
-    y_true = sp.csr_matrix(random_state.randint(0, 4, size=(20,5)))
-    y_pred = sp.csr_matrix(random_state.randint(0, 4, size=(20,5)))
-
-    for name in METRICS_WITH_MULTICLASS_MULITOUTPUT:
-        metrics = ALL_METRICS[name]
-        assert_raises(NotImplementedError, metrics, y_true, y_pred)
-
-
 def test_normalize_option_multilabel_classification():
     # Test in the multilabel case
     n_classes = 4
