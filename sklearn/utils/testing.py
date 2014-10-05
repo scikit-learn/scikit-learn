@@ -512,7 +512,7 @@ def uninstall_mldata_mock():
 
 
 # Meta estimators need another estimator to be instantiated.
-META_ESTIMATORS = ["OneVsOneClassifier",
+META_ESTIMATORS = ["OneVsOneClassifier", "ClassifierChain",
                    "OutputCodeClassifier", "OneVsRestClassifier", "RFE",
                    "RFECV", "BaseEnsemble"]
 # estimators that there is no way to default-construct sensibly
