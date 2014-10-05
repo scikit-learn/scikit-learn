@@ -592,9 +592,9 @@ variants of LSH. Prefix trees are used to create a forest, with each leaf of
 a tree corresponding to an actual data point in the database. There are
 :math:`l` such trees which compose the forest and they are constructed using
 independently drawn random sequence of hash functions from :math:`H`. In this
-implementation, the length of the sequence of hash functions is kept fixed at
-32. Moreover, a prefix tree is implemented using sorted arrays and binary
-search.
+implementation, "Random Projections" is being used as the LSH technique and 
+the length of the sequence of hash functions is kept fixed at 32. Moreover,
+a prefix tree is implemented using sorted arrays and binary search.
 
 There are two phases of tree traversals used in order to answer a query to find
 the :math:`m` nearest neighbors of a point :math:`q`. First, a top-down
@@ -606,7 +606,8 @@ depth towards the root synchronously across all trees in the bottom-up
 traversal. `M` is set to  :math:`cl` where :math:`c`, the number of candidates
 extracted from each tree, is a constant. Finally, the similarity of each of
 these :math:`M` points against point :math:`q` is calculated and the top
-:math:`m` points are returned as the nearest neighbors of :math:`q`. Since
+:math:`m` points are returned as the nearest neighbors of :math:`q`. Euclidean
+distance is the similarity measure used in this implementation. Since
 most of the time in these queries is spent calculating the distances to
 candidates, the speedup compared to brute force search is approximately
 :math:`N/M`, where :math:`N` is the number of points in database.
