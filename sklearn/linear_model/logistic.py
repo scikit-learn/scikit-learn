@@ -229,12 +229,12 @@ def _logistic_loss_grad_hess(w, X, y, alpha, sample_weight=None):
 
 
 def _multinomial_loss(w, X, Y, alpha, sample_weight):
-    """Computes multinomial loss.
+    """Computes multinomial loss and class probabilities.
 
     Parameters
     ----------
-    w : ndarray, shape (n_classes * n_features,) or
-        (n_classes * (n_features + 1),) Coefficient vector.
+    w : ndarray, shape (n_classes * n_features,) or (n_classes * (n_features + 1),)
+        Coefficient vector.
 
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
         Training data.
@@ -253,9 +253,15 @@ def _multinomial_loss(w, X, Y, alpha, sample_weight):
     -------
     loss : float
         Multinomial loss.
+
+    p : ndarray, shape (n_samples, n_classes)
+        Estimated class probabilities.
+
+    w : ndarray, shape (n_classes, n_features)
+        Reshaped param vector excluding intercept terms.
     """
-    n_samples, n_features = X.shape
     n_classes = Y.shape[1]
+    n_features = X.shape[1]
     fit_intercept = w.size == (n_classes * (n_features + 1))
     w = w.reshape(n_classes, -1)
     sample_weight = sample_weight[:, np.newaxis]
@@ -269,16 +275,16 @@ def _multinomial_loss(w, X, Y, alpha, sample_weight):
     p -= logsumexp(p, axis=1)[:, np.newaxis]
     loss = -(sample_weight * Y * p).sum()
     loss += 0.5 * alpha * squared_norm(w)
-    return loss
+    p = np.exp(p, p)
+    return loss, p, w
 
 
 def _multinomial_loss_grad(w, X, Y, alpha, sample_weight):
-    """Computes the multinomial loss and its gradient.
+    """Computes the multinomial loss, gradient and class probabilities.
 
     Parameters
     ----------
-    w : ndarray, shape (n_classes * n_features,) or
-        (n_classes * (n_features + 1),)
+    w : ndarray, shape (n_classes * n_features,) or (n_classes * (n_features + 1),)
         Coefficient vector.
 
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
@@ -300,37 +306,23 @@ def _multinomial_loss_grad(w, X, Y, alpha, sample_weight):
 
     grad : ndarray, shape (n_classes * n_features,) or
         (n_classes * (n_features + 1),)
-        Ravelled gradient of the logistic loss.
+        Ravelled gradient of the multinomial loss.
+
+    p : ndarray, shape (n_samples, n_classes)
+        Estimated class probabilities
     """
-    _, n_classes = Y.shape
-    _, n_features = X.shape
-
+    n_classes = Y.shape[1]
+    n_features = X.shape[1]
     fit_intercept = (w.size == n_classes * (n_features + 1))
-    w = w.reshape(Y.shape[1], -1)
-
+    grad = np.zeros((n_classes, n_features + bool(fit_intercept)))
+    loss, p, w = _multinomial_loss(w, X, Y, alpha, sample_weight)
     sample_weight = sample_weight[:, np.newaxis]
-    if fit_intercept:
-        grad = np.zeros((n_classes, n_features + 1))
-        intercept = w[:, -1]
-        w = w[:, :-1]
-    else:
-        grad = np.zeros((n_classes, n_features))
-        n_features = X.shape[1]
-        intercept = 0
-
-    p = safe_sparse_dot(X, w.T)
-    p += intercept
-    p -= logsumexp(p, axis=1).reshape(-1, 1)
-
-    loss = -(sample_weight * Y * p).sum() + .5 * alpha * squared_norm(w)
-    p = np.exp(p, p)
     diff = sample_weight * (p - Y)
     grad[:, :n_features] = safe_sparse_dot(diff.T, X)
     grad[:, :n_features] += alpha * w
     if fit_intercept:
         grad[:, -1] = diff.sum(axis=0)
-
-    return loss, grad.ravel()
+    return loss, grad.ravel(), p
 
 
 def _multinomial_loss_grad_hess(w, X, Y, alpha, sample_weight):
@@ -340,8 +332,7 @@ def _multinomial_loss_grad_hess(w, X, Y, alpha, sample_weight):
 
     Parameters
     ----------
-    w : ndarray, shape (n_classes * n_features,) or
-        (n_classes * (n_features + 1),)
+    w : ndarray, shape (n_classes * n_features,) or (n_classes * (n_features + 1),)
         Coefficient vector.
 
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
@@ -375,29 +366,11 @@ def _multinomial_loss_grad_hess(w, X, Y, alpha, sample_weight):
     Barak A. Pearlmutter (1993). Fast Exact Multiplication by the Hessian.
         http://www.bcl.hamilton.ie/~barak/papers/nc-hessian.pdf
     """
-    n_samples, n_features = X.shape
+    n_features = X.shape[1]
     n_classes = Y.shape[1]
     fit_intercept = w.size == (n_classes * (n_features + 1))
-    grad = np.zeros((n_classes, n_features + bool(fit_intercept)))
-    w = w.reshape(n_classes, -1)
+    loss, grad, p = _multinomial_loss_grad(w, X, Y, alpha, sample_weight)
     sample_weight = sample_weight[:, np.newaxis]
-    if fit_intercept:
-        intercept = w[:, -1]
-        w = w[:, :-1]
-    else:
-        intercept = 0
-    p = safe_sparse_dot(X, w.T)
-    p += intercept
-    p -= logsumexp(p, axis=1)[:, np.newaxis]
-    loss = -(sample_weight * Y * p).sum()
-    loss += 0.5 * alpha * squared_norm(w)
-    p = np.exp(p, p)
-    # At this point the variable p holds the predicted class probabilities.
-    err = (Y - p) * sample_weight
-    grad[:, :n_features] = -safe_sparse_dot(err.T, X)
-    grad[:, :n_features] += w * alpha
-    if fit_intercept:
-        grad[:, -1] = -np.sum(err, axis=0)
 
     # Hessian-vector product derived by applying the R-operator on the gradient
     # of the multinomial loss function.
@@ -415,14 +388,14 @@ def _multinomial_loss_grad_hess(w, X, Y, alpha, sample_weight):
         r_yhat += (-p * r_yhat).sum(axis=1)[:, np.newaxis]
         r_yhat *= p
         r_yhat *= sample_weight
-        hessProd = np.empty_like(grad)
+        hessProd = np.zeros((n_classes, n_features + bool(fit_intercept)))
         hessProd[:, :n_features] = safe_sparse_dot(r_yhat.T, X)
         hessProd[:, :n_features] += v * alpha
         if fit_intercept:
             hessProd[:, -1] = r_yhat.sum(axis=0)
         return hessProd.ravel()
 
-    return loss, grad.ravel(), hessp
+    return loss, grad, hessp
 
 
 def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
@@ -643,7 +616,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         if solver == 'lbfgs':
             func = _multinomial_loss_grad
         elif solver == 'newton-cg':
-            func = _multinomial_loss
+            func = lambda x, *args: _multinomial_loss(x, *args)[0]
             grad = lambda x, *args: _multinomial_loss_grad(x, *args)[1]
             hess = _multinomial_loss_grad_hess
     else:
