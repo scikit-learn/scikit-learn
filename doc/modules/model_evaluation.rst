@@ -54,26 +54,26 @@ and mean_squared_error, which measure the distance between the model
 and the data, are negated.  
 
 
-======================     =================================================     ==================================
+======================     =======================================     ==================================
 Scoring                    Function                                              Comment
-======================     =================================================     ==================================
+======================     =======================================     ==================================
 **Classification**
-'accuracy'                 :func:`sklearn.metrics.accuracy_score`
-'average_precision'        :func:`sklearn.metrics.average_precision_score`
-'f1'                       :func:`sklearn.metrics.f1_score`                    
-'log_loss'                 :func:`sklearn.metrics.log_loss`                      requires ``predict_proba`` support
-'precision'                :func:`sklearn.metrics.precision_score`
-'recall'                   :func:`sklearn.metrics.recall_score`
-'roc_auc'                  :func:`sklearn.metrics.roc_auc_score`
+'accuracy'                 :func:`metrics.accuracy_score`
+'average_precision'        :func:`metrics.average_precision_score`
+'f1'                       :func:`metrics.f1_score`                    
+'log_loss'                 :func:`metrics.log_loss`                    requires ``predict_proba`` support
+'precision'                :func:`metrics.precision_score`
+'recall'                   :func:`metrics.recall_score`
+'roc_auc'                  :func:`metrics.roc_auc_score`
 
 **Clustering**
-'adjusted_rand_score'      :func:`sklearn.metrics.adjusted_rand_score`
+'adjusted_rand_score'      :func:`metrics.adjusted_rand_score`
 
 **Regression**
-'mean_absolute_error'      :func:`sklearn.metrics.mean_absolute_error`
-'mean_squared_error'       :func:`sklearn.metrics.mean_squared_error`
-'r2'                       :func:`sklearn.metrics.r2_score`
-======================     =================================================     ==================================
+'mean_absolute_error'      :func:`metrics.mean_absolute_error`
+'mean_squared_error'       :func:`metrics.mean_squared_error`
+'r2'                       :func:`metrics.r2_score`
+======================     =======================================     ==================================
 
 Usage examples:
 
