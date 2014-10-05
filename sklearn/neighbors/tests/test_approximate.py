@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_not_equal
 
 from sklearn.metrics import euclidean_distances
 from sklearn.neighbors import LSHForest
@@ -182,7 +183,7 @@ def test_radius_neighbors():
     distances_exact, _ = nbrs.radius_neighbors(query, radius=mean_dist)
     # Distances of exact neighbors is less than or equal to approximate
     assert_true(np.all(np.less_equal(distances_exact[0],
-                                  distances_approx[0])))
+                                     distances_approx[0])))
 
 
 def test_distances():
@@ -272,6 +273,32 @@ def test_partial_fit():
     # size of _trees[1] = samples + 1
     assert_equal(len(lshf._trees[1]),
                  n_samples + n_samples_partial_fit)
+
+
+def test_hash_functions():
+    """Checks randomness of hash functions.
+
+    Variance and mean of each hash function (projection vector)
+    should be different from flattened array of hash functions.
+    If hash functions are not randomly built (seeded with
+    same value), variances and means of all functions are equal.
+    """
+    n_samples = 12
+    n_features = 2
+    n_estimators = 5
+    rng = np.random.RandomState(42)
+    X = rng.rand(n_samples, n_features)
+
+    lshf = LSHForest(n_estimators=n_estimators)
+    lshf.fit(X)
+
+    for i in range(n_estimators):
+        assert_not_equal(np.var(lshf.hash_functions_),
+                         np.var(lshf.hash_functions_[i]))
+
+    for i in range(n_estimators):
+        assert_not_equal(np.mean(lshf.hash_functions_),
+                         np.mean(lshf.hash_functions_[i]))
 
 
 if __name__ == "__main__":
