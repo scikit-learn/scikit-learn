@@ -54,6 +54,7 @@ __all__ = [
     "OutputCodeClassifier",
 ]
 
+
 def _fit_binary(estimator, X, y, classes=None):
     """Fit a single binary estimator."""
     unique_y = np.unique(y)
@@ -299,17 +300,17 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         else:
             thresh = .5
 
+        n_samples = _num_samples(X)
         if self.label_binarizer_.y_type_ == "multiclass":
-            maxima = np.empty(X.shape[0], dtype=float)
+            maxima = np.empty(n_samples, dtype=float)
             maxima.fill(-np.inf)
-            argmaxima = np.zeros(X.shape[0], dtype=int)
+            argmaxima = np.zeros(n_samples, dtype=int)
             for i, e in enumerate(self.estimators_):
                 pred = _predict_binary(e, X)
                 np.maximum(maxima, pred, out=maxima)
                 argmaxima[maxima == pred] = i
             return self.label_binarizer_.classes_[np.array(argmaxima.T)]
         else:
-            n_samples = _num_samples(X)
             indices = array.array('i')
             indptr = array.array('i', [0])
             for e in self.estimators_:
@@ -346,6 +347,11 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         # Y[i,j] gives the probability that sample i has the label j.
         # In the multi-label case, these are not disjoint.
         Y = np.array([e.predict_proba(X)[:, 1] for e in self.estimators_]).T
+
+        if len(self.estimators_) == 1:
+            # Only one estimator, but we still want to return probabilities
+            # for two classes.
+            Y = np.concatenate(((1 - Y), Y), axis=1)
 
         if not self.multilabel_:
             # Then, probabilities should be normalized to 1.

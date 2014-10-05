@@ -356,8 +356,9 @@ class LinearRegression(LinearModel, RegressorMixin):
         self : returns an instance of self.
         """
         if n_jobs != 1:
-            warnings.warn("The n_jobs parameter has been moved from the fit"
-                          " method to the LinearRegression class constructor",
+            warnings.warn("The n_jobs parameter in fit is deprecated and will "
+                          "be removed in 0.17. It has been moved from the fit "
+                          "method to the LinearRegression class constructor.",
                           DeprecationWarning, stacklevel=2)
             n_jobs_ = n_jobs
         else:

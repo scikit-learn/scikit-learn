@@ -753,7 +753,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
             raise ValueError("Incorrect number of features. "
                              "Got %d features, expected %d" % (
                                  n_features, expected_n_features))
-        if X.dtype.kind is not 'f':
+        if X.dtype.kind != 'f':
             warnings.warn("Got data type %s, converted to float "
                           "to avoid overflows" % X.dtype,
                           RuntimeWarning, stacklevel=2)
@@ -1104,7 +1104,7 @@ class MiniBatchKMeans(KMeans):
         Number of samples to randomly sample for speeding up the
         initialization (sometimes at the expense of accuracy): the
         only algorithm is initialized by running a batch KMeans on a
-        random subset of the data. This needs to be larger than k.
+        random subset of the data. This needs to be larger than n_clusters.
 
     init : {'k-means++', 'random' or an ndarray}, default: 'k-means++'
         Method for initialization, defaults to 'k-means++':
