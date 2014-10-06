@@ -18,6 +18,7 @@ from sklearn.lda import LDA
 n_train = 20  # samples for training
 n_test = 200  # samples for testing
 n_averages = 50  # how often to repeat classification
+n_features_max = 75  # maximum number of features
 
 
 def generate_data(n_samples, n_features):
@@ -31,7 +32,7 @@ def generate_data(n_samples, n_features):
     return X, y
 
 acc_clf1, acc_clf2 = [], []
-m_range = range(1, 100)
+m_range = range(1, n_features_max + 1)
 for m in m_range:
     score_clf1, score_clf2 = 0, 0
     for i in range(n_averages):
@@ -56,5 +57,5 @@ plt.xlabel('n_features / n_samples')
 plt.ylabel('Classification accuracy')
 
 plt.legend(loc=1, prop={'size': 8})
-plt.suptitle('LDA vs shrinkage LDA (1 discriminative feature)')
+plt.suptitle('LDA vs. shrinkage LDA (1 discriminative feature)')
 plt.show()
