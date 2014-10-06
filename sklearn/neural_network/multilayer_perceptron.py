@@ -239,14 +239,15 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     def _fit(self, X, y, incremental=False):
         # Make sure self.hidden_layer_sizes is a list
-        if not hasattr(self.hidden_layer_sizes, "__iter__"):
-            self.hidden_layer_sizes = [self.hidden_layer_sizes]
-        self.hidden_layer_sizes = list(self.hidden_layer_sizes)
+        hidden_layer_sizes = self.hidden_layer_sizes
+        if not hasattr(hidden_layer_sizes, "__iter__"):
+            hidden_layer_sizes = [hidden_layer_sizes]
+        hidden_layer_sizes = list(hidden_layer_sizes)
 
         # Validate input parameters.
-        if np.any(np.array(self.hidden_layer_sizes) <= 0):
+        if np.any(np.array(hidden_layer_sizes) <= 0):
             raise ValueError("hidden_layer_sizes must be > 0, got %s." %
-                             self.hidden_layer_sizes)
+                             hidden_layer_sizes)
         if not isinstance(self.shuffle, bool):
             raise ValueError("shuffle must be either True or False, got %s." %
                              self.shuffle)
@@ -301,7 +302,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         self.n_outputs_ = y.shape[1]
 
-        layer_units = ([n_features] + self.hidden_layer_sizes +
+        layer_units = ([n_features] + hidden_layer_sizes +
                        [self.n_outputs_])
 
         # First time training the model
@@ -515,7 +516,13 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         """
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
-        layer_units = [X.shape[1]] + self.hidden_layer_sizes + \
+        # Make sure self.hidden_layer_sizes is a list
+        hidden_layer_sizes = self.hidden_layer_sizes
+        if not hasattr(hidden_layer_sizes, "__iter__"):
+            hidden_layer_sizes = [hidden_layer_sizes]
+        hidden_layer_sizes = list(hidden_layer_sizes)
+
+        layer_units = [X.shape[1]] + hidden_layer_sizes + \
             [self.n_outputs_]
 
         # Initialize layers

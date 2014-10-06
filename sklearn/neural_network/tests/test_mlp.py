@@ -176,7 +176,8 @@ def test_gradient():
         theta = np.hstack([l.ravel() for l in mlp.layers_coef_ +
                            mlp.layers_intercept_])
 
-        layer_units = [X.shape[1]] + mlp.hidden_layer_sizes + [mlp.n_outputs_]
+        layer_units = ([X.shape[1]] + [mlp.hidden_layer_sizes] +
+                       [mlp.n_outputs_])
 
         activations = []
         deltas = []
