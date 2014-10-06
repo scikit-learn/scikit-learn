@@ -131,10 +131,10 @@ value is `1` represents the assigned classes of that samples::
 
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [[0, 1], [1]]
-    >>> clf = MultilayerPerceptronClassifier(hidden_layer_sizes=(15), random_state=1)
+    >>> clf = MultilayerPerceptronClassifier(hidden_layer_sizes=(15,), random_state=1)
     >>> clf.fit(X, y)
     MultilayerPerceptronClassifier(activation='relu', algorithm='l-bfgs',
-                    alpha=1e-05, batch_size=200, hidden_layer_sizes=(15),
+                    alpha=1e-05, batch_size=200, hidden_layer_sizes=(15,),
                     learning_rate='constant', learning_rate_init=0.5,
                     max_iter=200, power_t=0.5, random_state=1, shuffle=False,
                     tol=1e-05, verbose=False, warm_start=False)
