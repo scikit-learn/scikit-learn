@@ -614,7 +614,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         w0 = w0.ravel()
         target = Y_bin
         if solver == 'lbfgs':
-            func = _multinomial_loss_grad
+            func = lambda x, *args: _multinomial_loss_grad(x, *args)[0:2]
         elif solver == 'newton-cg':
             func = lambda x, *args: _multinomial_loss(x, *args)[0]
             grad = lambda x, *args: _multinomial_loss_grad(x, *args)[1]
