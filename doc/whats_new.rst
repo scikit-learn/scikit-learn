@@ -72,7 +72,7 @@ Enhancements
    - :class:`GridSearchCV` and :class:`RandomizedSearchCV` can now be
      configured to work with estimators that may fail and raise errors on
      individual folds. This option is controlled by the `error_score`
-     parameter. This does not affect errors raised on re-fit. By 
+     parameter. This does not affect errors raised on re-fit. By
 	 `Michal Romaniuk`_.
 
 
@@ -104,6 +104,9 @@ Bug fixes
       (If you cross-validated over ``gamma``, it probably doesn't matter
       too much.) By `Dougal Sutherland`_.
 
+    - Pipeline object delegate the ``classes_`` attribute to the underlying
+      estimator. It allows for instance to make bagging of a pipeline object.
+      By `Arnaud Joly`_
 
 API changes summary
 -------------------
