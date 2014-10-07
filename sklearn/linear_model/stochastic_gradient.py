@@ -494,10 +494,10 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Subset of the training data
 
-        y : numpy array, shape (n_samples,)
+        y : numpy array, shape (n_samples, )
             Subset of the target values
 
-        classes : array, shape (n_classes,)
+        classes : array, shape (n_classes, )
             Classes across all calls to partial_fit.
             Can be obtained by via `np.unique(y_all)`, where y_all is the
             target vector of the entire dataset.
@@ -505,7 +505,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
             and can be omitted in the subsequent calls.
             Note that y doesn't need to contain all labels in `classes`.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like, shape (n_samples, ), optional
             Weights applied to individual samples.
             If not provided, uniform weights are assumed.
 
@@ -527,16 +527,16 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training data
 
-        y : numpy array, shape (n_samples,)
+        y : numpy array, shape (n_samples, )
             Target values
 
         coef_init : array, shape (n_classes,n_features)
             The initial coefficients to warm-start the optimization.
 
-        intercept_init : array, shape (n_classes,)
+        intercept_init : array, shape (n_classes, )
             The initial intercept to warm-start the optimization.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like, shape (n_samples, ), optional
             Weights applied to individual samples.
             If not provided, uniform weights are assumed.
 
@@ -672,7 +672,7 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     n_features)
         Weights assigned to the features.
 
-    intercept_ : array, shape (1,) if n_classes == 2 else (n_classes,)
+    intercept_ : array, shape (1, ) if n_classes == 2 else (n_classes, )
         Constants in decision function.
 
     Examples
@@ -888,10 +888,10 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Subset of training data
 
-        y : numpy array of shape (n_samples,)
+        y : numpy array of shape (n_samples, )
             Subset of target values
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like, shape (n_samples, ), optional
             Weights applied to individual samples.
             If not provided, uniform weights are assumed.
 
@@ -938,16 +938,16 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training data
 
-        y : numpy array, shape (n_samples,)
+        y : numpy array, shape (n_samples, )
             Target values
 
-        coef_init : array, shape (n_features,)
+        coef_init : array, shape (n_features, )
             The initial coefficients to warm-start the optimization.
 
-        intercept_init : array, shape (1,)
+        intercept_init : array, shape (1, )
             The initial intercept to warm-start the optimization.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like, shape (n_samples, ), optional
             Weights applied to individual samples (1. for unweighted).
 
         Returns
@@ -969,7 +969,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
         Returns
         -------
-        array, shape (n_samples,)
+        array, shape (n_samples, )
            Predicted target values per element in X.
         """
         X = check_array(X, accept_sparse='csr')
@@ -987,7 +987,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
         Returns
         -------
-        array, shape (n_samples,)
+        array, shape (n_samples, )
            Predicted target values per element in X.
         """
         return self.decision_function(X)
@@ -1159,16 +1159,16 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
 
     Attributes
     ----------
-    coef_ : array, shape (n_features,)
+    coef_ : array, shape (n_features, )
         Weights asigned to the features.
 
-    intercept_ : array, shape (1,)
+    intercept_ : array, shape (1, )
         The intercept term.
 
-    `average_coef_` : array, shape (n_features,)
+    `average_coef_` : array, shape (n_features, )
         Averaged weights assigned to the features.
 
-    `average_intercept_` : array, shape (1)
+    `average_intercept_` : array, shape (1, )
         The averaged intercept term.
 
     Examples

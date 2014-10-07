@@ -93,7 +93,7 @@ if __name__ == "__main__":
             clf = SGDRegressor(alpha=alpha / n_train, fit_intercept=False,
                                n_iter=n_iter, learning_rate="invscaling",
                                eta0=.002, power_t=0.05,
-                               average=(n_iter * n_train / 2))
+                               average=(n_iter * n_train // 2))
 
             tstart = time()
             clf.fit(X_train, y_train)
@@ -122,7 +122,7 @@ if __name__ == "__main__":
         pl.plot(list_n_samples, np.sqrt(sgd_results[:, j, 0]),
                 label="SGDRegressor")
         pl.plot(list_n_samples, np.sqrt(asgd_results[:, j, 0]),
-                label="A-SGD")
+                label="A-SGDRegressor")
         pl.plot(list_n_samples, np.sqrt(ridge_results[:, j, 0]),
                 label="Ridge")
         pl.legend(prop={"size": 10})
@@ -137,7 +137,7 @@ if __name__ == "__main__":
         pl.plot(list_n_samples, np.sqrt(sgd_results[:, j, 1]),
                 label="SGDRegressor")
         pl.plot(list_n_samples, np.sqrt(asgd_results[:, j, 1]),
-                label="A-SGD")
+                label="A-SGDRegressor")
         pl.plot(list_n_samples, np.sqrt(ridge_results[:, j, 1]),
                 label="Ridge")
         pl.legend(prop={"size": 10})
