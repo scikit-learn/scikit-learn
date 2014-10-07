@@ -27,7 +27,7 @@ from sklearn.metrics import recall_score
 
 from sklearn.preprocessing import LabelBinarizer
 
-from sklearn.svm import LinearSVC
+from sklearn.svm import LinearSVC, SVC
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import (LinearRegression, Lasso, ElasticNet, Ridge,
                                   Perceptron, LogisticRegression)
@@ -186,19 +186,32 @@ def test_ovr_binary():
 
     classes = set("eggs spam".split())
 
-    for base_clf in (MultinomialNB(), LinearSVC(random_state=0),
-                     LinearRegression(), Ridge(),
-                     ElasticNet()):
-
+    def conduct_test(base_clf, test_predict_proba=False):
         clf = OneVsRestClassifier(base_clf).fit(X, y)
         assert_equal(set(clf.classes_), classes)
         y_pred = clf.predict(np.array([[0, 0, 4]]))[0]
         assert_equal(set(y_pred), set("eggs"))
 
+        if test_predict_proba:
+            X_test = np.array([[0, 0, 4]])
+            probabilities = clf.predict_proba(X_test)
+            assert_equal(2, len(probabilities[0]))
+            assert_equal(clf.classes_[np.argmax(probabilities, axis=1)],
+                         clf.predict(X_test))
+
         # test input as label indicator matrix
         clf = OneVsRestClassifier(base_clf).fit(X, Y)
         y_pred = clf.predict([[3, 0, 0]])[0]
         assert_equal(y_pred, 1)
+
+    for base_clf in (LinearSVC(random_state=0), LinearRegression(),
+                     Ridge(), ElasticNet()):
+        conduct_test(base_clf)
+
+    for base_clf in (MultinomialNB(), SVC(probability=True),
+                     LogisticRegression()):
+        conduct_test(base_clf, test_predict_proba=True)
+
 
 @ignore_warnings
 def test_ovr_multilabel():

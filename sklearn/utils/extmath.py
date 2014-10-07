@@ -7,8 +7,10 @@ Extended math utilities.
 #          Olivier Grisel
 #          Lars Buitinck
 #          Stefan van der Walt
+#          Kyle Kastner
 # License: BSD 3 clause
 
+from __future__ import division
 from functools import partial
 import warnings
 
@@ -519,27 +521,41 @@ def cartesian(arrays, out=None):
     return out
 
 
-def svd_flip(u, v):
-    """Sign correction to ensure deterministic output from SVD
+def svd_flip(u, v, u_based_decision=True):
+    """Sign correction to ensure deterministic output from SVD.
 
     Adjusts the columns of u and the rows of v such that the loadings in the
     columns in u that are largest in absolute value are always positive.
 
     Parameters
     ----------
-    u, v: arrays
+    u, v : arrays
         The output of `linalg.svd` or `sklearn.utils.extmath.randomized_svd`,
         with matching inner dimensions so one can compute `np.dot(u * s, v)`.
 
+    u_based_decision : boolean, (default=True)
+        If True, use the columns of u as the basis for sign flipping. Otherwise,
+        use the rows of v. The choice of which variable to base the decision on
+        is generally algorithm dependent.
+
+
     Returns
     -------
-    u_adjusted, s, v_adjusted: arrays with the same dimensions as the input.
+    u_adjusted, v_adjusted : arrays with the same dimensions as the input.
 
     """
-    max_abs_cols = np.argmax(np.abs(u), axis=0)
-    signs = np.sign(u[max_abs_cols, xrange(u.shape[1])])
-    u *= signs
-    v *= signs[:, np.newaxis]
+    if u_based_decision:
+        # columns of u, rows of v
+        max_abs_cols = np.argmax(np.abs(u), axis=0)
+        signs = np.sign(u[max_abs_cols, xrange(u.shape[1])])
+        u *= signs
+        v *= signs[:, np.newaxis]
+    else:
+        # rows of v, columns of u
+        max_abs_rows = np.argmax(np.abs(v), axis=1)
+        signs = np.sign(v[xrange(v.shape[0]), max_abs_rows])
+        u *= signs
+        v *= signs[:, np.newaxis]
     return u, v
 
 
@@ -621,3 +637,48 @@ def make_nonnegative(X, min_value=0):
                              " make it no longer sparse.")
         X = X + (min_value - min_)
     return X
+
+
+def _batch_mean_variance_update(X, old_mean, old_variance, old_sample_count):
+    """Calculate an average mean update and a Youngs and Cramer variance update.
+
+    From the paper "Algorithms for computing the sample variance: analysis and
+    recommendations", by Chan, Golub, and LeVeque.
+
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, n_features)
+        Data to use for variance update
+
+    old_mean : array-like, shape: (n_features,)
+
+    old_variance : array-like, shape: (n_features,)
+
+    old_sample_count : int
+
+    Returns
+    -------
+    updated_mean : array, shape (n_features,)
+
+    updated_variance : array, shape (n_features,)
+
+    updated_sample_count : int
+
+    References
+    ----------
+    T. Chan, G. Golub, R. LeVeque. Algorithms for computing the sample variance:
+        recommendations, The American Statistician, Vol. 37, No. 3, pp. 242-247
+
+    """
+    new_sum = X.sum(axis=0)
+    new_variance = X.var(axis=0) * X.shape[0]
+    old_sum = old_mean * old_sample_count
+    n_samples = X.shape[0]
+    updated_sample_count = old_sample_count + n_samples
+    partial_variance = old_sample_count / (n_samples * updated_sample_count) * (
+        n_samples / old_sample_count * old_sum - new_sum) ** 2
+    unnormalized_variance = old_variance * old_sample_count + new_variance + \
+        partial_variance
+    return ((old_sum + new_sum) / updated_sample_count,
+            unnormalized_variance / updated_sample_count,
+            updated_sample_count)
