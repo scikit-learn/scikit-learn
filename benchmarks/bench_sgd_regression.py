@@ -76,7 +76,7 @@ if __name__ == "__main__":
             gc.collect()
             print("- benchmarking SGD")
             n_iter = np.ceil(10 ** 4.0 / n_train)
-            clf = SGDRegressor(alpha=alpha, fit_intercept=False,
+            clf = SGDRegressor(alpha=alpha / n_train, fit_intercept=False,
                                n_iter=n_iter, learning_rate="invscaling",
                                eta0=.01, power_t=0.25)
 
@@ -87,11 +87,13 @@ if __name__ == "__main__":
             sgd_results[i, j, 1] = time() - tstart
 
             gc.collect()
-            print("- benchmarking ASGD")
+            print("n_iter", n_iter)
+            print("- benchmarking A-SGD")
             n_iter = np.ceil(10 ** 4.0 / n_train)
-            clf = SGDRegressor(alpha=alpha, fit_intercept=False,
+            clf = SGDRegressor(alpha=alpha / n_train, fit_intercept=False,
                                n_iter=n_iter, learning_rate="invscaling",
-                               eta0=.01, power_t=0.25, average=True)
+                               eta0=.002, power_t=0.05,
+                               average=(n_iter * n_train / 2))
 
             tstart = time()
             clf.fit(X_train, y_train)
@@ -120,7 +122,7 @@ if __name__ == "__main__":
         pl.plot(list_n_samples, np.sqrt(sgd_results[:, j, 0]),
                 label="SGDRegressor")
         pl.plot(list_n_samples, np.sqrt(asgd_results[:, j, 0]),
-                label="ASGDRegressor")
+                label="A-SGD")
         pl.plot(list_n_samples, np.sqrt(ridge_results[:, j, 0]),
                 label="Ridge")
         pl.legend(prop={"size": 10})
@@ -128,14 +130,14 @@ if __name__ == "__main__":
         pl.ylabel("RMSE")
         pl.title("Test error - %d features" % list_n_features[j])
         i += 1
-        pl.show()
+
         pl.subplot(m, 2, i + 1)
         pl.plot(list_n_samples, np.sqrt(elnet_results[:, j, 1]),
                 label="ElasticNet")
         pl.plot(list_n_samples, np.sqrt(sgd_results[:, j, 1]),
                 label="SGDRegressor")
         pl.plot(list_n_samples, np.sqrt(asgd_results[:, j, 1]),
-                label="ASGDRegressor")
+                label="A-SGD")
         pl.plot(list_n_samples, np.sqrt(ridge_results[:, j, 1]),
                 label="Ridge")
         pl.legend(prop={"size": 10})
