@@ -48,7 +48,6 @@ from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..feature_selection.from_model import _LearntSelectorMixin
-from ..metrics.scorer import get_scorer
 from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
@@ -103,30 +102,6 @@ def _parallel_helper(obj, methodname, *args, **kwargs):
     return getattr(obj, methodname)(*args, **kwargs)
 
 
-class _DummyPredictor:
-    """ Private class returning precomputed predictions. Used to provide out-
-    of-bag training predictions to a scorer.
-    """
-
-    def __init__(self, prediction, proba_prediction=None, decision_function=None):
-        self._prediction = prediction
-        self._proba_prediction = proba_prediction
-        self._decision_function = decision_function
-
-    def predict(self, X):
-        return self._prediction
-
-    def predict_proba(self, X):
-        if not self._proba_prediction:
-            raise NotImplementedError
-        return self._proba_prediction
-
-    def decision_function(self, X):
-        if not self._decision_function:
-            raise NotImplementedError
-        return self._decision_function
-
-
 class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
                                     _LearntSelectorMixin)):
     """Base class for forests of trees.
@@ -141,7 +116,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
                  n_estimators=10,
                  estimator_params=tuple(),
                  bootstrap=False,
-                 oob_score=False,
+                 oob_predict=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
@@ -152,7 +127,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             estimator_params=estimator_params)
 
         self.bootstrap = bootstrap
-        self.oob_score = oob_score
+        self.oob_predict = oob_predict
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.verbose = verbose
@@ -233,8 +208,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         # Check parameters
         self._validate_estimator()
 
-        if not self.bootstrap and self.oob_score:
-            raise ValueError("Out of bag estimation only available"
+        if not self.bootstrap and self.oob_predict:
+            raise ValueError("Out of bag prediction only available"
                              " if bootstrap=True")
 
         random_state = check_random_state(self.random_state)
@@ -279,8 +254,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             # Collect newly grown trees
             self.estimators_.extend(trees)
 
-        if self.oob_score:
-            self._set_oob_score(X, y)
+        if self.oob_predict:
+            self._set_oob_prediction(X, y)
 
         # Decapsulate classes_ attributes
         if hasattr(self, "classes_") and self.n_outputs_ == 1:
@@ -290,8 +265,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         return self
 
     @abstractmethod
-    def _set_oob_score(self, X, y):
-        """Calculate out of bag predictions and score."""
+    def _set_oob_prediction(self, X, y):
+        """Calculate out of bag predictions."""
 
     def _validate_y(self, y):
         # Default implementation
@@ -330,7 +305,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
                  n_estimators=10,
                  estimator_params=tuple(),
                  bootstrap=False,
-                 oob_score=False,
+                 oob_predict=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
@@ -341,21 +316,17 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             n_estimators=n_estimators,
             estimator_params=estimator_params,
             bootstrap=bootstrap,
-            oob_score=oob_score,
+            oob_predict=oob_predict,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
             warm_start=warm_start)
 
-    def _set_oob_score(self, X, y):
-        scoring = 'accuracy' if self.oob_score == True else self.oob_score
-        scorer = get_scorer(scoring)
-
+    def _set_oob_prediction(self, X, y):
         n_classes_ = self.n_classes_
         n_samples = y.shape[0]
 
         oob_decision_function = []
-        oob_score = 0.0
         predictions = []
         oob_prediction = []
 
@@ -376,7 +347,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         for k in xrange(self.n_outputs_):
             if (predictions[k].sum(axis=1) == 0).any():
-                warn("Some inputs do not have OOB scores. "
+                warn("Some inputs do not have OOB predictions. "
                      "This probably means too few trees were used "
                      "to compute any reliable oob estimates.")
 
@@ -392,11 +363,6 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             self.oob_prediction_ = oob_prediction
             self.oob_decision_function_ = oob_decision_function
         self.oob_prediction_proba_ = self.oob_decision_function_
-
-        predictor = _DummyPredictor(self.oob_prediction_,
-                                    self.oob_prediction_proba_,
-                                    self.oob_decision_function_)
-        self.oob_score_ = scorer(predictor, X, y)
 
     def _validate_y(self, y):
         y = np.copy(y)
@@ -541,7 +507,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
                  n_estimators=10,
                  estimator_params=tuple(),
                  bootstrap=False,
-                 oob_score=False,
+                 oob_predict=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
@@ -551,7 +517,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             n_estimators=n_estimators,
             estimator_params=estimator_params,
             bootstrap=bootstrap,
-            oob_score=oob_score,
+            oob_predict=oob_predict,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
@@ -592,10 +558,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
 
         return y_hat
 
-    def _set_oob_score(self, X, y):
-        scoring = 'r2' if self.oob_score == True else self.oob_score
-        scorer = get_scorer(scoring)
-
+    def _set_oob_prediction(self, X, y):
         n_samples = y.shape[0]
 
         predictions = np.zeros((n_samples, self.n_outputs_))
@@ -613,7 +576,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             n_predictions[mask, :] += 1
 
         if (n_predictions == 0).any():
-            warn("Some inputs do not have OOB scores. "
+            warn("Some inputs do not have OOB predictions. "
                  "This probably means too few trees were used "
                  "to compute any reliable oob estimates.")
             n_predictions[n_predictions == 0] = 1
@@ -624,8 +587,6 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
         if self.n_outputs_ == 1:
             self.oob_prediction_ = \
                 self.oob_prediction_.reshape((n_samples, ))
-
-        self.oob_score_ = scorer(_DummyPredictor(self.oob_prediction_), X, y)
 
 
 class RandomForestClassifier(ForestClassifier):
@@ -694,14 +655,9 @@ class RandomForestClassifier(ForestClassifier):
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
 
-    oob_score : bool, string, or callable, optional, default: False
-        Whether and how to estimate the generalization error using out-
-        of-bag samples.
-        If False, no oob_score_ is calculated;
-        If True, calculate oob_score_ using the ``accuracy`` scorer;
-        If string (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``, calculate oob_score_ as specified.
+    oob_predict : bool, default: False
+        Whether to generate predictions for out of bag samples. These predictions
+        can be used to estimate the generalization error.
 
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
@@ -737,9 +693,6 @@ class RandomForestClassifier(ForestClassifier):
     feature_importances_ : array of shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
-    oob_score_ : float
-        Score of the training dataset obtained using an out-of-bag estimate.
-
     oob_prediction_ : array of shape = [n_samples]
         Prediction computed with out-of-bag estimate on the training set.
 
@@ -774,7 +727,7 @@ class RandomForestClassifier(ForestClassifier):
                  max_features="auto",
                  max_leaf_nodes=None,
                  bootstrap=True,
-                 oob_score=False,
+                 oob_predict=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
@@ -787,7 +740,7 @@ class RandomForestClassifier(ForestClassifier):
                               "max_features", "max_leaf_nodes",
                               "random_state"),
             bootstrap=bootstrap,
-            oob_score=oob_score,
+            oob_predict=oob_predict,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
@@ -868,14 +821,9 @@ class RandomForestRegressor(ForestRegressor):
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
 
-    oob_score : bool, string, or callable, optional, default: False
-        Whether and how to estimate the generalization error using out-
-        of-bag samples.
-        If False, no oob_score_ is calculated;
-        If True, calculate oob_score_ using the ``r2`` scorer;
-        If string (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``, calculate oob_score_ as specified.
+    oob_predict : bool, default: False
+        Whether to generate predictions for out of bag samples. These predictions
+        can be used to estimate the generalization error.
 
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
@@ -903,9 +851,6 @@ class RandomForestRegressor(ForestRegressor):
     feature_importances_ : array of shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
-    oob_score_ : float
-        Score of the training dataset obtained using an out-of-bag estimate.
-
     oob_prediction_ : array of shape = [n_samples]
         Prediction computed with out-of-bag estimate on the training set.
 
@@ -928,7 +873,7 @@ class RandomForestRegressor(ForestRegressor):
                  max_features="auto",
                  max_leaf_nodes=None,
                  bootstrap=True,
-                 oob_score=False,
+                 oob_predict=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
@@ -941,7 +886,7 @@ class RandomForestRegressor(ForestRegressor):
                               "max_features", "max_leaf_nodes",
                               "random_state"),
             bootstrap=bootstrap,
-            oob_score=oob_score,
+            oob_predict=oob_predict,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
@@ -1023,14 +968,9 @@ class ExtraTreesClassifier(ForestClassifier):
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
 
-    oob_score : bool, string, or callable, optional, default: False
-        Whether and how to estimate the generalization error using out-
-        of-bag samples.
-        If False, no oob_score_ is calculated;
-        If True, calculate oob_score_ using the ``accuracy`` scorer;
-        If string (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``, calculate oob_score_ as specified.
+    oob_predict : bool, default: False
+        Whether to generate predictions for out of bag samples. These predictions
+        can be used to estimate the generalization error.
 
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
@@ -1065,9 +1005,6 @@ class ExtraTreesClassifier(ForestClassifier):
 
     feature_importances_ : array of shape = [n_features]
         The feature importances (the higher, the more important the feature).
-
-    oob_score_ : float
-        Score of the training dataset obtained using an out-of-bag estimate.
 
     oob_prediction_ : array of shape = [n_samples]
         Prediction computed with out-of-bag estimate on the training set.
@@ -1106,7 +1043,7 @@ class ExtraTreesClassifier(ForestClassifier):
                  max_features="auto",
                  max_leaf_nodes=None,
                  bootstrap=False,
-                 oob_score=False,
+                 oob_predict=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
@@ -1118,7 +1055,7 @@ class ExtraTreesClassifier(ForestClassifier):
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes", "random_state"),
             bootstrap=bootstrap,
-            oob_score=oob_score,
+            oob_predict=oob_predict,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
@@ -1201,14 +1138,9 @@ class ExtraTreesRegressor(ForestRegressor):
         Whether bootstrap samples are used when building trees.
         Note: this parameter is tree-specific.
 
-    oob_score : bool, string, or callable, optional, default: False
-        Whether and how to estimate the generalization error using out-
-        of-bag samples.
-        If False, no oob_score_ is calculated;
-        If True, calculate oob_score_ using the ``r2`` scorer;
-        If string (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``, calculate oob_score_ as specified.
+    oob_predict : bool, default: False
+        Whether to generate predictions for out of bag samples. These predictions
+        can be used to estimate the generalization error.
 
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
@@ -1236,9 +1168,6 @@ class ExtraTreesRegressor(ForestRegressor):
     feature_importances_ : array of shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
-    oob_score_ : float
-        Score of the training dataset obtained using an out-of-bag estimate.
-
     oob_prediction_ : array of shape = [n_samples]
         Prediction computed with out-of-bag estimate on the training set.
 
@@ -1263,7 +1192,7 @@ class ExtraTreesRegressor(ForestRegressor):
                  max_features="auto",
                  max_leaf_nodes=None,
                  bootstrap=False,
-                 oob_score=False,
+                 oob_predict=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
@@ -1276,7 +1205,7 @@ class ExtraTreesRegressor(ForestRegressor):
                               "max_features", "max_leaf_nodes",
                               "random_state"),
             bootstrap=bootstrap,
-            oob_score=oob_score,
+            oob_predict=oob_predict,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
@@ -1392,7 +1321,7 @@ class RandomTreesEmbedding(BaseForest):
                               "max_features", "max_leaf_nodes",
                               "random_state"),
             bootstrap=False,
-            oob_score=False,
+            oob_predict=False,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
@@ -1407,8 +1336,8 @@ class RandomTreesEmbedding(BaseForest):
         self.max_leaf_nodes = max_leaf_nodes
         self.sparse_output = sparse_output
 
-    def _set_oob_score(self, X, y):
-        raise NotImplementedError("OOB score not supported by tree embedding")
+    def _set_oob_prediction(self, X, y):
+        raise NotImplementedError("OOB prediction not supported by tree embedding")
 
     def fit(self, X, y=None, sample_weight=None):
         """Fit estimator.

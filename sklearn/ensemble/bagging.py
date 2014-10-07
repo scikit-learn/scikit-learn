@@ -17,6 +17,7 @@ from ..externals.joblib import Parallel, delayed
 from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
 from ..metrics import r2_score, accuracy_score
+from ..metrics.scorer import check_scoring, get_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, check_X_y, check_array, column_or_1d
 from ..utils.random import sample_without_replacement
@@ -27,6 +28,42 @@ __all__ = ["BaggingClassifier",
            "BaggingRegressor"]
 
 MAX_INT = np.iinfo(np.int32).max
+
+
+def oob_score(estimator, X, y, scoring, fit_params=None):
+    """Compute an estimator's out of bag score.
+
+    Parameters
+    ----------
+    estimator : estimator object implementing 'fit'
+        The object to use to fit the data.
+
+    X : array-like
+        The data to fit. Can be, for example a list, or an array at least 2d.
+
+    y : array-like
+        The target variable to try to predict.
+
+    scoring : string or callable
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
+
+    fit_params : dict, optional
+        Parameters to pass to the fit method of the estimator.
+
+    Returns
+    -------
+    score : float
+        Out of bag score of the estimator.
+    """
+    
+    estimator.oob_predict = True
+    scorer = check_scoring(estimator, scoring=scoring)
+    fit_params = fit_params if fit_params is not None else {}
+    estimator.fit(X, y, **fit_params)
+    return get_score(scorer, y, estimator.oob_prediction_,
+        estimator.oob_prediction_proba_, estimator.oob_decision_function_)
 
 
 def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,

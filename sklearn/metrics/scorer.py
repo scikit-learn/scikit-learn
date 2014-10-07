@@ -31,30 +31,40 @@ from ..utils.multiclass import type_of_target
 from ..externals import six
 
 
+class _Prediction(object):
+    def __init__(self, predicted=None, predicted_proba=None, decision_function=None):
+        if predicted is not None:
+            self.predicted = predicted
+        if predicted_proba is not None:
+            self.predicted_proba = predicted_proba
+        if decision_function is not None:
+            self.decision_function = decision_function
+
+
+class _LazyPrediction(object):
+    def __init__(self, estimator, X):
+        self.estimator = estimator
+        self.X = X
+
+    @property
+    def predicted(self):
+        return self.estimator.predict(self.X)
+
+    @property
+    def predicted_proba(self):
+        return self.estimator.predict_proba(self.X)
+
+    @property
+    def decision_function(self):
+        return self.estimator.decision_function(self.X)
+
+
 class _BaseScorer(six.with_metaclass(ABCMeta, object)):
     def __init__(self, score_func, sign, kwargs):
         self._kwargs = kwargs
         self._score_func = score_func
         self._sign = sign
 
-    @abstractmethod
-    def __call__(self, estimator, X, y, sample_weight=None):
-        pass
-
-    def __repr__(self):
-        kwargs_string = "".join([", %s=%s" % (str(k), str(v))
-                                 for k, v in self._kwargs.items()])
-        return ("make_scorer(%s%s%s%s)"
-                % (self._score_func.__name__,
-                   "" if self._sign > 0 else ", greater_is_better=False",
-                   self._factory_args(), kwargs_string))
-
-    def _factory_args(self):
-        """Return non-default make_scorer arguments for repr."""
-        return ""
-
-
-class _PredictScorer(_BaseScorer):
     def __call__(self, estimator, X, y_true, sample_weight=None):
         """Evaluate predicted target values for X relative to y_true.
 
@@ -78,7 +88,28 @@ class _PredictScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
-        y_pred = estimator.predict(X)
+        return self._score(y_true, _LazyPrediction(estimator, X), sample_weight)
+
+    @abstractmethod
+    def _score(self, y_true, y_pred, sample_weight):
+        pass
+
+    def __repr__(self):
+        kwargs_string = "".join([", %s=%s" % (str(k), str(v))
+                                 for k, v in self._kwargs.items()])
+        return ("make_scorer(%s%s%s%s)"
+                % (self._score_func.__name__,
+                   "" if self._sign > 0 else ", greater_is_better=False",
+                   self._factory_args(), kwargs_string))
+
+    def _factory_args(self):
+        """Return non-default make_scorer arguments for repr."""
+        return ""
+
+
+class _PredictScorer(_BaseScorer):
+    def _score(self, y_true, y_pred, sample_weight):
+        y_pred = y_pred.predicted
         if sample_weight is not None:
             return self._sign * self._score_func(y_true, y_pred,
                                                  sample_weight=sample_weight,
@@ -89,82 +120,34 @@ class _PredictScorer(_BaseScorer):
                 
 
 class _ProbaScorer(_BaseScorer):
-    def __call__(self, clf, X, y, sample_weight=None):
-        """Evaluate predicted probabilities for X relative to y_true.
-
-        Parameters
-        ----------
-        clf : object
-            Trained classifier to use for scoring. Must have a predict_proba
-            method; the output of that is used to compute the score.
-
-        X : array-like or sparse matrix
-            Test data that will be fed to clf.predict_proba.
-
-        y : array-like
-            Gold standard target values for X. These must be class labels,
-            not probabilities.
-
-        sample_weight : array-like, optional (default=None)
-            Sample weights.
-
-        Returns
-        -------
-        score : float
-            Score function applied to prediction of estimator on X.
-        """
-        y_pred = clf.predict_proba(X)
+    def _score(self, y_true, y_pred, sample_weight):
+        y_pred = y_pred.predicted_proba
         if sample_weight is not None:
-            return self._sign * self._score_func(y, y_pred,
+            return self._sign * self._score_func(y_true, y_pred,
                                                  sample_weight=sample_weight,
                                                  **self._kwargs)
         else:
-            return self._sign * self._score_func(y, y_pred, **self._kwargs)
+            return self._sign * self._score_func(y_true, y_pred, **self._kwargs)
 
     def _factory_args(self):
         return ", needs_proba=True"
 
 
 class _ThresholdScorer(_BaseScorer):
-    def __call__(self, clf, X, y, sample_weight=None):
-        """Evaluate decision function output for X relative to y_true.
-
-        Parameters
-        ----------
-        clf : object
-            Trained classifier to use for scoring. Must have either a
-            decision_function method or a predict_proba method; the output of
-            that is used to compute the score.
-
-        X : array-like or sparse matrix
-            Test data that will be fed to clf.decision_function or
-            clf.predict_proba.
-
-        y : array-like
-            Gold standard target values for X. These must be class labels,
-            not decision function values.
-
-        sample_weight : array-like, optional (default=None)
-            Sample weights.
-
-        Returns
-        -------
-        score : float
-            Score function applied to prediction of estimator on X.
-        """
-        y_type = type_of_target(y)
+    def _score(self, y_true, y_pred, sample_weight):
+        y_type = type_of_target(y_true)
         if y_type not in ("binary", "multilabel-indicator"):
             raise ValueError("{0} format is not supported".format(y_type))
 
         try:
-            y_pred = clf.decision_function(X)
+            y_pred = y_pred.decision_function
 
             # For multi-output multi-class estimator
             if isinstance(y_pred, list):
                 y_pred = np.vstack(p for p in y_pred).T
 
         except (NotImplementedError, AttributeError):
-            y_pred = clf.predict_proba(X)
+            y_pred = y_pred.predicted_proba
 
             if y_type == "binary":
                 y_pred = y_pred[:, 1]
@@ -172,14 +155,41 @@ class _ThresholdScorer(_BaseScorer):
                 y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
         if sample_weight is not None:
-            return self._sign * self._score_func(y, y_pred,
+            return self._sign * self._score_func(y_true, y_pred,
                                                  sample_weight=sample_weight,
                                                  **self._kwargs)
         else:
-            return self._sign * self._score_func(y, y_pred, **self._kwargs)
+            return self._sign * self._score_func(y_true, y_pred, **self._kwargs)
 
     def _factory_args(self):
         return ", needs_threshold=True"
+
+
+def get_score(scorer, y_true, y_pred=None, y_proba=None, y_decision=None):
+    """Score precomputed predictions.
+
+    Parameters
+    ----------
+    scorer: Scorer, as returned by check_scoring() or get_scorer().
+
+    y_true : array-like
+        Gold standard target values.
+
+    y_pred : array-like, optional, default: None
+        Predictions, as returend by predict().
+
+    y_proba : array-like, optional, default: None
+        Prediction probabilities, as returned by predict_proba().
+
+    y_decision : array-like, optional, default: None
+        Decision function, as returned by decision_function().
+
+    Returns
+    -------
+    score : float
+        Score calculated by scorer.
+    """
+    return scorer._score(y_true, _Prediction(y_pred, y_proba, y_decision), None)
 
 
 def get_scorer(scoring):

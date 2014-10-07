@@ -221,68 +221,6 @@ def test_importances():
         yield check_importance, name, X, y
 
 
-def check_oob_score(name, X, y, n_estimators=20):
-    """Check that oob prediction is a good estimation of the generalization
-       error."""
-    # Proper behavior
-    est = FOREST_ESTIMATORS[name](oob_score=True, random_state=0,
-                                  n_estimators=n_estimators, bootstrap=True)
-    n_samples = X.shape[0]
-    est.fit(X[:n_samples // 2, :], y[:n_samples // 2])
-    test_score = est.score(X[n_samples // 2:, :], y[n_samples // 2:])
-
-    if name in FOREST_CLASSIFIERS:
-        assert_less(abs(test_score - est.oob_score_), 0.1)
-    else:
-        assert_greater(test_score, est.oob_score_)
-        assert_greater(est.oob_score_, .8)
-
-    # Check warning if not enough estimators
-    with np.errstate(divide="ignore", invalid="ignore"):
-        est = FOREST_ESTIMATORS[name](oob_score=True, random_state=0,
-                                      n_estimators=1, bootstrap=True)
-        assert_warns(UserWarning, est.fit, X, y)
-
-
-def test_oob_score():
-    for name in FOREST_CLASSIFIERS:
-        yield check_oob_score, name, iris.data, iris.target
-
-        # non-contiguous targets in classification
-        yield check_oob_score, name, iris.data, iris.target * 2 + 1
-
-    for name in FOREST_REGRESSORS:
-        yield check_oob_score, name, boston.data, boston.target, 50
-
-
-def check_oob_score_raise_error(name):
-    ForestEstimator = FOREST_ESTIMATORS[name]
-
-    if name in FOREST_TRANSFORMERS:
-        for oob_score in [True, False]:
-            assert_raises(TypeError, ForestEstimator, oob_score=oob_score)
-
-        assert_raises(NotImplementedError, ForestEstimator()._set_oob_score,
-                      X, y)
-
-    else:
-        # Unfitted /  no bootstrap / no oob_score
-        for oob_score, bootstrap in [(True, False), (False, True),
-                                     (False, False)]:
-            est = ForestEstimator(oob_score=oob_score, bootstrap=bootstrap,
-                                  random_state=0)
-            assert_false(hasattr(est, "oob_score_"))
-
-        # No bootstrap
-        assert_raises(ValueError, ForestEstimator(oob_score=True,
-                                                  bootstrap=False).fit, X, y)
-
-
-def test_oob_score_raise_error():
-    for name in FOREST_ESTIMATORS:
-        yield check_oob_score_raise_error, name
-
-
 def check_gridsearch(name):
     forest = FOREST_CLASSIFIERS[name]()
     clf = GridSearchCV(forest, {'n_estimators': (1, 2), 'max_depth': (1, 2)})
@@ -765,45 +703,6 @@ def check_warm_start_equal_n_estimators(name):
 def test_warm_start_equal_n_estimators():
     for name in FOREST_ESTIMATORS:
         yield check_warm_start_equal_n_estimators, name
-
-
-def check_warm_start_oob(name):
-    """Test that the warm start computes oob score when asked."""
-    X, y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
-    ForestEstimator = FOREST_ESTIMATORS[name]
-    # Use 15 estimators to avoid 'some inputs do not have OOB scores' warning.
-    clf = ForestEstimator(n_estimators=15, max_depth=3, warm_start=False,
-                          random_state=1, bootstrap=True, oob_score=True)
-    clf.fit(X, y)
-
-    clf_2 = ForestEstimator(n_estimators=5, max_depth=3, warm_start=False,
-                            random_state=1, bootstrap=True, oob_score=False)
-    clf_2.fit(X, y)
-
-    clf_2.set_params(warm_start=True, oob_score=True, n_estimators=15)
-    clf_2.fit(X, y)
-
-    assert_true(hasattr(clf_2, 'oob_score_'))
-    assert_equal(clf.oob_score_, clf_2.oob_score_)
-
-    # Test that oob_score is computed even if we don't need to train
-    # additional trees.
-    clf_3 = ForestEstimator(n_estimators=15, max_depth=3, warm_start=True,
-                            random_state=1, bootstrap=True, oob_score=False)
-    clf_3.fit(X, y)
-    assert_true(not(hasattr(clf_3, 'oob_score_')))
-
-    clf_3.set_params(oob_score=True)
-    ignore_warnings(clf_3.fit)(X, y)
-
-    assert_equal(clf.oob_score_, clf_3.oob_score_)
-
-
-def test_warm_start_oob():
-    for name in FOREST_CLASSIFIERS:
-        yield check_warm_start_oob, name
-    for name in FOREST_REGRESSORS:
-        yield check_warm_start_oob, name
 
 
 if __name__ == "__main__":
