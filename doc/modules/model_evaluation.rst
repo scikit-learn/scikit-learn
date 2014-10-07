@@ -931,14 +931,9 @@ set [0,1] has an error: ::
   >>> zero_one_loss(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
   0.5
 
-<<<<<<< HEAD
 In the case of multiclass-multioutput inputs: ::
   >>> zero_one_loss(np.array([[1, 2], [3, 1]]), np.array([[2, 1], [3, 3]]))
   1.0
-=======
-  >>> zero_one_loss(np.array([[0, 1], [1, 1]]), np.ones((2, 2)),  normalize=False)
-  1
->>>>>>> da749625dc4b91c31430cbe9a7c35e99a29ae8b0
 
 .. topic:: Example:
 
