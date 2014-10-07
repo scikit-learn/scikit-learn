@@ -198,8 +198,9 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         cost : float
         """
         n_samples = X.shape[0]
+
         # Step (1/3): Forward propagate
-        self._forward_pass(activations)
+        activations = self._forward_pass(activations)
 
         # Step (2/3): Get cost
         cost = LOSS_FUNCTIONS[self.loss](y, activations[-1])
