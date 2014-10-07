@@ -12,7 +12,7 @@ PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
-.PHONY: help clean html dirhtml pickle json latex latexpdf changes linkcheck doctest
+.PHONY: help clean html dirhtml pickle json latex latexpdf changes linkcheck doctest optipng
 
 all: html-noplot
 
@@ -94,3 +94,9 @@ doctest:
 
 download-data:
 	python -c "from sklearn.datasets.lfw import check_fetch_lfw; check_fetch_lfw()"
+
+# Optimize PNG files. Needs OptiPNG. Change the -P argument to the number of
+# cores you have available, so -P 64 if you have a real computer ;)
+optipng:
+	find _build auto_examples */generated -name '*.png' -print0 \
+	  | xargs -0 -n 1 -P 4 optipng -o10

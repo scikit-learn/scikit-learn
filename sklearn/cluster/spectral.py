@@ -11,6 +11,7 @@ import numpy as np
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, as_float_array
+from ..utils.validation import check_array
 from ..utils.extmath import norm
 from ..metrics.pairwise import pairwise_kernels
 from ..neighbors import kneighbors_graph
@@ -348,11 +349,11 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     Attributes
     ----------
-    `affinity_matrix_` : array-like, shape (n_samples, n_samples)
+    affinity_matrix_ : array-like, shape (n_samples, n_samples)
         Affinity matrix used for clustering. Available only if after calling
         ``fit``.
 
-    `labels_` :
+    labels_ :
         Labels of each point
 
     Notes
@@ -414,6 +415,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
             OR, if affinity==`precomputed`, a precomputed affinity
             matrix of shape (n_samples, n_samples)
         """
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         if X.shape[0] == X.shape[1] and self.affinity != "precomputed":
             warnings.warn("The spectral clustering API has changed. ``fit``"
                           "now constructs an affinity matrix from data. To use"

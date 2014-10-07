@@ -41,14 +41,14 @@ The tutorial folder, should contain the following folders:
 
   * ``data`` - folder to put the datasets used during the tutorial
 
-  * ``skeletons`` - sample incomplete scripts for the exercices
+  * ``skeletons`` - sample incomplete scripts for the exercises
 
-  * ``solutions`` - solutions of the exercices
+  * ``solutions`` - solutions of the exercises
 
 
 You can already copy the skeletons into a new folder somewhere
 on your hard-drive named ``sklearn_tut_workspace`` where you
-will edit your own files for the exercices while keeping
+will edit your own files for the exercises while keeping
 the original skeletons intact::
 
     % cp -r skeletons work_directory/sklearn_tut_workspace
@@ -468,9 +468,8 @@ we can do::
   we trained on a small, 400-document subset of our full training set.
 
 
-
 Exercises
-=========
+~~~~~~~~~
 
 To do the exercises, copy the content of the 'skeletons' folder as
 a new folder named 'workspace'::
@@ -546,7 +545,7 @@ upon the completion of this tutorial:
   :class:`CountVectorizer`
 
 * If you don't have labels, try using
-  :ref:`Clustering <example_document_clustering.py>`
+  :ref:`Clustering <example_text_document_clustering.py>`
   on your problem.
 
 * If you have multiple labels per document, e.g categories, have a look

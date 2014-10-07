@@ -25,7 +25,6 @@ import re
 import pydoc
 from .docscrape_sphinx import get_doc_object
 from .docscrape_sphinx import SphinxDocString
-from sphinx.util.compat import Directive
 import inspect
 
 
@@ -123,9 +122,13 @@ def setup(app, get_doc_object_=get_doc_object):
 # Docstring-mangling domains
 #-----------------------------------------------------------------------------
 
-from docutils.statemachine import ViewList
-from sphinx.domains.c import CDomain
-from sphinx.domains.python import PythonDomain
+try:
+    import sphinx  # lazy to avoid test dependency
+except ImportError:
+    CDomain = PythonDomain = object
+else:
+    from sphinx.domains.c import CDomain
+    from sphinx.domains.python import PythonDomain
 
 
 class ManglingDomainBase(object):
@@ -180,6 +183,8 @@ def wrap_mangling_directive(base_directive, objtype):
 
             lines = list(self.content)
             mangle_docstrings(env.app, objtype, name, None, None, lines)
+            # local import to avoid testing dependency
+            from docutils.statemachine import ViewList
             self.content = ViewList(lines, self.content.parent)
 
             return base_directive.run(self)

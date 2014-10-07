@@ -20,7 +20,7 @@ print(__doc__)
 # Licence: BSD
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from scipy import stats
 
@@ -75,16 +75,16 @@ uncertainty_index = np.argsort(pred_entropies)[-10:]
 
 ###############################################################################
 # plot
-f = pl.figure(figsize=(7, 5))
+f = plt.figure(figsize=(7, 5))
 for index, image_index in enumerate(uncertainty_index):
     image = images[image_index]
 
     sub = f.add_subplot(2, 5, index + 1)
-    sub.imshow(image, cmap=pl.cm.gray_r)
-    pl.xticks([])
-    pl.yticks([])
+    sub.imshow(image, cmap=plt.cm.gray_r)
+    plt.xticks([])
+    plt.yticks([])
     sub.set_title('predict: %i\ntrue: %i' % (
         lp_model.transduction_[image_index], y[image_index]))
 
 f.suptitle('Learning with small amount of labeled data')
-pl.show()
+plt.show()

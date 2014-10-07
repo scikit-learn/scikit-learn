@@ -59,8 +59,8 @@ species_names = ['Bradypus Variegatus', 'Microryzomys Minutus']
 
 Xtrain = np.vstack([data['train']['dd lat'],
                     data['train']['dd long']]).T
-ytrain = np.array([d.startswith('micro') for d in data['train']['species']],
-                  dtype='int')
+ytrain = np.array([d.decode('ascii').startswith('micro')
+                  for d in data['train']['species']], dtype='int')
 Xtrain *= np.pi / 180.  # Convert lat/long to radians
 
 # Set up the data grid for the contour plot

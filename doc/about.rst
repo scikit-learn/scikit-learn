@@ -31,6 +31,13 @@ citations to the following paper:
     year={2011}
    }
 
+Artwork
+-------
+
+High quality PNG and SVG logos are available in the `doc/logos/ <https://github.com/scikit-learn/scikit-learn/tree/master/doc/logos>`_ source directory.
+
+.. image:: images/scikit-learn-logo-notext.png
+   :align: center
 
 Funding
 -------
@@ -41,6 +48,8 @@ time in the period 2010-2012. It also hosts coding sprints and other
 events.
 
 .. image:: images/inria-logo.jpg
+   :align: center
+
 
 `Google <http://code.google.com/opensource/>`_ sponsored David
 Cournapeau with a Summer of Code Scholarship in the summer of 2007,
@@ -70,9 +79,9 @@ If you are interested in donating to the project or to one of our code-sprints, 
 the *Paypal* button below or the `NumFOCUS Donations Page <http://numfocus.org/donatejoin/>`_ (if you use the latter, please indicate that you are donating for the scikit-learn project).
 
 All donations will be handled by `NumFOCUS
-<http://numfocus.org/donations`_, a non-profit-organization which is
+<http://numfocus.org/donations>`_, a non-profit-organization which is
 managed by a board of `Scipy community members
-<http://numfocus.org/board`_. NumFOCUS's mission is to foster
+<http://numfocus.org/board>`_. NumFOCUS's mission is to foster
 scientific computing software, in particular in Python. As a fiscal home
 of scikit-learn, it ensures that money is available when needed to keep
 the project funded and available while in compliance with tax regulations.

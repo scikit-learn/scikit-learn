@@ -48,17 +48,20 @@ iris.target = iris.target[perm]
 
 def test_classification_toy():
     """Check classification on a toy dataset."""
-    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
 
-    assert_raises(ValueError, clf.predict, T)
+    for loss in ('deviance', 'exponential'):
+        clf = GradientBoostingClassifier(loss=loss, n_estimators=10,
+                                         random_state=1)
 
-    clf.fit(X, y)
-    assert_array_equal(clf.predict(T), true_result)
-    assert_equal(100, len(clf.estimators_))
+        assert_raises(ValueError, clf.predict, T)
 
-    deviance_decrease = (clf.train_score_[:-1] - clf.train_score_[1:])
-    assert np.any(deviance_decrease >= 0.0), \
-        "Train deviance does not monotonically decrease."
+        clf.fit(X, y)
+        assert_array_equal(clf.predict(T), true_result)
+        assert_equal(10, len(clf.estimators_))
+
+        deviance_decrease = (clf.train_score_[:-1] - clf.train_score_[1:])
+        assert np.any(deviance_decrease >= 0.0), \
+            "Train deviance does not monotonically decrease."
 
 
 def test_parameter_checks():
@@ -86,6 +89,13 @@ def test_parameter_checks():
                   GradientBoostingClassifier(min_samples_leaf=0).fit, X, y)
     assert_raises(ValueError,
                   GradientBoostingClassifier(min_samples_leaf=-1.).fit, X, y)
+
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(min_weight_fraction_leaf=-1.).fit,
+                  X, y)
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(min_weight_fraction_leaf=0.6).fit,
+                  X, y)
 
     assert_raises(ValueError,
                   GradientBoostingClassifier(subsample=0.0).fit, X, y)
@@ -124,6 +134,8 @@ def test_loss_function():
                   GradientBoostingClassifier(loss='huber').fit, X, y)
     assert_raises(ValueError,
                   GradientBoostingRegressor(loss='deviance').fit, X, y)
+    assert_raises(ValueError,
+                  GradientBoostingRegressor(loss='exponential').fit, X, y)
 
 
 def test_classification_synthetic():
@@ -134,22 +146,24 @@ def test_classification_synthetic():
     X_train, X_test = X[:2000], X[2000:]
     y_train, y_test = y[:2000], y[2000:]
 
-    gbrt = GradientBoostingClassifier(n_estimators=100, min_samples_split=1,
-                                      max_depth=1,
-                                      learning_rate=1.0, random_state=0)
-    gbrt.fit(X_train, y_train)
-    error_rate = (1.0 - gbrt.score(X_test, y_test))
-    assert error_rate < 0.085, \
-        "GB failed with error %.4f" % error_rate
+    for loss in ('deviance', 'exponential'):
 
-    gbrt = GradientBoostingClassifier(n_estimators=200, min_samples_split=1,
-                                      max_depth=1,
-                                      learning_rate=1.0, subsample=0.5,
-                                      random_state=0)
-    gbrt.fit(X_train, y_train)
-    error_rate = (1.0 - gbrt.score(X_test, y_test))
-    assert error_rate < 0.08, \
-        "Stochastic GB failed with error %.4f" % error_rate
+        gbrt = GradientBoostingClassifier(n_estimators=100, min_samples_split=1,
+                                          max_depth=1, loss=loss,
+                                          learning_rate=1.0, random_state=0)
+        gbrt.fit(X_train, y_train)
+        error_rate = (1.0 - gbrt.score(X_test, y_test))
+        assert error_rate < 0.09, \
+            "GB(loss={}) failed with error {}".format(loss, error_rate)
+
+        gbrt = GradientBoostingClassifier(n_estimators=200, min_samples_split=1,
+                                          max_depth=1,
+                                          learning_rate=1.0, subsample=0.5,
+                                          random_state=0)
+        gbrt.fit(X_train, y_train)
+        error_rate = (1.0 - gbrt.score(X_test, y_test))
+        assert error_rate < 0.08, ("Stochastic GradientBoostingClassifier(loss={}) "
+                                   "failed with error {}".format(loss, error_rate))
 
 
 def test_boston():
@@ -157,28 +171,41 @@ def test_boston():
     and least absolute deviation. """
     for loss in ("ls", "lad", "huber"):
         for subsample in (1.0, 0.5):
-            clf = GradientBoostingRegressor(n_estimators=100, loss=loss,
-                                            max_depth=4, subsample=subsample,
-                                            min_samples_split=1,
-                                            random_state=1)
+            last_y_pred = None
+            for i, sample_weight in enumerate((None, np.ones(len(boston.target)),
+                                            2 * np.ones(len(boston.target)))):
+                clf = GradientBoostingRegressor(n_estimators=100, loss=loss,
+                                                max_depth=4, subsample=subsample,
+                                                min_samples_split=1,
+                                                random_state=1)
 
-            assert_raises(ValueError, clf.predict, boston.data)
-            clf.fit(boston.data, boston.target)
-            y_pred = clf.predict(boston.data)
-            mse = mean_squared_error(boston.target, y_pred)
-            assert mse < 6.0, "Failed with loss %s and " \
-                "mse = %.4f" % (loss, mse)
+                assert_raises(ValueError, clf.predict, boston.data)
+                clf.fit(boston.data, boston.target,
+                        sample_weight=sample_weight)
+                y_pred = clf.predict(boston.data)
+                mse = mean_squared_error(boston.target, y_pred)
+                assert mse < 6.0, "Failed with loss %s and " \
+                    "mse = %.4f" % (loss, mse)
+
+                if last_y_pred is not None:
+                    np.testing.assert_array_almost_equal(
+                        last_y_pred, y_pred,
+                        err_msg='pred_%d doesnt match last pred_%d for loss %r and subsample %r. '
+                        % (i, i - 1, loss, subsample))
+
+                last_y_pred = y_pred
 
 
 def test_iris():
     """Check consistency on dataset iris."""
     for subsample in (1.0, 0.5):
-        clf = GradientBoostingClassifier(n_estimators=100, loss='deviance',
-                                         random_state=1, subsample=subsample)
-        clf.fit(iris.data, iris.target)
-        score = clf.score(iris.data, iris.target)
-        assert score > 0.9, "Failed with subsample %.1f " \
-            "and score = %f" % (subsample, score)
+        for sample_weight in (None, np.ones(len(iris.target))):
+            clf = GradientBoostingClassifier(n_estimators=100, loss='deviance',
+                                             random_state=1, subsample=subsample)
+            clf.fit(iris.data, iris.target, sample_weight=sample_weight)
+            score = clf.score(iris.data, iris.target)
+            assert score > 0.9, "Failed with subsample %.1f " \
+                "and score = %f" % (subsample, score)
 
 
 def test_regression_synthetic():
@@ -239,7 +266,7 @@ def test_feature_importances():
     # assert_array_equal(true_ranking, feature_importances.argsort())
 
 
-def test_probability():
+def test_probability_log():
     """Predict probabilities."""
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
 
@@ -270,6 +297,10 @@ def test_check_inputs():
 
     clf = GradientBoostingClassifier().fit(X, y)
     assert_raises(TypeError, clf.predict, X_sparse)
+
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    assert_raises(ValueError, clf.fit, X, y,
+                  sample_weight=([1] * len(y)) + [0, 1])
 
 
 def test_check_inputs_predict():
@@ -330,8 +361,8 @@ def test_max_feature_auto():
     X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
     _, n_features = X.shape
 
-    X_train, X_test = X[:2000], X[2000:]
-    y_train, y_test = y[:2000], y[2000:]
+    X_train = X[:2000]
+    y_train = y[:2000]
 
     gbrt = GradientBoostingClassifier(n_estimators=1, max_features='auto')
     gbrt.fit(X_train, y_train)
@@ -361,7 +392,7 @@ def test_staged_predict():
     X, y = datasets.make_friedman1(n_samples=1200,
                                    random_state=1, noise=1.0)
     X_train, y_train = X[:200], y[:200]
-    X_test, y_test = X[200:], y[200:]
+    X_test = X[200:]
     clf = GradientBoostingRegressor()
     # test raise ValueError if not fitted
     assert_raises(ValueError, lambda X: np.fromiter(
@@ -668,7 +699,7 @@ def test_warm_start_n_estimators():
 
 
 def test_warm_start_max_depth():
-    """Test if possible to fit trees of differet depth in ensemble. """
+    """Test if possible to fit trees of different depth in ensemble. """
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
         est = Cls(n_estimators=100, max_depth=1, warm_start=True)
@@ -778,7 +809,7 @@ def test_monitor_early_stopping():
 
     for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
         est = Cls(n_estimators=20, max_depth=1, random_state=1, subsample=0.5)
-        _ = est.fit(X, y, monitor=early_stopping_monitor)
+        est.fit(X, y, monitor=early_stopping_monitor)
         assert_equal(est.n_estimators, 20)  # this is not altered
         assert_equal(est.estimators_.shape[0], 10)
         assert_equal(est.train_score_.shape[0], 10)
@@ -907,6 +938,71 @@ def test_max_leaf_nodes_max_depth():
         est = GBEstimator(max_depth=1).fit(X, y)
         tree = est.estimators_[0, 0].tree_
         assert_equal(tree.max_depth, 1)
+
+
+def test_warm_start_wo_nestimators_change():
+    """Test if warm_start does nothing if n_estimators is not changed.
+
+    Regression test for #3513.
+    """
+    clf = GradientBoostingClassifier(n_estimators=10, warm_start=True)
+    clf.fit([[0, 1], [2, 3]], [0, 1])
+    assert clf.estimators_.shape[0] == 10
+    clf.fit([[0, 1], [2, 3]], [0, 1])
+    assert clf.estimators_.shape[0] == 10
+
+
+def test_probability_exponential():
+    """Predict probabilities."""
+    clf = GradientBoostingClassifier(loss='exponential',
+                                     n_estimators=100, random_state=1)
+
+    assert_raises(ValueError, clf.predict_proba, T)
+
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
+
+    # check if probabilities are in [0, 1].
+    y_proba = clf.predict_proba(T)
+    assert np.all(y_proba >= 0.0)
+    assert np.all(y_proba <= 1.0)
+    score = clf.decision_function(T).ravel()
+    assert_array_equal(y_proba[:, 1],
+                       1.0 / (1.0 + np.exp(-2 * score)))
+
+    # derive predictions from probabilities
+    y_pred = clf.classes_.take(y_proba.argmax(axis=1), axis=0)
+    assert_array_equal(y_pred, true_result)
+
+
+def test_non_uniform_weights_toy_edge_case_reg():
+    X = [[1, 0],
+         [1, 0],
+         [1, 0],
+         [0, 1],
+        ]
+    y = [0, 0, 1, 0]
+    # ignore the first 2 training samples by setting their weight to 0
+    sample_weight = [0, 0, 1, 1]
+    for loss in ('ls', 'huber', 'lad', 'quantile'):
+        gb = GradientBoostingRegressor(n_estimators=5)
+        gb.fit(X, y, sample_weight=sample_weight)
+        assert_true(gb.predict([[1, 0]])[0] > 0.5)
+
+
+def test_non_uniform_weights_toy_edge_case_clf():
+    X = [[1, 0],
+         [1, 0],
+         [1, 0],
+         [0, 1],
+        ]
+    y = [0, 0, 1, 0]
+    # ignore the first 2 training samples by setting their weight to 0
+    sample_weight = [0, 0, 1, 1]
+    for loss in ('deviance', 'exponential'):
+        gb = GradientBoostingClassifier(n_estimators=5)
+        gb.fit(X, y, sample_weight=sample_weight)
+        assert_array_equal(gb.predict([[1, 0]]), [1])
 
 
 if __name__ == "__main__":

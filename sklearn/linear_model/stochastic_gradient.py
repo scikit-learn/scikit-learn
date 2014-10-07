@@ -8,15 +8,13 @@ import numpy as np
 import scipy.sparse as sp
 
 from abc import ABCMeta, abstractmethod
-import warnings
 
 from ..externals.joblib import Parallel, delayed
 
 from .base import LinearClassifierMixin, SparseCoefMixin
 from ..base import BaseEstimator, RegressorMixin
 from ..feature_selection.from_model import _LearntSelectorMixin
-from ..utils import (atleast2d_or_csr, check_arrays, check_random_state,
-                     column_or_1d)
+from ..utils import (check_array, check_random_state, check_X_y)
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..externals import six
@@ -318,8 +316,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                      loss, learning_rate, n_iter,
                      classes, sample_weight,
                      coef_init, intercept_init):
-        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
-        y = column_or_1d(y, warn=True)
+        X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C")
 
         n_samples, n_features = X.shape
         _check_fit_data(X, y)
@@ -330,10 +327,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         n_classes = self.classes_.shape[0]
 
         # Allocate datastructures from input arguments
-        y_ind = np.searchsorted(self.classes_, y)   # XXX use a LabelBinarizer?
         self._expanded_class_weight = compute_class_weight(self.class_weight,
-                                                           self.classes_,
-                                                           y_ind)
+                                                           self.classes_, y)
         sample_weight = self._validate_sample_weight(sample_weight, n_samples)
 
         if self.coef_ is None or coef_init is not None:
@@ -366,7 +361,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         if hasattr(self, "classes_"):
             self.classes_ = None
 
-        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
+        X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C")
         n_samples, n_features = X.shape
 
         # labels can be encoded as float, int, or string literals
@@ -448,6 +443,15 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         -------
         self : returns an instance of self.
         """
+        if self.class_weight == 'auto':
+            raise ValueError("class_weight 'auto' is not supported for "
+                             "partial_fit. In order to use 'auto' weights, "
+                             "use compute_class_weight('auto', classes, y). "
+                             "In place of y you can us a large enough sample "
+                             "of the full training set target to properly "
+                             "estimate the class frequency distributions. "
+                             "Pass the resulting weights as the class_weight "
+                             "parameter.")
         return self._partial_fit(X, y, alpha=self.alpha, C=1.0, loss=self.loss,
                                  learning_rate=self.learning_rate, n_iter=1,
                                  classes=classes, sample_weight=sample_weight,
@@ -596,11 +600,11 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
 
     Attributes
     ----------
-    `coef_` : array, shape = [1, n_features] if n_classes == 2 else [n_classes,
+    coef_ : array, shape = [1, n_features] if n_classes == 2 else [n_classes,
     n_features]
         Weights assigned to the features.
 
-    `intercept_` : array, shape = [1] if n_classes == 2 else [n_classes]
+    intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
     Examples
@@ -779,9 +783,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
     def _partial_fit(self, X, y, alpha, C, loss, learning_rate,
                      n_iter, sample_weight,
                      coef_init, intercept_init):
-        X, y = check_arrays(X, y, sparse_format="csr", copy=False,
-                            check_ccontiguous=True, dtype=np.float64)
-        y = column_or_1d(y, warn=True)
+        X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
+        y = y.astype(np.float64)
 
         n_samples, n_features = X.shape
         _check_fit_data(X, y)
@@ -888,7 +891,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         array, shape = [n_samples]
            Predicted target values per element in X.
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
         scores = safe_sparse_dot(X, self.coef_.T,
                                  dense_output=True) + self.intercept_
         return scores.ravel()
@@ -975,7 +978,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
     penalty : str, 'l2' or 'l1' or 'elasticnet'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
         which is the standard regularizer for linear SVM models. 'l1' and
-        'elasticnet' migh bring sparsity to the model (feature selection)
+        'elasticnet' might bring sparsity to the model (feature selection)
         not achievable with 'l2'.
 
     alpha : float
@@ -1031,10 +1034,10 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
 
     Attributes
     ----------
-    `coef_` : array, shape = [n_features]
+    coef_ : array, shape = [n_features]
         Weights asigned to the features.
 
-    `intercept_` : array, shape = [1]
+    intercept_ : array, shape = [1]
         The intercept term.
 
     Examples

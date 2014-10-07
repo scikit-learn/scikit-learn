@@ -113,17 +113,19 @@ def test_load_compressed():
 
     with NamedTemporaryFile(prefix="sklearn-test", suffix=".gz") as tmp:
         tmp.close()  # necessary under windows
-        shutil.copyfileobj(open(datafile, "rb"), gzip.open(tmp.name, "wb"))
+        with open(datafile, "rb") as f:
+            shutil.copyfileobj(f, gzip.open(tmp.name, "wb"))
         Xgz, ygz = load_svmlight_file(tmp.name)
-        assert_array_equal(X.toarray(), Xgz.toarray())
-        assert_array_equal(y, ygz)
+    assert_array_equal(X.toarray(), Xgz.toarray())
+    assert_array_equal(y, ygz)
 
     with NamedTemporaryFile(prefix="sklearn-test", suffix=".bz2") as tmp:
         tmp.close()  # necessary under windows
-        shutil.copyfileobj(open(datafile, "rb"), BZ2File(tmp.name, "wb"))
+        with open(datafile, "rb") as f:
+            shutil.copyfileobj(f, BZ2File(tmp.name, "wb"))
         Xbz, ybz = load_svmlight_file(tmp.name)
-        assert_array_equal(X.toarray(), Xbz.toarray())
-        assert_array_equal(y, ybz)
+    assert_array_equal(X.toarray(), Xbz.toarray())
+    assert_array_equal(y, ybz)
 
 
 @raises(ValueError)
@@ -165,13 +167,13 @@ def test_load_with_qid():
     7 qid:2 1:0.87 2:0.12""")
     X, y = load_svmlight_file(BytesIO(data), query_id=False)
     assert_array_equal(y, [3, 2, 7])
-    assert_array_equal(X.todense(), [[.53, .12], [.13, .1], [.87, .12]])
+    assert_array_equal(X.toarray(), [[.53, .12], [.13, .1], [.87, .12]])
     res1 = load_svmlight_files([BytesIO(data)], query_id=True)
     res2 = load_svmlight_file(BytesIO(data), query_id=True)
     for X, y, qid in (res1, res2):
         assert_array_equal(y, [3, 2, 7])
         assert_array_equal(qid, [1, 1, 2])
-        assert_array_equal(X.todense(), [[.53, .12], [.13, .1], [.87, .12]])
+        assert_array_equal(X.toarray(), [[.53, .12], [.13, .1], [.87, .12]])
 
 
 @raises(ValueError)

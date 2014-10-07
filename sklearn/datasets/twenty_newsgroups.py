@@ -80,10 +80,15 @@ def download_20newsgroups(target_dir, cache_path):
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
 
-    if not os.path.exists(archive_path):
-        logger.warn("Downloading dataset from %s (14 MB)", URL)
-        opener = urlopen(URL)
-        open(archive_path, 'wb').write(opener.read())
+    if os.path.exists(archive_path):
+        # Download is not complete as the .tar.gz file is removed after
+        # download.
+        logger.warn("Download was incomplete, downloading again.")
+        os.remove(archive_path)
+
+    logger.warn("Downloading dataset from %s (14 MB)", URL)
+    opener = urlopen(URL)
+    open(archive_path, 'wb').write(opener.read())
 
     logger.info("Decompressing %s", archive_path)
     tarfile.open(archive_path, "r:gz").extractall(path=target_dir)
@@ -196,7 +201,8 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     cache = None
     if os.path.exists(cache_path):
         try:
-            compressed_content = open(cache_path, 'rb').read()
+            with open(cache_path, 'rb') as f:
+                compressed_content = f.read()
             uncompressed_content = codecs.decode(
                 compressed_content, 'zlib_codec')
             cache = pickle.loads(uncompressed_content)

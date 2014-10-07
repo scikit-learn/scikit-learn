@@ -156,8 +156,8 @@ class BaseEstimator(object):
     Notes
     -----
     All estimators should specify all the parameters that can be set
-    at the class level in their __init__ as explicit keyword
-    arguments (no *args, **kwargs).
+    at the class level in their ``__init__`` as explicit keyword
+    arguments (no ``*args`` or ``**kwargs``).
     """
 
     @classmethod
@@ -267,16 +267,23 @@ class BaseEstimator(object):
 class ClassifierMixin(object):
     """Mixin class for all classifiers in scikit-learn."""
 
-    def score(self, X, y):
+    def score(self, X, y, sample_weight=None):
         """Returns the mean accuracy on the given test data and labels.
+
+        In multi-label classification, this is the subset accuracy
+        which is a harsh metric since you require for each sample that
+        each label set be correctly predicted.
 
         Parameters
         ----------
         X : array-like, shape = (n_samples, n_features)
             Test samples.
 
-        y : array-like, shape = (n_samples,)
+        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
             True labels for X.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Sample weights.
 
         Returns
         -------
@@ -285,14 +292,14 @@ class ClassifierMixin(object):
 
         """
         from .metrics import accuracy_score
-        return accuracy_score(y, self.predict(X))
+        return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
 
 ###############################################################################
 class RegressorMixin(object):
     """Mixin class for all regression estimators in scikit-learn."""
 
-    def score(self, X, y):
+    def score(self, X, y, sample_weight=None):
         """Returns the coefficient of determination R^2 of the prediction.
 
         The coefficient R^2 is defined as (1 - u/v), where u is the regression
@@ -305,8 +312,11 @@ class RegressorMixin(object):
         X : array-like, shape = (n_samples, n_features)
             Test samples.
 
-        y : array-like, shape = (n_samples,)
+        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
             True values for X.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Sample weights.
 
         Returns
         -------
@@ -315,7 +325,7 @@ class RegressorMixin(object):
         """
 
         from .metrics import r2_score
-        return r2_score(y, self.predict(X))
+        return r2_score(y, self.predict(X), sample_weight=sample_weight)
 
 
 ###############################################################################
@@ -364,8 +374,9 @@ class BiclusterMixin(object):
             Indices of columns in the dataset that belong to the bicluster.
 
         """
-        from .cluster.bicluster.utils import get_indices
-        return get_indices(self.rows_[i], self.columns_[i])
+        rows = self.rows_[i]
+        columns = self.columns_[i]
+        return np.nonzero(rows)[0], np.nonzero(columns)[0]
 
     def get_shape(self, i):
         """Shape of the i'th bicluster.
@@ -375,8 +386,8 @@ class BiclusterMixin(object):
         shape : (int, int)
             Number of rows and columns (resp.) in the bicluster.
         """
-        from .cluster.bicluster.utils import get_shape
-        return get_shape(self.rows_[i], self.columns_[i])
+        indices = self.get_indices(i)
+        return tuple(len(i) for i in indices)
 
     def get_submatrix(self, i, data):
         """Returns the submatrix corresponding to bicluster `i`.
@@ -385,8 +396,10 @@ class BiclusterMixin(object):
         ``columns_`` attributes exist.
 
         """
-        from .cluster.bicluster.utils import get_submatrix
-        return get_submatrix(self.rows_[i], self.columns_[i], data)
+        from .utils.validation import check_array
+        data = check_array(data, accept_sparse='csr')
+        row_ind, col_ind = self.get_indices(i)
+        return data[row_ind[:, np.newaxis], col_ind]
 
 
 ###############################################################################

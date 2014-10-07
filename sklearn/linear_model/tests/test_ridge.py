@@ -16,6 +16,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn import datasets
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics.scorer import SCORERS
+from sklearn.metrics import make_scorer
 
 from sklearn.linear_model.base import LinearRegression
 from sklearn.linear_model.ridge import ridge_regression
@@ -99,9 +100,9 @@ def test_ridge_singular():
     # test on a singular matrix
     rng = np.random.RandomState(0)
     n_samples, n_features = 6, 6
-    y = rng.randn(n_samples / 2)
+    y = rng.randn(n_samples // 2)
     y = np.concatenate((y, y))
-    X = rng.randn(n_samples / 2, n_features)
+    X = rng.randn(n_samples // 2, n_features)
     X = np.concatenate((X, X), axis=0)
 
     ridge = Ridge(alpha=0)
@@ -322,13 +323,15 @@ def _test_ridge_loo(filter_):
 
     # check that we get same best alpha with custom loss_func
     f = ignore_warnings
-    ridge_gcv2 = RidgeCV(fit_intercept=False, loss_func=mean_squared_error)
+    scoring = make_scorer(mean_squared_error, greater_is_better=False)
+    ridge_gcv2 = RidgeCV(fit_intercept=False, scoring=scoring)
     f(ridge_gcv2.fit)(filter_(X_diabetes), y_diabetes)
     assert_equal(ridge_gcv2.alpha_, alpha_)
 
     # check that we get same best alpha with custom score_func
     func = lambda x, y: -mean_squared_error(x, y)
-    ridge_gcv3 = RidgeCV(fit_intercept=False, score_func=func)
+    scoring = make_scorer(func)
+    ridge_gcv3 = RidgeCV(fit_intercept=False, scoring=scoring)
     f(ridge_gcv3.fit)(filter_(X_diabetes), y_diabetes)
     assert_equal(ridge_gcv3.alpha_, alpha_)
 
@@ -446,6 +449,13 @@ def test_ridge_cv_sparse_svd():
     X = sp.csr_matrix(X_diabetes)
     ridge = RidgeCV(gcv_mode="svd")
     assert_raises(TypeError, ridge.fit, X)
+
+
+def test_ridge_sparse_svd():
+    X = sp.csc_matrix(rng.rand(100, 10))
+    y = rng.rand(100)
+    ridge = Ridge(solver='svd')
+    assert_raises(TypeError, ridge.fit, X, y)
 
 
 def test_class_weights():
@@ -643,94 +653,6 @@ def test_deprecation_warning_dense_cholesky():
     warning_class = DeprecationWarning
     warning_message = ("The name 'dense_cholesky' is deprecated."
                        " Using 'cholesky' instead")
-    func1 = lambda: Ridge(solver='dense_cholesky')
-    func2 = lambda: RidgeClassifier(solver='dense_cholesky')
-    X = np.ones([3, 2])
-    y = np.zeros(3)
-    func3 = lambda: ridge_regression(X, y, alpha=1, solver='dense_cholesky')
-
-    for func in [func1, func2, func3]:
-        assert_warns_message(warning_class, warning_message, func)
-
-
-def test_raises_value_error_if_sample_weights_greater_than_1d():
-    """Sample weights must be either scalar or 1D"""
-
-    n_sampless = [2, 3]
-    n_featuress = [3, 2]
-
-    rng = np.random.RandomState(42)
-
-
-    for n_samples, n_features in zip(n_sampless, n_featuress):
-        X = rng.randn(n_samples, n_features)
-        y = rng.randn(n_samples)
-        sample_weights_OK = rng.randn(n_samples) ** 2 + 1
-        sample_weights_OK_1 = 1.
-        sample_weights_OK_2 = 2.
-        sample_weights_not_OK = sample_weights_OK[:, np.newaxis]
-        sample_weights_not_OK_2 = sample_weights_OK[np.newaxis, :]
-
-        ridge = Ridge(alpha=1)
-
-        # make sure the "OK" sample weights actually work
-        ridge.fit(X, y, sample_weights_OK)
-        ridge.fit(X, y, sample_weights_OK_1)
-        ridge.fit(X, y, sample_weights_OK_2)
-
-        def fit_ridge_not_ok():
-            ridge.fit(X, y, sample_weights_not_OK)
-
-        def fit_ridge_not_ok_2():
-            ridge.fit(X, y, sample_weights_not_OK_2)
-
-        assert_raise_message(ValueError,
-                              "Sample weights must be 1D array or scalar",
-                              fit_ridge_not_ok)
-
-        assert_raise_message(ValueError,
-                              "Sample weights must be 1D array or scalar",
-                              fit_ridge_not_ok_2)
-
-
-def test_sparse_design_with_sample_weights():
-    """Sample weights must work with sparse matrices"""
-
-    n_sampless = [2, 3]
-    n_featuress = [3, 2]
-
-    rng = np.random.RandomState(42)
-
-    sparse_matrix_converters = [sp.coo_matrix,
-                                sp.csr_matrix,
-                                sp.csc_matrix,
-                                sp.lil_matrix,
-                                sp.dok_matrix
-                                ]
-
-    sparse_ridge = Ridge(alpha=1., fit_intercept=False)
-    dense_ridge = Ridge(alpha=1., fit_intercept=False)
-
-    for n_samples, n_features in zip(n_sampless, n_featuress):
-        X = rng.randn(n_samples, n_features)
-        y = rng.randn(n_samples)
-        sample_weights = rng.randn(n_samples) ** 2 + 1
-        for sparse_converter in sparse_matrix_converters:
-            X_sparse = sparse_converter(X)
-            sparse_ridge.fit(X_sparse, y, sample_weight=sample_weights)
-            dense_ridge.fit(X, y, sample_weight=sample_weights)
-
-            assert_array_almost_equal(sparse_ridge.coef_, dense_ridge.coef_,
-                                      decimal=6)
-
-
-def test_deprecation_warning_dense_cholesky():
-    """Tests if DeprecationWarning is raised at instantiation of estimators
-    and when ridge_regression is called"""
-
-    warning_class = DeprecationWarning
-    warning_message = ("The name 'dense_cholesky' is deprecated."
-                       " Using 'cholesky' instead")
 
     X = np.ones([2, 3])
     y = np.ones(2)
@@ -743,3 +665,19 @@ def test_deprecation_warning_dense_cholesky():
     for func in [func1, func2, func3]:
         assert_warns_message(warning_class, warning_message, func)
 
+
+def test_raises_value_error_if_solver_not_supported():
+    """Tests whether a ValueError is raised if a non-identified solver
+    is passed to ridge_regression"""
+
+    wrong_solver = "This is not a solver (MagritteSolveCV QuantumBitcoin)"
+
+    exception = ValueError
+    message = "Solver %s not understood" % wrong_solver
+
+    def func():
+        X = np.eye(3)
+        y = np.ones(3)
+        ridge_regression(X, y, alpha=1., solver=wrong_solver)
+
+    assert_raise_message(exception, message, func)

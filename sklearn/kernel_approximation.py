@@ -15,8 +15,7 @@ from scipy.linalg import svd
 
 from .base import BaseEstimator
 from .base import TransformerMixin
-from .utils import (array2d, atleast2d_or_csr, check_random_state,
-                    as_float_array)
+from .utils import check_array, check_random_state, as_float_array
 from .utils.extmath import safe_sparse_dot
 from .metrics.pairwise import pairwise_kernels
 
@@ -66,11 +65,11 @@ class RBFSampler(BaseEstimator, TransformerMixin):
             Returns the transformer.
         """
 
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
 
-        self.random_weights_ = (np.sqrt(self.gamma) * random_state.normal(
+        self.random_weights_ = (np.sqrt(2 * self.gamma) * random_state.normal(
             size=(n_features, self.n_components)))
 
         self.random_offset_ = random_state.uniform(0, 2 * np.pi,
@@ -90,7 +89,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
         projection = safe_sparse_dot(X, self.random_weights_)
         projection += self.random_offset_
         np.cos(projection, projection)
@@ -125,7 +124,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
     AdditiveChi2Sampler : A different approach for approximating an additive
         variant of the chi squared kernel.
 
-    sklearn.metrics.chi2_kernel : The exact chi squared kernel.
+    sklearn.metrics.pairwise.chi2_kernel : The exact chi squared kernel.
     """
 
     def __init__(self, skewedness=1., n_components=100, random_state=None):
@@ -150,7 +149,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
             Returns the transformer.
         """
 
-        X = array2d(X)
+        X = check_array(X)
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
         uniform = random_state.uniform(size=(n_features, self.n_components))
@@ -175,7 +174,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
         """
         X = as_float_array(X, copy=True)
-        X = array2d(X, copy=False)
+        X = check_array(X, copy=False)
         if (X < 0).any():
             raise ValueError("X may not contain entries smaller than zero.")
 
@@ -220,10 +219,10 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
     SkewedChi2Sampler : A Fourier-approximation to a non-additive variant of
         the chi squared kernel.
 
-    sklearn.metrics.chi2_kernel : The exact chi squared kernel.
+    sklearn.metrics.pairwise.chi2_kernel : The exact chi squared kernel.
 
-    sklearn.metrics.additive_chi2_kernel : The exact additive chi squared
-        kernel.
+    sklearn.metrics.pairwise.additive_chi2_kernel : The exact additive chi
+        squared kernel.
 
     References
     ----------
@@ -239,7 +238,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
         """Set parameters."""
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
         if self.sample_interval is None:
             # See reference, figure 2 c)
             if self.sample_steps == 1:
@@ -270,7 +269,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
             the type of the input X.
         """
 
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
         sparse = sp.issparse(X)
 
         # check if X has negative values. Doesn't play well with np.log.
@@ -379,13 +378,13 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `components_` : array, shape (n_components, n_features)
+    components_ : array, shape (n_components, n_features)
         Subset of training points used to construct the feature map.
 
-    `component_indices_` : array, shape (n_components)
+    component_indices_ : array, shape (n_components)
         Indices of ``components_`` in the training set.
 
-    `normalization_` : array, shape (n_components, n_components)
+    normalization_ : array, shape (n_components, n_components)
         Normalization matrix needed for embedding.
         Square root of the kernel matrix on ``components_``.
 
@@ -407,7 +406,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
     RBFSampler : An approximation to the RBF kernel using random Fourier
                  features.
 
-    sklearn.metric.pairwise.kernel_metrics : List of built-in kernels.
+    sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
     """
     def __init__(self, kernel="rbf", gamma=None, coef0=1, degree=3,
                  kernel_params=None, n_components=100, random_state=None):

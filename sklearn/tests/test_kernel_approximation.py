@@ -4,6 +4,7 @@ from scipy.sparse import csr_matrix
 from sklearn.utils.testing import assert_array_equal, assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal, assert_raises
+from sklearn.utils.testing import assert_less_equal
 
 from sklearn.metrics.pairwise import kernel_metrics
 from sklearn.kernel_approximation import RBFSampler
@@ -121,7 +122,11 @@ def test_rbf_sampler():
     Y_trans = rbf_transform.transform(Y)
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
-    assert_array_almost_equal(kernel, kernel_approx, 1)
+    error = kernel - kernel_approx
+    assert_less_equal(np.abs(np.mean(error)), 0.01)  # close to unbiased
+    np.abs(error, out=error)
+    assert_less_equal(np.max(error), 0.1)  # nothing too far off
+    assert_less_equal(np.mean(error), 0.05)  # mean is fairly close
 
 
 def test_input_validation():

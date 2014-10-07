@@ -12,7 +12,7 @@ from scipy import linalg
 
 from .base import BaseEstimator, ClassifierMixin, TransformerMixin
 from .utils.extmath import logsumexp
-from .utils import check_arrays, array2d, column_or_1d
+from .utils import check_array, check_X_y
 
 __all__ = ['LDA']
 
@@ -42,26 +42,26 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     Attributes
     ----------
-    `coef_` : array-like, shape = [rank, n_classes - 1]
+    coef_ : array-like, shape = [rank, n_classes - 1]
         Coefficients of the features in the linear decision
         function. rank is min(rank_features, n_classes) where
         rank_features is the dimensionality of the spaces spanned
         by the features (i.e. n_features excluding redundant features).
 
-    `covariance_` : array-like, shape = [n_features, n_features]
+    covariance_ : array-like, shape = [n_features, n_features]
         Covariance matrix (shared by all classes).
 
-    `means_` : array-like, shape = [n_classes, n_features]
+    means_ : array-like, shape = [n_classes, n_features]
         Class means.
 
-    `priors_` : array-like, shape = [n_classes]
+    priors_ : array-like, shape = [n_classes]
         Class priors (sum to 1).
 
-    `scalings_` : array-like, shape = [rank, n_classes - 1]
+    scalings_ : array-like, shape = [rank, n_classes - 1]
         Scaling of the features in the space spanned by the class
         centroids.
 
-    `xbar_` : float, shape = [n_features]
+    xbar_ : float, shape = [n_features]
         Overall mean.
 
     Examples
@@ -110,8 +110,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             If True the covariance matrix (shared by all classes) is computed
             and stored in `self.covariance_` attribute.
         """
-        X, y = check_arrays(X, y, sparse_format='dense')
-        y = column_or_1d(y, warn=True)
+        X, y = check_X_y(X, y)
         self.classes_, y = np.unique(y, return_inverse=True)
         n_samples, n_features = X.shape
         n_classes = len(self.classes_)
@@ -185,7 +184,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         return self
 
     def _decision_function(self, X):
-        X = array2d(X)
+        X = check_array(X)
         # center and scale data
         X = np.dot(X - self.xbar_, self.scalings_)
         return np.dot(X, self.coef_.T) + self.intercept_
@@ -224,11 +223,12 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         -------
         X_new : array, shape = [n_samples, n_components]
         """
-        X = array2d(X)
+        X = check_array(X)
         # center and scale data
-        X = np.dot(X - self.xbar_, self.scalings_)
-        n_comp = X.shape[1] if self.n_components is None else self.n_components
-        return np.dot(X, self.coef_[:n_comp].T)
+        X_new = np.dot(X - self.xbar_, self.scalings_)
+        n_components = X.shape[1] if self.n_components is None \
+            else self.n_components
+        return X_new[:, :n_components]
 
     def predict(self, X):
         """

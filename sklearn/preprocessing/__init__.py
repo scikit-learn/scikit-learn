@@ -19,9 +19,9 @@ from .data import PolynomialFeatures
 from .label import label_binarize
 from .label import LabelBinarizer
 from .label import LabelEncoder
+from .label import MultiLabelBinarizer
 
 from .imputation import Imputer
-from ._weights import balance_weights
 
 __all__ = [
     'Binarizer',
@@ -29,13 +29,13 @@ __all__ = [
     'KernelCenterer',
     'LabelBinarizer',
     'LabelEncoder',
+    'MultiLabelBinarizer',
     'MinMaxScaler',
     'Normalizer',
     'OneHotEncoder',
     'StandardScaler',
     'add_dummy_feature',
     'PolynomialFeatures',
-    'balance_weights',
     'binarize',
     'normalize',
     'scale',

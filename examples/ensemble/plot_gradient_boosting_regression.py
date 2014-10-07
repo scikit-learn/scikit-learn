@@ -54,9 +54,9 @@ plt.figure(figsize=(12, 6))
 plt.subplot(1, 2, 1)
 plt.title('Deviance')
 plt.plot(np.arange(params['n_estimators']) + 1, clf.train_score_, 'b-',
-        label='Training Set Deviance')
+         label='Training Set Deviance')
 plt.plot(np.arange(params['n_estimators']) + 1, test_score, 'r-',
-        label='Test Set Deviance')
+         label='Test Set Deviance')
 plt.legend(loc='upper right')
 plt.xlabel('Boosting Iterations')
 plt.ylabel('Deviance')

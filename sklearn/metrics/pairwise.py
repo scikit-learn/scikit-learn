@@ -43,10 +43,9 @@ from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
 
-from ..utils import array2d, atleast2d_or_csr
+from ..utils import check_array
 from ..utils import gen_even_slices
 from ..utils import gen_batches
-from ..utils import safe_asarray
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
 from ..externals.joblib import Parallel
@@ -87,10 +86,10 @@ def check_pairwise_arrays(X, Y):
 
     """
     if Y is X or Y is None:
-        X = Y = atleast2d_or_csr(X)
+        X = Y = check_array(X, accept_sparse='csr')
     else:
-        X = atleast2d_or_csr(X)
-        Y = atleast2d_or_csr(Y)
+        X = check_array(X, accept_sparse='csr')
+        Y = check_array(Y, accept_sparse='csr')
     if X.shape[1] != Y.shape[1]:
         raise ValueError("Incompatible dimension for X and Y matrices: "
                          "X.shape[1] == %d while Y.shape[1] == %d" % (
@@ -98,10 +97,10 @@ def check_pairwise_arrays(X, Y):
 
     if not (X.dtype == Y.dtype == np.float32):
         if Y is X:
-            X = Y = safe_asarray(X, dtype=np.float)
+            X = Y = check_array(X, ['csr', 'csc', 'coo'], dtype=np.float)
         else:
-            X = safe_asarray(X, dtype=np.float)
-            Y = safe_asarray(Y, dtype=np.float)
+            X = check_array(X, ['csr', 'csc', 'coo'], dtype=np.float)
+            Y = check_array(Y, ['csr', 'csc', 'coo'], dtype=np.float)
     return X, Y
 
 
@@ -199,7 +198,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     X, Y = check_pairwise_arrays(X, Y)
 
     if Y_norm_squared is not None:
-        YY = array2d(Y_norm_squared)
+        YY = check_array(Y_norm_squared)
         if YY.shape != (1, Y.shape[0]):
             raise ValueError(
                 "Incompatible dimensions for Y and Y_norm_squared")
@@ -215,14 +214,14 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     distances *= -2
     distances += XX
     distances += YY
-    np.maximum(distances, 0, distances)
+    np.maximum(distances, 0, out=distances)
 
     if X is Y:
         # Ensure that distances between vectors and themselves are set to 0.0.
         # This may not be the case due to floating point rounding errors.
         distances.flat[::distances.shape[0] + 1] = 0.0
 
-    return distances if squared else np.sqrt(distances)
+    return distances if squared else np.sqrt(distances, out=distances)
 
 
 def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
@@ -268,12 +267,13 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
         Valid values for metric are:
 
         - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-        'manhattan']
+          'manhattan']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
-        'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-        'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
-        'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
+          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
+          'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
+          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
+
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
@@ -393,12 +393,13 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
         Valid values for metric are:
 
         - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-        'manhattan']
+          'manhattan']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
-        'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-        'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
-        'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
+          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
+          'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
+          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
+
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
@@ -440,9 +441,7 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
         Not supported for sparse matrix inputs.
 
     size_threshold : int, default=5e8
-        Avoid creating temporary matrices bigger than size_threshold (in
-        bytes). If the problem size gets too big, the implementation then
-        breaks it down in smaller problems.
+        Unused parameter.
 
     Returns
     -------
@@ -488,31 +487,12 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
                           X.shape[1], D)
         return D
 
-    temporary_size = X.size * Y.shape[-1]
-    # Convert to bytes
-    temporary_size *= X.itemsize
-    if temporary_size > size_threshold and sum_over_features:
-        # Broadcasting the full thing would be too big: it's on the order
-        # of magnitude of the gigabyte
-        D = np.empty((X.shape[0], Y.shape[0]), dtype=X.dtype)
-        index = 0
-        increment = 1 + int(size_threshold / float(temporary_size) *
-                            X.shape[0])
-        while index < X.shape[0]:
-            this_slice = slice(index, index + increment)
-            tmp = X[this_slice, np.newaxis, :] - Y[np.newaxis, :, :]
-            tmp = np.abs(tmp, tmp)
-            tmp = np.sum(tmp, axis=2)
-            D[this_slice] = tmp
-            index += increment
-    else:
-        D = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
-        D = np.abs(D, D)
-        if sum_over_features:
-            D = np.sum(D, axis=2)
-        else:
-            D = D.reshape((-1, X.shape[1]))
-    return D
+    if sum_over_features:
+        return distance.cdist(X, Y, 'cityblock')
+
+    D = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
+    D = np.abs(D, D)
+    return D.reshape((-1, X.shape[1]))
 
 
 def cosine_distances(X, Y=None):
@@ -994,20 +974,17 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
     If Y is given (default is None), then the returned matrix is the pairwise
     distance between the arrays from both X and Y.
 
-    Please note that support for sparse matrices is currently limited to
-    'euclidean', 'l2' and 'cosine'.
-
     Valid values for metric are:
 
-    - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-      'manhattan']
+    - From scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
+      'manhattan']. These metrics support sparse matrix inputs.
 
-    - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
+    - From scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
       'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',
       'matching', 'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
       'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
       See the documentation for scipy.spatial.distance for details on these
-      metrics.
+      metrics. These metrics do not support sparse matrix inputs.
 
     Note that in the case of 'cityblock', 'cosine' and 'euclidean' (which are
     valid scipy.spatial.distance metrics), the scikit-learn implementation

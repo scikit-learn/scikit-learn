@@ -6,8 +6,11 @@ Extended math utilities.
 #          Alexandre T. Passos
 #          Olivier Grisel
 #          Lars Buitinck
+#          Stefan van der Walt
+#          Kyle Kastner
 # License: BSD 3 clause
 
+from __future__ import division
 from functools import partial
 import warnings
 
@@ -20,7 +23,7 @@ from .fixes import np_version
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
-from .validation import array2d, NonBLASDotWarning
+from .validation import check_array, NonBLASDotWarning
 
 
 def norm(x):
@@ -54,8 +57,8 @@ def squared_norm(x):
 def row_norms(X, squared=False):
     """Row-wise (squared) Euclidean norm of X.
 
-    Equivalent to (X * X).sum(axis=1), but also supports CSR sparse matrices
-    and does not create an X.shape-sized temporary.
+    Equivalent to np.sqrt((X * X).sum(axis=1)), but also supports CSR sparse
+    matrices and does not create an X.shape-sized temporary.
 
     Performs no input validation.
     """
@@ -86,9 +89,9 @@ def _impose_f_order(X):
     # important to access flags instead of calling np.isfortran,
     # this catches corner cases.
     if X.flags.c_contiguous:
-        return array2d(X.T, copy=False, order='F'), True
+        return check_array(X.T, copy=False, order='F'), True
     else:
-        return array2d(X, copy=False, order='F'), False
+        return check_array(X, copy=False, order='F'), False
 
 
 def _fast_dot(A, B):
@@ -228,8 +231,7 @@ def randomized_range_finder(A, size, n_iter, random_state=None):
 
 
 def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
-                   transpose='auto', flip_sign=True, random_state=0,
-                   n_iterations=None):
+                   transpose='auto', flip_sign=True, random_state=0):
     """Computes a truncated randomized SVD
 
     Parameters
@@ -281,11 +283,6 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
     * A randomized algorithm for the decomposition of matrices
       Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
     """
-    if n_iterations is not None:
-        warnings.warn("n_iterations was renamed to n_iter for consistency "
-                      "and will be removed in 0.16.", DeprecationWarning)
-        n_iter = n_iterations
-
     random_state = check_random_state(random_state)
     n_random = n_components + n_oversamples
     n_samples, n_features = M.shape
@@ -507,48 +504,58 @@ def cartesian(arrays, out=None):
            [3, 5, 6],
            [3, 5, 7]])
 
-    References
-    ----------
-    http://stackoverflow.com/q/1208118
-
     """
-    arrays = [np.asarray(x).ravel() for x in arrays]
+    arrays = [np.asarray(x) for x in arrays]
+    shape = (len(x) for x in arrays)
     dtype = arrays[0].dtype
 
-    n = np.prod([x.size for x in arrays])
-    if out is None:
-        out = np.empty([n, len(arrays)], dtype=dtype)
+    ix = np.indices(shape)
+    ix = ix.reshape(len(arrays), -1).T
 
-    m = n / arrays[0].size
-    out[:, 0] = np.repeat(arrays[0], m)
-    if arrays[1:]:
-        cartesian(arrays[1:], out=out[0:m, 1:])
-        for j in xrange(1, arrays[0].size):
-            out[j * m:(j + 1) * m, 1:] = out[0:m, 1:]
+    if out is None:
+        out = np.empty_like(ix, dtype=dtype)
+
+    for n, arr in enumerate(arrays):
+        out[:, n] = arrays[n][ix[:, n]]
+
     return out
 
 
-def svd_flip(u, v):
-    """Sign correction to ensure deterministic output from SVD
+def svd_flip(u, v, u_based_decision=True):
+    """Sign correction to ensure deterministic output from SVD.
 
     Adjusts the columns of u and the rows of v such that the loadings in the
     columns in u that are largest in absolute value are always positive.
 
     Parameters
     ----------
-    u, v: arrays
+    u, v : arrays
         The output of `linalg.svd` or `sklearn.utils.extmath.randomized_svd`,
         with matching inner dimensions so one can compute `np.dot(u * s, v)`.
 
+    u_based_decision : boolean, (default=True)
+        If True, use the columns of u as the basis for sign flipping. Otherwise,
+        use the rows of v. The choice of which variable to base the decision on
+        is generally algorithm dependent.
+
+
     Returns
     -------
-    u_adjusted, s, v_adjusted: arrays with the same dimensions as the input.
+    u_adjusted, v_adjusted : arrays with the same dimensions as the input.
 
     """
-    max_abs_cols = np.argmax(np.abs(u), axis=0)
-    signs = np.sign(u[max_abs_cols, xrange(u.shape[1])])
-    u *= signs
-    v *= signs[:, np.newaxis]
+    if u_based_decision:
+        # columns of u, rows of v
+        max_abs_cols = np.argmax(np.abs(u), axis=0)
+        signs = np.sign(u[max_abs_cols, xrange(u.shape[1])])
+        u *= signs
+        v *= signs[:, np.newaxis]
+    else:
+        # rows of v, columns of u
+        max_abs_rows = np.argmax(np.abs(v), axis=1)
+        signs = np.sign(v[xrange(v.shape[0]), max_abs_rows])
+        u *= signs
+        v *= signs[:, np.newaxis]
     return u, v
 
 
@@ -558,7 +565,6 @@ def logistic_sigmoid(X, log=False, out=None):
     from .fixes import expit
     fn = log_logistic if log else expit
     return fn(X, out)
-
 
 
 def log_logistic(X, out=None):
@@ -591,7 +597,7 @@ def log_logistic(X, out=None):
     http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression/
     """
     is_1d = X.ndim == 1
-    X = array2d(X, dtype=np.float)
+    X = check_array(X, dtype=np.float)
 
     n_samples, n_features = X.shape
 
@@ -631,3 +637,48 @@ def make_nonnegative(X, min_value=0):
                              " make it no longer sparse.")
         X = X + (min_value - min_)
     return X
+
+
+def _batch_mean_variance_update(X, old_mean, old_variance, old_sample_count):
+    """Calculate an average mean update and a Youngs and Cramer variance update.
+
+    From the paper "Algorithms for computing the sample variance: analysis and
+    recommendations", by Chan, Golub, and LeVeque.
+
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, n_features)
+        Data to use for variance update
+
+    old_mean : array-like, shape: (n_features,)
+
+    old_variance : array-like, shape: (n_features,)
+
+    old_sample_count : int
+
+    Returns
+    -------
+    updated_mean : array, shape (n_features,)
+
+    updated_variance : array, shape (n_features,)
+
+    updated_sample_count : int
+
+    References
+    ----------
+    T. Chan, G. Golub, R. LeVeque. Algorithms for computing the sample variance:
+        recommendations, The American Statistician, Vol. 37, No. 3, pp. 242-247
+
+    """
+    new_sum = X.sum(axis=0)
+    new_variance = X.var(axis=0) * X.shape[0]
+    old_sum = old_mean * old_sample_count
+    n_samples = X.shape[0]
+    updated_sample_count = old_sample_count + n_samples
+    partial_variance = old_sample_count / (n_samples * updated_sample_count) * (
+        n_samples / old_sample_count * old_sum - new_sum) ** 2
+    unnormalized_variance = old_variance * old_sample_count + new_variance + \
+        partial_variance
+    return ((old_sum + new_sum) / updated_sample_count,
+            unnormalized_variance / updated_sample_count,
+            updated_sample_count)
