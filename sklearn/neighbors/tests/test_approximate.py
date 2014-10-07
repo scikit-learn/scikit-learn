@@ -289,7 +289,8 @@ def test_hash_functions():
     rng = np.random.RandomState(42)
     X = rng.rand(n_samples, n_features)
 
-    lshf = LSHForest(n_estimators=n_estimators)
+    lshf = LSHForest(n_estimators=n_estimators,
+                     random_state=rng.randint(0, np.iinfo(np.int32).max))
     lshf.fit(X)
 
     for i in range(n_estimators):

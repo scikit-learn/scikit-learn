@@ -175,12 +175,10 @@ class LSHForest(BaseEstimator):
 
         return original_indices, binary_hashes[original_indices], hash_function
 
-        return original_indices, binary_hashes[original_indices], hash_function
-
     def _compute_distances(self, query, candidates):
         """Computes the Euclidean distance.
 
-        Distance is from the queryto points in the candidates array.
+        Distance is from the query to points in the candidates array.
         Returns argsort of distances in the candidates
         array and sorted distances.
         """
