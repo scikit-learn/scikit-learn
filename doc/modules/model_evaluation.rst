@@ -271,8 +271,6 @@ In the multilabel case with binary label indicators: ::
   0.5
 
 In the case of multiclass-multioutput: ::
-  >>> accuracy_score(np.array([[1, 2], [3, 1]]), np.array([[4, 3], [3, 2]]))
-  0.0
   >>> accuracy_score(np.array([[1, 2], [3, 1]]), np.array([[1, 2], [3, 2]]))
   0.5
 
@@ -905,7 +903,7 @@ In the multilabel case with binary label indicators: ::
   >>> zero_one_loss(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
   0.5
 
-In the case of multiclass-multioutput indicators: ::
+In the case of multiclass-multioutput inputs: ::
   >>> zero_one_loss(np.array([[1, 2], [3, 1]]), np.array([[2, 1], [3, 3]]))
   1.0
 
