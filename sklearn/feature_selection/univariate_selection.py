@@ -6,6 +6,8 @@
 
 
 import numpy as np
+import warnings
+
 from scipy import special, stats
 from scipy.sparse import issparse
 
@@ -102,6 +104,10 @@ def f_oneway(*args):
     dfwn = n_samples - n_classes
     msb = ssbn / float(dfbn)
     msw = sswn / float(dfwn)
+    if (np.nonzero(msw)[0].size != msw.size and
+          np.nonzero(msb)[0].size != msb.size):
+        warnings.warn("The given data has features that are constant "
+                      "throughout.", UserWarning)
     f = msb / msw
     # flatten matrix to vector in sparse case
     f = np.asarray(f).ravel()
