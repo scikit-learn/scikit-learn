@@ -15,12 +15,17 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_no_warnings
+from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
 from scipy.stats import distributions
@@ -31,7 +36,8 @@ from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
 from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
-                                 ParameterGrid, ParameterSampler)
+                                 ParameterGrid, ParameterSampler,
+                                 ChangedBehaviorWarning)
 from sklearn.svm import LinearSVC, SVC
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree import DecisionTreeClassifier
@@ -39,7 +45,7 @@ from sklearn.cluster import KMeans, SpectralClustering
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
-from sklearn.cross_validation import KFold, StratifiedKFold
+from sklearn.cross_validation import KFold, StratifiedKFold, FitFailedWarning
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
 
@@ -143,13 +149,14 @@ def test_grid_search():
     assert_raises(ValueError, grid_search.fit, X, y)
 
 
+@ignore_warnings
 def test_grid_search_no_score():
     # Test grid-search on classifier that has no score function.
     clf = LinearSVC(random_state=0)
     X, y = make_blobs(random_state=0, centers=2)
     Cs = [.1, 1, 10]
     clf_no_score = LinearSVCNoScore(random_state=0)
-    grid_search = GridSearchCV(clf, {'C': Cs})
+    grid_search = GridSearchCV(clf, {'C': Cs}, scoring='accuracy')
     grid_search.fit(X, y)
 
     grid_search_no_score = GridSearchCV(clf_no_score, {'C': Cs},
@@ -166,6 +173,36 @@ def test_grid_search_no_score():
     grid_search_no_score = GridSearchCV(clf_no_score, {'C': Cs})
     assert_raise_message(TypeError, "no scoring", grid_search_no_score.fit,
                          [[1]])
+
+
+def test_grid_search_score_method():
+    X, y = make_classification(n_samples=100, n_classes=2, flip_y=.2,
+                               random_state=0)
+    clf = LinearSVC(random_state=0)
+    grid = {'C': [.1]}
+
+    search_no_scoring = GridSearchCV(clf, grid, scoring=None).fit(X, y)
+    search_accuracy = GridSearchCV(clf, grid, scoring='accuracy').fit(X, y)
+    search_no_score_method_auc = GridSearchCV(LinearSVCNoScore(), grid,
+                                              scoring='roc_auc').fit(X, y)
+    search_auc = GridSearchCV(clf, grid, scoring='roc_auc').fit(X, y)
+
+    # Check warning only occurs in situation where behavior changed:
+    # estimator requires score method to compete with scoring parameter
+    score_no_scoring = assert_no_warnings(search_no_scoring.score, X, y)
+    score_accuracy = assert_warns(ChangedBehaviorWarning,
+                                  search_accuracy.score, X, y)
+    score_no_score_auc = assert_no_warnings(search_no_score_method_auc.score,
+                                            X, y)
+    score_auc = assert_warns(ChangedBehaviorWarning,
+                             search_auc.score, X, y)
+    # ensure the test is sane
+    assert_true(score_auc < 1.0)
+    assert_true(score_accuracy < 1.0)
+    assert_not_equal(score_auc, score_accuracy)
+
+    assert_almost_equal(score_accuracy, score_no_scoring)
+    assert_almost_equal(score_auc, score_no_score_auc)
 
 
 def test_trivial_grid_scores():
@@ -638,3 +675,63 @@ def test_grid_search_allows_nans():
         ('classifier', MockClassifier()),
     ])
     GridSearchCV(p, {'classifier__foo_param': [1, 2, 3]}, cv=2).fit(X, y)
+
+
+
+class FailingClassifier(BaseEstimator):
+    """Classifier that raises a ValueError on fit()"""
+
+    FAILING_PARAMETER = 2
+
+    def __init__(self, parameter=None):
+        self.parameter = parameter
+
+    def fit(self, X, y=None):
+        if self.parameter == FailingClassifier.FAILING_PARAMETER:
+            raise ValueError("Failing classifier failed as required")
+
+    def predict(self, X):
+        return np.zeros(X.shape[0])
+
+
+def test_grid_search_failing_classifier():
+    """GridSearchCV with on_error != 'raise'
+
+    Ensures that a warning is raised and score reset where appropriate.
+    """
+
+    X, y = make_classification(n_samples=20, n_features=10, random_state=0)
+
+    clf = FailingClassifier()
+
+    # refit=False because we only want to check that errors caused by fits
+    # to individual folds will be caught and warnings raised instead. If
+    # refit was done, then an exception would be raised on refit and not
+    # caught by grid_search (expected behavior), and this would cause an
+    # error in this test.
+    gs = GridSearchCV(clf, [{'parameter': [0, 1, 2]}], scoring='accuracy',
+                      refit=False, error_score=0.0)
+
+    assert_warns(FitFailedWarning, gs.fit, X, y)
+
+    # Ensure that grid scores were set to zero as required for those fits
+    # that are expected to fail.
+    assert all(np.all(this_point.cv_validation_scores == 0.0)
+               for this_point in gs.grid_scores_
+               if this_point.parameters['parameter'] ==
+               FailingClassifier.FAILING_PARAMETER)
+
+
+def test_grid_search_failing_classifier_raise():
+    """GridSearchCV with on_error == 'raise' raises the error"""
+
+    X, y = make_classification(n_samples=20, n_features=10, random_state=0)
+
+    clf = FailingClassifier()
+
+    # refit=False because we want to test the behaviour of the grid search part
+    gs = GridSearchCV(clf, [{'parameter': [0, 1, 2]}], scoring='accuracy',
+                      refit=False, error_score='raise')
+
+    # FailingClassifier issues a ValueError so this is what we look for.
+    assert_raises(ValueError, gs.fit, X, y)

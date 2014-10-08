@@ -22,6 +22,7 @@ GitHub:
 2. Clone this copy to your local disk:
 
           $ git clone git@github.com:YourLogin/scikit-learn.git
+          $ cd scikit-learn
 
 3. Create a branch to hold your changes:
 

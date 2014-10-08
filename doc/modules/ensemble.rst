@@ -434,7 +434,7 @@ Classification
 ---------------
 
 :class:`GradientBoostingClassifier` supports both binary and multi-class
-classification via the deviance loss function (``loss='deviance'``).
+classification.
 The following example shows how to fit a gradient boosting classifier
 with 100 decision stumps as weak learners::
 
@@ -649,6 +649,10 @@ the parameter ``loss``:
       prior probability of each class. At each iteration ``n_classes``
       regression trees have to be constructed which makes GBRT rather
       inefficient for data sets with a large number of classes.
+    * Exponential loss (``'exponential'``): The same loss function
+      as :class:`AdaBoostClassifier`. Less robust to mislabeled
+      examples than ``'deviance'``; can only be used for binary
+      classification.
 
 Regularization
 ----------------
@@ -888,4 +892,3 @@ averaged.
  .. [HTF2009] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical Learning Ed. 2", Springer, 2009.
 
  .. [R2007] G. Ridgeway, "Generalized Boosted Models: A guide to the gbm package", 2007
-

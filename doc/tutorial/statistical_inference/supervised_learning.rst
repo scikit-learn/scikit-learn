@@ -175,7 +175,7 @@ Linear models: :math:`y = X\beta + \epsilon`
     >>> from sklearn import linear_model
     >>> regr = linear_model.LinearRegression()
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
-    LinearRegression(copy_X=True, fit_intercept=True, normalize=False)
+    LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=False)
     >>> print(regr.coef_)
     [   0.30349955 -237.63931533  510.53060544  327.73698041 -814.13170937
       492.81458798  102.84845219  184.60648906  743.51961675   76.09517222]
@@ -327,7 +327,7 @@ application of Occam's razor: *prefer simpler models*.
     >>> regr.alpha = best_alpha
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
     Lasso(alpha=0.025118864315095794, copy_X=True, fit_intercept=True,
-       max_iter=1000, normalize=False, positive=False, precompute='auto',
+       max_iter=1000, normalize=False, positive=False, precompute=False,
        random_state=None, selection='cyclic', tol=0.0001, warm_start=False)
     >>> print(regr.coef_)
     [   0.         -212.43764548  517.19478111  313.77959962 -160.8303982    -0.
@@ -372,7 +372,7 @@ function or **logistic** function:
     LogisticRegression(C=100000.0, class_weight=None, dual=False,
               fit_intercept=True, intercept_scaling=1, max_iter=100,
               multi_class='ovr', penalty='l2', random_state=None,
-              solver='liblinear', tol=0.0001)
+              solver='liblinear', tol=0.0001, verbose=0)
 
 This is known as :class:`LogisticRegression`.
 

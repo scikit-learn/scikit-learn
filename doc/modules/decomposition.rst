@@ -28,8 +28,7 @@ project the data onto the singular space while scaling each component
 to unit variance. This is often useful if the models down-stream make
 strong assumptions on the isotropy of the signal: this is for example
 the case for Support Vector Machines with the RBF kernel and the K-Means
-clustering algorithm. However in that case the inverse transform is no
-longer exact since some information is lost while forward transforming.
+clustering algorithm. 
 
 Below is an example of the iris dataset, which is comprised of 4
 features, projected on the 2 dimensions that explain most variance:
@@ -55,6 +54,46 @@ data based on the amount of variance it explains. As such it implements a
 
     * :ref:`example_decomposition_plot_pca_vs_lda.py`
     * :ref:`example_decomposition_plot_pca_vs_fa_model_selection.py`
+
+
+.. _IncrementalPCA:
+
+Incremental PCA
+---------------
+
+The :class:`PCA` object is very useful, but has certain limitations for 
+large datasets. The biggest limitation is that :class:`PCA` only supports 
+batch processing, which means all of the data to be processed must fit in main
+memory. The :class:`IncrementalPCA` object uses a different form of
+processing and allows for partial computations which almost
+exactly match the results of :class:`PCA` while processing the data in a
+minibatch fashion. :class:`IncrementalPCA` makes it possible to implement 
+out-of-core Principal Component Analysis either by:
+
+ * Using its ``partial_fit`` method on chunks of data fetched sequentially
+   from the local hard drive or a network database.
+
+ * Calling its fit method on a memory mapped file using ``numpy.memmap``.
+
+:class:`IncrementalPCA` only stores estimates of component and noise variances,
+in order update ``explained_variance_ratio_`` incrementally. This is why
+memory usage depends on the number of samples per batch, rather than the 
+number of samples to be processed in the dataset.
+
+.. figure:: ../auto_examples/decomposition/images/plot_incremental_pca_001.png
+    :target: ../auto_examples/decomposition/plot_incremental_pca.html
+    :align: center
+    :scale: 75%
+
+.. figure:: ../auto_examples/decomposition/images/plot_incremental_pca_002.png
+    :target: ../auto_examples/decomposition/plot_incremental_pca.html
+    :align: center
+    :scale: 75%
+
+
+.. topic:: Examples:
+
+    * :ref:`example_decomposition_plot_incremental_pca.py`
 
 
 .. _RandomizedPCA:

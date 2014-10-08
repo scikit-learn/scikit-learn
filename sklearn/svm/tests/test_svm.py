@@ -16,7 +16,7 @@ from sklearn.metrics import f1_score
 from sklearn.utils import check_random_state
 from sklearn.utils import ConvergenceWarning
 from sklearn.utils.testing import assert_greater, assert_in, assert_less
-from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_raises_regexp, assert_warns
 
 
 # toy sample
@@ -46,9 +46,7 @@ def test_libsvm_parameters():
 
 
 def test_libsvm_iris():
-    """
-    Check consistency on dataset iris.
-    """
+    """Check consistency on dataset iris."""
 
     # shuffle the dataset so that labels are not ordered
     for k in ('linear', 'rbf'):
@@ -72,6 +70,15 @@ def test_libsvm_iris():
                                        kernel='linear',
                                        random_seed=0)
     assert_greater(np.mean(pred == iris.target), .95)
+
+    # If random_seed >= 0, the libsvm rng is seeded (by calling `srand`), hence
+    # we should get deteriministic results (assuming that there is no other
+    # thread calling this wrapper calling `srand` concurrently).
+    pred2 = svm.libsvm.cross_validation(iris.data,
+                                       iris.target.astype(np.float64), 5,
+                                       kernel='linear',
+                                       random_seed=0)
+    assert_array_equal(pred, pred2)
 
 
 def test_single_sample_1d():
@@ -435,18 +442,16 @@ def test_linearsvc_parameters():
     params = [(dual, loss, penalty) for dual in [True, False]
               for loss in ['l1', 'l2', 'lr'] for penalty in ['l1', 'l2']]
 
+    X, y = make_classification(n_samples=5, n_features=5)
+
     for dual, loss, penalty in params:
-            if loss == 'l1' and penalty == 'l1':
-                assert_raises(ValueError, svm.LinearSVC, penalty=penalty,
-                              loss=loss, dual=dual)
-            elif loss == 'l1' and penalty == 'l2' and not dual:
-                assert_raises(ValueError, svm.LinearSVC, penalty=penalty,
-                              loss=loss, dual=dual)
-            elif penalty == 'l1' and dual:
-                assert_raises(ValueError, svm.LinearSVC, penalty=penalty,
-                              loss=loss, dual=dual)
+            clf = svm.LinearSVC(penalty=penalty, loss=loss, dual=dual)
+            if (loss == 'l1' and penalty == 'l1') or (
+                loss == 'l1' and penalty == 'l2' and not dual) or (
+                penalty == 'l1' and dual):
+                assert_raises(ValueError, clf.fit, X, y)
             else:
-                svm.LinearSVC(penalty=penalty, loss=loss, dual=dual)
+                clf.fit(X, y)
 
 
 def test_linearsvc():
@@ -666,6 +671,18 @@ def test_timeout():
     assert_warns(ConvergenceWarning, a.fit, X, Y)
 
 
+def test_unfitted():
+    X = "foo!"      # input validation not required when SVM not fitted
+
+    clf = svm.SVC()
+    assert_raises_regexp(Exception, r".*\bSVC\b.*\bnot\b.*\bfitted\b",
+                         clf.predict, X)
+
+    clf = svm.NuSVR()
+    assert_raises_regexp(Exception, r".*\bNuSVR\b.*\bnot\b.*\bfitted\b",
+                         clf.predict, X)
+
+
 def test_consistent_proba():
     a = svm.SVC(probability=True, max_iter=1, random_state=0)
     proba_1 = a.fit(X, Y).predict_proba(X)
@@ -677,7 +694,7 @@ def test_consistent_proba():
 def test_linear_svc_convergence_warnings():
     """Test that warnings are raised if model does not converge"""
 
-    lsvc = svm.LinearSVC(max_iter=2)
+    lsvc = svm.LinearSVC(max_iter=2, verbose=1)
     assert_warns(ConvergenceWarning, lsvc.fit, X, Y)
     assert_equal(lsvc.n_iter_, 2)
 
