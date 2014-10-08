@@ -45,7 +45,6 @@ X_features = combined_features.fit(X, y).transform(X)
 
 # Classify:
 svm = SVC(kernel="linear")
-svm.fit(X_features, y)
 
 # Do grid search over k, n_components and C:
 
