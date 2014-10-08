@@ -104,10 +104,12 @@ def f_oneway(*args):
     dfwn = n_samples - n_classes
     msb = ssbn / float(dfbn)
     msw = sswn / float(dfwn)
-    if (np.nonzero(msw)[0].size != msw.size and
-          np.nonzero(msb)[0].size != msb.size):
-        warnings.warn("The given data has features that are constant "
-                      "throughout.", UserWarning)
+    constant_features_each_class = np.where(msw == 0)
+    if (np.nonzero(msb)[0].size != msb.size and
+          constant_features_each_class[0].size):
+        warnings.warn("The given data has features %s that are constant "
+                      "throughout." % constant_features_each_class,
+                      UserWarning)
     f = msb / msw
     # flatten matrix to vector in sparse case
     f = np.asarray(f).ravel()
