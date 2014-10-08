@@ -1,3 +1,10 @@
+scikit-learn (0.15.2-3) unstable; urgency=medium
+
+  * debian/patches
+    - deb_skip_some_tests_on_arm -- skip two tests on armv to avoid FTBFS
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 07 Oct 2014 21:37:46 -0400
+
 scikit-learn (0.15.2-2) unstable; urgency=medium
 
   * debian/rules
