@@ -1,21 +1,21 @@
-# cdef extern from "stdlib.h":
-#     int strcmp(const char*, const char*)
+cdef extern from "string.h":
+    int strcmp(char*, char*)
 cdef extern from "math.h":
     double pow(double, double) nogil
 cdef extern from "math.h":
     double fmin(double, double) nogil
 cimport cython
 
-cdef LearningRate get_learning_rate(int learning_rate):
-    if learning_rate == 1:
+cdef LearningRate get_learning_rate(char* learning_rate):
+    if strcmp(learning_rate, "constant") == 0:
         return Constant.__new__(Constant)
-    elif learning_rate == 2:
+    elif strcmp(learning_rate, "optimal") == 0:
         return Optimal.__new__(Optimal)
-    elif learning_rate == 3:
+    elif strcmp(learning_rate, "invscaling") == 0:
         return InvScaling.__new__(InvScaling)
-    elif learning_rate == 4:
+    elif strcmp(learning_rate, "pa1") == 0:
         return PA1.__new__(PA1)
-    elif learning_rate == 5:
+    elif strcmp(learning_rate, "pa2") == 0:
         return PA2.__new__(PA2)
 
 cdef class LearningRate:

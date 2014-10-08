@@ -34,13 +34,6 @@ DEF L1 = 1
 DEF L2 = 2
 DEF ELASTICNET = 3
 
-# Learning rate constants
-DEF CONSTANT = 1
-DEF OPTIMAL = 2
-DEF INVSCALING = 3
-DEF PA1 = 4
-DEF PA2 = 5
-
 # ----------------------------------------
 # Extension Types for Loss Functions
 # ----------------------------------------
@@ -341,7 +334,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
               int n_iter, int fit_intercept,
               int verbose, bint shuffle, np.uint32_t seed,
               double weight_pos, double weight_neg,
-              int learning_rate, double eta0,
+              char* learning_rate, double eta0,
               double power_t,
               double t=1.0,
               double intercept_decay=1.0):
@@ -380,13 +373,13 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         The weight of the negative class.
     seed : np.uint32_t
         Seed of the pseudorandom number generator used to shuffle the data.
-    learning_rate : int
+    learning_rate : char*
         The learning rate:
-        (1) constant, eta = eta0
-        (2) optimal, eta = 1.0/(t+t0)
-        (3) inverse scaling, eta = eta0 / pow(t, power_t)
-        (4) Passive Agressive-I, eta = min(alpha, loss/norm(x))
-        (5) Passive Agressive-II, eta = 1.0 / (norm(x) + 0.5*alpha)
+        "constant" constant, eta = eta0
+        "optimal" optimal, eta = 1.0/(t+t0)
+        "invscling" inverse scaling, eta = eta0 / pow(t, power_t)
+        "pa1" Passive Agressive-I, eta = min(alpha, loss/norm(x))
+        "pa2" Passive Agressive-II, eta = 1.0 / (norm(x) + 0.5*alpha)
     eta0 : double
         The initial learning rate.
     power_t : double

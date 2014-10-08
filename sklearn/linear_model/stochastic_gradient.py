@@ -271,7 +271,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
                      dataset, n_iter, int(est.fit_intercept),
                      int(est.verbose), int(est.shuffle), seed,
                      pos_weight, neg_weight,
-                     learning_rate_type, est.eta0,
+                     learning_rate.encode(), est.eta0,
                      est.power_t, est.t_, intercept_decay)
 
 
@@ -930,7 +930,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                                           int(self.shuffle),
                                           seed,
                                           1.0, 1.0,
-                                          learning_rate_type,
+                                          learning_rate.encode(),
                                           self.eta0, self.power_t, self.t_,
                                           intercept_decay)
 

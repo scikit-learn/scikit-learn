@@ -1,4 +1,4 @@
-cdef LearningRate get_learning_rate(int learning_rate)
+cdef LearningRate get_learning_rate(char* learning_rate)
 
 cdef class LearningRate(object):
     cdef double eta(self, double eta0, double alpha, double t, double power_t) nogil
