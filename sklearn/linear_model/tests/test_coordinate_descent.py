@@ -8,7 +8,7 @@ import numpy as np
 from scipy import interpolate, sparse
 from copy import deepcopy
 
-from sklearn.datasets import load_boston
+from sklearn.datasets import load_boston, make_regression
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
@@ -21,7 +21,7 @@ from sklearn.utils.testing import ignore_warnings
 
 from sklearn.linear_model.coordinate_descent import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
-    MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path
+    MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path, enet_path
 from sklearn.linear_model import LassoLarsCV, lars_path
 
 
@@ -572,6 +572,30 @@ def test_deprection_precompute_enet():
     assert_warns(DeprecationWarning, clf.fit, X, y)
     clf = Lasso(precompute="auto")
     assert_warns(DeprecationWarning, clf.fit, X, y)
+
+
+def test_n_passes_stopping_criteria():
+    """Test the number of passes for the stopping condition.
+
+    Ideally, when stopping is set to 'objective' lesser number of passes
+    should be made on the data.
+    """
+    X, y = make_regression()
+    models = enet_path(X, y, precompute=False, return_n_iter=True, tol=1e-7,
+                       stopping="objective")
+    n_iters_obj = sum(models[-1])
+    models = enet_path(X, y, precompute=False, return_n_iter=True, tol=1e-4,
+                       stopping="dual_gap")
+    n_iters_dual = sum(models[-1])
+    assert_greater(n_iters_dual, n_iters_obj)
+
+    models = lasso_path(X, y, precompute=False, return_n_iter=True, tol=1e-7,
+                       stopping="objective")
+    n_iters_obj = sum(models[-1])
+    models = lasso_path(X, y, precompute=False, return_n_iter=True, tol=1e-4,
+                       stopping="dual_gap")
+    n_iters_dual = sum(models[-1])
+    assert_greater(n_iters_dual, n_iters_obj)
 
 
 if __name__ == '__main__':
