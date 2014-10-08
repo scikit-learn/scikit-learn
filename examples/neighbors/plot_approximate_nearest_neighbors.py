@@ -60,19 +60,18 @@ n_estimators_for_candidate_value = [1, 5, 10]
 accuracies_c = np.zeros((len(n_estimators_for_candidate_value),
                          n_candidates_values.shape[0]), dtype=float)
 
+nbrs = NearestNeighbors(n_neighbors=1).fit(X_index)
+neighbors_exact = nbrs.kneighbors(X_query, return_distance=False)
+
 # Calculate average accuracy for each value of `n_candidates`
 for j, value in enumerate(n_estimators_for_candidate_value):
     for i, n_candidates in enumerate(n_candidates_values):
         lshf = LSHForest(n_estimators=value,
                          n_candidates=n_candidates, n_neighbors=1)
-        nbrs = NearestNeighbors(n_neighbors=1)
-        # Fit the Nearest neighbor models
+        # Fit LSHForest
         lshf.fit(X_index)
-        nbrs.fit(X_index)
         # Get neighbors
         neighbors_approx = lshf.kneighbors(X_query, return_distance=False)
-        neighbors_exact = nbrs.kneighbors(X_query, return_distance=False)
-
         accuracies_c[j, i] = np.sum(np.equal(neighbors_approx,
                                              neighbors_exact))/n_queries
 
@@ -83,14 +82,10 @@ accuracies_trees = np.zeros(n_estimators_values.shape[0], dtype=float)
 # Calculate average accuracy for each value of `n_estimators`
 for i, n_estimators in enumerate(n_estimators_values):
     lshf = LSHForest(n_estimators=n_estimators, n_neighbors=1)
-    nbrs = NearestNeighbors(n_neighbors=1)
     # Fit the Nearest neighbor models
     lshf.fit(X_index)
-    nbrs.fit(X_index)
     # Get neighbors
     neighbors_approx = lshf.kneighbors(X_query, return_distance=False)
-    neighbors_exact = nbrs.kneighbors(X_query, return_distance=False)
-
     accuracies_trees[i] = np.sum(np.equal(neighbors_approx,
                                           neighbors_exact))/n_queries
 
