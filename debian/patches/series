@@ -1,3 +1,4 @@
+up_workaround_buggy_pil
 deb_skip_some_tests_on_arm
 deb_use_system_joblib
 deb_no_google_analytics

@@ -2,6 +2,7 @@ scikit-learn (0.15.2-3) unstable; urgency=medium
 
   * debian/patches
     - deb_skip_some_tests_on_arm -- skip two tests on armv to avoid FTBFS
+    - up_workaround_buggy_pil -- workaround a bug in PIL
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 07 Oct 2014 21:37:46 -0400
 
