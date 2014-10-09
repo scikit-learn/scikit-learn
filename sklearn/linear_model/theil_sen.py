@@ -309,8 +309,8 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
             raise ValueError("Subpopulation must be strictly positive "
                              "({0} <= 0).".format(self.max_subpopulation))
         all_combinations = max(1, np.rint(binom(n_samples, n_subsamples)))
-        n_subpop = int(min(self.max_subpopulation, all_combinations))
-        return n_subsamples, n_subpop
+        n_subpopulation = int(min(self.max_subpopulation, all_combinations))
+        return n_subsamples, n_subpopulation
 
     def fit(self, X, y):
         """Fit linear model.
@@ -331,20 +331,21 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
         y = check_array(y, ensure_2d=False)
         check_consistent_length(X, y)
         n_samples, n_features = X.shape
-        n_subsamples, n_subpop = self._check_subparams(n_samples, n_features)
+        n_subsamples, n_subpopulation = self._check_subparams(n_samples,
+                                                              n_features)
         self.breakdown_ = _breakdown_point(n_samples, n_subsamples)
         if self.verbose:
             print("Breakdown point: {0}".format(self.breakdown_))
             print("Number of samples: {0}".format(n_samples))
             tol_outliers = int(self.breakdown_ * n_samples)
             print("Tolerable outliers: {0}".format(tol_outliers))
-            print("Number of subpopulations: {0}".format(n_subpop))
+            print("Number of subpopulations: {0}".format(n_subpopulation))
         # Determine indices of subpopulation
         if np.rint(binom(n_samples, n_subsamples)) <= self.max_subpopulation:
             indices = list(combinations(range(n_samples), n_subsamples))
         else:
             indices = [random_state.randint(0, n_samples, n_subsamples)
-                       for _ in range(n_subpop)]
+                       for _ in range(n_subpopulation)]
         n_jobs = _get_n_jobs(self.n_jobs)
         index_list = np.array_split(indices, n_jobs)
         weights = Parallel(n_jobs=n_jobs,
