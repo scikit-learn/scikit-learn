@@ -100,6 +100,19 @@ def test_scaler_1d():
     X = np.ones(5)
     assert_array_equal(scale(X, with_mean=False), X)
 
+    X = np.zeros(8) + np.log(1e-5)
+    assert_array_almost_equal(scale(X), np.zeros(8))
+
+    X = np.zeros(22) + np.log(1e-5)
+    assert_array_almost_equal(scale(X), np.zeros(22))
+
+    X = np.ones(10.) * 1e-100
+    assert_array_almost_equal(scale(X), np.zeros(10))
+
+    X = np.arange(10.)
+    Y = np.arange(10.) * 1e-100
+    assert_array_almost_equal(scale(X), scale(Y))
+
 
 def test_scaler_2d_arrays():
     """Test scaling of 2d array along first axis"""
@@ -736,6 +749,7 @@ def test_one_hot_encoder_sparse():
     # test negative input to transform
     enc.fit([[0], [1]])
     assert_raises(ValueError, enc.transform, [[0], [-1]])
+
 
 def test_one_hot_encoder_dense():
     """check for sparse=False"""
