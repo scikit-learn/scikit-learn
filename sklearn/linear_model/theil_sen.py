@@ -82,21 +82,26 @@ def _modified_weiszfeld_step(X, y):
 def _spatial_median(X, max_iter=300, tol=1.e-3):
     """Spatial median (L1 median).
 
+    The spatial median is member of a class of so-called M-estimators which
+    are defined by an optimization problem. Given a number of p points in an
+    n-dimensional space, the point x minimizing the sum of all distances to the
+    p other points is called spatial median.
+
     Parameters
     ----------
     X : array, shape = [n_samples, n_features]
-        Training vector, where n_samples in the number of samples and
+        Training vector, where n_samples is the number of samples and
         n_features is the number of features.
 
     max_iter : int, optional
         Maximum number of iterations.  Default is 300.
 
     tol : float, optional
-        Stop the algorithm if spmed has converged. Default is 1.e-3.
+        Stop the algorithm if spatial_median has converged. Default is 1.e-3.
 
     Returns
     -------
-    spmed : array, shape = [n_features]
+    spatial_median : array, shape = [n_features]
         Spatial median.
 
     n_iter: int
