@@ -36,6 +36,10 @@ New features
      algorithm that supports out-of-core learning with a ``partial_fit``
      method. By `Kyle Kastner`_.
 
+   - Averaged SGD for :class:`SGDClassifier <linear_model.SGDClassifier>`
+     and :class:`SGDRegressor <linear_model.SGDRegressor>` By
+     `Danny Sullivan`_.
+
 
 Enhancements
 ............
