@@ -202,6 +202,9 @@ Enhancements
      by flipping the sign of eigen vectors. By `Hasil Sharma`_.
 
 
+   - Numerical stability improvements for :class:`preprocessing.StandardScaler`
+     and :func:`preprocessing.scale`. By `Nicolas Goix`_
+
 Documentation improvements
 ..........................
 
@@ -3345,3 +3348,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Hervé Bredin: http://herve.niderb.fr/
 
 .. _Eric Schubert: https://github.com/kno10
+
+.. _Nicolas Goix: https://webperso.telecom-paristech.fr/front/frontoffice.php?SP_ID=241
