@@ -1,8 +1,9 @@
-# -*- coding: utf-8 -*-
 """
-Created on Wed Sep 24 10:18:50 2014
+==================================================
+Comparison of Linear Discriminant Analysis solvers
+==================================================
 
-@author: clemens
+Compares different LDA solvers by plotting their decision planes.
 """
 
 from sklearn.datasets import make_blobs
@@ -30,7 +31,7 @@ def plot_boundary(clf):
 # Generate data
 X, y = make_blobs(n_samples=100, n_features=2, centers=[[-2, 5], [0, 3.5]])
 
-clf1 = LDA(solver="svd", store_covariance=True)
+clf1 = LDA(solver="svd")
 clf2 = LDA(solver="lsqr", alpha=None)
 clf3 = LDA(solver="eigen", alpha=None)
 clf1.fit(X, y)

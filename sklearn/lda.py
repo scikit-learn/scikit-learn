@@ -118,7 +118,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
     priors : array, optional, shape = [n_classes]
         Priors on classes
 
-    n_comps : int
+    n_components : int
         Number of components (< n_classes - 1) for dimensionality reduction
 
     Attributes
@@ -129,7 +129,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
     intercept_ : array, shape = [n_features]
         Intercept term
 
-    cov_ : array-like, shape = [n_features, n_features]
+    covariance_ : array-like, shape = [n_features, n_features]
         Covariance matrix (shared by all classes)
 
     means_ : array-like, shape = [n_classes, n_features]
@@ -163,12 +163,12 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
     sklearn.qda.QDA: Quadratic discriminant analysis
     """
 
-    def __init__(self, solver='svd', alpha=None, priors=None, n_comps=None,
+    def __init__(self, solver='svd', alpha=None, priors=None, n_components=None,
                  store_covariance=False):
         self.solver = solver
         self.alpha = alpha
         self.priors = priors
-        self.n_comps = n_comps
+        self.n_components = n_components
         self.store_covariance = store_covariance
         
     def _solve_lsqr(self, X, y, cov_estimator):
@@ -187,13 +187,13 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
               - 'empirical': Empirical covariance matrix
               - 'ledoit_wolf': Shrunk covariance matrix using Ledoit-Wolf
         """
-        self.means_, self.cov_ = _means_cov(X, y, cov_estimator)
+        self.means_, self.covariance_ = _means_cov(X, y, cov_estimator)
         self.xbar_ = np.dot(self.priors_, self.means_)
     
         # TODO: weight covariances with priors?
         means = self.means_ - self.xbar_
     
-        self.coef_ = np.linalg.lstsq(self.cov_, means.T, rcond=1e-11)[0].T
+        self.coef_ = np.linalg.lstsq(self.covariance_, means.T, rcond=1e-11)[0].T
         self.intercept_ = (-0.5 * np.diag(np.dot(means, self.coef_.T))
                            + np.log(self.priors_))
 
@@ -213,15 +213,15 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
               - 'empirical': Empirical covariance matrix
               - 'ledoit_wolf': Shrunk covariance matrix using Ledoit-Wolf
         """
-        self.means_, self.cov_ = _means_cov(X, y, cov_estimator)
+        self.means_, self.covariance_ = _means_cov(X, y, cov_estimator)
         self.xbar_ = np.dot(self.priors_, self.means_)
 
         # TODO: weight covariances with priors?
         St = _cov(X, cov_estimator)
-        Sb = St - self.cov_
+        Sb = St - self.covariance_
         means = self.means_ - self.xbar_
 
-        e, v = linalg.eigh(Sb, self.cov_)
+        e, v = linalg.eigh(Sb, self.covariance_)
         idx = e.argsort()[::-1]
         #self.scalings_ = np.atleast_2d(v[:, idx[n_classes - 1]]).T
         self.scalings_ = v        
@@ -231,7 +231,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
                            + np.log(self.priors_))
         self.coef_ = np.dot(coef, self.scalings_.T)
     
-    def _solve_svd(self, X, y, store_covariance=False, tol=1.0e-4):
+    def _solve_svd(self, X, y, tol=1.0e-4):
         """SVD solver
 
         Parameters
@@ -247,8 +247,8 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         """
         n_samples, n_features = X.shape
         n_classes = len(self.classes_)
-        if store_covariance:
-            self.means_, self.cov_ = _means_cov(X, y, cov_estimator='empirical')
+        if self.store_covariance:
+            self.means_, self.covariance_ = _means_cov(X, y, cov_estimator='empirical')
         else:
             self.means_ = _means_cov(X, y, cov_estimator=None)
 
@@ -274,7 +274,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
     
         rank = np.sum(S > tol)
         if rank < n_features:
-            warnings.warn("variables are collinear")
+            warnings.warn("Variables are collinear.")
         # Scaling of within covariance is: V' 1/S
         scalings = (V[:rank] / std).T / S[:rank]
     
@@ -316,15 +316,14 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         else:
             self.priors_ = self.priors
 
-        if self.alpha is None:
-            self.alpha = 'empirical'
+        alpha = "empirical" if self.alpha is None else self.alpha
 
         if self.solver == 'svd':
-            self._solve_svd(X, y, store_covariance=self.store_covariance)
+            self._solve_svd(X, y)
         elif self.solver == 'lsqr':
-            self._solve_lsqr(X, y, cov_estimator=self.alpha)
+            self._solve_lsqr(X, y, cov_estimator=alpha)
         elif self.solver == 'eigen':
-            self._solve_eigen(X, y, cov_estimator=self.alpha)
+            self._solve_eigen(X, y, cov_estimator=alpha)
         else:
             raise ValueError('unknown solver')
 
