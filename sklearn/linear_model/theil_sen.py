@@ -191,6 +191,15 @@ def _lstsq(X, y, indices, intercept):
 class TheilSenRegressor(LinearModel, RegressorMixin):
     """Theil-Sen Estimator: robust multivariate regression model.
 
+    The algorithm calculates least square solutions on subsets with size
+    n_subsamples of the samples in X. Any value of n_subsamples between the
+    number of features and samples leads to an estimator with a compromise
+    between robustness and efficiency. Since the number of least square
+    solutions is "n_samples choose n_subsamples", it can be extremely large
+    and can therefore be limited with max_subpopulation. If this limit is
+    reached, the subsets are chosen randomly. In a final step, the spatial
+    median (or L1 median) is calculated of all least square solutions.
+
     Parameters
     ----------
     fit_intercept : boolean, optional, default True
@@ -254,17 +263,6 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
     - Theil-Sen Estimators in a Multiple Linear Regression Model, 2009
       Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang
       http://www.math.iupui.edu/~hpeng/MTSE_0908.pdf
-
-    Notes
-    -----
-    The algorithm calculates least square solutions on subsets with size
-    n_subsamples of the samples in X. Any value of n_subsamples between the
-    number of features and samples leads to an estimator with a compromise
-    between robustness and efficiency. Since the number of least square
-    solutions is "n_samples choose n_subsamples", it can be extremely large
-    and can therefore be limited with max_subpopulation. If this limit is
-    reached, the subsets are chosen randomly. In a final step, the spatial
-    median (or L1 median) is calculated of all least square solutions.
     """
 
     def __init__(self, fit_intercept=True, copy_X=True,
