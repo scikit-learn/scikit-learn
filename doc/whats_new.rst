@@ -28,6 +28,10 @@ New features
      trained forest model to grow additional trees incrementally. By
      `Laurent Direr`_.
 
+   - Averaged SGD for :class:`SGDClassifier <linear_model.SGDClassifier>`
+     and :class:`SGDRegressor <linear_model.SGDRegressor>` By
+     `Danny Sullivan`_.
+
 
 Enhancements
 ............
