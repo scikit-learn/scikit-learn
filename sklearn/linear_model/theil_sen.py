@@ -154,6 +154,10 @@ def _breakdown_point(n_samples, n_subsamples):
 def _lstsq(X, y, indices, intercept):
     """Least Squares Estimator for TheilSenRegressor class.
 
+    This function calculates the least squares method on a subset of rows of X
+    and y defined by the indices array. Optionally, an intercept column is
+    added if intercept is set to true.
+
     Parameters
     ----------
     X : array, shape = [n_samples, n_features]
@@ -168,25 +172,19 @@ def _lstsq(X, y, indices, intercept):
 
     intercept : bool
         Fit intercept or not.
-
-    Notes
-    -----
-    This function calculates the least squares method on a subset of rows of X
-    and y defined by the indices array. Optionally, an intercept column is
-    added if intercept is set to true.
     """
     first_elem = 1 if intercept else 0
     n_dim = X.shape[1] + first_elem
     n_subsamples = indices.shape[1]
     weights = np.empty((indices.shape[0], n_dim))
-    X_sub = np.ones((n_subsamples, n_dim))
-    # gelss need to pad y to be of the max dim of X
-    this_y = np.zeros((max(n_subsamples, n_dim)))
-    lstsq, = get_lapack_funcs(('gelss',), (X_sub, this_y))
-    for i, ix in enumerate(indices):
-        X_sub[:, first_elem:] = X[ix, :]
-        this_y[:n_subsamples] = y[ix]
-        weights[i, :] = lstsq(X_sub, this_y)[1][:n_dim]
+    X_subpopulation = np.ones((n_subsamples, n_dim))
+    # gelss need to pad y_subpopulation to be of the max dim of X_subpopulation
+    y_subpopulation = np.zeros((max(n_subsamples, n_dim)))
+    lstsq, = get_lapack_funcs(('gelss',), (X_subpopulation, y_subpopulation))
+    for iter, subset in enumerate(indices):
+        X_subpopulation[:, first_elem:] = X[subset, :]
+        y_subpopulation[:n_subsamples] = y[subset]
+        weights[iter, :] = lstsq(X_subpopulation, y_subpopulation)[1][:n_dim]
     return weights
 
 
