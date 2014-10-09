@@ -771,6 +771,7 @@ details.
    metrics.explained_variance_score
    metrics.mean_absolute_error
    metrics.mean_squared_error
+   metrics.median_absolute_error
    metrics.r2_score
 
 Multilabel ranking metrics

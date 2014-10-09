@@ -181,6 +181,10 @@ def mean_squared_error(y_true, y_pred, sample_weight=None):
 def median_absolute_error(y_true, y_pred):
     """Median absolute error regression loss
 
+    The loss is calculated by taking the median of all absolute
+    differences between the target and the prediction. This metric is
+    particularly interesting because it is robust to outliers.
+
     Parameters
     ----------
     y_true : array-like of shape = [n_samples] or [n_samples, n_outputs]
@@ -193,12 +197,6 @@ def median_absolute_error(y_true, y_pred):
     -------
     loss : float
         A positive floating point value (the best value is 0.0).
-
-    Notes
-    -----
-
-    This metric is particularly interesting because it is robust to
-    outliers.
 
     Examples
     --------
