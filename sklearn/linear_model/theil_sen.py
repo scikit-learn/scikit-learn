@@ -121,12 +121,13 @@ def _spatial_median(X, max_iter=300, tol=1.e-3):
     for n_iter in range(max_iter):
         spatial_median = _modified_weiszfeld_step(X, spatial_median_old)
         if np.sum((spatial_median_old - spatial_median) ** 2) < tol:
-            return n_iter, spatial_median
+            break
         else:
             spatial_median_old = spatial_median
-    warnings.warn("Maximum number of iterations {max_iter} reached in spatial "
-                  "median for TheilSen regressor.".format(max_iter=max_iter),
-                  ConvergenceWarning)
+    else:
+        warnings.warn("Maximum number of iterations {max_iter} reached in "
+                      "spatial median for TheilSen regressor.".format(
+            max_iter=max_iter), ConvergenceWarning)
     return n_iter, spatial_median
 
 
