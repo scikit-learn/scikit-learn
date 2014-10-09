@@ -25,6 +25,9 @@ In particular, the combination of kernel map approximations with
 Since there has not been much empirical work using approximate embeddings, it
 is advisable to compare results against exact kernel methods when possible.
 
+.. seealso
+
+   :ref:`polynomial_regression` for an exact polynomial transformation.
 
 .. currentmodule:: sklearn.kernel_approximation
 

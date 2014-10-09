@@ -2346,7 +2346,7 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 	model->param = *param;
 	model->free_sv = 0;	// XXX
 
-    if(param->random_seed > 0)
+    if(param->random_seed >= 0)
     {
         srand(param->random_seed);
     }
@@ -2626,7 +2626,7 @@ void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *
 	int l = prob->l;
 	int *perm = Malloc(int,l);
 	int nr_class;
-    if(param->random_seed > 0)
+    if(param->random_seed >= 0)
     {
         srand(param->random_seed);
     }

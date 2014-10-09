@@ -61,7 +61,7 @@ static struct feature_node **dense_to_sparse(double *x, npy_intp *dims,
         if (sparse[i] == NULL) {
             int k;
             for (k=0; k<i; k++)
-                free(sparse[i]);
+                free(sparse[k]);
             goto sparse_i_error;
         }
         memcpy(sparse[i], temp, count * sizeof(struct feature_node));
@@ -100,7 +100,7 @@ static struct feature_node **csr_to_sparse(double *values,
         if (sparse[i] == NULL) {
             int l;
             for (l=0; l<i; l++)
-                free(sparse[i]);
+                free(sparse[l]);
             break;
         }
 

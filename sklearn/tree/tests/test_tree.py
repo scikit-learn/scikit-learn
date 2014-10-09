@@ -6,6 +6,7 @@ import numpy as np
 
 from functools import partial
 from itertools import product
+import platform
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_squared_error
@@ -796,6 +797,25 @@ def test_big_input():
         assert_in("float32", str(e))
 
 
-def test_memoryerror():
+def test_realloc():
     from sklearn.tree._tree import _realloc_test
     assert_raises(MemoryError, _realloc_test)
+
+
+def test_huge_allocations():
+    n_bits = int(platform.architecture()[0].rstrip('bit'))
+
+    X = np.random.randn(10, 2)
+    y = np.random.randint(0, 2, 10)
+
+    # Sanity check: we cannot request more memory than the size of the address
+    # space. Currently raises OverflowError.
+    huge = 2 ** (n_bits + 1)
+    clf = DecisionTreeClassifier(splitter='best', max_leaf_nodes=huge)
+    assert_raises(Exception, clf.fit, X, y)
+
+    # Non-regression test: MemoryError used to be dropped by Cython
+    # because of missing "except *".
+    huge = 2 ** (n_bits - 1) - 1
+    clf = DecisionTreeClassifier(splitter='best', max_leaf_nodes=huge)
+    assert_raises(MemoryError, clf.fit, X, y)
