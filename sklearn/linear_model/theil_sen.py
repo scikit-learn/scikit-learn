@@ -117,17 +117,17 @@ def _spatial_median(X, max_iter=300, tol=1.e-3):
         return 1, np.median(X.ravel())
     # We are computing the tol on the squared norm
     tol **= 2
-    spmed_old = np.mean(X, axis=0)
+    spatial_median_old = np.mean(X, axis=0)
     for n_iter in range(max_iter):
-        spmed = _modified_weiszfeld_step(X, spmed_old)
-        if np.sum((spmed_old - spmed) ** 2) < tol:
-            return n_iter, spmed
+        spatial_median = _modified_weiszfeld_step(X, spatial_median_old)
+        if np.sum((spatial_median_old - spatial_median) ** 2) < tol:
+            return n_iter, spatial_median
         else:
-            spmed_old = spmed
+            spatial_median_old = spatial_median
     warnings.warn("Maximum number of iterations {max_iter} reached in spatial "
                   "median for TheilSen regressor.".format(max_iter=max_iter),
                   ConvergenceWarning)
-    return n_iter, spmed
+    return n_iter, spatial_median
 
 
 def _breakdown_point(n_samples, n_subsamples):
