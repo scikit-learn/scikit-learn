@@ -243,8 +243,8 @@ def resample(*arrays, **options):
             max_n_samples, n_samples))
 
     check_consistent_length(*arrays)
-    arrays = [check_array(x, accept_sparse='csr', ensure_2d=False)
-              for x in arrays]
+    arrays = [check_array(x, accept_sparse='csr', ensure_2d=False,
+                          allow_nd=True) for x in arrays]
 
     if replace:
         indices = random_state.randint(0, n_samples, size=(max_n_samples,))

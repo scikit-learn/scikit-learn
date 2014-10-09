@@ -451,6 +451,13 @@ def test_ridge_cv_sparse_svd():
     assert_raises(TypeError, ridge.fit, X)
 
 
+def test_ridge_sparse_svd():
+    X = sp.csc_matrix(rng.rand(100, 10))
+    y = rng.rand(100)
+    ridge = Ridge(solver='svd')
+    assert_raises(TypeError, ridge.fit, X, y)
+
+
 def test_class_weights():
     """
     Test class weights.
@@ -674,3 +681,9 @@ def test_raises_value_error_if_solver_not_supported():
         ridge_regression(X, y, alpha=1., solver=wrong_solver)
 
     assert_raise_message(exception, message, func)
+
+
+def test_sparse_cg_max_iter():
+    reg = Ridge(solver="sparse_cg", max_iter=1)
+    reg.fit(X_diabetes, y_diabetes)
+    assert_equal(reg.coef_.shape[0], X_diabetes.shape[1])

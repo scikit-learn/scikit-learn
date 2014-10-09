@@ -1150,9 +1150,13 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     return np.array(scores)[:, 0]
 
 
-def _fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
-                   fit_params, return_train_score=False,
-                   return_parameters=False):
+class FitFailedWarning(RuntimeWarning):
+    pass
+
+
+def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
+                   parameters, fit_params, return_train_score=False,
+                   return_parameters=False, error_score='raise'):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -1179,6 +1183,12 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
 
     verbose : integer
         The verbosity level.
+
+    error_score : 'raise' (default) or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised. If a numeric value is given,
+        FitFailedWarning is raised. This parameter does not affect the refit
+        step, which will always raise the error.
 
     parameters : dict or None
         Parameters to be set on the estimator.
@@ -1231,13 +1241,33 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
 
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
-    if y_train is None:
-        estimator.fit(X_train, **fit_params)
+
+    try:
+        if y_train is None:
+            estimator.fit(X_train, **fit_params)
+        else:
+            estimator.fit(X_train, y_train, **fit_params)
+
+    except Exception as e:
+        if error_score == 'raise':
+            raise
+        elif isinstance(error_score, numbers.Number):
+            test_score = error_score
+            if return_train_score:
+                train_score = error_score
+            warnings.warn("Classifier fit failed. The score on this train-test"
+                          " partition for these parameters will be set to %f. "
+                          "Details: \n%r" % (error_score, e), FitFailedWarning)
+        else:
+            raise ValueError("error_score must be the string 'raise' or a"
+                             " numeric value. (Hint: if using 'raise', please"
+                             " make sure that it has been spelled correctly.)"
+                             )
+
     else:
-        estimator.fit(X_train, y_train, **fit_params)
-    test_score = _score(estimator, X_test, y_test, scorer)
-    if return_train_score:
-        train_score = _score(estimator, X_train, y_train, scorer)
+        test_score = _score(estimator, X_test, y_test, scorer)
+        if return_train_score:
+            train_score = _score(estimator, X_train, y_train, scorer)
 
     scoring_time = time.time() - start_time
 

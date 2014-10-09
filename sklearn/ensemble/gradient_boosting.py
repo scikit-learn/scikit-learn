@@ -1219,7 +1219,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         Choosing `subsample < 1.0` leads to a reduction of variance
         and an increase in bias.
 
-    max_features : int, float, string or None, optional (default="auto")
+    max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
           - If int, then consider `max_features` features at each split.
           - If float, then `max_features` is a percentage and

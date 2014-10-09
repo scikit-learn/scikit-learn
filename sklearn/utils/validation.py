@@ -14,6 +14,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..externals import six
+from inspect import getargspec
 
 
 class DataConversionWarning(UserWarning):
@@ -36,7 +37,6 @@ warnings.simplefilter('ignore', NonBLASDotWarning)
 def _assert_all_finite(X):
     """Like assert_all_finite, but only for ndarray."""
     X = np.asanyarray(X)
-
     # First try an O(n) time, O(1) space solution for the common case that
     # everything is finite; fall back to O(n) space np.isfinite to prevent
     # false positives from overflow in sum method.
@@ -385,3 +385,15 @@ def check_random_state(seed):
         return seed
     raise ValueError('%r cannot be used to seed a numpy.random.RandomState'
                      ' instance' % seed)
+
+def has_fit_parameter(estimator, parameter):
+    """ Checks whether the estimator's fit method supports the given parameter.
+
+    Example
+    -------
+    >>> from sklearn.svm import SVC
+    >>> has_fit_parameter(SVC(), "sample_weight")
+    True
+
+    """
+    return parameter in getargspec(estimator.fit)[0]
