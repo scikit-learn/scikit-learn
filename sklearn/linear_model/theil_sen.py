@@ -25,7 +25,7 @@ from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange as range
 
 
-def _modified_weiszfeld_step(X, y):
+def _modified_weiszfeld_step(X, x_old):
     """Modified Weiszfeld step.
 
     This function defines one iteration step in order to approximate the
@@ -38,12 +38,12 @@ def _modified_weiszfeld_step(X, y):
         Training vector, where n_samples is the number of samples and
         n_features is the number of features.
 
-    y : array, shape = [n_features]
+    x_old : array, shape = [n_features]
         Current start vector.
 
     Returns
     -------
-    new_y : array, shape = [n_features]
+    x_new : array, shape = [n_features]
         New iteration step.
 
     References
@@ -60,7 +60,7 @@ def _modified_weiszfeld_step(X, y):
     """
     epsilon = np.finfo(np.double).eps
     X = X.T
-    diff = X.T - y
+    diff = X.T - x_old
     normdiff = np.sqrt(np.sum(diff ** 2, axis=1))
     mask = normdiff >= epsilon
     if mask.sum() < X.shape[1]:
@@ -76,7 +76,7 @@ def _modified_weiszfeld_step(X, y):
     else:
         T = 1.
         r = 1.
-    return max(0., 1. - eta / r) * T + min(1., eta / r) * y
+    return max(0., 1. - eta / r) * T + min(1., eta / r) * x_old
 
 
 def _spatial_median(X, max_iter=300, tol=1.e-3):
