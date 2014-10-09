@@ -28,6 +28,10 @@ from ..externals.six.moves import xrange
 def _modified_weiszfeld_step(X, y):
     """Modified Weiszfeld step.
 
+    This function defines one iteration step in order to approximate the
+    spatial median (L1 median). It is a form of an iteratively re-weighted
+    least squares method.
+
     Parameters
     ----------
     X : array, shape = [n_samples, n_features]
@@ -42,31 +46,35 @@ def _modified_weiszfeld_step(X, y):
     new_y : array, shape = [n_features]
         New iteration step.
 
+    References
+    ----------
+    - On Computation of Spatial Median for Robust Data Mining, 2005
+      T. Kärkkäinen and S. Äyrämö
+      http://users.jyu.fi/~samiayr/pdf/ayramo_eurogen05.pdf
+
     Notes
     -----
-    This function defines one iteration step in order to approximate the
-    spatial median (L1 median). It is a form of an iteratively re-weighted
-    least squares method.
+    On page 4 of the referenced paper a formal mathematical definition of the
+    algorithm below is given. For an easier understanding, the variable names
+    used in the paper are also used in the algorithm.
     """
+    epsilon = np.finfo(np.double).eps
     X = X.T
     diff = X.T - y
     normdiff = np.sqrt(np.sum(diff ** 2, axis=1))
-    mask = normdiff >= 1e-6
+    mask = normdiff >= epsilon
     if mask.sum() < X.shape[1]:
         eta = 1.
     else:
         eta = 0.
     diff = diff[mask, :]
     normdiff = normdiff[mask][:, np.newaxis]
-    res = np.sum(diff / normdiff, axis=0)
-    T_denom = np.sum(1 / normdiff, axis=0)
-    T_nom = np.sum(X.T[mask, :] / normdiff, axis=0)
-    if T_denom != 0.:
-        T = T_nom / T_denom
+    r = linalg.norm(np.sum(diff / normdiff, axis=0))
+    if r > epsilon:  # to avoid division by zero
+        T = np.sum(X.T[mask, :] / normdiff, axis=0) / \
+            np.sum(1 / normdiff, axis=0)
     else:
-        T = T_nom
-    r = linalg.norm(res)
-    if r < 1.e-6:
+        T = 1.
         r = 1.
     return max(0., 1. - eta / r) * T + min(1., eta / r) * y
 
@@ -289,8 +297,7 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
         return n_subsamples, n_subpop
 
     def fit(self, X, y):
-        """
-        Fit linear model.
+        """Fit linear model.
 
         Parameters
         ----------
@@ -308,8 +315,8 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
         y = check_array(y, ensure_2d=False)
         check_consistent_length(X, y)
         n_samples, n_features = X.shape
-        n_subsample, n_subpop = self._check_subparams(n_samples, n_features)
-        self.breakdown_ = _breakdown_point(n_samples, n_subsample)
+        n_subsamples, n_subpop = self._check_subparams(n_samples, n_features)
+        self.breakdown_ = _breakdown_point(n_samples, n_subsamples)
         if self.verbose:
             print("Breakdown point: {0}".format(self.breakdown_))
             print("Number of samples: {0}".format(n_samples))
@@ -317,16 +324,16 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
             print("Tolerable outliers: {0}".format(tol_outliers))
             print("Number of subpopulations: {0}".format(n_subpop))
         # Determine indices of subpopulation
-        if np.rint(binom(n_samples, n_subsample)) <= self.max_subpopulation:
-            indices = list(combinations(xrange(n_samples), n_subsample))
+        if np.rint(binom(n_samples, n_subsamples)) <= self.max_subpopulation:
+            indices = list(combinations(xrange(n_samples), n_subsamples))
         else:
-            indices = [random_state.randint(0, n_samples, n_subsample)
+            indices = [random_state.randint(0, n_samples, n_subsamples)
                        for _ in xrange(n_subpop)]
         n_jobs = _get_n_jobs(self.n_jobs)
-        idx_list = np.array_split(indices, n_jobs)
+        index_list = np.array_split(indices, n_jobs)
         weights = Parallel(n_jobs=n_jobs,
                            verbose=self.verbose)(
-            delayed(_lstsq)(X, y, idx_list[job], self.fit_intercept)
+            delayed(_lstsq)(X, y, index_list[job], self.fit_intercept)
             for job in xrange(n_jobs))
         weights = np.vstack(weights)
         self.n_iter_, coefs = _spatial_median(weights,
