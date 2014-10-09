@@ -22,7 +22,7 @@ from ..base import RegressorMixin
 from ..utils import check_array, check_random_state, ConvergenceWarning
 from ..utils import check_consistent_length, _get_n_jobs
 from ..externals.joblib import Parallel, delayed
-from ..externals.six.moves import xrange
+from ..externals.six.moves import xrange as range
 
 
 def _modified_weiszfeld_step(X, y):
@@ -118,7 +118,7 @@ def _spatial_median(X, max_iter=300, tol=1.e-3):
     # We are computing the tol on the squared norm
     tol **= 2
     spmed_old = np.mean(X, axis=0)
-    for n_iter in xrange(max_iter):
+    for n_iter in range(max_iter):
         spmed = _modified_weiszfeld_step(X, spmed_old)
         if np.sum((spmed_old - spmed) ** 2) < tol:
             return n_iter, spmed
@@ -330,16 +330,16 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
             print("Number of subpopulations: {0}".format(n_subpop))
         # Determine indices of subpopulation
         if np.rint(binom(n_samples, n_subsamples)) <= self.max_subpopulation:
-            indices = list(combinations(xrange(n_samples), n_subsamples))
+            indices = list(combinations(range(n_samples), n_subsamples))
         else:
             indices = [random_state.randint(0, n_samples, n_subsamples)
-                       for _ in xrange(n_subpop)]
+                       for _ in range(n_subpop)]
         n_jobs = _get_n_jobs(self.n_jobs)
         index_list = np.array_split(indices, n_jobs)
         weights = Parallel(n_jobs=n_jobs,
                            verbose=self.verbose)(
             delayed(_lstsq)(X, y, index_list[job], self.fit_intercept)
-            for job in xrange(n_jobs))
+            for job in range(n_jobs))
         weights = np.vstack(weights)
         self.n_iter_, coefs = _spatial_median(weights,
                                               max_iter=self.max_iter,
