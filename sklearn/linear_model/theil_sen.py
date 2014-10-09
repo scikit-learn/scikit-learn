@@ -306,7 +306,8 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
         else:
             n_subsamples = min(n_dim, n_samples)
         if self.max_subpopulation <= 0:
-            raise ValueError("Subpopulation must be positive.")
+            raise ValueError("Subpopulation must be strictly positive "
+                             "({0} <= 0).".format(self.max_subpopulation))
         n_all = max(1, np.rint(binom(n_samples, n_subsamples)))
         n_subpop = int(min(self.max_subpopulation, n_all))
         return n_subsamples, n_subpop
