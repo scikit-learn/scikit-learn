@@ -126,8 +126,8 @@ def _spatial_median(X, max_iter=300, tol=1.e-3):
             spatial_median_old = spatial_median
     else:
         warnings.warn("Maximum number of iterations {max_iter} reached in "
-                      "spatial median for TheilSen regressor.".format(
-            max_iter=max_iter), ConvergenceWarning)
+                      "spatial median for TheilSen regressor."
+                      "".format(max_iter=max_iter), ConvergenceWarning)
     return n_iter, spatial_median
 
 
