@@ -287,11 +287,22 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
             n_dim = n_features
         n_subsamples = self.n_subsamples
         if n_subsamples is not None:
-            assert n_subsamples <= n_samples
+            if n_subsamples > n_samples:
+                raise ValueError("Invalid parameter since n_subsamples > "
+                                 "n_samples ({0} > {1}).".format(n_subsamples,
+                                                                 n_samples))
             if n_samples >= n_features:
-                assert n_dim <= n_subsamples
+                if n_dim > n_subsamples:
+                    plus_1 = "+1" if self.fit_intercept else ""
+                    raise ValueError("Invalid parameter since n_features{0} "
+                                     "> n_subsamples ({1} > {2})."
+                                     "".format(plus_1, n_dim, n_samples))
             else:  # if n_samples < n_features
-                assert n_subsamples == n_samples
+                if n_subsamples != n_samples:
+                    raise ValueError("Invalid parameter since n_subsamples != "
+                                     "n_samples ({0} != {1}) while n_samples "
+                                     "< n_features.".format(n_subsamples,
+                                                            n_samples))
         else:
             n_subsamples = min(n_dim, n_samples)
         if self.max_subpopulation <= 0:
