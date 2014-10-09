@@ -161,6 +161,13 @@ class CommonTest(object):
 
         assert_array_equal(clf.coef_, clf2.coef_)
 
+    def test_all_learning_rates(self):
+        learning_rates = ["constant", "optimal", "invscaling",
+                          "pa1", "pa2", "adagrad", "adadelta"]
+        for lr in learning_rates:
+            clf = self.factory(learning_rate=lr, eta0=.001)
+            clf.fit(X, Y)
+
 
 class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     """Test suite for the dense representation variant of SGD"""

@@ -456,8 +456,9 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 gradient = loss._dloss(p, y)
                 norm = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
                 current_loss = loss.loss(p, y)
-                eta = lr.eta(eta0, alpha, t, power_t)
-                update = lr.update(gradient, current_loss, eta, norm, C, p, y, is_hinge)
+                with gil:
+                    eta = lr.eta(eta0, alpha, t, power_t)
+                    update = lr.update(gradient, current_loss, eta, norm, C, p, y, is_hinge)
 
                 if verbose > 0:
                     sumloss += current_loss

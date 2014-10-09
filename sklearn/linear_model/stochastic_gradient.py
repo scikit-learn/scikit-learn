@@ -32,9 +32,6 @@ from .sgd_fast import EpsilonInsensitive
 from .sgd_fast import SquaredEpsilonInsensitive
 
 
-LEARNING_RATE_TYPES = {"constant": 1, "optimal": 2, "invscaling": 3,
-                       "pa1": 4, "pa2": 5}
-
 PENALTY_TYPES = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
 
 SPARSE_INTERCEPT_DECAY = 0.01
@@ -44,6 +41,8 @@ intercept oscillation."""
 DEFAULT_EPSILON = 0.1
 """Default value of ``epsilon`` parameter. """
 
+LEARNING_RATE_TYPES = set(["constant", "optimal", "invscaling",
+                          "adagrad", "adadelta", "pa1", "pa2"])
 
 class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
     """Base class for SGD classification and regression."""
@@ -98,10 +97,15 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         if self.learning_rate in ("constant", "invscaling"):
             if self.eta0 <= 0.0:
                 raise ValueError("eta0 must be > 0")
+        if self.learning_rate not in LEARNING_RATE_TYPES:
+            raise ValueError("The learning_rate %(lr)s is not "
+                             "supported. The learning_rate must "
+                             "be in %(lrt)s"
+                             % {"lr": self.learning_rate,
+                                "lrt": LEARNING_RATE_TYPES})
 
         # raises ValueError if not registered
         self._get_penalty_type(self.penalty)
-        self._get_learning_rate_type(self.learning_rate)
 
         if self.loss not in self.loss_functions:
             raise ValueError("The loss %s is not supported. " % self.loss)
@@ -131,13 +135,6 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
             return loss_class(*args)
         except KeyError:
             raise ValueError("The loss %s is not supported. " % loss)
-
-    def _get_learning_rate_type(self, learning_rate):
-        try:
-            return LEARNING_RATE_TYPES[learning_rate]
-        except KeyError:
-            raise ValueError("learning rate %s "
-                             "is not supported. " % learning_rate)
 
     def _get_penalty_type(self, penalty):
         penalty = str(penalty).lower()
@@ -258,7 +255,6 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
     dataset, intercept_decay = _make_dataset(X, y_i, sample_weight)
 
     penalty_type = est._get_penalty_type(est.penalty)
-    learning_rate_type = est._get_learning_rate_type(learning_rate)
 
     # XXX should have random_state_!
     random_state = check_random_state(est.random_state)
@@ -907,7 +903,6 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
         loss_function = self._get_loss_function(loss)
         penalty_type = self._get_penalty_type(self.penalty)
-        learning_rate_type = self._get_learning_rate_type(learning_rate)
 
         if self.t_ is None:
             self._init_t(loss_function)
