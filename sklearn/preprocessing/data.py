@@ -16,7 +16,6 @@ from ..utils import check_array
 from ..utils import warn_if_not_float
 from ..utils.extmath import row_norms
 from ..utils.fixes import combinations_with_replacement as combinations_w_r
-from ..utils.fixes import isclose
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale, mean_variance_axis)
@@ -39,20 +38,6 @@ __all__ = [
 ]
 
 
-def _replace_nearly_value(X, base, replace_to):
-    """Fit close value to avoid division by nearly zero.
-    """
-    def _replace(value):
-        if isclose(value, base):
-            return replace_to
-        else:
-            return value
-
-    X = np.asarray(X)
-    otypes = [np.float64]*X.ndim
-    return np.vectorize(_replace, otypes=otypes)(X)
-
-
 def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
     """Compute mean and std deviation for centering, scaling.
 
@@ -68,7 +53,10 @@ def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
 
     if with_std:
         std_ = Xr.std(axis=0)
-        std_ = _replace_nearly_value(std_, base=0, replace_to=1)
+        if isinstance(std_, np.ndarray):
+            std_[std_ == 0.0] = 1.0
+        elif std_ == 0.:
+            std_ = 1.
     else:
         std_ = None
 
