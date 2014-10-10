@@ -38,6 +38,7 @@ __all__ = [
 ]
 
 
+
 def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
     """Compute mean and std deviation for centering, scaling.
 
@@ -52,10 +53,19 @@ def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
         mean_ = None
 
     if with_std:
+        is_all_elems_equal = lambda arr:all(arr == arr.take(0))
+
         std_ = Xr.std(axis=0)
         if isinstance(std_, np.ndarray):
             std_[std_ == 0.0] = 1.0
-        elif std_ == 0.:
+
+            old_std_ = std_
+            is_equal_matrix = np.apply_along_axis(lambda col: is_all_elems_equal(col), 0, Xr)
+            std_with_flag = np.vstack([std_.ravel(), is_equal_matrix.ravel()])
+            replace_to_one = lambda std_and_flag: 1.0 if std_and_flag[1] else std_and_flag[0] # arg:(std_, flag)
+            std_ = np.apply_along_axis(replace_to_one, 0, std_with_flag)
+            std_.shape = old_std_.shape
+        elif std_ == 0. or is_all_elems_equal(X):
             std_ = 1.
     else:
         std_ = None
