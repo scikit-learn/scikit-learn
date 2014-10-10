@@ -28,7 +28,8 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
 
 
-REGRESSION_SCORERS = ['r2', 'mean_absolute_error', 'mean_squared_error']
+REGRESSION_SCORERS = ['r2', 'mean_absolute_error', 'mean_squared_error',
+                      'median_absolute_error']
 CLF_SCORERS = ['accuracy', 'f1', 'roc_auc', 'average_precision', 'precision',
                'recall', 'log_loss',
                'adjusted_rand_score'  # not really, but works
@@ -273,9 +274,10 @@ def test_scorer_sample_weight():
                              "called with sample weights: {1} vs "
                              "{2}".format(name, weighted, unweighted))
             assert_almost_equal(weighted, ignored,
-                         err_msg="scorer {0} behaves differently when "
-                         "ignoring samples and setting sample_weight to 0: "
-                         "{1} vs {2}".format(name, weighted, ignored))
+                                err_msg="scorer {0} behaves differently when "
+                                "ignoring samples and setting sample_weight to"
+                                " 0: {1} vs {2}".format(name, weighted,
+                                                        ignored))
 
         except TypeError as e:
             assert_true("sample_weight" in str(e),

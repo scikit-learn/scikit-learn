@@ -27,6 +27,7 @@ from ..utils.validation import column_or_1d
 __ALL__ = [
     "mean_absolute_error",
     "mean_squared_error",
+    "median_absolute_error",
     "r2_score",
     "explained_variance_score"
 ]
@@ -175,6 +176,43 @@ def mean_squared_error(y_true, y_pred, sample_weight=None):
     y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
     return np.average(((y_pred - y_true) ** 2).mean(axis=1),
                       weights=sample_weight)
+
+
+def median_absolute_error(y_true, y_pred):
+    """Median absolute error regression loss
+
+    The loss is calculated by taking the median of all absolute
+    differences between the target and the prediction. This metric is
+    particularly interesting because it is robust to outliers.
+
+    Parameters
+    ----------
+    y_true : array-like of shape = [n_samples] or [n_samples, n_outputs]
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
+        Estimated target values.
+
+    Returns
+    -------
+    loss : float
+        A positive floating point value (the best value is 0.0).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import median_absolute_error
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> median_absolute_error(y_true, y_pred)
+    0.5
+    >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+    >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
+    >>> median_absolute_error(y_true, y_pred)
+    1.0
+
+    """
+    y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
+    return np.median(np.abs(y_pred - y_true))
 
 
 def explained_variance_score(y_true, y_pred, sample_weight=None):
