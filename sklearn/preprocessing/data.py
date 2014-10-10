@@ -1,5 +1,5 @@
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Mathieu Blondel <mathieu@mblondel.org>
+# Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 # License: BSD 3 clause
@@ -52,7 +52,7 @@ def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
         mean_ = None
 
     if with_std:
-        is_all_elems_equal = lambda arr:arr.size > 0 and all(arr == arr.take(0))
+        is_all_elems_equal = lambda arr: arr.size > 0 and all(arr == arr.take(0))
 
         std_ = Xr.std(axis=0)
         if isinstance(std_, np.ndarray) and std_.size > 0:
@@ -61,7 +61,7 @@ def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
             old_std_ = std_
             is_equal_matrix = np.apply_along_axis(lambda col: is_all_elems_equal(col), 0, Xr)
             std_with_flag = np.vstack([std_.ravel(), is_equal_matrix.ravel()])
-            replace_to_one = lambda std_and_flag: 1.0 if std_and_flag[1] else std_and_flag[0] # arg:(std_, flag)
+            replace_to_one = lambda std_and_flag: 1.0 if std_and_flag[1] else std_and_flag[0]  # arg:(std_, flag)
             std_ = np.apply_along_axis(replace_to_one, 0, std_with_flag)
             std_.shape = old_std_.shape
         elif std_ == 0. or is_all_elems_equal(X):
@@ -452,6 +452,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     See :ref:`examples/linear_model/plot_polynomial_interpolation.py
     <example_linear_model_plot_polynomial_interpolation.py>`
     """
+
     def __init__(self, degree=2, interaction_only=False, include_bias=True):
         self.degree = degree
         self.interaction_only = interaction_only
@@ -473,8 +474,8 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         """
         n_samples, n_features = check_array(X).shape
         self.powers_ = self._power_matrix(n_features, self.degree,
-                                          self.interaction_only,
-                                          self.include_bias)
+            self.interaction_only,
+            self.include_bias)
         return self
 
     def transform(self, X, y=None):
@@ -975,8 +976,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     sklearn.feature_extraction.FeatureHasher : performs an approximate one-hot
       encoding of dictionary items or strings.
     """
+
     def __init__(self, n_values="auto", categorical_features="all",
-                 dtype=np.float, sparse=True):
+            dtype=np.float, sparse=True):
         self.n_values = n_values
         self.categorical_features = categorical_features
         self.dtype = dtype
@@ -1029,11 +1031,11 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
         column_indices = (X + indices[:-1]).ravel()
         row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
-                                n_features)
+            n_features)
         data = np.ones(n_samples * n_features)
         out = sparse.coo_matrix((data, (row_indices, column_indices)),
-                                shape=(n_samples, indices[-1]),
-                                dtype=self.dtype).tocsr()
+            shape=(n_samples, indices[-1]),
+            dtype=self.dtype).tocsr()
 
         if self.n_values == 'auto':
             mask = np.array(out.sum(axis=0)).ravel() != 0
@@ -1050,7 +1052,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         efficient. See fit for the parameters, transform for the return value.
         """
         return _transform_selected(X, self._fit_transform,
-                                   self.categorical_features, copy=True)
+            self.categorical_features, copy=True)
 
     def _transform(self, X):
         """Assumes X contains only categorical features."""
@@ -1070,11 +1072,11 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
         column_indices = (X + indices[:-1]).ravel()
         row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
-                                n_features)
+            n_features)
         data = np.ones(n_samples * n_features)
         out = sparse.coo_matrix((data, (row_indices, column_indices)),
-                                shape=(n_samples, indices[-1]),
-                                dtype=self.dtype).tocsr()
+            shape=(n_samples, indices[-1]),
+            dtype=self.dtype).tocsr()
         if self.n_values == 'auto':
             out = out[:, self.active_features_]
 
@@ -1094,4 +1096,4 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             Transformed input.
         """
         return _transform_selected(X, self._transform,
-                                   self.categorical_features, copy=True)
+            self.categorical_features, copy=True)
