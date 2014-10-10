@@ -598,7 +598,13 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                     )
             w0[:coef.size] = coef
         else:
-            if (coef.shape[0] != classes.size or
+            # For binary problems coef.shape[0] should be 1, otherwise it
+            # should be classes.size.
+            n_vectors = classes.size
+            if n_vectors == 2:
+                n_vectors = 1
+
+            if (coef.shape[0] != n_vectors or
                     coef.shape[1] not in (n_features, n_features + 1)):
                 raise ValueError(
                     'Initialization coef is of shape (%d, %d), expected '
