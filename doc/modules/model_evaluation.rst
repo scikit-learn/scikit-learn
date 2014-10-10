@@ -66,6 +66,7 @@ Scoring                    Function
 **Regression**
 'mean_absolute_error'      :func:`sklearn.metrics.mean_absolute_error`
 'mean_squared_error'       :func:`sklearn.metrics.mean_squared_error`
+'median_absolute_error'    :func:`sklearn.metrics.median_absolute_error`
 'r2'                       :func:`sklearn.metrics.r2_score`
 ======================     =================================================
 
@@ -1055,6 +1056,34 @@ function::
   * See :ref:`example_ensemble_plot_gradient_boosting_regression.py`
     for an example of mean squared error usage to
     evaluate gradient boosting regression.
+
+Median absolute error
+---------------------
+
+The :func:`median_absolute_error` is particularly interesting because it is
+robust to outliers. The loss is calculated by taking the median of all absolute
+differences between the target and the prediction.
+
+If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
+and :math:`y_i` is the corresponding true value, then the median absolute error
+(MedAE) estimated over :math:`n_{\text{samples}}` is defined as
+
+.. math::
+
+  \text{MedAE}(y, \hat{y}) = \text{median}(\mid y_1 - \hat{y}_1 \mid, \ldots, \mid y_n - \hat{y}_n \mid).
+
+Here a small example of usage of the :func:`median_absolute_error`
+function::
+
+  >>> from sklearn.metrics import median_absolute_error
+  >>> y_true = [3, -0.5, 2, 7]
+  >>> y_pred = [2.5, 0.0, 2, 8]
+  >>> median_absolute_error(y_true, y_pred)
+  0.5
+  >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+  >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
+  >>> median_absolute_error(y_true, y_pred)
+  1.0
 
 R² score, the coefficient of determination
 -------------------------------------------
