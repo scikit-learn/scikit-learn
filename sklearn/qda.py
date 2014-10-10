@@ -121,7 +121,9 @@ class QDA(BaseEstimator, ClassifierMixin):
             rank = np.sum(S > tol)
             if rank < n_features:
                 warnings.warn("Variables are collinear")
-            S2 = (S ** 2) / (len(Xg) - 1)
+            S2 = S ** 2
+            if len(Xg) > 1:
+                S2 /= len(Xg) - 1
             S2 = ((1 - self.reg_param) * S2) + self.reg_param
             if store_covariances:
                 # cov = V * (S^2 / (n-1)) * V.T
@@ -131,7 +133,7 @@ class QDA(BaseEstimator, ClassifierMixin):
         if store_covariances:
             self.covariances_ = cov
         self.means_ = np.asarray(means)
-        self.scalings_ = np.asarray(scalings)
+        self.scalings_ = scalings
         self.rotations_ = rotations
         return self
 
@@ -145,8 +147,8 @@ class QDA(BaseEstimator, ClassifierMixin):
             X2 = np.dot(Xm, R * (S ** (-0.5)))
             norm2.append(np.sum(X2 ** 2, 1))
         norm2 = np.array(norm2).T   # shape = [len(X), n_classes]
-        return (-0.5 * (norm2 + np.sum(np.log(self.scalings_), 1))
-                + np.log(self.priors_))
+        u = np.log([np.prod(s) for s in self.scalings_])
+        return (-0.5 * (norm2 + u) + np.log(self.priors_))
 
     def decision_function(self, X):
         """Apply decision function to an array of samples.
