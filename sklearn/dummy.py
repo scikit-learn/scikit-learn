@@ -327,6 +327,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
         * "mean": always predicts the mean of the training set
         * "median": always predicts the median of the training set
+        * "quantile": always predicts a specified quantile of the training set,
+          provided with the quantile parameter.
         * "constant": always predicts a constant value that is provided by
           the user.
 
@@ -334,11 +336,16 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
 
+    quantile : float in [0.0, 1.0]
+        The quantile to predict using the "quantile" strategy. A quantile of
+        0.5 corresponds to the median, while 0.0 to the minimum and 1.0 to the
+        maximum.
+
     Attributes
     ----------
     constant_ : float or array of shape [n_outputs]
-        Mean or median of the training targets or constant value given the by
-        the user.
+        Mean or median or quantile of the training targets or constant value
+        given by the user.
 
     n_outputs_ : int,
         Number of outputs.
@@ -347,9 +354,10 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         True if the output at fit is 2d, else false.
     """
 
-    def __init__(self, strategy="mean", constant=None):
+    def __init__(self, strategy="mean", constant=None, quantile=None):
         self.strategy = strategy
         self.constant = constant
+        self.quantile = quantile
 
     @property
     @deprecated('This will be removed in version 0.17')
@@ -376,12 +384,14 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             Returns self.
         """
 
-        if self.strategy not in ("mean", "median", "constant"):
-            raise ValueError("Unknown strategy type: %s, "
-                             "expected 'mean', 'median' or 'constant'"
+        if self.strategy not in ("mean", "median", "quantile", "constant"):
+            raise ValueError("Unknown strategy type: %s, expected "
+                             "'mean', 'median', 'quantile' or 'constant'"
                              % self.strategy)
 
         y = check_array(y, accept_sparse='csr', ensure_2d=False)
+        if len(y) == 0:
+            raise ValueError("y must not be empty.")
         self.output_2d_ = (y.ndim == 2)
 
         if self.strategy == "mean":
@@ -389,6 +399,14 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
         elif self.strategy == "median":
             self.constant_ = np.reshape(np.median(y, axis=0), (1, -1))
+
+        elif self.strategy == "quantile":
+            if self.quantile is None or not np.isscalar(self.quantile):
+                raise ValueError("Quantile must be a scalar in the range "
+                                 "[0.0, 1.0], but got %s." % self.quantile)
+
+            self.constant_ = np.reshape(
+                np.percentile(y, axis=0, q=self.quantile * 100.0), (1, -1))
 
         elif self.strategy == "constant":
             if self.constant is None:
