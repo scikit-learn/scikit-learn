@@ -24,6 +24,8 @@ from ..utils import check_consistent_length, _get_n_jobs
 from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange as range
 
+_epsilon = np.finfo(np.double).eps
+
 
 def _modified_weiszfeld_step(X, x_old):
     """Modified Weiszfeld step.
@@ -52,11 +54,10 @@ def _modified_weiszfeld_step(X, x_old):
       T. Kärkkäinen and S. Äyrämö
       http://users.jyu.fi/~samiayr/pdf/ayramo_eurogen05.pdf
     """
-    epsilon = np.finfo(np.double).eps
     X = X.T
     diff = X.T - x_old
     diff_norm = np.sqrt(np.sum(diff ** 2, axis=1))
-    mask = diff_norm >= epsilon
+    mask = diff_norm >= _epsilon
     if mask.sum() < X.shape[1]:  # x_old equals one of our samples
         equals_sample = 1.
     else:
@@ -64,7 +65,7 @@ def _modified_weiszfeld_step(X, x_old):
     diff = diff[mask, :]
     diff_norm = diff_norm[mask][:, np.newaxis]
     quotient_norm = linalg.norm(np.sum(diff / diff_norm, axis=0))
-    if quotient_norm > epsilon:  # to avoid division by zero
+    if quotient_norm > _epsilon:  # to avoid division by zero
         new_direction = (np.sum(X.T[mask, :] / diff_norm, axis=0)
                          / np.sum(1 / diff_norm, axis=0))
     else:
