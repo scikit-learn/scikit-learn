@@ -101,17 +101,19 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
 
         # Mask mapping each class to it's members.
         self.centroids_ = np.empty((n_classes, n_features), dtype=np.float64)
+        # Number of clusters in each class.
+        nk = np.zeros(n_classes)
+
         for cur_class in y_ind:
             center_mask = y_ind == cur_class
+            nk[cur_class] = np.sum(center_mask)
             if sp.issparse(X):
                 center_mask = np.where(center_mask)[0]
             self.centroids_[cur_class] = X[center_mask].mean(axis=0)
 
         if self.shrink_threshold:
-            dataset_centroid_ = np.array(X.mean(axis=0))[0]
-            # Number of clusters in each class.
-            nk = np.array([np.sum(classes == cur_class)
-                           for cur_class in classes])
+            dataset_centroid_ = np.mean(X, axis=0)
+
             # m parameter for determining deviation
             m = np.sqrt((1. / nk) + (1. / n_samples))
             # Calculate deviation using the standard deviation of centroids.
@@ -127,11 +129,10 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
             signs = np.sign(deviation)
             deviation = (np.abs(deviation) - self.shrink_threshold)
             deviation[deviation < 0] = 0
-            deviation = np.multiply(deviation, signs)
+            deviation *= signs
             # Now adjust the centroids using the deviation
-            msd = np.multiply(ms, deviation)
-            self.centroids_ = np.array([dataset_centroid_ + msd[i]
-                                        for i in xrange(n_classes)])
+            msd = ms * deviation
+            self.centroids_ = dataset_centroid_[np.newaxis, :] + msd
         return self
 
     def predict(self, X):
