@@ -38,7 +38,6 @@ __all__ = [
 ]
 
 
-
 def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
     """Compute mean and std deviation for centering, scaling.
 
