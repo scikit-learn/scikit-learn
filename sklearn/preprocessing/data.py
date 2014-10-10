@@ -52,10 +52,10 @@ def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
         mean_ = None
 
     if with_std:
-        is_all_elems_equal = lambda arr:all(arr == arr.take(0))
+        is_all_elems_equal = lambda arr:arr.size > 0 and all(arr == arr.take(0))
 
         std_ = Xr.std(axis=0)
-        if isinstance(std_, np.ndarray):
+        if isinstance(std_, np.ndarray) and std_.size > 0:
             std_[std_ == 0.0] = 1.0
 
             old_std_ = std_
