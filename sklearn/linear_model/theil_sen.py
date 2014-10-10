@@ -51,32 +51,27 @@ def _modified_weiszfeld_step(X, x_old):
     - On Computation of Spatial Median for Robust Data Mining, 2005
       T. Kärkkäinen and S. Äyrämö
       http://users.jyu.fi/~samiayr/pdf/ayramo_eurogen05.pdf
-
-    Notes
-    -----
-    On page 4 of the referenced paper a formal mathematical definition of the
-    algorithm below is given. For an easier understanding, the variable names
-    used in the paper are also used in the algorithm.
     """
     epsilon = np.finfo(np.double).eps
     X = X.T
     diff = X.T - x_old
-    normdiff = np.sqrt(np.sum(diff ** 2, axis=1))
-    mask = normdiff >= epsilon
-    if mask.sum() < X.shape[1]:
-        eta = 1.
+    diff_norm = np.sqrt(np.sum(diff ** 2, axis=1))
+    mask = diff_norm >= epsilon
+    if mask.sum() < X.shape[1]:  # x_old equals one of our samples
+        equals_sample = 1.
     else:
-        eta = 0.
+        equals_sample = 0.
     diff = diff[mask, :]
-    normdiff = normdiff[mask][:, np.newaxis]
-    r = linalg.norm(np.sum(diff / normdiff, axis=0))
-    if r > epsilon:  # to avoid division by zero
-        T = np.sum(X.T[mask, :] / normdiff, axis=0) / \
-            np.sum(1 / normdiff, axis=0)
+    diff_norm = diff_norm[mask][:, np.newaxis]
+    quotient_norm = linalg.norm(np.sum(diff / diff_norm, axis=0))
+    if quotient_norm > epsilon:  # to avoid division by zero
+        new_direction = (np.sum(X.T[mask, :] / diff_norm, axis=0)
+                         / np.sum(1 / diff_norm, axis=0))
     else:
-        T = 1.
-        r = 1.
-    return max(0., 1. - eta / r) * T + min(1., eta / r) * x_old
+        new_direction = 1.
+        quotient_norm = 1.
+    return (max(0., 1. - equals_sample / quotient_norm) * new_direction
+            + min(1., equals_sample / quotient_norm) * x_old)
 
 
 def _spatial_median(X, max_iter=300, tol=1.e-3):
