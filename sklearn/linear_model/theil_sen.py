@@ -172,6 +172,11 @@ def _lstsq(X, y, indices, intercept):
 
     intercept : bool
         Fit intercept or not.
+
+    Returns
+    -------
+    weights : array, shape = [n_subpopulation, n_features + intercept]
+        Solution matrix of n_subpopulation solved least square problems.
     """
     first_elem = 1 if intercept else 0
     n_dim = X.shape[1] + first_elem
