@@ -79,6 +79,9 @@ Enhancements
      parameter. This does not affect errors raised on re-fit. By
 	 `Michal Romaniuk`_.
 
+   - Add ``digits`` parameter to `metrics.classification_report` to allow
+     report to show different precision of floating point numbers. By
+     `Ian Gilmore`_.
 
 Documentation improvements
 ..........................
@@ -3007,3 +3010,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Dougal Sutherland: https://github.com/dougalsutherland
 
 .. _Michal Romaniuk: https://github.com/romaniukm
+
+.. _Ian Gilmore: https://github.com/agileminor
