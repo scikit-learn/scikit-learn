@@ -60,6 +60,5 @@ def test_hard_clamping():
     labels = [1.,0.,-1.]
     for estimator, parameters in ESTIMATORS:
         clf = estimator(**parameters).fit(samples, labels)
-        print clf.transduction_
         assert_array_equal(clf.transduction_[0], np.array([1.]))
         assert_array_equal(clf.transduction_[1], np.array([0.]))
