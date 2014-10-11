@@ -124,6 +124,8 @@ class QDA(BaseEstimator, ClassifierMixin):
             S2 = S ** 2
             if len(Xg) > 1:
                 S2 /= len(Xg) - 1
+            else:
+                warnings.warn("Variance is null for one-element class")
             S2 = ((1 - self.reg_param) * S2) + self.reg_param
             if store_covariances:
                 # cov = V * (S^2 / (n-1)) * V.T
@@ -147,7 +149,7 @@ class QDA(BaseEstimator, ClassifierMixin):
             X2 = np.dot(Xm, R * (S ** (-0.5)))
             norm2.append(np.sum(X2 ** 2, 1))
         norm2 = np.array(norm2).T   # shape = [len(X), n_classes]
-        u = np.log([np.prod(s) for s in self.scalings_])
+        u = np.asarray([np.sum(np.log(s)) for s in self.scalings_])
         return (-0.5 * (norm2 + u) + np.log(self.priors_))
 
     def decision_function(self, X):
