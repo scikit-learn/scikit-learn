@@ -747,7 +747,7 @@ An interesting development of using a :class:`HashingVectorizer` is the ability
 to perform `out-of-core`_ scaling. This means that we can learn from data that
 does not fit into the computer's main memory.
 
-.. _out-of-core: http://en.wikipedia.org/wiki/Out-of-core_algorithm. 
+.. _out-of-core: http://en.wikipedia.org/wiki/Out-of-core_algorithm 
 
 A strategy to implement out-of-core scaling is to stream data to the estimator 
 in mini-batches. Each mini-batch is vectorized using :class:`HashingVectorizer`

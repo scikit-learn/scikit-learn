@@ -185,6 +185,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     tiny = np.finfo(np.float).tiny  # to avoid division by 0 warning
     tiny32 = np.finfo(np.float32).tiny  # to avoid division by 0 warning
+    equality_tolerance = np.finfo(np.float32).eps
 
     while True:
         if Cov.size:
@@ -201,8 +202,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             prev_coef = coefs[n_iter - 1]
 
         alpha[0] = C / n_samples
-        if alpha[0] <= alpha_min:  # early stopping
-            if not (abs(alpha[0] - alpha_min) < 10 * np.finfo(np.float32).eps):
+        if alpha[0] <= alpha_min + equality_tolerance:  # early stopping
+            if abs(alpha[0] - alpha_min) > equality_tolerance:
                 # interpolation factor 0 <= ss < 1
                 if n_iter > 0:
                     # In the first iteration, all alphas are zero, the formula
@@ -265,7 +266,13 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             if diag < 1e-7:
                 # The system is becoming too ill-conditioned.
                 # We have degenerate vectors in our active set.
-                # We'll 'drop for good' the last regressor added
+                # We'll 'drop for good' the last regressor added.
+
+                # Note: this case is very rare. It is no longer triggered by the
+                # test suite. The `equality_tolerance` margin added in 0.16.0 to
+                # get early stopping to work consistently on all versions of
+                # Python including 32 bit Python under Windows seems to make it
+                # very difficult to trigger the 'drop for good' strategy.
                 warnings.warn('Regressors in active set degenerate. '
                               'Dropping a regressor, after %i iterations, '
                               'i.e. alpha=%.3e, '
@@ -1193,6 +1200,11 @@ class LassoLarsIC(LassoLars):
     n_iter_ : int
         number of iterations run by lars_path to find the grid of
         alphas.
+
+    criterion_ : array, shape (n_alphas,)
+        The value of the information criteria ('aic', 'bic') across all
+        alphas. The alpha which has the smallest information criteria
+        is chosen.
 
     Examples
     --------
