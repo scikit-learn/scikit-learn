@@ -1137,7 +1137,8 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
-    digits : number of digits for formatting output floating point values
+    digits : int
+        Number of digits for formatting output floating point values
 
     Returns
     -------

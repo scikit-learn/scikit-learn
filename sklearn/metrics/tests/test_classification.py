@@ -420,15 +420,6 @@ def test_classification_report_multiclass_with_digits():
     y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
 
     # print classification report with class names
-    expected_report_old = """\
-             precision    recall  f1-score   support
-
-     setosa       0.83      0.79      0.81        24
- versicolor       0.33      0.10      0.15        31
-  virginica       0.42      0.90      0.57        20
-
-avg / total       0.51      0.53      0.47        75
-"""
     expected_report = """\
              precision    recall  f1-score   support
 
