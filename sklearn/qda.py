@@ -115,17 +115,16 @@ class QDA(BaseEstimator, ClassifierMixin):
             Xg = X[y == ind, :]
             meang = Xg.mean(0)
             means.append(meang)
+            if len(Xg) == 1:
+                raise ValueError('y has only 1 sample in class %s, covariance '
+                                 'is ill defined.' % str(self.classes_[ind]))
             Xgc = Xg - meang
             # Xgc = U * S * V.T
             U, S, Vt = np.linalg.svd(Xgc, full_matrices=False)
             rank = np.sum(S > tol)
             if rank < n_features:
                 warnings.warn("Variables are collinear")
-            S2 = S ** 2
-            if len(Xg) > 1:
-                S2 /= len(Xg) - 1
-            else:
-                warnings.warn("Variance is null for one-element class")
+            S2 = (S ** 2) / (len(Xg) - 1)
             S2 = ((1 - self.reg_param) * S2) + self.reg_param
             if store_covariances:
                 # cov = V * (S^2 / (n-1)) * V.T
