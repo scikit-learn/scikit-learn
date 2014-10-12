@@ -267,6 +267,10 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
     `n_iter_` : int
         Number of iterations needed for the spatial median.
 
+    n_subpopulation_ : int
+        Number of combinations taken into account from 'n choose k', where n is
+        the number of samples and k is the number of subsamples.
+
     References
     ----------
     - Theil-Sen Estimators in a Multiple Linear Regression Model, 2009
@@ -343,8 +347,8 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
         y = check_array(y, ensure_2d=False)
         check_consistent_length(X, y)
         n_samples, n_features = X.shape
-        n_subsamples, n_subpopulation = self._check_subparams(n_samples,
-                                                              n_features)
+        n_subsamples, self.n_subpopulation_ = self._check_subparams(n_samples,
+                                                                    n_features)
         self.breakdown_ = _breakdown_point(n_samples, n_subsamples)
 
         if self.verbose:
@@ -352,14 +356,15 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
             print("Number of samples: {0}".format(n_samples))
             tol_outliers = int(self.breakdown_ * n_samples)
             print("Tolerable outliers: {0}".format(tol_outliers))
-            print("Number of subpopulations: {0}".format(n_subpopulation))
+            print("Number of subpopulations: {0}".format(
+                self.n_subpopulation_))
 
         # Determine indices of subpopulation
         if np.rint(binom(n_samples, n_subsamples)) <= self.max_subpopulation:
             indices = list(combinations(range(n_samples), n_subsamples))
         else:
             indices = [random_state.randint(0, n_samples, n_subsamples)
-                       for _ in range(n_subpopulation)]
+                       for _ in range(self.n_subpopulation_)]
 
         n_jobs = _get_n_jobs(self.n_jobs)
         index_list = np.array_split(indices, n_jobs)
