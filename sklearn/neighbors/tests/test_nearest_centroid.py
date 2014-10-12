@@ -98,6 +98,16 @@ def test_pickle():
                        " after pickling (classification).")
 
 
+def test_shrinkage_threshold_decoded_y():
+    clf = NearestCentroid(shrink_threshold=0.01)
+    y_ind = np.asarray(y)
+    y_ind[y_ind == -1] = 0
+    clf.fit(X, y_ind)
+    centroid_encoded = clf.centroids_
+    clf.fit(X, y)
+    assert_array_equal(centroid_encoded, clf.centroids_)
+
+
 if __name__ == "__main__":
     import nose
     nose.runmodule()

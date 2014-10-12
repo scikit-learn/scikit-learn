@@ -1201,6 +1201,11 @@ class LassoLarsIC(LassoLars):
         number of iterations run by lars_path to find the grid of
         alphas.
 
+    criterion_ : array, shape (n_alphas,)
+        The value of the information criteria ('aic', 'bic') across all
+        alphas. The alpha which has the smallest information criteria
+        is chosen.
+
     Examples
     --------
     >>> from sklearn import linear_model

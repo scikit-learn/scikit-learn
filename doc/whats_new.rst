@@ -36,6 +36,10 @@ New features
      algorithm that supports out-of-core learning with a ``partial_fit``
      method. By `Kyle Kastner`_.
 
+   - Averaged SGD for :class:`SGDClassifier <linear_model.SGDClassifier>`
+     and :class:`SGDRegressor <linear_model.SGDRegressor>` By
+     `Danny Sullivan`_.
+
 
 Enhancements
 ............
@@ -69,6 +73,12 @@ Enhancements
    - ``DictVectorizer`` can now perform ``fit_transform`` on an iterable in a
      single pass, when giving the option ``sort=False``. By Dan Blanchard.
 
+   - :class:`GridSearchCV` and :class:`RandomizedSearchCV` can now be
+     configured to work with estimators that may fail and raise errors on
+     individual folds. This option is controlled by the `error_score`
+     parameter. This does not affect errors raised on re-fit. By
+	 `Michal Romaniuk`_.
+
 
 Documentation improvements
 ..........................
@@ -91,6 +101,16 @@ Bug fixes
       appropriate error message and suggests a work around.
       By `Danny Sullivan`_.
 
+    - :class:`RBFSampler <kernel_approximation.RBFSampler>` with ``gamma=g``
+      formerly approximated :func:`rbf_kernel <metrics.pairwise.rbf_kernel>`
+      with ``gamma=g/2.``; the definition of ``gamma`` is now consistent,
+      which may substantially change your results if you use a fixed value.
+      (If you cross-validated over ``gamma``, it probably doesn't matter
+      too much.) By `Dougal Sutherland`_.
+
+    - Pipeline object delegate the ``classes_`` attribute to the underlying
+      estimator. It allows for instance to make bagging of a pipeline object.
+      By `Arnaud Joly`_
 
 API changes summary
 -------------------
@@ -112,6 +132,20 @@ API changes summary
 
     - `n_jobs` parameter of the fit method shifted to the constructor of the
        LinearRegression class.
+
+    - The ``predict_proba`` method of :class:`multiclass.OneVsRestClassifier`
+      now returns two probabilities per sample in the multiclass case; this
+      is consistent with other estimators and with the method's documentation,
+      but previous versions accidentally returned only the positive
+      probability. Fixed by Will Lamond and `Lars Buitinck`_.
+
+    - Change default value of precompute in :class:`ElasticNet` and :class:`Lasso`
+      to False. Setting precompute to "auto" was found to be slower when
+      n_samples > n_features since the computation of the Gram matrix is
+      computationally expensive and outweighs the benefit of fitting the Gram
+      for just one alpha.
+      ``precompute="auto"`` is now deprecated and will be removed in 0.18
+      By `Manoj Kumar`_.
 
 .. _changes_0_15_2:
 
@@ -2969,3 +3003,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Nikolay Mayorov: https://github.com/nmayorov
 
 .. _Jatin Shah: http://jatinshah.org/
+
+.. _Dougal Sutherland: https://github.com/dougalsutherland
+
+.. _Michal Romaniuk: https://github.com/romaniukm

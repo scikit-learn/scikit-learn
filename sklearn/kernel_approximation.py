@@ -69,7 +69,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
 
-        self.random_weights_ = (np.sqrt(self.gamma) * random_state.normal(
+        self.random_weights_ = (np.sqrt(2 * self.gamma) * random_state.normal(
             size=(n_features, self.n_components)))
 
         self.random_offset_ = random_state.uniform(0, 2 * np.pi,

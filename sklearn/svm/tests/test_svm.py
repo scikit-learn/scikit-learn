@@ -46,9 +46,7 @@ def test_libsvm_parameters():
 
 
 def test_libsvm_iris():
-    """
-    Check consistency on dataset iris.
-    """
+    """Check consistency on dataset iris."""
 
     # shuffle the dataset so that labels are not ordered
     for k in ('linear', 'rbf'):
@@ -72,6 +70,15 @@ def test_libsvm_iris():
                                        kernel='linear',
                                        random_seed=0)
     assert_greater(np.mean(pred == iris.target), .95)
+
+    # If random_seed >= 0, the libsvm rng is seeded (by calling `srand`), hence
+    # we should get deteriministic results (assuming that there is no other
+    # thread calling this wrapper calling `srand` concurrently).
+    pred2 = svm.libsvm.cross_validation(iris.data,
+                                       iris.target.astype(np.float64), 5,
+                                       kernel='linear',
+                                       random_seed=0)
+    assert_array_equal(pred, pred2)
 
 
 def test_single_sample_1d():
