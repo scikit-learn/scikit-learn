@@ -22,9 +22,9 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 
-from . import (r2_score, mean_absolute_error, mean_squared_error,
-               accuracy_score, f1_score, roc_auc_score,
-               average_precision_score,
+from . import (r2_score, median_absolute_error, mean_absolute_error,
+               mean_squared_error, accuracy_score, f1_score,
+               roc_auc_score, average_precision_score,
                precision_score, recall_score, log_loss)
 from .cluster import adjusted_rand_score
 from ..utils.multiclass import type_of_target
@@ -86,7 +86,7 @@ class _PredictScorer(_BaseScorer):
         else:
             return self._sign * self._score_func(y_true, y_pred,
                                                  **self._kwargs)
-                
+
 
 class _ProbaScorer(_BaseScorer):
     def __call__(self, clf, X, y, sample_weight=None):
@@ -316,6 +316,8 @@ mean_squared_error_scorer = make_scorer(mean_squared_error,
                                         greater_is_better=False)
 mean_absolute_error_scorer = make_scorer(mean_absolute_error,
                                          greater_is_better=False)
+median_absolute_error_scorer = make_scorer(median_absolute_error,
+                                           greater_is_better=False)
 
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
@@ -337,6 +339,7 @@ log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
 adjusted_rand_scorer = make_scorer(adjusted_rand_score)
 
 SCORERS = dict(r2=r2_scorer,
+               median_absolute_error=median_absolute_error_scorer,
                mean_absolute_error=mean_absolute_error_scorer,
                mean_squared_error=mean_squared_error_scorer,
                accuracy=accuracy_scorer, f1=f1_scorer, roc_auc=roc_auc_scorer,
