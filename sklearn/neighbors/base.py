@@ -80,8 +80,17 @@ def _get_weights(dist, weights):
     if weights in (None, 'uniform'):
         return None
     elif weights == 'distance':
-        with np.errstate(divide='ignore'):
-            dist = 1. / dist
+        # if user attempts to classify a point that was zero distance from one
+        # or more training points, those training points are weighted as 1.0
+        # and the other points as 0.0
+        for point_dist_i, point_dist in enumerate(dist):
+            # check if point_dist is iterable
+            # (ex: RadiusNeighborClassifier.predict may set an element of dist
+            # to 1e-6 to represent an 'outlier')
+            if hasattr(point_dist, '__contains__') and 0. in point_dist:
+                dist[point_dist_i] = (point_dist == 0.)
+            else:
+                dist[point_dist_i] = 1. / point_dist
         return dist
     elif callable(weights):
         return weights(dist)
@@ -270,7 +279,7 @@ class KNeighborsMixin(object):
         Returns
         -------
         dist : array
-            Array representing the lengths to point, only present if
+            Array representing the lengths to points, only present if
             return_distance=True
 
         ind : array
