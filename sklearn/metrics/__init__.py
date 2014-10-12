@@ -47,7 +47,6 @@ from .pairwise import pairwise_kernels
 from .regression import explained_variance_score
 from .regression import mean_absolute_error
 from .regression import mean_squared_error
-from .regression import median_absolute_error
 from .regression import r2_score
 
 from .scorer import make_scorer
@@ -81,8 +80,7 @@ __all__ = [
     'make_scorer',
     'matthews_corrcoef',
     'mean_absolute_error',
-    'mean_squared_error',    
-    'median_absolute_error',
+    'mean_squared_error',
     'mutual_info_score',
     'normalized_mutual_info_score',
     'pairwise_distances',

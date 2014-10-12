@@ -29,7 +29,6 @@ from .classification import zero_one_loss
 from .regression import explained_variance_score
 from .regression import mean_absolute_error
 from .regression import mean_squared_error
-from .regression import median_absolute_error
 from .regression import r2_score
 
 # Deprecated in 0.16
