@@ -72,7 +72,7 @@ for n_samples in n_samples_values:
 
     average_time_approx /= float(n_iter)
     average_time_exact /= float(n_iter)
-    accuracy = accuracy/float(n_queries)
+    accuracy /= float(n_iter)
     average_times_approx.append(average_time_approx)
     average_times_exact.append(average_time_exact)
     accuracies.append(accuracy)
