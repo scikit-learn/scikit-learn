@@ -1072,7 +1072,7 @@ and :math:`y_i` is the corresponding true value, then the median absolute error
 
   \text{MedAE}(y, \hat{y}) = \text{median}(\mid y_1 - \hat{y}_1 \mid, \ldots, \mid y_n - \hat{y}_n \mid).
 
-Here a small example of usage of the :func:`median_absolute_error`
+Here is a small example of usage of the :func:`median_absolute_error`
 function::
 
   >>> from sklearn.metrics import median_absolute_error
