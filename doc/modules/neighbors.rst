@@ -536,6 +536,72 @@ return the exact nearest neighbors. Some of the more popular approximate
 nearest neighbor search techniques are locality sensitive hashing, best bin fit
 and balanced box-decomposition tree based search.
 
+Locality Sensitive Hashing Forest
+---------------------------------
+
+The :class:`LSHForest` in scikit-learn implements one of the most promising
+variants of LSH. Prefix trees are used to create a forest, with each leaf of
+a tree corresponding to an actual data point in the database. There are
+:math:`l` such trees which compose the forest and they are constructed using
+independently drawn random sequence of hash functions from :math:`H`. In this
+implementation, "Random Projections" is being used as the LSH technique which
+is an approximation for the cosine distance. The length of the sequence of
+hash functions is kept fixed at 32. Moreover, a prefix tree is implemented
+using sorted arrays and binary search.
+
+There are two phases of tree traversals used in order to answer a query to find
+the :math:`m` nearest neighbors of a point :math:`q`. First, a top-down
+traversal is performed using a binary search to identify the leaf having the
+longest prefix match (maximum depth) with :math:`q`'s label after subjecting
+:math:`q` to the same hash functions. :math:`M >> m` points (total candidates)
+are extracted from the forest, moving up from the previously found maximum 
+depth towards the root synchronously across all trees in the bottom-up
+traversal. `M` is set to  :math:`cl` where :math:`c`, the number of candidates
+extracted from each tree, is a constant. Finally, the similarity of each of
+these :math:`M` points against point :math:`q` is calculated and the top
+:math:`m` points are returned as the nearest neighbors of :math:`q`. Since
+most of the time in these queries is spent calculating the distances to
+candidates, the speedup compared to brute force search is approximately
+:math:`N/M`, where :math:`N` is the number of points in database.
+
+The accuracy of queries can be controlled using parameters :math:`l` and
+:math:`c` (``n_estimators`` and ``n_candidates`` in our implementation).
+The behavior of accuracy while varying these parameters are as follows.
+
+.. figure:: ../auto_examples/neighbors/images/plot_approximate_nearest_neighbors_hyperparameters_001.png
+   :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors_hyperparameters.html
+   :align: center
+   :scale: 50
+
+.. figure:: ../auto_examples/neighbors/images/plot_approximate_nearest_neighbors_hyperparameters_002.png
+   :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors_hyperparameters.html
+   :align: center
+   :scale: 50
+
+For small data sets, brute force method in exact nearest neighbor search can be
+faster than LSHForest for the query time. LSHForest has a sub-linear query time
+scalability with the index size. The exact break even point where LSHForest
+queries become faster than the matching brute force queries dependents on the
+dimensionality, structure of the dataset and required level of precision.
+
+.. topic:: Examples:
+
+  * :ref:`example_neighbors_plot_approximate_nearest_neighbors_hyperparameters.py`: an example of
+    the behavior of hyperparameters of approximate nearest neighbor search using LSH Forest.
+
+  * :ref:`example_neighbors_plot_approximate_nearest_neighbors_scalability.py`: an example of
+    scalability of approximate nearest neighbor search using LSH Forest.
+
+.. topic:: References:
+
+   * `“LSH Forest: Self-Tuning Indexes for Similarity Search”
+     <http://www2005.org/docs/p651.pdf>`_,
+     Bawa, M., Condie, T., Ganesan, P., WWW '05 Proceedings of the 14th
+     international conference on World Wide Web  Pages 651-660
+
+Mathematical description of Locality Sensitive Hashing
+------------------------------------------------------
+
 Locality sensitive hashing (LSH) techniques have been used in many areas where
 nearest neighbor search is performed in high dimensions. The main concept
 behind LSH is to hash each data point in the database using multiple
@@ -583,57 +649,3 @@ in step 2.
      <http://web.mit.edu/andoni/www/papers/cSquared.pdf>`_,
      Alexandr, A., Indyk, P., Foundations of Computer Science, 2006. FOCS
      '06. 47th Annual IEEE Symposium
-
-Locality Sensitive Hashing Forest
----------------------------------
-
-The :class:`LSHForest` in scikit-learn implements one of the most promising
-variants of LSH. Prefix trees are used to create a forest, with each leaf of
-a tree corresponding to an actual data point in the database. There are
-:math:`l` such trees which compose the forest and they are constructed using
-independently drawn random sequence of hash functions from :math:`H`. In this
-implementation, "Random Projections" is being used as the LSH technique and 
-the length of the sequence of hash functions is kept fixed at 32. Moreover,
-a prefix tree is implemented using sorted arrays and binary search.
-
-There are two phases of tree traversals used in order to answer a query to find
-the :math:`m` nearest neighbors of a point :math:`q`. First, a top-down
-traversal is performed using a binary search to identify the leaf having the
-longest prefix match (maximum depth) with :math:`q`'s label after subjecting
-:math:`q` to the same hash functions. :math:`M >> m` points (total candidates)
-are extracted from the forest, moving up from the previously found maximum 
-depth towards the root synchronously across all trees in the bottom-up
-traversal. `M` is set to  :math:`cl` where :math:`c`, the number of candidates
-extracted from each tree, is a constant. Finally, the similarity of each of
-these :math:`M` points against point :math:`q` is calculated and the top
-:math:`m` points are returned as the nearest neighbors of :math:`q`. Euclidean
-distance is the similarity measure used in this implementation. Since
-most of the time in these queries is spent calculating the distances to
-candidates, the speedup compared to brute force search is approximately
-:math:`N/M`, where :math:`N` is the number of points in database.
-
-The query time depends mainly on the parameters :math:`l` and :math:`c`
-(``n_estimators`` and ``n_candidates`` in our implementation). The behavior of
-query time while varying these parameters are as follows.
-
-.. figure:: ../auto_examples/neighbors/images/plot_approximate_nearest_neighbors_001.png
-   :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors.html
-   :align: center
-   :scale: 50
-
-.. figure:: ../auto_examples/neighbors/images/plot_approximate_nearest_neighbors_002.png
-   :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors.html
-   :align: center
-   :scale: 50
-
-.. topic:: Examples:
-
-  * :ref:`example_neighbors_plot_approximate_nearest_neighbors.py`: an example of
-    approximate nearest neighbor search using LSH Forest.
-
-.. topic:: References:
-
-   * `“LSH Forest: Self-Tuning Indexes for Similarity Search”
-     <http://www2005.org/docs/p651.pdf>`_,
-     Bawa, M., Condie, T., Ganesan, P., WWW '05 Proceedings of the 14th
-     international conference on World Wide Web  Pages 651-660
