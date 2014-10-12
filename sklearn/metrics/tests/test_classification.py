@@ -13,7 +13,7 @@ from sklearn.preprocessing import LabelBinarizer, MultiLabelBinarizer
 from sklearn.utils.fixes import np_version
 from sklearn.utils.validation import check_random_state
 
-from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises, clean_warning_registry
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -908,7 +908,7 @@ def test_recall_warnings():
                        np.array([[1, 1], [1, 1]]),
                        np.array([[0, 0], [0, 0]]),
                        average='micro')
-
+    clean_warning_registry()
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
         recall_score(np.array([[0, 0], [0, 0]]),
@@ -920,6 +920,7 @@ def test_recall_warnings():
 
 
 def test_precision_warnings():
+    clean_warning_registry()
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
 
@@ -937,6 +938,7 @@ def test_precision_warnings():
 
 
 def test_fscore_warnings():
+    clean_warning_registry()
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
 

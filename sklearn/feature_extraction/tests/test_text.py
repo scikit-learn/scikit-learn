@@ -31,7 +31,7 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_raises
 from sklearn.utils.testing import (assert_in, assert_less, assert_greater,
-                                   assert_warns_message, assert_raise_message)
+                                   assert_warns_message, assert_raise_message, clean_warning_registry)
 
 from collections import defaultdict, Mapping
 from functools import partial
@@ -344,6 +344,7 @@ def test_tfidf_no_smoothing():
          [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=False, norm='l2')
 
+    clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         1. / np.array([0.])
         numpy_provides_div0_warning = len(w) == 1
@@ -595,14 +596,14 @@ def test_vectorizer_max_df():
     vect.max_df = 0.5  # 0.5 * 3 documents -> max_doc_count == 1.5
     vect.fit(test_data)
     assert_true('a' not in vect.vocabulary_.keys())  # {ae} ignored
-    assert_equal(len(vect.vocabulary_.keys()), 4)    # {bcdt} remain
+    assert_equal(len(vect.vocabulary_.keys()), 4)  # {bcdt} remain
     assert_true('a' in vect.stop_words_)
     assert_equal(len(vect.stop_words_), 2)
 
     vect.max_df = 1
     vect.fit(test_data)
     assert_true('a' not in vect.vocabulary_.keys())  # {ae} ignored
-    assert_equal(len(vect.vocabulary_.keys()), 4)    # {bcdt} remain
+    assert_equal(len(vect.vocabulary_.keys()), 4)  # {bcdt} remain
     assert_true('a' in vect.stop_words_)
     assert_equal(len(vect.stop_words_), 2)
 
@@ -618,14 +619,14 @@ def test_vectorizer_min_df():
     vect.min_df = 2
     vect.fit(test_data)
     assert_true('c' not in vect.vocabulary_.keys())  # {bcdt} ignored
-    assert_equal(len(vect.vocabulary_.keys()), 2)    # {ae} remain
+    assert_equal(len(vect.vocabulary_.keys()), 2)  # {ae} remain
     assert_true('c' in vect.stop_words_)
     assert_equal(len(vect.stop_words_), 4)
 
     vect.min_df = 0.8  # 0.8 * 3 documents -> min_doc_count == 2.4
     vect.fit(test_data)
     assert_true('c' not in vect.vocabulary_.keys())  # {bcdet} ignored
-    assert_equal(len(vect.vocabulary_.keys()), 1)    # {a} remains
+    assert_equal(len(vect.vocabulary_.keys()), 1)  # {a} remains
     assert_true('c' in vect.stop_words_)
     assert_equal(len(vect.stop_words_), 5)
 
