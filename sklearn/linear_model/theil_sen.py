@@ -54,12 +54,11 @@ def _modified_weiszfeld_step(X, x_old):
       T. Kärkkäinen and S. Äyrämö
       http://users.jyu.fi/~samiayr/pdf/ayramo_eurogen05.pdf
     """
-    X = X.T
-    diff = X.T - x_old
+    diff = X - x_old
     diff_norm = np.sqrt(np.sum(diff ** 2, axis=1))
     mask = diff_norm >= _EPSILON
 
-    if mask.sum() < X.shape[1]:  # x_old equals one of our samples
+    if mask.sum() < X.shape[0]:  # x_old equals one of our samples
         equals_sample = 1.
     else:
         equals_sample = 0.
@@ -69,7 +68,7 @@ def _modified_weiszfeld_step(X, x_old):
     quotient_norm = linalg.norm(np.sum(diff / diff_norm, axis=0))
 
     if quotient_norm > _EPSILON:  # to avoid division by zero
-        new_direction = (np.sum(X.T[mask, :] / diff_norm, axis=0)
+        new_direction = (np.sum(X[mask, :] / diff_norm, axis=0)
                          / np.sum(1 / diff_norm, axis=0))
     else:
         new_direction = 1.
