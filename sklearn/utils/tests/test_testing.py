@@ -84,7 +84,8 @@ def test_assert_raise_message():
                   _raise_ValueError, "test")
 
 
-# This class is taken from numpy 1.7
+# This class is inspired from numpy 1.7 with an alteration to check
+# the emptied warning filters after calls to assert_warns.
 class TestWarns(unittest.TestCase):
     def test_warn(self):
         def f():
@@ -92,6 +93,10 @@ class TestWarns(unittest.TestCase):
             return 3
 
         assert_equal(assert_warns(UserWarning, f), 3)
+
+        # Test that the warning registry is empty after assert_warns
+        assert_equal(sys.modules['warnings'].filters, [])
+
         assert_raises(AssertionError, assert_no_warnings, f)
         assert_equal(assert_no_warnings(lambda x: x, 1), 1)
 
