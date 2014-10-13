@@ -1,8 +1,10 @@
 import numpy as np
 
 from sklearn.utils.class_weight import compute_class_weight
+from sklearn.utils.class_weight import compute_sample_weight
 
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
@@ -51,3 +53,30 @@ def test_compute_class_weight_auto_unordered():
     assert_almost_equal(cw.sum(), classes.shape)
     assert_equal(len(cw), len(classes))
     assert_array_almost_equal(cw, np.array([1.636, 0.818, 0.545]), decimal=3)
+
+
+def test_compute_sample_weight():
+    """Test compute_sample_weight
+
+    Make sure it returns the same unique values as compute_class_weight
+    and in the same size as `y`.
+    """
+    classes = np.array([1, 0, 3, 5])
+    y = np.asarray([1, 0, 0, 3, 3, 3, 5, 5, 5, 5, 5, 5, 5])
+    sw = compute_sample_weight("auto", classes, y)
+    cw = compute_class_weight("auto", classes, y)
+
+    assert_array_equal(np.unique(sw), np.unique(cw))
+    assert_equal(sw.shape[0], y.shape[0])
+
+
+def test_compute_sample_weight_error_handling():
+    """Test error handling of compute_sample_weight
+
+    compute_sample_weight should raise an error when 'y' has a label not
+    in classes.
+    """
+    classes = np.array([1, 0])
+    y = np.asarray([1, 0, 0, 3, 3])
+
+    assert_raises(ValueError, compute_sample_weight, "auto", classes, y)

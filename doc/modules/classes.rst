@@ -987,6 +987,8 @@ See the :ref:`metrics` section of the user guide for further details.
    :template: class.rst
 
    neural_network.BernoulliRBM
+   neural_network.ELMClassifier
+   neural_network.ELMRegressor
 
 
 .. _cross_decomposition_ref:

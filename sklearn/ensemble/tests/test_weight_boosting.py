@@ -272,6 +272,23 @@ def test_sample_weight_missing():
     assert_raises(ValueError, clf.fit, X, y_regr)
 
 
+def test_sample_weight_missing():
+    from sklearn.linear_model import LinearRegression
+    from sklearn.cluster import KMeans
+
+    clf = AdaBoostClassifier(LinearRegression(), algorithm="SAMME")
+    assert_raises(ValueError, clf.fit, X, y_regr)
+
+    clf = AdaBoostRegressor(LinearRegression())
+    assert_raises(ValueError, clf.fit, X, y_regr)
+
+    clf = AdaBoostClassifier(KMeans(), algorithm="SAMME")
+    assert_raises(ValueError, clf.fit, X, y_regr)
+
+    clf = AdaBoostRegressor(KMeans())
+    assert_raises(ValueError, clf.fit, X, y_regr)
+
+
 def test_sparse_classification():
     """Check classification with sparse input."""
 
