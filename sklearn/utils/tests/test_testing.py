@@ -85,13 +85,17 @@ def test_assert_raise_message():
 
 
 # This class is inspired from numpy 1.7 with an alteration to check
-# the emptied warning filters after calls to assert_warns.
+# the reset warning filters after calls to assert_warns.
+# This assert_warns behavior is specific to scikit-learn.
 class TestWarns(unittest.TestCase):
     def test_warn(self):
         def f():
             warnings.warn("yo")
             return 3
 
+        # Test that assert_warns is not impacted by externally set
+        # filters and is reset internally.
+        warnings.simplefilter("ignore", UserWarning)
         assert_equal(assert_warns(UserWarning, f), 3)
 
         # Test that the warning registry is empty after assert_warns
