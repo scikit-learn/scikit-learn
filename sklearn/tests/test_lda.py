@@ -18,6 +18,7 @@ X1 = np.array([[-2, ], [-1, ], [-1, ], [1, ], [1, ], [2, ]], dtype='f')
 
 
 solvers = ['svd', 'lsqr', 'eigen']
+alphas = ['ledoit_wolf', 0, None, 0.43]
 
 
 def test_lda_predict():
@@ -27,29 +28,32 @@ def test_lda_predict():
     for simple toy data.
     """
     for solver in solvers:
-        clf = lda.LDA(solver=solver)
-        y_pred = clf.fit(X, y).predict(X)
-        assert_array_equal(y_pred, y, 'using solver ' + str(solver))
-
-        # Assert that it works with 1D data
-        y_pred1 = clf.fit(X1, y).predict(X1)
-        assert_array_equal(y_pred1, y, 'using solver ' + str(solver))
-
-        # Test probability estimates
-        y_proba_pred1 = clf.predict_proba(X1)
-        assert_array_equal((y_proba_pred1[:, 1] > 0.5) + 1, y,
-                           'using solver ' + str(solver))
-        y_log_proba_pred1 = clf.predict_log_proba(X1)
-        assert_array_almost_equal(np.exp(y_log_proba_pred1), y_proba_pred1, 8,
-                                  'using solver ' + str(solver))
-
-        # Primarily test for commit 2f34950 -- "reuse" of priors
-        y_pred3 = clf.fit(X, y3).predict(X)
-        # LDA shouldn't be able to separate those
-        assert_true(np.any(y_pred3 != y3), 'using solver ' + str(solver))
+        for alpha in alphas:
+            clf = lda.LDA(solver=solver, alpha=alpha)
+            y_pred = clf.fit(X, y).predict(X)
+            assert_array_equal(y_pred, y, 'solver ' + str(solver))
+    
+            # Assert that it works with 1D data
+            y_pred1 = clf.fit(X1, y).predict(X1)
+            assert_array_equal(y_pred1, y, 'solver ' + str(solver))
+    
+            # Test probability estimates
+            y_proba_pred1 = clf.predict_proba(X1)
+            assert_array_equal((y_proba_pred1[:, 1] > 0.5) + 1, y,
+                               'solver ' + str(solver))
+            y_log_proba_pred1 = clf.predict_log_proba(X1)
+            assert_array_almost_equal(np.exp(y_log_proba_pred1), y_proba_pred1, 8,
+                                      'solver ' + str(solver))
+    
+            # Primarily test for commit 2f34950 -- "reuse" of priors
+            y_pred3 = clf.fit(X, y3).predict(X)
+            # LDA shouldn't be able to separate those
+            assert_true(np.any(y_pred3 != y3), 'solver ' + str(solver))
 
 
 def test_lda_transform():
+    """Test LDA transform.
+    """
     for solver in solvers:
         clf = lda.LDA(solver=solver)
         try:
@@ -94,8 +98,7 @@ def test_lda_orthogonality():
 
 
 def test_lda_scaling():
-    """
-    Test if classification works correctly with differently scaled features.
+    """Test if classification works correctly with differently scaled features.
     """
     n = 100
     # use uniform distribution of features to make sure there is absolutely no
