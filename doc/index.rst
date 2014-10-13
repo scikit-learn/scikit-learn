@@ -62,8 +62,7 @@
 
     </h2>
     <blockquote>
-    <p>Identifying to which set of categories a new observation belong
-    to.</p>
+    <p>Identifying to which category an object belongs to.</p>
     <div class="box-links">
     <strong>Applications</strong>: Spam detection, Image recognition.</br>
     <strong>Algorithms</strong>:&nbsp;
@@ -93,7 +92,7 @@
 
     </h2>
     <blockquote>
-    <p>Predicting a continuous value for a new example.</p>
+    <p>Predicting a continuous-valued attribute associated with an object.</p>
     <div class="box-links">
     <strong>Applications</strong>: Drug response, Stock prices.</br>
     <strong>Algorithms</strong>:&nbsp;

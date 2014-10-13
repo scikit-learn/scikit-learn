@@ -418,7 +418,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             raise ValueError("newton-cg and lbfgs solvers support only "
                              "dual=False, got dual=%s" % dual)
     # Preprocessing.
-    X = check_array(X, accept_sparse='csc', dtype=np.float64)
+    X = check_array(X, accept_sparse='csr', dtype=np.float64)
     y = check_array(y, ensure_2d=False, copy=copy)
     _, n_features = X.shape
     check_consistent_length(X, y)
@@ -1190,7 +1190,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 raise ValueError("newton-cg and lbfgs solvers support only "
                                  "the primal form.")
 
-        X = check_array(X, accept_sparse='csc', dtype=np.float64)
+        X = check_array(X, accept_sparse='csr', dtype=np.float64)
         y = check_array(y, ensure_2d=False)
 
         if self.multi_class not in ['ovr', 'multinomial']:

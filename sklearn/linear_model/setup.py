@@ -13,10 +13,8 @@ def configuration(parent_package='', top_path=None):
 
     cblas_libs, blas_info = get_blas_info()
 
-    libraries = []
     if os.name == 'posix':
         cblas_libs.append('m')
-        libraries.append('m')
 
     config.add_extension('cd_fast', sources=['cd_fast.c'],
                          libraries=cblas_libs,
@@ -28,13 +26,17 @@ def configuration(parent_package='', top_path=None):
 
     config.add_extension('sgd_fast',
                          sources=['sgd_fast.c'],
-                         include_dirs=[numpy.get_include()],
-                         libraries=libraries,
-                         )
+                         include_dirs=[join('..', 'src', 'cblas'),
+                                       numpy.get_include(),
+                                       blas_info.pop('include_dirs', [])],
+                         libraries=cblas_libs,
+                         extra_compile_args=blas_info.pop('extra_compile_args',
+                                                          []),
+                         **blas_info)
 
     config.add_extension('learning_rates',
                          sources=['learning_rates.c'],
-                         libraries=libraries,
+                         libraries=cblas_libs,
                          )
 
     # add other directories

@@ -37,6 +37,7 @@ from sklearn.metrics import log_loss
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
+from sklearn.metrics import median_absolute_error
 from sklearn.metrics import precision_score
 from sklearn.metrics import r2_score
 from sklearn.metrics import recall_score
@@ -87,6 +88,7 @@ from sklearn.metrics.base import _average_binary_score
 REGRESSION_METRICS = {
     "mean_absolute_error": mean_absolute_error,
     "mean_squared_error": mean_squared_error,
+    "median_absolute_error": median_absolute_error,
     "explained_variance_score": explained_variance_score,
     "r2_score": r2_score,
 }
@@ -278,7 +280,8 @@ MULTILABELS_METRICS = [
 
 # Regression metrics with "multioutput-continuous" format support
 MULTIOUTPUT_METRICS = [
-    "mean_absolute_error", "mean_squared_error", "r2_score",
+    "mean_absolute_error", "mean_squared_error", "median_absolute_error",
+    "r2_score",
 ]
 
 # Symmetric with respect to their input arguments y_true and y_pred
@@ -291,7 +294,8 @@ SYMMETRIC_METRICS = [
 
     "f1_score", "weighted_f1_score", "micro_f1_score", "macro_f1_score",
 
-    "matthews_corrcoef_score", "mean_absolute_error", "mean_squared_error"
+    "matthews_corrcoef_score", "mean_absolute_error", "mean_squared_error",
+    "median_absolute_error"
 
 ]
 
@@ -321,6 +325,7 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = [
     "hamming_loss",
     "hinge_loss",
     "matthews_corrcoef_score",
+    "median_absolute_error",
 ]
 
 

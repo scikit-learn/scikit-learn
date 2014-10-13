@@ -31,7 +31,8 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_raises
 from sklearn.utils.testing import (assert_in, assert_less, assert_greater,
-                                   assert_warns_message, assert_raise_message)
+                                   assert_warns_message, assert_raise_message,
+                                   clean_warning_registry)
 
 from collections import defaultdict, Mapping
 from functools import partial
@@ -344,6 +345,7 @@ def test_tfidf_no_smoothing():
          [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=False, norm='l2')
 
+    clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         1. / np.array([0.])
         numpy_provides_div0_warning = len(w) == 1

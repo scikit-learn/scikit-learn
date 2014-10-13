@@ -24,12 +24,13 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
+from ..externals import six
 from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
 from ..utils import deprecated
-from ..externals import six
+from ..utils.fixes import frombuffer_empty
 
 __all__ = ['CountVectorizer',
            'ENGLISH_STOP_WORDS',
@@ -732,11 +733,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 raise ValueError("empty vocabulary; perhaps the documents only"
                                  " contain stop words")
 
-        # some Python/Scipy versions won't accept an array.array:
-        if j_indices:
-            j_indices = np.frombuffer(j_indices, dtype=np.intc)
-        else:
-            j_indices = np.array([], dtype=np.int32)
+        j_indices = frombuffer_empty(j_indices, dtype=np.intc)
         indptr = np.frombuffer(indptr, dtype=np.intc)
         values = np.ones(len(j_indices))
 
@@ -1091,14 +1088,14 @@ class TfidfVectorizer(CountVectorizer):
         and always treated as a token separator).
 
     max_df : float in range [0.0, 1.0] or int, optional, 1.0 by default
-        When building the vocabulary ignore terms that have a term frequency
+        When building the vocabulary ignore terms that have a document frequency
         strictly higher than the given threshold (corpus specific stop words).
         If float, the parameter represents a proportion of documents, integer
         absolute counts.
         This parameter is ignored if vocabulary is not None.
 
     min_df : float in range [0.0, 1.0] or int, optional, 1 by default
-        When building the vocabulary ignore terms that have a term frequency
+        When building the vocabulary ignore terms that have a document frequency
         strictly lower than the given threshold.
         This value is also called cut-off in the literature.
         If float, the parameter represents a proportion of documents, integer

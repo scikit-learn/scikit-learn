@@ -38,7 +38,7 @@ cdef class Constant(LearningRate):
 cdef class Optimal(LearningRate):
     @cython.cdivision(True)
     cdef double eta(self, double eta0, double alpha, double t, double power_t):
-        return 1.0 / (alpha * t)
+        return 1.0 / (alpha * (t - 1))
 
 cdef class InvScaling(LearningRate):
     @cython.cdivision(True)

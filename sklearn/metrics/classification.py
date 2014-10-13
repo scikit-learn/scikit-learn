@@ -1117,7 +1117,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted',
 
 
 def classification_report(y_true, y_pred, labels=None, target_names=None,
-                          sample_weight=None):
+                          sample_weight=None, digits=2):
     """Build a text report showing the main classification metrics
 
     Parameters
@@ -1136,6 +1136,9 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
+
+    digits : int
+        Number of digits for formatting output floating point values
 
     Returns
     -------
@@ -1172,7 +1175,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         target_names = ['%s' % l for l in labels]
     else:
         width = max(len(cn) for cn in target_names)
-        width = max(width, len(last_line_heading))
+        width = max(width, len(last_line_heading), digits)
 
     headers = ["precision", "recall", "f1-score", "support"]
     fmt = '%% %ds' % width  # first column: class name
@@ -1192,7 +1195,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     for i, label in enumerate(labels):
         values = [target_names[i]]
         for v in (p[i], r[i], f1[i]):
-            values += ["{0:0.2f}".format(v)]
+            values += ["{0:0.{1}f}".format(v, digits)]
         values += ["{0}".format(s[i])]
         report += fmt % tuple(values)
 
@@ -1203,7 +1206,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     for v in (np.average(p, weights=s),
               np.average(r, weights=s),
               np.average(f1, weights=s)):
-        values += ["{0:0.2f}".format(v)]
+        values += ["{0:0.{1}f}".format(v, digits)]
     values += ['{0}'.format(np.sum(s))]
     report += fmt % tuple(values)
     return report
