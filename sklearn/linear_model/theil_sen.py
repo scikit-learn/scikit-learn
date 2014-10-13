@@ -64,7 +64,7 @@ def _modified_weiszfeld_step(X, x_old):
     else:
         equals_sample = 0.
 
-    diff = diff[mask, :]
+    diff = diff[mask]
     diff_norm = diff_norm[mask][:, np.newaxis]
     quotient_norm = linalg.norm(np.sum(diff / diff_norm, axis=0))
 
