@@ -1026,7 +1026,6 @@ functions to measure regression performance. Some of those have been enhanced
 to handle the multioutput case: :func:`mean_absolute_error`,
 :func:`mean_squared_error`, :func:`median_absolute_error` and :func:`r2_score`.
 
-
 Explained variance score
 -------------------------
 
@@ -1133,6 +1132,8 @@ and :math:`y_i` is the corresponding true value, then the median absolute error
 
   \text{MedAE}(y, \hat{y}) = \text{median}(\mid y_1 - \hat{y}_1 \mid, \ldots, \mid y_n - \hat{y}_n \mid).
 
+The :func:`median_absolute_error` does not support multioutput.
+
 Here is a small example of usage of the :func:`median_absolute_error`
 function::
 
@@ -1141,10 +1142,6 @@ function::
   >>> y_pred = [2.5, 0.0, 2, 8]
   >>> median_absolute_error(y_true, y_pred)
   0.5
-  >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
-  >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
-  >>> median_absolute_error(y_true, y_pred)
-  1.0
 
 R² score, the coefficient of determination
 -------------------------------------------
