@@ -57,11 +57,8 @@ def _modified_weiszfeld_step(X, x_old):
     diff = X - x_old
     diff_norm = np.sqrt(np.sum(diff ** 2, axis=1))
     mask = diff_norm >= _EPSILON
-
-    if mask.sum() < X.shape[0]:  # x_old equals one of our samples
-        equals_sample = 1.
-    else:
-        equals_sample = 0.
+    # x_old equals one of our samples
+    is_x_old_in_X = int(mask.sum() < X.shape[0])
 
     diff = diff[mask]
     diff_norm = diff_norm[mask][:, np.newaxis]
@@ -74,8 +71,8 @@ def _modified_weiszfeld_step(X, x_old):
         new_direction = 1.
         quotient_norm = 1.
 
-    return (max(0., 1. - equals_sample / quotient_norm) * new_direction
-            + min(1., equals_sample / quotient_norm) * x_old)
+    return (max(0., 1. - is_x_old_in_X / quotient_norm) * new_direction
+            + min(1., is_x_old_in_X / quotient_norm) * x_old)
 
 
 def _spatial_median(X, max_iter=300, tol=1.e-3):
