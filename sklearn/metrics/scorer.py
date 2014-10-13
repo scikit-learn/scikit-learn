@@ -316,6 +316,8 @@ mean_squared_error_scorer = make_scorer(mean_squared_error,
                                         greater_is_better=False)
 mean_absolute_error_scorer = make_scorer(mean_absolute_error,
                                          greater_is_better=False)
+median_absolute_error_scorer = make_scorer(median_absolute_error,
+                                           greater_is_better=False)
 
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
@@ -337,6 +339,7 @@ log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
 adjusted_rand_scorer = make_scorer(adjusted_rand_score)
 
 SCORERS = dict(r2=r2_scorer,
+               median_absolute_error=median_absolute_error_scorer,
                mean_absolute_error=mean_absolute_error_scorer,
                mean_squared_error=mean_squared_error_scorer,
                accuracy=accuracy_scorer, f1=f1_scorer, roc_auc=roc_auc_scorer,
