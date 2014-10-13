@@ -1114,7 +1114,7 @@ function::
   >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
   >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
   >>> median_absolute_error(y_true, y_pred)
-  1.0
+  0.75
 
 R² score, the coefficient of determination
 -------------------------------------------

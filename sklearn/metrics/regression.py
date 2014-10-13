@@ -204,11 +204,11 @@ def median_absolute_error(y_true, y_pred):
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> median_absolute_error(y_true, y_pred)
-    1.0
+    0.75
 
     """
     y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
-    return np.median(np.abs(y_pred - y_true))
+    return np.median(np.median(np.abs(y_pred - y_true), axis=1))
 
 
 def explained_variance_score(y_true, y_pred, sample_weight=None):
