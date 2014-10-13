@@ -61,10 +61,11 @@ for the training samples::
     >>> y = [0, 1]
     >>> clf = SGDClassifier(loss="hinge", penalty="l2")
     >>> clf.fit(X, y)
-    SGDClassifier(alpha=0.0001, class_weight=None, epsilon=0.1, eta0=0.0,
-           fit_intercept=True, l1_ratio=0.15, learning_rate='optimal',
-           loss='hinge', n_iter=5, n_jobs=1, penalty='l2', power_t=0.5,
-           random_state=None, shuffle=False, verbose=0, warm_start=False)
+    SGDClassifier(alpha=0.0001, average=False, class_weight=None, epsilon=0.1,
+           eta0=0.0, fit_intercept=True, l1_ratio=0.15,
+           learning_rate='optimal', loss='hinge', n_iter=5, n_jobs=1,
+           penalty='l2', power_t=0.5, random_state=None, shuffle=False,
+           verbose=0, warm_start=False)
 
 
 After being fitted, the model can then be used to predict new values::
@@ -162,6 +163,12 @@ further information.
  - :ref:`example_linear_model_plot_sgd_weighted_samples.py`
  - :ref:`example_svm_plot_separating_hyperplane_unbalanced.py` (See the `Note`)
 
+:class:`SGDClassifier` supports averaged SGD (ASGD). Averaging can be enabled
+by setting ```average=True```. ASGD works by averaging the coefficients
+of the plain SGD over each iteration over a sample. When using ASGD
+the learning rate can be larger and even constant leading on some
+datasets to a speed up in training time.
+
 Regression
 ==========
 
@@ -183,6 +190,9 @@ The Huber and epsilon-insensitive loss functions can be used for
 robust regression. The width of the insensitive region has to be
 specified via the parameter ``epsilon``. This parameter depends on the
 scale of the target variables.
+
+:class:`SGDRegressor` supports averaged SGD as :class:`SGDClassifier`.
+Averaging can be enabled by setting ```average=True```
 
 
 Stochastic Gradient Descent for sparse data
@@ -245,6 +255,8 @@ Tips on Practical Use
     it is often wise to scale the feature values by some constant `c`
     such that the average L2 norm of the training data equals one.
 
+  * We found that Averaged SGD works best with a larger number of features
+    and a higher eta0
 
 .. topic:: References:
 
@@ -368,6 +380,11 @@ The model parameters can be accessed through the members ``coef_`` and
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.124.4696>`_
    H. Zou, T. Hastie - Journal of the Royal Statistical Society Series B,
    67 (2), 301-320.
+
+ * `"Towards Optimal One Pass Large Scale Learning with
+   Averaged Stochastic Gradient Descent"
+   <http://arxiv.org/pdf/1107.2490v2.pdf>`_
+   Xu, Wei
 
 
 Implementation details

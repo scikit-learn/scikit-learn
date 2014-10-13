@@ -36,6 +36,10 @@ New features
      algorithm that supports out-of-core learning with a ``partial_fit``
      method. By `Kyle Kastner`_.
 
+   - Averaged SGD for :class:`SGDClassifier <linear_model.SGDClassifier>`
+     and :class:`SGDRegressor <linear_model.SGDRegressor>` By
+     `Danny Sullivan`_.
+
 
 Enhancements
 ............
@@ -72,9 +76,12 @@ Enhancements
    - :class:`GridSearchCV` and :class:`RandomizedSearchCV` can now be
      configured to work with estimators that may fail and raise errors on
      individual folds. This option is controlled by the `error_score`
-     parameter. This does not affect errors raised on re-fit. By 
+     parameter. This does not affect errors raised on re-fit. By
 	 `Michal Romaniuk`_.
 
+   - Add ``digits`` parameter to `metrics.classification_report` to allow
+     report to show different precision of floating point numbers. By
+     `Ian Gilmore`_.
 
 Documentation improvements
 ..........................
@@ -104,6 +111,9 @@ Bug fixes
       (If you cross-validated over ``gamma``, it probably doesn't matter
       too much.) By `Dougal Sutherland`_.
 
+    - Pipeline object delegate the ``classes_`` attribute to the underlying
+      estimator. It allows for instance to make bagging of a pipeline object.
+      By `Arnaud Joly`_
 
 API changes summary
 -------------------
@@ -3000,3 +3010,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Dougal Sutherland: https://github.com/dougalsutherland
 
 .. _Michal Romaniuk: https://github.com/romaniukm
+
+.. _Ian Gilmore: https://github.com/agileminor

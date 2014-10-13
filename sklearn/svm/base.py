@@ -7,7 +7,7 @@ from abc import ABCMeta, abstractmethod
 
 from . import libsvm, liblinear
 from . import libsvm_sparse
-from ..base import BaseEstimator, ClassifierMixin
+from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..preprocessing import LabelEncoder
 from ..utils import check_array, check_random_state, column_or_1d
 from ..utils import ConvergenceWarning, compute_class_weight
@@ -413,20 +413,10 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError('coef_ is only available when using a '
                              'linear kernel')
 
-        if self.dual_coef_.shape[0] == 1:
-            # binary classifier
-            coef = -safe_sparse_dot(self.dual_coef_, self.support_vectors_)
-        else:
-            # 1vs1 classifier
-            coef = _one_vs_one_coef(self.dual_coef_, self.n_support_,
-                                    self.support_vectors_)
-            if sp.issparse(coef[0]):
-                coef = sp.vstack(coef).tocsr()
-            else:
-                coef = np.vstack(coef)
+        coef = self._get_coef()
 
-        # coef_ being a read-only property it's better to mark the value as
-        # immutable to avoid hiding potential bugs for the unsuspecting user
+        # coef_ being a read-only property, it's better to mark the value as
+        # immutable to avoid hiding potential bugs for the unsuspecting user.
         if sp.issparse(coef):
             # sparse matrix do not have global flags
             coef.data.flags.writeable = False
@@ -434,6 +424,9 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             # regular dense array
             coef.flags.writeable = False
         return coef
+
+    def _get_coef(self):
+        return safe_sparse_dot(self.dual_coef_, self.support_vectors_)
 
 
 class BaseSVC(BaseLibSVM, ClassifierMixin):
@@ -584,6 +577,22 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
             self.nu, self.epsilon, self.shrinking,
             self.probability, self.n_support_,
             self.probA_, self.probB_)
+
+    def _get_coef(self):
+        if self.dual_coef_.shape[0] == 1:
+            # binary classifier
+            coef = -safe_sparse_dot(self.dual_coef_, self.support_vectors_)
+        else:
+            # 1vs1 classifier
+            coef = _one_vs_one_coef(self.dual_coef_, self.n_support_,
+                                    self.support_vectors_)
+            if sp.issparse(coef[0]):
+                coef = sp.vstack(coef).tocsr()
+            else:
+                coef = np.vstack(coef)
+
+        return coef
+
 
 def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
     """Find the liblinear magic number for the solver.
