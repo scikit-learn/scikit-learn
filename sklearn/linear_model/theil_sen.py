@@ -21,6 +21,7 @@ from .base import LinearModel
 from ..base import RegressorMixin
 from ..utils import check_array, check_random_state, ConvergenceWarning
 from ..utils import check_consistent_length, _get_n_jobs
+from ..utils.random import choice
 from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange as range
 
@@ -360,7 +361,10 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
         if np.rint(binom(n_samples, n_subsamples)) <= self.max_subpopulation:
             indices = list(combinations(range(n_samples), n_subsamples))
         else:
-            indices = [random_state.randint(0, n_samples, n_subsamples)
+            indices = [choice(n_samples,
+                              size=n_subsamples,
+                              replace=False,
+                              random_state=random_state)
                        for _ in range(self.n_subpopulation_)]
 
         n_jobs = _get_n_jobs(self.n_jobs)
