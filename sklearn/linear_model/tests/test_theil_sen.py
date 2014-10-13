@@ -121,6 +121,12 @@ def test_spatial_median_1d():
     true_median = 2.
     _, median = _spatial_median(X)
     assert_array_almost_equal(median, true_median)
+    # Test larger problem and for exact solution in 1d case
+    random_state = np.random.RandomState(0)
+    X = random_state.randint(100, size=(1000, 1))
+    true_median = np.median(X.ravel())
+    _, median = _spatial_median(X)
+    assert_array_equal(median, true_median)
 
 
 def test_spatial_median_2d():
