@@ -336,15 +336,16 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
 
-    quantile : int or float in [0.0, 1.0]
-        The quantile to predict using the "quantile" strategy. A quantile of 0.5
-        corresponds to the median, while 0.0 to the minimum and 1.0 to the maximum.
+    quantile : float in [0.0, 1.0]
+        The quantile to predict using the "quantile" strategy. A quantile of
+        0.5 corresponds to the median, while 0.0 to the minimum and 1.0 to the
+        maximum.
 
     Attributes
     ----------
     constant_ : float or array of shape [n_outputs]
-        Mean or median or quantile of the training targets or constant value given by
-        the user.
+        Mean or median or quantile of the training targets or constant value
+        given by the user.
 
     n_outputs_ : int,
         Number of outputs.
@@ -384,8 +385,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         """
 
         if self.strategy not in ("mean", "median", "quantile", "constant"):
-            raise ValueError("Unknown strategy type: %s, "
-                             "expected 'mean', 'median', 'quantile' or 'constant'"
+            raise ValueError("Unknown strategy type: %s, expected "
+                             "'mean', 'median', 'quantile' or 'constant'"
                              % self.strategy)
 
         y = check_array(y, accept_sparse='csr', ensure_2d=False)
