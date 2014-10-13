@@ -180,7 +180,7 @@ value. This is not the case in this implementation: iteration stops when
 centroids move less than the tolerance.
 
 Given enough time, K-means will always converge, however this may be to a local
-minimum. This is highly dependent on the the initialization of the centroids.
+minimum. This is highly dependent on the initialization of the centroids.
 As a result, the computation is often done several times, with different
 initializations of the centroids. One method to help address this issue is the
 k-means++ initialization scheme, which has been implemented in scikit-learn
@@ -1221,7 +1221,7 @@ mean of homogeneity and completeness**:
 .. topic:: References
 
  .. [RH2007] `V-Measure: A conditional entropy-based external cluster evaluation
-   measure <http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf>`_
+   measure <http://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
    Andrew Rosenberg and Julia Hirschberg, 2007
 
  .. [B2011] `Identication and Characterization of Events in Social Media

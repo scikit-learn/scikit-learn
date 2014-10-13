@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2007-2009 Cournapeau David <cournape@gmail.com>
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
+# License: 3-clause BSD
 
 descr = """A set of python modules for machine learning and data mining"""
 
@@ -22,7 +23,8 @@ builtins.__SKLEARN_SETUP__ = True
 
 DISTNAME = 'scikit-learn'
 DESCRIPTION = 'A set of python modules for machine learning and data mining'
-LONG_DESCRIPTION = open('README.rst').read()
+with open('README.rst') as f:
+    LONG_DESCRIPTION = f.read()
 MAINTAINER = 'Andreas Mueller'
 MAINTAINER_EMAIL = 'amueller@ais.uni-bonn.de'
 URL = 'http://scikit-learn.org'

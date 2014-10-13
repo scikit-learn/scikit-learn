@@ -64,22 +64,18 @@ def _not_in_sphinx():
 class ReutersParser(html_parser.HTMLParser):
     """Utility class to parse a SGML file and yield documents one at a time."""
 
-    def __init__(self, verbose=0, encoding='latin-1'):
-        html_parser.HTMLParser.__init__(self, verbose)
+    def __init__(self, encoding='latin-1'):
+        html_parser.HTMLParser.__init__(self)
         self._reset()
         self.encoding = encoding
 
-        if not six.PY2:
-            # In Python 3 need to be defined explicitly
-            def handle_starttag(tag, attrs):
-                method = 'start_' + tag
-                getattr(self, method, lambda x: None)(attrs)
-            self.handle_starttag = handle_starttag
+    def handle_starttag(self, tag, attrs):
+        method = 'start_' + tag
+        getattr(self, method, lambda x: None)(attrs)
 
-            def handle_endtag(tag):
-                method = 'end_' + tag
-                getattr(self, method, lambda: None)()
-            self.handle_endtag = handle_endtag
+    def handle_endtag(self, tag):
+        method = 'end_' + tag
+        getattr(self, method, lambda: None)()
 
     def _reset(self):
         self.in_title = 0

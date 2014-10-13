@@ -6,8 +6,8 @@ import scipy.sparse as sp
 import numpy as np
 
 from .fixes import sparse_min_max
-from .sparsefuncs_fast import (csr_mean_variance_axis0,
-                               csc_mean_variance_axis0)
+from .sparsefuncs_fast import csr_mean_variance_axis0 as _csr_mean_var_axis0
+from .sparsefuncs_fast import csc_mean_variance_axis0 as _csc_mean_var_axis0
 
 
 def _raise_typeerror(X):
@@ -53,13 +53,16 @@ def inplace_csr_row_scale(X, scale):
     X.data *= np.repeat(scale, np.diff(X.indptr))
 
 
-def mean_variance_axis0(X):
+def mean_variance_axis(X, axis):
     """Compute mean and variance along axis 0 on a CSR or CSC matrix
 
     Parameters
     ----------
     X: CSR or CSC sparse matrix, shape (n_samples, n_features)
         Input data.
+
+    axis: int (either 0 or 1)
+        Axis along which the axis should be computed.
 
     Returns
     -------
@@ -71,10 +74,20 @@ def mean_variance_axis0(X):
         Feature-wise variances
 
     """
+    if axis not in (0, 1):
+        raise ValueError(
+            "Unknown axis value: %d. Use 0 for rows, or 1 for columns" % axis)
+
     if isinstance(X, sp.csr_matrix):
-        return csr_mean_variance_axis0(X)
+        if axis == 0:
+            return _csr_mean_var_axis0(X)
+        else:
+            return _csc_mean_var_axis0(X.T)
     elif isinstance(X, sp.csc_matrix):
-        return csc_mean_variance_axis0(X)
+        if axis == 0:
+            return _csc_mean_var_axis0(X)
+        else:
+            return _csr_mean_var_axis0(X.T)
     else:
         _raise_typeerror(X)
 
@@ -258,12 +271,15 @@ def inplace_swap_column(X, m, n):
 
 
 def min_max_axis(X, axis):
-    """Compute minimum and maximum along axis 0 on a CSR or CSC matrix
+    """Compute minimum and maximum along an axis on a CSR or CSC matrix
 
     Parameters
     ----------
-    X: CSR or CSC sparse matrix, shape (n_samples, n_features)
+    X : CSR or CSC sparse matrix, shape (n_samples, n_features)
         Input data.
+
+    axis: int (either 0 or 1)
+        Axis along which the axis should be computed.
 
     Returns
     -------
@@ -278,3 +294,51 @@ def min_max_axis(X, axis):
         return sparse_min_max(X, axis=axis)
     else:
         _raise_typeerror(X)
+
+
+def count_nonzero(X, axis=None, sample_weight=None):
+    """A variant of X.getnnz() with extension to weighting on axis 0
+
+    Useful in efficiently calculating multilabel metrics.
+
+    Parameters
+    ----------
+    X : CSR sparse matrix, shape = (n_samples, n_labels)
+        Input data.
+
+    axis : None, 0 or 1
+        The axis on which the data is aggregated.
+
+    sample_weight : array, shape = (n_samples,), optional
+        Weight for each row of X.
+    """
+    if axis == -1:
+        axis = 1
+    elif axis == -2:
+        axis = 0
+    elif X.format != 'csr':
+        raise TypeError('Expected CSR sparse format, got {0}'.format(X.format))
+
+    # We rely here on the fact that np.diff(Y.indptr) for a CSR
+    # will return the number of nonzero entries in each row.
+    # A bincount over Y.indices will return the number of nonzeros
+    # in each column. See ``csr_matrix.getnnz`` in scipy >= 0.14.
+    if axis is None:
+        if sample_weight is None:
+            return X.nnz
+        else:
+            return np.dot(np.diff(X.indptr), sample_weight)
+    elif axis == 1:
+        out = np.diff(X.indptr)
+        if sample_weight is None:
+            return out
+        return out * sample_weight
+    elif axis == 0:
+        if sample_weight is None:
+            return np.bincount(X.indices, minlength=X.shape[1])
+        else:
+            weights = np.repeat(sample_weight, np.diff(X.indptr))
+            return np.bincount(X.indices, minlength=X.shape[1],
+                               weights=weights)
+    else:
+        raise ValueError('Unsupported axis: {0}'.format(axis))

@@ -24,21 +24,24 @@ import warnings
 import numpy as np
 
 from scipy.sparse import coo_matrix
+from scipy.sparse import csr_matrix
 from scipy.spatial.distance import hamming as sp_hamming
 
-from ..externals.six.moves import zip
-from ..preprocessing import label_binarize
 from ..preprocessing import LabelBinarizer
 from ..preprocessing import LabelEncoder
-from ..utils import check_array, check_consistent_length
+from ..utils import check_array
+from ..utils import check_consistent_length
+from ..preprocessing import MultiLabelBinarizer
 from ..utils import column_or_1d
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
+from ..utils.validation import _num_samples
+from ..utils.sparsefuncs import count_nonzero
 
 from .base import UndefinedMetricWarning
 
 
-def _check_clf_targets(y_true, y_pred):
+def _check_targets(y_true, y_pred):
     """Check that y_true and y_pred belong to the same classification task
 
     This converts multiclass or binary types to a common shape, and raises a
@@ -46,11 +49,12 @@ def _check_clf_targets(y_true, y_pred):
     multilabel formats, for the presence of continuous-valued or multioutput
     targets, or for targets of different lengths.
 
-    Column vectors are squeezed to 1d.
+    Column vectors are squeezed to 1d, while multilabel formats are returned
+    as CSR sparse label indicators.
 
     Parameters
     ----------
-    y_true : array-like,
+    y_true : array-like
 
     y_pred : array-like
 
@@ -89,7 +93,27 @@ def _check_clf_targets(y_true, y_pred):
         y_true = column_or_1d(y_true)
         y_pred = column_or_1d(y_pred)
 
+    if y_type.startswith('multilabel'):
+        if y_type == 'multilabel-sequences':
+            labels = unique_labels(y_true, y_pred)
+            binarizer = MultiLabelBinarizer(classes=labels, sparse_output=True)
+            y_true = binarizer.fit_transform(y_true)
+            y_pred = binarizer.fit_transform(y_pred)
+
+        y_true = csr_matrix(y_true)
+        y_pred = csr_matrix(y_pred)
+        y_type = 'multilabel-indicator'
+
     return y_type, y_true, y_pred
+
+
+def _weighted_sum(sample_score, sample_weight, normalize=False):
+    if normalize:
+        return np.average(sample_score, weights=sample_weight)
+    elif sample_weight is not None:
+        return np.dot(sample_score, sample_weight)
+    else:
+        return sample_score.sum()
 
 
 def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
@@ -101,10 +125,10 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
 
     Parameters
     ----------
-    y_true : array-like or label indicator matrix
+    y_true : 1d array-like, or label indicator array / sparse matrix
         Ground truth (correct) labels.
 
-    y_pred : array-like or label indicator matrix
+    y_pred : 1d array-like, or label indicator array / sparse matrix
         Predicted labels, as returned by a classifier.
 
     normalize : bool, optional (default=True)
@@ -150,23 +174,14 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     """
 
     # Compute accuracy for each possible representation
-    y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
-    if y_type == 'multilabel-indicator':
-        score = (y_pred != y_true).sum(axis=1) == 0
-    elif y_type == 'multilabel-sequences':
-        score = np.array([len(set(true) ^ set(pred)) == 0
-                          for pred, true in zip(y_pred, y_true)])
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    if y_type.startswith('multilabel'):
+        differing_labels = count_nonzero(y_true - y_pred, axis=1)
+        score = differing_labels == 0
     else:
         score = y_true == y_pred
 
-    if normalize:
-        if sample_weight is not None:
-            return np.average(score, weights=sample_weight)
-        return np.mean(score)
-    else:
-        if sample_weight is not None:
-            return np.dot(score, sample_weight)
-        return np.sum(score)
+    return _weighted_sum(score, sample_weight, normalize)
 
 
 def confusion_matrix(y_true, y_pred, labels=None):
@@ -211,7 +226,7 @@ def confusion_matrix(y_true, y_pred, labels=None):
            [1, 0, 2]])
 
     """
-    y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
         raise ValueError("%s is not supported" % y_type)
 
@@ -249,10 +264,10 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
 
     Parameters
     ----------
-    y_true : array-like or label indicator matrix
+    y_true : 1d array-like, or label indicator array / sparse matrix
         Ground truth (correct) labels.
 
-    y_pred : array-like or label indicator matrix
+    y_pred : 1d array-like, or label indicator array / sparse matrix
         Predicted labels, as returned by a classifier.
 
     normalize : bool, optional (default=True)
@@ -308,49 +323,22 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
     """
 
     # Compute accuracy for each possible representation
-    y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
-    if y_type == 'multilabel-indicator':
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    if y_type.startswith('multilabel'):
         with np.errstate(divide='ignore', invalid='ignore'):
-            # oddly, we may get an "invalid" rather than a "divide"
-            # error here
-            y_pred_pos_label = y_pred == 1
-            y_true_pos_label = y_true == 1
-            pred_inter_true = np.sum(np.logical_and(y_pred_pos_label,
-                                                    y_true_pos_label),
-                                     axis=1)
-            pred_union_true = np.sum(np.logical_or(y_pred_pos_label,
-                                                   y_true_pos_label),
-                                     axis=1)
-            score = pred_inter_true / pred_union_true
+            # oddly, we may get an "invalid" rather than a "divide" error here
+            pred_or_true = count_nonzero(y_true + y_pred, axis=1)
+            pred_and_true = count_nonzero(y_true.multiply(y_pred), axis=1)
+            score = pred_and_true / pred_or_true
 
             # If there is no label, it results in a Nan instead, we set
             # the jaccard to 1: lim_{x->0} x/x = 1
             # Note with py2.6 and np 1.3: we can't check safely for nan.
-            score[pred_union_true == 0.0] = 1.0
-
-    elif y_type == 'multilabel-sequences':
-        score = np.empty(len(y_true), dtype=np.float)
-        for i, (true, pred) in enumerate(zip(y_pred, y_true)):
-            true_set = set(true)
-            pred_set = set(pred)
-            size_true_union_pred = len(true_set | pred_set)
-            # If there is no label, it results in a Nan instead, we set
-            # the jaccard to 1: lim_{x->0} x/x = 1
-            if size_true_union_pred == 0:
-                score[i] = 1.
-            else:
-                score[i] = (len(true_set & pred_set) /
-                            size_true_union_pred)
+            score[pred_or_true == 0.0] = 1.0
     else:
         score = y_true == y_pred
 
-    if normalize:
-        return np.average(score, weights=sample_weight)
-    else:
-        if sample_weight is not None:
-            return np.dot(score, sample_weight)
-        else:
-            return np.sum(score)
+    return _weighted_sum(score, sample_weight, normalize)
 
 
 def matthews_corrcoef(y_true, y_pred):
@@ -401,7 +389,7 @@ def matthews_corrcoef(y_true, y_pred):
     -0.33...
 
     """
-    y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
 
     if y_type != "binary":
         raise ValueError("%s is not supported" % y_type)
@@ -428,10 +416,10 @@ def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
 
     Parameters
     ----------
-    y_true : array-like or label indicator matrix
+    y_true : 1d array-like, or label indicator array / sparse matrix
         Ground truth (correct) labels.
 
-    y_pred : array-like or label indicator matrix
+    y_pred : 1d array-like, or label indicator array / sparse matrix
         Predicted labels, as returned by a classifier.
 
     normalize : bool, optional (default=True)
@@ -482,7 +470,7 @@ def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
         if sample_weight is not None:
             n_samples = np.sum(sample_weight)
         else:
-            n_samples = len(y_true)
+            n_samples = _num_samples(y_true)
         return n_samples - score
 
 
@@ -502,10 +490,10 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted',
 
     Parameters
     ----------
-    y_true : array-like or label indicator matrix
+    y_true : 1d array-like, or label indicator array / sparse matrix
         Ground truth (correct) target values.
 
-    y_pred : array-like or label indicator matrix
+    y_pred : 1d array-like, or label indicator array / sparse matrix
         Estimated targets as returned by a classifier.
 
     labels : array
@@ -585,10 +573,10 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
 
     Parameters
     ----------
-    y_true : array-like or label indicator matrix
+    y_true : 1d array-like, or label indicator array / sparse matrix
         Ground truth (correct) target values.
 
-    y_pred : array-like or label indicator matrix
+    y_pred : 1d array-like, or label indicator array / sparse matrix
         Estimated targets as returned by a classifier.
 
     beta: float
@@ -744,10 +732,10 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     Parameters
     ----------
-    y_true : array-like or label indicator matrix
+    y_true : 1d array-like, or label indicator array / sparse matrix
         Ground truth (correct) target values.
 
-    y_pred : array-like or label indicator matrix
+    y_pred : 1d array-like, or label indicator array / sparse matrix
         Estimated targets as returned by a classifier.
 
     beta : float, 1.0 by default
@@ -839,7 +827,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     if beta <= 0:
         raise ValueError("beta should be >0 in the F-beta score")
 
-    y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
 
     label_order = labels  # save this for later
     if labels is None:
@@ -850,28 +838,16 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     ### Calculate tp_sum, pred_sum, true_sum ###
 
     if y_type.startswith('multilabel'):
-        if y_type == 'multilabel-sequences':
-            y_true = label_binarize(y_true, labels, multilabel=True)
-            y_pred = label_binarize(y_pred, labels, multilabel=True)
-        else:
-            # set negative labels to zero
-            y_true = y_true == 1
-            y_pred = y_pred == 1
-
-        if sample_weight is None:
-            sum_weight = 1
-            dtype = int
-        else:
-            sum_weight = np.expand_dims(sample_weight, 1)
-            dtype = float
-
         sum_axis = 1 if average == 'samples' else 0
-        tp_sum = np.multiply(np.logical_and(y_true, y_pred),
-                             sum_weight).sum(axis=sum_axis, dtype=dtype)
-        pred_sum = np.sum(np.multiply(y_pred, sum_weight),
-                          axis=sum_axis, dtype=dtype)
-        true_sum = np.sum(np.multiply(y_true, sum_weight),
-                          axis=sum_axis, dtype=dtype)
+
+        # calculate weighted counts
+        true_and_pred = y_true.multiply(y_pred)
+        tp_sum = count_nonzero(true_and_pred, axis=sum_axis,
+                               sample_weight=sample_weight)
+        pred_sum = count_nonzero(y_pred, axis=sum_axis,
+                                 sample_weight=sample_weight)
+        true_sum = count_nonzero(y_true, axis=sum_axis,
+                                 sample_weight=sample_weight)
 
     elif average == 'samples':
         raise ValueError("Sample-based precision, recall, fscore is "
@@ -989,10 +965,10 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
 
     Parameters
     ----------
-    y_true : array-like or label indicator matrix
+    y_true : 1d array-like, or label indicator array / sparse matrix
         Ground truth (correct) target values.
 
-    y_pred : array-like or label indicator matrix
+    y_pred : 1d array-like, or label indicator array / sparse matrix
         Estimated targets as returned by a classifier.
 
     labels : array
@@ -1071,10 +1047,10 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted',
 
     Parameters
     ----------
-    y_true : array-like or label indicator matrix
+    y_true : 1d array-like, or label indicator array / sparse matrix
         Ground truth (correct) target values.
 
-    y_pred : array-like or label indicator matrix
+    y_pred : 1d array-like, or label indicator array / sparse matrix
         Estimated targets as returned by a classifier.
 
     labels : array
@@ -1141,15 +1117,15 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted',
 
 
 def classification_report(y_true, y_pred, labels=None, target_names=None,
-                          sample_weight=None):
+                          sample_weight=None, digits=2):
     """Build a text report showing the main classification metrics
 
     Parameters
     ----------
-    y_true : array-like or label indicator matrix
+    y_true : 1d array-like, or label indicator array / sparse matrix
         Ground truth (correct) target values.
 
-    y_pred : array-like or label indicator matrix
+    y_pred : 1d array-like, or label indicator array / sparse matrix
         Estimated targets as returned by a classifier.
 
     labels : array, shape = [n_labels]
@@ -1160,6 +1136,9 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
+
+    digits : int
+        Number of digits for formatting output floating point values
 
     Returns
     -------
@@ -1196,7 +1175,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         target_names = ['%s' % l for l in labels]
     else:
         width = max(len(cn) for cn in target_names)
-        width = max(width, len(last_line_heading))
+        width = max(width, len(last_line_heading), digits)
 
     headers = ["precision", "recall", "f1-score", "support"]
     fmt = '%% %ds' % width  # first column: class name
@@ -1216,7 +1195,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     for i, label in enumerate(labels):
         values = [target_names[i]]
         for v in (p[i], r[i], f1[i]):
-            values += ["{0:0.2f}".format(v)]
+            values += ["{0:0.{1}f}".format(v, digits)]
         values += ["{0}".format(s[i])]
         report += fmt % tuple(values)
 
@@ -1227,7 +1206,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     for v in (np.average(p, weights=s),
               np.average(r, weights=s),
               np.average(f1, weights=s)):
-        values += ["{0:0.2f}".format(v)]
+        values += ["{0:0.{1}f}".format(v, digits)]
     values += ['{0}'.format(np.sum(s))]
     report += fmt % tuple(values)
     return report
@@ -1240,10 +1219,10 @@ def hamming_loss(y_true, y_pred, classes=None):
 
     Parameters
     ----------
-    y_true : array-like or label indicator matrix
+    y_true : 1d array-like, or label indicator array / sparse matrix
         Ground truth (correct) labels.
 
-    y_pred : array-like or label indicator matrix
+    y_pred : 1d array-like, or label indicator array / sparse matrix
         Predicted labels, as returned by a classifier.
 
     classes : array, shape = [n_labels], optional
@@ -1296,20 +1275,16 @@ def hamming_loss(y_true, y_pred, classes=None):
     >>> hamming_loss(np.array([[0, 1], [1, 1]]), np.zeros((2, 2)))
     0.75
     """
-    y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
 
     if classes is None:
         classes = unique_labels(y_true, y_pred)
     else:
         classes = np.asarray(classes)
 
-    if y_type == 'multilabel-indicator':
-        return np.mean(y_true != y_pred)
-    elif y_type == 'multilabel-sequences':
-        loss = np.array([len(set(pred).symmetric_difference(true))
-                         for pred, true in zip(y_pred, y_true)])
-
-        return np.mean(loss) / np.size(classes)
+    if y_type.startswith('multilabel'):
+        n_differences = count_nonzero(y_true - y_pred)
+        return (n_differences / (y_true.shape[0] * len(classes)))
 
     elif y_type in ["binary", "multiclass"]:
         return sp_hamming(y_true, y_pred)
@@ -1317,7 +1292,7 @@ def hamming_loss(y_true, y_pred, classes=None):
         raise ValueError("{0} is not supported".format(y_type))
 
 
-def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
+def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None):
     """Log loss, aka logistic loss or cross-entropy loss.
 
     This is the loss function used in (multinomial) logistic regression
@@ -1344,6 +1319,9 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
     normalize : bool, optional (default=True)
         If true, return the mean loss per sample.
         Otherwise, return the sum of the per-sample losses.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
 
     Returns
     -------
@@ -1393,8 +1371,9 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
 
     # Renormalize
     Y /= Y.sum(axis=1)[:, np.newaxis]
-    loss = -(T * np.log(Y)).sum()
-    return loss / T.shape[0] if normalize else loss
+    loss = -(T * np.log(Y)).sum(axis=1)
+
+    return _weighted_sum(loss, sample_weight, normalize)
 
 
 def hinge_loss(y_true, pred_decision, pos_label=None, neg_label=None):

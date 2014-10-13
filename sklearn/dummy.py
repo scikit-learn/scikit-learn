@@ -1,16 +1,20 @@
 # Author: Mathieu Blondel <mathieu@mblondel.org>
 #         Arnaud Joly <a.joly@ulg.ac.be>
-#         Maheshakya Wijewardena<maheshakya.10@cse.mrt.ac.lk>
+#         Maheshakya Wijewardena <maheshakya.10@cse.mrt.ac.lk>
 # License: BSD 3 clause
 from __future__ import division
 
+import warnings
 import numpy as np
+import scipy.sparse as sp
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .externals.six.moves import xrange
 from .utils import check_random_state
 from .utils.validation import check_array
 from sklearn.utils import deprecated
+from sklearn.utils.random import random_choice_csc
+from sklearn.utils.multiclass import class_distribution
 
 
 class DummyClassifier(BaseEstimator, ClassifierMixin):
@@ -58,6 +62,10 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
     outputs_2d_ : bool,
         True if the output at fit is 2d, else false.
 
+    `sparse_output_` : bool,
+        True if the array returned from predict is to be in sparse CSC format.
+        Is automatically set to True if the input y is passed in sparse format.
+
     """
 
     def __init__(self, strategy="stratified", random_state=None,
@@ -90,16 +98,24 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                                  "constant"):
             raise ValueError("Unknown strategy type.")
 
-        y = np.atleast_1d(y)
-        self.output_2d_ = y.ndim == 2
+        if self.strategy == "uniform" and sp.issparse(y):
+            y = y.toarray()
+            warnings.warn('A local copy of the target data has been converted '
+                          'to a numpy array. Predicting on sparse target data '
+                          'with the uniform strategy would not save memory '
+                          'and would be slower.',
+                          UserWarning)
 
+        self.sparse_output_ = sp.issparse(y)
+
+        if not self.sparse_output_:
+            y = np.atleast_1d(y)
+
+        self.output_2d_ = y.ndim == 2
         if y.ndim == 1:
             y = np.reshape(y, (-1, 1))
 
         self.n_outputs_ = y.shape[1]
-        self.classes_ = []
-        self.n_classes_ = []
-        self.class_prior_ = []
 
         if self.strategy == "constant":
             if self.constant is None:
@@ -111,16 +127,14 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                     raise ValueError("Constant target value should have "
                                      "shape (%d, 1)." % self.n_outputs_)
 
-        for k in xrange(self.n_outputs_):
-            classes, y_k = np.unique(y[:, k], return_inverse=True)
-            self.classes_.append(classes)
-            self.n_classes_.append(classes.shape[0])
-            class_prior = np.bincount(y_k, weights=sample_weight)
-            self.class_prior_.append(class_prior / class_prior.sum())
+        (self.classes_,
+         self.n_classes_,
+         self.class_prior_) = class_distribution(y, sample_weight)
 
-            # Checking in case of constant strategy if the constant provided
-            # by the user is in y.
-            if self.strategy == "constant":
+        if self.strategy == "constant":
+            for k in range(self.n_outputs_):
+                # Checking in case of constant strategy if the constant
+                # provided by the user is in y.
                 if constant[k] not in self.classes_[k]:
                     raise ValueError("The constant target value must be "
                                      "present in training data")
@@ -172,26 +186,42 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             if self.n_outputs_ == 1:
                 proba = [proba]
 
-        y = []
-        for k in xrange(self.n_outputs_):
+        if self.sparse_output_:
+            class_prob = None
             if self.strategy == "most_frequent":
-                ret = np.ones(n_samples, dtype=int) * class_prior_[k].argmax()
+                classes_ = [np.array([cp.argmax()]) for cp in class_prior_]
 
             elif self.strategy == "stratified":
-                ret = proba[k].argmax(axis=1)
+                class_prob = class_prior_
 
             elif self.strategy == "uniform":
-                ret = rs.randint(n_classes_[k], size=n_samples)
+                    raise ValueError("Sparse target prediction is not "
+                                     "supported with the uniform strategy")
 
             elif self.strategy == "constant":
-                ret = np.ones(n_samples, dtype=int) * (
-                    np.where(classes_[k] == constant[k]))
+                classes_ = [np.array([c]) for c in constant]
 
-            y.append(classes_[k][ret])
+            y = random_choice_csc(n_samples, classes_, class_prob,
+                                  self.random_state)
+        else:
+            if self.strategy == "most_frequent":
+                y = np.tile([classes_[k][class_prior_[k].argmax()] for
+                             k in range(self.n_outputs_)], [n_samples, 1])
 
-        y = np.vstack(y).T
-        if self.n_outputs_ == 1 and not self.output_2d_:
-            y = np.ravel(y)
+            elif self.strategy == "stratified":
+                y = np.vstack(classes_[k][proba[k].argmax(axis=1)] for
+                              k in range(self.n_outputs_)).T
+
+            elif self.strategy == "uniform":
+                ret = [classes_[k][rs.randint(n_classes_[k], size=n_samples)]
+                       for k in range(self.n_outputs_)]
+                y = np.vstack(ret).T
+
+            elif self.strategy == "constant":
+                y = np.tile(self.constant, (n_samples, 1))
+
+            if self.n_outputs_ == 1 and not self.output_2d_:
+                y = np.ravel(y)
 
         return y
 

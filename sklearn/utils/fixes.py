@@ -11,11 +11,10 @@ at which the fixe is no longer needed.
 # License: BSD 3 clause
 
 import inspect
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
-
-from .testing import ignore_warnings
 
 np_version = []
 for x in np.__version__.split('.'):
@@ -103,9 +102,10 @@ else:
 
 
 try:
-    with ignore_warnings():
+    with warnings.catch_warnings(record=True):
         # Don't raise the numpy deprecation warnings that appear in
-        # 1.9
+        # 1.9, but avoid Python bug due to simplefilter('ignore')
+        warnings.simplefilter('always')
         sp.csr_matrix([1.0, 2.0, 3.0]).max(axis=0)
 except (TypeError, AttributeError):
     # in scipy < 14.0, sparse matrix min/max doesn't accept an `axis` argument
@@ -244,6 +244,18 @@ except ImportError:
                 # Make NaN == NaN
                 cond[np.isnan(x) & np.isnan(y)] = True
             return cond
+
+
+if np_version < (1, 7):
+    # Prior to 1.7.0, np.frombuffer wouldn't work for empty first arg.
+    def frombuffer_empty(buf, dtype):
+        if len(buf) == 0:
+            return np.empty(0, dtype=dtype)
+        else:
+            return np.frombuffer(buf, dtype=dtype)
+else:
+    frombuffer_empty = np.frombuffer
+
 
 if np_version < (1, 8):
     def in1d(ar1, ar2, assume_unique=False, invert=False):

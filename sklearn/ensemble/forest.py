@@ -66,83 +66,41 @@ __all__ = ["RandomForestClassifier",
 MAX_INT = np.iinfo(np.int32).max
 
 
-def _parallel_build_trees(trees, forest, X, y, sample_weight, verbose):
-    """Private function used to build a batch of trees within a job."""
-    for i, tree in enumerate(trees):
-        if verbose > 1:
-            print("building tree %d of %d" % (i + 1, len(trees)))
+def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
+                          verbose=0):
+    """Private function used to fit a single tree in parallel."""
+    if verbose > 1:
+        print("building tree %d of %d" % (tree_idx + 1, n_trees))
 
-        if forest.bootstrap:
-            n_samples = X.shape[0]
-            if sample_weight is None:
-                curr_sample_weight = np.ones((n_samples,), dtype=np.float64)
-            else:
-                curr_sample_weight = sample_weight.copy()
-
-            random_state = check_random_state(tree.random_state)
-            indices = random_state.randint(0, n_samples, n_samples)
-            sample_counts = np.bincount(indices, minlength=n_samples)
-            curr_sample_weight *= sample_counts
-
-            tree.fit(X, y,
-                     sample_weight=curr_sample_weight,
-                     check_input=False)
-
-            tree.indices_ = sample_counts > 0.
-
+    if forest.bootstrap:
+        n_samples = X.shape[0]
+        if sample_weight is None:
+            curr_sample_weight = np.ones((n_samples,), dtype=np.float64)
         else:
-            tree.fit(X, y,
-                     sample_weight=sample_weight,
-                     check_input=False)
+            curr_sample_weight = sample_weight.copy()
 
-    return trees
+        random_state = check_random_state(tree.random_state)
+        indices = random_state.randint(0, n_samples, n_samples)
+        sample_counts = np.bincount(indices, minlength=n_samples)
+        curr_sample_weight *= sample_counts
 
+        tree.fit(X, y,
+                 sample_weight=curr_sample_weight,
+                 check_input=False)
 
-def _parallel_predict_proba(trees, X, n_classes, n_outputs):
-    """Private function used to compute a batch of predictions within a job."""
-    n_samples = X.shape[0]
-
-    if n_outputs == 1:
-        proba = np.zeros((n_samples, n_classes))
-
-        for tree in trees:
-            proba_tree = tree.predict_proba(X)
-
-            if n_classes == tree.n_classes_:
-                proba += proba_tree
-
-            else:
-                proba[:, tree.classes_] += \
-                    proba_tree[:, range(len(tree.classes_))]
+        tree.indices_ = sample_counts > 0.
 
     else:
-        proba = []
+        tree.fit(X, y,
+                 sample_weight=sample_weight,
+                 check_input=False)
 
-        for k in xrange(n_outputs):
-            proba.append(np.zeros((n_samples, n_classes[k])))
-
-        for tree in trees:
-            proba_tree = tree.predict_proba(X)
-
-            for k in xrange(n_outputs):
-                if n_classes[k] == tree.n_classes_[k]:
-                    proba[k] += proba_tree[k]
-
-                else:
-                    proba[k][:, tree.classes_] += \
-                        proba_tree[k][:, range(len(tree.classes_))]
-
-    return proba
+    return tree
 
 
-def _parallel_predict_regression(trees, X):
-    """Private function used to compute a batch of predictions within a job."""
-    return sum(tree.predict(X) for tree in trees)
-
-
-def _parallel_apply(tree, X):
-    """Private helper function for parallelizing calls to apply in a forest."""
-    return tree.tree_.apply(X)
+def _parallel_helper(obj, methodname, *args, **kwargs):
+    """Private helper to workaround Python 2 pickle limitations"""
+    return getattr(obj, methodname)(*args, **kwargs)
 
 
 class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
@@ -193,7 +151,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         X = check_array(X, dtype=DTYPE)
         results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                            backend="threading")(
-            delayed(_parallel_apply)(tree, X) for tree in self.estimators_)
+            delayed(_parallel_helper)(tree.tree_, 'apply', X)
+            for tree in self.estimators_)
         return np.array(results).T
 
     def fit(self, X, y, sample_weight=None):
@@ -220,7 +179,6 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         self : object
             Returns self.
         """
-
         # Convert data
         # ensure_2d=False because there are actually unit test checking we fail
         # for 1d. FIXME make this consistent in the future.
@@ -272,16 +230,12 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             warn("Warm-start fitting without increasing n_estimators does not "
                  "fit new trees.")
         else:
-            # Assign chunk of trees to jobs
-            n_jobs, n_trees, starts = _partition_estimators(n_more_estimators,
-                                                            self.n_jobs)
-            trees = []
-
             if self.warm_start and len(self.estimators_) > 0:
                 # We draw from the random state to get the random state we
                 # would have got if we hadn't used a warm_start.
                 random_state.randint(MAX_INT, size=len(self.estimators_))
 
+            trees = []
             for i in range(n_more_estimators):
                 tree = self._make_estimator(append=False)
                 tree.set_params(random_state=random_state.randint(MAX_INT))
@@ -291,19 +245,15 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             # for fitting the trees is internally releasing the Python GIL
             # making threading always more efficient than multiprocessing in
             # that case.
-            all_new_trees = Parallel(n_jobs=n_jobs, verbose=self.verbose,
-                                     backend="threading")(
+            trees = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
+                             backend="threading")(
                 delayed(_parallel_build_trees)(
-                    trees[starts[i]:starts[i + 1]],
-                    self,
-                    X,
-                    y,
-                    sample_weight,
+                    t, self, X, y, sample_weight, i, len(trees),
                     verbose=self.verbose)
-                for i in range(n_jobs))
+                for i, t in enumerate(trees))
 
-            # Reduce
-            self.estimators_.extend(chain.from_iterable(all_new_trees))
+            # Collect newly grown trees
+            self.estimators_.extend(trees)
 
         if self.oob_score:
             self._set_oob_score(X, y)
@@ -336,8 +286,10 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             raise ValueError("Estimator not fitted, "
                              "call `fit` before `feature_importances_`.")
 
-        return sum(tree.feature_importances_
-                   for tree in self.estimators_) / self.n_estimators
+        all_importances = Parallel(n_jobs=self.n_jobs)(
+            delayed(getattr)(tree, 'feature_importances_')
+            for tree in self.estimators_)
+        return sum(all_importances) / self.n_estimators
 
 
 class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
@@ -490,12 +442,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         # Parallel loop
         all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose,
                              backend="threading")(
-            delayed(_parallel_predict_proba)(
-                self.estimators_[starts[i]:starts[i + 1]],
-                X,
-                self.n_classes_,
-                self.n_outputs_)
-            for i in range(n_jobs))
+            delayed(_parallel_helper)(e, 'predict_proba', X)
+            for e in self.estimators_)
 
         # Reduce
         proba = all_proba[0]
@@ -603,9 +551,8 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
         # Parallel loop
         all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose,
                              backend="threading")(
-            delayed(_parallel_predict_regression)(
-                self.estimators_[starts[i]:starts[i + 1]], X)
-            for i in range(n_jobs))
+            delayed(_parallel_helper)(e, 'predict', X)
+            for e in self.estimators_)
 
         # Reduce
         y_hat = sum(all_y_hat) / len(self.estimators_)

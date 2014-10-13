@@ -13,7 +13,7 @@ from sklearn.preprocessing import LabelBinarizer, MultiLabelBinarizer
 from sklearn.utils.fixes import np_version
 from sklearn.utils.validation import check_random_state
 
-from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises, clean_warning_registry
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -42,7 +42,7 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import zero_one_loss
 
 
-from sklearn.metrics.classification import _check_clf_targets
+from sklearn.metrics.classification import _check_targets
 from sklearn.metrics.base import UndefinedMetricWarning
 
 
@@ -398,6 +398,40 @@ avg / total       0.51      0.53      0.47        75
     report = classification_report(
         y_true, y_pred, labels=np.arange(len(iris.target_names)),
         target_names=iris.target_names)
+    assert_equal(report, expected_report)
+
+    # print classification report with label detection
+    expected_report = """\
+             precision    recall  f1-score   support
+
+          0       0.83      0.79      0.81        24
+          1       0.33      0.10      0.15        31
+          2       0.42      0.90      0.57        20
+
+avg / total       0.51      0.53      0.47        75
+"""
+    report = classification_report(y_true, y_pred)
+    assert_equal(report, expected_report)
+
+
+def test_classification_report_multiclass_with_digits():
+    """Test performance report with added digits in floating point values"""
+    iris = datasets.load_iris()
+    y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
+
+    # print classification report with class names
+    expected_report = """\
+             precision    recall  f1-score   support
+
+     setosa    0.82609   0.79167   0.80851        24
+ versicolor    0.33333   0.09677   0.15000        31
+  virginica    0.41860   0.90000   0.57143        20
+
+avg / total    0.51375   0.53333   0.47310        75
+"""
+    report = classification_report(
+        y_true, y_pred, labels=np.arange(len(iris.target_names)),
+        target_names=iris.target_names, digits=5)
     assert_equal(report, expected_report)
 
     # print classification report with label detection
@@ -908,7 +942,7 @@ def test_recall_warnings():
                        np.array([[1, 1], [1, 1]]),
                        np.array([[0, 0], [0, 0]]),
                        average='micro')
-
+    clean_warning_registry()
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
         recall_score(np.array([[0, 0], [0, 0]]),
@@ -920,6 +954,7 @@ def test_recall_warnings():
 
 
 def test_precision_warnings():
+    clean_warning_registry()
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
 
@@ -937,6 +972,7 @@ def test_precision_warnings():
 
 
 def test_fscore_warnings():
+    clean_warning_registry()
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
 
@@ -956,8 +992,8 @@ def test_fscore_warnings():
 
 
 @ignore_warnings  # sequence of sequences is deprecated
-def test__check_clf_targets():
-    """Check that _check_clf_targets correctly merges target types, squeezes
+def test__check_targets():
+    """Check that _check_targets correctly merges target types, squeezes
     output and fails if input lengths differ."""
     IND = 'multilabel-indicator'
     SEQ = 'multilabel-sequences'
@@ -985,7 +1021,7 @@ def test__check_clf_targets():
     # (types will be tried in either order)
     EXPECTED = {
         (IND, IND): IND,
-        (SEQ, SEQ): SEQ,
+        (SEQ, SEQ): IND,
         (MC, MC): MC,
         (BIN, BIN): BIN,
 
@@ -1023,27 +1059,30 @@ def test__check_clf_targets():
         except KeyError:
             expected = EXPECTED[type2, type1]
         if expected is None:
-            assert_raises(ValueError, _check_clf_targets, y1, y2)
+            assert_raises(ValueError, _check_targets, y1, y2)
 
             if type1 != type2:
                 assert_raise_message(
                     ValueError,
                     "Can't handle mix of {0} and {1}".format(type1, type2),
-                    _check_clf_targets, y1, y2)
+                    _check_targets, y1, y2)
 
             else:
                 if type1 not in (BIN, MC, SEQ, IND):
                     assert_raise_message(ValueError,
                                          "{0} is not supported".format(type1),
-                                         _check_clf_targets, y1, y2)
+                                         _check_targets, y1, y2)
 
         else:
-            merged_type, y1out, y2out = _check_clf_targets(y1, y2)
+            merged_type, y1out, y2out = _check_targets(y1, y2)
             assert_equal(merged_type, expected)
-            if not merged_type.startswith('multilabel'):
+            if merged_type.startswith('multilabel'):
+                assert_equal(y1out.format, 'csr')
+                assert_equal(y2out.format, 'csr')
+            else:
                 assert_array_equal(y1out, np.squeeze(y1))
                 assert_array_equal(y2out, np.squeeze(y2))
-            assert_raises(ValueError, _check_clf_targets, y1[:-1], y2)
+            assert_raises(ValueError, _check_targets, y1[:-1], y2)
 
 
 def test_hinge_loss_binary():

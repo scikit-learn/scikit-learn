@@ -10,17 +10,57 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import SkipTest
+
+from sklearn.base import BaseEstimator, BiclusterMixin
 
 from sklearn.cluster.bicluster import SpectralCoclustering
 from sklearn.cluster.bicluster import SpectralBiclustering
-from sklearn.cluster.bicluster.spectral import _scale_normalize
-from sklearn.cluster.bicluster.spectral import _bistochastic_normalize
-from sklearn.cluster.bicluster.spectral import _log_normalize
+from sklearn.cluster.bicluster import _scale_normalize
+from sklearn.cluster.bicluster import _bistochastic_normalize
+from sklearn.cluster.bicluster import _log_normalize
 
 from sklearn.metrics import consensus_score
 
 from sklearn.datasets import make_biclusters, make_checkerboard
+
+
+class MockBiclustering(BaseEstimator, BiclusterMixin):
+    # Mock object for testing get_submatrix.
+    def __init__(self):
+        pass
+
+    def get_indices(self, i):
+        # Overridden to reproduce old get_submatrix test.
+        return (np.where([True, True, False, False, True])[0],
+                np.where([False, False, True, True])[0])
+
+
+def test_get_submatrix():
+    data = np.arange(20).reshape(5, 4)
+    model = MockBiclustering()
+
+    for X in (data, csr_matrix(data), data.tolist()):
+        submatrix = model.get_submatrix(0, X)
+        if issparse(submatrix):
+            submatrix = submatrix.toarray()
+        assert_array_equal(submatrix, [[2, 3],
+                                       [6, 7],
+                                       [18, 19]])
+        submatrix[:] = -1
+        if issparse(X):
+            X = X.toarray()
+        assert_true(np.all(X != -1))
+
+
+def _test_shape_indices(model):
+    """Test get_shape and get_indices on fitted model."""
+    for i in range(model.n_clusters):
+        m, n = model.get_shape(i)
+        i_ind, j_ind = model.get_indices(i)
+        assert_equal(len(i_ind), m)
+        assert_equal(len(j_ind), n)
 
 
 def test_spectral_coclustering():
@@ -48,6 +88,8 @@ def test_spectral_coclustering():
             assert_array_equal(model.columns_.sum(axis=0), np.ones(30))
             assert_equal(consensus_score(model.biclusters_,
                                          (rows, cols)), 1)
+
+            _test_shape_indices(model)
 
 
 def test_spectral_biclustering():
@@ -87,6 +129,8 @@ def test_spectral_biclustering():
                                    np.repeat(3, 30))
                 assert_equal(consensus_score(model.biclusters_,
                                              (rows, cols)), 1)
+
+                _test_shape_indices(model)
 
 
 def _do_scale_test(scaled):

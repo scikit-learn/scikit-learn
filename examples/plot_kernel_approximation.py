@@ -17,7 +17,7 @@ of :class:`RBFSampler`, which uses random Fourier features) and different sized
 subsets of the training set (for :class:`Nystroem`) for the approximate mapping
 are shown.
 
-Please not that the dataset here is not large enough to show the benefits
+Please note that the dataset here is not large enough to show the benefits
 of kernel approximation, as the exact SVM is still reasonably fast.
 
 Sampling more dimensions clearly leads to better classification results, but

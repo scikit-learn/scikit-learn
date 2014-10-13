@@ -129,8 +129,9 @@ In the case of the Iris dataset, the samples are balanced across target
 classes hence the accuracy and the F1-score are almost equal.
 
 When the ``cv`` argument is an integer, :func:`cross_val_score` uses the
-:class:`KFold` or :class:`StratifiedKFold` strategies by default (depending on
-the absence or presence of the target array).
+:class:`KFold` or :class:`StratifiedKFold` strategies by default, the latter
+being used if the estimator derives from :class:`ClassifierMixin
+<sklearn.base.ClassifierMixin>`.
 
 It is also possible to use other cross validation strategies by passing a cross
 validation iterator instead, for instance::
@@ -143,7 +144,36 @@ validation iterator instead, for instance::
   ...                                                     # doctest: +ELLIPSIS
   array([ 0.97...,  0.97...,  1.        ])
 
-The available cross validation iterators are introduced in the following.
+The available cross validation iterators are introduced in the following
+section.
+
+.. topic:: Data transformation with held out data
+
+    Just as it is important to test a predictor on data held-out from
+    training, preprocessing (such as standardization, feature selection, etc.)
+    and similar :ref:`data transformations <data-transforms>` similarly should
+    be learnt from a training set and applied to held-out data for prediction::
+
+      >>> from sklearn import preprocessing
+      >>> X_train, X_test, y_train, y_test = cross_validation.train_test_split(
+      ...     iris.data, iris.target, test_size=0.4, random_state=0)
+      >>> scaler = preprocessing.StandardScaler().fit(X_train)
+      >>> X_train_transformed = scaler.transform(X_train)
+      >>> clf = svm.SVC(C=1).fit(X_train_transformed, y_train)
+      >>> X_test_transformed = scaler.transform(X_test)
+      >>> clf.score(X_test_transformed, y_test)  # doctest: +ELLIPSIS
+      0.9333...
+
+    A :class:`Pipeline <sklearn.pipeline.Pipeline>` makes it easier to compose
+    estimators, providing this behavior under cross-validation::
+
+      >>> from sklearn.pipeline import make_pipeline
+      >>> clf = make_pipeline(preprocessing.StandardScaler(), svm.SVC(C=1))
+      >>> cross_validation.cross_val_score(clf, iris.data, iris.target, cv=cv)
+      ...                                                 # doctest: +ELLIPSIS
+      array([ 0.97...,  0.93...,  0.95...])
+
+    See :ref:`combining_estimators`.
 
 
 .. topic:: Examples
@@ -152,7 +182,6 @@ The available cross validation iterators are introduced in the following.
     * :ref:`example_feature_selection_plot_rfe_with_cross_validation.py`,
     * :ref:`example_model_selection_grid_search_digits.py`,
     * :ref:`example_model_selection_grid_search_text_feature_extraction.py`,
-
 
 Cross validation iterators
 ==========================
@@ -264,8 +293,8 @@ fold cross validation should be preferred to LOO.
    <http://www.cs.iastate.edu/~jtian/cs573/Papers/Kohavi-IJCAI-95.pdf>`_, Intl. Jnt. Conf. AI   
  * R. Bharat Rao, G. Fung, R. Rosales, `On the Dangers of Cross-Validation. An Experimental Evaluation
    <http://www.siam.org/proceedings/datamining/2008/dm08_54_Rao.pdf>`_, SIAM 2008
- * G. James, D. Witten, T. Hastie, R Tibshirani, `An Introduction to Statitical Learning
-   <http://www-bcf.usc.edu/~gareth/ISL>`_, Springer 2013
+ * G. James, D. Witten, T. Hastie, R Tibshirani, `An Introduction to
+   Statistical Learning <http://www-bcf.usc.edu/~gareth/ISL>`_, Springer 2013
 
 
 Leave-P-Out - LPO

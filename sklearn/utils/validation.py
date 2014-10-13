@@ -14,6 +14,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..externals import six
+from inspect import getargspec
 
 
 class DataConversionWarning(UserWarning):
@@ -36,6 +37,9 @@ warnings.simplefilter('ignore', NonBLASDotWarning)
 def _assert_all_finite(X):
     """Like assert_all_finite, but only for ndarray."""
     X = np.asanyarray(X)
+    # First try an O(n) time, O(1) space solution for the common case that
+    # everything is finite; fall back to O(n) space np.isfinite to prevent
+    # false positives from overflow in sum method.
     if (X.dtype.char in np.typecodes['AllFloat'] and not np.isfinite(X.sum())
             and not np.isfinite(X).all()):
         raise ValueError("Input contains NaN, infinity"
@@ -46,10 +50,6 @@ def assert_all_finite(X):
     """Throw a ValueError if X contains NaN or infinity.
 
     Input MUST be an np.ndarray instance or a scipy.sparse matrix."""
-
-    # First try an O(n) time, O(1) space solution for the common case that
-    # there everything is finite; fall back to O(n) space np.isfinite to
-    # prevent false positives from overflow in sum method.
     _assert_all_finite(X.data if sp.issparse(X) else X)
 
 
@@ -156,6 +156,9 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, order, copy,
         matrix input will raise an error.  If the input is sparse but not in
         the allowed format, it will be converted to the first listed format.
 
+    dtype : string, type or None (default=none)
+        Data type of result. If None, the dtype of the input is preserved.
+
     order : 'F', 'C' or None (default=None)
         Whether an array will be forced to be fortran or c-style.
 
@@ -217,6 +220,9 @@ def check_array(array, accept_sparse=None, dtype=None, order=None, copy=False,
         'csr', etc.  None means that sparse matrix input will raise an error.
         If the input is sparse but not in the allowed format, it will be
         converted to the first listed format.
+
+    dtype : string, type or None (default=none)
+        Data type of result. If None, the dtype of the input is preserved.
 
     order : 'F', 'C' or None (default=None)
         Whether an array will be forced to be fortran or c-style.
@@ -281,6 +287,9 @@ def check_X_y(X, y, accept_sparse=None, dtype=None, order=None, copy=False,
         If the input is sparse but not in the allowed format, it will be
         converted to the first listed format.
 
+    dtype : string, type or None (default=none)
+        Data type of result. If None, the dtype of the input is preserved.
+
     order : 'F', 'C' or None (default=None)
         Whether an array will be forced to be fortran or c-style.
 
@@ -296,6 +305,10 @@ def check_X_y(X, y, accept_sparse=None, dtype=None, order=None, copy=False,
 
     allow_nd : boolean (default=False)
         Whether to allow X.ndim > 2.
+
+    multi_output : boolean (default=False)
+        Whether to allow 2-d y (array or sparse matrix). If false, y will be
+        validated as a vector.
 
     Returns
     -------
@@ -372,3 +385,15 @@ def check_random_state(seed):
         return seed
     raise ValueError('%r cannot be used to seed a numpy.random.RandomState'
                      ' instance' % seed)
+
+def has_fit_parameter(estimator, parameter):
+    """ Checks whether the estimator's fit method supports the given parameter.
+
+    Example
+    -------
+    >>> from sklearn.svm import SVC
+    >>> has_fit_parameter(SVC(), "sample_weight")
+    True
+
+    """
+    return parameter in getargspec(estimator.fit)[0]

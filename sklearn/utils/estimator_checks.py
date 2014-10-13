@@ -527,7 +527,7 @@ def check_classifiers_input_shapes(name, Classifier):
 
 
 def check_classifiers_classes(name, Classifier):
-    X, y = make_blobs(n_samples=30, random_state=0)
+    X, y = make_blobs(n_samples=30, random_state=0, cluster_std=0.1)
     X, y = shuffle(X, y, random_state=7)
     X = StandardScaler().fit_transform(X)
     # We need to make sure that we have non negative data, for things
@@ -764,9 +764,9 @@ def check_estimators_overwrite_params(name, Estimator):
         # catch deprecation warnings
         estimator = Estimator()
 
-    if hasattr(estimator, 'batch_size'):
+    if name == 'MiniBatchDictLearning' or name == 'MiniBatchSparsePCA':
         # FIXME
-        # for MiniBatchDictLearning
+        # for MiniBatchDictLearning and MiniBatchSparsePCA
         estimator.batch_size = 1
 
     set_fast_parameters(estimator)

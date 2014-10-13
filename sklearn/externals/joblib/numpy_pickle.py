@@ -107,7 +107,8 @@ class NDArrayWrapper(object):
         "Reconstruct the array"
         filename = os.path.join(unpickler._dirname, self.filename)
         # Load the array from the disk
-        if unpickler.np.__version__ >= '1.3':
+        np_ver = [int(x) for x in unpickler.np.__version__.split('.', 2)[:2]]
+        if np_ver >= [1, 3]:
             array = unpickler.np.load(filename,
                             mmap_mode=unpickler.mmap_mode)
         else:

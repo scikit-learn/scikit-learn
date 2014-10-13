@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_not_in
 from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils import safe_mask
 
@@ -576,3 +577,11 @@ def test_invalid_k():
                   GenericUnivariateSelect(mode='k_best', param=-1).fit, X, y)
     assert_raises(ValueError,
                   GenericUnivariateSelect(mode='k_best', param=4).fit, X, y)
+
+
+def test_f_classif_constant_feature():
+    """Test that f_classif warns if a feature is constant throughout."""
+
+    X, y = make_classification(n_samples=10, n_features=5)
+    X[:, 0] = 2.0
+    assert_warns(UserWarning, f_classif, X, y)

@@ -62,7 +62,9 @@ if you're using one of these unless you want custom multiclass behavior:
   - Inherently multiclass: :ref:`Naive Bayes <naive_bayes>`,
     :class:`sklearn.lda.LDA`,
     :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
-    :ref:`Nearest Neighbors <neighbors>`.
+    :ref:`Nearest Neighbors <neighbors>`,
+    setting "multi_class=multinomial" in
+    :class:`sklearn.linear_model.LogisticRegression`.
   - One-Vs-One: :class:`sklearn.svm.SVC`.
   - One-Vs-All: all linear models except :class:`sklearn.svm.SVC`.
 

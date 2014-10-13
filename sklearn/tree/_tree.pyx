@@ -2005,14 +2005,14 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef PriorityHeapRecord split_node_right
 
         cdef SIZE_t n_node_samples = splitter.n_samples
-        cdef int max_split_nodes = max_leaf_nodes - 1
+        cdef SIZE_t max_split_nodes = max_leaf_nodes - 1
         cdef bint is_leaf
         cdef SIZE_t max_depth_seen = -1
         cdef int rc = 0
         cdef Node* node
 
         # Initial capacity
-        cdef int init_capacity = max_split_nodes + max_leaf_nodes
+        cdef SIZE_t init_capacity = max_split_nodes + max_leaf_nodes
         tree._resize(init_capacity)
 
         with nogil:
@@ -2202,7 +2202,7 @@ cdef class Tree:
     threshold : array of double, shape [node_count]
         threshold[i] holds the threshold for the internal node i.
 
-    value : array of double, shape [node_count, n_outputs, ]
+    value : array of double, shape [node_count, n_outputs, max_n_classes]
         Contains the constant prediction value of each node.
 
     impurity : array of double, shape [node_count]
@@ -2333,7 +2333,7 @@ cdef class Tree:
     cdef void _resize(self, SIZE_t capacity) except *:
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
            double the size of the inner arrays."""
-        if self._resize_c(capacity)!= 0:
+        if self._resize_c(capacity) != 0:
             raise MemoryError()
 
     # XXX using (size_t)(-1) is ugly, but SIZE_MAX is not available in C89

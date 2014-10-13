@@ -14,10 +14,12 @@ import pkgutil
 
 from sklearn.externals.six import PY3
 from sklearn.externals.six.moves import zip
-from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_false, clean_warning_registry
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import ignore_warnings
 
 import sklearn
 from sklearn.base import (ClassifierMixin, RegressorMixin,
@@ -184,12 +186,14 @@ def test_configure():
         os.chdir(setup_path)
         old_argv = sys.argv
         sys.argv = ['setup.py', 'config']
+        clean_warning_registry()
         with warnings.catch_warnings():
             # The configuration spits out warnings when not finding
             # Blas/Atlas development headers
             warnings.simplefilter('ignore', UserWarning)
             if PY3:
-                exec(open('setup.py').read(), dict(__name__='__main__'))
+                with open('setup.py') as f:
+                    exec(f.read(), dict(__name__='__main__'))
             else:
                 execfile('setup.py', dict(__name__='__main__'))
     finally:
@@ -201,6 +205,7 @@ def test_class_weight_classifiers():
     # test that class_weight works and that the semantics are consistent
     classifiers = all_estimators(type_filter='classifier')
 
+    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         classifiers = [c for c in classifiers
                        if 'class_weight' in c[1]().get_params().keys()]
@@ -228,6 +233,7 @@ def test_class_weight_auto_classifiers():
 
     classifiers = all_estimators(type_filter='classifier')
 
+    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         classifiers = [c for c in classifiers
                        if 'class_weight' in c[1]().get_params().keys()]
@@ -256,6 +262,7 @@ def test_class_weight_auto_classifiers():
 def test_class_weight_auto_linear_classifiers():
     classifiers = all_estimators(type_filter='classifier')
 
+    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         linear_classifiers = [
             (name, clazz)
@@ -285,12 +292,14 @@ def test_estimators_overwrite_params():
                 yield check_estimators_overwrite_params, name, Estimator
 
 
+@ignore_warnings
 def test_import_all_consistency():
     # Smoke test to check that any name in a __all__ list is actually defined
     # in the namespace of the module or package.
     pkgs = pkgutil.walk_packages(path=sklearn.__path__, prefix='sklearn.',
                                  onerror=lambda _: None)
-    for importer, modname, ispkg in pkgs:
+    submods = [modname for _, modname, _ in pkgs]
+    for modname in submods + ['sklearn']:
         if ".tests." in modname:
             continue
         package = __import__(modname, fromlist="dummy")
@@ -299,6 +308,15 @@ def test_import_all_consistency():
                 raise AttributeError(
                     "Module '{0}' has no attribute '{1}'".format(
                         modname, name))
+
+
+def test_root_import_all_completeness():
+    EXCEPTIONS = ('utils', 'tests', 'base', 'setup')
+    for _, modname, _ in pkgutil.walk_packages(path=sklearn.__path__,
+                                               onerror=lambda _: None):
+        if '.' in modname or modname.startswith('_') or modname in EXCEPTIONS:
+            continue
+        assert_in(modname, sklearn.__all__)
 
 
 def test_sparsify_estimators():
@@ -366,5 +384,6 @@ def test_transformer_n_iter():
         # param is non-trivial.
         external_solver = ['Isomap', 'KernelPCA', 'LocallyLinearEmbedding',
                            'RandomizedLasso', 'LogisticRegressionCV']
+
         if hasattr(estimator, "max_iter") and name not in external_solver:
             yield check_transformer_n_iter, name, estimator
