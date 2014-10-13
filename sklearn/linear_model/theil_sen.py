@@ -185,8 +185,8 @@ def _lstsq(X, y, indices, fit_intercept):
     for index, subset in enumerate(indices):
         X_subpopulation[:, fit_intercept:] = X[subset, :]
         y_subpopulation[:n_subsamples] = y[subset]
-        weights[index, :] = lstsq(X_subpopulation,
-                                  y_subpopulation)[1][:n_features]
+        weights[index] = lstsq(X_subpopulation,
+                               y_subpopulation)[1][:n_features]
 
     return weights
 
