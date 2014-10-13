@@ -200,9 +200,9 @@ matrix which keeps track of the location/code of each class is called the
 code book. The code size is the dimensionality of the aforementioned space.
 Intuitively, each class should be represented by a code as unique as
 possible and a good code book should be designed to optimize classification
-accuracy. In this implementation, we simply use a randomly-generated code
-book as advocated in [2]_ although more elaborate methods may be added in the
-future.
+accuracy. In this implementation, we randomly generate subset of the exhaustive
+codes, suggested in [1]_ multiple times and pick up the one with most
+separation between different classes.
 
 At fitting time, one binary classifier per bit in the code book is fitted.
 At prediction time, the classifiers are used to project new points in the
@@ -222,7 +222,13 @@ one-vs-the-rest. In this case, some classifiers will in theory correct for
 the mistakes made by other classifiers, hence the name "error-correcting".
 In practice, however, this may not happen as classifier mistakes will
 typically be correlated. The error-correcting output codes have a similar
-effect to bagging.
+effect to bagging. The maximum value for ``code_size`` is
+``2^(n_classes-1)-1 / n_classes`` as suggested by [1]_, since the codes with
+all 0 or 1, and the complement of existing codes need to be excluded.
+
+The ``max_iter`` attribute allows the user to generate a code book with most
+separation between classes from several randomly generated subsets of the
+exhaustive code book.
 
 
 Multiclass learning
@@ -236,14 +242,14 @@ Below is an example of multiclass learning using Output-Codes::
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
   >>> clf = OutputCodeClassifier(LinearSVC(random_state=0),
-  ...                            code_size=2, random_state=0)
+  ...                            code_size=1, max_iter=5, random_state=0)
   >>> clf.fit(X, y).predict(X)
   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-         0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1,
-         1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1,
+         0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+         1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1,
          1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-         2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 1, 2, 2, 2,
+         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 2,
          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
 
 .. topic:: References:

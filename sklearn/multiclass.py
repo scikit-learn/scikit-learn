@@ -616,6 +616,12 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         one-vs-the-rest. A number greater than 1 will require more classifiers
         than one-vs-the-rest.
 
+    max_iter : int
+        Maximum number of iteration to generate a good code. An integer larger 
+        than 0. Each iteration, a random code will be generated and the old 
+        code will be replaced only when the total Hamming distance between 
+        code words increases.
+
     random_state : numpy.RandomState, optional
         The generator used to initialize the codebook. Defaults to
         numpy.random.
@@ -656,11 +662,47 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
        2008.
     """
 
-    def __init__(self, estimator, code_size=1.5, random_state=None, n_jobs=1):
+    def __init__(self, estimator, code_size=1, max_iter=10,
+                 random_state=None, n_jobs=1):
         self.estimator = estimator
         self.code_size = code_size
+        self.max_iter = max_iter
         self.random_state = random_state
         self.n_jobs = n_jobs
+
+    def _generate_codebook(self):
+        random_state = check_random_state(self.random_state)
+        iter = self.max_iter
+        n_classes = self.classes_.shape[0]
+        code_size_ = int(n_classes * self.code_size)
+        max_code_size_ = np.power(2, n_classes-1) - 1
+        if code_size_ > max_code_size_:
+            raise ValueError("The code size is larger than the possible "
+                             "exhaustive codes.")
+        if np.power(2, code_size_) < n_classes:
+            raise ValueError("The code size must be large enough to "
+                             "distinguish every class.")
+        tmp_code_book = np.zeros((n_classes, code_size_))
+        dist = 0
+        while iter > 0:
+            p = random_state.permutation(max_code_size_)
+            for i in range(code_size_):
+                code = bin(p[i] + max_code_size_ + 1)[2:].rjust(n_classes, '0')
+                for j in range(n_classes):
+                    if code[j] == '0':
+                        tmp_code_book[j][i] = 0
+                    else:
+                        tmp_code_book[j][i] = 1
+            iter = iter - 1
+            tmp_dist = 0
+            for i in range(n_classes-1):
+                for j in range(i + 1, n_classes):
+                    tmp_dist = tmp_dist + np.sum(np.abs(tmp_code_book[i]-tmp_code_book[j]))
+            if tmp_dist > dist:
+                dist = tmp_dist
+                self.code_book_ = tmp_code_book
+        if hasattr(self.estimator, "decision_function"):
+            self.code_book_[self.code_book_ == 0] = -1
 
     def fit(self, X, y):
         """Fit underlying estimators.
@@ -682,21 +724,9 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                              "".format(self.code_size))
 
         _check_estimator(self.estimator)
-        random_state = check_random_state(self.random_state)
 
         self.classes_ = np.unique(y)
-        n_classes = self.classes_.shape[0]
-        code_size_ = int(n_classes * self.code_size)
-
-        # FIXME: there are more elaborate methods than generating the codebook
-        # randomly.
-        self.code_book_ = random_state.random_sample((n_classes, code_size_))
-        self.code_book_[self.code_book_ > 0.5] = 1
-
-        if hasattr(self.estimator, "decision_function"):
-            self.code_book_[self.code_book_ != 1] = -1
-        else:
-            self.code_book_[self.code_book_ != 1] = 0
+        self._generate_codebook()
 
         classes_index = dict((c, i) for i, c in enumerate(self.classes_))
 

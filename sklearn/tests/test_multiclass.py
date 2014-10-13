@@ -487,19 +487,23 @@ def test_ovo_string_y():
 def test_ecoc_exceptions():
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0))
     assert_raises(ValueError, ecoc.predict, [])
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0), code_size=3)
+    assert_raises(ValueError, ecoc.fit, [], np.array([0, 1, 2, 3]))
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0), code_size=0.01)
+    assert_raises(ValueError, ecoc.fit, [], np.array([0, 1, 2, 3]))
 
 
 def test_ecoc_fit_predict():
     # A classifier which implements decision_function.
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0),
-                                code_size=2, random_state=0)
+                                code_size=1, random_state=0)
     ecoc.fit(iris.data, iris.target).predict(iris.data)
-    assert_equal(len(ecoc.estimators_), n_classes * 2)
+    assert_equal(len(ecoc.estimators_), n_classes * 1)
 
     # A classifier which implements predict_proba.
-    ecoc = OutputCodeClassifier(MultinomialNB(), code_size=2, random_state=0)
+    ecoc = OutputCodeClassifier(MultinomialNB(), code_size=1, random_state=0)
     ecoc.fit(iris.data, iris.target).predict(iris.data)
-    assert_equal(len(ecoc.estimators_), n_classes * 2)
+    assert_equal(len(ecoc.estimators_), n_classes * 1)
 
 
 def test_ecoc_gridsearch():
