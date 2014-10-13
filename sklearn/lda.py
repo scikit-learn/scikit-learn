@@ -23,63 +23,94 @@ from .utils import check_array, check_X_y
 from .preprocessing import StandardScaler
 
 
-def _cov(X, estimator='empirical'):
-    """
-    Estimate the covariance matrix using a specified estimator.
+def _cov(X, alpha=None):
+    """Estimate covariance matrix (using optional shrinkage)
 
     Parameters
     ----------
     X : array-like, shape = [n_samples, n_features]
         Data vector
 
-    estimator : string
-        Covariance estimator, possible values:
-          - 'empirical': empirical covariance matrix (default)
+    alpha : string or float, optional
+        Shrinkage parameter, possible values:
+          - None: no shrinkage (default)
+          - 'empirical': same as None
           - 'ledoit_wolf': shrunk covariance matrix using the Ledoit-Wolf lemma
+          - float between 0 and 1: fixed shrinkage constant
 
     Returns
     -------
     s : array-like, shape = [n_features, n_features]
         Estimated covariance matrix
     """
-    if isinstance(estimator, str):    
-        if estimator == 'ledoit_wolf':
+    alpha = "empirical" if alpha is None else alpha
+    if isinstance(alpha, str):    
+        if alpha == 'ledoit_wolf':
             # standardize features
             sc = StandardScaler()
             X = sc.fit_transform(X)
             std = np.diag(sc.std_)
-            s = std.dot(ledoit_wolf(X)[0]).dot(std)  # rescale covariance matrix
-        elif estimator == 'empirical':
+            s = std.dot(ledoit_wolf(X)[0]).dot(std)  # scale back
+        elif alpha == 'empirical':
             s = empirical_covariance(X)
         else:
-            raise ValueError('unknown covariance estimation method')
-    elif isinstance(estimator, float) or isinstance(estimator, int):
-        if estimator < 0 or estimator > 1:
+            raise ValueError('unknown shrinkage parameter')
+    elif isinstance(alpha, float) or isinstance(alpha, int):
+        if alpha < 0 or alpha > 1:
             raise ValueError('shrinkage parameter must be between 0 and 1')
         s = empirical_covariance(X)
-        s = shrunk_covariance(s, estimator)
+        s = shrunk_covariance(s, alpha)
     return s
 
 
-def _means_cov(X, y, cov_estimator=None):
+def _means(X, y):
+    """Compute class means
+    
+    Parameters
+    ----------
+    X : array-like, shape = [n_samples, n_features]
+        Training data
+
+    y : array-like, shape = [n_samples] or [n_samples, n_targets]
+        Target values
+    """
     means = []
     classes = np.unique(y)
-    if cov_estimator is not None:
-        covs = []
     for group in classes:
         Xg = X[y == group, :]
         meang = Xg.mean(0)
         means.append(meang)
-        if cov_estimator is not None:
-            covg = _cov(Xg, cov_estimator)
-            covg = np.atleast_2d(covg)
-            covs.append(covg)
+    return np.asarray(means)
 
-    means = np.asarray(means)
-    if cov_estimator is not None:
-        return means, np.mean(covs, 0)
-    else:
-        return means
+
+def _means_cov(X, y, alpha=None):
+    """Compute class means and covariance matrix
+    
+    Parameters
+    ----------
+    X : array-like, shape = [n_samples, n_features]
+        Training data
+
+    y : array-like, shape = [n_samples] or [n_samples, n_targets]
+        Target values
+        
+    alpha : string or float, optional
+        Shrinkage parameter, possible values:
+          - None: no shrinkage (default)
+          - 'ledoit_wolf': shrunk covariance matrix using the Ledoit-Wolf lemma
+          - float between 0 and 1: fixed shrinkage constant
+    """
+    means = []
+    classes = np.unique(y)
+    covs = []
+    for group in classes:
+        Xg = X[y == group, :]
+        meang = Xg.mean(0)
+        means.append(meang)
+        covg = _cov(Xg, alpha)
+        covg = np.atleast_2d(covg)
+        covs.append(covg)
+    return np.asarray(means), np.mean(covs, 0)
 
 
 class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
@@ -99,26 +130,22 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
     solver : string, optional
         Solver to use, possible values:
           - 'svd': Singular value decomposition (default). Does not need to
-                   compute the covariance matrix, therefore this solver is
-                   recommended for very large feature dimensions.
-          - 'lsqr': Least squares solution, can be combined with shrinkage (see
-                    below)
-          - 'eigen': Eigenvalue decomposition, can be combined with shrinkage
-                    (see below)
+              compute the covariance matrix, therefore this solver is
+              recommended for very large feature dimensions.
+          - 'lsqr': Least squares solution, can be combined with shrinkage.
+          - 'eigen': Eigenvalue decomposition, can be combined with shrinkage.
 
     alpha : string or float, optional
         Shrinkage parameter, possible values:
-          - None: No shrinkage (default)
-          - 'ledoit_wolf': Ledoit-Wolf shrinkage (determines optimal shrinkage
-                           parameter analytically)
-          - 'empirical': Equivalent with no shrinkage (or a value of 0)
-          - 0..1: If set to a number between 0 and 1, the shrinkage parameter
-                  is set to this value (0 means no shrinkage)
+          - None: no shrinkage (default)
+          - 'ledoit_wolf': shrunk covariance matrix using the Ledoit-Wolf lemma
+          - float between 0 and 1: fixed shrinkage constant
+        Note that shrinkage works only with 'lsqr' and 'eigen' solvers.
 
     priors : array, optional, shape = [n_classes]
         Priors on classes
 
-    n_components : int
+    n_components : int, optional
         Number of components (< n_classes - 1) for dimensionality reduction
 
     Attributes
@@ -171,7 +198,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         self.n_components = n_components
         self.store_covariance = store_covariance
         
-    def _solve_lsqr(self, X, y, cov_estimator):
+    def _solve_lsqr(self, X, y, alpha):
         """Least squares solver
 
         Parameters
@@ -182,12 +209,13 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         y : array-like, shape = [n_samples] or [n_samples, n_targets]
             Target values
 
-        cov_estimator : string
-            Covariance estimator, possible values:
-              - 'empirical': Empirical covariance matrix
-              - 'ledoit_wolf': Shrunk covariance matrix using Ledoit-Wolf
+        alpha : string or float, optional
+            Shrinkage parameter, possible values:
+              - None: no shrinkage (default)
+              - 'ledoit_wolf': shrunk covariance matrix using the Ledoit-Wolf lemma
+              - float between 0 and 1: fixed shrinkage constant
         """
-        self.means_, self.covariance_ = _means_cov(X, y, cov_estimator)
+        self.means_, self.covariance_ = _means_cov(X, y, alpha)
         self.xbar_ = np.dot(self.priors_, self.means_)
     
         # TODO: weight covariances with priors?
@@ -197,7 +225,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         self.intercept_ = (-0.5 * np.diag(np.dot(means, self.coef_.T))
                            + np.log(self.priors_))
 
-    def _solve_eigen(self, X, y, cov_estimator):
+    def _solve_eigen(self, X, y, alpha):
         """Eigenvalue decomposition solver
 
         Parameters
@@ -208,16 +236,17 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         y : array-like, shape = [n_samples] or [n_samples, n_targets]
             Target values
 
-        cov_estimator : string
-            Covariance estimator, possible values:
-              - 'empirical': Empirical covariance matrix
-              - 'ledoit_wolf': Shrunk covariance matrix using Ledoit-Wolf
+        alpha : string or float, optional
+            Shrinkage parameter, possible values:
+              - None: no shrinkage (default)
+              - 'ledoit_wolf': shrunk covariance matrix using the Ledoit-Wolf lemma
+              - float between 0 and 1: fixed shrinkage constant
         """
-        self.means_, self.covariance_ = _means_cov(X, y, cov_estimator)
+        self.means_, self.covariance_ = _means_cov(X, y, alpha)
         self.xbar_ = np.dot(self.priors_, self.means_)
 
         # TODO: weight covariances with priors?
-        St = _cov(X, cov_estimator)
+        St = _cov(X, alpha)
         Sb = St - self.covariance_
         means = self.means_ - self.xbar_
 
@@ -242,15 +271,15 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         y : array-like, shape = [n_samples] or [n_samples, n_targets]
             Target values
 
-        tol : float
+        tol : float, optional
             Threshold used for rank estimation
         """
         n_samples, n_features = X.shape
         n_classes = len(self.classes_)
         if self.store_covariance:
-            self.means_, self.covariance_ = _means_cov(X, y, cov_estimator='empirical')
+            self.means_, self.covariance_ = _means_cov(X, y, alpha=None)
         else:
-            self.means_ = _means_cov(X, y, cov_estimator=None)
+            self.means_ = _means(X, y)
 
         Xc = []
         for idx, group in enumerate(self.classes_):
@@ -295,8 +324,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         self.coef_ = np.dot(coef, self.scalings_.T)
 
     def fit(self, X, y):
-        """
-        Fit the LDA model according to the given training data and parameters.
+        """Fit LDA model according to the given training data and parameters
 
         Parameters
         ----------
@@ -316,14 +344,12 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         else:
             self.priors_ = self.priors
 
-        alpha = "empirical" if self.alpha is None else self.alpha
-
         if self.solver == 'svd':
             self._solve_svd(X, y)
         elif self.solver == 'lsqr':
-            self._solve_lsqr(X, y, cov_estimator=alpha)
+            self._solve_lsqr(X, y, alpha=self.alpha)
         elif self.solver == 'eigen':
-            self._solve_eigen(X, y, cov_estimator=alpha)
+            self._solve_eigen(X, y, alpha=self.alpha)
         else:
             raise ValueError('unknown solver')
 
@@ -334,9 +360,8 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         return np.dot(X - self.xbar_, self.coef_.T) + self.intercept_
 
     def decision_function(self, X):
-        """
-        This function returns the decision function values related to each
-        class on an array of test vectors X.
+        """Returns the decision function values related to each class on an
+        array of test vectors X
 
         Parameters
         ----------
@@ -355,9 +380,8 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         return dec_func
 
     def transform(self, X):
-        """
-        Project the data so as to maximize class separation (large separation
-        between projected class means and small variance within each class).
+        """Project data so as to maximize class separation (large separation
+        between projected class means and small variance within each class)
 
         Parameters
         ----------
@@ -377,10 +401,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         return X_new[:, :n_components]
 
     def predict(self, X):
-        """
-        This function does classification on an array of test vectors X.
-
-        The predicted class C for each sample in X is returned.
+        """Predict class labels for samples in X
 
         Parameters
         ----------
@@ -395,9 +416,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         return y_pred
 
     def predict_proba(self, X):
-        """
-        This function returns posterior probabilities of classification
-        according to each class on an array of test vectors X.
+        """Probability estimates
 
         Parameters
         ----------
@@ -415,9 +434,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         return likelihood / likelihood.sum(axis=1)[:, np.newaxis]
 
     def predict_log_proba(self, X):
-        """
-        This function returns posterior log-probabilities of classification
-        according to each class on an array of test vectors X.
+        """Log of probability estimates
 
         Parameters
         ----------
