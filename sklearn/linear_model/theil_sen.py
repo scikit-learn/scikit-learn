@@ -24,7 +24,7 @@ from ..utils import check_consistent_length, _get_n_jobs
 from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange as range
 
-_epsilon = np.finfo(np.double).eps
+_EPSILON = np.finfo(np.double).eps
 
 
 def _modified_weiszfeld_step(X, x_old):
@@ -57,7 +57,7 @@ def _modified_weiszfeld_step(X, x_old):
     X = X.T
     diff = X.T - x_old
     diff_norm = np.sqrt(np.sum(diff ** 2, axis=1))
-    mask = diff_norm >= _epsilon
+    mask = diff_norm >= _EPSILON
 
     if mask.sum() < X.shape[1]:  # x_old equals one of our samples
         equals_sample = 1.
@@ -68,7 +68,7 @@ def _modified_weiszfeld_step(X, x_old):
     diff_norm = diff_norm[mask][:, np.newaxis]
     quotient_norm = linalg.norm(np.sum(diff / diff_norm, axis=0))
 
-    if quotient_norm > _epsilon:  # to avoid division by zero
+    if quotient_norm > _EPSILON:  # to avoid division by zero
         new_direction = (np.sum(X.T[mask, :] / diff_norm, axis=0)
                          / np.sum(1 / diff_norm, axis=0))
     else:
@@ -189,10 +189,10 @@ def _lstsq(X, y, indices, intercept):
     y_subpopulation = np.zeros((max(n_subsamples, n_dim)))
     lstsq, = get_lapack_funcs(('gelss',), (X_subpopulation, y_subpopulation))
 
-    for iter, subset in enumerate(indices):
+    for index, subset in enumerate(indices):
         X_subpopulation[:, first_elem:] = X[subset, :]
         y_subpopulation[:n_subsamples] = y[subset]
-        weights[iter, :] = lstsq(X_subpopulation, y_subpopulation)[1][:n_dim]
+        weights[index, :] = lstsq(X_subpopulation, y_subpopulation)[1][:n_dim]
 
     return weights
 
