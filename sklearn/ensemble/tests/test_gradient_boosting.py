@@ -12,7 +12,7 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble.gradient_boosting import ZeroEstimator
 from sklearn.metrics import mean_squared_error
 from sklearn.utils import check_random_state, tosequence
-from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_almost_equal, clean_warning_registry
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
@@ -653,6 +653,7 @@ def test_more_verbose_output():
 def test_warn_deviance():
     """Test if mdeviance and bdeviance give deprecated warning. """
     for loss in ('bdeviance', 'mdeviance'):
+        clean_warning_registry()
         with warnings.catch_warnings(record=True) as w:
             # This will raise a DataConversionWarning that we want to
             # "always" raise, elsewhere the warnings gets ignored in the

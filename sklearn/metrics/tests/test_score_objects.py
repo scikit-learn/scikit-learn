@@ -28,7 +28,8 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
 
 
-REGRESSION_SCORERS = ['r2', 'mean_absolute_error', 'mean_squared_error']
+REGRESSION_SCORERS = ['r2', 'mean_absolute_error', 'mean_squared_error',
+                      'median_absolute_error']
 CLF_SCORERS = ['accuracy', 'f1', 'roc_auc', 'average_precision', 'precision',
                'recall', 'log_loss',
                'adjusted_rand_score'  # not really, but works

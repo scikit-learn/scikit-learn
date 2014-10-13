@@ -699,6 +699,18 @@ def test_linear_svc_convergence_warnings():
     assert_equal(lsvc.n_iter_, 2)
 
 
+def test_svr_coef_sign():
+    """Test that SVR(kernel="linear") has coef_ with the right sign."""
+    # Non-regression test for #2933.
+    X = np.random.RandomState(21).randn(10, 3)
+    y = np.random.RandomState(12).randn(10)
+
+    for klass in [svm.SVR, svm.NuSVR]:
+        svr = klass(kernel="linear").fit(X, y)
+        assert_array_almost_equal(svr.predict(X).reshape(-1, 1),
+                                  np.dot(X, svr.coef_.T) + svr.intercept_)
+
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()

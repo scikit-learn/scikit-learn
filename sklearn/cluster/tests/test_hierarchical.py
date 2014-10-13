@@ -16,6 +16,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import clean_warning_registry, ignore_warnings
 
 from sklearn.cluster import Ward, WardAgglomeration, ward_tree
 from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration
@@ -43,10 +44,7 @@ def test_linkage_misc():
     FeatureAgglomeration().fit(X)
 
     # Deprecation of Ward class
-    with warnings.catch_warnings(record=True) as warning_list:
-        warnings.simplefilter("always", DeprecationWarning)
-        Ward().fit(X)
-    assert_equal(len(warning_list), 1)
+    assert_warns(DeprecationWarning, Ward).fit(X)
 
     # test hiearchical clustering on a precomputed distances matrix
     dis = cosine_distances(X)
@@ -91,8 +89,7 @@ def test_unstructured_linkage_tree():
     for this_X in (X, X[0]):
         # With specified a number of clusters just for the sake of
         # raising a warning and testing the warning code
-        with warnings.catch_warnings(record=True) as warning_list:
-            warnings.simplefilter("ignore", DeprecationWarning)
+        with ignore_warnings():
             children, n_nodes, n_leaves, parent = assert_warns(
                 UserWarning, ward_tree, this_X.T, n_clusters=10)
         n_nodes = 2 * X.shape[1] - 1
@@ -100,15 +97,10 @@ def test_unstructured_linkage_tree():
 
     for tree_builder in _TREE_BUILDERS.values():
         for this_X in (X, X[0]):
-            with warnings.catch_warnings(record=True) as warning_list:
-                warnings.simplefilter("always", UserWarning)
-                warnings.simplefilter("ignore", DeprecationWarning)
+            with ignore_warnings():
+                children, n_nodes, n_leaves, parent = assert_warns(
+                    UserWarning, tree_builder, this_X.T, n_clusters=10)
 
-                # With specified a number of clusters just for the sake of
-                # raising a warning and testing the warning code
-                children, n_nodes, n_leaves, parent = tree_builder(
-                    this_X.T, n_clusters=10)
-            assert_equal(len(warning_list), 1)
             n_nodes = 2 * X.shape[1] - 1
             assert_equal(len(children) + n_leaves, n_nodes)
 
@@ -207,14 +199,10 @@ def test_ward_agglomeration():
     X = rnd.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
     assert_warns(DeprecationWarning, WardAgglomeration)
-    with warnings.catch_warnings(record=True) as warning_list:
-        warnings.simplefilter("always", DeprecationWarning)
-        if hasattr(np, 'VisibleDeprecationWarning'):
-            # Let's not catch the numpy internal DeprecationWarnings
-            warnings.simplefilter('ignore', np.VisibleDeprecationWarning)
+
+    with ignore_warnings():
         ward = WardAgglomeration(n_clusters=5, connectivity=connectivity)
         ward.fit(X)
-        assert_equal(len(warning_list), 1)
     agglo = FeatureAgglomeration(n_clusters=5, connectivity=connectivity)
     agglo.fit(X)
     assert_array_equal(agglo.labels_, ward.labels_)

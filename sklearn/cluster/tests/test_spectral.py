@@ -11,7 +11,7 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_equal, clean_warning_registry
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
@@ -69,6 +69,7 @@ def test_spectral_amg_mode():
     S = sparse.coo_matrix(S)
     try:
         from pyamg import smoothed_aggregation_solver
+
         amg_loaded = True
     except ImportError:
         amg_loaded = False
@@ -137,6 +138,7 @@ def test_affinities():
                       centers=[[1, 1], [-1, -1]], cluster_std=0.01
                       )
     # nearest neighbors affinity
+    clean_warning_registry()
     with warnings.catch_warnings(record=True) as warning_list:
         warnings.simplefilter("always", UserWarning)
         sp = SpectralClustering(n_clusters=2, affinity='nearest_neighbors',

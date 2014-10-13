@@ -523,17 +523,17 @@ class SVR(BaseLibSVM, RegressorMixin):
     support_vectors_ : array-like, shape = [nSV, n_features]
         Support vectors.
 
-    dual_coef_ : array, shape = [n_classes-1, n_SV]
+    dual_coef_ : array, shape = [1, n_SV]
         Coefficients of the support vector in the decision function.
 
-    coef_ : array, shape = [n_classes-1, n_features]
+    coef_ : array, shape = [1, n_features]
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`
 
-    intercept_ : array, shape = [n_class * (n_class-1) / 2]
+    intercept_ : array, shape = [1]
         Constants in decision function.
 
     Examples
@@ -639,17 +639,17 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     support_vectors_ : array-like, shape = [nSV, n_features]
         Support vectors.
 
-    dual_coef_ : array, shape = [n_classes-1, n_SV]
+    dual_coef_ : array, shape = [1, n_SV]
         Coefficients of the support vector in the decision function.
 
-    coef_ : array, shape = [n_classes-1, n_features]
+    coef_ : array, shape = [1, n_features]
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`
 
-    intercept_ : array, shape = [n_class * (n_class-1) / 2]
+    intercept_ : array, shape = [1]
         Constants in decision function.
 
     Examples

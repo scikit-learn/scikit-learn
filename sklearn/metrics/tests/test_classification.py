@@ -13,7 +13,7 @@ from sklearn.preprocessing import LabelBinarizer, MultiLabelBinarizer
 from sklearn.utils.fixes import np_version
 from sklearn.utils.validation import check_random_state
 
-from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises, clean_warning_registry
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -398,6 +398,40 @@ avg / total       0.51      0.53      0.47        75
     report = classification_report(
         y_true, y_pred, labels=np.arange(len(iris.target_names)),
         target_names=iris.target_names)
+    assert_equal(report, expected_report)
+
+    # print classification report with label detection
+    expected_report = """\
+             precision    recall  f1-score   support
+
+          0       0.83      0.79      0.81        24
+          1       0.33      0.10      0.15        31
+          2       0.42      0.90      0.57        20
+
+avg / total       0.51      0.53      0.47        75
+"""
+    report = classification_report(y_true, y_pred)
+    assert_equal(report, expected_report)
+
+
+def test_classification_report_multiclass_with_digits():
+    """Test performance report with added digits in floating point values"""
+    iris = datasets.load_iris()
+    y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
+
+    # print classification report with class names
+    expected_report = """\
+             precision    recall  f1-score   support
+
+     setosa    0.82609   0.79167   0.80851        24
+ versicolor    0.33333   0.09677   0.15000        31
+  virginica    0.41860   0.90000   0.57143        20
+
+avg / total    0.51375   0.53333   0.47310        75
+"""
+    report = classification_report(
+        y_true, y_pred, labels=np.arange(len(iris.target_names)),
+        target_names=iris.target_names, digits=5)
     assert_equal(report, expected_report)
 
     # print classification report with label detection
@@ -908,7 +942,7 @@ def test_recall_warnings():
                        np.array([[1, 1], [1, 1]]),
                        np.array([[0, 0], [0, 0]]),
                        average='micro')
-
+    clean_warning_registry()
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
         recall_score(np.array([[0, 0], [0, 0]]),
@@ -920,6 +954,7 @@ def test_recall_warnings():
 
 
 def test_precision_warnings():
+    clean_warning_registry()
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
 
@@ -937,6 +972,7 @@ def test_precision_warnings():
 
 
 def test_fscore_warnings():
+    clean_warning_registry()
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
 

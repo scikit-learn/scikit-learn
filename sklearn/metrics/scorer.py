@@ -22,10 +22,10 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 
-from . import (r2_score, mean_absolute_error, mean_squared_error,
-               accuracy_score, f1_score, roc_auc_score,
-               average_precision_score, precision_score,
-               recall_score, log_loss)
+from . import (r2_score, median_absolute_error, mean_absolute_error,
+               mean_squared_error, accuracy_score, f1_score,
+               roc_auc_score, average_precision_score,
+               precision_score, recall_score, log_loss)
 from .cluster import adjusted_rand_score
 from ..utils.multiclass import type_of_target
 from ..externals import six
