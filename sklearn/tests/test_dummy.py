@@ -344,7 +344,7 @@ def test_quantile_invalid():
     assert_raises(TypeError, est.fit, X, y)
 
     est = DummyRegressor(strategy="quantile", quantile=[0])
-    assert_raises(TypeError, est.fit, X, y)
+    assert_raises(ValueError, est.fit, X, y)
 
     est = DummyRegressor(strategy="quantile", quantile=-0.1)
     assert_raises(ValueError, est.fit, X, y)
@@ -357,15 +357,8 @@ def test_quantile_invalid():
 
 
 def test_quantile_strategy_empty_train():
-
-    X = []
-    y = []
-
-    X_test = [[1]] * 3
-
     est = DummyRegressor(strategy="quantile", quantile=0.4)
-    est.fit(X, y)
-    assert_array_equal(est.predict(X_test), [np.nan] * 3)
+    assert_raises(ValueError, est.fit, [], [])
 
 
 def test_constant_strategy_regressor():

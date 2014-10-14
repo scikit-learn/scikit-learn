@@ -390,6 +390,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
                              % self.strategy)
 
         y = check_array(y, accept_sparse='csr', ensure_2d=False)
+        if y.size == 0:
+            raise ValueError("y must not be empty.")
         self.output_2d_ = (y.ndim == 2)
 
         if self.strategy == "mean":
@@ -403,18 +405,12 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
                 raise TypeError("Quantile value has to be specified "
                                 "when the quantile strategy is used.")
 
-            if not np.isscalar(self.quantile):
-                raise TypeError("Quantile value must be scalar.")
-
-            self.quantile = float(self.quantile)
             if self.quantile < 0 or self.quantile > 1:
-                raise ValueError("Quantile must be in the range [0.0, 1.0]")
+                raise ValueError("Quantile must be in the range [0.0, 1.0], "
+                                 "but got %s." % self.quantile)
 
-            if y.shape[0] > 0:
-                self.constant_ = np.reshape(
-                    np.percentile(y, axis=0, q=self.quantile * 100.0), (1, -1))
-            else:
-                self.constant_ = np.array(np.nan)
+            self.constant_ = np.reshape(
+                np.percentile(y, axis=0, q=self.quantile * 100.0), (1, -1))
 
         elif self.strategy == "constant":
             if self.constant is None:
