@@ -215,7 +215,7 @@ def binarized_multilabel_confusion_matrix(y_true, y_pred):
 
     Examples
     --------
-    >>> from sklearn.metrics import confusion_matrix
+    >>> from sklearn.metrics import binarized_multilabel_confusion_matrix
     >>> y_true = np.array([[1, 0], [0, 1]])
     >>> y_pred = np.array([[1, 1], [1, 0]])
     >>> binarized_multilabel_confusion_matrix(y_true, y_pred)['tp']
