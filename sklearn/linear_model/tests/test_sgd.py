@@ -208,25 +208,18 @@ class CommonTest(object):
         assert_false(hasattr(clf, 'standard_coef_'))
 
     def test_late_onset_averaging_not_reached(self):
-        eta0 = .001
-        clf1 = self.factory(average=12, learning_rate="constant",
-                            eta0=eta0, n_iter=2)
-        clf2 = self.factory(learning_rate="constant", eta0=eta0, n_iter=2)
+        clf1 = self.factory(average=600)
+        clf2 = self.factory()
+        for _ in range(100):
+            if isinstance(clf1, SGDClassifier):
+                clf1.partial_fit(X, Y, classes=np.unique(Y))
+                clf2.partial_fit(X, Y, classes=np.unique(Y))
+            else:
+                clf1.partial_fit(X, Y)
+                clf2.partial_fit(X, Y)
 
-        clf1.fit(X, Y)
-        clf2.fit(X, Y)
-
-        assert_array_almost_equal(clf1.coef_, clf2.coef_)
-        assert_almost_equal(clf1.intercept_, clf1.intercept_)
-
-        clf1 = self.factory(average=13, learning_rate="constant",
-                            eta0=eta0, n_iter=2)
-        clf1.fit(X, Y)
-
-        assert_array_almost_equal(clf1.coef_, clf2.coef_,
-                                  decimal=16)
-        assert_almost_equal(clf1.intercept_, clf2.intercept_,
-                            decimal=16)
+        assert_array_almost_equal(clf1.coef_, clf2.coef_, decimal=10)
+        assert_almost_equal(clf1.intercept_, clf1.intercept_, decimal=10)
 
     def test_late_onset_averaging_reached(self):
         eta0 = .001
