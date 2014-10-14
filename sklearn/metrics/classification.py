@@ -243,10 +243,9 @@ def binarized_multilabel_confusion_matrix(y_true, y_pred):
     columns = np.repeat(range(0, n_labels), 4)
     mcm = coo_matrix((data, (rows, columns)), shape=(4, n_labels)).\
         toarray()
-    return (np.array(map(tuple, np.transpose(mcm)),
+    return (np.array(list(map(tuple, np.transpose(mcm))),
                      dtype=[('tp', int), ('fp', int),
                             ('fn', int), ('tn', int)]))
-    return mcm
 
 
 def confusion_matrix(y_true, y_pred, labels=None):
