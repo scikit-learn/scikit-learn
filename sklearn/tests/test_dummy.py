@@ -338,10 +338,10 @@ def test_quantile_invalid():
     y = [0] * 5  # ignored
 
     est = DummyRegressor(strategy="quantile")
-    assert_raises(TypeError, est.fit, X, y)
+    assert_raises(ValueError, est.fit, X, y)
 
     est = DummyRegressor(strategy="quantile", quantile=None)
-    assert_raises(TypeError, est.fit, X, y)
+    assert_raises(ValueError, est.fit, X, y)
 
     est = DummyRegressor(strategy="quantile", quantile=[0])
     assert_raises(ValueError, est.fit, X, y)

@@ -401,11 +401,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             self.constant_ = np.reshape(np.median(y, axis=0), (1, -1))
 
         elif self.strategy == "quantile":
-            if self.quantile is None:
-                raise TypeError("Quantile value has to be specified "
-                                "when the quantile strategy is used.")
-
-            if self.quantile < 0 or self.quantile > 1:
+            if self.quantile is None or self.quantile < 0 or self.quantile > 1:
                 raise ValueError("Quantile must be in the range [0.0, 1.0], "
                                  "but got %s." % self.quantile)
 
