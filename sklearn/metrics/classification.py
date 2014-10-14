@@ -218,11 +218,8 @@ def binarized_multilabel_confusion_matrix(y_true, y_pred):
     >>> from sklearn.metrics import confusion_matrix
     >>> y_true = np.array([[1, 0], [0, 1]])
     >>> y_pred = np.array([[1, 1], [1, 0]])
-    >>> a = binarized_multilabel_confusion_matrix(y_true, y_pred)
-    >>> a['tp']
+    >>> binarized_multilabel_confusion_matrix(y_true, y_pred)['tp']
     array([1, 0])
-    >>> a['tn']
-    array([0, 0])
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if not (y_type == 'multilabel-indicator'):
