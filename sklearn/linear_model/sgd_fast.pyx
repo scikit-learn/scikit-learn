@@ -37,6 +37,7 @@ DEF OPTIMAL = 2
 DEF INVSCALING = 3
 DEF PA1 = 4
 DEF PA2 = 5
+DEF BOTTOU = 6
 
 # ----------------------------------------
 # Extension Types for Loss Functions
@@ -612,6 +613,8 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     eta = 1.0 / (alpha * (optimal_init + t - 1))
                 elif learning_rate == INVSCALING:
                     eta = eta0 / pow(t, power_t)
+                elif learning_rate == BOTTOU:
+                    eta = eta0 / pow(1 + eta0 * alpha * (t - 1), power_t)
 
                 if verbose > 0:
                     sumloss += loss.loss(p, y)
