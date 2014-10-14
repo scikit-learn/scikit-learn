@@ -107,7 +107,7 @@ def _get_weights(dist, weights, bandwidth=None):
         kernel = KERNEL_WEIGHTS[weights]
         if isinstance(bandwidth, np.ndarray):
             bandwidth = bandwidth.ravel()
-        if dist.dtype == np.ndarray:
+        if dist.dtype == np.ndarray:  # when dist is array of arrays
             dist = dist / bandwidth
             weights = [kernel(instance_dist) for instance_dist in dist]
             return np.asarray(weights)

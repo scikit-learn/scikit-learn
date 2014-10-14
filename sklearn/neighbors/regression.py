@@ -75,7 +75,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-    metric_params: dict, optional (default = None)
+    metric_params : dict, optional (default = None)
         additional keyword arguments for the metric function.
 
     Examples
@@ -226,7 +226,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-    metric_params: dict, optional (default = None)
+    metric_params : dict, optional (default = None)
         additional keyword arguments for the metric function.
 
     Examples
