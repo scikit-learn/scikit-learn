@@ -540,7 +540,9 @@ Locality Sensitive Hashing Forest
 ---------------------------------
 
 The :class:`LSHForest` in scikit-learn implements one of the most promising
-variants of LSH. Prefix trees are used to create a forest, with each leaf of
+variants of LSH (see :ref:`Mathematical description of Locality Sensitive
+Hashing <mathematical_description_of_lsh>`).
+Prefix trees are used to create a forest, with each leaf of
 a tree corresponding to an actual data point in the database. There are
 :math:`l` such trees which compose the forest and they are constructed using
 independently drawn random sequence of hash functions from :math:`H`. In this
@@ -581,8 +583,21 @@ The behavior of accuracy while varying these parameters are as follows.
 For small data sets, brute force method in exact nearest neighbor search can be
 faster than LSHForest for the query time. LSHForest has a sub-linear query time
 scalability with the index size. The exact break even point where LSHForest
-queries become faster than the matching brute force queries dependents on the
-dimensionality, structure of the dataset and required level of precision.
+queries become faster than the matching brute force queries dependend on the
+dimensionality, structure of the dataset, required level of precision,
+characteristics of the runtime environment such as availability of BLAS
+optimizations, number of CPU cores and size of the CPU caches. Following graphs
+depict scalability of LSHForest queries with index size.
+
+.. figure:: ../auto_examples/neighbors/images/plot_approximate_nearest_neighbors_scalability_001.png
+   :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors_scalability.html
+   :align: center
+   :scale: 50
+
+.. figure:: ../auto_examples/neighbors/images/plot_approximate_nearest_neighbors_scalability_002.png
+   :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors_scalability.html
+   :align: center
+   :scale: 50
 
 .. topic:: Examples:
 
@@ -598,6 +613,8 @@ dimensionality, structure of the dataset and required level of precision.
      <http://www2005.org/docs/p651.pdf>`_,
      Bawa, M., Condie, T., Ganesan, P., WWW '05 Proceedings of the 14th
      international conference on World Wide Web  Pages 651-660
+
+.. _mathematical_description_of_lsh:
 
 Mathematical description of Locality Sensitive Hashing
 ------------------------------------------------------

@@ -5,7 +5,9 @@ Scalability of Approximate Nearest Neighbors
 
 This demonstrates the relationship between query time and index size of
 LSHForest. Also, query time is compared with brute force method in exact
-nearest neighbor search for the same index sizes.
+nearest neighbor search for the same index sizes. Break even point of
+query speeds of LSHForest and brute force method will change significantly
+depending on the speed of the host machine.
 
 Moreover, precision of first 10 neighbors for different index sizes is
 also demontrated, LSHForest is built with 'n_estimators' = 3 and
@@ -83,8 +85,10 @@ colors = ['r', 'b']
 p1 = plt.Rectangle((0, 0), 0.1, 0.1, fc=colors[0])
 p2 = plt.Rectangle((0, 0), 0.1, 0.1, fc=colors[1])
 
-labels = ['LSHForest', 'NearestNeighbors']
-plt.legend((p1, p2), (labels[0], labels[1]), loc='upper left')
+labels = ["LSHForest",
+          "NearestNeighbors(algorithm='brute', metric='cosine')"]
+plt.legend((p1, p2), (labels[0], labels[1]),
+           loc='upper left', fontsize='small')
 
 plt.scatter(n_samples_values, average_times_approx, c='r')
 plt.plot(n_samples_values, average_times_approx, c='r')
@@ -93,7 +97,7 @@ plt.plot(n_samples_values, average_times_exact, c='b')
 plt.xlim(min(n_samples_values), max(n_samples_values))
 plt.ylim(min(average_times_approx + average_times_exact),
          max(average_times_approx + average_times_exact))
-plt.ylabel("Average time in seconds")
+plt.ylabel("Average query time in seconds")
 plt.xlabel("n_samples")
 plt.grid(which='both')
 plt.title("Impact of index size on response time for first "
