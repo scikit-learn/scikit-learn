@@ -196,20 +196,15 @@ def binarized_multilabel_confusion_matrix(y_true, y_pred):
     y_pred : array, shape = [n_samples]
         Estimated targets as returned by a classifier.
 
-    labels : array, shape = [n_classes], optional
-        List of labels to index the matrix. This may be used to reorder
-        or select a subset of labels.
-        If none is given, those that appear at least once
-        in ``y_true`` or ``y_pred`` are used in sorted order.
-
     Returns
     -------
-    C : array, shape = [n_classes, 4]
-        where the columns are as follows
-        0 : True positive for class i
-        1 : False positives for class i
-        2 : False negatives for class i
-        3 : True negatives for class i
+    C : array, shape = [n_classes, ]
+        where you can access the value by
+        using keys 'tp', 'fp', 'fn' ,'tn'
+        for example:
+        C['tp'] returns an array a, where
+        a[i] contains the true positives
+        for the class a
         Multi-label Confusion matrix
 
     References
@@ -223,11 +218,11 @@ def binarized_multilabel_confusion_matrix(y_true, y_pred):
     >>> from sklearn.metrics import confusion_matrix
     >>> y_true = np.array([[1, 0], [0, 1]])
     >>> y_pred = np.array([[1, 1], [1, 0]])
-    >>> binarized_multilabel_confusion_matrix(y_true, y_pred)
-    array([[ 1.,  0.],
-           [ 1.,  1.],
-           [ 0.,  1.],
-           [ 0.,  0.]])
+    >>> a = binarized_multilabel_confusion_matrix(y_true, y_pred)
+    >>> a['tp']
+    array([1, 0])
+    >>> a['tn']
+    array([0, 0])
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if not (y_type == 'multilabel-indicator'):
@@ -251,6 +246,9 @@ def binarized_multilabel_confusion_matrix(y_true, y_pred):
     columns = np.repeat(range(0, n_labels), 4)
     mcm = coo_matrix((data, (rows, columns)), shape=(4, n_labels)).\
         toarray()
+    return (np.array(map(tuple, np.transpose(mcm)),
+                     dtype=[('tp', int), ('fp', int),
+                            ('fn', int), ('tn', int)]))
     return mcm
 
 
