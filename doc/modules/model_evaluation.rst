@@ -1107,6 +1107,9 @@ and :math:`y_i` is the corresponding true value, then the median absolute error
 
   \text{MedAE}(y, \hat{y}) = \text{median}(\mid y_1 - \hat{y}_1 \mid, \ldots, \mid y_n - \hat{y}_n \mid).
 
+With multi-output data, the median absolute error is first taken over all
+outputs per sample then taken over all samples.
+
 Here is a small example of usage of the :func:`median_absolute_error`
 function::
 
