@@ -16,6 +16,7 @@ from ..externals.six.moves import xrange
 from ..metrics.pairwise import pairwise_distances
 from ..preprocessing import LabelEncoder
 from ..utils.validation import check_array, check_X_y
+from ..utils.sparsefuncs import csc_row_median
 
 
 class NearestCentroid(BaseEstimator, ClassifierMixin):
@@ -86,8 +87,9 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         y : array, shape = [n_samples]
             Target values (integers)
         """
-        X, y = check_X_y(X, y, ['csr', 'csc'])
-        if sp.issparse(X) and self.shrink_threshold:
+        X, y = check_X_y(X, y, ['csc'])
+        X_sparse = sp.issparse(X)
+        if X_sparse and self.shrink_threshold:
             raise ValueError("threshold shrinking not supported"
                              " for sparse input")
 
@@ -100,16 +102,25 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
             raise ValueError('y has less than 2 classes')
 
         # Mask mapping each class to it's members.
-        self.centroids_ = np.empty((n_classes, n_features), dtype=np.float64)
+        self.centroids_ = np.zeros((n_classes, n_features), dtype=np.float64)
         # Number of clusters in each class.
         nk = np.zeros(n_classes)
 
         for cur_class in y_ind:
             center_mask = y_ind == cur_class
             nk[cur_class] = np.sum(center_mask)
-            if sp.issparse(X):
+            if X_sparse:
                 center_mask = np.where(center_mask)[0]
-            self.centroids_[cur_class] = X[center_mask].mean(axis=0)
+
+            # XXX: Update other averaging methods according to the metrics.
+            if self.metric == "manhattan":
+                # NumPy does not calculate median of sparse matrices.
+                if not X_sparse:
+                    self.centroids_[cur_class] = np.median(X[center_mask], axis=0)
+                else:
+                    self.centroids_[cur_class] = csc_row_median(X[center_mask])
+            else:
+                self.centroids_[cur_class] = X[center_mask].mean(axis=0)
 
         if self.shrink_threshold:
             dataset_centroid_ = np.mean(X, axis=0)
