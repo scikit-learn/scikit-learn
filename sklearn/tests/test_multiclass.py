@@ -487,11 +487,15 @@ def test_ovo_string_y():
 def test_ecoc_exceptions():
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0))
     assert_raises(ValueError, ecoc.predict, [])
-    ecoc = OutputCodeClassifier(LinearSVC(random_state=0), code_size=3)
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0),
+                                coding_strategy="abc")
+    assert_raises(ValueError, ecoc.fit, [], [])
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0), code_size=1.5,
+                                coding_strategy="opt_column_selection")
+    assert_raises(ValueError, ecoc.fit, [], np.array([0, 1, 2]))
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0), code_size=0.01,
+                                coding_strategy="opt_column_selection")
     assert_raises(ValueError, ecoc.fit, [], np.array([0, 1, 2, 3]))
-    ecoc = OutputCodeClassifier(LinearSVC(random_state=0), code_size=0.01)
-    assert_raises(ValueError, ecoc.fit, [], np.array([0, 1, 2, 3]))
-
 
 def test_ecoc_fit_predict():
     # A classifier which implements decision_function.
@@ -505,6 +509,26 @@ def test_ecoc_fit_predict():
     ecoc.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ecoc.estimators_), n_classes * 1)
 
+def test_ecoc_coding_strategy():
+    # For irsi dataset, code_size=1.5 will use random_code_book
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0),
+                                code_size=1.5, random_state=0)
+    ecoc.fit(iris.data, iris.target).predict(iris.data)
+    assert_equal(len(ecoc.estimators_), int(n_classes * 1.5))
+
+    # Set the coding_strategy to be "random"
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0),
+                                code_size=1.5, random_state=0,
+                                coding_strategy="random")
+    ecoc.fit(iris.data, iris.target).predict(iris.data)
+    assert_equal(len(ecoc.estimators_), int(n_classes * 1.5))
+
+    # Set the coding_strategy to be "opt_column_selection"
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0),
+                                code_size=1.0, random_state=0,
+                                coding_strategy="opt_column_selection")
+    ecoc.fit(iris.data, iris.target).predict(iris.data)
+    assert_equal(len(ecoc.estimators_), n_classes * 1)
 
 def test_ecoc_gridsearch():
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0),
