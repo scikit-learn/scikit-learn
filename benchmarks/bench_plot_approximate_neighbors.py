@@ -107,7 +107,7 @@ if __name__ == '__main__':
             speed_ups[i, j], accuracies[i, j] = calc_accuracy(
                 X_index[:sample_size], X_query, n_queries, n_neighbors,
                 **params)
-            print
+            print ('')
         print ('==========================================================')
 
     # Set labels for LSHForest parameters
@@ -134,7 +134,7 @@ if __name__ == '__main__':
     plt.ylim([0, 1.3])
     plt.xlim(np.min(n_samples), np.max(n_samples))
     plt.semilogx()
-    plt.ylabel("Presition@10")
+    plt.ylabel("Precision@10")
     plt.xlabel("Index size")
     plt.grid(which='both')
     plt.title("Precision of first 10 neighbors with index size")

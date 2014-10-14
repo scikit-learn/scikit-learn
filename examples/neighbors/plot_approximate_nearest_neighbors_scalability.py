@@ -44,7 +44,7 @@ X_all, _ = make_blobs(n_samples=max(n_samples_values) + n_queries,
 for n_samples in n_samples_values:
     X = X_all[:n_samples]
     # Initialize LSHForest for queries of a single neighbor
-    lshf = LSHForest(n_estimators=3, n_candidates=100,
+    lshf = LSHForest(n_estimators=15, n_candidates=200,
                      n_neighbors=10).fit(X)
     nbrs = NearestNeighbors(algorithm='brute', metric='cosine',
                             n_neighbors=10).fit(X)
