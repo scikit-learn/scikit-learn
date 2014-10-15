@@ -80,3 +80,49 @@ When the `NumPy support <http://buildbot.pypy.org/numpy-status/latest.html>`_
 in PyPy is complete or near-complete, and SciPy is ported over as well,
 we can start thinking of a port.
 We use too much of NumPy to work with a partial implementation.
+
+How do I deal with string data (or trees, graphs...)?
+-----------------------------------------------------
+
+scikit-learn estimators assume you'll feed them real-valued feature vectors.
+This assumption is hard-coded in pretty much all of the library.
+However, you can feed non-numerical inputs to estimators in several ways.
+
+If you have text documents, you can use a term frequency features; see
+:ref:`text_feature_extraction` for the built-in *text vectorizers*.
+For more general feature extraction from any kind of data, see
+:ref:`dict_feature_extraction` and :ref:`feature_hashing`.
+
+Another common case is when you have non-numerical data and a custom distance
+(or similarity) metric on these data. Examples include strings with edit
+distance (aka. Levenshtein distance; e.g., DNA or RNA sequences). These can be
+encoded as numbers, but doing so is painful and error-prone. Working with
+distance metrics on arbitrary data can be done in two ways.
+
+Firstly, many estimators take precomputed distance/similarity matrices, so if
+the dataset is not too large, you can compute distances for all pairs of inputs.
+If the dataset is large, you can use feature vectors with only one "feature",
+which is an index into a separate data structure, and supply a custom metric
+function that looks up the actual data in this data structure. E.g., to use
+DBSCAN with Levenshtein distances::
+
+    >>> from leven import levenshtein       # doctest: +SKIP
+    >>> import numpy as np
+    >>> from sklearn.cluster import dbscan
+    >>> data = ["ACCTCCTAGAAG", "ACCTACTAGAAGTT", "GAATATTAGGCCGA"]
+    >>> def lev_metric(x, y):
+    ...     i, j = int(x[0]), int(y[0])     # extract indices
+    ...     return levenshtein(data[i], data[j])
+    ...
+    >>> X = np.arange(len(data)).reshape(-1, 1)
+    >>> X
+    array([[0],
+           [1],
+           [2]])
+    >>> dbscan(X, metric=lev_metric, eps=5, min_samples=2)  # doctest: +SKIP
+    ([0, 1], array([ 0,  0, -1]))
+
+(This uses the third-party edit distance package ``leven``.)
+
+Similar tricks can be used, with some care, for tree kernels, graph kernels,
+etc.
