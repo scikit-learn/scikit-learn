@@ -218,8 +218,8 @@ class CommonTest(object):
                 clf1.partial_fit(X, Y)
                 clf2.partial_fit(X, Y)
 
-        assert_array_almost_equal(clf1.coef_, clf2.coef_, decimal=10)
-        assert_almost_equal(clf1.intercept_, clf1.intercept_, decimal=10)
+        assert_array_almost_equal(clf1.coef_, clf2.coef_, decimal=16)
+        assert_almost_equal(clf1.intercept_, clf2.intercept_, decimal=16)
 
     def test_late_onset_averaging_reached(self):
         eta0 = .001
