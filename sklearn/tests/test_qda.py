@@ -5,6 +5,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn import qda
 
@@ -96,16 +97,20 @@ def test_qda_regularization():
     # the default is reg_param=0. and will cause issues
     # when there is a constant variable
     clf = qda.QDA()
-    y_pred = clf.fit(X2, y).predict(X2)
+    with ignore_warnings():
+        y_pred = clf.fit(X2, y).predict(X2)
     assert_true(np.any(y_pred != y))
 
     # adding a little regularization fixes the problem
     clf = qda.QDA(reg_param=0.01)
-    y_pred = clf.fit(X2, y).predict(X2)
+    with ignore_warnings():
+        clf.fit(X2, y)
+    y_pred = clf.predict(X2)
     assert_array_equal(y_pred, y)
 
     # Case n_samples_in_a_class < n_features
-    # (needs some stronger regularization, test is very singular)
-    clf = qda.QDA(reg_param=1e-1)
-    y_pred5 = clf.fit(X5, y5).predict(X5)
+    clf = qda.QDA(reg_param=0.1)
+    with ignore_warnings():
+        clf.fit(X5, y5)
+    y_pred5 = clf.predict(X5)
     assert_array_equal(y_pred5, y5)

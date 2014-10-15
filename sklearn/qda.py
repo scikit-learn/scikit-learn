@@ -48,13 +48,15 @@ class QDA(BaseEstimator, ClassifierMixin):
         Class priors (sum to 1).
 
     rotations_ : list of arrays
-        For each class an array of shape [n_samples, n_samples], the
-        rotation of the Gaussian distribution, i.e. its principal axis.
+        For each class k an array of shape [n_features, n_k], with
+        ``n_k = min(n_features, number of elements in class k)``
+        It is the rotation of the Gaussian distribution, i.e. its
+        principal axis.
 
-    scalings_ : array-like, shape = [n_classes, n_features]
-        Contains the scaling of the Gaussian
-        distributions along the principal axes for each
-        class, i.e. the variance in the rotated coordinate system.
+    scalings_ : list of arrays
+        For each class k an array of shape [n_k]. It contains the scaling
+        of the Gaussian distributions along its principal axes, i.e. the
+        variance in the rotated coordinate system.
 
     Examples
     --------
