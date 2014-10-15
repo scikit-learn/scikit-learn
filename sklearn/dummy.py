@@ -401,9 +401,9 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             self.constant_ = np.reshape(np.median(y, axis=0), (1, -1))
 
         elif self.strategy == "quantile":
-            if self.quantile is None or self.quantile < 0 or self.quantile > 1:
-                raise ValueError("Quantile must be in the range [0.0, 1.0], "
-                                 "but got %s." % self.quantile)
+            if self.quantile is None or not np.isscalar(self.quantile):
+                raise ValueError("Quantile must be a scalar in the range "
+                                 "[0.0, 1.0], but got %s." % self.quantile)
 
             self.constant_ = np.reshape(
                 np.percentile(y, axis=0, q=self.quantile * 100.0), (1, -1))

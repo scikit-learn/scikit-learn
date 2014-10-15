@@ -353,7 +353,7 @@ def test_quantile_invalid():
     assert_raises(ValueError, est.fit, X, y)
 
     est = DummyRegressor(strategy="quantile", quantile='abc')
-    assert_raises(ValueError, est.fit, X, y)
+    assert_raises(TypeError, est.fit, X, y)
 
 
 def test_quantile_strategy_empty_train():
