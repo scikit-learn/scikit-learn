@@ -6723,7 +6723,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_8sgd_fast_4_plain_sgd(CYTHON_U
  *                 elif learning_rate == INVSCALING:
  *                     eta = eta0 / pow(t, power_t)
  *                 elif learning_rate == BOTTOU:             # <<<<<<<<<<<<<<
- *                     eta = eta0 / pow(1 + eta0 * alpha * (t - 1), power_t)
+ *                     eta = eta0 / pow(1. + eta0 * alpha * (t - 1.), power_t)
  * 
  */
             switch (__pyx_v_learning_rate) {
@@ -6761,7 +6761,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_8sgd_fast_4_plain_sgd(CYTHON_U
  *                 elif learning_rate == INVSCALING:
  *                     eta = eta0 / pow(t, power_t)             # <<<<<<<<<<<<<<
  *                 elif learning_rate == BOTTOU:
- *                     eta = eta0 / pow(1 + eta0 * alpha * (t - 1), power_t)
+ *                     eta = eta0 / pow(1. + eta0 * alpha * (t - 1.), power_t)
  */
               __pyx_v_eta = (__pyx_v_eta0 / pow(__pyx_v_t, __pyx_v_power_t));
               break;
@@ -6770,25 +6770,25 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_8sgd_fast_4_plain_sgd(CYTHON_U
  *                 elif learning_rate == INVSCALING:
  *                     eta = eta0 / pow(t, power_t)
  *                 elif learning_rate == BOTTOU:             # <<<<<<<<<<<<<<
- *                     eta = eta0 / pow(1 + eta0 * alpha * (t - 1), power_t)
+ *                     eta = eta0 / pow(1. + eta0 * alpha * (t - 1.), power_t)
  * 
  */
-              case 6:
+              case 4:
 
               /* "sklearn/linear_model/sgd_fast.pyx":617
  *                     eta = eta0 / pow(t, power_t)
  *                 elif learning_rate == BOTTOU:
- *                     eta = eta0 / pow(1 + eta0 * alpha * (t - 1), power_t)             # <<<<<<<<<<<<<<
+ *                     eta = eta0 / pow(1. + eta0 * alpha * (t - 1.), power_t)             # <<<<<<<<<<<<<<
  * 
  *                 if verbose > 0:
  */
-              __pyx_v_eta = (__pyx_v_eta0 / pow((1.0 + ((__pyx_v_eta0 * __pyx_v_alpha) * (__pyx_v_t - 1.0))), __pyx_v_power_t));
+              __pyx_v_eta = (__pyx_v_eta0 / pow((1. + ((__pyx_v_eta0 * __pyx_v_alpha) * (__pyx_v_t - 1.))), __pyx_v_power_t));
               break;
               default: break;
             }
 
             /* "sklearn/linear_model/sgd_fast.pyx":619
- *                     eta = eta0 / pow(1 + eta0 * alpha * (t - 1), power_t)
+ *                     eta = eta0 / pow(1. + eta0 * alpha * (t - 1.), power_t)
  * 
  *                 if verbose > 0:             # <<<<<<<<<<<<<<
  *                     sumloss += loss.loss(p, y)
@@ -6858,7 +6858,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_8sgd_fast_4_plain_sgd(CYTHON_U
  *                     update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
  *                     if update == 0:
  */
-              case 4:
+              case 5:
 
               /* "sklearn/linear_model/sgd_fast.pyx":628
  * 
@@ -6913,7 +6913,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_8sgd_fast_4_plain_sgd(CYTHON_U
  *                     update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
  *                     update = loss.loss(p, y) / (update + 0.5 / C)
  */
-              case 5:
+              case 6:
 
               /* "sklearn/linear_model/sgd_fast.pyx":633
  *                     update = min(C, loss.loss(p, y) / update)
@@ -6953,7 +6953,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_8sgd_fast_4_plain_sgd(CYTHON_U
  *                     if is_hinge:
  *                         # classification
  */
-            __pyx_t_5 = ((__pyx_v_learning_rate >= 4) != 0);
+            __pyx_t_5 = ((__pyx_v_learning_rate >= 5) != 0);
             if (__pyx_t_5) {
 
               /* "sklearn/linear_model/sgd_fast.pyx":639
