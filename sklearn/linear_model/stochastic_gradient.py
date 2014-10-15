@@ -396,7 +396,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
             raise ValueError("The number of class labels must be "
                              "greater than one.")
 
-
         return self
 
     def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
@@ -452,6 +451,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                 self.intercept_ = self.average_intercept_
             else:
                 self.coef_ = self.standard_coef_.reshape(1, -1)
+                self.standard_intercept_ = np.atleast_1d(intercept)
                 self.intercept_ = self.standard_intercept_
         else:
             self.coef_ = coef.reshape(1, -1)
@@ -484,6 +484,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                 self.intercept_ = self.average_intercept_
             else:
                 self.coef_ = self.standard_coef_
+                self.standard_intercept_ = np.atleast_1d(intercept)
                 self.intercept_ = self.standard_intercept_
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
