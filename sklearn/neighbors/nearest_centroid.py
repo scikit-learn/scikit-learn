@@ -88,8 +88,8 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
             Target values (integers)
         """
         X, y = check_X_y(X, y, ['csc'])
-        X_sparse = sp.issparse(X)
-        if X_sparse and self.shrink_threshold:
+        is_X_sparse = sp.issparse(X)
+        if is_X_sparse and self.shrink_threshold:
             raise ValueError("threshold shrinking not supported"
                              " for sparse input")
 
@@ -109,13 +109,13 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         for cur_class in y_ind:
             center_mask = y_ind == cur_class
             nk[cur_class] = np.sum(center_mask)
-            if X_sparse:
+            if is_X_sparse:
                 center_mask = np.where(center_mask)[0]
 
             # XXX: Update other averaging methods according to the metrics.
             if self.metric == "manhattan":
                 # NumPy does not calculate median of sparse matrices.
-                if not X_sparse:
+                if not is_X_sparse:
                     self.centroids_[cur_class] = np.median(X[center_mask], axis=0)
                 else:
                     self.centroids_[cur_class] = csc_row_median(X[center_mask])

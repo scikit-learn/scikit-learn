@@ -389,3 +389,6 @@ def test_csc_row_median():
     X = [[0, -2], [-1, -5], [1, -3]]
     csc = sp.csc_matrix(X)
     assert_array_equal(csc_row_median(csc), np.array([0., -3]))
+
+    # Test that it raises an Error for non-csc matrices.
+    assert_raises(TypeError, csc_row_median, sp.csr_matrix(X))

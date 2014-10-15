@@ -348,7 +348,8 @@ def count_nonzero(X, axis=None, sample_weight=None):
 def csc_row_median(csc):
     """
     Find the median across axis 0 of a CSC matrix.
-    Equivalent to doing np.median(X, axis=0)
+    Wrapper aound the _get_median function in imputer and is equivalent
+    to doing np.median(X, axis=0)
 
     Parameters
     ----------
@@ -361,55 +362,20 @@ def csc_row_median(csc):
         Median. 
 
     """
+    from ..preprocessing.imputation import _get_median
+
     if not isinstance(csc, sp.csc_matrix):
-        warnings.warn("Non CSC matix passed. Will convert to CSC format.")
-        csc = sp.csc_matrix(csc)
+        raise TypeError("Expected matrix of CSC format, got %s" % csc.format)
 
     indptr = csc.indptr
     n_samples, n_features = csc.shape
-
-    # Highly likely that the median of a sparse matrix is zero.
-    # Remains zero if the if/else conditions are not checked below.
     median = np.zeros(n_features)
 
     for f_ind, ptr in enumerate(indptr[:-1]):
-        sorted_nonzero = np.sort(csc.data[ptr: indptr[f_ind + 1]])
-        nz = n_samples - sorted_nonzero.size
-        zero_ind = np.searchsorted(sorted_nonzero, 0)
-        neg_idx = sorted_nonzero[: zero_ind]
-        pos_idx = sorted_nonzero[zero_ind: ]
-        odd = n_samples % 2
-        mid_ind = n_samples // 2
 
-        if odd:
-            # Number of negative terms is greater then (n_features + 1) / 2
-            # which implies the median is negative.
-            if zero_ind > mid_ind:
-                median[f_ind] = sorted_nonzero[mid_ind]
-
-            # The sum of the negative terms and the number of zeros is less
-            # than the (n_features + 1) / 2 which implies the median is positive.
-            elif zero_ind + nz <= mid_ind:
-                median[f_ind] = pos_idx[mid_ind - nz - neg_idx.size]
-
-        else:
-            # The first two conditions are highly unlikely.
-            # When the n_features / 2 is the last negative term and
-            # (n_features / 2) + 1 is zero.
-            if zero_ind == mid_ind:
-                median[f_ind] = neg_idx[-1] / 2.
-
-            # When the n_features / 2 is zero and (n_features / 2) + 1
-            # is the first positive term.
-            elif neg_idx.size + nz == mid_ind:
-                median[f_ind] = pos_idx[0] / 2.
-
-            # Same comments as for the odd case.
-            elif zero_ind > mid_ind:
-                median[f_ind] = (sorted_nonzero[mid_ind - 1] +
-                                 sorted_nonzero[mid_ind]) / 2.
-            elif zero_ind + nz < mid_ind:
-                npz = mid_ind - nz - neg_idx.size
-                median[f_ind] = (pos_idx[npz - 1] + pos_idx[npz]) / 2.
+        # Prevent modifying csc in place
+        data = np.copy(csc.data[ptr: indptr[f_ind + 1]])
+        nz = n_samples - data.size
+        median[f_ind] = _get_median(data, nz)
 
     return median
