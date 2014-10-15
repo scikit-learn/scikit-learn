@@ -42,7 +42,7 @@ try:
     execfile
 except NameError:
     def execfile(filename, global_vars=None, local_vars=None):
-        with open(filename) as f:
+        with open(filename, encoding='utf-8') as f:
             code = compile(f.read(), filename, 'exec')
             exec(code, global_vars, local_vars)
 
@@ -426,7 +426,7 @@ carousel_thumbs = {'plot_classifier_comparison_001.png': (1, 600),
 def extract_docstring(filename, ignore_heading=False):
     """ Extract a module-level docstring, if any
     """
-    lines = open(filename).readlines()
+    lines = open(filename, encoding='utf-8').readlines()
     start_row = 0
     if lines[0].startswith('#!'):
         lines.pop(0)
@@ -522,7 +522,7 @@ Examples
 def extract_line_count(filename, target_dir):
     # Extract the line count of a file
     example_file = os.path.join(target_dir, filename)
-    lines = open(example_file).readlines()
+    lines = open(example_file, encoding='utf-8').readlines()
     start_row = 0
     if lines and lines[0].startswith('#!'):
         lines.pop(0)
@@ -955,7 +955,8 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
     f.flush()
 
     # save variables so we can later add links to the documentation
-    example_code_obj = identify_names(open(example_file).read())
+    example_code_obj = \
+        identify_names(open(example_file, encoding='utf-8').read())
     if example_code_obj:
         codeobj_fname = example_file[:-3] + '_codeobj.pickle'
         with open(codeobj_fname, 'wb') as fid:
