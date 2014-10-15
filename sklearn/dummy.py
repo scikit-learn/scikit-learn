@@ -390,7 +390,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
                              % self.strategy)
 
         y = check_array(y, accept_sparse='csr', ensure_2d=False)
-        if y.size == 0:
+        if len(y) == 0:
             raise ValueError("y must not be empty.")
         self.output_2d_ = (y.ndim == 2)
 
