@@ -15,6 +15,7 @@ from collections import Mapping, namedtuple, Sized
 from functools import partial, reduce
 from itertools import product
 import operator
+import warnings
 
 import numpy as np
 
@@ -181,7 +182,7 @@ class ParameterSampler(object):
 
 
 def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
-                   verbose, **fit_params):
+                   verbose, error_score='raise', **fit_params):
     """Run fit on one set of parameters.
 
     Parameters
@@ -214,6 +215,11 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     **fit_params : kwargs
         Additional parameter passed to the fit function of the estimator.
 
+    error_score : 'raise' (default) or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised. If a numeric value is given,
+        FitFailedWarning is raised. This parameter does not affect the refit
+        step, which will always raise the error.
 
     Returns
     -------
@@ -228,7 +234,7 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     """
     score, n_samples_test, _ = _fit_and_score(estimator, X, y, scorer, train,
                                               test, verbose, parameters,
-                                              fit_params)
+                                              fit_params, error_score)
     return score, parameters, n_samples_test
 
 
@@ -272,6 +278,10 @@ class _CVScoreTuple (namedtuple('_CVScoreTuple',
             self.parameters)
 
 
+class ChangedBehaviorWarning(UserWarning):
+    pass
+
+
 class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                       MetaEstimatorMixin)):
     """Base class for hyper parameter search with cross-validation."""
@@ -279,7 +289,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
     @abstractmethod
     def __init__(self, estimator, scoring=None,
                  fit_params=None, n_jobs=1, iid=True,
-                 refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs'):
+                 refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
+                 error_score='raise'):
 
         self.scoring = scoring
         self.estimator = estimator
@@ -290,11 +301,13 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.cv = cv
         self.verbose = verbose
         self.pre_dispatch = pre_dispatch
+        self.error_score = error_score
 
     def score(self, X, y=None):
-        """Returns the score on the given test data and labels, if the search
-        estimator has been refit. The ``score`` function of the best estimator
-        is used, or the ``scoring`` parameter where unavailable.
+        """Returns the score on the given data, if the estimator has been refit
+
+        This uses the score defined by ``scoring`` where provided, and the
+        ``best_estimator_.score`` method otherwise.
 
         Parameters
         ----------
@@ -310,13 +323,23 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         -------
         score : float
 
+        Notes
+        -----
+         * The long-standing behavior of this method changed in version 0.16.
+         * It no longer uses the metric provided by ``estimator.score`` if the
+           ``scoring`` parameter was set when fitting.
+
         """
-        if hasattr(self.best_estimator_, 'score'):
-            return self.best_estimator_.score(X, y)
         if self.scorer_ is None:
             raise ValueError("No score function explicitly defined, "
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
+        if self.scoring is not None and hasattr(self.best_estimator_, 'score'):
+            warnings.warn("The long-standing behavior to use the estimator's "
+                          "score function in {0}.score has changed. The "
+                          "scoring parameter is now used."
+                          "".format(self.__class__.__name__),
+                          ChangedBehaviorWarning)
         return self.scorer_(self.best_estimator_, X, y)
 
     @property
@@ -369,9 +392,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         )(
             delayed(_fit_and_score)(clone(base_estimator), X, y, self.scorer_,
                                     train, test, self.verbose, parameters,
-                                    self.fit_params, return_parameters=True)
-            for parameters in parameter_iterable
-            for train, test in cv)
+                                    self.fit_params, return_parameters=True,
+                                    error_score=self.error_score)
+                for parameters in parameter_iterable
+                for train, test in cv)
 
         # Out is a list of triplet: score, estimator, n_test_samples
         n_fits = len(out)
@@ -490,6 +514,13 @@ class GridSearchCV(BaseSearchCV):
     verbose : integer
         Controls the verbosity: the higher, the more messages.
 
+    error_score : 'raise' (default) or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised. If a numeric value is given,
+        FitFailedWarning is raised. This parameter does not affect the refit
+        step, which will always raise the error.
+
+
     Examples
     --------
     >>> from sklearn import svm, grid_search, datasets
@@ -499,7 +530,7 @@ class GridSearchCV(BaseSearchCV):
     >>> clf = grid_search.GridSearchCV(svr, parameters)
     >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    GridSearchCV(cv=None,
+    GridSearchCV(cv=None, error_score=...,
            estimator=SVC(C=1.0, cache_size=..., class_weight=..., coef0=...,
                          degree=..., gamma=..., kernel='rbf', max_iter=-1,
                          probability=False, random_state=None, shrinking=True,
@@ -564,12 +595,14 @@ class GridSearchCV(BaseSearchCV):
 
     """
 
-    def __init__(self, estimator, param_grid, scoring=None,
-                 fit_params=None, n_jobs=1, iid=True,
-                 refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs'):
+    def __init__(self, estimator, param_grid, scoring=None, loss_func=None,
+                 score_func=None, fit_params=None, n_jobs=1, iid=True,
+                 refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
+                 error_score='raise'):
+
         super(GridSearchCV, self).__init__(
             estimator, scoring, fit_params, n_jobs, iid,
-            refit, cv, verbose, pre_dispatch)
+            refit, cv, verbose, pre_dispatch, error_score)
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
@@ -664,6 +697,12 @@ class RandomizedSearchCV(BaseSearchCV):
     verbose : integer
         Controls the verbosity: the higher, the more messages.
 
+    error_score : 'raise' (default) or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised. If a numeric value is given,
+        FitFailedWarning is raised. This parameter does not affect the refit
+        step, which will always raise the error.
+
 
     Attributes
     ----------
@@ -714,7 +753,8 @@ class RandomizedSearchCV(BaseSearchCV):
 
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
                  fit_params=None, n_jobs=1, iid=True, refit=True, cv=None,
-                 verbose=0, pre_dispatch='2*n_jobs', random_state=None):
+                 verbose=0, pre_dispatch='2*n_jobs', random_state=None,
+                 error_score='raise'):
 
         self.param_distributions = param_distributions
         self.n_iter = n_iter
@@ -722,7 +762,7 @@ class RandomizedSearchCV(BaseSearchCV):
         super(RandomizedSearchCV, self).__init__(
             estimator=estimator, scoring=scoring, fit_params=fit_params,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
-            pre_dispatch=pre_dispatch)
+            pre_dispatch=pre_dispatch, error_score=error_score)
 
     def fit(self, X, y=None):
         """Run fit on the estimator with randomly drawn parameters.

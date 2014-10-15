@@ -27,6 +27,8 @@ from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.extmath import cartesian
 from sklearn.utils.extmath import log_logistic, logistic_sigmoid
 from sklearn.utils.extmath import fast_dot, _fast_dot
+from sklearn.utils.extmath import svd_flip
+from sklearn.utils.extmath import _batch_mean_variance_update
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
@@ -246,6 +248,31 @@ def test_randomized_svd_transpose_consistency():
     assert_almost_equal(s2, s3)
 
 
+def test_svd_flip():
+    """Check that svd_flip works in both situations, and reconstructs input."""
+    rs = np.random.RandomState(1999)
+    n_samples = 20
+    n_features = 10
+    X = rs.randn(n_samples, n_features)
+
+    # Check matrix reconstruction
+    U, S, V = linalg.svd(X, full_matrices=False)
+    U1, V1 = svd_flip(U, V, u_based_decision=False)
+    assert_almost_equal(np.dot(U1 * S, V1), X, decimal=6)
+
+    # Check transposed matrix reconstruction
+    XT = X.T
+    U, S, V = linalg.svd(XT, full_matrices=False)
+    U2, V2 = svd_flip(U, V, u_based_decision=True)
+    assert_almost_equal(np.dot(U2 * S, V2), XT, decimal=6)
+
+    # Check that different flip methods are equivalent under reconstruction
+    U_flip1, V_flip1 = svd_flip(U, V, u_based_decision=True)
+    assert_almost_equal(np.dot(U_flip1 * S, V_flip1), XT, decimal=6)
+    U_flip2, V_flip2 = svd_flip(U, V, u_based_decision=False)
+    assert_almost_equal(np.dot(U_flip2 * S, V_flip2), XT, decimal=6)
+
+
 def test_randomized_svd_sign_flip():
     a = np.array([[2.0, 0.0], [0.0, 1.0]])
     u1, s1, v1 = randomized_svd(a, 2, flip_sign=True, random_state=41)
@@ -374,6 +401,61 @@ def test_fast_dot():
     if has_blas:
         for x in [np.array([[d] * 10] * 2) for d in [np.inf, np.nan]]:
             assert_raises(ValueError, _fast_dot, x, x.T)
+
+
+def test_incremental_variance_update_formulas():
+    """Test Youngs and Cramer incremental variance formulas."""
+    # Doggie data from http://www.mathsisfun.com/data/standard-deviation.html
+    A = np.array([[600, 470, 170, 430, 300],
+                  [600, 470, 170, 430, 300],
+                  [600, 470, 170, 430, 300],
+                  [600, 470, 170, 430, 300]]).T
+    idx = 2
+    X1 = A[:idx, :]
+    X2 = A[idx:, :]
+
+    old_means = X1.mean(axis=0)
+    old_variances = X1.var(axis=0)
+    old_sample_count = X1.shape[0]
+    final_means, final_variances, final_count = _batch_mean_variance_update(
+        X2, old_means, old_variances, old_sample_count)
+    assert_almost_equal(final_means, A.mean(axis=0), 6)
+    assert_almost_equal(final_variances, A.var(axis=0), 6)
+    assert_almost_equal(final_count, A.shape[0])
+
+
+def test_incremental_variance_ddof():
+    """Test that degrees of freedom parameter for calculations are correct."""
+    rng = np.random.RandomState(1999)
+    X = rng.randn(50, 10)
+    n_samples, n_features = X.shape
+    for batch_size in [11, 20, 37]:
+        steps = np.arange(0, X.shape[0], batch_size)
+        if steps[-1] != X.shape[0]:
+            steps = np.hstack([steps, n_samples])
+
+        for i, j in zip(steps[:-1], steps[1:]):
+            batch = X[i:j, :]
+            if i == 0:
+                incremental_means = batch.mean(axis=0)
+                incremental_variances = batch.var(axis=0)
+                # Assign this twice so that the test logic is consistent
+                incremental_count = batch.shape[0]
+                sample_count = batch.shape[0]
+            else:
+                result = _batch_mean_variance_update(batch, incremental_means,
+                                                    incremental_variances,
+                                                    sample_count)
+                (incremental_means, incremental_variances,
+                 incremental_count) = result
+                sample_count += batch.shape[0]
+
+            calculated_means = np.mean(X[:j], axis=0)
+            calculated_variances = np.var(X[:j], axis=0)
+            assert_almost_equal(incremental_means, calculated_means, 6)
+            assert_almost_equal(incremental_variances,
+                                calculated_variances, 6)
+            assert_equal(incremental_count, sample_count)
 
 if __name__ == '__main__':
     import nose

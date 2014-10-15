@@ -140,8 +140,8 @@ Efficient Routines for Sparse Matrices
 The ``sklearn.utils.sparsefuncs`` cython module hosts compiled extensions to
 efficiently process ``scipy.sparse`` data.
 
-- :func:`sparsefuncs.mean_variance_axis0`: compute the means and
-  variances along axis 0 of a CSR matrix.
+- :func:`sparsefuncs.mean_variance_axis`: compute the means and
+  variances along a specified axis of a CSR matrix.
   Used for normalizing the tolerance stopping criterion in
   :class:`sklearn.cluster.k_means_.KMeans`.
 

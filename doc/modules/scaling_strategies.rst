@@ -1,8 +1,8 @@
 .. _scaling_strategies:
 
-==================
-Scaling Strategies
-==================
+=================================================
+Strategies to scale computationally: bigger data
+=================================================
 
 For some applications the amount of examples, features (or both) and/or the 
 speed at which they need to be processed are challenging for traditional 
@@ -69,6 +69,7 @@ Here is a list of incremental estimators for different tasks:
       + :class:`sklearn.cluster.MiniBatchKMeans`
   - Decomposition / feature Extraction
       + :class:`sklearn.decomposition.MiniBatchDictionaryLearning`
+      + :class:`sklearn.decomposition.IncrementalPCA`
       + :class:`sklearn.cluster.MiniBatchKMeans`
 
 For classification, a somewhat important thing to note is that although a

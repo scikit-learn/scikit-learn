@@ -3,7 +3,7 @@ import numpy as np
 import numpy.linalg as la
 from scipy import sparse
 
-from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_almost_equal, clean_warning_registry
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
@@ -14,7 +14,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns
 
-from sklearn.utils.sparsefuncs import mean_variance_axis0
+from sklearn.utils.sparsefuncs import mean_variance_axis
 from sklearn.preprocessing.data import _transform_selected
 from sklearn.preprocessing.data import Binarizer
 from sklearn.preprocessing.data import KernelCenterer
@@ -283,7 +283,7 @@ def test_scaler_without_centering():
         X_scaled.mean(axis=0), [0., -0.01, 2.24, -0.35, -0.78], 2)
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
 
-    X_csr_scaled_mean, X_csr_scaled_std = mean_variance_axis0(X_csr_scaled)
+    X_csr_scaled_mean, X_csr_scaled_std = mean_variance_axis(X_csr_scaled, 0)
     assert_array_almost_equal(X_csr_scaled_mean, X_scaled.mean(axis=0))
     assert_array_almost_equal(X_csr_scaled_std, X_scaled.std(axis=0))
 
@@ -317,22 +317,26 @@ def test_scaler_int():
     X_csc = sparse.csc_matrix(X)
 
     null_transform = StandardScaler(with_mean=False, with_std=False, copy=True)
+    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         X_null = null_transform.fit_transform(X_csr)
     assert_array_equal(X_null.data, X_csr.data)
     X_orig = null_transform.inverse_transform(X_null)
     assert_array_equal(X_orig.data, X_csr.data)
 
+    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         scaler = StandardScaler(with_mean=False).fit(X)
         X_scaled = scaler.transform(X, copy=True)
     assert_false(np.any(np.isnan(X_scaled)))
 
+    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         scaler_csr = StandardScaler(with_mean=False).fit(X_csr)
         X_csr_scaled = scaler_csr.transform(X_csr, copy=True)
     assert_false(np.any(np.isnan(X_csr_scaled.data)))
 
+    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         scaler_csc = StandardScaler(with_mean=False).fit(X_csc)
         X_csc_scaled = scaler_csr.transform(X_csc, copy=True)
@@ -349,8 +353,8 @@ def test_scaler_int():
         [0., 1.109, 1.856, 21., 1.559], 2)
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
 
-    X_csr_scaled_mean, X_csr_scaled_std = mean_variance_axis0(
-        X_csr_scaled.astype(np.float))
+    X_csr_scaled_mean, X_csr_scaled_std = mean_variance_axis(
+        X_csr_scaled.astype(np.float), 0)
     assert_array_almost_equal(X_csr_scaled_mean, X_scaled.mean(axis=0))
     assert_array_almost_equal(X_csr_scaled_std, X_scaled.std(axis=0))
 
@@ -432,7 +436,7 @@ def test_scale_function_without_centering():
     # Check that X has not been copied
     assert_true(X_scaled is not X)
 
-    X_csr_scaled_mean, X_csr_scaled_std = mean_variance_axis0(X_csr_scaled)
+    X_csr_scaled_mean, X_csr_scaled_std = mean_variance_axis(X_csr_scaled, 0)
     assert_array_almost_equal(X_csr_scaled_mean, X_scaled.mean(axis=0))
     assert_array_almost_equal(X_csr_scaled_std, X_scaled.std(axis=0))
 
@@ -442,10 +446,12 @@ def test_warning_scaling_integers():
     X = np.array([[1, 2, 0],
                   [0, 0, 0]], dtype=np.uint8)
 
+    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         warnings.simplefilter("always")
         assert_warns(UserWarning, StandardScaler().fit, X)
 
+    clean_warning_registry()
     with warnings.catch_warnings(record=True):
         warnings.simplefilter("always")
         assert_warns(UserWarning, MinMaxScaler().fit, X)

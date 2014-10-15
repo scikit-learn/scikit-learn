@@ -14,6 +14,7 @@ from sklearn.utils import resample
 from sklearn.utils import safe_mask
 from sklearn.utils import column_or_1d
 from sklearn.utils import safe_indexing
+from sklearn.utils import shuffle
 from sklearn.utils.extmath import pinvh
 from sklearn.utils.mocking import MockDataFrame
 
@@ -175,3 +176,13 @@ def test_safe_indexing_mock_pandas():
     X_df_indexed = safe_indexing(X_df, inds)
     X_indexed = safe_indexing(X_df, inds)
     assert_array_equal(np.array(X_df_indexed), X_indexed)
+
+
+def test_shuffle_on_ndim_equals_three():
+    def to_tuple(A):    # to make the inner arrays hashable
+        return tuple(tuple(tuple(C) for C in B) for B in A)
+
+    A = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])  # A.shape = (2,2,2)
+    S = set(to_tuple(A))
+    shuffle(A)  # shouldn't raise a ValueError for dim = 3
+    assert_equal(set(to_tuple(A)), S)

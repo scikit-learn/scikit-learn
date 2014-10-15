@@ -45,7 +45,7 @@ and will store the coefficients :math:`w` of the linear model in its
     >>> from sklearn import linear_model
     >>> clf = linear_model.LinearRegression()
     >>> clf.fit ([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
-    LinearRegression(copy_X=True, fit_intercept=True, normalize=False)
+    LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=False)
     >>> clf.coef_
     array([ 0.5,  0.5])
 
@@ -184,7 +184,7 @@ for another implementation::
     >>> clf = linear_model.Lasso(alpha = 0.1)
     >>> clf.fit([[0, 0], [1, 1]], [0, 1])
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-       normalize=False, positive=False, precompute='auto', random_state=None,
+       normalize=False, positive=False, precompute=False, random_state=None,
        selection='cyclic', tol=0.0001, warm_start=False)
     >>> clf.predict([[1, 1]])
     array([ 0.8])
@@ -700,6 +700,21 @@ so the "multinomial" setting does not learn sparse models.
   * :ref:`example_linear_model_plot_logistic_l1_l2_sparsity.py`
 
   * :ref:`example_linear_model_plot_logistic_path.py`
+
+.. _liblinear_differences:
+
+.. topic:: Differences from liblinear:
+
+   There might be a difference in the scores obtained between
+   :class:`LogisticRegression` with ``solver=liblinear``
+   or :class:`LinearSVC` and the external liblinear library directly,
+   when ``fit_intercept=False`` and the fit ``coef_`` (or) the data to
+   be predicted are zeroes. This is because for the sample(s) with
+   ``decision_function`` zero, :class:`LogisticRegression` and :class:`LinearSVC`
+   predict the negative class, while liblinear predicts the positive class.
+   Note that a model with ``fit_intercept=False`` and having many samples with
+   ``decision_function`` zero, is likely to be a underfit, bad model and you are
+   advised to set ``fit_intercept=True`` and increase the intercept_scaling.
 
 .. note:: **Feature selection with sparse logistic regression**
 

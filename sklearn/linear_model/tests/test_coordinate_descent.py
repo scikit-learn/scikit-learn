@@ -562,6 +562,18 @@ def test_random_descent():
     assert_raises(ValueError, clf_random.fit, X, y)
 
 
+def test_deprection_precompute_enet():
+    """
+    Test that setting precompute="auto" gives a Deprecation Warning.
+    """
+
+    X, y, _, _ = build_dataset(n_samples=20, n_features=10)
+    clf = ElasticNet(precompute="auto")
+    assert_warns(DeprecationWarning, clf.fit, X, y)
+    clf = Lasso(precompute="auto")
+    assert_warns(DeprecationWarning, clf.fit, X, y)
+
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()

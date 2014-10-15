@@ -1,6 +1,6 @@
 import numpy as np
 import scipy.sparse as sp
-from scipy import linalg, optimize
+from scipy import linalg, optimize, sparse
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -485,7 +485,7 @@ def test_logistic_regression_convergence_warnings():
     """Test that warnings are raised if model does not converge"""
 
     X, y = make_classification(n_samples=20, n_features=20)
-    clf_lib = LogisticRegression(solver='liblinear', max_iter=2)
+    clf_lib = LogisticRegression(solver='liblinear', max_iter=2, verbose=1)
     assert_warns(ConvergenceWarning, clf_lib.fit, X, y)
     assert_equal(clf_lib.n_iter_, 2)
 
@@ -514,3 +514,29 @@ def test_logistic_regression_multinomial():
     clf_path.fit(X, y)
     assert_array_almost_equal(clf_path.coef_, clf_int.coef_, decimal=3)
     assert_almost_equal(clf_path.intercept_, clf_int.intercept_, decimal=3)
+
+
+def test_liblinear_decision_function_zero():
+    """Test negative prediction when decision_function values are zero.
+
+    Liblinear predicts the positive class when decision_function values
+    are zero. This is a test to verify that we do not do the same.
+    See Issue: https://github.com/scikit-learn/scikit-learn/issues/3600
+    and the PR https://github.com/scikit-learn/scikit-learn/pull/3623
+    """
+    rng = np.random.RandomState(0)
+    X, y = make_classification(n_samples=5, n_features=5)
+    clf = LogisticRegression(fit_intercept=False)
+    clf.fit(X, y)
+
+    # Dummy data such that the decision function becomes zero.
+    X = np.zeros((5, 5))
+    assert_array_equal(clf.predict(X), np.zeros(5))
+
+
+def test_liblinear_logregcv_sparse():
+    """Test LogRegCV with solver='liblinear' works for sparse matrices"""
+
+    X, y = make_classification(n_samples=10, n_features=5)
+    clf = LogisticRegressionCV(solver='liblinear')
+    clf.fit(sparse.csr_matrix(X), y)
