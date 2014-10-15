@@ -87,11 +87,15 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, dtype=np.float64, separator="=", sparse=True,
-                 sort=True):
+                 sort=True, enable_onehot_inverse=False):
         self.dtype = dtype
         self.separator = separator
         self.sparse = sparse
         self.sort = sort
+        self.feature_names_ = []
+        self.vocabulary_ = {}
+        self.enable_onehot_inverse = enable_onehot_inverse
+        self._onehot_dict = {}
 
     def fit(self, X, y=None):
         """Learn a list of feature name -> indices mappings.
@@ -109,14 +113,20 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         """
         feature_names = []
         vocab = {}
+        onehot_dict = {}
 
         for x in X:
             for f, v in six.iteritems(x):
+                _f = None
                 if isinstance(v, six.string_types):
+                    if self.enable_onehot_inverse:
+                        _f = f
                     f = "%s%s%s" % (f, self.separator, v)
                 if f not in vocab:
                     feature_names.append(f)
                     vocab[f] = len(vocab)
+                    if _f and f not in onehot_dict:
+                        onehot_dict[f] = [_f, v]
 
         if self.sort:
             feature_names.sort()
@@ -124,10 +134,11 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
         self.feature_names_ = feature_names
         self.vocabulary_ = vocab
+        self._onehot_dict = onehot_dict
 
         return self
 
-    def _transform(self, X, fitting):
+    def _transform(self, X, fitting, update_dict=False):
         # Sanity check: Python's array has no way of explicitly requesting the
         # signed 32-bit integers that scipy.sparse needs, so we use the next
         # best thing: typecode "i" (int). However, if that gives larger or
@@ -138,12 +149,14 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             " include the output from platform.platform() in your bug report")
 
         dtype = self.dtype
-        if fitting:
+        if fitting and not update_dict:
             feature_names = []
             vocab = {}
+            onehot_dict = {}
         else:
             feature_names = self.feature_names_
             vocab = self.vocabulary_
+            onehot_dict = self._onehot_dict
 
         # Process everything as sparse regardless of setting
         X = [X] if isinstance(X, Mapping) else X
@@ -158,7 +171,10 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         # same time
         for x in X:
             for f, v in six.iteritems(x):
+                _f = None
                 if isinstance(v, six.string_types):
+                    if self.enable_onehot_inverse:
+                        _f = f
                     f = "%s%s%s" % (f, self.separator, v)
                     v = 1
                 if f in vocab:
@@ -170,6 +186,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
                         vocab[f] = len(vocab)
                         indices.append(vocab[f])
                         values.append(dtype(v))
+                        if _f and f not in onehot_dict:
+                            onehot_dict[f] = [_f, v]
 
             indptr.append(len(indices))
 
@@ -200,10 +218,11 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         if fitting:
             self.feature_names_ = feature_names
             self.vocabulary_ = vocab
+            self._onehot_dict = onehot_dict
 
         return result_matrix
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, update_dict=False):
         """Learn a list of feature name -> indices mappings and transform X.
 
         Like fit(X) followed by transform(X), but does not require
@@ -215,13 +234,15 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             Dict(s) or Mapping(s) from feature names (arbitrary Python
             objects) to feature values (strings or convertible to dtype).
         y : (ignored)
+        update_dict : <boolean> if True, existing dict will be re-used and updated
+                      if False, a new dict is created
 
         Returns
         -------
         Xa : {array, sparse matrix}
             Feature vectors; always 2-d.
         """
-        return self._transform(X, fitting=True)
+        return self._transform(X, fitting=True, update_dict=update_dict)
 
     def inverse_transform(self, X, dict_type=dict):
         """Transform array or sparse matrix X back to feature mappings.
@@ -255,7 +276,11 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
         if sp.issparse(X):
             for i, j in zip(*X.nonzero()):
-                dicts[i][names[j]] = X[i, j]
+                if self.enable_onehot_inverse and names[j] in self._onehot_dict:
+                    if X[i, j]:
+                        dicts[i][self._onehot_dict[names[j]][0]] = self._onehot_dict[names[j]][1]
+                else:
+                    dicts[i][names[j]] = X[i, j]
         else:
             for i, d in enumerate(dicts):
                 for j, v in enumerate(X[i, :]):
