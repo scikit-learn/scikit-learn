@@ -405,10 +405,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         check_consistent_length(X, y, sample_weight)
 
         if self.strategy == "mean":
-            if sample_weight is None:
-                self.constant_ = np.mean(y, axis=0)
-            else:
-                self.constant_ = np.average(y, axis=0, weights=sample_weight)
+            self.constant_ = np.average(y, axis=0, weights=sample_weight)
 
         elif self.strategy == "median":
             if sample_weight is None:
