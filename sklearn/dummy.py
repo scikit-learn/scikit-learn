@@ -131,13 +131,13 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
          self.n_classes_,
          self.class_prior_) = class_distribution(y, sample_weight)
 
-        if self.strategy == "constant":
-            for k in range(self.n_outputs_):
-                # Checking in case of constant strategy if the constant
-                # provided by the user is in y.
-                if constant[k] not in self.classes_[k]:
-                    raise ValueError("The constant target value must be "
-                                     "present in training data")
+        if (self.strategy == "constant" and
+                any(constant[k] not in self.classes_[k]
+                    for k in range(self.n_outputs_))):
+            # Checking in case of constant strategy if the constant
+            # provided by the user is in y.
+            raise ValueError("The constant target value must be "
+                             "present in training data")
 
         if self.n_outputs_ == 1 and not self.output_2d_:
             self.n_classes_ = self.n_classes_[0]
