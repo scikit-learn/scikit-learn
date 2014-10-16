@@ -11,7 +11,7 @@ from sklearn.base import BaseEstimator, RegressorMixin
 
 
 class KernelRegression(BaseEstimator, RegressorMixin):
-    """Nadaraya-Watson kernel regression with automatic bandwith selection.
+    """Nadaraya-Watson kernel regression with automatic bandwidth selection.
 
     This implements Nadaraya-Watson kernel regression with (optional) automatic
     bandwith selection of the kernel via leave-one-out cross-validation. Kernel
@@ -32,20 +32,6 @@ class KernelRegression(BaseEstimator, RegressorMixin):
         sklearn.metrics.pairwise. Ignored by other kernels. If a sequence of
         values is given, one of these values is selected which minimizes
         the mean-squared-error of leave-one-out cross-validation.
-
-
-    Attributes
-    ----------
-    components_ : array, shape (n_components, n_features)
-        Subset of training points used to construct the feature map.
-
-    component_indices_ : array, shape (n_components)
-        Indices of ``components_`` in the training set.
-
-    normalization_ : array, shape (n_components, n_components)
-        Normalization matrix needed for embedding.
-        Square root of the kernel matrix on ``components_``.
-
 
     See also
     --------
