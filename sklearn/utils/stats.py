@@ -44,3 +44,16 @@ try:
 
 except TypeError as e:
     rankdata = _rankdata
+
+
+def _weighted_percentile(array, sample_weight, percentile=50):
+    """Compute the weighted ``percentile`` of ``array`` with ``sample_weight``. """
+    sorted_idx = np.argsort(array)
+
+    # Find index of median prediction for each sample
+    weight_cdf = sample_weight[sorted_idx].cumsum()
+    percentile_or_above = weight_cdf >= (percentile / 100.0) * weight_cdf[-1]
+    percentile_idx = percentile_or_above.argmax()
+
+    return array[sorted_idx[percentile_idx]]
+

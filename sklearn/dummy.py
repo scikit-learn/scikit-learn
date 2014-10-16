@@ -14,6 +14,7 @@ from .utils.validation import check_array
 from .utils.validation import check_consistent_length
 from .utils import deprecated
 from .utils.random import random_choice_csc
+from .utils.stats import _weighted_percentile
 from .utils.multiclass import class_distribution
 
 
@@ -366,7 +367,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             return self.constant_
         raise AttributeError
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the random regressor.
 
         Parameters
@@ -377,6 +378,9 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             Target values.
+
+        sample_weight : array-like of shape = [n_samples], optional
+            Sample weights.
 
         Returns
         -------
@@ -389,25 +393,43 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
                              "'mean', 'median', 'quantile' or 'constant'"
                              % self.strategy)
 
-        y = check_array(y, accept_sparse='csr', ensure_2d=False)
+        y = check_array(y, ensure_2d=False)
         if len(y) == 0:
             raise ValueError("y must not be empty.")
-        self.output_2d_ = (y.ndim == 2)
 
-        check_consistent_length(X, y)
+        self.output_2d_ = y.ndim == 2
+        if y.ndim == 1:
+            y = np.reshape(y, (-1, 1))
+        self.n_outputs_ = y.shape[1]
+
+        check_consistent_length(X, y, sample_weight)
 
         if self.strategy == "mean":
-            self.constant_ = np.mean(y, axis=0)
+            if sample_weight is None:
+                self.constant_ = np.mean(y, axis=0)
+            else:
+                self.constant_ = np.average(y, axis=0, weights=sample_weight)
 
         elif self.strategy == "median":
-            self.constant_ = np.median(y, axis=0)
+            if sample_weight is None:
+                self.constant_ = np.median(y, axis=0)
+            else:
+                self.constant_ = [_weighted_percentile(y[:, k], sample_weight,
+                                                       percentile=50.)
+                                  for k in range(self.n_outputs_)]
 
         elif self.strategy == "quantile":
             if self.quantile is None or not np.isscalar(self.quantile):
                 raise ValueError("Quantile must be a scalar in the range "
                                  "[0.0, 1.0], but got %s." % self.quantile)
 
-            self.constant_ = np.percentile(y, axis=0, q=self.quantile * 100.0)
+            percentile = self.quantile * 100.0
+            if sample_weight is None:
+                self.constant_ = np.percentile(y, axis=0, q=percentile)
+            else:
+                self.constant_ = [_weighted_percentile(y[:, k], sample_weight,
+                                                       percentile=percentile)
+                                  for k in range(self.n_outputs_)]
 
         elif self.strategy == "constant":
             if self.constant is None:
@@ -426,7 +448,6 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             self.constant_ = self.constant
 
         self.constant_ = np.reshape(self.constant_, (1, -1))
-        self.n_outputs_ = np.size(self.constant_)  # y.shape[1] is not safe
         return self
 
     def predict(self, X):
