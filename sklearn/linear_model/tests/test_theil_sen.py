@@ -12,11 +12,12 @@ from numpy.testing import assert_array_equal, assert_array_less
 from numpy.testing import assert_array_almost_equal, assert_warns
 from scipy.linalg import norm
 from scipy.optimize import fmin_bfgs
-from nose.tools import raises
+from nose.tools import raises, assert_almost_equal
 from sklearn.utils import ConvergenceWarning
 from sklearn.linear_model import LinearRegression, TheilSenRegressor
 from sklearn.linear_model.theil_sen import _spatial_median, _breakdown_point
 from sklearn.linear_model.theil_sen import _modified_weiszfeld_step
+from sklearn.utils.testing import assert_greater, assert_less
 
 
 def gen_toy_problem_1d(intercept=True):
@@ -148,7 +149,7 @@ def test_theil_sen_1d():
     X, y, w, c = gen_toy_problem_1d()
     # Check that Least Squares fails
     lstq = LinearRegression().fit(X, y)
-    assert np.abs(lstq.coef_ - w) > 0.9
+    assert_greater(np.abs(lstq.coef_ - w), 0.9)
     # Check that Theil-Sen works
     theil_sen = TheilSenRegressor().fit(X, y)
     assert_array_almost_equal(theil_sen.coef_, w, 1)
@@ -159,18 +160,18 @@ def test_theil_sen_1d_no_intercept():
     X, y, w, c = gen_toy_problem_1d(intercept=False)
     # Check that Least Squares fails
     lstq = LinearRegression(fit_intercept=False).fit(X, y)
-    assert np.abs(lstq.coef_ - w - c) > 0.5
+    assert_greater(np.abs(lstq.coef_ - w - c), 0.5)
     # Check that Theil-Sen works
     theil_sen = TheilSenRegressor(fit_intercept=False).fit(X, y)
     assert_array_almost_equal(theil_sen.coef_, w + c, 1)
-    assert theil_sen.intercept_ == 0.
+    assert_almost_equal(theil_sen.intercept_, 0.)
 
 
 def test_theil_sen_2d():
     X, y, w, c = gen_toy_problem_2d()
     # Check that Least Squares fails
     lstq = LinearRegression().fit(X, y)
-    assert norm(lstq.coef_ - w) > 1.0
+    assert_greater(norm(lstq.coef_ - w), 1.0)
     # Check that Theil-Sen works
     theil_sen = TheilSenRegressor(max_subpopulation=1e3,
                                   random_state=0).fit(X, y)
@@ -180,7 +181,7 @@ def test_theil_sen_2d():
 
 def test_calc_breakdown_point():
     bp = _breakdown_point(1e10, 2)
-    assert np.abs(bp - 1 + 1/(np.sqrt(2))) <= 1.e-6
+    assert_less(np.abs(bp - 1 + 1/(np.sqrt(2))), 1.e-6)
 
 
 @raises(ValueError)
@@ -238,7 +239,7 @@ def test_theil_sen_parallel():
     X, y, w, c = gen_toy_problem_2d()
     # Check that Least Squares fails
     lstq = LinearRegression().fit(X, y)
-    assert norm(lstq.coef_ - w) > 1.0
+    assert_greater(norm(lstq.coef_ - w), 1.0)
     # Check that Theil-Sen works
     theil_sen = TheilSenRegressor(n_jobs=-1,
                                   random_state=0,
