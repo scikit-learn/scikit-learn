@@ -1,6 +1,6 @@
 """
-Demo robust fitting
-===================
+Robust linear estimator fitting
+===============================
 
 Here a sine function is fit with a polynomial of order 3, for values
 close to zero.
