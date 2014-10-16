@@ -154,6 +154,10 @@ API changes summary
       ``precompute="auto"`` is now deprecated and will be removed in 0.18
       By `Manoj Kumar`_.
 
+    - Expose ``positive`` option in :func:`linear_model.enet_path` and
+      :func:`linear_model.enet_path` which constrains coefficients to be
+      positive. By `Manoj Kumar`_.
+
 .. _changes_0_15_2:
 
 0.15.2
