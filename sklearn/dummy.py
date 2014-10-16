@@ -366,7 +366,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             return self.constant_
         raise AttributeError
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y):
         """Fit the random regressor.
 
         Parameters
@@ -394,7 +394,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             raise ValueError("y must not be empty.")
         self.output_2d_ = (y.ndim == 2)
 
-        check_consistent_length(X, y, sample_weight)
+        check_consistent_length(X, y)
 
         if self.strategy == "mean":
             self.constant_ = np.mean(y, axis=0)
