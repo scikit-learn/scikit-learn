@@ -226,15 +226,15 @@ effect to bagging. The maximum value for ``code_size`` is
 ``2^(n_classes-1)-1 / n_classes`` as suggested by [1]_, since the codes with
 all 0 or 1, and the complement of existing codes need to be excluded.
 
-The ``coding_strategy`` attribute allows the user the select the strategy to
+The ``strategy`` attribute allows the user the select the strategy to
 code the classes. Two strategies are supported currently: (1) ``"random"``,
 a random ``n_classes x int(n_classes * code_size)`` matrix is generated, and
 entries > 0.5 are set to be 1 and the rest to be 0 or -1; (2)
-``"opt_column_selection"``, random subsets of the exhaustive code are sampled,
+``"max_hamming"``, random subsets of the exhaustive code are sampled,
 and the one with the largest Hamming distance is chosen.
 
 The ``max_iter`` attribute is used when
-``coding_strategy="opt_column_selection"`` allows the user to generate a code
+``strategy="max_hamming"`` allows the user to generate a code
 book with most separation between classes from several randomly generated
 subsets of the exhaustive code book.
 

@@ -13,6 +13,8 @@ from sklearn.utils.testing import assert_greater
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
+from sklearn.multiclass import random_code_book
+from sklearn.multiclass import max_hamming_code_book
 
 from sklearn.multiclass import fit_ovr
 from sklearn.multiclass import fit_ovo
@@ -483,18 +485,27 @@ def test_ovo_string_y():
     ovo.fit(X, y)
     assert_array_equal(y, ovo.predict(X))
 
+def test_code_book_functions():
+    random_state = np.random
+    random_state.seed(0)
+    code_book = random_code_book(3, random_state, 3)
+    correct_code_book = np.array([[1., 1., 1.], [1., 0., 1.], [0., 1., 1.]])
+    assert_almost_equal(correct_code_book, code_book) 
+    code_book = max_hamming_code_book(5, random_state, 15, 10)
+    assert_equal(5, code_book.shape[0])
+    assert_equal(15, code_book.shape[1])
 
 def test_ecoc_exceptions():
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0))
     assert_raises(ValueError, ecoc.predict, [])
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0),
-                                coding_strategy="abc")
+                                strategy="abc")
     assert_raises(ValueError, ecoc.fit, [], [])
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0), code_size=1.5,
-                                coding_strategy="opt_column_selection")
+                                strategy="max_hamming")
     assert_raises(ValueError, ecoc.fit, [], np.array([0, 1, 2]))
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0), code_size=0.01,
-                                coding_strategy="opt_column_selection")
+                                strategy="max_hamming")
     assert_raises(ValueError, ecoc.fit, [], np.array([0, 1, 2, 3]))
 
 def test_ecoc_fit_predict():
@@ -509,24 +520,24 @@ def test_ecoc_fit_predict():
     ecoc.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ecoc.estimators_), n_classes * 1)
 
-def test_ecoc_coding_strategy():
+def test_ecoc_strategy():
     # For irsi dataset, code_size=1.5 will use random_code_book
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0),
                                 code_size=1.5, random_state=0)
     ecoc.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ecoc.estimators_), int(n_classes * 1.5))
 
-    # Set the coding_strategy to be "random"
+    # Set the strategy to be "random"
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0),
                                 code_size=1.5, random_state=0,
-                                coding_strategy="random")
+                                strategy="random")
     ecoc.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ecoc.estimators_), int(n_classes * 1.5))
 
-    # Set the coding_strategy to be "opt_column_selection"
+    # Set the strategy to be "max_hamming"
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0),
                                 code_size=1.0, random_state=0,
-                                coding_strategy="opt_column_selection")
+                                strategy="max_hamming")
     ecoc.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ecoc.estimators_), n_classes * 1)
 

@@ -41,7 +41,7 @@ import scipy.sparse as sp
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .base import MetaEstimatorMixin
 from .preprocessing import LabelBinarizer
-from .metrics.pairwise import euclidean_distances
+from .metrics.pairwise import euclidean_distances, pairwise_distances
 from .utils import check_random_state
 from .utils.validation import _num_samples
 from .utils import deprecated
@@ -592,6 +592,37 @@ def predict_ecoc(estimators, classes, code_book, X):
     return ecoc.predict(X)
 
 
+def random_code_book(n_classes, random_state, code_size):
+    """Random generate a code book."""
+    code_book = random_state.random_sample((n_classes, code_size))
+    code_book[code_book > 0.5] = 1
+    code_book[code_book != 1] = 0
+    return code_book
+
+ 
+def max_hamming_code_book(n_classes, random_state, code_size, max_iter):
+    """Randomly sample subsets of exhaustive code for n_classes, and choose
+       the one gives the largest hamming distances.
+    """
+    max_code_size = np.power(2, n_classes-1) - 1
+    if code_size > max_code_size:
+        raise ValueError("The code size is larger than the possible "
+                         "exhaustive codes.")
+    if np.power(2, code_size) < n_classes:
+        raise ValueError("The code size must be large enough to "
+                         "distinguish every class.")
+    tmp_code_book = np.zeros((n_classes, code_size))
+    dist = 0
+    for k in range(max_iter):
+        p = random_state.permutation(max_code_size)
+        tmp_code_book = (p[:code_size, None] + max_code_size+1 & (1 << np.arange(n_classes-1, -1, -1)) > 0).astype(int).T
+        tmp_distance = np.sum(pairwise_distances(tmp_code_book, metric='hamming'))
+        if tmp_distance > dist:
+            dist = tmp_distance
+            code_book = tmp_code_book
+    return code_book
+
+
 class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     """(Error-Correcting) Output-Code multiclass strategy
 
@@ -616,11 +647,12 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         one-vs-the-rest. A number greater than 1 will require more classifiers
         than one-vs-the-rest.
 
-    max_iter : int
+    max_iter : int, default: 10
         Maximum number of iteration to generate a good code. An integer larger 
         than 0. Each iteration, a random code will be generated and the old 
         code will be replaced only when the total Hamming distance between 
         code words increases.
+        This parameter will be used when the strategy is "max_hamming"
 
     random_state : numpy.RandomState, optional
         The generator used to initialize the codebook. Defaults to
@@ -631,11 +663,12 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         If 1 is given, no parallel computing code is used at all, which is
         useful for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are
         used. Thus for n_jobs = -2, all CPUs but one are used.
-    coding_strategy : str, optional, default: None
+
+    strategy : str, optional, default: "auto"
         The strategy to generate a code book for all classes. Two options are
         avalable currently: (1) "random": randomly generate a
         n_class x int(n_class*code_size) matrix, and set entries > 0.5 to be 1,
-        the rest to be 0 or -1; (2) "opt_column_selection": select subset of
+        the rest to be 0 or -1; (2) "max_hamming": select subset of
         exhaustive code book mutiple times randomly, and choose the one gives
         the largest hamming distances between classes. 
 
@@ -670,67 +703,14 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     """
 
     def __init__(self, estimator, code_size=1, max_iter=10,
-                 random_state=None, n_jobs=1, coding_strategy=None):
+                 random_state=None, n_jobs=1, strategy="auto"):
         self.estimator = estimator
         self.code_size = code_size
         self.max_iter = max_iter
         self.random_state = random_state
         self.n_jobs = n_jobs
-        self.coding_strategy = coding_strategy
+        self.strategy = strategy
 
-    def _random_code_book(self, random_state, code_size):
-        n_classes = self.classes_.shape[0]
-        self.code_book_ = random_state.random_sample((n_classes, code_size))
-        self.code_book_[self.code_book_ > 0.5] = 1
-        self.code_book_[self.code_book_ != 1] = 0
- 
-    def _opt_column_selection_code_book(self, random_state, code_size):
-        n_classes = self.classes_.shape[0]
-        if code_size > self.max_code_size_:
-            raise ValueError("The code size is larger than the possible "
-                             "exhaustive codes.")
-        if np.power(2, code_size) < n_classes:
-            raise ValueError("The code size must be large enough to "
-                             "distinguish every class.")
-        tmp_code_book = np.zeros((n_classes, code_size))
-        dist = 0
-        iter = self.max_iter
-        while iter > 0:
-            p = random_state.permutation(self.max_code_size_)
-            for i in range(code_size):
-                code = bin(p[i] + self.max_code_size_ + 1)[2:].rjust(n_classes, '0')
-                for j in range(n_classes):
-                    if code[j] == '0':
-                        tmp_code_book[j][i] = 0
-                    else:
-                        tmp_code_book[j][i] = 1
-            iter = iter - 1
-            tmp_dist = 0
-            for i in range(n_classes-1):
-                for j in range(i + 1, n_classes):
-                    tmp_dist = tmp_dist + np.sum(np.abs(tmp_code_book[i]-tmp_code_book[j]))
-            if tmp_dist > dist:
-                dist = tmp_dist
-                self.code_book_ = tmp_code_book
-
-    def _generate_codebook(self):
-        random_state = check_random_state(self.random_state)
-        n_classes = self.classes_.shape[0]
-        code_size_ = int(n_classes * self.code_size)
-        self.max_code_size_ = np.power(2, n_classes-1) - 1
-        if self.coding_strategy is None:
-            if code_size_ > self.max_code_size_ or np.power(2, code_size_) < n_classes:
-                self._random_code_book(random_state, code_size_)
-            else:          
-                self._opt_column_selection_code_book(random_state, code_size_)
-        elif self.coding_strategy == "random":
-            self._random_code_book(random_state, code_size_)
-        elif self.coding_strategy == "opt_column_selection":
-            self._opt_column_selection_code_book(random_state, code_size_)
-        else:
-            raise ValueError("Unknown coding strategy %r" % self.coding_strategy)
-        if hasattr(self.estimator, "decision_function"):
-            self.code_book_[self.code_book_ == 0] = -1
 
     def fit(self, X, y):
         """Fit underlying estimators.
@@ -754,7 +734,30 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         _check_estimator(self.estimator)
 
         self.classes_ = np.unique(y)
-        self._generate_codebook()
+
+        random_state = check_random_state(self.random_state)
+        n_classes = self.classes_.shape[0]
+        code_size_ = int(n_classes * self.code_size)
+        max_code_size = np.power(2, n_classes-1) - 1
+        if self.strategy == "auto":
+            if code_size_ > max_code_size or np.power(2, code_size_) < n_classes:
+                self.code_book_ = random_code_book(n_classes, random_state, code_size_)
+            else:
+                self.code_book_ = max_hamming_code_book(n_classes,
+                                                                 random_state,
+                                                                 code_size_,
+                                                                 self.max_iter)
+        elif self.strategy == "random":
+            self.code_book_ = random_code_book(n_classes, random_state, code_size_)
+        elif self.strategy == "max_hamming":
+            self.code_book_ = max_hamming_code_book(n_classes,
+                                                             random_state,
+                                                             code_size_,
+                                                             self.max_iter)
+        else:
+            raise ValueError("Unknown coding strategy %r" % self.strategy)
+        if hasattr(self.estimator, "decision_function"):
+            self.code_book_[self.code_book_ == 0] = -1
 
         classes_index = dict((c, i) for i, c in enumerate(self.classes_))
 
