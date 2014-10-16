@@ -7,6 +7,7 @@ Logistic Regression
 #         Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 #         Manoj Kumar <manojkumarsivaraj334@gmail.com>
 #         Lars Buitinck
+#         Simon Wu <s8wu@uwaterloo.ca>
 
 import numbers
 import warnings
@@ -227,19 +228,69 @@ def _logistic_loss_grad_hess(w, X, y, alpha, sample_weight=None):
     return out, grad, Hs
 
 
-def _multinomial_loss_grad(w, X, Y, alpha, sample_weight):
-    """Computes the multinomial loss and its gradient.
+def _multinomial_loss(w, X, Y, alpha, sample_weight):
+    """Computes multinomial loss and class probabilities.
 
     Parameters
     ----------
-    w : ndarray, shape (n_classes * n_features,) or
-        (n_classes * (n_features + 1),)
+    w : ndarray, shape (n_classes * n_features,) or (n_classes * (n_features + 1),)
         Coefficient vector.
 
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
         Training data.
 
-    y : ndarray, shape (n_samples, n_classes)
+    Y : ndarray, shape (n_samples, n_classes)
+        Transformed labels according to the output of LabelBinarizer.
+
+    alpha : float
+        Regularization parameter. alpha is equal to 1 / C.
+
+    sample_weight : ndarray, shape (n_samples,) optional
+        Array of weights that are assigned to individual samples.
+        If not provided, then each sample is given unit weight.
+
+    Returns
+    -------
+    loss : float
+        Multinomial loss.
+
+    p : ndarray, shape (n_samples, n_classes)
+        Estimated class probabilities.
+
+    w : ndarray, shape (n_classes, n_features)
+        Reshaped param vector excluding intercept terms.
+    """
+    n_classes = Y.shape[1]
+    n_features = X.shape[1]
+    fit_intercept = w.size == (n_classes * (n_features + 1))
+    w = w.reshape(n_classes, -1)
+    sample_weight = sample_weight[:, np.newaxis]
+    if fit_intercept:
+        intercept = w[:, -1]
+        w = w[:, :-1]
+    else:
+        intercept = 0
+    p = safe_sparse_dot(X, w.T)
+    p += intercept
+    p -= logsumexp(p, axis=1)[:, np.newaxis]
+    loss = -(sample_weight * Y * p).sum()
+    loss += 0.5 * alpha * squared_norm(w)
+    p = np.exp(p, p)
+    return loss, p, w
+
+
+def _multinomial_loss_grad(w, X, Y, alpha, sample_weight):
+    """Computes the multinomial loss, gradient and class probabilities.
+
+    Parameters
+    ----------
+    w : ndarray, shape (n_classes * n_features,) or (n_classes * (n_features + 1),)
+        Coefficient vector.
+
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Training data.
+
+    Y : ndarray, shape (n_samples, n_classes)
         Transformed labels according to the output of LabelBinarizer.
 
     alpha : float
@@ -255,37 +306,96 @@ def _multinomial_loss_grad(w, X, Y, alpha, sample_weight):
 
     grad : ndarray, shape (n_classes * n_features,) or
         (n_classes * (n_features + 1),)
-        Ravelled gradient of the logistic loss.
+        Ravelled gradient of the multinomial loss.
+
+    p : ndarray, shape (n_samples, n_classes)
+        Estimated class probabilities
     """
-    _, n_classes = Y.shape
-    _, n_features = X.shape
-
+    n_classes = Y.shape[1]
+    n_features = X.shape[1]
     fit_intercept = (w.size == n_classes * (n_features + 1))
-    w = w.reshape(Y.shape[1], -1)
-
+    grad = np.zeros((n_classes, n_features + bool(fit_intercept)))
+    loss, p, w = _multinomial_loss(w, X, Y, alpha, sample_weight)
     sample_weight = sample_weight[:, np.newaxis]
-    if fit_intercept:
-        grad = np.zeros((n_classes, n_features + 1))
-        intercept = w[:, -1]
-        w = w[:, :-1]
-    else:
-        grad = np.zeros((n_classes, n_features))
-        n_features = X.shape[1]
-        intercept = 0
-
-    p = safe_sparse_dot(X, w.T)
-    p += intercept
-    p -= logsumexp(p, axis=1).reshape(-1, 1)
-
-    loss = -(sample_weight * Y * p).sum() + .5 * alpha * squared_norm(w)
-    p = np.exp(p, p)
     diff = sample_weight * (p - Y)
     grad[:, :n_features] = safe_sparse_dot(diff.T, X)
     grad[:, :n_features] += alpha * w
     if fit_intercept:
         grad[:, -1] = diff.sum(axis=0)
+    return loss, grad.ravel(), p
 
-    return loss, grad.ravel()
+
+def _multinomial_loss_grad_hess(w, X, Y, alpha, sample_weight):
+    """
+    Provides multinomial loss, gradient, and a function for computing hessian
+    vector product.
+
+    Parameters
+    ----------
+    w : ndarray, shape (n_classes * n_features,) or (n_classes * (n_features + 1),)
+        Coefficient vector.
+
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Training data.
+
+    Y : ndarray, shape (n_samples, n_classes)
+        Transformed labels according to the output of LabelBinarizer.
+
+    alpha : float
+        Regularization parameter. alpha is equal to 1 / C.
+
+    sample_weight : ndarray, shape (n_samples,) optional
+        Array of weights that are assigned to individual samples.
+
+    Returns
+    -------
+    loss : float
+        Multinomial loss.
+
+    grad : array, shape (n_classes * n_features,) or
+        (n_classes * (n_features + 1),)
+        Ravelled gradient of the multinomial loss.
+
+    hessp: callable
+        Function that takes in a vector input of shape (n_classes * n_features)
+        or (n_classes * (n_features + 1)) and returns matrix-vector product
+        with hessian.
+
+    References
+    ----------
+    Barak A. Pearlmutter (1993). Fast Exact Multiplication by the Hessian.
+        http://www.bcl.hamilton.ie/~barak/papers/nc-hessian.pdf
+    """
+    n_features = X.shape[1]
+    n_classes = Y.shape[1]
+    fit_intercept = w.size == (n_classes * (n_features + 1))
+    loss, grad, p = _multinomial_loss_grad(w, X, Y, alpha, sample_weight)
+    sample_weight = sample_weight[:, np.newaxis]
+
+    # Hessian-vector product derived by applying the R-operator on the gradient
+    # of the multinomial loss function.
+    def hessp(v):
+        v = v.reshape(n_classes, -1)
+        if fit_intercept:
+            inter_terms = v[:, -1]
+            v = v[:, :-1]
+        else:
+            inter_terms = 0
+        # r_yhat holds the result of applying the R-operator on the multinomial
+        # estimator.
+        r_yhat = safe_sparse_dot(X, v.T)
+        r_yhat += inter_terms
+        r_yhat += (-p * r_yhat).sum(axis=1)[:, np.newaxis]
+        r_yhat *= p
+        r_yhat *= sample_weight
+        hessProd = np.zeros((n_classes, n_features + bool(fit_intercept)))
+        hessProd[:, :n_features] = safe_sparse_dot(r_yhat.T, X)
+        hessProd[:, :n_features] += v * alpha
+        if fit_intercept:
+            hessProd[:, -1] = r_yhat.sum(axis=0)
+        return hessProd.ravel()
+
+    return loss, grad, hessp
 
 
 def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
@@ -402,13 +512,13 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         raise ValueError("multi_class can be either 'multinomial' or 'ovr'"
                          "got %s" % multi_class)
 
-    if multi_class == 'multinomial' and solver != 'lbfgs':
-        raise ValueError("Solver %s cannot solve problems with "
-                         "a multinomial backend." % solver)
-
     if solver not in ['liblinear', 'newton-cg', 'lbfgs']:
         raise ValueError("Logistic Regression supports only liblinear,"
                          " newton-cg and lbfgs solvers. got %s" % solver)
+
+    if multi_class == 'multinomial' and solver == 'liblinear':
+        raise ValueError("Solver %s cannot solve problems with "
+                         "a multinomial backend." % solver)
 
     if solver != 'liblinear':
         if penalty != 'l2':
@@ -488,7 +598,13 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                     )
             w0[:coef.size] = coef
         else:
-            if (coef.shape[0] != classes.size or
+            # For binary problems coef.shape[0] should be 1, otherwise it
+            # should be classes.size.
+            n_vectors = classes.size
+            if n_vectors == 2:
+                n_vectors = 1
+
+            if (coef.shape[0] != n_vectors or
                     coef.shape[1] not in (n_features, n_features + 1)):
                 raise ValueError(
                     'Initialization coef is of shape (%d, %d), expected '
@@ -499,20 +615,29 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                     )
             w0[:, :coef.shape[1]] = coef
 
-    # fmin_l_bfgs_b accepts only ravelled parameters.
     if multi_class == 'multinomial':
+        # fmin_l_bfgs_b and newton-cg accepts only ravelled parameters.
         w0 = w0.ravel()
+        target = Y_bin
+        if solver == 'lbfgs':
+            func = lambda x, *args: _multinomial_loss_grad(x, *args)[0:2]
+        elif solver == 'newton-cg':
+            func = lambda x, *args: _multinomial_loss(x, *args)[0]
+            grad = lambda x, *args: _multinomial_loss_grad(x, *args)[1]
+            hess = _multinomial_loss_grad_hess
+    else:
+        target = y
+        if solver == 'lbfgs':
+            func = _logistic_loss_and_grad
+        elif solver == 'newton-cg':
+            func = _logistic_loss
+            grad = lambda x, *args: _logistic_loss_and_grad(x, *args)[1]
+            hess = _logistic_loss_grad_hess
 
     coefs = list()
 
     for C in Cs:
         if solver == 'lbfgs':
-            if multi_class == 'multinomial':
-                target = Y_bin
-                func = _multinomial_loss_grad
-            else:
-                target = y
-                func = _logistic_loss_and_grad
             try:
                 w0, loss, info = optimize.fmin_l_bfgs_b(
                     func, w0, fprime=None,
@@ -529,12 +654,10 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             if info["warnflag"] == 1 and verbose > 0:
                 warnings.warn("lbfgs failed to converge. Increase the number "
                               "of iterations.")
-
         elif solver == 'newton-cg':
-            grad = lambda x, *args: _logistic_loss_and_grad(x, *args)[1]
-            w0 = newton_cg(_logistic_loss_grad_hess, _logistic_loss, grad, w0,
-                           args=(X, y, 1. / C, sample_weight),
-                           maxiter=max_iter, tol=tol)
+            args = (X, target, 1. / C, sample_weight)
+            w0 = newton_cg(hess, func, grad, w0, args=args, maxiter=max_iter,
+                           tol=tol)
         elif solver == 'liblinear':
             coef_, intercept_, _, = _fit_liblinear(
                 X, y, C, fit_intercept, intercept_scaling, class_weight,
@@ -724,8 +847,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     In the multiclass case, the training algorithm uses the one-vs-rest (OvR)
     scheme if the 'multi_class' option is set to 'ovr' and uses the
     cross-entropy loss, if the 'multi_class' option is set to 'multinomial'.
-    (Currently the 'multinomial' option is supported only by the 'lbfgs'
-    solver.)
+    (Currently the 'multinomial' option is supported only by the 'lbfgs' and
+    'newton-cg' solvers.)
 
     This class implements regularized logistic regression using the
     `liblinear` library, newton-cg and lbfgs solvers. It can handle both
@@ -894,10 +1017,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                 "lbfgs solvers, Got solver=%s" % self.solver
                 )
 
-        if self.solver != 'lbfgs' and self.multi_class == 'multinomial':
+        if self.solver == 'liblinear' and self.multi_class == 'multinomial':
             raise ValueError("Solver %s does not support a multinomial "
-                             "backend.")
-
+                             "backend." % self.solver)
         if self.multi_class not in ['ovr', 'multinomial']:
             raise ValueError("multi_class should be either ovr or multinomial "
                              "got %s" % self.multi_class)

@@ -67,8 +67,9 @@ Enhancements
    - Add ``multi_class="multinomial"`` option in
      :class:`linear_model.LogisticRegression` to implement a Logistic
      Regression solver that minimizes the cross-entropy or multinomial loss
-     instead of the default One-vs-Rest setting. By `Lars Buitinck`_ and
-     `Manoj Kumar`_.
+     instead of the default One-vs-Rest setting. Supports `lbfgs` and 
+     `newton-cg` solvers. By `Lars Buitinck`_ and `Manoj Kumar`_. Solver option
+     `newton-cg` by Simon Wu.
 
    - ``DictVectorizer`` can now perform ``fit_transform`` on an iterable in a
      single pass, when giving the option ``sort=False``. By Dan Blanchard.
