@@ -67,7 +67,7 @@ Enhancements
    - Add ``multi_class="multinomial"`` option in
      :class:`linear_model.LogisticRegression` to implement a Logistic
      Regression solver that minimizes the cross-entropy or multinomial loss
-     instead of the default One-vs-Rest setting. Supports `lbfgs` and 
+     instead of the default One-vs-Rest setting. Supports `lbfgs` and
      `newton-cg` solvers. By `Lars Buitinck`_ and `Manoj Kumar`_. Solver option
      `newton-cg` by Simon Wu.
 
@@ -83,6 +83,9 @@ Enhancements
    - Add ``digits`` parameter to `metrics.classification_report` to allow
      report to show different precision of floating point numbers. By
      `Ian Gilmore`_.
+
+   - Add a quantile prediction strategy to the :class:`dummy.DummyRegressor`.
+     By `Staple`_.
 
 Documentation improvements
 ..........................
@@ -3013,3 +3016,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Michal Romaniuk: https://github.com/romaniukm
 
 .. _Ian Gilmore: https://github.com/agileminor
+
+.. _Staple: https://github.com/staple
