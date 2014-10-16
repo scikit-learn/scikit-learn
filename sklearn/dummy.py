@@ -9,12 +9,12 @@ import numpy as np
 import scipy.sparse as sp
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
-from .externals.six.moves import xrange
 from .utils import check_random_state
 from .utils.validation import check_array
-from sklearn.utils import deprecated
-from sklearn.utils.random import random_choice_csc
-from sklearn.utils.multiclass import class_distribution
+from .utils.validation import check_consistent_length
+from .utils import deprecated
+from .utils.random import random_choice_csc
+from .utils.multiclass import class_distribution
 
 
 class DummyClassifier(BaseEstimator, ClassifierMixin):
@@ -263,7 +263,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             constant = [constant]
 
         P = []
-        for k in xrange(self.n_outputs_):
+        for k in range(self.n_outputs_):
             if self.strategy == "most_frequent":
                 ind = np.ones(n_samples, dtype=int) * class_prior_[k].argmax()
                 out = np.zeros((n_samples, n_classes_[k]), dtype=np.float64)
@@ -366,7 +366,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             return self.constant_
         raise AttributeError
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the random regressor.
 
         Parameters
@@ -394,19 +394,20 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             raise ValueError("y must not be empty.")
         self.output_2d_ = (y.ndim == 2)
 
+        check_consistent_length(X, y, sample_weight)
+
         if self.strategy == "mean":
-            self.constant_ = np.reshape(np.mean(y, axis=0), (1, -1))
+            self.constant_ = np.mean(y, axis=0)
 
         elif self.strategy == "median":
-            self.constant_ = np.reshape(np.median(y, axis=0), (1, -1))
+            self.constant_ = np.median(y, axis=0)
 
         elif self.strategy == "quantile":
             if self.quantile is None or not np.isscalar(self.quantile):
                 raise ValueError("Quantile must be a scalar in the range "
                                  "[0.0, 1.0], but got %s." % self.quantile)
 
-            self.constant_ = np.reshape(
-                np.percentile(y, axis=0, q=self.quantile * 100.0), (1, -1))
+            self.constant_ = np.percentile(y, axis=0, q=self.quantile * 100.0)
 
         elif self.strategy == "constant":
             if self.constant is None:
@@ -422,8 +423,9 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
                     "Constant target value should have "
                     "shape (%d, 1)." % y.shape[1])
 
-            self.constant_ = np.reshape(self.constant, (1, -1))
+            self.constant_ = self.constant
 
+        self.constant_ = np.reshape(self.constant_, (1, -1))
         self.n_outputs_ = np.size(self.constant_)  # y.shape[1] is not safe
         return self
 
