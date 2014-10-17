@@ -71,7 +71,7 @@ def gen_toy_problem_2d():
     X = random_state.normal(size=(n_samples, 2))
     w = np.array([5., 10.])
     c = 1.
-    noise = 0.1*random_state.normal(size=n_samples)
+    noise = 0.1 * random_state.normal(size=n_samples)
     y = np.dot(X, w) + c + noise
     # Add some outliers
     n_outliers = n_samples // 10
