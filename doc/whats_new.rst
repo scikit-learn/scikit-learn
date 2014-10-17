@@ -85,7 +85,7 @@ Enhancements
      `Ian Gilmore`_.
 
    - Add a quantile prediction strategy to the :class:`dummy.DummyRegressor`.
-     By `Staple`_.
+     By `Aaron Staple`_.
 
 Documentation improvements
 ..........................
@@ -3021,4 +3021,4 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Ian Gilmore: https://github.com/agileminor
 
-.. _Staple: https://github.com/staple
+.. _Aaron Staple: https://github.com/staple
