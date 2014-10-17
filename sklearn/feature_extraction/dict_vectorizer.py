@@ -95,7 +95,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         self.feature_names_ = []
         self.vocabulary_ = {}
         self.enable_onehot_inverse = enable_onehot_inverse
-        self._onehot_dict = {}
+        self.onehot_dict_ = {}
 
     def fit(self, X, y=None):
         """Learn a list of feature name -> indices mappings.
@@ -134,7 +134,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
         self.feature_names_ = feature_names
         self.vocabulary_ = vocab
-        self._onehot_dict = onehot_dict
+        self.onehot_dict_ = onehot_dict
 
         return self
 
@@ -156,7 +156,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         else:
             feature_names = self.feature_names_
             vocab = self.vocabulary_
-            onehot_dict = self._onehot_dict
+            onehot_dict = self.onehot_dict_
 
         # Process everything as sparse regardless of setting
         X = [X] if isinstance(X, Mapping) else X
@@ -175,6 +175,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
                 if isinstance(v, six.string_types):
                     if self.enable_onehot_inverse:
                         _f = f
+                        _v = v
                     f = "%s%s%s" % (f, self.separator, v)
                     v = 1
                 if f in vocab:
@@ -187,7 +188,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
                         indices.append(vocab[f])
                         values.append(dtype(v))
                         if _f and f not in onehot_dict:
-                            onehot_dict[f] = [_f, v]
+                            onehot_dict[f] = [_f, _v]
 
             indptr.append(len(indices))
 
@@ -218,7 +219,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         if fitting:
             self.feature_names_ = feature_names
             self.vocabulary_ = vocab
-            self._onehot_dict = onehot_dict
+            self.onehot_dict_ = onehot_dict
 
         return result_matrix
 
@@ -276,9 +277,9 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
         if sp.issparse(X):
             for i, j in zip(*X.nonzero()):
-                if self.enable_onehot_inverse and names[j] in self._onehot_dict:
+                if self.enable_onehot_inverse and names[j] in self.onehot_dict_:
                     if X[i, j]:
-                        dicts[i][self._onehot_dict[names[j]][0]] = self._onehot_dict[names[j]][1]
+                        dicts[i][self.onehot_dict_[names[j]][0]] = self.onehot_dict_[names[j]][1]
                 else:
                     dicts[i][names[j]] = X[i, j]
         else:
