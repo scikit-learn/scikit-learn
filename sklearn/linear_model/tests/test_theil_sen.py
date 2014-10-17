@@ -7,6 +7,9 @@ Testing for Theil-Sen module (sklearn.linear_model.theil_sen)
 
 from __future__ import division, print_function, absolute_import
 
+import os
+import sys
+from contextlib import contextmanager
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_less
 from numpy.testing import assert_array_almost_equal, assert_warns
@@ -18,6 +21,19 @@ from sklearn.linear_model import LinearRegression, TheilSenRegressor
 from sklearn.linear_model.theil_sen import _spatial_median, _breakdown_point
 from sklearn.linear_model.theil_sen import _modified_weiszfeld_step
 from sklearn.utils.testing import assert_greater, assert_less
+
+
+@contextmanager
+def no_stdout_stderr():
+    old_stdout = sys.stdout
+    old_stderr = sys.stderr
+    sys.stdout = open(os.devnull, 'w')
+    sys.stderr = open(os.devnull, 'w')
+    yield
+    sys.stdout.flush()
+    sys.stderr.flush()
+    sys.stdout = old_stdout
+    sys.stderr = old_stderr
 
 
 def gen_toy_problem_1d(intercept=True):
@@ -221,8 +237,7 @@ def test_subpopulation():
 
 def test_subsamples():
     X, y, w, c = gen_toy_problem_4d()
-    theil_sen = TheilSenRegressor(n_subsamples=X.shape[0],
-                                  verbose=True).fit(X, y)
+    theil_sen = TheilSenRegressor(n_subsamples=X.shape[0]).fit(X, y)
     lstq = LinearRegression().fit(X, y)
     # Check for exact the same results as Least Squares
     assert_array_almost_equal(theil_sen.coef_, lstq.coef_, 9)
@@ -231,8 +246,9 @@ def test_subsamples():
 def test_verbosity():
     X, y, w, c = gen_toy_problem_1d()
     # Check that Theil-Sen can be verbose
-    TheilSenRegressor(verbose=True).fit(X, y)
-    TheilSenRegressor(verbose=True, max_subpopulation=10).fit(X, y)
+    with no_stdout_stderr():
+        TheilSenRegressor(verbose=True).fit(X, y)
+        TheilSenRegressor(verbose=True, max_subpopulation=10).fit(X, y)
 
 
 def test_theil_sen_parallel():
