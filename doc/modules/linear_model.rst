@@ -688,11 +688,11 @@ so separate binary classifiers are trained for all classes.
 This happens under the hood, so :class:`LogisticRegression` instances
 using this solver behave as multiclass classifiers.
 
-Setting `multi_class` to "multinomial" with the "lbfgs" solver
+Setting `multi_class` to "multinomial" with the "lbfgs" or "newton-cg" solver
 in :class:`LogisticRegression` learns a true multinomial logistic
 regression model, which means that its probability estimates should
 be better calibrated than the default "one-vs-rest" setting.
-L-BFGS cannot optimize L1-penalized models, though,
+L-BFGS and newton-cg cannot optimize L1-penalized models, though,
 so the "multinomial" setting does not learn sparse models.
 
 .. topic:: Examples:

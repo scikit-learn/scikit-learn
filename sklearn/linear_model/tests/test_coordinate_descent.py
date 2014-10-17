@@ -21,7 +21,7 @@ from sklearn.utils.testing import ignore_warnings
 
 from sklearn.linear_model.coordinate_descent import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
-    MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path
+    MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path, enet_path
 from sklearn.linear_model import LassoLarsCV, lars_path
 
 
@@ -572,6 +572,17 @@ def test_deprection_precompute_enet():
     assert_warns(DeprecationWarning, clf.fit, X, y)
     clf = Lasso(precompute="auto")
     assert_warns(DeprecationWarning, clf.fit, X, y)
+
+
+def test_enet_path_positive():
+    """
+    Test that the coefs returned by positive=True in enet_path are positive
+    """
+
+    X, y, _, _ = build_dataset(n_samples=50, n_features=50)
+    for path in [enet_path, lasso_path]:
+        pos_path_coef = path(X, y, positive=True)[1]
+        assert_true(np.all(pos_path_coef >= 0))
 
 
 if __name__ == '__main__':

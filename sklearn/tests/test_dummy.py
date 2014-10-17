@@ -274,6 +274,93 @@ def test_median_strategy_multioutput_regressor():
     _check_behavior_2d(est)
 
 
+def test_quantile_strategy_regressor():
+
+    random_state = np.random.RandomState(seed=1)
+
+    X = [[0]] * 5  # ignored
+    y = random_state.randn(5)
+
+    reg = DummyRegressor(strategy="quantile", quantile=0.5)
+    reg.fit(X, y)
+    assert_array_equal(reg.predict(X), [np.median(y)] * len(X))
+
+    reg = DummyRegressor(strategy="quantile", quantile=0)
+    reg.fit(X, y)
+    assert_array_equal(reg.predict(X), [np.min(y)] * len(X))
+
+    reg = DummyRegressor(strategy="quantile", quantile=1)
+    reg.fit(X, y)
+    assert_array_equal(reg.predict(X), [np.max(y)] * len(X))
+
+    reg = DummyRegressor(strategy="quantile", quantile=0.3)
+    reg.fit(X, y)
+    assert_array_equal(reg.predict(X), [np.percentile(y, q=30)] * len(X))
+
+
+def test_quantile_strategy_multioutput_regressor():
+
+    random_state = np.random.RandomState(seed=1)
+
+    X_learn = random_state.randn(10, 10)
+    y_learn = random_state.randn(10, 5)
+
+    median = np.median(y_learn, axis=0).reshape((1, -1))
+    quantile_values = np.percentile(y_learn, axis=0, q=80).reshape((1, -1))
+
+    X_test = random_state.randn(20, 10)
+    y_test = random_state.randn(20, 5)
+
+    # Correctness oracle
+    est = DummyRegressor(strategy="quantile", quantile=0.5)
+    est.fit(X_learn, y_learn)
+    y_pred_learn = est.predict(X_learn)
+    y_pred_test = est.predict(X_test)
+
+    _check_equality_regressor(
+        median, y_learn, y_pred_learn, y_test, y_pred_test)
+    _check_behavior_2d(est)
+
+    # Correctness oracle
+    est = DummyRegressor(strategy="quantile", quantile=0.8)
+    est.fit(X_learn, y_learn)
+    y_pred_learn = est.predict(X_learn)
+    y_pred_test = est.predict(X_test)
+
+    _check_equality_regressor(
+        quantile_values, y_learn, y_pred_learn, y_test, y_pred_test)
+    _check_behavior_2d(est)
+
+
+def test_quantile_invalid():
+
+    X = [[0]] * 5  # ignored
+    y = [0] * 5  # ignored
+
+    est = DummyRegressor(strategy="quantile")
+    assert_raises(ValueError, est.fit, X, y)
+
+    est = DummyRegressor(strategy="quantile", quantile=None)
+    assert_raises(ValueError, est.fit, X, y)
+
+    est = DummyRegressor(strategy="quantile", quantile=[0])
+    assert_raises(ValueError, est.fit, X, y)
+
+    est = DummyRegressor(strategy="quantile", quantile=-0.1)
+    assert_raises(ValueError, est.fit, X, y)
+
+    est = DummyRegressor(strategy="quantile", quantile=1.1)
+    assert_raises(ValueError, est.fit, X, y)
+
+    est = DummyRegressor(strategy="quantile", quantile='abc')
+    assert_raises(TypeError, est.fit, X, y)
+
+
+def test_quantile_strategy_empty_train():
+    est = DummyRegressor(strategy="quantile", quantile=0.4)
+    assert_raises(ValueError, est.fit, [], [])
+
+
 def test_constant_strategy_regressor():
 
     random_state = np.random.RandomState(seed=1)
