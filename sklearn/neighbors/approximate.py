@@ -116,25 +116,21 @@ class LSHForest(BaseEstimator):
       >>> import numpy as np
       >>> from sklearn.neighbors import LSHForest
 
-      >>> X = np.logspace(0, 3, num=5000)
-      >>> X = X.reshape((100,50))
+      >>> X_train = [[5, 5, 2], [21, 5, 5], [1, 1, 1], [8, 9, 1], [6, 10, 2]]
+      >>> X_test = [[9, 1, 6], [3, 1, 10], [7, 10, 3]]
       >>> lshf = LSHForest()
-      >>> lshf.fit(X)
+      >>> lshf.fit(X_train)
       LSHForest(min_hash_length=4, n_candidates=50, n_estimators=10, n_neighbors=5,
            radius=1.0, radius_cutoff_ratio=0.9, random_state=None)
-      >>> distances, indices = lshf.kneighbors(X[:5], n_neighbors=3)
+      >>> distances, indices = lshf.kneighbors(X_test, n_neighbors=2)
       >>> distances
-      array([[ 1.08434102,  0.52344831,  0.        ],
-             [ 0.56089272,  0.52344831,  0.        ],
-             [ 0.60101568,  0.56089272,  0.        ],
-             [ 0.6440088 ,  0.60101568,  0.        ],
-             [ 0.6900774 ,  0.6440088 ,  0.        ]])
+      array([[ 0.14960959,  0.0693931 ],
+             [ 0.4810007 ,  0.22932536],
+             [ 0.01481913,  0.00489444]])
       >>> indices
-      array([[2, 1, 0],
-             [2, 0, 1],
-             [3, 1, 2],
-             [4, 2, 3],
-             [5, 3, 4]])
+      array([[2, 1],
+             [0, 2],
+             [0, 4]])
 
     """
 
