@@ -177,11 +177,18 @@ value assigned to a query point is computed from a simple majority vote of
 the nearest neighbors.  Under some circumstances, it is better to weight the
 neighbors such that nearer neighbors contribute more to the fit.  This can
 be accomplished through the ``weights`` keyword.  The default value,
-``weights = 'uniform'``, assigns uniform weights to each neighbor.
+``weights = 'uniform'``, assigns uniform weights to each neighbor,
 ``weights = 'distance'`` assigns weights proportional to the inverse of the
-distance from the query point.  Alternatively, a user-defined function of the
-distance can be supplied which is used to compute the weights.
-
+distance from the query point. Other allowed values for ``weights`` are names
+of :ref:`kernels <kernels>`: ``'tophat'``, ``'gaussian'``, ``'epanechnikov'``, 
+``'exponential'``, ``'linear'``, ``'cosine'``. The bandwidth of a kernel is 
+equal to the distance to :math:`k + 1` neighbor for 
+:class:`KNeighborsClassifier` and to the radius :math:`r` for 
+:class:`RadiusNeighborsClassifier`. The sum of weighted by a kernel votes for 
+a class is proportional to the probability density for this class estimated 
+by means of the kernel, and the class with the highest probability density is 
+picked. Alternatively, a user-defined function of the distance can be supplied 
+which is used to compute the weights.
 
 
 .. |classification_1| image:: ../auto_examples/neighbors/images/plot_classification_001.png
@@ -192,7 +199,11 @@ distance can be supplied which is used to compute the weights.
    :target: ../auto_examples/neighbors/plot_classification.html
    :scale: 50
 
-.. centered:: |classification_1| |classification_2|
+.. |classification_3| image:: ../auto_examples/neighbors/images/plot_classification_003.png
+   :target: ../auto_examples/neighbors/plot_classification.html
+   :scale: 50
+
+.. centered:: |classification_1| |classification_2| |classification_3|
 
 .. topic:: Examples:
 
@@ -224,8 +235,15 @@ to the regression than faraway points.  This can be accomplished through
 the ``weights`` keyword.  The default value, ``weights = 'uniform'``,
 assigns equal weights to all points.  ``weights = 'distance'`` assigns
 weights proportional to the inverse of the distance from the query point.
-Alternatively, a user-defined function of the distance can be supplied,
-which will be used to compute the weights.
+Other allowed values for ``weights`` are names of :ref:`kernels <kernels>`: 
+``'tophat'``, ``'gaussian'``, ``'epanechnikov'``, ``'exponential'``, 
+``'linear'``, ``'cosine'``. The bandwidth of a kernel is equal to the distance 
+to :math:`k + 1` neighbor for :class:`KNeighborsRegressor` and to the radius 
+:math:`r` for :class:`RadiusNeighborsRegressor`. Using kernels for nearest 
+neighbor regression results in smoother fitted function, which is often
+desirable. Alternatively, a user-defined function of the distance can be 
+supplied, which will be used to compute the weights.
+
 
 .. figure:: ../auto_examples/neighbors/images/plot_regression_001.png
    :target: ../auto_examples/neighbors/plot_regression.html
