@@ -46,7 +46,7 @@ from sklearn.linear_model import RANSACRegressor
 print(__doc__)
 
 estimators = [('OLS', LinearRegression()),
-              ('Theil-Sen', TheilSenRegressor()),
+              ('Theil-Sen', TheilSenRegressor(random_state=42)),
               ('RANSAC', RANSACRegressor(random_state=42)), ]
 
 ##############################################################################
