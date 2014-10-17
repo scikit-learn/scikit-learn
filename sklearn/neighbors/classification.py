@@ -28,20 +28,19 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     Parameters
     ----------
     n_neighbors : int, optional (default = 5)
-        Number of neighbors to use by default for :meth:`k_neighbors` queries.
+        Number of neighbors to use by default for :meth:`kneighbors` queries.
 
     weights : string or callable, optional (default = 'uniform')
-        weight function used in prediction.  Possible values:
+        Weight function used in prediction. Possible values:
 
-        - 'uniform' : uniform weights.  All points in each neighborhood
+        - 'uniform' : uniform weights. All points in each neighborhood
           are weighted equally.
         - 'distance' : weight points by the inverse of their distance.
           in this case, closer neighbors of a query point will have a
           greater influence than neighbors which are further away.
         - one of 'tophat', 'gaussian', 'epanechnikov', 'exponential',
-          'linear', 'cosine'. In this case the corresponding kernel
-          function is used for weighting. The bandwidth of the kernel
-          is equal to the distance to the n_neighbors+1 farthest point.
+          'linear', 'cosine' : kernel used for weighting. The bandwidth is
+          equal to the distance to the n_neighbors + 1 farthest point.
         - [callable] : a user-defined function which accepts an
           array of distances, and returns an array of the same shape
           containing the weights.
@@ -226,21 +225,20 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     Parameters
     ----------
     radius : float, optional (default = 1.0)
-        Range of parameter space to use by default for :meth`radius_neighbors`
+        Range of parameter space to use by default for :meth:`radius_neighbors`
         queries.
 
     weights : string or callable, optional (default = 'uniform')
-        weight function used in prediction.  Possible values:
+        Weight function used in prediction. Possible values:
 
-        - 'uniform' : uniform weights.  All points in each neighborhood
+        - 'uniform' : uniform weights. All points in each neighborhood
           are weighted equally.
         - 'distance' : weight points by the inverse of their distance.
           in this case, closer neighbors of a query point will have a
           greater influence than neighbors which are further away.
         - one of 'tophat', 'gaussian', 'epanechnikov', 'exponential',
-          'linear', 'cosine'. In this case the corresponding kernel
-          function is used for weighting. The bandwidth of the kernel
-          is equal to the radius parameter.
+          'linear', 'cosine' : kernel used for weighting. The bandwidth is
+          equal to the radius parameter.
         - [callable] : a user-defined function which accepts an
           array of distances, and returns an array of the same shape
           containing the weights.

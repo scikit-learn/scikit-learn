@@ -186,7 +186,7 @@ equal to the distance to :math:`k + 1` neighbor for
 :class:`KNeighborsClassifier` and to the radius :math:`r` for 
 :class:`RadiusNeighborsClassifier`. The sum of weighted by a kernel votes for 
 a class is proportional to the probability density for this class estimated 
-by means of the kernel, and the class with the highest probability density is 
+with the kernel, and the class with the highest probability density is 
 picked. Alternatively, a user-defined function of the distance can be supplied 
 which is used to compute the weights.
 
