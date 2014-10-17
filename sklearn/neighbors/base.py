@@ -79,8 +79,10 @@ def _get_weights(dist, weights, bandwidth=None):
     ===========
     dist: ndarray
         The input distances
-    weights: None, string from VALID_WEIGHTS or callable
-        The kind of weighting used
+    weights: None, callable or string
+        The kind of weighting used. The valid string parameters are 'uniform',
+        'distance', 'tophat', 'gaussian', 'epanechnikov', 'exponential',
+        'linear', 'cosine'.
     bandwidth: float or ndarray
         The kernel function bandwidth (only for kernel weighting).
         If float, then the bandwidth is the same for all queries.
@@ -105,8 +107,6 @@ def _get_weights(dist, weights, bandwidth=None):
         return weights(dist)
     else:
         kernel = KERNEL_WEIGHTS[weights]
-        if isinstance(bandwidth, np.ndarray):
-            bandwidth = bandwidth.ravel()
         if dist.dtype == np.ndarray:  # when dist is array of arrays
             dist = dist / bandwidth
             weights = [kernel(instance_dist) for instance_dist in dist]
@@ -428,6 +428,36 @@ class KNeighborsMixin(object):
 
         return csr_matrix((A_data.ravel(), A_ind.ravel(), A_indptr),
                           shape=(n_samples1, n_samples2))
+
+    def _get_neighbors_and_weights(self, X):
+        """Find neighbors to X and assign weights to them according to
+        class parameters.
+
+        Parameters
+        ----------
+        X : array of shape [n_samples, n_features]
+            A 2-D array representing the set of points.
+
+        Returns
+        -------
+        dist : array of shape [n_samples, self.n_neighbors]
+            Array representing the distances from points to neighbors.
+
+        ind : array of shape [n_samples, self.n_neighbors]
+            Indices of the nearest neighbors.
+
+        weights : array of shape [n_samples, self.n_neighbors]
+            Weights assigned to neighbors.
+        """
+        if self.weights in KERNEL_WEIGHTS:
+            dist, ind = self.kneighbors(X, n_neighbors=self.n_neighbors + 1)
+            bandwidth = dist[:, -1].ravel()
+            dist, ind = dist[:, :-1], ind[:, :-1]
+            weights = _get_weights(dist, self.weights, bandwidth=bandwidth)
+        else:
+            dist, ind = self.kneighbors(X)
+            weights = _get_weights(dist, self.weights)
+        return dist, ind, weights
 
 
 class RadiusNeighborsMixin(object):

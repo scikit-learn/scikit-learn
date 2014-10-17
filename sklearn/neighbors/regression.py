@@ -135,17 +135,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
             Target values
         """
         X = check_array(X, accept_sparse='csr')
-
-        if self.weights in KERNEL_WEIGHTS:
-            neigh_dist, neigh_ind = \
-                self.kneighbors(X, n_neighbors=self.n_neighbors + 1)
-            bandwidth = neigh_dist[:, -1]
-            neigh_dist, neigh_ind = neigh_dist[:, :-1], neigh_ind[:, :-1]
-            weights = _get_weights(neigh_dist, self.weights,
-                                   bandwidth=bandwidth)
-        else:
-            neigh_dist, neigh_ind = self.kneighbors(X)
-            weights = _get_weights(neigh_dist, self.weights)
+        neigh_dist, neigh_ind, weights = self._get_neighbors_and_weights(X)
 
         _y = self._y
         if _y.ndim == 1:
