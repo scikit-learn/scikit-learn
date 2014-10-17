@@ -230,7 +230,7 @@ def test_checksubparams_n_subsamples_if_less_samples_than_features():
 
 def test_subpopulation():
     X, y, w, c = gen_toy_problem_4d()
-    theil_sen = TheilSenRegressor(max_subpopulation=1000,
+    theil_sen = TheilSenRegressor(max_subpopulation=250,
                                   random_state=0).fit(X, y)
     assert_array_almost_equal(theil_sen.coef_, w, 1)
     assert_array_almost_equal(theil_sen.intercept_, c, 1)
