@@ -167,7 +167,7 @@ def test_theil_sen_1d():
     lstq = LinearRegression().fit(X, y)
     assert_greater(np.abs(lstq.coef_ - w), 0.9)
     # Check that Theil-Sen works
-    theil_sen = TheilSenRegressor().fit(X, y)
+    theil_sen = TheilSenRegressor(random_state=0).fit(X, y)
     assert_array_almost_equal(theil_sen.coef_, w, 1)
     assert_array_almost_equal(theil_sen.intercept_, c, 1)
 
@@ -178,7 +178,8 @@ def test_theil_sen_1d_no_intercept():
     lstq = LinearRegression(fit_intercept=False).fit(X, y)
     assert_greater(np.abs(lstq.coef_ - w - c), 0.5)
     # Check that Theil-Sen works
-    theil_sen = TheilSenRegressor(fit_intercept=False).fit(X, y)
+    theil_sen = TheilSenRegressor(fit_intercept=False,
+                                  random_state=0).fit(X, y)
     assert_array_almost_equal(theil_sen.coef_, w + c, 1)
     assert_almost_equal(theil_sen.intercept_, 0.)
 
@@ -203,19 +204,19 @@ def test_calc_breakdown_point():
 @raises(ValueError)
 def test_checksubparams_negative_subpopulation():
     X, y, w, c = gen_toy_problem_1d()
-    TheilSenRegressor(max_subpopulation=-1).fit(X, y)
+    TheilSenRegressor(max_subpopulation=-1, random_state=0).fit(X, y)
 
 
 @raises(ValueError)
 def test_checksubparams_too_few_subsamples():
     X, y, w, c = gen_toy_problem_1d()
-    TheilSenRegressor(n_subsamples=1).fit(X, y)
+    TheilSenRegressor(n_subsamples=1, random_state=0).fit(X, y)
 
 
 @raises(ValueError)
 def test_checksubparams_too_many_subsamples():
     X, y, w, c = gen_toy_problem_1d()
-    TheilSenRegressor(n_subsamples=101).fit(X, y)
+    TheilSenRegressor(n_subsamples=101, random_state=0).fit(X, y)
 
 
 @raises(ValueError)
@@ -224,7 +225,7 @@ def test_checksubparams_n_subsamples_if_less_samples_than_features():
     n_samples, n_features = 10, 20
     X = random_state.normal(size=(n_samples, n_features))
     y = random_state.normal(size=n_samples)
-    TheilSenRegressor(n_subsamples=9).fit(X, y)
+    TheilSenRegressor(n_subsamples=9, random_state=0).fit(X, y)
 
 
 def test_subpopulation():
@@ -237,7 +238,8 @@ def test_subpopulation():
 
 def test_subsamples():
     X, y, w, c = gen_toy_problem_4d()
-    theil_sen = TheilSenRegressor(n_subsamples=X.shape[0]).fit(X, y)
+    theil_sen = TheilSenRegressor(n_subsamples=X.shape[0],
+                                  random_state=0).fit(X, y)
     lstq = LinearRegression().fit(X, y)
     # Check for exact the same results as Least Squares
     assert_array_almost_equal(theil_sen.coef_, lstq.coef_, 9)
@@ -247,8 +249,10 @@ def test_verbosity():
     X, y, w, c = gen_toy_problem_1d()
     # Check that Theil-Sen can be verbose
     with no_stdout_stderr():
-        TheilSenRegressor(verbose=True).fit(X, y)
-        TheilSenRegressor(verbose=True, max_subpopulation=10).fit(X, y)
+        TheilSenRegressor(verbose=True, random_state=0).fit(X, y)
+        TheilSenRegressor(verbose=True,
+                          max_subpopulation=10,
+                          random_state=0).fit(X, y)
 
 
 def test_theil_sen_parallel():
@@ -270,11 +274,12 @@ def test_less_samples_than_features():
     X = random_state.normal(size=(n_samples, n_features))
     y = random_state.normal(size=n_samples)
     # Check that Theil-Sen falls back to Least Squares if fit_intercept=False
-    theil_sen = TheilSenRegressor(fit_intercept=False).fit(X, y)
+    theil_sen = TheilSenRegressor(fit_intercept=False,
+                                  random_state=0).fit(X, y)
     lstq = LinearRegression(fit_intercept=False).fit(X, y)
     assert_array_almost_equal(theil_sen.coef_, lstq.coef_, 12)
     # Check fit_intercept=True case. This will not be equal to the Least
     # Squares solution since the intercept is calculated differently.
-    theil_sen = TheilSenRegressor(fit_intercept=True).fit(X, y)
+    theil_sen = TheilSenRegressor(fit_intercept=True, random_state=0).fit(X, y)
     y_pred = theil_sen.predict(X)
     assert_array_almost_equal(y_pred, y, 12)
