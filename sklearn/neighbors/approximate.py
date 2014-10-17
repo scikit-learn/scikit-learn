@@ -5,7 +5,7 @@ import numpy as np
 from ..base import BaseEstimator
 from ..utils.validation import check_array
 from ..utils import check_random_state
-from ..utils.extmath import row_norms
+from ..metrics.pairwise import pairwise_distances
 
 from ..random_projection import GaussianRandomProjection
 
@@ -176,13 +176,14 @@ class LSHForest(BaseEstimator):
         return original_indices, binary_hashes[original_indices], hash_function
 
     def _compute_distances(self, query, candidates):
-        """Computes the Euclidean distance.
+        """Computes the cosine distance.
 
         Distance is from the query to points in the candidates array.
         Returns argsort of distances in the candidates
         array and sorted distances.
         """
-        distances = row_norms(self._fit_X[candidates] - query)
+        distances = pairwise_distances(query, self._fit_X[candidates],
+                                       metric='cosine')[0]
         distance_positions = np.argsort(distances)
         return distance_positions, distances[distance_positions]
 
