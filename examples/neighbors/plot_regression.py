@@ -34,16 +34,16 @@ y[::5] += 1 * (0.5 - np.random.rand(8))
 # Fit regression model
 n_neighbors = 5
 
-for i, weights in enumerate(['uniform', 'distance']):
+plt.figure(figsize=(8, 9))
+for i, weights in enumerate(['uniform', 'distance', 'epanechnikov']):
     knn = neighbors.KNeighborsRegressor(n_neighbors, weights=weights)
     y_ = knn.fit(X, y).predict(T)
-
-    plt.subplot(2, 1, i + 1)
+    plt.subplot(3, 1, i + 1)
     plt.scatter(X, y, c='k', label='data')
     plt.plot(T, y_, c='g', label='prediction')
     plt.axis('tight')
     plt.legend()
     plt.title("KNeighborsRegressor (k = %i, weights = '%s')" % (n_neighbors,
                                                                 weights))
-
+plt.tight_layout(pad=0.5)
 plt.show()
