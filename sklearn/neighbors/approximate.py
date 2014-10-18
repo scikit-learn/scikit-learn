@@ -116,25 +116,21 @@ class LSHForest(BaseEstimator):
       >>> import numpy as np
       >>> from sklearn.neighbors import LSHForest
 
-      >>> X = np.logspace(0, 3, num=5000)
-      >>> X = X.reshape((100,50))
+      >>> X_train = [[5, 5, 2], [21, 5, 5], [1, 1, 1], [8, 9, 1], [6, 10, 2]]
+      >>> X_test = [[9, 1, 6], [3, 1, 10], [7, 10, 3]]
       >>> lshf = LSHForest()
-      >>> lshf.fit(X)
+      >>> lshf.fit(X_train)
       LSHForest(min_hash_length=4, n_candidates=50, n_estimators=10, n_neighbors=5,
            radius=1.0, radius_cutoff_ratio=0.9, random_state=None)
-      >>> distances, indices = lshf.kneighbors(X[:5], n_neighbors=3)
+      >>> distances, indices = lshf.kneighbors(X_test, n_neighbors=2)
       >>> distances
-      array([[ -2.22044605e-16,  -2.22044605e-16,  -2.22044605e-16],
-             [ -2.22044605e-16,  -2.22044605e-16,  -2.22044605e-16],
-             [ -2.22044605e-16,  -2.22044605e-16,  -2.22044605e-16],
-             [  0.00000000e+00,   0.00000000e+00,   0.00000000e+00],
-             [ -2.22044605e-16,  -2.22044605e-16,  -2.22044605e-16]])
+      array([[ 0.14960959,  0.0693931 ],
+             [ 0.4810007 ,  0.22932536],
+             [ 0.01481913,  0.00489444]])
       >>> indices
-      array([[58, 80, 45],
-             [58, 80, 35],
-             [35, 58, 80],
-             [71, 35, 70],
-             [65, 21, 54]])
+      array([[2, 1],
+             [0, 2],
+             [0, 4]])
 
     """
 
