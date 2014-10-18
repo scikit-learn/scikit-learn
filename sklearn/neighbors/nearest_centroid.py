@@ -102,7 +102,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
             raise ValueError('y has less than 2 classes')
 
         # Mask mapping each class to it's members.
-        self.centroids_ = np.zeros((n_classes, n_features), dtype=np.float64)
+        self.centroids_ = np.empty((n_classes, n_features), dtype=np.float64)
         # Number of clusters in each class.
         nk = np.zeros(n_classes)
 
