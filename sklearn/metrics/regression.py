@@ -73,6 +73,30 @@ def _check_reg_targets(y_true, y_pred):
     return y_type, y_true, y_pred
 
 
+
+def _array_according_to_weights(array, weights):
+    """
+    Returns an array with each element repeated depending on it's
+    corresponding weight.
+
+    Parameters
+    ----------
+    array : array_like,
+
+    weights: array_like,
+
+    Returns
+    -------
+    result_array: original array with each element repeated depending
+        on the the corresponding weight in weights
+    """
+    result_array = np.array([])
+    for i, weight in enumerate(weights):
+        result_array = np.concatenate([result_array, np.repeat(array[i],
+                                                               weight)])
+    return result_array
+
+
 def _average_and_variance(values, sample_weight=None):
     """
     Compute the (weighted) average and variance.
@@ -178,7 +202,7 @@ def mean_squared_error(y_true, y_pred, sample_weight=None):
                       weights=sample_weight)
 
 
-def median_absolute_error(y_true, y_pred):
+def median_absolute_error(y_true, y_pred, sample_weight=None):
     """Median absolute error regression loss
 
     Parameters
@@ -188,6 +212,9 @@ def median_absolute_error(y_true, y_pred):
 
     y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
         Estimated target values.
+
+    sample_weight: array-like of shape = [n_samples]
+        Sample Weights.
 
     Returns
     -------
@@ -207,7 +234,12 @@ def median_absolute_error(y_true, y_pred):
     1.0
 
     """
+    import ipdb; ipdb.set_trace()
     y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
+    if sample_weight is None:
+        sample_weight = np.array([1]*len(y_true))
+    y_true = _array_according_to_weights(y_true, sample_weight)
+    y_pred = _array_according_to_weights(y_pred, sample_weight)
     return np.median(np.abs(y_pred - y_true))
 
 
