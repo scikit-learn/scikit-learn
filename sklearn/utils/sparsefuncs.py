@@ -384,7 +384,7 @@ def csc_row_median(X):
 
     Returns
     -------
-    median : ndarray, shape = (n_features,)
+    median : ndarray, shape (n_features,)
         Median. 
 
     """

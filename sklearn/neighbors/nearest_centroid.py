@@ -32,6 +32,11 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         feature array. If metric is a string or callable, it must be one of
         the options allowed by metrics.pairwise.pairwise_distances for its
         metric parameter.
+        The centroids for the samples corresponding to each class is the point
+        from which the sum of the distances (according to the metric) of all
+        samples that belong to that particular class are minimized.
+        If the "manhattan" metric is provided, this centroid is the median and
+        for all other metrics, the centroid is now set to be the mean.
     shrink_threshold : float, optional (default = None)
         Threshold for shrinking centroids to remove features.
 
