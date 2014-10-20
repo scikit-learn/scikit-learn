@@ -13,8 +13,8 @@ from sklearn.utils.testing import assert_greater
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
-from sklearn.multiclass import random_code_book
-from sklearn.multiclass import max_hamming_code_book
+from sklearn.multiclass import _random_code_book
+from sklearn.multiclass import _max_hamming_code_book
 
 from sklearn.multiclass import fit_ovr
 from sklearn.multiclass import fit_ovo
@@ -26,6 +26,7 @@ from sklearn.multiclass import predict_proba_ovr
 
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
+from sklearn.metrics.pairwise import pairwise_distances
 
 from sklearn.preprocessing import LabelBinarizer
 
@@ -488,10 +489,10 @@ def test_ovo_string_y():
 def test_code_book_functions():
     random_state = np.random
     random_state.seed(0)
-    code_book = random_code_book(3, random_state, 3)
-    correct_code_book = np.array([[1., 1., 1.], [1., 0., 1.], [0., 1., 1.]])
-    assert_almost_equal(correct_code_book, code_book) 
-    code_book = max_hamming_code_book(5, random_state, 15, 10)
+    code_book = _random_code_book(3, random_state, 10000)
+    proportion_of_1 = np.sum((code_book==1).astype(int))/30000
+    assert_true(proportion_of_1 > 0.48 and proportion_of_1 < 0.52)
+    code_book = _max_hamming_code_book(5, random_state, 15, 10)
     assert_equal(5, code_book.shape[0])
     assert_equal(15, code_book.shape[1])
 
@@ -540,6 +541,20 @@ def test_ecoc_strategy():
                                 strategy="max_hamming")
     ecoc.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ecoc.estimators_), n_classes * 1)
+
+def test_max_hamming_code_book():
+    # Test the the code could be improved using larger max_iter 
+    random_state = np.random
+    random_state.seed(0)
+    dist0 = np.sum(pairwise_distances(_max_hamming_code_book(5, random_state,
+                                                            10, 1),
+                                      metric='hamming'))
+    random_state = np.random
+    random_state.seed(0)
+    dist1 = np.sum(pairwise_distances(_max_hamming_code_book(5, random_state,
+                                                            10, 2),
+                                      metric='hamming')) 
+    assert_true(dist0 >= dist1);
 
 def test_ecoc_gridsearch():
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0),

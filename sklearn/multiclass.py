@@ -43,6 +43,7 @@ from .base import MetaEstimatorMixin
 from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances, pairwise_distances
 from .utils import check_random_state
+from .utils.random import sample_without_replacement
 from .utils.validation import _num_samples
 from .utils import deprecated
 from .externals.joblib import Parallel
@@ -592,7 +593,7 @@ def predict_ecoc(estimators, classes, code_book, X):
     return ecoc.predict(X)
 
 
-def random_code_book(n_classes, random_state, code_size):
+def _random_code_book(n_classes, random_state, code_size):
     """Random generate a code book."""
     code_book = random_state.random_sample((n_classes, code_size))
     code_book[code_book > 0.5] = 1
@@ -600,7 +601,7 @@ def random_code_book(n_classes, random_state, code_size):
     return code_book
 
  
-def max_hamming_code_book(n_classes, random_state, code_size, max_iter):
+def _max_hamming_code_book(n_classes, random_state, code_size, max_iter):
     """Randomly sample subsets of exhaustive code for n_classes, and choose
        the one gives the largest hamming distances.
     """
@@ -614,8 +615,11 @@ def max_hamming_code_book(n_classes, random_state, code_size, max_iter):
     tmp_code_book = np.zeros((n_classes, code_size))
     dist = 0
     for k in range(max_iter):
-        p = random_state.permutation(max_code_size)
-        tmp_code_book = (p[:code_size, None] + max_code_size+1 & (1 << np.arange(n_classes-1, -1, -1)) > 0).astype(int).T
+        p = sample_without_replacement(n_samples=code_size,
+                                       n_population=max_code_size)
+        tmp_code_book = (p[:, None] + max_code_size+1 &
+                         (1 << np.arange(n_classes-1, -1, -1)) > 0
+                        ).astype(int).T
         tmp_distance = np.sum(pairwise_distances(tmp_code_book, metric='hamming'))
         if tmp_distance > dist:
             dist = tmp_distance
@@ -664,13 +668,17 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         useful for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are
         used. Thus for n_jobs = -2, all CPUs but one are used.
 
-    strategy : str, optional, default: "auto"
-        The strategy to generate a code book for all classes. Two options are
-        avalable currently: (1) "random": randomly generate a
-        n_class x int(n_class*code_size) matrix, and set entries > 0.5 to be 1,
-        the rest to be 0 or -1; (2) "max_hamming": select subset of
-        exhaustive code book mutiple times randomly, and choose the one gives
-        the largest hamming distances between classes. 
+    strategy : str, {'auto', 'random', 'max_hamming'}, optional, default: "auto"
+        The strategy to generate a code book for all classes. Three options are
+        avalable currently: 
+        
+        (1) "random": randomly generate a n_class x int(n_class*code_size)
+            matrix, and set entries > 0.5 to be 1, the rest to be 0 or -1; 
+        (2) "max_hamming": select subset of exhaustive code book mutiple times
+            randomly, and choose the one gives the largest hamming distances
+            between classes.
+        (3) "auto": use "max_hamming" if the code_size is in the valid range
+            for it; otherwise, "random" strategy will be used.
 
     Attributes
     ----------
@@ -700,6 +708,12 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     .. [3] "The Elements of Statistical Learning",
        Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
        2008.
+
+    .. [4] "Error-correcting ouput codes library,"
+       Escalera, Sergio, Oriol Pujol, and Petia Radeva, 
+       The Journal of Machine Learning Research 11, page 661-664,
+       2010.
+
     """
 
     def __init__(self, estimator, code_size=1, max_iter=10,
@@ -741,16 +755,16 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         max_code_size = np.power(2, n_classes-1) - 1
         if self.strategy == "auto":
             if code_size_ > max_code_size or np.power(2, code_size_) < n_classes:
-                self.code_book_ = random_code_book(n_classes, random_state, code_size_)
+                self.code_book_ = _random_code_book(n_classes, random_state, code_size_)
             else:
-                self.code_book_ = max_hamming_code_book(n_classes,
+                self.code_book_ = _max_hamming_code_book(n_classes,
                                                                  random_state,
                                                                  code_size_,
                                                                  self.max_iter)
         elif self.strategy == "random":
-            self.code_book_ = random_code_book(n_classes, random_state, code_size_)
+            self.code_book_ = _random_code_book(n_classes, random_state, code_size_)
         elif self.strategy == "max_hamming":
-            self.code_book_ = max_hamming_code_book(n_classes,
+            self.code_book_ = _max_hamming_code_book(n_classes,
                                                              random_state,
                                                              code_size_,
                                                              self.max_iter)
