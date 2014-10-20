@@ -41,7 +41,6 @@ Single and multi-output problems are both handled.
 
 from __future__ import division
 
-from itertools import chain
 import numpy as np
 
 from warnings import warn
@@ -66,7 +65,8 @@ from .base import BaseEnsemble, _partition_estimators
 __all__ = ["RandomForestClassifier",
            "RandomForestRegressor",
            "ExtraTreesClassifier",
-           "ExtraTreesRegressor"]
+           "ExtraTreesRegressor",
+           "RandomTreesEmbedding"]
 
 MAX_INT = np.iinfo(np.int32).max
 
@@ -190,6 +190,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         # for 1d. FIXME make this consistent in the future.
         X = check_array(X, dtype=DTYPE, ensure_2d=False, accept_sparse="csc")
         if issparse(X):
+            # Pre-sort indices to avoid that each individual tree of the
+            # ensemble sorts the indices.
             X.sort_indices()
 
         # Remap output
@@ -1398,14 +1400,14 @@ class RandomTreesEmbedding(BaseForest):
         # for 1d.
         X = check_array(X, accept_sparse=['csc'], ensure_2d=False)
         if issparse(X):
+            # Pre-sort indices to avoid that each individual tree of the
+            # ensemble sorts the indices.
             X.sort_indices()
 
         rnd = check_random_state(self.random_state)
         y = rnd.uniform(size=X.shape[0])
         super(RandomTreesEmbedding, self).fit(X, y,
                                               sample_weight=sample_weight)
-        if issparse(X):
-            X = X.tocsr()
 
         self.one_hot_encoder_ = OneHotEncoder(sparse=self.sparse_output)
         return self.one_hot_encoder_.fit_transform(self.apply(X))
@@ -1418,7 +1420,7 @@ class RandomTreesEmbedding(BaseForest):
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             Input data to be transformed. Use ``dtype=np.float32`` for maximum
             efficiency. Sparse matrices are also supported, use sparse
-            ``csc_matrix`` for maximum efficieny.
+            ``csr_matrix`` for maximum efficieny.
 
         Returns
         -------
