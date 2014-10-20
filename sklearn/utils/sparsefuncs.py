@@ -4,7 +4,6 @@
 # License: BSD 3 clause
 import scipy.sparse as sp
 import numpy as np
-import warnings
 
 from .fixes import sparse_min_max
 from .sparsefuncs_fast import csr_mean_variance_axis0 as _csr_mean_var_axis0
@@ -373,7 +372,7 @@ def _get_elem_at_rank(rank, data, n_negative, n_zeros):
     return data[rank - n_zeros]
 
 
-def csc_row_median(X):
+def csc_median_axis_0(X):
     """Find the median across axis 0 of a CSC matrix.
     It is equivalent to doing np.median(X, axis=0).
 
@@ -395,10 +394,10 @@ def csc_row_median(X):
     n_samples, n_features = X.shape
     median = np.zeros(n_features)
 
-    for f_ind, ptr in enumerate(indptr[:-1]):
+    for f_ind, (start, end) in enumerate(zip(indptr[:-1], indptr[1:])):
 
         # Prevent modifying X in place
-        data = np.copy(X.data[ptr: indptr[f_ind + 1]])
+        data = np.copy(X.data[start: end])
         nz = n_samples - data.size
         median[f_ind] = _get_median(data, nz)
 

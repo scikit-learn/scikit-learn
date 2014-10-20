@@ -16,7 +16,7 @@ from ..externals.six.moves import xrange
 from ..metrics.pairwise import pairwise_distances
 from ..preprocessing import LabelEncoder
 from ..utils.validation import check_array, check_X_y
-from ..utils.sparsefuncs import csc_row_median
+from ..utils.sparsefuncs import csc_median_axis_0
 
 
 class NearestCentroid(BaseEstimator, ClassifierMixin):
@@ -37,6 +37,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         samples that belong to that particular class are minimized.
         If the "manhattan" metric is provided, this centroid is the median and
         for all other metrics, the centroid is now set to be the mean.
+
     shrink_threshold : float, optional (default = None)
         Threshold for shrinking centroids to remove features.
 
@@ -123,7 +124,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
                 if not is_X_sparse:
                     self.centroids_[cur_class] = np.median(X[center_mask], axis=0)
                 else:
-                    self.centroids_[cur_class] = csc_row_median(X[center_mask])
+                    self.centroids_[cur_class] = csc_median_axis_0(X[center_mask])
             else:
                 self.centroids_[cur_class] = X[center_mask].mean(axis=0)
 
