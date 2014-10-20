@@ -490,8 +490,8 @@ def test_code_book_functions():
     random_state = np.random
     random_state.seed(0)
     code_book = _random_code_book(3, random_state, 10000)
-    proportion_of_1 = np.sum((code_book==1).astype(int))/30000
-    assert_true(proportion_of_1 > 0.45 and proportion_of_1 < 0.55)
+    proportion_of_1 = np.sum((code_book==1).astype(int)) * 1.0 / 30000
+    assert_true(proportion_of_1 > 0.48 and proportion_of_1 < 0.52)
     code_book = _max_hamming_code_book(5, random_state, 15, 10)
     assert_equal(5, code_book.shape[0])
     assert_equal(15, code_book.shape[1])
