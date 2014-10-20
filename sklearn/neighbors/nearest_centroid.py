@@ -8,6 +8,7 @@ Nearest Centroid Classification
 #
 # License: BSD 3 clause
 
+import warnings
 import numpy as np
 from scipy import sparse as sp
 
@@ -126,6 +127,11 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
                 else:
                     self.centroids_[cur_class] = csc_median_axis_0(X[center_mask])
             else:
+                if self.metric != 'euclidean':
+                    warnings.warn("Averaging for metrics other than "
+                                  "euclidean and manhattan not supported. "
+                                  "The average is set to be the mean."
+                                  )
                 self.centroids_[cur_class] = X[center_mask].mean(axis=0)
 
         if self.shrink_threshold:
