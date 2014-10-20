@@ -11,18 +11,21 @@ from sklearn.utils.validation import check_array
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import ExtraTreesClassifier
-
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import MultinomialNB
 
 ESTIMATORS = {
     "dummy": DummyClassifier(),
     "random_forest": RandomForestClassifier(n_estimators=100,
                                             max_features="sqrt",
-                                            # min_samples_split=10
-                                            ),
+                                            min_samples_split=10),
     "extra_trees": ExtraTreesClassifier(n_estimators=100,
                                         max_features="sqrt",
-                                        # min_samples_split=10
-                                        ),
+                                        min_samples_split=10),
+    "logistic_regression": LogisticRegression(),
+    "naive_bayes": MultinomialNB(),
+    "adaboost": AdaBoostClassifier(n_estimators=10),
 }
 
 
@@ -44,21 +47,22 @@ if __name__ == "__main__":
     y_train = data_train.target
     y_test = data_test.target
 
-    # print("20 newsgroups")
-    # print("=============")
-    # print("X_train.shape = {0}".format(X_train.shape))
-    # print("X_train.format = {0}".format(X_train.format))
-    # print("X_train.dtype = {0}".format(X_train.dtype))
-    # print("X_train density = {0}"
-    #       "".format(X_train.nnz / np.product(X_train.shape)))
-    # print("y_train {0}".format(y_train.shape))
-    # print("X_test {0}".format(X_test.shape))
-    # print("X_test.format = {0}".format(X_test.format))
-    # print("X_test.dtype = {0}".format(X_test.dtype))
-    # print("y_test {0}".format(y_test.shape))
-    # print()
-    # print("Classifier Training")
-    # print("===================")
+    print("20 newsgroups")
+    print("=============")
+    print("X_train.shape = {0}".format(X_train.shape))
+    print("X_train.format = {0}".format(X_train.format))
+    print("X_train.dtype = {0}".format(X_train.dtype))
+    print("X_train density = {0}"
+          "".format(X_train.nnz / np.product(X_train.shape)))
+    print("y_train {0}".format(y_train.shape))
+    print("X_test {0}".format(X_test.shape))
+    print("X_test.format = {0}".format(X_test.format))
+    print("X_test.dtype = {0}".format(X_test.dtype))
+    print("y_test {0}".format(y_test.shape))
+    print()
+
+    print("Classifier Training")
+    print("===================")
     accuracy, train_time, test_time = {}, {}, {}
     for name in sorted(args["estimators"]):
         clf = ESTIMATORS[name]
@@ -67,7 +71,7 @@ if __name__ == "__main__":
         except (TypeError, ValueError):
             pass
 
-        # print("Training %s ... " % name, end="")
+        print("Training %s ... " % name, end="")
         t0 = time()
         clf.fit(X_train, y_train)
         train_time[name] = time() - t0
@@ -75,7 +79,7 @@ if __name__ == "__main__":
         y_pred = clf.predict(X_test)
         test_time[name] = time() - t0
         accuracy[name] = accuracy_score(y_test, y_pred)
-        # print("done")
+        print("done")
 
     print()
     print("Classification performance:")
