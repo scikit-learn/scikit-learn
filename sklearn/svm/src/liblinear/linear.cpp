@@ -2848,17 +2848,14 @@ static inline double get_w_value(const struct model *model_, int idx, int label_
 	int solver_type = model_->param.solver_type;
 	const double *w = model_->w;
 
-	if(!check_regression_model(model_) && (label_idx < 0 || label_idx >= nr_class))
-	{
-		const double nan = 0.0/0.0;
-		return nan;
-	}
 	if(idx < 0 || idx > model_->nr_feature)
 		return 0;
 	if(check_regression_model(model_))
 		return w[idx];
 	else
 	{
+		if(label_idx < 0 || label_idx >= nr_class)
+			return 0;
 		if(nr_class == 2 && solver_type != MCSVM_CS)
 		{
 			if(label_idx == 0)
