@@ -35,6 +35,7 @@ from .base import BaseEnsemble
 from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
+from ..base import is_classifier
 from ..utils import check_random_state, check_array, check_X_y, column_or_1d
 from ..utils.extmath import logsumexp
 from ..externals import six
@@ -904,8 +905,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         y : array-like, shape = [n_samples]
             Target values (integers in classification, real numbers in
             regression)
-            For classification, labels must correspond to classes
-            ``0, 1, ..., n_classes_-1``
+            For classification, labels must correspond to classes.
 
         sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted. Splits
@@ -946,6 +946,14 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         if n_samples != sample_weight.shape[0]:
             raise ValueError('Shape mismatch of sample_weight: %d != %d' %
                              (sample_weight.shape[0], n_samples))
+
+        if is_classifier(self):
+            y = column_or_1d(y, warn=True)
+            self.classes_, y = np.unique(y, return_inverse=True)
+            self.n_classes_ = len(self.classes_)
+        else:
+            self.n_classes_ = 1
+
 
         self.n_features = n_features
         random_state = check_random_state(self.random_state)
@@ -1143,6 +1151,50 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         importances = total_sum / len(self.estimators_)
         return importances
 
+    def predict(self, X):
+        """Predict target for X.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        y: array of shape = ["n_samples]
+            The predicted values.
+        """
+        if is_classifier(self):
+            score = self.decision_function(X)
+            decisions = self.loss_._score_to_decision(score)
+            return self.classes_.take(decisions, axis=0)
+        else:
+            return self.decision_function(X).ravel()
+
+    def staged_predict(self, X):
+        """Predict target at each stage for X.
+
+        This method allows monitoring (i.e. determine error on testing set)
+        after each stage.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        y : array of shape = [n_samples]
+            The predicted value of the input samples.
+        """
+        if is_classifier(self):
+            for score in self.staged_decision_function(X):
+                decisions = self.loss_._score_to_decision(score)
+                yield self.classes_.take(decisions, axis=0)
+        else:
+            for y in self.staged_decision_function(X):
+                yield y.ravel()
+
 
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     """Gradient Boosting for classification.
@@ -1292,48 +1344,6 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             random_state, verbose=verbose, max_leaf_nodes=max_leaf_nodes,
             warm_start=warm_start)
 
-    def fit(self, X, y, sample_weight=None, monitor=None):
-        """Fit the gradient boosting model.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
-
-        y : array-like, shape = [n_samples]
-            Target values (integers in classification, real numbers in
-            regression)
-            For classification, labels must correspond to classes
-            ``0, 1, ..., n_classes_-1``.
-
-        sample_weight : array-like, shape = [n_samples] or None
-            Sample weights. If None, then samples are equally weighted. Splits
-            that would create child nodes with net zero or negative weight are
-            ignored while searching for a split in each node. In the case of
-            classification, splits are also ignored if they would result in any
-            single class carrying a negative weight in either child node.
-
-        monitor : callable, optional
-            The monitor is called after each iteration with the current
-            iteration, a reference to the estimator and the local variables of
-            ``_fit_stages`` as keyword arguments ``callable(i, self,
-            locals())``. If the callable returns ``True`` the fitting procedure
-            is stopped. The monitor can be used for various things such as
-            computing held-out estimates, early stopping, model introspect, and
-            snapshoting.
-
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
-        y = column_or_1d(y, warn=True)
-        self.classes_, y = np.unique(y, return_inverse=True)
-        self.n_classes_ = len(self.classes_)
-        return super(GradientBoostingClassifier, self).fit(X, y, sample_weight,
-                                                           monitor)
-
     def predict_proba(self, X):
         """Predict class probabilities for X.
 
@@ -1382,43 +1392,6 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         except AttributeError:
             raise AttributeError('loss=%r does not support predict_proba' %
                                  self.loss)
-
-    def predict(self, X):
-        """Predict class for X.
-
-        Parameters
-        ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
-
-        Returns
-        -------
-        y : array of shape = [n_samples]
-            The predicted classes.
-        """
-        score = self.decision_function(X)
-        decisions = self.loss_._score_to_decision(score)
-        return self.classes_.take(decisions, axis=0)
-
-    def staged_predict(self, X):
-        """Predict classes at each stage for X.
-
-        This method allows monitoring (i.e. determine error on testing set)
-        after each stage.
-
-        Parameters
-        ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
-
-        Returns
-        -------
-        y : array of shape = [n_samples]
-            The predicted value of the input samples.
-        """
-        for score in self.staged_decision_function(X):
-            decisions = self.loss_._score_to_decision(score)
-            yield self.classes_.take(decisions, axis=0)
 
 
 class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
@@ -1570,76 +1543,4 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             random_state, alpha, verbose, max_leaf_nodes=max_leaf_nodes,
             warm_start=warm_start)
 
-    def fit(self, X, y, sample_weight=None, monitor=None):
-        """Fit the gradient boosting model.
 
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
-
-        y : array-like, shape = [n_samples]
-            Target values (integers in classification, real numbers in
-            regression)
-            For classification, labels must correspond to classes
-            ``0, 1, ..., n_classes_-1``.
-
-        sample_weight : array-like, shape = [n_samples] or None
-            Sample weights. If None, then samples are equally weighted. Splits
-            that would create child nodes with net zero or negative weight are
-            ignored while searching for a split in each node. In the case of
-            classification, splits are also ignored if they would result in any
-            single class carrying a negative weight in either child node.
-
-        monitor : callable, optional
-            The monitor is called after each iteration with the current
-            iteration, a reference to the estimator and the local variables of
-            ``_fit_stages`` as keyword arguments ``callable(i, self,
-            locals())``. If the callable returns ``True`` the fitting procedure
-            is stopped. The monitor can be used for various things such as
-            computing held-out estimates, early stopping, model introspect, and
-            snapshoting.
-
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
-        self.n_classes_ = 1
-        return super(GradientBoostingRegressor, self).fit(X, y, sample_weight,
-                                                          monitor)
-
-    def predict(self, X):
-        """Predict regression target for X.
-
-        Parameters
-        ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
-
-        Returns
-        -------
-        y: array of shape = [n_samples]
-            The predicted values.
-        """
-        return self.decision_function(X).ravel()
-
-    def staged_predict(self, X):
-        """Predict regression target at each stage for X.
-
-        This method allows monitoring (i.e. determine error on testing set)
-        after each stage.
-
-        Parameters
-        ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
-
-        Returns
-        -------
-        y : array of shape = [n_samples]
-            The predicted value of the input samples.
-        """
-        for y in self.staged_decision_function(X):
-            yield y.ravel()
