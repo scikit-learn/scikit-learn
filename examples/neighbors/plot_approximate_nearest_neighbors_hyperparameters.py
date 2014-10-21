@@ -96,7 +96,8 @@ labels = ['n_estimators = ' + str(n_estimators_for_candidate_value[0]),
           'n_estimators = ' + str(n_estimators_for_candidate_value[2])]
 
 plt.figure()
-plt.legend((p1, p2, p3), (labels[0], labels[1], labels[2]), loc='upper left')
+plt.legend((p1, p2, p3), (labels[0], labels[1], labels[2]),
+           loc='upper left', fontsize='small')
 
 for i in range(len(n_estimators_for_candidate_value)):
     plt.scatter(n_candidates_values, accuracies_c[i, :], c=colors[i])
