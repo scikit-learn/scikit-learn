@@ -1338,11 +1338,14 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
                  max_leaf_nodes=None, warm_start=False):
 
         super(GradientBoostingClassifier, self).__init__(
-            loss, learning_rate, n_estimators, min_samples_split,
-            min_samples_leaf, min_weight_fraction_leaf,
-            max_depth, init, subsample, max_features,
-            random_state, verbose=verbose, max_leaf_nodes=max_leaf_nodes,
-            warm_start=warm_start)
+            loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
+            min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
+            min_weight_fraction_leaf=min_weight_fraction_leaf,
+            max_depth=max_depth, init=init, subsample=subsample,
+            max_features=max_features,
+            random_state=random_state, verbose=verbose,
+            max_leaf_nodes=max_leaf_nodes, warm_start=warm_start)
 
     def predict_proba(self, X):
         """Predict class probabilities for X.
@@ -1537,10 +1540,13 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
                  warm_start=False):
 
         super(GradientBoostingRegressor, self).__init__(
-            loss, learning_rate, n_estimators, min_samples_split,
-            min_samples_leaf, min_weight_fraction_leaf,
-            max_depth, init, subsample, max_features,
-            random_state, alpha, verbose, max_leaf_nodes=max_leaf_nodes,
-            warm_start=warm_start)
+            loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
+            min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
+            min_weight_fraction_leaf=min_weight_fraction_leaf,
+            max_depth=max_depth, init=init, subsample=subsample,
+            max_features=max_features,
+            random_state=random_state, alpha=alpha, verbose=verbose,
+            max_leaf_nodes=max_leaf_nodes, warm_start=warm_start)
 
 
