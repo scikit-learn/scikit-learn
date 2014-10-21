@@ -119,6 +119,10 @@ Bug fixes
       estimator. It allows for instance to make bagging of a pipeline object.
       By `Arnaud Joly`_
 
+    - :class:`neighbors.NearestCentroid` now uses the median as the centroid
+      when metric is set to ``manhattan``. It was using the mean before.
+      By `Manoj Kumar`_
+
 API changes summary
 -------------------
 

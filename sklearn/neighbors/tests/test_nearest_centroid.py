@@ -125,6 +125,17 @@ def test_predict_translated_data():
     assert_array_equal(y_init, y_translate)
 
 
+def test_manhattan_metric():
+    """Test the manhattan metric."""
+
+    clf = NearestCentroid(metric='manhattan')
+    clf.fit(X, y)
+    dense_centroid = clf.centroids_
+    clf.fit(X_csr, y)
+    assert_array_equal(clf.centroids_, dense_centroid)
+    assert_array_equal(dense_centroid, [[-1, -1], [1, 1]])
+
+
 if __name__ == "__main__":
     import nose
     nose.runmodule()
