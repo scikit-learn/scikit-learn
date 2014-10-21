@@ -1404,6 +1404,9 @@ def hinge_loss(y_true, pred_decision, labels=None):
     labels : array, optional, default None
         Contains all the labels for the problem. Used in multiclass hinge loss.
 
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
     Returns
     -------
     loss : float
@@ -1492,4 +1495,6 @@ def hinge_loss(y_true, pred_decision, labels=None):
     losses = 1 - margin
     # The hinge_loss doesn't penalize good enough predictions.
     losses[losses <= 0] = 0
+    if sample_weight is not None:
+    #     losses = _weighted_sum(losses, sample_weight)
     return np.mean(losses)
