@@ -6,6 +6,8 @@ cdef extern from "math.h":
     double sqrt(double) nogil
 
 cimport cython
+cdef LearningRate adagrad
+cdef LearningRate  adadelta
 
 cdef LearningRate get_learning_rate(char* learning_rate):
     if strcmp(learning_rate, "constant") == 0:
@@ -15,9 +17,15 @@ cdef LearningRate get_learning_rate(char* learning_rate):
     elif strcmp(learning_rate, "invscaling") == 0:
         return InvScaling()
     elif strcmp(learning_rate, "adagrad") == 0:
-        return AdaGrad()
+        global adagrad
+        if not adagrad:
+            adagrad = AdaGrad()
+        return adagrad
     elif strcmp(learning_rate, "adadelta") == 0:
-        return AdaDelta()
+        global adadelta
+        if not adadelta:
+            adadelta = AdaDelta()
+        return adadelta
     elif strcmp(learning_rate, "pa1") == 0:
         return PA1()
     elif strcmp(learning_rate, "pa2") == 0:
@@ -58,7 +66,7 @@ cdef class AdaGrad(LearningRate):
     cdef double update(self, double gradient, double loss, double eta,
                        double norm, double C, double p, double y,
                        int is_hinge):
-        self.sum_squared_grad += gradient ** 2 + self.eps0
+        self.sum_squared_grad += gradient ** 2.0 + self.eps0
         return -(eta / sqrt(self.sum_squared_grad)) * gradient
 
 cdef class AdaDelta(LearningRate):
