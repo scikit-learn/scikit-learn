@@ -1377,7 +1377,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None):
     return _weighted_sum(loss, sample_weight, normalize)
 
 
-def hinge_loss(y_true, pred_decision, labels=None):
+def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     """Average hinge loss (non-regularized)
 
     In binary class case, assuming labels in y_true are encoded with +1 and -1,
@@ -1403,6 +1403,9 @@ def hinge_loss(y_true, pred_decision, labels=None):
 
     labels : array, optional, default None
         Contains all the labels for the problem. Used in multiclass hinge loss.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
 
     Returns
     -------
@@ -1454,7 +1457,7 @@ def hinge_loss(y_true, pred_decision, labels=None):
     >>> hinge_loss(y_true, pred_decision, labels)  #doctest: +ELLIPSIS
     0.56...
     """
-    check_consistent_length(y_true, pred_decision)
+    check_consistent_length(y_true, pred_decision, sample_weight)
     pred_decision = check_array(pred_decision, ensure_2d=False)
     y_true = column_or_1d(y_true)
     y_true_unique = np.unique(y_true)
@@ -1492,4 +1495,4 @@ def hinge_loss(y_true, pred_decision, labels=None):
     losses = 1 - margin
     # The hinge_loss doesn't penalize good enough predictions.
     losses[losses <= 0] = 0
-    return np.mean(losses)
+    return np.average(losses, weights=sample_weight)

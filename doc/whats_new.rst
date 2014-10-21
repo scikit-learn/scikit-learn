@@ -74,6 +74,9 @@ Enhancements
    - Add support for multiclass in `metrics.hinge_loss`. Added ``labels=None``
      as optional paramter. By `Saurabh Jha`.
 
+   - Add ``sample_weight`` parameter to `metrics.hinge_loss`.
+     By `Saurabh Jha`.
+
    - Add ``multi_class="multinomial"`` option in
      :class:`linear_model.LogisticRegression` to implement a Logistic
      Regression solver that minimizes the cross-entropy or multinomial loss
