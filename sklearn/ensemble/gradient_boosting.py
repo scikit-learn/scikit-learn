@@ -857,7 +857,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
         # do oob?
         if self.subsample < 1.0:
-            self._oob_score_ = np.zeros((self.n_estimators), dtype=np.float64)
             self.oob_improvement_ = np.zeros((self.n_estimators),
                                              dtype=np.float64)
 
@@ -867,8 +866,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             self.estimators_ = np.empty((0, 0), dtype=np.object)
         if hasattr(self, 'train_score_'):
             del self.train_score_
-        if hasattr(self, '_oob_score_'):
-            del self._oob_score_
         if hasattr(self, 'oob_improvement_'):
             del self.oob_improvement_
         if hasattr(self, 'init_'):
@@ -884,15 +881,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         self.estimators_.resize((total_n_estimators, self.loss_.K))
         self.train_score_.resize(total_n_estimators)
-        if (self.subsample < 1
-                or hasattr(self, '_oob_score_')
-                or hasattr(self, 'oob_improvement_')):
+        if (self.subsample < 1 or hasattr(self, 'oob_improvement_')):
             # if do oob resize arrays or create new if not available
-            if hasattr(self, '_oob_score_'):
-                self._oob_score_.resize(total_n_estimators)
-            else:
-                self._oob_score_ = np.zeros((total_n_estimators),
-                                            dtype=np.float64)
             if hasattr(self, 'oob_improvement_'):
                 self.oob_improvement_.resize(total_n_estimators)
             else:
@@ -993,8 +983,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             self.train_score_ = self.train_score_[:n_stages]
             if hasattr(self, 'oob_improvement_'):
                 self.oob_improvement_ = self.oob_improvement_[:n_stages]
-            if hasattr(self, '_oob_score_'):
-                self._oob_score_ = self._oob_score_[:n_stages]
 
         return self
 
@@ -1048,10 +1036,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                 self.train_score_[i] = loss_(y[sample_mask],
                                              y_pred[sample_mask],
                                              sample_weight[sample_mask])
-                self._oob_score_[i] = loss_(y[~sample_mask],
-                                            y_pred[~sample_mask],
-                                            sample_weight[~sample_mask])
-                self.oob_improvement_[i] = old_oob_score - self._oob_score_[i]
+                self.oob_improvement_[i] = (old_oob_score -
+                    loss_(y[~sample_mask], y_pred[~sample_mask],
+                          sample_weight[~sample_mask]))
             else:
                 # no need to fancy index w/ no subsampling
                 self.train_score_[i] = loss_(y, y_pred, sample_weight)
@@ -1156,17 +1143,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         importances = total_sum / len(self.estimators_)
         return importances
 
-    @property
-    def oob_score_(self):
-        warn("The oob_score_ argument is replaced by oob_improvement_"
-             " as of version 0.14 and will be removed in 0.16.",
-             DeprecationWarning)
-        try:
-            return self._oob_score_
-        except AttributeError:
-            raise ValueError("Estimator not fitted, "
-                             "call `fit` before `oob_score_`.")
-
 
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     """Gradient Boosting for classification.
@@ -1268,12 +1244,6 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         relative to the previous iteration.
         ``oob_improvement_[0]`` is the improvement in
         loss of the first stage over the ``init`` estimator.
-
-    oob_score_ : array, shape = [n_estimators]
-        Score of the training dataset obtained using an out-of-bag estimate.
-        The i-th score ``oob_score_[i]`` is the deviance (= loss) of the
-        model at iteration ``i`` on the out-of-bag sample.
-        Deprecated: use `oob_improvement_` instead.
 
     train_score_ : array, shape = [n_estimators]
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the
@@ -1553,12 +1523,6 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         relative to the previous iteration.
         ``oob_improvement_[0]`` is the improvement in
         loss of the first stage over the ``init`` estimator.
-
-    oob_score_ : array, shape = [n_estimators]
-        Score of the training dataset obtained using an out-of-bag estimate.
-        The i-th score ``oob_score_[i]`` is the deviance (= loss) of the
-        model at iteration ``i`` on the out-of-bag sample.
-        Deprecated: use `oob_improvement_` instead.
 
     train_score_ : array, shape = [n_estimators]
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the
