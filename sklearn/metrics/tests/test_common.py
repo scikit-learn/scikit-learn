@@ -325,6 +325,7 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = [
     "hamming_loss",
     "hinge_loss",
     "matthews_corrcoef_score",
+    "median_absolute_error"
 ]
 
 

@@ -15,7 +15,6 @@ from sklearn.metrics import median_absolute_error
 from sklearn.metrics import r2_score
 
 from sklearn.metrics.regression import _check_reg_targets
-from sklearn.metrics.regression import _array_according_to_weights
 
 
 def test_regression_metrics(n_samples=50):
@@ -77,10 +76,3 @@ def test__check_reg_targets():
                 assert_array_equal(y_check2, y2)
         else:
             assert_raises(ValueError, _check_reg_targets, y1, y2)
-
-
-def test__array_according_to_weights():
-    array = np.array([1, 3, 4, 5])
-    weight = np.array([3, 1, 2, 4])
-    dummy_result = np.array([1, 1, 1, 3, 4, 4, 5, 5, 5, 5])
-    assert_array_equal(dummy_result, _array_according_to_weights(array, weight))
