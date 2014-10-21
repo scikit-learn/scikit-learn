@@ -333,7 +333,7 @@ class TSNE(BaseEstimator):
         Maximum number of iterations for the optimization. Should be at
         least 200.
 
-    metric : string or callable, (default: "euclidean")
+    metric : string or callable, optional
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         allowed by scipy.spatial.distance.pdist for its metric parameter, or
@@ -342,7 +342,8 @@ class TSNE(BaseEstimator):
         Alternatively, if metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
         should take two arrays from X as input and return a value indicating
-        the distance between them.
+        the distance between them. The default is "euclidean" which is
+        interpreted as squared euclidean distance.
 
     init : string, optional (default: "random")
         Initialization of embedding. Possible options are 'random' and 'pca'.
@@ -432,7 +433,11 @@ class TSNE(BaseEstimator):
         else:
             if self.verbose:
                 print("[t-SNE] Computing pairwise distances...")
-            distances = pairwise_distances(X, metric=self.metric, squared=True)
+            
+            if self.metric == "euclidean":
+                distances = pairwise_distances(X, metric=self.metric, squared=True)
+            else:
+                distances = pairwise_distances(X, metric=self.metric)
 
         # Degrees of freedom of the Student's t-distribution. The suggestion
         # alpha = n_components - 1 comes from "Learning a Parametric Embedding
