@@ -10,7 +10,7 @@ query speeds of LSHForest and brute force method will change significantly
 depending on the speed of the host machine.
 
 Moreover, precision of first 10 neighbors for different index sizes is
-also demontrated, LSHForest is built with 'n_estimators' = 3 and
+also demontrated, LSHForest is built with 'n_estimators' = 10 and
 'n_candidates' = 100.
 """
 from __future__ import division
@@ -46,7 +46,7 @@ X_all, _ = make_blobs(n_samples=max(n_samples_values) + n_queries,
 for n_samples in n_samples_values:
     X = X_all[:n_samples]
     # Initialize LSHForest for queries of a single neighbor
-    lshf = LSHForest(n_estimators=15, n_candidates=200,
+    lshf = LSHForest(n_estimators=10, n_candidates=100,
                      n_neighbors=10).fit(X)
     nbrs = NearestNeighbors(algorithm='brute', metric='cosine',
                             n_neighbors=10).fit(X)
