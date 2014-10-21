@@ -1164,12 +1164,13 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         y: array of shape = ["n_samples]
             The predicted values.
         """
+        score = self.decision_function(X)
+
         if is_classifier(self):
-            score = self.decision_function(X)
             decisions = self.loss_._score_to_decision(score)
             return self.classes_.take(decisions, axis=0)
         else:
-            return self.decision_function(X).ravel()
+            return score.ravel()
 
     def staged_predict(self, X):
         """Predict target at each stage for X.
