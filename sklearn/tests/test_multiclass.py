@@ -10,6 +10,8 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_greater_equal
+from sklearn.utils.testing import assert_less
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
@@ -491,7 +493,8 @@ def test_code_book_functions():
     random_state.seed(0)
     code_book = _random_code_book(3, random_state, 10000)
     proportion_of_1 = np.sum((code_book==1).astype(int)) * 1.0 / 30000
-    assert_true(proportion_of_1 > 0.48 and proportion_of_1 < 0.52)
+    assert_greater(proportion_of_1, 0.48)
+    assert_less(proportion_of_1, 0.52)
     code_book = _max_hamming_code_book(5, random_state, 15, 10)
     assert_equal(5, code_book.shape[0])
     assert_equal(15, code_book.shape[1])
@@ -544,17 +547,15 @@ def test_ecoc_strategy():
 
 def test_max_hamming_code_book():
     # Test the the code could be improved using larger max_iter 
-    random_state = np.random
-    random_state.seed(0)
+    random_state = np.random.RandomState(0)
     dist0 = np.sum(pairwise_distances(_max_hamming_code_book(5, random_state,
                                                             10, 1),
                                       metric='hamming'))
-    random_state = np.random
-    random_state.seed(0)
+    random_state = np.random.RandomState(0)
     dist1 = np.sum(pairwise_distances(_max_hamming_code_book(5, random_state,
                                                             10, 2),
                                       metric='hamming')) 
-    assert_true(dist0 >= dist1);
+    assert_greater_equal(dist0, dist1);
 
 def test_ecoc_gridsearch():
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0),

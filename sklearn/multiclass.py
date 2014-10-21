@@ -605,26 +605,42 @@ def _max_hamming_code_book(n_classes, random_state, code_size, max_iter):
     """Randomly sample subsets of exhaustive code for n_classes, and choose
        the one gives the largest hamming distances.
     """
+    if max_iter <= 0:
+      raise ValueError("max_iter must be larger than 0.")
     max_code_size = np.power(2, n_classes-1) - 1
     if code_size > max_code_size:
-        raise ValueError("The code size is larger than the possible "
-                         "exhaustive codes.")
+        raise ValueError("The number of code words is larger than the number "
+                         "of exhaustive codes.")
     if np.power(2, code_size) < n_classes:
         raise ValueError("The code size must be large enough to "
                          "distinguish every class.")
-    tmp_code_book = np.zeros((n_classes, code_size))
-    dist = 0
+    best_code_distance = 0
     for k in range(max_iter):
         p = sample_without_replacement(n_samples=code_size,
                                        n_population=max_code_size)
+        # Example for understanding the intuition behind tmp_code_book
+        # The exhaustive code for 4 classes is
+        # 1 1 1 1 1 1 1
+        # 0 0 0 0 1 1 1
+        # 0 0 1 1 0 0 1
+        # 0 1 0 1 0 1 0
+        # The columns are the binary code for
+        # [8, 9, ..., 14] = [0, 1, ..., 6] + 7 + 1
+        # Here 7 is the max_code_size when n_classes = 4
+        # Bit manipulation & is used for generating the binary code of integers
+        # representing the code words sampled from exhaustive code.
         tmp_code_book = (p[:, None] + max_code_size+1 &
                          (1 << np.arange(n_classes-1, -1, -1)) > 0
                         ).astype(int).T
-        tmp_distance = np.sum(pairwise_distances(tmp_code_book, metric='hamming'))
-        if tmp_distance > dist:
-            dist = tmp_distance
-            code_book = tmp_code_book
-    return code_book
+        # The code distance is sum of hamming distances between columns and
+        # rows.
+        tmp_code_distance = np.sum(pairwise_distances(
+            tmp_code_book, metric='hamming')) + np.sum(pairwise_distances(
+            tmp_code_book.T, metric='hamming'))
+        if tmp_code_distance > best_code_distance:
+            best_code_distance = tmp_code_distance
+            best_code_book = tmp_code_book
+    return best_code_book
 
 
 class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
@@ -751,22 +767,22 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         random_state = check_random_state(self.random_state)
         n_classes = self.classes_.shape[0]
-        code_size_ = int(n_classes * self.code_size)
+        n_code_words = int(n_classes * self.code_size)
         max_code_size = np.power(2, n_classes-1) - 1
         if self.strategy == "auto":
-            if code_size_ > max_code_size or np.power(2, code_size_) < n_classes:
-                self.code_book_ = _random_code_book(n_classes, random_state, code_size_)
+            if n_code_words > max_code_size or np.power(2, n_code_words) < n_classes:
+                self.code_book_ = _random_code_book(n_classes, random_state, n_code_words)
             else:
                 self.code_book_ = _max_hamming_code_book(n_classes,
                                                                  random_state,
-                                                                 code_size_,
+                                                                 n_code_words,
                                                                  self.max_iter)
         elif self.strategy == "random":
-            self.code_book_ = _random_code_book(n_classes, random_state, code_size_)
+            self.code_book_ = _random_code_book(n_classes, random_state, n_code_words)
         elif self.strategy == "max_hamming":
             self.code_book_ = _max_hamming_code_book(n_classes,
                                                              random_state,
-                                                             code_size_,
+                                                             n_code_words,
                                                              self.max_iter)
         else:
             raise ValueError("Unknown coding strategy %r" % self.strategy)

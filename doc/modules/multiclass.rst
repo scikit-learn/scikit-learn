@@ -228,7 +228,7 @@ all 0 or 1, and the complement of existing codes need to be excluded.
 
 The ``strategy`` attribute allows the user the select the strategy to
 code the classes. Two strategies are supported currently: (1) ``"random"``,
-a random ``n_classes x int(n_classes * code_size)`` matrix is generated, and
+a random ``n_classes x int(n_classes x code_size)`` matrix is generated, and
 entries > 0.5 are set to be 1 and the rest to be 0 or -1; (2)
 ``"max_hamming"``, random subsets of the exhaustive code are sampled,
 and the one with the largest Hamming distance is chosen.
