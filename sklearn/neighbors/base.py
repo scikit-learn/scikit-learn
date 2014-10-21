@@ -86,8 +86,8 @@ def _get_weights(dist, weights, bandwidth=None):
     bandwidth: float or ndarray
         The kernel function bandwidth (only for kernel weighting).
         If float, then the bandwidth is the same for all queries.
-        If ndarray, then i-th element is used as a bandwidth for
-        i-th query.
+        If ndarray, then the i-th element is used as a bandwidth
+        for the i-th query.
 
 
     Returns

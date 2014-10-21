@@ -179,12 +179,12 @@ neighbors such that nearer neighbors contribute more to the fit.  This can
 be accomplished through the ``weights`` keyword.  The default value,
 ``weights = 'uniform'``, assigns uniform weights to each neighbor,
 ``weights = 'distance'`` assigns weights proportional to the inverse of the
-distance from the query point. Other allowed values for ``weights`` are names
-of :ref:`kernels <kernels>`: ``'tophat'``, ``'gaussian'``, ``'epanechnikov'``, 
+distance from the query point. Other allowed values for ``weights`` are 
+:ref:`kernels <kernels>`: ``'tophat'``, ``'gaussian'``, ``'epanechnikov'``, 
 ``'exponential'``, ``'linear'``, ``'cosine'``. The bandwidth of a kernel is 
-equal to the distance to :math:`k + 1` neighbor for 
+equal to the distance to the :math:`k + 1` neighbor for 
 :class:`KNeighborsClassifier` and to the radius :math:`r` for 
-:class:`RadiusNeighborsClassifier`. The sum of weighted by a kernel votes for 
+:class:`RadiusNeighborsClassifier`. The sum of kernel-weighted votes for 
 a class is proportional to the probability density for this class estimated 
 with the kernel, and the class with the highest probability density is 
 picked. Alternatively, a user-defined function of the distance can be supplied 
@@ -235,12 +235,12 @@ to the regression than faraway points.  This can be accomplished through
 the ``weights`` keyword.  The default value, ``weights = 'uniform'``,
 assigns equal weights to all points.  ``weights = 'distance'`` assigns
 weights proportional to the inverse of the distance from the query point.
-Other allowed values for ``weights`` are names of :ref:`kernels <kernels>`: 
-``'tophat'``, ``'gaussian'``, ``'epanechnikov'``, ``'exponential'``, 
-``'linear'``, ``'cosine'``. The bandwidth of a kernel is equal to the distance 
-to :math:`k + 1` neighbor for :class:`KNeighborsRegressor` and to the radius 
-:math:`r` for :class:`RadiusNeighborsRegressor`. Using kernels for nearest 
-neighbor regression results in smoother fitted function, which is often
+Other allowed values for ``weights`` are :ref:`kernels <kernels>`: ``'tophat'``,
+``'gaussian'``, ``'epanechnikov'``, ``'exponential'``, ``'linear'``, 
+``'cosine'``. The bandwidth of a kernel is equal to the distance to the 
+:math:`k + 1` neighbor for :class:`KNeighborsRegressor` and to the radius 
+:math:`r` for :class:`RadiusNeighborsRegressor`. Using kernels for nearest
+neighbor regression results in a smoother fitted function, which is often
 desirable. Alternatively, a user-defined function of the distance can be 
 supplied, which will be used to compute the weights.
 
