@@ -67,7 +67,7 @@ class LSHForest(BaseEstimator):
 
     n_estimators : int (default = 10)
         Number of trees in the LSH Forest.
-    
+
     min_hash_match : int (default = 4)
         lowest hash length to be searched when candidate selection is
         performed for nearest neighbors.
@@ -198,10 +198,12 @@ class LSHForest(BaseEstimator):
         Returns an array of candidates, their distance ranks and
         distances.
         """
+        random_state = check_random_state(self.random_state)
+        index_size = self._fit_X.shape[0]
         candidates = []
-        max_candidates = self.n_candidates * self.n_estimators
+        min_candidates = self.n_candidates * self.n_estimators
         while max_depth > self.min_hash_match and (len(candidates)
-                                                   < max_candidates or
+                                                   < min_candidates or
                                                    len(set(candidates))
                                                    < n_neighbors):
 
@@ -214,12 +216,16 @@ class LSHForest(BaseEstimator):
                         self._right_mask[max_depth])].tolist())
             max_depth = max_depth - 1
 
+        # For insufficient candidates, candidates are filled.
+        # upto min(index size, 5 * n_neighbors)
         if len(candidates) == 0:
             warnings.warn(
                 "No candidates found with"
-                " min_hash_match= %i. Please use a lower"
-                " min_hash_macth." % self.min_hash_match)
-            return np.nan, -1
+                " min_hash_match = %i. Candidates are"
+                " selected randomly." % self.min_hash_match)
+            candidates = random_state.choice(np.arange(0, index_size),
+                                             min(5 * n_neighbors,
+                                                 index_size))
 
         candidates = np.unique(candidates)
 
@@ -227,16 +233,19 @@ class LSHForest(BaseEstimator):
             warnings.warn(
                 "Number of candidates is not sufficient to retrieve"
                 " %i neighbors with"
-                " min_hash_match= %i. Please use a lower"
-                " min_hash_macth."
-                % (n_neighbors, self.min_hash_match))
+                " min_hash_match = %i. Candidates are filled up"
+                " randomly." % (n_neighbors, self.min_hash_match))
+            remaining = np.setdiff1d(np.arange(0, index_size), candidates)
+            to_fill = min(5 * n_neighbors, index_size) - len(candidates)
+            candidates = np.concatenate((candidates,
+                                         random_state.choice(remaining,
+                                                             to_fill,
+                                                             replace=False)))
 
         ranks, distances = self._compute_distances(query, candidates)
 
         return (candidates[ranks[:n_neighbors]][::-1],
                 distances[:n_neighbors][::-1])
-
-        return candidates, ranks, distances
 
     def _get_radius_neighbors(self, query, max_depth, bin_queries, radius):
         """Finds radius neighbors from the candidates obtained.

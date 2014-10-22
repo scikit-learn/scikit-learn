@@ -12,7 +12,6 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_array_less
-from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_not_equal
@@ -320,15 +319,15 @@ def test_candidates():
 
     assert_warns(UserWarning, lshf.kneighbors, X_test, n_neighbors=3)
     distances, neighbors = lshf.kneighbors(X_test, n_neighbors=3)
-    assert_equal(distances[0], -1)
+    assert_equal(distances.shape[1], 3)
 
-    # For zero candidates
+    # For candidates less than n_neighbors
     lshf = LSHForest(min_hash_match=31)
     lshf.fit(X_train)
 
     assert_warns(UserWarning, lshf.kneighbors, X_test, n_neighbors=5)
     distances, neighbors = lshf.kneighbors(X_test, n_neighbors=5)
-    assert_less(neighbors.shape[0], 5)
+    assert_equal(distances.shape[1], 5)
 
 
 if __name__ == "__main__":
