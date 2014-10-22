@@ -947,13 +947,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             raise ValueError('Shape mismatch of sample_weight: %d != %d' %
                              (sample_weight.shape[0], n_samples))
 
-        if is_classifier(self):
-            y = column_or_1d(y, warn=True)
-            self.classes_, y = np.unique(y, return_inverse=True)
-            self.n_classes_ = len(self.classes_)
-        else:
-            self.n_classes_ = 1
-
+        y = self._validate_y(y)
 
         self.n_features = n_features
         random_state = check_random_state(self.random_state)
@@ -1151,6 +1145,11 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         importances = total_sum / len(self.estimators_)
         return importances
 
+    def _validate_y(self, y):
+        self.n_classes_ = 1
+
+        # Default implementation
+        return y
 
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     """Gradient Boosting for classification.
@@ -1302,6 +1301,11 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             max_features=max_features,
             random_state=random_state, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start)
+
+    def _validate_y(self, y):
+        self.classes_, y = np.unique(y, return_inverse=True)
+        self.n_classes_ = len(self.classes_)
+        return y
 
     def predict(self, X):
         """Predict class for X.
