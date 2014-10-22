@@ -12,9 +12,11 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_array_less
+from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_not_equal
+from sklearn.utils.testing import assert_warns
 
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.neighbors import LSHForest
@@ -87,7 +89,7 @@ def test_kneighbors():
     """Checks whether desired number of neighbors are returned.
 
     It is guaranteed to return the requested number of neighbors
-    if `min_hash_length` is set to 0. Returned distances should be
+    if `min_hash_match` is set to 0. Returned distances should be
     in ascending order.
     """
     n_samples = 12
@@ -96,7 +98,7 @@ def test_kneighbors():
     rng = np.random.RandomState(42)
     X = rng.rand(n_samples, n_features)
 
-    lshf = LSHForest(min_hash_length=0)
+    lshf = LSHForest(min_hash_match=0)
     # Test unfitted estimator
     assert_raises(ValueError, lshf.kneighbors, X[0])
 
@@ -300,6 +302,33 @@ def test_hash_functions():
     for i in range(n_estimators):
         assert_not_equal(np.mean(lshf.hash_functions_),
                          np.mean(lshf.hash_functions_[i]))
+
+
+def test_candidates():
+    """Checks whether candidates are sufficient.
+
+    This should handle the cases when number of candidates is 0.
+    User should be warned when number of candidates is less than
+    requested number of neighbors.
+    """
+    X_train = [[5, 5, 2], [21, 5, 5], [1, 1, 1], [8, 9, 1], [6, 10, 2]]
+    X_test = [7, 10, 3]
+
+    # For zero candidates
+    lshf = LSHForest(min_hash_match=32)
+    lshf.fit(X_train)
+
+    assert_warns(UserWarning, lshf.kneighbors, X_test, n_neighbors=3)
+    distances, neighbors = lshf.kneighbors(X_test, n_neighbors=3)
+    assert_equal(distances[0], -1)
+
+    # For zero candidates
+    lshf = LSHForest(min_hash_match=31)
+    lshf.fit(X_train)
+
+    assert_warns(UserWarning, lshf.kneighbors, X_test, n_neighbors=5)
+    distances, neighbors = lshf.kneighbors(X_test, n_neighbors=5)
+    assert_less(neighbors.shape[0], 5)
 
 
 if __name__ == "__main__":
