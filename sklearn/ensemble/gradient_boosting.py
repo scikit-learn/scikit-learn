@@ -37,6 +37,7 @@ from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import is_classifier
 from ..utils import check_random_state, check_array, check_X_y, column_or_1d
+from ..utils import check_consistent_length
 from ..utils.extmath import logsumexp
 from ..externals import six
 from ..feature_selection.from_model import _LearntSelectorMixin
@@ -940,12 +941,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         else:
             sample_weight = column_or_1d(sample_weight, warn=True)
 
-        if y.shape[0] != n_samples:
-            raise ValueError('Shape mismatch of X and y: %d != %d' %
-                             (n_samples, y.shape[0]))
-        if n_samples != sample_weight.shape[0]:
-            raise ValueError('Shape mismatch of sample_weight: %d != %d' %
-                             (sample_weight.shape[0], n_samples))
+        check_consistent_length(X, y, sample_weight)
 
         y = self._validate_y(y)
 
