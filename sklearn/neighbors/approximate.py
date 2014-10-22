@@ -53,6 +53,13 @@ def _find_longest_prefix_match(bit_string_array, query, hash_size,
     return res
 
 
+def _array_of_arrays(list_of_arrays):
+    """Creates an array of array from list of arrays."""
+    out = np.empty(len(list_of_arrays), dtype=object)
+    out[:] = list_of_arrays
+    return out
+
+
 class LSHForest(BaseEstimator):
     """Performs approximate nearest neighbor search using LSH forest.
 
@@ -67,7 +74,7 @@ class LSHForest(BaseEstimator):
 
     n_estimators : int (default = 10)
         Number of trees in the LSH Forest.
-    
+
     min_hash_match : int (default = 4)
         lowest hash length to be searched when candidate selection is
         performed for nearest neighbors.
@@ -198,10 +205,11 @@ class LSHForest(BaseEstimator):
         Returns an array of candidates, their distance ranks and
         distances.
         """
+        index_size = self._fit_X.shape[0]
         candidates = []
-        max_candidates = self.n_candidates * self.n_estimators
+        min_candidates = self.n_candidates * self.n_estimators
         while max_depth > self.min_hash_match and (len(candidates)
-                                                   < max_candidates or
+                                                   < min_candidates or
                                                    len(set(candidates))
                                                    < n_neighbors):
 
@@ -214,29 +222,25 @@ class LSHForest(BaseEstimator):
                         self._right_mask[max_depth])].tolist())
             max_depth = max_depth - 1
 
-        if len(candidates) == 0:
-            warnings.warn(
-                "No candidates found with"
-                " min_hash_match= %i. Please use a lower"
-                " min_hash_macth." % self.min_hash_match)
-            return np.nan, -1
-
         candidates = np.unique(candidates)
-
+        # For insufficient candidates, candidates are filled.
+        # Candidates are filled from unselected indices uniformly.
         if candidates.shape[0] < n_neighbors:
             warnings.warn(
                 "Number of candidates is not sufficient to retrieve"
                 " %i neighbors with"
-                " min_hash_match= %i. Please use a lower"
-                " min_hash_macth."
-                % (n_neighbors, self.min_hash_match))
+                " min_hash_match = %i. Candidates are filled up"
+                " uniformly from unselected"
+                " indices." % (n_neighbors, self.min_hash_match))
+            remaining = np.setdiff1d(np.arange(0, index_size), candidates)
+            to_fill = n_neighbors - candidates.shape[0]
+            candidates = np.concatenate((candidates, remaining[:to_fill]))
 
-        ranks, distances = self._compute_distances(query, candidates)
+        ranks, distances = self._compute_distances(query,
+                                                   candidates.astype(int))
 
         return (candidates[ranks[:n_neighbors]][::-1],
                 distances[:n_neighbors][::-1])
-
-        return candidates, ranks, distances
 
     def _get_radius_neighbors(self, query, max_depth, bin_queries, radius):
         """Finds radius neighbors from the candidates obtained.
@@ -293,6 +297,11 @@ class LSHForest(BaseEstimator):
         X : array_like, shape (n_samples, n_features)
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
+
+        Returns
+        -------
+        self : object
+            Returns self.
         """
 
         self._fit_X = check_array(X)
@@ -363,6 +372,16 @@ class LSHForest(BaseEstimator):
 
         return_distance : boolean, optional (default = False)
             Returns the distances of neighbors if set to True.
+
+        Returns
+        -------
+        dist : array
+            Array representing the lengths to point, only present if
+            return_distance=True
+
+        ind : array
+            Indices of the approximate nearest points in the population
+            matrix.
         """
         if not hasattr(self, 'hash_functions_'):
             raise ValueError("estimator should be fitted.")
@@ -399,6 +418,16 @@ class LSHForest(BaseEstimator):
 
         return_distance : boolean, optional (default = False)
             Returns the distances of neighbors if set to True.
+
+        Returns
+        -------
+        dist : array
+            Array representing the cosine distances to each point,
+            only present if return_distance=True.
+
+        ind : array
+            An array of arrays of indices of the approximated nearest points
+            with in the `radius` to the query in the population matrix.
         """
         if not hasattr(self, 'hash_functions_'):
             raise ValueError("estimator should be fitted.")
@@ -416,9 +445,9 @@ class LSHForest(BaseEstimator):
             distances.append(dists)
 
         if return_distance:
-            return np.array(distances), np.array(neighbors)
+            return _array_of_arrays(distances), _array_of_arrays(neighbors)
         else:
-            return np.array(neighbors)
+            return _array_of_arrays(neighbors)
 
     def partial_fit(self, X):
         """
