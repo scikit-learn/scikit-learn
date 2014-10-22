@@ -935,7 +935,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         # Check input
         X, y = check_X_y(X, y, dtype=DTYPE)
-        n_samples, n_features = X.shape
+        n_samples, self.n_features = X.shape
         if sample_weight is None:
             sample_weight = np.ones(n_samples, dtype=np.float32)
         else:
@@ -945,7 +945,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         y = self._validate_y(y)
 
-        self.n_features = n_features
         random_state = check_random_state(self.random_state)
         self._check_params()
 
