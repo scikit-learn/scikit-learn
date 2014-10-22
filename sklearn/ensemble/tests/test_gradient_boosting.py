@@ -642,25 +642,6 @@ def test_more_verbose_output():
     assert_equal(100, n_lines)
 
 
-def test_warn_deviance():
-    """Test if mdeviance and bdeviance give deprecated warning. """
-    for loss in ('bdeviance', 'mdeviance'):
-        clean_warning_registry()
-        with warnings.catch_warnings(record=True) as w:
-            # This will raise a DataConversionWarning that we want to
-            # "always" raise, elsewhere the warnings gets ignored in the
-            # later tests, and the tests that check for this warning fail
-            warnings.simplefilter("always", DataConversionWarning)
-            clf = GradientBoostingClassifier(loss=loss)
-            try:
-                clf.fit(X, y)
-            except:
-                # mdeviance will raise ValueError because only 2 classes
-                pass
-            # deprecated warning for bdeviance and mdeviance
-            assert len(w) == 1
-
-
 def test_warm_start():
     """Test if warm start equals fit. """
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)

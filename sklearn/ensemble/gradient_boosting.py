@@ -631,8 +631,6 @@ LOSS_FUNCTIONS = {'ls': LeastSquaresError,
                   'lad': LeastAbsoluteError,
                   'huber': HuberLossFunction,
                   'quantile': QuantileLossFunction,
-                  'bdeviance': BinomialDeviance,
-                  'mdeviance': MultinomialDeviance,
                   'deviance': None,    # for both, multinomial and binomial
                   'exponential': ExponentialLoss,
                   }
@@ -781,10 +779,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         if (self.loss not in self._SUPPORTED_LOSS
                 or self.loss not in LOSS_FUNCTIONS):
             raise ValueError("Loss '{0:s}' not supported. ".format(self.loss))
-
-        if self.loss in ('mdeviance', 'bdeviance'):
-            warn(("Loss '{0:s}' is deprecated as of version 0.14. "
-                 "Use 'deviance' instead. ").format(self.loss))
 
         if self.loss == 'deviance':
             loss_class = (MultinomialDeviance
@@ -1276,7 +1270,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     Elements of Statistical Learning Ed. 2, Springer, 2009.
     """
 
-    _SUPPORTED_LOSS = ('deviance', 'mdeviance', 'bdeviance', 'exponential')
+    _SUPPORTED_LOSS = ('deviance', 'exponential')
 
     def __init__(self, loss='deviance', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=2,
