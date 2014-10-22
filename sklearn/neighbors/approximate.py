@@ -67,19 +67,18 @@ class LSHForest(BaseEstimator):
 
     n_estimators : int (default = 10)
         Number of trees in the LSH Forest.
-
-    n_candidates : int (default = 10)
-        Value to restrict candidates selected from a single esitimator(tree)
-        for nearest neighbors. Number of total candidates is often greater
-        than n_candidates*n_estimators(unless restricted by min_hash_match)
-
-    n_neighbors : int (default = 5)
-        Number of neighbors to be returned from query function when
-        it is not provided to :meth:`k_neighbors`
-
+    
     min_hash_match : int (default = 4)
         lowest hash length to be searched when candidate selection is
         performed for nearest neighbors.
+
+    n_candidates : int (default = 10)
+        Minimum number of candidates evaluated per estimator, assuming enough
+        items meet the `min_hash_match` constraint.
+
+    n_neighbors : int (default = 5)
+        Number of neighbors to be returned from query function when
+        it is not provided to :meth:`k_neighbors`.
 
     radius : float, optinal (default = 1.0)
         Radius from the data point to its neighbors. This is the parameter
