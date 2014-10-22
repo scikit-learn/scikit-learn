@@ -2,6 +2,7 @@
 # Author: Maheshakya Wijewardena <maheshakya.10@cse.mrt.ac.lk>
 
 import numpy as np
+import warnings
 from ..base import BaseEstimator
 from ..utils.validation import check_array
 from ..utils import check_random_state
@@ -70,13 +71,13 @@ class LSHForest(BaseEstimator):
     n_candidates : int (default = 10)
         Value to restrict candidates selected from a single esitimator(tree)
         for nearest neighbors. Number of total candidates is often greater
-        than n_candidates*n_estimators(unless restricted by min_hash_length)
+        than n_candidates*n_estimators(unless restricted by min_hash_match)
 
     n_neighbors : int (default = 5)
         Number of neighbors to be returned from query function when
         it is not provided to :meth:`k_neighbors`
 
-    min_hash_length : int (default = 4)
+    min_hash_match : int (default = 4)
         lowest hash length to be searched when candidate selection is
         performed for nearest neighbors.
 
@@ -120,7 +121,7 @@ class LSHForest(BaseEstimator):
       >>> X_test = [[9, 1, 6], [3, 1, 10], [7, 10, 3]]
       >>> lshf = LSHForest()
       >>> lshf.fit(X_train)
-      LSHForest(min_hash_length=4, n_candidates=50, n_estimators=10, n_neighbors=5,
+      LSHForest(min_hash_match=4, n_candidates=50, n_estimators=10, n_neighbors=5,
            radius=1.0, radius_cutoff_ratio=0.9, random_state=None)
       >>> distances, indices = lshf.kneighbors(X_test, n_neighbors=2)
       >>> distances
@@ -135,14 +136,14 @@ class LSHForest(BaseEstimator):
     """
 
     def __init__(self, n_estimators=10, radius=1.0, n_candidates=50,
-                 n_neighbors=5, min_hash_length=4, radius_cutoff_ratio=.9,
+                 n_neighbors=5, min_hash_match=4, radius_cutoff_ratio=.9,
                  random_state=None):
         self.n_estimators = n_estimators
         self.radius = radius
         self.random_state = random_state
         self.n_candidates = n_candidates
         self.n_neighbors = n_neighbors
-        self.min_hash_length = min_hash_length
+        self.min_hash_match = min_hash_match
         self.radius_cutoff_ratio = radius_cutoff_ratio
 
     def _create_tree(self, seed):
@@ -187,7 +188,7 @@ class LSHForest(BaseEstimator):
         """Creates left and right masks for all hash lengths."""
         tri_size = self.max_label_length + 1
         left_mask = np.tril(np.ones((tri_size, tri_size), dtype=int))[:, 1:]
-        right_mask = np.triu(np.ones((tri_size, tri_size), dtype=int))[:, :-1]
+        right_mask = left_mask[::-1, ::-1]
 
         self._left_mask = np.packbits(left_mask).view(dtype='>u4')
         self._right_mask = np.packbits(right_mask).view(dtype='>u4')
@@ -200,10 +201,10 @@ class LSHForest(BaseEstimator):
         """
         candidates = []
         max_candidates = self.n_candidates * self.n_estimators
-        while max_depth > self.min_hash_length and (len(candidates)
-                                                    < max_candidates or
-                                                    len(set(candidates))
-                                                    < n_neighbors):
+        while max_depth > self.min_hash_match and (len(candidates)
+                                                   < max_candidates or
+                                                   len(set(candidates))
+                                                   < n_neighbors):
 
             for i in range(self.n_estimators):
                 candidates.extend(
@@ -213,8 +214,28 @@ class LSHForest(BaseEstimator):
                         self._left_mask[max_depth],
                         self._right_mask[max_depth])].tolist())
             max_depth = max_depth - 1
+
+        if len(candidates) == 0:
+            warnings.warn(
+                "No candidates found with"
+                " min_hash_match= %i. Please use a lower"
+                " min_hash_macth." % self.min_hash_match)
+            return np.nan, -1
+
         candidates = np.unique(candidates)
+
+        if candidates.shape[0] < n_neighbors:
+            warnings.warn(
+                "Number of candidates is not sufficient to retrieve"
+                " %i neighbors with"
+                " min_hash_match= %i. Please use a lower"
+                " min_hash_macth."
+                % (n_neighbors, self.min_hash_match))
+
         ranks, distances = self._compute_distances(query, candidates)
+
+        return (candidates[ranks[:n_neighbors]][::-1],
+                distances[:n_neighbors][::-1])
 
         return candidates, ranks, distances
 
@@ -230,8 +251,8 @@ class LSHForest(BaseEstimator):
         total_neighbors = np.array([], dtype=int)
         total_distances = np.array([], dtype=float)
 
-        while max_depth > self.min_hash_length and (ratio_within_radius
-                                                    > threshold):
+        while max_depth > self.min_hash_match and (ratio_within_radius
+                                                   > threshold):
             candidates = []
             for i in range(self.n_estimators):
                 candidates.extend(
@@ -324,13 +345,8 @@ class LSHForest(BaseEstimator):
                                               bin_queries, radius)
 
         else:
-            candidates, ranks, distances = self._get_candidates(query,
-                                                                max_depth,
-                                                                bin_queries,
-                                                                n_neighbors)
-
-            return (candidates[ranks[:n_neighbors]][::-1],
-                    distances[:n_neighbors][::-1])
+            return self._get_candidates(query, max_depth,
+                                        bin_queries, n_neighbors)
 
     def kneighbors(self, X, n_neighbors=None, return_distance=True):
         """
