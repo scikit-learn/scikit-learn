@@ -1151,51 +1151,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         importances = total_sum / len(self.estimators_)
         return importances
 
-    def predict(self, X):
-        """Predict target for X.
-
-        Parameters
-        ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
-
-        Returns
-        -------
-        y: array of shape = ["n_samples]
-            The predicted values.
-        """
-        score = self.decision_function(X)
-
-        if is_classifier(self):
-            decisions = self.loss_._score_to_decision(score)
-            return self.classes_.take(decisions, axis=0)
-        else:
-            return score.ravel()
-
-    def staged_predict(self, X):
-        """Predict target at each stage for X.
-
-        This method allows monitoring (i.e. determine error on testing set)
-        after each stage.
-
-        Parameters
-        ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
-
-        Returns
-        -------
-        y : array of shape = [n_samples]
-            The predicted value of the input samples.
-        """
-        if is_classifier(self):
-            for score in self.staged_decision_function(X):
-                decisions = self.loss_._score_to_decision(score)
-                yield self.classes_.take(decisions, axis=0)
-        else:
-            for y in self.staged_decision_function(X):
-                yield y.ravel()
-
 
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     """Gradient Boosting for classification.
@@ -1347,6 +1302,44 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             max_features=max_features,
             random_state=random_state, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start)
+
+    def predict(self, X):
+        """Predict class for X.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        y: array of shape = ["n_samples]
+            The predicted values.
+        """
+        score = self.decision_function(X)
+        decisions = self.loss_._score_to_decision(score)
+        return self.classes_.take(decisions, axis=0)
+
+    def staged_predict(self, X):
+        """Predict class at each stage for X.
+
+        This method allows monitoring (i.e. determine error on testing set)
+        after each stage.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        y : array of shape = [n_samples]
+            The predicted value of the input samples.
+        """
+        for score in self.staged_decision_function(X):
+            decisions = self.loss_._score_to_decision(score)
+            yield self.classes_.take(decisions, axis=0)
+
 
     def predict_proba(self, X):
         """Predict class probabilities for X.
@@ -1550,4 +1543,36 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             random_state=random_state, alpha=alpha, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start)
 
+    def predict(self, X):
+        """Predict regression target for X.
 
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        y: array of shape = [n_samples]
+            The predicted values.
+        """
+        return self.decision_function(X).ravel()
+
+    def staged_predict(self, X):
+        """Predict regression target at each stage for X.
+
+        This method allows monitoring (i.e. determine error on testing set)
+        after each stage.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        y : array of shape = [n_samples]
+            The predicted value of the input samples.
+        """
+        for y in self.staged_decision_function(X):
+            yield y.ravel()
