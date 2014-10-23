@@ -436,7 +436,7 @@ class KNeighborsMixin(object):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-        	Input data.
+        Input data.
 
         Returns
         -------
@@ -471,11 +471,11 @@ class RadiusNeighborsMixin(object):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-        	Input data.
+            Input data.
 
         radius : float, optional (default=None)
-			The radius of neighbors search.
-			If None, it is set to self.radius.
+            The radius of neighbors search.
+            If None, it is set to self.radius.
 
         return_distance : boolean, optional (default=True)
             If False, distances will not be returned
@@ -483,15 +483,15 @@ class RadiusNeighborsMixin(object):
         Returns
         -------
         dist : array of arrays, shape (n_samples,)
-			Distances to neighbors. It contains 1-d arrays of different 
-			sizes, because the number of neighbors is not fixed.
-			Only presents if return_distance=True.
-            
+            Distances to neighbors. It contains 1-d arrays of different
+            sizes, because the number of neighbors is not fixed.
+            Only presents if return_distance=True.
+
 
         ind : array of arrays, shape (n_samples,)
-			Indices of neighbors. It contains 1-d arrays of different 
-			sizes, because the number of neighbors is not fixed.
-	
+            Indices of neighbors. It contains 1-d arrays of different
+            sizes, because the number of neighbors is not fixed.
+
         Examples
         --------
         In the following example, we construct a NeighborsClassifier
@@ -581,11 +581,11 @@ class RadiusNeighborsMixin(object):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-        	Input data.
+            Input data.
 
         radius : float, optional (default=None)
             The radius of neighbors search.
-			If None, it is set to self.radius.
+            If None, it is set to self.radius.
 
         mode : {'connectivity', 'distance'}, optional (default='connectivity')
             Type of returned matrix: 'connectivity' will return the
@@ -655,8 +655,8 @@ class SupervisedFloatMixin(object):
         Parameters
         ----------
         X : {array-like, sparse matrix, BallTree, KDTree}
-			Input data. If array-like or sparse matrix, 
-			it has shape (n_samples, n_features).
+            Input data. If array-like or sparse matrix,
+            it has shape (n_samples, n_features).
 
         y : array-like, shape (n_samples,) or (n_samples, n_outputs).
             Target values.
@@ -675,7 +675,7 @@ class SupervisedIntegerMixin(object):
         ----------
         X : {array-like, sparse matrix, BallTree, KDTree}
             Input data. If array-like or sparse matrix,
-			it has shape (n_samples, n_features).
+            it has shape (n_samples, n_features).
 
         y : array-like, shape (n_samples,) or (n_samples, n_outputs)
             Target values.
@@ -717,6 +717,6 @@ class UnsupervisedMixin(object):
         ----------
         X : {array-like, sparse matrix, BallTree, KDTree}
             Input data. If array-like or sparse matrix,
-			it has shape (n_samples, n_features).
+            it has shape (n_samples, n_features).
         """
         return self._fit(X)

@@ -10,7 +10,6 @@
 
 import numpy as np
 
-from .base import KERNEL_WEIGHTS
 from .base import _get_weights, _check_weights, NeighborsBase, KNeighborsMixin
 from .base import RadiusNeighborsMixin, SupervisedFloatMixin
 from ..base import RegressorMixin
@@ -131,7 +130,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         Returns
         -------
         y : array, shape (n_samples,) or (n_samples, n_outputs)
-        	Predicted values.
+            Predicted values.
         """
         X = check_array(X, accept_sparse='csr')
         neigh_dist, neigh_ind, weights = self._get_neighbors_and_weights(X)
@@ -260,7 +259,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-        	Input data.
+            Input data.
 
         Returns
         -------

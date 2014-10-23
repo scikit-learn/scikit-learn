@@ -12,10 +12,8 @@ import numpy as np
 from scipy import stats
 from ..utils.extmath import weighted_mode
 
-from .base import \
-    KERNEL_WEIGHTS, \
-    _check_weights, _get_weights, \
-    NeighborsBase, KNeighborsMixin,\
+from .base import _check_weights, _get_weights, \
+    NeighborsBase, KNeighborsMixin, \
     RadiusNeighborsMixin, SupervisedIntegerMixin
 from ..base import ClassifierMixin
 from ..utils import check_array
@@ -172,10 +170,10 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         Returns
         -------
-        y_prob : array, shape (n_samples, n_classes), 
-		or a list of n_outputs of such arrays if n_outputs > 1.
-			Predicted probabilities for each class. 
-			Classes are ordered lexicographically.
+        y_prob : array, shape (n_samples, n_classes), or a list of n_outputs
+        of such arrays if n_outputs > 1.
+            Predicted probabilities for each class.
+            Classes are ordered lexicographically.
         """
         X = check_array(X, accept_sparse='csr')
         neigh_dist, neigh_ind, weights = self._get_neighbors_and_weights(X)
