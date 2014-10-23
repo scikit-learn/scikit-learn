@@ -508,8 +508,7 @@ def test_ecoc_exceptions():
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0), code_size=1.5,
                                 strategy="iter_hamming")
     assert_raises(ValueError, ecoc.fit, [], np.array([0, 1, 2]))
-    ecoc = OutputCodeClassifier(LinearSVC(random_state=0), code_size=0.01,
-                                strategy="iter_hamming")
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0), code_size=0.01)
     assert_raises(ValueError, ecoc.fit, [], np.array([0, 1, 2, 3]))
 
 def test_ecoc_fit_predict():

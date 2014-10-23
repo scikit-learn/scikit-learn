@@ -607,13 +607,13 @@ def _iter_hamming_code_book(n_classes, random_state, code_size, max_iter):
     """
     if max_iter <= 0:
       raise ValueError("max_iter must be larger than 0.")
-    max_code_size = np.power(2, n_classes-1) - 1
+    if n_classes > 60:
+      max_code_size = np.power(2, 60) - 1 
+    else:
+      max_code_size = np.power(2, n_classes-1) - 1
     if code_size > max_code_size:
         raise ValueError("The number of code words is larger than the number "
                          "of exhaustive codes.")
-    if np.power(2, code_size) < n_classes:
-        raise ValueError("The code size must be large enough to "
-                         "distinguish every class.")
     best_code_distance = 0
     for k in range(max_iter):
         p = sample_without_replacement(n_samples=code_size,
@@ -767,16 +767,22 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         random_state = check_random_state(self.random_state)
         n_classes = self.classes_.shape[0]
+        if n_classes > 60:
+          max_code_size = np.power(2, 60) - 1 
+        else:
+          max_code_size = np.power(2, n_classes-1) - 1
         n_code_words = int(n_classes * self.code_size)
-        max_code_size = np.power(2, n_classes-1) - 1
+        if n_code_words - 1 < np.log2(n_classes):
+            raise ValueError("The code size must be large enough to "
+                             "distinguish every class.")
         if self.strategy == "auto":
-            if n_code_words > max_code_size or np.power(2, n_code_words) < n_classes:
+            if n_code_words > max_code_size:
                 self.code_book_ = _random_code_book(n_classes, random_state, n_code_words)
             else:
                 self.code_book_ = _iter_hamming_code_book(n_classes,
-                                                                 random_state,
-                                                                 n_code_words,
-                                                                 self.max_iter)
+                                                          random_state,
+                                                          n_code_words,
+                                                          self.max_iter)
         elif self.strategy == "random":
             self.code_book_ = _random_code_book(n_classes, random_state, n_code_words)
         elif self.strategy == "iter_hamming":
