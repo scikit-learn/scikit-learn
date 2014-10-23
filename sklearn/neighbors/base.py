@@ -77,24 +77,28 @@ def _get_weights(dist, weights, bandwidth=None):
 
     Parameters
     ===========
-    dist: ndarray
-        The input distances
+    dist: array, shape (n_samples,) or (n_samples, n_neighbors)
+        Input distances. If dist is computed by KNeighbors class then it is a
+        2-D array of shape (n_samples, n_neighbors). If dist is computed by
+        RadiusNeighbors class then it is a 1-D array of shape (n_samples,)
+        containg 1-D arrays of sizes equal to the number of neighbors of each
+        query point within the radius.
     weights: None, callable or string
-        The kind of weighting used. The valid string parameters are 'uniform',
+        The kind of weights to use. The valid string parameters are 'uniform',
         'distance', 'tophat', 'gaussian', 'epanechnikov', 'exponential',
         'linear', 'cosine'.
-    bandwidth: float or ndarray
-        The kernel function bandwidth (only for kernel weighting).
-        If float, then the bandwidth is the same for all queries.
-        If ndarray, then the i-th element is used as a bandwidth
-        for the i-th query.
+    bandwidth: {float, array}
+        The kernel bandwidth (only for kernel weighting). If float, then the
+        bandwidth is the same for all query points (applicable to
+        RadiusNeighbors classes.) If array, then the i-th element is used as a
+        bandwidth for the i-th query (applicable to KNeighbors classes.)
 
 
     Returns
     ========
-    weights_arr: array of the same shape as ``dist``
-        if ``weights == 'uniform'`` or ``weights == 'tophat'``,
-        then returns None
+    weights_arr: array, shape is the same as dist, or None
+        Assigned weights. If weights='uniform' or weights='tophat',
+        then None is returned.
     """
     weights = _check_weights(weights)
     if weights in (None, 'uniform', 'tophat'):
@@ -107,10 +111,10 @@ def _get_weights(dist, weights, bandwidth=None):
         return weights(dist)
     else:
         kernel = KERNEL_WEIGHTS[weights]
-        if dist.dtype == np.ndarray:  # when dist is array of arrays
+        if type(bandwidth) == float:  # for RadiusNeighbors
             dist = dist / bandwidth
             weights = [kernel(instance_dist) for instance_dist in dist]
-            return np.asarray(weights)
+            return np.array(weights)
         else:
             return kernel(dist.T / bandwidth).T
 
@@ -280,24 +284,23 @@ class KNeighborsMixin(object):
 
         Parameters
         ----------
-        X : array-like, last dimension same as that of fit data
-            The new point.
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Input data.
 
-        n_neighbors : int
-            Number of neighbors to get (default is the value
-            passed to the constructor).
+        n_neighbors : int, optional (default=None)
+            The number of neighbors to search.
+            If None, it is set to self.n_neighbors.
 
         return_distance : boolean, optional. Defaults to True.
             If False, distances will not be returned
 
         Returns
         -------
-        dist : array
-            Array representing the lengths to point, only present if
-            return_distance=True
+        dist : array, shape (n_samples, n_neighbors)
+            Distances to neighbors. Only presents if return_distance=True.
 
-        ind : array
-            Indices of the nearest points in the population matrix.
+        ind : array, shape (n_samples, n_neighbors)
+            Indices of neighbors.
 
         Examples
         --------
@@ -362,18 +365,18 @@ class KNeighborsMixin(object):
 
     def kneighbors_graph(self, X, n_neighbors=None,
                          mode='connectivity'):
-        """Computes the (weighted) graph of k-Neighbors for points in X
+        """Compute the (weighted) graph of k-Neighbors for points in X.
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Sample data
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Input data.
 
-        n_neighbors : int
-            Number of neighbors for each sample.
-            (default is value passed to the constructor).
+        n_neighbors : int, optional (default=None)
+            The number of neighbors to search.
+            If None, it is set to self.n_neighbors.
 
-        mode : {'connectivity', 'distance'}, optional
+        mode : {'connectivity', 'distance'}, optional (default='connectivity')
             Type of returned matrix: 'connectivity' will return the
             connectivity matrix with ones and zeros, in 'distance' the
             edges are Euclidean distance between points.
@@ -436,7 +439,7 @@ class KNeighborsMixin(object):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-        Input data.
+            Input data.
 
         Returns
         -------
@@ -486,7 +489,6 @@ class RadiusNeighborsMixin(object):
             Distances to neighbors. It contains 1-d arrays of different
             sizes, because the number of neighbors is not fixed.
             Only presents if return_distance=True.
-
 
         ind : array of arrays, shape (n_samples,)
             Indices of neighbors. It contains 1-d arrays of different

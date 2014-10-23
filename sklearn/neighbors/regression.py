@@ -120,7 +120,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         self.weights = _check_weights(weights)
 
     def predict(self, X):
-        """Predict the target for the provided data
+        """Predict the target for the provided data.
 
         Parameters
         ----------
