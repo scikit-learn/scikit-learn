@@ -19,6 +19,7 @@ import sys
 import gzip
 import posixpath
 import subprocess
+import warnings
 
 
 # Try Python 2 first, otherwise load from Python 3
@@ -697,7 +698,6 @@ def make_thumbnail(in_fname, out_fname, width, height):
         try:
             subprocess.call(["optipng", "-quiet", "-o", "9", out_fname])
         except Exception:
-            import warnings
             warnings.warn('Install optipng to reduce the size of the generated images')
 
 
@@ -807,7 +807,7 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
         last_dir = ''
     else:
         last_dir += '_'
-
+    short_fname = last_dir + fname
     src_file = os.path.join(src_dir, fname)
     example_file = os.path.join(target_dir, fname)
     shutil.copyfile(src_file, example_file)
