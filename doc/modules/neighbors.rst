@@ -179,16 +179,24 @@ neighbors such that nearer neighbors contribute more to the fit.  This can
 be accomplished through the ``weights`` keyword.  The default value,
 ``weights = 'uniform'``, assigns uniform weights to each neighbor,
 ``weights = 'distance'`` assigns weights proportional to the inverse of the
-distance from the query point. Other allowed values for ``weights`` are 
-:ref:`kernels <kernels>`: ``'tophat'``, ``'gaussian'``, ``'epanechnikov'``, 
-``'exponential'``, ``'linear'``, ``'cosine'``. The bandwidth of a kernel is 
-equal to the distance to the :math:`k + 1` neighbor for 
-:class:`KNeighborsClassifier` and to the radius :math:`r` for 
-:class:`RadiusNeighborsClassifier`. The sum of kernel-weighted votes for 
-a class is proportional to the probability density for this class estimated 
-with the kernel, and the class with the highest probability density is 
-picked. Alternatively, a user-defined function of the distance can be supplied 
+distance from the query point. Other allowed values for ``weights`` are
+:ref:`kernels <kernels>`: ``'tophat'``, ``'gaussian'``, ``'epanechnikov'``,
+``'exponential'``, ``'linear'``, ``'cosine'``. The bandwidth of a kernel is
+equal to the distance to the :math:`k + 1` neighbor for
+:class:`KNeighborsClassifier` and to the radius :math:`r` for
+:class:`RadiusNeighborsClassifier`. The sum of kernel-weighted votes for
+a class is proportional to the probability density for this class estimated
+with the kernel, and the class with the highest probability density is
+picked. Alternatively, a user-defined function of the distance can be supplied
 which is used to compute the weights.
+
+It is advised to try different options for ``weights`` and choose one which
+works best for your data. All kernel weights (except ``'tophat'`` which
+is equivalent to ``'uniform'``) behave similarly, they give a smoother decision
+boundary and tend to outperform ``uniform`` weights. When ``weights='distance'``
+and a query point is very close (or equal) to some training point,
+the classification is based solely on this training point. Generally this
+is an undersiable property, but probably it can work well in certain situations.
 
 
 .. |classification_1| image:: ../auto_examples/neighbors/images/plot_classification_001.png
@@ -236,14 +244,20 @@ the ``weights`` keyword.  The default value, ``weights = 'uniform'``,
 assigns equal weights to all points.  ``weights = 'distance'`` assigns
 weights proportional to the inverse of the distance from the query point.
 Other allowed values for ``weights`` are :ref:`kernels <kernels>`: ``'tophat'``,
-``'gaussian'``, ``'epanechnikov'``, ``'exponential'``, ``'linear'``, 
-``'cosine'``. The bandwidth of a kernel is equal to the distance to the 
-:math:`k + 1` neighbor for :class:`KNeighborsRegressor` and to the radius 
-:math:`r` for :class:`RadiusNeighborsRegressor`. Using kernels for nearest
-neighbor regression results in a smoother fitted function, which is often
-desirable. Alternatively, a user-defined function of the distance can be 
-supplied, which will be used to compute the weights.
+``'gaussian'``, ``'epanechnikov'``, ``'exponential'``, ``'linear'``,
+``'cosine'``. The bandwidth of a kernel is equal to the distance to the
+:math:`k + 1` neighbor for :class:`KNeighborsRegressor` and to the radius
+:math:`r` for :class:`RadiusNeighborsRegressor`. Nearest neighbors regression
+with kernel weighting is also known as Nadaraya-Watson estimate. Alternatively,
+a user-defined function of the distance can be supplied, which will be used to
+compute the weights.
 
+Using ``'uniform'`` weights results in a piecewise constant fitted function.
+Such dependencies are not realistic and doesn't occur in nature. The better
+alternative is to use kernel weights, which give smoother and potentially more
+accurate estimates. When ``weights='distance'``, a fitted function passes
+through each training point. This is an unusual property for a regression
+function, but probably can be useful in specific situations.
 
 .. figure:: ../auto_examples/neighbors/images/plot_regression_001.png
    :target: ../auto_examples/neighbors/plot_regression.html
@@ -437,12 +451,12 @@ depends on a number of factors:
   a significant fraction of the total cost.  If very few query points
   will be required, brute force is better than a tree-based method.
 
-Currently, ``algorithm = 'auto'`` selects ``'kd_tree'`` if :math:`k < N/2` 
-and the ``'effective_metric_'`` is in the ``'VALID_METRICS'`` list of 
-``'kd_tree'``. It selects ``'ball_tree'`` if :math:`k < N/2` and the 
-``'effective_metric_'`` is not in the ``'VALID_METRICS'`` list of 
-``'kd_tree'``. It selects ``'brute'`` if :math:`k >= N/2`. This choice is based on the assumption that the number of query points is at least the 
-same order as the number of training points, and that ``leaf_size`` is 
+Currently, ``algorithm = 'auto'`` selects ``'kd_tree'`` if :math:`k < N/2`
+and the ``'effective_metric_'`` is in the ``'VALID_METRICS'`` list of
+``'kd_tree'``. It selects ``'ball_tree'`` if :math:`k < N/2` and the
+``'effective_metric_'`` is not in the ``'VALID_METRICS'`` list of
+``'kd_tree'``. It selects ``'brute'`` if :math:`k >= N/2`. This choice is based on the assumption that the number of query points is at least the
+same order as the number of training points, and that ``leaf_size`` is
 close to its default value of ``30``.
 
 Effect of ``leaf_size``
