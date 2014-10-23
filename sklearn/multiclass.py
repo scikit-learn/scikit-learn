@@ -601,7 +601,7 @@ def _random_code_book(n_classes, random_state, code_size):
     return code_book
 
  
-def _max_hamming_code_book(n_classes, random_state, code_size, max_iter):
+def _iter_hamming_code_book(n_classes, random_state, code_size, max_iter):
     """Randomly sample subsets of exhaustive code for n_classes, and choose
        the one gives the largest hamming distances.
     """
@@ -672,7 +672,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         than 0. Each iteration, a random code will be generated and the old 
         code will be replaced only when the total Hamming distance between 
         code words increases.
-        This parameter will be used when the strategy is "max_hamming"
+        This parameter will be used when the strategy is "iter_hamming"
 
     random_state : numpy.RandomState, optional
         The generator used to initialize the codebook. Defaults to
@@ -684,16 +684,16 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         useful for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are
         used. Thus for n_jobs = -2, all CPUs but one are used.
 
-    strategy : str, {'auto', 'random', 'max_hamming'}, optional, default: "auto"
+    strategy : str, {'auto', 'random', 'iter_hamming'}, optional, default: "auto"
         The strategy to generate a code book for all classes. Three options are
         avalable currently: 
         
         (1) "random": randomly generate a n_class x int(n_class*code_size)
             matrix, and set entries > 0.5 to be 1, the rest to be 0 or -1; 
-        (2) "max_hamming": select subset of exhaustive code book mutiple times
+        (2) "iter_hamming": select subset of exhaustive code book mutiple times
             randomly, and choose the one gives the largest hamming distances
             between classes.
-        (3) "auto": use "max_hamming" if the code_size is in the valid range
+        (3) "auto": use "iter_hamming" if the code_size is in the valid range
             for it; otherwise, "random" strategy will be used.
 
     Attributes
@@ -725,11 +725,11 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
        Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
        2008.
 
-    .. [4] "Error-correcting ouput codes library,"
-       Escalera, Sergio, Oriol Pujol, and Petia Radeva, 
-       The Journal of Machine Learning Research 11, page 661-664,
-       2010.
-
+    .. [4] "Reducing multiclass to binary: A unifying approach for margin
+       classifiers", 
+       Allwein, Erin L., Robert E. Schapire, and Yoram Singer,
+       The Journal of Machine Learning Research 1: 113-141,
+       2001.
     """
 
     def __init__(self, estimator, code_size=1, max_iter=10,
@@ -773,14 +773,14 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             if n_code_words > max_code_size or np.power(2, n_code_words) < n_classes:
                 self.code_book_ = _random_code_book(n_classes, random_state, n_code_words)
             else:
-                self.code_book_ = _max_hamming_code_book(n_classes,
+                self.code_book_ = _iter_hamming_code_book(n_classes,
                                                                  random_state,
                                                                  n_code_words,
                                                                  self.max_iter)
         elif self.strategy == "random":
             self.code_book_ = _random_code_book(n_classes, random_state, n_code_words)
-        elif self.strategy == "max_hamming":
-            self.code_book_ = _max_hamming_code_book(n_classes,
+        elif self.strategy == "iter_hamming":
+            self.code_book_ = _iter_hamming_code_book(n_classes,
                                                              random_state,
                                                              n_code_words,
                                                              self.max_iter)

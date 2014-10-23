@@ -230,11 +230,11 @@ The ``strategy`` attribute allows the user the select the strategy to
 code the classes. Two strategies are supported currently: (1) ``"random"``,
 a random ``n_classes x int(n_classes x code_size)`` matrix is generated, and
 entries > 0.5 are set to be 1 and the rest to be 0 or -1; (2)
-``"max_hamming"``, random subsets of the exhaustive code are sampled,
+``"iter_hamming"``, random subsets of the exhaustive code are sampled,
 and the one with the largest Hamming distance is chosen.
 
 The ``max_iter`` attribute is used when
-``strategy="max_hamming"`` allows the user to generate a code
+``strategy="iter_hamming"`` allows the user to generate a code
 book with most separation between classes from several randomly generated
 subsets of the exhaustive code book.
 
@@ -274,3 +274,9 @@ Below is an example of multiclass learning using Output-Codes::
     .. [3] "The Elements of Statistical Learning",
         Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
         2008.
+
+    .. [4] "Reducing multiclass to binary: A unifying approach for margin
+       classifiers."
+       Allwein, Erin L., Robert E. Schapire, and Yoram Singer,
+       The Journal of Machine Learning Research 1: 113-141,
+       2001.

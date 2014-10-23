@@ -16,7 +16,7 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
 from sklearn.multiclass import _random_code_book
-from sklearn.multiclass import _max_hamming_code_book
+from sklearn.multiclass import _iter_hamming_code_book
 
 from sklearn.multiclass import fit_ovr
 from sklearn.multiclass import fit_ovo
@@ -495,7 +495,7 @@ def test_code_book_functions():
     proportion_of_1 = np.sum((code_book==1).astype(int)) * 1.0 / 30000
     assert_greater(proportion_of_1, 0.48)
     assert_less(proportion_of_1, 0.52)
-    code_book = _max_hamming_code_book(5, random_state, 15, 10)
+    code_book = _iter_hamming_code_book(5, random_state, 15, 10)
     assert_equal(5, code_book.shape[0])
     assert_equal(15, code_book.shape[1])
 
@@ -506,10 +506,10 @@ def test_ecoc_exceptions():
                                 strategy="abc")
     assert_raises(ValueError, ecoc.fit, [], [])
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0), code_size=1.5,
-                                strategy="max_hamming")
+                                strategy="iter_hamming")
     assert_raises(ValueError, ecoc.fit, [], np.array([0, 1, 2]))
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0), code_size=0.01,
-                                strategy="max_hamming")
+                                strategy="iter_hamming")
     assert_raises(ValueError, ecoc.fit, [], np.array([0, 1, 2, 3]))
 
 def test_ecoc_fit_predict():
@@ -538,21 +538,21 @@ def test_ecoc_strategy():
     ecoc.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ecoc.estimators_), int(n_classes * 1.5))
 
-    # Set the strategy to be "max_hamming"
+    # Set the strategy to be "iter_hamming"
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0),
                                 code_size=1.0, random_state=0,
-                                strategy="max_hamming")
+                                strategy="iter_hamming")
     ecoc.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ecoc.estimators_), n_classes * 1)
 
-def test_max_hamming_code_book():
+def test_iter_hamming_code_book():
     # Test the the code could be improved using larger max_iter 
     random_state = np.random.RandomState(0)
-    dist0 = np.sum(pairwise_distances(_max_hamming_code_book(5, random_state,
+    dist0 = np.sum(pairwise_distances(_iter_hamming_code_book(5, random_state,
                                                             10, 1),
                                       metric='hamming'))
     random_state = np.random.RandomState(0)
-    dist1 = np.sum(pairwise_distances(_max_hamming_code_book(5, random_state,
+    dist1 = np.sum(pairwise_distances(_iter_hamming_code_book(5, random_state,
                                                             10, 2),
                                       metric='hamming')) 
     assert_greater_equal(dist0, dist1);
