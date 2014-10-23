@@ -333,6 +333,26 @@ def test_candidates():
     assert_equal(distances.shape[1], 5)
 
 
+def test_graphs():
+    """Smoke tests for graph methods."""
+    n_samples_sizes = [5, 10, 20]
+    n_features = 3
+    rng = np.random.RandomState(42)
+
+    for n_samples in n_samples_sizes:
+        X = rng.rand(n_samples, n_features)
+        lshf = LSHForest(min_hash_match=0)
+        lshf.fit(X)
+
+        kneighbors_graph = lshf.kneighbors_graph(X)
+        radius_neighbors_graph = lshf.radius_neighbors_graph(X)
+
+        assert_equal(kneighbors_graph.shape[0], n_samples)
+        assert_equal(kneighbors_graph.shape[1], n_samples)
+        assert_equal(radius_neighbors_graph.shape[0], n_samples)
+        assert_equal(radius_neighbors_graph.shape[1], n_samples)
+
+
 if __name__ == "__main__":
     import nose
     nose.runmodule()

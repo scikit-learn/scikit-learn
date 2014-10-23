@@ -407,6 +407,12 @@ class KNeighborsMixin(object):
 class RadiusNeighborsMixin(object):
     """Mixin for radius-based neighbors searches"""
 
+    def _array_of_arrays(self, list_of_arrays):
+        """Creates an array of arrays from list of arrays."""
+        out = np.empty(len(list_of_arrays), dtype=object)
+        out[:] = list_of_arrays
+        return out
+
     def radius_neighbors(self, X, radius=None, return_distance=True):
         """Finds the neighbors within a given radius of a point or points.
 

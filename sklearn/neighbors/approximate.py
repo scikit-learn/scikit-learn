@@ -54,13 +54,6 @@ def _find_longest_prefix_match(bit_string_array, query, hash_size,
     return res
 
 
-def _array_of_arrays(list_of_arrays):
-    """Creates an array of array from list of arrays."""
-    out = np.empty(len(list_of_arrays), dtype=object)
-    out[:] = list_of_arrays
-    return out
-
-
 class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
     """Performs approximate nearest neighbor search using LSH forest.
 
@@ -446,9 +439,10 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
             distances.append(dists)
 
         if return_distance:
-            return _array_of_arrays(distances), _array_of_arrays(neighbors)
+            return (self._array_of_arrays(distances),
+                    self._array_of_arrays(neighbors))
         else:
-            return _array_of_arrays(neighbors)
+            return self._array_of_arrays(neighbors)
 
     def partial_fit(self, X):
         """
