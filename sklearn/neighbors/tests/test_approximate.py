@@ -159,12 +159,12 @@ def test_radius_neighbors():
         neighbors = lshf.radius_neighbors(query, radius=mean_dist,
                                           return_distance=False)
         # At least one neighbor should be returned.
-        assert_greater(neighbors.shape[1], 0)
+        assert_greater(neighbors.shape[0], 0)
         # All distances should be less than mean_dist
         distances, neighbors = lshf.radius_neighbors(query,
                                                      radius=mean_dist,
                                                      return_distance=True)
-        assert_array_less(distances, mean_dist)
+        assert_array_less(distances[0], mean_dist)
 
     # Multiple points
     n_queries = 5
@@ -173,6 +173,9 @@ def test_radius_neighbors():
                                                  return_distance=True)
     assert_equal(neighbors.shape[0], n_queries)
     assert_equal(distances.shape[0], n_queries)
+    # dists and inds should not be 2D arrays
+    assert_equal(distances.ndim, 1)
+    assert_equal(neighbors.ndim, 1)
 
     # Compare with exact neighbor search
     query = X[rng.randint(0, n_samples)]
