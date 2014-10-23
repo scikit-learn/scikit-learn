@@ -75,7 +75,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
     metric_params : dict, optional (default = None)
-        additional keyword arguments for the metric function.
+        Additional keyword arguments for the metric function.
 
     Examples
     --------
@@ -125,13 +125,13 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
 
         Parameters
         ----------
-        X : array or matrix, shape = [n_samples, n_features]
-
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Input data.
 
         Returns
         -------
-        y : array of int, shape = [n_samples] or [n_samples, n_outputs]
-            Target values
+        y : array, shape (n_samples,) or (n_samples, n_outputs)
+        	Predicted values.
         """
         X = check_array(X, accept_sparse='csr')
         neigh_dist, neigh_ind, weights = self._get_neighbors_and_weights(X)
@@ -259,12 +259,13 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 
         Parameters
         ----------
-        X : array or matrix, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        	Input data.
 
         Returns
         -------
-        y : array of int, shape = [n_samples] or [n_samples, n_outputs]
-            Target values
+        y : array, shape (n_samples,) or (n_samples, n_outputs)
+            Predicted values.
         """
         X = check_array(X, accept_sparse='csr')
 

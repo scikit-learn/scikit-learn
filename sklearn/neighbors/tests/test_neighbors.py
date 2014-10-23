@@ -149,7 +149,7 @@ def test_kneighbors_classifier(n_samples=40,
     X = 2 * rng.rand(n_samples, n_features) - 1
     y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
     y_str = y.astype(str)
-    
+
     for algorithm in ALGORITHMS:
         for weights in WEIGHTS:
             knn = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors,
@@ -318,7 +318,7 @@ def test_RadiusNeighborsClassifier_multioutput():
     y = rng.randint(0, 3, (n_samples, n_output))
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    
+
     for algorithm, weights in product(ALGORITHMS, WEIGHTS):
         # Stack single output prediction
         y_pred_so = []
@@ -419,7 +419,7 @@ def test_kneighbors_regressor(n_samples=40,
     y = np.sqrt((X ** 2).sum(1))
     y /= y.max()
     y_target = y[:n_test_pts]
-    
+
     for algorithm in ALGORITHMS:
         for weights in WEIGHTS:
             knn = neighbors.KNeighborsRegressor(n_neighbors=n_neighbors,
@@ -470,7 +470,7 @@ def test_kneighbors_regressor_multioutput(n_samples=40,
     y /= y.max()
     y = np.vstack([y, y]).T
     y_target = y[:n_test_pts]
-    
+
     for algorithm, weights in product(ALGORITHMS, WEIGHTS):
         knn = neighbors.KNeighborsRegressor(n_neighbors=n_neighbors,
                                             weights=weights,
@@ -494,7 +494,7 @@ def test_radius_neighbors_regressor(n_samples=40,
     y = np.sqrt((X ** 2).sum(1))
     y /= y.max()
     y_target = y[:n_test_pts]
-    
+
     for algorithm in ALGORITHMS:
         for weights in WEIGHTS:
             neigh = neighbors.RadiusNeighborsRegressor(radius=radius,
@@ -547,7 +547,7 @@ def test_RadiusNeighborsRegressor_multioutput(n_samples=40,
     y = np.sqrt((X ** 2).sum(1))
     y /= y.max()
     y = np.vstack([y, y]).T
-    y_target = y[:n_test_pts]    
+    y_target = y[:n_test_pts]
 
     for algorithm, weights in product(ALGORITHMS, WEIGHTS):
         rnn = neighbors.RadiusNeighborsRegressor(n_neighbors=n_neighbors,

@@ -128,13 +128,13 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         Parameters
         ----------
-        X : array of shape [n_samples, n_features]
-            A 2-D array representing the test points.
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Input data.
 
         Returns
         -------
-        y : array of shape [n_samples] or [n_samples, n_outputs]
-            Class labels for each data sample.
+        y : array-like, shape (n_samples,) or (n_samples, n_outputs)
+            Predicted classes.
         """
         X = check_array(X, accept_sparse='csr')
         neigh_dist, neigh_ind, weights = self._get_neighbors_and_weights(X)
@@ -167,15 +167,15 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         Parameters
         ----------
-        X : array, shape = (n_samples, n_features)
-            A 2-D array representing the test points.
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Input data.
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes], or a list of n_outputs
-            of such arrays if n_outputs > 1.
-            The class probabilities of the input samples. Classes are ordered
-            by lexicographic order.
+        y_prob : array, shape (n_samples, n_classes), 
+		or a list of n_outputs of such arrays if n_outputs > 1.
+			Predicted probabilities for each class. 
+			Classes are ordered lexicographically.
         """
         X = check_array(X, accept_sparse='csr')
         neigh_dist, neigh_ind, weights = self._get_neighbors_and_weights(X)
@@ -278,7 +278,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         If set to None, ValueError is raised, when outlier is detected.
 
     metric_params : dict, optional (default = None)
-        additional keyword arguments for the metric function.
+        Additional keyword arguments for the metric function.
 
     Examples
     --------
@@ -323,13 +323,13 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         Parameters
         ----------
-        X : array of shape [n_samples, n_features]
-            A 2-D array representing the test points.
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Input data.
 
         Returns
         -------
-        y : array of shape [n_samples] or [n_samples, n_outputs]
-            Class labels for each data sample.
+        y : array, shape (n_samples,) or (n_samples, n_outputs)
+            Predicted classes.
 
         """
         X = check_array(X, accept_sparse='csr')

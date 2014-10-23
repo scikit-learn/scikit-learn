@@ -44,7 +44,7 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
     metric_params : dict, optional (default = None)
-        additional keyword arguments for the metric function.
+        Additional keyword arguments for the metric function.
 
     Examples
     --------
@@ -58,6 +58,7 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
       >>> neigh.kneighbors([[0, 0, 1.3]], 2, return_distance=False)
       ... #doctest: +ELLIPSIS
       array([[2, 0]]...)
+
 
       >>> neigh.radius_neighbors([0, 0, 1.3], 0.4, return_distance=False)
       array([[2]])

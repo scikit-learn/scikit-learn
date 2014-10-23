@@ -431,22 +431,22 @@ class KNeighborsMixin(object):
 
     def _get_neighbors_and_weights(self, X):
         """Find neighbors to X and assign weights to them according to
-        class parameters.
+        self parameters.
 
         Parameters
         ----------
-        X : array of shape [n_samples, n_features]
-            A 2-D array representing the set of points.
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        	Input data.
 
         Returns
         -------
-        dist : array of shape [n_samples, self.n_neighbors]
-            Array representing the distances from points to neighbors.
+        dist : array, shape (n_samples, self.n_neighbors)
+            Distances to neighbors.
 
-        ind : array of shape [n_samples, self.n_neighbors]
-            Indices of the nearest neighbors.
+        ind : array, shape (n_samples, self.n_neighbors)
+            Indices of neighbors.
 
-        weights : array of shape [n_samples, self.n_neighbors]
+        weights : array, shape (n_samples, self.n_neighbors)
             Weights assigned to neighbors.
         """
         if self.weights in KERNEL_WEIGHTS:
@@ -470,25 +470,28 @@ class RadiusNeighborsMixin(object):
 
         Parameters
         ----------
-        X : array-like, last dimension same as that of fit data
-            The new point or points
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        	Input data.
 
-        radius : float
-            Limiting distance of neighbors to return.
-            (default is the value passed to the constructor).
+        radius : float, optional (default=None)
+			The radius of neighbors search.
+			If None, it is set to self.radius.
 
-        return_distance : boolean, optional. Defaults to True.
+        return_distance : boolean, optional (default=True)
             If False, distances will not be returned
 
         Returns
         -------
-        dist : array
-            Array representing the euclidean distances to each point,
-            only present if return_distance=True.
+        dist : array of arrays, shape (n_samples,)
+			Distances to neighbors. It contains 1-d arrays of different 
+			sizes, because the number of neighbors is not fixed.
+			Only presents if return_distance=True.
+            
 
-        ind : array
-            Indices of the nearest points in the population matrix.
-
+        ind : array of arrays, shape (n_samples,)
+			Indices of neighbors. It contains 1-d arrays of different 
+			sizes, because the number of neighbors is not fixed.
+	
         Examples
         --------
         In the following example, we construct a NeighborsClassifier
@@ -577,21 +580,21 @@ class RadiusNeighborsMixin(object):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Sample data
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        	Input data.
 
-        radius : float
-            Radius of neighborhoods.
-            (default is the value passed to the constructor).
+        radius : float, optional (default=None)
+            The radius of neighbors search.
+			If None, it is set to self.radius.
 
-        mode : {'connectivity', 'distance'}, optional
+        mode : {'connectivity', 'distance'}, optional (default='connectivity')
             Type of returned matrix: 'connectivity' will return the
             connectivity matrix with ones and zeros, in 'distance' the
             edges are Euclidean distance between points.
 
         Returns
         -------
-        A : sparse matrix in CSR format, shape = [n_samples, n_samples]
+        A : sparse matrix in CSR format, shape (n_samples, n_samples)
             A[i, j] is assigned the weight of edge that connects i to j.
 
         Examples
@@ -652,11 +655,11 @@ class SupervisedFloatMixin(object):
         Parameters
         ----------
         X : {array-like, sparse matrix, BallTree, KDTree}
-            Training data. If array or matrix, shape = [n_samples, n_features]
+			Input data. If array-like or sparse matrix, 
+			it has shape (n_samples, n_features).
 
-        y : {array-like, sparse matrix}
-            Target values, array of float values, shape = [n_samples]
-             or [n_samples, n_outputs]
+        y : array-like, shape (n_samples,) or (n_samples, n_outputs).
+            Target values.
         """
         if not isinstance(X, (KDTree, BallTree)):
             X, y = check_X_y(X, y, "csr", multi_output=True)
@@ -671,10 +674,11 @@ class SupervisedIntegerMixin(object):
         Parameters
         ----------
         X : {array-like, sparse matrix, BallTree, KDTree}
-            Training data. If array or matrix, shape = [n_samples, n_features]
+            Input data. If array-like or sparse matrix,
+			it has shape (n_samples, n_features).
 
-        y : {array-like, sparse matrix}
-            Target values of shape = [n_samples] or [n_samples, n_outputs]
+        y : array-like, shape (n_samples,) or (n_samples, n_outputs)
+            Target values.
 
         """
         if not isinstance(X, (KDTree, BallTree)):
@@ -712,6 +716,7 @@ class UnsupervisedMixin(object):
         Parameters
         ----------
         X : {array-like, sparse matrix, BallTree, KDTree}
-            Training data. If array or matrix, shape = [n_samples, n_features]
+            Input data. If array-like or sparse matrix,
+			it has shape (n_samples, n_features).
         """
         return self._fit(X)
