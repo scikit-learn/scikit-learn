@@ -3,6 +3,7 @@
 
 import numpy as np
 import warnings
+from .base import KNeighborsMixin, RadiusNeighborsMixin
 from ..base import BaseEstimator
 from ..utils.validation import check_array
 from ..utils import check_random_state
@@ -60,7 +61,7 @@ def _array_of_arrays(list_of_arrays):
     return out
 
 
-class LSHForest(BaseEstimator):
+class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
     """Performs approximate nearest neighbor search using LSH forest.
 
     LSH Forest: Locality Sensitive Hashing forest [1] is an alternative
