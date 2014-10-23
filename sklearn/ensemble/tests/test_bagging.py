@@ -46,7 +46,6 @@ perm = rng.permutation(boston.target.size)
 boston.data = boston.data[perm]
 boston.target = boston.target[perm]
 
-
 def test_classification():
     """Check classification for various parameter settings."""
     rng = check_random_state(0)
@@ -310,6 +309,7 @@ def test_oob_score_classification():
                                 oob_score=True,
                                 random_state=rng).fit(X_train, y_train)
 
+        prediction = clf.predict(X_test)
         test_score = clf.score(X_test, y_test)
 
         assert_less(abs(test_score - clf.oob_score_), 0.1)
@@ -371,7 +371,6 @@ def test_single_estimator():
 
     assert_array_equal(clf1.predict(X_test), clf2.predict(X_test))
 
-
 def test_error():
     """Test that it gives proper exception on deficient input."""
     X, y = iris.data, iris.target
@@ -409,8 +408,7 @@ def test_error():
 def test_parallel_classification():
     """Check parallel classification."""
     rng = check_random_state(0)
-
-    # Classification
+# Classification
     X_train, X_test, y_train, y_test = train_test_split(iris.data,
                                                         iris.target,
                                                         random_state=rng)
@@ -542,6 +540,284 @@ def test_base_estimator():
                                 random_state=0).fit(X_train, y_train)
 
     assert_true(isinstance(ensemble.base_estimator_, SVR))
+
+# Test multioutput classification functions
+def test_multioutput_classification():
+    """check classification for multioutput problems"""
+    rng = check_random_state(0)
+
+    X_train = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [-2, 1],
+               [-1, 1], [-1, 2], [2, -1], [1, -1], [1, -2]]
+
+    y_train = [[-1, 0], [-1, 0], [-1, 0], [1, 1], [1, 1], [1, 1], [-1, 2],
+               [-1, 2], [-1, 2], [1, 3], [1, 3], [1, 3]]
+    X_test = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
+    y_test = [[-1, 0], [1, 1], [-1, 2], [1, 3]]
+
+
+    grid = ParameterGrid({"max_samples": [0.5, 1.0],
+                          "max_features": [1,2],
+                          "bootstrap": [True, False],
+                          "bootstrap_features": [True, False]})
+
+    for base_estimator in [None,
+                           DummyClassifier(),
+                           DecisionTreeClassifier(),
+                           KNeighborsClassifier()]:
+        for params in grid:
+            BaggingClassifier(base_estimator = base_estimator,
+                              random_state = rng,
+                              **params).fit(X_train, y_train).predict(X_test)
+
+def test_multioutput_regression():
+    """check classification for multioutput problems"""
+    rng = check_random_state(0)
+
+    X_train = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [-2, 1],
+               [-1, 1], [-1, 2], [2, -1], [1, -1], [1, -2]]
+
+    y_train = [[-1, 0], [-1, 0], [-1, 0], [1, 1], [1, 1], [1, 1], [-1, 2],
+               [-1, 2], [-1, 2], [1, 3], [1, 3], [1, 3]]
+    X_test = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
+    y_test = [[-1, 0], [1, 1], [-1, 2], [1, 3]]
+
+
+    grid = ParameterGrid({"max_samples": [0.5, 1.0],
+                          "max_features": [0.5, 1.0],
+                          "bootstrap": [True, False],
+                          "bootstrap_features": [True, False]})
+
+    for base_estimator in [None,
+                           DummyRegressor(),
+                           DecisionTreeRegressor(),
+                           KNeighborsRegressor()]:
+        for params in grid:
+            BaggingRegressor(base_estimator = base_estimator,
+                              random_state = rng,
+                              **params).fit(X_train, y_train).predict(X_test)
+
+def test_multioutput_probability():
+    """Predict probabilities."""
+    rng = check_random_state(0)
+    X_train = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [-2, 1],
+               [-1, 1], [-1, 2], [2, -1], [1, -1], [1, -2]]
+
+    y_train = [[-1, 0], [-1, 0], [-1, 0], [1, 1], [1, 1], [1, 1], [-1, 2],
+               [-1, 2], [-1, 2], [1, 3], [1, 3], [1, 3]]
+    X_test = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
+    y_test = [[-1, 0], [1, 1], [-1, 2], [1, 3]]
+
+
+    with np.errstate(divide="ignore", invalid="ignore"):
+        # Normal case
+        ensemble = BaggingClassifier(base_estimator=DecisionTreeClassifier(),
+                                     random_state=rng).fit(X_train, y_train)
+
+        expected = [np.ones(len(X_test)), np.ones(len(X_test))]
+        prob_sum = [np.sum(out, axis=1) for out in ensemble.predict_proba(X_test)]
+        for i,j in zip(expected, prob_sum):
+            assert_array_almost_equal(i,j)
+
+        prob     = ensemble.predict_proba(X_test)
+        log_prob = ensemble.predict_log_proba(X_test)
+        for i,j in zip(prob, log_prob):
+            assert_array_almost_equal(i, np.exp(j))
+
+        # Degenerate case, where some classes are missing 
+        # Is there another test case possible?  Logistic regression is single-output
+        #ensemble = BaggingClassifier(base_estimator=LogisticRegression(),
+                                     #random_state=rng,
+                                     #max_samples=5).fit(X_train, y_train)
+
+        #expected = [np.ones(len(X_test)), np.ones(len(X_test))]
+        #prob_sum = [np.sum(out, axis=1) for out in ensemble.predict_proba(X_test)]
+        #for i,j in zip(expected, prob_sum):
+            #assert_array_almost_equal(i,j)
+
+        #prob     = ensemble.predict_proba(X_test)
+        #log_prob = ensemble.predict_log_proba(X_test)
+        #for i,j in zip(prob, log_prob):
+            #assert_array_almost_equal(i, np.exp(j))
+
+def test_multioutput_oob_score_classification():
+    """Check that oob prediction is a good estimation of the generalization
+    error."""
+    rng = check_random_state(0)
+    X_train = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [-2, 1],
+               [-1, 1], [-1, 2], [2, -1], [1, -1], [1, -2]]
+    y_train = [[-1, 0], [-1, 0], [-1, 0], [1, 1], [1, 1], [1, 1], [-1, 2],
+               [-1, 2], [-1, 2], [1, 3], [1, 3], [1, 3]]
+    X_test = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
+    y_test = [[-1, 0], [1, 1], [-1, 2], [1, 3]]
+
+
+    for base_estimator in [DecisionTreeClassifier()]:#, SVC()]:
+        clf = BaggingClassifier(base_estimator=base_estimator,
+                                n_estimators=100,
+                                bootstrap=True,
+                                oob_score=True,
+                                random_state=rng).fit(X_train, y_train)
+
+        prediction = clf.predict(X_test)
+        # Mean accuracy across outputs
+        test_score = np.mean( np.mean(prediction == y_test, axis = 0) )
+
+        assert_less(abs(test_score - clf.oob_score_), 0.1)
+
+        # Test with few estimators
+        assert_warns(UserWarning,
+                     BaggingClassifier(base_estimator=base_estimator,
+                                       n_estimators=1,
+                                       bootstrap=True,
+                                       oob_score=True,
+                                       random_state=rng).fit,
+                     X_train,
+                     y_train)
+
+
+def test_multioutput_oob_score_regression():
+    """Check that oob prediction is a good estimation of the generalization
+    error."""
+    rng = check_random_state(0)
+    X_train = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [-2, 1],
+               [-1, 1], [-1, 2], [2, -1], [1, -1], [1, -2]]
+
+    y_train = [[-1, 0], [-1, 0], [-1, 0], [1, 1], [1, 1], [1, 1], [-1, 2],
+               [-1, 2], [-1, 2], [1, 3], [1, 3], [1, 3]]
+    X_test = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
+    y_test = [[-1, 0], [1, 1], [-1, 2], [1, 3]]
+
+
+    clf = BaggingRegressor(base_estimator=DecisionTreeRegressor(),
+                           n_estimators=50,
+                           bootstrap=True,
+                           oob_score=True,
+                           random_state=rng).fit(X_train, y_train)
+
+    test_score = clf.score(X_test, y_test)
+
+    assert_less(abs(test_score - clf.oob_score_), 0.1)
+
+    # Test with few estimators
+    assert_warns(UserWarning,
+                 BaggingRegressor(base_estimator=DecisionTreeRegressor(),
+                                  n_estimators=1,
+                                  bootstrap=True,
+                                  oob_score=True,
+                                  random_state=rng).fit,
+                 X_train,
+                 y_train)
+
+
+def test_multioutput_single_estimator():
+    """Check singleton ensembles."""
+    rng = check_random_state(0)
+    X_train = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [-2, 1],
+               [-1, 1], [-1, 2], [2, -1], [1, -1], [1, -2]]
+
+    y_train = [[-1, 0], [-1, 0], [-1, 0], [1, 1], [1, 1], [1, 1], [-1, 2],
+               [-1, 2], [-1, 2], [1, 3], [1, 3], [1, 3]]
+    X_test = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
+    y_test = [[-1, 0], [1, 1], [-1, 2], [1, 3]]
+
+
+    clf1 = BaggingRegressor(base_estimator=KNeighborsRegressor(),
+                            n_estimators=1,
+                            bootstrap=False,
+                            bootstrap_features=False,
+                            random_state=rng).fit(X_train, y_train)
+
+    clf2 = KNeighborsRegressor().fit(X_train, y_train)
+
+    assert_array_equal(clf1.predict(X_test), clf2.predict(X_test))
+
+def test_multioutput_parallel_classification():
+    """Check parallel classification."""
+    rng = check_random_state(0)
+
+    # Classification
+    X_train = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [-2, 1],
+               [-1, 1], [-1, 2], [2, -1], [1, -1], [1, -2]]
+
+    y_train = [[-1, 0], [-1, 0], [-1, 0], [1, 1], [1, 1], [1, 1], [-1, 2],
+               [-1, 2], [-1, 2], [1, 3], [1, 3], [1, 3]]
+    X_test = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
+    y_test = [[-1, 0], [1, 1], [-1, 2], [1, 3]]
+
+    ensemble = BaggingClassifier(DecisionTreeClassifier(),
+                                 n_jobs=3,
+                                 random_state=0).fit(X_train, y_train)
+
+
+    # predict_proba
+    ensemble.set_params(n_jobs=1)
+    y1 = ensemble.predict_proba(X_test)
+    ensemble.set_params(n_jobs=2)
+    y2 = ensemble.predict_proba(X_test)
+    for i,j in zip(y1,y2):
+        assert_array_almost_equal(i,j)
+
+    ensemble = BaggingClassifier(DecisionTreeClassifier(),
+                                 n_jobs=1,
+                                 random_state=0).fit(X_train, y_train)
+
+    y3 = ensemble.predict_proba(X_test)
+    for i,j in zip(y1,y3):
+        assert_array_almost_equal(i,j)
+
+    # decision_function
+    # couldn't think of multioutput estimator with decision func
+    #ensemble = BaggingClassifier(SVC(),
+                                 #n_jobs=3,
+                                 #random_state=0).fit(X_train, y_train)
+#
+    #ensemble.set_params(n_jobs=1)
+    #decisions1 = ensemble.decision_function(X_test)
+    #ensemble.set_params(n_jobs=2)
+    #decisions2 = ensemble.decision_function(X_test)
+    #for i,j in zip(decisions1, decisions2):
+    #   assert_array_almost_equal(i,j)
+#
+    #ensemble = BaggingClassifier(SVC(),
+                                 #n_jobs=1,
+                                 #random_state=0).fit(X_train, y_train)
+
+    #decisions3 = ensemble.decision_function(X_test)
+    #for i,j in zip(decisions1, decisions3):
+    #   assert_array_almost_equal(i,j)
+
+
+def test_multioutput_parallel_regression():
+    """Check parallel regression."""
+    rng = check_random_state(0)
+
+    X_train = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [-2, 1],
+               [-1, 1], [-1, 2], [2, -1], [1, -1], [1, -2]]
+
+    y_train = [[-1, 0], [-1, 0], [-1, 0], [1, 1], [1, 1], [1, 1], [-1, 2],
+               [-1, 2], [-1, 2], [1, 3], [1, 3], [1, 3]]
+    X_test = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
+    y_test = [[-1, 0], [1, 1], [-1, 2], [1, 3]]
+
+
+    ensemble = BaggingRegressor(DecisionTreeRegressor(),
+                                n_jobs=3,
+                                random_state=0).fit(X_train, y_train)
+
+    ensemble.set_params(n_jobs=1)
+    y1 = ensemble.predict(X_test)
+    ensemble.set_params(n_jobs=2)
+    y2 = ensemble.predict(X_test)
+    assert_array_almost_equal(y1, y2)
+
+    ensemble = BaggingRegressor(DecisionTreeRegressor(),
+                                n_jobs=1,
+                                random_state=0).fit(X_train, y_train)
+
+    y3 = ensemble.predict(X_test)
+    assert_array_almost_equal(y1, y3)
+
+
 
 if __name__ == "__main__":
     import nose

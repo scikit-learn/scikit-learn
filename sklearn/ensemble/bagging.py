@@ -10,18 +10,18 @@ import numbers
 import numpy as np
 from warnings import warn
 from abc import ABCMeta, abstractmethod
-from ..utils.validation import has_fit_parameter
+from inspect import getargspec
 
-from ..base import ClassifierMixin, RegressorMixin
-from ..externals.joblib import Parallel, delayed
-from ..externals.six import with_metaclass
-from ..externals.six.moves import zip
-from ..metrics import r2_score, accuracy_score
-from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_random_state, check_X_y, check_array, column_or_1d
-from ..utils.random import sample_without_replacement
+from sklearn.base import ClassifierMixin, RegressorMixin
+from sklearn.externals.joblib import Parallel, delayed
+from sklearn.externals.six import with_metaclass
+from sklearn.externals.six.moves import zip
+from sklearn.metrics import r2_score, accuracy_score
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils import check_random_state, check_array, column_or_1d
+from sklearn.utils.random import sample_without_replacement
 
-from .base import BaseEnsemble, _partition_estimators
+from sklearn.ensemble.base import BaseEnsemble, _partition_estimators
 
 __all__ = ["BaggingClassifier",
            "BaggingRegressor"]
@@ -47,9 +47,8 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
 
     bootstrap = ensemble.bootstrap
     bootstrap_features = ensemble.bootstrap_features
-    support_sample_weight = has_fit_parameter(ensemble.base_estimator_,
-                                              "sample_weight")
-
+    support_sample_weight = ("sample_weight" in
+                             getargspec(ensemble.base_estimator_.fit)[0])
 
     # Build estimators
     estimators = []
@@ -121,28 +120,54 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
     return estimators, estimators_samples, estimators_features
 
 
+# NOTE
+# why is n_classes necessary here?
+# i.e., why ever does n_classes != len(estimator.classes_)?
 def _parallel_predict_proba(estimators, estimators_features, X, n_classes):
     """Private function used to compute (proba-)predictions within a job."""
     n_samples = X.shape[0]
-    proba = np.zeros((n_samples, n_classes))
+
+    if hasattr(n_classes, '__len__'):
+        n_outputs = len(n_classes)
+    else:
+        n_outputs = 1
+
+    if n_outputs == 1:
+        proba = np.zeros((n_samples, n_classes))
+    else:
+        proba = [np.zeros((n_samples, j)) for j in n_classes]
 
     for estimator, features in zip(estimators, estimators_features):
         if hasattr(estimator, "predict_proba"):
             proba_estimator = estimator.predict_proba(X[:, features])
 
-            if n_classes == len(estimator.classes_):
-                proba += proba_estimator
+            if n_outputs == 1:
+                if n_classes == len(estimator.classes_):
+                    proba += proba_estimator
 
-            else:
-                proba[:, estimator.classes_] += \
-                    proba_estimator[:, range(len(estimator.classes_))]
+                else:
+                    proba[:, estimator.classes_] += \
+                        proba_estimator[:, range(len(estimator.classes_))]
+            else: 
+                for j in xrange(n_outputs):
+                    if n_classes[j] == len(estimator.classes_[j]):
+                        proba[j] += proba_estimator[j]
+
+                    else:
+                        proba[j][:, estimator.classes_[j]] += \
+                            proba_estimator[j][:, range(len(estimator.classes_[j]))]
 
         else:
             # Resort to voting
             predictions = estimator.predict(X[:, features])
 
-            for i in range(n_samples):
-                proba[i, predictions[i]] += 1
+            if n_outputs == 1:
+                for i in range(n_samples):
+                    proba[i, predictions[i]] += 1
+            else:
+                for j in range(n_outputs):
+                    for i in range(n_samples):
+                            proba[j][i, predictions[i,j]] += 1
 
     return proba
 
@@ -150,34 +175,80 @@ def _parallel_predict_proba(estimators, estimators_features, X, n_classes):
 def _parallel_predict_log_proba(estimators, estimators_features, X, n_classes):
     """Private function used to compute log probabilities within a job."""
     n_samples = X.shape[0]
-    log_proba = np.empty((n_samples, n_classes))
-    log_proba.fill(-np.inf)
-    all_classes = np.arange(n_classes, dtype=np.int)
+    if hasattr(n_classes, '__len__'):
+        n_outputs = len(n_classes)
+    else:
+        n_outputs = 1
+
+    if n_outputs == 1:
+        log_proba = np.empty((n_samples, n_classes))
+        log_proba.fill(-np.inf)
+        all_classes = np.arange(n_classes, dtype=np.int)
+    else:
+        log_proba = [np.empty((n_samples, j)) for j in n_classes]
+        for i in xrange(n_outputs):
+            log_proba[i].fill(-np.inf)
+        all_classes = [np.arange(j, dtype=np.int) for j in n_classes]
 
     for estimator, features in zip(estimators, estimators_features):
         log_proba_estimator = estimator.predict_log_proba(X[:, features])
 
-        if n_classes == len(estimator.classes_):
-            log_proba = np.logaddexp(log_proba, log_proba_estimator)
+        if n_outputs == 1:
+            if n_classes == len(estimator.classes_):
+                log_proba = np.logaddexp(log_proba, log_proba_estimator)
+
+            else:
+                log_proba[:, estimator.classes_] = np.logaddexp(
+                    log_proba[:, estimator.classes_],
+                    log_proba_estimator[:, range(len(estimator.classes_))])
+
+                missing = np.setdiff1d(all_classes, estimator.classes_)
+                log_proba[:, missing] = np.logaddexp(log_proba[:, missing],
+                                                     -np.inf)
 
         else:
-            log_proba[:, estimator.classes_] = np.logaddexp(
-                log_proba[:, estimator.classes_],
-                log_proba_estimator[:, range(len(estimator.classes_))])
+            for j in xrange(n_outputs):
+                if n_classes == len(estimator.classes_[j]):
+                    log_proba[j] = np.logaddexp(log_proba[j], log_proba_estimator[j])
 
-            missing = np.setdiff1d(all_classes, estimator.classes_)
-            log_proba[:, missing] = np.logaddexp(log_proba[:, missing],
-                                                 -np.inf)
+                else:
+                    log_proba[j][:, estimator.classes_[j]] = np.logaddexp(
+                        log_proba[j][:, estimator.classes_[j]],
+                        log_proba_estimator[j][:, range(len(estimator.classes_[j]))])
+
+                    missing = np.setdiff1d(all_classes[j], estimator.classes_[j])
+                    log_proba[j][:, missing] = np.logaddexp(log_proba[j][:, missing],
+                                                            -np.inf)
 
     return log_proba
 
 
+# NOTE
+# Not clear to me what the return format of decision_function is
+# Gut is that end fix will be equiv to others, i.e., returns list
+# of arrays when n_outputs > 1
 def _parallel_decision_function(estimators, estimators_features, X):
     """Private function used to compute decisions within a job."""
     return sum(estimator.decision_function(X[:, features])
                for estimator, features in zip(estimators,
                                               estimators_features))
+    all_decisions = [estimator.decision_function(X[:, features])
+                     for estimator, features in zip(estimators,
+                                                    estimators_features)]
 
+    n_outputs_ = estimators[0].n_outputs_
+    decisions = all_decisions[0]
+
+    if n_outputs_ == 1: 
+        for i in xrange(1, len(all_decisions)):
+            decisions += all_decisions[i]
+
+    else:
+        for i in xrange(1, len(all_decisions)):
+            for j in xrange(n_outputs_):
+                decisions[j] += all_decisions[i][j]
+
+    return decisions
 
 def _parallel_predict_regression(estimators, estimators_features, X):
     """Private function used to compute predictions within a job."""
@@ -245,10 +316,25 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         random_state = check_random_state(self.random_state)
 
         # Convert data
-        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'])
+        # ensure_2d=False because there are actually unit test checking we fail
+        # for 1d. FIXME make this consistent in the future.
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], ensure_2d=False)
 
         # Remap output
         n_samples, self.n_features_ = X.shape
+
+        y = np.atleast_1d(y)
+        if y.ndim == 2 and y.shape[1] == 1:
+            warn("A column-vector y was passed when a 1d array was"
+                 " expected. Please change the shape of y to "
+                 "(n_samples, ), for example using ravel().",
+                 DataConversionWarning, stacklevel=2)
+
+        if y.ndim == 1:
+            self.n_outputs_ = 1
+        else:
+            self.n_outputs_ = y.shape[1]
+
         y = self._validate_y(y)
 
         # Check parameters
@@ -301,6 +387,11 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         self.estimators_features_ = list(itertools.chain.from_iterable(
             t[2] for t in all_results))
 
+        # Decapsulate classes_ attributes
+        if hasattr(self, "classes_") and self.n_outputs_ == 1:
+            self.n_classes_ = self.n_classes_[0]
+            self.classes_ = self.classes_[0]
+
         if self.oob_score:
             self._set_oob_score(X, y)
 
@@ -312,8 +403,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
 
     def _validate_y(self, y):
         # Default implementation
-        return column_or_1d(y, warn=True)
-
+        return y
 
 class BaggingClassifier(BaseBagging, ClassifierMixin):
     """A Bagging classifier.
@@ -453,11 +543,25 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             default=DecisionTreeClassifier())
 
     def _set_oob_score(self, X, y):
-        n_classes_ = self.n_classes_
-        classes_ = self.classes_
+        if self.n_outputs_ == 1:
+            n_classes_ = [self.n_classes_]
+            classes_   = [self.classes_]
+        else:
+            n_classes_ = self.n_classes_
+            classes_   = self.classes_
         n_samples = y.shape[0]
 
-        predictions = np.zeros((n_samples, n_classes_))
+        # Turn into column vector if 1-d, for ease of use
+        if y.ndim == 1:
+            y = np.reshape(y, (-1, 1))
+
+        oob_decision_function = []
+        oob_score = 0.0
+        predictions = []
+
+        for k in xrange(self.n_outputs_):
+            predictions.append(np.zeros((n_samples,
+                                         n_classes_[k])))
 
         for estimator, samples, features in zip(self.estimators_,
                                                 self.estimators_samples_,
@@ -466,35 +570,65 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             mask[samples] = False
 
             if hasattr(estimator, "predict_proba"):
-                predictions[mask, :] += estimator.predict_proba(
+                proba = estimator.predict_proba(
                     (X[mask, :])[:, features])
+
+                if self.n_outputs_ == 1:
+                    proba = [proba]
+
+                for k in xrange(self.n_outputs_):
+                    predictions[k][mask, :] += proba[k]
 
             else:
                 p = estimator.predict((X[mask, :])[:, features])
+
+                if self.n_outputs_ == 1:
+                    p = [p]
+
                 j = 0
 
-                for i in range(n_samples):
+                for i in xrange(n_samples):
                     if mask[i]:
-                        predictions[i, p[j]] += 1
+                        for k in xrange(self.n_outputs_):
+                            predictions[k][i, p[k][j]] += 1
                         j += 1
 
-        if (predictions.sum(axis=1) == 0).any():
-            warn("Some inputs do not have OOB scores. "
-                 "This probably means too few estimators were used "
-                 "to compute any reliable oob estimates.")
+        for k in xrange(self.n_outputs_):
+            if (predictions[k].sum(axis=1) == 0).any(): 
+                warn("Some inputs do not have OOB scores. "
+                     "This probably means too few estimators were used "
+                     "to compute any reliable oob estimates.")
 
-        oob_decision_function = (predictions /
-                                 predictions.sum(axis=1)[:, np.newaxis])
-        oob_score = accuracy_score(y, classes_.take(np.argmax(predictions,
-                                                              axis=1)))
+            decision = (predictions[k] /
+                        predictions[k].sum(axis=1)[:, np.newaxis])
+            oob_decision_function.append(decision)
+
+            oob_score += np.mean(y[:, k] ==
+                                 np.argmax(predictions[k], axis=1), axis=0)
+
+        if self.n_outputs_ == 1:
+            oob_decision_function = oob_decision_function[0]
+                                
 
         self.oob_decision_function_ = oob_decision_function
-        self.oob_score_ = oob_score
+        self.oob_score_ = oob_score / self.n_outputs_
 
     def _validate_y(self, y):
-        y = column_or_1d(y, warn=True)
-        self.classes_, y = np.unique(y, return_inverse=True)
-        self.n_classes_ = len(self.classes_)
+        y = np.copy(y)
+
+        if self.n_outputs_ == 1:
+            y = np.reshape(y, (-1,1))
+
+        self.classes_ = []
+        self.n_classes_ = []
+
+        for k in xrange(self.n_outputs_):
+            classes_k, y[:, k] = np.unique(y[:, k], return_inverse=True)
+            self.classes_.append(classes_k)
+            self.n_classes_.append(classes_k.shape[0])
+
+        if self.n_outputs_ == 1:
+            y = y.ravel()
 
         return y
 
@@ -516,8 +650,25 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         y : array of shape = [n_samples]
             The predicted classes.
         """
-        return self.classes_.take(np.argmax(self.predict_proba(X), axis=1),
-                                  axis=0)
+        # FIXME
+        # ensure_2d=False because there are actually unit test checking we fail
+        # for 1d.
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], ensure_2d=False)
+        n_samples = X.shape[0]
+        proba = self.predict_proba(X)
+
+        if self.n_outputs_ == 1:
+            return self.classes_.take(np.argmax(proba, axis=1), axis=0).ravel()
+
+        else:
+            predictions = np.zeros((n_samples, self.n_outputs_))
+
+            for k in xrange(self.n_outputs_):
+                predictions[:, k] = self.classes_[k].take(np.argmax(proba[k],
+                                                                    axis=1),
+                                                          axis = 0)
+            return predictions
+            
 
     def predict_proba(self, X):
         """Predict class probabilities for X.
@@ -563,7 +714,20 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             for i in range(n_jobs))
 
         # Reduce
-        proba = sum(all_proba) / self.n_estimators
+        proba = all_proba[0] 
+
+        if self.n_outputs_ == 1:
+            for j in xrange(1, len(all_proba)):
+                proba += all_proba[j]
+
+            proba /= len(self.estimators_)
+        else:
+            for j in xrange(1, len(all_proba)):
+                for k in xrange(self.n_outputs_):
+                    proba[k] += all_proba[j][k]
+
+            for k in xrange(self.n_outputs_):
+                proba[k] /= self.n_estimators
 
         return proba
 
@@ -588,7 +752,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         """
         if hasattr(self.base_estimator_, "predict_log_proba"):
             # Check data
-            X = check_array(X)
+            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
             if self.n_features_ != X.shape[1]:
                 raise ValueError("Number of features of the model must "
@@ -611,15 +775,28 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             # Reduce
             log_proba = all_log_proba[0]
 
-            for j in range(1, len(all_log_proba)):
-                log_proba = np.logaddexp(log_proba, all_log_proba[j])
+            if self.n_outputs_ == 1:
+                for j in range(1, len(all_log_proba)):
+                    log_proba = np.logaddexp(log_proba, all_log_proba[j])
 
-            log_proba -= np.log(self.n_estimators)
+                log_proba -= np.log(self.n_estimators)
+
+            else:
+                for j in xrange(1, len(all_log_proba)):
+                    for k in xrange(self.n_outputs_):
+                        log_proba[k] = np.logaddexp(log_proba, all_log_proba[j][k])
+
+                for k in xrange(self.n_outputs_):
+                    log_proba[k] -= np.log(self.n_estimators)
 
             return log_proba
 
         else:
-            return np.log(self.predict_proba(X))
+            if self.n_outputs_ == 1:
+                return np.log(self.predict_proba(X))
+            else:
+                return map(np.log, self.predict_proba(X))
+#               return [np.log(proba) for proba in self.predict_proba(X)]
 
     def decision_function(self, X):
         """Average of the decision functions of the base classifiers.
@@ -644,7 +821,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             raise NotImplementedError
 
         # Check data
-        X = check_array(X)
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
         if self.n_features_ != X.shape[1]:
             raise ValueError("Number of features of the model must "
@@ -664,7 +841,20 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             for i in range(n_jobs))
 
         # Reduce
-        decisions = sum(all_decisions) / self.n_estimators
+        decisions = all_decisions[0]
+
+        if self.n_outputs_ == 1:
+            for j in xrange(1, len(all_decisions)):
+                decisions += all_decisions[j]
+
+            decisions /= len(self.estimators_)
+
+        else:
+            for j in xrange(1, len(all_decisions)):
+                for k in xrange(self.n_outputs_):
+                    decisions[k] += all_decisions[j][k]
+            for k in xrange(self.n_outputs_):
+                decisions[k] /= self.n_estimators
 
         return decisions
 
@@ -746,11 +936,11 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
     oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
 
-    oob_prediction_ : array of shape = [n_samples]
-        Prediction computed with out-of-bag estimate on the training
+    oob_decision_function_ : array of shape = [n_samples, n_classes]
+        Decision function computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
-        `oob_prediction_` might contain NaN.
+        `oob_decision_function_` might contain NaN.
 
     References
     ----------
@@ -825,6 +1015,9 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
         # Reduce
         y_hat = sum(all_y_hat) / self.n_estimators
+    
+        if self.n_outputs_ == 1:
+            y_hat = y_hat.ravel()
 
         return y_hat
 
@@ -835,9 +1028,20 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
     def _set_oob_score(self, X, y):
         n_samples = y.shape[0]
+        if y.ndim == 1:
+            n_outputs = 1
+        else:
+            n_outputs = y.shape[1]
 
-        predictions = np.zeros((n_samples,))
-        n_predictions = np.zeros((n_samples,))
+        # NOTE
+        # main edit was to add 'n_outputs_'
+        # i think it should be okay?
+        if n_outputs == 1:
+            predictions = np.zeros((n_samples, ))
+            n_predictions = np.zeros((n_samples, ))
+        else:
+            predictions = np.zeros((n_samples, n_outputs))
+            n_predictions = np.zeros((n_samples, n_outputs))
 
         for estimator, samples, features in zip(self.estimators_,
                                                 self.estimators_samples_,
@@ -845,7 +1049,10 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
             mask = np.ones(n_samples, dtype=np.bool)
             mask[samples] = False
 
-            predictions[mask] += estimator.predict((X[mask, :])[:, features])
+            if n_outputs == 1:
+                predictions[mask] += estimator.predict((X[mask, :])[:, features])
+            else:
+                predictions[mask, :] += estimator.predict((X[mask, :])[:, features])
             n_predictions[mask] += 1
 
         if (n_predictions == 0).any():
@@ -855,6 +1062,6 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
             n_predictions[n_predictions == 0] = 1
 
         predictions /= n_predictions
-
+        
         self.oob_prediction_ = predictions
         self.oob_score_ = r2_score(y, predictions)
