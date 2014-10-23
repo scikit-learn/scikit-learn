@@ -21,14 +21,16 @@ print(__doc__)
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import neighbors
+from sklearn.metrics import mean_squared_error
 
 np.random.seed(0)
-X = np.sort(5 * np.random.rand(40, 1), axis=0)
-T = np.linspace(0, 5, 500)[:, np.newaxis]
-y = np.sin(X).ravel()
+X_train = np.sort(5 * np.random.rand(40, 1), axis=0)
+X_test = np.linspace(0, 5, 500)[:, np.newaxis]
+y_train = np.sin(X_train).ravel()
+y_test = np.sin(X_test).ravel()
 
 # Add noise to targets
-y[::5] += 1 * (0.5 - np.random.rand(8))
+y_train += 0.2 * np.random.randn(y_train.size)
 
 ###############################################################################
 # Fit regression model
@@ -37,13 +39,17 @@ n_neighbors = 5
 plt.figure(figsize=(8, 9))
 for i, weights in enumerate(['uniform', 'distance', 'epanechnikov']):
     knn = neighbors.KNeighborsRegressor(n_neighbors, weights=weights)
-    y_ = knn.fit(X, y).predict(T)
+    y_pred = knn.fit(X_train, y_train).predict(X_test)
+    mse = mean_squared_error(y_test, y_pred)
     plt.subplot(3, 1, i + 1)
-    plt.scatter(X, y, c='k', label='data')
-    plt.plot(T, y_, c='g', label='prediction')
+    plt.scatter(X_train, y_train, c='k', label='training data')
+    plt.plot(X_test, y_pred, c='g', label='prediction')
+    plt.plot(X_test, y_test, c='k', label='true function')
+    plt.text(0, -1, "MSE = {:.3f}".format(mse), fontsize=16)
     plt.axis('tight')
     plt.legend()
     plt.title("KNeighborsRegressor (k = %i, weights = '%s')" % (n_neighbors,
                                                                 weights))
+    print(mse)
 plt.tight_layout(pad=0.5)
 plt.show()
