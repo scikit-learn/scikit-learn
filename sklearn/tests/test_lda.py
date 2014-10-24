@@ -5,6 +5,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_raises
 
 from sklearn import lda
 
@@ -18,7 +19,7 @@ X1 = np.array([[-2, ], [-1, ], [-1, ], [1, ], [1, ], [2, ]], dtype='f')
 
 
 solvers = ['svd', 'lsqr', 'eigen']
-alphas = ['ledoit_wolf', 0, None, 0.43]
+alphas = ['ledoit_wolf', 0, None, 0.43, 'dummy', -22.9]
 
 
 def test_lda_predict():
@@ -30,25 +31,35 @@ def test_lda_predict():
     for solver in solvers:
         for alpha in alphas:
             clf = lda.LDA(solver=solver, alpha=alpha)
-            y_pred = clf.fit(X, y).predict(X)
+            try:
+                y_pred = clf.fit(X, y).predict(X)
+            except ValueError:
+                assert_raises(ValueError)
+                continue
             assert_array_equal(y_pred, y, 'solver ' + str(solver))
-    
+
             # Assert that it works with 1D data
             y_pred1 = clf.fit(X1, y).predict(X1)
             assert_array_equal(y_pred1, y, 'solver ' + str(solver))
-    
+
             # Test probability estimates
             y_proba_pred1 = clf.predict_proba(X1)
             assert_array_equal((y_proba_pred1[:, 1] > 0.5) + 1, y,
                                'solver ' + str(solver))
             y_log_proba_pred1 = clf.predict_log_proba(X1)
-            assert_array_almost_equal(np.exp(y_log_proba_pred1), y_proba_pred1, 8,
-                                      'solver ' + str(solver))
-    
+            assert_array_almost_equal(np.exp(y_log_proba_pred1), y_proba_pred1,
+                                      8, 'solver ' + str(solver))
+
             # Primarily test for commit 2f34950 -- "reuse" of priors
             y_pred3 = clf.fit(X, y3).predict(X)
             # LDA shouldn't be able to separate those
             assert_true(np.any(y_pred3 != y3), 'solver ' + str(solver))
+    # Test unknown solver
+    clf = lda.LDA(solver="dummy")
+    try:
+        y_pred = clf.fit(X, y).predict(X)
+    except ValueError:
+        assert_raises(ValueError)
 
 
 def test_lda_transform():
@@ -59,7 +70,8 @@ def test_lda_transform():
         try:
             X_transformed = clf.fit(X, y).transform(X)
         except NotImplementedError:
-            pass
+            assert_raises(NotImplementedError)
+            continue
         assert_equal(X_transformed.shape[1], 1, 'using solver ' + str(solver))
 
 
@@ -108,7 +120,7 @@ def test_lda_scaling():
     x = np.vstack((x1, x2)) * [1, 100, 10000]
     y = [-1] * n + [1] * n
 
-    for solver in solvers:
+    for solver in solvers[:-1]:  # don't test last unknown solver
         clf = lda.LDA(solver=solver)
         # should be able to separate the data perfectly
         assert_equal(clf.fit(x, y).score(x, y), 1.0,
