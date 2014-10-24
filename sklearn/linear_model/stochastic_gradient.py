@@ -124,6 +124,8 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                              "be in %(lrt)s"
                              % {"lr": self.learning_rate,
                                 "lrt": list(LEARNING_RATE_TYPES.keys())})
+        if self.rho0 > 1.0 or self.rho0 < 0.0:
+            raise ValueError("rho0 must be in the range (0, 1)")
 
         # raises ValueError if not registered
         self._get_penalty_type(self.penalty)
@@ -702,6 +704,16 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
+    eps0: double, optional
+        Only relevent for learning_rates "adagrad" and "adadelta". The
+        regularization added to sum_squared_gradients on each sample
+        encountered
+
+    rho0: double, optional
+        Only relevent for the learning_rate "adadelta". The decay rate for
+        adadelta. The accumulated gradient is multiplied by rho0 and the
+        squared gradient is multiplied by (1.0 - rho0)
+
     average : bool or int, optional
         When set to True, computes the averaged SGD weights and stores the
         result in the coef_ attribute. If set to an int greater than 1,
@@ -726,11 +738,11 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     >>> clf = linear_model.SGDClassifier()
     >>> clf.fit(X, Y)
     ... #doctest: +NORMALIZE_WHITESPACE
-    SGDClassifier(alpha=0.0001, average=False, class_weight=None, epsilon=0.1,
-            eta0=0.0, fit_intercept=True, l1_ratio=0.15,
+    SGDClassifier(alpha=0.0001, average=False, class_weight=None, eps0=0.1,
+            epsilon=0.1, eta0=0.0, fit_intercept=True, l1_ratio=0.15,
             learning_rate='optimal', loss='hinge', n_iter=5, n_jobs=1,
-            penalty='l2', power_t=0.5, random_state=None, shuffle=False,
-            verbose=0, warm_start=False)
+            penalty='l2', power_t=0.5, random_state=None, rho0=0.9,
+            shuffle=False, verbose=0, warm_start=False)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -1204,6 +1216,16 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
+    eps0: double, optional
+        Only relevent for learning_rates "adagrad" and "adadelta". The
+        regularization added to sum_squared_gradients on each sample
+        encountered
+
+    rho0: double, optional
+        Only relevent for the learning_rate "adadelta". The decay rate for
+        adadelta. The accumulated gradient is multiplied by rho0 and the
+        squared gradient is multiplied by (1.0 - rho0)
+
     average : bool or int, optional
         When set to True, computes the averaged SGD weights and stores the
         result in the coef_ attribute. If set to an int greater than 1,
@@ -1235,10 +1257,11 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
     >>> clf = linear_model.SGDRegressor()
     >>> clf.fit(X, y)
     ... #doctest: +NORMALIZE_WHITESPACE
-    SGDRegressor(alpha=0.0001, average=False, epsilon=0.1, eta0=0.01,
+    SGDRegressor(alpha=0.0001, average=False, eps0=0.1, epsilon=0.1, eta0=0.01,
                  fit_intercept=True, l1_ratio=0.15, learning_rate='invscaling',
                  loss='squared_loss', n_iter=5, penalty='l2', power_t=0.25,
-                 random_state=None, shuffle=False, verbose=0, warm_start=False)
+                 random_state=None, rho0=0.9, shuffle=False, verbose=0,
+                 warm_start=False)
 
     See also
     --------
