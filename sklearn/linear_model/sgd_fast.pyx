@@ -17,7 +17,6 @@ from time import time
 cimport cython
 from libc.math cimport exp, log, sqrt, pow, fabs
 cimport numpy as np
-from learning_rates cimport get_learning_rate
 from learning_rates cimport LearningRate, Optimal
 cdef extern from "sgd_fast_helpers.h":
     bint skl_isfinite(double) nogil
@@ -338,7 +337,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
               int n_iter, int fit_intercept,
               int verbose, bint shuffle, np.uint32_t seed,
               double weight_pos, double weight_neg,
-              char* learning_rate, double eta0,
+              LearningRate learning_rate, double eta0,
               double power_t,
               double t=1.0,
               double intercept_decay=1.0):
@@ -433,7 +432,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 int n_iter, int fit_intercept,
                 int verbose, bint shuffle, np.uint32_t seed,
                 double weight_pos, double weight_neg,
-                char* learning_rate, double eta0,
+                LearningRate learning_rate, double eta0,
                 double power_t,
                 double t=1.0,
                 double intercept_decay=1.0,
@@ -477,11 +476,14 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         The weight of the negative class.
     seed : np.uint32_t
         Seed of the pseudorandom number generator used to shuffle the data.
-    learning_rate : int
-        The learning rate:
+    learning_rate : LearningRate
+        A learning rate object:
         "constant" constant, eta = eta0
         "optimal" optimal, eta = 1.0/(t+t0)
         "invscling" inverse scaling, eta = eta0 / pow(t, power_t)
+        "adagrad" adagrad, eta = eta0 / (sum_squared_gradients + eps0)
+        "adadelta" adadelta, eta = sqrt((accudelta + self.eps0) /
+                    (agrad + self.eps0))
         "pa1" Passive Agressive-I, eta = min(alpha, loss/norm(x))
         "pa2" Passive Agressive-II, eta = 1.0 / (norm(x) + 0.5*alpha)
     eta0 : double
@@ -540,7 +542,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                int n_iter, int fit_intercept,
                int verbose, bint shuffle, np.uint32_t seed,
                double weight_pos, double weight_neg,
-               char* learning_rate, double eta0,
+               LearningRate learning_rate, double eta0,
                double power_t,
                double t=1.0,
                double intercept_decay=1.0,
@@ -575,7 +577,6 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef double norm = 0.0
     cdef double optimal_init = 1.0
 
-    cdef LearningRate lr = get_learning_rate(learning_rate)
 
     # q vector is only used for L1 regularization
     cdef np.ndarray[double, ndim = 1, mode = "c"] q = None
@@ -592,7 +593,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
 
     eta = eta0
 
-    if isinstance(lr, Optimal):
+    if isinstance(learning_rate, Optimal):
         typw = sqrt(1.0 / sqrt(alpha))
         # computing eta0, the initial learning rate
         initial_eta0 = typw / max(1.0, loss._dloss(-typw, 1.0))
@@ -619,8 +620,10 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 norm = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
                 current_loss = loss.loss(p, y)
                 with gil:
-                    eta = lr.eta(eta0, alpha, optimal_init + t, power_t)
-                    update = lr.update(gradient, current_loss, eta, norm, C, p, y, is_hinge)
+                    eta = learning_rate.eta(eta0, alpha,
+                                            optimal_init + t, power_t)
+                    update = learning_rate.update(gradient, current_loss,
+                                                  eta, norm, C, p, y, is_hinge)
 
                 if verbose > 0:
                     sumloss += current_loss

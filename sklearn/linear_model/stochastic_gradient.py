@@ -30,6 +30,13 @@ from .sgd_fast import SquaredLoss
 from .sgd_fast import Huber
 from .sgd_fast import EpsilonInsensitive
 from .sgd_fast import SquaredEpsilonInsensitive
+from .learning_rates import Constant
+from .learning_rates import Optimal
+from .learning_rates import InvScaling
+from .learning_rates import AdaGrad
+from .learning_rates import AdaDelta
+from .learning_rates import PA2
+from .learning_rates import PA1
 
 
 PENALTY_TYPES = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
@@ -41,8 +48,14 @@ intercept oscillation."""
 DEFAULT_EPSILON = 0.1
 """Default value of ``epsilon`` parameter. """
 
-LEARNING_RATE_TYPES = set(["constant", "optimal", "invscaling",
-                          "adagrad", "adadelta", "pa1", "pa2"])
+LEARNING_RATE_TYPES = {"constant": Constant,
+                       "optimal": Optimal,
+                       "invscaling": InvScaling,
+                       "adagrad": AdaGrad,
+                       "adadelta": AdaDelta,
+                       "pa1": PA1,
+                       "pa2": PA2,
+                       }
 
 class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
     """Base class for SGD classification and regression."""
@@ -72,6 +85,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         self._validate_params()
 
         self.coef_ = None
+        self.learning_rate_object = None
 
         if self.average > 0:
             self.standard_coef_ = None
@@ -107,7 +121,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                              "supported. The learning_rate must "
                              "be in %(lrt)s"
                              % {"lr": self.learning_rate,
-                                "lrt": LEARNING_RATE_TYPES})
+                                "lrt": list(LEARNING_RATE_TYPES.keys())})
 
         # raises ValueError if not registered
         self._get_penalty_type(self.penalty)
@@ -126,6 +140,10 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
             return loss_class(*args)
         except KeyError:
             raise ValueError("The loss %s is not supported. " % loss)
+
+    def _get_learning_rate(self, learning_rate):
+        """Get ``LearningRate`` object for str ``learning_rate``. """
+        return LEARNING_RATE_TYPES[learning_rate]()
 
     def _get_penalty_type(self, penalty):
         penalty = str(penalty).lower()
@@ -289,7 +307,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
                          dataset, n_iter, int(est.fit_intercept),
                          int(est.verbose), int(est.shuffle), seed,
                          pos_weight, neg_weight,
-                         learning_rate.encode(), est.eta0,
+                         learning_rate, est.eta0,
                          est.power_t, est.t_, intercept_decay)
 
     else:
@@ -301,7 +319,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
                                             n_iter, int(est.fit_intercept),
                                             int(est.verbose), int(est.shuffle),
                                             seed, pos_weight, neg_weight,
-                                            learning_rate.encode(), est.eta0,
+                                            learning_rate, est.eta0,
                                             est.power_t, est.t_,
                                             intercept_decay,
                                             est.average)
@@ -376,17 +394,21 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                                          coef_init, intercept_init)
 
         self.loss_function = self._get_loss_function(loss)
+        if self.learning_rate_object is None:
+            self.learning_rate_object = \
+                self._get_learning_rate(learning_rate)
+
         if self.t_ is None:
             self.t_ = 1.0
 
         # delegate to concrete training procedure
         if n_classes > 2:
             self._fit_multiclass(X, y, alpha=alpha, C=C,
-                                 learning_rate=learning_rate,
+                                 learning_rate=self.learning_rate_object,
                                  sample_weight=sample_weight, n_iter=n_iter)
         elif n_classes == 2:
             self._fit_binary(X, y, alpha=alpha, C=C,
-                             learning_rate=learning_rate,
+                             learning_rate=self.learning_rate_object,
                              sample_weight=sample_weight, n_iter=n_iter)
         else:
             raise ValueError("The number of class labels must be "
@@ -405,7 +427,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         # labels can be encoded as float, int, or string literals
         # np.unique sorts in asc order; largest class id is positive class
         classes = np.unique(y)
-
         if self.warm_start and self.coef_ is not None:
             if coef_init is None:
                 coef_init = self.coef_
@@ -423,6 +444,9 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
         # Clear iteration count for multiple call to fit.
         self.t_ = None
+
+        #clear learning rate object
+        self.learning_rate_object = None
 
         self._partial_fit(X, y, alpha, C, loss, learning_rate, self.n_iter,
                           classes, sample_weight, coef_init, intercept_init)
@@ -551,7 +575,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         self : returns an instance of self.
         """
         return self._fit(X, y, alpha=self.alpha, C=1.0,
-                         loss=self.loss, learning_rate=self.learning_rate,
+                         loss=self.loss,
+                         learning_rate=self.learning_rate,
                          coef_init=coef_init, intercept_init=intercept_init,
                          sample_weight=sample_weight)
 
@@ -639,11 +664,16 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         multi-class problems) computation. -1 means 'all CPUs'. Defaults
         to 1.
 
-    learning_rate : string, optional
+    learning_rate: string, optional
         The learning rate:
         constant: eta = eta0
         optimal: eta = 1.0 / (t + t0) [default]
         invscaling: eta = eta0 / pow(t, power_t)
+        adagrad: eta = eta0 / (sum_squared_gradients + eps0)
+        adadelta: eta = sqrt((accudelta + self.eps0) /
+                    (agrad + self.eps0))
+        pa1: eta = min(alpha, loss/norm(x))
+        pa2: eta = 1.0 / (norm(x) + 0.5*alpha)
 
     eta0 : double
         The initial learning rate for the 'constant' or 'invscaling'
@@ -881,7 +911,11 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                                                dtype=np.float64,
                                                order="C")
 
-        self._fit_regressor(X, y, alpha, C, loss, learning_rate,
+        if self.learning_rate_object is None:
+            self.learning_rate_object = \
+                self._get_learning_rate(learning_rate)
+
+        self._fit_regressor(X, y, alpha, C, loss, self.learning_rate_object,
                             sample_weight, n_iter)
 
         return self
@@ -907,8 +941,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         """
         return self._partial_fit(X, y, self.alpha, C=1.0,
                                  loss=self.loss,
-                                 learning_rate=self.learning_rate, n_iter=1,
-                                 sample_weight=sample_weight,
+                                 learning_rate=self.learning_rate,
+                                 n_iter=1, sample_weight=sample_weight,
                                  coef_init=None, intercept_init=None)
 
     def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
@@ -930,6 +964,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
         # Clear iteration count for multiple call to fit.
         self.t_ = None
+
+        self.learning_rate_object = None
 
         return self._partial_fit(X, y, alpha, C, loss, learning_rate,
                                  self.n_iter, sample_weight,
@@ -961,7 +997,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         self : returns an instance of self.
         """
         return self._fit(X, y, alpha=self.alpha, C=1.0,
-                         loss=self.loss, learning_rate=self.learning_rate,
+                         loss=self.loss,
+                         learning_rate=self.learning_rate,
                          coef_init=coef_init,
                          intercept_init=intercept_init,
                          sample_weight=sample_weight)
@@ -1031,7 +1068,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                             int(self.shuffle),
                             seed,
                             1.0, 1.0,
-                            learning_rate.encode(),
+                            learning_rate,
                             self.eta0, self.power_t, self.t_,
                             intercept_decay, self.average)
 
@@ -1059,9 +1096,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                           int(self.fit_intercept),
                           int(self.verbose),
                           int(self.shuffle),
-                          seed,
-                          1.0, 1.0,
-                          learning_rate.encode(),
+                          seed, 1.0, 1.0, learning_rate,
                           self.eta0, self.power_t, self.t_,
                           intercept_decay)
 
@@ -1140,11 +1175,16 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
         For epsilon-insensitive, any differences between the current prediction
         and the correct label are ignored if they are less than this threshold.
 
-    learning_rate : string, optional
+    learning_rate: string, optional
         The learning rate:
         constant: eta = eta0
-        optimal: eta = 1.0/(alpha * t)
-        invscaling: eta = eta0 / pow(t, power_t) [default]
+        optimal: eta = 1.0 / (t + t0) [default]
+        invscaling: eta = eta0 / pow(t, power_t)
+        adagrad: eta = eta0 / (sum_squared_gradients + eps0)
+        adadelta: eta = sqrt((accudelta + self.eps0) /
+                    (agrad + self.eps0))
+        pa1: eta = min(alpha, loss/norm(x))
+        pa2: eta = 1.0 / (norm(x) + 0.5*alpha)
 
     eta0 : double, optional
         The initial learning rate [default 0.01].

@@ -1,5 +1,3 @@
-cdef LearningRate get_learning_rate(char* learning_rate)
-
 cdef class LearningRate(object):
     cdef double eta(self, double eta0, double alpha, double t, double power_t)
     cdef double update(self, double gradient, double loss, double eta,

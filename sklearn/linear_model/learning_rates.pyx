@@ -1,35 +1,9 @@
-cdef extern from "stdlib.h":
-    int strcmp(char*, char*)
 cdef extern from "math.h":
     double pow(double, double) nogil
     double fmin(double, double) nogil
     double sqrt(double) nogil
 
 cimport cython
-cdef LearningRate adagrad
-cdef LearningRate  adadelta
-
-cdef LearningRate get_learning_rate(char* learning_rate):
-    if strcmp(learning_rate, "constant") == 0:
-        return Constant()
-    elif strcmp(learning_rate, "optimal") == 0:
-        return Optimal()
-    elif strcmp(learning_rate, "invscaling") == 0:
-        return InvScaling()
-    elif strcmp(learning_rate, "adagrad") == 0:
-        global adagrad
-        if not adagrad:
-            adagrad = AdaGrad()
-        return adagrad
-    elif strcmp(learning_rate, "adadelta") == 0:
-        global adadelta
-        if not adadelta:
-            adadelta = AdaDelta()
-        return adadelta
-    elif strcmp(learning_rate, "pa1") == 0:
-        return PA1()
-    elif strcmp(learning_rate, "pa2") == 0:
-        return PA2()
 
 cdef class LearningRate:
     cdef double eta(self, double eta0, double alpha, double t, double power_t):
@@ -72,8 +46,9 @@ cdef class AdaGrad(LearningRate):
 cdef class AdaDelta(LearningRate):
     def __cinit__(self):
         self.sum_squared_grad = 0
-        self.rho0 = 0.8
-        self.eps0 = 1.E-7
+        self.rho0 = 0.95
+        # self.eps0 = 1.E-7
+        self.eps0 = .1
         self.accugrad = 0
         self.accudelta = 0
 
@@ -98,11 +73,11 @@ cdef class PA(LearningRate):
         if is_hinge:
             # classification
             return y
-        elif y - p < 0:
+        elif y - p < 0.0:
             # regression
-            return -1
+            return -1.0
         else:
-            return 1
+            return 1.0
 
 cdef class PA1(PA):
     cdef double eta(self, double eta0, double alpha, double t, double power_t):
