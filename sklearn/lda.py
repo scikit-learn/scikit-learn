@@ -44,7 +44,7 @@ def _cov(X, alpha=None):
         Estimated covariance matrix
     """
     alpha = "empirical" if alpha is None else alpha
-    if isinstance(alpha, str):    
+    if isinstance(alpha, str):
         if alpha == 'ledoit_wolf':
             # standardize features
             sc = StandardScaler()
@@ -65,7 +65,7 @@ def _cov(X, alpha=None):
 
 def _means(X, y):
     """Compute class means
-    
+
     Parameters
     ----------
     X : array-like, shape = [n_samples, n_features]
@@ -85,7 +85,7 @@ def _means(X, y):
 
 def _means_cov(X, y, alpha=None):
     """Compute class means and covariance matrix
-    
+
     Parameters
     ----------
     X : array-like, shape = [n_samples, n_features]
@@ -93,7 +93,7 @@ def _means_cov(X, y, alpha=None):
 
     y : array-like, shape = [n_samples] or [n_samples, n_targets]
         Target values
-        
+
     alpha : string or float, optional
         Shrinkage parameter, possible values:
           - None: no shrinkage (default)
@@ -190,15 +190,15 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
     sklearn.qda.QDA: Quadratic discriminant analysis
     """
 
-    def __init__(self, solver='svd', alpha=None, priors=None, n_components=None,
-                 store_covariance=False):
+    def __init__(self, solver='svd', alpha=None, priors=None,
+                 n_components=None, store_covariance=False):
         self.solver = solver
         self.alpha = alpha
         self.priors = priors
         self.n_components = n_components
         self.store_covariance = store_covariance
-        
-    def _solve_lsqr(self, X, y, alpha):
+
+    def _solve_lsqr(self, X, y, alpha, rcond=1e-11):
         """Least squares solver
 
         Parameters
@@ -212,16 +212,16 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         alpha : string or float, optional
             Shrinkage parameter, possible values:
               - None: no shrinkage (default)
-              - 'ledoit_wolf': shrunk covariance matrix using the Ledoit-Wolf lemma
+              - 'ledoit_wolf': shrinkage using the Ledoit-Wolf lemma
               - float between 0 and 1: fixed shrinkage constant
         """
         self.means_, self.covariance_ = _means_cov(X, y, alpha)
         self.xbar_ = np.dot(self.priors_, self.means_)
-    
+
         # TODO: weight covariances with priors?
         means = self.means_ - self.xbar_
-    
-        self.coef_ = np.linalg.lstsq(self.covariance_, means.T, rcond=1e-11)[0].T
+
+        self.coef_ = np.linalg.lstsq(self.covariance_, means.T, rcond)[0].T
         self.intercept_ = (-0.5 * np.diag(np.dot(means, self.coef_.T))
                            + np.log(self.priors_))
 
@@ -239,27 +239,26 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         alpha : string or float, optional
             Shrinkage parameter, possible values:
               - None: no shrinkage (default)
-              - 'ledoit_wolf': shrunk covariance matrix using the Ledoit-Wolf lemma
+              - 'ledoit_wolf': shrinkage using the Ledoit-Wolf lemma
               - float between 0 and 1: fixed shrinkage constant
         """
         self.means_, self.covariance_ = _means_cov(X, y, alpha)
         self.xbar_ = np.dot(self.priors_, self.means_)
 
-        # TODO: weight covariances with priors?
         St = _cov(X, alpha)
         Sb = St - self.covariance_
         means = self.means_ - self.xbar_
 
         e, v = linalg.eigh(Sb, self.covariance_)
-        idx = e.argsort()[::-1]
-        #self.scalings_ = np.atleast_2d(v[:, idx[n_classes - 1]]).T
-        self.scalings_ = v        
-        
+        # idx = e.argsort()[::-1]
+        # self.scalings_ = np.atleast_2d(v[:, idx[n_classes - 1]]).T
+        self.scalings_ = v
+
         coef = np.dot(means, self.scalings_)
         self.intercept_ = (-0.5 * np.diag(np.dot(means, coef.T))
                            + np.log(self.priors_))
         self.coef_ = np.dot(coef, self.scalings_.T)
-    
+
     def _solve_svd(self, X, y, tol=1.0e-4):
         """SVD solver
 
@@ -287,26 +286,26 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             Xc.append(Xg - self.means_[idx])
 
         self.xbar_ = np.dot(self.priors_, self.means_)
-    
+
         Xc = np.concatenate(Xc, axis=0)
-    
+
         # 1) within (univariate) scaling by with classes std-dev
         std = Xc.std(axis=0)
         # avoid division by zero in normalization
         std[std == 0] = 1.
         fac = 1. / (n_samples - n_classes)
-    
+
         # 2) Within variance scaling
         X = np.sqrt(fac) * (Xc / std)
         # SVD of centered (within)scaled data
         U, S, V = linalg.svd(X, full_matrices=False)
-    
+
         rank = np.sum(S > tol)
         if rank < n_features:
             warnings.warn("Variables are collinear.")
         # Scaling of within covariance is: V' 1/S
         scalings = (V[:rank] / std).T / S[:rank]
-    
+
         # 3) Between variance scaling
         # Scale weighted centers
         X = np.dot(((np.sqrt((n_samples * self.priors_) * fac)) *
@@ -315,7 +314,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         # Use SVD to find projection in the space spanned by the
         # (n_classes) centers
         _, S, V = linalg.svd(X, full_matrices=0)
-    
+
         rank = np.sum(S > tol * S[0])
         self.scalings_ = np.dot(scalings, V.T[:, :rank])
         coef = np.dot(self.means_ - self.xbar_, self.scalings_)
@@ -392,10 +391,9 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         X_new : array, shape = [n_samples, n_components]
         """
         X = check_array(X)
-        # center and scale data
         if self.solver == 'lsqr' or self.solver == 'eigen':
-            raise NotImplementedError('transform not implemented for this solver')
-        X_new = np.dot(X - self.xbar_, self.scalings_)
+            raise NotImplementedError('transform not implemented')
+        X_new = np.dot(X - self.xbar_, self.scalings_)  # center and scale data
         n_components = X.shape[1] if self.n_components is None \
             else self.n_components
         return X_new[:, :n_components]
