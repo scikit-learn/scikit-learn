@@ -16,6 +16,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn.cluster import SpectralClustering, spectral_clustering
 from sklearn.cluster.spectral import spectral_embedding
@@ -69,6 +70,7 @@ def test_spectral_amg_mode():
     S = sparse.coo_matrix(S)
     try:
         from pyamg import smoothed_aggregation_solver
+
         amg_loaded = True
     except ImportError:
         amg_loaded = False
@@ -137,14 +139,10 @@ def test_affinities():
                       centers=[[1, 1], [-1, -1]], cluster_std=0.01
                       )
     # nearest neighbors affinity
-    with warnings.catch_warnings(record=True) as warning_list:
-        warnings.simplefilter("always", UserWarning)
-        sp = SpectralClustering(n_clusters=2, affinity='nearest_neighbors',
-                                random_state=0)
-        labels = sp.fit(X).labels_
-        assert_equal(adjusted_rand_score(y, labels), 1)
-    assert_true(re.search(r'\bnot fully connected\b',
-                          str(warning_list[0].message)))
+    sp = SpectralClustering(n_clusters=2, affinity='nearest_neighbors',
+                            random_state=0)
+    assert_warns_message(UserWarning, 'not fully connected', sp.fit, X)
+    assert_equal(adjusted_rand_score(y, sp.labels_), 1)
 
     sp = SpectralClustering(n_clusters=2, gamma=2, random_state=0)
     labels = sp.fit(X).labels_

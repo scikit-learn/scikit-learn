@@ -681,3 +681,9 @@ def test_raises_value_error_if_solver_not_supported():
         ridge_regression(X, y, alpha=1., solver=wrong_solver)
 
     assert_raise_message(exception, message, func)
+
+
+def test_sparse_cg_max_iter():
+    reg = Ridge(solver="sparse_cg", max_iter=1)
+    reg.fit(X_diabetes, y_diabetes)
+    assert_equal(reg.coef_.shape[0], X_diabetes.shape[1])

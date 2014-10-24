@@ -36,6 +36,10 @@ New features
      algorithm that supports out-of-core learning with a ``partial_fit``
      method. By `Kyle Kastner`_.
 
+   - Averaged SGD for :class:`SGDClassifier <linear_model.SGDClassifier>`
+     and :class:`SGDRegressor <linear_model.SGDRegressor>` By
+     `Danny Sullivan`_.
+
 
 Enhancements
 ............
@@ -63,12 +67,25 @@ Enhancements
    - Add ``multi_class="multinomial"`` option in
      :class:`linear_model.LogisticRegression` to implement a Logistic
      Regression solver that minimizes the cross-entropy or multinomial loss
-     instead of the default One-vs-Rest setting. By `Lars Buitinck`_ and
-     `Manoj Kumar`_.
+     instead of the default One-vs-Rest setting. Supports `lbfgs` and
+     `newton-cg` solvers. By `Lars Buitinck`_ and `Manoj Kumar`_. Solver option
+     `newton-cg` by Simon Wu.
 
    - ``DictVectorizer`` can now perform ``fit_transform`` on an iterable in a
      single pass, when giving the option ``sort=False``. By Dan Blanchard.
 
+   - :class:`GridSearchCV` and :class:`RandomizedSearchCV` can now be
+     configured to work with estimators that may fail and raise errors on
+     individual folds. This option is controlled by the `error_score`
+     parameter. This does not affect errors raised on re-fit. By
+	 `Michal Romaniuk`_.
+
+   - Add ``digits`` parameter to `metrics.classification_report` to allow
+     report to show different precision of floating point numbers. By
+     `Ian Gilmore`_.
+
+   - Add a quantile prediction strategy to the :class:`dummy.DummyRegressor`.
+     By `Aaron Staple`_.
 
 Documentation improvements
 ..........................
@@ -98,6 +115,13 @@ Bug fixes
       (If you cross-validated over ``gamma``, it probably doesn't matter
       too much.) By `Dougal Sutherland`_.
 
+    - Pipeline object delegate the ``classes_`` attribute to the underlying
+      estimator. It allows for instance to make bagging of a pipeline object.
+      By `Arnaud Joly`_
+
+    - :class:`neighbors.NearestCentroid` now uses the median as the centroid
+      when metric is set to ``manhattan``. It was using the mean before.
+      By `Manoj Kumar`_
 
 API changes summary
 -------------------
@@ -126,6 +150,17 @@ API changes summary
       but previous versions accidentally returned only the positive
       probability. Fixed by Will Lamond and `Lars Buitinck`_.
 
+    - Change default value of precompute in :class:`ElasticNet` and :class:`Lasso`
+      to False. Setting precompute to "auto" was found to be slower when
+      n_samples > n_features since the computation of the Gram matrix is
+      computationally expensive and outweighs the benefit of fitting the Gram
+      for just one alpha.
+      ``precompute="auto"`` is now deprecated and will be removed in 0.18
+      By `Manoj Kumar`_.
+
+    - Expose ``positive`` option in :func:`linear_model.enet_path` and
+      :func:`linear_model.enet_path` which constrains coefficients to be
+      positive. By `Manoj Kumar`_.
 
 .. _changes_0_15_2:
 
@@ -2985,3 +3020,9 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Jatin Shah: http://jatinshah.org/
 
 .. _Dougal Sutherland: https://github.com/dougalsutherland
+
+.. _Michal Romaniuk: https://github.com/romaniukm
+
+.. _Ian Gilmore: https://github.com/agileminor
+
+.. _Aaron Staple: https://github.com/staple

@@ -184,7 +184,7 @@ for another implementation::
     >>> clf = linear_model.Lasso(alpha = 0.1)
     >>> clf.fit([[0, 0], [1, 1]], [0, 1])
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-       normalize=False, positive=False, precompute='auto', random_state=None,
+       normalize=False, positive=False, precompute=False, random_state=None,
        selection='cyclic', tol=0.0001, warm_start=False)
     >>> clf.predict([[1, 1]])
     array([ 0.8])
@@ -688,11 +688,11 @@ so separate binary classifiers are trained for all classes.
 This happens under the hood, so :class:`LogisticRegression` instances
 using this solver behave as multiclass classifiers.
 
-Setting `multi_class` to "multinomial" with the "lbfgs" solver
+Setting `multi_class` to "multinomial" with the "lbfgs" or "newton-cg" solver
 in :class:`LogisticRegression` learns a true multinomial logistic
 regression model, which means that its probability estimates should
 be better calibrated than the default "one-vs-rest" setting.
-L-BFGS cannot optimize L1-penalized models, though,
+L-BFGS and newton-cg cannot optimize L1-penalized models, though,
 so the "multinomial" setting does not learn sparse models.
 
 .. topic:: Examples:

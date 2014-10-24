@@ -599,7 +599,7 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     generator = check_random_state(random_state)
     # so as not to have the first point = last point, we add one and then
     # remove it.
-    linspace = np.linspace(0, 2 * np.pi, n_samples / 2 + 1)[:-1]
+    linspace = np.linspace(0, 2 * np.pi, n_samples // 2 + 1)[:-1]
     outer_circ_x = np.cos(linspace)
     outer_circ_y = np.sin(linspace)
     inner_circ_x = outer_circ_x * factor
@@ -644,7 +644,7 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
         The integer labels (0 or 1) for class membership of each sample.
     """
 
-    n_samples_out = n_samples / 2
+    n_samples_out = n_samples // 2
     n_samples_in = n_samples - n_samples_out
 
     generator = check_random_state(random_state)

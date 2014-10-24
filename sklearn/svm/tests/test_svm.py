@@ -46,9 +46,7 @@ def test_libsvm_parameters():
 
 
 def test_libsvm_iris():
-    """
-    Check consistency on dataset iris.
-    """
+    """Check consistency on dataset iris."""
 
     # shuffle the dataset so that labels are not ordered
     for k in ('linear', 'rbf'):
@@ -72,6 +70,15 @@ def test_libsvm_iris():
                                        kernel='linear',
                                        random_seed=0)
     assert_greater(np.mean(pred == iris.target), .95)
+
+    # If random_seed >= 0, the libsvm rng is seeded (by calling `srand`), hence
+    # we should get deteriministic results (assuming that there is no other
+    # thread calling this wrapper calling `srand` concurrently).
+    pred2 = svm.libsvm.cross_validation(iris.data,
+                                       iris.target.astype(np.float64), 5,
+                                       kernel='linear',
+                                       random_seed=0)
+    assert_array_equal(pred, pred2)
 
 
 def test_single_sample_1d():
@@ -690,6 +697,18 @@ def test_linear_svc_convergence_warnings():
     lsvc = svm.LinearSVC(max_iter=2, verbose=1)
     assert_warns(ConvergenceWarning, lsvc.fit, X, Y)
     assert_equal(lsvc.n_iter_, 2)
+
+
+def test_svr_coef_sign():
+    """Test that SVR(kernel="linear") has coef_ with the right sign."""
+    # Non-regression test for #2933.
+    X = np.random.RandomState(21).randn(10, 3)
+    y = np.random.RandomState(12).randn(10)
+
+    for klass in [svm.SVR, svm.NuSVR]:
+        svr = klass(kernel="linear").fit(X, y)
+        assert_array_almost_equal(svr.predict(X).reshape(-1, 1),
+                                  np.dot(X, svr.coef_.T) + svr.intercept_)
 
 
 if __name__ == '__main__':

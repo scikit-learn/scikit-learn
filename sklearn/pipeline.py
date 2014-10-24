@@ -200,6 +200,10 @@ class Pipeline(BaseEstimator):
         return self.steps[-1][-1].score(Xt, y)
 
     @property
+    def classes_(self):
+        return self.steps[-1][-1].classes_
+
+    @property
     def _pairwise(self):
         # check if first estimator expects pairwise input
         return getattr(self.steps[0][1], '_pairwise', False)

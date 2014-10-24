@@ -21,7 +21,7 @@ from sklearn.utils.testing import ignore_warnings
 
 from sklearn.linear_model.coordinate_descent import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
-    MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path
+    MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path, enet_path
 from sklearn.linear_model import LassoLarsCV, lars_path
 
 
@@ -560,6 +560,29 @@ def test_random_descent():
     # Raise error when selection is not in cyclic or random.
     clf_random = ElasticNet(selection='invalid')
     assert_raises(ValueError, clf_random.fit, X, y)
+
+
+def test_deprection_precompute_enet():
+    """
+    Test that setting precompute="auto" gives a Deprecation Warning.
+    """
+
+    X, y, _, _ = build_dataset(n_samples=20, n_features=10)
+    clf = ElasticNet(precompute="auto")
+    assert_warns(DeprecationWarning, clf.fit, X, y)
+    clf = Lasso(precompute="auto")
+    assert_warns(DeprecationWarning, clf.fit, X, y)
+
+
+def test_enet_path_positive():
+    """
+    Test that the coefs returned by positive=True in enet_path are positive
+    """
+
+    X, y, _, _ = build_dataset(n_samples=50, n_features=50)
+    for path in [enet_path, lasso_path]:
+        pos_path_coef = path(X, y, positive=True)[1]
+        assert_true(np.all(pos_path_coef >= 0))
 
 
 if __name__ == '__main__':

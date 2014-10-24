@@ -15,7 +15,7 @@ from scipy import sparse
 from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
 from .base import center_data, sparse_center_data
-from ..utils import check_array
+from ..utils import check_array, check_X_y
 from ..utils.validation import check_random_state
 from ..cross_validation import _check_cv as check_cv
 from ..externals.joblib import Parallel, delayed
@@ -107,7 +107,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                precompute='auto', Xy=None, fit_intercept=None,
                normalize=None, copy_X=True, coef_init=None,
                verbose=False, return_models=False, return_n_iter=False,
-               **params):
+               positive=False, **params):
     """Compute Lasso path with coordinate descent
 
     The Lasso optimization function varies for mono and multi-outputs.
@@ -181,6 +181,9 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     params : kwargs
         keyword arguments passed to the coordinate descent solver.
+
+    positive : bool, default False
+        If set to True, forces coefficients to be positive.
 
     Returns
     -------
@@ -266,14 +269,15 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                      alphas=alphas, precompute=precompute, Xy=Xy,
                      fit_intercept=fit_intercept, normalize=normalize,
                      copy_X=copy_X, coef_init=coef_init, verbose=verbose,
-                     return_models=return_models, **params)
+                     return_models=return_models, positive=positive,
+                     **params)
 
 
 def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, fit_intercept=True,
               normalize=False, copy_X=True, coef_init=None,
               verbose=False, return_models=False, return_n_iter=False,
-              **params):
+              positive=False, **params):
     """Compute elastic net path with coordinate descent
 
     The elastic net optimization function varies for mono and multi-outputs.
@@ -358,6 +362,9 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     return_n_iter : bool
         whether to return the number of iterations or not.
+
+    positive : bool, default False
+        If set to True, forces coefficients to be positive.
 
     Returns
     -------
@@ -459,7 +466,6 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     n_alphas = len(alphas)
     tol = params.get('tol', 1e-4)
-    positive = params.get('positive', False)
     max_iter = params.get('max_iter', 1000)
     dual_gaps = np.empty(n_alphas)
     n_iters = []
@@ -604,6 +610,8 @@ class ElasticNet(LinearModel, RegressorMixin):
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument. For sparse input
         this option is always ``True`` to preserve sparsity.
+        WARNING : The ``'auto'`` option is deprecated and will
+        be removed in 0.18.
 
     max_iter : int, optional
         The maximum number of iterations
@@ -665,7 +673,7 @@ class ElasticNet(LinearModel, RegressorMixin):
     path = staticmethod(enet_path)
 
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
-                 normalize=False, precompute='auto', max_iter=1000,
+                 normalize=False, precompute=False, max_iter=1000,
                  copy_X=True, tol=1e-4, warm_start=False, positive=False,
                  random_state=None, selection='cyclic'):
         self.alpha = alpha
@@ -708,10 +716,16 @@ class ElasticNet(LinearModel, RegressorMixin):
             warnings.warn("With alpha=0, this algorithm does not converge "
                           "well. You are advised to use the LinearRegression "
                           "estimator", stacklevel=2)
-        X = check_array(X, 'csc', dtype=np.float64, order='F', copy=self.copy_X
-                        and self.fit_intercept)
-        # From now on X can be touched inplace
-        y = np.asarray(y, dtype=np.float64)
+
+        if self.precompute == 'auto':
+            warnings.warn("Setting precompute to 'auto', was found to be "
+                          "slower even when n_samples > n_features. Hence "
+                          "it will be removed in 0.18.",
+                          DeprecationWarning, stacklevel=2)
+
+        X, y = check_X_y(X, y, accept_sparse='csc', dtype=np.float64,
+                         order='F', copy=self.copy_X and self.fit_intercept,
+                         multi_output=True)
 
         X, y, X_mean, y_mean, X_std, precompute, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,
@@ -830,6 +844,8 @@ class Lasso(ElasticNet):
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument. For sparse input
         this option is always ``True`` to preserve sparsity.
+        WARNING : The ``'auto'`` option is deprecated and will
+        be removed in 0.18.
 
     max_iter : int, optional
         The maximum number of iterations
@@ -880,7 +896,7 @@ class Lasso(ElasticNet):
     >>> clf = linear_model.Lasso(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-       normalize=False, positive=False, precompute='auto', random_state=None,
+       normalize=False, positive=False, precompute=False, random_state=None,
        selection='cyclic', tol=0.0001, warm_start=False)
     >>> print(clf.coef_)
     [ 0.85  0.  ]
@@ -906,7 +922,7 @@ class Lasso(ElasticNet):
     path = staticmethod(enet_path)
 
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
-                 precompute='auto', copy_X=True, max_iter=1000,
+                 precompute=False, copy_X=True, max_iter=1000,
                  tol=1e-4, warm_start=False, positive=False,
                  random_state=None, selection='cyclic'):
         super(Lasso, self).__init__(
@@ -1207,6 +1223,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         model.alpha = best_alpha
         model.l1_ratio = best_l1_ratio
         model.copy_X = copy_X
+        model.precompute = False
         model.fit(X, y)
         if not hasattr(self, 'l1_ratio'):
             del self.l1_ratio_
