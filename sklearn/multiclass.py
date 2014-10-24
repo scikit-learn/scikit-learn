@@ -632,11 +632,9 @@ def _iter_hamming_code_book(n_classes, random_state, code_size, max_iter):
         tmp_code_book = (p[:, None] + max_code_size+1 &
                          (1 << np.arange(n_classes-1, -1, -1)) > 0
                         ).astype(int).T
-        # The code distance is sum of hamming distances between columns and
-        # rows.
+        # The code distance is sum of hamming distances between rows.
         tmp_code_distance = np.sum(pairwise_distances(
-            tmp_code_book, metric='hamming')) + np.sum(pairwise_distances(
-            tmp_code_book.T, metric='hamming'))
+            tmp_code_book, metric='hamming'))
         if tmp_code_distance > best_code_distance:
             best_code_distance = tmp_code_distance
             best_code_book = tmp_code_book
