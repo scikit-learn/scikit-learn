@@ -19,7 +19,7 @@ import sys
 import gzip
 import posixpath
 import subprocess
-from textwrap import dedent
+import warnings
 
 
 # Try Python 2 first, otherwise load from Python 3
@@ -513,9 +513,9 @@ Examples
     # better than nested.
     seen_backrefs = set()
     generate_dir_rst('.', fhindex, example_dir, root_dir, plot_gallery, seen_backrefs)
-    for dir in sorted(os.listdir(example_dir)):
-        if os.path.isdir(os.path.join(example_dir, dir)):
-            generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery, seen_backrefs)
+    for directory in sorted(os.listdir(example_dir)):
+        if os.path.isdir(os.path.join(example_dir, directory)):
+            generate_dir_rst(directory, fhindex, example_dir, root_dir, plot_gallery, seen_backrefs)
     fhindex.flush()
 
 
@@ -535,7 +535,7 @@ def extract_line_count(filename, target_dir):
         tok_type = token.tok_name[tok_type]
         if tok_type in ('NEWLINE', 'COMMENT', 'NL', 'INDENT', 'DEDENT'):
             continue
-        elif ((tok_type == 'STRING') and check_docstring):
+        elif (tok_type == 'STRING') and check_docstring:
             erow_docstring = erow
             check_docstring = False
     return erow_docstring+1+start_row, erow+1+start_row
@@ -597,12 +597,12 @@ def _thumbnail_div(subdir, full_dir, fname, snippet):
     return ''.join(out)
 
 
-def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery, seen_backrefs):
+def generate_dir_rst(directory, fhindex, example_dir, root_dir, plot_gallery, seen_backrefs):
     """ Generate the rst file for an example directory.
     """
-    if not dir == '.':
-        target_dir = os.path.join(root_dir, dir)
-        src_dir = os.path.join(example_dir, dir)
+    if not directory == '.':
+        target_dir = os.path.join(root_dir, directory)
+        src_dir = os.path.join(example_dir, directory)
     else:
         target_dir = root_dir
         src_dir = example_dir
@@ -621,14 +621,14 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery, seen_bac
         os.makedirs(target_dir)
     sorted_listdir = line_count_sort(os.listdir(src_dir),
                                      src_dir)
-    if not os.path.exists(os.path.join(dir, 'images', 'thumb')):
-        os.makedirs(os.path.join(dir, 'images', 'thumb'))
+    if not os.path.exists(os.path.join(directory, 'images', 'thumb')):
+        os.makedirs(os.path.join(directory, 'images', 'thumb'))
     for fname in sorted_listdir:
         if fname.endswith('py'):
             backrefs = generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery)
             new_fname = os.path.join(src_dir, fname)
             _, snippet, _ = extract_docstring(new_fname, True)
-            fhindex.write(_thumbnail_div(dir, dir, fname, snippet))
+            fhindex.write(_thumbnail_div(directory, directory, fname, snippet))
             fhindex.write("""
 
 .. toctree::
@@ -636,7 +636,7 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery, seen_bac
 
    %s/%s
 
-""" % (dir, fname[:-3]))
+""" % (directory, fname[:-3]))
             for backref in backrefs:
                 include_path = os.path.join(root_dir, '../modules/generated/%s.examples' % backref)
                 seen = backref in seen_backrefs
@@ -648,8 +648,8 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery, seen_bac
                         print('-----------------%s--' % ('-' * len(backref)),
                               file=ex_file)
                         print(file=ex_file)
-                    rel_dir = os.path.join('../../auto_examples', dir)
-                    ex_file.write(_thumbnail_div(dir, rel_dir, fname, snippet))
+                    rel_dir = os.path.join('../../auto_examples', directory)
+                    ex_file.write(_thumbnail_div(directory, rel_dir, fname, snippet))
                     seen_backrefs.add(backref)
     fhindex.write("""
 .. raw:: html
@@ -828,8 +828,6 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
                              'time_%s.txt' % base_image_name)
     thumb_file = os.path.join(thumb_dir, fname[:-3] + '.png')
     time_elapsed = 0
-    time_m = 0
-    time_s = 0
     if plot_gallery and fname.startswith('plot'):
         # generate the plot as png image if file name
         # starts with plot and if it is more recent than an
