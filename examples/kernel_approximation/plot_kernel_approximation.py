@@ -8,7 +8,7 @@ of an RBF kernel.
 
 .. currentmodule:: sklearn.kernel_approximation
 
-It shows how to use :class:`RBFSampler` and :class:`Nystroem` to
+It shows how to use :class:`Fastfood`, :class:`RBFSampler` and :class:`Nystroem` to
 approximate the feature map of an RBF kernel for classification with an SVM on
 the digits dataset. Results using a linear SVM in the original space, a linear
 SVM using the approximate mappings and using a kernelized SVM are compared.
@@ -37,7 +37,7 @@ a datapoint (represented as a dot) does not necessarily be classified
 into the region it is lying in, since it will not lie on the plane
 that the first two principal components span.
 
-The usage of :class:`RBFSampler` and :class:`Nystroem` is described in detail
+The usage of :class:`Fastfood`, :class:`RBFSampler` and :class:`Nystroem` is described in detail
 in :ref:`kernel_approximation`.
 
 """
@@ -55,7 +55,7 @@ from time import time
 # Import datasets, classifiers and performance metrics
 from sklearn import datasets, svm, pipeline
 from sklearn.kernel_approximation import (RBFSampler,
-                                          Nystroem)
+                                          Nystroem, Fastfood)
 from sklearn.decomposition import PCA
 
 # The digits dataset
@@ -75,14 +75,22 @@ data_train, targets_train = data[:n_samples / 2], digits.target[:n_samples / 2]
 data_test, targets_test = data[n_samples / 2:], digits.target[n_samples / 2:]
 #data_test = scaler.transform(data_test)
 
+# fix model parameters:
+GAMMA = .2
+SIGMA = np.sqrt(1 / (2 * GAMMA))
+
 # Create a classifier: a support vector classifier
-kernel_svm = svm.SVC(gamma=.2)
+kernel_svm = svm.SVC(gamma=GAMMA)
 linear_svm = svm.LinearSVC()
 
 # create pipeline from kernel approximation
 # and linear svm
-feature_map_fourier = RBFSampler(gamma=.2, random_state=1)
-feature_map_nystroem = Nystroem(gamma=.2, random_state=1)
+feature_map_fastfood = Fastfood(sigma=SIGMA, random_state=1)
+feature_map_fourier = RBFSampler(gamma=GAMMA, random_state=1)
+feature_map_nystroem = Nystroem(gamma=GAMMA, random_state=1)
+fastfood_approx_svm = pipeline.Pipeline([("feature_map", feature_map_fastfood),
+                                        ("svm", svm.LinearSVC())])
+
 fourier_approx_svm = pipeline.Pipeline([("feature_map", feature_map_fourier),
                                         ("svm", svm.LinearSVC())])
 
@@ -101,15 +109,22 @@ linear_svm.fit(data_train, targets_train)
 linear_svm_score = linear_svm.score(data_test, targets_test)
 linear_svm_time = time() - linear_svm_time
 
-sample_sizes = 30 * np.arange(1, 10)
+sample_sizes = 30 * np.arange(1, 14)
+fastfood_scores = []
 fourier_scores = []
 nystroem_scores = []
+fastfood_times = []
 fourier_times = []
 nystroem_times = []
 
 for D in sample_sizes:
+    fastfood_approx_svm.set_params(feature_map__n_components=D)
     fourier_approx_svm.set_params(feature_map__n_components=D)
     nystroem_approx_svm.set_params(feature_map__n_components=D)
+    start = time()
+    fastfood_approx_svm.fit(data_train, targets_train)
+    fastfood_times.append(time() - start)
+
     start = time()
     nystroem_approx_svm.fit(data_train, targets_train)
     nystroem_times.append(time() - start)
@@ -118,8 +133,10 @@ for D in sample_sizes:
     fourier_approx_svm.fit(data_train, targets_train)
     fourier_times.append(time() - start)
 
+    fastfood_score = fastfood_approx_svm.score(data_test, targets_test)
     fourier_score = fourier_approx_svm.score(data_test, targets_test)
     nystroem_score = nystroem_approx_svm.score(data_test, targets_test)
+    fastfood_scores.append(fastfood_score)
     nystroem_scores.append(nystroem_score)
     fourier_scores.append(fourier_score)
 
@@ -136,6 +153,10 @@ timescale.plot(sample_sizes, nystroem_times, '--',
 accuracy.plot(sample_sizes, fourier_scores, label="Fourier approx. kernel")
 timescale.plot(sample_sizes, fourier_times, '--',
                label='Fourier approx. kernel')
+
+accuracy.plot(sample_sizes, fastfood_scores, label="Fastfood approx. kernel")
+timescale.plot(sample_sizes, fastfood_times, '--',
+               label='Fastfood approx. kernel')
 
 # horizontal lines for exact rbf and linear kernels:
 accuracy.plot([sample_sizes[0], sample_sizes[-1]],
@@ -181,6 +202,8 @@ flat_grid = grid.reshape(-1, data.shape[1])
 
 # title for the plots
 titles = ['SVC with rbf kernel',
+          'SVC (linear kernel)\n with Fastfood rbf feature map\n'
+          'n_components=100',
           'SVC (linear kernel)\n with Fourier rbf feature map\n'
           'n_components=100',
           'SVC (linear kernel)\n with Nystroem rbf feature map\n'
@@ -190,11 +213,11 @@ plt.tight_layout()
 plt.figure(figsize=(12, 5))
 
 # predict and plot
-for i, clf in enumerate((kernel_svm, nystroem_approx_svm,
+for i, clf in enumerate((kernel_svm, fastfood_approx_svm, nystroem_approx_svm,
                          fourier_approx_svm)):
     # Plot the decision boundary. For that, we will assign a color to each
     # point in the mesh [x_min, m_max]x[y_min, y_max].
-    plt.subplot(1, 3, i + 1)
+    plt.subplot(1, 4, i + 1)
     Z = clf.predict(flat_grid)
 
     # Put the result into a color plot
