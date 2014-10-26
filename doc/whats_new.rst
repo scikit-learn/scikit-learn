@@ -87,6 +87,10 @@ Enhancements
    - Add a quantile prediction strategy to the :class:`dummy.DummyRegressor`.
      By `Aaron Staple`_.
 
+   - Add ``handle_unknown`` option to :class:`preprocessing.OneHotEncoder` to
+     handle unknown categorical features more gracefully during transform.
+     By `Manoj Kumar`_
+
 Documentation improvements
 ..........................
 
