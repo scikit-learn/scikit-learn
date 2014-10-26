@@ -13,29 +13,30 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import datasets
 from sklearn.linear_model import SGDClassifier
+from sklearn.cross_validation import train_test_split
 
 epochs = 20
+train_proportion = .8
 
 
 def train(X_train, y_train, X_test, y_test, classes, classifiers):
+    plt.figure()
     for name, clf, scores in classifiers:
         print("training", name, "...")
         for r in range(epochs):
             clf.partial_fit(X_train, y_train, classes=classes)
-            pred = clf.predict(X_test)
-            scores.append(1.0 - np.mean(y_test == pred))
+            score = clf.score(X_test, y_test)
+            scores.append(1.0 - score)
 
-        plt.plot(scores, label=name)
+        plt.plot(1 + np.arange(epochs), scores, label=name)
         print(name, scores)
 
     plt.legend(loc="upper right")
     plt.xlabel("epoch")
     plt.ylabel("error")
-    plt.show()
 
 
 if __name__ == "__main__":
-    train_proportion = .8
     alpha = 1.e-5
     news_clfs = [
         ("invscaling", SGDClassifier(learning_rate="invscaling",
@@ -94,28 +95,29 @@ if __name__ == "__main__":
         #                            rho0=.95), []),
     ]
 
-    datasets = [
+    tests = [
         (datasets.load_digits(), digits_clfs),
         (datasets.fetch_20newsgroups_vectorized(), news_clfs),
         # (datasets.fetch_lfw_pairs(), faces_clfs),
     ]
 
-    for data_set, classifiers in datasets:
+    for data_set, classifiers in tests:
         X, y = data_set.data, data_set.target
-        shuff = np.arange(X.shape[0])
-        np.random.seed(77)
-        np.random.shuffle(shuff)
-        X = X[shuff]
-        y = y[shuff]
         classes = np.unique(y)
 
         train_num = int(train_proportion * X.shape[0])
-        X_train = X[:train_num]
-        X_test = X[train_num:]
-        y_train = y[:train_num]
-        y_test = y[train_num:]
+
+        X_train, X_test, y_train, y_test = \
+            train_test_split(X, y, train_size=train_proportion,
+                             random_state=77)
 
         train(X_train, y_train, X_test, y_test, classes, classifiers)
+
+    plt.show()
+
+
+
+
 
 
 
