@@ -23,6 +23,9 @@ from .utils import check_array, check_X_y
 from .preprocessing import StandardScaler
 
 
+__all__ = ['LDA']
+
+
 def _cov(X, alpha=None):
     """Estimate covariance matrix (using optional shrinkage)
 
@@ -182,8 +185,10 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = LDA()
     >>> clf.fit(X, y)
+    LDA(alpha=None, n_components=None, priors=None, solver='svd',
+      store_covariance=False)
     >>> print(clf.predict([[-0.8, -1]]))
-    [0]
+    [1]
 
     See also
     --------
