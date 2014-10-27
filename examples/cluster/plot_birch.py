@@ -23,7 +23,7 @@ X, labels_true = make_blobs(n_samples=3000, centers=centers, cluster_std=0.7)
 ##############################################################################
 for threshold in [3.0, 1.0]:
     # Compute clustering with Birch
-    birch = Birch(threshold=threshold, branching_factor=8)
+    birch = Birch(threshold=threshold, branching_factor=8, n_clusters=None)
     birch.fit(X)
 
     ##########################################################################

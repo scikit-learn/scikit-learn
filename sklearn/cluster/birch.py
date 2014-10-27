@@ -3,11 +3,14 @@
 # License: BSD 3 clause
 
 import numpy as np
+from scipy import sparse
 
 from ..metrics.pairwise import (pairwise_distances,
                                 pairwise_distances_argmin_min)
-from ..base import TransformerMixin
+from ..base import TransformerMixin, ClusterMixin
+from ..externals.six.moves import xrange
 from ..utils import check_array
+from .hierarchical import AgglomerativeClustering
 
 
 class CFNode(object):
@@ -170,9 +173,6 @@ class CFSubcluster(object):
 
     Attributes
     ----------
-    sample_indices_ : array-like
-        Array of sample indices that belong to each subcluster.
-
     n_ : int
         Number of samples that belong to each subcluster.
 
@@ -187,11 +187,8 @@ class CFSubcluster(object):
     child_ : CFNode
         Child Node of the subcluster.
     """
-    def __init__(self, X=None, index=None):
+    def __init__(self, X=None):
         self.X = X
-        self.sample_indices_ = []
-        if index is not None:
-            self.sample_indices_ = [index]
         if X is None:
             self.n_ = 0
             self.ls_ = 0.0
@@ -203,13 +200,12 @@ class CFSubcluster(object):
         self.child_ = None
 
     def update(self, subcluster):
-        self.sample_indices_ += subcluster.sample_indices_
         self.n_ += subcluster.n_
-        self.ls_ += subcluster.ls_
+        self.ls_ = self.ls_ + subcluster.ls_
         self.ss_ += subcluster.ss_
 
 
-class Birch(TransformerMixin):
+class Birch(TransformerMixin, ClusterMixin):
     """Implements the Birch algorithm.
 
     Insert a new sample is inserted into the CF Tree, the sample
@@ -231,9 +227,6 @@ class Birch(TransformerMixin):
         Maximun number of CF subclusters in each node. If a new samples enters
         such that the number of subclusters exceed the branching_factor then
         the node and the corresponding parent has to be updated.
-
-    copy : bool, default True
-        If set to False, X will be written inplace.
 
     Attributes
     ----------
@@ -260,10 +253,13 @@ class Birch(TransformerMixin):
       https://code.google.com/p/jbirch/
     """
 
-    def __init__(self, threshold=1.0, branching_factor=8, copy=True):
+    def __init__(self, threshold=1.0, branching_factor=8, copy=True,
+                 n_clusters=3):
         self.threshold = threshold
         self.branching_factor = branching_factor
-        self.copy = copy
+        self.n_clusters = n_clusters
+        self.partial_fit_ = False
+        self.root_ = None
 
     def fit(self, X):
         """
@@ -274,20 +270,23 @@ class Birch(TransformerMixin):
         X : ndarray
             Input data.
         """
-        X = check_array(X, copy=self.copy)
+        X = check_array(X, accept_sparse='csr')
         threshold = self.threshold
         branching_factor = self.branching_factor
 
-        # The first root is the leaf. Manipulate this object throughout.
-        self.root_ = CFNode(threshold, branching_factor, True)
+        # If partial_fit is called for the first time or if fit is called,
+        # we need to initialize the root.
+        if not self.partial_fit_ or (self.root_ is None and self.partial_fit_):
+            # The first root is the leaf. Manipulate this object throughout.
+            self.root_ = CFNode(threshold, branching_factor, True)
 
-        # To enable getting back subclusters.
-        self.dummy_leaf_ = CFNode(threshold, branching_factor, True)
-        self.dummy_leaf_.next_leaf_ = self.root_
+            # To enable getting back subclusters.
+            self.dummy_leaf_ = CFNode(threshold, branching_factor, True)
+            self.dummy_leaf_.next_leaf_ = self.root_
 
         # Cannot vectorize. Enough to convince to use cython.
         for ind, sample in enumerate(X):
-            subcluster = CFSubcluster(sample, ind)
+            subcluster = CFSubcluster(sample)
 
             split = self.root_.insert_cf_subcluster(subcluster)
 
@@ -329,21 +328,40 @@ class Birch(TransformerMixin):
                 self.root_.subclusters_.append(new_subcluster1)
                 self.root_.subclusters_.append(new_subcluster2)
 
-        # Impedance matching with sklearn cluster API
+        # To get labels_ and centroids_
         leaves = self.get_leaves()
-        clusters = [sub.sample_indices_ for leaf in leaves
-                    for sub in leaf.subclusters_]
-        centroids = [leaf.get_centroids() for leaf in leaves]
+        centroids = list()
+        weights = list()
+        for leaf in leaves:
+            centroids.append(leaf.get_centroids())
+            for sf in leaf.subclusters_:
+                weights.append(sf.n_)
+
+        # Weights assigned to each centroid for the global clustering step.
         centroids = np.concatenate(centroids)
-        labels = np.empty(X.shape[0], dtype=np.int)
-        for k, cluster in enumerate(clusters):
-            labels[cluster] = k
-        self.labels_ = labels
-        self.centroids_ = centroids
+        weights = np.asarray(weights)
+
+        if self.n_clusters is None or len(centroids) <= self.n_clusters:
+            self.centroids_ = centroids
+            self.labels_ = self.predict(X)
+            return self
+
+        # We need the global clustering step that clusters the subclusters of
+        # the leaves are clustered back with Agglomerative Clustering.
+        # Compute these new centroids and map samples to these centroids.
+        clf = AgglomerativeClustering(n_clusters=self.n_clusters)
+        labels = clf.fit_predict(centroids)
+        new_centroids = np.empty((self.n_clusters, X.shape[1]))
+        for i in xrange(self.n_clusters):
+             mask = clf.labels_ == i
+             new_centroids[i] = np.average(centroids[mask], axis=0,
+                                           weights=weights[mask])
+        self.centroids_ = new_centroids
+        self.labels_ = self.predict(X)
         return self
 
     def get_leaves(self):
-        r"""
+        """
         Retrieve the leaves.
         """
         leaf_ptr = self.dummy_leaf_.next_leaf_
@@ -352,3 +370,27 @@ class Birch(TransformerMixin):
             leaves.append(leaf_ptr)
             leaf_ptr = leaf_ptr.next_leaf_
         return leaves
+
+    def predict(self, X):
+        """
+        Predict data using the centroids_ of subclusters.
+ 
+        Parameters
+        ----------
+        X : ndarray
+            Input data.
+        """
+        return pairwise_distances_argmin_min(X, self.centroids_)[0]
+
+
+    def partial_fit(self, X):
+        """
+        Online learning. Prevents rebuilding of CFTree from scratch.
+
+        Parameters
+        ----------
+        X : ndarray
+            Input data.
+        """
+        self.partial_fit_ = True
+        return self.fit(X)
