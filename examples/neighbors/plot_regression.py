@@ -21,7 +21,6 @@ print(__doc__)
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import neighbors
-from sklearn.metrics import mean_squared_error
 
 np.random.seed(0)
 X_train = np.sort(5 * np.random.rand(40, 1), axis=0)
@@ -44,12 +43,10 @@ for i, weights in enumerate(['uniform', 'distance', 'epanechnikov']):
     plt.subplot(3, 1, i + 1)
     plt.scatter(X_train, y_train, c='k', label='training data')
     plt.plot(X_test, y_pred, c='g', label='prediction')
-    plt.plot(X_test, y_test, c='k', label='true function')
-    plt.text(0, -1, "MSE = {:.3f}".format(mse), fontsize=16)
+    plt.plot(X_test, y_test, c='k', label='true function')    
     plt.axis('tight')
     plt.legend()
     plt.title("KNeighborsRegressor (k = %i, weights = '%s')" % (n_neighbors,
-                                                                weights))
-    print(mse)
+                                                                weights))    
 plt.tight_layout(pad=0.5)
 plt.show()
