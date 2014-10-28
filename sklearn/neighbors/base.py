@@ -90,8 +90,8 @@ def _get_weights(dist, weights, bandwidth=None):
     bandwidth: {float, array}
         The kernel bandwidth (only for kernel weighting). If float, then the
         bandwidth is the same for all query points (applicable to
-        RadiusNeighbors classes.) If array, then the i-th element is used as a
-        bandwidth for the i-th query (applicable to KNeighbors classes.)
+        RadiusNeighbors classes). If array, then the i-th element is used as a
+        bandwidth for the i-th query (applicable to KNeighbors classes).
 
 
     Returns

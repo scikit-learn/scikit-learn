@@ -196,7 +196,8 @@ is equivalent to ``'uniform'``) behave similarly, they give a smoother decision
 boundary and tend to outperform ``uniform`` weights. When ``weights='distance'``
 and a query point is very close (or equal) to some training point,
 the classification is based solely on this training point. Generally this
-is an undersiable property, but probably it can work well in certain situations.
+is an undesirable property, but potentially it can work well in certain 
+situations.
 
 
 .. |classification_1| image:: ../auto_examples/neighbors/images/plot_classification_001.png
@@ -254,10 +255,10 @@ compute the weights.
 
 Using ``'uniform'`` weights results in a piecewise constant fitted function.
 Such dependencies are not realistic and doesn't occur in nature. The better
-alternative is to use kernel weights, which give smoother and potentially more
+alternative is to use kernel weights, which give smoother and usually more
 accurate estimates. When ``weights='distance'``, a fitted function passes
 through each training point. This is an unusual property for a regression
-function, but probably can be useful in specific situations.
+function, but potentially it can be useful in specific situations.
 
 .. figure:: ../auto_examples/neighbors/images/plot_regression_001.png
    :target: ../auto_examples/neighbors/plot_regression.html
