@@ -339,11 +339,8 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
                                  min_indices]
 
             flags = values[chunk_x] > min_values
-            indices[chunk_x] = np.where(
-                flags, min_indices + chunk_y.start, indices[chunk_x])
-
-            values[chunk_x] = np.where(
-                flags, min_values, values[chunk_x])
+            indices[chunk_x][flags] = min_indices[flags] + chunk_y.start
+            values[chunk_x][flags] = min_values[flags]
 
     if metric == "euclidean" and not metric_kwargs.get("squared", False):
         np.sqrt(values, values)
