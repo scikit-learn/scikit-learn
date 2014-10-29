@@ -19,7 +19,7 @@ X1 = np.array([[-2, ], [-1, ], [-1, ], [1, ], [1, ], [2, ]], dtype='f')
 
 
 solvers = ['svd', 'lsqr', 'eigen']
-alphas = ['ledoit_wolf', 0, None, 0.43, 'dummy', -22.9]
+alphas = ['ledoit_wolf', 0, None, 0.43]
 
 
 def test_lda_predict():
@@ -31,11 +31,7 @@ def test_lda_predict():
     for solver in solvers:
         for alpha in alphas:
             clf = lda.LDA(solver=solver, alpha=alpha)
-            try:
-                y_pred = clf.fit(X, y).predict(X)
-            except ValueError:
-                assert_raises(ValueError)
-                continue
+            y_pred = clf.fit(X, y).predict(X)
             assert_array_equal(y_pred, y, 'solver ' + str(solver))
 
             # Assert that it works with 1D data
@@ -54,25 +50,23 @@ def test_lda_predict():
             y_pred3 = clf.fit(X, y3).predict(X)
             # LDA shouldn't be able to separate those
             assert_true(np.any(y_pred3 != y3), 'solver ' + str(solver))
+
+    # Test invalid alphas
+    clf = lda.LDA(solver="lsqr", alpha=-0.2231)
+    assert_raises(ValueError, clf.fit, X, y)
+    clf = lda.LDA(solver="eigen", alpha="dummy")
+    assert_raises(ValueError, clf.fit, X, y)
     # Test unknown solver
     clf = lda.LDA(solver="dummy")
-    try:
-        y_pred = clf.fit(X, y).predict(X)
-    except ValueError:
-        assert_raises(ValueError)
+    assert_raises(ValueError, clf.fit, X, y)
 
 
 def test_lda_transform():
     """Test LDA transform.
     """
-    for solver in solvers:
-        clf = lda.LDA(solver=solver)
-        try:
-            X_transformed = clf.fit(X, y).transform(X)
-        except NotImplementedError:
-            assert_raises(NotImplementedError)
-            continue
-        assert_equal(X_transformed.shape[1], 1, 'using solver ' + str(solver))
+    clf = lda.LDA(solver="svd")
+    X_transformed = clf.fit(X, y).transform(X)
+    assert_equal(X_transformed.shape[1], 1)
 
 
 def test_lda_orthogonality():
@@ -89,28 +83,23 @@ def test_lda_orthogonality():
     X = (means[:, np.newaxis, :] + scatter[np.newaxis, :, :]).reshape((-1, 3))
     y = np.repeat(np.arange(means.shape[0]), scatter.shape[0])
 
-    for solver in solvers:
-        # Fit LDA and transform the means
-        clf = lda.LDA(solver=solver).fit(X, y)
-        try:
-            means_transformed = clf.transform(means)
-        except NotImplementedError:
-            assert_raises(NotImplementedError)
-            continue
+    # Fit LDA and transform the means
+    clf = lda.LDA(solver="svd").fit(X, y)
+    means_transformed = clf.transform(means)
 
-        d1 = means_transformed[3] - means_transformed[0]
-        d2 = means_transformed[2] - means_transformed[1]
-        d1 /= np.sqrt(np.sum(d1**2))
-        d2 /= np.sqrt(np.sum(d2**2))
+    d1 = means_transformed[3] - means_transformed[0]
+    d2 = means_transformed[2] - means_transformed[1]
+    d1 /= np.sqrt(np.sum(d1**2))
+    d2 /= np.sqrt(np.sum(d2**2))
 
-        # the transformed within-class covariance should be the identity matrix
-        assert_almost_equal(np.cov(clf.transform(scatter).T), np.eye(2))
+    # the transformed within-class covariance should be the identity matrix
+    assert_almost_equal(np.cov(clf.transform(scatter).T), np.eye(2))
 
-        # the means of classes 0 and 3 should lie on the first component
-        assert_almost_equal(np.abs(np.dot(d1[:2], [1, 0])), 1.0)
+    # the means of classes 0 and 3 should lie on the first component
+    assert_almost_equal(np.abs(np.dot(d1[:2], [1, 0])), 1.0)
 
-        # the means of classes 1 and 2 should lie on the second component
-        assert_almost_equal(np.abs(np.dot(d2[:2], [0, 1])), 1.0)
+    # the means of classes 1 and 2 should lie on the second component
+    assert_almost_equal(np.abs(np.dot(d2[:2], [0, 1])), 1.0)
 
 
 def test_lda_scaling():
