@@ -7,7 +7,9 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_raises
 
+from sklearn.datasets import make_blobs
 from sklearn import lda
+
 
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]], dtype='f')
@@ -59,6 +61,28 @@ def test_lda_predict():
     # Test unknown solver
     clf = lda.LDA(solver="dummy")
     assert_raises(ValueError, clf.fit, X, y)
+
+
+def test_lda_coefs():
+    """Test if the coefficients of the solvers are approximately the same.
+    """
+    n_features = 2
+    n_classes = 2
+    n_samples = 1000
+    X, y = make_blobs(n_samples=n_samples, n_features=n_features,
+                      centers=n_classes, random_state=11)
+
+    clf_lda_svd = lda.LDA(solver="svd")
+    clf_lda_lsqr = lda.LDA(solver="lsqr")
+    clf_lda_eigen = lda.LDA(solver="eigen")
+
+    clf_lda_svd.fit(X, y)
+    clf_lda_lsqr.fit(X, y)
+    clf_lda_eigen.fit(X, y)
+
+    assert_array_almost_equal(clf_lda_svd.coef_, clf_lda_lsqr.coef_, 1)
+    assert_array_almost_equal(clf_lda_svd.coef_, clf_lda_eigen.coef_, 1)
+    assert_array_almost_equal(clf_lda_eigen.coef_, clf_lda_lsqr.coef_, 1)
 
 
 def test_lda_transform():
