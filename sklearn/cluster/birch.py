@@ -54,7 +54,7 @@ class CFNode(object):
         self.next_leaf_ = None
 
     def get_centroids(self):
-        return [sc.ls_ / sc.n_ for sc in self.subclusters_]
+        return np.asarray([sc.ls_ / sc.n_ for sc in self.subclusters_])
 
     def split_node(self, child_node, parent_subcluster):
         r"""
@@ -112,7 +112,9 @@ class CFNode(object):
 
         subcluster_centroids = self.get_centroids()
         closest_index, closest_threshold = \
-            pairwise_distances_argmin_min(subcluster.ls_, subcluster_centroids)
+            pairwise_distances_argmin_min(subcluster.ls_[np.newaxis, :],
+                                          subcluster_centroids,
+                                          check_X_y=False)
 
         # Index returned is a numpy array.
         closest_index = closest_index[0]
@@ -380,7 +382,7 @@ class Birch(TransformerMixin, ClusterMixin):
         X : ndarray
             Input data.
         """
-        return pairwise_distances_argmin_min(X, self.centroids_)[0]
+        return pairwise_distances_argmin_min(X, self.centroids_, check_X_y=False)[0]
 
 
     def partial_fit(self, X):
