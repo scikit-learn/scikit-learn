@@ -30,7 +30,7 @@ from sklearn.neighbors import NearestNeighbors
 import matplotlib.pyplot as plt
 
 # Initialize the range of `n_samples`
-n_samples_values = [1000, 2000, 4000, 6000, 8000, 10000]
+n_samples_values = [1000, 10000, 20000, 40000]
 n_queries = 100
 average_times_approx = []
 average_times_exact = []
@@ -46,8 +46,11 @@ X_all, _ = make_blobs(n_samples=max(n_samples_values) + n_queries,
 for n_samples in n_samples_values:
     X = X_all[:n_samples]
     # Initialize LSHForest for queries of a single neighbor
+    print("Building an LSH Forest index for data with shape %r:" % (X.shape,))
+    t0 = time.time()
     lshf = LSHForest(n_estimators=10, n_candidates=100,
                      n_neighbors=10).fit(X)
+    print("done in %.3fs" % (time.time() - t0))
     nbrs = NearestNeighbors(algorithm='brute', metric='cosine',
                             n_neighbors=10).fit(X)
     average_time_approx = 0
@@ -58,19 +61,14 @@ for n_samples in n_samples_values:
         query = X_all[-n_queries:][rng.randint(0, n_queries)]
 
         t0 = time.time()
-        approx_neighbors = lshf.kneighbors(query,
-                                           return_distance=False)
-        T = time.time() - t0
-        average_time_approx += T
+        approx_neighbors = lshf.kneighbors(query, return_distance=False)
+        average_time_approx += time.time() - t0
 
         t0 = time.time()
-        exact_neighbors = nbrs.kneighbors(query,
-                                          return_distance=False)
-        T = time.time() - t0
-        average_time_exact += T
+        exact_neighbors = nbrs.kneighbors(query, return_distance=False)
+        average_time_exact += time.time() - t0
 
-        accuracy = accuracy + np.in1d(approx_neighbors,
-                                      exact_neighbors).mean()
+        accuracy = accuracy + np.in1d(approx_neighbors, exact_neighbors).mean()
 
     average_time_approx /= float(n_iter)
     average_time_exact /= float(n_iter)
