@@ -73,7 +73,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
     metric_params : dict, optional (default = None)
-        additional keyword arguments for the metric function.
+        Additional keyword arguments for the metric function.
 
     Examples
     --------
