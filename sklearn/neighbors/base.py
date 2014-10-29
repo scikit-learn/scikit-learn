@@ -116,8 +116,10 @@ def _get_weights(dist, weights, bandwidth=None):
             weights = [kernel(instance_dist) for instance_dist in dist]
             return np.array(weights)
         else:
-            return kernel(dist.T / bandwidth).T
-
+            with np.errstate(invalid='ignore'):  # accounts for possible NaN
+                dist = (dist.T / bandwidth).T
+            dist = np.nan_to_num(dist)
+            return kernel(dist)
 
 class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Base class for nearest neighbors estimators."""

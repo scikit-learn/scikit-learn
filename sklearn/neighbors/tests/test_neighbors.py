@@ -307,6 +307,19 @@ def test_radius_neighbors_classifier_zero_distance():
             assert_array_equal(correct_labels1, clf.predict(z1))
 
 
+def test_kneighbors_classifier_zero_distance():
+    X = np.array([[1.0, 1.0], [1.0, 1.0], [1.0, 1.0], [1.0, 1.0]])
+    y = np.array([0, 1, 0, 0])
+    X_test = np.array([[1.0, 1.0], [2.0, 2.0]])
+    y_test = np.array([0, 0])
+    for algorithm, weights in zip(ALGORITHMS, ['linear']):
+        clf = neighbors.KNeighborsClassifier(n_neighbors=3,
+                                             weights=weights,
+                                             algorithm=algorithm)
+        clf.fit(X, y)
+        assert_array_equal(y_test, clf.predict(X_test))
+
+
 def test_RadiusNeighborsClassifier_multioutput():
     """Test k-NN classifier on multioutput data"""
     rng = check_random_state(0)
