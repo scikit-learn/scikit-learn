@@ -34,8 +34,28 @@ def make_data(n_samples, n_features, n_queries, seed=0):
     return X[:n_samples], X[n_samples:]
 
 
-def calc_accuracy(X, queries, n_queries, n_neighbors, **lshf_params):
-    """Calculates accuracy and the speed up."""
+def calc_exact_neighbors(X, queries, n_queries, n_neighbors):
+    """Measures average times for exact neighbor queries."""
+    print ('Building NearestNeighbors for %d samples in %d dimensions' %
+           (X.shape[0], X.shape[1]))
+    nbrs = NearestNeighbors(algorithm='brute', metric='cosine').fit(X)
+    neighbors_list = []
+    average_time = 0
+
+    for query in queries:
+        t0 = time()
+        neighbors = nbrs.kneighbors(query, n_neighbors=n_neighbors,
+                                    return_distance=False)
+        average_time += time() - t0
+        neighbors_list.append(neighbors)
+    average_time /= float(n_queries)
+
+    return neighbors_list, average_time
+
+
+def calc_accuracy(X, queries, n_queries, n_neighbors, exact_neighbors,
+                  average_time_exact, **lshf_params):
+    """Calculates accuracy and the speed up of LSHForest."""
     print('Building LSHForest for %d samples in %d dimensions' %
           (X.shape[0], X.shape[1]))
     lshf = LSHForest(**lshf_params)
@@ -44,29 +64,17 @@ def calc_accuracy(X, queries, n_queries, n_neighbors, **lshf_params):
     lshf_build_time = time() - t0
     print('Done in %0.3fs' % lshf_build_time)
 
-    nbrs = NearestNeighbors(algorithm='brute', metric='cosine').fit(X)
-
     average_time_approx = 0
-    average_time_exact = 0
     accuracy = 0
 
-    for query in queries:
+    for i, query in enumerate(queries):
         t0 = time()
         approx_neighbors = lshf.kneighbors(query, n_neighbors=n_neighbors,
                                            return_distance=False)
-        T = time() - t0
-        average_time_approx += T
-
-        t0 = time()
-        exact_neighbors = nbrs.kneighbors(query, n_neighbors=n_neighbors,
-                                          return_distance=False)
-        T = time() - t0
-        average_time_exact += T
-
-        accuracy += np.in1d(approx_neighbors, exact_neighbors).mean()
+        average_time_approx += time() - t0
+        accuracy += np.in1d(approx_neighbors, exact_neighbors[i]).mean()
 
     average_time_approx /= float(n_queries)
-    average_time_exact /= float(n_queries)
     accuracy /= float(n_queries)
     speed_up = average_time_exact / average_time_approx
 
@@ -78,6 +86,7 @@ def calc_accuracy(X, queries, n_queries, n_neighbors, **lshf_params):
     print ('Speed up: %0.1fx' % speed_up)
 
     return speed_up, accuracy
+
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
@@ -97,18 +106,20 @@ if __name__ == '__main__':
     accuracies = np.zeros((len(n_samples), len(params_list)), dtype=float)
     speed_ups = np.zeros((len(n_samples), len(params_list)), dtype=float)
 
-    for i, sample_size in enumerate(n_samples):
-        print ('==========================================================')
-        print ('Sample size: %i' % sample_size)
-        print ('------------------------')
-        for j, params in enumerate(params_list):
-            print ('LSHF parameters: n_estimators = %i, n_candidates = %i' %
-                   (params['n_estimators'], params['n_candidates']))
-            speed_ups[i, j], accuracies[i, j] = calc_accuracy(
-                X_index[:sample_size], X_query, n_queries, n_neighbors,
-                **params)
-            print ('')
-        print ('==========================================================')
+for i, sample_size in enumerate(n_samples):
+    print ('==========================================================')
+    print ('Sample size: %i' % sample_size)
+    print ('------------------------')
+    exact_neighbors, average_time_exact = calc_exact_neighbors(
+        X_index[:sample_size], X_query, n_queries, n_neighbors)
+    for j, params in enumerate(params_list):
+        print ('LSHF parameters: n_estimators = %i, n_candidates = %i' %
+               (params['n_estimators'], params['n_candidates']))
+        speed_ups[i, j], accuracies[i, j] = calc_accuracy(
+            X_index[:sample_size], X_query, n_queries, n_neighbors,
+            exact_neighbors, average_time_exact, **params)
+        print ('')
+    print ('==========================================================')
 
     # Set labels for LSHForest parameters
     colors = ['c', 'm', 'y']
