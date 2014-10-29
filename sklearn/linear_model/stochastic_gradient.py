@@ -711,8 +711,9 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
 
     rho0: double, optional
         Only relevent for the learning_rate "adadelta". The decay rate for
-        adadelta. The accumulated gradient is multiplied by rho0 and the
-        squared gradient is multiplied by (1.0 - rho0)
+        adadelta. This is a momentum parameter. The accumulated gradient is
+        multiplied by rho0 and the squared gradient is multiplied by
+        (1.0 - rho0)
 
     average : bool or int, optional
         When set to True, computes the averaged SGD weights and stores the
@@ -1223,8 +1224,9 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
 
     rho0: double, optional
         Only relevent for the learning_rate "adadelta". The decay rate for
-        adadelta. The accumulated gradient is multiplied by rho0 and the
-        squared gradient is multiplied by (1.0 - rho0)
+        adadelta. This is a momentum parameter. The accumulated gradient is
+        multiplied by rho0 and the squared gradient is multiplied by
+        (1.0 - rho0)
 
     average : bool or int, optional
         When set to True, computes the averaged SGD weights and stores the
