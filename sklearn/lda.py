@@ -359,6 +359,10 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
         return self
 
+    def _decision_function(self, X):
+        X = check_array(X)
+        return np.dot(X - self.xbar_, self.coef_.T) + self.intercept_
+
     def decision_function(self, X):
         """Returns the decision function values related to each class on an
         array of test vectors X
@@ -369,11 +373,15 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
         Returns
         -------
-        C : array, shape = [n_samples, n_classes]
+        C : array, shape = [n_samples, n_classes] or [n_samples,]
             Decision function values related to each class, per sample.
+            In the two-class case, the shape is [n_samples,], giving the
+            log likelihood ratio of the positive class.
         """
-        X = check_array(X)
-        return np.dot(X - self.xbar_, self.coef_.T) + self.intercept_
+        dec_func = self._decision_function(X)
+        if len(self.classes_) == 2:
+            return dec_func[:, 1] - dec_func[:, 0]
+        return dec_func
 
     def transform(self, X):
         """Project data so as to maximize class separation (large separation
@@ -406,7 +414,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         -------
         C : array, shape = [n_samples]
         """
-        d = self.decision_function(X)
+        d = self._decision_function(X)
         y_pred = self.classes_.take(d.argmax(1))
         return y_pred
 
@@ -421,7 +429,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         -------
         C : array, shape = [n_samples, n_classes]
         """
-        values = self.decision_function(X)
+        values = self._decision_function(X)
         # compute the likelihood of the underlying gaussian models
         # up to a multiplicative constant.
         likelihood = np.exp(values - values.max(axis=1)[:, np.newaxis])
@@ -439,7 +447,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         -------
         C : array, shape = [n_samples, n_classes]
         """
-        values = self.decision_function(X)
+        values = self._decision_function(X)
         loglikelihood = (values - values.max(axis=1)[:, np.newaxis])
         normalization = logsumexp(loglikelihood, axis=1)
         return loglikelihood - normalization[:, np.newaxis]
