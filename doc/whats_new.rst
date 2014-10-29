@@ -91,6 +91,10 @@ Enhancements
      handle unknown categorical features more gracefully during transform.
      By `Manoj Kumar`_
 
+   - Added option ``check_X_y`` to :func:`metrics.pairwise_distances_argmin_min`
+     that can give speed improvements by avoiding repeated checking when set to
+     False. By `Manoj Kumar`_
+
 Documentation improvements
 ..........................
 
