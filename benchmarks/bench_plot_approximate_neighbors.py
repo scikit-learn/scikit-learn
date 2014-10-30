@@ -106,20 +106,20 @@ if __name__ == '__main__':
     accuracies = np.zeros((len(n_samples), len(params_list)), dtype=float)
     speed_ups = np.zeros((len(n_samples), len(params_list)), dtype=float)
 
-for i, sample_size in enumerate(n_samples):
-    print ('==========================================================')
-    print ('Sample size: %i' % sample_size)
-    print ('------------------------')
-    exact_neighbors, average_time_exact = calc_exact_neighbors(
-        X_index[:sample_size], X_query, n_queries, n_neighbors)
-    for j, params in enumerate(params_list):
-        print ('LSHF parameters: n_estimators = %i, n_candidates = %i' %
-               (params['n_estimators'], params['n_candidates']))
-        speed_ups[i, j], accuracies[i, j] = calc_accuracy(
-            X_index[:sample_size], X_query, n_queries, n_neighbors,
-            exact_neighbors, average_time_exact, **params)
-        print ('')
-    print ('==========================================================')
+    for i, sample_size in enumerate(n_samples):
+        print ('==========================================================')
+        print ('Sample size: %i' % sample_size)
+        print ('------------------------')
+        exact_neighbors, average_time_exact = calc_exact_neighbors(
+            X_index[:sample_size], X_query, n_queries, n_neighbors)
+        for j, params in enumerate(params_list):
+            print ('LSHF parameters: n_estimators = %i, n_candidates = %i' %
+                   (params['n_estimators'], params['n_candidates']))
+            speed_ups[i, j], accuracies[i, j] = calc_accuracy(
+                X_index[:sample_size], X_query, n_queries, n_neighbors,
+                exact_neighbors, average_time_exact, **params)
+            print ('')
+        print ('==========================================================')
 
     # Set labels for LSHForest parameters
     colors = ['c', 'm', 'y']
