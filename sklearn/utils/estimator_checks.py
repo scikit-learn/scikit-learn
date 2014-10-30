@@ -41,6 +41,7 @@ from sklearn.feature_selection import SelectKBest
 from sklearn.svm.base import BaseLibSVM
 from sklearn.pipeline import make_pipeline
 from sklearn.utils.validation import DataConversionWarning
+from sklearn.utils import ConvergenceWarning
 from sklearn.cross_validation import train_test_split
 
 from sklearn.utils import shuffle
@@ -218,7 +219,7 @@ def set_fast_parameters(estimator):
             and estimator.__class__.__name__ != "TSNE"):
         estimator.set_params(n_iter=5)
     if "max_iter" in params:
-        # NMF
+        warnings.simplefilter("ignore", ConvergenceWarning)
         if estimator.max_iter is not None:
             estimator.set_params(max_iter=min(5, estimator.max_iter))
         # LinearSVR
