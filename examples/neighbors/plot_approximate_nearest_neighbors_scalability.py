@@ -30,13 +30,15 @@ from sklearn.neighbors import NearestNeighbors
 import matplotlib.pyplot as plt
 
 # Initialize the range of `n_samples`
-n_samples_values = [1000, 10000, 20000, 40000]
+n_samples_values = [1000, 2000, 4000, 6000, 8000, 10000]
 n_queries = 100
 average_times_approx = []
 average_times_exact = []
 accuracies = []
+stds_accuracies = []
+stds_times_approx = []
+stds_times_exact = []
 n_iter = 30
-
 rng = np.random.RandomState(42)
 
 X_all, _ = make_blobs(n_samples=max(n_samples_values) + n_queries,
@@ -46,33 +48,33 @@ X_all, _ = make_blobs(n_samples=max(n_samples_values) + n_queries,
 for n_samples in n_samples_values:
     X = X_all[:n_samples]
     # Initialize LSHForest for queries of a single neighbor
-    print("Building an LSH Forest index for data with shape %r:" % (X.shape,))
-    t0 = time.time()
     lshf = LSHForest(n_estimators=10, n_candidates=100,
                      n_neighbors=10).fit(X)
-    print("done in %.3fs" % (time.time() - t0))
     nbrs = NearestNeighbors(algorithm='brute', metric='cosine',
                             n_neighbors=10).fit(X)
-    average_time_approx = 0
-    average_time_exact = 0
-    accuracy = 0
+    average_time_approx = []
+    average_time_exact = []
+    accuracy = []
 
     for i in range(n_iter):
         query = X_all[-n_queries:][rng.randint(0, n_queries)]
 
         t0 = time.time()
         approx_neighbors = lshf.kneighbors(query, return_distance=False)
-        average_time_approx += time.time() - t0
+        average_time_approx.append(time.time() - t0)
 
         t0 = time.time()
         exact_neighbors = nbrs.kneighbors(query, return_distance=False)
-        average_time_exact += time.time() - t0
+        average_time_exact.append(time.time() - t0)
 
-        accuracy = accuracy + np.in1d(approx_neighbors, exact_neighbors).mean()
+        accuracy.append(np.in1d(approx_neighbors, exact_neighbors).mean())
 
-    average_time_approx /= float(n_iter)
-    average_time_exact /= float(n_iter)
-    accuracy /= float(n_iter)
+    stds_accuracies.append(np.std(accuracy))
+    stds_times_approx.append(np.std(average_time_approx))
+    stds_times_exact.append(np.std(average_time_exact))
+    average_time_approx = np.mean(average_time_approx)
+    average_time_exact = np.mean(average_time_exact)
+    accuracy = np.mean(accuracy)
     average_times_approx.append(average_time_approx)
     average_times_exact.append(average_time_exact)
     accuracies.append(accuracy)
@@ -89,7 +91,7 @@ plt.legend((p1, p2), (labels[0], labels[1]),
            loc='upper left', fontsize='small')
 
 plt.scatter(n_samples_values, average_times_approx, c='r')
-plt.plot(n_samples_values, average_times_approx, c='r')
+plt.errorbar(n_samples_values, average_times_approx, stds_times_approx, c='r')
 plt.scatter(n_samples_values, average_times_exact, c='b')
 plt.plot(n_samples_values, average_times_exact, c='b')
 plt.xlim(min(n_samples_values), max(n_samples_values))
@@ -101,12 +103,14 @@ plt.grid(which='both')
 plt.title("Impact of index size on response time for first "
           "nearest neighbors queries")
 
+plt.show()
+
 # Plot precision@10
 plt.figure()
 plt.scatter(n_samples_values, accuracies, c='c')
-plt.plot(n_samples_values, accuracies, c='c')
+plt.errorbar(n_samples_values, accuracies, stds_accuracies, c='c')
 plt.xlim(min(n_samples_values), max(n_samples_values))
-plt.ylim(0, 1)
+plt.ylim(0, 1.1)
 plt.ylabel("precision@10")
 plt.xlabel("n_samples")
 plt.grid(which='both')
