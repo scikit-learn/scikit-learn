@@ -341,7 +341,8 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
               int learning_rate, double eta0,
               double power_t,
               double t=1.0,
-              double intercept_decay=1.0):
+              double intercept_decay=1.0,
+              bint sag=False):
     """Plain SGD for generic loss functions and penalties.
 
     Parameters
@@ -417,7 +418,8 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                           power_t,
                           t,
                           intercept_decay,
-                          0)
+                          0,
+                          sag)
     return standard_weights, standard_intercept
 
 
@@ -437,7 +439,8 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 double power_t,
                 double t=1.0,
                 double intercept_decay=1.0,
-                int average=1):
+                int average=1,
+                bint sag=False):
     """Average SGD for generic loss functions and penalties.
 
     Parameters
@@ -495,6 +498,9 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     average : int
         The number of iterations before averaging starts. average=1 is
         equivalent to averaging for all iterations.
+    sag : bint
+        A boolean which, when set to true, computes the stochastic average
+        gradient
 
     Returns
     -------
@@ -523,7 +529,8 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                       power_t,
                       t,
                       intercept_decay,
-                      average)
+                      average,
+                      sag)
 
 
 def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
@@ -542,7 +549,8 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                double power_t,
                double t=1.0,
                double intercept_decay=1.0,
-               int average=0):
+               int average=0,
+               bint sag=False):
 
     # get the data information into easy vars
     cdef Py_ssize_t n_samples = dataset.n_samples
@@ -569,7 +577,6 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef unsigned int i = 0
     cdef int is_hinge = isinstance(loss, Hinge)
     cdef double optimal_init = 0.0
-    cdef bint sag = True
 
     # q vector is only used for L1 regularization
     cdef np.ndarray[double, ndim = 1, mode = "c"] q = None

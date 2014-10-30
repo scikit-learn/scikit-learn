@@ -146,11 +146,12 @@ class CommonTest(object):
         for i, entry in enumerate(X):
             p = np.dot(entry, weights)
             p += intercept
+
             weights *= 1.0 - (eta * alpha)
             gradient = p - y[i]
             new = -eta * entry * gradient
 
-            intercept += -(eta * gradient) * decay
+            intercept += -eta * gradient * decay
             weights += (new - weights) / (i + 1)
 
         return weights, intercept
@@ -361,7 +362,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
                            learning_rate='constant',
                            eta0=eta, alpha=alpha,
                            fit_intercept=True,
-                           n_iter=1)
+                           n_iter=1, sag=True)
 
         # simple linear function without noise
         y = np.dot(X, w)

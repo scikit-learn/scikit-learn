@@ -52,7 +52,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, epsilon=0.1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 warm_start=False, average=False):
+                 warm_start=False, average=False, sag=False):
         self.loss = loss
         self.penalty = penalty
         self.learning_rate = learning_rate
@@ -69,6 +69,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         self.power_t = power_t
         self.warm_start = warm_start
         self.average = average
+        self.sag = sag
 
         self._validate_params()
 
@@ -294,7 +295,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
                          int(est.verbose), int(est.shuffle), seed,
                          pos_weight, neg_weight,
                          learning_rate_type, est.eta0,
-                         est.power_t, est.t_, intercept_decay)
+                         est.power_t, est.t_, intercept_decay, est.sag)
 
     else:
         standard_coef, standard_intercept, average_coef, \
@@ -308,7 +309,8 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
                                             learning_rate_type, est.eta0,
                                             est.power_t, est.t_,
                                             intercept_decay,
-                                            est.average)
+                                            est.average,
+                                            est.sag)
 
         if len(est.classes_) == 2:
             est.average_intercept_[0] = average_intercept
@@ -339,7 +341,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                  fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
                  epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 class_weight=None, warm_start=False, average=False):
+                 class_weight=None, warm_start=False, average=False,
+                 sag=False):
 
         super(BaseSGDClassifier, self).__init__(loss=loss, penalty=penalty,
                                                 alpha=alpha, l1_ratio=l1_ratio,
@@ -351,7 +354,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                                                 learning_rate=learning_rate,
                                                 eta0=eta0, power_t=power_t,
                                                 warm_start=warm_start,
-                                                average=average)
+                                                average=average, sag=sag)
         self.class_weight = class_weight
         self.classes_ = None
         self.n_jobs = int(n_jobs)
@@ -712,14 +715,15 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
                  fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
                  epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 class_weight=None, warm_start=False, average=False):
+                 class_weight=None, warm_start=False, average=False,
+                 sag=False):
         super(SGDClassifier, self).__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
             fit_intercept=fit_intercept, n_iter=n_iter, shuffle=shuffle,
             verbose=verbose, epsilon=epsilon, n_jobs=n_jobs,
             random_state=random_state, learning_rate=learning_rate, eta0=eta0,
             power_t=power_t, class_weight=class_weight, warm_start=warm_start,
-            average=average)
+            average=average, sag=sag)
 
     def _check_proba(self):
         if self.loss not in ("log", "modified_huber"):
@@ -847,7 +851,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, epsilon=DEFAULT_EPSILON, random_state=None,
                  learning_rate="invscaling", eta0=0.01, power_t=0.25,
-                 warm_start=False, average=False):
+                 warm_start=False, average=False, sag=False):
         super(BaseSGDRegressor, self).__init__(loss=loss, penalty=penalty,
                                                alpha=alpha, l1_ratio=l1_ratio,
                                                fit_intercept=fit_intercept,
@@ -858,7 +862,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                                                learning_rate=learning_rate,
                                                eta0=eta0, power_t=power_t,
                                                warm_start=warm_start,
-                                               average=average)
+                                               average=average, sag=sag)
 
     def _partial_fit(self, X, y, alpha, C, loss, learning_rate,
                      n_iter, sample_weight,
@@ -1068,7 +1072,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                           1.0, 1.0,
                           learning_rate_type,
                           self.eta0, self.power_t, self.t_,
-                          intercept_decay)
+                          intercept_decay, self.sag)
 
             self.t_ += n_iter * X.shape[0]
             self.intercept_ = np.atleast_1d(self.intercept_)
@@ -1206,7 +1210,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, epsilon=DEFAULT_EPSILON, random_state=None,
                  learning_rate="invscaling", eta0=0.01, power_t=0.25,
-                 warm_start=False, average=False):
+                 warm_start=False, average=False, sag=False):
         super(SGDRegressor, self).__init__(loss=loss, penalty=penalty,
                                            alpha=alpha, l1_ratio=l1_ratio,
                                            fit_intercept=fit_intercept,
@@ -1217,4 +1221,4 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
                                            learning_rate=learning_rate,
                                            eta0=eta0, power_t=power_t,
                                            warm_start=warm_start,
-                                           average=average)
+                                           average=average, sag=sag)
