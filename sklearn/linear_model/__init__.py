@@ -18,6 +18,7 @@ from .coordinate_descent import (Lasso, ElasticNet, LassoCV, ElasticNetCV,
                                  lasso_path, enet_path, MultiTaskLasso,
                                  MultiTaskElasticNet, MultiTaskElasticNetCV,
                                  MultiTaskLassoCV)
+from .sag import SAGClassifier, SAGRegressor
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 from .stochastic_gradient import SGDClassifier, SGDRegressor
 from .ridge import (Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV,
@@ -67,6 +68,8 @@ __all__ = ['ARDRegression',
            'RidgeCV',
            'RidgeClassifier',
            'RidgeClassifierCV',
+           'SAGClassifier',
+           'SAGRegressor',
            'SGDClassifier',
            'SGDRegressor',
            'SquaredLoss',

@@ -8,6 +8,7 @@
 
 cimport cython
 from libc.limits cimport INT_MAX
+from libc.stdlib cimport rand, srand, RAND_MAX
 cimport numpy as np
 import numpy as np
 
@@ -37,8 +38,38 @@ cdef class SequentialDataset:
         sample_weight : double*
             The weight of the next example.
         """
-        with gil:
-            raise NotImplementedError()
+        cdef int current_index = self._get_next_index()
+        self._sample(x_data_ptr, x_ind_ptr, nnz, y,
+                     sample_weight, current_index)
+
+    cdef int random(self, double **x_data_ptr, int **x_ind_ptr,
+                    int *nnz, double *y, double *sample_weight) nogil:
+        """Get the a random example ``x`` from the dataset.
+
+        Parameters
+        ----------
+        x_data_ptr : double**
+            A pointer to the double array which holds the feature
+            values of the next example.
+        x_ind_ptr : np.intc**
+            A pointer to the int array which holds the feature
+            indices of the next example.
+        nnz : int*
+            A pointer to an int holding the number of non-zero
+            values of the next example.
+        y : double*
+            The target value of the next example.
+        sample_weight : double*
+            The weight of the next example.
+        Returns
+        -------
+        index : int
+            The index sampled
+        """
+        cdef int current_index = self._get_random_index()
+        self._sample(x_data_ptr, x_ind_ptr, nnz, y,
+                     sample_weight, current_index)
+        return current_index
 
     cdef void shuffle(self, np.uint32_t seed) nogil:
         """Permutes the ordering of examples."""
@@ -50,6 +81,24 @@ cdef class SequentialDataset:
             j = i + our_rand_r(&seed) % (n - i)
             ind[i], ind[j] = ind[j], ind[i]
 
+    cdef int _get_next_index(self) nogil:
+        cdef int current_index = self.current_index
+        if current_index >= (self.n_samples - 1):
+            current_index = -1
+
+        current_index += 1
+        self.current_index = current_index
+        return self.current_index
+
+    cdef int _get_random_index(self) nogil:
+        cdef int n = self.n_samples
+        return (int)(1.0 * rand() / RAND_MAX * n)
+
+    cdef void _sample(self, double **x_data_ptr, int **x_ind_ptr,
+                      int *nnz, double *y, double *sample_weight,
+                      int current_index) nogil:
+        pass
+
 
 cdef class ArrayDataset(SequentialDataset):
     """Dataset backed by a two-dimensional numpy array.
@@ -60,7 +109,8 @@ cdef class ArrayDataset(SequentialDataset):
 
     def __cinit__(self, np.ndarray[double, ndim=2, mode='c'] X,
                   np.ndarray[double, ndim=1, mode='c'] Y,
-                  np.ndarray[double, ndim=1, mode='c'] sample_weights):
+                  np.ndarray[double, ndim=1, mode='c'] sample_weights,
+                  int seed=0):
         """A ``SequentialDataset`` backed by a two-dimensional numpy array.
 
         Parameters
@@ -98,14 +148,11 @@ cdef class ArrayDataset(SequentialDataset):
             np.arange(0, self.n_samples, dtype=np.intc)
         self.index = index
         self.index_data_ptr = <int *>index.data
+        srand(seed)
 
-    cdef void next(self, double **x_data_ptr, int **x_ind_ptr,
-                   int *nnz, double *y, double *sample_weight) nogil:
-        cdef int current_index = self.current_index
-        if current_index >= (self.n_samples - 1):
-            current_index = -1
-
-        current_index += 1
+    cdef void _sample(self, double **x_data_ptr, int **x_ind_ptr,
+                      int *nnz, double *y, double *sample_weight,
+                      int current_index) nogil:
         cdef int sample_idx = self.index_data_ptr[current_index]
         cdef int offset = sample_idx * self.stride
 
@@ -115,8 +162,11 @@ cdef class ArrayDataset(SequentialDataset):
         nnz[0] = self.n_features
         sample_weight[0] = self.sample_weight_data[sample_idx]
 
-        self.current_index = current_index
-
+    cdef void next(self, double **x_data_ptr, int **x_ind_ptr,
+                   int *nnz, double *y, double *sample_weight) nogil:
+        cdef int current_index = self._get_next_index()
+        self._sample(x_data_ptr, x_ind_ptr, nnz, y,
+                     sample_weight, current_index)
 
 cdef class CSRDataset(SequentialDataset):
     """A ``SequentialDataset`` backed by a scipy sparse CSR matrix. """
@@ -125,7 +175,8 @@ cdef class CSRDataset(SequentialDataset):
                   np.ndarray[int, ndim=1, mode='c'] X_indptr,
                   np.ndarray[int, ndim=1, mode='c'] X_indices,
                   np.ndarray[double, ndim=1, mode='c'] Y,
-                  np.ndarray[double, ndim=1, mode='c'] sample_weight):
+                  np.ndarray[double, ndim=1, mode='c'] sample_weight,
+                  int seed=0):
         """Dataset backed by a scipy sparse CSR matrix.
 
         The feature indices of ``x`` are given by x_ind_ptr[0:nnz].
@@ -162,14 +213,11 @@ cdef class CSRDataset(SequentialDataset):
                                                                dtype=np.intc)
         self.index = idx
         self.index_data_ptr = <int *>idx.data
+        srand(seed)
 
-    cdef void next(self, double **x_data_ptr, int **x_ind_ptr,
-                   int *nnz, double *y, double *sample_weight) nogil:
-        cdef int current_index = self.current_index
-        if current_index >= (self.n_samples - 1):
-            current_index = -1
-
-        current_index += 1
+    cdef void _sample(self, double **x_data_ptr, int **x_ind_ptr,
+                      int *nnz, double *y, double *sample_weight,
+                      int current_index) nogil:
         cdef int sample_idx = self.index_data_ptr[current_index]
         cdef int offset = self.X_indptr_ptr[sample_idx]
         y[0] = self.Y_data_ptr[sample_idx]
@@ -177,9 +225,6 @@ cdef class CSRDataset(SequentialDataset):
         x_ind_ptr[0] = self.X_indices_ptr + offset
         nnz[0] = self.X_indptr_ptr[sample_idx + 1] - offset
         sample_weight[0] = self.sample_weight_data[sample_idx]
-
-        self.current_index = current_index
-
 
 cdef enum:
     RAND_R_MAX = 0x7FFFFFFF
