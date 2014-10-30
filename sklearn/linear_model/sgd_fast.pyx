@@ -569,6 +569,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef unsigned int i = 0
     cdef int is_hinge = isinstance(loss, Hinge)
     cdef double optimal_init = 0.0
+    cdef bint sag = True
 
     # q vector is only used for L1 regularization
     cdef np.ndarray[double, ndim = 1, mode = "c"] q = None
@@ -645,7 +646,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 if penalty_type >= L2:
                     w.scale(1.0 - ((1.0 - l1_ratio) * eta * alpha))
                 if update != 0.0:
-                    w.add(x_data_ptr, x_ind_ptr, xnnz, update)
+                    w.add(x_data_ptr, x_ind_ptr, xnnz, update, t, sag)
                     if fit_intercept == 1:
                         intercept += update * intercept_decay
 

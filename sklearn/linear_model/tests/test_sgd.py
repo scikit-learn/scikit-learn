@@ -133,6 +133,28 @@ class CommonTest(object):
 
         return average_weights, average_intercept
 
+    def sag(self, X, y, eta, alpha, intercept_init=0.0):
+        weights = np.zeros(X.shape[1])
+        intercept = intercept_init
+        decay = 1.0
+
+        # sparse data has a fixed decay of .01
+        if (isinstance(self, SparseSGDClassifierTestCase) or
+                isinstance(self, SparseSGDRegressorTestCase)):
+            decay = .01
+
+        for i, entry in enumerate(X):
+            p = np.dot(entry, weights)
+            p += intercept
+            weights *= 1.0 - (eta * alpha)
+            gradient = p - y[i]
+            new = -eta * entry * gradient
+
+            intercept += -(eta * gradient) * decay
+            weights += (new - weights) / (i + 1)
+
+        return weights, intercept
+
     def _test_warm_start(self, X, Y, lr):
         # Test that explicit warm restart...
         clf = self.factory(alpha=0.01, eta0=0.01, n_iter=5, shuffle=False,
@@ -325,6 +347,35 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     def test_set_intercept_binary(self):
         """Checks intercept_ shape for the warm starts in binary case"""
         self.factory().fit(X5, Y5, intercept_init=0)
+
+    def test_sag_binary_computed_correctly(self):
+        eta = .1
+        alpha = 0.1
+        n_samples = 20
+        n_features = 10
+        rng = np.random.RandomState(0)
+        X = rng.normal(size=(n_samples, n_features))
+        w = rng.normal(size=n_features)
+
+        clf = self.factory(loss='squared_loss',
+                           learning_rate='constant',
+                           eta0=eta, alpha=alpha,
+                           fit_intercept=True,
+                           n_iter=1)
+
+        # simple linear function without noise
+        y = np.dot(X, w)
+        y = np.sign(y)
+
+        clf.fit(X, y)
+
+        sag_weights, sag_intercept = self.sag(X, y, eta, alpha)
+        sag_weights = sag_weights.reshape(1, -1)
+        assert_array_almost_equal(clf.coef_,
+                                  sag_weights,
+                                  decimal=14)
+        assert_almost_equal(clf.intercept_, sag_intercept, decimal=14)
+
 
     def test_average_binary_computed_correctly(self):
         """Checks the SGDClassifier correctly computes the average weights"""

@@ -69,7 +69,7 @@ cdef class WeightVector(object):
             self.average_b = 1.0
 
     cdef void add(self, double *x_data_ptr, int *x_ind_ptr, int xnnz,
-                  double c) nogil:
+                  double c, double num_iter, bint sag) nogil:
         """Scales sample x by constant c and adds it to the weight vector.
 
         This operation updates ``sq_norm``.
@@ -84,6 +84,10 @@ cdef class WeightVector(object):
             The number of non-zero features of ``x``.
         c : double
             The scaling constant for the example.
+        num_iter: double
+            The total number of iterations thus far
+        sag : bint
+            A boolean when set to True computes stochastic average gradient.
         """
         cdef int j
         cdef int idx
@@ -100,7 +104,11 @@ cdef class WeightVector(object):
             val = x_data_ptr[j]
             innerprod += (w_data_ptr[idx] * val)
             xsqnorm += (val * val)
-            w_data_ptr[idx] += val * (c / wscale)
+            if sag:
+                w_data_ptr[idx] += ((val * (c / wscale) - w_data_ptr[idx]) /
+                                    num_iter)
+            else:
+                w_data_ptr[idx] += val * (c / wscale)
 
         self.sq_norm += (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
 
