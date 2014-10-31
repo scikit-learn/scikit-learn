@@ -102,7 +102,8 @@ class CommonTest(object):
 
     # a simple implementation of ASGD to use for testing
     # uses squared loss to find the gradient
-    def asgd(self, X, y, eta, alpha, weight_init=None, intercept_init=0.0):
+    def asgd(self, X, y, eta, alpha, weight_init=None,
+             intercept_init=0.0, adagrad=False, fit_intercept=True, eps0=0.0):
         if weight_init is None:
             weights = np.zeros(X.shape[1])
         else:
@@ -118,13 +119,22 @@ class CommonTest(object):
                 isinstance(self, SparseSGDRegressorTestCase)):
             decay = .01
 
+        accu_gradient = np.zeros(X.shape[1])
         for i, entry in enumerate(X):
             p = np.dot(entry, weights)
             p += intercept
-            gradient = p - y[i]
+
+            scalar_gradient = p - y[i]
             weights *= 1.0 - (eta * alpha)
-            weights += -(eta * gradient * entry)
-            intercept += -(eta * gradient) * decay
+            gradient_vector = scalar_gradient * entry
+            if adagrad:
+                accu_gradient += gradient_vector * gradient_vector + eps0
+                weights -= eta / np.sqrt(accu_gradient) * gradient_vector
+            else:
+                weights -= eta * gradient_vector
+
+            if fit_intercept:
+                intercept -= eta * scalar_gradient * decay
 
             average_weights *= i
             average_weights += weights
@@ -133,8 +143,7 @@ class CommonTest(object):
             average_intercept *= i
             average_intercept += intercept
             average_intercept /= i + 1.0
-
-        return average_weights, average_intercept
+        return average_weights, average_intercept, weights, intercept
 
     def _test_warm_start(self, X, Y, lr):
         # Test that explicit warm restart...
@@ -248,7 +257,7 @@ class CommonTest(object):
         clf1.fit(X, Y_encode)
         clf2.fit(X, Y_encode)
 
-        average_weights, average_intercept = \
+        average_weights, average_intercept, _, _ = \
             self.asgd(X, Y_encode, eta0, alpha,
                       weight_init=clf2.coef_.ravel(),
                       intercept_init=clf2.intercept_)
@@ -358,12 +367,40 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
         clf.fit(X, y)
 
-        average_weights, average_intercept = self.asgd(X, y, eta, alpha)
+        average_weights, average_intercept, _, _ = self.asgd(X, y, eta, alpha)
         average_weights = average_weights.reshape(1, -1)
         assert_array_almost_equal(clf.coef_,
                                   average_weights,
                                   decimal=14)
         assert_almost_equal(clf.intercept_, average_intercept, decimal=14)
+
+    def test_adagrad_computed_correctly(self):
+        eta = .1
+        alpha = 2.
+        n_samples = 20
+        n_features = 10
+        rng = np.random.RandomState(0)
+        X = rng.normal(size=(n_samples, n_features))
+        w = rng.normal(size=n_features)
+        y = np.dot(X, w)
+        y = np.sign(y)
+
+        clf = self.factory(loss='squared_loss',
+                           learning_rate='adagrad',
+                           eta0=eta, alpha=alpha, eps0=0.1,
+                           fit_intercept=False,
+                           n_iter=1, average=False)
+
+        clf.partial_fit(X[:10], y[:10], classes=np.unique(y))
+        clf.partial_fit(X[10:], y[10:], classes=np.unique(y))
+
+        _, _, weights, intercept = self.asgd(X, y, eta, alpha,
+                                             adagrad=True, fit_intercept=False, eps0=.1)
+        weights = weights.reshape(1, -1)
+        assert_array_almost_equal(clf.coef_,
+                                  weights,
+                                  decimal=14)
+        assert_almost_equal(clf.intercept_, intercept, decimal=14)
 
     def test_set_intercept_to_intercept(self):
         """Checks intercept_ shape consistency for the warm starts"""
@@ -418,7 +455,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         for i, cl in enumerate(classes):
             y_i = np.ones(np_Y2.shape[0])
             y_i[np_Y2 != cl] = -1
-            average_coef, average_intercept = self.asgd(X2, y_i, eta, alpha)
+            average_coef, average_intercept, _, _ = self.asgd(X2, y_i, eta, alpha)
             assert_array_almost_equal(average_coef, clf.coef_[i], decimal=16)
             assert_almost_equal(average_intercept,
                                 clf.intercept_[i],
@@ -847,7 +884,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
                            n_iter=1, average=True)
 
         clf.fit(X, y)
-        average_weights, average_intercept = self.asgd(X, y, eta, alpha)
+        average_weights, average_intercept, _, _ = self.asgd(X, y, eta, alpha)
 
         assert_array_almost_equal(clf.coef_,
                                   average_weights,
@@ -875,7 +912,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
 
         clf.partial_fit(X[:int(n_samples / 2)][:], y[:int(n_samples / 2)])
         clf.partial_fit(X[int(n_samples / 2):][:], y[int(n_samples / 2):])
-        average_weights, average_intercept = self.asgd(X, y, eta, alpha)
+        average_weights, average_intercept, _, _ = self.asgd(X, y, eta, alpha)
 
         assert_array_almost_equal(clf.coef_,
                                   average_weights,
@@ -897,7 +934,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
 
         clf.partial_fit(X3[:int(n_samples / 2)][:], Y3[:int(n_samples / 2)])
         clf.partial_fit(X3[int(n_samples / 2):][:], Y3[int(n_samples / 2):])
-        average_weights, average_intercept = self.asgd(X3, Y3, eta, alpha)
+        average_weights, average_intercept, _, _ = self.asgd(X3, Y3, eta, alpha)
 
         assert_array_almost_equal(clf.coef_,
                                   average_weights,

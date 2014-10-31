@@ -576,6 +576,8 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef double gradient = 0.0
     cdef double norm = 0.0
     cdef double optimal_init = 1.0
+    cdef np.ndarray[double, ndim=1, mode='c'] gradient_vector = np.zeros((n_features,), dtype=np.float64, order="c")
+    cdef double* gradient_ptr = &gradient_vector[0]
 
 
     # q vector is only used for L1 regularization
@@ -623,7 +625,10 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     eta = learning_rate.eta(eta0, alpha,
                                             optimal_init + t, power_t)
                     update = learning_rate.update(gradient, current_loss,
-                                                  eta, norm, C, p, y, is_hinge)
+                                                  eta, norm, C, p, y, is_hinge,
+                                                  gradient_ptr,
+                                                  x_data_ptr, x_ind_ptr, xnnz,
+                                                  n_features)
 
                 if verbose > 0:
                     sumloss += current_loss
@@ -635,10 +640,14 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
 
                 update *= class_weight * sample_weight
 
+                for my_i in range(n_features):
+                    gradient_ptr[my_i] *= class_weight * sample_weight
+
                 if penalty_type >= L2:
                     w.scale(1.0 - ((1.0 - l1_ratio) * eta * alpha))
+
                 if update != 0.0:
-                    w.add(x_data_ptr, x_ind_ptr, xnnz, update)
+                    w.add(x_data_ptr, x_ind_ptr, xnnz, gradient_ptr)
                     if fit_intercept == 1:
                         intercept += update * intercept_decay
 

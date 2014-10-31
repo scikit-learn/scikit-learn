@@ -2,15 +2,20 @@ cdef extern from "math.h":
     double pow(double, double) nogil
     double fmin(double, double) nogil
     double sqrt(double) nogil
-
+import numpy as np
 cimport cython
+cimport numpy as np
 
 cdef class LearningRate:
     cdef double eta(self, double eta0, double alpha, double t, double power_t):
         pass
     cdef double update(self, double gradient, double loss, double eta,
                        double norm, double C, double p, double y,
-                       int is_hinge):
+                       int is_hinge, double* gradient_ptr, double* x_data_ptr,
+                       int* x_ind_ptr, int xnnz, int n_features):
+        for j in range(xnnz):
+            idx = x_ind_ptr[j]
+            gradient_ptr[idx] = -eta * gradient
         return -eta * gradient
 
 cdef class Constant(LearningRate):
@@ -40,6 +45,7 @@ cdef class AdaGrad(LearningRate):
 
     def __cinit__(self, double sum_squared_grad, double eps0, double rho0):
         self.sum_squared_grad = sum_squared_grad
+        self.sum_squared_grad_vector = None
         self.eps0 = eps0
 
     cdef double eta(self, double eta0, double alpha, double t, double power_t):
@@ -48,8 +54,16 @@ cdef class AdaGrad(LearningRate):
     @cython.cdivision(True)
     cdef double update(self, double gradient, double loss, double eta,
                        double norm, double C, double p, double y,
-                       int is_hinge):
+                       int is_hinge, double* gradient_ptr, double* x_data_ptr,
+                       int* x_ind_ptr, int xnnz, int n_features):
+        if self.sum_squared_grad_vector is None:
+            self.sum_squared_grad_vector = np.zeros((n_features,), dtype=np.float64, order="c")
         self.sum_squared_grad += gradient ** 2.0 + self.eps0
+        for j in range(xnnz):
+            idx = x_ind_ptr[j]
+            val = x_data_ptr[j]
+            self.sum_squared_grad_vector[idx] += gradient * val * gradient * val + self.eps0
+            gradient_ptr[idx] = -(eta / sqrt(self.sum_squared_grad_vector[idx])) * gradient
         return -(eta / sqrt(self.sum_squared_grad)) * gradient
 
     def __reduce__(self):
@@ -58,7 +72,6 @@ cdef class AdaGrad(LearningRate):
 
 cdef class AdaDelta(LearningRate):
     def __cinit__(self, double sum_squared_grad, double eps0, double rho0):
-        self.sum_squared_grad = sum_squared_grad
         self.rho0 = rho0
         self.eps0 = eps0
         self.accugrad = 0
@@ -70,7 +83,8 @@ cdef class AdaDelta(LearningRate):
     @cython.cdivision(True)
     cdef double update(self, double gradient, double loss, double eta,
                        double norm, double C, double p, double y,
-                       int is_hinge):
+                       int is_hinge, double* gradient_ptr, double* x_data_ptr,
+                       int* x_ind_ptr, int xnnz, int n_features):
         agrad = self.rho0 * self.accugrad + \
             (1. - self.rho0) * gradient * gradient
         dx = - sqrt((self.accudelta + self.eps0) /
@@ -78,6 +92,9 @@ cdef class AdaDelta(LearningRate):
         self.accudelta = self.rho0 * self.accudelta +\
             (1. - self.rho0) * dx * dx
         self.accugrad = agrad
+        for j in range(xnnz):
+            idx = x_ind_ptr[j]
+            gradient_ptr[idx] = dx
         return dx
 
     def __reduce__(self):
@@ -101,10 +118,14 @@ cdef class PA1(PA):
     @cython.cdivision(True)
     cdef double update(self, double gradient, double loss, double eta,
                        double norm, double C, double p, double y,
-                       int is_hinge):
+                       int is_hinge, double* gradient_ptr, double* x_data_ptr,
+                       int* x_ind_ptr, int xnnz, int n_features):
         update = loss / norm
         update = fmin(C, update)
         update *= self._get_multiplier(is_hinge, p, y)
+        for j in range(xnnz):
+            idx = x_ind_ptr[j]
+            gradient_ptr[idx] = update
         return update
 
     def __reduce__(self):
@@ -117,9 +138,13 @@ cdef class PA2(PA):
     @cython.cdivision(True)
     cdef double update(self, double gradient, double loss, double eta,
                        double norm, double C, double p, double y,
-                       int is_hinge):
+                       int is_hinge, double* gradient_ptr, double* x_data_ptr,
+                       int* x_ind_ptr, int xnnz, int n_features):
         update = loss / (norm + 0.5 / C)
         update *= self._get_multiplier(is_hinge, p, y)
+        for j in range(xnnz):
+            idx = x_ind_ptr[j]
+            gradient_ptr[idx] = update
         return update
 
     def __reduce__(self):

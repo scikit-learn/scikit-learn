@@ -90,8 +90,9 @@ if __name__ == "__main__":
         ("adagrad", SGDClassifier(learning_rate="adagrad",
                                   alpha=alpha, loss=loss,
                                   n_iter=20, shuffle=shuffle,
-                                  eta0=.00001,
-                                  eps0=1e-2)),
+                                  eta0=1.0,
+                                  eps0=1e-2,
+                                  fit_intercept=False)),
     ]
 
     alpha = 1e-1
@@ -116,8 +117,8 @@ if __name__ == "__main__":
     ]
 
     all_datasets = [
-        # (datasets.load_digits(), digits_clfs),
-        (datasets.fetch_20newsgroups_vectorized(), news_clfs),
+        (datasets.load_digits(), digits_clfs),
+        # (datasets.fetch_20newsgroups_vectorized(), news_clfs),
         # (datasets.fetch_lfw_pairs(), faces_clfs),
     ]
 
