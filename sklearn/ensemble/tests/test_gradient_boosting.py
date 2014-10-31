@@ -617,6 +617,31 @@ def test_verbose_output():
     assert_equal(10 + 9, n_lines)
 
 
+def test_verbose_output_with_end():
+    """Check verbose=-1 does not cause error. """
+    from sklearn.externals.six.moves import cStringIO as StringIO
+    import sys
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1,
+                                     verbose=-1, subsample=0.8)
+    clf.fit(X, y)
+    verbose_output = sys.stdout
+    sys.stdout = old_stdout
+
+    # check output
+    verbose_output.seek(0)
+    header = verbose_output.readline().rstrip()
+    # with OOB
+    true_header = ' '.join(['%10s'] + ['%16s'] * 4) % (
+        'Iter', 'Train Loss', 'OOB Improve', 'Remaining Time', 'End Time')
+    assert_equal(true_header, header)
+
+    n_lines = sum(1 for l in verbose_output.readlines())
+    # one for 1-10 and then 9 for 20-100
+    assert_equal(10 + 9, n_lines)
+
+
 def test_more_verbose_output():
     """Check verbose=2 does not cause error. """
     from sklearn.externals.six.moves import cStringIO as StringIO
@@ -635,6 +660,31 @@ def test_more_verbose_output():
     # no OOB
     true_header = ' '.join(['%10s'] + ['%16s'] * 2) % (
         'Iter', 'Train Loss', 'Remaining Time')
+    assert_equal(true_header, header)
+
+    n_lines = sum(1 for l in verbose_output.readlines())
+    # 100 lines for n_estimators==100
+    assert_equal(100, n_lines)
+
+
+def test_more_verbose_output_with_end():
+    """Check verbose=-2 does not cause error. """
+    from sklearn.externals.six.moves import cStringIO as StringIO
+    import sys
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1,
+                                     verbose=-2)
+    clf.fit(X, y)
+    verbose_output = sys.stdout
+    sys.stdout = old_stdout
+
+    # check output
+    verbose_output.seek(0)
+    header = verbose_output.readline().rstrip()
+    # no OOB
+    true_header = ' '.join(['%10s'] + ['%16s'] * 3) % (
+        'Iter', 'Train Loss', 'Remaining Time', 'End Time')
     assert_equal(true_header, header)
 
     n_lines = sum(1 for l in verbose_output.readlines())
