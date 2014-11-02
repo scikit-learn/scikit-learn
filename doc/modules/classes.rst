@@ -176,6 +176,7 @@ Classes
 
    cross_validation.train_test_split
    cross_validation.cross_val_score
+   cross_validation.cross_val_predict
    cross_validation.permutation_test_score
    cross_validation.check_cv
 
