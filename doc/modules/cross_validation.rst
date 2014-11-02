@@ -152,15 +152,18 @@ The function :func:`cross_val_predict` has a similar interface to
 :func:`cross_val_score`, but returns, for each element in the input, the
 prediction that was obtained for that element when it was in the test set. Only
 cross-validation strategies that assign all elements to a test set exactly once
-can be used (otherwise, an exception is raise).
+can be used (otherwise, an exception is raised).
 
-These prediction then be used to evalute the classifier::
+These prediction can then be used to evalute the classifier::
 
   >>> predicted = cross_validation.cross_val_predict(clf, iris.data,
   ...                                                iris.target, cv=10)
   >>> metrics.accuracy_score(iris.target, predicted) # doctest: +ELLIPSIS
   0.97...
 
+Note that the result of this computation may be slightly different from those
+obtained using :func:`cross_val_score` as the elements are grouped in different
+ways.
 
 The available cross validation iterators are introduced in the following
 section.
