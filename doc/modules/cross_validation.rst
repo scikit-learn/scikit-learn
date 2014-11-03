@@ -187,7 +187,7 @@ These prediction can then be used to evalute the classifier::
   >>> predicted = cross_validation.cross_val_predict(clf, iris.data,
   ...                                                iris.target, cv=10)
   >>> metrics.accuracy_score(iris.target, predicted) # doctest: +ELLIPSIS
-  0.97...
+  0.966...
 
 Note that the result of this computation may be slightly different from those
 obtained using :func:`cross_val_score` as the elements are grouped in different
