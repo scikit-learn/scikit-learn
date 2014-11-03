@@ -36,9 +36,9 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         - 'distance' : weight points by the inverse of their distance.
           in this case, closer neighbors of a query point will have a
           greater influence than neighbors which are further away.
-        - one of 'tophat', 'gaussian', 'epanechnikov', 'exponential',
-          'linear', 'cosine' : kernel used for weighting. The bandwidth is
-          equal to the distance to the n_neighbors + 1 farthest point.
+        - 'linear' : use linear kernel for weighting. Weights decay linearly
+          with a distance from 1 at the query point to 0 at the n_neighbors + 1
+          farthest point.
         - [callable] : a user-defined function which accepts an
           array of distances, and returns an array of the same shape
           containing the weights.
@@ -234,9 +234,9 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         - 'distance' : weight points by the inverse of their distance.
           in this case, closer neighbors of a query point will have a
           greater influence than neighbors which are further away.
-        - one of 'tophat', 'gaussian', 'epanechnikov', 'exponential',
-          'linear', 'cosine' : kernel used for weighting. The bandwidth is
-          equal to the radius parameter.
+        - 'linear' : use linear kernel for weighting. Weights decay linearly
+          with a distance from 1 at a distance equal zero to 0 at a distance
+          equal radius.
         - [callable] : a user-defined function which accepts an
           array of distances, and returns an array of the same shape
           containing the weights.

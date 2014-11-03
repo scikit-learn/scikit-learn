@@ -48,8 +48,7 @@ def _weight_func(dist):
     return retval ** 2
 
 
-WEIGHTS = ['uniform', 'distance', _weight_func, 'tophat', 'gaussian',
-           'epanechnikov', 'exponential', 'linear', 'cosine']
+WEIGHTS = ['uniform', 'distance', 'linear', _weight_func]
 
 
 def test_unsupervised_kneighbors(n_samples=20, n_features=5,

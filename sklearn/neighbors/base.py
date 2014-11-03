@@ -42,14 +42,7 @@ VALID_METRICS_SPARSE = dict(ball_tree=[],
                             brute=PAIRWISE_DISTANCE_FUNCTIONS.keys())
 
 
-KERNEL_WEIGHTS = {'gaussian': lambda dist: np.exp(-0.5 * dist**2),
-                  'epanechnikov': lambda dist: 1.0 - dist**2,
-                  'exponential': lambda dist: np.exp(-dist),
-                  'linear': lambda dist: 1.0 - dist,
-                  'cosine': lambda dist: np.cos(0.5 * np.pi * dist)}
-
-
-VALID_WEIGHTS = ['uniform', 'distance', 'tophat'] + list(KERNEL_WEIGHTS.keys())
+VALID_WEIGHTS = ['uniform', 'distance', 'linear']
 
 
 class NeighborsWarning(UserWarning):
@@ -85,14 +78,12 @@ def _get_weights(dist, weights, bandwidth=None):
         query point within the radius.
     weights: None, callable or string
         The kind of weights to use. The valid string parameters are 'uniform',
-        'distance', 'tophat', 'gaussian', 'epanechnikov', 'exponential',
-        'linear', 'cosine'.
+        'distance', 'linear'.
     bandwidth: {float, array}
-        The kernel bandwidth (only for kernel weighting). If float, then the
-        bandwidth is the same for all query points (applicable to
-        RadiusNeighbors classes). If array, then the i-th element is used as a
-        bandwidth for the i-th query (applicable to KNeighbors classes).
-
+        The bandwidth for 'linear' weights. If float, then the bandwidth is the
+        same for all query points (applicable to RadiusNeighbors classes).
+        If array, then the i-th element is used as a bandwidth for the i-th
+        query (applicable to KNeighbors classes).
 
     Returns
     ========
@@ -101,25 +92,23 @@ def _get_weights(dist, weights, bandwidth=None):
         then None is returned.
     """
     weights = _check_weights(weights)
-    if weights in (None, 'uniform', 'tophat'):
+    if weights in (None, 'uniform'):
         return None
     elif weights == 'distance':
         with np.errstate(divide='ignore'):
             dist = 1.0 / dist
         return dist
-    elif callable(weights):
-        return weights(dist)
-    else:
-        kernel = KERNEL_WEIGHTS[weights]
+    elif weights == 'linear':
         if type(bandwidth) == float:  # for RadiusNeighbors
             dist = dist / bandwidth
-            weights = [kernel(instance_dist) for instance_dist in dist]
-            return np.array(weights)
         else:
             with np.errstate(invalid='ignore'):  # accounts for possible NaN
                 dist = (dist.T / bandwidth).T
             dist = np.nan_to_num(dist)
-            return kernel(dist)
+        return 1 - dist
+    elif callable(weights):
+        return weights(dist)
+
 
 class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Base class for nearest neighbors estimators."""
@@ -454,7 +443,10 @@ class KNeighborsMixin(object):
         weights : array, shape (n_samples, self.n_neighbors)
             Weights assigned to neighbors.
         """
-        if self.weights in KERNEL_WEIGHTS:
+        if self.n_neighbors == 1:
+            dist, ind = self.kneighbors(X)
+            weights = _get_weights(dist, None)
+        elif self.weights == 'linear':
             dist, ind = self.kneighbors(X, n_neighbors=self.n_neighbors + 1)
             bandwidth = dist[:, -1].ravel()
             dist, ind = dist[:, :-1], ind[:, :-1]

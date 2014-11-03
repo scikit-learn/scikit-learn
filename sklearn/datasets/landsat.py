@@ -47,7 +47,7 @@ logger = logging.getLogger()
 
 def fetch_landsat(data_home=None, download_if_missing=True,
                   random_state=None, shuffle=False):
-    """Load the covertype dataset, downloading it if necessary.
+    """Load Landsat dataset, downloading it if necessary.
 
     Parameters
     ----------
