@@ -1,16 +1,15 @@
 # Authors: Manoj Kumar <manojkumarsivaraj334@gmail.com>
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
+from __future__ import division
 
 import numpy as np
-from scipy import sparse
-from math import sqrt
 
 from ..metrics.pairwise import euclidean_distances
 from ..base import TransformerMixin, ClusterMixin
 from ..externals.six.moves import xrange
 from ..utils import check_array
-from ..utils.extmath import safe_sparse_dot, row_norms
+from ..utils.extmath import safe_sparse_dot
 from .hierarchical import AgglomerativeClustering
 
 
@@ -43,6 +42,12 @@ class CFNode(object):
     next_leaf_ : CFNode
         next_leaf. Useful only if is_leaf is True.
         the final subclusters.
+
+    centroids_ : array-like
+        list of centroids for a particular CFNode.
+
+    squared_norm_ : array-like
+        list of squared norms for a particular CFNode.
     """
     def __init__(self, threshold, branching_factor, is_leaf):
         self.threshold = threshold
@@ -68,11 +73,11 @@ class CFNode(object):
         dist = euclidean_distances(
             child_node.centroids_, Y_norm_squared=child_node.squared_norm_,
             squared=True)
-        max_ = dist.argmax()
-        farthest_idx1 = max_ / dist.shape[0]
-        farthest_idx2 = max_ % dist.shape[0]
+        n_clusters = dist.shape[0]
 
-        dist_idx = dist[[farthest_idx1, farthest_idx2]]
+        farthest_idx = np.unravel_index(
+            dist.argmax(), (n_clusters, n_clusters))
+        dist_idx = dist[[farthest_idx]]
         newsubcluster1 = CFSubcluster()
         newsubcluster2 = CFSubcluster()
 
@@ -110,7 +115,7 @@ class CFNode(object):
 
     def insert_cf_subcluster(self, subcluster):
         """
-        Insert a new subcluster into the nide
+        Insert a new subcluster into the node
         """
         if not self.subclusters_:
             self.update(subcluster)
@@ -194,12 +199,17 @@ class CFSubcluster(object):
         Linear sum of all the samples in a subcluster. Prevents holding
         all sample data in memory.
 
-    ss_ : ndarray
-        Squared sum of all the samples in a subcluster. Prevents holding
-        all sample data in memory.
+    centroid_ : ndarray
+        Centroid of the subcluster. Prevent recomputing of centroids when
+        self.centroids_ is called.
 
     child_ : CFNode
-        Child Node of the subcluster.
+        Child Node of the subcluster. Once a given CFNode is set as the child
+        of the CFNode, it is set to self.child_.
+
+    sq_norm_ : ndarray
+        Squared norm of the subcluster. Used to prevent recomputing when
+        pairwise minimum distances are computed.
     """
     def __init__(self, X=None):
         self.X = X
@@ -243,6 +253,12 @@ class Birch(TransformerMixin, ClusterMixin):
         such that the number of subclusters exceed the branching_factor then
         the node and the corresponding parent has to be updated.
 
+    n_clusters : int or None, default 3
+        Number of clusters after the final clustring step, which treats the
+        subclusters from the leaves as new samples.
+        If set to None, this final clustering step is not performed and the
+        subclusters are returned as they are.
+
     Attributes
     ----------
     root_ : CFNode
@@ -268,14 +284,14 @@ class Birch(TransformerMixin, ClusterMixin):
       https://code.google.com/p/jbirch/
     """
 
-    def __init__(self, threshold=1.0, branching_factor=8, copy=True,
-                 n_clusters=3):
+    def __init__(self, threshold=1.0, branching_factor=8, n_clusters=3):
         self.threshold = threshold
         self.branching_factor = branching_factor
         self.n_clusters = n_clusters
         self.partial_fit_ = False
         self.root_ = None
 
+    @profile
     def fit(self, X):
         """
         Build a CF Tree for the input data.
@@ -310,11 +326,12 @@ class Birch(TransformerMixin, ClusterMixin):
                     self.root_.centroids_,
                     Y_norm_squared=self.root_.squared_norm_,
                     squared=True)
-                max_ = subclusters_pairwise.argmax()
-                farthest_idx1 = max_ / subclusters_pairwise.shape[0]
-                farthest_idx2 = max_ % subclusters_pairwise.shape[0]
-                dist_idx = subclusters_pairwise[[
-                    farthest_idx1, farthest_idx2]]
+
+                # Separating the two farthest clusters.
+                n_clusters = subclusters_pairwise.shape[0]
+                farthest_idx = np.unravel_index(subclusters_pairwise.argmax(),
+                    (n_clusters, n_clusters))
+                dist_idx = subclusters_pairwise[[farthest_idx]]
 
                 new_node1 = CFNode(
                     threshold, branching_factor, self.root_.is_leaf)
@@ -363,14 +380,14 @@ class Birch(TransformerMixin, ClusterMixin):
             self.labels_ = self.predict(X)
             return self
 
-        # We need the global clustering step that clusters the subclusters of
-        # the leaves are clustered back with Agglomerative Clustering.
-        # Compute these new centroids and map samples to these centroids.
+        # The global clustering step that clusters the subclusters of
+        # the leaves. It assumes the centroids of the subclusters as
+        # samples and finds the final centroids.
         clf = AgglomerativeClustering(n_clusters=self.n_clusters)
         labels = clf.fit_predict(centroids)
         new_centroids = np.empty((self.n_clusters, X.shape[1]))
         for i in xrange(self.n_clusters):
-             mask = clf.labels_ == i
+             mask = labels == i
              new_centroids[i] = np.average(centroids[mask], axis=0,
                                            weights=weights[mask])
         self.centroids_ = new_centroids
