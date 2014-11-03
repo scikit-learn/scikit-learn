@@ -37,7 +37,6 @@ average_times_exact = []
 accuracies = []
 stds_accuracies = []
 stds_times_approx = []
-stds_times_exact = []
 n_iter = 30
 rng = np.random.RandomState(42)
 
@@ -71,7 +70,6 @@ for n_samples in n_samples_values:
 
     stds_accuracies.append(np.std(accuracy))
     stds_times_approx.append(np.std(average_time_approx))
-    stds_times_exact.append(np.std(average_time_exact))
     average_time_approx = np.mean(average_time_approx)
     average_time_exact = np.mean(average_time_exact)
     accuracy = np.mean(accuracy)
