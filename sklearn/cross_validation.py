@@ -1610,7 +1610,7 @@ def permutation_test_score(estimator, X, y, cv=None,
     score : float
         The true score without permuting targets.
 
-    permutation_scores : array, shape [n_permutations]
+    permutation_scores : array, shape (n_permutations,)
         The scores obtained for each permutations.
 
     pvalue : float
