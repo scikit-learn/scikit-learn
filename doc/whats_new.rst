@@ -67,6 +67,12 @@ Enhancements
      to `Rohit Sivaprasad`_), as well as evaluation metrics (by
      `Joel Nothman`_).
 
+   - Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score`.
+     By `Jatin Shah`.
+
+   - Add support for multiclass in `metrics.hinge_loss`. Added ``labels=None``
+     as optional paramter. By `Saurabh Jha`.
+
    - Add ``multi_class="multinomial"`` option in
      :class:`linear_model.LogisticRegression` to implement a Logistic
      Regression solver that minimizes the cross-entropy or multinomial loss
