@@ -100,8 +100,6 @@ between bias and variance in the result.  A large bandwidth leads to a very
 smooth (i.e. high-bias) density distribution.  A small bandwidth leads
 to an unsmooth (i.e. high-variance) density distribution.
 
-.. _kernels:
-
 :class:`sklearn.neighbors.KernelDensity` implements several common kernel
 forms, which are shown in the following figure:
 

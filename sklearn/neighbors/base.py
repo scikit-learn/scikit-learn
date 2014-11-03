@@ -66,7 +66,7 @@ def _check_weights(weights):
 
 
 def _get_weights(dist, weights, bandwidth=None):
-    """Get the weights from an array of distances and a parameter ``weights``
+    """Get the weights from an array of distances and a parameter ``weights``.
 
     Parameters
     ===========

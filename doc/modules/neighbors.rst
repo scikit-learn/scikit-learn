@@ -175,30 +175,16 @@ to the so-called "curse of dimensionality".
 The basic nearest neighbors classification uses uniform weights: that is, the
 value assigned to a query point is computed from a simple majority vote of
 the nearest neighbors.  Under some circumstances, it is better to weight the
-neighbors such that nearer neighbors contribute more to the fit.  This can
+neighbors such that nearer neighbors contribute more to the fit. This can
 be accomplished through the ``weights`` keyword.  The default value,
 ``weights = 'uniform'``, assigns uniform weights to each neighbor,
 ``weights = 'distance'`` assigns weights proportional to the inverse of the
-distance from the query point. Other allowed values for ``weights`` are
-:ref:`kernels <kernels>`: ``'tophat'``, ``'gaussian'``, ``'epanechnikov'``,
-``'exponential'``, ``'linear'``, ``'cosine'``. The bandwidth of a kernel is
-equal to the distance to the :math:`k + 1` neighbor for
-:class:`KNeighborsClassifier` and to the radius :math:`r` for
-:class:`RadiusNeighborsClassifier`. The sum of kernel-weighted votes for
-a class is proportional to the probability density for this class estimated
-with the kernel, and the class with the highest probability density is
-picked. Alternatively, a user-defined function of the distance can be supplied
-which is used to compute the weights.
-
-It is advised to try different options for ``weights`` and choose one which
-works best for your data. All kernel weights (except ``'tophat'`` which
-is equivalent to ``'uniform'``) behave similarly, they give a smoother decision
-boundary and tend to outperform ``uniform`` weights. When ``weights='distance'``
-and a query point is very close (or equal) to some training point,
-the classification is based solely on this training point. Generally this
-is an undesirable property, but potentially it can work well in certain 
-situations.
-
+distance from the query point, ``weights = 'linear'`` applies a linear kernel
+for neighbors weighting. In the latter case weights decay linearly with a
+distance from 1 at a distance equal zero to 0 at a distance equal to the
+kernel bandwidth. The bandwidth is equal to the distance to the :math:`k + 1` 
+neighbor for :class:`KNeighborsClassifier` and to the radius :math:`r` for
+:class:`RadiusNeighborsClassifier`.
 
 .. |classification_1| image:: ../auto_examples/neighbors/images/plot_classification_001.png
    :target: ../auto_examples/neighbors/plot_classification.html
@@ -214,10 +200,23 @@ situations.
 
 .. centered:: |classification_1| |classification_2| |classification_3|
 
+
+It is advised to try different options for ``weights`` and choose one which
+works best for your data. Setting ``weights = 'linear'`` usually gives an
+improvement of classification accuracy within 1% range, also accuracy depends 
+less on number of neighbors in this case.
+
+.. figure:: ../auto_examples/neighbors/images/plot_weights_comparison_001.png
+   :target: ../auto_examples/neighbors/plot_weights_comparison.html
+   :align: center
+   :scale: 75
+
 .. topic:: Examples:
 
   * :ref:`example_neighbors_plot_classification.py`: an example of
     classification using nearest neighbors.
+  * :ref:`example_neighbors_plot_weights_comparison.py`: an example
+    demonstrating how accuracy of classification depends on weights.  
 
 .. _regression:
 
@@ -240,25 +239,17 @@ The basic nearest neighbors regression uses uniform weights: that is,
 each point in the local neighborhood contributes uniformly to the
 classification of a query point.  Under some circumstances, it can be
 advantageous to weight points such that nearby points contribute more
-to the regression than faraway points.  This can be accomplished through
-the ``weights`` keyword.  The default value, ``weights = 'uniform'``,
-assigns equal weights to all points.  ``weights = 'distance'`` assigns
-weights proportional to the inverse of the distance from the query point.
-Other allowed values for ``weights`` are :ref:`kernels <kernels>`: ``'tophat'``,
-``'gaussian'``, ``'epanechnikov'``, ``'exponential'``, ``'linear'``,
-``'cosine'``. The bandwidth of a kernel is equal to the distance to the
-:math:`k + 1` neighbor for :class:`KNeighborsRegressor` and to the radius
-:math:`r` for :class:`RadiusNeighborsRegressor`. Nearest neighbors regression
-with kernel weighting is also known as Nadaraya-Watson estimate. Alternatively,
-a user-defined function of the distance can be supplied, which will be used to
-compute the weights.
-
-Using ``'uniform'`` weights results in a piecewise constant fitted function.
-Such dependencies are not realistic and doesn't occur in nature. The better
-alternative is to use kernel weights, which give smoother and usually more
-accurate estimates. When ``weights='distance'``, a fitted function passes
-through each training point. This is an unusual property for a regression
-function, but potentially it can be useful in specific situations.
+to the regression than faraway points. This can be accomplished through the 
+``weights`` keyword.  The default value, ``weights = 'uniform'``, assigns
+uniform weights to each neighbor, ``weights = 'distance'`` assigns weights
+proportional to the inverse of the distance from the query point,
+``weights = 'linear'`` applies a linear kernel for neighbors weighting. In the
+latter case weights decay linearly with a distance from 1 at a distance equal
+zero to 0 at a distance equal to the kernel bandwidth. The bandwidth is equal
+to the distance to the :math:`k + 1` neighbor for :class:`KNeighborsRegressor`
+and to the radius :math:`r` for :class:`RadiusNeighborsRegressor`.
+Alternatively, a user-defined function of the distance can be supplied, which
+will be used to compute the weights.
 
 .. figure:: ../auto_examples/neighbors/images/plot_regression_001.png
    :target: ../auto_examples/neighbors/plot_regression.html

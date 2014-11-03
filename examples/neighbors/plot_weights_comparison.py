@@ -1,7 +1,7 @@
 """
-========================================================================
-Nearest neighbors classification with different weights and n_neighbors
-========================================================================
+======================================================
+Accuracy of classification with different weights
+======================================================
 
 This example demonstrates how accuracy of k-nearest-neighbors classification
 depends on number of neighbors and weights assigned to them. The real-world
@@ -44,6 +44,6 @@ for weights in weight_types:
 plt.xticks(neighbor_counts)
 plt.title("Accuracy of kNN on Landsat dataset")
 plt.xlabel("n_neighbors")
-plt.ylabel("Accuracy")
-plt.legend(loc='best')
+plt.ylabel("accuracy")
+plt.legend(loc='lower left')
 plt.show()
