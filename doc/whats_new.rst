@@ -14,7 +14,8 @@ New features
 
    - Incremental fit for :class:`GaussianNB <naive_bayes.GaussianNB>`.
 
-   - Add ``sample_weight`` support to :class:`dummy.DummyClassifier`. By
+   - Add ``sample_weight`` support to :class:`dummy.DummyClassifier` and
+     :class:`dummy.DummyRegressor`. By
      `Arnaud Joly`_.
 
    - Add the :func:`metrics.label_ranking_average_precision_score` metrics. By
