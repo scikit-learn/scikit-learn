@@ -10,6 +10,7 @@ from .dict_learning import sparse_encode, SparseCodingMixin
 from ..preprocessing import normalize
 from ..utils import check_array, check_random_state
 from ..utils.extmath import norm
+from ..utils.random import choice
 
 
 # atoms with norm below are considered zero
@@ -96,9 +97,8 @@ def _init_dictionary_from_samples(X, n_components, random_state):
         replace = True
     else:
         replace = False
-    chosen_examples = random_state.choice(nonzero_examples,
-                                          replace=replace,
-                                          size=n_components)
+    chosen_examples = choice(nonzero_examples, replace=replace,
+                             size=n_components, random_state=random_state)
     return X[chosen_examples, :]
 
 
