@@ -207,14 +207,14 @@ def test_distances():
         distances, neighbors = lshf.kneighbors(query,
                                                n_neighbors=n_neighbors,
                                                return_distance=True)
-        # Returned distances should be in sorted in descending order.
-        assert_true(np.all(np.diff(distances[0]) <= 0))
+        # Returned distances should be in sorted in acsending order.
+        assert_true(np.all(np.diff(distances[0]) >= 0))
 
         mean_dist = np.mean(pairwise_distances(query, X, metric='cosine'))
         distances, neighbors = lshf.radius_neighbors(query,
                                                      radius=mean_dist,
                                                      return_distance=True)
-        assert_true(np.all(np.diff(distances[0]) <= 0))
+        assert_true(np.all(np.diff(distances[0]) >= 0))
 
 
 def test_fit():
