@@ -1184,32 +1184,6 @@ def test_hinge_loss_multiclass_invariance_lists():
                  dummy_hinge_loss)
 
 
-def test_hinge_loss_multiclass_sample_weight():
-    pred_decision = np.array([
-        [0.36, -0.17, -0.58, -0.99],
-        [-0.54, -0.37, -0.48, -0.58],
-        [-1.45, -0.58, -0.38, -0.17],
-        [-0.54, -0.38, -0.48, -0.58],
-        [-2.36, -0.79, -0.27,  0.24],
-        [-1.45, -0.58, -0.38, -0.17]
-    ])
-    y_true = np.array([0, 1, 2, 1, 3, 2])
-    sample_weight = [1, 2, 3, 1, 8, 4]
-    dummy_losses = np.array([
-        1 - pred_decision[0][0] + pred_decision[0][1],
-        1 - pred_decision[1][1] + pred_decision[1][2],
-        1 - pred_decision[2][2] + pred_decision[2][3],
-        1 - pred_decision[3][1] + pred_decision[3][2],
-        1 - pred_decision[4][3] + pred_decision[4][2],
-        1 - pred_decision[5][2] + pred_decision[5][3]
-    ])
-    dummy_losses[dummy_losses <= 0] = 0
-    dummy_hinge_loss = np.average(dummy_losses, weights=sample_weight)
-    assert_equal(hinge_loss(y_true, pred_decision,
-                            sample_weight=sample_weight),
-                 dummy_hinge_loss)
-
-
 def test_log_loss():
     # binary case with symbolic labels ("no" < "yes")
     y_true = ["no", "no", "no", "yes", "yes", "yes"]
