@@ -20,9 +20,10 @@ _ATOM_NORM_TOLERANCE = 1e-6
 def _worst_represented_example(X, dictionary, sparse_codes):
     """Find the sample that has the most representation error."""
 
-    # TODO: [optimize] can use squared norm or extmath.norm
-    errors = numpy.linalg.norm(X - numpy.dot(sparse_codes, dictionary), axis=1)
-    worst_index = numpy.argmax(errors)
+    # TODO: [optimize] can use extmath.norm
+    residuals = X - numpy.dot(sparse_codes, dictionary)
+    errors_squared = numpy.sum(residuals * residuals, axis=1)
+    worst_index = numpy.argmax(errors_squared)
     return X[worst_index, :]
 
 
