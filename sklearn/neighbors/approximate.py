@@ -193,8 +193,8 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         left_mask = np.tril(np.ones((tri_size, tri_size), dtype=int))[:, 1:]
         right_mask = left_mask[::-1, ::-1]
 
-        self._left_mask = np.packbits(left_mask).view(dtype='HASH_DTYPE')
-        self._right_mask = np.packbits(right_mask).view(dtype='HASH_DTYPE')
+        self._left_mask = np.packbits(left_mask).view(dtype=HASH_DTYPE)
+        self._right_mask = np.packbits(right_mask).view(dtype=HASH_DTYPE)
 
     def _get_candidates(self, query, max_depth, bin_queries, n_neighbors):
         """Performs the Synchronous ascending phase.
@@ -284,7 +284,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         projections = (np.dot(self.hash_functions_[tree_n],
                               y) > 0).astype(int)
 
-        return np.packbits(projections).view(dtype='HASH_DTYPE')[0]
+        return np.packbits(projections).view(dtype=HASH_DTYPE)[0]
 
     def fit(self, X):
         """Fit the LSH forest on the data.
@@ -337,7 +337,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         for i in range(self.n_estimators):
             bin_query = self._convert_to_hash(query, i)
             k = _find_longest_prefix_match(self._trees[i], bin_query,
-                                           HASH_SIZE,
+                                           MAX_HASH_SIZE,
                                            self._left_mask,
                                            self._right_mask)
             if k > max_depth:
