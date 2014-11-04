@@ -29,8 +29,12 @@ def make_data(n_samples, n_features, n_queries, seed=0):
     print('Generating random blob-ish data')
     X, _ = make_blobs(n_samples=n_samples + n_queries,
                       n_features=n_features, centers=100,
-                      random_state=seed)
+                      shuffle=True, random_state=seed)
 
+    # Keep the last samples as held out query vectors: note since we used
+    # shuffle=True we have ensured that index and query vectors are
+    # samples from the same distribution (a mixture of 100 gaussians in this
+    # case)
     return X[:n_samples], X[n_samples:]
 
 
