@@ -1,5 +1,5 @@
 """
-Tests for the birch clusterer.
+Tests for the birch clustering algorithm.
 """
 
 import numpy as np
@@ -10,9 +10,10 @@ from sklearn.datasets import make_blobs
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 
+
 def test_n_samples_leaves_roots():
     """Sanity check for the number of samples in leaves and roots"""
-    X, y = make_blobs()
+    X, y = make_blobs(n_samples=10)
     brc = Birch()
     brc.fit(X)
     n_samples_root = sum([sc.n_ for sc in brc.root_.subclusters_])
@@ -23,7 +24,7 @@ def test_n_samples_leaves_roots():
 
 
 def test_partial_fit():
-    X, y = make_blobs()
+    X, y = make_blobs(n_samples=100)
     brc = Birch()
     brc.fit(X)
     brc_partial = Birch()

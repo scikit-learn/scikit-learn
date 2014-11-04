@@ -13,7 +13,7 @@ from ..utils.extmath import safe_sparse_dot
 from .hierarchical import AgglomerativeClustering
 
 
-class CFNode(object):
+class _CFNode(object):
     """Each node in a CFTree is called a CFNode.
 
     The CFNode can have a maximum of branching_factor
@@ -36,10 +36,10 @@ class CFNode(object):
     subclusters_ : array-like
         list of subclusters for a particular CFNode.
 
-    prev_leaf_ : CFNode
+    prev_leaf_ : _CFNode
         prev_leaf. Useful only if is_leaf is True.
 
-    next_leaf_ : CFNode
+    next_leaf_ : _CFNode
         next_leaf. Useful only if is_leaf is True.
         the final subclusters.
 
@@ -54,7 +54,8 @@ class CFNode(object):
         self.branching_factor = branching_factor
         self.is_leaf = is_leaf
 
-        # The list of subclusters to manipulate throughout
+        # The list of subclusters, centroids and squared norms
+        # to manipulate throughout
         self.subclusters_ = []
         self.centroids_ = []
         self.squared_norm_ = []
@@ -78,13 +79,13 @@ class CFNode(object):
         farthest_idx = np.unravel_index(
             dist.argmax(), (n_clusters, n_clusters))
         dist_idx = dist[[farthest_idx]]
-        newsubcluster1 = CFSubcluster()
-        newsubcluster2 = CFSubcluster()
+        newsubcluster1 = _CFSubcluster()
+        newsubcluster2 = _CFSubcluster()
 
         threshold = self.threshold
         branching_factor = self.branching_factor
-        new_node1 = CFNode(threshold, branching_factor, child_node.is_leaf)
-        new_node2 = CFNode(threshold, branching_factor, child_node.is_leaf)
+        new_node1 = _CFNode(threshold, branching_factor, child_node.is_leaf)
+        new_node2 = _CFNode(threshold, branching_factor, child_node.is_leaf)
         newsubcluster1.child_ = new_node1
         newsubcluster2.child_ = new_node2
 
@@ -175,7 +176,7 @@ class CFNode(object):
                 return True
 
 
-class CFSubcluster(object):
+class _CFSubcluster(object):
     """Each subcluster in a CFNode is called a CFSubcluster.
 
     A CFSubcluster can have a CFNode has its child.
@@ -203,9 +204,9 @@ class CFSubcluster(object):
         Centroid of the subcluster. Prevent recomputing of centroids when
         self.centroids_ is called.
 
-    child_ : CFNode
-        Child Node of the subcluster. Once a given CFNode is set as the child
-        of the CFNode, it is set to self.child_.
+    child_ : _CFNode
+        Child Node of the subcluster. Once a given _CFNode is set as the child
+        of the _CFNode, it is set to self.child_.
 
     sq_norm_ : ndarray
         Squared norm of the subcluster. Used to prevent recomputing when
@@ -231,15 +232,12 @@ class CFSubcluster(object):
 
 
 class Birch(TransformerMixin, ClusterMixin):
-    """Implements the Birch algorithm.
+    """Implements the Birch clustering algorithm.
 
-    Insert a new sample is inserted into the CF Tree, the sample
-    ultimately ends up at the leaf which has the closest centroid,
-    and the parent sublusters are updated.
-
-    TODO: Implement Merging Refinement
-    TODO: Implement recomputing threshold and rebuilding the tree if
-    the Memory Limit is breached.
+    Every new sample is inserted into the root of the Clustering Feature
+    Tree. It is then clubbed together with the subcluster that has the
+    centroid closest to the new sample. This is done recursively till it
+    ends up at the subcluster of the leaf of the tree has the closest centroid.
 
     Parameters
     ----------
@@ -251,7 +249,9 @@ class Birch(TransformerMixin, ClusterMixin):
     branching_factor : int, default 8
         Maximun number of CF subclusters in each node. If a new samples enters
         such that the number of subclusters exceed the branching_factor then
-        the node and the corresponding parent has to be updated.
+        the node has to be split. The corresponding parent also has to be
+        split and if the number of subclusters in the parent is greater than
+        the branching factor, then it has to be split recursively.
 
     n_clusters : int or None, default 3
         Number of clusters after the final clustring step, which treats the
@@ -261,7 +261,7 @@ class Birch(TransformerMixin, ClusterMixin):
 
     Attributes
     ----------
-    root_ : CFNode
+    root_ : _CFNode
         Root of the CFTree.
 
     dummy_leaf_ : CFNode
@@ -291,7 +291,6 @@ class Birch(TransformerMixin, ClusterMixin):
         self.partial_fit_ = False
         self.root_ = None
 
-    @profile
     def fit(self, X):
         """
         Build a CF Tree for the input data.
@@ -309,15 +308,15 @@ class Birch(TransformerMixin, ClusterMixin):
         # we need to initialize the root.
         if not self.partial_fit_ or (self.root_ is None and self.partial_fit_):
             # The first root is the leaf. Manipulate this object throughout.
-            self.root_ = CFNode(threshold, branching_factor, True)
+            self.root_ = _CFNode(threshold, branching_factor, True)
 
             # To enable getting back subclusters.
-            self.dummy_leaf_ = CFNode(threshold, branching_factor, True)
+            self.dummy_leaf_ = _CFNode(threshold, branching_factor, True)
             self.dummy_leaf_.next_leaf_ = self.root_
 
         # Cannot vectorize. Enough to convince to use cython.
         for sample in X:
-            subcluster = CFSubcluster(sample)
+            subcluster = _CFSubcluster(sample)
 
             split = self.root_.insert_cf_subcluster(subcluster)
 
@@ -333,13 +332,13 @@ class Birch(TransformerMixin, ClusterMixin):
                     (n_clusters, n_clusters))
                 dist_idx = subclusters_pairwise[[farthest_idx]]
 
-                new_node1 = CFNode(
+                new_node1 = _CFNode(
                     threshold, branching_factor, self.root_.is_leaf)
-                new_node2 = CFNode(
+                new_node2 = _CFNode(
                     threshold, branching_factor, self.root_.is_leaf)
 
-                new_subcluster1 = CFSubcluster()
-                new_subcluster2 = CFSubcluster()
+                new_subcluster1 = _CFSubcluster()
+                new_subcluster2 = _CFSubcluster()
                 new_subcluster1.child_ = new_node1
                 new_subcluster2.child_ = new_node2
 
@@ -358,7 +357,7 @@ class Birch(TransformerMixin, ClusterMixin):
                     new_node2.prev_leaf_ = new_node1
 
                 del self.root_
-                self.root_ = CFNode(threshold, branching_factor, False)
+                self.root_ = _CFNode(threshold, branching_factor, False)
                 self.root_.update(new_subcluster1)
                 self.root_.update(new_subcluster2)
 
