@@ -37,6 +37,7 @@ from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..utils import check_random_state, check_array, check_X_y, column_or_1d
 from ..utils.extmath import logsumexp
+from ..utils.stats import _weighted_percentile
 from ..externals import six
 from ..feature_selection.from_model import _LearntSelectorMixin
 
@@ -48,18 +49,6 @@ from ..tree._tree import FriedmanMSE
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
 from ._gradient_boosting import _random_sample_mask
-
-
-def _weighted_percentile(array, sample_weight, percentile=50):
-    """Compute the weighted ``percentile`` of ``array`` with ``sample_weight``. """
-    sorted_idx = np.argsort(array)
-
-    # Find index of median prediction for each sample
-    weight_cdf = sample_weight[sorted_idx].cumsum()
-    percentile_or_above = weight_cdf >= (percentile / 100.0) * weight_cdf[-1]
-    percentile_idx = percentile_or_above.argmax()
-
-    return array[sorted_idx[percentile_idx]]
 
 
 class QuantileEstimator(BaseEstimator):
