@@ -1204,9 +1204,9 @@ def test_hinge_loss_multiclass_sample_weight():
         1 - pred_decision[5][2] + pred_decision[5][3]
     ])
     dummy_losses[dummy_losses <= 0] = 0
-    dummy_losses = np.dot(dummy_losses, sample_weight)
-    dummy_hinge_loss = np.mean(dummy_losses)
-    assert_equal(hinge_loss(y_true, pred_decision),
+    dummy_hinge_loss = np.average(dummy_losses, weights=sample_weight)
+    assert_equal(hinge_loss(y_true, pred_decision,
+                            sample_weight=sample_weight),
                  dummy_hinge_loss)
 
 

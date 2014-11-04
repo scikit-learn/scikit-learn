@@ -1377,7 +1377,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None):
     return _weighted_sum(loss, sample_weight, normalize)
 
 
-def hinge_loss(y_true, pred_decision, labels=None):
+def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     """Average hinge loss (non-regularized)
 
     In binary class case, assuming labels in y_true are encoded with +1 and -1,
@@ -1495,6 +1495,7 @@ def hinge_loss(y_true, pred_decision, labels=None):
     losses = 1 - margin
     # The hinge_loss doesn't penalize good enough predictions.
     losses[losses <= 0] = 0
-    if sample_weight is not None:
-    #     losses = _weighted_sum(losses, sample_weight)
-    return np.mean(losses)
+    if sample_weight is None:
+        return np.mean(losses)
+    else:
+        return np.average(losses, weights=sample_weight)
