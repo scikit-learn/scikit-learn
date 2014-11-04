@@ -240,8 +240,8 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         ranks, distances = self._compute_distances(query,
                                                    candidates.astype(int))
 
-        return (candidates[ranks[:n_neighbors]][::-1],
-                distances[:n_neighbors][::-1])
+        return (candidates[ranks[:n_neighbors]],
+                distances[:n_neighbors])
 
     def _get_radius_neighbors(self, query, max_depth, bin_queries, radius):
         """Finds radius neighbors from the candidates obtained.
@@ -277,7 +277,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
             ratio_within_radius = (total_neighbors.shape[0] /
                                    float(total_candidates.shape[0]))
             max_depth = max_depth - 1
-        return total_neighbors[::-1], total_distances[::-1]
+        return total_neighbors, total_distances
 
     def _convert_to_hash(self, y, tree_n):
         """Converts item(a data point) into an integer.
