@@ -135,13 +135,13 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
            radius=1.0, radius_cutoff_ratio=0.9, random_state=None)
       >>> distances, indices = lshf.kneighbors(X_test, n_neighbors=2)
       >>> distances
-      array([[ 0.14960959,  0.0693931 ],
-             [ 0.4810007 ,  0.22932536],
-             [ 0.01481913,  0.00489444]])
+      array([[ 0.0693931 ,  0.14960959],
+             [ 0.22932536,  0.4810007 ],
+             [ 0.00489444,  0.01481913]])
       >>> indices
-      array([[2, 1],
-             [0, 2],
-             [0, 4]])
+      array([[1, 2],
+             [2, 0],
+             [4, 0]])
 
     """
 
