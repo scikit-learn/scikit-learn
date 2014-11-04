@@ -86,9 +86,10 @@ def _reconstruction_error(X, dictionary, sparse_codes):
 
 
 def _init_dictionary_from_samples(X, n_components, random_state):
-    # TODO: [optimize] can use squared norm or extmath.norm
+    # TODO: [optimize] can use extmath.norm
+    samples_norms_squared = numpy.sum(X*X, axis=1)
     nonzero_examples = list(
-        numpy.where(numpy.linalg.norm(X, axis=1) > _ATOM_NORM_TOLERANCE)[0])
+        numpy.where(samples_norms_squared > _ATOM_NORM_TOLERANCE)[0])
 
     if len(nonzero_examples) < n_components:
         # this is not effective, but still allowed
