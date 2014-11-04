@@ -13,6 +13,9 @@ from ..random_projection import GaussianRandomProjection
 
 __all__ = ["LSHForest"]
 
+HASH_DTYPE = '>u4'
+MAX_HASH_SIZE = np.dtype(HASH_DTYPE).itemsize * 8
+
 
 def _find_matching_indices(sorted_array, item, left_mask, right_mask):
     """Finds indices in sorted array of integers.
@@ -166,7 +169,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         into a binary string array based on the sign (positive/negative)
         of the projection.
         """
-        grp = GaussianRandomProjection(n_components=self.max_label_length,
+        grp = GaussianRandomProjection(n_components=MAX_HASH_SIZE,
                                        random_state=seed)
         X = np.zeros((1, self._fit_X.shape[1]), dtype=float)
         grp.fit(X)
@@ -174,7 +177,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         hashes = (grp.transform(self._fit_X) > 0).astype(int)
         hash_function = grp.components_
 
-        binary_hashes = np.packbits(hashes).view(dtype='>u4')
+        binary_hashes = np.packbits(hashes).view(dtype=HASH_DTYPE)
         original_indices = np.argsort(binary_hashes)
 
         return original_indices, binary_hashes[original_indices], hash_function
@@ -193,12 +196,12 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
     def _generate_masks(self):
         """Creates left and right masks for all hash lengths."""
-        tri_size = self.max_label_length + 1
+        tri_size = MAX_HASH_SIZE + 1
         left_mask = np.tril(np.ones((tri_size, tri_size), dtype=int))[:, 1:]
         right_mask = left_mask[::-1, ::-1]
 
-        self._left_mask = np.packbits(left_mask).view(dtype='>u4')
-        self._right_mask = np.packbits(right_mask).view(dtype='>u4')
+        self._left_mask = np.packbits(left_mask).view(dtype=HASH_DTYPE)
+        self._right_mask = np.packbits(right_mask).view(dtype=HASH_DTYPE)
 
     def _get_candidates(self, query, max_depth, bin_queries, n_neighbors):
         """Performs the Synchronous ascending phase.
@@ -288,7 +291,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         projections = (np.dot(self.hash_functions_[tree_n],
                               y) > 0).astype(int)
 
-        return np.packbits(projections).view(dtype='>u4')[0]
+        return np.packbits(projections).view(dtype=HASH_DTYPE)[0]
 
     def fit(self, X):
         """Fit the LSH forest on the data.
@@ -306,7 +309,6 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         """
 
         self._fit_X = check_array(X)
-        self.max_label_length = 32
 
         # Creates a g(p,x) for each tree
         self.hash_functions_ = []
@@ -342,7 +344,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         for i in range(self.n_estimators):
             bin_query = self._convert_to_hash(query, i)
             k = _find_longest_prefix_match(self._trees[i], bin_query,
-                                           self.max_label_length,
+                                           MAX_HASH_SIZE,
                                            self._left_mask,
                                            self._right_mask)
             if k > max_depth:
