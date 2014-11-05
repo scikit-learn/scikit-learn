@@ -3,6 +3,7 @@
 # License: BSD 3 clause
 from __future__ import division
 
+import warnings
 import numpy as np
 
 from ..metrics.pairwise import euclidean_distances
@@ -253,9 +254,10 @@ class Birch(TransformerMixin, ClusterMixin):
         split and if the number of subclusters in the parent is greater than
         the branching factor, then it has to be split recursively.
 
-    n_clusters : int or None, default 3
+    n_clusters : int, instance of ClusterMixin or None, default 3
         Number of clusters after the final clustring step, which treats the
-        subclusters from the leaves as new samples.
+        subclusters from the leaves as new samples. By default the global
+        clustering step is AgglomerativeClustering with n_clusters set to 3.
         If set to None, this final clustering step is not performed and the
         subclusters are returned as they are.
 
@@ -374,18 +376,36 @@ class Birch(TransformerMixin, ClusterMixin):
         centroids = np.concatenate(centroids)
         weights = np.asarray(weights)
 
-        if self.n_clusters is None or len(centroids) <= self.n_clusters:
+        # Preprocessing for the global clustering.
+        not_enough_centroids = False
+        if isinstance(self.n_clusters, ClusterMixin):
+            clf = self.n_clusters
+        elif isinstance(self.n_clusters, int):
+            clf = AgglomerativeClustering(n_clusters=self.n_clusters)
+            # There is no need to perform the global clustering step.
+            if len(centroids) < self.n_clusters:
+                not_enough_centroids = True
+        elif self.n_clusters is not None:
+            raise ValueError("n_clusters should be an instance of "
+                             "ClusterMixin or an int")            
+
+        if self.n_clusters is None or not_enough_centroids:
             self.centroids_ = centroids
             self.labels_ = self.predict(X)
+            if not_enough_centroids:
+                warnings.warn(
+                    "Number of clusters %s found by Birch is lesser than "
+                    "%s. Either decrease the threshold or increase the "
+                    "branching_factor" % (len(centroids), self.n_clusters))
             return self
 
         # The global clustering step that clusters the subclusters of
         # the leaves. It assumes the centroids of the subclusters as
         # samples and finds the final centroids.
-        clf = AgglomerativeClustering(n_clusters=self.n_clusters)
         labels = clf.fit_predict(centroids)
-        new_centroids = np.empty((self.n_clusters, X.shape[1]))
-        for i in xrange(self.n_clusters):
+        n_clusters = len(np.unique(labels))
+        new_centroids = np.empty((n_clusters, X.shape[1]))
+        for i in xrange(n_clusters):
              mask = labels == i
              new_centroids[i] = np.average(centroids[mask], axis=0,
                                            weights=weights[mask])

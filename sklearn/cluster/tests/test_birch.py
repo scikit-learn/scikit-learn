@@ -3,12 +3,20 @@ Tests for the birch clustering algorithm.
 """
 
 import numpy as np
+import warnings
 
+from .common import generate_clustered_data
 from sklearn.cluster.birch import Birch
+from sklearn.cluster.hierarchical import AgglomerativeClustering
 from sklearn.datasets import make_blobs
+from sklearn.linear_model import ElasticNet
+from sklearn.metrics import pairwise_distances_argmin
 
+from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_warns
 
 
 def test_n_samples_leaves_roots():
@@ -24,10 +32,56 @@ def test_n_samples_leaves_roots():
 
 
 def test_partial_fit():
+    """Test that fit is equivalent to calling partial_fit multiple times""" 
     X, y = make_blobs(n_samples=100)
-    brc = Birch()
+    brc = Birch(n_clusters=3)
     brc.fit(X)
     brc_partial = Birch()
     brc_partial.partial_fit(X[:50])
     brc_partial.partial_fit(X[50:])
     assert_array_equal(brc_partial.centroids_, brc.centroids_)
+    assert_equal(len(brc.centroids_), 3)
+
+
+def test_birch_predict():
+    """Test the predict method predicts the nearest centroid."""
+    rng = np.random.RandomState(0)
+    X = generate_clustered_data(n_clusters=3, n_features=3,
+                                n_samples_per_cluster=10)
+
+    # n_samples * n_samples_per_cluster
+    shuffle_indices = np.arange(30)
+    rng.shuffle(shuffle_indices)
+    X_shuffle = X[shuffle_indices, :]
+    brc = Birch(n_clusters=4, threshold=1.)
+    brc.fit(X_shuffle)
+    centroids = brc.centroids_
+    assert_array_equal(brc.labels_, brc.predict(X_shuffle))
+    nearest_centroid = pairwise_distances_argmin(X_shuffle, centroids)
+    assert_array_equal(nearest_centroid, brc.labels_)
+
+
+def test_n_clusters():
+    """Test that n_clusters param works properly"""
+    X, y = make_blobs(n_samples=100, centers=10)
+    brc1 = Birch(n_clusters=10)
+    brc1.fit(X)
+    assert_equal(len(brc1.centroids_), 10)
+
+    # Test that n_clusters = Agglomerative Clustering gives
+    # the same results.
+    gc = AgglomerativeClustering(n_clusters=10)
+    brc2 = Birch(n_clusters=gc)
+    brc2.fit(X)
+    assert_equal(len(brc2.centroids_), 10)
+    assert_array_equal(brc1.centroids_, brc2.centroids_)
+    assert_array_equal(brc1.labels_, brc2.labels_)
+
+    # Test that the wrong global clustering step raises an Error.
+    clf = ElasticNet()
+    brc3 = Birch(n_clusters=clf)
+    assert_raises(ValueError, brc3.fit, X)
+
+    # Test that a small number of clusters raises a warning.
+    brc4 = Birch(threshold=10000.)
+    assert_warns(UserWarning, brc4.fit, X)
