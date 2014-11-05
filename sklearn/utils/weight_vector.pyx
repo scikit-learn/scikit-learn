@@ -69,7 +69,7 @@ cdef class WeightVector(object):
             self.average_b = 1.0
 
     cdef void add(self, double *x_data_ptr, int *x_ind_ptr, int xnnz,
-                  double *c) nogil:
+                  double *c, double update) nogil:
         """Scales sample x by constant c and adds it to the weight vector.
 
         This operation updates ``sq_norm``.
@@ -100,15 +100,15 @@ cdef class WeightVector(object):
             val = x_data_ptr[j]
             innerprod += (w_data_ptr[idx] * val)
             xsqnorm += (val * val)
-            w_data_ptr[idx] += val * (c[idx] / wscale)
+            w_data_ptr[idx] += val * (c[idx] * update / wscale)
 
-        self.sq_norm += (xsqnorm * c[0] * c[0]) + (2.0 * innerprod * wscale * c[0])
+        self.sq_norm += (xsqnorm * c[x_ind_ptr[0]] * c[x_ind_ptr[0]]) + (2.0 * innerprod * wscale * c[x_ind_ptr[0]])
 
     # Update the average weights according to the sparse trick defined
     # here: http://research.microsoft.com/pubs/192769/tricks-2012.pdf
     # by Leon Bottou
     cdef void add_average(self, double *x_data_ptr, int *x_ind_ptr, int xnnz,
-                          double c, double num_iter) nogil:
+                          double* c, double update, double num_iter) nogil:
         """Updates the average weight vector.
 
         Parameters
@@ -135,7 +135,7 @@ cdef class WeightVector(object):
         for j in range(xnnz):
             idx = x_ind_ptr[j]
             val = x_data_ptr[j]
-            aw_data_ptr[idx] += (self.average_a * val * (-c / wscale))
+            aw_data_ptr[idx] += (self.average_a * val * (c[idx] * update / wscale))
 
         # Once the the sample has been processed
         # update the average_a and average_b

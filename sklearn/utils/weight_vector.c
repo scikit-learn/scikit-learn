@@ -757,8 +757,8 @@ struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector {
  */
 
 struct __pyx_vtabstruct_7sklearn_5utils_13weight_vector_WeightVector {
-  void (*add)(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *, double *, int *, int, double *);
-  void (*add_average)(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *, double *, int *, int, double, double);
+  void (*add)(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *, double *, int *, int, double *, double);
+  void (*add_average)(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *, double *, int *, int, double *, double, double);
   double (*dot)(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *, double *, int *, int);
   void (*scale)(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *, double);
   void (*reset_wscale)(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *);
@@ -1049,8 +1049,8 @@ static PyTypeObject *__Pyx_ImportType(const char *module_name, const char *class
 
 static int __Pyx_InitStrings(__Pyx_StringTabEntry *t);
 
-static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *__pyx_v_self, double *__pyx_v_x_data_ptr, int *__pyx_v_x_ind_ptr, int __pyx_v_xnnz, double *__pyx_v_c); /* proto*/
-static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add_average(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *__pyx_v_self, double *__pyx_v_x_data_ptr, int *__pyx_v_x_ind_ptr, int __pyx_v_xnnz, double __pyx_v_c, double __pyx_v_num_iter); /* proto*/
+static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *__pyx_v_self, double *__pyx_v_x_data_ptr, int *__pyx_v_x_ind_ptr, int __pyx_v_xnnz, double *__pyx_v_c, double __pyx_v_update); /* proto*/
+static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add_average(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *__pyx_v_self, double *__pyx_v_x_data_ptr, int *__pyx_v_x_ind_ptr, int __pyx_v_xnnz, double *__pyx_v_c, double __pyx_v_update, double __pyx_v_num_iter); /* proto*/
 static double __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_dot(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *__pyx_v_self, double *__pyx_v_x_data_ptr, int *__pyx_v_x_ind_ptr, int __pyx_v_xnnz); /* proto*/
 static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_scale(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *__pyx_v_self, double __pyx_v_c); /* proto*/
 static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_reset_wscale(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *__pyx_v_self); /* proto*/
@@ -1474,11 +1474,11 @@ static int __pyx_pf_7sklearn_5utils_13weight_vector_12WeightVector___cinit__(str
  *             self.average_b = 1.0
  * 
  *     cdef void add(self, double *x_data_ptr, int *x_ind_ptr, int xnnz,             # <<<<<<<<<<<<<<
- *                   double *c) nogil:
+ *                   double *c, double update) nogil:
  *         """Scales sample x by constant c and adds it to the weight vector.
  */
 
-static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *__pyx_v_self, double *__pyx_v_x_data_ptr, int *__pyx_v_x_ind_ptr, int __pyx_v_xnnz, double *__pyx_v_c) {
+static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *__pyx_v_self, double *__pyx_v_x_data_ptr, int *__pyx_v_x_ind_ptr, int __pyx_v_xnnz, double *__pyx_v_c, double __pyx_v_update) {
   int __pyx_v_j;
   int __pyx_v_idx;
   double __pyx_v_val;
@@ -1564,7 +1564,7 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add(struct __
  *             val = x_data_ptr[j]
  *             innerprod += (w_data_ptr[idx] * val)             # <<<<<<<<<<<<<<
  *             xsqnorm += (val * val)
- *             w_data_ptr[idx] += val * (c[idx] / wscale)
+ *             w_data_ptr[idx] += val * (c[idx] * update / wscale)
  */
     __pyx_v_innerprod = (__pyx_v_innerprod + ((__pyx_v_w_data_ptr[__pyx_v_idx]) * __pyx_v_val));
 
@@ -1572,7 +1572,7 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add(struct __
  *             val = x_data_ptr[j]
  *             innerprod += (w_data_ptr[idx] * val)
  *             xsqnorm += (val * val)             # <<<<<<<<<<<<<<
- *             w_data_ptr[idx] += val * (c[idx] / wscale)
+ *             w_data_ptr[idx] += val * (c[idx] * update / wscale)
  * 
  */
     __pyx_v_xsqnorm = (__pyx_v_xsqnorm + (__pyx_v_val * __pyx_v_val));
@@ -1580,28 +1580,28 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add(struct __
     /* "sklearn/utils/weight_vector.pyx":103
  *             innerprod += (w_data_ptr[idx] * val)
  *             xsqnorm += (val * val)
- *             w_data_ptr[idx] += val * (c[idx] / wscale)             # <<<<<<<<<<<<<<
+ *             w_data_ptr[idx] += val * (c[idx] * update / wscale)             # <<<<<<<<<<<<<<
  * 
- *         self.sq_norm += (xsqnorm * c[0] * c[0]) + (2.0 * innerprod * wscale * c[0])
+ *         self.sq_norm += (xsqnorm * c[x_ind_ptr[0]] * c[x_ind_ptr[0]]) + (2.0 * innerprod * wscale * c[x_ind_ptr[0]])
  */
     __pyx_t_5 = __pyx_v_idx;
-    (__pyx_v_w_data_ptr[__pyx_t_5]) = ((__pyx_v_w_data_ptr[__pyx_t_5]) + (__pyx_v_val * ((__pyx_v_c[__pyx_v_idx]) / __pyx_v_wscale)));
+    (__pyx_v_w_data_ptr[__pyx_t_5]) = ((__pyx_v_w_data_ptr[__pyx_t_5]) + (__pyx_v_val * (((__pyx_v_c[__pyx_v_idx]) * __pyx_v_update) / __pyx_v_wscale)));
   }
 
   /* "sklearn/utils/weight_vector.pyx":105
- *             w_data_ptr[idx] += val * (c[idx] / wscale)
+ *             w_data_ptr[idx] += val * (c[idx] * update / wscale)
  * 
- *         self.sq_norm += (xsqnorm * c[0] * c[0]) + (2.0 * innerprod * wscale * c[0])             # <<<<<<<<<<<<<<
+ *         self.sq_norm += (xsqnorm * c[x_ind_ptr[0]] * c[x_ind_ptr[0]]) + (2.0 * innerprod * wscale * c[x_ind_ptr[0]])             # <<<<<<<<<<<<<<
  * 
  *     # Update the average weights according to the sparse trick defined
  */
-  __pyx_v_self->sq_norm = (__pyx_v_self->sq_norm + (((__pyx_v_xsqnorm * (__pyx_v_c[0])) * (__pyx_v_c[0])) + (((2.0 * __pyx_v_innerprod) * __pyx_v_wscale) * (__pyx_v_c[0]))));
+  __pyx_v_self->sq_norm = (__pyx_v_self->sq_norm + (((__pyx_v_xsqnorm * (__pyx_v_c[(__pyx_v_x_ind_ptr[0])])) * (__pyx_v_c[(__pyx_v_x_ind_ptr[0])])) + (((2.0 * __pyx_v_innerprod) * __pyx_v_wscale) * (__pyx_v_c[(__pyx_v_x_ind_ptr[0])]))));
 
   /* "sklearn/utils/weight_vector.pyx":71
  *             self.average_b = 1.0
  * 
  *     cdef void add(self, double *x_data_ptr, int *x_ind_ptr, int xnnz,             # <<<<<<<<<<<<<<
- *                   double *c) nogil:
+ *                   double *c, double update) nogil:
  *         """Scales sample x by constant c and adds it to the weight vector.
  */
 
@@ -1612,11 +1612,11 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add(struct __
  *     # here: http://research.microsoft.com/pubs/192769/tricks-2012.pdf
  *     # by Leon Bottou
  *     cdef void add_average(self, double *x_data_ptr, int *x_ind_ptr, int xnnz,             # <<<<<<<<<<<<<<
- *                           double c, double num_iter) nogil:
+ *                           double* c, double update, double num_iter) nogil:
  *         """Updates the average weight vector.
  */
 
-static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add_average(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *__pyx_v_self, double *__pyx_v_x_data_ptr, int *__pyx_v_x_ind_ptr, int __pyx_v_xnnz, double __pyx_v_c, double __pyx_v_num_iter) {
+static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add_average(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *__pyx_v_self, double *__pyx_v_x_data_ptr, int *__pyx_v_x_ind_ptr, int __pyx_v_xnnz, double *__pyx_v_c, double __pyx_v_update, double __pyx_v_num_iter) {
   int __pyx_v_j;
   int __pyx_v_idx;
   double __pyx_v_val;
@@ -1686,7 +1686,7 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add_average(s
  *         for j in range(xnnz):
  *             idx = x_ind_ptr[j]             # <<<<<<<<<<<<<<
  *             val = x_data_ptr[j]
- *             aw_data_ptr[idx] += (self.average_a * val * (-c / wscale))
+ *             aw_data_ptr[idx] += (self.average_a * val * (c[idx] * update / wscale))
  */
     __pyx_v_idx = (__pyx_v_x_ind_ptr[__pyx_v_j]);
 
@@ -1694,7 +1694,7 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add_average(s
  *         for j in range(xnnz):
  *             idx = x_ind_ptr[j]
  *             val = x_data_ptr[j]             # <<<<<<<<<<<<<<
- *             aw_data_ptr[idx] += (self.average_a * val * (-c / wscale))
+ *             aw_data_ptr[idx] += (self.average_a * val * (c[idx] * update / wscale))
  * 
  */
     __pyx_v_val = (__pyx_v_x_data_ptr[__pyx_v_j]);
@@ -1702,12 +1702,12 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add_average(s
     /* "sklearn/utils/weight_vector.pyx":138
  *             idx = x_ind_ptr[j]
  *             val = x_data_ptr[j]
- *             aw_data_ptr[idx] += (self.average_a * val * (-c / wscale))             # <<<<<<<<<<<<<<
+ *             aw_data_ptr[idx] += (self.average_a * val * (c[idx] * update / wscale))             # <<<<<<<<<<<<<<
  * 
  *         # Once the the sample has been processed
  */
     __pyx_t_5 = __pyx_v_idx;
-    (__pyx_v_aw_data_ptr[__pyx_t_5]) = ((__pyx_v_aw_data_ptr[__pyx_t_5]) + ((__pyx_v_self->average_a * __pyx_v_val) * ((-__pyx_v_c) / __pyx_v_wscale)));
+    (__pyx_v_aw_data_ptr[__pyx_t_5]) = ((__pyx_v_aw_data_ptr[__pyx_t_5]) + ((__pyx_v_self->average_a * __pyx_v_val) * (((__pyx_v_c[__pyx_v_idx]) * __pyx_v_update) / __pyx_v_wscale)));
   }
 
   /* "sklearn/utils/weight_vector.pyx":142
@@ -1745,7 +1745,7 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add_average(s
  *     # here: http://research.microsoft.com/pubs/192769/tricks-2012.pdf
  *     # by Leon Bottou
  *     cdef void add_average(self, double *x_data_ptr, int *x_ind_ptr, int xnnz,             # <<<<<<<<<<<<<<
- *                           double c, double num_iter) nogil:
+ *                           double* c, double update, double num_iter) nogil:
  *         """Updates the average weight vector.
  */
 
@@ -4384,8 +4384,8 @@ PyMODINIT_FUNC PyInit_weight_vector(void)
   /*--- Function export code ---*/
   /*--- Type init code ---*/
   __pyx_vtabptr_7sklearn_5utils_13weight_vector_WeightVector = &__pyx_vtable_7sklearn_5utils_13weight_vector_WeightVector;
-  __pyx_vtable_7sklearn_5utils_13weight_vector_WeightVector.add = (void (*)(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *, double *, int *, int, double *))__pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add;
-  __pyx_vtable_7sklearn_5utils_13weight_vector_WeightVector.add_average = (void (*)(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *, double *, int *, int, double, double))__pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add_average;
+  __pyx_vtable_7sklearn_5utils_13weight_vector_WeightVector.add = (void (*)(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *, double *, int *, int, double *, double))__pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add;
+  __pyx_vtable_7sklearn_5utils_13weight_vector_WeightVector.add_average = (void (*)(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *, double *, int *, int, double *, double, double))__pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add_average;
   __pyx_vtable_7sklearn_5utils_13weight_vector_WeightVector.dot = (double (*)(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *, double *, int *, int))__pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_dot;
   __pyx_vtable_7sklearn_5utils_13weight_vector_WeightVector.scale = (void (*)(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *, double))__pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_scale;
   __pyx_vtable_7sklearn_5utils_13weight_vector_WeightVector.reset_wscale = (void (*)(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *))__pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_reset_wscale;

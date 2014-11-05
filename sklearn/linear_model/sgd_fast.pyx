@@ -574,10 +574,11 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef int is_hinge = isinstance(loss, Hinge)
     cdef double current_loss = 0.0
     cdef double gradient = 0.0
+    cdef double grad = 0.0 # TODO: delete this line
     cdef double norm = 0.0
     cdef double optimal_init = 1.0
-    cdef np.ndarray[double, ndim=1, mode='c'] gradient_vector = np.zeros((n_features,), dtype=np.float64, order="c")
-    cdef double* gradient_ptr = &gradient_vector[0]
+    cdef np.ndarray[double, ndim=1, mode='c'] eta_vector = np.zeros((n_features,), dtype=np.float64, order="c")
+    cdef double* eta_ptr = &eta_vector[0]
 
 
     # q vector is only used for L1 regularization
@@ -622,13 +623,11 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 norm = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
                 current_loss = loss.loss(p, y)
                 with gil:
-                    eta = learning_rate.eta(eta0, alpha,
-                                            optimal_init + t, power_t)
+                    learning_rate.eta(eta_ptr, eta0, alpha,
+                                      optimal_init + t, power_t, gradient,
+                                      x_data_ptr, x_ind_ptr, xnnz)
                     update = learning_rate.update(gradient, current_loss,
-                                                  eta, norm, C, p, y, is_hinge,
-                                                  gradient_ptr,
-                                                  x_data_ptr, x_ind_ptr, xnnz,
-                                                  n_features)
+                                                  eta, norm, C, p, y, is_hinge)
 
                 if verbose > 0:
                     sumloss += current_loss
@@ -640,16 +639,13 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
 
                 update *= class_weight * sample_weight
 
-                for my_i in range(n_features):
-                    gradient_ptr[my_i] *= class_weight * sample_weight
-
                 if penalty_type >= L2:
-                    w.scale(1.0 - ((1.0 - l1_ratio) * eta * alpha))
+                    w.scale(1.0 - ((1.0 - l1_ratio) * eta_ptr[x_ind_ptr[0]] * alpha))
 
                 if update != 0.0:
-                    w.add(x_data_ptr, x_ind_ptr, xnnz, gradient_ptr)
+                    w.add(x_data_ptr, x_ind_ptr, xnnz, eta_ptr, -update)
                     if fit_intercept == 1:
-                        intercept += update * intercept_decay
+                        intercept += -update * eta_ptr[x_ind_ptr[0]] * intercept_decay
 
                 if average > 0 and average <= t:
                     # compute the average for the intercept and update the
@@ -657,12 +653,12 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     # the update is 0
 
                     w.add_average(x_data_ptr, x_ind_ptr, xnnz,
-                                  update, (t - average + 1))
+                                  eta_ptr, update, (t - average + 1))
                     average_intercept += ((intercept - average_intercept) /
                                           (t - average + 1))
 
                 if penalty_type == L1 or penalty_type == ELASTICNET:
-                    u += (l1_ratio * eta * alpha)
+                    u += (l1_ratio * eta_ptr[x_ind_ptr[0]] * alpha)
                     l1penalty(w, q_data_ptr, x_ind_ptr, xnnz, u)
 
                 t += 1

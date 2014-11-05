@@ -7,36 +7,42 @@ cimport cython
 cimport numpy as np
 
 cdef class LearningRate:
-    cdef double eta(self, double eta0, double alpha, double t, double power_t):
-        pass
-    cdef double update(self, double gradient, double loss, double eta,
-                       double norm, double C, double p, double y,
-                       int is_hinge, double* gradient_ptr, double* x_data_ptr,
-                       int* x_ind_ptr, int xnnz, int n_features):
+    cdef void eta(self, double *eta_ptr, double eta0, double alpha, double t,
+                  double power_t, double gradient, double* x_data_ptr,
+                  int* x_ind_ptr, int xnnz):
         for j in range(xnnz):
             idx = x_ind_ptr[j]
-            gradient_ptr[idx] = -eta * gradient
-        return -eta * gradient
+            eta_ptr[idx] = eta0
+    cdef double update(self, double gradient, double loss, double eta,
+                       double norm, double C, double p, double y,
+                       int is_hinge):
+        return gradient
 
 cdef class Constant(LearningRate):
-    cdef double eta(self, double eta0, double alpha, double t, double power_t):
-        return eta0
 
     def __reduce__(self):
         return Constant, ()
 
 cdef class Optimal(LearningRate):
     @cython.cdivision(True)
-    cdef double eta(self, double eta0, double alpha, double t, double power_t):
-        return 1.0 / (alpha * (t - 1))
+    cdef void eta(self, double *eta_ptr, double eta0, double alpha, double t,
+                  double power_t, double gradient, double* x_data_ptr,
+                  int* x_ind_ptr, int xnnz):
+        for j in range(xnnz):
+            idx = x_ind_ptr[j]
+            eta_ptr[idx] = 1.0 / (alpha * (t - 1))
 
     def __reduce__(self):
         return Optimal, ()
 
 cdef class InvScaling(LearningRate):
     @cython.cdivision(True)
-    cdef double eta(self, double eta0, double alpha, double t, double power_t):
-        return eta0 / pow(t, power_t)
+    cdef void eta(self, double *eta_ptr, double eta0, double alpha, double t,
+                  double power_t, double gradient, double* x_data_ptr,
+                  int* x_ind_ptr, int xnnz):
+        for j in range(xnnz):
+            idx = x_ind_ptr[j]
+            eta_ptr[idx] = eta0 / pow(t, power_t)
 
     def __reduce__(self):
         return InvScaling, ()
@@ -48,24 +54,6 @@ cdef class AdaGrad(LearningRate):
         self.sum_squared_grad_vector = None
         self.eps0 = eps0
 
-    cdef double eta(self, double eta0, double alpha, double t, double power_t):
-        return eta0
-
-    @cython.cdivision(True)
-    cdef double update(self, double gradient, double loss, double eta,
-                       double norm, double C, double p, double y,
-                       int is_hinge, double* gradient_ptr, double* x_data_ptr,
-                       int* x_ind_ptr, int xnnz, int n_features):
-        if self.sum_squared_grad_vector is None:
-            self.sum_squared_grad_vector = np.zeros((n_features,), dtype=np.float64, order="c")
-        self.sum_squared_grad += gradient ** 2.0 + self.eps0
-        for j in range(xnnz):
-            idx = x_ind_ptr[j]
-            val = x_data_ptr[j]
-            self.sum_squared_grad_vector[idx] += gradient * val * gradient * val + self.eps0
-            gradient_ptr[idx] = -(eta / sqrt(self.sum_squared_grad_vector[idx])) * gradient
-        return -(eta / sqrt(self.sum_squared_grad)) * gradient
-
     def __reduce__(self):
         return AdaGrad, (self.sum_squared_grad, self.eps0, self.rho0)
 
@@ -76,26 +64,6 @@ cdef class AdaDelta(LearningRate):
         self.eps0 = eps0
         self.accugrad = 0
         self.accudelta = 0
-
-    cdef double eta(self, double eta0, double alpha, double t, double power_t):
-        return eta0
-
-    @cython.cdivision(True)
-    cdef double update(self, double gradient, double loss, double eta,
-                       double norm, double C, double p, double y,
-                       int is_hinge, double* gradient_ptr, double* x_data_ptr,
-                       int* x_ind_ptr, int xnnz, int n_features):
-        agrad = self.rho0 * self.accugrad + \
-            (1. - self.rho0) * gradient * gradient
-        dx = - sqrt((self.accudelta + self.eps0) /
-                    (agrad + self.eps0)) * gradient
-        self.accudelta = self.rho0 * self.accudelta +\
-            (1. - self.rho0) * dx * dx
-        self.accugrad = agrad
-        for j in range(xnnz):
-            idx = x_ind_ptr[j]
-            gradient_ptr[idx] = dx
-        return dx
 
     def __reduce__(self):
         return AdaDelta, (self.sum_squared_grad, self.eps0, self.rho0)
@@ -112,39 +80,27 @@ cdef class PA(LearningRate):
             return 1.0
 
 cdef class PA1(PA):
-    cdef double eta(self, double eta0, double alpha, double t, double power_t):
-        return eta0
 
     @cython.cdivision(True)
     cdef double update(self, double gradient, double loss, double eta,
                        double norm, double C, double p, double y,
-                       int is_hinge, double* gradient_ptr, double* x_data_ptr,
-                       int* x_ind_ptr, int xnnz, int n_features):
+                       int is_hinge):
         update = loss / norm
         update = fmin(C, update)
         update *= self._get_multiplier(is_hinge, p, y)
-        for j in range(xnnz):
-            idx = x_ind_ptr[j]
-            gradient_ptr[idx] = update
         return update
 
     def __reduce__(self):
         return PA1, ()
 
 cdef class PA2(PA):
-    cdef double eta(self, double eta0, double alpha, double t, double power_t):
-        return eta0
 
     @cython.cdivision(True)
     cdef double update(self, double gradient, double loss, double eta,
                        double norm, double C, double p, double y,
-                       int is_hinge, double* gradient_ptr, double* x_data_ptr,
-                       int* x_ind_ptr, int xnnz, int n_features):
+                       int is_hinge):
         update = loss / (norm + 0.5 / C)
         update *= self._get_multiplier(is_hinge, p, y)
-        for j in range(xnnz):
-            idx = x_ind_ptr[j]
-            gradient_ptr[idx] = update
         return update
 
     def __reduce__(self):
