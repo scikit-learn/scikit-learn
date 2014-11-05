@@ -239,7 +239,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.labels = tree._cluster_id[:]
         self._is_core = tree._is_core[:]
         self._ordered_list = tree._ordered_list[:]
-        _ExtractDBSCAN(self,self.eps*0.99) # scaled; extraction needs to be < eps
+        _ExtractDBSCAN(self,self.eps) # need to be scaled; extraction needs to be < eps
         self.core_samples = self._index[self._is_core[:] > 0]
         self.n_clusters = max(self._cluster_id)
         self.processed = True
@@ -255,6 +255,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
                 self.labels = self._cluster_id[:]
                 self.core_samples = self._index[self._is_core[:] == True]
                 self.labels = self._cluster_id[:]
+                self.n_clusters = max(self._cluster_id)
                 return self.core_samples, self.labels
         else:
             print("Run fit method first")
