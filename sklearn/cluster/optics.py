@@ -202,11 +202,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
     
     Attributes
     ----------
-    `core_sample_indices_` : array, shape = [n_core_samples]
+    `core_samples` : array, shape = [n_core_samples]
         Indices of core samples. 
-    `components_` : array, shape = [n_core_samples, n_features]
-        Copy of each core sample found by training.
-
     `labels_` : array, shape = [n_samples]
         Cluster labels for each point in the dataset given to fit().
         Noisy samples are given the label -1.
@@ -243,7 +240,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.core_samples = self._index[self._is_core[:] > 0]
         self.n_clusters = max(self._cluster_id)
         self.processed = True
-        return self.core_samples, self.labels
+        return self.core_samples, self.labels_
 
 
     def extract(self, epsPrime):
@@ -254,9 +251,9 @@ class OPTICS(BaseEstimator, ClusterMixin):
                 _ExtractDBSCAN(self,epsPrime)
                 self.labels_ = self._cluster_id[:]
                 self.core_samples = self._index[self._is_core[:] == True]
-                self.labels = self._cluster_id[:]
+                self.labels_ = self._cluster_id[:]
                 self.n_clusters = max(self._cluster_id)
-                return self.core_samples, self.labels
+                return self.core_samples, self.labels_
         else:
             print("Run fit method first")
             
