@@ -17,7 +17,7 @@ print(__doc__)
 
 from itertools import cycle
 from time import time
-
+from scipy import sparse
 import matplotlib.pyplot as plt
 import numpy as np
 

@@ -2,6 +2,7 @@
 Tests for the birch clustering algorithm.
 """
 
+from scipy import sparse
 import numpy as np
 import warnings
 
@@ -85,3 +86,17 @@ def test_n_clusters():
     # Test that a small number of clusters raises a warning.
     brc4 = Birch(threshold=10000.)
     assert_warns(UserWarning, brc4.fit, X)
+
+
+def test_sparse_X():
+    """Test that sparse and dense data give same results"""
+    X, y = make_blobs(n_samples=100, centers=10)
+    brc = Birch(n_clusters=10)
+    brc.fit(X)
+
+    csr = sparse.csr_matrix(X)
+    brc_sparse = Birch(n_clusters=10)
+    brc_sparse.fit(X)
+
+    assert_array_equal(brc.labels_, brc_sparse.labels_)
+    assert_array_equal(brc.centroids_, brc_sparse.centroids_)
