@@ -59,7 +59,7 @@ class setOfObjects(BallTree):
             self.data[point], MinPts)[0][0][-1]
 
 # Prep Method #
-def _prep_optics(SetofObjects, epsilon, MinPts):
+def __prep_optics(SetofObjects, epsilon, MinPts):
     """Prep data set for main OPTICS loop
 
     Parameters
@@ -93,7 +93,7 @@ def _prep_optics(SetofObjects, epsilon, MinPts):
 
 
 #def __build_optics(SetOfObjects, epsilon, MinPts, Output_file_name):
-def _build_optics(SetOfObjects, epsilon, MinPts):
+def __build_optics(SetOfObjects, epsilon, MinPts):
     """Builds OPTICS ordered list of clustering structure
 
     Parameters
@@ -112,7 +112,7 @@ def _build_optics(SetOfObjects, epsilon, MinPts):
 
     for point in SetOfObjects._index:
         if not SetOfObjects._processed[point]:
-            _expandClusterOrder(SetOfObjects, point, epsilon,
+            __expandClusterOrder(SetOfObjects, point, epsilon,
                                MinPts) # , Output_file_name)
 
 # OPTICS helper functions; these should not be public #
@@ -122,7 +122,7 @@ def _build_optics(SetOfObjects, epsilon, MinPts):
 
 
 #def __expandClusterOrder(SetOfObjects, point, epsilon, MinPts, Output_file_name):
-def _expandClusterOrder(SetOfObjects, point, epsilon, MinPts):
+def __expandClusterOrder(SetOfObjects, point, epsilon, MinPts):
     if SetOfObjects._core_dist[point] <= epsilon:
         while not SetOfObjects._processed[point]:
             SetOfObjects._processed[point] = True
@@ -132,7 +132,7 @@ def _expandClusterOrder(SetOfObjects, point, epsilon, MinPts):
 #                file.write((str(point) + ', ' + str(
 #                    SetOfObjects._reachability[point]) + '\n'))
                 # Keep following line! ## 
-            point = _set_reach_dist(SetOfObjects, point, epsilon)
+            point = __set_reach_dist(SetOfObjects, point, epsilon)
         # above line should be in io loop for file output
         # print('Object Found!') # Verbose mode for debugging
     else:
@@ -141,7 +141,7 @@ def _expandClusterOrder(SetOfObjects, point, epsilon, MinPts):
 
 # As above, NOT paralizable! Paralizing would allow items in
 # 'unprocessed' list to switch to 'processed' ###
-def _set_reach_dist(SetOfObjects, point_index, epsilon):
+def __set_reach_dist(SetOfObjects, point_index, epsilon):
 
     # Assumes that the query returns ordered (smallest distance first)
     # entries. This is the case for the balltree query...
@@ -175,13 +175,39 @@ def _set_reach_dist(SetOfObjects, point_index, epsilon):
 
 # End Algorithm #
 
-               
+# wrapper for calling algorithm #
+
+def optics(X, eps=0.5, min_samples=5, metric='euclidean'):
+    """Perform OPTICS clustering
+
+    Parameters
+    ----------
+    X: a feature array [n_samples, n_features]
+    
+    epsilon: float or int
+        Determines maximum object size that can be extracted.
+        Smaller epsilons reduce run time
+    
+    MinPts: int
+        The minimum number of samples in a neighborhood to be
+        considered a core point
+    """
+
+    X = np.asarray(X)
+    tree = setOfObjects(X,metric)
+    __prep_optics(tree,eps,min_samples)
+    __build_optics(tree,eps,min_samples)
+    __ExtractDBSCAN(tree,eps)
+    self.n_clusters = max(tree._cluster_id)
+    self._reachability = tree._reachability
+    self._core_dist = tree._reachability
+    self._cluster_id = tree._cluster_id
+    self._is_core = tree._is_core
+    self._ordered_list = tree._ordered_list
+
 # Main Class #
 
-#class OPTICS(object):
-
 class OPTICS(BaseEstimator, ClusterMixin):
-
     """Estimate clustering structure from vector array
 
     OPTICS: Ordering Points To Identify the Clustering Structure
@@ -218,10 +244,10 @@ class OPTICS(BaseEstimator, ClusterMixin):
     Record 28, no. 2 (1999): 49-60.
     """
 
-    def __init__(self, eps=0.5, min_samples=5): #, metric='euclidean'):
+    def __init__(self, eps=0.5, min_samples=5, metric='euclidean'):
         self.eps = eps
         self.min_samples = min_samples
-        # self.metric = metric
+        self.metric = metric
         self.processed = False
         
     def fit(self, X):
@@ -229,21 +255,21 @@ class OPTICS(BaseEstimator, ClusterMixin):
         
         Initial clustering is set to match 'eps' distance"""
         X = np.asarray(X)
-        tree = setOfObjects(X) #,self.metric)
-        _prep_optics(tree,self.eps,self.min_samples)
-        _build_optics(tree,self.eps,self.min_samples)
-        self._index = tree._index[:]
-        self._reachability = tree._reachability[:]
-        self._core_dist = tree._core_dist[:]
-        self._cluster_id = tree._cluster_id[:]
+        tree = setOfObjects(X,self.metric)
+        __prep_optics(tree,self.eps,self.min_samples)
+        __build_optics(tree,self.eps,self.min_samples)
+        self._index = tree._index
+        self._reachability = tree._reachability
+        self._core_dist = tree._reachability
+        self._cluster_id = tree._cluster_id
+        self._is_core = tree._is_core
+        self._ordered_list = tree
+        __ExtractDBSCAN(self,self.eps)
         self.labels = tree._cluster_id[:]
-        self._is_core = tree._is_core[:]
-        self._ordered_list = tree._ordered_list[:]
-        _ExtractDBSCAN(self,self.eps*0.99) # scaled; extraction needs to be < eps
-        self.core_samples = self._index[self._is_core[:] > 0]
+        self.core_samples = self._index[self._is_core[:] == True]
         self.n_clusters = max(self._cluster_id)
         self.processed = True
-        return self.core_samples, self.labels
+        return self
 
 
     def extract(self, epsPrime):
@@ -251,19 +277,19 @@ class OPTICS(BaseEstimator, ClusterMixin):
             if epsPrime > self.eps:
                 print('Specify an epsilon smaller than ' + self.eps)
             else:
-                _ExtractDBSCAN(self,epsPrime)
+                __ExtractDBSCAN(self,epsPrime)
                 self.labels = self._cluster_id[:]
                 self.core_samples = self._index[self._is_core[:] == True]
-                self.labels = self._cluster_id[:]
-                return self.core_samples, self.labels
+                return self
         else:
             print("Run fit method first")
             
 # Extract DBSCAN Equivalent cluster structure ##
 
 # Important: Epsilon prime should be less than epsilon used in OPTICS #
-                
-def _ExtractDBSCAN(SetOfObjects, epsilon_prime):
+
+
+def __extractDBSCAN(SetOfObjects, epsilon_prime):
     """Performs DBSCAN equivalent extraction for arbitrary epsilon.
     Can be run multiple times.
 
