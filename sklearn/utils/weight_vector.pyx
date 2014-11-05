@@ -50,7 +50,8 @@ cdef class WeightVector(object):
 
     def __cinit__(self,
                   np.ndarray[double, ndim=1, mode='c'] w,
-                  np.ndarray[double, ndim=1, mode='c'] aw):
+                  np.ndarray[double, ndim=1, mode='c'] aw,
+                  np.ndarray[double, ndim=1, mode='c'] wscale_vector):
         cdef double *wdata = <double *>w.data
 
         if w.shape[0] > INT_MAX:
@@ -59,6 +60,7 @@ cdef class WeightVector(object):
         self.w = w
         self.w_data_ptr = wdata
         self.wscale = 1.0
+        self.wscale_ptr = <double *>wscale_vector.data
         self.n_features = w.shape[0]
         self.sq_norm = ddot(<int>w.shape[0], wdata, 1, wdata, 1)
 
@@ -94,13 +96,14 @@ cdef class WeightVector(object):
         # the next two lines save a factor of 2!
         cdef double wscale = self.wscale
         cdef double* w_data_ptr = self.w_data_ptr
+        cdef double* wscale_ptr = self.wscale_ptr
 
         for j in range(xnnz):
             idx = x_ind_ptr[j]
             val = x_data_ptr[j]
             innerprod += (w_data_ptr[idx] * val)
             xsqnorm += (val * val)
-            w_data_ptr[idx] += val * (c[idx] * update / wscale)
+            w_data_ptr[idx] += val * (c[idx] * update / wscale_ptr[idx])
 
         self.sq_norm += (xsqnorm * c[x_ind_ptr[0]] * c[x_ind_ptr[0]]) + (2.0 * innerprod * wscale * c[x_ind_ptr[0]])
 
@@ -131,11 +134,12 @@ cdef class WeightVector(object):
         cdef double average_a = self.average_a
         cdef double wscale = self.wscale
         cdef double* aw_data_ptr = self.aw_data_ptr
+        cdef double* wscale_ptr = self.wscale_ptr
 
         for j in range(xnnz):
             idx = x_ind_ptr[j]
             val = x_data_ptr[j]
-            aw_data_ptr[idx] += (self.average_a * val * (c[idx] * update / wscale))
+            aw_data_ptr[idx] += (self.average_a * val * (c[idx] * update / wscale_ptr[idx]))
 
         # Once the the sample has been processed
         # update the average_a and average_b
@@ -165,10 +169,10 @@ cdef class WeightVector(object):
         cdef int idx
         cdef double innerprod = 0.0
         cdef double* w_data_ptr = self.w_data_ptr
+        cdef double* wscale_ptr = self.wscale_ptr
         for j in range(xnnz):
             idx = x_ind_ptr[j]
-            innerprod += w_data_ptr[idx] * x_data_ptr[j]
-        innerprod *= self.wscale
+            innerprod += wscale_ptr[idx] * w_data_ptr[idx] * x_data_ptr[j]
         return innerprod
 
     cdef void scale(self, double c) nogil:
@@ -183,6 +187,8 @@ cdef class WeightVector(object):
 
     cdef void reset_wscale(self) nogil:
         """Scales each coef of ``w`` by ``wscale`` and resets it to 1. """
+        cdef double* wscale_ptr = self.wscale_ptr
+
         if self.aw is not None:
             daxpy(<int>self.aw.shape[0], self.average_a,
                   <double *>self.w.data, 1, <double *>self.aw.data, 1)
@@ -191,7 +197,9 @@ cdef class WeightVector(object):
             self.average_a = 0.0
             self.average_b = 1.0
 
-        dscal(<int>self.w.shape[0], self.wscale, <double *>self.w.data, 1)
+        # dscal(<int>self.w.shape[0], self.wscale, <double *>self.w.data, 1)
+        for j in range(self.n_features):
+            self.w_data_ptr[j] *= wscale_ptr[j]
         self.wscale = 1.0
 
     cdef double norm(self) nogil:

@@ -52,7 +52,7 @@ if __name__ == "__main__":
     loss = 'log'
     # loss = 'hinge'
 
-    alpha = 1e-8
+    alpha = 1e-3
     news_clfs = [
         ("invscaling", SGDClassifier(learning_rate="invscaling",
                                      alpha=alpha, loss=loss,
@@ -61,32 +61,32 @@ if __name__ == "__main__":
         ("optimal", SGDClassifier(learning_rate="optimal",
                                   alpha=alpha, loss=loss,
                                   n_iter=20)),
-        ("adadelta", SGDClassifier(learning_rate="adadelta",
-                                   alpha=alpha, loss=loss,
-                                   n_iter=20, shuffle=shuffle,
-                                   eps0=100.,
-                                   rho0=.8)),
+        # ("adadelta", SGDClassifier(learning_rate="adadelta",
+        #                            alpha=alpha, loss=loss,
+        #                            n_iter=20, shuffle=shuffle,
+        #                            eps0=100.,
+        #                            rho0=.8)),
         ("adagrad", SGDClassifier(learning_rate="adagrad",
                                   alpha=alpha, loss=loss,
                                   n_iter=20, shuffle=shuffle,
-                                  eta0=60.,
-                                  eps0=0.0)),
+                                  eta0=1.,
+                                  eps0=0.1)),
     ]
 
-    alpha = 1e-1
+    alpha = 1e-8
     digits_clfs = [
         ("invscaling", SGDClassifier(learning_rate="invscaling",
                                      alpha=alpha, loss=loss,
                                      n_iter=20, shuffle=shuffle,
-                                     eta0=.01)),
+                                     eta0=.1)),
         ("optimal", SGDClassifier(learning_rate="optimal",
                                   alpha=alpha, loss=loss,
                                   n_iter=20)),
-        ("adadelta", SGDClassifier(learning_rate="adadelta",
-                                   alpha=alpha, loss=loss,
-                                   n_iter=20, shuffle=shuffle,
-                                   eps0=10.,
-                                   rho0=.9)),
+        # ("adadelta", SGDClassifier(learning_rate="adadelta",
+        #                            alpha=alpha, loss=loss,
+        #                            n_iter=20, shuffle=shuffle,
+        #                            eps0=1.,
+        #                            rho0=.9)),
         ("adagrad", SGDClassifier(learning_rate="adagrad",
                                   alpha=alpha, loss=loss,
                                   n_iter=20, shuffle=shuffle,
@@ -95,7 +95,7 @@ if __name__ == "__main__":
                                   fit_intercept=False)),
     ]
 
-    alpha = 1e-1
+    # alpha = 1e-1
     faces_clfs = [
         ("invscaling", SGDClassifier(learning_rate="invscaling",
                                      alpha=alpha, loss=loss,

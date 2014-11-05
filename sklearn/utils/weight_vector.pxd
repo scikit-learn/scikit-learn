@@ -13,6 +13,7 @@ cdef class WeightVector(object):
     cdef double *w_data_ptr
     cdef double *aw_data_ptr
     cdef double wscale
+    cdef double *wscale_ptr
     cdef double average_a
     cdef double average_b
     cdef int n_features

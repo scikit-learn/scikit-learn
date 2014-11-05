@@ -552,7 +552,9 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef Py_ssize_t n_samples = dataset.n_samples
     cdef Py_ssize_t n_features = weights.shape[0]
 
-    cdef WeightVector w = WeightVector(weights, average_weights)
+    cdef np.ndarray[double, ndim=1, mode='c'] wscale_vector = \
+            np.ones((n_features,), dtype=np.float64, order="c")
+    cdef WeightVector w = WeightVector(weights, average_weights, wscale_vector)
     cdef double* w_ptr = &weights[0]
     cdef double *x_data_ptr = NULL
     cdef int *x_ind_ptr = NULL
@@ -574,7 +576,6 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef int is_hinge = isinstance(loss, Hinge)
     cdef double current_loss = 0.0
     cdef double gradient = 0.0
-    cdef double grad = 0.0 # TODO: delete this line
     cdef double norm = 0.0
     cdef double optimal_init = 1.0
     cdef np.ndarray[double, ndim=1, mode='c'] eta_vector = np.zeros((n_features,), dtype=np.float64, order="c")
@@ -625,9 +626,9 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 with gil:
                     learning_rate.eta(eta_ptr, eta0, alpha,
                                       optimal_init + t, power_t, gradient,
-                                      x_data_ptr, x_ind_ptr, xnnz)
+                                      n_features, x_data_ptr, x_ind_ptr, xnnz, w)
                     update = learning_rate.update(gradient, current_loss,
-                                                  eta, norm, C, p, y, is_hinge)
+                                                  norm, C, p, y, is_hinge)
 
                 if verbose > 0:
                     sumloss += current_loss
@@ -641,6 +642,8 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
 
                 if penalty_type >= L2:
                     w.scale(1.0 - ((1.0 - l1_ratio) * eta_ptr[x_ind_ptr[0]] * alpha))
+                    for j in range(n_features):
+                        w.wscale_ptr[j] *= 1.0 - ((1.0 - l1_ratio) * eta_ptr[j] * alpha)
 
                 if update != 0.0:
                     w.add(x_data_ptr, x_ind_ptr, xnnz, eta_ptr, -update)
