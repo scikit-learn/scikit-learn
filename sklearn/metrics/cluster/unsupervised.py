@@ -36,7 +36,7 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
         Array of pairwise distances between samples, or a feature array.
 
     labels : array, shape = [n_samples]
-             label values for each sample
+         Predicted labels for each sample.
 
     metric : string, or callable
         The metric to use when calculating distance between instances in a
