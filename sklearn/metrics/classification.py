@@ -1457,7 +1457,7 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     >>> hinge_loss(y_true, pred_decision, labels)  #doctest: +ELLIPSIS
     0.56...
     """
-    check_consistent_length(y_true, pred_decision)
+    check_consistent_length(y_true, pred_decision, sample_weight)
     pred_decision = check_array(pred_decision, ensure_2d=False)
     y_true = column_or_1d(y_true)
     y_true_unique = np.unique(y_true)
