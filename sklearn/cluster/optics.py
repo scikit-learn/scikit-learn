@@ -236,7 +236,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self._reachability = tree._reachability[:]
         self._core_dist = tree._core_dist[:]
         self._cluster_id = tree._cluster_id[:]
-        self.labels = tree._cluster_id[:]
+        self.labels_ = tree._cluster_id[:]
         self._is_core = tree._is_core[:]
         self._ordered_list = tree._ordered_list[:]
         _ExtractDBSCAN(self,self.eps) # need to be scaled; extraction needs to be < eps
@@ -252,7 +252,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
                 print('Specify an epsilon smaller than ' + self.eps)
             else:
                 _ExtractDBSCAN(self,epsPrime)
-                self.labels = self._cluster_id[:]
+                self.labels_ = self._cluster_id[:]
                 self.core_samples = self._index[self._is_core[:] == True]
                 self.labels = self._cluster_id[:]
                 self.n_clusters = max(self._cluster_id)

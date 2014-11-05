@@ -42,14 +42,14 @@ core_samples_mask[clust.core_samples] = True
 import matplotlib.pyplot as plt
 
 # Black removed and is used for noise instead.
-unique_labels = set(clust.labels)
+unique_labels = set(clust.labels_)
 colors = plt.cm.Spectral(np.linspace(0, 1, len(unique_labels)))
 for k, col in zip(unique_labels, colors):
     if k == -1:
         # Black used for noise.
         col = 'k'
 
-    class_member_mask = (clust.labels == k)
+    class_member_mask = (clust.labels_ == k)
 
     xy = X[class_member_mask & core_samples_mask]
     plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=col,
