@@ -20,6 +20,10 @@ class _LearntSelectorMixin(TransformerMixin):
     def transform(self, X, threshold=None):
         """Reduce X to its most important features.
 
+        Uses ``coef_`` or ``feature_importances_`` to determine the most
+        important features.  For models with a ``coef_`` for each class, the
+        absolute sum over the classes is used.
+
         Parameters
         ----------
         X : array or scipy sparse matrix of shape [n_samples, n_features]
