@@ -21,14 +21,14 @@ heldout = [0.95, 0.90, 0.75, 0.50, 0.01]
 rounds = 10
 digits = datasets.load_digits()
 X, y = digits.data, digits.target
-X = X[y < 2]
-y = y[y < 2]
-y[y == 0] = -1
+# X = X[y < 5]
+# y = y[y < 5]
+# y[y == 0] = -1
 
 classifiers = [
     ("SGD", SGDClassifier()),
     ("ASGD", SGDClassifier(average=True)),
-    ("SAG", SAGClassifier(eta0=.001, n_iter=20)),
+    ("SAG", SAGClassifier(eta0=.001)),
     ("Perceptron", Perceptron()),
     ("Passive-Aggressive I", PassiveAggressiveClassifier(loss='hinge',
                                                          C=1.0)),
@@ -47,8 +47,7 @@ for name, clf in classifiers:
             X_train, X_test, y_train, y_test = \
                 train_test_split(X, y, test_size=i, random_state=rng)
             clf.fit(X_train, y_train)
-            y_pred = clf.predict(X_test)
-            yy_.append(1 - np.mean(y_pred == y_test))
+            yy_.append(1 - clf.score(X_test, y_test))
         yy.append(np.mean(yy_))
     plt.plot(xx, yy, label=name)
 
