@@ -645,9 +645,6 @@ class VerboseReporter(object):
     If ``verbose==1`` output is printed once in a while (when iteration mod
     verbose_mod is zero).; if larger than 1 then output is printed for
     each update.
-
-    If ``verbose==-1``, as above, but the estimated end time is also printed;
-    if less than -1 then output is printed for each update.
     """
 
     def __init__(self, verbose):
@@ -661,11 +658,8 @@ class VerboseReporter(object):
         if est.subsample < 1:
             header_fields.append('OOB Improve')
             verbose_fmt.append('{oob_impr:>16.4f}')
-        header_fields.append('Remaining Time')
-        verbose_fmt.append('{remaining_time:>16s}')
-        if self.verbose < 0:
-            header_fields.append('End Time')
-            verbose_fmt.append('{end_time:>16s}')
+        header_fields.extend(['Remaining Time', 'End Time'])
+        verbose_fmt.extend(['{remaining_time:>16s}', '{end_time:>16s}'])
 
         # print the header line
         print(('%10s ' + '%16s ' *
@@ -687,7 +681,9 @@ class VerboseReporter(object):
             remaining_time = ((est.n_estimators - (j + 1)) *
                               (time() - self.start_time) / float(i + 1))
             end_time = strftime("%d %b %H:%M", localtime(time() + remaining_time))
-            if remaining_time > 60:
+            if remaining_time > 3600:
+                remaining_time = '{0:.2f}h'.format(remaining_time / 3600.0)
+            elif remaining_time > 60:
                 remaining_time = '{0:.2f}m'.format(remaining_time / 60.0)
             else:
                 remaining_time = '{0:.2f}s'.format(remaining_time)
@@ -696,7 +692,7 @@ class VerboseReporter(object):
                                           oob_impr=oob_impr,
                                           remaining_time=remaining_time,
                                           end_time=end_time))
-            if abs(self.verbose) == 1 and ((i + 1) // (self.verbose_mod * 10) > 0):
+            if self.verbose == 1 and ((i + 1) // (self.verbose_mod * 10) > 0):
                 # adjust verbose frequency (powers of 10)
                 self.verbose_mod *= 10
 
@@ -1045,7 +1041,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                 # no need to fancy index w/ no subsampling
                 self.train_score_[i] = loss_(y, y_pred, sample_weight)
 
-            if self.verbose != 0:
+            if self.verbose > 0:
                 verbose_reporter.update(i, self)
 
             if monitor is not None:
@@ -1229,8 +1225,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     verbose : int, default: 0
         Enable verbose output. If 1 then it prints progress and performance
         once in a while (the more trees the lower the frequency). If greater
-        than 1 then it prints progress and performance for every tree. If
-        negative, the estimated end time is also printed.
+        than 1 then it prints progress and performance for every tree.
 
     warm_start : bool, default: False
         When set to ``True``, reuse the solution of the previous call to fit
@@ -1508,8 +1503,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     verbose : int, default: 0
         Enable verbose output. If 1 then it prints progress and performance
         once in a while (the more trees the lower the frequency). If greater
-        than 1 then it prints progress and performance for every tree. If
-        negative, the estimated end time is also printed.
+        than 1 then it prints progress and performance for every tree.
 
     warm_start : bool, default: False
         When set to ``True``, reuse the solution of the previous call to fit
