@@ -50,7 +50,6 @@ class ItemSelector(BaseEstimator, TransformerMixin):
     The data is expected to be stored in a 2D data structure, where the first
     index is over features and the second is over samples.  i.e.
 
-    >> len(data) == n_features
     >> len(data[key]) == n_samples
 
     Please note that this is the opposite convention to sklearn feature
