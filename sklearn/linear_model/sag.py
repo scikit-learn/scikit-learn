@@ -7,6 +7,7 @@ from sklearn.feature_selection.from_model \
 from ..utils import check_random_state
 from ..externals import six
 from .sgd_fast import Log
+from ..externals.joblib import Parallel, delayed
 
 
 class BaseSAG(six.with_metaclass(ABCMeta, BaseSGD)):
@@ -70,7 +71,7 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG,
                  epsilon=.1, n_jobs=1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
                  class_weight=None, warm_start=False, average=False):
-
+        self.n_jobs = n_jobs
         super(BaseSAGClassifier, self).__init__(penalty=penalty,
                                                 alpha=alpha,
                                                 fit_intercept=fit_intercept,
@@ -90,27 +91,18 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG,
         self.classes_ = np.unique(y)
 
         if len(self.classes_) == 2:
-            y_encoded = np.ones(n_samples)
-            y_encoded[y != self.classes_[1]] = -1.0
-
-            coef, intercept = \
-                super(BaseSAGClassifier, self)._fit(X, y_encoded,
-                                                    coef_init=None,
-                                                    intercept_init=None,
-                                                    sample_weight=None)
+            coef, intercept = self._fit_target_class(X, y, self.classes_[1])
         else:
             coef = []
             intercept = []
 
-            for cl in self.classes_:
-                y_encoded = np.ones(n_samples)
-                y_encoded[y != cl] = -1.0
+            results = Parallel(n_jobs=self.n_jobs,
+                               backend="threading",
+                               verbose=self.verbose)(
+                delayed(self._fit_target_class)(X, y, cl)
+                for cl in self.classes_)
 
-                coef_cl, intercept_cl = \
-                    super(BaseSAGClassifier, self)._fit(X, y_encoded,
-                                                        coef_init=None,
-                                                        intercept_init=None,
-                                                        sample_weight=None)
+            for coef_cl, intercept_cl in results:
                 coef.append(coef_cl)
                 intercept.append(intercept_cl)
 
@@ -119,6 +111,17 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG,
 
         self.coef_ = coef
         self.intercept_ = intercept
+
+    def _fit_target_class(self, X, y, target_class):
+        n_samples, n_features = X.shape[0], X.shape[1]
+
+        y_encoded = np.ones(n_samples)
+        y_encoded[y != target_class] = -1.0
+
+        return super(BaseSAGClassifier, self)._fit(X, y_encoded,
+                                                   coef_init=None,
+                                                   intercept_init=None,
+                                                   sample_weight=None)
 
 
 class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin):
@@ -133,6 +136,7 @@ class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin):
                                             fit_intercept=fit_intercept,
                                             n_iter=n_iter, shuffle=shuffle,
                                             verbose=verbose,
+                                            n_jobs=n_jobs,
                                             epsilon=epsilon,
                                             random_state=random_state,
                                             learning_rate=learning_rate,
