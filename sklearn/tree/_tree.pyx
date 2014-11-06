@@ -58,9 +58,7 @@ cdef DTYPE_t FEATURE_THRESHOLD = 1e-7
 
 # Constant to switch between algorithm non zero value extract algorithm
 # in SparseSplitter
-import os
-cdef DTYPE_t EXTRACT_NNZ_SWITCH = float(os.environ.get("NNZ_SWITCH", 0.1))
-print("NNZ_SWITCH = %s" % EXTRACT_NNZ_SWITCH)
+cdef DTYPE_t EXTRACT_NNZ_SWITCH = 0.1
 
 # Some handy constants (BestFirstTreeBuilder)
 cdef int IS_FIRST = 1
