@@ -294,7 +294,7 @@ def type_of_target(y):
     try:
         y = np.asarray(y)
     except ValueError:
-        #known to fail in numpy 1.3 for array of arrays
+        # known to fail in numpy 1.3 for array of arrays
         return 'unknown'
     if y.ndim > 2 or (y.dtype == object and len(y) and
                       not isinstance(y.flat[0], string_types)):

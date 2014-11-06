@@ -744,11 +744,19 @@ def test_normalize_option_multiclass_multioutput_classification():
     y_pred = random_state.randint(0, 4, size=(20, 5))
     n_samples = y_true.shape[0]
 
-    for name in METRICS_WITH_MULTICLASS_MULITOUTPUT:
-        metrics = ALL_METRICS[name]
-        measure = metrics(y_true, y_pred, normalize=True)
-        assert_almost_equal(metrics(y_true, y_pred, normalize=False)
+    for name in ALL_METRICS:
+        if (name in METRICS_WITH_MULTICLASS_MULITOUTPUT and
+                    name in METRICS_WITH_NORMALIZE_OPTION):
+            metrics = ALL_METRICS[name]
+            measure = metrics(y_true, y_pred, normalize=True)
+            assert_almost_equal(metrics(y_true, y_pred, normalize=False)
                             / n_samples, measure)
+
+    for name in ALL_METRICS:
+        if (name not in METRICS_WITH_MULTICLASS_MULITOUTPUT and
+                    name not in MULTIOUTPUT_METRICS):
+            metrics = ALL_METRICS[name]
+            assert_raises(Exception, metrics, y_true, y_pred)
 
 
 def test_normalize_option_multilabel_classification():
@@ -793,17 +801,6 @@ def test_normalize_option_multilabel_classification():
                                     y_pred_binary_indicator, normalize=False)
                             / n_samples, measure,
                             err_msg="Failed with %s" % name)
-
-
-def test_multiclass_multioutput_support():
-    random_state = check_random_state(0)
-    y_true = random_state.randint(0, 4, size=(20, 5))
-    y_pred = random_state.randint(0, 4, size=(20, 5))
-    for name in ALL_METRICS.keys():
-        if (name not in METRICS_WITH_MULTICLASS_MULITOUTPUT and
-                        name not in MULTIOUTPUT_METRICS):
-            metrics = ALL_METRICS[name]
-            assert_raises(Exception, metrics, y_true, y_pred)
 
 
 @ignore_warnings

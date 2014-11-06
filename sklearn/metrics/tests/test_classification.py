@@ -1066,7 +1066,7 @@ def test__check_targets():
             merged_type, y1out, y2out = _check_targets(y1, y2)
             assert_equal(merged_type, expected)
             if (merged_type.startswith('multilabel') or
-               merged_type == 'multiclass-multioutput'):
+                   merged_type == 'multiclass-multioutput'):
                 assert_equal(y1out.format, 'csr')
                 assert_equal(y2out.format, 'csr')
             else:
