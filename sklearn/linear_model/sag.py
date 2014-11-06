@@ -4,13 +4,11 @@ from sklearn.feature_selection.from_model \
     import _LearntSelectorMixin
 from ..utils import check_random_state
 
-DEFAULT_EPSILON = 0.1
-
 
 class BaseSAGClassifier(BaseSGDClassifier):
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001, l1_ratio=0.15,
                  fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
-                 epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=None,
+                 epsilon=.1, n_jobs=1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
                  class_weight=None, warm_start=False, average=False,
                  sag=False):
@@ -27,9 +25,6 @@ class BaseSAGClassifier(BaseSGDClassifier):
                                                 eta0=eta0, power_t=power_t,
                                                 warm_start=warm_start,
                                                 average=average, sag=sag)
-
-    def partial_fit(self, X, y, sample_weight=None):
-        raise ValueError("partial fit not supported for SAG")
 
     def _fit(self, X, y, coef_init=None, intercept_init=None,
              sample_weight=None):
@@ -88,4 +83,7 @@ class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin):
             sample_weight=None):
         return self._fit(X, y, coef_init=None, intercept_init=None,
                          sample_weight=None)
+
+    def partial_fit(self, X, y, sample_weight=None):
+        raise ValueError("partial fit not supported for SAG")
 
