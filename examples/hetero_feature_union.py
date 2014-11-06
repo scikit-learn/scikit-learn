@@ -1,7 +1,7 @@
 """
-============================================
-Feature Union with Heterogeneos Data Sources
-============================================
+=============================================
+Feature Union with Heterogeneous Data Sources
+=============================================
 
 Datasets can often contain components of that require different feature
 extraction and processing pipelines.  This scenario might occur when:
@@ -55,7 +55,7 @@ class ItemSelector(BaseEstimator, TransformerMixin):
     Please note that this is the opposite convention to sklearn feature
     matrixes (where the first index corresponds to sample).
 
-    ItemSelector only requres that the collection implement getitem
+    ItemSelector only requires that the collection implement getitem
     (data[key]).  Examples include: a dict of lists, 2D numpy array, Pandas
     DataFrame, numpy record array, etc.
 
