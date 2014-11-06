@@ -1,24 +1,24 @@
 import numpy as np
 from abc import ABCMeta
 from .stochastic_gradient import BaseSGD
-from .base import LinearClassifierMixin
+from .base import LinearClassifierMixin, LinearModel
+from ..base import RegressorMixin
 from sklearn.feature_selection.from_model \
     import _LearntSelectorMixin
 from ..utils import check_random_state
 from ..externals import six
-from .sgd_fast import Log
+from .sgd_fast import Log, SquaredLoss
 from ..externals.joblib import Parallel, delayed
 
 
 class BaseSAG(six.with_metaclass(ABCMeta, BaseSGD)):
-    def __init__(self, loss="log", penalty='l2', alpha=0.0001, l1_ratio=0.0,
+    def __init__(self, loss=None, penalty='l2', alpha=0.0001, l1_ratio=0.0,
                  fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
                  epsilon=.1, n_jobs=1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 class_weight=None, warm_start=False, average=False):
+                 class_weight=None, warm_start=False):
 
         self.gradient_memory = None
-        self.loss_functions = {"log": (Log, )}
 
         super(BaseSAG, self).__init__(loss=loss, penalty=penalty,
                                       alpha=alpha, l1_ratio=l1_ratio,
@@ -30,7 +30,10 @@ class BaseSAG(six.with_metaclass(ABCMeta, BaseSGD)):
                                       learning_rate=learning_rate,
                                       eta0=eta0, power_t=power_t,
                                       warm_start=warm_start,
-                                      average=average)
+                                      average=False)
+
+    def partial_fit(self, X, y, sample_weight=None):
+        raise ValueError("partial fit not supported for SAG")
 
     def _fit(self, X, y, coef_init=None, intercept_init=None,
              sample_weight=None):
@@ -70,9 +73,11 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG,
                  fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
                  epsilon=.1, n_jobs=1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 class_weight=None, warm_start=False, average=False):
+                 class_weight=None, warm_start=False):
         self.n_jobs = n_jobs
+        self.loss_functions = {"log": (Log, )}
         super(BaseSAGClassifier, self).__init__(penalty=penalty,
+                                                loss="log",
                                                 alpha=alpha,
                                                 fit_intercept=fit_intercept,
                                                 n_iter=n_iter, shuffle=shuffle,
@@ -81,8 +86,7 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG,
                                                 random_state=random_state,
                                                 learning_rate=learning_rate,
                                                 eta0=eta0, power_t=power_t,
-                                                warm_start=warm_start,
-                                                average=average)
+                                                warm_start=warm_start)
 
     def _fit(self, X, y, coef_init=None, intercept_init=None,
              sample_weight=None):
@@ -129,7 +133,7 @@ class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin):
                  fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
                  epsilon=.1, n_jobs=1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 class_weight=None, warm_start=False, average=False):
+                 class_weight=None, warm_start=False):
 
         super(SAGClassifier, self).__init__(penalty=penalty,
                                             alpha=alpha,
@@ -141,8 +145,7 @@ class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin):
                                             random_state=random_state,
                                             learning_rate=learning_rate,
                                             eta0=eta0, power_t=power_t,
-                                            warm_start=warm_start,
-                                            average=average)
+                                            warm_start=warm_start)
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
             sample_weight=None):
@@ -150,6 +153,58 @@ class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin):
                                         intercept_init=None,
                                         sample_weight=None)
 
-    def partial_fit(self, X, y, sample_weight=None):
-        raise ValueError("partial fit not supported for SAG")
+
+class BaseSAGRegressor(six.with_metaclass(ABCMeta, BaseSAG,
+                                          LinearModel, RegressorMixin)):
+    def __init__(self, penalty='l2', alpha=0.0001,
+                 fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
+                 epsilon=.1, n_jobs=1, random_state=None,
+                 learning_rate="optimal", eta0=0.001, power_t=0.5,
+                 class_weight=None, warm_start=False):
+
+        self.loss_functions = {"squared_loss": (SquaredLoss, )}
+        super(BaseSAGRegressor, self).__init__(penalty=penalty,
+                                               alpha=alpha,
+                                               loss="squared_loss",
+                                               fit_intercept=fit_intercept,
+                                               n_iter=n_iter, shuffle=shuffle,
+                                               verbose=verbose,
+                                               epsilon=epsilon,
+                                               random_state=random_state,
+                                               learning_rate=learning_rate,
+                                               eta0=eta0, power_t=power_t,
+                                               warm_start=warm_start)
+
+    def _fit(self, X, y, coef_init=None, intercept_init=None,
+             sample_weight=None):
+        self.coef_, self.intercept_ = \
+            super(BaseSAGRegressor, self)._fit(X, y,
+                                               coef_init=None,
+                                               intercept_init=None,
+                                               sample_weight=None)
+
+
+class SAGRegressor(BaseSAGRegressor, _LearntSelectorMixin):
+    def __init__(self, penalty='l2', alpha=0.0001,
+                 fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
+                 epsilon=.1, n_jobs=1, random_state=None,
+                 learning_rate="invscaling", eta0=0.001, power_t=0.5,
+                 class_weight=None, warm_start=False):
+
+        super(SAGRegressor, self).__init__(penalty=penalty,
+                                           alpha=alpha,
+                                           fit_intercept=fit_intercept,
+                                           n_iter=n_iter, shuffle=shuffle,
+                                           verbose=verbose,
+                                           epsilon=epsilon,
+                                           random_state=random_state,
+                                           learning_rate=learning_rate,
+                                           eta0=eta0, power_t=power_t,
+                                           warm_start=warm_start)
+
+    def fit(self, X, y, coef_init=None, intercept_init=None,
+            sample_weight=None):
+        super(SAGRegressor, self)._fit(X, y, coef_init=None,
+                                       intercept_init=None,
+                                       sample_weight=None)
 
