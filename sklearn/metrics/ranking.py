@@ -23,7 +23,6 @@ import warnings
 import numpy as np
 from scipy.sparse import csr_matrix
 
-from ..preprocessing import LabelBinarizer
 from ..utils import check_consistent_length
 from ..utils import deprecated
 from ..utils import column_or_1d, check_array
