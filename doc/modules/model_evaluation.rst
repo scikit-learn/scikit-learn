@@ -48,10 +48,10 @@ Common cases: predefined values
 
 For the most common use cases, you can designate a scorer object with the
 ``scoring`` parameter; the table below shows all possible values.
-All scorer ojects follow the convention that higher return values are better 
-than lower return values.  Thus the returns from mean_absolute_error 
-and mean_squared_error, which measure the distance between the model 
-and the data, are negated.  
+All scorer ojects follow the convention that higher return values are better
+than lower return values.  Thus the returns from mean_absolute_error
+and mean_squared_error, which measure the distance between the model
+and the data, are negated.
 
 
 ======================     =======================================     ==================================
@@ -60,7 +60,7 @@ Scoring                    Function                                             
 **Classification**
 'accuracy'                 :func:`metrics.accuracy_score`
 'average_precision'        :func:`metrics.average_precision_score`
-'f1'                       :func:`metrics.f1_score`                    
+'f1'                       :func:`metrics.f1_score`
 'log_loss'                 :func:`metrics.log_loss`                    requires ``predict_proba`` support
 'precision'                :func:`metrics.precision_score`
 'recall'                   :func:`metrics.recall_score`
@@ -91,10 +91,10 @@ Usage examples:
 
 .. note::
 
-    The values listed by the ValueError exception correspond to the functions measuring 
+    The values listed by the ValueError exception correspond to the functions measuring
     prediction accuracy described in the following sections.
     The scorer objects for those functions are stored in the dictionary
-    ``sklearn.metrics.SCORERS``.  
+    ``sklearn.metrics.SCORERS``.
 
 .. currentmodule:: sklearn.metrics
 
@@ -112,8 +112,8 @@ measuring a prediction error given ground truth and prediction:
 - functions ending with ``_error`` or ``_loss`` return a
   value to minimize, the lower the better.  When converting
   into a scorer object using :func:`make_scorer`, set
-  the ``greater_is_better`` parameter to False (True by default; see the 
-  parameter description below). 
+  the ``greater_is_better`` parameter to False (True by default; see the
+  parameter description below).
 
 Metrics available for various machine learning tasks are detailed in sections
 below.
@@ -136,33 +136,33 @@ the :func:`fbeta_score` function::
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=ftwo_scorer)
 
 The second use case is to build a completely custom scorer object
-from a simple python function using :func:`make_scorer`, which can 
-take several parameters: 
+from a simple python function using :func:`make_scorer`, which can
+take several parameters:
 
-* the python function you want to use (``my_custom_loss_func`` 
+* the python function you want to use (``my_custom_loss_func``
   in the example below)
 
-* whether the python function returns a score (``greater_is_better=True``, 
-  the default) or a loss (``greater_is_better=False``).  If a loss, the output 
+* whether the python function returns a score (``greater_is_better=True``,
+  the default) or a loss (``greater_is_better=False``).  If a loss, the output
   of the python function is negated by the scorer object, conforming to
-  the cross validation convention that scorers return higher values for better models. 
+  the cross validation convention that scorers return higher values for better models.
 
-* for classification metrics only: whether the python function you provided requires continuous decision 
-  certainties (``needs_threshold=True``).  The default value is 
+* for classification metrics only: whether the python function you provided requires continuous decision
+  certainties (``needs_threshold=True``).  The default value is
   False.
 
 * any additional parameters, such as ``beta`` in an :func:`f1_score`.
 
-Here is an example of building custom scorers, and of using the 
+Here is an example of building custom scorers, and of using the
 ``greater_is_better`` parameter::
 
     >>> import numpy as np
     >>> def my_custom_loss_func(ground_truth, predictions):
-    ...     diff = np.abs(ground_truth - predictions).max()		
+    ...     diff = np.abs(ground_truth - predictions).max()
     ...     return np.log(1 + diff)
     ...
-    >>> # loss_func will negate the return value of my_custom_loss_func, 
-    >>> #  which will be np.log(2), 0.693, given the values for ground_truth 
+    >>> # loss_func will negate the return value of my_custom_loss_func,
+    >>> #  which will be np.log(2), 0.693, given the values for ground_truth
     >>> #  and predictions defined below.
     >>> loss  = make_scorer(my_custom_loss_func, greater_is_better=False)
     >>> score = make_scorer(my_custom_loss_func, greater_is_better=True)
@@ -175,7 +175,7 @@ Here is an example of building custom scorers, and of using the
     -0.69...
     >>> score(clf,ground_truth, predictions) # doctest: +ELLIPSIS
     0.69...
-    
+
 
 .. _diy_scoring:
 
@@ -193,7 +193,7 @@ the following two rules:
 
 - It returns a floating point number that quantifies the
   ``estimator`` prediction quality on ``X``, with reference to ``y``.
-  Again, by convention higher numbers are better, so if your scorer 
+  Again, by convention higher numbers are better, so if your scorer
   returns loss, that value should be negated.
 
 
@@ -214,7 +214,6 @@ Some of these are restricted to the binary classification case:
 .. autosummary::
    :template: function.rst
 
-   hinge_loss
    matthews_corrcoef
    precision_recall_curve
    roc_curve
@@ -226,6 +225,7 @@ Others also work in the multiclass case:
    :template: function.rst
 
    confusion_matrix
+   hinge_loss
 
 
 Some also work in the multilabel case:
@@ -307,7 +307,7 @@ The :func:`confusion_matrix` function evaluates
 classification accuracy by computing the `confusion matrix
 <http://en.wikipedia.org/wiki/Confusion_matrix>`_.
 
-By definition, entry :math:`i, j` in a confusion matrix is 
+By definition, entry :math:`i, j` in a confusion matrix is
 the number of observations actually in group :math:`i`, but
 predicted to be in group :math:`j`. Here is an example::
 
@@ -330,7 +330,7 @@ from the :ref:`example_model_selection_plot_confusion_matrix.py` example):
 .. topic:: Example:
 
   * See :ref:`example_model_selection_plot_confusion_matrix.py`
-    for an example of using a confusion matrix to evaluate classifier output 
+    for an example of using a confusion matrix to evaluate classifier output
     quality.
 
   * See :ref:`example_classification_plot_digits_classification.py`
@@ -661,11 +661,11 @@ Then the metrics are defined as:
   (array([ 0.66...,  0.        ,  0.        ]), array([ 1.,  0.,  0.]), array([ 0.71...,  0.        ,  0.        ]), array([2, 2, 2]...))
 
 
-Hinge loss 
+Hinge loss
 ----------
 
 The :func:`hinge_loss` function computes the average distance between
-the model and the data using 
+the model and the data using
 `hinge loss <http://en.wikipedia.org/wiki/Hinge_loss>`_, a one-sided metric
 that considers only prediction errors. (Hinge
 loss is used in maximal margin classifiers such as support vector machines.)
@@ -678,8 +678,22 @@ value, and :math:`w` is the predicted decisions as output by
 
   L_\text{Hinge}(y, w) = \max\left\{1 - wy, 0\right\} = \left|1 - wy\right|_+
 
-Here is a small example demonstrating the use of the :func:`hinge_loss` function
-with a svm classifier::
+If there are more than two labels, :func:`hinge_loss` uses a multiclass variant
+due to Crammer & Singer.
+`Here <http://jmlr.csail.mit.edu/papers/volume2/crammer01a/crammer01a.pdf>`_ is
+the paper describing it.
+
+If :math:`y_w` is the predicted decision for true label and :math:`y_t` is the
+maximum of the predicted decisions for all other labels, where predicted
+decisions are output by decision function, then multiclass hinge loss is defined
+by:
+
+.. math::
+
+  L_\text{Hinge}(y_w, y_t) = \max{1 + y_t - y_w, 0\right\}
+
+Here a small example demonstrating the use of the :func:`hinge_loss` function
+with a svm classifier in a binary class problem::
 
   >>> from sklearn import svm
   >>> from sklearn.metrics import hinge_loss
@@ -695,6 +709,22 @@ with a svm classifier::
   array([-2.18...,  2.36...,  0.09...])
   >>> hinge_loss([-1, 1, 1], pred_decision)  # doctest: +ELLIPSIS
   0.3...
+
+Here is an example demonstrating the use of the :func:`hinge_loss` function
+with a svm classifier in a multiclass problem::
+
+  >>> X = np.array([[0], [1], [2], [3]])
+  >>> Y = np.array([0, 1, 2, 3])
+  >>> labels = np.array([0, 1, 2, 3])
+  >>> est = svm.LinearSVC()
+  >>> est.fit(X, Y)
+  LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
+       intercept_scaling=1, loss='l2', max_iter=1000, multi_class='ovr',
+       penalty='l2', random_state=None, tol=0.0001, verbose=0)
+  >>> pred_decision = est.decision_function([[-1], [2], [3]])
+  >>> y_true = [0, 2, 3]
+  >>> hinge_loss(y_true, pred_decision, labels)  #doctest: +ELLIPSIS
+  0.56...
 
 
 Log loss
@@ -752,7 +782,7 @@ sample has label 0.  The log loss is non-negative.
 Matthews correlation coefficient
 ---------------------------------
 
-The :func:`matthews_corrcoef` function computes the 
+The :func:`matthews_corrcoef` function computes the
 `Matthew's correlation coefficient (MCC) <http://en.wikipedia.org/wiki/Matthews_correlation_coefficient>`_
 for binary classes.  Quoting Wikipedia:
 
@@ -788,7 +818,7 @@ function:
 Receiver operating characteristic (ROC)
 ---------------------------------------
 
-The function :func:`roc_curve` computes the 
+The function :func:`roc_curve` computes the
 `receiver operating characteristic curve, or ROC curve <http://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_.
  Quoting Wikipedia :
 

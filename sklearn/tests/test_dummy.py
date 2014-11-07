@@ -11,6 +11,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.stats import _weighted_percentile
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
 
@@ -570,6 +571,24 @@ def test_most_frequent_strategy_sparse_target():
     assert_true(sp.issparse(y_pred))
     assert_array_equal(y_pred.toarray(), np.hstack([np.ones((n_samples, 1)),
                                                     np.zeros((n_samples, 1))]))
+
+
+def test_dummy_regressor_sample_weight(n_samples=10):
+    random_state = np.random.RandomState(seed=1)
+
+    X = [[0]] * n_samples
+    y = random_state.rand(n_samples)
+    sample_weight = random_state.rand(n_samples)
+
+    est = DummyRegressor(strategy="mean").fit(X, y, sample_weight)
+    assert_equal(est.constant_, np.average(y, weights=sample_weight))
+
+    est = DummyRegressor(strategy="median").fit(X, y, sample_weight)
+    assert_equal(est.constant_, _weighted_percentile(y, sample_weight, 50.))
+
+    est = DummyRegressor(strategy="quantile", quantile=.95).fit(X, y,
+                                                                sample_weight)
+    assert_equal(est.constant_, _weighted_percentile(y, sample_weight, 95.))
 
 
 if __name__ == '__main__':

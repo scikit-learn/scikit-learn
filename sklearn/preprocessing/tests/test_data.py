@@ -802,3 +802,27 @@ def test_one_hot_encoder_categorical_features():
     # Edge case: all categorical
     cat = [True, True, True]
     _check_one_hot(X, X2, cat, 5)
+
+
+def test_one_hot_encoder_unknown_transform():
+    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]])
+    y = np.array([[4, 1, 1]])
+
+    # Test that one hot encoder raises error for unknown features
+    # present during transform.
+    oh = OneHotEncoder(handle_unknown='error')
+    oh.fit(X)
+    assert_raises(ValueError, oh.transform, y)
+
+    # Test the ignore option, ignores unknown features.
+    oh = OneHotEncoder(handle_unknown='ignore')
+    oh.fit(X)
+    assert_array_equal(
+        oh.transform(y).toarray(),
+        np.array([[ 0.,  0.,  0.,  0.,  1.,  0.,  0.]])
+        )
+
+    # Raise error if handle_unknown is neither ignore or error.
+    oh = OneHotEncoder(handle_unknown='42')
+    oh.fit(X)
+    assert_raises(ValueError, oh.transform, y)

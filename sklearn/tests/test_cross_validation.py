@@ -7,6 +7,7 @@ from scipy.sparse import coo_matrix
 from scipy import stats
 
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
@@ -23,6 +24,7 @@ from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 from sklearn import cross_validation as cval
 from sklearn.base import BaseEstimator
 from sklearn.datasets import make_regression
+from sklearn.datasets import load_boston
 from sklearn.datasets import load_digits
 from sklearn.datasets import load_iris
 from sklearn.metrics import accuracy_score
@@ -36,6 +38,7 @@ from sklearn.externals.six.moves import zip
 from sklearn.linear_model import Ridge
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
+from sklearn.cluster import KMeans
 
 from sklearn.preprocessing import Imputer, LabelBinarizer
 from sklearn.pipeline import Pipeline
@@ -998,3 +1001,51 @@ def test_cross_val_score_multilabel():
     assert_almost_equal(score_micro, [1, 1/2, 3/4, 1/2, 1/3])
     assert_almost_equal(score_macro, [1, 1/2, 3/4, 1/2, 1/4])
     assert_almost_equal(score_samples, [1, 1/2, 3/4, 1/2, 1/4])
+
+
+def test_cross_val_predict():
+    boston = load_boston()
+    X, y = boston.data, boston.target
+    cv = cval.KFold(len(boston.target))
+
+    est = Ridge()
+
+    # Naive loop (should be same as cross_val_predict):
+    preds2 = np.zeros_like(y)
+    for train, test in cv:
+        est.fit(X[train], y[train])
+        preds2[test] = est.predict(X[test])
+
+    preds = cval.cross_val_predict(est, X, y, cv=cv)
+    assert_array_almost_equal(preds, preds2)
+
+    preds = cval.cross_val_predict(est, X, y)
+    assert_equal(len(preds), len(y))
+
+    cv = cval.LeaveOneOut(len(y))
+    preds = cval.cross_val_predict(est, X, y, cv=cv)
+    assert_equal(len(preds), len(y))
+
+    Xsp = X.copy()
+    Xsp *= (Xsp > np.median(Xsp))
+    Xsp = coo_matrix(Xsp)
+    preds = cval.cross_val_predict(est, Xsp, y)
+    assert_array_almost_equal(len(preds), len(y))
+
+    preds = cval.cross_val_predict(KMeans(), X)
+    assert_equal(len(preds), len(y))
+
+    def bad_cv():
+        for i in range(4):
+            yield np.array([0, 1, 2, 3]), np.array([4, 5, 6, 7, 8])
+
+    assert_raises(ValueError, cval.cross_val_predict, est, X, y, cv=bad_cv())
+
+
+def test_check_is_partition():
+    p = np.arange(100)
+    assert_true(cval._check_is_partition(p, 100))
+    assert_false(cval._check_is_partition(np.delete(p, 23), 100))
+
+    p[0] = 23
+    assert_false(cval._check_is_partition(p, 100))
