@@ -1,4 +1,4 @@
-	# simple makefile to simplify repetetive build env management tasks under posix
+# simple makefile to simplify repetetive build env management tasks under posix
 
 # caution: testing won't work on windows, see README
 
@@ -6,8 +6,6 @@ PYTHON ?= python
 CYTHON ?= cython
 NOSETESTS ?= nosetests
 CTAGS ?= ctags
-CC=cc
-CXX=c++
 
 all: clean inplace test
 
