@@ -69,23 +69,33 @@ class _CFNode(object):
     squared_norm_ : array-like
         list of squared norms for a particular CFNode.
     """
-    def __init__(self, threshold, branching_factor, is_leaf):
+    def __init__(self, threshold, branching_factor, is_leaf, n_features):
         self.threshold = threshold
         self.branching_factor = branching_factor
         self.is_leaf = is_leaf
+        self.n_features = n_features
 
         # The list of subclusters, centroids and squared norms
-        # to manipulate throughout
+        # to manipulate throughout.
         self.subclusters_ = []
-        self.centroids_ = []
+        self.init_centroids_ = np.zeros((branching_factor + 1, n_features))
+        self.init_sq_norm_ = np.zeros((branching_factor + 1))
+        self.n_ = 0
         self.squared_norm_ = []
         self.prev_leaf_ = None
         self.next_leaf_ = None
 
     def update(self, subcluster):
         self.subclusters_.append(subcluster)
-        self.centroids_.append(subcluster.centroid_)
-        self.squared_norm_.append(subcluster.sq_norm_)
+        self.init_centroids_[self.n_] = subcluster.centroid_
+        self.init_sq_norm_[self.n_] = subcluster.sq_norm_
+        self.n_ += 1
+
+        # Keep centroids and squared norm as views. In this way
+        # if we change init_centroids and init_sq_norm_, it is
+        # sufficient,
+        self.centroids_ = self.init_centroids_[:self.n_, :]
+        self.squared_norm_ = self.init_sq_norm_[:self.n_]
 
     def split_node(self, child_node, parent_subcluster):
         r"""
@@ -105,9 +115,11 @@ class _CFNode(object):
         threshold = self.threshold
         branching_factor = self.branching_factor
         new_node1 = _CFNode(threshold, branching_factor,
-                            is_leaf=child_node.is_leaf)
+                            is_leaf=child_node.is_leaf,
+                            n_features=child_node.n_features)
         new_node2 = _CFNode(threshold, branching_factor,
-                            is_leaf=child_node.is_leaf)
+                            is_leaf=child_node.is_leaf,
+                            n_features=child_node.n_features)
         newsubcluster1.child_ = new_node1
         newsubcluster2.child_ = new_node2
 
@@ -131,8 +143,11 @@ class _CFNode(object):
 
         ind = self.subclusters_.index(parent_subcluster)
         self.subclusters_.remove(parent_subcluster)
-        del self.centroids_[ind]
-        del self.squared_norm_[ind]
+        self.init_centroids_[ind: self.n_ - 1, :] = \
+            self.init_centroids_[ind + 1: self.n_, :]
+        self.init_sq_norm_[ind: self.n_ - 1] = \
+            self.init_sq_norm_[ind + 1: self.n_]
+        self.n_ -= 1
         self.update(newsubcluster1)
         self.update(newsubcluster2)
 
@@ -147,7 +162,7 @@ class _CFNode(object):
         # We need to find the closest subcluster among all the
         # subclusters so that we can insert our new subcluster.
         dist_matrix = safe_sparse_dot(
-            np.asarray(self.centroids_), subcluster.centroid_)
+            self.centroids_, subcluster.centroid_)
         dist_matrix *= -2.
         dist_matrix += self.squared_norm_
         closest_index = np.argmin(dist_matrix)
@@ -162,9 +177,9 @@ class _CFNode(object):
                 # If it is determined that the child need not be split, we
                 # can just update the closest_subcluster
                 self.subclusters_[closest_index].update(subcluster)
-                self.centroids_[closest_index] = \
+                self.init_centroids_[closest_index] = \
                     self.subclusters_[closest_index].centroid_
-                self.squared_norm_[closest_index] = \
+                self.init_sq_norm_[closest_index] = \
                     self.subclusters_[closest_index].sq_norm_
                 return False
 
@@ -183,9 +198,9 @@ class _CFNode(object):
             closest_threshold = subcluster.sq_norm_  + dist_matrix[closest_index]
             if self.threshold ** 2 >= closest_threshold:
                 self.subclusters_[closest_index].update(subcluster)
-                self.centroids_[closest_index] = \
+                self.init_centroids_[closest_index] = \
                     self.subclusters_[closest_index].centroid_
-                self.squared_norm_[closest_index] = \
+                self.init_sq_norm_[closest_index] = \
                     self.subclusters_[closest_index].sq_norm_
                 return False
 
@@ -329,15 +344,17 @@ class Birch(TransformerMixin, ClusterMixin):
         threshold = self.threshold
         branching_factor = self.branching_factor
 
+        n_samples, n_features = X.shape
         # If partial_fit is called for the first time or if fit is called,
         # we need to initialize the root.
         if not self.partial_fit_ or (self.root_ is None and self.partial_fit_):
             # The first root is the leaf. Manipulate this object throughout.
-            self.root_ = _CFNode(threshold, branching_factor, is_leaf=True)
+            self.root_ = _CFNode(threshold, branching_factor, is_leaf=True,
+                                 n_features=n_features)
 
             # To enable getting back subclusters.
             self.dummy_leaf_ = _CFNode(threshold, branching_factor,
-                                       is_leaf=True)
+                                       is_leaf=True, n_features=n_features)
             self.dummy_leaf_.next_leaf_ = self.root_
 
         # Cannot vectorize. Enough to convince to use cython.
@@ -358,9 +375,11 @@ class Birch(TransformerMixin, ClusterMixin):
                 dist_idx = subclusters_pairwise[[farthest_idx]]
 
                 new_node1 = _CFNode(
-                    threshold, branching_factor, is_leaf=self.root_.is_leaf)
+                    threshold, branching_factor, is_leaf=self.root_.is_leaf,
+                    n_features=n_features)
                 new_node2 = _CFNode(
-                    threshold, branching_factor, is_leaf=self.root_.is_leaf)
+                    threshold, branching_factor, is_leaf=self.root_.is_leaf,
+                    n_features=n_features)
 
                 new_subcluster1 = _CFSubcluster()
                 new_subcluster2 = _CFSubcluster()
@@ -383,7 +402,8 @@ class Birch(TransformerMixin, ClusterMixin):
 
                 del self.root_
                 self.root_ = _CFNode(threshold, branching_factor,
-                                     is_leaf=False)
+                                     is_leaf=False,
+                                     n_features=n_features)
                 self.root_.update(new_subcluster1)
                 self.root_.update(new_subcluster2)
 
