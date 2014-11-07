@@ -681,9 +681,6 @@ class VBGMM(DPGMM):
         X = np.asarray(X)
         if X.ndim == 1:
             X = X[:, np.newaxis]
-        z = np.zeros((X.shape[0], self.n_components))
-        p = np.zeros(self.n_components)
-        bound = np.zeros(X.shape[0])
         dg = digamma(self.gamma_) - digamma(np.sum(self.gamma_))
 
         if self.covariance_type not in ['full', 'tied', 'diag', 'spherical']:
