@@ -42,10 +42,10 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
         The maximum depth of the representation. If None, the tree is fully
         generated.
 
-    verbose : boolean (default = False)
+    verbose : boolean, optional (default = False)
         Show sample counts for each node in the tree
 
-    probabilities : boolean (default = False)
+    probabilities : boolean, optional (default = False)
         Show the probabilities for each class instead of the sample counts
         
     Examples
