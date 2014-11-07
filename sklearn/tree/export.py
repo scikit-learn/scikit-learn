@@ -17,7 +17,7 @@ from numpy import sum
 
 
 def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
-                    max_depth=None):
+                    max_depth=None, verbose = False, probabilities = False):
     """Export a decision tree in DOT format.
 
     This function generates a GraphViz representation of the decision tree,
