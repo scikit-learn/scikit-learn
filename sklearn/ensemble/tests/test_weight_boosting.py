@@ -42,7 +42,6 @@ boston = datasets.load_boston()
 boston.data, boston.target = shuffle(boston.data, boston.target,
                                      random_state=rng)
 
-
 def test_classification_toy():
     """Check classification on a toy dataset."""
     for alg in ['SAMME', 'SAMME.R']:
@@ -246,6 +245,12 @@ def test_base_estimator():
 
     clf = AdaBoostRegressor(SVR(), random_state=0)
     clf.fit(X, y_regr)
+
+    # check that an empty discrete ensemble fails early
+    X_fail = [[1, 1], [1, 1], [1, 1], [1, 1]]
+    y_fail = ["foo", "bar", 1, 2]
+    clf = AdaBoostClassifier(SVC(), algorithm="SAMME")
+    assert_raises(ValueError, clf.fit, X_fail, y_fail)
 
 
 def test_sample_weight_missing():
