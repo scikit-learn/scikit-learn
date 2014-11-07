@@ -138,6 +138,12 @@ def test_roc_curve():
     assert_equal(fpr.shape, tpr.shape)
     assert_equal(fpr.shape, thresholds.shape)
 
+    # test partial ROC
+    y_true = np.array([0, 0, 1, 1])
+    y_scores = np.array([0.1,  0,  0.1, 0.01])
+    assert_equal(roc_auc_score(y_true, y_scores, max_fpr=0.3), 0.5)
+    assert_equal(roc_auc_score(y_true, y_true, max_fpr=0.7), 1)
+
 
 def test_roc_curve_end_points():
     # Make sure that roc_curve returns a curve start at 0 and ending and
