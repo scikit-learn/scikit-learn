@@ -23,7 +23,8 @@ import scipy.sparse as sp
 
 from .base import is_classifier, clone
 from .utils import indexable, check_random_state, safe_indexing
-from .utils.validation import _is_arraylike, _num_samples, check_array
+from .utils.validation import (_is_arraylike, _num_samples,
+                               check_array, column_or_1d)
 from .utils.multiclass import type_of_target
 from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
@@ -39,6 +40,7 @@ __all__ = ['Bootstrap',
            'ShuffleSplit',
            'StratifiedKFold',
            'StratifiedShuffleSplit',
+           'PredefinedSplit',
            'check_cv',
            'cross_val_score',
            'cross_val_predict',
@@ -1068,6 +1070,59 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     def __len__(self):
         return self.n_iter
+
+
+class PredefinedSplit(_PartitionIterator):
+    """Predefined split cross validation iterator
+
+    Splits the data into training/test set folds according to a predefined
+    scheme. Each sample can be assigned to at most one test set fold, as
+    specified by the user through the ``test_fold`` parameter.
+
+    Parameters
+    ----------
+    test_fold : "array-like, shape (n_samples,)
+        test_fold[i] gives the test set fold of sample i. A value of -1
+        indicates that the corresponding sample is not part of any test set
+        folds, but will instead always be put into the training fold.
+
+    Examples
+    --------
+    >>> from sklearn.cross_validation import PredefinedSplit
+    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
+    >>> y = np.array([0, 0, 1, 1])
+    >>> ps = PredefinedSplit(test_fold=[0, 1, -1, 1])
+    >>> len(ps)
+    2
+    >>> print(ps)       # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    sklearn.cross_validation.PredefinedSplit(test_fold=[ 0  1 -1  1])
+    >>> for train_index, test_index in ps:
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
+    ...    X_train, X_test = X[train_index], X[test_index]
+    ...    y_train, y_test = y[train_index], y[test_index]
+    TRAIN: [1 2 3] TEST: [0]
+    TRAIN: [0 2] TEST: [1 3]
+    """
+
+    def __init__(self, test_fold, indices=None):
+        super(PredefinedSplit, self).__init__(len(test_fold), indices)
+        self.test_fold = np.array(test_fold, dtype=np.int)
+        self.test_fold = column_or_1d(self.test_fold)
+        self.unique_folds = np.unique(self.test_fold)
+        self.unique_folds = self.unique_folds[self.unique_folds != -1]
+
+    def _iter_test_indices(self):
+        for f in self.unique_folds:
+            yield np.where(self.test_fold == f)[0]
+
+    def __repr__(self):
+        return '%s.%s(test_fold=%s)' % (
+            self.__class__.__module__,
+            self.__class__.__name__,
+            self.test_fold)
+
+    def __len__(self):
+        return len(self.unique_folds)
 
 
 ##############################################################################
