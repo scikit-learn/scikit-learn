@@ -220,7 +220,8 @@ def auc_score(y_true, y_score):
     return roc_auc_score(y_true, y_score)
 
 
-def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
+def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
+                  max_fpr=None):
     """Compute Area Under the Curve (AUC) from prediction scores
 
     Note: this implementation is restricted to the binary classification task
@@ -254,6 +255,10 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
+    max_fpr : float, optional
+       If not ``None``, the standardized partial AUC over
+       the range [0, max_fpr] is returned.
+
     Returns
     -------
     auc : float
@@ -262,6 +267,9 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
     ----------
     .. [1] `Wikipedia entry for the Receiver operating characteristic
             <http://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
+
+    .. [2] `Analyzing a portion of the ROC curve. McClish, 1989
+            <http://www.ncbi.nlm.nih.gov/pubmed/2668680>`_
 
     See also
     --------
@@ -279,13 +287,31 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
     0.75
 
     """
-    def _binary_roc_auc_score(y_true, y_score, sample_weight=None):
+    def _binary_roc_auc_score(y_true, y_score, sample_weight=None,
+                              max_fpr=max_fpr):
         if len(np.unique(y_true)) != 2:
             raise ValueError("Only one class present in y_true. ROC AUC score "
                              "is not defined in that case.")
 
         fpr, tpr, tresholds = roc_curve(y_true, y_score,
                                         sample_weight=sample_weight)
+        if max_fpr:
+            idx = np.where(fpr <= max_fpr)[0]
+
+            # linearly interpolate the ROC curve until max_fpr
+            idx_last = idx.max()
+            idx_next = idx_last + 1
+            xc = [fpr[idx_last], fpr[idx_next]]
+            yc = [tpr[idx_last], fpr[idx_next]]
+            tpr = np.r_[tpr[idx], np.interp(max_fpr, xc, yc)]
+            fpr = np.r_[fpr[idx], max_fpr]
+            partial_roc = auc(fpr, tpr, reorder=True)
+
+            # standardize result to lie between 0.5 and 1
+            min_area = max_fpr**2/2
+            max_area = max_fpr
+            return 0.5*(1+(partial_roc-min_area)/(max_area-min_area))
+
         return auc(fpr, tpr, reorder=True)
 
     return _average_binary_score(
