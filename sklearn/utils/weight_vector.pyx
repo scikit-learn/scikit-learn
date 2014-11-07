@@ -61,6 +61,7 @@ cdef class WeightVector(object):
         self.w_data_ptr = wdata
         self.wscale = 1.0
         self.wscale_ptr = <double *>wscale_vector.data
+        self.n_etas = wscale_vector.shape[0]
         self.n_features = w.shape[0]
         self.sq_norm = ddot(<int>w.shape[0], wdata, 1, wdata, 1)
 
@@ -71,7 +72,7 @@ cdef class WeightVector(object):
             self.average_b = 1.0
 
     cdef void add(self, double *x_data_ptr, int *x_ind_ptr, int xnnz,
-                  double *c, double update) nogil:
+                  double *eta_ptr, double update) nogil:
         """Scales sample x by constant c and adds it to the weight vector.
 
         This operation updates ``sq_norm``.
@@ -92,6 +93,7 @@ cdef class WeightVector(object):
         cdef double val
         cdef double innerprod = 0.0
         cdef double xsqnorm = 0.0
+        cdef int eta_index
 
         # the next two lines save a factor of 2!
         cdef double wscale = self.wscale
@@ -101,17 +103,21 @@ cdef class WeightVector(object):
         for j in range(xnnz):
             idx = x_ind_ptr[j]
             val = x_data_ptr[j]
+            if self.n_etas > 1:
+                eta_index = idx
+            else:
+                eta_index = 0
             innerprod += (w_data_ptr[idx] * val)
             xsqnorm += (val * val)
-            w_data_ptr[idx] += val * (c[idx] * update / wscale_ptr[idx])
+            w_data_ptr[idx] += val * (eta_ptr[eta_index] * update / wscale_ptr[eta_index])
 
-        self.sq_norm += (xsqnorm * c[x_ind_ptr[0]] * c[x_ind_ptr[0]]) + (2.0 * innerprod * wscale * c[x_ind_ptr[0]])
+        self.sq_norm += (xsqnorm * eta_ptr[0] * eta_ptr[0]) + (2.0 * innerprod * wscale_ptr[0] * eta_ptr[0])
 
     # Update the average weights according to the sparse trick defined
     # here: http://research.microsoft.com/pubs/192769/tricks-2012.pdf
     # by Leon Bottou
     cdef void add_average(self, double *x_data_ptr, int *x_ind_ptr, int xnnz,
-                          double* c, double update, double num_iter) nogil:
+                          double* eta_ptr, double update, double num_iter) nogil:
         """Updates the average weight vector.
 
         Parameters
@@ -131,6 +137,7 @@ cdef class WeightVector(object):
         cdef int idx
         cdef double val
         cdef double mu = 1.0 / num_iter
+        cdef int eta_index
         cdef double average_a = self.average_a
         cdef double wscale = self.wscale
         cdef double* aw_data_ptr = self.aw_data_ptr
@@ -139,13 +146,17 @@ cdef class WeightVector(object):
         for j in range(xnnz):
             idx = x_ind_ptr[j]
             val = x_data_ptr[j]
-            aw_data_ptr[idx] += (self.average_a * val * (c[idx] * update / wscale_ptr[idx]))
+            if self.n_etas > 1:
+                eta_index = idx
+            else:
+                eta_index = 0
+            aw_data_ptr[idx] += (self.average_a * val * (eta_ptr[eta_index] * update / wscale_ptr[eta_index]))
 
         # Once the the sample has been processed
         # update the average_a and average_b
         if num_iter > 1:
             self.average_b /= (1.0 - mu)
-        self.average_a += mu * self.average_b * wscale
+        self.average_a += mu * self.average_b * wscale_ptr[0]
 
     cdef double dot(self, double *x_data_ptr, int *x_ind_ptr,
                     int xnnz) nogil:
@@ -170,9 +181,15 @@ cdef class WeightVector(object):
         cdef double innerprod = 0.0
         cdef double* w_data_ptr = self.w_data_ptr
         cdef double* wscale_ptr = self.wscale_ptr
+        cdef double wscale = self.wscale
+        cdef int eta_index
         for j in range(xnnz):
             idx = x_ind_ptr[j]
-            innerprod += wscale_ptr[idx] * w_data_ptr[idx] * x_data_ptr[j]
+            if self.n_etas > 1:
+                eta_index = idx
+            else:
+                eta_index = 0
+            innerprod += wscale_ptr[eta_index] * w_data_ptr[idx] * x_data_ptr[j]
         return innerprod
 
     cdef void scale(self, double c) nogil:
@@ -184,6 +201,17 @@ cdef class WeightVector(object):
         self.sq_norm *= (c * c)
         if self.wscale < 1e-9:
             self.reset_wscale()
+
+    cdef void scale_vector(self, double l1_ratio,
+                           double* eta_ptr, double alpha) nogil:
+        if alpha == 0.0:
+            return
+        for j in range(self.n_etas):
+            self.wscale_ptr[j] *= (1.0 - ((1.0 - l1_ratio) *
+                                   eta_ptr[j] * alpha))
+        cdef double norm = (1.0 - ((1.0 - l1_ratio) *
+                            eta_ptr[0] * alpha))
+        self.sq_norm *= (norm * norm)
 
     cdef void reset_wscale(self) nogil:
         """Scales each coef of ``w`` by ``wscale`` and resets it to 1. """
@@ -197,9 +225,15 @@ cdef class WeightVector(object):
             self.average_a = 0.0
             self.average_b = 1.0
 
-        # dscal(<int>self.w.shape[0], self.wscale, <double *>self.w.data, 1)
-        for j in range(self.n_features):
-            self.w_data_ptr[j] *= wscale_ptr[j]
+        if self.n_etas > 1:
+            for j in range(self.n_features):
+                self.w_data_ptr[j] *= wscale_ptr[j]
+                self.wscale_ptr[j] = 1.0
+        else:
+            dscal(<int>self.w.shape[0], self.wscale_ptr[0],
+                  <double *>self.w.data, 1)
+            # wscale_ptr[0] = 1.0
+
         self.wscale = 1.0
 
     cdef double norm(self) nogil:

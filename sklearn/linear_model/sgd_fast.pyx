@@ -17,7 +17,7 @@ from time import time
 cimport cython
 from libc.math cimport exp, log, sqrt, pow, fabs
 cimport numpy as np
-from learning_rates cimport LearningRate, Optimal
+from learning_rates cimport LearningRate, Optimal, Adaptive
 cdef extern from "sgd_fast_helpers.h":
     bint skl_isfinite(double) nogil
 
@@ -552,8 +552,17 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef Py_ssize_t n_samples = dataset.n_samples
     cdef Py_ssize_t n_features = weights.shape[0]
 
-    cdef np.ndarray[double, ndim=1, mode='c'] wscale_vector = \
-            np.ones((n_features,), dtype=np.float64, order="c")
+    cdef int n_etas
+    cdef np.ndarray[double, ndim=1, mode='c'] wscale_vector
+    cdef np.ndarray[double, ndim=1, mode='c'] eta_vector
+    if isinstance(learning_rate, Adaptive):
+        n_etas = n_features
+    else:
+        n_etas = 1
+
+    eta_vector = np.zeros((n_etas,), dtype=np.float64, order="c")
+    cdef double* eta_ptr = &eta_vector[0]
+    wscale_vector = np.ones((n_etas,), dtype=np.float64, order="c")
     cdef WeightVector w = WeightVector(weights, average_weights, wscale_vector)
     cdef double* w_ptr = &weights[0]
     cdef double *x_data_ptr = NULL
@@ -578,9 +587,6 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef double gradient = 0.0
     cdef double norm = 0.0
     cdef double optimal_init = 1.0
-    cdef np.ndarray[double, ndim=1, mode='c'] eta_vector = np.zeros((n_features,), dtype=np.float64, order="c")
-    cdef double* eta_ptr = &eta_vector[0]
-
 
     # q vector is only used for L1 regularization
     cdef np.ndarray[double, ndim = 1, mode = "c"] q = None
@@ -641,14 +647,14 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 update *= class_weight * sample_weight
 
                 if penalty_type >= L2:
-                    w.scale(1.0 - ((1.0 - l1_ratio) * eta_ptr[x_ind_ptr[0]] * alpha))
-                    for j in range(n_features):
-                        w.wscale_ptr[j] *= 1.0 - ((1.0 - l1_ratio) * eta_ptr[j] * alpha)
+                    # w.scale(1.0 - ((1.0 - l1_ratio) * eta_ptr[0] * alpha))
+                    w.scale_vector(l1_ratio, eta_ptr, alpha)
 
                 if update != 0.0:
+                    # TODO: what to do with intercept for multiple etas?
                     w.add(x_data_ptr, x_ind_ptr, xnnz, eta_ptr, -update)
                     if fit_intercept == 1:
-                        intercept += -update * eta_ptr[x_ind_ptr[0]] * intercept_decay
+                        intercept += -update * eta_ptr[0] * intercept_decay
 
                 if average > 0 and average <= t:
                     # compute the average for the intercept and update the
@@ -660,8 +666,9 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     average_intercept += ((intercept - average_intercept) /
                                           (t - average + 1))
 
+                # TODO: what should the penalty be for adagrad?
                 if penalty_type == L1 or penalty_type == ELASTICNET:
-                    u += (l1_ratio * eta_ptr[x_ind_ptr[0]] * alpha)
+                    u += (l1_ratio * eta_ptr[0] * alpha)
                     l1penalty(w, q_data_ptr, x_ind_ptr, xnnz, u)
 
                 t += 1

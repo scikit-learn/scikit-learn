@@ -61,38 +61,40 @@ if __name__ == "__main__":
         ("optimal", SGDClassifier(learning_rate="optimal",
                                   alpha=alpha, loss=loss,
                                   n_iter=20)),
-        # ("adadelta", SGDClassifier(learning_rate="adadelta",
-        #                            alpha=alpha, loss=loss,
-        #                            n_iter=20, shuffle=shuffle,
-        #                            eps0=100.,
-        #                            rho0=.8)),
+        ("adadelta", SGDClassifier(learning_rate="adadelta",
+                                   alpha=0.0, loss=loss,
+                                   fit_intercept=False,
+                                   n_iter=20, shuffle=shuffle,
+                                   eps0=1.,
+                                   rho0=.999)),
         ("adagrad", SGDClassifier(learning_rate="adagrad",
-                                  alpha=alpha, loss=loss,
+                                  alpha=0.0, loss=loss,
+                                  fit_intercept=False,
                                   n_iter=20, shuffle=shuffle,
                                   eta0=1.,
                                   eps0=0.1)),
     ]
 
-    alpha = 1e-8
+    alpha = 1e-3
     digits_clfs = [
-        ("invscaling", SGDClassifier(learning_rate="invscaling",
-                                     alpha=alpha, loss=loss,
-                                     n_iter=20, shuffle=shuffle,
-                                     eta0=.1)),
-        ("optimal", SGDClassifier(learning_rate="optimal",
-                                  alpha=alpha, loss=loss,
-                                  n_iter=20)),
-        # ("adadelta", SGDClassifier(learning_rate="adadelta",
-        #                            alpha=alpha, loss=loss,
-        #                            n_iter=20, shuffle=shuffle,
-        #                            eps0=1.,
-        #                            rho0=.9)),
+        # ("invscaling", SGDClassifier(learning_rate="invscaling",
+        #                              alpha=alpha, loss=loss,
+        #                              n_iter=20, shuffle=shuffle,
+        #                              eta0=.1)),
+        # ("optimal", SGDClassifier(learning_rate="optimal",
+        #                           alpha=alpha, loss=loss,
+        #                           n_iter=20)),
         ("adagrad", SGDClassifier(learning_rate="adagrad",
                                   alpha=alpha, loss=loss,
                                   n_iter=20, shuffle=shuffle,
                                   eta0=1.0,
                                   eps0=1e-2,
                                   fit_intercept=False)),
+        ("adadelta", SGDClassifier(learning_rate="adadelta",
+                                   alpha=alpha, loss=loss,
+                                   n_iter=20, shuffle=shuffle,
+                                   eps0=2.0,
+                                   rho0=.999)),
     ]
 
     # alpha = 1e-1
@@ -117,8 +119,8 @@ if __name__ == "__main__":
     ]
 
     all_datasets = [
-        (datasets.load_digits(), digits_clfs),
-        # (datasets.fetch_20newsgroups_vectorized(), news_clfs),
+        # (datasets.load_digits(), digits_clfs),
+        (datasets.fetch_20newsgroups_vectorized(), news_clfs),
         # (datasets.fetch_lfw_pairs(), faces_clfs),
     ]
 

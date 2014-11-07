@@ -21,16 +21,19 @@ cdef class InvScaling(LearningRate):
 cdef class PA(LearningRate):
     cdef double _get_multiplier(self, int is_hinge, double y, double p)
 
-cdef class AdaGrad(LearningRate):
+cdef class Adaptive(LearningRate):
+    cdef double _compute_eta(self, double full_gradient,
+                             double val, int idx, double eta0, int n_features)
+cdef class AdaGrad(Adaptive):
     cdef double sum_squared_grad
     cdef np.ndarray sum_squared_grad_vector
     cdef double eps0
 
-cdef class AdaDelta(LearningRate):
+cdef class AdaDelta(Adaptive):
     cdef double rho0
     cdef double eps0
-    cdef double accugrad
-    cdef double accudelta
+    cdef np.ndarray accugrad
+    cdef np.ndarray accudelta
 
 cdef class PA1(PA):
     pass

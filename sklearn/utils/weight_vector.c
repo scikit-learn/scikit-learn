@@ -744,6 +744,7 @@ struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector {
   double average_a;
   double average_b;
   int n_features;
+  int n_etas;
   double sq_norm;
 };
 
@@ -762,6 +763,7 @@ struct __pyx_vtabstruct_7sklearn_5utils_13weight_vector_WeightVector {
   void (*add_average)(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *, double *, int *, int, double *, double, double);
   double (*dot)(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *, double *, int *, int);
   void (*scale)(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *, double);
+  void (*scale_vector)(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *, double, double *, double);
   void (*reset_wscale)(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *);
   double (*norm)(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *);
 };
@@ -1050,10 +1052,11 @@ static PyTypeObject *__Pyx_ImportType(const char *module_name, const char *class
 
 static int __Pyx_InitStrings(__Pyx_StringTabEntry *t);
 
-static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *__pyx_v_self, double *__pyx_v_x_data_ptr, int *__pyx_v_x_ind_ptr, int __pyx_v_xnnz, double *__pyx_v_c, double __pyx_v_update); /* proto*/
-static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add_average(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *__pyx_v_self, double *__pyx_v_x_data_ptr, int *__pyx_v_x_ind_ptr, int __pyx_v_xnnz, double *__pyx_v_c, double __pyx_v_update, double __pyx_v_num_iter); /* proto*/
+static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *__pyx_v_self, double *__pyx_v_x_data_ptr, int *__pyx_v_x_ind_ptr, int __pyx_v_xnnz, double *__pyx_v_eta_ptr, double __pyx_v_update); /* proto*/
+static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add_average(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *__pyx_v_self, double *__pyx_v_x_data_ptr, int *__pyx_v_x_ind_ptr, int __pyx_v_xnnz, double *__pyx_v_eta_ptr, double __pyx_v_update, double __pyx_v_num_iter); /* proto*/
 static double __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_dot(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *__pyx_v_self, double *__pyx_v_x_data_ptr, int *__pyx_v_x_ind_ptr, int __pyx_v_xnnz); /* proto*/
 static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_scale(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *__pyx_v_self, double __pyx_v_c); /* proto*/
+static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_scale_vector(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *__pyx_v_self, double __pyx_v_l1_ratio, double *__pyx_v_eta_ptr, double __pyx_v_alpha); /* proto*/
 static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_reset_wscale(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *__pyx_v_self); /* proto*/
 static double __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_norm(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *__pyx_v_self); /* proto*/
 
@@ -1387,7 +1390,7 @@ static int __pyx_pf_7sklearn_5utils_13weight_vector_12WeightVector___cinit__(str
  *         self.w_data_ptr = wdata
  *         self.wscale = 1.0             # <<<<<<<<<<<<<<
  *         self.wscale_ptr = <double *>wscale_vector.data
- *         self.n_features = w.shape[0]
+ *         self.n_etas = wscale_vector.shape[0]
  */
   __pyx_v_self->wscale = 1.0;
 
@@ -1395,22 +1398,31 @@ static int __pyx_pf_7sklearn_5utils_13weight_vector_12WeightVector___cinit__(str
  *         self.w_data_ptr = wdata
  *         self.wscale = 1.0
  *         self.wscale_ptr = <double *>wscale_vector.data             # <<<<<<<<<<<<<<
+ *         self.n_etas = wscale_vector.shape[0]
  *         self.n_features = w.shape[0]
- *         self.sq_norm = ddot(<int>w.shape[0], wdata, 1, wdata, 1)
  */
   __pyx_v_self->wscale_ptr = ((double *)__pyx_v_wscale_vector->data);
 
   /* "sklearn/utils/weight_vector.pyx":64
  *         self.wscale = 1.0
  *         self.wscale_ptr = <double *>wscale_vector.data
+ *         self.n_etas = wscale_vector.shape[0]             # <<<<<<<<<<<<<<
+ *         self.n_features = w.shape[0]
+ *         self.sq_norm = ddot(<int>w.shape[0], wdata, 1, wdata, 1)
+ */
+  __pyx_v_self->n_etas = (__pyx_v_wscale_vector->dimensions[0]);
+
+  /* "sklearn/utils/weight_vector.pyx":65
+ *         self.wscale_ptr = <double *>wscale_vector.data
+ *         self.n_etas = wscale_vector.shape[0]
  *         self.n_features = w.shape[0]             # <<<<<<<<<<<<<<
  *         self.sq_norm = ddot(<int>w.shape[0], wdata, 1, wdata, 1)
  * 
  */
   __pyx_v_self->n_features = (__pyx_v_w->dimensions[0]);
 
-  /* "sklearn/utils/weight_vector.pyx":65
- *         self.wscale_ptr = <double *>wscale_vector.data
+  /* "sklearn/utils/weight_vector.pyx":66
+ *         self.n_etas = wscale_vector.shape[0]
  *         self.n_features = w.shape[0]
  *         self.sq_norm = ddot(<int>w.shape[0], wdata, 1, wdata, 1)             # <<<<<<<<<<<<<<
  * 
@@ -1418,7 +1430,7 @@ static int __pyx_pf_7sklearn_5utils_13weight_vector_12WeightVector___cinit__(str
  */
   __pyx_v_self->sq_norm = cblas_ddot(((int)(__pyx_v_w->dimensions[0])), __pyx_v_wdata, 1, __pyx_v_wdata, 1);
 
-  /* "sklearn/utils/weight_vector.pyx":67
+  /* "sklearn/utils/weight_vector.pyx":68
  *         self.sq_norm = ddot(<int>w.shape[0], wdata, 1, wdata, 1)
  * 
  *         self.aw = aw             # <<<<<<<<<<<<<<
@@ -1431,7 +1443,7 @@ static int __pyx_pf_7sklearn_5utils_13weight_vector_12WeightVector___cinit__(str
   __Pyx_DECREF(((PyObject *)__pyx_v_self->aw));
   __pyx_v_self->aw = ((PyArrayObject *)__pyx_v_aw);
 
-  /* "sklearn/utils/weight_vector.pyx":68
+  /* "sklearn/utils/weight_vector.pyx":69
  * 
  *         self.aw = aw
  *         if self.aw is not None:             # <<<<<<<<<<<<<<
@@ -1442,7 +1454,7 @@ static int __pyx_pf_7sklearn_5utils_13weight_vector_12WeightVector___cinit__(str
   __pyx_t_5 = (__pyx_t_1 != 0);
   if (__pyx_t_5) {
 
-    /* "sklearn/utils/weight_vector.pyx":69
+    /* "sklearn/utils/weight_vector.pyx":70
  *         self.aw = aw
  *         if self.aw is not None:
  *             self.aw_data_ptr = <double *>aw.data             # <<<<<<<<<<<<<<
@@ -1451,7 +1463,7 @@ static int __pyx_pf_7sklearn_5utils_13weight_vector_12WeightVector___cinit__(str
  */
     __pyx_v_self->aw_data_ptr = ((double *)__pyx_v_aw->data);
 
-    /* "sklearn/utils/weight_vector.pyx":70
+    /* "sklearn/utils/weight_vector.pyx":71
  *         if self.aw is not None:
  *             self.aw_data_ptr = <double *>aw.data
  *             self.average_a = 0.0             # <<<<<<<<<<<<<<
@@ -1460,7 +1472,7 @@ static int __pyx_pf_7sklearn_5utils_13weight_vector_12WeightVector___cinit__(str
  */
     __pyx_v_self->average_a = 0.0;
 
-    /* "sklearn/utils/weight_vector.pyx":71
+    /* "sklearn/utils/weight_vector.pyx":72
  *             self.aw_data_ptr = <double *>aw.data
  *             self.average_a = 0.0
  *             self.average_b = 1.0             # <<<<<<<<<<<<<<
@@ -1505,21 +1517,22 @@ static int __pyx_pf_7sklearn_5utils_13weight_vector_12WeightVector___cinit__(str
   return __pyx_r;
 }
 
-/* "sklearn/utils/weight_vector.pyx":73
+/* "sklearn/utils/weight_vector.pyx":74
  *             self.average_b = 1.0
  * 
  *     cdef void add(self, double *x_data_ptr, int *x_ind_ptr, int xnnz,             # <<<<<<<<<<<<<<
- *                   double *c, double update) nogil:
+ *                   double *eta_ptr, double update) nogil:
  *         """Scales sample x by constant c and adds it to the weight vector.
  */
 
-static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *__pyx_v_self, double *__pyx_v_x_data_ptr, int *__pyx_v_x_ind_ptr, int __pyx_v_xnnz, double *__pyx_v_c, double __pyx_v_update) {
+static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *__pyx_v_self, double *__pyx_v_x_data_ptr, int *__pyx_v_x_ind_ptr, int __pyx_v_xnnz, double *__pyx_v_eta_ptr, double __pyx_v_update) {
   int __pyx_v_j;
   int __pyx_v_idx;
   double __pyx_v_val;
   double __pyx_v_innerprod;
   double __pyx_v_xsqnorm;
-  double __pyx_v_wscale;
+  int __pyx_v_eta_index;
+  CYTHON_UNUSED double __pyx_v_wscale;
   double *__pyx_v_w_data_ptr;
   double *__pyx_v_wscale_ptr;
   double __pyx_t_1;
@@ -1527,26 +1540,27 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add(struct __
   int __pyx_t_3;
   int __pyx_t_4;
   int __pyx_t_5;
+  int __pyx_t_6;
 
-  /* "sklearn/utils/weight_vector.pyx":93
+  /* "sklearn/utils/weight_vector.pyx":94
  *         cdef int idx
  *         cdef double val
  *         cdef double innerprod = 0.0             # <<<<<<<<<<<<<<
  *         cdef double xsqnorm = 0.0
- * 
+ *         cdef int eta_index
  */
   __pyx_v_innerprod = 0.0;
 
-  /* "sklearn/utils/weight_vector.pyx":94
+  /* "sklearn/utils/weight_vector.pyx":95
  *         cdef double val
  *         cdef double innerprod = 0.0
  *         cdef double xsqnorm = 0.0             # <<<<<<<<<<<<<<
+ *         cdef int eta_index
  * 
- *         # the next two lines save a factor of 2!
  */
   __pyx_v_xsqnorm = 0.0;
 
-  /* "sklearn/utils/weight_vector.pyx":97
+  /* "sklearn/utils/weight_vector.pyx":99
  * 
  *         # the next two lines save a factor of 2!
  *         cdef double wscale = self.wscale             # <<<<<<<<<<<<<<
@@ -1556,7 +1570,7 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add(struct __
   __pyx_t_1 = __pyx_v_self->wscale;
   __pyx_v_wscale = __pyx_t_1;
 
-  /* "sklearn/utils/weight_vector.pyx":98
+  /* "sklearn/utils/weight_vector.pyx":100
  *         # the next two lines save a factor of 2!
  *         cdef double wscale = self.wscale
  *         cdef double* w_data_ptr = self.w_data_ptr             # <<<<<<<<<<<<<<
@@ -1566,7 +1580,7 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add(struct __
   __pyx_t_2 = __pyx_v_self->w_data_ptr;
   __pyx_v_w_data_ptr = __pyx_t_2;
 
-  /* "sklearn/utils/weight_vector.pyx":99
+  /* "sklearn/utils/weight_vector.pyx":101
  *         cdef double wscale = self.wscale
  *         cdef double* w_data_ptr = self.w_data_ptr
  *         cdef double* wscale_ptr = self.wscale_ptr             # <<<<<<<<<<<<<<
@@ -1576,7 +1590,7 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add(struct __
   __pyx_t_2 = __pyx_v_self->wscale_ptr;
   __pyx_v_wscale_ptr = __pyx_t_2;
 
-  /* "sklearn/utils/weight_vector.pyx":101
+  /* "sklearn/utils/weight_vector.pyx":103
  *         cdef double* wscale_ptr = self.wscale_ptr
  * 
  *         for j in range(xnnz):             # <<<<<<<<<<<<<<
@@ -1587,88 +1601,122 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add(struct __
   for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
     __pyx_v_j = __pyx_t_4;
 
-    /* "sklearn/utils/weight_vector.pyx":102
+    /* "sklearn/utils/weight_vector.pyx":104
  * 
  *         for j in range(xnnz):
  *             idx = x_ind_ptr[j]             # <<<<<<<<<<<<<<
  *             val = x_data_ptr[j]
- *             innerprod += (w_data_ptr[idx] * val)
+ *             if self.n_etas > 1:
  */
     __pyx_v_idx = (__pyx_v_x_ind_ptr[__pyx_v_j]);
 
-    /* "sklearn/utils/weight_vector.pyx":103
+    /* "sklearn/utils/weight_vector.pyx":105
  *         for j in range(xnnz):
  *             idx = x_ind_ptr[j]
  *             val = x_data_ptr[j]             # <<<<<<<<<<<<<<
- *             innerprod += (w_data_ptr[idx] * val)
- *             xsqnorm += (val * val)
+ *             if self.n_etas > 1:
+ *                 eta_index = idx
  */
     __pyx_v_val = (__pyx_v_x_data_ptr[__pyx_v_j]);
 
-    /* "sklearn/utils/weight_vector.pyx":104
+    /* "sklearn/utils/weight_vector.pyx":106
  *             idx = x_ind_ptr[j]
  *             val = x_data_ptr[j]
+ *             if self.n_etas > 1:             # <<<<<<<<<<<<<<
+ *                 eta_index = idx
+ *             else:
+ */
+    __pyx_t_5 = ((__pyx_v_self->n_etas > 1) != 0);
+    if (__pyx_t_5) {
+
+      /* "sklearn/utils/weight_vector.pyx":107
+ *             val = x_data_ptr[j]
+ *             if self.n_etas > 1:
+ *                 eta_index = idx             # <<<<<<<<<<<<<<
+ *             else:
+ *                 eta_index = 0
+ */
+      __pyx_v_eta_index = __pyx_v_idx;
+      goto __pyx_L5;
+    }
+    /*else*/ {
+
+      /* "sklearn/utils/weight_vector.pyx":109
+ *                 eta_index = idx
+ *             else:
+ *                 eta_index = 0             # <<<<<<<<<<<<<<
+ *             innerprod += (w_data_ptr[idx] * val)
+ *             xsqnorm += (val * val)
+ */
+      __pyx_v_eta_index = 0;
+    }
+    __pyx_L5:;
+
+    /* "sklearn/utils/weight_vector.pyx":110
+ *             else:
+ *                 eta_index = 0
  *             innerprod += (w_data_ptr[idx] * val)             # <<<<<<<<<<<<<<
  *             xsqnorm += (val * val)
- *             w_data_ptr[idx] += val * (c[idx] * update / wscale_ptr[idx])
+ *             w_data_ptr[idx] += val * (eta_ptr[eta_index] * update / wscale_ptr[eta_index])
  */
     __pyx_v_innerprod = (__pyx_v_innerprod + ((__pyx_v_w_data_ptr[__pyx_v_idx]) * __pyx_v_val));
 
-    /* "sklearn/utils/weight_vector.pyx":105
- *             val = x_data_ptr[j]
+    /* "sklearn/utils/weight_vector.pyx":111
+ *                 eta_index = 0
  *             innerprod += (w_data_ptr[idx] * val)
  *             xsqnorm += (val * val)             # <<<<<<<<<<<<<<
- *             w_data_ptr[idx] += val * (c[idx] * update / wscale_ptr[idx])
+ *             w_data_ptr[idx] += val * (eta_ptr[eta_index] * update / wscale_ptr[eta_index])
  * 
  */
     __pyx_v_xsqnorm = (__pyx_v_xsqnorm + (__pyx_v_val * __pyx_v_val));
 
-    /* "sklearn/utils/weight_vector.pyx":106
+    /* "sklearn/utils/weight_vector.pyx":112
  *             innerprod += (w_data_ptr[idx] * val)
  *             xsqnorm += (val * val)
- *             w_data_ptr[idx] += val * (c[idx] * update / wscale_ptr[idx])             # <<<<<<<<<<<<<<
+ *             w_data_ptr[idx] += val * (eta_ptr[eta_index] * update / wscale_ptr[eta_index])             # <<<<<<<<<<<<<<
  * 
- *         self.sq_norm += (xsqnorm * c[x_ind_ptr[0]] * c[x_ind_ptr[0]]) + (2.0 * innerprod * wscale * c[x_ind_ptr[0]])
+ *         self.sq_norm += (xsqnorm * eta_ptr[0] * eta_ptr[0]) + (2.0 * innerprod * wscale_ptr[0] * eta_ptr[0])
  */
-    __pyx_t_5 = __pyx_v_idx;
-    (__pyx_v_w_data_ptr[__pyx_t_5]) = ((__pyx_v_w_data_ptr[__pyx_t_5]) + (__pyx_v_val * (((__pyx_v_c[__pyx_v_idx]) * __pyx_v_update) / (__pyx_v_wscale_ptr[__pyx_v_idx]))));
+    __pyx_t_6 = __pyx_v_idx;
+    (__pyx_v_w_data_ptr[__pyx_t_6]) = ((__pyx_v_w_data_ptr[__pyx_t_6]) + (__pyx_v_val * (((__pyx_v_eta_ptr[__pyx_v_eta_index]) * __pyx_v_update) / (__pyx_v_wscale_ptr[__pyx_v_eta_index]))));
   }
 
-  /* "sklearn/utils/weight_vector.pyx":108
- *             w_data_ptr[idx] += val * (c[idx] * update / wscale_ptr[idx])
+  /* "sklearn/utils/weight_vector.pyx":114
+ *             w_data_ptr[idx] += val * (eta_ptr[eta_index] * update / wscale_ptr[eta_index])
  * 
- *         self.sq_norm += (xsqnorm * c[x_ind_ptr[0]] * c[x_ind_ptr[0]]) + (2.0 * innerprod * wscale * c[x_ind_ptr[0]])             # <<<<<<<<<<<<<<
+ *         self.sq_norm += (xsqnorm * eta_ptr[0] * eta_ptr[0]) + (2.0 * innerprod * wscale_ptr[0] * eta_ptr[0])             # <<<<<<<<<<<<<<
  * 
  *     # Update the average weights according to the sparse trick defined
  */
-  __pyx_v_self->sq_norm = (__pyx_v_self->sq_norm + (((__pyx_v_xsqnorm * (__pyx_v_c[(__pyx_v_x_ind_ptr[0])])) * (__pyx_v_c[(__pyx_v_x_ind_ptr[0])])) + (((2.0 * __pyx_v_innerprod) * __pyx_v_wscale) * (__pyx_v_c[(__pyx_v_x_ind_ptr[0])]))));
+  __pyx_v_self->sq_norm = (__pyx_v_self->sq_norm + (((__pyx_v_xsqnorm * (__pyx_v_eta_ptr[0])) * (__pyx_v_eta_ptr[0])) + (((2.0 * __pyx_v_innerprod) * (__pyx_v_wscale_ptr[0])) * (__pyx_v_eta_ptr[0]))));
 
-  /* "sklearn/utils/weight_vector.pyx":73
+  /* "sklearn/utils/weight_vector.pyx":74
  *             self.average_b = 1.0
  * 
  *     cdef void add(self, double *x_data_ptr, int *x_ind_ptr, int xnnz,             # <<<<<<<<<<<<<<
- *                   double *c, double update) nogil:
+ *                   double *eta_ptr, double update) nogil:
  *         """Scales sample x by constant c and adds it to the weight vector.
  */
 
   /* function exit code */
 }
 
-/* "sklearn/utils/weight_vector.pyx":113
+/* "sklearn/utils/weight_vector.pyx":119
  *     # here: http://research.microsoft.com/pubs/192769/tricks-2012.pdf
  *     # by Leon Bottou
  *     cdef void add_average(self, double *x_data_ptr, int *x_ind_ptr, int xnnz,             # <<<<<<<<<<<<<<
- *                           double* c, double update, double num_iter) nogil:
+ *                           double* eta_ptr, double update, double num_iter) nogil:
  *         """Updates the average weight vector.
  */
 
-static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add_average(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *__pyx_v_self, double *__pyx_v_x_data_ptr, int *__pyx_v_x_ind_ptr, int __pyx_v_xnnz, double *__pyx_v_c, double __pyx_v_update, double __pyx_v_num_iter) {
+static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add_average(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *__pyx_v_self, double *__pyx_v_x_data_ptr, int *__pyx_v_x_ind_ptr, int __pyx_v_xnnz, double *__pyx_v_eta_ptr, double __pyx_v_update, double __pyx_v_num_iter) {
   int __pyx_v_j;
   int __pyx_v_idx;
   double __pyx_v_val;
   double __pyx_v_mu;
+  int __pyx_v_eta_index;
   CYTHON_UNUSED double __pyx_v_average_a;
-  double __pyx_v_wscale;
+  CYTHON_UNUSED double __pyx_v_wscale;
   double *__pyx_v_aw_data_ptr;
   double *__pyx_v_wscale_ptr;
   double __pyx_t_1;
@@ -1678,18 +1726,18 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add_average(s
   int __pyx_t_5;
   int __pyx_t_6;
 
-  /* "sklearn/utils/weight_vector.pyx":133
+  /* "sklearn/utils/weight_vector.pyx":139
  *         cdef int idx
  *         cdef double val
  *         cdef double mu = 1.0 / num_iter             # <<<<<<<<<<<<<<
+ *         cdef int eta_index
  *         cdef double average_a = self.average_a
- *         cdef double wscale = self.wscale
  */
   __pyx_v_mu = (1.0 / __pyx_v_num_iter);
 
-  /* "sklearn/utils/weight_vector.pyx":134
- *         cdef double val
+  /* "sklearn/utils/weight_vector.pyx":141
  *         cdef double mu = 1.0 / num_iter
+ *         cdef int eta_index
  *         cdef double average_a = self.average_a             # <<<<<<<<<<<<<<
  *         cdef double wscale = self.wscale
  *         cdef double* aw_data_ptr = self.aw_data_ptr
@@ -1697,8 +1745,8 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add_average(s
   __pyx_t_1 = __pyx_v_self->average_a;
   __pyx_v_average_a = __pyx_t_1;
 
-  /* "sklearn/utils/weight_vector.pyx":135
- *         cdef double mu = 1.0 / num_iter
+  /* "sklearn/utils/weight_vector.pyx":142
+ *         cdef int eta_index
  *         cdef double average_a = self.average_a
  *         cdef double wscale = self.wscale             # <<<<<<<<<<<<<<
  *         cdef double* aw_data_ptr = self.aw_data_ptr
@@ -1707,7 +1755,7 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add_average(s
   __pyx_t_1 = __pyx_v_self->wscale;
   __pyx_v_wscale = __pyx_t_1;
 
-  /* "sklearn/utils/weight_vector.pyx":136
+  /* "sklearn/utils/weight_vector.pyx":143
  *         cdef double average_a = self.average_a
  *         cdef double wscale = self.wscale
  *         cdef double* aw_data_ptr = self.aw_data_ptr             # <<<<<<<<<<<<<<
@@ -1717,7 +1765,7 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add_average(s
   __pyx_t_2 = __pyx_v_self->aw_data_ptr;
   __pyx_v_aw_data_ptr = __pyx_t_2;
 
-  /* "sklearn/utils/weight_vector.pyx":137
+  /* "sklearn/utils/weight_vector.pyx":144
  *         cdef double wscale = self.wscale
  *         cdef double* aw_data_ptr = self.aw_data_ptr
  *         cdef double* wscale_ptr = self.wscale_ptr             # <<<<<<<<<<<<<<
@@ -1727,7 +1775,7 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add_average(s
   __pyx_t_2 = __pyx_v_self->wscale_ptr;
   __pyx_v_wscale_ptr = __pyx_t_2;
 
-  /* "sklearn/utils/weight_vector.pyx":139
+  /* "sklearn/utils/weight_vector.pyx":146
  *         cdef double* wscale_ptr = self.wscale_ptr
  * 
  *         for j in range(xnnz):             # <<<<<<<<<<<<<<
@@ -1738,79 +1786,112 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add_average(s
   for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
     __pyx_v_j = __pyx_t_4;
 
-    /* "sklearn/utils/weight_vector.pyx":140
+    /* "sklearn/utils/weight_vector.pyx":147
  * 
  *         for j in range(xnnz):
  *             idx = x_ind_ptr[j]             # <<<<<<<<<<<<<<
  *             val = x_data_ptr[j]
- *             aw_data_ptr[idx] += (self.average_a * val * (c[idx] * update / wscale_ptr[idx]))
+ *             if self.n_etas > 1:
  */
     __pyx_v_idx = (__pyx_v_x_ind_ptr[__pyx_v_j]);
 
-    /* "sklearn/utils/weight_vector.pyx":141
+    /* "sklearn/utils/weight_vector.pyx":148
  *         for j in range(xnnz):
  *             idx = x_ind_ptr[j]
  *             val = x_data_ptr[j]             # <<<<<<<<<<<<<<
- *             aw_data_ptr[idx] += (self.average_a * val * (c[idx] * update / wscale_ptr[idx]))
- * 
+ *             if self.n_etas > 1:
+ *                 eta_index = idx
  */
     __pyx_v_val = (__pyx_v_x_data_ptr[__pyx_v_j]);
 
-    /* "sklearn/utils/weight_vector.pyx":142
+    /* "sklearn/utils/weight_vector.pyx":149
  *             idx = x_ind_ptr[j]
  *             val = x_data_ptr[j]
- *             aw_data_ptr[idx] += (self.average_a * val * (c[idx] * update / wscale_ptr[idx]))             # <<<<<<<<<<<<<<
+ *             if self.n_etas > 1:             # <<<<<<<<<<<<<<
+ *                 eta_index = idx
+ *             else:
+ */
+    __pyx_t_5 = ((__pyx_v_self->n_etas > 1) != 0);
+    if (__pyx_t_5) {
+
+      /* "sklearn/utils/weight_vector.pyx":150
+ *             val = x_data_ptr[j]
+ *             if self.n_etas > 1:
+ *                 eta_index = idx             # <<<<<<<<<<<<<<
+ *             else:
+ *                 eta_index = 0
+ */
+      __pyx_v_eta_index = __pyx_v_idx;
+      goto __pyx_L5;
+    }
+    /*else*/ {
+
+      /* "sklearn/utils/weight_vector.pyx":152
+ *                 eta_index = idx
+ *             else:
+ *                 eta_index = 0             # <<<<<<<<<<<<<<
+ *             aw_data_ptr[idx] += (self.average_a * val * (eta_ptr[eta_index] * update / wscale_ptr[eta_index]))
+ * 
+ */
+      __pyx_v_eta_index = 0;
+    }
+    __pyx_L5:;
+
+    /* "sklearn/utils/weight_vector.pyx":153
+ *             else:
+ *                 eta_index = 0
+ *             aw_data_ptr[idx] += (self.average_a * val * (eta_ptr[eta_index] * update / wscale_ptr[eta_index]))             # <<<<<<<<<<<<<<
  * 
  *         # Once the the sample has been processed
  */
-    __pyx_t_5 = __pyx_v_idx;
-    (__pyx_v_aw_data_ptr[__pyx_t_5]) = ((__pyx_v_aw_data_ptr[__pyx_t_5]) + ((__pyx_v_self->average_a * __pyx_v_val) * (((__pyx_v_c[__pyx_v_idx]) * __pyx_v_update) / (__pyx_v_wscale_ptr[__pyx_v_idx]))));
+    __pyx_t_6 = __pyx_v_idx;
+    (__pyx_v_aw_data_ptr[__pyx_t_6]) = ((__pyx_v_aw_data_ptr[__pyx_t_6]) + ((__pyx_v_self->average_a * __pyx_v_val) * (((__pyx_v_eta_ptr[__pyx_v_eta_index]) * __pyx_v_update) / (__pyx_v_wscale_ptr[__pyx_v_eta_index]))));
   }
 
-  /* "sklearn/utils/weight_vector.pyx":146
+  /* "sklearn/utils/weight_vector.pyx":157
  *         # Once the the sample has been processed
  *         # update the average_a and average_b
  *         if num_iter > 1:             # <<<<<<<<<<<<<<
  *             self.average_b /= (1.0 - mu)
- *         self.average_a += mu * self.average_b * wscale
+ *         self.average_a += mu * self.average_b * wscale_ptr[0]
  */
-  __pyx_t_6 = ((__pyx_v_num_iter > 1.0) != 0);
-  if (__pyx_t_6) {
+  __pyx_t_5 = ((__pyx_v_num_iter > 1.0) != 0);
+  if (__pyx_t_5) {
 
-    /* "sklearn/utils/weight_vector.pyx":147
+    /* "sklearn/utils/weight_vector.pyx":158
  *         # update the average_a and average_b
  *         if num_iter > 1:
  *             self.average_b /= (1.0 - mu)             # <<<<<<<<<<<<<<
- *         self.average_a += mu * self.average_b * wscale
+ *         self.average_a += mu * self.average_b * wscale_ptr[0]
  * 
  */
     __pyx_v_self->average_b = (__pyx_v_self->average_b / (1.0 - __pyx_v_mu));
-    goto __pyx_L5;
+    goto __pyx_L6;
   }
-  __pyx_L5:;
+  __pyx_L6:;
 
-  /* "sklearn/utils/weight_vector.pyx":148
+  /* "sklearn/utils/weight_vector.pyx":159
  *         if num_iter > 1:
  *             self.average_b /= (1.0 - mu)
- *         self.average_a += mu * self.average_b * wscale             # <<<<<<<<<<<<<<
+ *         self.average_a += mu * self.average_b * wscale_ptr[0]             # <<<<<<<<<<<<<<
  * 
  *     cdef double dot(self, double *x_data_ptr, int *x_ind_ptr,
  */
-  __pyx_v_self->average_a = (__pyx_v_self->average_a + ((__pyx_v_mu * __pyx_v_self->average_b) * __pyx_v_wscale));
+  __pyx_v_self->average_a = (__pyx_v_self->average_a + ((__pyx_v_mu * __pyx_v_self->average_b) * (__pyx_v_wscale_ptr[0])));
 
-  /* "sklearn/utils/weight_vector.pyx":113
+  /* "sklearn/utils/weight_vector.pyx":119
  *     # here: http://research.microsoft.com/pubs/192769/tricks-2012.pdf
  *     # by Leon Bottou
  *     cdef void add_average(self, double *x_data_ptr, int *x_ind_ptr, int xnnz,             # <<<<<<<<<<<<<<
- *                           double* c, double update, double num_iter) nogil:
+ *                           double* eta_ptr, double update, double num_iter) nogil:
  *         """Updates the average weight vector.
  */
 
   /* function exit code */
 }
 
-/* "sklearn/utils/weight_vector.pyx":150
- *         self.average_a += mu * self.average_b * wscale
+/* "sklearn/utils/weight_vector.pyx":161
+ *         self.average_a += mu * self.average_b * wscale_ptr[0]
  * 
  *     cdef double dot(self, double *x_data_ptr, int *x_ind_ptr,             # <<<<<<<<<<<<<<
  *                     int xnnz) nogil:
@@ -1823,12 +1904,16 @@ static double __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_dot(struct 
   double __pyx_v_innerprod;
   double *__pyx_v_w_data_ptr;
   double *__pyx_v_wscale_ptr;
+  CYTHON_UNUSED double __pyx_v_wscale;
+  int __pyx_v_eta_index;
   double __pyx_r;
   double *__pyx_t_1;
-  int __pyx_t_2;
+  double __pyx_t_2;
   int __pyx_t_3;
+  int __pyx_t_4;
+  int __pyx_t_5;
 
-  /* "sklearn/utils/weight_vector.pyx":170
+  /* "sklearn/utils/weight_vector.pyx":181
  *         cdef int j
  *         cdef int idx
  *         cdef double innerprod = 0.0             # <<<<<<<<<<<<<<
@@ -1837,59 +1922,102 @@ static double __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_dot(struct 
  */
   __pyx_v_innerprod = 0.0;
 
-  /* "sklearn/utils/weight_vector.pyx":171
+  /* "sklearn/utils/weight_vector.pyx":182
  *         cdef int idx
  *         cdef double innerprod = 0.0
  *         cdef double* w_data_ptr = self.w_data_ptr             # <<<<<<<<<<<<<<
  *         cdef double* wscale_ptr = self.wscale_ptr
- *         for j in range(xnnz):
+ *         cdef double wscale = self.wscale
  */
   __pyx_t_1 = __pyx_v_self->w_data_ptr;
   __pyx_v_w_data_ptr = __pyx_t_1;
 
-  /* "sklearn/utils/weight_vector.pyx":172
+  /* "sklearn/utils/weight_vector.pyx":183
  *         cdef double innerprod = 0.0
  *         cdef double* w_data_ptr = self.w_data_ptr
  *         cdef double* wscale_ptr = self.wscale_ptr             # <<<<<<<<<<<<<<
- *         for j in range(xnnz):
- *             idx = x_ind_ptr[j]
+ *         cdef double wscale = self.wscale
+ *         cdef int eta_index
  */
   __pyx_t_1 = __pyx_v_self->wscale_ptr;
   __pyx_v_wscale_ptr = __pyx_t_1;
 
-  /* "sklearn/utils/weight_vector.pyx":173
+  /* "sklearn/utils/weight_vector.pyx":184
  *         cdef double* w_data_ptr = self.w_data_ptr
  *         cdef double* wscale_ptr = self.wscale_ptr
+ *         cdef double wscale = self.wscale             # <<<<<<<<<<<<<<
+ *         cdef int eta_index
+ *         for j in range(xnnz):
+ */
+  __pyx_t_2 = __pyx_v_self->wscale;
+  __pyx_v_wscale = __pyx_t_2;
+
+  /* "sklearn/utils/weight_vector.pyx":186
+ *         cdef double wscale = self.wscale
+ *         cdef int eta_index
  *         for j in range(xnnz):             # <<<<<<<<<<<<<<
  *             idx = x_ind_ptr[j]
- *             innerprod += wscale_ptr[idx] * w_data_ptr[idx] * x_data_ptr[j]
+ *             if self.n_etas > 1:
  */
-  __pyx_t_2 = __pyx_v_xnnz;
-  for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
-    __pyx_v_j = __pyx_t_3;
+  __pyx_t_3 = __pyx_v_xnnz;
+  for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
+    __pyx_v_j = __pyx_t_4;
 
-    /* "sklearn/utils/weight_vector.pyx":174
- *         cdef double* wscale_ptr = self.wscale_ptr
+    /* "sklearn/utils/weight_vector.pyx":187
+ *         cdef int eta_index
  *         for j in range(xnnz):
  *             idx = x_ind_ptr[j]             # <<<<<<<<<<<<<<
- *             innerprod += wscale_ptr[idx] * w_data_ptr[idx] * x_data_ptr[j]
- *         return innerprod
+ *             if self.n_etas > 1:
+ *                 eta_index = idx
  */
     __pyx_v_idx = (__pyx_v_x_ind_ptr[__pyx_v_j]);
 
-    /* "sklearn/utils/weight_vector.pyx":175
+    /* "sklearn/utils/weight_vector.pyx":188
  *         for j in range(xnnz):
  *             idx = x_ind_ptr[j]
- *             innerprod += wscale_ptr[idx] * w_data_ptr[idx] * x_data_ptr[j]             # <<<<<<<<<<<<<<
+ *             if self.n_etas > 1:             # <<<<<<<<<<<<<<
+ *                 eta_index = idx
+ *             else:
+ */
+    __pyx_t_5 = ((__pyx_v_self->n_etas > 1) != 0);
+    if (__pyx_t_5) {
+
+      /* "sklearn/utils/weight_vector.pyx":189
+ *             idx = x_ind_ptr[j]
+ *             if self.n_etas > 1:
+ *                 eta_index = idx             # <<<<<<<<<<<<<<
+ *             else:
+ *                 eta_index = 0
+ */
+      __pyx_v_eta_index = __pyx_v_idx;
+      goto __pyx_L5;
+    }
+    /*else*/ {
+
+      /* "sklearn/utils/weight_vector.pyx":191
+ *                 eta_index = idx
+ *             else:
+ *                 eta_index = 0             # <<<<<<<<<<<<<<
+ *             innerprod += wscale_ptr[eta_index] * w_data_ptr[idx] * x_data_ptr[j]
+ *         return innerprod
+ */
+      __pyx_v_eta_index = 0;
+    }
+    __pyx_L5:;
+
+    /* "sklearn/utils/weight_vector.pyx":192
+ *             else:
+ *                 eta_index = 0
+ *             innerprod += wscale_ptr[eta_index] * w_data_ptr[idx] * x_data_ptr[j]             # <<<<<<<<<<<<<<
  *         return innerprod
  * 
  */
-    __pyx_v_innerprod = (__pyx_v_innerprod + (((__pyx_v_wscale_ptr[__pyx_v_idx]) * (__pyx_v_w_data_ptr[__pyx_v_idx])) * (__pyx_v_x_data_ptr[__pyx_v_j])));
+    __pyx_v_innerprod = (__pyx_v_innerprod + (((__pyx_v_wscale_ptr[__pyx_v_eta_index]) * (__pyx_v_w_data_ptr[__pyx_v_idx])) * (__pyx_v_x_data_ptr[__pyx_v_j])));
   }
 
-  /* "sklearn/utils/weight_vector.pyx":176
- *             idx = x_ind_ptr[j]
- *             innerprod += wscale_ptr[idx] * w_data_ptr[idx] * x_data_ptr[j]
+  /* "sklearn/utils/weight_vector.pyx":193
+ *                 eta_index = 0
+ *             innerprod += wscale_ptr[eta_index] * w_data_ptr[idx] * x_data_ptr[j]
  *         return innerprod             # <<<<<<<<<<<<<<
  * 
  *     cdef void scale(self, double c) nogil:
@@ -1897,8 +2025,8 @@ static double __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_dot(struct 
   __pyx_r = __pyx_v_innerprod;
   goto __pyx_L0;
 
-  /* "sklearn/utils/weight_vector.pyx":150
- *         self.average_a += mu * self.average_b * wscale
+  /* "sklearn/utils/weight_vector.pyx":161
+ *         self.average_a += mu * self.average_b * wscale_ptr[0]
  * 
  *     cdef double dot(self, double *x_data_ptr, int *x_ind_ptr,             # <<<<<<<<<<<<<<
  *                     int xnnz) nogil:
@@ -1910,7 +2038,7 @@ static double __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_dot(struct 
   return __pyx_r;
 }
 
-/* "sklearn/utils/weight_vector.pyx":178
+/* "sklearn/utils/weight_vector.pyx":195
  *         return innerprod
  * 
  *     cdef void scale(self, double c) nogil:             # <<<<<<<<<<<<<<
@@ -1921,7 +2049,7 @@ static double __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_dot(struct 
 static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_scale(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *__pyx_v_self, double __pyx_v_c) {
   int __pyx_t_1;
 
-  /* "sklearn/utils/weight_vector.pyx":183
+  /* "sklearn/utils/weight_vector.pyx":200
  *         It updates ``wscale`` and ``sq_norm``. If ``wscale`` gets too
  *         small we call ``reset_swcale``."""
  *         self.wscale *= c             # <<<<<<<<<<<<<<
@@ -1930,7 +2058,7 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_scale(struct 
  */
   __pyx_v_self->wscale = (__pyx_v_self->wscale * __pyx_v_c);
 
-  /* "sklearn/utils/weight_vector.pyx":184
+  /* "sklearn/utils/weight_vector.pyx":201
  *         small we call ``reset_swcale``."""
  *         self.wscale *= c
  *         self.sq_norm *= (c * c)             # <<<<<<<<<<<<<<
@@ -1939,7 +2067,7 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_scale(struct 
  */
   __pyx_v_self->sq_norm = (__pyx_v_self->sq_norm * (__pyx_v_c * __pyx_v_c));
 
-  /* "sklearn/utils/weight_vector.pyx":185
+  /* "sklearn/utils/weight_vector.pyx":202
  *         self.wscale *= c
  *         self.sq_norm *= (c * c)
  *         if self.wscale < 1e-9:             # <<<<<<<<<<<<<<
@@ -1949,19 +2077,19 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_scale(struct 
   __pyx_t_1 = ((__pyx_v_self->wscale < 1e-9) != 0);
   if (__pyx_t_1) {
 
-    /* "sklearn/utils/weight_vector.pyx":186
+    /* "sklearn/utils/weight_vector.pyx":203
  *         self.sq_norm *= (c * c)
  *         if self.wscale < 1e-9:
  *             self.reset_wscale()             # <<<<<<<<<<<<<<
  * 
- *     cdef void reset_wscale(self) nogil:
+ *     cdef void scale_vector(self, double l1_ratio,
  */
     ((struct __pyx_vtabstruct_7sklearn_5utils_13weight_vector_WeightVector *)__pyx_v_self->__pyx_vtab)->reset_wscale(__pyx_v_self);
     goto __pyx_L3;
   }
   __pyx_L3:;
 
-  /* "sklearn/utils/weight_vector.pyx":178
+  /* "sklearn/utils/weight_vector.pyx":195
  *         return innerprod
  * 
  *     cdef void scale(self, double c) nogil:             # <<<<<<<<<<<<<<
@@ -1972,8 +2100,104 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_scale(struct 
   /* function exit code */
 }
 
-/* "sklearn/utils/weight_vector.pyx":188
+/* "sklearn/utils/weight_vector.pyx":205
  *             self.reset_wscale()
+ * 
+ *     cdef void scale_vector(self, double l1_ratio,             # <<<<<<<<<<<<<<
+ *                            double* eta_ptr, double alpha) nogil:
+ *         if alpha == 0.0:
+ */
+
+static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_scale_vector(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *__pyx_v_self, double __pyx_v_l1_ratio, double *__pyx_v_eta_ptr, double __pyx_v_alpha) {
+  int __pyx_v_j;
+  double __pyx_v_norm;
+  int __pyx_t_1;
+  int __pyx_t_2;
+  int __pyx_t_3;
+  int __pyx_t_4;
+
+  /* "sklearn/utils/weight_vector.pyx":207
+ *     cdef void scale_vector(self, double l1_ratio,
+ *                            double* eta_ptr, double alpha) nogil:
+ *         if alpha == 0.0:             # <<<<<<<<<<<<<<
+ *             return
+ *         for j in range(self.n_etas):
+ */
+  __pyx_t_1 = ((__pyx_v_alpha == 0.0) != 0);
+  if (__pyx_t_1) {
+
+    /* "sklearn/utils/weight_vector.pyx":208
+ *                            double* eta_ptr, double alpha) nogil:
+ *         if alpha == 0.0:
+ *             return             # <<<<<<<<<<<<<<
+ *         for j in range(self.n_etas):
+ *             self.wscale_ptr[j] *= (1.0 - ((1.0 - l1_ratio) *
+ */
+    goto __pyx_L0;
+  }
+
+  /* "sklearn/utils/weight_vector.pyx":209
+ *         if alpha == 0.0:
+ *             return
+ *         for j in range(self.n_etas):             # <<<<<<<<<<<<<<
+ *             self.wscale_ptr[j] *= (1.0 - ((1.0 - l1_ratio) *
+ *                                    eta_ptr[j] * alpha))
+ */
+  __pyx_t_2 = __pyx_v_self->n_etas;
+  for (__pyx_t_3 = 0; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
+    __pyx_v_j = __pyx_t_3;
+
+    /* "sklearn/utils/weight_vector.pyx":210
+ *             return
+ *         for j in range(self.n_etas):
+ *             self.wscale_ptr[j] *= (1.0 - ((1.0 - l1_ratio) *             # <<<<<<<<<<<<<<
+ *                                    eta_ptr[j] * alpha))
+ *         cdef double norm = (1.0 - ((1.0 - l1_ratio) *
+ */
+    __pyx_t_4 = __pyx_v_j;
+
+    /* "sklearn/utils/weight_vector.pyx":211
+ *         for j in range(self.n_etas):
+ *             self.wscale_ptr[j] *= (1.0 - ((1.0 - l1_ratio) *
+ *                                    eta_ptr[j] * alpha))             # <<<<<<<<<<<<<<
+ *         cdef double norm = (1.0 - ((1.0 - l1_ratio) *
+ *                             eta_ptr[0] * alpha))
+ */
+    (__pyx_v_self->wscale_ptr[__pyx_t_4]) = ((__pyx_v_self->wscale_ptr[__pyx_t_4]) * (1.0 - (((1.0 - __pyx_v_l1_ratio) * (__pyx_v_eta_ptr[__pyx_v_j])) * __pyx_v_alpha)));
+  }
+
+  /* "sklearn/utils/weight_vector.pyx":212
+ *             self.wscale_ptr[j] *= (1.0 - ((1.0 - l1_ratio) *
+ *                                    eta_ptr[j] * alpha))
+ *         cdef double norm = (1.0 - ((1.0 - l1_ratio) *             # <<<<<<<<<<<<<<
+ *                             eta_ptr[0] * alpha))
+ *         self.sq_norm *= (norm * norm)
+ */
+  __pyx_v_norm = (1.0 - (((1.0 - __pyx_v_l1_ratio) * (__pyx_v_eta_ptr[0])) * __pyx_v_alpha));
+
+  /* "sklearn/utils/weight_vector.pyx":214
+ *         cdef double norm = (1.0 - ((1.0 - l1_ratio) *
+ *                             eta_ptr[0] * alpha))
+ *         self.sq_norm *= (norm * norm)             # <<<<<<<<<<<<<<
+ * 
+ *     cdef void reset_wscale(self) nogil:
+ */
+  __pyx_v_self->sq_norm = (__pyx_v_self->sq_norm * (__pyx_v_norm * __pyx_v_norm));
+
+  /* "sklearn/utils/weight_vector.pyx":205
+ *             self.reset_wscale()
+ * 
+ *     cdef void scale_vector(self, double l1_ratio,             # <<<<<<<<<<<<<<
+ *                            double* eta_ptr, double alpha) nogil:
+ *         if alpha == 0.0:
+ */
+
+  /* function exit code */
+  __pyx_L0:;
+}
+
+/* "sklearn/utils/weight_vector.pyx":216
+ *         self.sq_norm *= (norm * norm)
  * 
  *     cdef void reset_wscale(self) nogil:             # <<<<<<<<<<<<<<
  *         """Scales each coef of ``w`` by ``wscale`` and resets it to 1. """
@@ -1990,7 +2214,7 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_reset_wscale(
   int __pyx_t_5;
   int __pyx_t_6;
 
-  /* "sklearn/utils/weight_vector.pyx":190
+  /* "sklearn/utils/weight_vector.pyx":218
  *     cdef void reset_wscale(self) nogil:
  *         """Scales each coef of ``w`` by ``wscale`` and resets it to 1. """
  *         cdef double* wscale_ptr = self.wscale_ptr             # <<<<<<<<<<<<<<
@@ -2000,7 +2224,7 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_reset_wscale(
   __pyx_t_1 = __pyx_v_self->wscale_ptr;
   __pyx_v_wscale_ptr = __pyx_t_1;
 
-  /* "sklearn/utils/weight_vector.pyx":192
+  /* "sklearn/utils/weight_vector.pyx":220
  *         cdef double* wscale_ptr = self.wscale_ptr
  * 
  *         if self.aw is not None:             # <<<<<<<<<<<<<<
@@ -2011,7 +2235,7 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_reset_wscale(
   __pyx_t_3 = (__pyx_t_2 != 0);
   if (__pyx_t_3) {
 
-    /* "sklearn/utils/weight_vector.pyx":193
+    /* "sklearn/utils/weight_vector.pyx":221
  * 
  *         if self.aw is not None:
  *             daxpy(<int>self.aw.shape[0], self.average_a,             # <<<<<<<<<<<<<<
@@ -2020,7 +2244,7 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_reset_wscale(
  */
     cblas_daxpy(((int)(__pyx_v_self->aw->dimensions[0])), __pyx_v_self->average_a, ((double *)__pyx_v_self->w->data), 1, ((double *)__pyx_v_self->aw->data), 1);
 
-    /* "sklearn/utils/weight_vector.pyx":195
+    /* "sklearn/utils/weight_vector.pyx":223
  *             daxpy(<int>self.aw.shape[0], self.average_a,
  *                   <double *>self.w.data, 1, <double *>self.aw.data, 1)
  *             dscal(<int>self.aw.shape[0], 1.0 / self.average_b,             # <<<<<<<<<<<<<<
@@ -2029,7 +2253,7 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_reset_wscale(
  */
     cblas_dscal(((int)(__pyx_v_self->aw->dimensions[0])), (1.0 / __pyx_v_self->average_b), ((double *)__pyx_v_self->aw->data), 1);
 
-    /* "sklearn/utils/weight_vector.pyx":197
+    /* "sklearn/utils/weight_vector.pyx":225
  *             dscal(<int>self.aw.shape[0], 1.0 / self.average_b,
  *                   <double *>self.aw.data, 1)
  *             self.average_a = 0.0             # <<<<<<<<<<<<<<
@@ -2038,51 +2262,84 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_reset_wscale(
  */
     __pyx_v_self->average_a = 0.0;
 
-    /* "sklearn/utils/weight_vector.pyx":198
+    /* "sklearn/utils/weight_vector.pyx":226
  *                   <double *>self.aw.data, 1)
  *             self.average_a = 0.0
  *             self.average_b = 1.0             # <<<<<<<<<<<<<<
  * 
- *         # dscal(<int>self.w.shape[0], self.wscale, <double *>self.w.data, 1)
+ *         if self.n_etas > 1:
  */
     __pyx_v_self->average_b = 1.0;
     goto __pyx_L3;
   }
   __pyx_L3:;
 
-  /* "sklearn/utils/weight_vector.pyx":201
+  /* "sklearn/utils/weight_vector.pyx":228
+ *             self.average_b = 1.0
  * 
- *         # dscal(<int>self.w.shape[0], self.wscale, <double *>self.w.data, 1)
- *         for j in range(self.n_features):             # <<<<<<<<<<<<<<
- *             self.w_data_ptr[j] *= wscale_ptr[j]
- *         self.wscale = 1.0
+ *         if self.n_etas > 1:             # <<<<<<<<<<<<<<
+ *             for j in range(self.n_features):
+ *                 self.w_data_ptr[j] *= wscale_ptr[j]
  */
-  __pyx_t_4 = __pyx_v_self->n_features;
-  for (__pyx_t_5 = 0; __pyx_t_5 < __pyx_t_4; __pyx_t_5+=1) {
-    __pyx_v_j = __pyx_t_5;
+  __pyx_t_3 = ((__pyx_v_self->n_etas > 1) != 0);
+  if (__pyx_t_3) {
 
-    /* "sklearn/utils/weight_vector.pyx":202
- *         # dscal(<int>self.w.shape[0], self.wscale, <double *>self.w.data, 1)
- *         for j in range(self.n_features):
- *             self.w_data_ptr[j] *= wscale_ptr[j]             # <<<<<<<<<<<<<<
- *         self.wscale = 1.0
+    /* "sklearn/utils/weight_vector.pyx":229
  * 
+ *         if self.n_etas > 1:
+ *             for j in range(self.n_features):             # <<<<<<<<<<<<<<
+ *                 self.w_data_ptr[j] *= wscale_ptr[j]
+ *                 self.wscale_ptr[j] = 1.0
  */
-    __pyx_t_6 = __pyx_v_j;
-    (__pyx_v_self->w_data_ptr[__pyx_t_6]) = ((__pyx_v_self->w_data_ptr[__pyx_t_6]) * (__pyx_v_wscale_ptr[__pyx_v_j]));
+    __pyx_t_4 = __pyx_v_self->n_features;
+    for (__pyx_t_5 = 0; __pyx_t_5 < __pyx_t_4; __pyx_t_5+=1) {
+      __pyx_v_j = __pyx_t_5;
+
+      /* "sklearn/utils/weight_vector.pyx":230
+ *         if self.n_etas > 1:
+ *             for j in range(self.n_features):
+ *                 self.w_data_ptr[j] *= wscale_ptr[j]             # <<<<<<<<<<<<<<
+ *                 self.wscale_ptr[j] = 1.0
+ *         else:
+ */
+      __pyx_t_6 = __pyx_v_j;
+      (__pyx_v_self->w_data_ptr[__pyx_t_6]) = ((__pyx_v_self->w_data_ptr[__pyx_t_6]) * (__pyx_v_wscale_ptr[__pyx_v_j]));
+
+      /* "sklearn/utils/weight_vector.pyx":231
+ *             for j in range(self.n_features):
+ *                 self.w_data_ptr[j] *= wscale_ptr[j]
+ *                 self.wscale_ptr[j] = 1.0             # <<<<<<<<<<<<<<
+ *         else:
+ *             dscal(<int>self.w.shape[0], self.wscale_ptr[0],
+ */
+      (__pyx_v_self->wscale_ptr[__pyx_v_j]) = 1.0;
+    }
+    goto __pyx_L4;
   }
+  /*else*/ {
 
-  /* "sklearn/utils/weight_vector.pyx":203
- *         for j in range(self.n_features):
- *             self.w_data_ptr[j] *= wscale_ptr[j]
+    /* "sklearn/utils/weight_vector.pyx":233
+ *                 self.wscale_ptr[j] = 1.0
+ *         else:
+ *             dscal(<int>self.w.shape[0], self.wscale_ptr[0],             # <<<<<<<<<<<<<<
+ *                   <double *>self.w.data, 1)
+ *             # wscale_ptr[0] = 1.0
+ */
+    cblas_dscal(((int)(__pyx_v_self->w->dimensions[0])), (__pyx_v_self->wscale_ptr[0]), ((double *)__pyx_v_self->w->data), 1);
+  }
+  __pyx_L4:;
+
+  /* "sklearn/utils/weight_vector.pyx":237
+ *             # wscale_ptr[0] = 1.0
+ * 
  *         self.wscale = 1.0             # <<<<<<<<<<<<<<
  * 
  *     cdef double norm(self) nogil:
  */
   __pyx_v_self->wscale = 1.0;
 
-  /* "sklearn/utils/weight_vector.pyx":188
- *             self.reset_wscale()
+  /* "sklearn/utils/weight_vector.pyx":216
+ *         self.sq_norm *= (norm * norm)
  * 
  *     cdef void reset_wscale(self) nogil:             # <<<<<<<<<<<<<<
  *         """Scales each coef of ``w`` by ``wscale`` and resets it to 1. """
@@ -2092,7 +2349,7 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_reset_wscale(
   /* function exit code */
 }
 
-/* "sklearn/utils/weight_vector.pyx":205
+/* "sklearn/utils/weight_vector.pyx":239
  *         self.wscale = 1.0
  * 
  *     cdef double norm(self) nogil:             # <<<<<<<<<<<<<<
@@ -2103,7 +2360,7 @@ static void __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_reset_wscale(
 static double __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_norm(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *__pyx_v_self) {
   double __pyx_r;
 
-  /* "sklearn/utils/weight_vector.pyx":207
+  /* "sklearn/utils/weight_vector.pyx":241
  *     cdef double norm(self) nogil:
  *         """The L2 norm of the weight vector. """
  *         return sqrt(self.sq_norm)             # <<<<<<<<<<<<<<
@@ -2111,7 +2368,7 @@ static double __pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_norm(struct
   __pyx_r = sqrt(__pyx_v_self->sq_norm);
   goto __pyx_L0;
 
-  /* "sklearn/utils/weight_vector.pyx":205
+  /* "sklearn/utils/weight_vector.pyx":239
  *         self.wscale = 1.0
  * 
  *     cdef double norm(self) nogil:             # <<<<<<<<<<<<<<
@@ -4302,7 +4559,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
 };
 static int __Pyx_InitCachedBuiltins(void) {
   __pyx_builtin_ValueError = __Pyx_GetBuiltinName(__pyx_n_s_ValueError); if (!__pyx_builtin_ValueError) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 58; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 101; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 103; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_builtin_RuntimeError = __Pyx_GetBuiltinName(__pyx_n_s_RuntimeError); if (!__pyx_builtin_RuntimeError) {__pyx_filename = __pyx_f[1]; __pyx_lineno = 799; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   return 0;
   __pyx_L1_error:;
@@ -4477,6 +4734,7 @@ PyMODINIT_FUNC PyInit_weight_vector(void)
   __pyx_vtable_7sklearn_5utils_13weight_vector_WeightVector.add_average = (void (*)(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *, double *, int *, int, double *, double, double))__pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_add_average;
   __pyx_vtable_7sklearn_5utils_13weight_vector_WeightVector.dot = (double (*)(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *, double *, int *, int))__pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_dot;
   __pyx_vtable_7sklearn_5utils_13weight_vector_WeightVector.scale = (void (*)(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *, double))__pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_scale;
+  __pyx_vtable_7sklearn_5utils_13weight_vector_WeightVector.scale_vector = (void (*)(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *, double, double *, double))__pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_scale_vector;
   __pyx_vtable_7sklearn_5utils_13weight_vector_WeightVector.reset_wscale = (void (*)(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *))__pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_reset_wscale;
   __pyx_vtable_7sklearn_5utils_13weight_vector_WeightVector.norm = (double (*)(struct __pyx_obj_7sklearn_5utils_13weight_vector_WeightVector *))__pyx_f_7sklearn_5utils_13weight_vector_12WeightVector_norm;
   if (PyType_Ready(&__pyx_type_7sklearn_5utils_13weight_vector_WeightVector) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 27; __pyx_clineno = __LINE__; goto __pyx_L1_error;}

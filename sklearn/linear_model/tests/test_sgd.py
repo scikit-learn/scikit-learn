@@ -103,7 +103,8 @@ class CommonTest(object):
     # a simple implementation of ASGD to use for testing
     # uses squared loss to find the gradient
     def asgd(self, X, y, eta, alpha, weight_init=None,
-             intercept_init=0.0, adagrad=False, fit_intercept=True, eps0=0.0):
+             intercept_init=0.0, learning_rate=None,
+             fit_intercept=True, eps0=0.0, rho0=.9):
         if weight_init is None:
             weights = np.zeros(X.shape[1])
         else:
@@ -120,12 +121,23 @@ class CommonTest(object):
             decay = .01
 
         accu_gradient = np.zeros(X.shape[1])
+        accu_delta = np.zeros(X.shape[1])
+
         for i, entry in enumerate(X):
             p = np.dot(entry, weights)
             p += intercept
             scalar_gradient = p - y[i]
             gradient_vector = scalar_gradient * entry + alpha * weights
-            if adagrad:
+            if learning_rate == "adadelta":
+                accu_gradient *= rho0
+                accu_gradient += (1. - rho0) * (gradient_vector *
+                                                gradient_vector)
+                dx = np.sqrt((accu_delta + eps0) /
+                             (accu_gradient + eps0))
+                accu_delta *= rho0
+                accu_delta += (1. - rho0) * dx * dx
+                weights -= dx * gradient_vector
+            elif learning_rate == "adagrad":
                 accu_gradient += gradient_vector * gradient_vector
                 weights -= eta / np.sqrt(accu_gradient + eps0) * gradient_vector
             else:
@@ -407,7 +419,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     def test_adagrad_computed_correctly(self):
         eta = .1
         alpha = .1
-        n_samples = 10
+        n_samples = 20
         n_features = 10
         rng = np.random.RandomState(0)
         X = rng.normal(size=(n_samples, n_features))
@@ -421,11 +433,77 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
                            fit_intercept=False,
                            n_iter=1, average=False)
 
-        clf.partial_fit(X[:10], y[:10], classes=np.unique(y))
-        clf.partial_fit(X[10:], y[10:], classes=np.unique(y))
+        clf.partial_fit(X[:int(n_samples / 2)], y[:int(n_samples / 2)],
+                        classes=np.unique(y))
+        clf.partial_fit(X[int(n_samples / 2):], y[int(n_samples / 2):],
+                        classes=np.unique(y))
 
         _, _, weights, intercept = self.asgd(X, y, eta, alpha,
-                                             adagrad=True, fit_intercept=False,
+                                             learning_rate='adagrad', fit_intercept=False,
+                                             eps0=.1)
+        weights = weights.reshape(1, -1)
+        assert_array_almost_equal(clf.coef_,
+                                  weights,
+                                  decimal=14)
+        assert_almost_equal(clf.intercept_, intercept, decimal=14)
+
+    def test_adadelta_computed_correctly(self):
+        eta = .1
+        alpha = .1
+        n_samples = 20
+        n_features = 10
+        rng = np.random.RandomState(0)
+        X = rng.normal(size=(n_samples, n_features))
+        w = rng.normal(size=n_features)
+        y = np.dot(X, w)
+        y = np.sign(y)
+
+        clf = self.factory(loss='squared_loss',
+                           learning_rate='adadelta',
+                           eta0=eta, alpha=alpha, eps0=0.1,
+                           fit_intercept=False, rho0=.9,
+                           n_iter=1, average=False)
+
+        clf.partial_fit(X[:int(n_samples / 2)], y[:int(n_samples / 2)],
+                        classes=np.unique(y))
+        clf.partial_fit(X[int(n_samples / 2):], y[int(n_samples / 2):],
+                        classes=np.unique(y))
+
+        _, _, weights, intercept = self.asgd(X, y, eta, alpha,
+                                             learning_rate='adadelta',
+                                             fit_intercept=False,
+                                             eps0=.1, rho0=.9)
+        weights = weights.reshape(1, -1)
+        assert_array_almost_equal(clf.coef_,
+                                  weights,
+                                  decimal=14)
+        assert_almost_equal(clf.intercept_, intercept, decimal=14)
+
+    def test_adagrad_computed_correctly_alpha_zero(self):
+        eta = .1
+        alpha = .0
+        n_samples = 20
+        n_features = 10
+        rng = np.random.RandomState(0)
+        X = rng.normal(size=(n_samples, n_features))
+        w = rng.normal(size=n_features)
+        y = np.dot(X, w)
+        y = np.sign(y)
+
+        clf = self.factory(loss='squared_loss',
+                           learning_rate='adagrad',
+                           eta0=eta, alpha=alpha, eps0=0.1,
+                           fit_intercept=False,
+                           n_iter=1, average=False)
+
+        clf.partial_fit(X[:int(n_samples / 2)], y[:int(n_samples / 2)],
+                        classes=np.unique(y))
+        clf.partial_fit(X[int(n_samples / 2):], y[int(n_samples / 2):],
+                        classes=np.unique(y))
+
+        _, _, weights, intercept = self.asgd(X, y, eta, alpha,
+                                             learning_rate='adagrad',
+                                             fit_intercept=False,
                                              eps0=.1)
         weights = weights.reshape(1, -1)
         assert_array_almost_equal(clf.coef_,
@@ -438,6 +516,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         alpha = .1
         y_encode = np.copy(Y3)
         y_encode[y_encode == 2] = -1
+        n_samples = y_encode.shape[0]
 
         clf = self.factory(loss='squared_loss',
                            learning_rate='adagrad',
@@ -445,11 +524,13 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
                            fit_intercept=False,
                            n_iter=1, average=False)
 
-        clf.partial_fit(X3[:10], y_encode[:10], classes=np.unique(y_encode))
-        clf.partial_fit(X3[10:], y_encode[10:], classes=np.unique(y_encode))
+        clf.partial_fit(X3[:int(n_samples / 2)], y_encode[:int(n_samples / 2)],
+                        classes=np.unique(y_encode))
+        clf.partial_fit(X3[int(n_samples / 2):], y_encode[int(n_samples / 2):],
+                        classes=np.unique(y_encode))
 
         _, _, weights, intercept = self.asgd(X3, y_encode, eta, alpha,
-                                             adagrad=True, fit_intercept=False,
+                                             learning_rate='adagrad', fit_intercept=False,
                                              eps0=.1)
         weights = weights.reshape(1, -1)
         assert_array_almost_equal(clf.coef_,
