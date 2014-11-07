@@ -14,6 +14,7 @@ from sklearn.linear_model import ElasticNet
 from sklearn.metrics import pairwise_distances_argmin
 
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
@@ -100,3 +101,30 @@ def test_sparse_X():
 
     assert_array_equal(brc.labels_, brc_sparse.labels_)
     assert_array_equal(brc.centroids_, brc_sparse.centroids_)
+
+
+def check_branching_factor(node, branching_factor):
+    subclusters = node.subclusters_
+    if node.is_leaf:
+        assert_greater_equal(branching_factor, len(subclusters))
+        return
+    for cluster in subclusters:
+        check_branching_factor(cluster.child_, branching_factor)
+
+
+def test_branching_factor():
+    """Test that nodes have at max branching_factor number of subclusters"""
+    X, y = make_blobs()
+    branching_factor = 9
+
+    # Purposefully set a low threshold to maximize the subclusters.
+    brc = Birch(n_clusters=None, branching_factor=branching_factor,
+                threshold=0.01)
+    brc.fit(X)
+    check_branching_factor(brc.root_, branching_factor)
+
+    # Purposefully set a low threshold to maximize the subclusters.
+    brc = Birch(n_clusters=3, branching_factor=branching_factor,
+                threshold=0.01)
+    brc.fit(X)
+    check_branching_factor(brc.root_, branching_factor)
