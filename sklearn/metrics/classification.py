@@ -840,6 +840,9 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
 
+    if y_type == "multiclass-multioutput":
+        raise ValueError("%s is not supported" % y_type)
+
     label_order = labels  # save this for later
     if labels is None:
         labels = unique_labels(y_true, y_pred)
