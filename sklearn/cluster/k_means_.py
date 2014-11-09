@@ -285,7 +285,8 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
     # precompute squared norms of data points
     x_squared_norms = row_norms(X, squared=True)
 
-    best_labels, best_inertia, best_centers = None, None, None
+    best_labels, best_inertia, best_centers, best_n_iter = None,
+        None, None, None
     if n_jobs == 1:
         # For a single thread, less memory is needed if we just store one set
         # of the best results (as opposed to one set per run per thread).
