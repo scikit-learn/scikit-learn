@@ -587,6 +587,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef double gradient = 0.0
     cdef double norm = 0.0
     cdef double optimal_init = 1.0
+    cdef double intercept_eta = 0.0
 
     # q vector is only used for L1 regularization
     cdef np.ndarray[double, ndim = 1, mode = "c"] q = None
@@ -630,9 +631,14 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 norm = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
                 current_loss = loss.loss(p, y)
                 with gil:
-                    learning_rate.eta(eta_ptr, eta0, alpha,
-                                      optimal_init + t, power_t, gradient,
-                                      n_features, x_data_ptr, x_ind_ptr, xnnz, w)
+                    intercept_eta = learning_rate.eta(eta_ptr,
+                                                      eta0, alpha,
+                                                      optimal_init + t,
+                                                      power_t, gradient,
+                                                      n_features, x_data_ptr,
+                                                      x_ind_ptr, xnnz, w,
+                                                      intercept, fit_intercept)
+
                     update = learning_rate.update(gradient, current_loss,
                                                   norm, C, p, y, is_hinge)
 
@@ -647,14 +653,12 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 update *= class_weight * sample_weight
 
                 if penalty_type >= L2:
-                    # w.scale(1.0 - ((1.0 - l1_ratio) * eta_ptr[0] * alpha))
                     w.scale_vector(l1_ratio, eta_ptr, alpha)
 
                 if update != 0.0:
-                    # TODO: what to do with intercept for multiple etas?
                     w.add(x_data_ptr, x_ind_ptr, xnnz, eta_ptr, -update)
                     if fit_intercept == 1:
-                        intercept += -update * eta_ptr[0] * intercept_decay
+                        intercept -= update * intercept_eta * intercept_decay
 
                 if average > 0 and average <= t:
                     # compute the average for the intercept and update the

@@ -8,11 +8,13 @@ cimport numpy as np
 from sklearn.utils.weight_vector cimport WeightVector
 
 cdef class LearningRate:
-    cdef void eta(self, double *eta_ptr, double eta0, double alpha, double t,
-                  double power_t, double gradient, int n_features,
-                  double* x_data_ptr, int* x_ind_ptr, int xnnz,
-                  WeightVector w):
+    cdef double eta(self, double *eta_ptr, double eta0, double alpha, double t,
+                    double power_t, double gradient, int n_features,
+                    double* x_data_ptr, int* x_ind_ptr, int xnnz,
+                    WeightVector w, double intercept, int fit_itercept):
         eta_ptr[0] = eta0
+        return eta_ptr[0]
+
     cdef double update(self, double gradient, double loss,
                        double norm, double C, double p, double y,
                        int is_hinge):
@@ -25,22 +27,24 @@ cdef class Constant(LearningRate):
 
 cdef class Optimal(LearningRate):
     @cython.cdivision(True)
-    cdef void eta(self, double *eta_ptr, double eta0, double alpha, double t,
-                  double power_t, double gradient, int n_features,
-                  double* x_data_ptr, int* x_ind_ptr, int xnnz,
-                  WeightVector w):
+    cdef double eta(self, double *eta_ptr, double eta0, double alpha, double t,
+                    double power_t, double gradient, int n_features,
+                    double* x_data_ptr, int* x_ind_ptr, int xnnz,
+                    WeightVector w, double intercept, int fit_itercept):
         eta_ptr[0] = 1.0 / (alpha * (t - 1))
+        return eta_ptr[0]
 
     def __reduce__(self):
         return Optimal, ()
 
 cdef class InvScaling(LearningRate):
     @cython.cdivision(True)
-    cdef void eta(self, double *eta_ptr, double eta0, double alpha, double t,
-                  double power_t, double gradient, int n_features,
-                  double* x_data_ptr, int* x_ind_ptr, int xnnz,
-                  WeightVector w):
+    cdef double eta(self, double *eta_ptr, double eta0, double alpha, double t,
+                    double power_t, double gradient, int n_features,
+                    double* x_data_ptr, int* x_ind_ptr, int xnnz,
+                    WeightVector w, double intercept, int fit_itercept):
         eta_ptr[0] = eta0 / pow(t, power_t)
+        return eta_ptr[0]
 
     def __reduce__(self):
         return InvScaling, ()
@@ -50,15 +54,20 @@ cdef class Adaptive(LearningRate):
                              double val, int idx, double eta0, int n_features):
         pass
 
+    cdef double _compute_intercept_eta(self, double full_gradient,
+                                       double eta0):
+        pass
+
     @cython.cdivision(True)
-    cdef void eta(self, double *eta_ptr, double eta0, double alpha, double t,
-                  double power_t, double gradient, int n_features,
-                  double* x_data_ptr, int* x_ind_ptr, int xnnz,
-                  WeightVector w):
+    cdef double eta(self, double *eta_ptr, double eta0, double alpha, double t,
+                    double power_t, double gradient, int n_features,
+                    double* x_data_ptr, int* x_ind_ptr, int xnnz,
+                    WeightVector w, double intercept, int fit_itercept):
 
         cdef int counter = 0
         cdef int j = 0
         cdef double val
+        cdef double intercept_eta = 0.0
 
         if alpha == 0.0:
             # we can use a sparse trick here
@@ -83,37 +92,50 @@ cdef class Adaptive(LearningRate):
                 eta_ptr[j] = self._compute_eta(full_gradient, val, j,
                                                eta0, w.n_features)
 
+        if fit_itercept == 1:
+            intercept_eta = self._compute_intercept_eta(gradient, eta0)
+
+        return intercept_eta
+
 cdef class AdaGrad(Adaptive):
 
-    def __cinit__(self, double sum_squared_grad, double eps0, double rho0):
-        self.sum_squared_grad = sum_squared_grad
-        self.sum_squared_grad_vector = None
+    def __cinit__(self, double eps0, double rho0):
+        self.accugrad = None
+        self.intercept_accugrad = 0.0
         self.eps0 = eps0
 
     @cython.cdivision(True)
     cdef double _compute_eta(self, double full_gradient,
                              double val, int idx, double eta0, int n_features):
-        if self.sum_squared_grad_vector is None:
-            self.sum_squared_grad_vector = \
+        if self.accugrad is None:
+            self.accugrad = \
                 np.zeros((n_features,), dtype=np.float64, order="c")
 
         cdef double eps0 = self.eps0
-        cdef double* sum_squared_grad_vector_ptr = \
-            <double *>self.sum_squared_grad_vector.data
-        sum_squared_grad_vector_ptr[idx] += full_gradient * full_gradient
+        cdef double* accugrad = <double *>self.accugrad.data
+        accugrad[idx] += full_gradient * full_gradient
 
-        return eta0 / sqrt(sum_squared_grad_vector_ptr[idx] + eps0)
+        return eta0 / sqrt(accugrad[idx] + eps0)
+
+    @cython.cdivision(True)
+    cdef double _compute_intercept_eta(self, double gradient,
+                                       double eta0):
+        cdef double eps0 = self.eps0
+        self.intercept_accugrad += gradient * gradient
+        return eta0 / sqrt(self.intercept_accugrad + eps0)
 
     def __reduce__(self):
-        return AdaGrad, (self.sum_squared_grad, self.eps0, self.rho0)
+        return AdaGrad, (self.eps0)
 
 
 cdef class AdaDelta(Adaptive):
-    def __cinit__(self, double sum_squared_grad, double eps0, double rho0):
+    def __cinit__(self, double eps0, double rho0):
         self.rho0 = rho0
         self.eps0 = eps0
         self.accugrad = None
         self.accudelta = None
+        self.intercept_accugrad = 0.0
+        self.intercept_accudelta = 0.0
 
     @cython.cdivision(True)
     cdef double _compute_eta(self, double full_gradient,
@@ -138,14 +160,32 @@ cdef class AdaDelta(Adaptive):
 
         return dx
 
+    @cython.cdivision(True)
+    cdef double _compute_intercept_eta(self, double gradient,
+                                       double eta0):
+        cdef double eps0 = self.eps0
+        cdef double rho0 = self.rho0
+
+        self.intercept_accugrad *= rho0
+        self.intercept_accugrad += (1. - rho0) * gradient * gradient
+        dx = sqrt((self.intercept_accudelta + eps0) /
+                  (self.intercept_accugrad + eps0))
+        self.intercept_accudelta *= rho0
+        self.intercept_accudelta += (1. - rho0) * dx * dx
+
+        return dx
+
     def __reduce__(self):
-        return AdaDelta, (self.sum_squared_grad, self.eps0, self.rho0)
+        return AdaGrad, (self.eps0)
+
+    def __reduce__(self):
+        return AdaDelta, (self.eps0, self.rho0)
 
 cdef class PA(LearningRate):
-    cdef void eta(self, double *eta_ptr, double eta0, double alpha, double t,
-                  double power_t, double gradient, int n_features,
-                  double* x_data_ptr, int* x_ind_ptr, int xnnz,
-                  WeightVector w):
+    cdef double eta(self, double *eta_ptr, double eta0, double alpha, double t,
+                    double power_t, double gradient, int n_features,
+                    double* x_data_ptr, int* x_ind_ptr, int xnnz,
+                    WeightVector w, double intercept, int fit_itercept):
         eta_ptr[0] = -1.0
 
     cdef double _get_multiplier(self, int is_hinge, double p, double y):

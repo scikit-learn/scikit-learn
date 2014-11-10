@@ -147,8 +147,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
 
     def _get_learning_rate(self, learning_rate):
         """Get ``LearningRate`` object for str ``learning_rate``. """
-        return LEARNING_RATE_TYPES[learning_rate](sum_squared_grad=0.0,
-                                                  eps0=self.eps0,
+        return LEARNING_RATE_TYPES[learning_rate](eps0=self.eps0,
                                                   rho0=self.rho0)
 
     def _get_penalty_type(self, penalty):
