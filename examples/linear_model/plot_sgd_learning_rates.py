@@ -39,7 +39,7 @@ def train(X_train, y_train, X_test, y_test, classes, classifiers):
         plt.plot(xx, scores_train, col, label=name + ' (train)')
         plt.plot(xx, scores_test, col + '--', label=name + ' (test)')
 
-    plt.legend(loc="upper right")
+    plt.legend(loc="upper right", fontsize="small")
     plt.xlabel("epoch")
     plt.ylabel("error")
     plt.show()
@@ -47,81 +47,32 @@ def train(X_train, y_train, X_test, y_test, classes, classifiers):
 
 if __name__ == "__main__":
     train_proportion = .8
-    # shuffle = True
-    shuffle = False
     loss = 'log'
-    # loss = 'hinge'
 
-    alpha = 1e-3
+    alpha = 1e-8
     news_clfs = [
         ("invscaling", SGDClassifier(learning_rate="invscaling",
                                      alpha=alpha, loss=loss,
-                                     n_iter=20, shuffle=shuffle,
+                                     shuffle=shuffle,
                                      eta0=60.0)),
         ("optimal", SGDClassifier(learning_rate="optimal",
-                                  alpha=alpha, loss=loss,
-                                  n_iter=20)),
+                                  alpha=alpha, loss=loss)),
         ("adadelta", SGDClassifier(learning_rate="adadelta",
                                    alpha=0.0, loss=loss,
-                                   fit_intercept=False,
-                                   n_iter=20, shuffle=shuffle,
-                                   eps0=1.,
-                                   rho0=.999)),
+                                   fit_intercept=True,
+                                   shuffle=shuffle,
+                                   eps0=10.,
+                                   rho0=.8)),
         ("adagrad", SGDClassifier(learning_rate="adagrad",
                                   alpha=0.0, loss=loss,
-                                  fit_intercept=False,
-                                  n_iter=20, shuffle=shuffle,
+                                  fit_intercept=True,
+                                  shuffle=shuffle,
                                   eta0=1.,
                                   eps0=0.1)),
     ]
 
-    alpha = 1e-3
-    digits_clfs = [
-        # ("invscaling", SGDClassifier(learning_rate="invscaling",
-        #                              alpha=alpha, loss=loss,
-        #                              n_iter=20, shuffle=shuffle,
-        #                              eta0=.1)),
-        # ("optimal", SGDClassifier(learning_rate="optimal",
-        #                           alpha=alpha, loss=loss,
-        #                           n_iter=20)),
-        ("adagrad", SGDClassifier(learning_rate="adagrad",
-                                  alpha=alpha, loss=loss,
-                                  n_iter=20, shuffle=shuffle,
-                                  eta0=1.0,
-                                  eps0=1e-2,
-                                  fit_intercept=False)),
-        ("adadelta", SGDClassifier(learning_rate="adadelta",
-                                   alpha=alpha, loss=loss,
-                                   n_iter=20, shuffle=shuffle,
-                                   eps0=2.0,
-                                   rho0=.999)),
-    ]
-
-    # alpha = 1e-1
-    faces_clfs = [
-        ("invscaling", SGDClassifier(learning_rate="invscaling",
-                                     alpha=alpha, loss=loss,
-                                     n_iter=20, shuffle=shuffle,
-                                     eta0=1.)),
-        ("optimal", SGDClassifier(learning_rate="optimal",
-                                  alpha=alpha, loss=loss,
-                                  n_iter=20)),
-        ("adagrad", SGDClassifier(learning_rate="adagrad",
-                                  alpha=alpha, loss=loss,
-                                  n_iter=20, shuffle=shuffle,
-                                  eta0=1.0,
-                                  eps0=0.1)),
-        ("adadelta", SGDClassifier(learning_rate="adadelta",
-                                   alpha=alpha, loss=loss,
-                                   n_iter=20, shuffle=shuffle,
-                                   eps0=1.0,
-                                   rho0=.95)),
-    ]
-
     all_datasets = [
-        # (datasets.load_digits(), digits_clfs),
         (datasets.fetch_20newsgroups_vectorized(), news_clfs),
-        # (datasets.fetch_lfw_pairs(), faces_clfs),
     ]
 
     for data_set, classifiers in all_datasets:

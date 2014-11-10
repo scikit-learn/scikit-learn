@@ -59,7 +59,7 @@ cdef class WeightVector(object):
                              % (INT_MAX, w.shape[0]))
         self.w = w
         self.w_data_ptr = wdata
-        self.wscale = 1.0
+        # self.wscale = 1.0
         self.wscale_ptr = <double *>wscale_vector.data
         self.n_etas = wscale_vector.shape[0]
         self.n_features = w.shape[0]
@@ -204,16 +204,24 @@ cdef class WeightVector(object):
 
     cdef void scale_vector(self, double l1_ratio,
                            double* eta_ptr, double alpha) nogil:
-        """Scales the weight vector by a constant ``(1.0 - ((1.0 - l1_ratio) *
+        """Scales the weight vector by ``(1.0 - ((1.0 - l1_ratio) *
                                    * alpha))``.
 
-        It updates ``wscale`` and ``sq_norm``. If ``wscale`` gets too
-        small we call ``reset_swcale``."""
+        If ``wscale`` gets too small we call ``reset_swcale``."""
+
         if alpha == 0.0:
             return
+
+        cdef bint too_small = False
+
         for j in range(self.n_etas):
             self.wscale_ptr[j] *= (1.0 - ((1.0 - l1_ratio) *
                                    eta_ptr[j] * alpha))
+            if self.wscale_ptr[j] < 1e-9:
+                too_small = True
+
+        if too_small:
+            self.reset_wscale()
         # cdef double norm = (1.0 - ((1.0 - l1_ratio) *
         #                     eta_ptr[0] * alpha))
         # self.sq_norm *= (norm * norm)
@@ -237,9 +245,9 @@ cdef class WeightVector(object):
         else:
             dscal(<int>self.w.shape[0], self.wscale_ptr[0],
                   <double *>self.w.data, 1)
-            # wscale_ptr[0] = 1.0
 
-        self.wscale = 1.0
+
+        # self.wscale = 1.0
 
     # cdef double norm(self) nogil:
     #     """The L2 norm of the weight vector. """

@@ -4,6 +4,7 @@
 # License: BSD 3 clause
 """Classification and regression using Stochastic Gradient Descent (SGD)."""
 
+import warnings
 import numpy as np
 import scipy.sparse as sp
 
@@ -126,6 +127,10 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                                 "lrt": list(LEARNING_RATE_TYPES.keys())})
         if self.rho0 > 1.0 or self.rho0 < 0.0:
             raise ValueError("rho0 must be in the range (0, 1)")
+        if ((self.learning_rate == "adagrad" or
+             self.learning_rate == "adadelta") and self.penalty != "l2"):
+            raise ValueError("Only penalty='l2' is supported for "
+                             "learning_rate type adagrad and adadelta")
 
         # raises ValueError if not registered
         self._get_penalty_type(self.penalty)
@@ -230,12 +235,20 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                                                dtype=np.float64,
                                                order="C")
 
+    def _check_fit_data(self, X, y):
+        """Various checks on the X and y dataset. """
+        n_samples, _ = X.shape
+        if n_samples != y.shape[0]:
+            raise ValueError("Shapes of X and y do not match.")
 
-def _check_fit_data(X, y):
-    """Check if shape of input data matches. """
-    n_samples, _ = X.shape
-    if n_samples != y.shape[0]:
-        raise ValueError("Shapes of X and y do not match.")
+        if ((self.learning_rate == "adagrad" or
+             self.learning_rate == "adadelta") and
+                sp.issparse(X) and self.alpha != 0.0):
+            warnings.warn("You are using learning_rate of type 'adagrad' or "
+                          "'adadelta' with sparse data and with alpha != 0.0. "
+                          "This will most likely be very slow. It is "
+                          "recommended that you set alpha=0.0 for "
+                          "faster results.")
 
 
 def _make_dataset(X, y_i, sample_weight):
@@ -384,7 +397,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C")
 
         n_samples, n_features = X.shape
-        _check_fit_data(X, y)
+        self._check_fit_data(X, y)
 
         self._validate_params()
         _check_partial_fit_first_call(self, classes)
@@ -913,7 +926,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         y = y.astype(np.float64)
 
         n_samples, n_features = X.shape
-        _check_fit_data(X, y)
+        self._check_fit_data(X, y)
 
         self._validate_params()
 

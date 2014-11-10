@@ -670,7 +670,6 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     average_intercept += ((intercept - average_intercept) /
                                           (t - average + 1))
 
-                # TODO: what should the penalty be for adagrad?
                 if penalty_type == L1 or penalty_type == ELASTICNET:
                     u += (l1_ratio * eta_ptr[0] * alpha)
                     l1penalty(w, q_data_ptr, x_ind_ptr, xnnz, u)
@@ -731,7 +730,7 @@ cdef void l1penalty(WeightVector w, double * q_data_ptr,
     cdef double z = 0.0
     cdef int j = 0
     cdef int idx = 0
-    cdef double wscale = w.wscale
+    cdef double wscale = w.wscale_ptr[0]
     cdef double *w_data_ptr = w.w_data_ptr
     for j in range(xnnz):
         idx = x_ind_ptr[j]
