@@ -45,6 +45,7 @@ no_structure = np.random.rand(n_samples, 2), None
 colors = np.array([x for x in 'bgrcmykbgrcmykbgrcmykbgrcmyk'])
 colors = np.hstack([colors] * 20)
 
+plt.clf()
 plt.figure(figsize=(17, 9.5))
 plt.subplots_adjust(left=.001, right=.999, bottom=.001, top=.96, wspace=.05,
                     hspace=.01)
@@ -80,6 +81,7 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
                             affinity="cityblock", n_clusters=2,
                             connectivity=connectivity)
 
+    birch = cluster.Birch(n_clusters=2)
     for name, algorithm in [
                             ('MiniBatchKMeans', two_means),
                             ('AffinityPropagation', affinity_propagation),
@@ -87,7 +89,8 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
                             ('SpectralClustering', spectral),
                             ('Ward', ward),
                             ('AgglomerativeClustering', average_linkage),
-                            ('DBSCAN', dbscan)
+                            ('DBSCAN', dbscan),
+                            ('Birch', birch),
                            ]:
         # predict cluster memberships
         t0 = time.time()
@@ -99,7 +102,7 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
             y_pred = algorithm.predict(X)
 
         # plot
-        plt.subplot(4, 7, plot_num)
+        plt.subplot(4, 8, plot_num)
         if i_dataset == 0:
             plt.title(name, size=18)
         plt.scatter(X[:, 0], X[:, 1], color=colors[y_pred].tolist(), s=10)

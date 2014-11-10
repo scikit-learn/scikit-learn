@@ -101,6 +101,13 @@ Overview of clustering methods
      - Flat geometry, good for density estimation
      - Mahalanobis distances to  centers
 
+   * - :ref:`Birch`
+     - branching factor, number of clusters.
+     - Large ``n_clusters`` and ``n_samples``
+     - Online algorithm used when the entire data cannot fit into memory,
+       handles outliers effectively.
+     - Euclidean distance between points.
+
 Non-flat geometry clustering is useful when the clusters have a specific
 shape, i.e. a non-flat manifold, and the standard euclidean distance is
 not the right metric. This case arises in the two top rows of the figure
@@ -766,6 +773,71 @@ by black points below.
    Ester, M., H. P. Kriegel, J. Sander, and X. Xu,
    In Proceedings of the 2nd International Conference on Knowledge Discovery
    and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
+
+.. _birch:
+
+Birch
+=====
+
+The :class:`Birch` builds a tree called the Characteristic Feature tree for
+the given data. The data is essentially compressed to a set of Characteristic
+Feature nodes. The CF Nodes have a number of subclusters, and the subclusters
+have CF Nodes as children. The CF subclusters hold the
+necessary information for clustering which prevents the need to hold the entire
+input data in memory. This information includes the Linear Sum, Squared Sum and
+the number of samples that belong to that subcluster. In the algorithm included
+in scikit-learn, the subclusters hold the centroids and squared norm of the
+centroids to prevent possible recomputation of these during insertion of new
+samples into the tree.
+
+The Birch algorithm has two parameters, the threshold and the branching factor.
+The branching factor limits the number of subclusters in a node and the
+threshold limits the distance between the entering sample and the existing
+subclusters.
+
+There might be cases in which the clusters obtained directly from Birch are too many.
+This can be changed either by increasing the threshold or providing n_clusters.
+If set to None, the subclusters from the leaves are directly read off, otherwise
+a global clustering step clusters these subclusters into global clusters and the
+samples are mapped to these global subclusters.
+
+**Algorithm description:**
+
+- A new sample is inserted into the root of the CF Tree which is a CF Node.
+  It is then assigned to the subcluster of the root, that has the smallest
+  distance constrained by the threshold and branching factor conditions.
+  If the subcluster has any child node, then this is
+  done repeatedly till it reaches the leaf. After finding the nearest subcluster
+  in the leaf, the properties of this and the parent subclusters, i.e the centroid
+  and squared norms are recursively updated.
+
+- If the distance between a new sample and all the subclusters in a particular
+  node is greater than the threshold and the number of subclusters is greater
+  than the branching factor, then a space is temporarily allocated to
+  this new sample. The two farthest subclusters are taken and the subclusters
+  are divided into two groups on the basis of the distance between these
+  subclusters.
+
+- If this split node has a parent subcluster and there is room
+  for a new subcluster, then the parent is split into two. If there is no room,
+  then this node is again split into two and the process is continued
+  recursively, till it reaches the root.
+
+Birch is generally slightly faster than MiniBatchKMeans on large clusters and
+is slightly slightly slower than MiniBatchKMeans on large features.
+
+.. image:: ../auto_examples/cluster/images/plot_birch_vs_minibatchkmeans_001.png
+    :target: ../auto_examples/cluster/plot_birch_vs_minibatchkmeans.html
+
+.. topic:: References:
+
+ * Tian Zhang, Raghu Ramakrishnan, Maron Livny
+   BIRCH: An efficient data clustering method for large databases.
+   http://www.cs.sfu.ca/CourseCentral/459/han/papers/zhang96.pdf
+
+* Roberto Perdisci
+  JBirch - Java implementation of BIRCH clustering algorithm
+  https://code.google.com/p/jbirch/
 
 .. _clustering_evaluation:
 

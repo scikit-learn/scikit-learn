@@ -439,8 +439,8 @@ class Birch(TransformerMixin, ClusterMixin):
             if not_enough_centroids:
                 warnings.warn(
                     "Number of clusters %s found by Birch is lesser than "
-                    "%s. Either decrease the threshold or increase the "
-                    "branching_factor" % (len(centroids), self.n_clusters))
+                    "%s. Decrease the threshold."
+                    % (len(centroids), self.n_clusters))
             return self
 
         # The global clustering step that clusters the subclusters of
@@ -450,9 +450,9 @@ class Birch(TransformerMixin, ClusterMixin):
         n_clusters = len(np.unique(labels))
         new_centroids = np.empty((n_clusters, X.shape[1]))
         for i in xrange(n_clusters):
-             mask = labels == i
-             new_centroids[i] = np.average(centroids[mask], axis=0,
-                                           weights=weights[mask])
+            mask = labels == i
+            new_centroids[i] = np.average(centroids[mask], axis=0,
+                                          weights=weights[mask])
         self.centroids_ = new_centroids
         self.labels_ = self.predict(X)
         return self
