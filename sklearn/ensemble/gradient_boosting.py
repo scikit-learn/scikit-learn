@@ -35,7 +35,9 @@ from .base import BaseEnsemble
 from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
+from ..dummy import DummyRegressor
 from ..utils import check_random_state, check_array, check_X_y, column_or_1d
+from ..utils import deprecated
 from ..utils.extmath import logsumexp
 from ..utils.stats import _weighted_percentile
 from ..externals import six
@@ -51,6 +53,9 @@ from ._gradient_boosting import predict_stage
 from ._gradient_boosting import _random_sample_mask
 
 
+
+@deprecated("QuantileEstimator is deprecated and will be removed in 0.18. "
+            "Use the sklearn.dummy.DummyRegressor instead.")
 class QuantileEstimator(BaseEstimator):
     """An estimator predicting the alpha-quantile of the training targets."""
     def __init__(self, alpha=0.9):
@@ -62,7 +67,8 @@ class QuantileEstimator(BaseEstimator):
         if sample_weight is None:
             self.quantile = stats.scoreatpercentile(y, self.alpha * 100.0)
         else:
-            self.quantile = _weighted_percentile(y, sample_weight, self.alpha * 100.0)
+            self.quantile = _weighted_percentile(y, sample_weight,
+                                                 self.alpha * 100.0)
 
     def predict(self, X):
         y = np.empty((X.shape[0], 1), dtype=np.float64)
@@ -70,6 +76,8 @@ class QuantileEstimator(BaseEstimator):
         return y
 
 
+@deprecated("MeanEstimator is deprecated and will be removed in 0.18. "
+            "Use the sklearn.dummy.DummyRegressor instead.")
 class MeanEstimator(BaseEstimator):
     """An estimator predicting the mean of the training targets."""
     def fit(self, X, y, sample_weight=None):
@@ -242,7 +250,7 @@ class LeastSquaresError(RegressionLossFunction):
     """Loss function for least squares (LS) estimation.
     Terminal regions need not to be updated for least squares. """
     def init_estimator(self):
-        return MeanEstimator()
+        return DummyRegressor(strategy="mean")
 
     def __call__(self, y, pred, sample_weight=None):
         if sample_weight is None:
@@ -272,7 +280,7 @@ class LeastSquaresError(RegressionLossFunction):
 class LeastAbsoluteError(RegressionLossFunction):
     """Loss function for least absolute deviation (LAD) regression. """
     def init_estimator(self):
-        return QuantileEstimator(alpha=0.5)
+        return DummyRegressor(strategy="median")
 
     def __call__(self, y, pred, sample_weight=None):
         if sample_weight is None:
@@ -312,7 +320,7 @@ class HuberLossFunction(RegressionLossFunction):
         self.gamma = None
 
     def init_estimator(self):
-        return QuantileEstimator(alpha=0.5)
+        return DummyRegressor(strategy="median")
 
     def __call__(self, y, pred, sample_weight=None):
         pred = pred.ravel()
@@ -378,7 +386,7 @@ class QuantileLossFunction(RegressionLossFunction):
         self.percentile = alpha * 100.0
 
     def init_estimator(self):
-        return QuantileEstimator(self.alpha)
+        return DummyRegressor(strategy="quantile", quantile=self.alpha)
 
     def __call__(self, y, pred, sample_weight=None):
         pred = pred.ravel()
@@ -943,6 +951,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
             # init predictions
             y_pred = self.init_.predict(X)
+            if y_pred.ndim == 1:
+                y_pred = y_pred.reshape((-1, 1))
             begin_at_stage = 0
         else:
             # add more estimators to fitted model
@@ -1048,6 +1058,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             raise ValueError("X.shape[1] should be {0:d}, not {1:d}.".format(
                 self.n_features, X.shape[1]))
         score = self.init_.predict(X).astype(np.float64)
+        if score.ndim == 1:
+            score = score.reshape((-1, 1))
         return score
 
     def _decision_function(self, X):

@@ -77,6 +77,7 @@ def test_sample_weight_smoke():
     assert_almost_equal(loss_wo_sw, loss_w_sw)
 
 
+
 def test_sample_weight_init_estimators():
     """Smoke test for init estimators with sample weights. """
     rng = check_random_state(13)
@@ -103,12 +104,23 @@ def test_sample_weight_init_estimators():
         init_est = loss.init_estimator()
         init_est.fit(X, y)
         out = init_est.predict(X)
-        assert_equal(out.shape, (y.shape[0], 1))
+        if issubclass(Loss, RegressionLossFunction):
+            assert_equal(out.shape, y.shape)
+        else:
+            # XXX : specific dummy classifier of GBRT should ravel
+            #       however this is not possible easily due to api misused.
+            assert_equal(out.shape, (y.shape[0], 1))
 
         sw_init_est = loss.init_estimator()
         sw_init_est.fit(X, y, sample_weight=sample_weight)
         sw_out = init_est.predict(X)
-        assert_equal(sw_out.shape, (y.shape[0], 1))
+
+        if issubclass(Loss, RegressionLossFunction):
+            assert_equal(sw_out.shape, y.shape)
+        else:
+            # XXX : specific dummy classifier of GBRT should ravel
+            #       however this is not possible easily due to api misused.
+            assert_equal(sw_out.shape, (y.shape[0], 1))
 
         # check if predictions match
         assert_array_equal(out, sw_out)
