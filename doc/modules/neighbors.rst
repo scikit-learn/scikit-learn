@@ -525,8 +525,8 @@ This is a well-known phenomenon called “The Curse of Dimensionality”.
 
 There are certain applications where we do not need the exact nearest neighbors
 but having a “good guess” would suffice when the data is in high dimension. 
-When answers do not have to be exact, the :class:`LSHForest` implements an
-approximate nearest neighbor search, which is useful for high dimensional
+When answers do not have to be exact, the :class:`LSHForest` class implements
+an approximate nearest neighbor search, which is useful for high dimensional
 problems. Approximate nearest neighbor search methods have been designed to try
 to overcome the bottle neck of query time. These techniques are useful when the
 aim is to characterize the neighborhood rather than identifying the exact
@@ -642,6 +642,11 @@ the data set size and structure and is therefore hard to tune in practice.
 There is a side effect of having a large :math:`k`; it has the potential of
 decreasing the chance of nearby points getting collided. To address this
 issue, multiple estimators are constructed in step 2.
+
+The requirement to tune :math:`k` for a given dataset makes classical LSH
+cumbersome to use in practice. The LSH Forest variant has benn designed to
+alleviate this requirement by automatically adjusting the number of digits
+used to hash the samples.
 
 LSH Forest is formulated with prefix trees with each leaf of
 a tree corresponding to an actual data point in the database. There are
