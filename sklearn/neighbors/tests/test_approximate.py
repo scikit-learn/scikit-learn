@@ -191,7 +191,7 @@ def test_radius_neighbors():
 
 
 def test_distances():
-    """Checks whether returned distances are in ascending order."""
+    """Checks whether returned neighbors are from closest to farthest."""
     n_samples = 12
     n_features = 2
     n_iter = 10
@@ -207,7 +207,7 @@ def test_distances():
         distances, neighbors = lshf.kneighbors(query,
                                                n_neighbors=n_neighbors,
                                                return_distance=True)
-        # Returned distances should be in sorted in acsending order.
+        # Returned neighbors should be from closest to farthest.
         assert_true(np.all(np.diff(distances[0]) >= 0))
 
         mean_dist = np.mean(pairwise_distances(query, X, metric='cosine'))
