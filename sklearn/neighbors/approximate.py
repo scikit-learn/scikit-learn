@@ -332,6 +332,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
     def _query(self, query, n_neighbors=None, radius=None, is_radius=False):
         """Finds neighbors and distances.
+
         Returns the neighbors whose distances from the query is less
         than radius if is_radius is True.
         Otherwise returns m number of neighbors and the distances
