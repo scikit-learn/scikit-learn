@@ -3,12 +3,13 @@ from abc import ABCMeta
 from .stochastic_gradient import BaseSGD
 from .base import LinearClassifierMixin, LinearModel
 from ..base import RegressorMixin
-from sklearn.feature_selection.from_model \
-    import _LearntSelectorMixin
+from sklearn.feature_selection.from_model import _LearntSelectorMixin
 from ..utils import check_random_state
 from ..externals import six
 from .sgd_fast import Log, SquaredLoss
 from ..externals.joblib import Parallel, delayed
+from .sag_fast import fast_fit
+from ..utils.seq_dataset import ArrayDataset
 
 
 class BaseSAG(six.with_metaclass(ABCMeta, BaseSGD)):
@@ -39,31 +40,14 @@ class BaseSAG(six.with_metaclass(ABCMeta, BaseSGD)):
              sample_weight=None):
 
         n_samples, n_features = X.shape[0], X.shape[1]
-        gradient_memory = np.zeros((n_samples, n_features))
-        coef_ = np.zeros(n_features)
-        intercept_ = 0.0
-        sum_gradient = np.zeros(n_features)
-        rng = check_random_state(self.random_state)
-        seen = set()
+        sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
+        dataset = ArrayDataset(X, y, sample_weight, seed=self.random_state)
+        coef_ = np.zeros(n_features, dtype=np.float64, order='C')
         loss_function = self._get_loss_function(self.loss)
-        eta = self.eta0
 
-        for i in range(self.n_iter * n_samples):
-            idx = int(rng.rand(1) * n_samples)
-            sample = X[idx]
-            seen.add(idx)
-
-            p = np.dot(sample, coef_) + intercept_
-            gradient = loss_function.dloss(p, y[idx])
-            # eta = eta
-
-            update = X[idx] * gradient + self.alpha * coef_
-            sum_gradient += update - gradient_memory[idx]
-            gradient_memory[idx] = update
-
-            coef_ -= eta * sum_gradient / len(seen)
-            intercept_ -= eta * gradient
-
+        intercept_ = fast_fit(dataset, coef_, n_samples, n_features,
+                              self.n_iter, loss_function,
+                              self.eta0, self.alpha)
         return coef_.reshape(1, -1), intercept_
 
 

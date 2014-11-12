@@ -17,7 +17,7 @@ from sklearn.utils.testing import assert_raises_regexp
 
 from sklearn import linear_model, datasets, metrics
 from sklearn.base import clone
-from sklearn.linear_model import SGDClassifier, SGDRegressor, SAGClassifier
+from sklearn.linear_model import SGDClassifier, SGDRegressor, SAGRegressor
 from sklearn.preprocessing import LabelEncoder, scale
 
 
@@ -133,26 +133,37 @@ class CommonTest(object):
 
         return average_weights, average_intercept
 
-    def sag(self, X, y, eta, alpha, intercept_init=0.0):
+    def sag(self, X, y, eta, alpha, intercept_init=0.0, indexes=None):
+        n_samples, n_features = X.shape[0], X.shape[1]
+
         weights = np.zeros(X.shape[1])
         sum_gradient = np.zeros(X.shape[1])
+        gradient_memory = np.zeros((n_samples, n_features))
         intercept = intercept_init
+        rng = np.random.RandomState(77)
         decay = 1.0
+        seen = set()
+        if indexes is None:
+            indexes = range(n_samples)
 
         # sparse data has a fixed decay of .01
         if (isinstance(self, SparseSGDClassifierTestCase) or
                 isinstance(self, SparseSGDRegressorTestCase)):
             decay = .01
 
-        for i, entry in enumerate(X):
+        for i in indexes:
+            # idx = int(rng.rand(1) * n_samples)
+            idx = i
+            entry = X[idx]
+            seen.add(idx)
             p = np.dot(entry, weights) + intercept
-
-            gradient = p - y[i]
+            gradient = p - y[idx]
             update = entry * gradient + alpha * weights
-            sum_gradient += update
+            sum_gradient += update - gradient_memory[idx]
+            gradient_memory[idx] = update
 
             intercept -= eta * gradient * decay
-            weights -= eta * sum_gradient / (i + 1)
+            weights -= eta * sum_gradient / len(seen)
 
         return weights, intercept
 
@@ -349,20 +360,25 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         """Checks intercept_ shape for the warm starts in binary case"""
         self.factory().fit(X5, Y5, intercept_init=0)
 
-    # def test_sag_computed_correctly(self):
-    #     eta = .1
-    #     alpha = .1
-    #     clf1 = SAGClassifier(loss="squared_loss", learning_rate="constant", eta0=eta, alpha=alpha, n_iter=1)
-    #     y = np.copy(Y3)
-    #     y[y == 2] = -1
-    #     X = np.copy(X3)
-    #     clf1.fit(X, y)
-    #     weights, intercept = self.sag(X, y, eta, alpha)
+    def test_sag_computed_correctly(self):
+        eta = .1
+        alpha = .1
+        n_features = 20
+        n_samples = 10
+        clf1 = SAGRegressor(learning_rate="constant", eta0=eta, alpha=alpha, n_iter=1, random_state=77)
+        rng = np.random.RandomState(0)
+        X = rng.normal(size=(n_samples, n_features))
+        w = rng.normal(size=n_features)
+        y = np.dot(X, w)
 
-    #     assert_array_almost_equal(clf1.coef_.ravel(),
-    #                               weights.ravel(),
-    #                               decimal=16)
-    #     assert_almost_equal(clf1.intercept_, intercept, decimal=16)
+        clf1.fit(X, y)
+        weights, intercept = self.sag(X, y, eta, alpha,
+                                      indexes=[0, 1, 1, 3, 0, 8, 6, 2, 3, 9])
+
+        assert_array_almost_equal(clf1.coef_.ravel(),
+                                  weights.ravel(),
+                                  decimal=14)
+        assert_almost_equal(clf1.intercept_, intercept, decimal=14)
 
     # def test_sag_binary_computed_correctly(self):
     #     eta = .1
