@@ -68,11 +68,21 @@ class _CFNode(object):
         next_leaf. Useful only if is_leaf is True.
         the final subclusters.
 
-    centroids_ : array-like
-        list of centroids for a particular CFNode.
+    init_centroids_ : ndarray, shape (branching_factor + 1, n_features)
+        manipulate init_centroids throughout rather than centroids_ since
+        the centroids are just a view of the init_centroids_ .
 
-    squared_norm_ : array-like
-        list of squared norms for a particular CFNode.
+    init_sq_norm_ : ndarray, shape (branching_factor + 1,)
+        manipulate squared_norms throughout. similar to init_centroids_.
+
+    centroids_ : ndarray
+        view of init_centroids_.
+
+    squared_norm_ : ndarray
+        view of init_sq_norm_.
+
+    n_ : int
+        number of subclusters in the node.
     """
     def __init__(self, threshold, branching_factor, is_leaf, n_features):
         self.threshold = threshold

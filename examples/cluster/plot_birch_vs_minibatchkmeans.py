@@ -55,7 +55,7 @@ for ind, (birch_model, info) in enumerate(zip(birch_models, final_step)):
 
     # Plot result
     labels = birch_model.labels_
-    centroids = birch_model.centroids_
+    centroids = birch_model.cluster_centers_
     n_clusters = np.unique(labels).size
     print("n_clusters : %d" % n_clusters)
 
