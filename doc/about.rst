@@ -51,10 +51,18 @@ events.
    :align: center
 
 
-`Google <http://code.google.com/opensource/>`_ sponsored David
-Cournapeau with a Summer of Code Scholarship in the summer of 2007,
-`Vlad Niculae`_ in 2011, and `Vlad Niculae`_ and Immanuel Bayer in 2012 . It also provided funding for sprints and events
-around scikit-learn. If
+The following students were sponspored by `Google <http://code.google.com/opensource/>`_
+to work on scikit-learn through the
+`Google Summer of Code`_<http://en.wikipedia.org/wiki/Google_Summer_of_Code>
+programme.
+
+- 2007 - David Cournapeau
+- 2011 - `Vlad Niculae`_
+- 2012 - `Vlad Niculae`_, Immanuel Bayer.
+- 2013 - `Kemal Eren`_
+- 2014 - Hamzeh Alsalhi, Issam Laradji, Maheshakya Wijewardena, Manoj Kumar.
+
+It also provided funding for sprints and events around scikit-learn. If
 you would like to participate in the next Google Summer of code
 program, please see `this page
 <http://github.com/scikit-learn/scikit-learn/wiki/SummerOfCode>`_
