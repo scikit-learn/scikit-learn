@@ -9,7 +9,7 @@ clustering step) and MiniBatchKMeans on a synthetic dataset having
 """
 
 # Authors: Manoj Kumar <manojkumarsivaraj334@gmail.com
-# Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+#          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
 
 print(__doc__)

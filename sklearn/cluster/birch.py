@@ -8,7 +8,7 @@ import numpy as np
 from scipy import sparse
 
 from ..metrics.pairwise import euclidean_distances
-from ..base import TransformerMixin, ClusterMixin
+from ..base import TransformerMixin, ClusterMixin, BaseEstimator
 from ..externals.six.moves import xrange
 from ..utils import check_array
 from ..utils.extmath import safe_sparse_dot
@@ -275,7 +275,7 @@ class _CFSubcluster(object):
         self.sq_norm_ = np.dot(self.centroid_, self.centroid_)
 
 
-class Birch(TransformerMixin, ClusterMixin):
+class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     """Implements the Birch clustering algorithm.
 
     Every new sample is inserted into the root of the Clustering Feature
@@ -324,8 +324,10 @@ class Birch(TransformerMixin, ClusterMixin):
     >>> X = [[0, 1], [0.3, 1], [-0.3, 1], [0, -1], [0.3, -1], [-0.3, -1]]
     >>> brc = Birch(threshold=0.5, n_clusters=None)
     >>> brc.fit(X)
+    Birch(branching_factor=8, n_clusters=None, threshold=0.5)
     >>> print(brc.cluster_centers_)
-    array([[ 0.,  1.], [ 0., -1.]])
+    [[ 0.  1.]
+     [ 0. -1.]]
 
     References
     ----------
@@ -345,7 +347,7 @@ class Birch(TransformerMixin, ClusterMixin):
         self.partial_fit_ = False
         self.root_ = None
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """
         Build a CF Tree for the input data.
 
@@ -487,6 +489,14 @@ class Birch(TransformerMixin, ClusterMixin):
             leaf_ptr = leaf_ptr.next_leaf_
         return leaves
 
+    def _check_fit(self, X):
+        if not hasattr(self, 'cluster_centers_'):
+            raise ValueError("Fit training data before predicting")
+        if X.shape[1] != self.cluster_centers_.shape[1]:
+            raise ValueError(
+                "Training data and predicted data do "
+                "not have same features.")
+
     def predict(self, X):
         """
         Predict data using the centroids_ of subclusters.
@@ -495,7 +505,14 @@ class Birch(TransformerMixin, ClusterMixin):
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Input data.
+
+        Returns
+        -------
+        labels: ndarray, shape(n_samples)
+            Labelled data.
         """
+        X = check_array(X, accept_sparse='csr')
+        self._check_fit(X)
         X_dot_centroid = safe_sparse_dot(X, self.cluster_centers_.T)
         X_dot_centroid *= -2
         X_dot_centroid += np.sum(self.cluster_centers_ ** 2, axis=1)
@@ -512,3 +529,23 @@ class Birch(TransformerMixin, ClusterMixin):
         """
         self.partial_fit_ = True
         return self.fit(X)
+
+    def transform(self, X, y=None):
+        """
+        Transform X into cluster centroids dimension.
+
+        Each dimension represents the distance between each cluster centroid.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Input data.
+
+        Returns
+        -------
+        X_trans: {array-like, sparse matrix}, shape (n_samples, n_clusters)
+            Transformed data.
+        """
+        if not hasattr(self, 'cluster_centers_'):
+            raise ValueError("Fit training data before predicting")
+        return euclidean_distances(X, self.cluster_centers_)
