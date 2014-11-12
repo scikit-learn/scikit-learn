@@ -41,8 +41,8 @@ def test_partial_fit():
     brc_partial = Birch()
     brc_partial.partial_fit(X[:50])
     brc_partial.partial_fit(X[50:])
-    assert_array_equal(brc_partial.centroids_, brc.centroids_)
-    assert_equal(len(brc.centroids_), 3)
+    assert_array_equal(brc_partial.cluster_centers_, brc.cluster_centers_)
+    assert_equal(len(brc.cluster_centers_), 3)
 
 
 def test_birch_predict():
@@ -57,7 +57,7 @@ def test_birch_predict():
     X_shuffle = X[shuffle_indices, :]
     brc = Birch(n_clusters=4, threshold=1.)
     brc.fit(X_shuffle)
-    centroids = brc.centroids_
+    centroids = brc.cluster_centers_
     assert_array_equal(brc.labels_, brc.predict(X_shuffle))
     nearest_centroid = pairwise_distances_argmin(X_shuffle, centroids)
     assert_array_equal(nearest_centroid, brc.labels_)
@@ -68,15 +68,15 @@ def test_n_clusters():
     X, y = make_blobs(n_samples=100, centers=10)
     brc1 = Birch(n_clusters=10)
     brc1.fit(X)
-    assert_equal(len(brc1.centroids_), 10)
+    assert_equal(len(brc1.cluster_centers_), 10)
 
     # Test that n_clusters = Agglomerative Clustering gives
     # the same results.
     gc = AgglomerativeClustering(n_clusters=10)
     brc2 = Birch(n_clusters=gc)
     brc2.fit(X)
-    assert_equal(len(brc2.centroids_), 10)
-    assert_array_equal(brc1.centroids_, brc2.centroids_)
+    assert_equal(len(brc2.cluster_centers_), 10)
+    assert_array_equal(brc1.cluster_centers_, brc2.cluster_centers_)
     assert_array_equal(brc1.labels_, brc2.labels_)
 
     # Test that the wrong global clustering step raises an Error.
@@ -100,7 +100,7 @@ def test_sparse_X():
     brc_sparse.fit(X)
 
     assert_array_equal(brc.labels_, brc_sparse.labels_)
-    assert_array_equal(brc.centroids_, brc_sparse.centroids_)
+    assert_array_equal(brc.cluster_centers_, brc_sparse.cluster_centers_)
 
 
 def check_branching_factor(node, branching_factor):

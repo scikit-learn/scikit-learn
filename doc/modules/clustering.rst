@@ -824,7 +824,7 @@ samples are mapped to these global subclusters.
   recursively, till it reaches the root.
 
 Birch is generally slightly faster than MiniBatchKMeans on large clusters and
-is slightly slightly slower than MiniBatchKMeans on large features.
+is slightly slower than MiniBatchKMeans on large features.
 
 .. image:: ../auto_examples/cluster/images/plot_birch_vs_minibatchkmeans_001.png
     :target: ../auto_examples/cluster/plot_birch_vs_minibatchkmeans.html

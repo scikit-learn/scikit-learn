@@ -8,18 +8,16 @@ clustering step) and MiniBatchKMeans on a synthetic dataset having
 100,000 samples and 2 features generated using make_blobs.
 """
 
-# Authors: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
-#          Manoj Kumar <manojkumarsivaraj334@gmail.com>
-
+# Authors: Manoj Kumar <manojkumarsivaraj334@gmail.com
+# Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
 
 print(__doc__)
 
 from itertools import cycle
 from time import time
-from scipy import sparse
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 
 from sklearn.cluster import Birch, MiniBatchKMeans
 from sklearn.datasets.samples_generator import make_blobs
@@ -53,7 +51,7 @@ for ind, (birch_model, info) in enumerate(zip(birch_models, final_step)):
     birch_model.fit(X)
     time_ = time() - t
     print("Birch %s as the final step took %0.2f seconds" % (
-        info, (time() - t)))
+          info, (time() - t)))
 
     # Plot result
     labels = birch_model.labels_
@@ -71,7 +69,7 @@ for ind, (birch_model, info) in enumerate(zip(birch_models, final_step)):
     ax.set_ylim([-25, 25])
     ax.set_xlim([-25, 25])
     ax.set_autoscaley_on(False)
-    ax.set_title('Bitch %s' % info)
+    ax.set_title('Birch %s' % info)
 
 # Compute clustering with MiniBatchKMeans.
 mbk = MiniBatchKMeans(init='k-means++', n_clusters=100, batch_size=100,

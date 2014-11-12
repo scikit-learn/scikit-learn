@@ -14,7 +14,12 @@ from ..utils import check_array
 from ..utils.extmath import safe_sparse_dot
 from .hierarchical import AgglomerativeClustering
 
-def iterate_X(X):
+def _iterate_X(X):
+    """
+    This little hack returns a densified row when iterating over a sparse
+    matrix, insted of constructing a sparse matrix for every row that is
+    expensive.
+    """
     n_samples = X.shape[0]
     X_issparse = sparse.issparse(X)
     if X_issparse:
@@ -307,11 +312,20 @@ class Birch(TransformerMixin, ClusterMixin):
     dummy_leaf_ : CFNode
         Start pointer to all the leaves.
 
-    centroids_ : ndarray
+    cluster_centers_ : ndarray
         Centroids of all subclusters read directly from the leaves.
 
     labels_ : ndarray
         Array of labels assigned to the input data.
+
+    Examples
+    --------
+    >>> from sklearn.cluster import Birch
+    >>> X = [[0, 1], [0.3, 1], [-0.3, 1], [0, -1], [0.3, -1], [-0.3, -1]]
+    >>> brc = Birch(threshold=0.5, n_clusters=None)
+    >>> brc.fit(X)
+    >>> print(brc.cluster_centers_)
+    array([[ 0.,  1.], [ 0., -1.]])
 
     References
     ----------
@@ -337,7 +351,7 @@ class Birch(TransformerMixin, ClusterMixin):
 
         Parameters
         ----------
-        X : ndarray
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Input data.
         """
         X = check_array(X, accept_sparse='csr')
@@ -358,7 +372,7 @@ class Birch(TransformerMixin, ClusterMixin):
             self.dummy_leaf_.next_leaf_ = self.root_
 
         # Cannot vectorize. Enough to convince to use cython.
-        for sample in iterate_X(X):
+        for sample in _iterate_X(X):
             subcluster = _CFSubcluster(sample)
             split = self.root_.insert_cf_subcluster(subcluster)
 
@@ -434,7 +448,7 @@ class Birch(TransformerMixin, ClusterMixin):
                              "ClusterMixin or an int")            
 
         if self.n_clusters is None or not_enough_centroids:
-            self.centroids_ = centroids
+            self.cluster_centers_ = centroids
             self.labels_ = self.predict(X)
             if not_enough_centroids:
                 warnings.warn(
@@ -453,13 +467,18 @@ class Birch(TransformerMixin, ClusterMixin):
             mask = labels == i
             new_centroids[i] = np.average(centroids[mask], axis=0,
                                           weights=weights[mask])
-        self.centroids_ = new_centroids
+        self.cluster_centers_ = new_centroids
         self.labels_ = self.predict(X)
         return self
 
     def get_leaves(self):
         """
-        Retrieve the leaves.
+        Retrieve the leaves of the CF Node.
+
+        Returns
+        -------
+        leaves: array-like
+            List of the leaf nodes.
         """
         leaf_ptr = self.dummy_leaf_.next_leaf_
         leaves = []
@@ -474,12 +493,12 @@ class Birch(TransformerMixin, ClusterMixin):
  
         Parameters
         ----------
-        X : ndarray
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Input data.
         """
-        X_dot_centroid = safe_sparse_dot(X, self.centroids_.T)
+        X_dot_centroid = safe_sparse_dot(X, self.cluster_centers_.T)
         X_dot_centroid *= -2
-        X_dot_centroid += np.sum(self.centroids_ ** 2, axis=1)
+        X_dot_centroid += np.sum(self.cluster_centers_ ** 2, axis=1)
         return np.argmin(X_dot_centroid, axis=1)
 
     def partial_fit(self, X):
@@ -488,7 +507,7 @@ class Birch(TransformerMixin, ClusterMixin):
 
         Parameters
         ----------
-        X : ndarray
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Input data.
         """
         self.partial_fit_ = True
