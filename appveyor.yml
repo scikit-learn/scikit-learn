@@ -43,7 +43,7 @@ install:
   - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
 
   # Install the build and runtime dependencies of the project.
-  - "%CMD_IN_ENV% pip install -r continuous_integration/appveyor/requirements.txt"
+  - "%CMD_IN_ENV% pip install --timeout=60 -r continuous_integration/appveyor/requirements.txt"
   - "%CMD_IN_ENV% python setup.py bdist_wheel bdist_wininst -b doc/logos/scikit-learn-logo.bmp"
   - ps: "ls dist"
 
