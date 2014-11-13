@@ -13,9 +13,11 @@ from ..externals import six
 
 from . import _tree
 
+from numpy import sum
+
 
 def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
-                    max_depth=None):
+                    max_depth=None, verbose = False, probabilities = False):
     """Export a decision tree in DOT format.
 
     This function generates a GraphViz representation of the decision tree,
@@ -43,6 +45,12 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
         The maximum depth of the representation. If None, the tree is fully
         generated.
 
+    verbose : boolean, optional (default = False)
+        Show sample counts for each node in the tree
+
+    probabilities : boolean, optional (default = False)
+        Show the probabilities for each class instead of the sample counts
+        
     Examples
     --------
     >>> from sklearn.datasets import load_iris
@@ -55,32 +63,56 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
     >>> tree.export_graphviz(clf,
     ...     out_file='tree.dot')                # doctest: +SKIP
     """
+    def recursive_value(tree,node_id,probabilities=False):
+        if tree.children_left[node_id] == _tree.TREE_LEAF:
+            value = tree.value[node_id]
+            
+            if tree.n_outputs == 1:
+                value = value[0, :]
+            return value
+        
+        else:
+            left_child = tree.children_left[node_id]
+            right_child = tree.children_right[node_id]
+            
+            return (recursive_value(tree, left_child) + recursive_value(tree, right_child) )
+        
     def node_to_str(tree, node_id, criterion):
         if not isinstance(criterion, six.string_types):
             criterion = "impurity"
 
-        value = tree.value[node_id]
-        if tree.n_outputs == 1:
-            value = value[0, :]
-
-        if tree.children_left[node_id] == _tree.TREE_LEAF:
+        value = recursive_value(tree,node_id)
+            
+        if probabilities:
+            value /= sum(value)
+                
+        if tree.children_left[node_id] == _tree.TREE_LEAF:    
             return "%s = %.4f\\nsamples = %s\\nvalue = %s" \
                    % (criterion,
-                      tree.impurity[node_id],
-                      tree.n_node_samples[node_id],
-                      value)
+                     tree.impurity[node_id],
+                     tree.n_node_samples[node_id],
+                     value)
         else:
             if feature_names is not None:
                 feature = feature_names[tree.feature[node_id]]
             else:
                 feature = "X[%s]" % tree.feature[node_id]
 
-            return "%s <= %.4f\\n%s = %s\\nsamples = %s" \
-                   % (feature,
-                      tree.threshold[node_id],
-                      criterion,
-                      tree.impurity[node_id],
-                      tree.n_node_samples[node_id])
+            if verbose:
+                return "%s <= %.4f\\n%s = %s\\nsamples = %s\\nvalue = %s" \
+                       % (feature,
+                          tree.threshold[node_id],
+                          criterion,
+                          tree.impurity[node_id],
+                          tree.n_node_samples[node_id],
+                          value)
+            else:
+                return "%s <= %.4f\\n%s = %s\\nsamples = %s"  \
+                       % (feature,
+                          tree.threshold[node_id],
+                          criterion,
+                          tree.impurity[node_id],
+                          tree.n_node_samples[node_id])
 
     def recurse(tree, node_id, criterion, parent=None, depth=0):
         if node_id == _tree.TREE_LEAF:
