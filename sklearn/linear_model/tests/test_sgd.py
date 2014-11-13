@@ -162,8 +162,59 @@ class CommonTest(object):
             sum_gradient += update - gradient_memory[idx]
             gradient_memory[idx] = update
 
-            intercept -= eta * gradient * decay
+            # intercept -= eta * gradient * decay
             weights -= eta * sum_gradient / len(seen)
+
+        return weights, intercept
+
+    def sag_sparse(self, X, y, eta, alpha, intercept_init=0.0, indexes=None):
+        n_samples, n_features = X.shape[0], X.shape[1]
+
+        weights = np.zeros(n_features)
+        sum_gradient = np.zeros(n_features)
+        last_updated = np.zeros(n_features, dtype=np.int)
+        c_sum = np.zeros(n_samples + 1)
+        gradient_memory = np.zeros((n_samples, n_features))
+        intercept = intercept_init
+        wscale = 1.0
+        decay = 1.0
+        seen = set()
+        if indexes is None:
+            indexes = range(n_samples)
+
+        # sparse data has a fixed decay of .01
+        if (isinstance(self, SparseSGDClassifierTestCase) or
+                isinstance(self, SparseSGDRegressorTestCase)):
+            decay = .01
+
+        counter = 0
+        for k in indexes:
+            # idx = int(rng.rand(1) * n_samples)
+            idx = k
+            entry = X[idx]
+            seen.add(idx)
+
+            for j in range(n_features):
+                weights[j] -= ((c_sum[counter] - c_sum[last_updated[j]]) *
+                               sum_gradient[j])
+                last_updated[j] = counter
+
+            p = (wscale * np.dot(entry, weights)) + intercept
+            gradient = p - y[idx]
+
+            update = entry * gradient
+            sum_gradient += update - gradient_memory[idx]
+            gradient_memory[idx] = update
+
+            wscale *= (1.0 - alpha * eta)
+            c_sum[counter + 1] = c_sum[counter] + eta / (wscale * len(seen))
+
+            # intercept -= eta * gradient * decay
+            counter += 1
+
+        for k in range(n_features):
+            weights[k] -= (c_sum[counter] - c_sum[last_updated[k]]) * sum_gradient[k]
+        weights *= wscale
 
         return weights, intercept
 
@@ -361,24 +412,30 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         self.factory().fit(X5, Y5, intercept_init=0)
 
     def test_sag_computed_correctly(self):
-        eta = .1
+        eta = .2
         alpha = .1
         n_features = 20
         n_samples = 10
-        clf1 = SAGRegressor(learning_rate="constant", eta0=eta, alpha=alpha, n_iter=1, random_state=77)
+        # clf1 = SAGRegressor(learning_rate="constant", eta0=eta, alpha=alpha, n_iter=1, random_state=77)
         rng = np.random.RandomState(0)
         X = rng.normal(size=(n_samples, n_features))
         w = rng.normal(size=n_features)
         y = np.dot(X, w)
 
-        clf1.fit(X, y)
+        # clf1.fit(X, y)
         weights, intercept = self.sag(X, y, eta, alpha,
                                       indexes=[0, 1, 1, 3, 0, 8, 6, 2, 3, 9])
 
-        assert_array_almost_equal(clf1.coef_.ravel(),
-                                  weights.ravel(),
+        spweights, spintercept = self.sag_sparse(X, y, eta, alpha,
+                                      indexes=[0, 1, 1, 3, 0, 8, 6, 2, 3, 9])
+
+        assert_array_almost_equal(weights.ravel(),
+                                  spweights.ravel(),
                                   decimal=14)
-        assert_almost_equal(clf1.intercept_, intercept, decimal=14)
+        # assert_array_almost_equal(clf1.coef_.ravel(),
+        #                           weights.ravel(),
+        #                           decimal=14)
+        # assert_almost_equal(clf1.intercept_, intercept, decimal=14)
 
     # def test_sag_binary_computed_correctly(self):
     #     eta = .1
