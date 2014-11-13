@@ -8,7 +8,7 @@ from ..utils import check_random_state
 from ..externals import six
 from .sgd_fast import Log, SquaredLoss
 from ..externals.joblib import Parallel, delayed
-from .sag_fast import fast_fit
+from .sag_fast import fast_fit, fast_fit_sparse
 from ..utils.seq_dataset import ArrayDataset
 
 
@@ -45,9 +45,12 @@ class BaseSAG(six.with_metaclass(ABCMeta, BaseSGD)):
         coef_ = np.zeros(n_features, dtype=np.float64, order='C')
         loss_function = self._get_loss_function(self.loss)
 
-        intercept_ = fast_fit(dataset, coef_, n_samples, n_features,
-                              self.n_iter, loss_function,
-                              self.eta0, self.alpha)
+        # intercept_ = fast_fit(dataset, coef_, n_samples, n_features,
+        #                       self.n_iter, loss_function,
+        #                       self.eta0, self.alpha)
+        intercept_ = fast_fit_sparse(dataset, coef_, n_samples, n_features,
+                                     self.n_iter, loss_function,
+                                     self.eta0, self.alpha)
         return coef_.reshape(1, -1), intercept_
 
 
