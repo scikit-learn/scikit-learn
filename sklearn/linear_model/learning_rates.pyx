@@ -3,6 +3,7 @@ cdef extern from "math.h":
     double fmin(double, double) nogil
     double sqrt(double) nogil
 import numpy as np
+from libc.stdlib cimport malloc
 cimport cython
 cimport numpy as np
 from sklearn.utils.weight_vector cimport WeightVector
@@ -11,13 +12,13 @@ cdef class LearningRate:
     cdef double eta(self, double *eta_ptr, double eta0, double alpha, double t,
                     double power_t, double gradient, int n_features,
                     double* x_data_ptr, int* x_ind_ptr, int xnnz,
-                    WeightVector w, double intercept, int fit_itercept):
+                    WeightVector w, double intercept, int fit_itercept) nogil:
         eta_ptr[0] = eta0
         return eta_ptr[0]
 
     cdef double update(self, double gradient, double loss,
                        double norm, double C, double p, double y,
-                       int is_hinge):
+                       int is_hinge) nogil:
         return gradient
 
 cdef class Constant(LearningRate):
@@ -30,7 +31,7 @@ cdef class Optimal(LearningRate):
     cdef double eta(self, double *eta_ptr, double eta0, double alpha, double t,
                     double power_t, double gradient, int n_features,
                     double* x_data_ptr, int* x_ind_ptr, int xnnz,
-                    WeightVector w, double intercept, int fit_itercept):
+                    WeightVector w, double intercept, int fit_itercept) nogil:
         eta_ptr[0] = 1.0 / (alpha * (t - 1))
         return eta_ptr[0]
 
@@ -42,7 +43,7 @@ cdef class InvScaling(LearningRate):
     cdef double eta(self, double *eta_ptr, double eta0, double alpha, double t,
                     double power_t, double gradient, int n_features,
                     double* x_data_ptr, int* x_ind_ptr, int xnnz,
-                    WeightVector w, double intercept, int fit_itercept):
+                    WeightVector w, double intercept, int fit_itercept) nogil:
         eta_ptr[0] = eta0 / pow(t, power_t)
         return eta_ptr[0]
 
@@ -51,18 +52,18 @@ cdef class InvScaling(LearningRate):
 
 cdef class Adaptive(LearningRate):
     cdef double _compute_eta(self, double full_gradient,
-                             double val, int idx, double eta0, int n_features):
+                             double val, int idx, double eta0, int n_features) nogil:
         pass
 
     cdef double _compute_intercept_eta(self, double full_gradient,
-                                       double eta0):
+                                       double eta0) nogil:
         pass
 
     @cython.cdivision(True)
     cdef double eta(self, double *eta_ptr, double eta0, double alpha, double t,
                     double power_t, double gradient, int n_features,
                     double* x_data_ptr, int* x_ind_ptr, int xnnz,
-                    WeightVector w, double intercept, int fit_itercept):
+                    WeightVector w, double intercept, int fit_itercept) nogil:
 
         cdef int counter = 0
         cdef int j = 0
@@ -100,26 +101,26 @@ cdef class Adaptive(LearningRate):
 cdef class AdaGrad(Adaptive):
 
     def __cinit__(self, double eps0, double rho0):
-        self.accugrad = None
         self.intercept_accugrad = 0.0
         self.eps0 = eps0
 
     @cython.cdivision(True)
     cdef double _compute_eta(self, double full_gradient,
-                             double val, int idx, double eta0, int n_features):
-        if self.accugrad is None:
-            self.accugrad = \
-                np.zeros((n_features,), dtype=np.float64, order="c")
+                             double val, int idx, double eta0, int n_features) nogil:
+        if self.accugrad == NULL:
+            self.accugrad = <double*> malloc(n_features * sizeof(double))
+            for i in range(n_features):
+                self.accugrad[i] = 0.0
 
         cdef double eps0 = self.eps0
-        cdef double* accugrad = <double *>self.accugrad.data
+        cdef double* accugrad = <double *>self.accugrad
         accugrad[idx] += full_gradient * full_gradient
 
         return eta0 / sqrt(accugrad[idx] + eps0)
 
     @cython.cdivision(True)
     cdef double _compute_intercept_eta(self, double gradient,
-                                       double eta0):
+                                       double eta0) nogil:
         cdef double eps0 = self.eps0
         self.intercept_accugrad += gradient * gradient
         return eta0 / sqrt(self.intercept_accugrad + eps0)
@@ -132,25 +133,27 @@ cdef class AdaDelta(Adaptive):
     def __cinit__(self, double eps0, double rho0):
         self.rho0 = rho0
         self.eps0 = eps0
-        self.accugrad = None
-        self.accudelta = None
         self.intercept_accugrad = 0.0
         self.intercept_accudelta = 0.0
 
     @cython.cdivision(True)
     cdef double _compute_eta(self, double full_gradient,
-                             double val, int idx, double eta0, int n_features):
-        if self.accugrad is None:
-            self.accugrad = \
-                np.zeros((n_features,), dtype=np.float64, order="c")
-        if self.accudelta is None:
-            self.accudelta = \
-                np.zeros((n_features,), dtype=np.float64, order="c")
+                             double val, int idx, double eta0, int n_features) nogil:
+
+        if self.accugrad == NULL:
+            self.accugrad = <double*> malloc(n_features * sizeof(double))
+            for i in range(n_features):
+                self.accugrad[i] = 0.0
+        if self.accudelta == NULL:
+            self.accudelta = <double*> malloc(n_features * sizeof(double))
+            for i in range(n_features):
+                self.accudelta[i] = 0.0
+
 
         cdef double eps0 = self.eps0
         cdef double rho0 = self.rho0
-        cdef double* accugrad = <double *>self.accugrad.data
-        cdef double* accudelta = <double *>self.accudelta.data
+        cdef double* accugrad = self.accugrad
+        cdef double* accudelta = self.accudelta
 
         accugrad[idx] *= rho0
         accugrad[idx] += (1. - rho0) * full_gradient * full_gradient
@@ -162,7 +165,7 @@ cdef class AdaDelta(Adaptive):
 
     @cython.cdivision(True)
     cdef double _compute_intercept_eta(self, double gradient,
-                                       double eta0):
+                                       double eta0) nogil:
         cdef double eps0 = self.eps0
         cdef double rho0 = self.rho0
 
@@ -176,19 +179,16 @@ cdef class AdaDelta(Adaptive):
         return dx
 
     def __reduce__(self):
-        return AdaGrad, (self.eps0)
-
-    def __reduce__(self):
         return AdaDelta, (self.eps0, self.rho0)
 
 cdef class PA(LearningRate):
     cdef double eta(self, double *eta_ptr, double eta0, double alpha, double t,
                     double power_t, double gradient, int n_features,
                     double* x_data_ptr, int* x_ind_ptr, int xnnz,
-                    WeightVector w, double intercept, int fit_itercept):
+                    WeightVector w, double intercept, int fit_itercept) nogil:
         eta_ptr[0] = -1.0
 
-    cdef double _get_multiplier(self, int is_hinge, double p, double y):
+    cdef double _get_multiplier(self, int is_hinge, double p, double y) nogil:
         if is_hinge:
             # classification
             return y
@@ -203,7 +203,7 @@ cdef class PA1(PA):
     @cython.cdivision(True)
     cdef double update(self, double gradient, double loss,
                        double norm, double C, double p, double y,
-                       int is_hinge):
+                       int is_hinge) nogil:
         update = loss / norm
         update = fmin(C, update)
         update *= self._get_multiplier(is_hinge, p, y)
@@ -217,7 +217,7 @@ cdef class PA2(PA):
     @cython.cdivision(True)
     cdef double update(self, double gradient, double loss,
                        double norm, double C, double p, double y,
-                       int is_hinge):
+                       int is_hinge) nogil:
         update = loss / (norm + 0.5 / C)
         update *= self._get_multiplier(is_hinge, p, y)
         return update

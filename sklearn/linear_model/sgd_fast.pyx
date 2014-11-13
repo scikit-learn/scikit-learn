@@ -630,17 +630,17 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 gradient = loss._dloss(p, y)
                 norm = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
                 current_loss = loss.loss(p, y)
-                with gil:
-                    intercept_eta = learning_rate.eta(eta_ptr,
-                                                      eta0, alpha,
-                                                      optimal_init + t,
-                                                      power_t, gradient,
-                                                      n_features, x_data_ptr,
-                                                      x_ind_ptr, xnnz, w,
-                                                      intercept, fit_intercept)
 
-                    update = learning_rate.update(gradient, current_loss,
-                                                  norm, C, p, y, is_hinge)
+                intercept_eta = learning_rate.eta(eta_ptr,
+                                                  eta0, alpha,
+                                                  optimal_init + t,
+                                                  power_t, gradient,
+                                                  n_features, x_data_ptr,
+                                                  x_ind_ptr, xnnz, w,
+                                                  intercept, fit_intercept)
+
+                update = learning_rate.update(gradient, current_loss,
+                                              norm, C, p, y, is_hinge)
 
                 if verbose > 0:
                     sumloss += current_loss
