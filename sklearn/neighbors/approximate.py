@@ -105,7 +105,6 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         Hash function g(p,x) for a tree is an array of 32 randomly generated
         float arrays with the same dimenstion as the data set.
 
-
     References
     ----------
 
@@ -113,7 +112,6 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
            Indexes for Similarity Search", WWW '05 Proceedings of the
            14th international conference on World Wide Web,  651-660,
            2005.
-
 
     Examples
     --------
