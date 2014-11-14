@@ -515,26 +515,22 @@ Approximate Nearest Neighbors
 =============================
 
 There are many efficient exact nearest neighbor search algorithms for low
-dimensions :math:`d` (approximately 50 on modern computers). However these
-algorithms perform poorly with respect to space and query time, with an
-exponential rate in :math:`d`. For last :math:`d`, these algorithsm have only
-an insignificant improvement compared with the linear time algorithm
-:ref:`brute_force`. That implies that these algorithms are not any better than
-comparing query point to each point from the database in a high dimension.
-This is a well-known phenomenon called “The Curse of Dimensionality”.
+dimensions :math:`d` (approximately 50). However these algorithms perform poorly
+with respect to space and query time when :math:`d` increases. These algorithms
+are not any better than comparing query point to each point from the database in
+a high dimension (see :ref:`brute_force`). This is a well-known consequence of
+the phenomenon called “The Curse of Dimensionality”.
 
 There are certain applications where we do not need the exact nearest neighbors
-but having a “good guess” would suffice when the data is in high dimension. 
-When answers do not have to be exact, the :class:`LSHForest` class implements
-an approximate nearest neighbor search, which is useful for high dimensional
-problems. Approximate nearest neighbor search methods have been designed to try
-to overcome the bottle neck of query time. These techniques are useful when the
-aim is to characterize the neighborhood rather than identifying the exact
-neighbors themselves (eg: k-nearest neighbors classification and regression).
-These algorithms can obtain improved speed, although it does not guarantee to
-return the exact nearest neighbors. Some of the more popular approximate
-nearest neighbor search techniques are locality sensitive hashing, best bin fit
-and balanced box-decomposition tree based search.
+but having a “good guess” would suffice.  When answers do not have to be exact,
+the :class:`LSHForest` class implements an approximate nearest neighbor search.
+Approximate nearest neighbor search methods have been designed to try to speedup
+query time with high dimensional data. These techniques are useful when the aim
+is to characterize the neighborhood rather than identifying the exact neighbors
+themselves (eg: k-nearest neighbors classification and regression). Some of the
+most popular approximate nearest neighbor search techniques are locality
+sensitive hashing, best bin fit and balanced box-decomposition tree based
+search.
 
 Locality Sensitive Hashing Forest
 ---------------------------------
@@ -550,8 +546,7 @@ Hashing <mathematical_description_of_lsh>`).
 
 :class:`LSHForest` has two main hyper-parameters: ``n_estimators`` and
 ``n_candidates``. The accuracy of queries can be controlled using these
-parameters. The behavior of accuracy while varying these parameters is
-as follows.
+parameters as demonstrated in the following plots:
 
 .. figure:: ../auto_examples/neighbors/images/plot_approximate_nearest_neighbors_hyperparameters_001.png
    :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors_hyperparameters.html
@@ -567,14 +562,14 @@ As a rule of thumb, a user can set ``n_estimators`` to a large enough value
 (e.g. between 10 and 50) and then adjust ``n_candidates`` to trade off accuracy
 for query time.
 
-For small data sets, brute force method in exact nearest neighbor search can be
-faster than LSHForest for the query time. LSHForest has a sub-linear query time
-scalability with the index size. The exact break even point where LSHForest
-queries become faster than the matching brute force queries depends on the
-dimensionality, structure of the dataset, required level of precision,
-characteristics of the runtime environment such as availability of BLAS
-optimizations, number of CPU cores and size of the CPU caches. Following graphs
-depict scalability of LSHForest queries with index size.
+For small data sets, the brute force method for exact nearest neighbor search
+can be faster than LSH Forest. However LSH Forest has a sub-linear query time
+scalability with the index size. The exact break even point where LSH Forest
+queries become faster than brute force depends on the dimensionality, structure
+of the dataset, required level of precision, characteristics of the runtime
+environment such as availability of BLAS optimizations, number of CPU cores and
+size of the CPU caches. Following graphs depict scalability of LSHForest queries
+with index size.
 
 .. figure:: ../auto_examples/neighbors/images/plot_approximate_nearest_neighbors_scalability_001.png
    :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors_scalability.html
@@ -586,8 +581,14 @@ depict scalability of LSHForest queries with index size.
    :align: center
    :scale: 50
 
-Note that accuracy of queries should not be too sensitive with respect to
-the size of the data set.
+.. figure:: ../auto_examples/neighbors/images/plot_approximate_nearest_neighbors_scalability_003.png
+   :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors_scalability.html
+   :align: center
+   :scale: 50
+
+For fixed :class:`LSHForest` parameters, the accuracy of queries tends to slowly
+decrease with larger datasets. The error bars on the previous plots represent
+standard deviation across different queries.
 
 .. topic:: Examples:
 
