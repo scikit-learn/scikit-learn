@@ -1024,7 +1024,7 @@ Regression metrics
 The :mod:`sklearn.metrics` module implements several loss, score, and utility
 functions to measure regression performance. Some of those have been enhanced
 to handle the multioutput case: :func:`mean_absolute_error`,
-:func:`mean_absolute_error` and :func:`r2_score`.
+:func:`mean_squared_error`, :func:`median_absolute_error` and :func:`r2_score`.
 
 
 Explained variance score
