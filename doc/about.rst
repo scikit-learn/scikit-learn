@@ -43,17 +43,23 @@ Funding
 -------
 
 `INRIA <http://inria.fr>`_ actively supports this project. It has
-provided funding for Fabian Pedregosa to work on this project full
-time in the period 2010-2012. It also hosts coding sprints and other
-events.
+provided funding for Fabian Pedregosa (2010-2012), Jaques Grobler
+(2012-2013) and Olivier Grisel (2013-2015) to work on this project
+full-time. It also hosts coding sprints and other events.
 
 .. image:: images/inria-logo.jpg
    :align: center
 
+`Paris-Saclay Center for Data Science <http://www.datascience-paris-saclay.fr>`_
+funded one year for a developer to work on the project full-time
+(2014-2015).
+
+.. image:: images/cds-logo.png
+   :align: center
 
 The following students were sponspored by `Google <http://code.google.com/opensource/>`_
 to work on scikit-learn through the
-`Google Summer of Code`_<http://en.wikipedia.org/wiki/Google_Summer_of_Code>
+`Google Summer of Code <http://en.wikipedia.org/wiki/Google_Summer_of_Code>`_
 programme.
 
 - 2007 - David Cournapeau
