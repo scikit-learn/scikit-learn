@@ -15,15 +15,22 @@ import warnings
 
 import numpy as np
 import scipy.sparse as sp
+import scipy
 
-np_version = []
-for x in np.__version__.split('.'):
-    try:
-        np_version.append(int(x))
-    except ValueError:
-        # x may be of the form dev-1ea1592
-        np_version.append(x)
-np_version = tuple(np_version)
+
+def _parse_version(version_string):
+    version = []
+    for x in version_string.split('.'):
+        try:
+            version.append(int(x))
+        except ValueError:
+            # x may be of the form dev-1ea1592
+            version.append(x)
+    return tuple(version)
+
+
+np_version = _parse_version(np.__version__)
+sp_version = _parse_version(scipy.__version__)
 
 
 try:
@@ -300,3 +307,10 @@ if np_version < (1, 8):
             return flag[indx][rev_idx]
 else:
     from numpy import in1d
+
+
+if sp_version < (0, 15):
+    # Backport fix for scikit-learn/scikit-learn#2986 / scipy/scipy#4142
+    from ._scipy_sparse_lsqr_backport import lsqr as sparse_lsqr
+else:
+    from scipy.sparse.linalg import lsqr as sparse_lsqr
