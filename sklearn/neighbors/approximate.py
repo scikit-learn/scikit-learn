@@ -63,8 +63,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
     LSH Forest: Locality Sensitive Hashing forest [1] is an alternative
     method for vanilla approximate nearest neighbor search methods.
     LSH forest data structure has been implemented using sorted
-    arrays and binary search. 32 bit fixed length hashes are used in
-    this implementation.
+    arrays and binary search and 32 bit fixed-length hashes.
 
     Parameters
     ----------
@@ -82,11 +81,11 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
     n_neighbors : int (default = 5)
         Number of neighbors to be returned from query function when
-        it is not provided to :meth:`k_neighbors`.
+        it is not provided to the :meth:`kneighbors` method.
 
     radius : float, optinal (default = 1.0)
         Radius from the data point to its neighbors. This is the parameter
-        space to use by default for :meth`radius_neighbors` queries.
+        space to use by default for the :meth`radius_neighbors` queries.
 
     radius_cutoff_ratio : float, optional (defualt = 0.9)
         Cut off ratio of radius neighbors to candidates at the radius
@@ -120,15 +119,14 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
       >>> X_train = [[5, 5, 2], [21, 5, 5], [1, 1, 1], [8, 9, 1], [6, 10, 2]]
       >>> X_test = [[9, 1, 6], [3, 1, 10], [7, 10, 3]]
-      >>> lshf = LSHForest()
-      >>> lshf.fit(X_train)
+      >>> lshf = LSHForest().fit(X_train)
       LSHForest(min_hash_match=4, n_candidates=50, n_estimators=10, n_neighbors=5,
            radius=1.0, radius_cutoff_ratio=0.9, random_state=None)
       >>> distances, indices = lshf.kneighbors(X_test, n_neighbors=2)
-      >>> distances
-      array([[ 0.0693931 ,  0.14960959],
-             [ 0.22932536,  0.4810007 ],
-             [ 0.00489444,  0.01481913]])
+      >>> distances                                        # doctest: +ELLIPSIS
+      array([[ 0.069...,  0.149...],
+             [ 0.229...,  0.481...],
+             [ 0.004...,  0.014...]])
       >>> indices
       array([[1, 2],
              [2, 0],
