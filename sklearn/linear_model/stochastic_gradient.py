@@ -150,10 +150,13 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         except KeyError:
             raise ValueError("The loss %s is not supported. " % loss)
 
-    def _get_learning_rate(self, learning_rate):
+    def _get_learning_rate(self, learning_rate, n_features):
         """Get ``LearningRate`` object for str ``learning_rate``. """
-        return LEARNING_RATE_TYPES[learning_rate](eps0=self.eps0,
-                                                  rho0=self.rho0)
+        return LEARNING_RATE_TYPES[learning_rate](self.eta0, self.alpha,
+                                                  self.power_t,
+                                                  n_features,
+                                                  self.eps0,
+                                                  self.rho0)
 
     def _get_penalty_type(self, penalty):
         penalty = str(penalty).lower()
@@ -416,7 +419,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         self.loss_function = self._get_loss_function(loss)
         if self.learning_rate_object is None:
             self.learning_rate_object = \
-                self._get_learning_rate(learning_rate)
+                self._get_learning_rate(learning_rate, n_features)
 
         if self.t_ is None:
             self.t_ = 1.0
@@ -946,7 +949,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
         if self.learning_rate_object is None:
             self.learning_rate_object = \
-                self._get_learning_rate(learning_rate)
+                self._get_learning_rate(learning_rate, n_features)
 
         self._fit_regressor(X, y, alpha, C, loss, self.learning_rate_object,
                             sample_weight, n_iter)
