@@ -20,7 +20,6 @@ _ATOM_NORM_TOLERANCE = 1e-6
 def _worst_represented_example(X, dictionary, sparse_codes):
     """Find the sample that has the most representation error."""
 
-    # TODO: [optimize] can use extmath.norm
     residuals = X - numpy.dot(sparse_codes, dictionary)
     errors_squared = numpy.sum(residuals * residuals, axis=1)
     worst_index = numpy.argmax(errors_squared)
@@ -65,7 +64,6 @@ def _atom_update(X, atom_index, dictionary, sparse_codes, approximate_svd):
         sparse_codes[atom_usages[0], atom_index] = atom_norm
     else:
         dictionary[atom_index, :] = 0
-        # TODO: [optimize] can save memory by not-calculating this, or doing it inplace
         representation = numpy.dot(sparse_codes[atom_usages, :], dictionary)
         residual = (X[atom_usages, :] - representation).T
         if approximate_svd:
@@ -82,13 +80,11 @@ def _atom_update(X, atom_index, dictionary, sparse_codes, approximate_svd):
 
 def _reconstruction_error(X, dictionary, sparse_codes):
     """Calculate the total reconstruction error for data."""
-    # TODO: [optimize] in-place calculation
     errors = X - numpy.dot(sparse_codes, dictionary)
     return norm(errors)
 
 
 def _init_dictionary_from_samples(X, n_components, random_state):
-    # TODO: [optimize] can use extmath.norm
     samples_norms_squared = numpy.sum(X*X, axis=1)
     nonzero_examples = list(
         numpy.where(samples_norms_squared > _ATOM_NORM_TOLERANCE)[0])
