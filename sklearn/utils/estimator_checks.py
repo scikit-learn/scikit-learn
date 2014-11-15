@@ -23,7 +23,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import check_skip_travis
 
-from sklearn.base import (clone, ClusterMixin)
+from sklearn.base import (clone, ClusterMixin, ClassifierMixin)
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
 from sklearn.lda import LDA
@@ -363,6 +363,24 @@ def check_transformer_pickle(name, Transformer):
     pickled_X_pred = unpickled_transformer.transform(X)
 
     assert_array_almost_equal(pickled_X_pred, X_pred)
+
+
+def check_estimators_partial_fit_n_features(name, Alg):
+    # check if number of features changes between calls to partial_fit.
+    if not hasattr(Alg, 'partial_fit'):
+        return
+    X, y = make_blobs(n_samples=50, random_state=1)
+    X -= X.min()
+    with warnings.catch_warnings(record=True):
+        alg = Alg()
+    set_fast_parameters(alg)
+    if isinstance(alg, ClassifierMixin):
+        classes = np.unique(y)
+        alg.partial_fit(X, y, classes=classes)
+    else:
+        alg.partial_fit(X, y)
+
+    assert_raises(ValueError, alg.partial_fit, X[:, :-1], y)
 
 
 def check_clustering(name, Alg):
@@ -962,12 +980,12 @@ def check_non_transformer_estimators_n_iter(name, estimator, multi_output=False)
 def check_transformer_n_iter(name, estimator):
     if name in CROSS_DECOMPOSITION:
         # Check using default data
-        X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
+        X = [[0., 0., 1.], [1., 0., 0.], [2., 2., 2.], [2., 5., 4.]]
         y_ = [[0.1, -0.2], [0.9, 1.1], [0.1, -0.5], [0.3, -0.2]]
 
     else:
         X, y_ = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
-                          random_state=0, n_features=2, cluster_std=0.1)
+                           random_state=0, n_features=2, cluster_std=0.1)
         X -= X.min() - 0.1
     set_random_state(estimator, 0)
     estimator.fit(X, y_)

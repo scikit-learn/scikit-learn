@@ -211,13 +211,6 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                                                order="C")
 
 
-def _check_fit_data(X, y):
-    """Check if shape of input data matches. """
-    n_samples, _ = X.shape
-    if n_samples != y.shape[0]:
-        raise ValueError("Shapes of X and y do not match.")
-
-
 def _make_dataset(X, y_i, sample_weight):
     """Create ``Dataset`` abstraction for sparse and dense inputs.
 
@@ -363,7 +356,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C")
 
         n_samples, n_features = X.shape
-        _check_fit_data(X, y)
 
         self._validate_params()
         _check_partial_fit_first_call(self, classes)
@@ -378,6 +370,9 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         if self.coef_ is None or coef_init is not None:
             self._allocate_parameter_mem(n_classes, n_features,
                                          coef_init, intercept_init)
+        elif n_features != self.coef_.shape[-1]:
+            raise ValueError("Number of features %d does not match previous data %d."
+                             % (n_features, self.coef_.shape[-1]))
 
         self.loss_function = self._get_loss_function(loss)
         if self.t_ is None:
@@ -867,7 +862,6 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         y = y.astype(np.float64)
 
         n_samples, n_features = X.shape
-        _check_fit_data(X, y)
 
         self._validate_params()
 
@@ -877,6 +871,9 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         if self.coef_ is None:
             self._allocate_parameter_mem(1, n_features,
                                          coef_init, intercept_init)
+        elif n_features != self.coef_.shape[-1]:
+            raise ValueError("Number of features %d does not match previous data %d."
+                             % (n_features, self.coef_.shape[-1]))
         if self.average > 0 and self.average_coef_ is None:
             self.average_coef_ = np.zeros(n_features,
                                           dtype=np.float64,
