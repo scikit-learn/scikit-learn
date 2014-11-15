@@ -119,7 +119,8 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
       >>> X_train = [[5, 5, 2], [21, 5, 5], [1, 1, 1], [8, 9, 1], [6, 10, 2]]
       >>> X_test = [[9, 1, 6], [3, 1, 10], [7, 10, 3]]
-      >>> lshf = LSHForest().fit(X_train)
+      >>> lshf = LSHForest()
+      >>> lshf.fit(X_train)
       LSHForest(min_hash_match=4, n_candidates=50, n_estimators=10, n_neighbors=5,
            radius=1.0, radius_cutoff_ratio=0.9, random_state=None)
       >>> distances, indices = lshf.kneighbors(X_test, n_neighbors=2)
