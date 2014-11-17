@@ -14,6 +14,7 @@ import warnings
 
 import numpy as np
 from scipy import linalg
+from six import string_types
 
 from .base import BaseEstimator, ClassifierMixin, TransformerMixin
 from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
@@ -47,7 +48,7 @@ def _cov(X, alpha=None):
         Estimated covariance matrix
     """
     alpha = "empirical" if alpha is None else alpha
-    if isinstance(alpha, str):
+    if isinstance(alpha, string_types):
         if alpha == 'ledoit_wolf':
             # standardize features
             sc = StandardScaler()
