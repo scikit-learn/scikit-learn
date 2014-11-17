@@ -857,6 +857,17 @@ def test_metric_params_interface():
                  metric_params={'p': 3})
 
 
+def test_predict_sparse_ball_kd_tree():
+    rng = np.random.RandomState(0)
+    X = rng.rand(5, 5)
+    y = rng.randint(0, 2, 5)
+    nbrs1 = neighbors.KNeighborsClassifier(1, algorithm='kd_tree')
+    nbrs2 = neighbors.KNeighborsRegressor(1, algorithm='ball_tree')
+    for model in [nbrs1, nbrs2]:
+        model.fit(X, y)
+        assert_raises(ValueError, model.predict, csr_matrix(X))
+
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()

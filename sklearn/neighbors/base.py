@@ -328,6 +328,10 @@ class KNeighborsMixin(object):
             else:
                 return neigh_ind
         elif self._fit_method in ['ball_tree', 'kd_tree']:
+            if issparse(X):
+                raise ValueError(
+                    "%s does not work with sparse matrices. Densify the data, "
+                    "or set algorithm='brute'" % self._fit_method)
             result = self._tree.query(X, n_neighbors,
                                       return_distance=return_distance)
             return result
@@ -503,6 +507,10 @@ class RadiusNeighborsMixin(object):
             else:
                 return neigh_ind
         elif self._fit_method in ['ball_tree', 'kd_tree']:
+            if issparse(X):
+                raise ValueError(
+                    "%s does not work with sparse matrices. Densify the data, "
+                    "or set algorithm='brute'" % self._fit_method)
             results = self._tree.query_radius(X, radius,
                                               return_distance=return_distance)
             if return_distance:
