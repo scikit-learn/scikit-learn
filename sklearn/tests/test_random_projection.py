@@ -19,7 +19,6 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_warns
 
 all_sparse_random_matrix = [sparse_random_matrix]
 all_dense_random_matrix = [gaussian_random_matrix]
@@ -329,15 +328,6 @@ def test_correct_RandomProjection_dimensions_embedding():
             assert_equal(rp.components_.shape, (100, n_features))
             assert_less(rp.components_.nnz, 115)  # close to 1% density
             assert_less(85, rp.components_.nnz)  # close to 1% density
-
-
-def test_warning_n_components_greater_than_n_features():
-    n_features = 20
-    data, _ = make_sparse_random_data(5, n_features, int(n_features / 4))
-
-    for RandomProjection in all_RandomProjection:
-        assert_warns(UserWarning,
-                     RandomProjection(n_components=n_features + 1).fit, data)
 
 
 def test_works_with_sparse_data():
