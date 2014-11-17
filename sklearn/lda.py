@@ -64,6 +64,8 @@ def _cov(X, alpha=None):
             raise ValueError('shrinkage parameter must be between 0 and 1')
         s = empirical_covariance(X)
         s = shrunk_covariance(s, alpha)
+    else:
+        raise TypeError('alpha must be of string or int type')
     return s
 
 
