@@ -1028,7 +1028,7 @@ cdef class Splitter:
         return self.criterion.node_impurity()
 
 
-cdef class DenseSplitter(Splitter):
+cdef class BaseDenseSplitter(Splitter):
     cdef DTYPE_t* X
     cdef SIZE_t X_sample_stride
     cdef SIZE_t X_fx_stride
@@ -1059,7 +1059,7 @@ cdef class DenseSplitter(Splitter):
         self.X_fx_stride = <SIZE_t> X.strides[1] / <SIZE_t> X.itemsize
 
 
-cdef class BestSplitter(DenseSplitter):
+cdef class BestSplitter(BaseDenseSplitter):
     """Splitter for finding the best split."""
     def __reduce__(self):
         return (BestSplitter, (self.criterion,
@@ -1358,7 +1358,7 @@ cdef void heapsort(DTYPE_t* Xf, SIZE_t* samples, SIZE_t n) nogil:
         end = end - 1
 
 
-cdef class RandomSplitter(DenseSplitter):
+cdef class RandomSplitter(BaseDenseSplitter):
     """Splitter for finding the best random split."""
     def __reduce__(self):
         return (RandomSplitter, (self.criterion,
@@ -1560,7 +1560,7 @@ cdef class RandomSplitter(DenseSplitter):
         n_constant_features[0] = n_total_constants
 
 
-cdef class PresortBestSplitter(DenseSplitter):
+cdef class PresortBestSplitter(BaseDenseSplitter):
     """Splitter for finding the best split, using presorting."""
     cdef DTYPE_t* X_old
     cdef np.ndarray X_argsorted
@@ -1598,7 +1598,7 @@ cdef class PresortBestSplitter(DenseSplitter):
         cdef void* sample_mask = NULL
 
         # Call parent initializer
-        DenseSplitter.init(self, X, y, sample_weight)
+        BaseDenseSplitter.init(self, X, y, sample_weight)
 
         cdef np.ndarray X_ndarray = X
 
@@ -1808,7 +1808,7 @@ cdef class PresortBestSplitter(DenseSplitter):
         n_constant_features[0] = n_total_constants
 
 
-cdef class SparseSplitter(Splitter):
+cdef class BaseSparseSplitter(Splitter):
     # The sparse splitter works only with csc sparse matrix format
     cdef DTYPE_t* X_data
     cdef INT32_t* X_indices
@@ -2127,7 +2127,7 @@ cdef inline void sparse_swap(SIZE_t* index_to_samples, SIZE_t* samples,
     index_to_samples[samples[pos_2]] = pos_2
 
 
-cdef class BestSparseSplitter(SparseSplitter):
+cdef class BestSparseSplitter(BaseSparseSplitter):
     """Splitter for finding the best split, using the sparse data."""
 
     def __reduce__(self):
@@ -2344,7 +2344,7 @@ cdef class BestSparseSplitter(SparseSplitter):
         n_constant_features[0] = n_total_constants
 
 
-cdef class RandomSparseSplitter(SparseSplitter):
+cdef class RandomSparseSplitter(BaseSparseSplitter):
     """Splitter for finding a random split, using the sparse data."""
 
     def __reduce__(self):
