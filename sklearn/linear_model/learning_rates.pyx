@@ -187,6 +187,7 @@ cdef class AdaDelta(Adaptive):
 
     @cython.cdivision(True)
     cdef double _compute_intercept_eta(self, double gradient) nogil:
+        cdef double eta0 = self.eta0
         cdef double eps0 = self.eps0
         cdef double rho0 = self.rho0
 
@@ -197,7 +198,7 @@ cdef class AdaDelta(Adaptive):
         self.intercept_accudelta *= rho0
         self.intercept_accudelta += (1. - rho0) * dx * dx
 
-        return dx
+        return eta0 * dx
 
     def __reduce__(self):
         return AdaDelta, (self.eta0, self.alpha, 0, self.n_features,

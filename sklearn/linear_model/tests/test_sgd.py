@@ -138,7 +138,7 @@ class CommonTest(object):
                 dx = np.sqrt((accu_delta + eps0) / (accu_gradient + eps0))
                 accu_delta *= rho0
                 accu_delta += (1. - rho0) * dx * dx
-                weights -= dx * gradient_vector
+                weights -= eta * dx * gradient_vector
 
                 intercept_accu_gradient *= rho0
                 intercept_accu_gradient += (1. - rho0) * scalar_gradient ** 2
@@ -146,7 +146,7 @@ class CommonTest(object):
                                     (intercept_accu_gradient + eps0))
                 intercept_accu_delta *= rho0
                 intercept_accu_delta += (1. - rho0) * intercept_dx ** 2
-                intercept_eta = intercept_dx
+                intercept_eta = eta * intercept_dx
 
             elif learning_rate == "adagrad":
                 accu_gradient += gradient_vector * gradient_vector
