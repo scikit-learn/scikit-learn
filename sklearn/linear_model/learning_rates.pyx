@@ -152,6 +152,7 @@ cdef class AdaGrad(Adaptive):
 cdef class AdaDelta(Adaptive):
     def __cinit__(self, double eta0, double alpha, double power_t,
                   int n_features, double eps0, double rho0):
+        self.eta0 = eta0
         self.alpha = alpha
         self.n_features = n_features
         self.rho0 = rho0
@@ -170,6 +171,7 @@ cdef class AdaDelta(Adaptive):
     @cython.cdivision(True)
     cdef double _compute_eta(self, double full_gradient,
                              double val, int idx) nogil:
+        cdef double eta0 = self.eta0
         cdef double eps0 = self.eps0
         cdef double rho0 = self.rho0
         cdef double* accugrad = self.accugrad
@@ -181,7 +183,7 @@ cdef class AdaDelta(Adaptive):
         accudelta[idx] *= rho0
         accudelta[idx] += (1. - rho0) * dx * dx
 
-        return dx
+        return eta0 * dx
 
     @cython.cdivision(True)
     cdef double _compute_intercept_eta(self, double gradient) nogil:
@@ -198,7 +200,7 @@ cdef class AdaDelta(Adaptive):
         return dx
 
     def __reduce__(self):
-        return AdaDelta, (0, self.alpha, 0, self.n_features,
+        return AdaDelta, (self.eta0, self.alpha, 0, self.n_features,
                           self.eps0, self.rho0)
 
 cdef class PA(LearningRate):
