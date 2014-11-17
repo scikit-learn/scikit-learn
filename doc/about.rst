@@ -65,7 +65,7 @@ programme.
 - 2007 - David Cournapeau
 - 2011 - `Vlad Niculae`_
 - 2012 - `Vlad Niculae`_, Immanuel Bayer.
-- 2013 - `Kemal Eren`_
+- 2013 - `Kemal Eren`_, Nicolas Trésegnie
 - 2014 - Hamzeh Alsalhi, Issam Laradji, Maheshakya Wijewardena, Manoj Kumar.
 
 It also provided funding for sprints and events around scikit-learn. If
