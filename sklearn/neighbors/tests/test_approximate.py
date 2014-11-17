@@ -231,9 +231,9 @@ def test_fit():
     # _input_array = X
     assert_array_equal(X, lshf._fit_X)
     # A hash function g(p) for each tree
-    assert_equal(n_estimators, lshf.hash_functions_.shape[0])
+    assert_equal(n_estimators, len(lshf.hash_functions_))
     # Hash length = 32
-    assert_equal(32, lshf.hash_functions_.shape[1])
+    assert_equal(32, lshf.hash_functions_[0].components_.shape[0])
     # Number of trees in the forest
     assert_equal(n_estimators, len(lshf._trees))
     # Each tree has entries for every data point
@@ -297,13 +297,17 @@ def test_hash_functions():
                      random_state=rng.randint(0, np.iinfo(np.int32).max))
     lshf.fit(X)
 
+    hash_functions = []
     for i in range(n_estimators):
-        assert_not_equal(np.var(lshf.hash_functions_),
-                         np.var(lshf.hash_functions_[i]))
+        hash_functions.append(lshf.hash_functions_[i].components_)
 
     for i in range(n_estimators):
-        assert_not_equal(np.mean(lshf.hash_functions_),
-                         np.mean(lshf.hash_functions_[i]))
+        assert_not_equal(np.var(hash_functions),
+                         np.var(lshf.hash_functions_[i].components_))
+
+    for i in range(n_estimators):
+        assert_not_equal(np.mean(hash_functions),
+                         np.mean(lshf.hash_functions_[i].components_))
 
 
 def test_candidates():

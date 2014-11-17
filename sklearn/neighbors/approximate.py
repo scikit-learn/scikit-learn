@@ -57,6 +57,36 @@ def _find_longest_prefix_match(bit_string_array, query, hash_size,
     return res
 
 
+class ProjectionToHashMixin(object):
+    """Turn a transformed real-valued array into a hash"""
+    @staticmethod
+    def _to_hash(projected):
+        if projected.shape[1] % 8 != 0:
+            raise ValueError('Require reduced dimensionality to be a multiple '
+                             'of 8 for hashing')
+        # XXX: perhaps non-copying operation better
+        out = np.packbits((projected > 0).astype(int)).view(dtype=HASH_DTYPE)
+        return out.reshape(projected.shape[0], -1)
+
+    def fit_transform(self, X, y=None):
+        self.fit(X)
+        return self.transform(X)
+
+    def transform(self, X, y=None):
+        return self._to_hash(super(ProjectionToHashMixin, self).transform(X))
+
+
+class GaussianRandomProjectionHash(ProjectionToHashMixin,
+                                   GaussianRandomProjection):
+    """Use GaussianRandomProjection to produce a cosine LSH fingerprint"""
+    def __init__(self,
+                 n_components=8,
+                 random_state=None):
+        super(GaussianRandomProjectionHash, self).__init__(
+            n_components=n_components,
+            random_state=random_state)
+
+
 def _array_of_arrays(list_of_arrays):
     """Creates an array of array from list of arrays."""
     out = np.empty(len(list_of_arrays), dtype=object)
@@ -107,9 +137,11 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
     Attributes
     ----------
 
-    `hash_functions_` : list of arrays
+    `hash_functions_` : list of GaussianRandomProjectionHash objects
         Hash function g(p,x) for a tree is an array of 32 randomly generated
-        float arrays with the same dimension as the data set.
+        float arrays with the same dimenstion as the data set. This array is
+        stored in GaussianRandomProjectionHash object and can be obtained
+        from `components_` attribute.
 
     References
     ----------
@@ -156,28 +188,14 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
     def _create_tree(self, seed):
         """Builds a single tree.
 
-        Here, it creates a sorted array of binary hashes.
         Hashing is done on an array of data points.
         `GaussianRandomProjection` is used for hashing.
         `n_components=hash_size and n_features=n_dim.
-
-        This creates binary hashes by getting the dot product of
-        input points and hash_function then transforming the projection
-        into a binary string array based on the sign (positive/negative)
-        of the projection.
         """
-        grp = GaussianRandomProjection(n_components=MAX_HASH_SIZE,
-                                       random_state=seed)
-        X = np.zeros((1, self._fit_X.shape[1]), dtype=float)
-        grp.fit(X)
-
-        hashes = (grp.transform(self._fit_X) > 0).astype(int)
-        hash_function = grp.components_
-
-        binary_hashes = np.packbits(hashes).view(dtype=HASH_DTYPE)
-        original_indices = np.argsort(binary_hashes)
-
-        return original_indices, binary_hashes[original_indices], hash_function
+        grph = GaussianRandomProjectionHash(n_components=MAX_HASH_SIZE,
+                                            random_state=seed)
+        grph.fit(self._fit_X)
+        return grph
 
     def _compute_distances(self, query, candidates):
         """Computes the cosine distance.
@@ -279,19 +297,14 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
             max_depth = max_depth - 1
         return total_neighbors, total_distances
 
-    def _convert_to_hash(self, y, tree_n):
-        """Converts item(a data point) into an integer.
-
-        Value of the integer is the value represented by the
-        binary hashed value.
-        """
-        projections = (np.dot(self.hash_functions_[tree_n],
-                              y) > 0).astype(int)
-
-        return np.packbits(projections).view(dtype=HASH_DTYPE)[0]
-
     def fit(self, X):
         """Fit the LSH forest on the data.
+
+        This creates binary hashes of input data points by getting the
+        dot product of input points and hash_function then
+        transforming the projection into a binary string array based
+        on the sign (positive/negative) of the projection.
+        A sorted array of binary hashes is created.
 
         Parameters
         ----------
@@ -313,16 +326,17 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         self._original_indices = []
 
         random_state = check_random_state(self.random_state)
+        int_max = np.iinfo(np.int32).max
 
         for i in range(self.n_estimators):
             # This is g(p,x) for a particular tree.
-            original_index, bin_hashes, hash_function = self._create_tree(
-                random_state.randint(0, np.iinfo(np.int32).max))
+            grph = self._create_tree(random_state.randint(0, int_max))
+            hashes = grph.transform(self._fit_X)[:, 0]
+            original_index = np.argsort(hashes)
+            bin_hashes = hashes[original_index]
             self._original_indices.append(original_index)
             self._trees.append(bin_hashes)
-            self.hash_functions_.append(hash_function)
-
-        self.hash_functions_ = np.array(self.hash_functions_)
+            self.hash_functions_.append(grph)
         self._generate_masks()
 
         return self
@@ -336,11 +350,12 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         for a given query.
         """
         bin_queries = []
+        query = query.reshape((1, query.shape[0]))
 
         # descend phase
         max_depth = 0
         for i in range(self.n_estimators):
-            bin_query = self._convert_to_hash(query, i)
+            bin_query = self.hash_functions_[i].transform(query)[0][0]
             k = _find_longest_prefix_match(self._trees[i], bin_query,
                                            MAX_HASH_SIZE,
                                            self._left_mask,
@@ -474,7 +489,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         input_array_size = self._fit_X.shape[0]
 
         for i in range(self.n_estimators):
-            bin_X = [self._convert_to_hash(X[j], i) for j in range(n_samples)]
+            bin_X = self.hash_functions_[i].transform(X)[:, 0]
             # gets the position to be added in the tree.
             positions = self._trees[i].searchsorted(bin_X)
             # adds the hashed value into the tree.
