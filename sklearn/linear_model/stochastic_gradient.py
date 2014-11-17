@@ -415,6 +415,9 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         if self.coef_ is None or coef_init is not None:
             self._allocate_parameter_mem(n_classes, n_features,
                                          coef_init, intercept_init)
+        elif n_features != self.coef_.shape[-1]:
+            raise ValueError("Number of features %d does not match previous data %d."
+                             % (n_features, self.coef_.shape[-1]))
 
         self.loss_function = self._get_loss_function(loss)
         if self.learning_rate_object is None:
@@ -939,6 +942,9 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         if self.coef_ is None:
             self._allocate_parameter_mem(1, n_features,
                                          coef_init, intercept_init)
+        elif n_features != self.coef_.shape[-1]:
+            raise ValueError("Number of features %d does not match previous data %d."
+                             % (n_features, self.coef_.shape[-1]))
         if self.average > 0 and self.average_coef_ is None:
             self.average_coef_ = np.zeros(n_features,
                                           dtype=np.float64,

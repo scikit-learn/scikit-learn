@@ -327,11 +327,11 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         # U = Y C(Q'C)^-1 = YC* (W* : q x k matrix)
         self.x_rotations_ = np.dot(
             self.x_weights_,
-            linalg.inv(np.dot(self.x_loadings_.T, self.x_weights_)))
+            linalg.pinv(np.dot(self.x_loadings_.T, self.x_weights_)))
         if Y.shape[1] > 1:
             self.y_rotations_ = np.dot(
                 self.y_weights_,
-                linalg.inv(np.dot(self.y_loadings_.T, self.y_weights_)))
+                linalg.pinv(np.dot(self.y_loadings_.T, self.y_weights_)))
         else:
             self.y_rotations_ = np.ones(1)
 

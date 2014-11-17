@@ -28,7 +28,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn import cluster, datasets
-from sklearn.metrics import euclidean_distances
 from sklearn.neighbors import kneighbors_graph
 from sklearn.preprocessing import StandardScaler
 
@@ -65,15 +64,11 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
     # make connectivity symmetric
     connectivity = 0.5 * (connectivity + connectivity.T)
 
-    # Compute distances
-    #distances = np.exp(-euclidean_distances(X))
-    distances = euclidean_distances(X)
-
     # create clustering estimators
     ms = cluster.MeanShift(bandwidth=bandwidth, bin_seeding=True)
     two_means = cluster.MiniBatchKMeans(n_clusters=2)
-    ward = cluster.AgglomerativeClustering(n_clusters=2,
-                    linkage='ward', connectivity=connectivity)
+    ward = cluster.AgglomerativeClustering(n_clusters=2, linkage='ward',
+                                           connectivity=connectivity)
     spectral = cluster.SpectralClustering(n_clusters=2,
                                           eigen_solver='arpack',
                                           affinity="nearest_neighbors")

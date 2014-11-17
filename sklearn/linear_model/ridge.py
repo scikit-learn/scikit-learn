@@ -908,9 +908,12 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    cv : cross-validation generator, optional
+    cv : integer or cross-validation generator, optional
         If None, Generalized Cross-Validation (efficient Leave-One-Out)
         will be used.
+        If an integer is passed, it is the number of folds for KFold cross
+        validation.  Specific cross-validation objects can be passed, see
+        sklearn.cross_validation module for the list of possible objects
 
     gcv_mode : {None, 'auto', 'svd', eigen'}, optional
         Flag indicating which strategy to use when performing

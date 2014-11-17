@@ -807,7 +807,8 @@ Some tips and tricks:
     splitting, filtering based on part-of-speech, etc. are not included in the
     scikit-learn codebase, but can be added by customizing either the
     tokenizer or the analyzer.
-    Here's a ``CountVectorizer`` with a tokenizer and lemmatizer using NLTK::
+    Here's a ``CountVectorizer`` with a tokenizer and lemmatizer using
+    `NLTK <http://www.nltk.org>`_::
 
         >>> from nltk import word_tokenize          # doctest: +SKIP
         >>> from nltk.stem import WordNetLemmatizer # doctest: +SKIP

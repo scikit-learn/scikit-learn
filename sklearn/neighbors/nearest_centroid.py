@@ -8,6 +8,7 @@ Nearest Centroid Classification
 #
 # License: BSD 3 clause
 
+import warnings
 import numpy as np
 from scipy import sparse as sp
 
@@ -16,6 +17,7 @@ from ..externals.six.moves import xrange
 from ..metrics.pairwise import pairwise_distances
 from ..preprocessing import LabelEncoder
 from ..utils.validation import check_array, check_X_y
+from ..utils.sparsefuncs import csc_median_axis_0
 
 
 class NearestCentroid(BaseEstimator, ClassifierMixin):
@@ -31,6 +33,12 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         feature array. If metric is a string or callable, it must be one of
         the options allowed by metrics.pairwise.pairwise_distances for its
         metric parameter.
+        The centroids for the samples corresponding to each class is the point
+        from which the sum of the distances (according to the metric) of all
+        samples that belong to that particular class are minimized.
+        If the "manhattan" metric is provided, this centroid is the median and
+        for all other metrics, the centroid is now set to be the mean.
+
     shrink_threshold : float, optional (default = None)
         Threshold for shrinking centroids to remove features.
 
@@ -86,8 +94,14 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         y : array, shape = [n_samples]
             Target values (integers)
         """
-        X, y = check_X_y(X, y, ['csr', 'csc'])
-        if sp.issparse(X) and self.shrink_threshold:
+        # If X is sparse and the metric is "manhattan", store it in a csc
+        # format is easier to calculate the median.
+        if self.metric == 'manhattan':
+            X, y = check_X_y(X, y, ['csc'])
+        else:
+            X, y = check_X_y(X, y, ['csr', 'csc'])
+        is_X_sparse = sp.issparse(X)
+        if is_X_sparse and self.shrink_threshold:
             raise ValueError("threshold shrinking not supported"
                              " for sparse input")
 
@@ -107,9 +121,23 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         for cur_class in y_ind:
             center_mask = y_ind == cur_class
             nk[cur_class] = np.sum(center_mask)
-            if sp.issparse(X):
+            if is_X_sparse:
                 center_mask = np.where(center_mask)[0]
-            self.centroids_[cur_class] = X[center_mask].mean(axis=0)
+
+            # XXX: Update other averaging methods according to the metrics.
+            if self.metric == "manhattan":
+                # NumPy does not calculate median of sparse matrices.
+                if not is_X_sparse:
+                    self.centroids_[cur_class] = np.median(X[center_mask], axis=0)
+                else:
+                    self.centroids_[cur_class] = csc_median_axis_0(X[center_mask])
+            else:
+                if self.metric != 'euclidean':
+                    warnings.warn("Averaging for metrics other than "
+                                  "euclidean and manhattan not supported. "
+                                  "The average is set to be the mean."
+                                  )
+                self.centroids_[cur_class] = X[center_mask].mean(axis=0)
 
         if self.shrink_threshold:
             dataset_centroid_ = np.mean(X, axis=0)
