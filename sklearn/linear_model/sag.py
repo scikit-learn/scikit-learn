@@ -1,5 +1,8 @@
 import numpy as np
+import scipy.sparse as sp
+
 from abc import ABCMeta
+
 from .stochastic_gradient import BaseSGD
 from .base import LinearClassifierMixin, LinearModel
 from ..base import RegressorMixin
@@ -9,7 +12,7 @@ from ..externals import six
 from .sgd_fast import Log, SquaredLoss
 from ..externals.joblib import Parallel, delayed
 from .sag_fast import fast_fit, fast_fit_sparse
-from ..utils.seq_dataset import ArrayDataset
+from ..utils.seq_dataset import ArrayDataset, CSRDataset
 
 
 class BaseSAG(six.with_metaclass(ABCMeta, BaseSGD)):
@@ -41,7 +44,12 @@ class BaseSAG(six.with_metaclass(ABCMeta, BaseSGD)):
 
         n_samples, n_features = X.shape[0], X.shape[1]
         sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
-        dataset = ArrayDataset(X, y, sample_weight, seed=self.random_state)
+        if sp.issparse(X):
+            dataset = CSRDataset(X.data, X.indptr, X.indices,
+                                 y, sample_weight)
+        else:
+            dataset = ArrayDataset(X, y, sample_weight, seed=self.random_state)
+
         coef_ = np.zeros(n_features, dtype=np.float64, order='C')
         loss_function = self._get_loss_function(self.loss)
 
@@ -172,6 +180,102 @@ class BaseSAGRegressor(six.with_metaclass(ABCMeta, BaseSAG,
 
 
 class SAGRegressor(BaseSAGRegressor, _LearntSelectorMixin):
+    """Linear model fitted by minimizing a regularized empirical loss with SAG
+
+    SAG stands for Stochastic Average Gradient: the gradient of the loss is
+    estimated each sample at a time and the model is updated along the way with
+    a decreasing strength schedule (aka learning rate).
+
+    The regularizer is a penalty added to the loss function that shrinks model
+    parameters towards the zero vector using either the squared euclidean norm
+    L2 or the absolute norm L1 or a combination of both (Elastic Net). If the
+    parameter update crosses the 0.0 value because of the regularizer, the
+    update is truncated to 0.0 to allow for learning sparse models and achieve
+    online feature selection.
+
+    This implementation works with data represented as dense numpy arrays of
+    floating point values for the features.
+
+    Parameters
+    ----------
+    loss : str, 'squared_loss', 'huber', 'epsilon_insensitive', \
+                or 'squared_epsilon_insensitive'
+        The loss function to be used. Defaults to 'squared_loss' which refers
+        to the ordinary least squares fit. 'huber' modifies 'squared_loss' to
+        focus less on getting outliers correct by switching from squared to
+        linear loss past a distance of epsilon. 'epsilon_insensitive' ignores
+        errors less than epsilon and is linear past that; this is the loss
+        function used in SVR. 'squared_epsilon_insensitive' is the same but
+        becomes squared loss past a tolerance of epsilon.
+
+    alpha : float
+        Constant that multiplies the regularization term. Defaults to 0.0001
+
+    fit_intercept: bool
+        Whether the intercept should be estimated or not. If False, the
+        data is assumed to be already centered. Defaults to True.
+
+    n_iter : int, optional
+        The number of passes over the training data (aka epochs). The number
+        of iterations is set to 1 if using partial_fit.
+        Defaults to 5.
+
+    verbose: integer, optional
+        The verbosity level.
+
+    epsilon: float
+        Epsilon in the epsilon-insensitive loss functions; only if `loss` is
+        'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'.
+        For 'huber', determines the threshold at which it becomes less
+        important to get the prediction exactly right.
+        For epsilon-insensitive, any differences between the current prediction
+        and the correct label are ignored if they are less than this threshold.
+
+    learning_rate : string, optional
+        The learning rate:
+        constant: eta = eta0
+        optimal: eta = 1.0/(alpha * t)
+        invscaling: eta = eta0 / pow(t, power_t) [default]
+
+    eta0 : double, optional
+        The initial learning rate [default 0.01].
+
+    power_t : double, optional
+        The exponent for inverse scaling learning rate [default 0.25].
+
+    warm_start : bool, optional
+        When set to True, reuse the solution of the previous call to fit as
+        initialization, otherwise, just erase the previous solution.
+
+    Attributes
+    ----------
+    coef_ : array, shape (n_features,)
+        Weights asigned to the features.
+
+    intercept_ : array, shape (1,)
+        The intercept term.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn import linear_model
+    >>> n_samples, n_features = 10, 5
+    >>> np.random.seed(0)
+    >>> y = np.random.randn(n_samples)
+    >>> X = np.random.randn(n_samples, n_features)
+    >>> clf = linear_model.SAGRegressor()
+    >>> clf.fit(X, y)
+    ... #doctest: +NORMALIZE_WHITESPACE
+    SAGRegressor(alpha=0.0001, epsilon=0.1, eta0=0.01,
+                 fit_intercept=True, l1_ratio=0.15, learning_rate='invscaling',
+                 n_iter=5, power_t=0.25, random_state=None,
+                 shuffle=False, verbose=0, warm_start=False)
+
+    See also
+    --------
+    SGDRegressor, Ridge, ElasticNet, Lasso, SVR
+
+    """
     def __init__(self, penalty='l2', alpha=0.0001,
                  fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
                  epsilon=.1, n_jobs=1, random_state=None,
