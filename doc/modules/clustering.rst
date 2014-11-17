@@ -102,11 +102,10 @@ Overview of clustering methods
      - Mahalanobis distances to  centers
 
    * - :ref:`Birch`
-     - branching factor, number of clusters.
+     - branching factor, number of clusters
      - Large ``n_clusters`` and ``n_samples``
-     - Online algorithm used when the entire data cannot fit into memory,
-       handles outliers effectively.
-     - Euclidean distance between points.
+     - Large dataset, outlier removal
+     - Euclidean distance between points
 
 Non-flat geometry clustering is useful when the clusters have a specific
 shape, i.e. a non-flat manifold, and the standard euclidean distance is
@@ -780,7 +779,7 @@ Birch
 =====
 
 The :class:`Birch` builds a tree called the Characteristic Feature tree for
-the given data. The data is essentially compressed to a set of Characteristic
+the given data. The data is essentially lossy compressed to a set of Characteristic
 Feature nodes. The CF Nodes have a number of subclusters, and the subclusters
 have CF Nodes as children. The CF subclusters hold the
 necessary information for clustering which prevents the need to hold the entire
@@ -795,11 +794,12 @@ The branching factor limits the number of subclusters in a node and the
 threshold limits the distance between the entering sample and the existing
 subclusters.
 
-There might be cases in which the clusters obtained directly from Birch are too many.
-This can be changed either by increasing the threshold or providing n_clusters.
-If set to None, the subclusters from the leaves are directly read off, otherwise
-a global clustering step clusters these subclusters into global clusters and the
-samples are mapped to these global subclusters.
+Generally, the clusters obtained directly from Birch are too many.
+This can be tuned by either increasing the threshold or providing ``n_clusters``.
+If ``n_clusters`` is set to None, the subclusters from the leaves are
+directly read off, otherwise a global clustering step clusters these subclusters
+into global clusters and the  samples are mapped to to the global cluster
+of the nearest subcluster.
 
 **Algorithm description:**
 
@@ -835,9 +835,9 @@ is slightly slower than MiniBatchKMeans on large features.
    BIRCH: An efficient data clustering method for large databases.
    http://www.cs.sfu.ca/CourseCentral/459/han/papers/zhang96.pdf
 
-* Roberto Perdisci
-  JBirch - Java implementation of BIRCH clustering algorithm
-  https://code.google.com/p/jbirch/
+ * Roberto Perdisci
+   JBirch - Java implementation of BIRCH clustering algorithm
+   https://code.google.com/p/jbirch/
 
 .. _clustering_evaluation:
 

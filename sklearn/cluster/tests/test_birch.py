@@ -11,11 +11,13 @@ from sklearn.cluster.birch import Birch
 from sklearn.cluster.hierarchical import AgglomerativeClustering
 from sklearn.datasets import make_blobs
 from sklearn.linear_model import ElasticNet
-from sklearn.metrics import pairwise_distances_argmin
+from sklearn.metrics import pairwise_distances_argmin, v_measure_score
+from sklearn.utils.extmath import norm
 
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
@@ -41,8 +43,8 @@ def test_partial_fit():
     brc_partial = Birch()
     brc_partial.partial_fit(X[:50])
     brc_partial.partial_fit(X[50:])
-    assert_array_equal(brc_partial.cluster_centers_, brc.cluster_centers_)
-    assert_equal(len(brc.cluster_centers_), 3)
+    assert_array_equal(brc_partial.subcluster_centers_, brc.subcluster_centers_)
+    assert_equal(len(np.unique(brc.labels_)), 3)
 
 
 def test_birch_predict():
@@ -57,10 +59,10 @@ def test_birch_predict():
     X_shuffle = X[shuffle_indices, :]
     brc = Birch(n_clusters=4, threshold=1.)
     brc.fit(X_shuffle)
-    centroids = brc.cluster_centers_
+    centroids = brc.subcluster_centers_
     assert_array_equal(brc.labels_, brc.predict(X_shuffle))
     nearest_centroid = pairwise_distances_argmin(X_shuffle, centroids)
-    assert_array_equal(nearest_centroid, brc.labels_)
+    assert_almost_equal(v_measure_score(nearest_centroid, brc.labels_), 1.0)
 
 
 def test_n_clusters():
@@ -68,15 +70,14 @@ def test_n_clusters():
     X, y = make_blobs(n_samples=100, centers=10)
     brc1 = Birch(n_clusters=10)
     brc1.fit(X)
-    assert_equal(len(brc1.cluster_centers_), 10)
+    assert_equal(len(np.unique(brc1.labels_)), 10)
 
     # Test that n_clusters = Agglomerative Clustering gives
     # the same results.
     gc = AgglomerativeClustering(n_clusters=10)
     brc2 = Birch(n_clusters=gc)
     brc2.fit(X)
-    assert_equal(len(brc2.cluster_centers_), 10)
-    assert_array_equal(brc1.cluster_centers_, brc2.cluster_centers_)
+    assert_array_equal(brc1.subcluster_labels_, brc2.subcluster_labels_)
     assert_array_equal(brc1.labels_, brc2.labels_)
 
     # Test that the wrong global clustering step raises an Error.
@@ -100,16 +101,16 @@ def test_sparse_X():
     brc_sparse.fit(X)
 
     assert_array_equal(brc.labels_, brc_sparse.labels_)
-    assert_array_equal(brc.cluster_centers_, brc_sparse.cluster_centers_)
+    assert_array_equal(brc.subcluster_centers_,
+                       brc_sparse.subcluster_centers_)
 
 
 def check_branching_factor(node, branching_factor):
     subclusters = node.subclusters_
-    if node.is_leaf:
-        assert_greater_equal(branching_factor, len(subclusters))
-        return
+    assert_greater_equal(branching_factor, len(subclusters))
     for cluster in subclusters:
-        check_branching_factor(cluster.child_, branching_factor)
+        if cluster.child_:
+            check_branching_factor(cluster.child_, branching_factor)
 
 
 def test_branching_factor():
@@ -122,9 +123,33 @@ def test_branching_factor():
                 threshold=0.01)
     brc.fit(X)
     check_branching_factor(brc.root_, branching_factor)
-
-    # Purposefully set a low threshold to maximize the subclusters.
     brc = Birch(n_clusters=3, branching_factor=branching_factor,
                 threshold=0.01)
     brc.fit(X)
     check_branching_factor(brc.root_, branching_factor)
+
+    # Raises error when branching_factor is set to one.
+    brc = Birch(n_clusters=None, branching_factor=1, threshold=0.01)
+    assert_raises(ValueError, brc.fit, X)
+
+
+def check_threshold(birch_instance, threshold):
+    """Use the leaf linked list for traversal"""
+    current_leaf = birch_instance.dummy_leaf_.next_leaf_
+    while current_leaf:
+        subclusters = current_leaf.subclusters_
+        for sc in subclusters:
+            assert_greater_equal(threshold, sc.radius())
+        current_leaf = current_leaf.next_leaf_
+
+
+def test_threshold():
+    """Test that the leaf subclusters have a threshold lesser than radius"""
+    X, y = make_blobs(n_samples=80, centers=4)
+    brc = Birch(threshold=0.5, n_clusters=None)
+    brc.fit(X)
+    check_threshold(brc, 0.5)
+
+    brc = Birch(threshold=5.0, n_clusters=None)
+    brc.fit(X)
+    check_threshold(brc, 5.)

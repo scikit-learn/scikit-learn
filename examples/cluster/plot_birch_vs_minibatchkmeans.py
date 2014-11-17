@@ -19,11 +19,12 @@ from time import time
 import numpy as np
 import matplotlib.pyplot as plt
 
+from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import Birch, MiniBatchKMeans
 from sklearn.datasets.samples_generator import make_blobs
 
 
-# Generate centres for the blobs so that it forms a 10 X 10 grid.
+# Generate centers for the blobs so that it forms a 10 X 10 grid.
 xx = np.linspace(-22, 22, 10)
 yy = np.linspace(-22, 22, 10)
 xx, yy = np.meshgrid(xx, yy)
@@ -32,6 +33,7 @@ n_centres = np.hstack((np.ravel(xx)[:, np.newaxis],
 
 # Generate blobs to do a comparison between MiniBatchKMeans and Birch.
 X, y = make_blobs(n_samples=100000, centers=n_centres, random_state=0)
+   
 
 # Use all colors that matplotlib provides by default.
 colors = cycle(['blue', 'green', 'red', 'cyan', 'magenta', 'yellow', 'black'])
@@ -42,8 +44,8 @@ fig.subplots_adjust(left=0.04, right=0.98, bottom=0.1, top=0.9)
 
 # Compute clustering with Birch with and without the final clustering step
 # and plot.
-birch_models = [Birch(threshold=4.2, branching_factor=15, n_clusters=None),
-                Birch(threshold=4.2, branching_factor=15, n_clusters=100)]
+birch_models = [Birch(threshold=2.0, branching_factor=10, n_clusters=None),
+                Birch(threshold=2.0, branching_factor=10, n_clusters=100)]
 final_step = ['without global clustering', 'with global clustering']
 
 for ind, (birch_model, info) in enumerate(zip(birch_models, final_step)):
@@ -55,7 +57,7 @@ for ind, (birch_model, info) in enumerate(zip(birch_models, final_step)):
 
     # Plot result
     labels = birch_model.labels_
-    centroids = birch_model.cluster_centers_
+    centroids = birch_model.subcluster_centers_
     n_clusters = np.unique(labels).size
     print("n_clusters : %d" % n_clusters)
 

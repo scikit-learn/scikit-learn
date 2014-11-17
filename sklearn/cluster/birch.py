@@ -6,12 +6,14 @@ from __future__ import division
 import warnings
 import numpy as np
 from scipy import sparse
+from math import sqrt
 
 from ..metrics.pairwise import euclidean_distances
 from ..base import TransformerMixin, ClusterMixin, BaseEstimator
 from ..externals.six.moves import xrange
+from ..neighbors import KNeighborsClassifier
 from ..utils import check_array
-from ..utils.extmath import safe_sparse_dot
+from ..utils.extmath import safe_sparse_dot, norm
 from .hierarchical import AgglomerativeClustering
 
 def _iterate_X(X):
@@ -165,7 +167,7 @@ class _CFNode(object):
         self.n_ -= 1
         self.update(newsubcluster1)
         self.update(newsubcluster2)
-
+    #@profile
     def insert_cf_subcluster(self, subcluster):
         """
         Insert a new subcluster into the node
@@ -210,8 +212,9 @@ class _CFNode(object):
 
         # good to go!
         else:
-            closest_threshold = subcluster.sq_norm_  + dist_matrix[closest_index]
-            if self.threshold ** 2 >= closest_threshold:
+            closest_threshold = closest_subcluster.get_threshold(subcluster)
+            if closest_threshold <= self.threshold:
+
                 self.subclusters_[closest_index].update(subcluster)
                 self.init_centroids_[closest_index] = \
                     self.subclusters_[closest_index].centroid_
@@ -255,6 +258,9 @@ class _CFSubcluster(object):
         Linear sum of all the samples in a subcluster. Prevents holding
         all sample data in memory.
 
+    ss_ : float
+        Sum of the squared l2 norms of all samples belonging to a subcluster.
+
     centroid_ : ndarray
         Centroid of the subcluster. Prevent recomputing of centroids when
         self.centroids_ is called.
@@ -271,18 +277,35 @@ class _CFSubcluster(object):
         self.X = X
         if X is None:
             self.n_ = 0
-            self.ls_ = 0.0
+            self.ls_ = self.ss_ = 0.0
         else:
             self.n_ = 1
             self.ls_ = self.centroid_ = X
+            self.ss_ = np.dot(self.ls_, self.ls_)
             self.sq_norm_ = np.dot(self.ls_, self.ls_)
         self.child_ = None
 
     def update(self, subcluster):
         self.n_ += subcluster.n_
         self.ls_ = self.ls_ + subcluster.ls_
+        self.ss_ = self.ss_ + subcluster.ss_
         self.centroid_ = self.ls_ / self.n_
         self.sq_norm_ = np.dot(self.centroid_, self.centroid_)
+
+    def get_threshold(self, nominee_cluster):
+        """Check if a cluster is worthy enough to be merged"""
+        new_ss = self.ss_ + nominee_cluster.ss_
+        new_ls = self.ls_ + nominee_cluster.ls_
+        new_n = self.n_ + nominee_cluster.n_
+        new_centroid = new_ls / new_n
+        dot_product = -2 * np.dot(new_ls, new_centroid)
+        new_norm = np.dot(new_centroid, new_centroid)
+        return sqrt(((new_ss + dot_product) / new_n) + new_norm)
+
+    def radius(self):
+        """Return radius of the subcluster"""
+        dot_product = -2 * np.dot(self.ls_, self.centroid_)
+        return sqrt(((self.ss_ + dot_product) / self.n_) + self.sq_norm_)
 
 
 class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
@@ -295,8 +318,8 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
 
     Parameters
     ----------
-    threshold : float, default 1.0
-        The minimum distance between a new sample and the closest subcluster
+    threshold : float, default 0.5
+        The maximum distance between a new sample and the closest subcluster
         centroid for it to be part of the subcluster. If the distance
         is greater than this threshold, than a new subcluster is started.
 
@@ -307,7 +330,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         split and if the number of subclusters in the parent is greater than
         the branching factor, then it has to be split recursively.
 
-    n_clusters : int, instance of ClusterMixin or None, default 3
+    n_clusters : int, instance of sklearn.cluster model or None, default 3
         Number of clusters after the final clustring step, which treats the
         subclusters from the leaves as new samples. By default the global
         clustering step is AgglomerativeClustering with n_clusters set to 3.
@@ -319,14 +342,22 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     root_ : _CFNode
         Root of the CFTree.
 
-    dummy_leaf_ : CFNode
+    dummy_leaf_ : _CFNode
         Start pointer to all the leaves.
 
-    cluster_centers_ : ndarray
+    subcluster_centers_ : ndarray,
         Centroids of all subclusters read directly from the leaves.
 
-    labels_ : ndarray
-        Array of labels assigned to the input data.
+    subcluster_labels_ : ndarray,
+        Labels assigned to the centroids of the subclusters after
+        they are clustered globally.
+
+    labels_ : ndarray, shape (n_samples,)
+        Array of labels assigned to the input data or the last
+        batch of input data if partial_fit was used.
+
+    predictor_ : instance of KNeighborsClassifier
+        KNeighborsClassifier that is fit on the subcluster centroids.
 
     Examples
     --------
@@ -335,9 +366,8 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     >>> brc = Birch(threshold=0.5, n_clusters=None)
     >>> brc.fit(X)
     Birch(branching_factor=8, n_clusters=None, threshold=0.5)
-    >>> print(brc.cluster_centers_)
-    [[ 0.  1.]
-     [ 0. -1.]]
+    >>> brc.predict(X)
+    array([0, 0, 0, 1, 1, 1])
 
     References
     ----------
@@ -350,7 +380,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
       https://code.google.com/p/jbirch/
     """
 
-    def __init__(self, threshold=1.0, branching_factor=8, n_clusters=3):
+    def __init__(self, threshold=0.5, branching_factor=8, n_clusters=3):
         self.threshold = threshold
         self.branching_factor = branching_factor
         self.n_clusters = n_clusters
@@ -370,6 +400,8 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         threshold = self.threshold
         branching_factor = self.branching_factor
 
+        if branching_factor <= 1:
+            raise ValueError("Branching_factor should be greater than one.")
         n_samples, n_features = X.shape
         # If partial_fit is called for the first time or if fit is called,
         # we need to initialize the root.
@@ -433,54 +465,48 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
                 self.root_.update(new_subcluster1)
                 self.root_.update(new_subcluster2)
 
-        # To get labels_ and centroids_
-        leaves = self.get_leaves()
-        centroids = list()
-        weights = list()
-        for leaf in leaves:
-            centroids.append(leaf.centroids_)
-            for sf in leaf.subclusters_:
-                weights.append(sf.n_)
-
-        # Weights assigned to each centroid for the global clustering step.
-        centroids = np.concatenate(centroids)
-        weights = np.asarray(weights)
-
+        centroids = np.concatenate([leaf.centroids_ for leaf in self.get_leaves()])
         # Preprocessing for the global clustering.
         not_enough_centroids = False
-        if isinstance(self.n_clusters, ClusterMixin):
-            clf = self.n_clusters
+        if hasattr(self.n_clusters, 'fit_predict'):
+            global_cluster = self.n_clusters
         elif isinstance(self.n_clusters, int):
-            clf = AgglomerativeClustering(n_clusters=self.n_clusters)
+            global_cluster = AgglomerativeClustering(
+                n_clusters=self.n_clusters)
             # There is no need to perform the global clustering step.
             if len(centroids) < self.n_clusters:
                 not_enough_centroids = True
         elif self.n_clusters is not None:
             raise ValueError("n_clusters should be an instance of "
-                             "ClusterMixin or an int")            
+                             "ClusterMixin or an int")
+
+        self.subcluster_centers_ = centroids
+        self.predictor_ = KNeighborsClassifier(1)
+
+        # For KNeighborsClassifier, fit and predict should be
+        # both dense or sparse
+        if sparse.issparse(X):
+            centroids = sparse.csr_matrix(centroids)
 
         if self.n_clusters is None or not_enough_centroids:
-            self.cluster_centers_ = centroids
-            self.labels_ = self.predict(X)
+            self.subcluster_labels_ = np.arange(len(centroids))
+            self.predictor_.fit(centroids, self.subcluster_labels_)
+            self.labels_ = self.predictor_.predict(X)
             if not_enough_centroids:
                 warnings.warn(
-                    "Number of clusters %s found by Birch is lesser than "
-                    "%s. Decrease the threshold."
+                    "Number of subclusters found (%d) by Birch is less "
+                    "than (%d). Decrease the threshold."
                     % (len(centroids), self.n_clusters))
             return self
 
         # The global clustering step that clusters the subclusters of
         # the leaves. It assumes the centroids of the subclusters as
         # samples and finds the final centroids.
-        labels = clf.fit_predict(centroids)
-        n_clusters = len(np.unique(labels))
-        new_centroids = np.empty((n_clusters, X.shape[1]))
-        for i in xrange(n_clusters):
-            mask = labels == i
-            new_centroids[i] = np.average(centroids[mask], axis=0,
-                                          weights=weights[mask])
-        self.cluster_centers_ = new_centroids
-        self.labels_ = self.predict(X)
+        self.subcluster_labels_ = global_cluster.fit_predict(
+            self.subcluster_centers_)
+        self.predictor_.fit(centroids, self.subcluster_labels_)
+        self.labels_ = self.predictor_.predict(X)
+
         return self
 
     def get_leaves(self):
@@ -500,9 +526,9 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         return leaves
 
     def _check_fit(self, X):
-        if not hasattr(self, 'cluster_centers_'):
+        if not hasattr(self, 'subcluster_centers_'):
             raise ValueError("Fit training data before predicting")
-        if X.shape[1] != self.cluster_centers_.shape[1]:
+        if X.shape[1] != self.subcluster_centers_.shape[1]:
             raise ValueError(
                 "Training data and predicted data do "
                 "not have same features.")
@@ -521,14 +547,9 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         labels: ndarray, shape(n_samples)
             Labelled data.
         """
-        X = check_array(X, accept_sparse='csr')
-        self._check_fit(X)
-        X_dot_centroid = safe_sparse_dot(X, self.cluster_centers_.T)
-        X_dot_centroid *= -2
-        X_dot_centroid += np.sum(self.cluster_centers_ ** 2, axis=1)
-        return np.argmin(X_dot_centroid, axis=1)
+        return self.predictor_.predict(X)
 
-    def partial_fit(self, X):
+    def partial_fit(self, X, y=None):
         """
         Online learning. Prevents rebuilding of CFTree from scratch.
 
@@ -542,7 +563,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
 
     def transform(self, X, y=None):
         """
-        Transform X into cluster centroids dimension.
+        Transform X into subcluster centroids dimension.
 
         Each dimension represents the distance between each cluster centroid.
 
@@ -556,6 +577,6 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         X_trans: {array-like, sparse matrix}, shape (n_samples, n_clusters)
             Transformed data.
         """
-        if not hasattr(self, 'cluster_centers_'):
+        if not hasattr(self, 'subcluster_centers_'):
             raise ValueError("Fit training data before predicting")
-        return euclidean_distances(X, self.cluster_centers_)
+        return euclidean_distances(X, self.subcluster_centers_)
