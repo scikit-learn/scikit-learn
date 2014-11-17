@@ -28,7 +28,6 @@ The main theoretical result behind the efficiency of random projection is the
 # License: BSD 3 clause
 
 from __future__ import division
-import warnings
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
@@ -358,13 +357,6 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
             if self.n_components <= 0:
                 raise ValueError("n_components must be greater than 0, got %s"
                                  % self.n_components_)
-
-            elif self.n_components > n_features:
-                warnings.warn(
-                    "The number of components is higher than the number of"
-                    " features: n_features < n_components (%s < %s)."
-                    "The dimensionality of the problem will not be reduced."
-                    % (n_features, self.n_components))
 
             self.n_components_ = self.n_components
 
