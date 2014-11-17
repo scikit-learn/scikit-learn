@@ -1,5 +1,6 @@
 # cython: cdivision=True
 
+import numpy as np
 cimport numpy as np
 from libc.stdlib cimport malloc, free
 
@@ -88,7 +89,7 @@ def fast_fit(SequentialDataset dataset,
 
     free(gradient_memory)
     free(sum_gradient)
-    free(seen)
+    # free(seen)
 
     return intercept
 
@@ -118,34 +119,41 @@ def fast_fit_sparse(SequentialDataset dataset,
     # the total number of samples seen
     cdef double num_seen = 0.0
     # vector of booleans indicating whether this sample has been seen
-    cdef bint* seen = <bint*> malloc(n_samples * sizeof(bint))
+    cdef np.ndarray[bint, ndim=1] seen_array = np.zeros(n_samples,
+                                                        dtype=np.int32,
+                                                        order="c")
+    cdef bint* seen = <bint*> seen_array.data
+
     # the sum of gradients for each feature
-    cdef double* sum_gradient = <double*> malloc(n_features *
-                                                 sizeof(double))
+    cdef np.ndarray[double, ndim=1] sum_gradient_array = \
+        np.zeros(n_features,
+                 dtype=np.double,
+                 order="c")
+    cdef double* sum_gradient = <double*> sum_gradient_array.data
+
     # the previously seen gradient for each sample
-    cdef double** gradient_memory = <double**> malloc(n_samples *
-                                                      sizeof(double))
+    cdef np.ndarray[double, ndim=1] gradient_memory_array = \
+        np.zeros(n_samples,
+                 dtype=np.double,
+                 order="c")
+    cdef double* gradient_memory = <double*> gradient_memory_array.data
+
     # the cumulative sums needed for JIT params
-    cdef double* cumulative_sums = <double*> malloc((n_samples *
-                                                     n_iter + 1) *
-                                                    sizeof(double))
+    cdef np.ndarray[double, ndim=1] cumulative_sums_array = \
+        np.empty(n_samples * n_iter,
+                 dtype=np.double,
+                 order="c")
+    cdef double* cumulative_sums = <double*> cumulative_sums_array.data
+
     # the index for the last time this feature was updated
-    cdef int* feature_hist = <int*> malloc(n_features *
-                                           sizeof(int))
+    cdef np.ndarray[int, ndim=1] feature_hist_array = \
+        np.zeros(n_features,
+                 dtype=np.int32,
+                 order="c")
+    cdef int* feature_hist = <int*> feature_hist_array.data
+
     # the scalar used for multiplying z
     cdef double wscale = 1.0
-
-    for i in range(n_samples * n_iter):
-        gradient_memory[i] = <double*> malloc(n_features * sizeof(double))
-        for j in range(n_features):
-            gradient_memory[i][j] = 0.0
-
-    for i in range(n_samples):
-        seen[i] = False
-
-    for i in range(n_features):
-        sum_gradient[i] = 0.0
-        feature_hist[i] = 0
 
     cumulative_sums[0] = 0.0
 
@@ -184,10 +192,11 @@ def fast_fit_sparse(SequentialDataset dataset,
                 val = x_data_ptr[j]
                 update = val * gradient
                 sum_gradient[idx] += (update -
-                                      gradient_memory[current_index][idx])
-                gradient_memory[current_index][idx] = update
+                                      gradient_memory[current_index] * val)
 
-            # intercept -= eta * gradient
+            gradient_memory[current_index] = gradient
+
+            intercept -= eta * gradient
 
             wscale *= 1.0 - eta * alpha
             cumulative_sums[k + 1] = (cumulative_sums[k] +
@@ -200,12 +209,6 @@ def fast_fit_sparse(SequentialDataset dataset,
                                sum_gradient[j])
             weights_ptr[j] *= wscale
         wscale = 1.0
-
-    free(gradient_memory)
-    free(sum_gradient)
-    free(seen)
-    free(cumulative_sums)
-    free(feature_hist)
 
     return intercept
 

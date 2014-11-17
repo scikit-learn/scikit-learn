@@ -46,7 +46,7 @@ class BaseSAG(six.with_metaclass(ABCMeta, BaseSGD)):
         sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
         if sp.issparse(X):
             dataset = CSRDataset(X.data, X.indptr, X.indices,
-                                 y, sample_weight)
+                                 y, sample_weight, seed=self.random_state)
         else:
             dataset = ArrayDataset(X, y, sample_weight, seed=self.random_state)
 

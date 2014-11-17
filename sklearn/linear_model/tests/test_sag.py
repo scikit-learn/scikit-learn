@@ -73,7 +73,7 @@ class CommonTest(object):
             sum_gradient += update - gradient_memory[idx]
             gradient_memory[idx] = update
 
-            # intercept -= eta * gradient * decay
+            intercept -= eta * gradient * decay
             weights -= eta * sum_gradient / len(seen)
 
         return weights, intercept
@@ -120,7 +120,7 @@ class CommonTest(object):
             wscale *= (1.0 - alpha * eta)
             c_sum[counter + 1] = c_sum[counter] + eta / (wscale * len(seen))
 
-            # intercept -= eta * gradient * decay
+            intercept -= eta * gradient * decay
             counter += 1
 
         for k in range(n_features):
@@ -149,8 +149,10 @@ class DenseSAGRegressorTestCase(unittest.TestCase, CommonTest):
         # weights, intercept = self.sag(X, y, eta, alpha,
         #                               indexes=[0, 1, 1, 3, 0, 8, 6, 2, 3, 9])
 
+        indexes = [0, 1, 1, 3, 0, 8, 6, 2, 3, 9]
+
         spweights, spintercept = self.sag_sparse(X, y, eta, alpha,
-                                      indexes=[0, 1, 1, 3, 0, 8, 6, 2, 3, 9])
+                                                 indexes=indexes)
 
         assert_array_almost_equal(clf1.coef_.ravel(),
                                   spweights.ravel(),
