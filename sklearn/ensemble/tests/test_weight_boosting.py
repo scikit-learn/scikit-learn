@@ -251,7 +251,7 @@ def test_base_estimator():
     X_fail = [[1, 1], [1, 1], [1, 1], [1, 1]]
     y_fail = ["foo", "bar", 1, 2]
     clf = AdaBoostClassifier(SVC(), algorithm="SAMME")
-    assert_raises_regexp(ValueError, "worse than random",
+    assert_raises_regexp(ValueError, r".*worse than random.*",
                          clf.fit, X_fail, y_fail)
 
 
