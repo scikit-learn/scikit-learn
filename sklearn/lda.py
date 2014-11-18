@@ -386,8 +386,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         return dec_func
 
     def transform(self, X):
-        """Project data to maximize class separation (large separation between
-        projected class means and small variance within each class).
+        """Project data to maximize class separation.
 
         Parameters
         ----------
