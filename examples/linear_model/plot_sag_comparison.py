@@ -14,12 +14,11 @@ import matplotlib.pyplot as plt
 from sklearn import datasets
 
 from sklearn.cross_validation import train_test_split
-from sklearn.linear_model import (SGDClassifier, Perceptron, SAGClassifier,
+from sklearn.linear_model import (SGDClassifier, SAGClassifier,
                                   SGDRegressor, SAGRegressor)
-from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.metrics import mean_squared_error
 
-heldout = [0.95, 0.90, 0.75, 0.50, 0.01]
+heldout = [0.95, 0.90, 0.75, 0.50, 0.25, 0.10, 0.01]
 rounds = 5
 digits = datasets.load_digits()
 digits.data = digits.data[digits.target < 4]
@@ -28,18 +27,13 @@ boston = datasets.load_boston()
 
 classifiers = [
     ("SGD", SGDClassifier(eta0=.001, learning_rate="constant", n_iter=20)),
-    # ("ASGD", SGDClassifier(average=True)),
-    ("SAG", SAGClassifier(eta0=.001, n_iter=20)),
-    # ("Perceptron", Perceptron()),
-    # ("Passive-Aggressive I", PassiveAggressiveClassifier(loss='hinge',
-    #                                                      C=1.0)),
-    # ("Passive-Aggressive II", PassiveAggressiveClassifier(loss='squared_hinge',
-    #                                                       C=1.0)),
+    ("SAG", SAGClassifier(eta0=.001, n_iter=20, random_state=77)),
 ]
 
 regressors = [
-    ("SGD", SGDRegressor(eta0=.000001, loss="squared_loss", learning_rate="constant", n_iter=20)),
-    ("SAG", SAGRegressor(eta0=.000001, n_iter=20)),
+    ("SGD", SGDRegressor(eta0=.000001, loss="squared_loss",
+                         learning_rate="constant", n_iter=20)),
+    ("SAG", SAGRegressor(eta0=.000001, n_iter=20, random_state=77)),
 ]
 
 xx = 1. - np.array(heldout)
