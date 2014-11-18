@@ -1,5 +1,6 @@
 import pickle
 import unittest
+import math
 
 import numpy as np
 import scipy.sparse as sp
@@ -8,23 +9,37 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 
 
+def log_dloss(p, y):
+    z = p * y
+    # approximately equal and saves the computation of the log
+    if z > 18.0:
+        return math.exp(-z) * -y
+    if z < -18.0:
+        return -y
+    return -y / (math.exp(z) + 1.0)
+
+
+def squared_dloss(p, y):
+    return p - y
+
+
 class SparseSAGClassifier(SAGClassifier):
 
     def fit(self, X, y, *args, **kw):
         X = sp.csr_matrix(X)
-        return SAGClassifier.fit(X, y, *args, **kw)
+        return SAGClassifier.fit(self, X, y, *args, **kw)
 
     def partial_fit(self, X, y, *args, **kw):
         X = sp.csr_matrix(X)
-        return SAGClassifier.partial_fit(X, y, *args, **kw)
+        return SAGClassifier.partial_fit(self, X, y, *args, **kw)
 
     def decision_function(self, X):
         X = sp.csr_matrix(X)
-        return SAGClassifier.decision_function(X)
+        return SAGClassifier.decision_function(self, X)
 
     def predict_proba(self, X):
         X = sp.csr_matrix(X)
-        return SAGClassifier.predict_proba(X)
+        return SAGClassifier.predict_proba(self, X)
 
 
 class SparseSAGRegressor(SAGRegressor):
@@ -44,41 +59,43 @@ class SparseSAGRegressor(SAGRegressor):
 
 class CommonTest(object):
 
-    def sag(self, X, y, eta, alpha, intercept_init=0.0, indexes=None):
-        n_samples, n_features = X.shape[0], X.shape[1]
+    # def sag(self, X, y, eta, alpha, intercept_init=0.0,
+    #         indexes=None, dloss=None):
+    #     n_samples, n_features = X.shape[0], X.shape[1]
 
-        weights = np.zeros(X.shape[1])
-        sum_gradient = np.zeros(X.shape[1])
-        gradient_memory = np.zeros((n_samples, n_features))
-        intercept = intercept_init
-        rng = np.random.RandomState(77)
-        decay = 1.0
-        seen = set()
-        if indexes is None:
-            indexes = range(n_samples)
+    #     weights = np.zeros(X.shape[1])
+    #     sum_gradient = np.zeros(X.shape[1])
+    #     gradient_memory = np.zeros((n_samples, n_features))
+    #     intercept = intercept_init
+    #     rng = np.random.RandomState(77)
+    #     decay = 1.0
+    #     seen = set()
+    #     if indexes is None:
+    #         indexes = range(n_samples)
 
-        # sparse data has a fixed decay of .01
-        # if (isinstance(self, SparseSGDClassifierTestCase) or
-        #         isinstance(self, SparseSGDRegressorTestCase)):
-        #     decay = .01
+    #     # sparse data has a fixed decay of .01
+    #     # if (isinstance(self, SparseSGDClassifierTestCase) or
+    #     #         isinstance(self, SparseSGDRegressorTestCase)):
+    #     #     decay = .01
 
-        for i in indexes:
-            # idx = int(rng.rand(1) * n_samples)
-            idx = i
-            entry = X[idx]
-            seen.add(idx)
-            p = np.dot(entry, weights) + intercept
-            gradient = p - y[idx]
-            update = entry * gradient + alpha * weights
-            sum_gradient += update - gradient_memory[idx]
-            gradient_memory[idx] = update
+    #     for i in indexes:
+    #         # idx = int(rng.rand(1) * n_samples)
+    #         idx = i
+    #         entry = X[idx]
+    #         seen.add(idx)
+    #         p = np.dot(entry, weights) + intercept
+    #         gradient = dloss(p, y[idx])
+    #         update = entry * gradient + alpha * weights
+    #         sum_gradient += update - gradient_memory[idx]
+    #         gradient_memory[idx] = update
 
-            intercept -= eta * gradient * decay
-            weights -= eta * sum_gradient / len(seen)
+    #         intercept -= eta * gradient * decay
+    #         weights -= eta * sum_gradient / len(seen)
 
-        return weights, intercept
+    #     return weights, intercept
 
-    def sag_sparse(self, X, y, eta, alpha, intercept_init=0.0, indexes=None):
+    def sag_sparse(self, X, y, eta, alpha, intercept_init=0.0,
+                   indexes=None, dloss=None):
         n_samples, n_features = X.shape[0], X.shape[1]
 
         weights = np.zeros(n_features)
@@ -111,7 +128,7 @@ class CommonTest(object):
                 last_updated[j] = counter
 
             p = (wscale * np.dot(entry, weights)) + intercept
-            gradient = p - y[idx]
+            gradient = dloss(p, y[idx])
 
             update = entry * gradient
             sum_gradient += update - gradient_memory[idx]
@@ -146,48 +163,96 @@ class DenseSAGRegressorTestCase(unittest.TestCase, CommonTest):
         y = np.dot(X, w)
 
         clf1.fit(X, y)
-        # weights, intercept = self.sag(X, y, eta, alpha,
-        #                               indexes=[0, 1, 1, 3, 0, 8, 6, 2, 3, 9])
 
         indexes = [0, 1, 1, 3, 0, 8, 6, 2, 3, 9]
 
         spweights, spintercept = self.sag_sparse(X, y, eta, alpha,
-                                                 indexes=indexes)
+                                                 indexes=indexes,
+                                                 dloss=squared_dloss)
 
         assert_array_almost_equal(clf1.coef_.ravel(),
                                   spweights.ravel(),
                                   decimal=14)
         assert_almost_equal(clf1.intercept_, spintercept, decimal=14)
 
-    # def test_sag_binary_computed_correctly(self):
-    #     eta = .1
-    #     alpha = 0.1
-    #     n_samples = 20
-    #     n_features = 10
-    #     rng = np.random.RandomState(0)
-    #     X = rng.normal(size=(n_samples, n_features))
-    #     w = rng.normal(size=n_features)
-
-    #     clf = self.factory(loss='squared_loss',
-    #                        learning_rate='constant',
-    #                        eta0=eta, alpha=alpha,
-    #                        fit_intercept=True,
-    #                        n_iter=1, sag=True)
-
-    #     # simple linear function without noise
-    #     y = np.dot(X, w)
-    #     y = np.sign(y)
-
-    #     clf.fit(X, y)
-
-    #     sag_weights, sag_intercept = self.sag(X, y, eta, alpha)
-    #     sag_weights = sag_weights.reshape(1, -1)
-    #     assert_array_almost_equal(clf.coef_,
-    #                               sag_weights,
-    #                               decimal=14)
-    #     assert_almost_equal(clf.intercept_, sag_intercept, decimal=14)
 
 class SparseSAGRegressorTestCase(DenseSAGRegressorTestCase):
     """Run exactly the same tests using the sparse representation variant"""
 
     factory = SparseSAGRegressor
+
+
+class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
+    factory = SAGClassifier
+
+    def test_sag_computed_correctly(self):
+        eta = .2
+        alpha = .1
+        n_features = 20
+        n_samples = 10
+        clf1 = self.factory(learning_rate="constant", eta0=eta,
+                            alpha=alpha, n_iter=1, random_state=77)
+        rng = np.random.RandomState(0)
+        X = rng.normal(size=(n_samples, n_features))
+        w = rng.normal(size=n_features)
+        y = np.dot(X, w)
+        y = np.sign(y)
+
+        clf1.fit(X, y)
+
+        indexes = [0, 1, 1, 3, 0, 8, 6, 2, 3, 9]
+
+        spweights, spintercept = self.sag_sparse(X, y, eta, alpha,
+                                                 indexes=indexes,
+                                                 dloss=log_dloss)
+
+        assert_array_almost_equal(clf1.coef_.ravel(),
+                                  spweights.ravel(),
+                                  decimal=14)
+        assert_almost_equal(clf1.intercept_, spintercept, decimal=14)
+
+    def test_sag_multiclass_computed_correctly(self):
+        eta = .2
+        alpha = .1
+        n_features = 20
+        n_samples = 10
+        clf1 = self.factory(learning_rate="constant", eta0=eta,
+                            alpha=alpha, n_iter=1, random_state=77)
+        rng = np.random.RandomState(0)
+        X = rng.normal(size=(n_samples, n_features))
+        w = rng.normal(size=n_features)
+        y = np.dot(X, w)
+        y = np.sign(y)
+        y[2] = 2
+        classes = np.unique(y)
+
+        clf1.fit(X, y)
+
+        indexes = [0, 1, 1, 3, 0, 8, 6, 2, 3, 9]
+
+        coef = []
+        intercept = []
+        for cl in classes:
+            y_encoded = np.ones(n_samples)
+            y_encoded[y != cl] = -1
+
+            spweights, spintercept = self.sag_sparse(X, y_encoded, eta, alpha,
+                                                     indexes=indexes,
+                                                     dloss=log_dloss)
+            coef.append(spweights)
+            intercept.append(spintercept)
+
+        coef = np.vstack(coef)
+        intercept = np.array(intercept)
+
+        for i, cl in enumerate(classes):
+            assert_array_almost_equal(clf1.coef_[i].ravel(),
+                                      coef[i].ravel(),
+                                      decimal=14)
+            assert_almost_equal(clf1.intercept_[i], intercept[i], decimal=14)
+
+
+class SparseSAGClassifierTestCase(DenseSAGClassifierTestCase):
+    """Run exactly the same tests using the sparse representation variant"""
+
+    factory = SparseSAGClassifier

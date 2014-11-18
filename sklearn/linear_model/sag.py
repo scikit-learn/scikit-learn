@@ -11,7 +11,7 @@ from ..utils import check_random_state
 from ..externals import six
 from .sgd_fast import Log, SquaredLoss
 from ..externals.joblib import Parallel, delayed
-from .sag_fast import fast_fit, fast_fit_sparse
+from .sag_fast import fast_fit_sparse
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
 
 

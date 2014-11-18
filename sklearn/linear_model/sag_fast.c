@@ -1026,6 +1026,8 @@ static CYTHON_INLINE PyObject* __Pyx_PyInt_From_int(int value);
   #define __PYX_FORCE_INIT_THREADS 0
 #endif
 
+static CYTHON_INLINE PyObject* __Pyx_PyInt_From_long(long value);
+
 #if CYTHON_CCOMPLEX
   #ifdef __cplusplus
     #define __Pyx_CREAL(z) ((z).real())
@@ -1123,8 +1125,6 @@ static CYTHON_INLINE __pyx_t_double_complex __pyx_t_double_complex_from_parts(do
         static CYTHON_INLINE __pyx_t_double_complex __Pyx_c_pow(__pyx_t_double_complex, __pyx_t_double_complex);
     #endif
 #endif
-
-static CYTHON_INLINE PyObject* __Pyx_PyInt_From_long(long value);
 
 static CYTHON_INLINE long __Pyx_PyInt_As_long(PyObject *);
 
@@ -1919,7 +1919,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_8sag_fast_fast_fit(CYTHON_UNUS
  * 
  *             intercept -= eta * gradient             # <<<<<<<<<<<<<<
  * 
- *     free(gradient_memory)
+ *     # free(gradient_memory)
  */
           __pyx_v_intercept = (__pyx_v_intercept - (__pyx_v_eta * __pyx_v_gradient));
         }
@@ -1942,24 +1942,6 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_8sag_fast_fast_fit(CYTHON_UNUS
         __pyx_L13:;
       }
   }
-
-  /* "sklearn/linear_model/sag_fast.pyx":90
- *             intercept -= eta * gradient
- * 
- *     free(gradient_memory)             # <<<<<<<<<<<<<<
- *     free(sum_gradient)
- *     # free(seen)
- */
-  free(__pyx_v_gradient_memory);
-
-  /* "sklearn/linear_model/sag_fast.pyx":91
- * 
- *     free(gradient_memory)
- *     free(sum_gradient)             # <<<<<<<<<<<<<<
- *     # free(seen)
- * 
- */
-  free(__pyx_v_sum_gradient);
 
   /* "sklearn/linear_model/sag_fast.pyx":94
  *     # free(seen)
@@ -2475,7 +2457,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_8sag_fast_2fast_fit_sparse(CYT
   /* "sklearn/linear_model/sag_fast.pyx":143
  *     # the cumulative sums needed for JIT params
  *     cdef np.ndarray[double, ndim=1] cumulative_sums_array = \
- *         np.empty(n_samples * n_iter,             # <<<<<<<<<<<<<<
+ *         np.empty(n_samples * n_iter + 1,             # <<<<<<<<<<<<<<
  *                  dtype=np.double,
  *                  order="c")
  */
@@ -2484,7 +2466,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_8sag_fast_2fast_fit_sparse(CYT
   __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_empty); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 143; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyInt_From_int((__pyx_v_n_samples * __pyx_v_n_iter)); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 143; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_PyInt_From_long(((__pyx_v_n_samples * __pyx_v_n_iter) + 1)); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 143; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
   __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 143; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
@@ -2496,7 +2478,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_8sag_fast_2fast_fit_sparse(CYT
 
   /* "sklearn/linear_model/sag_fast.pyx":144
  *     cdef np.ndarray[double, ndim=1] cumulative_sums_array = \
- *         np.empty(n_samples * n_iter,
+ *         np.empty(n_samples * n_iter + 1,
  *                  dtype=np.double,             # <<<<<<<<<<<<<<
  *                  order="c")
  *     cdef double* cumulative_sums = <double*> cumulative_sums_array.data
@@ -2513,7 +2495,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_8sag_fast_2fast_fit_sparse(CYT
   /* "sklearn/linear_model/sag_fast.pyx":143
  *     # the cumulative sums needed for JIT params
  *     cdef np.ndarray[double, ndim=1] cumulative_sums_array = \
- *         np.empty(n_samples * n_iter,             # <<<<<<<<<<<<<<
+ *         np.empty(n_samples * n_iter + 1,             # <<<<<<<<<<<<<<
  *                  dtype=np.double,
  *                  order="c")
  */
@@ -5413,7 +5395,7 @@ PyMODINIT_FUNC PyInit_sag_fast(void)
  * 
  * import numpy as np             # <<<<<<<<<<<<<<
  * cimport numpy as np
- * from libc.stdlib cimport malloc, free
+ * from libc.stdlib cimport malloc
  */
   __pyx_t_1 = __Pyx_Import(__pyx_n_s_numpy, 0, -1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 3; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
@@ -6891,6 +6873,32 @@ static CYTHON_INLINE PyObject* __Pyx_PyInt_From_int(int value) {
     }
 }
 
+static CYTHON_INLINE PyObject* __Pyx_PyInt_From_long(long value) {
+    const long neg_one = (long) -1, const_zero = 0;
+    const int is_unsigned = neg_one > const_zero;
+    if (is_unsigned) {
+        if (sizeof(long) < sizeof(long)) {
+            return PyInt_FromLong((long) value);
+        } else if (sizeof(long) <= sizeof(unsigned long)) {
+            return PyLong_FromUnsignedLong((unsigned long) value);
+        } else if (sizeof(long) <= sizeof(unsigned long long)) {
+            return PyLong_FromUnsignedLongLong((unsigned long long) value);
+        }
+    } else {
+        if (sizeof(long) <= sizeof(long)) {
+            return PyInt_FromLong((long) value);
+        } else if (sizeof(long) <= sizeof(long long)) {
+            return PyLong_FromLongLong((long long) value);
+        }
+    }
+    {
+        int one = 1; int little = (int)*(unsigned char *)&one;
+        unsigned char *bytes = (unsigned char *)&value;
+        return _PyLong_FromByteArray(bytes, sizeof(long),
+                                     little, !is_unsigned);
+    }
+}
+
 #if CYTHON_CCOMPLEX
   #ifdef __cplusplus
     static CYTHON_INLINE __pyx_t_float_complex __pyx_t_float_complex_from_parts(float x, float y) {
@@ -7130,32 +7138,6 @@ static CYTHON_INLINE PyObject* __Pyx_PyInt_From_int(int value) {
         }
     #endif
 #endif
-
-static CYTHON_INLINE PyObject* __Pyx_PyInt_From_long(long value) {
-    const long neg_one = (long) -1, const_zero = 0;
-    const int is_unsigned = neg_one > const_zero;
-    if (is_unsigned) {
-        if (sizeof(long) < sizeof(long)) {
-            return PyInt_FromLong((long) value);
-        } else if (sizeof(long) <= sizeof(unsigned long)) {
-            return PyLong_FromUnsignedLong((unsigned long) value);
-        } else if (sizeof(long) <= sizeof(unsigned long long)) {
-            return PyLong_FromUnsignedLongLong((unsigned long long) value);
-        }
-    } else {
-        if (sizeof(long) <= sizeof(long)) {
-            return PyInt_FromLong((long) value);
-        } else if (sizeof(long) <= sizeof(long long)) {
-            return PyLong_FromLongLong((long long) value);
-        }
-    }
-    {
-        int one = 1; int little = (int)*(unsigned char *)&one;
-        unsigned char *bytes = (unsigned char *)&value;
-        return _PyLong_FromByteArray(bytes, sizeof(long),
-                                     little, !is_unsigned);
-    }
-}
 
 static CYTHON_INLINE long __Pyx_PyInt_As_long(PyObject *x) {
     const long neg_one = (long) -1, const_zero = 0;
