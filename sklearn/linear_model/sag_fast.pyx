@@ -213,6 +213,33 @@ def fast_fit_sparse(SequentialDataset dataset,
     return intercept
 
 
+def get_auto_eta(SequentialDataset dataset, double alpha, int n_samples):
+    cdef double *x_data_ptr
+    cdef int *x_ind_ptr
+    cdef double y
+    cdef double sample_weight
+    cdef int xnnz
+    cdef double max_squared_sum = 0.0
+    cdef double current_squared_sum = 0.0
+
+    with nogil:
+        for i in range(n_samples):
+            dataset.next(&x_data_ptr,
+                         &x_ind_ptr,
+                         &xnnz,
+                         &y,
+                         &sample_weight)
+            for j in range(xnnz):
+                val = x_data_ptr[j]
+                current_squared_sum += val * val
+
+            if current_squared_sum > max_squared_sum:
+                max_squared_sum = current_squared_sum
+            current_squared_sum = 0.0
+
+    return 1.0 / (4.0 * max_squared_sum)
+
+
 cdef double dot(double* x_data_ptr, int* x_ind_ptr, double* w_data_ptr,
                 int xnnz) nogil:
         cdef int j

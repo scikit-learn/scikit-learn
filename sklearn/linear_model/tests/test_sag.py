@@ -94,21 +94,21 @@ class CommonTest(object):
 
     #     return weights, intercept
 
-    def sag_sparse(self, X, y, eta, alpha, intercept_init=0.0,
+    def sag_sparse(self, X, y, eta, alpha, intercept_init=0.0, n_iter=1,
                    indexes=None, dloss=None):
         n_samples, n_features = X.shape[0], X.shape[1]
 
         weights = np.zeros(n_features)
         sum_gradient = np.zeros(n_features)
         last_updated = np.zeros(n_features, dtype=np.int)
-        c_sum = np.zeros(n_samples + 1)
         gradient_memory = np.zeros((n_samples, n_features))
         intercept = intercept_init
         wscale = 1.0
         decay = 1.0
         seen = set()
         if indexes is None:
-            indexes = range(n_samples)
+            indexes = np.tile(np.arange(n_samples), n_iter)
+        c_sum = np.zeros(len(indexes) + 1)
 
         # sparse data has a fixed decay of .01
         # if (isinstance(self, SparseSGDClassifierTestCase) or
@@ -165,6 +165,27 @@ class DenseSAGRegressorTestCase(unittest.TestCase, CommonTest):
 
         indexes = [0, 1, 1, 3, 0, 8, 6, 2, 3, 9]
 
+        spweights, spintercept = self.sag_sparse(X, y, eta, alpha,
+                                                 indexes=indexes,
+                                                 dloss=squared_dloss)
+
+        assert_array_almost_equal(clf1.coef_.ravel(),
+                                  spweights.ravel(),
+                                  decimal=14)
+        assert_almost_equal(clf1.intercept_, spintercept, decimal=14)
+
+    def test_auto_eta(self):
+        indexes = [0, 0, 0, 0, 0, 2]
+        X = np.array([[1, 2, 3], [2, 3, 4], [2, 3, 2]])
+        y = [.5, .6, .7]
+        alpha = .1
+        # sum the squares of the second sample because that's the largest
+        eta = 4 + 9 + 16
+        eta = 1 / (4 * eta)
+
+        clf1 = self.factory(eta0='auto', alpha=alpha,
+                            n_iter=2, random_state=77)
+        clf1.fit(X, y)
         spweights, spintercept = self.sag_sparse(X, y, eta, alpha,
                                                  indexes=indexes,
                                                  dloss=squared_dloss)

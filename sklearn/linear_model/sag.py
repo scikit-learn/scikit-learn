@@ -7,11 +7,11 @@ from .stochastic_gradient import BaseSGD
 from .base import LinearClassifierMixin, LinearModel
 from ..base import RegressorMixin
 from sklearn.feature_selection.from_model import _LearntSelectorMixin
-from ..utils import check_random_state
+from ..utils import (check_array, check_random_state, check_X_y)
 from ..externals import six
 from .sgd_fast import Log, SquaredLoss
 from ..externals.joblib import Parallel, delayed
-from .sag_fast import fast_fit_sparse
+from .sag_fast import fast_fit_sparse, get_auto_eta
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
 
 
@@ -46,6 +46,10 @@ class BaseSAG(six.with_metaclass(ABCMeta, BaseSGD)):
         else:
             dataset = ArrayDataset(X, y, sample_weight, seed=self.random_state)
 
+        if self.eta0 == 'auto':
+            step_size = get_auto_eta(dataset, self.alpha, n_samples)
+        else:
+            step_size = self.eta0
         coef_ = np.zeros(n_features, dtype=np.float64, order='C')
         loss_function = self._get_loss_function(self.loss)
 
@@ -54,8 +58,12 @@ class BaseSAG(six.with_metaclass(ABCMeta, BaseSGD)):
         #                       self.eta0, self.alpha)
         intercept_ = fast_fit_sparse(dataset, coef_, n_samples, n_features,
                                      self.n_iter, loss_function,
-                                     self.eta0, self.alpha)
+                                     step_size, self.alpha)
         return coef_.reshape(1, -1), intercept_
+
+    def _get_auto_eta(self, X, alpha):
+        print(np.square(X))
+        return 1.0 / (4 * np.max(np.square(X).sum(axis=1)))
 
 
 class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG,
@@ -77,7 +85,7 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG,
 
     def _fit(self, X, y, coef_init=None, intercept_init=None,
              sample_weight=None):
-
+        X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
         n_samples, n_features = X.shape[0], X.shape[1]
         self.classes_ = np.unique(y)
 
@@ -155,6 +163,7 @@ class BaseSAGRegressor(six.with_metaclass(ABCMeta, BaseSAG,
 
     def _fit(self, X, y, coef_init=None, intercept_init=None,
              sample_weight=None):
+        X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
         self.coef_, self.intercept_ = \
             super(BaseSAGRegressor, self)._fit(X, y,
                                                coef_init=None,
