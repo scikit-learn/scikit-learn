@@ -70,10 +70,10 @@ except ImportError:
         assert_false(x in container, msg="%r in %r" % (x, container))
 
 try:
-    from nose.tools import assert_raises_regexp
+    from nose.tools import assert_raises_regex
 except ImportError:
     # for Py 2.6
-    def assert_raises_regexp(expected_exception, expected_regexp,
+    def assert_raises_regex(expected_exception, expected_regexp,
                              callable_obj=None, *args, **kwargs):
         """Helper function to check for message patterns in exceptions"""
 
@@ -83,13 +83,18 @@ except ImportError:
             not_raised = True
         except Exception as e:
             error_message = str(e)
-            if not re.compile(expected_regexp).match(error_message):
+            if not re.compile(expected_regexp).search(error_message):
                 raise AssertionError("Error message should match pattern "
                                      "%r. %r does not." %
                                      (expected_regexp, error_message))
         if not_raised:
             raise AssertionError("Should have raised %r" %
                                  expected_exception(expected_regexp))
+
+# assert_raises_regexp is deprecated in Python 3.4 in favor of
+# assert_raises_regex but lets keep the bacward compat in scikit-learn with
+# the old name for now
+assert_raises_regexp = assert_raises_regex
 
 
 def _assert_less(a, b, msg=None):
