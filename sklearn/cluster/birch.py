@@ -13,7 +13,7 @@ from ..base import TransformerMixin, ClusterMixin, BaseEstimator
 from ..externals.six.moves import xrange
 from ..neighbors import KNeighborsClassifier
 from ..utils import check_array
-from ..utils.extmath import safe_sparse_dot, norm
+from ..utils.extmath import safe_sparse_dot
 from .hierarchical import AgglomerativeClustering
 
 def _iterate_X(X):
@@ -167,7 +167,7 @@ class _CFNode(object):
         self.n_ -= 1
         self.update(newsubcluster1)
         self.update(newsubcluster2)
-    #@profile
+
     def insert_cf_subcluster(self, subcluster):
         """
         Insert a new subcluster into the node
@@ -193,7 +193,7 @@ class _CFNode(object):
             if not split_child:
                 # If it is determined that the child need not be split, we
                 # can just update the closest_subcluster
-                self.subclusters_[closest_index].update(subcluster)
+                closest_subcluster.update(subcluster)
                 self.init_centroids_[closest_index] = \
                     self.subclusters_[closest_index].centroid_
                 self.init_sq_norm_[closest_index] = \
@@ -212,14 +212,13 @@ class _CFNode(object):
 
         # good to go!
         else:
-            closest_threshold = closest_subcluster.get_threshold(subcluster)
-            if closest_threshold <= self.threshold:
-
-                self.subclusters_[closest_index].update(subcluster)
+            should_merge = closest_subcluster.merge_subcluster(
+                subcluster, self.threshold)
+            if should_merge:
                 self.init_centroids_[closest_index] = \
-                    self.subclusters_[closest_index].centroid_
+                    closest_subcluster.centroid_
                 self.init_sq_norm_[closest_index] = \
-                    self.subclusters_[closest_index].sq_norm_
+                    closest_subcluster.sq_norm_
                 return False
 
             # not close to any other subclusters, and we still have space, so add.
@@ -292,15 +291,21 @@ class _CFSubcluster(object):
         self.centroid_ = self.ls_ / self.n_
         self.sq_norm_ = np.dot(self.centroid_, self.centroid_)
 
-    def get_threshold(self, nominee_cluster):
-        """Check if a cluster is worthy enough to be merged"""
+    def merge_subcluster(self, nominee_cluster, threshold):
+        """Check if a cluster is worthy enough to be merged. If
+           yes than merge."""
         new_ss = self.ss_ + nominee_cluster.ss_
         new_ls = self.ls_ + nominee_cluster.ls_
         new_n = self.n_ + nominee_cluster.n_
         new_centroid = new_ls / new_n
         dot_product = -2 * np.dot(new_ls, new_centroid)
         new_norm = np.dot(new_centroid, new_centroid)
-        return sqrt(((new_ss + dot_product) / new_n) + new_norm)
+        new_radius = (new_ss + dot_product) / new_n + new_norm
+        if new_radius <= threshold ** 2:
+            self.n_, self.ls_, self.ss_, self.centroid_, self.sq_norm_ =  (
+                new_n, new_ls, new_ss, new_centroid, new_norm)
+            return True
+        return False
 
     def radius(self):
         """Return radius of the subcluster"""
@@ -480,13 +485,10 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
             raise ValueError("n_clusters should be an instance of "
                              "ClusterMixin or an int")
 
+        # We use algorithm='brute', so that we can handle both sparse
+        # and dense data.
         self.subcluster_centers_ = centroids
-        self.predictor_ = KNeighborsClassifier(1)
-
-        # For KNeighborsClassifier, fit and predict should be
-        # both dense or sparse
-        if sparse.issparse(X):
-            centroids = sparse.csr_matrix(centroids)
+        self.predictor_ = KNeighborsClassifier(1, algorithm='brute')
 
         if self.n_clusters is None or not_enough_centroids:
             self.subcluster_labels_ = np.arange(len(centroids))
