@@ -155,8 +155,7 @@ class DenseSAGRegressorTestCase(unittest.TestCase, CommonTest):
         alpha = .1
         n_features = 20
         n_samples = 10
-        clf1 = self.factory(learning_rate="constant", eta0=eta,
-                            alpha=alpha, n_iter=1, random_state=77)
+        clf1 = self.factory(eta0=eta, alpha=alpha, n_iter=1, random_state=77)
         rng = np.random.RandomState(0)
         X = rng.normal(size=(n_samples, n_features))
         w = rng.normal(size=n_features)
@@ -190,8 +189,7 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
         alpha = .1
         n_features = 20
         n_samples = 10
-        clf1 = self.factory(learning_rate="constant", eta0=eta,
-                            alpha=alpha, n_iter=1, random_state=77)
+        clf1 = self.factory(eta0=eta, alpha=alpha, n_iter=1, random_state=77)
         rng = np.random.RandomState(0)
         X = rng.normal(size=(n_samples, n_features))
         w = rng.normal(size=n_features)
@@ -216,8 +214,7 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
         alpha = .1
         n_features = 20
         n_samples = 10
-        clf1 = self.factory(learning_rate="constant", eta0=eta,
-                            alpha=alpha, n_iter=1, random_state=77)
+        clf1 = self.factory(eta0=eta, alpha=alpha, n_iter=1, random_state=77)
         rng = np.random.RandomState(0)
         X = rng.normal(size=(n_samples, n_features))
         w = rng.normal(size=n_features)

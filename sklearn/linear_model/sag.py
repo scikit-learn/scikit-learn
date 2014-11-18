@@ -16,25 +16,21 @@ from ..utils.seq_dataset import ArrayDataset, CSRDataset
 
 
 class BaseSAG(six.with_metaclass(ABCMeta, BaseSGD)):
-    def __init__(self, loss=None, penalty='l2', alpha=0.0001, l1_ratio=0.0,
-                 fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
-                 epsilon=.1, n_jobs=1, random_state=None,
-                 learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 class_weight=None, warm_start=False):
+    def __init__(self, loss=None, alpha=0.0001,
+                 fit_intercept=True, n_iter=5, verbose=0,
+                 n_jobs=1, random_state=None,
+                 eta0=0.0, class_weight=None, warm_start=False):
 
         self.gradient_memory = None
 
-        super(BaseSAG, self).__init__(loss=loss, penalty=penalty,
-                                      alpha=alpha, l1_ratio=l1_ratio,
+        super(BaseSAG, self).__init__(loss=loss,
+                                      alpha=alpha,
                                       fit_intercept=fit_intercept,
-                                      n_iter=n_iter, shuffle=shuffle,
+                                      n_iter=n_iter,
                                       verbose=verbose,
-                                      epsilon=epsilon,
                                       random_state=random_state,
-                                      learning_rate=learning_rate,
-                                      eta0=eta0, power_t=power_t,
-                                      warm_start=warm_start,
-                                      average=False)
+                                      eta0=eta0,
+                                      warm_start=warm_start)
 
     def partial_fit(self, X, y, sample_weight=None):
         raise ValueError("partial fit not supported for SAG")
@@ -64,23 +60,19 @@ class BaseSAG(six.with_metaclass(ABCMeta, BaseSGD)):
 
 class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG,
                                            LinearClassifierMixin)):
-    def __init__(self, penalty='l2', alpha=0.0001,
-                 fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
-                 epsilon=.1, n_jobs=1, random_state=None,
-                 learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 class_weight=None, warm_start=False):
+    def __init__(self, alpha=0.0001,
+                 fit_intercept=True, n_iter=5, verbose=0,
+                 n_jobs=1, random_state=None,
+                 eta0=0.0, class_weight=None, warm_start=False):
         self.n_jobs = n_jobs
         self.loss_functions = {"log": (Log, )}
-        super(BaseSAGClassifier, self).__init__(penalty=penalty,
-                                                loss="log",
+        super(BaseSAGClassifier, self).__init__(loss="log",
                                                 alpha=alpha,
                                                 fit_intercept=fit_intercept,
-                                                n_iter=n_iter, shuffle=shuffle,
+                                                n_iter=n_iter,
                                                 verbose=verbose,
-                                                epsilon=epsilon,
                                                 random_state=random_state,
-                                                learning_rate=learning_rate,
-                                                eta0=eta0, power_t=power_t,
+                                                eta0=eta0,
                                                 warm_start=warm_start)
 
     def _fit(self, X, y, coef_init=None, intercept_init=None,
@@ -124,22 +116,17 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG,
 
 
 class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin):
-    def __init__(self, penalty='l2', alpha=0.0001,
-                 fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
-                 epsilon=.1, n_jobs=1, random_state=None,
-                 learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 class_weight=None, warm_start=False):
+    def __init__(self, alpha=0.0001, fit_intercept=True, n_iter=5,
+                 verbose=0, n_jobs=1, random_state=None,
+                 eta0=0.0, class_weight=None, warm_start=False):
 
-        super(SAGClassifier, self).__init__(penalty=penalty,
-                                            alpha=alpha,
+        super(SAGClassifier, self).__init__(alpha=alpha,
                                             fit_intercept=fit_intercept,
-                                            n_iter=n_iter, shuffle=shuffle,
+                                            n_iter=n_iter,
                                             verbose=verbose,
                                             n_jobs=n_jobs,
-                                            epsilon=epsilon,
                                             random_state=random_state,
-                                            learning_rate=learning_rate,
-                                            eta0=eta0, power_t=power_t,
+                                            eta0=eta0,
                                             warm_start=warm_start)
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
@@ -151,23 +138,19 @@ class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin):
 
 class BaseSAGRegressor(six.with_metaclass(ABCMeta, BaseSAG,
                                           LinearModel, RegressorMixin)):
-    def __init__(self, penalty='l2', alpha=0.0001,
+    def __init__(self, alpha=0.0001,
                  fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
-                 epsilon=.1, n_jobs=1, random_state=None,
-                 learning_rate="optimal", eta0=0.001, power_t=0.5,
-                 class_weight=None, warm_start=False):
+                 n_jobs=1, random_state=None,
+                 eta0=0.001, class_weight=None, warm_start=False):
 
         self.loss_functions = {"squared_loss": (SquaredLoss, )}
-        super(BaseSAGRegressor, self).__init__(penalty=penalty,
-                                               alpha=alpha,
+        super(BaseSAGRegressor, self).__init__(alpha=alpha,
                                                loss="squared_loss",
                                                fit_intercept=fit_intercept,
-                                               n_iter=n_iter, shuffle=shuffle,
+                                               n_iter=n_iter,
                                                verbose=verbose,
-                                               epsilon=epsilon,
                                                random_state=random_state,
-                                               learning_rate=learning_rate,
-                                               eta0=eta0, power_t=power_t,
+                                               eta0=eta0,
                                                warm_start=warm_start)
 
     def _fit(self, X, y, coef_init=None, intercept_init=None,
@@ -184,30 +167,17 @@ class SAGRegressor(BaseSAGRegressor, _LearntSelectorMixin):
 
     SAG stands for Stochastic Average Gradient: the gradient of the loss is
     estimated each sample at a time and the model is updated along the way with
-    a decreasing strength schedule (aka learning rate).
+    a constant learning rate.
 
     The regularizer is a penalty added to the loss function that shrinks model
-    parameters towards the zero vector using either the squared euclidean norm
-    L2 or the absolute norm L1 or a combination of both (Elastic Net). If the
-    parameter update crosses the 0.0 value because of the regularizer, the
-    update is truncated to 0.0 to allow for learning sparse models and achieve
-    online feature selection.
+    parameters towards the zero vector using the squared euclidean norm
+    L2.
 
-    This implementation works with data represented as dense numpy arrays of
-    floating point values for the features.
+    This implementation works with data represented as dense or sparse numpy
+    arrays of floating point values for the features.
 
     Parameters
     ----------
-    loss : str, 'squared_loss', 'huber', 'epsilon_insensitive', \
-                or 'squared_epsilon_insensitive'
-        The loss function to be used. Defaults to 'squared_loss' which refers
-        to the ordinary least squares fit. 'huber' modifies 'squared_loss' to
-        focus less on getting outliers correct by switching from squared to
-        linear loss past a distance of epsilon. 'epsilon_insensitive' ignores
-        errors less than epsilon and is linear past that; this is the loss
-        function used in SVR. 'squared_epsilon_insensitive' is the same but
-        becomes squared loss past a tolerance of epsilon.
-
     alpha : float
         Constant that multiplies the regularization term. Defaults to 0.0001
 
@@ -222,20 +192,6 @@ class SAGRegressor(BaseSAGRegressor, _LearntSelectorMixin):
 
     verbose: integer, optional
         The verbosity level.
-
-    epsilon: float
-        Epsilon in the epsilon-insensitive loss functions; only if `loss` is
-        'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'.
-        For 'huber', determines the threshold at which it becomes less
-        important to get the prediction exactly right.
-        For epsilon-insensitive, any differences between the current prediction
-        and the correct label are ignored if they are less than this threshold.
-
-    learning_rate : string, optional
-        The learning rate:
-        constant: eta = eta0
-        optimal: eta = 1.0/(alpha * t)
-        invscaling: eta = eta0 / pow(t, power_t) [default]
 
     eta0 : double, optional
         The initial learning rate [default 0.01].
@@ -266,32 +222,25 @@ class SAGRegressor(BaseSAGRegressor, _LearntSelectorMixin):
     >>> clf = linear_model.SAGRegressor()
     >>> clf.fit(X, y)
     ... #doctest: +NORMALIZE_WHITESPACE
-    SAGRegressor(alpha=0.0001, epsilon=0.1, eta0=0.01,
-                 fit_intercept=True, l1_ratio=0.15, learning_rate='invscaling',
-                 n_iter=5, power_t=0.25, random_state=None,
-                 shuffle=False, verbose=0, warm_start=False)
+    SAGRegressor(alpha=0.0001, eta0=0.01,
+                 fit_intercept=True, n_iter=5, random_state=None,
+                 verbose=0, warm_start=False)
 
     See also
     --------
     SGDRegressor, Ridge, ElasticNet, Lasso, SVR
 
     """
-    def __init__(self, penalty='l2', alpha=0.0001,
-                 fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
-                 epsilon=.1, n_jobs=1, random_state=None,
-                 learning_rate="invscaling", eta0=0.001, power_t=0.5,
-                 class_weight=None, warm_start=False):
+    def __init__(self, alpha=0.0001, fit_intercept=True, n_iter=5, verbose=0,
+                 n_jobs=1, random_state=None,
+                 eta0=0.001, class_weight=None, warm_start=False):
 
-        super(SAGRegressor, self).__init__(penalty=penalty,
-                                           alpha=alpha,
+        super(SAGRegressor, self).__init__(alpha=alpha,
                                            fit_intercept=fit_intercept,
-                                           n_iter=n_iter, shuffle=shuffle,
+                                           n_iter=n_iter,
                                            verbose=verbose,
-                                           epsilon=epsilon,
                                            random_state=random_state,
-                                           learning_rate=learning_rate,
-                                           eta0=eta0, power_t=power_t,
-                                           warm_start=warm_start)
+                                           eta0=eta0, warm_start=warm_start)
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
             sample_weight=None):
