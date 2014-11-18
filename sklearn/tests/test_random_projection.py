@@ -20,6 +20,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns
+from sklearn.utils import DataDimensionalityWarning
 
 all_sparse_random_matrix = [sparse_random_matrix]
 all_dense_random_matrix = [gaussian_random_matrix]
@@ -336,7 +337,7 @@ def test_warning_n_components_greater_than_n_features():
     data, _ = make_sparse_random_data(5, n_features, int(n_features / 4))
 
     for RandomProjection in all_RandomProjection:
-        assert_warns(UserWarning,
+        assert_warns(DataDimensionalityWarning,
                      RandomProjection(n_components=n_features + 1).fit, data)
 
 
