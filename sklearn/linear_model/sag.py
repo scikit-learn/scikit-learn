@@ -3,7 +3,6 @@ import scipy.sparse as sp
 
 from abc import ABCMeta
 
-from .stochastic_gradient import BaseSGD
 from .base import LinearClassifierMixin, LinearModel
 from ..base import RegressorMixin
 from sklearn.feature_selection.from_model import _LearntSelectorMixin
@@ -15,29 +14,28 @@ from .sag_fast import fast_fit_sparse, get_auto_eta
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
 
 
-class BaseSAG(six.with_metaclass(ABCMeta, BaseSGD)):
-    def __init__(self, loss=None, alpha=0.0001,
+class BaseSAG(six.with_metaclass(ABCMeta)):
+    def __init__(self, alpha=0.0001,
                  fit_intercept=True, n_iter=5, verbose=0,
-                 n_jobs=1, random_state=None,
-                 eta0=0.0, class_weight=None, warm_start=False):
+                 random_state=None, eta0=0.0,
+                 class_weight=None, warm_start=False):
 
         self.gradient_memory = None
-
-        super(BaseSAG, self).__init__(loss=loss,
-                                      alpha=alpha,
-                                      fit_intercept=fit_intercept,
-                                      n_iter=n_iter,
-                                      verbose=verbose,
-                                      random_state=random_state,
-                                      eta0=eta0,
-                                      warm_start=warm_start)
+        self.alpha = alpha
+        self.fit_intercept = fit_intercept
+        self.n_iter = n_iter
+        self.verbose = verbose
+        self.eta0 = eta0
+        self.random_state = random_state
+        self.class_weight = class_weight
+        self.warm_start = warm_start
 
     def partial_fit(self, X, y, sample_weight=None):
         raise ValueError("partial fit not supported for SAG")
 
     def _fit(self, X, y, coef_init=None, intercept_init=None,
              sample_weight=None):
-
+        X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
         n_samples, n_features = X.shape[0], X.shape[1]
         sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
         if sp.issparse(X):
@@ -51,19 +49,14 @@ class BaseSAG(six.with_metaclass(ABCMeta, BaseSGD)):
         else:
             step_size = self.eta0
         coef_ = np.zeros(n_features, dtype=np.float64, order='C')
-        loss_function = self._get_loss_function(self.loss)
 
         # intercept_ = fast_fit(dataset, coef_, n_samples, n_features,
         #                       self.n_iter, loss_function,
         #                       self.eta0, self.alpha)
         intercept_ = fast_fit_sparse(dataset, coef_, n_samples, n_features,
-                                     self.n_iter, loss_function,
+                                     self.n_iter, self.loss_function,
                                      step_size, self.alpha)
         return coef_.reshape(1, -1), intercept_
-
-    def _get_auto_eta(self, X, alpha):
-        print(np.square(X))
-        return 1.0 / (4 * np.max(np.square(X).sum(axis=1)))
 
 
 class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG,
@@ -73,9 +66,8 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG,
                  n_jobs=1, random_state=None,
                  eta0=0.0, class_weight=None, warm_start=False):
         self.n_jobs = n_jobs
-        self.loss_functions = {"log": (Log, )}
-        super(BaseSAGClassifier, self).__init__(loss="log",
-                                                alpha=alpha,
+        self.loss_function = Log()
+        super(BaseSAGClassifier, self).__init__(alpha=alpha,
                                                 fit_intercept=fit_intercept,
                                                 n_iter=n_iter,
                                                 verbose=verbose,
@@ -85,7 +77,6 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG,
 
     def _fit(self, X, y, coef_init=None, intercept_init=None,
              sample_weight=None):
-        X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
         n_samples, n_features = X.shape[0], X.shape[1]
         self.classes_ = np.unique(y)
 
@@ -147,13 +138,12 @@ class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin):
 class BaseSAGRegressor(six.with_metaclass(ABCMeta, BaseSAG,
                                           LinearModel, RegressorMixin)):
     def __init__(self, alpha=0.0001,
-                 fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
+                 fit_intercept=True, n_iter=5, verbose=0,
                  n_jobs=1, random_state=None,
                  eta0=0.001, class_weight=None, warm_start=False):
 
-        self.loss_functions = {"squared_loss": (SquaredLoss, )}
+        self.loss_function = SquaredLoss()
         super(BaseSAGRegressor, self).__init__(alpha=alpha,
-                                               loss="squared_loss",
                                                fit_intercept=fit_intercept,
                                                n_iter=n_iter,
                                                verbose=verbose,
@@ -163,7 +153,6 @@ class BaseSAGRegressor(six.with_metaclass(ABCMeta, BaseSAG,
 
     def _fit(self, X, y, coef_init=None, intercept_init=None,
              sample_weight=None):
-        X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
         self.coef_, self.intercept_ = \
             super(BaseSAGRegressor, self)._fit(X, y,
                                                coef_init=None,

@@ -7,6 +7,7 @@ import scipy.sparse as sp
 from sklearn.linear_model import SAGRegressor, SAGClassifier
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_greater
 
 
 def log_dloss(p, y):
@@ -195,6 +196,28 @@ class DenseSAGRegressorTestCase(unittest.TestCase, CommonTest):
                                   decimal=14)
         assert_almost_equal(clf1.intercept_, spintercept, decimal=14)
 
+    def test_sag_regressor(self):
+        xmin, xmax = -5, 5
+        n_samples = 100
+        rng = np.random.RandomState(0)
+        X = np.linspace(xmin, xmax, n_samples).reshape(n_samples, 1)
+
+        # simple linear function without noise
+        y = 0.5 * X.ravel()
+
+        clf = self.factory(eta0=.001, alpha=0.1, n_iter=20, random_state=77)
+        clf.fit(X, y)
+        score = clf.score(X, y)
+        assert_greater(score, 0.99)
+
+        # simple linear function with noise
+        y = 0.5 * X.ravel() + rng.randn(n_samples, 1).ravel()
+
+        clf = self.factory(eta0=.001, alpha=0.1, n_iter=20, random_state=77)
+        clf.fit(X, y)
+        score = clf.score(X, y)
+        assert_greater(score, 0.5)
+
 
 class SparseSAGRegressorTestCase(DenseSAGRegressorTestCase):
     """Run exactly the same tests using the sparse representation variant"""
@@ -268,6 +291,21 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
                                       coef[i].ravel(),
                                       decimal=14)
             assert_almost_equal(clf1.intercept_[i], intercept[i], decimal=14)
+
+    def test_classifier_results(self):
+        eta = .2
+        alpha = .1
+        n_features = 20
+        n_samples = 10
+        rng = np.random.RandomState(0)
+        X = rng.normal(size=(n_samples, n_features))
+        w = rng.normal(size=n_features)
+        y = np.dot(X, w)
+        y = np.sign(y)
+        clf = self.factory(eta0=eta, alpha=alpha, n_iter=20, random_state=77)
+        clf.fit(X, y)
+        pred = clf.predict(X)
+        assert_almost_equal(pred, y, decimal=14)
 
 
 class SparseSAGClassifierTestCase(DenseSAGClassifierTestCase):
