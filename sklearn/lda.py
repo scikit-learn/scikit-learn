@@ -74,10 +74,10 @@ def _means(X, y):
 
     Parameters
     ----------
-    X : array-like, shape = [n_samples, n_features]
+    X : array-like, shape (n_samples, n_features)
         Training data.
 
-    y : array-like, shape = [n_samples] or [n_samples, n_targets]
+    y : array-like, shape (n_samples) or (n_samples, n_targets)
         Target values.
     """
     means = []
@@ -94,10 +94,10 @@ def _means_cov(X, y, alpha=None):
 
     Parameters
     ----------
-    X : array-like, shape = [n_samples, n_features]
+    X : array-like, shape (n_samples, n_features)
         Training data.
 
-    y : array-like, shape = [n_samples] or [n_samples, n_targets]
+    y : array-like, shape (n_samples) or (n_samples, n_targets)
         Target values.
 
     alpha : string or float, optional
@@ -148,7 +148,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
           - float between 0 and 1: fixed shrinkage constant.
         Note that shrinkage works only with 'lsqr' and 'eigen' solvers.
 
-    priors : array, optional, shape = [n_classes]
+    priors : array, optional, shape (n_classes)
         Priors on classes.
 
     n_components : int, optional
@@ -156,28 +156,28 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     Attributes
     ----------
-    coef_ : array, shape = [n_features] or [n_classes, n_features]
+    coef_ : array, shape (n_features) or (n_classes, n_features)
         Weight vector(s).
 
-    intercept_ : array, shape = [n_features]
+    intercept_ : array, shape (n_features)
         Intercept term.
 
-    covariance_ : array-like, shape = [n_features, n_features]
+    covariance_ : array-like, shape (n_features, n_features)
         Covariance matrix (shared by all classes).
 
-    means_ : array-like, shape = [n_classes, n_features]
+    means_ : array-like, shape (n_classes, n_features)
         Class means.
 
-    priors_ : array-like, shape = [n_classes]
+    priors_ : array-like, shape (n_classes)
         Class priors (sum to 1).
 
-    scalings_ : array-like, shape = [rank, n_classes - 1]
+    scalings_ : array-like, shape (rank, n_classes - 1)
         Scaling of the features in the space spanned by the class centroids.
 
-    xbar_ : array-like, shape = [n_features]
+    xbar_ : array-like, shape (n_features)
         Overall mean.
 
-    classes_ : array-like, shape = [n_classes]
+    classes_ : array-like, shape (n_classes)
         Unique class labels.
 
     Examples
@@ -210,10 +210,10 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
             Training data.
 
-        y : array-like, shape = [n_samples] or [n_samples, n_targets]
+        y : array-like, shape (n_samples) or (n_samples, n_targets)
             Target values.
 
         alpha : string or float, optional
@@ -237,10 +237,10 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
             Training data.
 
-        y : array-like, shape = [n_samples] or [n_samples, n_targets]
+        y : array-like, shape (n_samples) or (n_samples, n_targets)
             Target values.
 
         alpha : string or float, optional
@@ -268,10 +268,10 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
             Training data.
 
-        y : array-like, shape = [n_samples] or [n_samples, n_targets]
+        y : array-like, shape (n_samples) or (n_samples, n_targets)
             Target values.
 
         tol : float, optional
@@ -331,10 +331,10 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
             Training data.
 
-        y : array, shape = [n_samples]
+        y : array, shape (n_samples)
             Target values.
         """
         X, y = check_X_y(X, y)
@@ -370,14 +370,14 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
             Input data.
 
         Returns
         -------
-        C : array, shape = [n_samples, n_classes] or [n_samples,]
+        C : array, shape (n_samples, n_classes) or (n_samples,)
             Decision function values related to each class, per sample.
-            In the two-class case, the shape is [n_samples,], giving the
+            In the two-class case, the shape is (n_samples,), giving the
             log likelihood ratio of the positive class.
         """
         dec_func = self._decision_function(X)
@@ -390,12 +390,12 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
             Input data.
 
         Returns
         -------
-        X_new : array, shape = [n_samples, n_components]
+        X_new : array, shape (n_samples, n_components)
             Transformed data.
         """
         X = check_array(X)
@@ -412,12 +412,12 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
             Input data.
 
         Returns
         -------
-        C : array, shape = [n_samples]
+        C : array, shape (n_samples)
             Predicted class labels.
         """
         d = self._decision_function(X)
@@ -429,12 +429,12 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
             Input data.
 
         Returns
         -------
-        C : array, shape = [n_samples, n_classes]
+        C : array, shape (n_samples, n_classes)
             Estimated probabilities.
         """
         values = self._decision_function(X)
@@ -449,12 +449,12 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
             Input data.
 
         Returns
         -------
-        C : array, shape = [n_samples, n_classes]
+        C : array, shape (n_samples, n_classes)
             Estimated log probabilities.
         """
         values = self._decision_function(X)
