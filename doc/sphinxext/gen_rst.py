@@ -453,7 +453,7 @@ def extract_docstring(filename, ignore_heading=False):
                         first_par = ((first_par[:95] + '...')
                                      if len(first_par) > 95 else first_par)
                     else:
-			raise ValueError("Docstring not found by gallery.\n"
+                        raise ValueError("Docstring not found by gallery.\n"
                                          "Please check the layout of your"
                                          " example file:\n {}\n and make sure"
                                          " it's correct".format(filename))
