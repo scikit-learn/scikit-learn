@@ -228,7 +228,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         # TODO: weight covariances with priors?
         means = self.means_ - self.xbar_
 
-        self.coef_ = np.linalg.lstsq(self.covariance_, means.T, rcond)[0].T
+        self.coef_ = linalg.lstsq(self.covariance_, means.T, rcond)[0].T
         self.intercept_ = (-0.5 * np.diag(np.dot(means, self.coef_.T))
                            + np.log(self.priors_))
 
@@ -256,10 +256,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         Sb = St - self.covariance_
         means = self.means_ - self.xbar_
 
-        e, v = linalg.eigh(Sb, self.covariance_)
-        # idx = e.argsort()[::-1]
-        # self.scalings_ = np.atleast_2d(v[:, idx[n_classes - 1]]).T
-        self.scalings_ = v
+        _, self.scalings_ = linalg.eigh(Sb, self.covariance_)
 
         coef = np.dot(means, self.scalings_)
         self.intercept_ = (-0.5 * np.diag(np.dot(means, coef.T))
@@ -351,13 +348,16 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             self.priors_ = self.priors
 
         if self.solver == 'svd':
+            if self.alpha is not None:
+                raise NotImplementedError('shrinkage not supported')
             self._solve_svd(X, y)
         elif self.solver == 'lsqr':
             self._solve_lsqr(X, y, alpha=self.alpha)
         elif self.solver == 'eigen':
             self._solve_eigen(X, y, alpha=self.alpha)
         else:
-            raise ValueError('unknown solver')
+            raise ValueError("unknown solver {} (valid solvers are 'svd', "
+                             "'lsqr', and 'eigen').".format(self.solver))
 
         return self
 
@@ -400,7 +400,8 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         """
         X = check_array(X)
         if self.solver == 'lsqr' or self.solver == 'eigen':
-            raise NotImplementedError('transform not implemented')
+            raise NotImplementedError("transform not implemented for solver "
+                                      "'{}'; use 'svd'.".format(self.solver))
         X_new = np.dot(X - self.xbar_, self.scalings_)  # center and scale data
         n_components = X.shape[1] if self.n_components is None \
             else self.n_components
