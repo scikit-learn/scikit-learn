@@ -95,12 +95,17 @@ from .sgd_fast cimport LossFunction
 
 def fast_fit_sparse(SequentialDataset dataset,
                     np.ndarray[double, ndim=1, mode='c'] weights,
+                    double intercept_init,
                     int n_samples,
                     int n_features,
                     int n_iter,
                     LossFunction loss,
                     double eta,
-                    double alpha
+                    double alpha,
+                    np.ndarray[double, ndim=1, mode='c'] sum_gradient_init,
+                    np.ndarray[double, ndim=1, mode='c'] gradient_memory_init,
+                    np.ndarray[bint, ndim=1, mode='c'] seen_init,
+                    int num_seen_init
                     ):
 
     cdef double* weights_ptr = &weights[0]
@@ -117,26 +122,26 @@ def fast_fit_sparse(SequentialDataset dataset,
     cdef double full_gradient
 
     # the total number of samples seen
-    cdef double num_seen = 0.0
+    cdef double num_seen = num_seen_init
     # vector of booleans indicating whether this sample has been seen
-    cdef np.ndarray[bint, ndim=1] seen_array = np.zeros(n_samples,
-                                                        dtype=np.int32,
-                                                        order="c")
-    cdef bint* seen = <bint*> seen_array.data
+    # cdef np.ndarray[bint, ndim=1] seen_array = np.zeros(n_samples,
+    #                                                     dtype=np.int32,
+    #                                                     order="c")
+    cdef bint* seen = <bint*> seen_init.data
 
     # the sum of gradients for each feature
-    cdef np.ndarray[double, ndim=1] sum_gradient_array = \
-        np.zeros(n_features,
-                 dtype=np.double,
-                 order="c")
-    cdef double* sum_gradient = <double*> sum_gradient_array.data
+    # cdef np.ndarray[double, ndim=1] sum_gradient_array = \
+    #     np.zeros(n_features,
+    #              dtype=np.double,
+    #              order="c")
+    cdef double* sum_gradient = <double*> sum_gradient_init.data
 
     # the previously seen gradient for each sample
-    cdef np.ndarray[double, ndim=1] gradient_memory_array = \
-        np.zeros(n_samples,
-                 dtype=np.double,
-                 order="c")
-    cdef double* gradient_memory = <double*> gradient_memory_array.data
+    # cdef np.ndarray[double, ndim=1] gradient_memory_array = \
+    #     np.zeros(n_samples,
+    #              dtype=np.double,
+    #              order="c")
+    cdef double* gradient_memory = <double*> gradient_memory_init.data
 
     # the cumulative sums needed for JIT params
     cdef np.ndarray[double, ndim=1] cumulative_sums_array = \
@@ -157,10 +162,11 @@ def fast_fit_sparse(SequentialDataset dataset,
 
     cumulative_sums[0] = 0.0
 
-    cdef double intercept = 0.0
+    cdef double intercept = intercept_init
 
     with nogil:
         for k in range(n_iter * n_samples):
+
             # extract a random sample
             current_index = dataset.random(&x_data_ptr,
                                            &x_ind_ptr,
@@ -169,10 +175,9 @@ def fast_fit_sparse(SequentialDataset dataset,
                                            &sample_weight)
 
             # update the number of samples seen and the seen array
-            if not seen[current_index]:
+            if seen[current_index] == 0:
                 num_seen += 1.0
-                seen[current_index] = True
-
+                seen[current_index] = 1
             # make the weight updates
             for j in range(xnnz):
                 idx = x_ind_ptr[j]
@@ -210,7 +215,7 @@ def fast_fit_sparse(SequentialDataset dataset,
             weights_ptr[j] *= wscale
         wscale = 1.0
 
-    return intercept
+    return intercept, num_seen
 
 
 def get_auto_eta(SequentialDataset dataset, double alpha, int n_samples):

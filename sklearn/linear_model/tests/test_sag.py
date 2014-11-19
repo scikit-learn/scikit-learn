@@ -10,6 +10,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_greater
 
 
+# this is used for sag classification
 def log_dloss(p, y):
     z = p * y
     # approximately equal and saves the computation of the log
@@ -20,6 +21,7 @@ def log_dloss(p, y):
     return -y / (math.exp(z) + 1.0)
 
 
+# this is used for sag regression
 def squared_dloss(p, y):
     return p - y
 
@@ -175,6 +177,32 @@ class DenseSAGRegressorTestCase(unittest.TestCase, CommonTest):
                                   decimal=14)
         assert_almost_equal(clf1.intercept_, spintercept, decimal=14)
 
+    def test_regressor_warm_start(self):
+        eta = .2
+        alpha = .1
+        n_features = 20
+        n_samples = 10
+        clf1 = self.factory(eta0=eta, alpha=alpha, n_iter=1,
+                            random_state=77, warm_start=True)
+        rng = np.random.RandomState(0)
+        X = rng.normal(size=(n_samples, n_features))
+        w = rng.normal(size=n_features)
+        y = np.dot(X, w)
+
+        clf1.fit(X, y)
+        clf1.fit(X, y)
+
+        indexes = [0, 1, 1, 3, 0, 8, 6, 2, 3, 9, 0, 1, 1, 3, 0, 8, 6, 2, 3, 9]
+
+        spweights, spintercept = self.sag_sparse(X, y, eta, alpha,
+                                                 indexes=indexes,
+                                                 dloss=squared_dloss)
+
+        assert_array_almost_equal(clf1.coef_.ravel(),
+                                  spweights.ravel(),
+                                  decimal=13)
+        assert_almost_equal(clf1.intercept_, spintercept, decimal=13)
+
     def test_auto_eta(self):
         indexes = [0, 0, 0, 0, 0, 2]
         X = np.array([[1, 2, 3], [2, 3, 4], [2, 3, 2]])
@@ -205,7 +233,7 @@ class DenseSAGRegressorTestCase(unittest.TestCase, CommonTest):
         # simple linear function without noise
         y = 0.5 * X.ravel()
 
-        clf = self.factory(eta0=.001, alpha=0.1, n_iter=20, random_state=77)
+        clf = self.factory(eta0=.001, alpha=0.1, n_iter=20)
         clf.fit(X, y)
         score = clf.score(X, y)
         assert_greater(score, 0.99)
@@ -213,7 +241,7 @@ class DenseSAGRegressorTestCase(unittest.TestCase, CommonTest):
         # simple linear function with noise
         y = 0.5 * X.ravel() + rng.randn(n_samples, 1).ravel()
 
-        clf = self.factory(eta0=.001, alpha=0.1, n_iter=20, random_state=77)
+        clf = self.factory(eta0=.001, alpha=0.1, n_iter=20)
         clf.fit(X, y)
         score = clf.score(X, y)
         assert_greater(score, 0.5)
@@ -302,10 +330,37 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
         w = rng.normal(size=n_features)
         y = np.dot(X, w)
         y = np.sign(y)
-        clf = self.factory(eta0=eta, alpha=alpha, n_iter=20, random_state=77)
+        clf = self.factory(eta0=eta, alpha=alpha, n_iter=20)
         clf.fit(X, y)
         pred = clf.predict(X)
         assert_almost_equal(pred, y, decimal=14)
+
+    def test_classifier_warm_start(self):
+        eta = .2
+        alpha = .1
+        n_features = 20
+        n_samples = 10
+        clf1 = self.factory(eta0=eta, alpha=alpha, n_iter=1,
+                            random_state=77, warm_start=True)
+        rng = np.random.RandomState(0)
+        X = rng.normal(size=(n_samples, n_features))
+        w = rng.normal(size=n_features)
+        y = np.dot(X, w)
+        y = np.sign(y)
+
+        clf1.fit(X, y)
+        clf1.fit(X, y)
+
+        indexes = [0, 1, 1, 3, 0, 8, 6, 2, 3, 9, 0, 1, 1, 3, 0, 8, 6, 2, 3, 9]
+
+        spweights, spintercept = self.sag_sparse(X, y, eta, alpha,
+                                                 indexes=indexes,
+                                                 dloss=log_dloss)
+
+        assert_array_almost_equal(clf1.coef_.ravel(),
+                                  spweights.ravel(),
+                                  decimal=13)
+        assert_almost_equal(clf1.intercept_, spintercept, decimal=13)
 
 
 class SparseSAGClassifierTestCase(DenseSAGClassifierTestCase):
