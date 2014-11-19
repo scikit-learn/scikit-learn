@@ -14,7 +14,7 @@ from .sag_fast import fast_fit_sparse, get_auto_eta
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
 
 
-class BaseSAG(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
+class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
     def __init__(self, alpha=0.0001, fit_intercept=True, n_iter=5, verbose=0,
                  seed=None, eta0=0.0, warm_start=False):
         self.gradient_memory = None
@@ -106,8 +106,7 @@ class BaseSAG(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                 num_seen)
 
 
-class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG,
-                                           LinearClassifierMixin)):
+class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
     def __init__(self, alpha=0.0001,
                  fit_intercept=True, n_iter=5, verbose=0,
                  n_jobs=1, seed=None,
@@ -215,7 +214,8 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG,
                                                    seen_init, num_seen_init)
 
 
-class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin):
+class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin,
+                    LinearClassifierMixin, BaseEstimator):
     """Linear classifiers (SVM, logistic regression, a.o.) with SAG training.
 
     This estimator implements regularized linear models with stochastic
@@ -331,8 +331,7 @@ class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin):
         return self
 
 
-class BaseSAGRegressor(six.with_metaclass(ABCMeta, BaseSAG,
-                                          LinearModel, RegressorMixin)):
+class BaseSAGRegressor(six.with_metaclass(ABCMeta, BaseSAG)):
     def __init__(self, alpha=0.0001, fit_intercept=True, n_iter=5, verbose=0,
                  seed=None, eta0=0.001, warm_start=False):
 
@@ -367,7 +366,8 @@ class BaseSAGRegressor(six.with_metaclass(ABCMeta, BaseSAG,
                                                seen_init, num_seen_init)
 
 
-class SAGRegressor(BaseSAGRegressor, _LearntSelectorMixin):
+class SAGRegressor(BaseSAGRegressor, _LearntSelectorMixin,
+                   LinearModel, RegressorMixin, BaseEstimator):
     """Linear model fitted by minimizing a regularized empirical loss with SAG
 
     SAG stands for Stochastic Average Gradient: the gradient of the loss is
