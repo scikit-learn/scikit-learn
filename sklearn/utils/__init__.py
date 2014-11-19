@@ -417,5 +417,9 @@ def tosequence(x):
         return list(x)
 
 
-class ConvergenceWarning(Warning):
-    "Custom warning to capture convergence problems"
+class ConvergenceWarning(UserWarning):
+    """Custom warning to capture convergence problems"""
+
+
+class DataDimensionalityWarning(UserWarning):
+    """Custom warning to notify potential issues with data dimensionality"""
