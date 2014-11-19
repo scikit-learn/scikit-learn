@@ -4,7 +4,6 @@ Tests for the birch clustering algorithm.
 
 from scipy import sparse
 import numpy as np
-import warnings
 
 from .common import generate_clustered_data
 from sklearn.cluster.birch import Birch
@@ -12,9 +11,7 @@ from sklearn.cluster.hierarchical import AgglomerativeClustering
 from sklearn.datasets import make_blobs
 from sklearn.linear_model import ElasticNet
 from sklearn.metrics import pairwise_distances_argmin, v_measure_score
-from sklearn.utils.extmath import norm
 
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -98,7 +95,7 @@ def test_sparse_X():
 
     csr = sparse.csr_matrix(X)
     brc_sparse = Birch(n_clusters=10)
-    brc_sparse.fit(X)
+    brc_sparse.fit(csr)
 
     assert_array_equal(brc.labels_, brc_sparse.labels_)
     assert_array_equal(brc.subcluster_centers_,

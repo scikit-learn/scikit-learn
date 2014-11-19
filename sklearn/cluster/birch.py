@@ -11,10 +11,10 @@ from math import sqrt
 from ..metrics.pairwise import euclidean_distances
 from ..base import TransformerMixin, ClusterMixin, BaseEstimator
 from ..externals.six.moves import xrange
-from ..neighbors import KNeighborsClassifier
 from ..utils import check_array
-from ..utils.extmath import safe_sparse_dot
+from ..utils.extmath import row_norms, safe_sparse_dot
 from .hierarchical import AgglomerativeClustering
+
 
 def _iterate_X(X):
     """
@@ -221,13 +221,14 @@ class _CFNode(object):
                     closest_subcluster.sq_norm_
                 return False
 
-            # not close to any other subclusters, and we still have space, so add.
+            # not close to any other subclusters, and we still
+            # have space, so add.
             elif len(self.subclusters_) < self.branching_factor:
                 self.update(subcluster)
                 return False
 
-            # We do not have enough space nor is it closer to an other subcluster.
-            # We need to split.
+            # We do not have enough space nor is it closer to an
+            # other subcluster. We need to split.
             else:
                 self.update(subcluster)
                 return True
@@ -328,7 +329,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         centroid for it to be part of the subcluster. If the distance
         is greater than this threshold, than a new subcluster is started.
 
-    branching_factor : int, default 8
+    branching_factor : int, default 50
         Maximun number of CF subclusters in each node. If a new samples enters
         such that the number of subclusters exceed the branching_factor then
         the node has to be split. The corresponding parent also has to be
@@ -361,16 +362,13 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         Array of labels assigned to the input data or the last
         batch of input data if partial_fit was used.
 
-    predictor_ : instance of KNeighborsClassifier
-        KNeighborsClassifier that is fit on the subcluster centroids.
-
     Examples
     --------
     >>> from sklearn.cluster import Birch
     >>> X = [[0, 1], [0.3, 1], [-0.3, 1], [0, -1], [0.3, -1], [-0.3, -1]]
     >>> brc = Birch(threshold=0.5, n_clusters=None)
     >>> brc.fit(X)
-    Birch(branching_factor=8, n_clusters=None, threshold=0.5)
+    Birch(branching_factor=50, n_clusters=None, threshold=0.5)
     >>> brc.predict(X)
     array([0, 0, 0, 1, 1, 1])
 
@@ -385,7 +383,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
       https://code.google.com/p/jbirch/
     """
 
-    def __init__(self, threshold=0.5, branching_factor=8, n_clusters=3):
+    def __init__(self, threshold=0.5, branching_factor=50, n_clusters=3):
         self.threshold = threshold
         self.branching_factor = branching_factor
         self.n_clusters = n_clusters
@@ -433,7 +431,8 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
 
                 # Separating the two farthest clusters.
                 n_clusters = subclusters_pairwise.shape[0]
-                farthest_idx = np.unravel_index(subclusters_pairwise.argmax(),
+                farthest_idx = np.unravel_index(
+                    subclusters_pairwise.argmax(),
                     (n_clusters, n_clusters))
                 dist_idx = subclusters_pairwise[[farthest_idx]]
 
@@ -470,7 +469,9 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
                 self.root_.update(new_subcluster1)
                 self.root_.update(new_subcluster2)
 
-        centroids = np.concatenate([leaf.centroids_ for leaf in self.get_leaves()])
+        centroids = np.concatenate([
+            leaf.centroids_ for leaf in self.get_leaves()])
+
         # Preprocessing for the global clustering.
         not_enough_centroids = False
         if hasattr(self.n_clusters, 'fit_predict'):
@@ -485,15 +486,14 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
             raise ValueError("n_clusters should be an instance of "
                              "ClusterMixin or an int")
 
-        # We use algorithm='brute', so that we can handle both sparse
-        # and dense data.
+        # To use in predict to avoid recalculation.
         self.subcluster_centers_ = centroids
-        self.predictor_ = KNeighborsClassifier(1, algorithm='brute')
+        self._subcluster_norms = row_norms(
+            self.subcluster_centers_, squared=True)
 
         if self.n_clusters is None or not_enough_centroids:
             self.subcluster_labels_ = np.arange(len(centroids))
-            self.predictor_.fit(centroids, self.subcluster_labels_)
-            self.labels_ = self.predictor_.predict(X)
+            self.labels_ = self.predict(X)
             if not_enough_centroids:
                 warnings.warn(
                     "Number of subclusters found (%d) by Birch is less "
@@ -506,8 +506,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         # samples and finds the final centroids.
         self.subcluster_labels_ = global_cluster.fit_predict(
             self.subcluster_centers_)
-        self.predictor_.fit(centroids, self.subcluster_labels_)
-        self.labels_ = self.predictor_.predict(X)
+        self.labels_ = self.predict(X)
 
         return self
 
@@ -538,7 +537,9 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     def predict(self, X):
         """
         Predict data using the centroids_ of subclusters.
- 
+
+        Avoid computation of the row norms of X.
+
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
@@ -549,7 +550,12 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         labels: ndarray, shape(n_samples)
             Labelled data.
         """
-        return self.predictor_.predict(X)
+        X = check_array(X, accept_sparse='csr')
+        self._check_fit(X)
+        reduced_distance = safe_sparse_dot(X, self.subcluster_centers_.T)
+        reduced_distance *= -2
+        reduced_distance += self._subcluster_norms
+        return self.subcluster_labels_[np.argmin(reduced_distance, axis=1)]
 
     def partial_fit(self, X, y=None):
         """

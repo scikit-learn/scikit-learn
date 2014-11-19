@@ -44,8 +44,8 @@ fig.subplots_adjust(left=0.04, right=0.98, bottom=0.1, top=0.9)
 
 # Compute clustering with Birch with and without the final clustering step
 # and plot.
-birch_models = [Birch(threshold=2.0, branching_factor=10, n_clusters=None),
-                Birch(threshold=2.0, branching_factor=10, n_clusters=100)]
+birch_models = [Birch(threshold=1.7, n_clusters=None),
+                Birch(threshold=1.7, n_clusters=100)]
 final_step = ['without global clustering', 'with global clustering']
 
 for ind, (birch_model, info) in enumerate(zip(birch_models, final_step)):
