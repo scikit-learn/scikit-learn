@@ -1141,10 +1141,8 @@ function::
   >>> y_pred = [2.5, 0.0, 2, 8]
   >>> median_absolute_error(y_true, y_pred)
   0.5
-  >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
-  >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
-  >>> median_absolute_error(y_true, y_pred)
-  0.75
+
+The :func:`median_absolute_error` does not suppport multioutput.
 
 R² score, the coefficient of determination
 -------------------------------------------
