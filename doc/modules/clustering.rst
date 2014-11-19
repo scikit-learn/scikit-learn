@@ -811,12 +811,12 @@ of the nearest subcluster.
   in the leaf, the properties of this and the parent subclusters, i.e the centroid
   and squared norms are recursively updated.
 
-- If the distance between a new sample and all the subclusters in a particular
-  node is greater than the threshold and the number of subclusters is greater
-  than the branching factor, then a space is temporarily allocated to
-  this new sample. The two farthest subclusters are taken and the subclusters
-  are divided into two groups on the basis of the distance between these
-  subclusters.
+- If the radius of the subcluster obtained by merging the new sample and the
+  nearest subcluster is greater than the square of the threshold and if the
+  number of subclusters is greater than the branching factor, then a space is temporarily
+  allocated to this new sample. The two farthest subclusters are taken and
+  the subclusters are divided into two groups on the basis of the distance
+  between these subclusters.
 
 - If this split node has a parent subcluster and there is room
   for a new subcluster, then the parent is split into two. If there is no room,

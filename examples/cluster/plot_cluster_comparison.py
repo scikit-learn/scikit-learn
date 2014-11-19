@@ -50,7 +50,7 @@ clustering_names =  [
     'SpectralClustering', 'Ward', 'AgglomerativeClustering',
     'DBSCAN', 'Birch'
     ]
-plt.clf()
+
 plt.figure(figsize=(len(clustering_names) * 2 + 3, 9.5))
 plt.subplots_adjust(left=.02, right=.98, bottom=.001, top=.96, wspace=.05,
                     hspace=.01)

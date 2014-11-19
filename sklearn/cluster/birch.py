@@ -320,9 +320,10 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     Parameters
     ----------
     threshold : float, default 0.5
-        The maximum distance between a new sample and the closest subcluster
-        centroid for it to be part of the subcluster. If the distance
-        is greater than this threshold, than a new subcluster is started.
+        The radius of the subcluster obtained by merging a new sample and the
+        closest subcluster should be greater than the square of the threshold.
+        If the radius is greater than the square of the threshold, than a new
+        subcluster is started.
 
     branching_factor : int, default 50
         Maximun number of CF subclusters in each node. If a new samples enters

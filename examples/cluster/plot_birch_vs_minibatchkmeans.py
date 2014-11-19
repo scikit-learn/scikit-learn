@@ -38,7 +38,6 @@ X, y = make_blobs(n_samples=100000, centers=n_centres, random_state=0)
 # Use all colors that matplotlib provides by default.
 colors = cycle(['blue', 'green', 'red', 'cyan', 'magenta', 'yellow', 'black'])
 
-plt.clf()
 fig = plt.figure(figsize=(12, 4))
 fig.subplots_adjust(left=0.04, right=0.98, bottom=0.1, top=0.9)
 
