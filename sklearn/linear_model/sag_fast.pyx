@@ -3,6 +3,8 @@
 import numpy as np
 cimport numpy as np
 from libc.stdlib cimport malloc
+cdef extern from "sgd_fast_helpers.h":
+    bint skl_isfinite(double) nogil
 
 from sklearn.utils.seq_dataset cimport SequentialDataset
 from .sgd_fast cimport LossFunction
@@ -114,6 +116,7 @@ def fast_fit_sparse(SequentialDataset dataset,
                     int num_seen_init
                     ):
 
+    cdef bint infinity = False
     cdef double* weights_ptr = &weights[0]
     cdef double *x_data_ptr
     cdef int *x_ind_ptr
@@ -175,6 +178,7 @@ def fast_fit_sparse(SequentialDataset dataset,
             if seen[current_index] == 0:
                 num_seen += 1.0
                 seen[current_index] = 1
+
             # make the weight updates
             for j in range(xnnz):
                 idx = x_ind_ptr[j]
@@ -182,6 +186,17 @@ def fast_fit_sparse(SequentialDataset dataset,
                                       cumulative_sums[feature_hist[idx]]) *
                                      sum_gradient[idx])
                 feature_hist[idx] = k
+
+                # check to see that the weight is not inf or NaN
+                if not skl_isfinite(weights_ptr[idx]):
+                    infinity = True
+                    break
+
+            # check to see if we have already encountered a bad weight or
+            # that the intercept is not inf or NaN
+            if infinity or not skl_isfinite(intercept):
+                infinity = True
+                break
 
             # find the current prediction, gradient
             p = (wscale * dot(x_data_ptr, x_ind_ptr,
@@ -204,13 +219,19 @@ def fast_fit_sparse(SequentialDataset dataset,
             cumulative_sums[k + 1] = (cumulative_sums[k] +
                                       eta / (wscale * num_seen))
 
-        k = n_samples * n_iter
-        for j in range(n_features):
-            weights_ptr[j] -= ((cumulative_sums[k] -
-                                cumulative_sums[feature_hist[j]]) *
-                               sum_gradient[j])
-            weights_ptr[j] *= wscale
-        wscale = 1.0
+    if infinity:
+        raise ValueError(("Floating-point under-/overflow occurred at epoch"
+                          " #%d. Lowering the eta0 or scaling the input data"
+                          " with StandardScaler or"
+                          " MinMaxScaler might help.") % (k + 1))
+
+    k = n_samples * n_iter
+    for j in range(n_features):
+        weights_ptr[j] -= ((cumulative_sums[k] -
+                            cumulative_sums[feature_hist[j]]) *
+                           sum_gradient[j])
+        weights_ptr[j] *= wscale
+    wscale = 1.0
 
     return intercept, num_seen
 

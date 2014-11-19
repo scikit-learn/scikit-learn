@@ -3,8 +3,8 @@ import scipy.sparse as sp
 
 from abc import ABCMeta
 
-from .base import LinearClassifierMixin, LinearModel
-from ..base import RegressorMixin
+from .base import LinearClassifierMixin, LinearModel, SparseCoefMixin
+from ..base import RegressorMixin, BaseEstimator
 from sklearn.feature_selection.from_model import _LearntSelectorMixin
 from ..utils import check_X_y
 from ..externals import six
@@ -14,12 +14,9 @@ from .sag_fast import fast_fit_sparse, get_auto_eta
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
 
 
-class BaseSAG(six.with_metaclass(ABCMeta)):
-    def __init__(self, alpha=0.0001,
-                 fit_intercept=True, n_iter=5, verbose=0,
-                 seed=None, eta0=0.0,
-                 class_weight=None, warm_start=False):
-
+class BaseSAG(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
+    def __init__(self, alpha=0.0001, fit_intercept=True, n_iter=5, verbose=0,
+                 seed=None, eta0=0.0, warm_start=False):
         self.gradient_memory = None
         self.alpha = alpha
         self.fit_intercept = fit_intercept
@@ -27,7 +24,6 @@ class BaseSAG(six.with_metaclass(ABCMeta)):
         self.verbose = verbose
         self.eta0 = eta0
         self.seed = seed
-        self.class_weight = class_weight
         self.warm_start = warm_start
 
         self.coef_ = None
@@ -73,14 +69,16 @@ class BaseSAG(six.with_metaclass(ABCMeta)):
 
         if self.seed is None:
             # TODO: is this what should be done here?
-            self.seed = np.random.randint(100000)
+            seed = np.random.randint(100000)
+        else:
+            seed = self.seed
 
         # check which type of Sequential Dataset is needed
         if sp.issparse(X):
             dataset = CSRDataset(X.data, X.indptr, X.indices,
-                                 y, sample_weight, seed=self.seed)
+                                 y, sample_weight, seed=seed)
         else:
-            dataset = ArrayDataset(X, y, sample_weight, seed=self.seed)
+            dataset = ArrayDataset(X, y, sample_weight, seed=seed)
 
         # set the eta0 if needed, 'auto' is 1 / 4L where L is the max sum of
         # squares for over all samples
@@ -324,18 +322,19 @@ class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin):
             sample_weight=None, sum_gradient_init=None,
             gradient_memory_init=None, seen_init=None,
             num_seen_init=None):
-        super(SAGClassifier, self)._fit(X, y, coef_init, intercept_init,
-                                        sample_weight, sum_gradient_init,
-                                        gradient_memory_init, seen_init,
-                                        num_seen_init)
+        super(SAGClassifier, self)._fit(X, y, coef_init,
+                                        intercept_init,
+                                        sample_weight,
+                                        sum_gradient_init,
+                                        gradient_memory_init,
+                                        seen_init, num_seen_init)
+        return self
 
 
 class BaseSAGRegressor(six.with_metaclass(ABCMeta, BaseSAG,
                                           LinearModel, RegressorMixin)):
-    def __init__(self, alpha=0.0001,
-                 fit_intercept=True, n_iter=5, verbose=0,
-                 n_jobs=1, seed=None,
-                 eta0=0.001, class_weight=None, warm_start=False):
+    def __init__(self, alpha=0.0001, fit_intercept=True, n_iter=5, verbose=0,
+                 seed=None, eta0=0.001, warm_start=False):
 
         self.loss_function = SquaredLoss()
         super(BaseSAGRegressor, self).__init__(alpha=alpha,
@@ -428,7 +427,7 @@ class SAGRegressor(BaseSAGRegressor, _LearntSelectorMixin):
     >>> clf = linear_model.SAGRegressor()
     >>> clf.fit(X, y)
     ... #doctest: +NORMALIZE_WHITESPACE
-    SAGRegressor(alpha=0.0001, eta0=0.01,
+    SAGRegressor(alpha=0.0001, eta0=0.001,
                  fit_intercept=True, n_iter=5, seed=None,
                  verbose=0, warm_start=False)
 
@@ -438,9 +437,7 @@ class SAGRegressor(BaseSAGRegressor, _LearntSelectorMixin):
 
     """
     def __init__(self, alpha=0.0001, fit_intercept=True, n_iter=5, verbose=0,
-                 n_jobs=1, seed=None,
-                 eta0=0.001, class_weight=None, warm_start=False):
-
+                 seed=None, eta0=0.001, warm_start=False):
         super(SAGRegressor, self).__init__(alpha=alpha,
                                            fit_intercept=fit_intercept,
                                            n_iter=n_iter,
@@ -458,4 +455,4 @@ class SAGRegressor(BaseSAGRegressor, _LearntSelectorMixin):
                                        sum_gradient_init,
                                        gradient_memory_init,
                                        seen_init, num_seen_init)
-
+        return self
