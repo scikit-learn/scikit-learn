@@ -690,7 +690,7 @@ by:
 
 .. math::
 
-  L_\text{Hinge}(y_w, y_t) = \max{1 + y_t - y_w, 0\right\}
+  L_\text{Hinge}(y_w, y_t) = \max\left\{1 + y_t - y_w, 0\right\}
 
 Here a small example demonstrating the use of the :func:`hinge_loss` function
 with a svm classifier in a binary class problem::
