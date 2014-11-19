@@ -16,28 +16,23 @@ from ..utils.extmath import row_norms, safe_sparse_dot
 from .hierarchical import AgglomerativeClustering
 
 
-def _iterate_X(X):
+def _iterate_sparse_X(X):
     """
     This little hack returns a densified row when iterating over a sparse
     matrix, insted of constructing a sparse matrix for every row that is
     expensive.
     """
     n_samples = X.shape[0]
-    X_issparse = sparse.issparse(X)
-    if X_issparse:
-        X_indices = X.indices
-        X_data = X.data
-        X_indptr = X.indptr
+    X_indices = X.indices
+    X_data = X.data
+    X_indptr = X.indptr
 
     for i in xrange(n_samples):
-        if X_issparse:
-            row = np.zeros(X.shape[1])
-            startptr, endptr = X_indptr[i], X_indptr[i + 1]
-            nonzero_indices = X_indices[startptr: endptr]
-            row[nonzero_indices] = X_data[startptr: endptr]
-            yield row
-        else:
-            yield X[i]
+        row = np.zeros(X.shape[1])
+        startptr, endptr = X_indptr[i], X_indptr[i + 1]
+        nonzero_indices = X_indices[startptr: endptr]
+        row[nonzero_indices] = X_data[startptr: endptr]
+        yield row
 
 
 class _CFNode(object):
@@ -419,7 +414,12 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
             self.dummy_leaf_.next_leaf_ = self.root_
 
         # Cannot vectorize. Enough to convince to use cython.
-        for sample in _iterate_X(X):
+        if not sparse.issparse(X):
+            iter_func = iter
+        else:
+            iter_func = _iterate_sparse_X
+
+        for sample in iter_func(X):
             subcluster = _CFSubcluster(sample)
             split = self.root_.insert_cf_subcluster(subcluster)
 
