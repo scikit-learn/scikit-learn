@@ -6,7 +6,7 @@ from abc import ABCMeta
 from .base import LinearClassifierMixin, LinearModel
 from ..base import RegressorMixin
 from sklearn.feature_selection.from_model import _LearntSelectorMixin
-from ..utils import (check_array, check_random_state, check_X_y)
+from ..utils import check_X_y
 from ..externals import six
 from .sgd_fast import Log, SquaredLoss
 from ..externals.joblib import Parallel, delayed
@@ -128,14 +128,6 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG,
         self.classes_ = np.unique(y)
 
         if len(self.classes_) == 2:
-            if self.warm_start:
-                coef_init = self.coef_
-                intercept_init = self.intercept_
-                sum_gradient_init = self.sum_gradient_
-                gradient_memory_init = self.gradient_memory_
-                seen_init = self.seen_
-                num_seen_init = self.num_seen_
-
             coef, intercept, sum_gradient, gradient_memory, seen, num_seen = \
                 self._fit_target_class(X, y, self.classes_[1],
                                        coef_init, intercept_init,
@@ -145,12 +137,10 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG,
         else:
             coef = []
             intercept = []
-
-            # TODO do something nice here...
-            sum_gradient = None
-            gradient_memory = None
-            seen = None
-            num_seen = None
+            sum_gradient = []
+            gradient_memory = []
+            seen = []
+            num_seen = []
 
             results = Parallel(n_jobs=self.n_jobs,
                                backend="threading",
@@ -158,13 +148,21 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG,
                 delayed(self._fit_target_class)(X, y, cl)
                 for cl in self.classes_)
 
-            # TODO: do something with the warm start params
-            for coef_cl, intercept_cl, _, _, _, _ in results:
+            for (coef_cl, intercept_cl, sum_gradient_cl, gradient_memory_cl,
+                 seen_cl, num_seen_cl) in results:
                 coef.append(coef_cl)
                 intercept.append(intercept_cl)
+                sum_gradient.append(sum_gradient_cl)
+                gradient_memory.append(gradient_memory_cl)
+                seen.append(seen_cl)
+                num_seen.append(num_seen_cl)
 
             coef = np.vstack(coef)
             intercept = np.array(intercept)
+            sum_gradient = np.array(sum_gradient)
+            gradient_memory = np.array(gradient_memory)
+            seen = np.array(seen)
+            num_seen = np.array(num_seen)
 
         self.coef_ = coef
         self.intercept_ = intercept
@@ -177,6 +175,30 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG,
                           intercept_init=None, sample_weight=None,
                           sum_gradient_init=None, gradient_memory_init=None,
                           seen_init=None, num_seen_init=None):
+        if self.warm_start:
+            if len(self.classes_) == 2:
+                # init parameters for binary classifier
+                coef_init = self.coef_
+                intercept_init = self.intercept_
+                sum_gradient_init = self.sum_gradient_
+                gradient_memory_init = self.gradient_memory_
+                seen_init = self.seen_
+                num_seen_init = self.num_seen_
+            else:
+                # init parameters for multi-class classifier
+                class_index = np.where(self.classes_ == target_class)[0][0]
+                if self.coef_ is not None:
+                    coef_init = self.coef_[class_index]
+                if self.intercept_ is not None:
+                    intercept_init = self.intercept_[class_index]
+                if self.sum_gradient_ is not None:
+                    sum_gradient_init = self.sum_gradient_[class_index]
+                if self.gradient_memory_ is not None:
+                    gradient_memory_init = self.gradient_memory_[class_index]
+                if self.seen_ is not None:
+                    seen_init = self.seen_[class_index]
+                if self.num_seen_ is not None:
+                    num_seen_init = self.num_seen_[class_index]
 
         n_samples, n_features = X.shape[0], X.shape[1]
 

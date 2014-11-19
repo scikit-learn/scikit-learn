@@ -335,7 +335,7 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
         pred = clf.predict(X)
         assert_almost_equal(pred, y, decimal=14)
 
-    def test_classifier_warm_start(self):
+    def test_binary_classifier_warm_start(self):
         eta = .2
         alpha = .1
         n_features = 20
@@ -361,6 +361,47 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
                                   spweights.ravel(),
                                   decimal=13)
         assert_almost_equal(clf1.intercept_, spintercept, decimal=13)
+
+    def test_multiclass_classifier_warm_start(self):
+        eta = .2
+        alpha = .1
+        n_features = 20
+        n_samples = 10
+        clf1 = self.factory(eta0=eta, alpha=alpha, n_iter=1,
+                            random_state=77, warm_start=True)
+        rng = np.random.RandomState(0)
+        X = rng.normal(size=(n_samples, n_features))
+        w = rng.normal(size=n_features)
+        y = np.dot(X, w)
+        y = np.sign(y)
+        y[2] = 2
+        classes = np.unique(y)
+
+        clf1.fit(X, y)
+        clf1.fit(X, y)
+
+        indexes = [0, 1, 1, 3, 0, 8, 6, 2, 3, 9, 0, 1, 1, 3, 0, 8, 6, 2, 3, 9]
+
+        coef = []
+        intercept = []
+        for cl in classes:
+            y_encoded = np.ones(n_samples)
+            y_encoded[y != cl] = -1
+
+            spweights, spintercept = self.sag_sparse(X, y_encoded, eta, alpha,
+                                                     indexes=indexes,
+                                                     dloss=log_dloss)
+            coef.append(spweights)
+            intercept.append(spintercept)
+
+        coef = np.vstack(coef)
+        intercept = np.array(intercept)
+
+        for i, cl in enumerate(classes):
+            assert_array_almost_equal(clf1.coef_[i].ravel(),
+                                      coef[i].ravel(),
+                                      decimal=14)
+            assert_almost_equal(clf1.intercept_[i], intercept[i], decimal=14)
 
 
 class SparseSAGClassifierTestCase(DenseSAGClassifierTestCase):
