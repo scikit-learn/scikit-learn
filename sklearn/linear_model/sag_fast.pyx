@@ -93,6 +93,12 @@ from .sgd_fast cimport LossFunction
 
 #     return intercept
 
+# This sparse implementation is taken from section 4.3 of "Minimizing Finite
+# Sums with the Stochastic Average Gradient" by
+# Mark Schmidt, Nicolas Le Roux, Francis Bach. 2013. <hal-00860051>
+#
+# https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf
+
 def fast_fit_sparse(SequentialDataset dataset,
                     np.ndarray[double, ndim=1, mode='c'] weights,
                     double intercept_init,
@@ -123,24 +129,14 @@ def fast_fit_sparse(SequentialDataset dataset,
 
     # the total number of samples seen
     cdef double num_seen = num_seen_init
+
     # vector of booleans indicating whether this sample has been seen
-    # cdef np.ndarray[bint, ndim=1] seen_array = np.zeros(n_samples,
-    #                                                     dtype=np.int32,
-    #                                                     order="c")
     cdef bint* seen = <bint*> seen_init.data
 
     # the sum of gradients for each feature
-    # cdef np.ndarray[double, ndim=1] sum_gradient_array = \
-    #     np.zeros(n_features,
-    #              dtype=np.double,
-    #              order="c")
     cdef double* sum_gradient = <double*> sum_gradient_init.data
 
     # the previously seen gradient for each sample
-    # cdef np.ndarray[double, ndim=1] gradient_memory_array = \
-    #     np.zeros(n_samples,
-    #              dtype=np.double,
-    #              order="c")
     cdef double* gradient_memory = <double*> gradient_memory_init.data
 
     # the cumulative sums needed for JIT params
@@ -160,6 +156,7 @@ def fast_fit_sparse(SequentialDataset dataset,
     # the scalar used for multiplying z
     cdef double wscale = 1.0
 
+    # the cumulative sums for each iteration for the sparse implementation
     cumulative_sums[0] = 0.0
 
     cdef double intercept = intercept_init

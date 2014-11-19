@@ -17,7 +17,7 @@ from ..utils.seq_dataset import ArrayDataset, CSRDataset
 class BaseSAG(six.with_metaclass(ABCMeta)):
     def __init__(self, alpha=0.0001,
                  fit_intercept=True, n_iter=5, verbose=0,
-                 random_state=None, eta0=0.0,
+                 seed=None, eta0=0.0,
                  class_weight=None, warm_start=False):
 
         self.gradient_memory = None
@@ -26,7 +26,7 @@ class BaseSAG(six.with_metaclass(ABCMeta)):
         self.n_iter = n_iter
         self.verbose = verbose
         self.eta0 = eta0
-        self.random_state = random_state
+        self.seed = seed
         self.class_weight = class_weight
         self.warm_start = warm_start
 
@@ -71,12 +71,16 @@ class BaseSAG(six.with_metaclass(ABCMeta)):
         if num_seen_init is None:
             num_seen_init = 0
 
+        if self.seed is None:
+            # TODO: is this what should be done here?
+            self.seed = np.random.randint(100000)
+
         # check which type of Sequential Dataset is needed
         if sp.issparse(X):
             dataset = CSRDataset(X.data, X.indptr, X.indices,
-                                 y, sample_weight, seed=self.random_state)
+                                 y, sample_weight, seed=self.seed)
         else:
-            dataset = ArrayDataset(X, y, sample_weight, seed=self.random_state)
+            dataset = ArrayDataset(X, y, sample_weight, seed=self.seed)
 
         # set the eta0 if needed, 'auto' is 1 / 4L where L is the max sum of
         # squares for over all samples
@@ -108,7 +112,7 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG,
                                            LinearClassifierMixin)):
     def __init__(self, alpha=0.0001,
                  fit_intercept=True, n_iter=5, verbose=0,
-                 n_jobs=1, random_state=None,
+                 n_jobs=1, seed=None,
                  eta0=0.0, class_weight=None, warm_start=False):
         self.n_jobs = n_jobs
         self.loss_function = Log()
@@ -116,7 +120,7 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG,
                                                 fit_intercept=fit_intercept,
                                                 n_iter=n_iter,
                                                 verbose=verbose,
-                                                random_state=random_state,
+                                                seed=seed,
                                                 eta0=eta0,
                                                 warm_start=warm_start)
 
@@ -214,16 +218,105 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG,
 
 
 class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin):
+    """Linear classifiers (SVM, logistic regression, a.o.) with SAG training.
+
+    This estimator implements regularized linear models with stochastic
+    average gradient (SAG) learning: the gradient of the loss is estimated
+    using a random sample from the dataset. The weights are then updated
+    according to the sum of gradients seen thus far divided by the number of
+    unique samples seen.
+
+    This implementation works with data represented as dense or sparse arrays
+    of floating point values for the features. It will fit the data according
+    to log loss.
+
+    The regularizer is a penalty added to the loss function that shrinks model
+    parameters towards the zero vector using either the squared euclidean norm
+    L2.
+
+    Parameters
+    ----------
+    alpha : float
+        Constant that multiplies the regularization term. Defaults to 0.0001
+
+    fit_intercept: bool
+        Whether the intercept should be estimated or not. If False, the
+        data is assumed to be already centered. Defaults to True.
+
+    n_iter: int, optional
+        The number of passes over the training data (aka epochs). The number
+        of iterations is set to 1 if using partial_fit.
+        Defaults to 5.
+
+    seed: int seed
+        The seed of the pseudo random number generator to use when
+        sampling the data.
+
+    verbose: integer, optional
+        The verbosity level
+
+    n_jobs: integer, optional
+        The number of CPUs to use to do the OVA (One Versus All, for
+        multi-class problems) computation. -1 means 'all CPUs'. Defaults
+        to 1.
+
+    eta0 : double or "auto"
+        The initial learning rate. The default value is 0.001.
+
+    class_weight : dict, {class_label : weight} or "auto" or None, optional
+        Preset for the class_weight fit parameter.
+
+        Weights associated with classes. If not given, all classes
+        are supposed to have weight one.
+
+        The "auto" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies.
+
+    warm_start : bool, optional
+        When set to True, reuse the solution of the previous call to fit as
+        initialization, otherwise, just erase the previous solution.
+
+
+    Attributes
+    ----------
+    coef_ : array, shape (1, n_features) if n_classes == 2 else (n_classes,
+    n_features)
+        Weights assigned to the features.
+
+    intercept_ : array, shape (1,) if n_classes == 2 else (n_classes,)
+        Constants in decision function.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn import linear_model
+    >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
+    >>> Y = np.array([1, 1, 2, 2])
+    >>> clf = linear_model.SAGClassifier()
+    >>> clf.fit(X, Y)
+    ... #doctest: +NORMALIZE_WHITESPACE
+    SAGClassifier(alpha=0.0001, class_weight=None,
+                  eta0=0.001, fit_intercept=True,
+                  n_iter=5, n_jobs=1, seed=None,
+                  verbose=0, warm_start=False)
+    >>> print(clf.predict([[-0.8, -1]]))
+    [1]
+
+    See also
+    --------
+    SGDClassifier, LinearSVC, LogisticRegression, Perceptron
+
+    """
     def __init__(self, alpha=0.0001, fit_intercept=True, n_iter=5,
-                 verbose=0, n_jobs=1, random_state=1.0,
-                 eta0=0.0, class_weight=None, warm_start=False):
+                 verbose=0, n_jobs=1, seed=None,
+                 eta0=0.001, class_weight=None, warm_start=False):
 
         super(SAGClassifier, self).__init__(alpha=alpha,
                                             fit_intercept=fit_intercept,
                                             n_iter=n_iter,
                                             verbose=verbose,
                                             n_jobs=n_jobs,
-                                            random_state=random_state,
+                                            seed=seed,
                                             eta0=eta0,
                                             warm_start=warm_start)
 
@@ -241,7 +334,7 @@ class BaseSAGRegressor(six.with_metaclass(ABCMeta, BaseSAG,
                                           LinearModel, RegressorMixin)):
     def __init__(self, alpha=0.0001,
                  fit_intercept=True, n_iter=5, verbose=0,
-                 n_jobs=1, random_state=None,
+                 n_jobs=1, seed=None,
                  eta0=0.001, class_weight=None, warm_start=False):
 
         self.loss_function = SquaredLoss()
@@ -249,7 +342,7 @@ class BaseSAGRegressor(six.with_metaclass(ABCMeta, BaseSAG,
                                                fit_intercept=fit_intercept,
                                                n_iter=n_iter,
                                                verbose=verbose,
-                                               random_state=random_state,
+                                               seed=seed,
                                                eta0=eta0,
                                                warm_start=warm_start)
 
@@ -299,18 +392,18 @@ class SAGRegressor(BaseSAGRegressor, _LearntSelectorMixin):
         data is assumed to be already centered. Defaults to True.
 
     n_iter : int, optional
-        The number of passes over the training data (aka epochs). The number
-        of iterations is set to 1 if using partial_fit.
+        The number of passes over the training data (aka epochs).
         Defaults to 5.
+
+    seed: int seed
+        The seed of the pseudo random number generator to use when
+        sampling the data.
 
     verbose: integer, optional
         The verbosity level.
 
-    eta0 : double, optional
+    eta0 : double or "auto"
         The initial learning rate [default 0.01].
-
-    power_t : double, optional
-        The exponent for inverse scaling learning rate [default 0.25].
 
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
@@ -336,7 +429,7 @@ class SAGRegressor(BaseSAGRegressor, _LearntSelectorMixin):
     >>> clf.fit(X, y)
     ... #doctest: +NORMALIZE_WHITESPACE
     SAGRegressor(alpha=0.0001, eta0=0.01,
-                 fit_intercept=True, n_iter=5, random_state=None,
+                 fit_intercept=True, n_iter=5, seed=None,
                  verbose=0, warm_start=False)
 
     See also
@@ -345,14 +438,14 @@ class SAGRegressor(BaseSAGRegressor, _LearntSelectorMixin):
 
     """
     def __init__(self, alpha=0.0001, fit_intercept=True, n_iter=5, verbose=0,
-                 n_jobs=1, random_state=1.0,
+                 n_jobs=1, seed=None,
                  eta0=0.001, class_weight=None, warm_start=False):
 
         super(SAGRegressor, self).__init__(alpha=alpha,
                                            fit_intercept=fit_intercept,
                                            n_iter=n_iter,
                                            verbose=verbose,
-                                           random_state=random_state,
+                                           seed=seed,
                                            eta0=eta0, warm_start=warm_start)
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
