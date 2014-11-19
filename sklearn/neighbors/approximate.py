@@ -68,18 +68,23 @@ class ProjectionToHashMixin(object):
         out = np.packbits((projected > 0).astype(int)).view(dtype=HASH_DTYPE)
         return out.reshape(projected.shape[0], -1)
 
-    def fit_transform(self, X):
+    def fit_transform(self, X, y=None):
         self.fit(X)
         return self.transform(X)
 
-    def transform(self, X):
+    def transform(self, X, y=None):
         return self._to_hash(super(ProjectionToHashMixin, self).transform(X))
 
 
 class GaussianRandomProjectionHash(ProjectionToHashMixin,
                                    GaussianRandomProjection):
     """Use GaussianRandomProjection to produce a cosine LSH fingerprint"""
-    pass
+    def __init__(self,
+                 n_components=8,
+                 random_state=None):
+        super(GaussianRandomProjectionHash, self).__init__(
+            n_components=n_components,
+            random_state=random_state)
 
 
 class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
