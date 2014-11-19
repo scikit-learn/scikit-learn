@@ -41,6 +41,8 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
              sample_weight=None, sum_gradient_init=None,
              gradient_memory_init=None, seen_init=None, num_seen_init=None):
         X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
+        y = y.astype(np.float64)
+
         n_samples, n_features = X.shape[0], X.shape[1]
 
         # initialize all parameters if there is no init
