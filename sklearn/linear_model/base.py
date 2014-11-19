@@ -21,7 +21,6 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
 from scipy import sparse
-from scipy.sparse.linalg import lsqr
 
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
@@ -29,6 +28,7 @@ from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..utils import as_float_array, check_array
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
+from ..utils.fixes import sparse_lsqr
 
 
 ###
@@ -371,13 +371,13 @@ class LinearRegression(LinearModel, RegressorMixin):
 
         if sp.issparse(X):
             if y.ndim < 2:
-                out = lsqr(X, y)
+                out = sparse_lsqr(X, y)
                 self.coef_ = out[0]
                 self.residues_ = out[3]
             else:
                 # sparse_lstsq cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
-                    delayed(lsqr)(X, y[:, j].ravel())
+                    delayed(sparse_lsqr)(X, y[:, j].ravel())
                     for j in range(y.shape[1]))
                 self.coef_ = np.vstack(out[0] for out in outs)
                 self.residues_ = np.vstack(out[3] for out in outs)

@@ -107,7 +107,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                precompute='auto', Xy=None, fit_intercept=None,
                normalize=None, copy_X=True, coef_init=None,
                verbose=False, return_models=False, return_n_iter=False,
-               **params):
+               positive=False, **params):
     """Compute Lasso path with coordinate descent
 
     The Lasso optimization function varies for mono and multi-outputs.
@@ -181,6 +181,9 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     params : kwargs
         keyword arguments passed to the coordinate descent solver.
+
+    positive : bool, default False
+        If set to True, forces coefficients to be positive.
 
     Returns
     -------
@@ -266,14 +269,15 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                      alphas=alphas, precompute=precompute, Xy=Xy,
                      fit_intercept=fit_intercept, normalize=normalize,
                      copy_X=copy_X, coef_init=coef_init, verbose=verbose,
-                     return_models=return_models, **params)
+                     return_models=return_models, positive=positive,
+                     **params)
 
 
 def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, fit_intercept=True,
               normalize=False, copy_X=True, coef_init=None,
               verbose=False, return_models=False, return_n_iter=False,
-              **params):
+              positive=False, **params):
     """Compute elastic net path with coordinate descent
 
     The elastic net optimization function varies for mono and multi-outputs.
@@ -358,6 +362,9 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     return_n_iter : bool
         whether to return the number of iterations or not.
+
+    positive : bool, default False
+        If set to True, forces coefficients to be positive.
 
     Returns
     -------
@@ -459,7 +466,6 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     n_alphas = len(alphas)
     tol = params.get('tol', 1e-4)
-    positive = params.get('positive', False)
     max_iter = params.get('max_iter', 1000)
     dual_gaps = np.empty(n_alphas)
     n_iters = []

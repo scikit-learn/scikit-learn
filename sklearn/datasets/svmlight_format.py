@@ -109,6 +109,21 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
     --------
     load_svmlight_files: similar function for loading multiple files in this
     format, enforcing the same number of features/columns on all of them.
+
+    Examples
+    --------
+    To use joblib.Memory to cache the svmlight file::
+
+        from sklearn.externals.joblib import Memory
+        from sklearn.datasets import load_svmlight_file
+        mem = Memory("./mycache")
+
+        @mem.cache
+        def get_data():
+            data = load_svmlight_file("mysvmlightfile")
+            return data[0], data[1]
+
+        X, y = get_data()
     """
     return tuple(load_svmlight_files([f], n_features, dtype, multilabel,
                                      zero_based, query_id))

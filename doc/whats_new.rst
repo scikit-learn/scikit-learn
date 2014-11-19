@@ -14,7 +14,8 @@ New features
 
    - Incremental fit for :class:`GaussianNB <naive_bayes.GaussianNB>`.
 
-   - Add ``sample_weight`` support to :class:`dummy.DummyClassifier`. By
+   - Add ``sample_weight`` support to :class:`dummy.DummyClassifier` and
+     :class:`dummy.DummyRegressor`. By
      `Arnaud Joly`_.
 
    - Add the :func:`metrics.label_ranking_average_precision_score` metrics. By
@@ -40,6 +41,9 @@ New features
      and :class:`SGDRegressor <linear_model.SGDRegressor>` By
      `Danny Sullivan`_.
 
+   - Added :func:`cross_val_predict <cross_validation.cross_val_predict>`
+     function which computes cross-validated estimates. By `Luis Pedro Coelho`_
+
 
 Enhancements
 ............
@@ -64,11 +68,21 @@ Enhancements
      to `Rohit Sivaprasad`_), as well as evaluation metrics (by
      `Joel Nothman`_).
 
+   - Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score`.
+     By `Jatin Shah`.
+
+   - Add support for multiclass in `metrics.hinge_loss`. Added ``labels=None``
+     as optional paramter. By `Saurabh Jha`.
+
+   - Add ``sample_weight`` parameter to `metrics.hinge_loss`.
+     By `Saurabh Jha`.
+
    - Add ``multi_class="multinomial"`` option in
      :class:`linear_model.LogisticRegression` to implement a Logistic
      Regression solver that minimizes the cross-entropy or multinomial loss
-     instead of the default One-vs-Rest setting. By `Lars Buitinck`_ and
-     `Manoj Kumar`_.
+     instead of the default One-vs-Rest setting. Supports `lbfgs` and
+     `newton-cg` solvers. By `Lars Buitinck`_ and `Manoj Kumar`_. Solver option
+     `newton-cg` by Simon Wu.
 
    - ``DictVectorizer`` can now perform ``fit_transform`` on an iterable in a
      single pass, when giving the option ``sort=False``. By Dan Blanchard.
@@ -82,6 +96,17 @@ Enhancements
    - Add ``digits`` parameter to `metrics.classification_report` to allow
      report to show different precision of floating point numbers. By
      `Ian Gilmore`_.
+
+   - Add a quantile prediction strategy to the :class:`dummy.DummyRegressor`.
+     By `Aaron Staple`_.
+
+   - Add ``handle_unknown`` option to :class:`preprocessing.OneHotEncoder` to
+     handle unknown categorical features more gracefully during transform.
+     By `Manoj Kumar`_
+
+   - Added option ``check_X_y`` to :func:`metrics.pairwise_distances_argmin_min`
+     that can give speed improvements by avoiding repeated checking when set to
+     False. By `Manoj Kumar`_
 
 Documentation improvements
 ..........................
@@ -114,6 +139,10 @@ Bug fixes
     - Pipeline object delegate the ``classes_`` attribute to the underlying
       estimator. It allows for instance to make bagging of a pipeline object.
       By `Arnaud Joly`_
+
+    - :class:`neighbors.NearestCentroid` now uses the median as the centroid
+      when metric is set to ``manhattan``. It was using the mean before.
+      By `Manoj Kumar`_
 
 API changes summary
 -------------------
@@ -149,6 +178,10 @@ API changes summary
       for just one alpha.
       ``precompute="auto"`` is now deprecated and will be removed in 0.18
       By `Manoj Kumar`_.
+
+    - Expose ``positive`` option in :func:`linear_model.enet_path` and
+      :func:`linear_model.enet_path` which constrains coefficients to be
+      positive. By `Manoj Kumar`_.
 
 .. _changes_0_15_2:
 
@@ -3012,3 +3045,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Michal Romaniuk: https://github.com/romaniukm
 
 .. _Ian Gilmore: https://github.com/agileminor
+
+.. _Aaron Staple: https://github.com/staple
+
+.. _Luis Pedro Coelho: http://luispedro.org

@@ -546,6 +546,10 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         # Stop if the error is at least as bad as random guessing
         if estimator_error >= 1. - (1. / n_classes):
             self.estimators_.pop(-1)
+            if len(self.estimators_) == 0:
+                raise ValueError('BaseClassifier in AdaBoostClassifier '
+                                 'ensemble is worse than random, ensemble '
+                                 'can not be fit.')
             return None, None, None
 
         # Boost weight using multi-class AdaBoost SAMME alg

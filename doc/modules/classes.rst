@@ -176,6 +176,7 @@ Classes
 
    cross_validation.train_test_split
    cross_validation.cross_val_score
+   cross_validation.cross_val_predict
    cross_validation.permutation_test_score
    cross_validation.check_cv
 
@@ -199,6 +200,8 @@ Loaders
    :toctree: generated/
    :template: function.rst
 
+   datasets.clear_data_home
+   datasets.get_data_home
    datasets.fetch_20newsgroups
    datasets.fetch_20newsgroups_vectorized
    datasets.load_boston
@@ -211,6 +214,7 @@ Loaders
    datasets.load_lfw_people
    datasets.fetch_lfw_people
    datasets.load_linnerud
+   datasets.mldata_filename
    datasets.fetch_mldata
    datasets.fetch_olivetti_faces
    datasets.fetch_california_housing

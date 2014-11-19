@@ -555,14 +555,6 @@ def test_mem_layout():
     assert_equal(100, len(clf.estimators_))
 
 
-def test_oob_score():
-    """Test if oob_score is deprecated. """
-    clf = GradientBoostingClassifier(n_estimators=100, random_state=1,
-                                     subsample=0.5)
-    clf.fit(X, y)
-    assert_warns(DeprecationWarning, hasattr, clf, 'oob_score_')
-
-
 def test_oob_improvement():
     """Test if oob improvement has correct shape and regression test. """
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1,
@@ -648,25 +640,6 @@ def test_more_verbose_output():
     n_lines = sum(1 for l in verbose_output.readlines())
     # 100 lines for n_estimators==100
     assert_equal(100, n_lines)
-
-
-def test_warn_deviance():
-    """Test if mdeviance and bdeviance give deprecated warning. """
-    for loss in ('bdeviance', 'mdeviance'):
-        clean_warning_registry()
-        with warnings.catch_warnings(record=True) as w:
-            # This will raise a DataConversionWarning that we want to
-            # "always" raise, elsewhere the warnings gets ignored in the
-            # later tests, and the tests that check for this warning fail
-            warnings.simplefilter("always", DataConversionWarning)
-            clf = GradientBoostingClassifier(loss=loss)
-            try:
-                clf.fit(X, y)
-            except:
-                # mdeviance will raise ValueError because only 2 classes
-                pass
-            # deprecated warning for bdeviance and mdeviance
-            assert len(w) == 1
 
 
 def test_warm_start():
@@ -815,7 +788,6 @@ def test_monitor_early_stopping():
         assert_equal(est.estimators_.shape[0], 10)
         assert_equal(est.train_score_.shape[0], 10)
         assert_equal(est.oob_improvement_.shape[0], 10)
-        assert_equal(est._oob_score_.shape[0], 10)
 
         # try refit
         est.set_params(n_estimators=30)
@@ -823,7 +795,6 @@ def test_monitor_early_stopping():
         assert_equal(est.n_estimators, 30)
         assert_equal(est.estimators_.shape[0], 30)
         assert_equal(est.train_score_.shape[0], 30)
-        assert_equal(est.oob_improvement_.shape[0], 30)
 
         est = Cls(n_estimators=20, max_depth=1, random_state=1, subsample=0.5,
                   warm_start=True)
@@ -832,7 +803,6 @@ def test_monitor_early_stopping():
         assert_equal(est.estimators_.shape[0], 10)
         assert_equal(est.train_score_.shape[0], 10)
         assert_equal(est.oob_improvement_.shape[0], 10)
-        assert_equal(est._oob_score_.shape[0], 10)
 
         # try refit
         est.set_params(n_estimators=30, warm_start=False)

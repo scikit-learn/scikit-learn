@@ -127,7 +127,7 @@ class GMM(BaseEstimator):
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
         Defaults to 'diag'.
 
-    random_state: RandomState or an int seed (0 by default)
+    random_state: RandomState or an int seed (None by default)
         A random number generator instance
 
     min_covar : float, optional
