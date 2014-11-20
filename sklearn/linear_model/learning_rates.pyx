@@ -83,29 +83,19 @@ cdef class Adaptive(LearningRate):
         cdef double intercept_eta = 0.0
         cdef double alpha = self.alpha
 
-        if alpha == 0.0:
-            # we can use a sparse trick here
-            for j in range(xnnz):
-                idx = x_ind_ptr[j]
-                val = x_data_ptr[j]
-                full_gradient = gradient * val
-                eta_ptr[idx] = self._compute_eta(full_gradient, val, idx)
-        else:
-            # since alpha is non-zero, we have to update
-            # all sum_squared_gradients
-            for j in range(w.n_features):
-                if counter < xnnz and x_ind_ptr[counter] == j:
-                    val = x_data_ptr[counter]
-                    counter += 1
-                else:
-                    val = 0.0
-
-                full_gradient = (gradient * val +
-                                 alpha * w.w_data_ptr[j] * w.wscale_ptr[j])
-                eta_ptr[j] = self._compute_eta(full_gradient, val, j)
+        # we can use a sparse trick here
+        for j in range(xnnz):
+            idx = x_ind_ptr[j]
+            val = x_data_ptr[j]
+            full_gradient = gradient * val
+            eta_ptr[idx] = self._compute_eta(full_gradient, val, idx)
 
         if fit_itercept == 1:
             intercept_eta = self._compute_intercept_eta(gradient)
+
+        with gil:
+            for j in range(2):
+                print(eta_ptr[j])
 
         return intercept_eta
 

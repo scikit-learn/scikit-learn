@@ -149,7 +149,7 @@ class CommonTest(object):
                 intercept_eta = eta * intercept_dx
 
             elif learning_rate == "adagrad":
-                accu_gradient += gradient_vector * gradient_vector
+                accu_gradient += (scalar_gradient * entry) ** 2
                 weights -= (eta / np.sqrt(accu_gradient + eps0) *
                             gradient_vector)
 
@@ -162,6 +162,7 @@ class CommonTest(object):
             if fit_intercept:
                 intercept -= intercept_eta * scalar_gradient * decay
 
+            print("test", (eta / np.sqrt(accu_gradient + eps0)))
             average_weights *= i
             average_weights += weights
             average_weights /= i + 1.0
@@ -466,38 +467,38 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
                                   decimal=14)
         assert_almost_equal(clf.intercept_, intercept, decimal=14)
 
-    def test_adadelta_computed_correctly(self):
-        eta = .1
-        alpha = .1
-        n_samples = 20
-        n_features = 10
-        fit_intercept = True
-        rng = np.random.RandomState(0)
-        X = rng.normal(size=(n_samples, n_features))
-        w = rng.normal(size=n_features)
-        y = np.dot(X, w)
-        y = np.sign(y)
+    # def test_adadelta_computed_correctly(self):
+    #     eta = .1
+    #     alpha = .1
+    #     n_samples = 20
+    #     n_features = 10
+    #     fit_intercept = True
+    #     rng = np.random.RandomState(0)
+    #     X = rng.normal(size=(n_samples, n_features))
+    #     w = rng.normal(size=n_features)
+    #     y = np.dot(X, w)
+    #     y = np.sign(y)
 
-        clf = self.factory(loss='squared_loss',
-                           learning_rate='adadelta',
-                           eta0=eta, alpha=alpha, eps0=0.1,
-                           fit_intercept=fit_intercept, rho0=.9,
-                           n_iter=1, average=False)
+    #     clf = self.factory(loss='squared_loss',
+    #                        learning_rate='adadelta',
+    #                        eta0=eta, alpha=alpha, eps0=0.1,
+    #                        fit_intercept=fit_intercept, rho0=.9,
+    #                        n_iter=1, average=False)
 
-        clf.partial_fit(X[:int(n_samples / 2)], y[:int(n_samples / 2)],
-                        classes=np.unique(y))
-        clf.partial_fit(X[int(n_samples / 2):], y[int(n_samples / 2):],
-                        classes=np.unique(y))
+    #     clf.partial_fit(X[:int(n_samples / 2)], y[:int(n_samples / 2)],
+    #                     classes=np.unique(y))
+    #     clf.partial_fit(X[int(n_samples / 2):], y[int(n_samples / 2):],
+    #                     classes=np.unique(y))
 
-        _, _, weights, intercept = self.asgd(X, y, eta, alpha,
-                                             learning_rate='adadelta',
-                                             fit_intercept=fit_intercept,
-                                             eps0=.1, rho0=.9)
-        weights = weights.reshape(1, -1)
-        assert_array_almost_equal(clf.coef_,
-                                  weights,
-                                  decimal=14)
-        assert_almost_equal(clf.intercept_, intercept, decimal=14)
+    #     _, _, weights, intercept = self.asgd(X, y, eta, alpha,
+    #                                          learning_rate='adadelta',
+    #                                          fit_intercept=fit_intercept,
+    #                                          eps0=.1, rho0=.9)
+    #     weights = weights.reshape(1, -1)
+    #     assert_array_almost_equal(clf.coef_,
+    #                               weights,
+    #                               decimal=14)
+    #     assert_almost_equal(clf.intercept_, intercept, decimal=14)
 
     def test_adagrad_computed_correctly_alpha_zero(self):
         eta = .1
@@ -526,6 +527,32 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
                                              learning_rate='adagrad',
                                              fit_intercept=fit_intercept,
                                              eps0=.1)
+        weights = weights.reshape(1, -1)
+        assert_array_almost_equal(clf.coef_,
+                                  weights,
+                                  decimal=14)
+        assert_almost_equal(clf.intercept_, intercept, decimal=14)
+
+    def test_adagrad_small_computed_correctly_with_zeros(self):
+        X = np.array([[1, 0], [0, 1]])
+        y = np.array([-1, 1])
+        eta = .1
+        alpha = .1
+        fit_intercept = True
+
+        clf = self.factory(loss='squared_loss',
+                           learning_rate='adagrad',
+                           eta0=eta, alpha=alpha, eps0=0.1,
+                           fit_intercept=fit_intercept,
+                           n_iter=1, average=False)
+
+        _, _, weights, intercept = self.asgd(X, y, eta, alpha,
+                                             learning_rate='adagrad',
+                                             fit_intercept=fit_intercept,
+                                             eps0=.1)
+        clf.partial_fit(X[0], [y[0]], classes=[1, -1])
+        clf.partial_fit(X[1], [y[1]])
+
         weights = weights.reshape(1, -1)
         assert_array_almost_equal(clf.coef_,
                                   weights,
