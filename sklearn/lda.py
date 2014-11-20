@@ -53,8 +53,7 @@ def _cov(X, alpha=None):
             # standardize features
             sc = StandardScaler()
             X = sc.fit_transform(X)
-            std = np.diag(sc.std_)
-            s = std.dot(ledoit_wolf(X)[0]).dot(std)  # scale back
+            s = sc.std_ * ledoit_wolf(X)[0] * sc.std_  # scale back
         elif alpha == 'empirical':
             s = empirical_covariance(X)
         else:
