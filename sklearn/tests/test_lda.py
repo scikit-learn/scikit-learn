@@ -131,6 +131,7 @@ def test_lda_scaling():
     """Test if classification works correctly with differently scaled features.
     """
     n = 100
+    np.random.seed(1234)
     # use uniform distribution of features to make sure there is absolutely no
     # overlap between classes.
     x1 = np.random.uniform(-1, 1, (n, 3)) + [-10, 0, 0]
