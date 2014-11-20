@@ -6,7 +6,7 @@ cdef extern from "sgd_fast_helpers.h":
     bint skl_isfinite(double) nogil
 
 from sklearn.utils.seq_dataset cimport SequentialDataset
-from .sgd_fast cimport LossFunction
+from .sgd_fast cimport LossFunction, Classification
 
 # def fast_fit(SequentialDataset dataset,
 #              np.ndarray[double, ndim=1, mode='c'] weights,
@@ -254,7 +254,8 @@ def fast_fit_sparse(SequentialDataset dataset,
     return intercept, num_seen
 
 
-def get_auto_eta(SequentialDataset dataset, double alpha, int n_samples):
+def get_auto_eta(SequentialDataset dataset, double alpha,
+                 int n_samples, LossFunction loss):
     cdef double *x_data_ptr
     cdef int *x_ind_ptr
     cdef double y
@@ -278,8 +279,12 @@ def get_auto_eta(SequentialDataset dataset, double alpha, int n_samples):
                 max_squared_sum = current_squared_sum
             current_squared_sum = 0.0
 
-    return 4.0 / (max_squared_sum + alpha)
-
+    if isinstance(loss, Classification):
+        # Lipschitz for log loss
+        return 4.0 / (max_squared_sum + 4.0 * alpha)
+    else:
+        # Lipschitz for squared loss
+        return 1.0 / (max_squared_sum + alpha)
 
 cdef double dot(double* x_data_ptr, int* x_ind_ptr, double* w_data_ptr,
                 int xnnz) nogil:

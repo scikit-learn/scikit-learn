@@ -81,7 +81,8 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
         # set the eta0 if needed, 'auto' is 1 / 4L where L is the max sum of
         # squares for over all samples
         if self.eta0 == 'auto':
-            step_size = get_auto_eta(dataset, self.alpha, n_samples)
+            step_size = get_auto_eta(dataset, self.alpha, n_samples,
+                                     self.loss_function)
         else:
             step_size = self.eta0
 
@@ -359,7 +360,7 @@ class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin,
     >>> clf.fit(X, Y)
     ... #doctest: +NORMALIZE_WHITESPACE
     SAGClassifier(alpha=0.0001, class_weight=None,
-                  eta0=0.001, fit_intercept=True,
+                  eta0='auto', fit_intercept=True,
                   n_iter=5, n_jobs=1, random_state=None,
                   verbose=0, warm_start=False)
     >>> print(clf.predict([[-0.8, -1]]))
@@ -458,7 +459,7 @@ class SAGRegressor(BaseSAGRegressor, _LearntSelectorMixin,
     >>> clf = linear_model.SAGRegressor()
     >>> clf.fit(X, y)
     ... #doctest: +NORMALIZE_WHITESPACE
-    SAGRegressor(alpha=0.0001, eta0=0.001,
+    SAGRegressor(alpha=0.0001, eta0='auto',
                  fit_intercept=True, n_iter=5, random_state=None,
                  verbose=0, warm_start=False)
 
