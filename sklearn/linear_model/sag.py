@@ -38,8 +38,6 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
              sample_weight=None, sum_gradient_init=None,
              gradient_memory_init=None, seen_init=None, num_seen_init=None,
              weight_pos=1.0, weight_neg=1.0):
-        X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
-        y = y.astype(np.float64)
 
         n_samples, n_features = X.shape[0], X.shape[1]
 
@@ -127,12 +125,20 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
              sample_weight=None, sum_gradient_init=None,
              gradient_memory_init=None, seen_init=None,
              num_seen_init=None):
+        X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
+        y = y.astype(np.float64)
+
         n_samples, n_features = X.shape[0], X.shape[1]
         self.classes_ = np.unique(y)
         self.expanded_class_weight_ = compute_class_weight(self.class_weight,
                                                            self.classes_, y)
 
-        if len(self.classes_) == 2:
+        if self.classes_.shape[0] <= 1:
+            # there is only one class
+            raise ValueError("The number of class labels must be "
+                             "greater than one.")
+        elif self.classes_.shape[0] == 2:
+            # binary classifier
             coef, intercept, sum_gradient, gradient_memory, seen, num_seen = \
                 self._fit_target_class(X, y, self.classes_[1],
                                        coef_init, intercept_init,
@@ -140,6 +146,7 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
                                        gradient_memory_init,
                                        seen_init, num_seen_init)
         else:
+            # multiclass classifier
             coef = []
             intercept = []
             sum_gradient = []
@@ -147,12 +154,14 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
             seen = []
             num_seen = []
 
+            # perform a fit for all classes, one verse all
             results = Parallel(n_jobs=self.n_jobs,
                                backend="threading",
                                verbose=self.verbose)(
                 delayed(self._fit_target_class)(X, y, cl)
                 for cl in self.classes_)
 
+            # append results to the correct array
             for (coef_cl, intercept_cl, sum_gradient_cl, gradient_memory_cl,
                  seen_cl, num_seen_cl) in results:
                 coef.append(coef_cl)
@@ -162,11 +171,12 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
                 seen.append(seen_cl)
                 num_seen.append(num_seen_cl)
 
+            # stack all arrays to transform into np arrays
             coef = np.vstack(coef)
             intercept = np.array(intercept)
-            sum_gradient = np.array(sum_gradient)
-            gradient_memory = np.array(gradient_memory)
-            seen = np.array(seen)
+            sum_gradient = np.vstack(sum_gradient)
+            gradient_memory = np.vstack(gradient_memory)
+            seen = np.vstack(seen)
             num_seen = np.array(num_seen)
 
         self.coef_ = coef
@@ -180,7 +190,7 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
                           intercept_init=None, sample_weight=None,
                           sum_gradient_init=None, gradient_memory_init=None,
                           seen_init=None, num_seen_init=None):
-        if len(self.classes_) == 2:
+        if self.classes_.shape[0] == 2:
             if self.warm_start:
                 # init parameters for binary classifier
                 coef_init = self.coef_
@@ -243,6 +253,9 @@ class BaseSAGRegressor(six.with_metaclass(ABCMeta, BaseSAG)):
              sample_weight=None, sum_gradient_init=None,
              gradient_memory_init=None, seen_init=None,
              num_seen_init=None):
+        X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
+        y = y.astype(np.float64)
+
         if self.warm_start:
             coef_init = self.coef_
             intercept_init = self.intercept_

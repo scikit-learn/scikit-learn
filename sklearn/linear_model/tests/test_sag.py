@@ -8,6 +8,7 @@ from sklearn.linear_model import SAGRegressor, SAGClassifier
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_raises_regexp
 
 
 # this is used for sag classification
@@ -158,6 +159,7 @@ class DenseSAGRegressorTestCase(unittest.TestCase, CommonTest):
     factory = SAGRegressor
 
     def test_sag_computed_correctly(self):
+        """tests the if the sag regressor computed correctly"""
         eta = .2
         alpha = .1
         n_features = 20
@@ -182,6 +184,7 @@ class DenseSAGRegressorTestCase(unittest.TestCase, CommonTest):
         assert_almost_equal(clf1.intercept_, spintercept, decimal=14)
 
     def test_regressor_warm_start(self):
+        """tests the regressor warmstart"""
         eta = .2
         alpha = .1
         n_features = 20
@@ -208,6 +211,7 @@ class DenseSAGRegressorTestCase(unittest.TestCase, CommonTest):
         assert_almost_equal(clf1.intercept_, spintercept, decimal=13)
 
     def test_auto_eta(self):
+        """tests the auto eta computed correctly"""
         indexes = [0, 0, 0, 0, 0, 2]
         X = np.array([[1, 2, 3], [2, 3, 4], [2, 3, 2]])
         y = [.5, .6, .7]
@@ -229,6 +233,7 @@ class DenseSAGRegressorTestCase(unittest.TestCase, CommonTest):
         assert_almost_equal(clf1.intercept_, spintercept, decimal=14)
 
     def test_sag_regressor(self):
+        """tests the if the sag regressor performs well"""
         xmin, xmax = -5, 5
         n_samples = 100
         rng = np.random.RandomState(0)
@@ -261,6 +266,7 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
     factory = SAGClassifier
 
     def test_sag_computed_correctly(self):
+        """tests the binary classifier computed correctly"""
         eta = .2
         alpha = .1
         n_features = 20
@@ -286,6 +292,7 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
         assert_almost_equal(clf1.intercept_, spintercept, decimal=14)
 
     def test_sag_multiclass_computed_correctly(self):
+        """tests the multiclass classifier is comuted correctly"""
         eta = .2
         alpha = .1
         n_features = 20
@@ -325,6 +332,7 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
             assert_almost_equal(clf1.intercept_[i], intercept[i], decimal=14)
 
     def test_classifier_results(self):
+        """tests classifier results match target"""
         eta = .2
         alpha = .1
         n_features = 20
@@ -340,6 +348,7 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
         assert_almost_equal(pred, y, decimal=14)
 
     def test_binary_classifier_warm_start(self):
+        """tests binary classifier with a warm start"""
         eta = .2
         alpha = .1
         n_features = 20
@@ -367,6 +376,7 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
         assert_almost_equal(clf1.intercept_, spintercept, decimal=13)
 
     def test_multiclass_classifier_warm_start(self):
+        """tests multiclass classifier with a warm start"""
         eta = .2
         alpha = .1
         n_features = 20
@@ -408,6 +418,7 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
             assert_almost_equal(clf1.intercept_[i], intercept[i], decimal=14)
 
     def test_binary_classifier_class_weight(self):
+        """tests binary classifier with classweights for each class"""
         eta = .2
         alpha = .1
         n_features = 20
@@ -439,6 +450,7 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
         assert_almost_equal(clf1.intercept_, spintercept, decimal=13)
 
     def test_multiclass_classifier_class_weight(self):
+        """tests multiclass with classweights for each class"""
         eta = .2
         alpha = .1
         n_features = 20
@@ -483,6 +495,17 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
                                       coef[i].ravel(),
                                       decimal=14)
             assert_almost_equal(clf1.intercept_[i], intercept[i], decimal=14)
+
+    def test_classifier_single_class(self):
+        """tests value error thrown with only one class"""
+        X = [[1, 2], [3, 4]]
+        Y = [1, 1]
+
+        assert_raises_regexp(ValueError,
+                             "The number of class labels must be "
+                             "greater than one.",
+                             self.factory().fit,
+                             X, Y)
 
 
 class SparseSAGClassifierTestCase(DenseSAGClassifierTestCase):
