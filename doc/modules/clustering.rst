@@ -104,7 +104,7 @@ Overview of clustering methods
    * - :ref:`Birch`
      - branching factor, number of clusters
      - Large ``n_clusters`` and ``n_samples``
-     - Large dataset, outlier removal
+     - Large dataset, outlier removal, data reduction.
      - Euclidean distance between points
 
 Non-flat geometry clustering is useful when the clusters have a specific
@@ -794,12 +794,13 @@ The branching factor limits the number of subclusters in a node and the
 threshold limits the distance between the entering sample and the existing
 subclusters.
 
-Generally, the clusters obtained directly from Birch are too many.
-This can be tuned by either increasing the threshold or providing ``n_clusters``.
-If ``n_clusters`` is set to None, the subclusters from the leaves are
-directly read off, otherwise a global clustering step clusters these subclusters
-into global clusters and the  samples are mapped to to the global cluster
-of the nearest subcluster.
+This algorithm can be viewed as an instance or data reduction method,
+since it reduces the input data to a set of subclusters which are obtained directly
+from the leaves of the CF Tree. The number of subclusters obtained can be decreased by
+either increasing the threshold or providing ``n_clusters``. If ``n_clusters`` is set
+to None, the subclusters from the leaves are directly read off, otherwise a global
+clustering step labels these subclusters into global clusters(labels) and the
+samples are mapped to the global label of the nearest subcluster.
 
 **Algorithm description:**
 

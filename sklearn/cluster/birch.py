@@ -338,6 +338,8 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         clustering step is AgglomerativeClustering with n_clusters set to 3.
         If set to None, this final clustering step is not performed and the
         subclusters are returned as they are.
+        It is advised to set n_clusters=None if ``partial_fit`` is used, to
+        avoid this final clustering step for every call to ``partial_fit``.
 
     Attributes
     ----------

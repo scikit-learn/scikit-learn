@@ -58,6 +58,8 @@ New features
    - Added :func:`metrics.median_absolute_error`, a robust metric.
      By `Gael Varoquaux`_ and `Florian Wilhelm`_.
 
+   - Add :class:`cluster.Birch`, an online clustering algorithm. By
+     `Manoj Kumar`_ and `Alexandre Gramfort`_.
 
 Enhancements
 ............

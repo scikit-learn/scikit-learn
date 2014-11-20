@@ -6,6 +6,11 @@ Compare BIRCH and MiniBatchKMeans
 This example compares the timing of Birch (with and without the global
 clustering step) and MiniBatchKMeans on a synthetic dataset having
 100,000 samples and 2 features generated using make_blobs.
+
+If ``n_clusters`` is set to None, the data is reduced from 100,000
+samples to a set of 158 clusters. This can be viewed as a preprocessing
+step before the final (global) clustering step that further reduces these
+158 clusters to 100 clusters.
 """
 
 # Authors: Manoj Kumar <manojkumarsivaraj334@gmail.com
@@ -18,6 +23,7 @@ from itertools import cycle
 from time import time
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import Birch, MiniBatchKMeans
@@ -36,7 +42,7 @@ X, y = make_blobs(n_samples=100000, centers=n_centres, random_state=0)
    
 
 # Use all colors that matplotlib provides by default.
-colors = cycle(['blue', 'green', 'red', 'cyan', 'magenta', 'yellow', 'black'])
+colors_ = cycle(colors.cnames.keys())
 
 fig = plt.figure(figsize=(12, 4))
 fig.subplots_adjust(left=0.04, right=0.98, bottom=0.1, top=0.9)
@@ -61,12 +67,13 @@ for ind, (birch_model, info) in enumerate(zip(birch_models, final_step)):
     print("n_clusters : %d" % n_clusters)
 
     ax = fig.add_subplot(1, 3, ind + 1)
-    for this_centroid, k, col in zip(centroids, range(n_clusters), colors):
+    for this_centroid, k, col in zip(centroids, range(n_clusters), colors_):
         mask = labels == k
         ax.plot(X[mask, 0], X[mask, 1], 'w',
                 markerfacecolor=col, marker='.')
-        ax.plot(this_centroid[0], this_centroid[1], '+', markerfacecolor=col,
-                markeredgecolor='k', markersize=5)
+        if birch_model.n_clusters is None:
+            ax.plot(this_centroid[0], this_centroid[1], '+', markerfacecolor=col,
+                    markeredgecolor='k', markersize=5)
     ax.set_ylim([-25, 25])
     ax.set_xlim([-25, 25])
     ax.set_autoscaley_on(False)
@@ -84,7 +91,7 @@ mbk_means_labels_unique = np.unique(mbk.labels_)
 
 ax = fig.add_subplot(1, 3, 3)
 for this_centroid, k, col in zip(mbk.cluster_centers_,
-                                 range(n_clusters), colors):
+                                 range(n_clusters), colors_):
     mask = mbk.labels_ == k
     ax.plot(X[mask, 0], X[mask, 1], 'w', markerfacecolor=col, marker='.')
     ax.plot(this_centroid[0], this_centroid[1], '+', markeredgecolor='k',
