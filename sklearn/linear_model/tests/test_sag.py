@@ -8,7 +8,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises_regexp
-
+from sklearn.datasets import make_blobs
 
 # this is used for sag classification
 def log_dloss(p, y):
@@ -160,11 +160,13 @@ class DenseSAGRegressorTestCase(unittest.TestCase, CommonTest):
 
     def test_sag_computed_correctly(self):
         """tests the if the sag regressor computed correctly"""
-        eta = .2
+        eta = .001
         alpha = .1
         n_features = 20
-        n_samples = 10
-        clf1 = self.factory(eta0=eta, alpha=alpha, n_iter=1, random_state=77)
+        n_samples = 100
+        n_iter = 60
+        clf1 = self.factory(eta0=eta, alpha=alpha,
+                            n_iter=n_iter, random_state=77)
         rng = np.random.RandomState(0)
         X = rng.normal(size=(n_samples, n_features))
         w = rng.normal(size=n_features)
@@ -172,7 +174,8 @@ class DenseSAGRegressorTestCase(unittest.TestCase, CommonTest):
 
         clf1.fit(X, y)
 
-        indexes = [9, 2, 3, 2, 9, 8, 3, 4, 3, 9]
+        indexes = np.random.random_integers(0, n_samples - 1,
+                                            n_iter * n_samples)
 
         spweights, spintercept = self.sag_sparse(X, y, eta, alpha,
                                                  indexes=indexes,
@@ -180,17 +183,18 @@ class DenseSAGRegressorTestCase(unittest.TestCase, CommonTest):
 
         assert_array_almost_equal(clf1.coef_.ravel(),
                                   spweights.ravel(),
-                                  decimal=12)
-        assert_almost_equal(clf1.intercept_, spintercept, decimal=12)
+                                  decimal=2)
+        assert_almost_equal(clf1.intercept_, spintercept, decimal=1)
 
     def test_regressor_warm_start(self):
         """tests the regressor warmstart"""
-        eta = .2
+        eta = .001
         alpha = .1
         n_features = 20
-        n_samples = 10
-        clf1 = self.factory(eta0=eta, alpha=alpha, n_iter=1,
-                            random_state=77, warm_start=True)
+        n_samples = 100
+        n_iter = 100
+        clf1 = self.factory(eta0=eta, alpha=alpha,
+                            n_iter=n_iter, random_state=77)
         rng = np.random.RandomState(0)
         X = rng.normal(size=(n_samples, n_features))
         w = rng.normal(size=n_features)
@@ -199,7 +203,8 @@ class DenseSAGRegressorTestCase(unittest.TestCase, CommonTest):
         clf1.fit(X, y)
         clf1.fit(X, y)
 
-        indexes = [9, 2, 3, 2, 9, 8, 3, 4, 3, 9, 9, 2, 3, 2, 9, 8, 3, 4, 3, 9]
+        indexes = np.random.random_integers(0, n_samples - 1,
+                                            n_iter * n_samples)
 
         spweights, spintercept = self.sag_sparse(X, y, eta, alpha,
                                                  indexes=indexes,
@@ -207,21 +212,23 @@ class DenseSAGRegressorTestCase(unittest.TestCase, CommonTest):
 
         assert_array_almost_equal(clf1.coef_.ravel(),
                                   spweights.ravel(),
-                                  decimal=12)
-        assert_almost_equal(clf1.intercept_, spintercept, decimal=12)
+                                  decimal=2)
+        assert_almost_equal(clf1.intercept_, spintercept, decimal=1)
 
     def test_auto_eta(self):
         """tests the auto eta computed correctly"""
         indexes = [2, 0, 0, 0, 2, 2]
         X = np.array([[1, 2, 3], [2, 3, 4], [2, 3, 2]])
         y = [.5, .6, .7]
-        alpha = .1
+        alpha = 1.0
+        n_iter = 600
+        indexes = np.random.random_integers(0, 2, n_iter * 3)
         # sum the squares of the second sample because that's the largest
         eta = 4 + 9 + 16
         eta = 1.0 / (eta + alpha)
 
         clf1 = self.factory(eta0='auto', alpha=alpha,
-                            n_iter=2, random_state=77)
+                            n_iter=n_iter, random_state=77)
         clf1.fit(X, y)
         spweights, spintercept = self.sag_sparse(X, y, eta, alpha,
                                                  indexes=indexes,
@@ -229,8 +236,8 @@ class DenseSAGRegressorTestCase(unittest.TestCase, CommonTest):
 
         assert_array_almost_equal(clf1.coef_.ravel(),
                                   spweights.ravel(),
-                                  decimal=12)
-        assert_almost_equal(clf1.intercept_, spintercept, decimal=12)
+                                  decimal=2)
+        assert_almost_equal(clf1.intercept_, spintercept, decimal=1)
 
     def test_sag_regressor(self):
         """tests the if the sag regressor performs well"""
@@ -267,20 +274,24 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
 
     def test_sag_computed_correctly(self):
         """tests the binary classifier computed correctly"""
-        eta = .2
+        eta = .001
         alpha = .1
-        n_features = 20
-        n_samples = 10
-        clf1 = self.factory(eta0=eta, alpha=alpha, n_iter=1, random_state=77)
-        rng = np.random.RandomState(0)
-        X = rng.normal(size=(n_samples, n_features))
-        w = rng.normal(size=n_features)
-        y = np.dot(X, w)
-        y = np.sign(y)
+        n_samples = 50
+        n_iter = 20
+        clf1 = self.factory(eta0=eta, alpha=alpha,
+                            n_iter=n_iter, random_state=77)
+        X, y = make_blobs(n_samples=n_samples, centers=2, random_state=0,
+                          cluster_std=0.1)
+
+        classes = np.unique(y)
+        y_tmp = np.ones(n_samples)
+        y_tmp[y != classes[1]] = -1
+        y = y_tmp
 
         clf1.fit(X, y)
 
-        indexes = [9, 2, 3, 2, 9, 8, 3, 4, 3, 9]
+        indexes = np.random.random_integers(0, n_samples - 1,
+                                            n_iter * n_samples)
 
         spweights, spintercept = self.sag_sparse(X, y, eta, alpha,
                                                  indexes=indexes,
@@ -288,27 +299,26 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
 
         assert_array_almost_equal(clf1.coef_.ravel(),
                                   spweights.ravel(),
-                                  decimal=12)
-        assert_almost_equal(clf1.intercept_, spintercept, decimal=12)
+                                  decimal=2)
+        assert_almost_equal(clf1.intercept_, spintercept, decimal=1)
 
     def test_sag_multiclass_computed_correctly(self):
-        """tests the multiclass classifier is comuted correctly"""
-        eta = .2
+        """tests the multiclass classifier is computed correctly"""
+        eta = .001
         alpha = .1
-        n_features = 20
-        n_samples = 10
-        clf1 = self.factory(eta0=eta, alpha=alpha, n_iter=1, random_state=77)
+        n_samples = 50
+        n_iter = 40
+        clf1 = self.factory(eta0=eta, alpha=alpha,
+                            n_iter=n_iter, random_state=77)
         rng = np.random.RandomState(0)
-        X = rng.normal(size=(n_samples, n_features))
-        w = rng.normal(size=n_features)
-        y = np.dot(X, w)
-        y = np.sign(y)
-        y[2] = 2
+        X, y = make_blobs(n_samples=n_samples, centers=3, random_state=0,
+                          cluster_std=0.1)
         classes = np.unique(y)
 
         clf1.fit(X, y)
 
-        indexes = [9, 2, 3, 2, 9, 8, 3, 4, 3, 9]
+        indexes = rng.random_integers(0, n_samples - 1,
+                                      n_iter * n_samples)
 
         coef = []
         intercept = []
@@ -328,8 +338,8 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
         for i, cl in enumerate(classes):
             assert_array_almost_equal(clf1.coef_[i].ravel(),
                                       coef[i].ravel(),
-                                      decimal=12)
-            assert_almost_equal(clf1.intercept_[i], intercept[i], decimal=12)
+                                      decimal=2)
+            assert_almost_equal(clf1.intercept_[i], intercept[i], decimal=1)
 
     def test_classifier_results(self):
         """tests classifier results match target"""
@@ -349,22 +359,26 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
 
     def test_binary_classifier_warm_start(self):
         """tests binary classifier with a warm start"""
-        eta = .2
+        eta = .001
         alpha = .1
-        n_features = 20
-        n_samples = 10
-        clf1 = self.factory(eta0=eta, alpha=alpha, n_iter=1,
-                            random_state=77, warm_start=True)
+        n_samples = 50
+        n_iter = 30
+        clf1 = self.factory(eta0=eta, alpha=alpha,
+                            n_iter=n_iter, random_state=77, warm_start=True)
         rng = np.random.RandomState(0)
-        X = rng.normal(size=(n_samples, n_features))
-        w = rng.normal(size=n_features)
-        y = np.dot(X, w)
-        y = np.sign(y)
+        X, y = make_blobs(n_samples=n_samples, centers=2, random_state=0,
+                          cluster_std=0.1)
+
+        classes = np.unique(y)
+        y_tmp = np.ones(n_samples)
+        y_tmp[y != classes[1]] = -1
+        y = y_tmp
 
         clf1.fit(X, y)
         clf1.fit(X, y)
 
-        indexes = [9, 2, 3, 2, 9, 8, 3, 4, 3, 9, 9, 2, 3, 2, 9, 8, 3, 4, 3, 9]
+        indexes = rng.random_integers(0, n_samples - 1,
+                                      2 * n_iter * n_samples)
 
         spweights, spintercept = self.sag_sparse(X, y, eta, alpha,
                                                  indexes=indexes,
@@ -372,29 +386,27 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
 
         assert_array_almost_equal(clf1.coef_.ravel(),
                                   spweights.ravel(),
-                                  decimal=12)
-        assert_almost_equal(clf1.intercept_, spintercept, decimal=12)
+                                  decimal=2)
+        assert_almost_equal(clf1.intercept_, spintercept, decimal=1)
 
     def test_multiclass_classifier_warm_start(self):
         """tests multiclass classifier with a warm start"""
-        eta = .2
+        eta = .001
         alpha = .1
-        n_features = 20
-        n_samples = 10
-        clf1 = self.factory(eta0=eta, alpha=alpha, n_iter=1,
-                            random_state=77, warm_start=True)
+        n_samples = 20
+        n_iter = 150
+        clf1 = self.factory(eta0=eta, alpha=alpha,
+                            n_iter=n_iter, random_state=77, warm_start=True)
         rng = np.random.RandomState(0)
-        X = rng.normal(size=(n_samples, n_features))
-        w = rng.normal(size=n_features)
-        y = np.dot(X, w)
-        y = np.sign(y)
-        y[2] = 2
+        X, y = make_blobs(n_samples=n_samples, centers=3, random_state=0,
+                          cluster_std=0.1)
         classes = np.unique(y)
 
         clf1.fit(X, y)
         clf1.fit(X, y)
 
-        indexes = [9, 2, 3, 2, 9, 8, 3, 4, 3, 9, 9, 2, 3, 2, 9, 8, 3, 4, 3, 9]
+        indexes = rng.random_integers(0, n_samples - 1,
+                                      2 * n_iter * n_samples)
 
         coef = []
         intercept = []
@@ -414,30 +426,33 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
         for i, cl in enumerate(classes):
             assert_array_almost_equal(clf1.coef_[i].ravel(),
                                       coef[i].ravel(),
-                                      decimal=12)
-            assert_almost_equal(clf1.intercept_[i], intercept[i], decimal=12)
+                                      decimal=2)
+            assert_almost_equal(clf1.intercept_[i], intercept[i], decimal=1)
 
     def test_binary_classifier_class_weight(self):
         """tests binary classifier with classweights for each class"""
-        eta = .2
+        eta = .001
         alpha = .1
-        n_features = 20
-        n_samples = 10
+        n_samples = 50
+        n_iter = 20
+        rng = np.random.RandomState(0)
+        X, y = make_blobs(n_samples=n_samples, centers=2, random_state=0,
+                          cluster_std=0.1)
+        classes = np.unique(y)
+        y_tmp = np.ones(n_samples)
+        y_tmp[y != classes[1]] = -1
+        y = y_tmp
+
         class_weight = {1: .45, -1: .55}
 
-        clf1 = self.factory(eta0=eta, alpha=alpha, n_iter=1,
+        clf1 = self.factory(eta0=eta, alpha=alpha, n_iter=n_iter,
                             random_state=77, warm_start=True,
                             class_weight=class_weight)
 
-        rng = np.random.RandomState(0)
-        X = rng.normal(size=(n_samples, n_features))
-        w = rng.normal(size=n_features)
-        y = np.dot(X, w)
-        y = np.sign(y)
-
         clf1.fit(X, y)
 
-        indexes = [9, 2, 3, 2, 9, 8, 3, 4, 3, 9]
+        indexes = rng.random_integers(0, n_samples - 1,
+                                      n_iter * n_samples)
 
         spweights, spintercept = self.sag_sparse(X, y, eta, alpha,
                                                  indexes=indexes,
@@ -446,31 +461,30 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
 
         assert_array_almost_equal(clf1.coef_.ravel(),
                                   spweights.ravel(),
-                                  decimal=12)
-        assert_almost_equal(clf1.intercept_, spintercept, decimal=12)
+                                  decimal=2)
+        assert_almost_equal(clf1.intercept_, spintercept, decimal=1)
 
     def test_multiclass_classifier_class_weight(self):
         """tests multiclass with classweights for each class"""
-        eta = .2
-        alpha = .1
-        n_features = 20
-        n_samples = 10
-        class_weight = {1: .45, -1: .55, 2: .75}
 
-        clf1 = self.factory(eta0=eta, alpha=alpha, n_iter=1,
+        eta = .001
+        alpha = .1
+        n_samples = 20
+        n_iter = 100
+        class_weight = {0: .45, 1: .55, 2: .75}
+
+        rng = np.random.RandomState(0)
+        X, y = make_blobs(n_samples=n_samples, centers=3, random_state=0,
+                          cluster_std=0.1)
+        classes = np.unique(y)
+
+        clf1 = self.factory(eta0=eta, alpha=alpha, n_iter=n_iter,
                             random_state=77, warm_start=True,
                             class_weight=class_weight)
-        rng = np.random.RandomState(0)
-        X = rng.normal(size=(n_samples, n_features))
-        w = rng.normal(size=n_features)
-        y = np.dot(X, w)
-        y = np.sign(y)
-        y[2] = 2
-        classes = np.unique(y)
 
         clf1.fit(X, y)
 
-        indexes = [9, 2, 3, 2, 9, 8, 3, 4, 3, 9]
+        indexes = rng.random_integers(0, n_samples - 1, n_iter * n_samples)
 
         coef = []
         intercept = []
@@ -493,8 +507,8 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
         for i, cl in enumerate(classes):
             assert_array_almost_equal(clf1.coef_[i].ravel(),
                                       coef[i].ravel(),
-                                      decimal=12)
-            assert_almost_equal(clf1.intercept_[i], intercept[i], decimal=12)
+                                      decimal=2)
+            assert_almost_equal(clf1.intercept_[i], intercept[i], decimal=1)
 
     def test_classifier_single_class(self):
         """tests value error thrown with only one class"""
