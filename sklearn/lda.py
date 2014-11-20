@@ -338,11 +338,10 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         """
         X, y = check_X_y(X, y)
         self.classes_ = unique_labels(y)
-        n_classes = len(self.classes_)
 
-        # TODO: support priors estimated from data
-        if self.priors is None:  # equal priors
-            self.priors_ = np.ones(n_classes) / n_classes
+        if self.priors is None:  # estimate priors from sample
+            _, y_t = np.unique(y, return_inverse=True)  # non-negative ints
+            self.priors_ = np.bincount(y_t) / float(len(y))
         else:
             self.priors_ = self.priors
 
