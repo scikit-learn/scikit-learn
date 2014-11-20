@@ -104,6 +104,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         self.step = step
         self.estimator_params = estimator_params
         self.verbose = verbose
+        self._n_features_to_remove = None
 
     def fit(self, X, y):
         """Fit the RFE model and then the underlying estimator on the selected
@@ -126,11 +127,12 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
             n_features_to_select = self.n_features_to_select
 
         if 0.0 < self.step < 1.0:
-            step = int(self.step * n_features)
+            self._n_features_to_remove = int(self.step * n_features)
         else:
-            step = int(self.step)
-        if step <= 0:
-            raise ValueError("Step must be >0")
+            self._n_features_to_remove = int(self.step)
+
+        if self._n_features_to_remove <= 0:
+            self._n_features_to_remove = 1
 
         support_ = np.ones(n_features, dtype=np.bool)
         ranking_ = np.ones(n_features, dtype=np.int)
@@ -156,7 +158,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
             ranks = np.ravel(ranks)
 
             # Eliminate the worse features
-            threshold = min(step, np.sum(support_) - n_features_to_select)
+            threshold = min(self._n_features_to_remove, 
+                            np.sum(support_) - n_features_to_select)
             support_[features[ranks][:threshold]] = False
             ranking_[np.logical_not(support_)] += 1
 
