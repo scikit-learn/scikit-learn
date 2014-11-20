@@ -225,7 +225,7 @@ cross-validation: :class:`LassoCV` and :class:`LassoLarsCV`.
 explained below.
 
 For high-dimensional datasets with many collinear regressors,
-:class:`LassoCV` is most often preferable. How, :class:`LassoLarsCV` has
+:class:`LassoCV` is most often preferable. However, :class:`LassoLarsCV` has
 the advantage of exploring more relevant values of `alpha` parameter, and
 if the number of samples is very small compared to the number of
 observations, it is often faster than :class:`LassoCV`.
