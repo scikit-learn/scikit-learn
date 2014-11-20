@@ -6,12 +6,12 @@ from abc import ABCMeta
 from .base import LinearClassifierMixin, LinearModel, SparseCoefMixin
 from ..base import RegressorMixin, BaseEstimator
 from sklearn.feature_selection.from_model import _LearntSelectorMixin
-from ..utils import check_X_y
-from ..externals import six
-from .sgd_fast import Log, SquaredLoss
-from ..externals.joblib import Parallel, delayed
-from .sag_fast import fast_fit_sparse, get_auto_eta
+from ..utils import check_X_y, compute_class_weight
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
+from ..externals import six
+from ..externals.joblib import Parallel, delayed
+from .sgd_fast import Log, SquaredLoss
+from .sag_fast import fast_fit_sparse, get_auto_eta
 
 
 class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
@@ -34,12 +34,10 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
         self.sum_gradient_ = None
         self.gradient_memory_ = None
 
-    def partial_fit(self, X, y, sample_weight=None):
-        raise ValueError("partial fit not supported for SAG")
-
     def _fit(self, X, y, coef_init=None, intercept_init=None,
              sample_weight=None, sum_gradient_init=None,
-             gradient_memory_init=None, seen_init=None, num_seen_init=None):
+             gradient_memory_init=None, seen_init=None, num_seen_init=None,
+             weight_pos=1.0, weight_neg=1.0):
         X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
         y = y.astype(np.float64)
 
@@ -100,7 +98,8 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
                                                sum_gradient_init.ravel(),
                                                gradient_memory_init.ravel(),
                                                seen_init.ravel(),
-                                               num_seen_init)
+                                               num_seen_init, weight_pos,
+                                               weight_neg)
         return (coef_init.reshape(1, -1), intercept_,
                 sum_gradient_init.reshape(1, -1),
                 gradient_memory_init.reshape(1, -1),
@@ -114,6 +113,7 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
                  n_jobs=1, seed=None,
                  eta0=0.0, class_weight=None, warm_start=False):
         self.n_jobs = n_jobs
+        self.class_weight = class_weight
         self.loss_function = Log()
         super(BaseSAGClassifier, self).__init__(alpha=alpha,
                                                 fit_intercept=fit_intercept,
@@ -129,6 +129,8 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
              num_seen_init=None):
         n_samples, n_features = X.shape[0], X.shape[1]
         self.classes_ = np.unique(y)
+        self.expanded_class_weight_ = compute_class_weight(self.class_weight,
+                                                           self.classes_, y)
 
         if len(self.classes_) == 2:
             coef, intercept, sum_gradient, gradient_memory, seen, num_seen = \
@@ -178,8 +180,8 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
                           intercept_init=None, sample_weight=None,
                           sum_gradient_init=None, gradient_memory_init=None,
                           seen_init=None, num_seen_init=None):
-        if self.warm_start:
-            if len(self.classes_) == 2:
+        if len(self.classes_) == 2:
+            if self.warm_start:
                 # init parameters for binary classifier
                 coef_init = self.coef_
                 intercept_init = self.intercept_
@@ -187,9 +189,13 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
                 gradient_memory_init = self.gradient_memory_
                 seen_init = self.seen_
                 num_seen_init = self.num_seen_
-            else:
+
+            weight_pos = self.expanded_class_weight_[1]
+            weight_neg = self.expanded_class_weight_[0]
+        else:
+            class_index = np.where(self.classes_ == target_class)[0][0]
+            if self.warm_start:
                 # init parameters for multi-class classifier
-                class_index = np.where(self.classes_ == target_class)[0][0]
                 if self.coef_ is not None:
                     coef_init = self.coef_[class_index]
                 if self.intercept_ is not None:
@@ -203,6 +209,9 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
                 if self.num_seen_ is not None:
                     num_seen_init = self.num_seen_[class_index]
 
+            weight_pos = self.expanded_class_weight_[class_index]
+            weight_neg = 1.0
+
         n_samples, n_features = X.shape[0], X.shape[1]
 
         y_encoded = np.ones(n_samples)
@@ -213,7 +222,43 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
                                                    sample_weight,
                                                    sum_gradient_init,
                                                    gradient_memory_init,
-                                                   seen_init, num_seen_init)
+                                                   seen_init, num_seen_init,
+                                                   weight_pos, weight_neg)
+
+
+class BaseSAGRegressor(six.with_metaclass(ABCMeta, BaseSAG)):
+    def __init__(self, alpha=0.0001, fit_intercept=True, n_iter=5, verbose=0,
+                 seed=None, eta0=0.001, warm_start=False):
+
+        self.loss_function = SquaredLoss()
+        super(BaseSAGRegressor, self).__init__(alpha=alpha,
+                                               fit_intercept=fit_intercept,
+                                               n_iter=n_iter,
+                                               verbose=verbose,
+                                               seed=seed,
+                                               eta0=eta0,
+                                               warm_start=warm_start)
+
+    def _fit(self, X, y, coef_init=None, intercept_init=None,
+             sample_weight=None, sum_gradient_init=None,
+             gradient_memory_init=None, seen_init=None,
+             num_seen_init=None):
+        if self.warm_start:
+            coef_init = self.coef_
+            intercept_init = self.intercept_
+            sum_gradient_init = self.sum_gradient_
+            gradient_memory_init = self.gradient_memory_
+            seen_init = self.seen_
+            num_seen_init = self.num_seen_
+
+        (self.coef_, self.intercept_, self.sum_gradient_,
+         self.gradient_memory_, self.seen_, self.num_seen_) = \
+            super(BaseSAGRegressor, self)._fit(X, y, coef_init,
+                                               intercept_init,
+                                               sample_weight,
+                                               sum_gradient_init,
+                                               gradient_memory_init,
+                                               seen_init, num_seen_init)
 
 
 class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin,
@@ -312,6 +357,7 @@ class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin,
                  eta0=0.001, class_weight=None, warm_start=False):
 
         super(SAGClassifier, self).__init__(alpha=alpha,
+                                            class_weight=class_weight,
                                             fit_intercept=fit_intercept,
                                             n_iter=n_iter,
                                             verbose=verbose,
@@ -331,41 +377,6 @@ class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin,
                                         gradient_memory_init,
                                         seen_init, num_seen_init)
         return self
-
-
-class BaseSAGRegressor(six.with_metaclass(ABCMeta, BaseSAG)):
-    def __init__(self, alpha=0.0001, fit_intercept=True, n_iter=5, verbose=0,
-                 seed=None, eta0=0.001, warm_start=False):
-
-        self.loss_function = SquaredLoss()
-        super(BaseSAGRegressor, self).__init__(alpha=alpha,
-                                               fit_intercept=fit_intercept,
-                                               n_iter=n_iter,
-                                               verbose=verbose,
-                                               seed=seed,
-                                               eta0=eta0,
-                                               warm_start=warm_start)
-
-    def _fit(self, X, y, coef_init=None, intercept_init=None,
-             sample_weight=None, sum_gradient_init=None,
-             gradient_memory_init=None, seen_init=None,
-             num_seen_init=None):
-        if self.warm_start:
-            coef_init = self.coef_
-            intercept_init = self.intercept_
-            sum_gradient_init = self.sum_gradient_
-            gradient_memory_init = self.gradient_memory_
-            seen_init = self.seen_
-            num_seen_init = self.num_seen_
-
-        (self.coef_, self.intercept_, self.sum_gradient_,
-         self.gradient_memory_, self.seen_, self.num_seen_) = \
-            super(BaseSAGRegressor, self)._fit(X, y, coef_init,
-                                               intercept_init,
-                                               sample_weight,
-                                               sum_gradient_init,
-                                               gradient_memory_init,
-                                               seen_init, num_seen_init)
 
 
 class SAGRegressor(BaseSAGRegressor, _LearntSelectorMixin,

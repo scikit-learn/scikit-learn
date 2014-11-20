@@ -98,7 +98,7 @@ class CommonTest(object):
     #     return weights, intercept
 
     def sag_sparse(self, X, y, eta, alpha, intercept_init=0.0, n_iter=1,
-                   indexes=None, dloss=None):
+                   indexes=None, dloss=None, class_weight=None):
         n_samples, n_features = X.shape[0], X.shape[1]
 
         weights = np.zeros(n_features)
@@ -109,6 +109,7 @@ class CommonTest(object):
         wscale = 1.0
         decay = 1.0
         seen = set()
+
         if indexes is None:
             indexes = np.tile(np.arange(n_samples), n_iter)
         c_sum = np.zeros(len(indexes) + 1)
@@ -132,6 +133,9 @@ class CommonTest(object):
 
             p = (wscale * np.dot(entry, weights)) + intercept
             gradient = dloss(p, y[idx])
+
+            if class_weight:
+                gradient *= class_weight[y[idx]]
 
             update = entry * gradient
             sum_gradient += update - gradient_memory[idx]
@@ -391,6 +395,83 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
             spweights, spintercept = self.sag_sparse(X, y_encoded, eta, alpha,
                                                      indexes=indexes,
                                                      dloss=log_dloss)
+            coef.append(spweights)
+            intercept.append(spintercept)
+
+        coef = np.vstack(coef)
+        intercept = np.array(intercept)
+
+        for i, cl in enumerate(classes):
+            assert_array_almost_equal(clf1.coef_[i].ravel(),
+                                      coef[i].ravel(),
+                                      decimal=14)
+            assert_almost_equal(clf1.intercept_[i], intercept[i], decimal=14)
+
+    def test_binary_classifier_class_weight(self):
+        eta = .2
+        alpha = .1
+        n_features = 20
+        n_samples = 10
+        class_weight = {1: .45, -1: .55}
+
+        clf1 = self.factory(eta0=eta, alpha=alpha, n_iter=1,
+                            seed=77, warm_start=True,
+                            class_weight=class_weight)
+
+        rng = np.random.RandomState(0)
+        X = rng.normal(size=(n_samples, n_features))
+        w = rng.normal(size=n_features)
+        y = np.dot(X, w)
+        y = np.sign(y)
+
+        clf1.fit(X, y)
+
+        indexes = [0, 1, 1, 3, 0, 8, 6, 2, 3, 9]
+
+        spweights, spintercept = self.sag_sparse(X, y, eta, alpha,
+                                                 indexes=indexes,
+                                                 dloss=log_dloss,
+                                                 class_weight=class_weight)
+
+        assert_array_almost_equal(clf1.coef_.ravel(),
+                                  spweights.ravel(),
+                                  decimal=13)
+        assert_almost_equal(clf1.intercept_, spintercept, decimal=13)
+
+    def test_multiclass_classifier_class_weight(self):
+        eta = .2
+        alpha = .1
+        n_features = 20
+        n_samples = 10
+        class_weight = {1: .45, -1: .55, 2: .75}
+
+        clf1 = self.factory(eta0=eta, alpha=alpha, n_iter=1,
+                            seed=77, warm_start=True,
+                            class_weight=class_weight)
+        rng = np.random.RandomState(0)
+        X = rng.normal(size=(n_samples, n_features))
+        w = rng.normal(size=n_features)
+        y = np.dot(X, w)
+        y = np.sign(y)
+        y[2] = 2
+        classes = np.unique(y)
+
+        clf1.fit(X, y)
+
+        indexes = [0, 1, 1, 3, 0, 8, 6, 2, 3, 9]
+
+        coef = []
+        intercept = []
+        for cl in classes:
+            y_encoded = np.ones(n_samples)
+            y_encoded[y != cl] = -1
+            cl_weight = {-1: 1.0, 1: 1.0}
+            cl_weight[1] = class_weight[cl]
+
+            spweights, spintercept = self.sag_sparse(X, y_encoded, eta, alpha,
+                                                     indexes=indexes,
+                                                     dloss=log_dloss,
+                                                     class_weight=cl_weight)
             coef.append(spweights)
             intercept.append(spintercept)
 

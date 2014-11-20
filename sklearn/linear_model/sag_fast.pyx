@@ -113,22 +113,33 @@ def fast_fit_sparse(SequentialDataset dataset,
                     np.ndarray[double, ndim=1, mode='c'] sum_gradient_init,
                     np.ndarray[double, ndim=1, mode='c'] gradient_memory_init,
                     np.ndarray[bint, ndim=1, mode='c'] seen_init,
-                    int num_seen_init
+                    int num_seen_init,
+                    double weight_pos,
+                    double weight_neg
                     ):
 
+    # true if the weights or intercept are NaN or infinity
     cdef bint infinity = False
+    # the pointer to the coef_ or weights
     cdef double* weights_ptr = &weights[0]
+    # the data pointer for X, the training set
     cdef double *x_data_ptr
+    # the index pointer for the column of the data
     cdef int *x_ind_ptr
+    # the label for the sample
     cdef double y
+    # the sample weight
     cdef double sample_weight
+    # the number of non-zero features for this sample
     cdef int xnnz
+    # helper variable for indexes
     cdef int idx
+    # the total number of interations through the data
     cdef int k
+    # the index (row number) of the current sample
     cdef int current_index
-    cdef int class_weight
-    cdef int counter
-    cdef double full_gradient
+    # helper variable for the weight of a pos/neg class
+    cdef double class_weight
 
     # the total number of samples seen
     cdef double num_seen = num_seen_init
@@ -202,6 +213,14 @@ def fast_fit_sparse(SequentialDataset dataset,
             p = (wscale * dot(x_data_ptr, x_ind_ptr,
                  weights_ptr, xnnz)) + intercept
             gradient = loss._dloss(p, y)
+
+            # find the class_weight
+            if y > 0.0:
+                class_weight = weight_pos
+            else:
+                class_weight = weight_neg
+
+            gradient *= sample_weight * class_weight
 
             # make the updates to the sum of gradients
             for j in range(xnnz):
