@@ -40,12 +40,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 
-from sklearn.externals import six
 from sklearn.externals.six.moves import html_parser
 from sklearn.externals.six.moves import urllib
 from sklearn.datasets import get_data_home
 from sklearn.feature_extraction.text import HashingVectorizer
-from sklearn.linear_model.stochastic_gradient import SGDClassifier
+from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.linear_model import Perceptron
 from sklearn.naive_bayes import MultinomialNB

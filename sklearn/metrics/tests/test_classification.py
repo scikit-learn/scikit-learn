@@ -1095,6 +1095,95 @@ def test_hinge_loss_binary():
     assert_equal(hinge_loss(y_true, pred_decision), 1.2 / 4)
 
 
+def test_hinge_loss_multiclass():
+    pred_decision = np.array([
+        [0.36, -0.17, -0.58, -0.99],
+        [-0.54, -0.37, -0.48, -0.58],
+        [-1.45, -0.58, -0.38, -0.17],
+        [-0.54, -0.38, -0.48, -0.58],
+        [-2.36, -0.79, -0.27,  0.24],
+        [-1.45, -0.58, -0.38, -0.17]
+    ])
+    y_true = np.array([0, 1, 2, 1, 3, 2])
+    dummy_losses = np.array([
+        1 - pred_decision[0][0] + pred_decision[0][1],
+        1 - pred_decision[1][1] + pred_decision[1][2],
+        1 - pred_decision[2][2] + pred_decision[2][3],
+        1 - pred_decision[3][1] + pred_decision[3][2],
+        1 - pred_decision[4][3] + pred_decision[4][2],
+        1 - pred_decision[5][2] + pred_decision[5][3]
+    ])
+    dummy_losses[dummy_losses <= 0] = 0
+    dummy_hinge_loss = np.mean(dummy_losses)
+    assert_equal(hinge_loss(y_true, pred_decision),
+                 dummy_hinge_loss)
+
+
+def test_hinge_loss_multiclass_missing_labels_with_labels_none():
+    y_true = np.array([0, 1, 2, 2])
+    pred_decision = np.array([
+        [1.27, 0.034, -0.68, -1.40],
+        [-1.45, -0.58, -0.38, -0.17],
+        [-2.36, -0.79, -0.27,  0.24],
+        [-2.36, -0.79, -0.27,  0.24]
+    ])
+    error_message = ("Please include all labels in y_true "
+                     "or pass labels as third argument")
+    assert_raise_message(ValueError,
+                         error_message,
+                         hinge_loss, y_true, pred_decision)
+
+
+def test_hinge_loss_multiclass_with_missing_labels():
+    pred_decision = np.array([
+        [0.36, -0.17, -0.58, -0.99],
+        [-0.55, -0.38, -0.48, -0.58],
+        [-1.45, -0.58, -0.38, -0.17],
+        [-0.55, -0.38, -0.48, -0.58],
+        [-1.45, -0.58, -0.38, -0.17]
+    ])
+    y_true = np.array([0, 1, 2, 1, 2])
+    labels = np.array([0, 1, 2, 3])
+    dummy_losses = np.array([
+        1 - pred_decision[0][0] + pred_decision[0][1],
+        1 - pred_decision[1][1] + pred_decision[1][2],
+        1 - pred_decision[2][2] + pred_decision[2][3],
+        1 - pred_decision[3][1] + pred_decision[3][2],
+        1 - pred_decision[4][2] + pred_decision[4][3]
+    ])
+    dummy_losses[dummy_losses <= 0] = 0
+    dummy_hinge_loss = np.mean(dummy_losses)
+    assert_equal(hinge_loss(y_true, pred_decision, labels=labels),
+                 dummy_hinge_loss)
+
+
+def test_hinge_loss_multiclass_invariance_lists():
+    # Currently, invariance of string and integer labels cannot be tested
+    # in common invariance tests because invariance tests for multiclass
+    # decision functions is not implemented yet.
+    y_true = ['blue', 'green', 'red',
+              'green', 'white', 'red']
+    pred_decision = [
+        [0.36, -0.17, -0.58, -0.99],
+        [-0.55, -0.38, -0.48, -0.58],
+        [-1.45, -0.58, -0.38,  -0.17],
+        [-0.55, -0.38, -0.48, -0.58],
+        [-2.36, -0.79, -0.27,  0.24],
+        [-1.45, -0.58, -0.38,  -0.17]]
+    dummy_losses = np.array([
+        1 - pred_decision[0][0] + pred_decision[0][1],
+        1 - pred_decision[1][1] + pred_decision[1][2],
+        1 - pred_decision[2][2] + pred_decision[2][3],
+        1 - pred_decision[3][1] + pred_decision[3][2],
+        1 - pred_decision[4][3] + pred_decision[4][2],
+        1 - pred_decision[5][2] + pred_decision[5][3]
+    ])
+    dummy_losses[dummy_losses <= 0] = 0
+    dummy_hinge_loss = np.mean(dummy_losses)
+    assert_equal(hinge_loss(y_true, pred_decision),
+                 dummy_hinge_loss)
+
+
 def test_log_loss():
     # binary case with symbolic labels ("no" < "yes")
     y_true = ["no", "no", "no", "yes", "yes", "yes"]

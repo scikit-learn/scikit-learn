@@ -14,7 +14,8 @@ New features
 
    - Incremental fit for :class:`GaussianNB <naive_bayes.GaussianNB>`.
 
-   - Add ``sample_weight`` support to :class:`dummy.DummyClassifier`. By
+   - Add ``sample_weight`` support to :class:`dummy.DummyClassifier` and
+     :class:`dummy.DummyRegressor`. By
      `Arnaud Joly`_.
 
    - Add the :func:`metrics.label_ranking_average_precision_score` metrics. By
@@ -40,6 +41,9 @@ New features
      and :class:`SGDRegressor <linear_model.SGDRegressor>` By
      `Danny Sullivan`_.
 
+   - Added :func:`cross_val_predict <cross_validation.cross_val_predict>`
+     function which computes cross-validated estimates. By `Luis Pedro Coelho`_
+
 
 Enhancements
 ............
@@ -63,6 +67,15 @@ Enhancements
      :class:`multiclass.OneVsRestClassifier` (by `Hamzeh Alsalhi`_ with thanks
      to `Rohit Sivaprasad`_), as well as evaluation metrics (by
      `Joel Nothman`_).
+
+   - Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score`.
+     By `Jatin Shah`.
+
+   - Add support for multiclass in `metrics.hinge_loss`. Added ``labels=None``
+     as optional paramter. By `Saurabh Jha`.
+
+   - Add ``sample_weight`` parameter to `metrics.hinge_loss`.
+     By `Saurabh Jha`.
 
    - Add ``multi_class="multinomial"`` option in
      :class:`linear_model.LogisticRegression` to implement a Logistic
@@ -3034,3 +3047,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Ian Gilmore: https://github.com/agileminor
 
 .. _Aaron Staple: https://github.com/staple
+
+.. _Luis Pedro Coelho: http://luispedro.org
