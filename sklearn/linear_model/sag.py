@@ -6,24 +6,26 @@ from abc import ABCMeta
 from .base import LinearClassifierMixin, LinearModel, SparseCoefMixin
 from ..base import RegressorMixin, BaseEstimator
 from sklearn.feature_selection.from_model import _LearntSelectorMixin
-from ..utils import check_X_y, compute_class_weight
+from ..utils import check_X_y, compute_class_weight, check_random_state
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from .sgd_fast import Log, SquaredLoss
 from .sag_fast import fast_fit_sparse, get_auto_eta
 
+MAX_INT = np.iinfo(np.int32).max
+
 
 class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
     def __init__(self, alpha=0.0001, fit_intercept=True, n_iter=5, verbose=0,
-                 seed=None, eta0=0.0, warm_start=False):
+                 random_state=None, eta0='auto', warm_start=False):
         self.gradient_memory = None
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.n_iter = n_iter
         self.verbose = verbose
         self.eta0 = eta0
-        self.seed = seed
+        self.random_state = random_state
         self.warm_start = warm_start
 
         self.coef_ = None
@@ -65,18 +67,16 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
         if num_seen_init is None:
             num_seen_init = 0
 
-        if self.seed is None:
-            # TODO: is this what should be done here?
-            seed = np.random.randint(100000)
-        else:
-            seed = self.seed
+        random_state = check_random_state(self.random_state)
 
         # check which type of Sequential Dataset is needed
         if sp.issparse(X):
             dataset = CSRDataset(X.data, X.indptr, X.indices,
-                                 y, sample_weight, seed=seed)
+                                 y, sample_weight,
+                                 seed=random_state.randint(MAX_INT))
         else:
-            dataset = ArrayDataset(X, y, sample_weight, seed=seed)
+            dataset = ArrayDataset(X, y, sample_weight,
+                                   seed=random_state.randint(MAX_INT))
 
         # set the eta0 if needed, 'auto' is 1 / 4L where L is the max sum of
         # squares for over all samples
@@ -108,8 +108,8 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
 class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
     def __init__(self, alpha=0.0001,
                  fit_intercept=True, n_iter=5, verbose=0,
-                 n_jobs=1, seed=None,
-                 eta0=0.0, class_weight=None, warm_start=False):
+                 n_jobs=1, random_state=None,
+                 eta0='auto', class_weight=None, warm_start=False):
         self.n_jobs = n_jobs
         self.class_weight = class_weight
         self.loss_function = Log()
@@ -117,7 +117,7 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
                                                 fit_intercept=fit_intercept,
                                                 n_iter=n_iter,
                                                 verbose=verbose,
-                                                seed=seed,
+                                                random_state=random_state,
                                                 eta0=eta0,
                                                 warm_start=warm_start)
 
@@ -125,10 +125,10 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
              sample_weight=None, sum_gradient_init=None,
              gradient_memory_init=None, seen_init=None,
              num_seen_init=None):
-        X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
-        y = y.astype(np.float64)
-
+        X, y = check_X_y(X, y, "csr", copy=False, order='C',
+                         dtype=np.float64)
         n_samples, n_features = X.shape[0], X.shape[1]
+
         self.classes_ = np.unique(y)
         self.expanded_class_weight_ = compute_class_weight(self.class_weight,
                                                            self.classes_, y)
@@ -158,7 +158,12 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
             results = Parallel(n_jobs=self.n_jobs,
                                backend="threading",
                                verbose=self.verbose)(
-                delayed(self._fit_target_class)(X, y, cl)
+                delayed(self._fit_target_class)(X, y, cl,
+                                                coef_init, intercept_init,
+                                                sample_weight,
+                                                sum_gradient_init,
+                                                gradient_memory_init,
+                                                seen_init, num_seen_init)
                 for cl in self.classes_)
 
             # append results to the correct array
@@ -238,14 +243,14 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
 
 class BaseSAGRegressor(six.with_metaclass(ABCMeta, BaseSAG)):
     def __init__(self, alpha=0.0001, fit_intercept=True, n_iter=5, verbose=0,
-                 seed=None, eta0=0.001, warm_start=False):
+                 random_state=None, eta0='auto', warm_start=False):
 
         self.loss_function = SquaredLoss()
         super(BaseSAGRegressor, self).__init__(alpha=alpha,
                                                fit_intercept=fit_intercept,
                                                n_iter=n_iter,
                                                verbose=verbose,
-                                               seed=seed,
+                                               random_state=random_state,
                                                eta0=eta0,
                                                warm_start=warm_start)
 
@@ -294,10 +299,10 @@ class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin,
 
     Parameters
     ----------
-    alpha : float
+    alpha : float, optional
         Constant that multiplies the regularization term. Defaults to 0.0001
 
-    fit_intercept: bool
+    fit_intercept: bool, optional
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
@@ -306,8 +311,8 @@ class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin,
         of iterations is set to 1 if using partial_fit.
         Defaults to 5.
 
-    seed: int seed
-        The seed of the pseudo random number generator to use when
+    random_state: int or numpy.random.RandomState, optional
+        The random_state of the pseudo random number generator to use when
         sampling the data.
 
     verbose: integer, optional
@@ -355,7 +360,7 @@ class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin,
     ... #doctest: +NORMALIZE_WHITESPACE
     SAGClassifier(alpha=0.0001, class_weight=None,
                   eta0=0.001, fit_intercept=True,
-                  n_iter=5, n_jobs=1, seed=None,
+                  n_iter=5, n_jobs=1, random_state=None,
                   verbose=0, warm_start=False)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
@@ -366,8 +371,8 @@ class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin,
 
     """
     def __init__(self, alpha=0.0001, fit_intercept=True, n_iter=5,
-                 verbose=0, n_jobs=1, seed=None,
-                 eta0=0.001, class_weight=None, warm_start=False):
+                 verbose=0, n_jobs=1, random_state=None,
+                 eta0='auto', class_weight=None, warm_start=False):
 
         super(SAGClassifier, self).__init__(alpha=alpha,
                                             class_weight=class_weight,
@@ -375,7 +380,7 @@ class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin,
                                             n_iter=n_iter,
                                             verbose=verbose,
                                             n_jobs=n_jobs,
-                                            seed=seed,
+                                            random_state=random_state,
                                             eta0=eta0,
                                             warm_start=warm_start)
 
@@ -409,10 +414,10 @@ class SAGRegressor(BaseSAGRegressor, _LearntSelectorMixin,
 
     Parameters
     ----------
-    alpha : float
+    alpha : float, optional
         Constant that multiplies the regularization term. Defaults to 0.0001
 
-    fit_intercept: bool
+    fit_intercept: bool, optional
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
@@ -420,8 +425,8 @@ class SAGRegressor(BaseSAGRegressor, _LearntSelectorMixin,
         The number of passes over the training data (aka epochs).
         Defaults to 5.
 
-    seed: int seed
-        The seed of the pseudo random number generator to use when
+    random_state: int or numpy.random.RandomState, optional
+        The random_state of the pseudo random number generator to use when
         sampling the data.
 
     verbose: integer, optional
@@ -454,7 +459,7 @@ class SAGRegressor(BaseSAGRegressor, _LearntSelectorMixin,
     >>> clf.fit(X, y)
     ... #doctest: +NORMALIZE_WHITESPACE
     SAGRegressor(alpha=0.0001, eta0=0.001,
-                 fit_intercept=True, n_iter=5, seed=None,
+                 fit_intercept=True, n_iter=5, random_state=None,
                  verbose=0, warm_start=False)
 
     See also
@@ -463,12 +468,12 @@ class SAGRegressor(BaseSAGRegressor, _LearntSelectorMixin,
 
     """
     def __init__(self, alpha=0.0001, fit_intercept=True, n_iter=5, verbose=0,
-                 seed=None, eta0=0.001, warm_start=False):
+                 random_state=None, eta0='auto', warm_start=False):
         super(SAGRegressor, self).__init__(alpha=alpha,
                                            fit_intercept=fit_intercept,
                                            n_iter=n_iter,
                                            verbose=verbose,
-                                           seed=seed,
+                                           random_state=random_state,
                                            eta0=eta0, warm_start=warm_start)
 
     def fit(self, X, y, coef_init=None, intercept_init=None,

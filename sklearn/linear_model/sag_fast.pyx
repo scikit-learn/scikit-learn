@@ -2,7 +2,6 @@
 
 import numpy as np
 cimport numpy as np
-from libc.stdlib cimport malloc
 cdef extern from "sgd_fast_helpers.h":
     bint skl_isfinite(double) nogil
 
@@ -279,7 +278,7 @@ def get_auto_eta(SequentialDataset dataset, double alpha, int n_samples):
                 max_squared_sum = current_squared_sum
             current_squared_sum = 0.0
 
-    return 1.0 / (4.0 * max_squared_sum)
+    return 4.0 / (max_squared_sum + alpha)
 
 
 cdef double dot(double* x_data_ptr, int* x_ind_ptr, double* w_data_ptr,
