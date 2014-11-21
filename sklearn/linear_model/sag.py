@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 
 from .base import LinearClassifierMixin, LinearModel, SparseCoefMixin
 from ..base import RegressorMixin, BaseEstimator
@@ -16,6 +16,18 @@ from .sag_fast import fast_fit_sparse, get_auto_eta
 MAX_INT = np.iinfo(np.int32).max
 
 
+# taken from http://stackoverflow.com/questions/1816958
+# useful for passing instance methods to Parallel
+def multiprocess_method(instance, name, args=()):
+    "indirect caller for instance methods and multiprocessing"
+    return getattr(instance, name)(*args)
+
+
+# The inspiration for SAG comes from:
+# "Minimizing Finite Sums with the Stochastic Average Gradient" by
+# Mark Schmidt, Nicolas Le Roux, Francis Bach. 2013. <hal-00860051>
+#
+# https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf
 class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
     def __init__(self, alpha=0.0001, fit_intercept=True, n_iter=5, verbose=0,
                  random_state=None, eta0='auto', warm_start=False):
@@ -86,9 +98,6 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
         else:
             step_size = self.eta0
 
-        # intercept_ = fast_fit(dataset, coef_, n_samples, n_features,
-        #                       self.n_iter, loss_function,
-        #                       self.eta0, self.alpha)
         intercept_, num_seen = fast_fit_sparse(dataset, coef_init.ravel(),
                                                intercept_init, n_samples,
                                                n_features, self.n_iter,
@@ -107,6 +116,7 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
 
 
 class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
+    @abstractmethod
     def __init__(self, alpha=0.0001,
                  fit_intercept=True, n_iter=5, verbose=0,
                  n_jobs=1, random_state=None,
@@ -159,12 +169,16 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
             results = Parallel(n_jobs=self.n_jobs,
                                backend="threading",
                                verbose=self.verbose)(
-                delayed(self._fit_target_class)(X, y, cl,
-                                                coef_init, intercept_init,
-                                                sample_weight,
-                                                sum_gradient_init,
-                                                gradient_memory_init,
-                                                seen_init, num_seen_init)
+                # we have to use a call to multiprocess_method instead of the
+                # plain instance method because pickle will not work on
+                # instance methods in python 2.6 and 2.7
+                delayed(multiprocess_method)(self, "_fit_target_class",
+                                            (X, y, cl,
+                                             coef_init, intercept_init,
+                                             sample_weight,
+                                             sum_gradient_init,
+                                             gradient_memory_init,
+                                             seen_init, num_seen_init))
                 for cl in self.classes_)
 
             # append results to the correct array
@@ -243,6 +257,7 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
 
 
 class BaseSAGRegressor(six.with_metaclass(ABCMeta, BaseSAG)):
+    @abstractmethod
     def __init__(self, alpha=0.0001, fit_intercept=True, n_iter=5, verbose=0,
                  random_state=None, eta0='auto', warm_start=False):
 
@@ -288,7 +303,10 @@ class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin,
     average gradient (SAG) learning: the gradient of the loss is estimated
     using a random sample from the dataset. The weights are then updated
     according to the sum of gradients seen thus far divided by the number of
-    unique samples seen.
+    unique samples seen. The inspiration for SAG comes from "Minimizing Finite
+    Sums with the Stochastic Average Gradient" by Mark Schmidt, Nicolas Le
+    Roux, and Francis Bach. 2013. <hal-00860051>
+    https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf
 
     This implementation works with data represented as dense or sparse arrays
     of floating point values for the features. It will fit the data according
@@ -404,7 +422,10 @@ class SAGRegressor(BaseSAGRegressor, _LearntSelectorMixin,
 
     SAG stands for Stochastic Average Gradient: the gradient of the loss is
     estimated each sample at a time and the model is updated along the way with
-    a constant learning rate.
+    a constant learning rate. The inspiration for SAG comes from "Minimizing
+    Finite Sums with the Stochastic Average Gradient" by Mark Schmidt,
+    Nicolas Le Roux, and Francis Bach. 2013. <hal-00860051>
+    https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf
 
     The regularizer is a penalty added to the loss function that shrinks model
     parameters towards the zero vector using the squared euclidean norm
