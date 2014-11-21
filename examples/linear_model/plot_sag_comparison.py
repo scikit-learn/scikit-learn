@@ -3,8 +3,7 @@
 Comparing SAG to plain SGD implementation
 =========================================
 
-An example showing how different learning_rate
-schedules affect accuracy convergence
+An example comparing SAG with SGD
 
 """
 # Author: Danny Sullivan <dsullivan7 at hotmail dot com>
