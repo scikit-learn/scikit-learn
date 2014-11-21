@@ -619,3 +619,49 @@ def label_ranking_average_precision_score(y_true, y_score):
         out += np.divide(L, rank, dtype=float).mean()
 
     return out / n_samples
+
+
+    check_consistent_length(y_true, y_score)
+
+
+def coverage_error(y_true, y_score):
+    """ Coverage error measure
+
+    Compute how fare we need to go through the ranking scores to get all
+    true labels. The best value is equal to the average the number
+    of labels in y_true per sample.
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples, n_labels]
+        True binary labels in binary indicator format.
+
+    y_score : array, shape = [n_samples, n_labels]
+        Target scores, can either be probability estimates of the positive
+        class, confidence values, or binary decisions.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
+    Return
+    ------
+    coverage : float
+
+    """
+    y_true = check_array(y_true, ensure_2d=False)
+    y_score = check_array(y_score, ensure_2d=False)
+    check_consistent_length(y_true, y_score)
+
+    y_type = type_of_target(y_true)
+    if y_type != "multilabel-indicator":
+        raise ValueError("{0} format is not supported".format(y_type))
+
+    if y_true.shape != y_score.shape:
+        raise ValueError("y_true and y_score have different shape")
+
+    y_score_mask = np.ma.masked_array(y_score, mask=np.logical_not(y_true))
+    y_min_relevant = y_score_mask.min(axis=1).reshape((-1, 1))
+    coverage = (y_score >= y_min_relevant).sum(axis=1)
+    coverage = coverage.filled(0)
+
+    return coverage.mean()
