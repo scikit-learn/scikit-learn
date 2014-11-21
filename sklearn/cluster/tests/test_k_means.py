@@ -10,6 +10,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
@@ -253,6 +254,16 @@ def test_k_means_perfect_init():
                 n_init=1)
     km.fit(X)
     _check_fitted_model(km)
+
+
+def test_k_means_n_init():
+    rnd = np.random.RandomState(0)
+    X = rnd.normal(size=(40, 2))
+
+    # two regression tests on bad n_init argument
+    # previous bug: n_init <= 0 threw non-informative TypeError (#3858)
+    assert_raises_regexp(ValueError, "n_init", KMeans(n_init=0).fit, X)
+    assert_raises_regexp(ValueError, "n_init", KMeans(n_init=-1).fit, X)
 
 
 def test_mb_k_means_plus_plus_init_dense_array():
