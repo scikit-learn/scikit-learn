@@ -44,6 +44,12 @@ New features
    - Added :func:`cross_val_predict <cross_validation.cross_val_predict>`
      function which computes cross-validated estimates. By `Luis Pedro Coelho`_
 
+   - Added :class:`linear_model.TheilSenRegressor`, a robust
+     generalized-median-based estimator. By `Florian Wilhelm`_.
+
+   - Added :func:`metrics.median_absolute_error`, a robust metric.
+     By `Gael Varoquaux`_ and `Florian Wilhelm`_.
+
 
 Enhancements
 ............
@@ -91,7 +97,7 @@ Enhancements
      configured to work with estimators that may fail and raise errors on
      individual folds. This option is controlled by the `error_score`
      parameter. This does not affect errors raised on re-fit. By
-	 `Michal Romaniuk`_.
+     `Michal Romaniuk`_.
 
    - Add ``digits`` parameter to `metrics.classification_report` to allow
      report to show different precision of floating point numbers. By
@@ -3049,3 +3055,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Aaron Staple: https://github.com/staple
 
 .. _Luis Pedro Coelho: http://luispedro.org
+
+.. _Florian Wilhelm: https://github.com/FlorianWilhelm
