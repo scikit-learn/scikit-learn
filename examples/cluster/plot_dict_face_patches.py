@@ -44,7 +44,7 @@ buffer = []
 index = 1
 t0 = time.time()
 
-# The online learning part: cycle over the whole dataset 4 times
+# The online learning part: cycle over the whole dataset 6 times
 index = 0
 for _ in range(6):
     for img in faces.images:
