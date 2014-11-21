@@ -22,9 +22,14 @@ n_features_max = 75  # maximum number of features
 
 
 def generate_data(n_samples, n_features):
-    """Generate `n_samples` samples of data with `n_features` features. Of
-    these, only one feature contains discriminative information, the other
-    features contain only noise."""
+    """Generate random blob-ish data with noisy features.
+
+    This returns an array of input data with shape `(n_samples, n_features)`
+    and an array of `n_samples` target labels.
+
+    Only one feature contains discriminative information, the other features
+    contain only noise.
+    """
     X, y = make_blobs(n_samples=n_samples, n_features=1, centers=[[-2], [2]])
 
     # add non-discriminative features

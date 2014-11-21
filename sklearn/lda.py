@@ -136,7 +136,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         Solver to use, possible values:
           - 'svd': Singular value decomposition (default). Does not compute the
                 covariance matrix, therefore this solver is recommended for
-                very large feature dimensions.
+                data with a very large number of features.
           - 'lsqr': Least squares solution, can be combined with shrinkage.
           - 'eigen': Eigenvalue decomposition, can be combined with shrinkage.
 
