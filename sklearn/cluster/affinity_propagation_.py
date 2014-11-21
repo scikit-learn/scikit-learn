@@ -96,10 +96,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     A = np.zeros((n_samples, n_samples))
     R = np.zeros((n_samples, n_samples))  # Initialize messages
     # Intermediate results
-    AS = np.zeros((n_samples, n_samples))
-    Rp = np.zeros((n_samples, n_samples))
-    Anew = np.zeros((n_samples, n_samples))
-    Rnew = np.zeros((n_samples, n_samples))
+    tmp = np.zeros((n_samples, n_samples))
 
     # Remove degeneracies
     S += ((np.finfo(np.double).eps * S + np.finfo(np.double).tiny * 100) *
@@ -111,38 +108,36 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     ind = np.arange(n_samples)
 
     for it in range(max_iter):
-        # Compute responsibilities
-        np.add(A, S, AS)
+        # tmp = A + S; compute responsibilities
+        np.add(A, S, tmp)
+        I = np.argmax(tmp, axis=1)
+        Y = tmp[ind, I]  # np.max(A + S, axis=1)
+        tmp[ind, I] = -np.inf
+        Y2 = np.max(tmp, axis=1)
 
-        I = np.argmax(AS, axis=1)
-        Y = AS[np.arange(n_samples), I]  # np.max(AS, axis=1)
-
-        AS[ind, I[ind]] = - np.finfo(np.double).max
-
-        Y2 = np.max(AS, axis=1)
-        np.subtract(S, Y[:, None], Rnew)
-        Rnew[ind, I[ind]] = S[ind, I[ind]] - Y2[ind]
+        # tmp = Rnew
+        np.subtract(S, Y[:, None], tmp)
+        tmp[ind, I] = S[ind, I] - Y2
 
         # Damping
-        Rnew *= 1 - damping
+        tmp *= 1 - damping
         R *= damping
-        R += Rnew
+        R += tmp
 
-        # Compute availabilities
-        np.maximum(R, 0, Rp)
-        Rp.flat[::n_samples + 1] = R.flat[::n_samples + 1]
+        # tmp = Rp; compute availabilities
+        np.maximum(R, 0, tmp)
+        tmp.flat[::n_samples + 1] = R.flat[::n_samples + 1]
 
-        np.subtract(np.sum(Rp, axis=0), Rp, Anew)
-
-        dA = np.diag(Anew)
-        Anew = np.minimum(Anew, 0)
-
-        Anew.flat[::n_samples + 1] = dA
+        # tmp = -Anew
+        tmp -= np.sum(tmp, axis=0)
+        dA = np.diag(tmp).copy()
+        tmp.clip(0, np.inf, tmp)
+        tmp.flat[::n_samples + 1] = dA
 
         # Damping
-        Anew *= 1 - damping
+        tmp *= 1 - damping
         A *= damping
-        A += Anew
+        A -= tmp
 
         # Check for convergence
         E = (np.diag(A) + np.diag(R)) > 0
