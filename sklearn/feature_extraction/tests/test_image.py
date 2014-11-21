@@ -282,6 +282,14 @@ def test_extract_patches_square():
     assert_true(patches.shape == (expected_n_patches[0], expected_n_patches[1],
                                   p, p))
 
+
+def test_width_patch():
+    # width and height of the patch should be less than the image
+    x = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    assert_raises(ValueError, extract_patches_2d, x, (4, 1))
+    assert_raises(ValueError, extract_patches_2d, x, (1, 4))
+
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()
