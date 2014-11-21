@@ -25,15 +25,18 @@ digits.data = digits.data[digits.target < 4]
 digits.target = digits.target[digits.target < 4]
 boston = datasets.load_boston()
 
+alpha = .0001
 classifiers = [
-    ("SGD", SGDClassifier(eta0=.001, learning_rate="constant", n_iter=20)),
-    ("SAG", SAGClassifier(eta0=.001, n_iter=20, random_state=77)),
+    ("SGD Classifier", SGDClassifier(loss="log", alpha=alpha)),
+    ("SAG Classifier", SAGClassifier(eta0='auto', alpha=alpha,
+                                     random_state=77)),
 ]
 
+alpha = .0001
 regressors = [
-    ("SGD", SGDRegressor(eta0=.000001, loss="squared_loss",
-                         learning_rate="constant", n_iter=20)),
-    ("SAG", SAGRegressor(eta0=.000001, n_iter=20, random_state=77)),
+    ("SGD Regressor", SGDRegressor(eta0=.00001, loss="squared_loss",
+                                   alpha=alpha)),
+    ("SAG Regressor", SAGRegressor(eta0='auto', alpha=alpha, random_state=77)),
 ]
 
 xx = 1. - np.array(heldout)
@@ -56,6 +59,7 @@ for data_set, clfs, scoring_func, plot_label in all_tests:
     X = data_set.data
     y = data_set.target
     for name, clf in clfs:
+        print("training", name, "...")
         rng = np.random.RandomState(42)
         yy = []
         for i in heldout:
