@@ -172,6 +172,70 @@ class CommonTest(object):
             average_intercept /= i + 1.0
         return average_weights, average_intercept, weights, intercept
 
+    def sparse_sgd(self, X, y, eta, alpha, weight_init=None,
+                   intercept_init=0.0, learning_rate=None,
+                   fit_intercept=True, eps0=0.0, rho0=.9):
+        if weight_init is None:
+            weights = np.zeros(X.shape[1])
+        else:
+            weights = weight_init
+
+        intercept = intercept_init
+        decay = 1.0
+
+        # sparse data has a fixed decay of .01
+        if (isinstance(self, SparseSGDClassifierTestCase) or
+                isinstance(self, SparseSGDRegressorTestCase)):
+            decay = .01
+
+        accu_gradient = np.zeros(X.shape[1])
+        accu_delta = np.zeros(X.shape[1])
+        intercept_accu_gradient = 0.0
+        intercept_accu_delta = 0.0
+        wscale = 1.0
+
+        for i, entry in enumerate(X):
+            p = np.dot(entry, weights * wscale)
+            p += intercept
+            scalar_gradient = p - y[i]
+            gradient_vector = scalar_gradient * entry
+
+            wscale *= 1. - (alpha * eta)
+            # if learning_rate == "adadelta":
+            #     accu_gradient *= rho0
+            #     accu_gradient += (1. - rho0) * (gradient_vector *
+            #                                     gradient_vector)
+            #     dx = np.sqrt((accu_delta + eps0) / (accu_gradient + eps0))
+            #     accu_delta *= rho0
+            #     accu_delta += (1. - rho0) * dx * dx
+            #     weights -= eta * dx * gradient_vector
+
+            #     intercept_accu_gradient *= rho0
+            #     intercept_accu_gradient += (1. - rho0) * scalar_gradient ** 2
+            #     intercept_dx = sqrt((intercept_accu_delta + eps0) /
+            #                         (intercept_accu_gradient + eps0))
+            #     intercept_accu_delta *= rho0
+            #     intercept_accu_delta += (1. - rho0) * intercept_dx ** 2
+            #     intercept_eta = eta * intercept_dx
+
+            if learning_rate == "adagrad":
+                accu_gradient += (scalar_gradient * entry) ** 2
+                weights -= (eta / np.sqrt(accu_gradient + eps0) *
+                            gradient_vector)
+
+                intercept_accu_gradient += scalar_gradient ** 2
+                intercept_eta = eta / (np.sqrt(intercept_accu_gradient + eps0))
+            else:
+                weights -= eta * gradient_vector / wscale
+                intercept_eta = eta
+
+            if fit_intercept:
+                intercept -= intercept_eta * scalar_gradient * decay
+
+            print("test", (eta / np.sqrt(accu_gradient + eps0)))
+        weights *= wscale
+        return weights, intercept
+
     def _test_warm_start(self, X, Y, lr):
         # Test that explicit warm restart...
         clf = self.factory(alpha=0.01, eta0=0.01, n_iter=5, shuffle=False,
@@ -461,6 +525,38 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
                                              learning_rate='adagrad',
                                              fit_intercept=fit_intercept,
                                              eps0=.1)
+        weights = weights.reshape(1, -1)
+        assert_array_almost_equal(clf.coef_,
+                                  weights,
+                                  decimal=14)
+        assert_almost_equal(clf.intercept_, intercept, decimal=14)
+
+    def test_sparse_computed_correctly(self):
+        eta = .01
+        alpha = .01
+        n_samples = 20
+        n_features = 2
+        fit_intercept = True
+        rng = np.random.RandomState(0)
+        X = rng.normal(size=(n_samples, n_features))
+        w = rng.normal(size=n_features)
+        y = np.dot(X, w)
+        y = np.sign(y)
+        split = int(n_samples / 2)
+
+        clf = self.factory(loss='squared_loss',
+                           learning_rate='constant',
+                           eta0=eta, alpha=alpha, eps0=0.1,
+                           fit_intercept=fit_intercept,
+                           n_iter=1, average=False)
+
+        clf.partial_fit(X[:split], y[:split],
+                        classes=np.unique(y))
+        clf.partial_fit(X[split:], y[split:],
+                        classes=np.unique(y))
+
+        weights, intercept = self.sparse_sgd(X, y, eta, alpha,
+                                             fit_intercept=fit_intercept)
         weights = weights.reshape(1, -1)
         assert_array_almost_equal(clf.coef_,
                                   weights,

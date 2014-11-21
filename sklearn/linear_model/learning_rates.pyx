@@ -93,6 +93,7 @@ cdef class Adaptive(LearningRate):
         if fit_itercept == 1:
             intercept_eta = self._compute_intercept_eta(gradient)
 
+        # TODO: remove this
         with gil:
             for j in range(2):
                 print(eta_ptr[j])

@@ -87,7 +87,6 @@ cdef class WeightVector(object):
         cdef int j
         cdef int idx
         cdef double val
-        cdef double innerprod = 0.0
         cdef int eta_index
 
         # the next two lines save a factor of 2!
@@ -102,7 +101,6 @@ cdef class WeightVector(object):
                 eta_index = idx
             else:
                 eta_index = 0
-            innerprod += (w_data_ptr[idx] * val)
             w_data_ptr[idx] += val * (eta_ptr[eta_index] * update / wscale_ptr[eta_index])
 
     # Update the average weights according to the sparse trick defined

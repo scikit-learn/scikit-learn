@@ -631,6 +631,8 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 norm = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
                 current_loss = loss.loss(p, y)
 
+                # stores all eta(s) in eta_ptr and stores the intercept
+                # eta in intercept_eta
                 intercept_eta = learning_rate.eta(eta_ptr,
                                                   optimal_init + t, gradient,
                                                   x_data_ptr, x_ind_ptr,
