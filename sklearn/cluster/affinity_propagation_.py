@@ -95,6 +95,11 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
 
     A = np.zeros((n_samples, n_samples))
     R = np.zeros((n_samples, n_samples))  # Initialize messages
+    # Intermediate results
+    AS = np.zeros((n_samples, n_samples))
+    Rp = np.zeros((n_samples, n_samples))
+    Anew = np.zeros((n_samples, n_samples))
+    Rnew = np.zeros((n_samples, n_samples))
 
     # Remove degeneracies
     S += ((np.finfo(np.double).eps * S + np.finfo(np.double).tiny * 100) *
@@ -107,8 +112,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
 
     for it in range(max_iter):
         # Compute responsibilities
-        Rold = R.copy()
-        AS = A + S
+        np.add(A, S, AS)
 
         I = np.argmax(AS, axis=1)
         Y = AS[np.arange(n_samples), I]  # np.max(AS, axis=1)
@@ -116,25 +120,29 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
         AS[ind, I[ind]] = - np.finfo(np.double).max
 
         Y2 = np.max(AS, axis=1)
-        R = S - Y[:, np.newaxis]
+        np.subtract(S, Y[:, None], Rnew)
+        Rnew[ind, I[ind]] = S[ind, I[ind]] - Y2[ind]
 
-        R[ind, I[ind]] = S[ind, I[ind]] - Y2[ind]
-
-        R = (1 - damping) * R + damping * Rold  # Damping
+        # Damping
+        Rnew *= 1 - damping
+        R *= damping
+        R += Rnew
 
         # Compute availabilities
-        Aold = A
-        Rp = np.maximum(R, 0)
+        np.maximum(R, 0, Rp)
         Rp.flat[::n_samples + 1] = R.flat[::n_samples + 1]
 
-        A = np.sum(Rp, axis=0)[np.newaxis, :] - Rp
+        np.subtract(np.sum(Rp, axis=0), Rp, Anew)
 
-        dA = np.diag(A)
-        A = np.minimum(A, 0)
+        dA = np.diag(Anew)
+        Anew = np.minimum(Anew, 0)
 
-        A.flat[::n_samples + 1] = dA
+        Anew.flat[::n_samples + 1] = dA
 
-        A = (1 - damping) * A + damping * Aold  # Damping
+        # Damping
+        Anew *= 1 - damping
+        A *= damping
+        A += Anew
 
         # Check for convergence
         E = (np.diag(A) + np.diag(R)) > 0
