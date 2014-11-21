@@ -621,9 +621,6 @@ def label_ranking_average_precision_score(y_true, y_score):
     return out / n_samples
 
 
-    check_consistent_length(y_true, y_score)
-
-
 def coverage_error(y_true, y_score):
     """ Coverage error measure
 
