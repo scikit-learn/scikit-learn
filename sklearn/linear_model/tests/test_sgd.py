@@ -219,11 +219,11 @@ class CommonTest(object):
             #     intercept_eta = eta * intercept_dx
 
             if learning_rate == "adagrad":
-                accu_gradient += (scalar_gradient * entry) ** 2
+                accu_gradient += gradient_vector * gradient_vector
                 weights -= (eta / np.sqrt(accu_gradient + eps0) *
                             gradient_vector)
 
-                intercept_accu_gradient += scalar_gradient ** 2
+                intercept_accu_gradient += scalar_gradient * scalar_gradient
                 intercept_eta = eta / (np.sqrt(intercept_accu_gradient + eps0))
             else:
                 weights -= eta * gradient_vector / wscale
@@ -232,7 +232,6 @@ class CommonTest(object):
             if fit_intercept:
                 intercept -= intercept_eta * scalar_gradient * decay
 
-            print("test", (eta / np.sqrt(accu_gradient + eps0)))
         weights *= wscale
         return weights, intercept
 
