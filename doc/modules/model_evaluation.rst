@@ -972,6 +972,36 @@ In multilabel learning, each sample can have any number of ground truth labels
 associated with it. The goal is to give high scores and better rank to
 the ground truth labels.
 
+Coverage
+--------
+
+The :func:`coverage_error` function computes the average number of labels that
+have to be included in the final prediction such such that all true labels
+are predicted. This is usefull if you want to know how many top-scored-labels
+you have to predict in average without missing any true one. The best and
+minimal coverage is thus the average number of true labels.
+
+Formally, given a binary indicator matrix of the ground truth labels
+:math:`y \in \mathcal{R}^{n_\text{samples} \times n_\text{labels}}` and the
+score associated with each label
+:math:`\hat{f} \in \mathcal{R}^{n_\text{samples} \times n_\text{labels}}`,
+the coverage is defined as
+
+.. math::
+  coverage(y, \hat{f}) = \frac{1}{n_{\text{samples}}}
+    \sum_{i=0}^{n_{\text{samples}} - 1} \max_{j:y_{ij} = 1} rank_{ij}
+
+with :math:`\text{rank}_{ij} = \left|\left\{k: \hat{f}_{ik} \geq \hat{f}_{ij} \right\}\right|`.
+
+Here is a small example of usage of this function::
+
+    >>> import numpy as np
+    >>> from sklearn.metrics import coverage_error
+    >>> y_true = np.array([[1, 0, 0], [0, 0, 1]])
+    >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
+    >>> coverage_error(y_true, y_score)
+    2.5
+
 Label ranking average precision
 -------------------------------
 
@@ -986,7 +1016,7 @@ score. This metric will yield better scores if you are able to give better rank
 to the labels associated with each sample. The obtained score is always strictly
 greater than 0, and the best value is 1. If there is exactly one relevant
 label per sample, label ranking average precision is equivalent to the `mean
-reciprocal rank <http://en.wikipedia.org/wiki/Mean_reciprocal_rank>`.
+reciprocal rank <http://en.wikipedia.org/wiki/Mean_reciprocal_rank>`_.
 
 Formally, given a binary indicator matrix of the ground truth labels
 :math:`y \in \mathcal{R}^{n_\text{samples} \times n_\text{labels}}` and the

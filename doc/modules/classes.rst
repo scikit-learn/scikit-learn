@@ -787,6 +787,7 @@ details.
    :toctree: generated/
    :template: function.rst
 
+   metrics.coverage_error
    metrics.label_ranking_average_precision_score
 
 
