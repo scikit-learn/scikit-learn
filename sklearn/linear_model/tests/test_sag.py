@@ -115,9 +115,9 @@ class CommonTest(object):
         c_sum = np.zeros(len(indexes) + 1)
 
         # sparse data has a fixed decay of .01
-        # if (isinstance(self, SparseSGDClassifierTestCase) or
-        #         isinstance(self, SparseSGDRegressorTestCase)):
-        #     decay = .01
+        if (isinstance(self, SparseSAGClassifierTestCase) or
+                isinstance(self, SparseSAGRegressorTestCase)):
+            decay = .01
 
         counter = 0
         for k in indexes:

@@ -14,6 +14,7 @@ from .sgd_fast cimport LossFunction, Classification
 #
 # https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf
 
+
 def fast_fit_sparse(SequentialDataset dataset,
                     np.ndarray[double, ndim=1, mode='c'] weights,
                     double intercept_init,
@@ -28,8 +29,8 @@ def fast_fit_sparse(SequentialDataset dataset,
                     np.ndarray[bint, ndim=1, mode='c'] seen_init,
                     int num_seen_init,
                     double weight_pos,
-                    double weight_neg
-                    ):
+                    double weight_neg,
+                    double intercept_decay):
 
     # true if the weights or intercept are NaN or infinity
     cdef bint infinity = False
@@ -145,7 +146,7 @@ def fast_fit_sparse(SequentialDataset dataset,
 
             gradient_memory[current_index] = gradient
 
-            intercept -= eta * gradient
+            intercept -= eta * gradient * intercept_decay
 
             wscale *= 1.0 - eta * alpha
             cumulative_sums[k + 1] = (cumulative_sums[k] +

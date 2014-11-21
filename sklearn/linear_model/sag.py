@@ -15,6 +15,10 @@ from .sag_fast import fast_fit_sparse, get_auto_eta
 
 MAX_INT = np.iinfo(np.int32).max
 
+"""For sparse data intercept updates are scaled by this decay factor to avoid
+intercept oscillation."""
+SPARSE_INTERCEPT_DECAY = 0.01
+
 
 # taken from http://stackoverflow.com/questions/1816958
 # useful for passing instance methods to Parallel
@@ -86,9 +90,11 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
             dataset = CSRDataset(X.data, X.indptr, X.indices,
                                  y, sample_weight,
                                  seed=random_state.randint(MAX_INT))
+            intercept_decay = SPARSE_INTERCEPT_DECAY
         else:
             dataset = ArrayDataset(X, y, sample_weight,
                                    seed=random_state.randint(MAX_INT))
+            intercept_decay = 1.0
 
         # set the eta0 if needed, 'auto' is 1 / 4L where L is the max sum of
         # squares for over all samples
@@ -107,7 +113,8 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
                                                gradient_memory_init.ravel(),
                                                seen_init.ravel(),
                                                num_seen_init, weight_pos,
-                                               weight_neg)
+                                               weight_neg,
+                                               intercept_decay)
         return (coef_init.reshape(1, -1), intercept_,
                 sum_gradient_init.reshape(1, -1),
                 gradient_memory_init.reshape(1, -1),
