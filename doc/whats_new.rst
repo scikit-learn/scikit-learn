@@ -115,7 +115,7 @@ Enhancements
      False. By `Manoj Kumar`_.
 
    - Added support for sparse input data to decision trees and their ensembles.
-     By `Arnaud Joly`_.
+     By `Fares Hedyati`_ and `Arnaud Joly`_.
 
 Documentation improvements
 ..........................
@@ -3060,3 +3060,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Luis Pedro Coelho: http://luispedro.org
 
 .. _Florian Wilhelm: https://github.com/FlorianWilhelm
+
+.. _Fares Hedyati: https://github.com/fareshedyati
