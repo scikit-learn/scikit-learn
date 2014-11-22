@@ -27,15 +27,15 @@ from .preprocessing import StandardScaler
 __all__ = ['LDA']
 
 
-def _cov(X, alpha=None):
+def _cov(X, shrinkage=None):
     """Estimate covariance matrix (using optional shrinkage).
 
     Parameters
     ----------
-    X : array-like, shape = [n_samples, n_features]
-        Data vector.
+    X : array-like, shape (n_samples, n_features)
+        Input data.
 
-    alpha : string or float, optional
+    shrinkage : string or float, optional
         Shrinkage parameter, possible values:
           - None: no shrinkage (default).
           - 'empirical': same as None.
@@ -44,27 +44,27 @@ def _cov(X, alpha=None):
 
     Returns
     -------
-    s : array-like, shape = [n_features, n_features]
+    s : array, shape (n_features, n_features)
         Estimated covariance matrix.
     """
-    alpha = "empirical" if alpha is None else alpha
-    if isinstance(alpha, string_types):
-        if alpha == 'ledoit_wolf':
+    shrinkage = "empirical" if shrinkage is None else shrinkage
+    if isinstance(shrinkage, string_types):
+        if shrinkage == 'ledoit_wolf':
             # standardize features
             sc = StandardScaler()
             X = sc.fit_transform(X)
             s = sc.std_ * ledoit_wolf(X)[0] * sc.std_  # scale back
-        elif alpha == 'empirical':
+        elif shrinkage == 'empirical':
             s = empirical_covariance(X)
         else:
             raise ValueError('unknown shrinkage parameter')
-    elif isinstance(alpha, float) or isinstance(alpha, int):
-        if alpha < 0 or alpha > 1:
+    elif isinstance(shrinkage, float) or isinstance(shrinkage, int):
+        if shrinkage < 0 or shrinkage > 1:
             raise ValueError('shrinkage parameter must be between 0 and 1')
         s = empirical_covariance(X)
-        s = shrunk_covariance(s, alpha)
+        s = shrunk_covariance(s, shrinkage)
     else:
-        raise TypeError('alpha must be of string or int type')
+        raise TypeError('shrinkage must be of string or int type')
     return s
 
 
@@ -76,7 +76,7 @@ def _means(X, y):
     X : array-like, shape (n_samples, n_features)
         Training data.
 
-    y : array-like, shape (n_samples) or (n_samples, n_targets)
+    y : array-like, shape (n_samples,) or (n_samples, n_targets)
         Target values.
     """
     means = []
@@ -88,7 +88,7 @@ def _means(X, y):
     return np.asarray(means)
 
 
-def _means_cov(X, y, alpha=None):
+def _means_cov(X, y, shrinkage=None):
     """Compute class means and covariance matrix.
 
     Parameters
@@ -96,10 +96,10 @@ def _means_cov(X, y, alpha=None):
     X : array-like, shape (n_samples, n_features)
         Training data.
 
-    y : array-like, shape (n_samples) or (n_samples, n_targets)
+    y : array-like, shape (n_samples,) or (n_samples, n_targets)
         Target values.
 
-    alpha : string or float, optional
+    shrinkage : string or float, optional
         Shrinkage parameter, possible values:
           - None: no shrinkage (default).
           - 'ledoit_wolf': shrinkage using the Ledoit-Wolf lemma.
@@ -112,7 +112,7 @@ def _means_cov(X, y, alpha=None):
         Xg = X[y == group, :]
         meang = Xg.mean(0)
         means.append(meang)
-        covg = _cov(Xg, alpha)
+        covg = _cov(Xg, shrinkage)
         covg = np.atleast_2d(covg)
         covs.append(covg)
     return np.asarray(means), np.mean(covs, 0)
@@ -140,14 +140,14 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
           - 'lsqr': Least squares solution, can be combined with shrinkage.
           - 'eigen': Eigenvalue decomposition, can be combined with shrinkage.
 
-    alpha : string or float, optional
+    shrinkage : string or float, optional
         Shrinkage parameter, possible values:
           - None: no shrinkage (default).
           - 'ledoit_wolf': shrinkage using the Ledoit-Wolf lemma.
           - float between 0 and 1: fixed shrinkage constant.
         Note that shrinkage works only with 'lsqr' and 'eigen' solvers.
 
-    priors : array, optional, shape (n_classes)
+    priors : array, optional, shape (n_classes,)
         Priors on classes.
 
     n_components : int, optional
@@ -155,10 +155,10 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     Attributes
     ----------
-    coef_ : array, shape (n_features) or (n_classes, n_features)
+    coef_ : array, shape (n_features,) or (n_classes, n_features)
         Weight vector(s).
 
-    intercept_ : array, shape (n_features)
+    intercept_ : array, shape (n_features,)
         Intercept term.
 
     covariance_ : array-like, shape (n_features, n_features)
@@ -167,16 +167,16 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
     means_ : array-like, shape (n_classes, n_features)
         Class means.
 
-    priors_ : array-like, shape (n_classes)
+    priors_ : array-like, shape (n_classes,)
         Class priors (sum to 1).
 
     scalings_ : array-like, shape (rank, n_classes - 1)
         Scaling of the features in the space spanned by the class centroids.
 
-    xbar_ : array-like, shape (n_features)
+    xbar_ : array-like, shape (n_features,)
         Overall mean.
 
-    classes_ : array-like, shape (n_classes)
+    classes_ : array-like, shape (n_classes,)
         Unique class labels.
 
     Examples
@@ -187,7 +187,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = LDA()
     >>> clf.fit(X, y)
-    LDA(alpha=None, n_components=None, priors=None, solver='svd',
+    LDA(n_components=None, priors=None, shrinkage=None, solver='svd',
       store_covariance=False)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
@@ -196,15 +196,15 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
     --------
     sklearn.qda.QDA: Quadratic discriminant analysis
     """
-    def __init__(self, solver='svd', alpha=None, priors=None,
+    def __init__(self, solver='svd', shrinkage=None, priors=None,
                  n_components=None, store_covariance=False):
         self.solver = solver
-        self.alpha = alpha
+        self.shrinkage = shrinkage
         self.priors = priors
         self.n_components = n_components
         self.store_covariance = store_covariance
 
-    def _solve_lsqr(self, X, y, alpha, rcond=1e-11):
+    def _solve_lsqr(self, X, y, shrinkage, rcond=1e-11):
         """Least squares solver.
 
         Parameters
@@ -212,16 +212,16 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             Training data.
 
-        y : array-like, shape (n_samples) or (n_samples, n_targets)
+        y : array-like, shape (n_samples,) or (n_samples, n_targets)
             Target values.
 
-        alpha : string or float, optional
+        shrinkage : string or float, optional
             Shrinkage parameter, possible values:
               - None: no shrinkage (default).
               - 'ledoit_wolf': shrinkage using the Ledoit-Wolf lemma.
               - float between 0 and 1: fixed shrinkage constant.
         """
-        self.means_, self.covariance_ = _means_cov(X, y, alpha)
+        self.means_, self.covariance_ = _means_cov(X, y, shrinkage)
         self.xbar_ = np.dot(self.priors_, self.means_)
 
         # TODO: weight covariances with priors?
@@ -231,7 +231,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         self.intercept_ = (-0.5 * np.diag(np.dot(means, self.coef_.T))
                            + np.log(self.priors_))
 
-    def _solve_eigen(self, X, y, alpha):
+    def _solve_eigen(self, X, y, shrinkage):
         """Eigenvalue decomposition solver.
 
         Parameters
@@ -239,19 +239,19 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             Training data.
 
-        y : array-like, shape (n_samples) or (n_samples, n_targets)
+        y : array-like, shape (n_samples,) or (n_samples, n_targets)
             Target values.
 
-        alpha : string or float, optional
+        shrinkage : string or float, optional
             Shrinkage parameter, possible values:
               - None: no shrinkage (default).
               - 'ledoit_wolf': shrinkage using the Ledoit-Wolf lemma.
               - float between 0 and 1: fixed shrinkage constant.
         """
-        self.means_, self.covariance_ = _means_cov(X, y, alpha)
+        self.means_, self.covariance_ = _means_cov(X, y, shrinkage)
         self.xbar_ = np.dot(self.priors_, self.means_)
 
-        St = _cov(X, alpha)
+        St = _cov(X, shrinkage)
         Sb = St - self.covariance_
         means = self.means_ - self.xbar_
 
@@ -270,7 +270,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             Training data.
 
-        y : array-like, shape (n_samples) or (n_samples, n_targets)
+        y : array-like, shape (n_samples,) or (n_samples, n_targets)
             Target values.
 
         tol : float, optional
@@ -279,7 +279,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         n_samples, n_features = X.shape
         n_classes = len(self.classes_)
         if self.store_covariance:
-            self.means_, self.covariance_ = _means_cov(X, y, alpha=None)
+            self.means_, self.covariance_ = _means_cov(X, y, shrinkage=None)
         else:
             self.means_ = _means(X, y)
 
@@ -333,7 +333,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             Training data.
 
-        y : array, shape (n_samples)
+        y : array, shape (n_samples,)
             Target values.
         """
         X, y = check_X_y(X, y)
@@ -346,13 +346,13 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             self.priors_ = self.priors
 
         if self.solver == 'svd':
-            if self.alpha is not None:
+            if self.shrinkage is not None:
                 raise NotImplementedError('shrinkage not supported')
             self._solve_svd(X, y)
         elif self.solver == 'lsqr':
-            self._solve_lsqr(X, y, alpha=self.alpha)
+            self._solve_lsqr(X, y, shrinkage=self.shrinkage)
         elif self.solver == 'eigen':
-            self._solve_eigen(X, y, alpha=self.alpha)
+            self._solve_eigen(X, y, shrinkage=self.shrinkage)
         else:
             raise ValueError("unknown solver {} (valid solvers are 'svd', "
                              "'lsqr', and 'eigen').".format(self.solver))
@@ -415,7 +415,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
         Returns
         -------
-        C : array, shape (n_samples)
+        C : array, shape (n_samples,)
             Predicted class labels.
         """
         d = self._decision_function(X)

@@ -44,8 +44,8 @@ for n_features in n_features_range:
     for _ in range(n_averages):
         X, y = generate_data(n_train, n_features)
 
-        clf1 = LDA(solver='lsqr', alpha='ledoit_wolf').fit(X, y)
-        clf2 = LDA(solver='lsqr', alpha=None).fit(X, y)
+        clf1 = LDA(solver='lsqr', shrinkage='ledoit_wolf').fit(X, y)
+        clf2 = LDA(solver='lsqr', shrinkage=None).fit(X, y)
 
         X, y = generate_data(n_test, n_features)
         score_clf1 += clf1.score(X, y)
@@ -64,6 +64,6 @@ plt.plot(features_samples_ratio, acc_clf2, linewidth=2,
 plt.xlabel('n_features / n_samples')
 plt.ylabel('Classification accuracy')
 
-plt.legend(loc=1, prop={'size': 8})
+plt.legend(loc=1, prop={'size': 12})
 plt.suptitle('LDA vs. shrinkage LDA (1 discriminative feature)')
 plt.show()

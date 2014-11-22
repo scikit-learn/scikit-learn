@@ -19,9 +19,9 @@ y3 = np.array([1, 1, 2, 2, 3, 3])
 # Degenerate data with only one feature (still should be separable)
 X1 = np.array([[-2, ], [-1, ], [-1, ], [1, ], [1, ], [2, ]], dtype='f')
 
-solver_alpha = [('svd', None), ('lsqr', None), ('eigen', None),
-                ('lsqr', 'ledoit_wolf'), ('lsqr', 0), ('lsqr', 0.43),
-                ('eigen', 'ledoit_wolf'), ('eigen', 0), ('eigen', 0.43)]
+solver_shrinkage = [('svd', None), ('lsqr', None), ('eigen', None),
+                    ('lsqr', 'ledoit_wolf'), ('lsqr', 0), ('lsqr', 0.43),
+                    ('eigen', 'ledoit_wolf'), ('eigen', 0), ('eigen', 0.43)]
 
 def test_lda_predict():
     """Test LDA classification.
@@ -29,9 +29,9 @@ def test_lda_predict():
     This checks that LDA implements fit and predict and returns correct values
     for simple toy data.
     """
-    for test_case in solver_alpha:
-        solver, alpha = test_case
-        clf = lda.LDA(solver=solver, alpha=alpha)
+    for test_case in solver_shrinkage:
+        solver, shrinkage = test_case
+        clf = lda.LDA(solver=solver, shrinkage=shrinkage)
         y_pred = clf.fit(X, y).predict(X)
         assert_array_equal(y_pred, y, 'solver ' + str(solver))
 
@@ -52,12 +52,12 @@ def test_lda_predict():
         # LDA shouldn't be able to separate those
         assert_true(np.any(y_pred3 != y3), 'solver ' + str(solver))
 
-    # Test invalid alphas
-    clf = lda.LDA(solver="lsqr", alpha=-0.2231)
+    # Test invalid shrinkages
+    clf = lda.LDA(solver="lsqr", shrinkage=-0.2231)
     assert_raises(ValueError, clf.fit, X, y)
-    clf = lda.LDA(solver="eigen", alpha="dummy")
+    clf = lda.LDA(solver="eigen", shrinkage="dummy")
     assert_raises(ValueError, clf.fit, X, y)
-    clf = lda.LDA(solver="svd", alpha="ledoit_wolf")
+    clf = lda.LDA(solver="svd", shrinkage="ledoit_wolf")
     assert_raises(NotImplementedError, clf.fit, X, y)
     # Test unknown solver
     clf = lda.LDA(solver="dummy")
