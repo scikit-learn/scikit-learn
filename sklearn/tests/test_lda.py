@@ -23,6 +23,7 @@ solver_shrinkage = [('svd', None), ('lsqr', None), ('eigen', None),
                     ('lsqr', 'ledoit_wolf'), ('lsqr', 0), ('lsqr', 0.43),
                     ('eigen', 'ledoit_wolf'), ('eigen', 0), ('eigen', 0.43)]
 
+
 def test_lda_predict():
     """Test LDA classification.
 
@@ -33,24 +34,24 @@ def test_lda_predict():
         solver, shrinkage = test_case
         clf = lda.LDA(solver=solver, shrinkage=shrinkage)
         y_pred = clf.fit(X, y).predict(X)
-        assert_array_equal(y_pred, y, 'solver ' + str(solver))
+        assert_array_equal(y_pred, y, 'solver %s' % solver)
 
         # Assert that it works with 1D data
         y_pred1 = clf.fit(X1, y).predict(X1)
-        assert_array_equal(y_pred1, y, 'solver ' + str(solver))
+        assert_array_equal(y_pred1, y, 'solver %s' % solver)
 
         # Test probability estimates
         y_proba_pred1 = clf.predict_proba(X1)
         assert_array_equal((y_proba_pred1[:, 1] > 0.5) + 1, y,
-                           'solver ' + str(solver))
+                           'solver %s' % solver)
         y_log_proba_pred1 = clf.predict_log_proba(X1)
         assert_array_almost_equal(np.exp(y_log_proba_pred1), y_proba_pred1,
-                                  8, 'solver ' + str(solver))
+                                  8, 'solver %s' % solver)
 
         # Primarily test for commit 2f34950 -- "reuse" of priors
         y_pred3 = clf.fit(X, y3).predict(X)
         # LDA shouldn't be able to separate those
-        assert_true(np.any(y_pred3 != y3), 'solver ' + str(solver))
+        assert_true(np.any(y_pred3 != y3), 'solver %s' % solver)
 
     # Test invalid shrinkages
     clf = lda.LDA(solver="lsqr", shrinkage=-0.2231)
@@ -131,11 +132,11 @@ def test_lda_scaling():
     """Test if classification works correctly with differently scaled features.
     """
     n = 100
-    np.random.seed(1234)
+    rng = np.random.RandomState(1234)
     # use uniform distribution of features to make sure there is absolutely no
     # overlap between classes.
-    x1 = np.random.uniform(-1, 1, (n, 3)) + [-10, 0, 0]
-    x2 = np.random.uniform(-1, 1, (n, 3)) + [10, 0, 0]
+    x1 = rng.uniform(-1, 1, (n, 3)) + [-10, 0, 0]
+    x2 = rng.uniform(-1, 1, (n, 3)) + [10, 0, 0]
     x = np.vstack((x1, x2)) * [1, 100, 10000]
     y = [-1] * n + [1] * n
 
@@ -143,4 +144,4 @@ def test_lda_scaling():
         clf = lda.LDA(solver=solver)
         # should be able to separate the data perfectly
         assert_equal(clf.fit(x, y).score(x, y), 1.0,
-                     'using covariance: ' + str(solver))
+                     'using covariance: %s' % solver)
