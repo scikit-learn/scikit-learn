@@ -149,6 +149,13 @@ def fast_fit_sparse(SequentialDataset dataset,
             intercept -= eta * gradient * intercept_decay
 
             wscale *= 1.0 - eta * alpha
+
+            # if wscale gets too small, we need to reset the scale
+            if wscale < 1e-9:
+                scale_weights(weights_ptr, wscale, n_features, k,
+                              cumulative_sums, feature_hist, sum_gradient)
+                wscale = 1.0
+
             cumulative_sums[k + 1] = (cumulative_sums[k] +
                                       eta / (wscale * num_seen))
 
@@ -159,15 +166,21 @@ def fast_fit_sparse(SequentialDataset dataset,
                           " MinMaxScaler might help.") % (k + 1))
 
     k = n_samples * n_iter
+    scale_weights(weights_ptr, wscale, n_features, k,
+                  cumulative_sums, feature_hist, sum_gradient)
+
+
+    return intercept, num_seen
+
+
+cdef void scale_weights(double* weights_ptr, double wscale, int n_features,
+                        int k, double* cumulative_sums, int* feature_hist,
+                        double* sum_gradient) nogil:
     for j in range(n_features):
         weights_ptr[j] -= ((cumulative_sums[k] -
                             cumulative_sums[feature_hist[j]]) *
                            sum_gradient[j])
         weights_ptr[j] *= wscale
-    wscale = 1.0
-
-    return intercept, num_seen
-
 
 def get_auto_eta(SequentialDataset dataset, double alpha,
                  int n_samples, LossFunction loss):

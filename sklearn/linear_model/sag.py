@@ -180,12 +180,12 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
                 # plain instance method because pickle will not work on
                 # instance methods in python 2.6 and 2.7
                 delayed(multiprocess_method)(self, "_fit_target_class",
-                                            (X, y, cl,
-                                             coef_init, intercept_init,
-                                             sample_weight,
-                                             sum_gradient_init,
-                                             gradient_memory_init,
-                                             seen_init, num_seen_init))
+                                             (X, y, cl,
+                                              coef_init, intercept_init,
+                                              sample_weight,
+                                              sum_gradient_init,
+                                              gradient_memory_init,
+                                              seen_init, num_seen_init))
                 for cl in self.classes_)
 
             # append results to the correct array
