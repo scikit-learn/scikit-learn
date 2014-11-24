@@ -117,6 +117,9 @@ Enhancements
    - Added support for sparse input data to decision trees and their ensembles.
      By `Fares Hedyati`_ and `Arnaud Joly`_.
 
+   - Optimized :class:`cluster.AffinityPropagation` by reducing the number of
+     memory allocations of large temporary data-structures. By `Antony Lee`_.
+
 Documentation improvements
 ..........................
 
@@ -3081,3 +3084,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Matt Pico: https://github.com/MattpSoftware
 
 .. _Matt Terry: https://github.com/mrterry
+
+.. _Antony Lee: https://www.ocf.berkeley.edu/~antonyl/
