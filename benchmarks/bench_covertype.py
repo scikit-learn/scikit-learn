@@ -51,6 +51,8 @@ from time import time
 import argparse
 import numpy as np
 
+from scipy import sparse as sp
+
 from sklearn.datasets import fetch_covtype, get_data_home
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
@@ -68,8 +70,15 @@ memory = Memory(os.path.join(get_data_home(), 'covertype_benchmark_data'),
                 mmap_mode='r')
 
 
+def nbytes(X):
+    if sp.issparse(X):
+        return X.data.nbytes + X.indices.nbytes + X.indptr.nbytes
+    else:
+        return X.nbytes
+
+
 @memory.cache
-def load_data(dtype=np.float32, order='C', random_state=13):
+def load_data(dtype=np.float32, order='C', random_state=13, sparse=False):
     """Load the data, then cache and memmap the train/test split"""
     ######################################################################
     ## Load dataset
@@ -94,11 +103,19 @@ def load_data(dtype=np.float32, order='C', random_state=13):
     std[10:] = 1.0
     X_train = (X_train - mean) / std
     X_test = (X_test - mean) / std
+
+    if sparse:
+        to_sparse = sp.csc_matrix
+        if order.lower() == 'c':
+            to_sparse = sp.csr_matrix
+        X_train = to_sparse(X_train)
+        X_test = to_sparse(X_test)
+
     return X_train, X_test, y_train, y_test
 
 
 ESTIMATORS = {
-    'GBRT': GradientBoostingClassifier(n_estimators=250),
+    'GBRT': GradientBoostingClassifier(n_estimators=25, max_depth=3),
     'ExtraTrees': ExtraTreesClassifier(n_estimators=20),
     'RandomForest': RandomForestClassifier(n_estimators=20),
     'CART': DecisionTreeClassifier(min_samples_split=5),
@@ -124,12 +141,15 @@ if __name__ == "__main__":
                              "data")
     parser.add_argument('--random-seed', nargs="?", default=13, type=int,
                         help="Common seed used by random number generator.")
+    parser.add_argument('--sparse', nargs="?", default=0, type=int,
+                        help="Whether to use a sparse matrix for the inputs.")
     args = vars(parser.parse_args())
 
     print(__doc__)
 
     X_train, X_test, y_train, y_test = load_data(
-        order=args["order"], random_state=args["random_seed"])
+        order=args["order"], random_state=args["random_seed"],
+        sparse=args["sparse"] > 0)
 
     print("")
     print("Dataset statistics:")
@@ -140,11 +160,11 @@ if __name__ == "__main__":
     print("%s %d (pos=%d, neg=%d, size=%dMB)"
           % ("number of train samples:".ljust(25),
              X_train.shape[0], np.sum(y_train == 1),
-             np.sum(y_train == 0), int(X_train.nbytes / 1e6)))
+             np.sum(y_train == 0), int(nbytes(X_train) / 1e6)))
     print("%s %d (pos=%d, neg=%d, size=%dMB)"
           % ("number of test samples:".ljust(25),
              X_test.shape[0], np.sum(y_test == 1),
-             np.sum(y_test == 0), int(X_test.nbytes / 1e6)))
+             np.sum(y_test == 0), int(nbytes(X_test) / 1e6)))
 
     print()
     print("Training Classifiers")
