@@ -115,23 +115,23 @@ def test_rfecv():
 
 def test_rfe_min_step():
     
-    X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
+    n_features = 10
+    X, y = make_friedman1(n_samples=50, n_features=n_features, random_state=0)
+    n_samples, n_features = X.shape
     estimator = SVR(kernel="linear")
-    selector = RFE(estimator, step=0.01)
-    sel = selector.fit(X,y)
 
     # Test when floor(step * n_features) <= 0
-    assert_equal(sel._n_features_to_remove, 1)
-
-    selector = RFE(estimator, step=0.20)
+    selector = RFE(estimator, step=0.01)
     sel = selector.fit(X,y)
+    assert_equal(sel.support_.sum(), n_features // 2)
 
     # Test when step is between (0,1) and floor(step * n_features) > 0
-    assert_equal(sel._n_features_to_remove, 2)
-
-    selector = RFE(estimator, step=5)
+    selector = RFE(estimator, step=0.20)
     sel = selector.fit(X,y)
+    assert_equal(sel.support_.sum(), n_features // 2)
 
     # Test when step is an integer
-    assert_equal(sel._n_features_to_remove, 5)
+    selector = RFE(estimator, step=5)
+    sel = selector.fit(X,y)
+    assert_equal(sel.support_.sum(), n_features // 2)
 
