@@ -881,21 +881,6 @@ def test_coverage_error():
     assert_almost_equal(coverage_error([[1, 1, 0]], [[0.5, 0.75, 0.25]]), 2)
     assert_almost_equal(coverage_error([[1, 1, 1]], [[0.5, 0.75, 0.25]]), 3)
 
-    # Tie handling
-    assert_almost_equal(coverage_error([[0, 0]], [[0.5, 0.5]]), 0)
-    assert_almost_equal(coverage_error([[1, 0]], [[0.5, 0.5]]), 2)
-    assert_almost_equal(coverage_error([[0, 1]], [[0.5, 0.5]]), 2)
-    assert_almost_equal(coverage_error([[1, 1]], [[0.5, 0.5]]), 2)
-
-    assert_almost_equal(coverage_error([[0, 0, 0]], [[0.25, 0.5, 0.5]]), 0)
-    assert_almost_equal(coverage_error([[0, 0, 1]], [[0.25, 0.5, 0.5]]), 2)
-    assert_almost_equal(coverage_error([[0, 1, 0]], [[0.25, 0.5, 0.5]]), 2)
-    assert_almost_equal(coverage_error([[0, 1, 1]], [[0.25, 0.5, 0.5]]), 2)
-    assert_almost_equal(coverage_error([[1, 0, 0]], [[0.25, 0.5, 0.5]]), 3)
-    assert_almost_equal(coverage_error([[1, 0, 1]], [[0.25, 0.5, 0.5]]), 3)
-    assert_almost_equal(coverage_error([[1, 1, 0]], [[0.25, 0.5, 0.5]]), 3)
-    assert_almost_equal(coverage_error([[1, 1, 1]], [[0.25, 0.5, 0.5]]), 3)
-
     # Non trival case
     assert_almost_equal(coverage_error([[0, 1, 0], [1, 1, 0]],
                                        [[0.1, 10., -3], [0, 1, 3]]),
@@ -909,18 +894,18 @@ def test_coverage_error():
                                        [[0.1, 10, -3], [3, 1, 3], [0, 2, 0]]),
                         (1 + 3 + 3) / 3.)
 
-    # Raise value error if not appropriate format
-    assert_raises(ValueError, coverage_error, [0, 1, 0], [0.25, 0.3, 0.2])
-    assert_raises(ValueError, coverage_error, [0, 1, 2],
-                  [[0.25, 0.75, 0.0], [0.7, 0.3, 0.0], [0.8, 0.2, 0.0]])
-    assert_raises(ValueError, coverage_error, [(0), (1), (2)],
-                  [[0.25, 0.75, 0.0], [0.7, 0.3, 0.0], [0.8, 0.2, 0.0]])
 
-    # Check that that y_true.shape != y_score.shape raise the proper exception
-    assert_raises(ValueError, coverage_error, [[0, 1], [0, 1]], [0 , 1])
-    assert_raises(ValueError, coverage_error, [[0, 1], [0, 1]], [[0 , 1]])
-    assert_raises(ValueError, coverage_error, [[0, 1], [0, 1]], [[0] , [1]])
+def test_coverage_tie_handling():
+    assert_almost_equal(coverage_error([[0, 0]], [[0.5, 0.5]]), 0)
+    assert_almost_equal(coverage_error([[1, 0]], [[0.5, 0.5]]), 2)
+    assert_almost_equal(coverage_error([[0, 1]], [[0.5, 0.5]]), 2)
+    assert_almost_equal(coverage_error([[1, 1]], [[0.5, 0.5]]), 2)
 
-    assert_raises(ValueError, coverage_error, [[0, 1]], [[0 , 1], [0, 1]])
-    assert_raises(ValueError, coverage_error, [[0], [1]], [[0 , 1], [0, 1]])
-    assert_raises(ValueError, coverage_error, [[0, 1], [0, 1]], [[0] , [1]])
+    assert_almost_equal(coverage_error([[0, 0, 0]], [[0.25, 0.5, 0.5]]), 0)
+    assert_almost_equal(coverage_error([[0, 0, 1]], [[0.25, 0.5, 0.5]]), 2)
+    assert_almost_equal(coverage_error([[0, 1, 0]], [[0.25, 0.5, 0.5]]), 2)
+    assert_almost_equal(coverage_error([[0, 1, 1]], [[0.25, 0.5, 0.5]]), 2)
+    assert_almost_equal(coverage_error([[1, 0, 0]], [[0.25, 0.5, 0.5]]), 3)
+    assert_almost_equal(coverage_error([[1, 0, 1]], [[0.25, 0.5, 0.5]]), 3)
+    assert_almost_equal(coverage_error([[1, 1, 0]], [[0.25, 0.5, 0.5]]), 3)
+    assert_almost_equal(coverage_error([[1, 1, 1]], [[0.25, 0.5, 0.5]]), 3)
