@@ -120,6 +120,21 @@ Enhancements
 Documentation improvements
 ..........................
 
+   - Added example of using :class:`FeatureUnion` for heterogeneous input.
+     By `Matt Terry`_
+
+   - Documentation on scorers was improved, to highlight the handling of loss
+     functions. By `Matt Pico`_.
+
+   - A discrepancy between liblinear output and scikit-learn's wrappers
+     is now noted. By `Manoj Kumar`_.
+
+   - Improved documentation generation: examples referring to a class or
+     function are now shown in a gallery on the class/function's API reference
+     page. By `Joel Nothman`_.
+
+   - More explicit documentation of sample generators and of data
+     transformation. By `Joel Nothman`_.
 
 Bug fixes
 .........
@@ -3062,3 +3077,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Florian Wilhelm: https://github.com/FlorianWilhelm
 
 .. _Fares Hedyati: https://github.com/fareshedyati
+
+.. _Matt Pico: https://github.com/MattpSoftware
+
+.. _Matt Terry: https://github.com/mrterry
