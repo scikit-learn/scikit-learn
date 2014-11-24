@@ -5,6 +5,9 @@ Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 import numpy as np
 import warnings
 
+from scipy import sparse
+
+
 from sklearn import datasets
 from sklearn.base import clone
 from sklearn.ensemble import GradientBoostingClassifier
@@ -290,17 +293,37 @@ def test_check_inputs():
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
     assert_raises(ValueError, clf.fit, X, y + [0, 1])
 
-    from scipy import sparse
-    X_sparse = sparse.csr_matrix(X)
-    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
-    assert_raises(TypeError, clf.fit, X_sparse, y)
-
-    clf = GradientBoostingClassifier().fit(X, y)
-    assert_raises(TypeError, clf.predict, X_sparse)
-
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
     assert_raises(ValueError, clf.fit, X, y,
                   sample_weight=([1] * len(y)) + [0, 1])
+
+
+def test_sparse_inputs_csr():
+    """Test if gradient boosting supports sparse inputs. """
+    X_sparse = sparse.csr_matrix(X)
+    clf1 = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf1.fit(X_sparse, y)
+    out1 = clf1.predict_proba(X_sparse)
+
+    clf2 = GradientBoostingClassifier().fit(X, y)
+    clf2.fit(X, y)
+    out2 = clf2.predict_proba(X)
+
+    np.testing.assert_array_almost_equal(out1, out2)
+
+
+def test_sparse_inputs_csc():
+    """Test if gradient boosting supports sparse inputs. """
+    X_sparse = sparse.csc_matrix(X)
+    clf1 = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf1.fit(X_sparse, y)
+    out1 = clf1.predict_proba(X_sparse)
+
+    clf2 = GradientBoostingClassifier().fit(X, y)
+    clf2.fit(X, y)
+    out2 = clf2.predict_proba(X)
+
+    np.testing.assert_array_almost_equal(out1, out2)
 
 
 def test_check_inputs_predict():

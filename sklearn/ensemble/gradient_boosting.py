@@ -30,6 +30,7 @@ import numbers
 import numpy as np
 
 from scipy import stats
+from scipy.sparse import issparse
 
 from .base import BaseEnsemble
 from ..base import BaseEstimator
@@ -45,10 +46,13 @@ from ..feature_selection.from_model import _LearntSelectorMixin
 from ..tree.tree import DecisionTreeRegressor
 from ..tree._tree import DTYPE, TREE_LEAF
 from ..tree._tree import PresortBestSplitter
+from ..tree._tree import BestSparseSplitter
 from ..tree._tree import FriedmanMSE
 
-from ._gradient_boosting import predict_stages
-from ._gradient_boosting import predict_stage
+from ._gradient_boosting import predict_stages_dense
+from ._gradient_boosting import predict_stages_sparse
+from ._gradient_boosting import predict_stage_dense
+from ._gradient_boosting import predict_stage_sparse
 from ._gradient_boosting import _random_sample_mask
 
 
@@ -712,7 +716,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         self.estimators_ = np.empty((0, 0), dtype=np.object)
 
-    def _fit_stage(self, i, X, y, y_pred, sample_weight, sample_mask,
+    def _fit_stage(self, i, X, X_apply, y, y_pred, sample_weight, sample_mask,
                    criterion, splitter, random_state):
         """Fit another stage of ``n_classes_`` trees to the boosting model. """
 
@@ -747,7 +751,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                      check_input=False)
 
             # update tree leaves
-            loss.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
+            loss.update_terminal_regions(tree.tree_, X_apply, y, residual, y_pred,
                                          sample_weight, sample_mask,
                                          self.learning_rate, k=k)
 
@@ -881,9 +885,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : array-like or sparse matrix of shape = [n_samples, n_features]
+            The training input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csc_matrix``.
 
         y : array-like, shape = [n_samples]
             Target values (integers in classification, real numbers in
@@ -916,7 +921,12 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             self._clear_state()
 
         # Check input
-        X, y = check_X_y(X, y, dtype=DTYPE)
+        X, y = check_X_y(X, y, accept_sparse="csc", dtype=DTYPE)
+        if issparse(X):
+            # Pre-sort indices to avoid that each individual tree of the
+            # ensemble sorts the indices.
+            X.sort_indices()
+
         n_samples, self.n_features = X.shape
         if sample_weight is None:
             sample_weight = np.ones(n_samples, dtype=np.float32)
@@ -982,11 +992,18 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         # init criterion and splitter
         criterion = FriedmanMSE(1)
-        splitter = PresortBestSplitter(criterion,
-                                       self.max_features_,
-                                       self.min_samples_leaf,
-                                       self.min_weight_fraction_leaf,
-                                       random_state)
+        if issparse(X):
+            # fall back to best splitter for spase inputs
+            SplitterClz = BestSparseSplitter
+            X_apply = X.tocsr()
+        else:
+            SplitterClz = PresortBestSplitter
+            X_apply = X
+        splitter = SplitterClz(criterion,
+                               self.max_features_,
+                               self.min_samples_leaf,
+                               self.min_weight_fraction_leaf,
+                               random_state)
 
         if self.verbose:
             verbose_reporter = VerboseReporter(self.verbose)
@@ -1006,7 +1023,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                                       sample_weight[~sample_mask])
 
             # fit next stage of trees
-            y_pred = self._fit_stage(i, X, y, y_pred, sample_weight,
+            y_pred = self._fit_stage(i, X, X_apply, y, y_pred, sample_weight,
                                      sample_mask, criterion, splitter,
                                      random_state)
 
@@ -1048,9 +1065,12 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
     def _decision_function(self, X):
         # for use in inner loop, not raveling the output in single-class case,
-        # not doing input validation.
+        # not doing input validation -- assumes X is either 2d ndarray or csr
         score = self._init_decision_function(X)
-        predict_stages(self.estimators_, X, self.learning_rate, score)
+        if issparse(X):
+            predict_stages_sparse(self.estimators_, X, self.learning_rate, score)
+        else:
+            predict_stages_dense(self.estimators_, X, self.learning_rate, score)
         return score
 
     def decision_function(self, X):
@@ -1058,8 +1078,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix of shape = [n_samples, n_features]
+            The training input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csc_matrix``.
 
         Returns
         -------
@@ -1069,7 +1091,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             Regression and binary classification produce an array of shape
             [n_samples].
         """
-        X = check_array(X, dtype=DTYPE, order="C")
+        X = check_array(X, dtype=DTYPE, ensure_2d=True, accept_sparse="csr",
+                        order="C")
         score = self._decision_function(X)
         if score.shape[1] == 1:
             return score.ravel()
@@ -1083,8 +1106,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix of shape = [n_samples, n_features]
+            The training input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csc_matrix``.
 
         Returns
         -------
@@ -1094,10 +1119,14 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             Regression and binary classification are special cases with
             ``k == 1``, otherwise ``k==n_classes``.
         """
-        X = check_array(X, dtype=DTYPE, order="C")
+        X = check_array(X, dtype=DTYPE, ensure_2d=True, accept_sparse="csr",
+                        order="C")
         score = self._init_decision_function(X)
         for i in range(self.estimators_.shape[0]):
-            predict_stage(self.estimators_, i, X, self.learning_rate, score)
+            if issparse(X):
+                predict_stage_sparse(self.estimators_, i, X, self.learning_rate, score)
+            else:
+                predict_stage_dense(self.estimators_, i, X, self.learning_rate, score)
             yield score
 
     @property
@@ -1127,6 +1156,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         # Default implementation
         return y
+
 
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     """Gradient Boosting for classification.
@@ -1289,8 +1319,10 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix of shape = [n_samples, n_features]
+            The training input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csc_matrix``.
 
         Returns
         -------
@@ -1301,34 +1333,15 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         decisions = self.loss_._score_to_decision(score)
         return self.classes_.take(decisions, axis=0)
 
-    def staged_predict(self, X):
-        """Predict class at each stage for X.
-
-        This method allows monitoring (i.e. determine error on testing set)
-        after each stage.
-
-        Parameters
-        ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
-
-        Returns
-        -------
-        y : array of shape = [n_samples]
-            The predicted value of the input samples.
-        """
-        for score in self.staged_decision_function(X):
-            decisions = self.loss_._score_to_decision(score)
-            yield self.classes_.take(decisions, axis=0)
-
-
     def predict_proba(self, X):
         """Predict class probabilities for X.
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix of shape = [n_samples, n_features]
+            The training input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csc_matrix``.
 
         Raises
         ------
@@ -1356,8 +1369,10 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix of shape = [n_samples, n_features]
+            The training input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csc_matrix``.
 
         Returns
         -------
@@ -1370,6 +1385,28 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         except AttributeError:
             raise AttributeError('loss=%r does not support predict_proba' %
                                  self.loss)
+
+    def staged_predict(self, X):
+        """Predict classes at each stage for X.
+
+        This method allows monitoring (i.e. determine error on testing set)
+        after each stage.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape = [n_samples, n_features]
+            The training input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csc_matrix``.
+
+        Returns
+        -------
+        y : array of shape = [n_samples]
+            The predicted value of the input samples.
+        """
+        for score in self.staged_decision_function(X):
+            decisions = self.loss_._score_to_decision(score)
+            yield self.classes_.take(decisions, axis=0)
 
 
 class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
@@ -1524,13 +1561,56 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             random_state=random_state, alpha=alpha, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start)
 
+    def fit(self, X, y, sample_weight=None, monitor=None):
+        """Fit the gradient boosting model.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape = [n_samples, n_features]
+            The training input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csc_matrix``.
+
+        y : array-like, shape = [n_samples]
+            Target values (integers in classification, real numbers in
+            regression)
+            For classification, labels must correspond to classes
+            ``0, 1, ..., n_classes_-1``.
+
+        sample_weight : array-like, shape = [n_samples] or None
+            Sample weights. If None, then samples are equally weighted. Splits
+            that would create child nodes with net zero or negative weight are
+            ignored while searching for a split in each node. In the case of
+            classification, splits are also ignored if they would result in any
+            single class carrying a negative weight in either child node.
+
+        monitor : callable, optional
+            The monitor is called after each iteration with the current
+            iteration, a reference to the estimator and the local variables of
+            ``_fit_stages`` as keyword arguments ``callable(i, self,
+            locals())``. If the callable returns ``True`` the fitting procedure
+            is stopped. The monitor can be used for various things such as
+            computing held-out estimates, early stopping, model introspect, and
+            snapshoting.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        self.n_classes_ = 1
+        return super(GradientBoostingRegressor, self).fit(X, y, sample_weight,
+                                                          monitor)
+
     def predict(self, X):
         """Predict regression target for X.
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix of shape = [n_samples, n_features]
+            The training input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csc_matrix``.
 
         Returns
         -------
@@ -1547,8 +1627,10 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix of shape = [n_samples, n_features]
+            The training input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csc_matrix``.
 
         Returns
         -------
