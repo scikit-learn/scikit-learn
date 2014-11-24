@@ -174,13 +174,31 @@ def test_svr():
     diabetes = datasets.load_diabetes()
     for clf in (svm.NuSVR(kernel='linear', nu=.4, C=1.0),
                 svm.NuSVR(kernel='linear', nu=.4, C=10.),
-                svm.SVR(kernel='linear', C=10.)):
+                svm.SVR(kernel='linear', C=10.),
+                svm.LinearSVR(C=10.),
+                svm.LinearSVR(C=10.),
+                ):
         clf.fit(diabetes.data, diabetes.target)
         assert_greater(clf.score(diabetes.data, diabetes.target), 0.02)
 
     # non-regression test; previously, BaseLibSVM would check that
     # len(np.unique(y)) < 2, which must only be done for SVC
     svm.SVR().fit(diabetes.data, np.ones(len(diabetes.data)))
+    svm.LinearSVR().fit(diabetes.data, np.ones(len(diabetes.data)))
+
+
+def test_linearsvr():
+    # check that SVR(kernel='linear') and LinearSVC() give
+    # comparable results
+    diabetes = datasets.load_diabetes()
+    lsvr = svm.LinearSVR(C=1e3).fit(diabetes.data, diabetes.target)
+    score1 = lsvr.score(diabetes.data, diabetes.target)
+
+    svr = svm.SVR(kernel='linear', C=1e3).fit(diabetes.data, diabetes.target)
+    score2 = svr.score(diabetes.data, diabetes.target)
+
+    assert np.linalg.norm(lsvr.coef_ - svr.coef_) / np.linalg.norm(svr.coef_) < .1
+    assert np.abs(score1 - score2) < 0.1
 
 
 def test_svr_errors():
@@ -705,10 +723,11 @@ def test_svr_coef_sign():
     X = np.random.RandomState(21).randn(10, 3)
     y = np.random.RandomState(12).randn(10)
 
-    for klass in [svm.SVR, svm.NuSVR]:
-        svr = klass(kernel="linear").fit(X, y)
-        assert_array_almost_equal(svr.predict(X).reshape(-1, 1),
-                                  np.dot(X, svr.coef_.T) + svr.intercept_)
+    for svr in [svm.SVR(kernel='linear'), svm.NuSVR(kernel='linear'),
+                svm.LinearSVR()]:
+        svr.fit(X, y)
+        assert_array_almost_equal(svr.predict(X),
+                                  np.dot(X, svr.coef_.ravel()) + svr.intercept_)
 
 
 if __name__ == '__main__':
