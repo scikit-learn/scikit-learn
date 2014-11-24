@@ -824,8 +824,23 @@ samples are mapped to the global label of the nearest subcluster.
   then this node is again split into two and the process is continued
   recursively, till it reaches the root.
 
-Birch is generally slightly faster than MiniBatchKMeans on large clusters and
-is slightly slower than MiniBatchKMeans on large features.
+**Birch or MiniBatchKMeans?**
+
+ - Birch does not scale very well to high dimensionsal data. If ``n_features``
+   is greater than twenty, it is generally better to use MiniBatchKMeans.
+ - If the number of instances of data needs to be reduced, or if ``n_clusters``
+   is really large, it is generally better to use Birch.
+
+**How to use partial_fit?**
+
+To avoid the computation of global clustering, for every call of ``partial_fit``
+the user is advised
+1. To set ``n_clusters=None`` initially
+2. Train all data by multiple calls to partial_fit.
+3. Set ``n_clusters`` to a required value using
+   ``brc.set_params(n_clusters=n_clusters)``
+4. Call ``partial_fit`` finally with no arguments, i.e ``brc.partial_fit()``
+   which performs the global clustering.
 
 .. image:: ../auto_examples/cluster/images/plot_birch_vs_minibatchkmeans_001.png
     :target: ../auto_examples/cluster/plot_birch_vs_minibatchkmeans.html

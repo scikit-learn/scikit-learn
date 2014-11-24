@@ -33,15 +33,22 @@ def test_n_samples_leaves_roots():
 
 
 def test_partial_fit():
-    """Test that fit is equivalent to calling partial_fit multiple times""" 
+    """Test that fit is equivalent to calling partial_fit multiple times"""
+    # Test that same subcluster centres are obtained after calling partial
+    # fit twice
     X, y = make_blobs(n_samples=100)
     brc = Birch(n_clusters=3)
     brc.fit(X)
-    brc_partial = Birch()
+    brc_partial = Birch(n_clusters=None)
     brc_partial.partial_fit(X[:50])
     brc_partial.partial_fit(X[50:])
     assert_array_equal(brc_partial.subcluster_centers_, brc.subcluster_centers_)
-    assert_equal(len(np.unique(brc.labels_)), 3)
+
+    # Test that same global labels are obtained after calling partial_fit
+    # with None
+    brc_partial.set_params(n_clusters=3)
+    brc_partial.partial_fit(None)
+    assert_array_equal(brc_partial.subcluster_labels_, brc.subcluster_labels_)
 
 
 def test_birch_predict():

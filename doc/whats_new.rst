@@ -59,7 +59,7 @@ New features
      By `Gael Varoquaux`_ and `Florian Wilhelm`_.
 
    - Add :class:`cluster.Birch`, an online clustering algorithm. By
-     `Manoj Kumar`_ and `Alexandre Gramfort`_.
+     `Manoj Kumar`_, `Alexandre Gramfort`_ and `Joel Nothman`_.
 
 Enhancements
 ............
