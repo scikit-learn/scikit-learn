@@ -616,6 +616,7 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
         'PL1_LL2_D0': 5,  # L1 penalty, L2 Loss, primal form
         'PL1_LLR_D0': 6,  # L1 penalty, logistic regression
         'PL2_LLR_D1': 7,  # L2 penalty, logistic regression, dual form
+        'PL2_LEI_D0': 11, # L2 penalty, epsilon-insensitive loss, primal form
     }
 
     if multi_class == 'crammer_singer':
@@ -646,7 +647,8 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
 
 def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
                    penalty, dual, verbose, max_iter, tol,
-                   random_state=None, multi_class='ovr', loss='lr'):
+                   random_state=None, multi_class='ovr', loss='lr', 
+                   epsilon=0.1):
     """Used by Logistic Regression (and CV) and LinearSVC.
 
     Preprocessing is done in this function before supplying it to liblinear.
@@ -707,9 +709,10 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         If `crammer_singer` is chosen, the options loss, penalty and dual will
         be ignored.
 
-    loss : str, {'lr', 'l1', 'l2'}
+    loss : str, {'lr', 'l1', 'l2', 'ei'}
         The loss function. 'l1' is the hinge loss while 'l2' is the squared
-        hinge loss and 'lr' is the Logistic loss.
+        hinge loss, 'lr' is the Logistic loss and 'ei' is the epsilon-insensitive
+        loss.
 
     Returns
     -------
@@ -749,7 +752,8 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     solver_type = _get_liblinear_solver_type(multi_class, penalty, loss, dual)
     raw_coef_, n_iter_  = liblinear.train_wrap(
         X, y_ind, sp.isspmatrix(X), solver_type, tol, bias, C,
-        class_weight_, max_iter, rnd.randint(np.iinfo('i').max)
+        class_weight_, max_iter, rnd.randint(np.iinfo('i').max),
+        epsilon
         )
     # Regarding rnd.randint(..) in the above signature:
     # seed for srand in range [0..INT_MAX); due to limitations in Numpy
