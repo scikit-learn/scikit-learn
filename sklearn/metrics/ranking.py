@@ -622,11 +622,11 @@ def label_ranking_average_precision_score(y_true, y_score):
 
 
 def coverage_error(y_true, y_score):
-    """ Coverage error measure
+    """Coverage error measure
 
-    Compute how fare we need to go through the ranking scores to get all
+    Compute how fare we need to go through the ranked scores to cover all
     true labels. The best value is equal to the average the number
-    of labels in y_true per sample.
+    of labels in ``y_true` per sample.
 
     Parameters
     ----------
@@ -643,6 +643,12 @@ def coverage_error(y_true, y_score):
     Return
     ------
     coverage : float
+
+    References
+    ----------
+    .. [1] Tsoumakas, G., Katakis, I., & Vlahavas, I. (2010).
+           Mining multi-label data. In Data mining and knowledge discovery
+           handbook (pp. 667-685). Springer US.
 
     """
     y_true = check_array(y_true, ensure_2d=False)

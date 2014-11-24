@@ -977,19 +977,19 @@ Coverage
 
 The :func:`coverage_error` function computes the average number of labels that
 have to be included in the final prediction such such that all true labels
-are predicted. This is usefull if you want to know how many top-scored-labels
-you have to predict in average without missing any true one. The best and
-minimal coverage is thus the average number of true labels.
+are predicted. This is useful if you want to know how many top-scored-labels
+you have to predict in average without missing any true one. The best value
+of this metrics is thus the average number of true labels.
 
 Formally, given a binary indicator matrix of the ground truth labels
-:math:`y \in \mathcal{R}^{n_\text{samples} \times n_\text{labels}}` and the
+:math:`y \in \left\{0, 1\right\}^{n_\text{samples} \times n_\text{labels}}` and the
 score associated with each label
-:math:`\hat{f} \in \mathcal{R}^{n_\text{samples} \times n_\text{labels}}`,
+:math:`\hat{f} \in \mathbb{R}^{n_\text{samples} \times n_\text{labels}}`,
 the coverage is defined as
 
 .. math::
   coverage(y, \hat{f}) = \frac{1}{n_{\text{samples}}}
-    \sum_{i=0}^{n_{\text{samples}} - 1} \max_{j:y_{ij} = 1} rank_{ij}
+    \sum_{i=0}^{n_{\text{samples}} - 1} \max_{j:y_{ij} = 1} \text{rank}_{ij}
 
 with :math:`\text{rank}_{ij} = \left|\left\{k: \hat{f}_{ik} \geq \hat{f}_{ij} \right\}\right|`.
 
