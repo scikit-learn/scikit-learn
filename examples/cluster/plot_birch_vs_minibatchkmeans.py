@@ -7,7 +7,7 @@ This example compares the timing of Birch (with and without the global
 clustering step) and MiniBatchKMeans on a synthetic dataset having
 100,000 samples and 2 features generated using make_blobs.
 
-If ``n_clusters`` is set to None, the data is reduced from 100,000
+If ``global_clusters`` is set to None, the data is reduced from 100,000
 samples to a set of 158 clusters. This can be viewed as a preprocessing
 step before the final (global) clustering step that further reduces these
 158 clusters to 100 clusters.
@@ -49,8 +49,8 @@ fig.subplots_adjust(left=0.04, right=0.98, bottom=0.1, top=0.9)
 
 # Compute clustering with Birch with and without the final clustering step
 # and plot.
-birch_models = [Birch(threshold=1.7, n_clusters=None),
-                Birch(threshold=1.7, n_clusters=100)]
+birch_models = [Birch(threshold=1.7, global_clusters=None),
+                Birch(threshold=1.7, global_clusters=100)]
 final_step = ['without global clustering', 'with global clustering']
 
 for ind, (birch_model, info) in enumerate(zip(birch_models, final_step)):
@@ -71,7 +71,7 @@ for ind, (birch_model, info) in enumerate(zip(birch_models, final_step)):
         mask = labels == k
         ax.plot(X[mask, 0], X[mask, 1], 'w',
                 markerfacecolor=col, marker='.')
-        if birch_model.n_clusters is None:
+        if birch_model.global_clusters is None:
             ax.plot(this_centroid[0], this_centroid[1], '+', markerfacecolor=col,
                     markeredgecolor='k', markersize=5)
     ax.set_ylim([-25, 25])

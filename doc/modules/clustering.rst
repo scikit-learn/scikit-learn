@@ -102,7 +102,7 @@ Overview of clustering methods
      - Mahalanobis distances to  centers
 
    * - :ref:`Birch`
-     - branching factor, number of clusters
+     - branching factor, threshold, optional global clusterer.
      - Large ``n_clusters`` and ``n_samples``
      - Large dataset, outlier removal, data reduction.
      - Euclidean distance between points
@@ -797,7 +797,7 @@ subclusters.
 This algorithm can be viewed as an instance or data reduction method,
 since it reduces the input data to a set of subclusters which are obtained directly
 from the leaves of the CF Tree. The number of subclusters obtained can be decreased by
-either increasing the threshold or providing ``n_clusters``. If ``n_clusters`` is set
+either increasing the threshold or providing ``global_clusters``. If ``global_clusters`` is set
 to None, the subclusters from the leaves are directly read off, otherwise a global
 clustering step labels these subclusters into global clusters(labels) and the
 samples are mapped to the global label of the nearest subcluster.
@@ -835,10 +835,10 @@ samples are mapped to the global label of the nearest subcluster.
 
 To avoid the computation of global clustering, for every call of ``partial_fit``
 the user is advised
-1. To set ``n_clusters=None`` initially
+1. To set ``global_clusters=None`` initially
 2. Train all data by multiple calls to partial_fit.
-3. Set ``n_clusters`` to a required value using
-   ``brc.set_params(n_clusters=n_clusters)``
+3. Set ``global_clusters`` to a required value using
+   ``brc.set_params(global_clusters=n_clusters)``
 4. Call ``partial_fit`` finally with no arguments, i.e ``brc.partial_fit()``
    which performs the global clustering.
 
