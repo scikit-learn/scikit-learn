@@ -191,7 +191,7 @@ def test_boston():
                     "mse = %.4f" % (loss, mse)
 
                 if last_y_pred is not None:
-                    np.testing.assert_array_almost_equal(
+                    assert_array_almost_equal(
                         last_y_pred, y_pred,
                         err_msg='pred_%d doesnt match last pred_%d for loss %r and subsample %r. '
                         % (i, i - 1, loss, subsample))
@@ -309,7 +309,7 @@ def test_sparse_inputs_csr():
     clf2.fit(X, y)
     out2 = clf2.predict_proba(X)
 
-    np.testing.assert_array_almost_equal(out1, out2)
+    assert_array_almost_equal(out1, out2)
 
 
 def test_sparse_inputs_csc():
@@ -323,7 +323,7 @@ def test_sparse_inputs_csc():
     clf2.fit(X, y)
     out2 = clf2.predict_proba(X)
 
-    np.testing.assert_array_almost_equal(out1, out2)
+    assert_array_almost_equal(out1, out2)
 
 
 def test_check_inputs_predict():
