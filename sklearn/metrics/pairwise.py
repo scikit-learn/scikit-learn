@@ -7,6 +7,7 @@
 #          Philippe Gervais <philippe.gervais@inria.fr>
 #          Lars Buitinck <larsmans@gmail.com>
 #          Joel Nothman <joel.nothman@gmail.com>
+#          Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD 3 clause
 
 import itertools
@@ -15,6 +16,7 @@ import numpy as np
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
+import scipy.special
 
 from ..utils import check_array
 from ..utils import gen_even_slices
@@ -767,6 +769,60 @@ def rbf_kernel(X, Y=None, gamma=None):
     return K
 
 
+def matern_kernel(X, Y=None, gamma=None, coef0=1.5):
+    """ Compute the Matern kernel between X and Y.
+
+    The class of Matern kernels is a generalization of the RBF and
+    absolute exponential kernel parameterized by an additional parameter
+    coef0 (commonly denoted as nu in the literature). The smaller coef0,
+    the less smooth the approximated function is. For nu->inf, the kernel
+    becomes equivalent to the RBF kernel and for nu=0.5 to the absolute
+    exponential kernel. Important intermediate values are nu=1.5 (once
+    differentiable functions) and nu=2.5 (twice differentiable functions).
+
+    See Rasmussen and Williams 2006, pp84 for details regarding the
+    different variants of the Matern kernel.
+
+    Parameters
+    ----------
+    X : array of shape (n_samples_X, n_features)
+
+    Y : array of shape (n_samples_Y, n_features)
+
+    gamma : float
+
+    coef0 : float in [0.5, 1.5, 2.5, inf]
+
+    Returns
+    -------
+    kernel_matrix : array of shape (n_samples_X, n_samples_Y)
+    """
+    if coef0 == np.inf:  # fall back to rbf-kernel
+        return rbf_kernel(X, Y, gamma)
+
+    X, Y = check_pairwise_arrays(X, Y)
+    if gamma is None:
+        gamma = 1.0 / X.shape[1]
+
+    K = euclidean_distances(X, Y, squared=False)
+    if coef0 == 0.5:
+        K *= -gamma
+        np.exp(K, K) # exponentiate K in-place
+    elif coef0 == 1.5:
+        K *= np.sqrt(3) * gamma
+        K = (1 + K) * np.exp(-K)
+    elif coef0 == 2.5:
+        K *= np.sqrt(5) * gamma
+        K = (1 + K + K ** 2 / 3.0) * np.exp(-K)
+    else:  # general case; expensive to evaluate
+        K[K == 0.0] += 1e-10  # strict zeros would result in nan
+        tmp = (np.sqrt(2 * coef0) * gamma * K)
+        K[:] = (2 ** (1 - coef0)) / scipy.special.gamma(coef0)
+        K *= tmp ** coef0
+        K *= scipy.special.kv(coef0, tmp)
+    return K
+
+
 def cosine_similarity(X, Y=None):
     """Compute cosine similarity between samples in X and Y.
 
@@ -1121,7 +1177,8 @@ PAIRWISE_KERNEL_FUNCTIONS = {
     'poly': polynomial_kernel,
     'rbf': rbf_kernel,
     'sigmoid': sigmoid_kernel,
-    'cosine': cosine_similarity, }
+    'cosine': cosine_similarity,
+    'matern': matern_kernel}
 
 
 def kernel_metrics():
@@ -1158,6 +1215,7 @@ KERNEL_PARAMS = {
     "polynomial": frozenset(["gamma", "degree", "coef0"]),
     "rbf": frozenset(["gamma"]),
     "sigmoid": frozenset(["gamma", "coef0"]),
+    "matern": frozenset(["gamma", "coef0"]),
 }
 
 
