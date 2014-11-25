@@ -476,16 +476,23 @@ div.highlight-python pre {
     clear: right !important;
 }
 
-tt {
+tt, code {
     background-color: #ecf0f3;
     color: #222;
     /* padding: 1px 2px; */
     font-size: 1.1em;
     font-family: monospace;
+    border: none;
+    padding: none;
 }
 
 a tt {
 	color: inherit;
+}
+
+
+a code {
+    color: inherit;
 }
 
 .viewcode-back {
