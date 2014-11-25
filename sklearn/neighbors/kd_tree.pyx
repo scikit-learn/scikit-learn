@@ -15,14 +15,12 @@ VALID_METRICS = ['EuclideanDistance', 'ManhattanDistance',
                  'ChebyshevDistance', 'MinkowskiDistance']
 
 
-#----------------------------------------------------------------------
-# Here's our big hack: we can't subclass BinaryTree, because polymorphism
-# doesn't work in cython.  The dual-tree queries defined in BinaryTree
-# break if we try this approach.  So we use a literal include to "inherit"
-# all the boiler-plate code, and assign BinaryTree to KDTree.  The
-# specifics of the implementation are the functions in this module.
+# Inherit KDTree from BinaryTree
 include "binary_tree.pxi"
-KDTree = BinaryTree
+
+cdef class KDTree(BinaryTree):
+    __doc__ = CLASS_DOC.format(**DOC_DICT)
+    pass
 
 #----------------------------------------------------------------------
 # The functions below specialized the Binary Tree as a KD Tree
