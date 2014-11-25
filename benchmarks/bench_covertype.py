@@ -78,7 +78,7 @@ def nbytes(X):
 
 
 @memory.cache
-def load_data(dtype=np.float32, order='C', random_state=13, sparse=False):
+def load_data(dtype=np.float32, order='C', random_state=13, sparse=None):
     """Load the data, then cache and memmap the train/test split"""
     ######################################################################
     ## Load dataset
@@ -105,9 +105,13 @@ def load_data(dtype=np.float32, order='C', random_state=13, sparse=False):
     X_test = (X_test - mean) / std
 
     if sparse:
-        to_sparse = sp.csc_matrix
-        if order.lower() == 'c':
+        if sparse == 'csc':
+            to_sparse = sp.csc_matrix
+        elif sparse == 'csr':
             to_sparse = sp.csr_matrix
+        else:
+            raise ValueError('sparse must be either csc or csr')
+
         X_train = to_sparse(X_train)
         X_test = to_sparse(X_test)
 
@@ -141,7 +145,8 @@ if __name__ == "__main__":
                              "data")
     parser.add_argument('--random-seed', nargs="?", default=13, type=int,
                         help="Common seed used by random number generator.")
-    parser.add_argument('--sparse', nargs="?", default=0, type=int,
+    parser.add_argument('--sparse', nargs="?", default=None, type=str,
+                        choices=["csc", "csr"],
                         help="Whether to use a sparse matrix for the inputs.")
     args = vars(parser.parse_args())
 
@@ -149,7 +154,7 @@ if __name__ == "__main__":
 
     X_train, X_test, y_train, y_test = load_data(
         order=args["order"], random_state=args["random_seed"],
-        sparse=args["sparse"] > 0)
+        sparse=args["sparse"])
 
     print("")
     print("Dataset statistics:")
