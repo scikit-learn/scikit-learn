@@ -16,6 +16,7 @@ from .bounds import l1_min_c
 from . import libsvm, liblinear, libsvm_sparse
 
 __all__ = ['LinearSVC',
+           'LinearSVR',
            'NuSVC',
            'NuSVR',
            'OneClassSVM',
