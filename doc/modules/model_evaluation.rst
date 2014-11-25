@@ -992,6 +992,8 @@ the coverage is defined as
     \sum_{i=0}^{n_{\text{samples}} - 1} \max_{j:y_{ij} = 1} \text{rank}_{ij}
 
 with :math:`\text{rank}_{ij} = \left|\left\{k: \hat{f}_{ik} \geq \hat{f}_{ij} \right\}\right|`.
+Given the rank definition, ties in ``y_scores`` are broken by giving the
+maximal rank that would have been assigned to all tied values.
 
 Here is a small example of usage of this function::
 
