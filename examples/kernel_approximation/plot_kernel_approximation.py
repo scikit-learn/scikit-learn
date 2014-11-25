@@ -85,7 +85,7 @@ linear_svm = svm.LinearSVC()
 
 # create pipeline from kernel approximation
 # and linear svm
-feature_map_fastfood = Fastfood(sigma=SIGMA, random_state=1)
+feature_map_fastfood = Fastfood(sigma=SIGMA, tradeoff_mem_accuracy='mem', random_state=1)
 feature_map_fourier = RBFSampler(gamma=GAMMA, random_state=1)
 feature_map_nystroem = Nystroem(gamma=GAMMA, random_state=1)
 fastfood_approx_svm = pipeline.Pipeline([("feature_map", feature_map_fastfood),
