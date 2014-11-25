@@ -17,11 +17,17 @@ from time import time
 cimport cython
 from libc.math cimport exp, log, sqrt, pow, fabs
 cimport numpy as np
+from learning_rates cimport LearningRate, Optimal, Adaptive
 cdef extern from "sgd_fast_helpers.h":
     bint skl_isfinite(double) nogil
 
 from sklearn.utils.weight_vector cimport WeightVector
 from sklearn.utils.seq_dataset cimport SequentialDataset
+
+cdef extern from "math.h":
+    double pow(double, double) nogil
+    double fmax(double, double) nogil
+    double sqrt(double) nogil
 
 np.import_array()
 
@@ -30,13 +36,6 @@ DEF NO_PENALTY = 0
 DEF L1 = 1
 DEF L2 = 2
 DEF ELASTICNET = 3
-
-# Learning rate constants
-DEF CONSTANT = 1
-DEF OPTIMAL = 2
-DEF INVSCALING = 3
-DEF PA1 = 4
-DEF PA2 = 5
 
 # ----------------------------------------
 # Extension Types for Loss Functions
@@ -338,7 +337,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
               int n_iter, int fit_intercept,
               int verbose, bint shuffle, np.uint32_t seed,
               double weight_pos, double weight_neg,
-              int learning_rate, double eta0,
+              LearningRate learning_rate, double eta0,
               double power_t,
               double t=1.0,
               double intercept_decay=1.0):
@@ -377,13 +376,13 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         The weight of the negative class.
     seed : np.uint32_t
         Seed of the pseudorandom number generator used to shuffle the data.
-    learning_rate : int
+    learning_rate : char*
         The learning rate:
-        (1) constant, eta = eta0
-        (2) optimal, eta = 1.0/(alpha * t).
-        (3) inverse scaling, eta = eta0 / pow(t, power_t)
-        (4) Passive Agressive-I, eta = min(alpha, loss/norm(x))
-        (5) Passive Agressive-II, eta = 1.0 / (norm(x) + 0.5*alpha)
+        "constant" constant, eta = eta0
+        "optimal" optimal, eta = 1.0/(t+t0)
+        "invscling" inverse scaling, eta = eta0 / pow(t, power_t)
+        "pa1" Passive Agressive-I, eta = min(alpha, loss/norm(x))
+        "pa2" Passive Agressive-II, eta = 1.0 / (norm(x) + 0.5*alpha)
     eta0 : double
         The initial learning rate.
     power_t : double
@@ -433,7 +432,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 int n_iter, int fit_intercept,
                 int verbose, bint shuffle, np.uint32_t seed,
                 double weight_pos, double weight_neg,
-                int learning_rate, double eta0,
+                LearningRate learning_rate, double eta0,
                 double power_t,
                 double t=1.0,
                 double intercept_decay=1.0,
@@ -477,13 +476,16 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         The weight of the negative class.
     seed : np.uint32_t
         Seed of the pseudorandom number generator used to shuffle the data.
-    learning_rate : int
-        The learning rate:
-        (1) constant, eta = eta0
-        (2) optimal, eta = 1.0/(alpha * t).
-        (3) inverse scaling, eta = eta0 / pow(t, power_t)
-        (4) Passive Agressive-I, eta = min(alpha, loss/norm(x))
-        (5) Passive Agressive-II, eta = 1.0 / (norm(x) + 0.5*alpha)
+    learning_rate : LearningRate
+        A learning rate object:
+        "constant" constant, eta = eta0
+        "optimal" optimal, eta = 1.0/(t+t0)
+        "invscling" inverse scaling, eta = eta0 / pow(t, power_t)
+        "adagrad" adagrad, eta = eta0 / (sum_squared_gradients + eps0)
+        "adadelta" adadelta, eta = sqrt((accudelta + self.eps0) /
+                    (agrad + self.eps0))
+        "pa1" Passive Agressive-I, eta = min(alpha, loss/norm(x))
+        "pa2" Passive Agressive-II, eta = 1.0 / (norm(x) + 0.5*alpha)
     eta0 : double
         The initial learning rate.
     power_t : double
@@ -507,6 +509,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     average_intercept : float
         The averaged intercept accross iterations
     """
+
     return _plain_sgd(weights,
                       intercept,
                       average_weights,
@@ -526,6 +529,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                       average)
 
 
+@cython.cdivision(True)
 def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                double intercept,
                np.ndarray[double, ndim=1, mode='c'] average_weights,
@@ -538,7 +542,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                int n_iter, int fit_intercept,
                int verbose, bint shuffle, np.uint32_t seed,
                double weight_pos, double weight_neg,
-               int learning_rate, double eta0,
+               LearningRate learning_rate, double eta0,
                double power_t,
                double t=1.0,
                double intercept_decay=1.0,
@@ -548,7 +552,18 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef Py_ssize_t n_samples = dataset.n_samples
     cdef Py_ssize_t n_features = weights.shape[0]
 
-    cdef WeightVector w = WeightVector(weights, average_weights)
+    cdef int n_etas
+    cdef np.ndarray[double, ndim=1, mode='c'] wscale_vector
+    cdef np.ndarray[double, ndim=1, mode='c'] eta_vector
+    if isinstance(learning_rate, Adaptive):
+        n_etas = n_features
+    else:
+        n_etas = 1
+
+    eta_vector = np.zeros((n_etas,), dtype=np.float64, order="c")
+    cdef double* eta_ptr = &eta_vector[0]
+    wscale_vector = np.ones((n_etas,), dtype=np.float64, order="c")
+    cdef WeightVector w = WeightVector(weights, average_weights, wscale_vector)
     cdef double* w_ptr = &weights[0]
     cdef double *x_data_ptr = NULL
     cdef int *x_ind_ptr = NULL
@@ -568,7 +583,11 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef unsigned int epoch = 0
     cdef unsigned int i = 0
     cdef int is_hinge = isinstance(loss, Hinge)
-    cdef double optimal_init = 0.0
+    cdef double current_loss = 0.0
+    cdef double gradient = 0.0
+    cdef double norm = 0.0
+    cdef double optimal_init = 1.0
+    cdef double intercept_eta = 0.0
 
     # q vector is only used for L1 regularization
     cdef np.ndarray[double, ndim = 1, mode = "c"] q = None
@@ -585,10 +604,10 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
 
     eta = eta0
 
-    if learning_rate == OPTIMAL:
-        typw = np.sqrt(1.0 / np.sqrt(alpha))
+    if isinstance(learning_rate, Optimal):
+        typw = sqrt(1.0 / sqrt(alpha))
         # computing eta0, the initial learning rate
-        initial_eta0 = typw / max(1.0, loss.dloss(-typw, 1.0))
+        initial_eta0 = typw / max(1.0, loss._dloss(-typw, 1.0))
         # initialize t such that eta at first sample equals eta0
         optimal_init = 1.0 / (initial_eta0 * alpha)
 
@@ -608,46 +627,38 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                              &sample_weight)
 
                 p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
-                if learning_rate == OPTIMAL:
-                    eta = 1.0 / (alpha * (optimal_init + t - 1))
-                elif learning_rate == INVSCALING:
-                    eta = eta0 / pow(t, power_t)
+                gradient = loss._dloss(p, y)
+                norm = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
+                current_loss = loss.loss(p, y)
+
+                # stores all eta(s) in eta_ptr and stores the intercept
+                # eta in intercept_eta
+                intercept_eta = learning_rate.eta(eta_ptr,
+                                                  optimal_init + t, gradient,
+                                                  x_data_ptr, x_ind_ptr,
+                                                  xnnz, w, intercept,
+                                                  fit_intercept)
+
+                update = learning_rate.update(gradient, current_loss,
+                                              norm, C, p, y, is_hinge)
 
                 if verbose > 0:
-                    sumloss += loss.loss(p, y)
+                    sumloss += current_loss
 
                 if y > 0.0:
                     class_weight = weight_pos
                 else:
                     class_weight = weight_neg
 
-                if learning_rate == PA1:
-                    update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
-                    if update == 0:
-                        continue
-                    update = min(C, loss.loss(p, y) / update)
-                elif learning_rate == PA2:
-                    update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
-                    update = loss.loss(p, y) / (update + 0.5 / C)
-                else:
-                    update = -eta * loss._dloss(p, y)
-
-                if learning_rate >= PA1:
-                    if is_hinge:
-                        # classification
-                        update *= y
-                    elif y - p < 0:
-                        # regression
-                        update *= -1
-
                 update *= class_weight * sample_weight
 
                 if penalty_type >= L2:
-                    w.scale(1.0 - ((1.0 - l1_ratio) * eta * alpha))
+                    w.scale_vector(l1_ratio, eta_ptr, alpha)
+
                 if update != 0.0:
-                    w.add(x_data_ptr, x_ind_ptr, xnnz, update)
+                    w.add(x_data_ptr, x_ind_ptr, xnnz, eta_ptr, -update)
                     if fit_intercept == 1:
-                        intercept += update * intercept_decay
+                        intercept -= update * intercept_eta * intercept_decay
 
                 if average > 0 and average <= t:
                     # compute the average for the intercept and update the
@@ -655,12 +666,12 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     # the update is 0
 
                     w.add_average(x_data_ptr, x_ind_ptr, xnnz,
-                                  update, (t - average + 1))
+                                  eta_ptr, update, (t - average + 1))
                     average_intercept += ((intercept - average_intercept) /
                                           (t - average + 1))
 
                 if penalty_type == L1 or penalty_type == ELASTICNET:
-                    u += (l1_ratio * eta * alpha)
+                    u += (l1_ratio * eta_ptr[0] * alpha)
                     l1penalty(w, q_data_ptr, x_ind_ptr, xnnz, u)
 
                 t += 1
@@ -719,7 +730,7 @@ cdef void l1penalty(WeightVector w, double * q_data_ptr,
     cdef double z = 0.0
     cdef int j = 0
     cdef int idx = 0
-    cdef double wscale = w.wscale
+    cdef double wscale = w.wscale_ptr[0]
     cdef double *w_data_ptr = w.w_data_ptr
     for j in range(xnnz):
         idx = x_ind_ptr[j]
