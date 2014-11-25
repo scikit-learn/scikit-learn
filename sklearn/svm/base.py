@@ -725,15 +725,19 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     n_iter_ : int
         Maximum number of iterations run across all classes.
     """
-    enc = LabelEncoder()
-    y_ind = enc.fit_transform(y)
-    classes_ = enc.classes_
-    if len(classes_) < 2:
-        raise ValueError("This solver needs samples of at least 2 classes"
-                         " in the data, but the data contains only one"
-                         " class: %r" % classes_[0])
+    if loss is not 'ei':
+        enc = LabelEncoder()
+        y_ind = enc.fit_transform(y)
+        classes_ = enc.classes_
+        if len(classes_) < 2:
+            raise ValueError("This solver needs samples of at least 2 classes"
+                             " in the data, but the data contains only one"
+                             " class: %r" % classes_[0])
 
-    class_weight_ = compute_class_weight(class_weight, classes_, y)
+        class_weight_ = compute_class_weight(class_weight, classes_, y)
+    else:
+        class_weight_ = np.empty(0, dtype=np.float)
+        y_ind = y
     liblinear.set_verbosity_wrap(verbose)
     rnd = check_random_state(random_state)
     if verbose:

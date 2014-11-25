@@ -321,7 +321,7 @@ class LinearSVR(LinearModel, RegressorMixin, SparseCoefMixin):
                              % self.C)
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64, order="C")
-        self.classes_ = np.unique(y)
+
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
             None, self.penalty, False, self.verbose,
