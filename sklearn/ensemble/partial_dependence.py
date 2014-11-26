@@ -8,6 +8,7 @@ import numbers
 
 import numpy as np
 from scipy.stats.mstats import mquantiles
+from scipy.sparse import issparse
 
 from ..utils.extmath import cartesian
 from ..externals.joblib import Parallel, delayed
@@ -20,6 +21,16 @@ from ._gradient_boosting import _partial_dependence_tree
 from .gradient_boosting import BaseGradientBoosting
 
 
+def csc_col_minmax(X):
+    """Computes the min-max values of each column in X. """
+    n_features = X.shape[1]
+    res = np.empty((2, n_features), dtype=X.dtype)
+    for col in range(n_features):
+        res[0, col] = np.min(X[:, col].data)
+        res[1, col] = np.max(X[:, col].data)
+    return res
+
+
 def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
     """Generate a grid of points based on the ``percentiles of ``X``.
 
@@ -29,11 +40,13 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
 
     Parameters
     ----------
-    X : ndarray
-        The data
+    X : array-like or sparse matrix of shape = [n_samples, n_features]
+        The training input samples. Internally, it will be converted to
+        ``dtype=np.float32`` and if a sparse matrix is provided
+        to a sparse ``csc_matrix``.
     percentiles : tuple of floats
         The percentiles which are used to construct the extreme
-        values of the grid axes.
+        values of the grid axes. Ignored if X is sparse.
     grid_resolution : int
         The number of equally spaced points that are placed
         on the grid.
@@ -51,14 +64,22 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
     if not all(0. <= x <= 1. for x in percentiles):
         raise ValueError('percentile values must be in [0, 1]')
 
+    is_sparse = issparse(X)
+
     axes = []
     for col in range(X.shape[1]):
-        uniques = np.unique(X[:, col])
+        if is_sparse:
+            uniques = np.unique(X[:, col].data)
+        else:
+            uniques = np.unique(X[:, col])
         if uniques.shape[0] < grid_resolution:
             # feature has low resolution use unique vals
             axis = uniques
         else:
-            emp_percentiles = mquantiles(X, prob=percentiles, axis=0)
+            if is_sparse:
+                emp_percentiles = csc_col_minmax(X)
+            else:
+                emp_percentiles = mquantiles(X, prob=percentiles, axis=0)
             # create axis based on percentiles and grid resolution
             axis = np.linspace(emp_percentiles[0, col],
                                emp_percentiles[1, col],
@@ -91,10 +112,13 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
         The data on which ``gbrt`` was trained. It is used to generate
         a ``grid`` for the ``target_variables``. The ``grid`` comprises
         ``grid_resolution`` equally spaced points between the two
-        ``percentiles``.
+        ``percentiles``. Internally, it will be converted to
+        ``dtype=np.float32`` and if a sparse matrix is provided
+        to a sparse ``csc_matrix``.
     percentiles : (low, high), default=(0.05, 0.95)
         The lower and upper percentile used create the extreme values
-        for the ``grid``. Only if ``X`` is not None.
+        for the ``grid``. Only if ``X`` is not None. Ignored if ``X``
+        is sparse.
     grid_resolution : int, default=100
         The number of equally spaced points on the ``grid``.
 
@@ -133,7 +157,7 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
                          % (gbrt.n_features - 1))
 
     if X is not None:
-        X = check_array(X, dtype=DTYPE, order='C')
+        X = check_array(X, dtype=DTYPE, order='C', accept_sparse='csc')
         grid, axes = _grid_from_X(X[:, target_variables], percentiles,
                                   grid_resolution)
     else:
@@ -178,7 +202,12 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     gbrt : BaseGradientBoosting
         A fitted gradient boosting model.
     X : array-like, shape=(n_samples, n_features)
-        The data on which ``gbrt`` was trained.
+        The data on which ``gbrt`` was trained. It is used to generate
+        a ``grid`` for the ``target_variables``. The ``grid`` comprises
+        ``grid_resolution`` equally spaced points between the two
+        ``percentiles``. Internally, it will be converted to
+        ``dtype=np.float32`` and if a sparse matrix is provided
+        to a sparse ``csc_matrix``.
     features : seq of tuples or ints
         If seq[i] is an int or a tuple with one int value, a one-way
         PDP is created; if seq[i] is a tuple of two ints, a two-way
@@ -252,7 +281,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         # regression and binary classification
         label_idx = 0
 
-    X = check_array(X, dtype=DTYPE, order='C')
+    X = check_array(X, dtype=DTYPE, order='C', accept_sparse='csc')
     if gbrt.n_features != X.shape[1]:
         raise ValueError('X.shape[1] does not match gbrt.n_features')
 
@@ -352,7 +381,11 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
             ax.clabel(CS, fmt='%2.2f', colors='k', fontsize=10, inline=True)
 
         # plot data deciles + axes labels
-        deciles = mquantiles(X[:, fx[0]], prob=np.arange(0.1, 1.0, 0.1))
+        if issparse(X):
+            minmax = csc_col_minmax(X[:, fx[0]:fx[0] + 1])
+            deciles = np.linspace(minmax[0, 0], minmax[1, 0], 10)
+        else:
+            deciles = mquantiles(X[:, fx[0]], prob=np.arange(0.1, 1.0, 0.1))
         trans = transforms.blended_transform_factory(ax.transData,
                                                      ax.transAxes)
         ylim = ax.get_ylim()
@@ -368,7 +401,11 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
 
         if len(axes) > 1:
             # two-way PDP - y-axis deciles + labels
-            deciles = mquantiles(X[:, fx[1]], prob=np.arange(0.1, 1.0, 0.1))
+            if issparse(X):
+                minmax = csc_col_minmax(X[:, fx[1]:fx[1] + 1])
+                deciles = np.linspace(minmax[0, 0], minmax[1, 0], 10)
+            else:
+                deciles = mquantiles(X[:, fx[1]], prob=np.arange(0.1, 1.0, 0.1))
             trans = transforms.blended_transform_factory(ax.transAxes,
                                                          ax.transData)
             xlim = ax.get_xlim()
