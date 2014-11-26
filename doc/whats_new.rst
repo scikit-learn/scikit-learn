@@ -171,6 +171,12 @@ Bug fixes
       when metric is set to ``manhattan``. It was using the mean before.
       By `Manoj Kumar`_
 
+    - Fix numerical stability issues in :class:`linear_model.SGDClassifier`
+      and :class:`linear_model.SGDRegressor` by clipping large gradients and
+      ensuring that weight decay rescaling is always positive (for large
+      l2 regularization and large learning rate values).
+      By `Olivier Grisel`_
+
 API changes summary
 -------------------
 
