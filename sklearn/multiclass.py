@@ -551,6 +551,35 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             prediction = votes.argmax(axis=1)
         return self.classes_[prediction]
 
+    def decision_function(self, X):
+        """Distance (votes) of the samples X to the separating hyperplanes.
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+        Returns
+        -------
+        D : array-like, shape = [n_samples, n_class * (n_class-1) / 2]
+            Returns the decision function of the sample for each class
+            in the model.
+        """
+        if not hasattr(self, "estimators_"):
+            raise ValueError("The object hasn't been fitted yet!")
+
+        # Predict decision function (votes) using the one-vs-one strategy.
+        n_samples = X.shape[0]
+        n_classes = self.classes_.shape[0]
+        votes = np.zeros((n_samples, n_classes))
+
+        k = 0
+        for i in range(n_classes):
+            for j in range(i + 1, n_classes):
+                pred = self.estimators_[k].predict(X)
+                votes[pred == 0, i] += 1
+                votes[pred == 1, j] += 1
+                k += 1
+
+        return votes
+
 
 @deprecated("fit_ecoc is deprecated and will be removed in 0.18."
             "Use the OutputCodeClassifier instead.")
