@@ -201,13 +201,11 @@ def median_absolute_error(y_true, y_pred):
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> median_absolute_error(y_true, y_pred)
     0.5
-    >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
-    >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
-    >>> median_absolute_error(y_true, y_pred)
-    1.0
 
     """
     y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
+    if y_type == 'continuous-multioutput':
+        raise ValueError("Multioutput not supported in median_absolute_error")
     return np.median(np.abs(y_pred - y_true))
 
 

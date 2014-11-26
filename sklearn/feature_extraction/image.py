@@ -349,6 +349,14 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     i_h, i_w = image.shape[:2]
     p_h, p_w = patch_size
 
+    if p_h > i_h:
+        raise ValueError("Height of the patch should be less than the height"
+                         " of the image.")
+
+    if p_w > i_w:
+        raise ValueError("Width of the patch should be less than the width"
+                         " of the image.")
+
     image = check_array(image, allow_nd=True)
     image = image.reshape((i_h, i_w, -1))
     n_colors = image.shape[-1]

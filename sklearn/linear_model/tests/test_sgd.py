@@ -18,7 +18,7 @@ from sklearn.utils.testing import assert_raises_regexp
 from sklearn import linear_model, datasets, metrics
 from sklearn.base import clone
 from sklearn.linear_model import SGDClassifier, SGDRegressor
-from sklearn.preprocessing import LabelEncoder, scale
+from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
 
 
 class SparseSGDClassifier(SGDClassifier):
@@ -1067,26 +1067,57 @@ def test_l1_ratio():
 
 
 def test_underflow_or_overlow():
-    # Generate some weird data with unscaled features
-    rng = np.random.RandomState(42)
-    n_samples = 100
-    n_features = 10
+    with np.errstate(all='raise'):
+        # Generate some weird data with hugely unscaled features
+        rng = np.random.RandomState(0)
+        n_samples = 100
+        n_features = 10
 
-    X = rng.normal(size=(n_samples, n_features))
-    X[:, 0] *= 100
+        X = rng.normal(size=(n_samples, n_features))
+        X[:, :2] *= 1e300
+        assert_true(np.isfinite(X).all())
 
-    # Define a ground truth on the scaled data
-    ground_truth = rng.normal(size=n_features)
-    y = (np.dot(scale(X), ground_truth) > 0.).astype(np.int32)
-    assert_array_equal(np.unique(y), [0, 1])
+        # Use MinMaxScaler to scale the data without introducing a numerical
+        # instability (computing the standard deviation naively is not possible
+        # on this data)
+        X_scaled = MinMaxScaler().fit_transform(X)
+        assert_true(np.isfinite(X_scaled).all())
 
-    model = SGDClassifier(alpha=0.1, loss='squared_hinge', n_iter=500)
+        # Define a ground truth on the scaled data
+        ground_truth = rng.normal(size=n_features)
+        y = (np.dot(X_scaled, ground_truth) > 0.).astype(np.int32)
+        assert_array_equal(np.unique(y), [0, 1])
 
-    # smoke test: model is stable on scaled data
-    model.fit(scale(X), y)
+        model = SGDClassifier(alpha=0.1, loss='squared_hinge', n_iter=500)
 
-    # model is numerically unstable on unscaled data
-    msg_regxp = (r"Floating-point under-/overflow occurred at epoch #.*"
-                 " Scaling input data with StandardScaler or MinMaxScaler"
-                 " might help.")
-    assert_raises_regexp(ValueError, msg_regxp, model.fit, X, y)
+        # smoke test: model is stable on scaled data
+        model.fit(X_scaled, y)
+        assert_true(np.isfinite(model.coef_).all())
+
+        # model is numerically unstable on unscaled data
+        msg_regxp = (r"Floating-point under-/overflow occurred at epoch #.*"
+                     " Scaling input data with StandardScaler or MinMaxScaler"
+                     " might help.")
+        assert_raises_regexp(ValueError, msg_regxp, model.fit, X, y)
+
+
+def test_numerical_stability_large_gradient():
+    # Non regression test case for numerical stability on scaled problems
+    # where the gradient can still explode with some losses
+    model = SGDClassifier(loss='squared_hinge', n_iter=10, shuffle=True,
+                          penalty='elasticnet', l1_ratio=0.3, alpha=0.01,
+                          eta0=0.001, random_state=0)
+    with np.errstate(all='raise'):
+        model.fit(iris.data, iris.target)
+    assert_true(np.isfinite(model.coef_).all())
+
+
+def test_large_regularization():
+    # Non regression tests for numerical stability issues caused by large
+    # regularization parameters
+    for penalty in ['l2', 'l1', 'elasticnet']:
+        model = SGDClassifier(alpha=1000., learning_rate='constant', eta0=0.1,
+                              n_iter=5, penalty=penalty)
+        with np.errstate(all='raise'):
+            model.fit(iris.data, iris.target)
+        assert_array_almost_equal(model.coef_, np.zeros_like(model.coef_))

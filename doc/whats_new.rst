@@ -44,6 +44,12 @@ New features
    - Added :func:`cross_val_predict <cross_validation.cross_val_predict>`
      function which computes cross-validated estimates. By `Luis Pedro Coelho`_
 
+   - Added :class:`linear_model.TheilSenRegressor`, a robust
+     generalized-median-based estimator. By `Florian Wilhelm`_.
+
+   - Added :func:`metrics.median_absolute_error`, a robust metric.
+     By `Gael Varoquaux`_ and `Florian Wilhelm`_.
+
 
 Enhancements
 ............
@@ -91,7 +97,7 @@ Enhancements
      configured to work with estimators that may fail and raise errors on
      individual folds. This option is controlled by the `error_score`
      parameter. This does not affect errors raised on re-fit. By
-	 `Michal Romaniuk`_.
+     `Michal Romaniuk`_.
 
    - Add ``digits`` parameter to `metrics.classification_report` to allow
      report to show different precision of floating point numbers. By
@@ -102,15 +108,36 @@ Enhancements
 
    - Add ``handle_unknown`` option to :class:`preprocessing.OneHotEncoder` to
      handle unknown categorical features more gracefully during transform.
-     By `Manoj Kumar`_
+     By `Manoj Kumar`_.
 
    - Added option ``check_X_y`` to :func:`metrics.pairwise_distances_argmin_min`
      that can give speed improvements by avoiding repeated checking when set to
-     False. By `Manoj Kumar`_
+     False. By `Manoj Kumar`_.
+
+   - Added support for sparse input data to decision trees and their ensembles.
+     By `Fares Hedyati`_ and `Arnaud Joly`_.
+
+   - Optimized :class:`cluster.AffinityPropagation` by reducing the number of
+     memory allocations of large temporary data-structures. By `Antony Lee`_.
 
 Documentation improvements
 ..........................
 
+   - Added example of using :class:`FeatureUnion` for heterogeneous input.
+     By `Matt Terry`_
+
+   - Documentation on scorers was improved, to highlight the handling of loss
+     functions. By `Matt Pico`_.
+
+   - A discrepancy between liblinear output and scikit-learn's wrappers
+     is now noted. By `Manoj Kumar`_.
+
+   - Improved documentation generation: examples referring to a class or
+     function are now shown in a gallery on the class/function's API reference
+     page. By `Joel Nothman`_.
+
+   - More explicit documentation of sample generators and of data
+     transformation. By `Joel Nothman`_.
 
 Bug fixes
 .........
@@ -143,6 +170,12 @@ Bug fixes
     - :class:`neighbors.NearestCentroid` now uses the median as the centroid
       when metric is set to ``manhattan``. It was using the mean before.
       By `Manoj Kumar`_
+
+    - Fix numerical stability issues in :class:`linear_model.SGDClassifier`
+      and :class:`linear_model.SGDRegressor` by clipping large gradients and
+      ensuring that weight decay rescaling is always positive (for large
+      l2 regularization and large learning rate values).
+      By `Olivier Grisel`_
 
 API changes summary
 -------------------
@@ -3049,3 +3082,13 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Aaron Staple: https://github.com/staple
 
 .. _Luis Pedro Coelho: http://luispedro.org
+
+.. _Florian Wilhelm: https://github.com/FlorianWilhelm
+
+.. _Fares Hedyati: https://github.com/fareshedyati
+
+.. _Matt Pico: https://github.com/MattpSoftware
+
+.. _Matt Terry: https://github.com/mrterry
+
+.. _Antony Lee: https://www.ocf.berkeley.edu/~antonyl/

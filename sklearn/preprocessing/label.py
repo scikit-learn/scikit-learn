@@ -237,6 +237,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
            [0, 0, 0, 1]])
 
     Binary targets transform to a column vector
+
     >>> lb = preprocessing.LabelBinarizer()
     >>> lb.fit_transform(['yes', 'no', 'no', 'yes'])
     array([[1],
@@ -244,11 +245,18 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
            [0],
            [1]])
 
+    Passing a 2D matrix for multilabel classification
+
     >>> import numpy as np
     >>> lb.fit(np.array([[0, 1, 1], [1, 0, 0]]))
     LabelBinarizer(neg_label=0, pos_label=1, sparse_output=False)
     >>> lb.classes_
     array([0, 1, 2])
+    >>> lb.transform([0, 1, 2, 1])
+    array([[1, 0, 0],
+           [0, 1, 0],
+           [0, 0, 1],
+           [0, 1, 0]])
 
     See also
     --------

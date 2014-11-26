@@ -569,6 +569,8 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef unsigned int i = 0
     cdef int is_hinge = isinstance(loss, Hinge)
     cdef double optimal_init = 0.0
+    cdef double dloss = 0.0
+    cdef double MAX_DLOSS = 1e12
 
     # q vector is only used for L1 regularization
     cdef np.ndarray[double, ndim = 1, mode = "c"] q = None
@@ -630,7 +632,14 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
                     update = loss.loss(p, y) / (update + 0.5 / C)
                 else:
-                    update = -eta * loss._dloss(p, y)
+                    dloss = loss._dloss(p, y)
+                    # clip dloss with large values to avoid numerical
+                    # instabilities
+                    if dloss < -MAX_DLOSS:
+                        dloss = -MAX_DLOSS
+                    elif dloss > MAX_DLOSS:
+                        dloss = MAX_DLOSS
+                    update = -eta * dloss
 
                 if learning_rate >= PA1:
                     if is_hinge:
@@ -643,7 +652,9 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 update *= class_weight * sample_weight
 
                 if penalty_type >= L2:
-                    w.scale(1.0 - ((1.0 - l1_ratio) * eta * alpha))
+                    # do not scale to negative values when eta or alpha are too
+                    # big: instead set the weights to zero
+                    w.scale(max(0, 1.0 - ((1.0 - l1_ratio) * eta * alpha)))
                 if update != 0.0:
                     w.add(x_data_ptr, x_ind_ptr, xnnz, update)
                     if fit_intercept == 1:

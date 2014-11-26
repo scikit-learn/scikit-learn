@@ -36,6 +36,7 @@ from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..utils import check_random_state, check_array, check_X_y, column_or_1d
+from ..utils import check_consistent_length
 from ..utils.extmath import logsumexp
 from ..utils.stats import _weighted_percentile
 from ..externals import six
@@ -887,8 +888,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         y : array-like, shape = [n_samples]
             Target values (integers in classification, real numbers in
             regression)
-            For classification, labels must correspond to classes
-            ``0, 1, ..., n_classes_-1``
+            For classification, labels must correspond to classes.
 
         sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted. Splits
@@ -917,20 +917,16 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         # Check input
         X, y = check_X_y(X, y, dtype=DTYPE)
-        n_samples, n_features = X.shape
+        n_samples, self.n_features = X.shape
         if sample_weight is None:
             sample_weight = np.ones(n_samples, dtype=np.float32)
         else:
             sample_weight = column_or_1d(sample_weight, warn=True)
 
-        if y.shape[0] != n_samples:
-            raise ValueError('Shape mismatch of X and y: %d != %d' %
-                             (n_samples, y.shape[0]))
-        if n_samples != sample_weight.shape[0]:
-            raise ValueError('Shape mismatch of sample_weight: %d != %d' %
-                             (sample_weight.shape[0], n_samples))
+        check_consistent_length(X, y, sample_weight)
 
-        self.n_features = n_features
+        y = self._validate_y(y)
+
         random_state = check_random_state(self.random_state)
         self._check_params()
 
@@ -1126,6 +1122,11 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         importances = total_sum / len(self.estimators_)
         return importances
 
+    def _validate_y(self, y):
+        self.n_classes_ = 1
+
+        # Default implementation
+        return y
 
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     """Gradient Boosting for classification.
@@ -1269,53 +1270,57 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
                  max_leaf_nodes=None, warm_start=False):
 
         super(GradientBoostingClassifier, self).__init__(
-            loss, learning_rate, n_estimators, min_samples_split,
-            min_samples_leaf, min_weight_fraction_leaf,
-            max_depth, init, subsample, max_features,
-            random_state, verbose=verbose, max_leaf_nodes=max_leaf_nodes,
-            warm_start=warm_start)
+            loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
+            min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
+            min_weight_fraction_leaf=min_weight_fraction_leaf,
+            max_depth=max_depth, init=init, subsample=subsample,
+            max_features=max_features,
+            random_state=random_state, verbose=verbose,
+            max_leaf_nodes=max_leaf_nodes, warm_start=warm_start)
 
-    def fit(self, X, y, sample_weight=None, monitor=None):
-        """Fit the gradient boosting model.
+    def _validate_y(self, y):
+        self.classes_, y = np.unique(y, return_inverse=True)
+        self.n_classes_ = len(self.classes_)
+        return y
+
+    def predict(self, X):
+        """Predict class for X.
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
-
-        y : array-like, shape = [n_samples]
-            Target values (integers in classification, real numbers in
-            regression)
-            For classification, labels must correspond to classes
-            ``0, 1, ..., n_classes_-1``.
-
-        sample_weight : array-like, shape = [n_samples] or None
-            Sample weights. If None, then samples are equally weighted. Splits
-            that would create child nodes with net zero or negative weight are
-            ignored while searching for a split in each node. In the case of
-            classification, splits are also ignored if they would result in any
-            single class carrying a negative weight in either child node.
-
-        monitor : callable, optional
-            The monitor is called after each iteration with the current
-            iteration, a reference to the estimator and the local variables of
-            ``_fit_stages`` as keyword arguments ``callable(i, self,
-            locals())``. If the callable returns ``True`` the fitting procedure
-            is stopped. The monitor can be used for various things such as
-            computing held-out estimates, early stopping, model introspect, and
-            snapshoting.
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
 
         Returns
         -------
-        self : object
-            Returns self.
+        y: array of shape = ["n_samples]
+            The predicted values.
         """
-        y = column_or_1d(y, warn=True)
-        self.classes_, y = np.unique(y, return_inverse=True)
-        self.n_classes_ = len(self.classes_)
-        return super(GradientBoostingClassifier, self).fit(X, y, sample_weight,
-                                                           monitor)
+        score = self.decision_function(X)
+        decisions = self.loss_._score_to_decision(score)
+        return self.classes_.take(decisions, axis=0)
+
+    def staged_predict(self, X):
+        """Predict class at each stage for X.
+
+        This method allows monitoring (i.e. determine error on testing set)
+        after each stage.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        y : array of shape = [n_samples]
+            The predicted value of the input samples.
+        """
+        for score in self.staged_decision_function(X):
+            decisions = self.loss_._score_to_decision(score)
+            yield self.classes_.take(decisions, axis=0)
+
 
     def predict_proba(self, X):
         """Predict class probabilities for X.
@@ -1365,43 +1370,6 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         except AttributeError:
             raise AttributeError('loss=%r does not support predict_proba' %
                                  self.loss)
-
-    def predict(self, X):
-        """Predict class for X.
-
-        Parameters
-        ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
-
-        Returns
-        -------
-        y : array of shape = [n_samples]
-            The predicted classes.
-        """
-        score = self.decision_function(X)
-        decisions = self.loss_._score_to_decision(score)
-        return self.classes_.take(decisions, axis=0)
-
-    def staged_predict(self, X):
-        """Predict classes at each stage for X.
-
-        This method allows monitoring (i.e. determine error on testing set)
-        after each stage.
-
-        Parameters
-        ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
-
-        Returns
-        -------
-        y : array of shape = [n_samples]
-            The predicted value of the input samples.
-        """
-        for score in self.staged_decision_function(X):
-            decisions = self.loss_._score_to_decision(score)
-            yield self.classes_.take(decisions, axis=0)
 
 
 class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
@@ -1547,51 +1515,14 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
                  warm_start=False):
 
         super(GradientBoostingRegressor, self).__init__(
-            loss, learning_rate, n_estimators, min_samples_split,
-            min_samples_leaf, min_weight_fraction_leaf,
-            max_depth, init, subsample, max_features,
-            random_state, alpha, verbose, max_leaf_nodes=max_leaf_nodes,
-            warm_start=warm_start)
-
-    def fit(self, X, y, sample_weight=None, monitor=None):
-        """Fit the gradient boosting model.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
-
-        y : array-like, shape = [n_samples]
-            Target values (integers in classification, real numbers in
-            regression)
-            For classification, labels must correspond to classes
-            ``0, 1, ..., n_classes_-1``.
-
-        sample_weight : array-like, shape = [n_samples] or None
-            Sample weights. If None, then samples are equally weighted. Splits
-            that would create child nodes with net zero or negative weight are
-            ignored while searching for a split in each node. In the case of
-            classification, splits are also ignored if they would result in any
-            single class carrying a negative weight in either child node.
-
-        monitor : callable, optional
-            The monitor is called after each iteration with the current
-            iteration, a reference to the estimator and the local variables of
-            ``_fit_stages`` as keyword arguments ``callable(i, self,
-            locals())``. If the callable returns ``True`` the fitting procedure
-            is stopped. The monitor can be used for various things such as
-            computing held-out estimates, early stopping, model introspect, and
-            snapshoting.
-
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
-        self.n_classes_ = 1
-        return super(GradientBoostingRegressor, self).fit(X, y, sample_weight,
-                                                          monitor)
+            loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
+            min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
+            min_weight_fraction_leaf=min_weight_fraction_leaf,
+            max_depth=max_depth, init=init, subsample=subsample,
+            max_features=max_features,
+            random_state=random_state, alpha=alpha, verbose=verbose,
+            max_leaf_nodes=max_leaf_nodes, warm_start=warm_start)
 
     def predict(self, X):
         """Predict regression target for X.

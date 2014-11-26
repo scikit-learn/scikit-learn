@@ -13,6 +13,8 @@ from collections import defaultdict
 from itertools import product
 
 import numpy as np
+from scipy.sparse import csr_matrix, csc_matrix, coo_matrix
+
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -34,6 +36,8 @@ from sklearn.ensemble import RandomTreesEmbedding
 from sklearn.grid_search import GridSearchCV
 from sklearn.svm import LinearSVC
 from sklearn.utils.validation import check_random_state
+
+from sklearn.tree.tree import SPARSE_SPLITTERS
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -181,7 +185,7 @@ def test_probability():
         yield check_probability, name
 
 
-def check_importance(name, X, y):
+def check_importances(name, X, y):
     """Check variable importances."""
 
     ForestClassifier = FOREST_CLASSIFIERS[name]
@@ -218,7 +222,18 @@ def test_importances():
                                         random_state=0)
 
     for name in FOREST_CLASSIFIERS:
-        yield check_importance, name, X, y
+        yield check_importances, name, X, y
+
+
+def check_unfitted_feature_importances(name):
+    assert_raises(ValueError, getattr, FOREST_ESTIMATORS[name](random_state=0),
+                  "feature_importances_")
+
+
+def test_unfitted_feature_importances():
+    for name in FOREST_ESTIMATORS:
+        yield check_unfitted_feature_importances, name
+
 
 
 def check_oob_score(name, X, y, n_estimators=20):
@@ -346,7 +361,6 @@ def check_multioutput(name):
 
     X_train = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [-2, 1],
                [-1, 1], [-1, 2], [2, -1], [1, -1], [1, -2]]
-
     y_train = [[-1, 0], [-1, 0], [-1, 0], [1, 1], [1, 1], [1, 1], [-1, 2],
                [-1, 2], [-1, 2], [1, 3], [1, 3], [1, 3]]
     X_test = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
@@ -457,6 +471,15 @@ def test_random_hasher():
     linear_clf = LinearSVC()
     linear_clf.fit(X_reduced, y)
     assert_equal(linear_clf.score(X_reduced, y), 1.)
+
+
+def test_random_hasher_sparse_data():
+    X, y = datasets.make_multilabel_classification(return_indicator=True,
+                                                   random_state=0)
+    hasher = RandomTreesEmbedding(n_estimators=30, random_state=1)
+    X_transformed = hasher.fit_transform(X)
+    X_transformed_sparse = hasher.fit_transform(csc_matrix(X))
+    assert_array_equal(X_transformed_sparse.toarray(), X_transformed.toarray())
 
 
 def test_parallel_train():
@@ -612,6 +635,42 @@ def test_min_weight_fraction_leaf():
         yield check_min_weight_fraction_leaf, name, X, y
 
 
+def check_sparse_input(name, X, X_sparse, y):
+    ForestEstimator = FOREST_ESTIMATORS[name]
+
+    dense = ForestEstimator(random_state=0, max_depth=2).fit(X, y)
+    sparse = ForestEstimator(random_state=0, max_depth=2).fit(X_sparse, y)
+
+    assert_array_almost_equal(sparse.apply(X), dense.apply(X))
+
+    if name in FOREST_CLASSIFIERS or name in FOREST_REGRESSORS:
+        assert_array_almost_equal(sparse.predict(X), dense.predict(X))
+        assert_array_almost_equal(sparse.feature_importances_,
+                                  dense.feature_importances_)
+
+    if name in FOREST_CLASSIFIERS:
+        assert_array_almost_equal(sparse.predict_proba(X),
+                                  dense.predict_proba(X))
+        assert_array_almost_equal(sparse.predict_log_proba(X),
+                                  dense.predict_log_proba(X))
+
+    if name in FOREST_TRANSFORMERS:
+        assert_array_almost_equal(sparse.transform(X).toarray(),
+                                  dense.transform(X).toarray())
+        assert_array_almost_equal(sparse.fit_transform(X).toarray(),
+                                  dense.fit_transform(X).toarray())
+
+
+def test_sparse_input():
+    X, y = datasets.make_multilabel_classification(return_indicator=True,
+                                                   random_state=0,
+                                                   n_samples=40)
+
+    for name, sparse_matrix in product(FOREST_ESTIMATORS,
+                                       (csr_matrix, csc_matrix, coo_matrix)):
+        yield check_sparse_input, name, X, sparse_matrix(X), y
+
+
 def check_memory_layout(name, dtype):
     """Check that it works no matter the memory layout"""
 
@@ -636,6 +695,23 @@ def check_memory_layout(name, dtype):
     X = np.ascontiguousarray(iris.data, dtype=dtype)
     y = iris.target
     assert_array_equal(est.fit(X, y).predict(X), y)
+
+    if est.base_estimator.splitter in SPARSE_SPLITTERS:
+        # csr matrix
+        X = csr_matrix(iris.data, dtype=dtype)
+        y = iris.target
+        assert_array_equal(est.fit(X, y).predict(X), y)
+
+        # csc_matrix
+        X = csc_matrix(iris.data, dtype=dtype)
+        y = iris.target
+        assert_array_equal(est.fit(X, y).predict(X), y)
+
+        # coo_matrix
+        X = coo_matrix(iris.data, dtype=dtype)
+        y = iris.target
+        assert_array_equal(est.fit(X, y).predict(X), y)
+
 
     # Strided
     X = np.asarray(iris.data[::3], dtype=dtype)

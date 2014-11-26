@@ -245,6 +245,9 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
         Returned only if `return_n_iter` is set to True.
 
     """
+    if n_init <= 0:
+        raise ValueError("Invalid number of initializations."
+             " n_init=%d must be bigger than zero." % n_init)
     random_state = check_random_state(random_state)
 
     best_inertia = np.infty

@@ -3,6 +3,10 @@ from sklearn.utils.testing import (assert_allclose, assert_raises,
                                    assert_equal)
 from sklearn.neighbors import KernelDensity, KDTree, NearestNeighbors
 from sklearn.neighbors.ball_tree import kernel_norm
+from sklearn.pipeline import make_pipeline
+from sklearn.datasets import make_blobs
+from sklearn.grid_search import GridSearchCV
+from sklearn.preprocessing import StandardScaler
 
 
 def compute_kernel_slow(Y, X, kernel, h):
@@ -123,6 +127,19 @@ def test_kde_badargs():
                   metric='blah')
     assert_raises(ValueError, KernelDensity,
                   algorithm='kd_tree', metric='blah')
+
+
+def test_kde_pipeline_gridsearch():
+    # test that kde plays nice in pipelines and grid-searches
+    X, _ = make_blobs(cluster_std=.1, random_state=1,
+                      centers=[[0, 1], [1, 0], [0, 0]])
+    pipe1 = make_pipeline(StandardScaler(with_mean=False, with_std=False),
+                          KernelDensity(kernel="gaussian"))
+    params = dict(kerneldensity__bandwidth=[0.001, 0.01, 0.1, 1, 10])
+    search = GridSearchCV(pipe1, param_grid=params, cv=5)
+    search.fit(X)
+    assert_equal(search.best_params_['kerneldensity__bandwidth'], .1)
+
 
 if __name__ == '__main__':
     import nose
