@@ -976,6 +976,11 @@ def check_sample_weight_invariance(name, metric, y1, y2):
                 err_msg="%s sample_weight is not invariant "
                         "under scaling" % name)
 
+    # Check that if sample_weight.shape[0] != y_true.shape[0], it raised an
+    # error
+    assert_raises(Exception, metric, y1, y2,
+                  sample_weight=np.hstack([sample_weight, sample_weight]))
+
 
 def test_sample_weight_invariance(n_samples=50):
     random_state = check_random_state(0)
@@ -1052,3 +1057,5 @@ def test_sample_weight_invariance(n_samples=50):
         else:
             yield (check_sample_weight_invariance, name, metric, y_true,
                    y_pred)
+
+
