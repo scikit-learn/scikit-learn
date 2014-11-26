@@ -5,10 +5,9 @@ Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 import numpy as np
 import warnings
 
-from itertools import product, izip
+from itertools import product
 from scipy import sparse
 from scipy.sparse import csr_matrix, csc_matrix, coo_matrix
-
 
 from sklearn import datasets
 from sklearn.base import clone
@@ -27,7 +26,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.validation import DataConversionWarning
-
+from sklearn.externals.six.moves import zip
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -311,13 +310,13 @@ def check_sparse_input_clf(loss, X, X_sparse, y):
                               dense.decision_function(X))
     assert_array_almost_equal(sparse.transform(X_sparse.todense()),
                               dense.transform(X))
-    for sparse_score, dense_score in izip(sparse.staged_decision_function(X_sparse),
+    for sparse_score, dense_score in zip(sparse.staged_decision_function(X_sparse),
                                           dense.staged_decision_function(X)):
         assert_array_almost_equal(sparse_score, dense_score)
-    for sparse_score, dense_score in izip(sparse.staged_predict(X_sparse),
+    for sparse_score, dense_score in zip(sparse.staged_predict(X_sparse),
                                           dense.staged_predict(X)):
         assert_array_almost_equal(sparse_score, dense_score)
-    for sparse_score, dense_score in izip(sparse.staged_predict_proba(X_sparse),
+    for sparse_score, dense_score in zip(sparse.staged_predict_proba(X_sparse),
                                           dense.staged_predict_proba(X)):
         assert_array_almost_equal(sparse_score, dense_score)
 
@@ -342,10 +341,10 @@ def check_sparse_input_reg(loss, X, X_sparse, y):
                               dense.decision_function(X))
     assert_array_almost_equal(sparse.transform(X_sparse).todense(),
                               dense.transform(X))
-    for sparse_score, dense_score in izip(sparse.staged_decision_function(X_sparse),
+    for sparse_score, dense_score in zip(sparse.staged_decision_function(X_sparse),
                                           dense.staged_decision_function(X)):
         assert_array_almost_equal(sparse_score, dense_score)
-    for sparse_score, dense_score in izip(sparse.staged_predict(X_sparse),
+    for sparse_score, dense_score in zip(sparse.staged_predict(X_sparse),
                                           dense.staged_predict(X)):
         assert_array_almost_equal(sparse_score, dense_score)
 
