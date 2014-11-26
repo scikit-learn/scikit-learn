@@ -298,8 +298,8 @@ class GaussianNB(BaseNB):
             self.class_count_ = np.zeros(n_classes)
         else:
             if X.shape[1] != self.theta_.shape[1]:
-                raise ValueError("Number of features %d does not match previous data %d." %
-                                 (X.shape[1], self.theta_.shape[1]))
+                msg = "Number of features %d does not match previous data %d."
+                raise ValueError(msg % (X.shape[1], self.theta_.shape[1]))
             # Put epsilon back in each time
             self.sigma_[:, :] -= epsilon
 
@@ -406,8 +406,8 @@ class BaseDiscreteNB(BaseNB):
             self.feature_count_ = np.zeros((n_effective_classes, n_features),
                                            dtype=np.float64)
         elif n_features != self.coef_.shape[1]:
-            raise ValueError("Number of features %d does not match previous data %d."
-                             % (n_features, self.coef_.shape[-1]))
+            msg = "Number of features %d does not match previous data %d."
+            raise ValueError(msg % (n_features, self.coef_.shape[-1]))
 
         Y = label_binarize(y, classes=self.classes_)
         if Y.shape[1] == 1:
@@ -569,8 +569,7 @@ class MultinomialNB(BaseDiscreteNB):
     ----------
     C.D. Manning, P. Raghavan and H. Schuetze (2008). Introduction to
     Information Retrieval. Cambridge University Press, pp. 234-265.
-    http://nlp.stanford.edu/IR-book/html/htmledition/
-        naive-bayes-text-classification-1.html
+    http://nlp.stanford.edu/IR-book/html/htmledition/naive-bayes-text-classification-1.html
     """
 
     def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
