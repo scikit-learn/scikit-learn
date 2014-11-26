@@ -362,7 +362,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
         else:
             norms_squared = None
         return orthogonal_mp_gram(G, Xy, n_nonzero_coefs, tol, norms_squared,
-                                  copy_Gram=copy_X, copy_Xy=False)
+                                  copy_Gram=copy_X, copy_Xy=False, return_path=return_path)
 
     if return_path:
         coef = np.zeros((X.shape[1], y.shape[1], X.shape[1]))
