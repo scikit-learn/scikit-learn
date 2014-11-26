@@ -327,6 +327,7 @@ class LinearSVR(LinearModel, RegressorMixin, SparseCoefMixin):
             None, self.penalty, False, self.verbose,
             self.max_iter, self.tol, self.random_state, loss='ei',
             epsilon=self.epsilon)
+        self.coef_ = self.coef_.ravel()
 
         return self
 
