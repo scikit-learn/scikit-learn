@@ -11,7 +11,7 @@ from ..utils.seq_dataset import ArrayDataset, CSRDataset
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from .sgd_fast import Log, SquaredLoss
-from .sag_fast import sag, sag_sparse, get_auto_eta
+from .sag_fast import sag_sparse, get_auto_eta
 
 MAX_INT = np.iinfo(np.int32).max
 
@@ -103,11 +103,6 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
                                      self.loss_function)
         else:
             step_size = self.eta0
-
-        # intercept_ = sag(dataset, coef_init.ravel(), n_samples, n_features,
-        #                  self.n_iter, self.loss_function,
-        #                  step_size, self.alpha)
-        # num_seen = 0
 
         intercept_, num_seen = sag_sparse(dataset, coef_init.ravel(),
                                           intercept_init, n_samples,
