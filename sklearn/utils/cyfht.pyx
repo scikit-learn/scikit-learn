@@ -18,10 +18,6 @@ cimport numpy as np
 cimport cython
 from libc.math cimport log2
 
-
-ctypedef np.double_t DTYPE_t
-
-
 def is_power_of_two(input_integer):
     """ Test if an integer is a power of two. """
     if input_integer == 1:
@@ -42,7 +38,7 @@ def pure_python_fht(array_):
                 array_[j] = temp - array_[j]
 
 
-def fht(np.ndarray[DTYPE_t] array_):
+def fht(cython.floating[::1] array_):
     """ Single dimensional FHT. """
     if not is_power_of_two(array_.shape[0]):
         raise ValueError('Length of input for fht must be a power of two')
@@ -51,9 +47,9 @@ def fht(np.ndarray[DTYPE_t] array_):
 
 
 @cython.boundscheck(False)
-cdef _fht(np.ndarray[DTYPE_t, ndim=1] array_):
+cdef void _fht(cython.floating[::1] array_) nogil:
     cdef unsigned int bit, length, _, i, j
-    cdef double temp
+    cdef cython.floating temp
     bit = length = array_.shape[0]
     for _ in xrange(<unsigned int>(log2(length))):
         bit >>= 1
@@ -64,8 +60,7 @@ cdef _fht(np.ndarray[DTYPE_t, ndim=1] array_):
                 array_[i] += array_[j]
                 array_[j] = temp - array_[j]
 
-
-def fht2(np.ndarray[DTYPE_t, ndim=2] array_):
+def fht2(cython.floating[:, ::1] array_):
     """ Two dimensional row-wise FHT. """
     if not is_power_of_two(array_.shape[1]):
         raise ValueError('Length of rows for fht2 must be a power of two')
@@ -74,9 +69,8 @@ def fht2(np.ndarray[DTYPE_t, ndim=2] array_):
 
 
 @cython.boundscheck(False)
-cdef _fht2(np.ndarray[DTYPE_t, ndim=2] array_):
-    cdef unsigned int bit, length, _, i, j, n
-    cdef double temp
+cdef void _fht2(cython.floating[:, ::1] array_) nogil:
+    cdef unsigned int n
     n = array_.shape[0]
     for x in xrange(n):
         # TODO: This call still shows up as yellow in cython -a presumably due

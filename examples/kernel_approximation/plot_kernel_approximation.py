@@ -143,7 +143,7 @@ for D in sample_sizes:
 # plot the results:
 plt.figure(figsize=(8, 8))
 accuracy = plt.subplot(211)
-# second y axis for timeings
+# second y axis for timings
 timescale = plt.subplot(212)
 
 accuracy.plot(sample_sizes, nystroem_scores, label="Nystroem approx. kernel")
@@ -174,7 +174,8 @@ accuracy.plot([64, 64], [0.7, 1], label="n_features")
 
 # legends and labels
 accuracy.set_title("Classification accuracy")
-timescale.set_title("Training times")
+timescale.set_title("Training times for dataset size of " + str(n_samples) + " with dimensionality of  "
+                    + str(np.size(data, 1)))
 accuracy.set_xlim(sample_sizes[0], sample_sizes[-1])
 accuracy.set_xticks(())
 accuracy.set_ylim(np.min(fourier_scores), 1)
