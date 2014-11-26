@@ -190,13 +190,13 @@ def test_linearsvr():
     # check that SVR(kernel='linear') and LinearSVC() give 
     # comparable results
     diabetes = datasets.load_diabetes()
-    lsvr = svm.LinearSVR().fit(diabetes.data, diabetes.target)
+    lsvr = svm.LinearSVR(C=1e3).fit(diabetes.data, diabetes.target)
     score1 = lsvr.score(diabetes.data, diabetes.target)
     
-    svr = svm.SVR(kernel='linear').fit(diabetes.data, diabetes.target)
+    svr = svm.SVR(kernel='linear', C=1e3).fit(diabetes.data, diabetes.target)
     score2 = svr.score(diabetes.data, diabetes.target)
     
-    assert_almost_equal(score1, score2)
+    assert_almost_equal(score1, score2, decimal=1)
 
 
 def test_svr_errors():
