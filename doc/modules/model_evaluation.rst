@@ -972,8 +972,8 @@ In multilabel learning, each sample can have any number of ground truth labels
 associated with it. The goal is to give high scores and better rank to
 the ground truth labels.
 
-Coverage
---------
+Coverage error
+--------------
 
 The :func:`coverage_error` function computes the average number of labels that
 have to be included in the final prediction such such that all true labels
