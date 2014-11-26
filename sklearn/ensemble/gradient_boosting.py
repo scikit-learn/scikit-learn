@@ -199,15 +199,16 @@ class LossFunction(six.with_metaclass(ABCMeta, object)):
         ----------
         tree : tree.Tree
             The tree object.
-        X : np.ndarray, shape=(n, m)
-            The data array.
-        y : np.ndarray, shape=(n,)
+        X : array-like or csr matrix of shape = [n_samples, n_features]
+            The training input samples. Assumes ``dtype=np.float32`` and
+            if a sparse matrix is provided, ``csc_matrix`` format.
+        y : np.ndarray, shape=(n_samples,)
             The target labels.
-        residual : np.ndarray, shape=(n,)
+        residual : np.ndarray, shape=(n_samples,)
             The residuals (usually the negative gradient).
-        y_pred : np.ndarray, shape=(n,):
+        y_pred : np.ndarray, shape=(n_samples,):
             The predictions.
-        sample_weight np.ndarray, shape=(n,):
+        sample_weight np.ndarray, shape=(n_samples,):
             The weight of each sample.
         """
         # compute leaf for each sample in ``X``.
