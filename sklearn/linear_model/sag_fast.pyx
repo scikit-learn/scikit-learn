@@ -8,6 +8,94 @@ cdef extern from "sgd_fast_helpers.h":
 from sklearn.utils.seq_dataset cimport SequentialDataset
 from .sgd_fast cimport LossFunction, Classification
 
+def sag(SequentialDataset dataset,
+        np.ndarray[double, ndim=1, mode='c'] weights,
+        int n_samples,
+        int n_features,
+        int n_iter,
+        LossFunction loss,
+        double eta,
+        double alpha
+        ):
+
+    cdef double* weights_ptr = &weights[0]
+    cdef double *x_data_ptr
+    cdef int *x_ind_ptr
+    cdef double y
+    cdef double sample_weight
+    cdef int xnnz
+    cdef int idx
+    cdef int current_index
+    cdef int class_weight
+    cdef int counter
+    cdef int i
+    cdef int j
+    cdef double full_gradient
+    cdef double num_seen = 0.0
+
+    cdef np.ndarray[bint, ndim=1] seen_array = \
+        np.zeros(n_samples,
+                 dtype=np.int32,
+                 order="c")
+    cdef bint* seen = <bint*> seen_array.data
+
+    cdef np.ndarray[double, ndim=1] sum_gradient_array = \
+        np.zeros(n_features,
+                 dtype=np.double,
+                 order="c")
+    cdef double* sum_gradient = <double*> sum_gradient_array.data
+
+    cdef np.ndarray[double, ndim=1] gradient_memory_array = \
+        np.zeros(n_samples * n_features,
+                 dtype=np.double,
+                 order="c")
+    cdef double* gradient_memory = <double*> gradient_memory_array.data
+
+    cdef double intercept = 0.0
+
+    with nogil:
+        for i in range(n_iter * n_samples):
+
+            # extract a random sample
+            current_index = dataset.random(&x_data_ptr,
+                                           &x_ind_ptr,
+                                           &xnnz,
+                                           &y,
+                                           &sample_weight)
+
+            # update the number of samples seen and the seen array
+            if not seen[current_index]:
+                num_seen += 1.0
+                seen[current_index] = True
+
+            # if y > 0.0:
+            #     class_weight = 1
+            # else:
+            #     class_weight = -1
+
+            # find the current prediction, gradient
+            p = dot(x_data_ptr, x_ind_ptr, weights_ptr, xnnz) + intercept
+            gradient = loss._dloss(p, y)
+            # gradient *= class_weight * sample_weight
+            counter = 0
+            for j in range(n_features):
+
+                if counter < xnnz and x_ind_ptr[counter] == j:
+                    val = x_data_ptr[counter]
+                    counter += 1
+                else:
+                    val = 0.0
+                full_gradient = (val * gradient +
+                                 alpha * weights_ptr[j])
+                sum_gradient[j] += (full_gradient -
+                                    gradient_memory[current_index * n_features + j])
+                gradient_memory[current_index * n_features + j] = full_gradient
+                weights_ptr[j] -= eta * sum_gradient[j] / num_seen
+
+            intercept -= eta * gradient
+
+    return intercept
+
 # This sparse implementation is taken from section 4.3 of "Minimizing Finite
 # Sums with the Stochastic Average Gradient" by
 # Mark Schmidt, Nicolas Le Roux, Francis Bach. 2013. <hal-00860051>
@@ -15,22 +103,22 @@ from .sgd_fast cimport LossFunction, Classification
 # https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf
 
 
-def fast_fit_sparse(SequentialDataset dataset,
-                    np.ndarray[double, ndim=1, mode='c'] weights,
-                    double intercept_init,
-                    int n_samples,
-                    int n_features,
-                    int n_iter,
-                    LossFunction loss,
-                    double eta,
-                    double alpha,
-                    np.ndarray[double, ndim=1, mode='c'] sum_gradient_init,
-                    np.ndarray[double, ndim=1, mode='c'] gradient_memory_init,
-                    np.ndarray[bint, ndim=1, mode='c'] seen_init,
-                    int num_seen_init,
-                    double weight_pos,
-                    double weight_neg,
-                    double intercept_decay):
+def sag_sparse(SequentialDataset dataset,
+               np.ndarray[double, ndim=1, mode='c'] weights,
+               double intercept_init,
+               int n_samples,
+               int n_features,
+               int n_iter,
+               LossFunction loss,
+               double eta,
+               double alpha,
+               np.ndarray[double, ndim=1, mode='c'] sum_gradient_init,
+               np.ndarray[double, ndim=1, mode='c'] gradient_memory_init,
+               np.ndarray[bint, ndim=1, mode='c'] seen_init,
+               int num_seen_init,
+               double weight_pos,
+               double weight_neg,
+               double intercept_decay):
 
     # true if the weights or intercept are NaN or infinity
     cdef bint infinity = False
