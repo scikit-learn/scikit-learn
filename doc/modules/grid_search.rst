@@ -61,8 +61,6 @@ evaluated and the best combination is retained.
 
 .. currentmodule:: sklearn.grid_search
 
-.. _gridsearch_scoring:
-
 .. topic:: Examples:
 
     - See :ref:`example_model_selection_grid_search_digits.py` for an example of
@@ -130,53 +128,60 @@ increasing ``n_iter`` will always lead to a finer search.
 Tips for parameter search
 =========================
 
-.. topic:: Specifying an objective metric
+.. _gridsearch_scoring:
 
-  By default, parameter search uses the ``score`` function of the estimator
-  to evaluate a parameter setting. These are the
-  :func:`sklearn.metrics.accuracy_score` for classification and
-  :func:`sklearn.metrics.r2_score` for regression.  For some applications,
-  other scoring functions are better suited (for example in unbalanced
-  classification, the accuracy score is often uninformative). An alternative
-  scoring function can be specified via the ``scoring`` parameter to
-  :class:`GridSearchCV`, :class:`RandomizedSearchCV` and many of the
-  specialized cross-validation tools described below.
-  See :ref:`scoring_parameter` for more details.
+Specifying an objective metric
+------------------------------
 
-.. topic:: Composite estimators and parameter spaces
+By default, parameter search uses the ``score`` function of the estimator
+to evaluate a parameter setting. These are the
+:func:`sklearn.metrics.accuracy_score` for classification and
+:func:`sklearn.metrics.r2_score` for regression.  For some applications,
+other scoring functions are better suited (for example in unbalanced
+classification, the accuracy score is often uninformative). An alternative
+scoring function can be specified via the ``scoring`` parameter to
+:class:`GridSearchCV`, :class:`RandomizedSearchCV` and many of the
+specialized cross-validation tools described below.
+See :ref:`scoring_parameter` for more details.
 
-   :ref:`pipeline` describes building composite estimators whose
-   parameter space can be searched with these tools.
+Composite estimators and parameter spaces
+-----------------------------------------
 
-.. topic:: Model selection: development and evaluation
+:ref:`pipeline` describes building composite estimators whose
+parameter space can be searched with these tools.
 
-  Model selection by evaluating various parameter settings can be seen as a way
-  to use the labeled data to "train" the parameters of the grid.
+Model selection: development and evaluation
+-------------------------------------------
 
-  When evaluating the resulting model it is important to do it on
-  held-out samples that were not seen during the grid search process:
-  it is recommended to split the data into a **development set** (to
-  be fed to the ``GridSearchCV`` instance) and an **evaluation set**
-  to compute performance metrics.
+Model selection by evaluating various parameter settings can be seen as a way
+to use the labeled data to "train" the parameters of the grid.
 
-  This can be done by using the :func:`cross_validation.train_test_split`
-  utility function.
+When evaluating the resulting model it is important to do it on
+held-out samples that were not seen during the grid search process:
+it is recommended to split the data into a **development set** (to
+be fed to the ``GridSearchCV`` instance) and an **evaluation set**
+to compute performance metrics.
 
-.. topic:: Parallelism
+This can be done by using the :func:`cross_validation.train_test_split`
+utility function.
 
-  :class:`GridSearchCV` and :class:`RandomizedSearchCV` evaluate each parameter
-  setting independently.  Computations can be run in parallel if your OS
-  supports it, by using the keyword ``n_jobs=-1``. See function signature for
-  more details.
+Parallelism
+-----------
 
-.. topic:: Robustness to failure
+:class:`GridSearchCV` and :class:`RandomizedSearchCV` evaluate each parameter
+setting independently.  Computations can be run in parallel if your OS
+supports it, by using the keyword ``n_jobs=-1``. See function signature for
+more details.
 
-  Some parameter settings may result in a failure to ``fit`` one or more folds
-  of the data.  By default, this will cause the entire search to fail, even if
-  some parameter settings could be fully evaluated. Setting ``error_score=0``
-  (or `=np.NaN`) will make the procedure robust to such failure, issuing a
-  warning and setting the score for that fold to 0 (or `NaN`), but completing
-  the search.
+Robustness to failure
+---------------------
+
+Some parameter settings may result in a failure to ``fit`` one or more folds
+of the data.  By default, this will cause the entire search to fail, even if
+some parameter settings could be fully evaluated. Setting ``error_score=0``
+(or `=np.NaN`) will make the procedure robust to such failure, issuing a
+warning and setting the score for that fold to 0 (or `NaN`), but completing
+the search.
 
 .. _alternative_cv:
 
