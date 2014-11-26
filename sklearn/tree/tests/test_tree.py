@@ -1166,3 +1166,34 @@ def check_raise_error_on_1d_input(name):
 def test_1d_input():
     for name in ALL_TREES:
         yield check_raise_error_on_1d_input, name
+
+
+def _check_min_weight_leaf_split_level(TreeEstimator, X, y, sample_weight):
+    # Private function to keep pretty printing in nose yielded tests
+    est = TreeEstimator(random_state=0)
+    est.fit(X, y, sample_weight=sample_weight)
+    assert_equal(est.tree_.max_depth, 1)
+
+    est = TreeEstimator(random_state=0, min_weight_fraction_leaf=0.4)
+    est.fit(X, y, sample_weight=sample_weight)
+    assert_equal(est.tree_.max_depth, 0)
+
+
+def check_min_weight_leaf_split_level(name):
+    TreeEstimator = ALL_TREES[name]
+
+    X = np.array([[0], [0], [0], [0], [1]])
+    y = [0, 0, 0, 0, 1]
+    sample_weight = [0.2, 0.2, 0.2, 0.2, 0.2]
+    _check_min_weight_leaf_split_level(TreeEstimator, X, y, sample_weight)
+
+    if TreeEstimator().splitter in SPARSE_SPLITTERS:
+        _check_min_weight_leaf_split_level(TreeEstimator, csc_matrix(X), y,
+                                           sample_weight)
+
+
+def test_min_weight_leaf_split_level():
+    for name in ALL_TREES:
+        yield check_min_weight_leaf_split_level, name
+
+
