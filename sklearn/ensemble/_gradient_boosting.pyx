@@ -162,7 +162,7 @@ def predict_stage_dense(np.ndarray[object, ndim=2] estimators,
 @cython.nonecheck(False)
 def predict_stage_sparse(np.ndarray[object, ndim=2] estimators,
                   int stage,
-                  np.ndarray[DTYPE_t, ndim=2] X, double scale,
+                  object X, double scale,
                   np.ndarray[float64, ndim=2] out):
     """Add predictions of ``estimators[stage]`` to ``out``.
 

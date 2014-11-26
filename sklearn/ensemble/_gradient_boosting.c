@@ -1846,7 +1846,7 @@ static PyObject *__pyx_builtin_IndexError;
 static PyObject *__pyx_pf_7sklearn_8ensemble_18_gradient_boosting_predict_stages_dense(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_estimators, PyArrayObject *__pyx_v_X, double __pyx_v_scale, PyArrayObject *__pyx_v_out); /* proto */
 static PyObject *__pyx_pf_7sklearn_8ensemble_18_gradient_boosting_2predict_stages_sparse(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_estimators, PyObject *__pyx_v_X, double __pyx_v_scale, PyArrayObject *__pyx_v_out); /* proto */
 static PyObject *__pyx_pf_7sklearn_8ensemble_18_gradient_boosting_4predict_stage_dense(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_estimators, int __pyx_v_stage, PyArrayObject *__pyx_v_X, double __pyx_v_scale, PyArrayObject *__pyx_v_out); /* proto */
-static PyObject *__pyx_pf_7sklearn_8ensemble_18_gradient_boosting_6predict_stage_sparse(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_estimators, int __pyx_v_stage, PyArrayObject *__pyx_v_X, double __pyx_v_scale, PyArrayObject *__pyx_v_out); /* proto */
+static PyObject *__pyx_pf_7sklearn_8ensemble_18_gradient_boosting_6predict_stage_sparse(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_estimators, int __pyx_v_stage, PyObject *__pyx_v_X, double __pyx_v_scale, PyArrayObject *__pyx_v_out); /* proto */
 static PyObject *__pyx_pf_7sklearn_8ensemble_18_gradient_boosting_8_partial_dependence_tree(CYTHON_UNUSED PyObject *__pyx_self, struct __pyx_obj_7sklearn_4tree_5_tree_Tree *__pyx_v_tree, __Pyx_memviewslice __pyx_v_X, __Pyx_memviewslice __pyx_v_target_feature, double __pyx_v_learn_rate, __Pyx_memviewslice __pyx_v_out); /* proto */
 static PyObject *__pyx_pf_7sklearn_8ensemble_18_gradient_boosting_10_random_sample_mask(CYTHON_UNUSED PyObject *__pyx_self, npy_intp __pyx_v_n_total_samples, npy_intp __pyx_v_n_total_in_bag, PyObject *__pyx_v_random_state); /* proto */
 static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, Py_buffer *__pyx_v_info, int __pyx_v_flags); /* proto */
@@ -3105,7 +3105,7 @@ static PyObject *__pyx_pf_7sklearn_8ensemble_18_gradient_boosting_4predict_stage
  * @cython.nonecheck(False)
  * def predict_stage_sparse(np.ndarray[object, ndim=2] estimators,             # <<<<<<<<<<<<<<
  *                   int stage,
- *                   np.ndarray[DTYPE_t, ndim=2] X, double scale,
+ *                   object X, double scale,
  */
 
 /* Python wrapper */
@@ -3115,7 +3115,7 @@ static PyMethodDef __pyx_mdef_7sklearn_8ensemble_18_gradient_boosting_7predict_s
 static PyObject *__pyx_pw_7sklearn_8ensemble_18_gradient_boosting_7predict_stage_sparse(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
   PyArrayObject *__pyx_v_estimators = 0;
   int __pyx_v_stage;
-  PyArrayObject *__pyx_v_X = 0;
+  PyObject *__pyx_v_X = 0;
   double __pyx_v_scale;
   PyArrayObject *__pyx_v_out = 0;
   int __pyx_lineno = 0;
@@ -3179,7 +3179,7 @@ static PyObject *__pyx_pw_7sklearn_8ensemble_18_gradient_boosting_7predict_stage
     }
     __pyx_v_estimators = ((PyArrayObject *)values[0]);
     __pyx_v_stage = __Pyx_PyInt_As_int(values[1]); if (unlikely((__pyx_v_stage == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 164; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_X = ((PyArrayObject *)values[2]);
+    __pyx_v_X = values[2];
     __pyx_v_scale = __pyx_PyFloat_AsDouble(values[3]); if (unlikely((__pyx_v_scale == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 165; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     __pyx_v_out = ((PyArrayObject *)values[4]);
   }
@@ -3192,7 +3192,6 @@ static PyObject *__pyx_pw_7sklearn_8ensemble_18_gradient_boosting_7predict_stage
   return NULL;
   __pyx_L4_argument_unpacking_done:;
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_estimators), __pyx_ptype_5numpy_ndarray, 1, "estimators", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 163; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_X), __pyx_ptype_5numpy_ndarray, 1, "X", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 165; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_out), __pyx_ptype_5numpy_ndarray, 1, "out", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 166; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_r = __pyx_pf_7sklearn_8ensemble_18_gradient_boosting_6predict_stage_sparse(__pyx_self, __pyx_v_estimators, __pyx_v_stage, __pyx_v_X, __pyx_v_scale, __pyx_v_out);
 
@@ -3205,9 +3204,7 @@ static PyObject *__pyx_pw_7sklearn_8ensemble_18_gradient_boosting_7predict_stage
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7sklearn_8ensemble_18_gradient_boosting_6predict_stage_sparse(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_estimators, int __pyx_v_stage, PyArrayObject *__pyx_v_X, double __pyx_v_scale, PyArrayObject *__pyx_v_out) {
-  __Pyx_LocalBuf_ND __pyx_pybuffernd_X;
-  __Pyx_Buffer __pyx_pybuffer_X;
+static PyObject *__pyx_pf_7sklearn_8ensemble_18_gradient_boosting_6predict_stage_sparse(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_estimators, int __pyx_v_stage, PyObject *__pyx_v_X, double __pyx_v_scale, PyArrayObject *__pyx_v_out) {
   __Pyx_LocalBuf_ND __pyx_pybuffernd_estimators;
   __Pyx_Buffer __pyx_pybuffer_estimators;
   __Pyx_LocalBuf_ND __pyx_pybuffernd_out;
@@ -3229,10 +3226,6 @@ static PyObject *__pyx_pf_7sklearn_8ensemble_18_gradient_boosting_6predict_stage
   __pyx_pybuffer_estimators.refcount = 0;
   __pyx_pybuffernd_estimators.data = NULL;
   __pyx_pybuffernd_estimators.rcbuffer = &__pyx_pybuffer_estimators;
-  __pyx_pybuffer_X.pybuffer.buf = NULL;
-  __pyx_pybuffer_X.refcount = 0;
-  __pyx_pybuffernd_X.data = NULL;
-  __pyx_pybuffernd_X.rcbuffer = &__pyx_pybuffer_X;
   __pyx_pybuffer_out.pybuffer.buf = NULL;
   __pyx_pybuffer_out.refcount = 0;
   __pyx_pybuffernd_out.data = NULL;
@@ -3242,11 +3235,6 @@ static PyObject *__pyx_pf_7sklearn_8ensemble_18_gradient_boosting_6predict_stage
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_estimators.rcbuffer->pybuffer, (PyObject*)__pyx_v_estimators, &__Pyx_TypeInfo_object, PyBUF_FORMAT| PyBUF_STRIDES, 2, 0, __pyx_stack) == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 163; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
   __pyx_pybuffernd_estimators.diminfo[0].strides = __pyx_pybuffernd_estimators.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_estimators.diminfo[0].shape = __pyx_pybuffernd_estimators.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_estimators.diminfo[1].strides = __pyx_pybuffernd_estimators.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_estimators.diminfo[1].shape = __pyx_pybuffernd_estimators.rcbuffer->pybuffer.shape[1];
-  {
-    __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_X.rcbuffer->pybuffer, (PyObject*)__pyx_v_X, &__Pyx_TypeInfo_nn___pyx_t_7sklearn_8ensemble_18_gradient_boosting_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES, 2, 0, __pyx_stack) == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 163; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  }
-  __pyx_pybuffernd_X.diminfo[0].strides = __pyx_pybuffernd_X.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_X.diminfo[0].shape = __pyx_pybuffernd_X.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_X.diminfo[1].strides = __pyx_pybuffernd_X.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_X.diminfo[1].shape = __pyx_pybuffernd_X.rcbuffer->pybuffer.shape[1];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_out.rcbuffer->pybuffer, (PyObject*)__pyx_v_out, &__Pyx_TypeInfo_nn___pyx_t_7sklearn_8ensemble_18_gradient_boosting_float64, PyBUF_FORMAT| PyBUF_STRIDES, 2, 0, __pyx_stack) == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 163; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -3286,9 +3274,9 @@ static PyObject *__pyx_pf_7sklearn_8ensemble_18_gradient_boosting_6predict_stage
   }
   PyTuple_SET_ITEM(__pyx_t_7, 0+__pyx_t_6, __pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_3);
-  __Pyx_INCREF(((PyObject *)__pyx_v_X));
-  PyTuple_SET_ITEM(__pyx_t_7, 1+__pyx_t_6, ((PyObject *)__pyx_v_X));
-  __Pyx_GIVEREF(((PyObject *)__pyx_v_X));
+  __Pyx_INCREF(__pyx_v_X);
+  PyTuple_SET_ITEM(__pyx_t_7, 1+__pyx_t_6, __pyx_v_X);
+  __Pyx_GIVEREF(__pyx_v_X);
   PyTuple_SET_ITEM(__pyx_t_7, 2+__pyx_t_6, __pyx_t_4);
   __Pyx_GIVEREF(__pyx_t_4);
   __Pyx_INCREF(((PyObject *)__pyx_v_out));
@@ -3309,7 +3297,7 @@ static PyObject *__pyx_pf_7sklearn_8ensemble_18_gradient_boosting_6predict_stage
  * @cython.nonecheck(False)
  * def predict_stage_sparse(np.ndarray[object, ndim=2] estimators,             # <<<<<<<<<<<<<<
  *                   int stage,
- *                   np.ndarray[DTYPE_t, ndim=2] X, double scale,
+ *                   object X, double scale,
  */
 
   /* function exit code */
@@ -3322,7 +3310,6 @@ static PyObject *__pyx_pf_7sklearn_8ensemble_18_gradient_boosting_6predict_stage
   __Pyx_XDECREF(__pyx_t_7);
   { PyObject *__pyx_type, *__pyx_value, *__pyx_tb;
     __Pyx_ErrFetch(&__pyx_type, &__pyx_value, &__pyx_tb);
-    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_X.rcbuffer->pybuffer);
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_estimators.rcbuffer->pybuffer);
     __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_out.rcbuffer->pybuffer);
   __Pyx_ErrRestore(__pyx_type, __pyx_value, __pyx_tb);}
@@ -3330,7 +3317,6 @@ static PyObject *__pyx_pf_7sklearn_8ensemble_18_gradient_boosting_6predict_stage
   __pyx_r = NULL;
   goto __pyx_L2;
   __pyx_L0:;
-  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_X.rcbuffer->pybuffer);
   __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_estimators.rcbuffer->pybuffer);
   __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_out.rcbuffer->pybuffer);
   __pyx_L2:;
@@ -18222,7 +18208,7 @@ static int __Pyx_InitCachedConstants(void) {
  * @cython.nonecheck(False)
  * def predict_stage_sparse(np.ndarray[object, ndim=2] estimators,             # <<<<<<<<<<<<<<
  *                   int stage,
- *                   np.ndarray[DTYPE_t, ndim=2] X, double scale,
+ *                   object X, double scale,
  */
   __pyx_tuple__24 = PyTuple_Pack(5, __pyx_n_s_estimators, __pyx_n_s_stage, __pyx_n_s_X, __pyx_n_s_scale, __pyx_n_s_out); if (unlikely(!__pyx_tuple__24)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 163; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__24);
@@ -18641,7 +18627,7 @@ PyMODINIT_FUNC PyInit__gradient_boosting(void)
  * @cython.nonecheck(False)
  * def predict_stage_sparse(np.ndarray[object, ndim=2] estimators,             # <<<<<<<<<<<<<<
  *                   int stage,
- *                   np.ndarray[DTYPE_t, ndim=2] X, double scale,
+ *                   object X, double scale,
  */
   __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_7sklearn_8ensemble_18_gradient_boosting_7predict_stage_sparse, NULL, __pyx_n_s_sklearn_ensemble__gradient_boost); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 163; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);

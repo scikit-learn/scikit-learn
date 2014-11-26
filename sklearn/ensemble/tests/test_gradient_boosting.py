@@ -5,7 +5,9 @@ Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 import numpy as np
 import warnings
 
+from itertools import product, izip
 from scipy import sparse
+from scipy.sparse import csr_matrix, csc_matrix, coo_matrix
 
 
 from sklearn import datasets
@@ -298,32 +300,59 @@ def test_check_inputs():
                   sample_weight=([1] * len(y)) + [0, 1])
 
 
-def test_sparse_inputs_csr():
+def check_sparse_input_clf(loss, X, X_sparse, y):
+    """Check if gradient boosting supports sparse inputs. """
+    sparse = GradientBoostingClassifier(loss=loss, random_state=1).fit(X_sparse, y)
+    dense = GradientBoostingClassifier(loss=loss, random_state=1).fit(X, y)
+
+    assert_array_almost_equal(sparse.predict(X_sparse), dense.predict(X))
+    assert_array_almost_equal(sparse.predict_proba(X_sparse), dense.predict_proba(X))
+    assert_array_almost_equal(sparse.decision_function(X_sparse),
+                              dense.decision_function(X))
+    # FIXME assert_array_almost_equal(sparse.transform(X_sparse), dense.transform(X))
+    for sparse_score, dense_score in izip(sparse.staged_decision_function(X_sparse),
+                                          dense.staged_decision_function(X)):
+        assert_array_almost_equal(sparse_score, dense_score)
+    for sparse_score, dense_score in izip(sparse.staged_predict(X_sparse),
+                                          dense.staged_predict(X)):
+        assert_array_almost_equal(sparse_score, dense_score)
+    for sparse_score, dense_score in izip(sparse.staged_predict_proba(X_sparse),
+                                          dense.staged_predict_proba(X)):
+        assert_array_almost_equal(sparse_score, dense_score)
+
+
+def test_sparse_input_clf():
     """Test if gradient boosting supports sparse inputs. """
-    X_sparse = sparse.csr_matrix(X)
-    clf1 = GradientBoostingClassifier(n_estimators=100, random_state=1)
-    clf1.fit(X_sparse, y)
-    out1 = clf1.predict_proba(X_sparse)
-
-    clf2 = GradientBoostingClassifier().fit(X, y)
-    clf2.fit(X, y)
-    out2 = clf2.predict_proba(X)
-
-    assert_array_almost_equal(out1, out2)
+    for loss, sparse_matrix in product(('deviance', 'exponential'),
+                                       (csr_matrix, csc_matrix, coo_matrix)):
+        yield check_sparse_input_clf, loss, X, sparse_matrix(X), y
 
 
-def test_sparse_inputs_csc():
+def check_sparse_input_reg(loss, X, X_sparse, y):
+    """Check if gradient boosting supports sparse inputs. """
+    alpha = 0.8
+    sparse = GradientBoostingRegressor(loss=loss, alpha=alpha,
+                                       random_state=1).fit(X_sparse, y)
+    dense = GradientBoostingRegressor(loss=loss, alpha=alpha,
+                                      random_state=1).fit(X, y)
+
+    assert_array_almost_equal(sparse.predict(X_sparse), dense.predict(X))
+    assert_array_almost_equal(sparse.decision_function(X_sparse),
+                              dense.decision_function(X))
+    # FIXME assert_array_almost_equal(sparse.transform(X_sparse), dense.transform(X))
+    for sparse_score, dense_score in izip(sparse.staged_decision_function(X_sparse),
+                                          dense.staged_decision_function(X)):
+        assert_array_almost_equal(sparse_score, dense_score)
+    for sparse_score, dense_score in izip(sparse.staged_predict(X_sparse),
+                                          dense.staged_predict(X)):
+        assert_array_almost_equal(sparse_score, dense_score)
+
+
+def test_sparse_input_reg():
     """Test if gradient boosting supports sparse inputs. """
-    X_sparse = sparse.csc_matrix(X)
-    clf1 = GradientBoostingClassifier(n_estimators=100, random_state=1)
-    clf1.fit(X_sparse, y)
-    out1 = clf1.predict_proba(X_sparse)
-
-    clf2 = GradientBoostingClassifier().fit(X, y)
-    clf2.fit(X, y)
-    out2 = clf2.predict_proba(X)
-
-    assert_array_almost_equal(out1, out2)
+    for loss, sparse_matrix in product(('huber', 'ls', 'quantile', 'lad'),
+                                       (csr_matrix, csc_matrix, coo_matrix)):
+        yield check_sparse_input_reg, loss, X, sparse_matrix(X), y
 
 
 def test_check_inputs_predict():
