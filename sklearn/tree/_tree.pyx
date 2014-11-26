@@ -2134,6 +2134,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
         return (BestSparseSplitter, (self.criterion,
                                      self.max_features,
                                      self.min_samples_leaf,
+                                     self.min_weight_leaf,
                                      self.random_state), self.__getstate__())
 
     cdef void node_split(self, double impurity, SplitRecord* split,
@@ -2351,6 +2352,7 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
         return (RandomSparseSplitter, (self.criterion,
                                        self.max_features,
                                        self.min_samples_leaf,
+                                       self.min_weight_leaf,
                                        self.random_state), self.__getstate__())
 
     cdef void node_split(self, double impurity, SplitRecord* split,
@@ -2556,6 +2558,7 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
         # Return values
         split[0] = best
         n_constant_features[0] = n_total_constants
+
 
 # =============================================================================
 # Tree builders
