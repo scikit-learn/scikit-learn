@@ -624,7 +624,7 @@ def label_ranking_average_precision_score(y_true, y_score):
 def coverage_error(y_true, y_score, sample_weight=None):
     """Coverage error measure
 
-    Compute how fare we need to go through the ranked scores to cover all
+    Compute how far we need to go through the ranked scores to cover all
     true labels. The best value is equal to the average the number
     of labels in ``y_true` per sample.
 
