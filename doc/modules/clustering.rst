@@ -778,16 +778,20 @@ by black points below.
 Birch
 =====
 
-The :class:`Birch` builds a tree called the Characteristic Feature tree for
+The :class:`Birch` builds a tree called the Characteristic Feature Tree(CFT) for
 the given data. The data is essentially lossy compressed to a set of Characteristic
-Feature nodes. The CF Nodes have a number of subclusters, and the subclusters
-have CF Nodes as children. The CF subclusters hold the
-necessary information for clustering which prevents the need to hold the entire
-input data in memory. This information includes the Linear Sum, Squared Sum and
-the number of samples that belong to that subcluster. In the algorithm included
-in scikit-learn, the subclusters hold the centroids and squared norm of the
-centroids to prevent possible recomputation of these during insertion of new
-samples into the tree.
+Feature nodes (CF Nodes). The CF Nodes have a number of subclusters called
+Characteristic Feature subclusters (CF Subclusters) and these CF Subclusters
+located in the non-terminal CF Nodes can have CF Nodes as children. 
+
+The CF Subclusters hold the necessary information for clustering which prevents
+the need to hold the entire input data in memory. This information includes:
+
+- Number of samples in a subcluster.
+- Linear Sum - A n-dimensional vector holding the sum of all samples
+- Squared Sum - Sum of the squared L2 norm of all samples.
+- Centroids - To avoid recalculation linear sum / n_samples.
+- Squared norm of the centroids.
 
 The Birch algorithm has two parameters, the threshold and the branching factor.
 The branching factor limits the number of subclusters in a node and the
@@ -796,21 +800,20 @@ subclusters.
 
 This algorithm can be viewed as an instance or data reduction method,
 since it reduces the input data to a set of subclusters which are obtained directly
-from the leaves of the CF Tree. The number of subclusters obtained can be decreased by
-either increasing the threshold or providing ``global_clusters``. If ``global_clusters`` is set
-to None, the subclusters from the leaves are directly read off, otherwise a global
-clustering step labels these subclusters into global clusters(labels) and the
-samples are mapped to the global label of the nearest subcluster.
+from the leaves of the CFT. This reduced data can be further processed by feeding
+it into a global clusterer. This global clusterer can be set by ``global_clusters``.
+If ``global_clusters`` is set to None, the subclusters from the leaves are directly
+read off, otherwise a global clustering step labels these subclusters into global
+clusters(labels) and the samples are mapped to the global label of the nearest subcluster.
 
 **Algorithm description:**
 
 - A new sample is inserted into the root of the CF Tree which is a CF Node.
-  It is then assigned to the subcluster of the root, that has the smallest
-  distance constrained by the threshold and branching factor conditions.
-  If the subcluster has any child node, then this is
-  done repeatedly till it reaches the leaf. After finding the nearest subcluster
-  in the leaf, the properties of this and the parent subclusters, i.e the centroid
-  and squared norms are recursively updated.
+  It is then merged with the subcluster of the root, that has the smallest
+  radius after merging, constrained by the threshold and branching factor conditions.
+  If the subcluster has any child node, then this is done repeatedly till it reaches
+  a leaf. After finding the nearest subcluster in the leaf, the properties of this
+  subcluster and the parent subclusters are recursively updated.
 
 - If the radius of the subcluster obtained by merging the new sample and the
   nearest subcluster is greater than the square of the threshold and if the

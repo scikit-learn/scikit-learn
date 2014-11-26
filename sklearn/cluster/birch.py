@@ -92,22 +92,22 @@ class _CFNode(object):
         self.subclusters_ = []
         self.init_centroids_ = np.zeros((branching_factor + 1, n_features))
         self.init_sq_norm_ = np.zeros((branching_factor + 1))
-        self.n_ = 0
+        self.n_samples_ = 0
         self.squared_norm_ = []
         self.prev_leaf_ = None
         self.next_leaf_ = None
 
     def update(self, subcluster):
         self.subclusters_.append(subcluster)
-        self.init_centroids_[self.n_] = subcluster.centroid_
-        self.init_sq_norm_[self.n_] = subcluster.sq_norm_
-        self.n_ += 1
+        self.init_centroids_[self.n_samples_] = subcluster.centroid_
+        self.init_sq_norm_[self.n_samples_] = subcluster.sq_norm_
+        self.n_samples_ += 1
 
         # Keep centroids and squared norm as views. In this way
         # if we change init_centroids and init_sq_norm_, it is
         # sufficient,
-        self.centroids_ = self.init_centroids_[:self.n_, :]
-        self.squared_norm_ = self.init_sq_norm_[:self.n_]
+        self.centroids_ = self.init_centroids_[:self.n_samples_, :]
+        self.squared_norm_ = self.init_sq_norm_[:self.n_samples_]
 
     def split_node(self, child_node, parent_subcluster):
         r"""
@@ -155,11 +155,11 @@ class _CFNode(object):
 
         ind = self.subclusters_.index(parent_subcluster)
         self.subclusters_.remove(parent_subcluster)
-        self.init_centroids_[ind: self.n_ - 1, :] = \
-            self.init_centroids_[ind + 1: self.n_, :]
-        self.init_sq_norm_[ind: self.n_ - 1] = \
-            self.init_sq_norm_[ind + 1: self.n_]
-        self.n_ -= 1
+        self.init_centroids_[ind: self.n_samples_ - 1, :] = \
+            self.init_centroids_[ind + 1: self.n_samples_, :]
+        self.init_sq_norm_[ind: self.n_samples_ - 1] = \
+            self.init_sq_norm_[ind + 1: self.n_samples_]
+        self.n_samples_ -= 1
         self.update(newsubcluster1)
         self.update(newsubcluster2)
 
@@ -246,14 +246,14 @@ class _CFSubcluster(object):
 
     Attributes
     ----------
-    n_ : int
+    n_samples_ : int
         Number of samples that belong to each subcluster.
 
-    ls_ : ndarray
+    linear_sum_ : ndarray
         Linear sum of all the samples in a subcluster. Prevents holding
         all sample data in memory.
 
-    ss_ : float
+    squared_sum_ : float
         Sum of the squared l2 norms of all samples belonging to a subcluster.
 
     centroid_ : ndarray
@@ -271,42 +271,48 @@ class _CFSubcluster(object):
     def __init__(self, X=None):
         self.X = X
         if X is None:
-            self.n_ = 0
-            self.ls_ = self.ss_ = 0.0
+            self.n_samples_ = 0
+            self.linear_sum_ = self.squared_sum_ = 0.0
         else:
-            self.n_ = 1
-            self.ls_ = self.centroid_ = X
-            self.ss_ = np.dot(self.ls_, self.ls_)
-            self.sq_norm_ = np.dot(self.ls_, self.ls_)
+            self.n_samples_ = 1
+            self.linear_sum_ = self.centroid_ = X
+            self.squared_sum_ = np.dot(self.linear_sum_, self.linear_sum_)
+            self.sq_norm_ = np.dot(self.linear_sum_, self.linear_sum_)
         self.child_ = None
 
     def update(self, subcluster):
-        self.n_ += subcluster.n_
-        self.ls_ = self.ls_ + subcluster.ls_
-        self.ss_ = self.ss_ + subcluster.ss_
-        self.centroid_ = self.ls_ / self.n_
+        self.n_samples_ += subcluster.n_samples_
+        self.linear_sum_ = self.linear_sum_ + subcluster.linear_sum_
+        self.squared_sum_ = self.squared_sum_ + subcluster.squared_sum_
+        self.centroid_ = self.linear_sum_ / self.n_samples_
         self.sq_norm_ = np.dot(self.centroid_, self.centroid_)
 
     def merge_subcluster(self, nominee_cluster, threshold):
         """Check if a cluster is worthy enough to be merged. If
            yes than merge."""
-        new_ss = self.ss_ + nominee_cluster.ss_
-        new_ls = self.ls_ + nominee_cluster.ls_
-        new_n = self.n_ + nominee_cluster.n_
+        new_ss = self.squared_sum_ + nominee_cluster.squared_sum_
+        new_ls = self.linear_sum_ + nominee_cluster.linear_sum_
+        new_n = self.n_samples_ + nominee_cluster.n_samples_
         new_centroid = new_ls / new_n
         dot_product = -2 * np.dot(new_ls, new_centroid)
         new_norm = np.dot(new_centroid, new_centroid)
         new_radius = (new_ss + dot_product) / new_n + new_norm
         if new_radius <= threshold ** 2:
-            self.n_, self.ls_, self.ss_, self.centroid_, self.sq_norm_ =  (
-                new_n, new_ls, new_ss, new_centroid, new_norm)
+            (self.n_samples_, self.linear_sum_, self.squared_sum_,
+             self.centroid_, self.sq_norm_) =  (
+             new_n, new_ls, new_ss, new_centroid, new_norm
+             )
+
             return True
         return False
 
     def radius(self):
         """Return radius of the subcluster"""
-        dot_product = -2 * np.dot(self.ls_, self.centroid_)
-        return sqrt(((self.ss_ + dot_product) / self.n_) + self.sq_norm_)
+        dot_product = -2 * np.dot(self.linear_sum_, self.centroid_)
+        return sqrt(
+            ((self.squared_sum_ + dot_product) / self.n_samples_) +
+            self.sq_norm_
+            )
 
 
 class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
@@ -479,13 +485,13 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
                 self.root_.update(new_subcluster2)
 
         centroids = np.concatenate([
-            leaf.centroids_ for leaf in self.get_leaves()])
+            leaf.centroids_ for leaf in self._get_leaves()])
         self.subcluster_centers_ = centroids
 
         self._global_clustering(X)
         return self
 
-    def get_leaves(self):
+    def _get_leaves(self):
         """
         Retrieve the leaves of the CF Node.
 
