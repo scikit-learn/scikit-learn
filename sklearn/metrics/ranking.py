@@ -621,7 +621,7 @@ def label_ranking_average_precision_score(y_true, y_score):
     return out / n_samples
 
 
-def coverage_error(y_true, y_score):
+def coverage_error(y_true, y_score, sample_weight=None):
     """Coverage error measure
 
     Compute how fare we need to go through the ranked scores to cover all
@@ -645,7 +645,7 @@ def coverage_error(y_true, y_score):
 
     Return
     ------
-    coverage : float
+    coverage_error : float
 
     References
     ----------
@@ -670,4 +670,4 @@ def coverage_error(y_true, y_score):
     coverage = (y_score >= y_min_relevant).sum(axis=1)
     coverage = coverage.filled(0)
 
-    return coverage.mean()
+    return np.average(coverage, weights=sample_weight)
