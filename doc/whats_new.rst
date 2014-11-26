@@ -21,6 +21,8 @@ New features
    - Add the :func:`metrics.label_ranking_average_precision_score` metrics. By
      `Arnaud Joly`_.
 
+   - Add the :func:`metrics.coverage_error` metrics. By `Arnaud Joly`_.
+
    - Added :class:`linear_model.LogisticRegressionCV`. By
      `Manoj Kumar`_, `Fabian Pedregosa`_, `Gael Varoquaux`_
      and `Alexandre Gramfort`_.
