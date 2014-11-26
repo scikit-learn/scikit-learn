@@ -192,7 +192,7 @@ struct parameter *set_parameter(int solver_type, double eps, double C,
     param->solver_type = solver_type;
     param->eps = eps;
     param->C = C;
-    param->p = epsilon;  // epsilon for epsilon-SVR; TODO pass as a parameter
+    param->p = epsilon;  // epsilon for epsilon-SVR
     param->nr_weight = (int) nr_weight;
     param->weight_label = (int *) weight_label;
     param->weight = (double *) weight;
