@@ -309,7 +309,8 @@ def check_sparse_input_clf(loss, X, X_sparse, y):
     assert_array_almost_equal(sparse.predict_proba(X_sparse), dense.predict_proba(X))
     assert_array_almost_equal(sparse.decision_function(X_sparse),
                               dense.decision_function(X))
-    # FIXME assert_array_almost_equal(sparse.transform(X_sparse), dense.transform(X))
+    assert_array_almost_equal(sparse.transform(X_sparse.todense()),
+                              dense.transform(X))
     for sparse_score, dense_score in izip(sparse.staged_decision_function(X_sparse),
                                           dense.staged_decision_function(X)):
         assert_array_almost_equal(sparse_score, dense_score)
@@ -339,7 +340,8 @@ def check_sparse_input_reg(loss, X, X_sparse, y):
     assert_array_almost_equal(sparse.predict(X_sparse), dense.predict(X))
     assert_array_almost_equal(sparse.decision_function(X_sparse),
                               dense.decision_function(X))
-    # FIXME assert_array_almost_equal(sparse.transform(X_sparse), dense.transform(X))
+    assert_array_almost_equal(sparse.transform(X_sparse).todense(),
+                              dense.transform(X))
     for sparse_score, dense_score in izip(sparse.staged_decision_function(X_sparse),
                                           dense.staged_decision_function(X)):
         assert_array_almost_equal(sparse_score, dense_score)
