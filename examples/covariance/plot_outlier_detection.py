@@ -15,7 +15,7 @@ different ways of performing :ref:`outlier_detection`:
   non-Gaussian, i.e. with two well-separated clusters;
 
 The ground truth about inliers and outliers is given by the points colors
-while the orange-filled area indicates which points are reported as outliers
+while the orange-filled area indicates which points are reported as inliers
 by each method.
 
 Here, we assume that we know the fraction of outliers in the datasets.
