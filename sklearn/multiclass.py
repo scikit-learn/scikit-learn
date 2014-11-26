@@ -416,14 +416,14 @@ def _fit_ovo_binary(estimator, X, y, i, j):
 
 
 @deprecated("fit_ovo is deprecated and will be removed in 0.18."
-            "Use the OneVsRestClassifier instead.")
+            "Use the OneVsOneClassifier instead.")
 def fit_ovo(estimator, X, y, n_jobs=1):
     ovo =  OneVsOneClassifier(estimator, n_jobs=n_jobs).fit(X, y)
     return ovo.estimators_, ovo.classes_
 
 
 @deprecated("predict_ovo is deprecated and will be removed in 0.18."
-            "Use the OneVsRestClassifier instead.")
+            "Use the OneVsOneClassifier instead.")
 def predict_ovo(estimators, classes, X):
     """Make predictions using the one-vs-one strategy."""
 
