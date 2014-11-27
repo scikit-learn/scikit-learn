@@ -26,6 +26,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import coverage_error
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import fbeta_score
@@ -139,6 +140,8 @@ CLASSIFICATION_METRICS = {
 }
 
 THRESHOLDED_METRICS = {
+    "coverage_error": coverage_error,
+
     "log_loss": log_loss,
     "unnormalized_log_loss": partial(log_loss, normalize=False),
 
@@ -191,6 +194,8 @@ METRIC_UNDEFINED_MULTICLASS = [
 
     "roc_auc_score", "micro_roc_auc", "weighted_roc_auc",
     "macro_roc_auc",  "samples_roc_auc",
+
+    "coverage_error",
 ]
 
 # Metrics with an "average" argument
@@ -255,6 +260,8 @@ THRESHOLDED_MULTILABEL_METRICS = [
     "average_precision_score", "weighted_average_precision_score",
     "samples_average_precision_score", "micro_average_precision_score",
     "macro_average_precision_score",
+
+    "coverage_error",
 ]
 
 # Classification metrics with  "multilabel-indicator" and
@@ -969,6 +976,11 @@ def check_sample_weight_invariance(name, metric, y1, y2):
                 err_msg="%s sample_weight is not invariant "
                         "under scaling" % name)
 
+    # Check that if sample_weight.shape[0] != y_true.shape[0], it raised an
+    # error
+    assert_raises(Exception, metric, y1, y2,
+                  sample_weight=np.hstack([sample_weight, sample_weight]))
+
 
 def test_sample_weight_invariance(n_samples=50):
     random_state = check_random_state(0)
@@ -1045,3 +1057,5 @@ def test_sample_weight_invariance(n_samples=50):
         else:
             yield (check_sample_weight_invariance, name, metric, y_true,
                    y_pred)
+
+
