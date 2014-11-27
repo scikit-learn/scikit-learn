@@ -126,11 +126,11 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
             n_features_to_select = self.n_features_to_select
 
         if 0.0 < self.step < 1.0:
-            step = int(self.step * n_features)
+            step = int(max(1, self.step * n_features))       
         else:
             step = int(self.step)
         if step <= 0:
-            step = 1
+            raise ValueError("Step must be >0")
 
         support_ = np.ones(n_features, dtype=np.bool)
         ranking_ = np.ones(n_features, dtype=np.int)
