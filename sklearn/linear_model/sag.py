@@ -33,16 +33,19 @@ def multiprocess_method(instance, name, args=()):
 #
 # https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf
 class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
-    def __init__(self, alpha=0.0001, fit_intercept=True, n_iter=5, verbose=0,
+    def __init__(self, alpha=0.0001, fit_intercept=True, max_iter=1000,
+                 tol=.01, verbose=0,
                  random_state=None, eta0='auto', warm_start=False):
-        self.gradient_memory = None
         self.alpha = alpha
         self.fit_intercept = fit_intercept
-        self.n_iter = n_iter
+        self.max_iter = max_iter
+        self.tol = tol
         self.verbose = verbose
         self.eta0 = eta0
         self.random_state = random_state
         self.warm_start = warm_start
+
+        self._validate_params()
 
         self.coef_ = None
         self.intercept_ = None
@@ -51,6 +54,12 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
         self.seen_ = None
         self.sum_gradient_ = None
         self.gradient_memory_ = None
+
+    def _validate_params(self):
+        if not isinstance(self.max_iter, int):
+            raise ValueError("max_iter must be an integer")
+        if self.max_iter < 1:
+            raise ValueError("max_iter must be greater than 0")
 
     def _fit(self, X, y, coef_init=None, intercept_init=None,
              sample_weight=None, sum_gradient_init=None,
@@ -106,7 +115,8 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
 
         intercept_, num_seen = sag_sparse(dataset, coef_init.ravel(),
                                           intercept_init, n_samples,
-                                          n_features, self.n_iter,
+                                          n_features, self.tol,
+                                          self.max_iter,
                                           self.loss_function,
                                           step_size, self.alpha,
                                           sum_gradient_init.ravel(),
@@ -114,7 +124,8 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
                                           seen_init.ravel(),
                                           num_seen_init, weight_pos,
                                           weight_neg,
-                                          intercept_decay)
+                                          intercept_decay,
+                                          self.verbose)
 
         return (coef_init.reshape(1, -1), intercept_,
                 sum_gradient_init.reshape(1, -1),
@@ -126,7 +137,7 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
 class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
     @abstractmethod
     def __init__(self, alpha=0.0001,
-                 fit_intercept=True, n_iter=5, verbose=0,
+                 fit_intercept=True, max_iter=1000, tol=.01, verbose=0,
                  n_jobs=1, random_state=None,
                  eta0='auto', class_weight=None, warm_start=False):
         self.n_jobs = n_jobs
@@ -134,9 +145,10 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
         self.loss_function = Log()
         super(BaseSAGClassifier, self).__init__(alpha=alpha,
                                                 fit_intercept=fit_intercept,
-                                                n_iter=n_iter,
+                                                max_iter=max_iter,
                                                 verbose=verbose,
                                                 random_state=random_state,
+                                                tol=tol,
                                                 eta0=eta0,
                                                 warm_start=warm_start)
 
@@ -266,15 +278,17 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
 
 class BaseSAGRegressor(six.with_metaclass(ABCMeta, BaseSAG)):
     @abstractmethod
-    def __init__(self, alpha=0.0001, fit_intercept=True, n_iter=5, verbose=0,
-                 random_state=None, eta0='auto', warm_start=False):
+    def __init__(self, alpha=0.0001, fit_intercept=True, max_iter=1000,
+                 tol=.01, verbose=0, random_state=None, eta0='auto',
+                 warm_start=False):
 
         self.loss_function = SquaredLoss()
         super(BaseSAGRegressor, self).__init__(alpha=alpha,
                                                fit_intercept=fit_intercept,
-                                               n_iter=n_iter,
+                                               max_iter=max_iter,
                                                verbose=verbose,
                                                random_state=random_state,
+                                               tol=tol,
                                                eta0=eta0,
                                                warm_start=warm_start)
 
@@ -333,7 +347,7 @@ class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin,
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
-    n_iter: int, optional
+    max_iter: int, optional
         The number of passes over the training data (aka epochs). The number
         of iterations is set to 1 if using partial_fit.
         Defaults to 5.
@@ -387,8 +401,8 @@ class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin,
     ... #doctest: +NORMALIZE_WHITESPACE
     SAGClassifier(alpha=0.0001, class_weight=None,
                   eta0='auto', fit_intercept=True,
-                  n_iter=5, n_jobs=1, random_state=None,
-                  verbose=0, warm_start=False)
+                  max_iter=1000, n_jobs=1, random_state=None,
+                  tol=.01, verbose=0, warm_start=False)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -397,17 +411,18 @@ class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin,
     SGDClassifier, LinearSVC, LogisticRegression, Perceptron
 
     """
-    def __init__(self, alpha=0.0001, fit_intercept=True, n_iter=5,
-                 verbose=0, n_jobs=1, random_state=None,
+    def __init__(self, alpha=0.0001, fit_intercept=True, max_iter=1000,
+                 tol=.01, verbose=0, n_jobs=1, random_state=None,
                  eta0='auto', class_weight=None, warm_start=False):
 
         super(SAGClassifier, self).__init__(alpha=alpha,
                                             class_weight=class_weight,
                                             fit_intercept=fit_intercept,
-                                            n_iter=n_iter,
+                                            max_iter=max_iter,
                                             verbose=verbose,
                                             n_jobs=n_jobs,
                                             random_state=random_state,
+                                            tol=tol,
                                             eta0=eta0,
                                             warm_start=warm_start)
 
@@ -451,7 +466,7 @@ class SAGRegressor(BaseSAGRegressor, _LearntSelectorMixin,
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
-    n_iter : int, optional
+    max_iter : int, optional
         The number of passes over the training data (aka epochs).
         Defaults to 5.
 
@@ -489,19 +504,20 @@ class SAGRegressor(BaseSAGRegressor, _LearntSelectorMixin,
     >>> clf.fit(X, y)
     ... #doctest: +NORMALIZE_WHITESPACE
     SAGRegressor(alpha=0.0001, eta0='auto',
-                 fit_intercept=True, n_iter=5, random_state=None,
-                 verbose=0, warm_start=False)
+                 fit_intercept=True, max_iter=1000, random_state=None,
+                 tol=.01, verbose=0, warm_start=False)
 
     See also
     --------
     SGDRegressor, Ridge, ElasticNet, Lasso, SVR
 
     """
-    def __init__(self, alpha=0.0001, fit_intercept=True, n_iter=5, verbose=0,
-                 random_state=None, eta0='auto', warm_start=False):
+    def __init__(self, alpha=0.0001, fit_intercept=True, max_iter=1000,
+                 tol=.01, verbose=0, random_state=None, eta0='auto',
+                 warm_start=False):
         super(SAGRegressor, self).__init__(alpha=alpha,
                                            fit_intercept=fit_intercept,
-                                           n_iter=n_iter,
+                                           max_iter=max_iter,
                                            verbose=verbose,
                                            random_state=random_state,
                                            eta0=eta0, warm_start=warm_start)

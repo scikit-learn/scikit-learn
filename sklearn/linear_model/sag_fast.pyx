@@ -2,6 +2,9 @@
 
 import numpy as np
 cimport numpy as np
+import warnings
+from libc.math cimport fmax, fabs
+
 cdef extern from "sgd_fast_helpers.h":
     bint skl_isfinite(double) nogil
 
@@ -15,11 +18,12 @@ from .sgd_fast cimport LossFunction, Classification
 # https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf
 
 def sag_sparse(SequentialDataset dataset,
-               np.ndarray[double, ndim=1, mode='c'] weights,
+               np.ndarray[double, ndim=1, mode='c'] weights_array,
                double intercept_init,
                int n_samples,
                int n_features,
-               int n_iter,
+               double tol,
+               int max_iter,
                LossFunction loss,
                double eta,
                double alpha,
@@ -29,12 +33,13 @@ def sag_sparse(SequentialDataset dataset,
                int num_seen_init,
                double weight_pos,
                double weight_neg,
-               double intercept_decay):
+               double intercept_decay,
+               bint verbose):
 
     # true if the weights or intercept are NaN or infinity
     cdef bint infinity = False
     # the pointer to the coef_ or weights
-    cdef double* weights_ptr = &weights[0]
+    cdef double* weights = <double * >weights_array.data
     # the data pointer for X, the training set
     cdef double *x_data_ptr
     # the index pointer for the column of the data
@@ -48,11 +53,17 @@ def sag_sparse(SequentialDataset dataset,
     # helper variable for indexes
     cdef int idx
     # the total number of interations through the data
-    cdef int k
+    cdef int total_iter = 0
     # the index (row number) of the current sample
     cdef int current_index
     # helper variable for the weight of a pos/neg class
     cdef double class_weight
+    # the maximum change in weights, used to compute stopping criterea
+    cdef double max_change
+    # a holder variable for the max weight, used to compute stopping criterea
+    cdef double max_weight
+    # whether or not the max iter has been reached
+    cdef bint max_iter_reached = False
 
     # the total number of samples seen
     cdef double num_seen = num_seen_init
@@ -68,7 +79,7 @@ def sag_sparse(SequentialDataset dataset,
 
     # the cumulative sums needed for JIT params
     cdef np.ndarray[double, ndim=1] cumulative_sums_array = \
-        np.empty(n_samples * n_iter + 1,
+        np.empty(max_iter * n_samples + 1,
                  dtype=np.double,
                  order="c")
     cdef double* cumulative_sums = <double*> cumulative_sums_array.data
@@ -80,6 +91,13 @@ def sag_sparse(SequentialDataset dataset,
                  order="c")
     cdef int* feature_hist = <int*> feature_hist_array.data
 
+    # the previous weights to use to compute stopping criteria
+    cdef np.ndarray[double, ndim=1] previous_weights_array = \
+        np.zeros(n_features,
+                 dtype=np.double,
+                 order="c")
+    cdef double* previous_weights = <double*> previous_weights_array.data
+
     # the scalar used for multiplying z
     cdef double wscale = 1.0
 
@@ -89,97 +107,123 @@ def sag_sparse(SequentialDataset dataset,
     cdef double intercept = intercept_init
 
     with nogil:
-        for k in range(n_iter * n_samples):
+        while True:
+            for k in range(n_samples):
 
-            # extract a random sample
-            current_index = dataset.random(&x_data_ptr,
-                                           &x_ind_ptr,
-                                           &xnnz,
-                                           &y,
-                                           &sample_weight)
+                # extract a random sample
+                current_index = dataset.random(&x_data_ptr,
+                                               &x_ind_ptr,
+                                               &xnnz,
+                                               &y,
+                                               &sample_weight)
 
-            # update the number of samples seen and the seen array
-            if seen[current_index] == 0:
-                num_seen += 1.0
-                seen[current_index] = 1
+                # update the number of samples seen and the seen array
+                if seen[current_index] == 0:
+                    num_seen += 1.0
+                    seen[current_index] = 1
 
-            # make the weight updates
-            for j in range(xnnz):
-                idx = x_ind_ptr[j]
-                weights_ptr[idx] -= ((cumulative_sums[k] -
+                # make the weight updates
+                for j in range(xnnz):
+                    idx = x_ind_ptr[j]
+                    weights[idx] -= ((cumulative_sums[total_iter] -
                                       cumulative_sums[feature_hist[idx]]) *
                                      sum_gradient[idx])
-                feature_hist[idx] = k
+                    feature_hist[idx] = total_iter
 
-                # check to see that the weight is not inf or NaN
-                if not skl_isfinite(weights_ptr[idx]):
+                    # check to see that the weight is not inf or NaN
+                    if not skl_isfinite(weights[idx]):
+                        infinity = True
+                        break
+
+                # check to see if we have already encountered a bad weight or
+                # that the intercept is not inf or NaN
+                if infinity or not skl_isfinite(intercept):
                     infinity = True
                     break
 
-            # check to see if we have already encountered a bad weight or
-            # that the intercept is not inf or NaN
-            if infinity or not skl_isfinite(intercept):
-                infinity = True
+                # find the current prediction, gradient
+                p = (wscale * dot(x_data_ptr, x_ind_ptr,
+                     weights, xnnz)) + intercept
+                gradient = loss._dloss(p, y)
+
+                # find the class_weight
+                if y > 0.0:
+                    class_weight = weight_pos
+                else:
+                    class_weight = weight_neg
+
+                gradient *= sample_weight * class_weight
+
+                # make the updates to the sum of gradients
+                for j in range(xnnz):
+                    idx = x_ind_ptr[j]
+                    val = x_data_ptr[j]
+                    update = val * gradient
+                    sum_gradient[idx] += (update -
+                                          gradient_memory[current_index] * val)
+
+                gradient_memory[current_index] = gradient
+
+                intercept -= eta * gradient * intercept_decay
+
+                wscale *= 1.0 - eta * alpha
+
+                # if wscale gets too small, we need to reset the scale
+                if wscale < 1e-9:
+                    scale_weights(weights, wscale, n_features, total_iter,
+                                  cumulative_sums, feature_hist, sum_gradient)
+                    wscale = 1.0
+
+                cumulative_sums[total_iter + 1] = (cumulative_sums[total_iter]
+                                                   + eta / (wscale * num_seen))
+
+                total_iter += 1
+
+            # check if the stopping criteria is reached
+            scale_weights(weights, wscale, n_features, total_iter,
+                          cumulative_sums, feature_hist, sum_gradient)
+            wscale = 1.0
+            max_change = 0.0
+            max_weight = 0.0
+            for j in range(n_features):
+                max_weight = fmax(max_weight, fabs(weights[j]))
+            for j in range(n_features):
+                max_change = fmax(max_change,
+                                  fabs(weights[j] - previous_weights[j]))
+                previous_weights[j] = weights[j]
+
+            if max_change / max_weight <= tol:
+                if verbose:
+                    with gil:
+                        print(("convergence after %d epochs") %
+                              total_iter / n_samples)
+                break
+            if total_iter / n_samples >= max_iter:
+                max_iter_reached = True
                 break
 
-            # find the current prediction, gradient
-            p = (wscale * dot(x_data_ptr, x_ind_ptr,
-                 weights_ptr, xnnz)) + intercept
-            gradient = loss._dloss(p, y)
-
-            # find the class_weight
-            if y > 0.0:
-                class_weight = weight_pos
-            else:
-                class_weight = weight_neg
-
-            gradient *= sample_weight * class_weight
-
-            # make the updates to the sum of gradients
-            for j in range(xnnz):
-                idx = x_ind_ptr[j]
-                val = x_data_ptr[j]
-                update = val * gradient
-                sum_gradient[idx] += (update -
-                                      gradient_memory[current_index] * val)
-
-            gradient_memory[current_index] = gradient
-
-            intercept -= eta * gradient * intercept_decay
-
-            wscale *= 1.0 - eta * alpha
-
-            # if wscale gets too small, we need to reset the scale
-            if wscale < 1e-9:
-                scale_weights(weights_ptr, wscale, n_features, k,
-                              cumulative_sums, feature_hist, sum_gradient)
-                wscale = 1.0
-
-            cumulative_sums[k + 1] = (cumulative_sums[k] +
-                                      eta / (wscale * num_seen))
 
     if infinity:
         raise ValueError(("Floating-point under-/overflow occurred at epoch"
                           " #%d. Lowering the eta0 or scaling the input data"
                           " with StandardScaler or"
-                          " MinMaxScaler might help.") % (k + 1))
+                          " MinMaxScaler might help.") % (total_iter + 1))
 
-    k = n_samples * n_iter
-    scale_weights(weights_ptr, wscale, n_features, k,
-                  cumulative_sums, feature_hist, sum_gradient)
-
+    if max_iter_reached:
+        warnings.warn("The max_iter was reached which means "
+                      "the coef_ did not converge")
 
     return intercept, num_seen
 
 
-cdef void scale_weights(double* weights_ptr, double wscale, int n_features,
-                        int k, double* cumulative_sums, int* feature_hist,
-                        double* sum_gradient) nogil:
+cdef void scale_weights(double* weights, double wscale, int n_features,
+                        int total_iter, double* cumulative_sums,
+                        int* feature_hist, double* sum_gradient) nogil:
     for j in range(n_features):
-        weights_ptr[j] -= ((cumulative_sums[k] -
+        weights[j] -= ((cumulative_sums[total_iter] -
                             cumulative_sums[feature_hist[j]]) *
                            sum_gradient[j])
-        weights_ptr[j] *= wscale
+        weights[j] *= wscale
 
 def get_auto_eta(SequentialDataset dataset, double alpha,
                  int n_samples, LossFunction loss):
