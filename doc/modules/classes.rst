@@ -952,6 +952,7 @@ Pairwise metrics
    neighbors.NearestCentroid
    neighbors.BallTree
    neighbors.KDTree
+   neighbors.LSHForest
    neighbors.DistanceMetric
    neighbors.KernelDensity
 
