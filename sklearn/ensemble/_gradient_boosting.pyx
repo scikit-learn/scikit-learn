@@ -25,6 +25,8 @@ from numpy import bool as np_bool
 from numpy import float32 as np_float32
 from numpy import float64 as np_float64
 
+from scipy.sparse import issparse
+
 # Define a datatype for the data array
 DTYPE = np.float32
 ctypedef np.float32_t DTYPE_t
@@ -143,24 +145,12 @@ def predict_stages_sparse(np.ndarray[object, ndim=2] estimators, X,
     for i in range(n_estimators):
         for k in range(K):
             tree = estimators[i, k].tree_
+            # fall back to tree.predict instead of inplace for sparse matrices
             out += scale * tree.predict(X).reshape((X.shape[0], 1))
 
 
 @cython.nonecheck(False)
-def predict_stage_dense(np.ndarray[object, ndim=2] estimators,
-                  int stage,
-                  np.ndarray[DTYPE_t, ndim=2] X, double scale,
-                  np.ndarray[float64, ndim=2] out):
-    """Add predictions of ``estimators[stage]`` to ``out``.
-
-    Each estimator in the stage is scaled by ``scale`` before
-    its prediction is added to ``out``.
-    """
-    return predict_stages_dense(estimators[stage:stage + 1], X, scale, out)
-
-
-@cython.nonecheck(False)
-def predict_stage_sparse(np.ndarray[object, ndim=2] estimators,
+def predict_stage(np.ndarray[object, ndim=2] estimators,
                   int stage,
                   object X, double scale,
                   np.ndarray[float64, ndim=2] out):
@@ -169,7 +159,10 @@ def predict_stage_sparse(np.ndarray[object, ndim=2] estimators,
     Each estimator in the stage is scaled by ``scale`` before
     its prediction is added to ``out``.
     """
-    return predict_stages_sparse(estimators[stage:stage + 1], X, scale, out)
+    if issparse(X):
+        predict_stages_sparse(estimators[stage:stage + 1], X, scale, out)
+    else:
+        predict_stages_dense(estimators[stage:stage + 1], X, scale, out)
 
 
 cdef inline int array_index(int32 val, int32[::1] arr):

@@ -51,8 +51,7 @@ from ..tree._tree import FriedmanMSE
 
 from ._gradient_boosting import predict_stages_dense
 from ._gradient_boosting import predict_stages_sparse
-from ._gradient_boosting import predict_stage_dense
-from ._gradient_boosting import predict_stage_sparse
+from ._gradient_boosting import predict_stage
 from ._gradient_boosting import _random_sample_mask
 
 
@@ -996,9 +995,14 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         if issparse(X):
             # fall back to best splitter for spase inputs
             SplitterClz = BestSparseSplitter
+
+            # CSR is needed for tree predictions
+            # we do the conversion once here to avoid repeated
+            # conversions in each stage
             X_apply = X.tocsr()
         else:
             SplitterClz = PresortBestSplitter
+            # for dense X, X_apply equals X
             X_apply = X
         splitter = SplitterClz(criterion,
                                self.max_features_,
@@ -1124,10 +1128,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                         order="C")
         score = self._init_decision_function(X)
         for i in range(self.estimators_.shape[0]):
-            if issparse(X):
-                predict_stage_sparse(self.estimators_, i, X, self.learning_rate, score)
-            else:
-                predict_stage_dense(self.estimators_, i, X, self.learning_rate, score)
+            predict_stage(self.estimators_, i, X, self.learning_rate, score)
             yield score
 
     @property
