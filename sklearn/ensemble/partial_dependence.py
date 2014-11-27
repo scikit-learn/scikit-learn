@@ -21,7 +21,7 @@ from ._gradient_boosting import _partial_dependence_tree
 from .gradient_boosting import BaseGradientBoosting
 
 
-def csc_col_minmax(X):
+def _csc_col_minmax(X):
     """Computes the min-max values of each column in X. """
     n_features = X.shape[1]
     res = np.empty((2, n_features), dtype=X.dtype)
@@ -77,7 +77,7 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
             axis = uniques
         else:
             if is_sparse:
-                emp_percentiles = csc_col_minmax(X)
+                emp_percentiles = _csc_col_minmax(X)
             else:
                 emp_percentiles = mquantiles(X, prob=percentiles, axis=0)
             # create axis based on percentiles and grid resolution
@@ -382,7 +382,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
 
         # plot data deciles + axes labels
         if issparse(X):
-            minmax = csc_col_minmax(X[:, fx[0]:fx[0] + 1])
+            minmax = _csc_col_minmax(X[:, fx[0]:fx[0] + 1])
             deciles = np.linspace(minmax[0, 0], minmax[1, 0], 10)
         else:
             deciles = mquantiles(X[:, fx[0]], prob=np.arange(0.1, 1.0, 0.1))
@@ -402,7 +402,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         if len(axes) > 1:
             # two-way PDP - y-axis deciles + labels
             if issparse(X):
-                minmax = csc_col_minmax(X[:, fx[1]:fx[1] + 1])
+                minmax = _csc_col_minmax(X[:, fx[1]:fx[1] + 1])
                 deciles = np.linspace(minmax[0, 0], minmax[1, 0], 10)
             else:
                 deciles = mquantiles(X[:, fx[1]], prob=np.arange(0.1, 1.0, 0.1))
