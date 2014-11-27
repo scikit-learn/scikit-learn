@@ -12,9 +12,6 @@ from sklearn.utils.validation import check_array
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.ensemble import AdaBoostClassifier
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import MultinomialNB
 
@@ -26,13 +23,9 @@ ESTIMATORS = {
     "extra_trees": ExtraTreesClassifier(n_estimators=100,
                                         max_features="sqrt",
                                         min_samples_split=10),
-    "logistic_regression": LogisticRegression(C=20000, penalty='l1'),
+    "logistic_regression": LogisticRegression(),
     "naive_bayes": MultinomialNB(),
-    "adaboost": AdaBoostClassifier(base_estimator=DecisionTreeClassifier(max_depth=1),
-                                   n_estimators=100),
-    "cartr": DecisionTreeRegressor(max_depth=1),
-    "cart": DecisionTreeClassifier(max_depth=1),
-    "gbrt": GradientBoostingClassifier(n_estimators=100, max_depth=1, learning_rate=1.0, verbose=1),
+    "adaboost": AdaBoostClassifier(n_estimators=10),
 }
 
 
@@ -46,15 +39,8 @@ if __name__ == "__main__":
                         choices=ESTIMATORS)
     args = vars(parser.parse_args())
 
-    def filter_classes(bunch):
-        mask = np.logical_or(bunch.target == 0, bunch.target == 15)
-        bunch.data = bunch.data[mask]
-        bunch.target = bunch.target[mask]
-        bunch.target_names = [bunch.target_names[0], bunch.target_names[-1]]
-        return bunch
-
-    data_train = filter_classes(fetch_20newsgroups_vectorized(subset="train"))
-    data_test = filter_classes(fetch_20newsgroups_vectorized(subset="test"))
+    data_train = fetch_20newsgroups_vectorized(subset="train")
+    data_test = fetch_20newsgroups_vectorized(subset="test")
     X_train = check_array(data_train.data, dtype=np.float32,
                           accept_sparse="csc")
     X_test = check_array(data_test.data, dtype=np.float32, accept_sparse="csr")
