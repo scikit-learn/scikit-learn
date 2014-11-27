@@ -196,7 +196,7 @@ def sag_sparse(SequentialDataset dataset,
                 if verbose:
                     with gil:
                         print(("convergence after %d epochs") %
-                              total_iter / n_samples)
+                              (total_iter / n_samples))
                 break
             if total_iter / n_samples >= max_iter:
                 max_iter_reached = True
