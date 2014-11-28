@@ -4,6 +4,7 @@ import numpy as np
 cimport numpy as np
 import warnings
 from libc.math cimport fmax, fabs
+from libc.time cimport time, time_t
 
 cdef extern from "sgd_fast_helpers.h":
     bint skl_isfinite(double) nogil
@@ -64,6 +65,10 @@ def sag_sparse(SequentialDataset dataset,
     cdef double max_weight
     # whether or not the max iter has been reached
     cdef bint max_iter_reached = False
+    # the start time of the fit
+    cdef time_t start_time
+    # the end time of the fit
+    cdef time_t end_time
 
     # the total number of samples seen
     cdef double num_seen = num_seen_init
@@ -107,6 +112,7 @@ def sag_sparse(SequentialDataset dataset,
     cdef double intercept = intercept_init
 
     with nogil:
+        start_time = time(NULL)
         while True:
             for k in range(n_samples):
 
@@ -194,11 +200,18 @@ def sag_sparse(SequentialDataset dataset,
 
             if max_change / max_weight <= tol:
                 if verbose:
+                    end_time = time(NULL)
                     with gil:
-                        print(("convergence after %d epochs") %
-                              (total_iter / n_samples))
+                        print("convergence after %d epochs took %d seconds" %
+                              ((total_iter / n_samples),
+                              (end_time - start_time)))
                 break
             if total_iter / n_samples >= max_iter:
+                if verbose:
+                    end_time = time(NULL)
+                    with gil:
+                        print(("max_iter reached after %d seconds") %
+                              (end_time - start_time))
                 max_iter_reached = True
                 break
 
