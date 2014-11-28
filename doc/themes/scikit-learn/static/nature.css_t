@@ -733,15 +733,6 @@ div.docstringWrapper p {
     border-width: 1px;
 }
 
-.class,
-.function {
-	clear: both
-}
-
-.documentwrapper {
-	position: absolute;  /* Internal floats are separate to external */
-}
-
 .section:after {
     clear: both;
 }
