@@ -44,7 +44,7 @@ html:
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html/stable"
 
 html-noplot:
-	$(SPHINXBUILD) -D plot_gallery=False -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html/stable
+	$(SPHINXBUILD) -D plot_gallery=0 -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html/stable
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html/stable."
 
