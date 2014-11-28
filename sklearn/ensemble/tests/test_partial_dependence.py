@@ -1,9 +1,10 @@
 """
 Testing for the partial dependence module.
 """
-
 import numpy as np
 from numpy.testing import assert_array_equal
+
+from scipy.sparse import csr_matrix
 
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import if_matplotlib
@@ -101,6 +102,27 @@ def test_partial_dependecy_input():
     # wrong ndim for grid
     grid = np.random.rand(10, 2, 1)
     assert_raises(ValueError, partial_dependence, clf, [0], grid=grid)
+
+
+def test_partial_dependence_sparse():
+    """Test partial dependence for classifier """
+    X_sparse = csr_matrix(X)
+    clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
+    clf.fit(X_sparse, y)
+
+    pdp, axes = partial_dependence(clf, [0], X=X_sparse, grid_resolution=5)
+
+    # only 4 grid points instead of 5 because only 4 unique X[:,0] vals
+    assert pdp.shape == (1, 4)
+    assert axes[0].shape[0] == 4
+
+    # now with our own grid
+    X_sparse = X_sparse.tocsc()
+    grid = np.unique(X_sparse[:, 0].data)
+    pdp_2, axes = partial_dependence(clf, [0], grid=grid)
+
+    assert axes is None
+    assert_array_equal(pdp, pdp_2)
 
 
 @if_matplotlib

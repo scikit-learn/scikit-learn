@@ -5,6 +5,10 @@ Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 import numpy as np
 import warnings
 
+from itertools import product
+from scipy import sparse
+from scipy.sparse import csr_matrix, csc_matrix, coo_matrix
+
 from sklearn import datasets
 from sklearn.base import clone
 from sklearn.ensemble import GradientBoostingClassifier
@@ -22,7 +26,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.validation import DataConversionWarning
-
+from sklearn.externals.six.moves import zip
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -188,7 +192,7 @@ def test_boston():
                     "mse = %.4f" % (loss, mse)
 
                 if last_y_pred is not None:
-                    np.testing.assert_array_almost_equal(
+                    assert_array_almost_equal(
                         last_y_pred, y_pred,
                         err_msg='pred_%d doesnt match last pred_%d for loss %r and subsample %r. '
                         % (i, i - 1, loss, subsample))
@@ -290,17 +294,66 @@ def test_check_inputs():
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
     assert_raises(ValueError, clf.fit, X, y + [0, 1])
 
-    from scipy import sparse
-    X_sparse = sparse.csr_matrix(X)
-    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
-    assert_raises(TypeError, clf.fit, X_sparse, y)
-
-    clf = GradientBoostingClassifier().fit(X, y)
-    assert_raises(TypeError, clf.predict, X_sparse)
-
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
     assert_raises(ValueError, clf.fit, X, y,
                   sample_weight=([1] * len(y)) + [0, 1])
+
+
+def check_sparse_input_clf(loss, X, X_sparse, y):
+    """Check if gradient boosting supports sparse inputs. """
+    sparse = GradientBoostingClassifier(loss=loss, random_state=1).fit(X_sparse, y)
+    dense = GradientBoostingClassifier(loss=loss, random_state=1).fit(X, y)
+
+    assert_array_almost_equal(sparse.predict(X_sparse), dense.predict(X))
+    assert_array_almost_equal(sparse.predict_proba(X_sparse), dense.predict_proba(X))
+    assert_array_almost_equal(sparse.decision_function(X_sparse),
+                              dense.decision_function(X))
+    assert_array_almost_equal(sparse.transform(X_sparse.todense()),
+                              dense.transform(X))
+    for sparse_score, dense_score in zip(sparse.staged_decision_function(X_sparse),
+                                          dense.staged_decision_function(X)):
+        assert_array_almost_equal(sparse_score, dense_score)
+    for sparse_score, dense_score in zip(sparse.staged_predict(X_sparse),
+                                          dense.staged_predict(X)):
+        assert_array_almost_equal(sparse_score, dense_score)
+    for sparse_score, dense_score in zip(sparse.staged_predict_proba(X_sparse),
+                                          dense.staged_predict_proba(X)):
+        assert_array_almost_equal(sparse_score, dense_score)
+
+
+def test_sparse_input_clf():
+    """Test if gradient boosting supports sparse inputs. """
+    for loss, sparse_matrix in product(('deviance', 'exponential'),
+                                       (csr_matrix, csc_matrix, coo_matrix)):
+        yield check_sparse_input_clf, loss, X, sparse_matrix(X), y
+
+
+def check_sparse_input_reg(loss, X, X_sparse, y):
+    """Check if gradient boosting supports sparse inputs. """
+    alpha = 0.8
+    sparse = GradientBoostingRegressor(loss=loss, alpha=alpha,
+                                       random_state=1).fit(X_sparse, y)
+    dense = GradientBoostingRegressor(loss=loss, alpha=alpha,
+                                      random_state=1).fit(X, y)
+
+    assert_array_almost_equal(sparse.predict(X_sparse), dense.predict(X))
+    assert_array_almost_equal(sparse.decision_function(X_sparse),
+                              dense.decision_function(X))
+    assert_array_almost_equal(sparse.transform(X_sparse).todense(),
+                              dense.transform(X))
+    for sparse_score, dense_score in zip(sparse.staged_decision_function(X_sparse),
+                                          dense.staged_decision_function(X)):
+        assert_array_almost_equal(sparse_score, dense_score)
+    for sparse_score, dense_score in zip(sparse.staged_predict(X_sparse),
+                                          dense.staged_predict(X)):
+        assert_array_almost_equal(sparse_score, dense_score)
+
+
+def test_sparse_input_reg():
+    """Test if gradient boosting supports sparse inputs. """
+    for loss, sparse_matrix in product(('huber', 'ls', 'quantile', 'lad'),
+                                       (csr_matrix, csc_matrix, coo_matrix)):
+        yield check_sparse_input_reg, loss, X, sparse_matrix(X), y
 
 
 def test_check_inputs_predict():
