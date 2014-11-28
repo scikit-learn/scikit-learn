@@ -3346,23 +3346,26 @@ cdef class Tree:
         cdef Node* node = nodes
         cdef Node* end_node = node + self.node_count
 
+        cdef double normalizer
+
         cdef np.ndarray[np.float64_t, ndim=1] importances
         importances = np.zeros((self.n_features,))
+        cdef DOUBLE_t* importance_data = <DOUBLE_t*>importances.data
 
-        while node != end_node:
-            if node.left_child != _TREE_LEAF:
-                # ... and node.right_child != _TREE_LEAF:
-                left = &nodes[node.left_child]
-                right = &nodes[node.right_child]
+        with nogil:
+            while node != end_node:
+                if node.left_child != _TREE_LEAF:
+                    # ... and node.right_child != _TREE_LEAF:
+                    left = &nodes[node.left_child]
+                    right = &nodes[node.right_child]
 
-                importances[node.feature] += (
-                    node.weighted_n_node_samples * node.impurity -
-                    left.weighted_n_node_samples * left.impurity -
-                    right.weighted_n_node_samples * right.impurity)
-            node += 1
+                    importance_data[node.feature] += (
+                        node.weighted_n_node_samples * node.impurity -
+                        left.weighted_n_node_samples * left.impurity -
+                        right.weighted_n_node_samples * right.impurity)
+                node += 1
 
-        importances = importances / nodes[0].weighted_n_node_samples
-        cdef double normalizer
+        importances /= nodes[0].weighted_n_node_samples
 
         if normalize:
             normalizer = np.sum(importances)
