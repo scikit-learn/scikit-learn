@@ -59,9 +59,7 @@ test_script:
   - "mkdir empty_folder"
   - "cd empty_folder"
 
-  # Skip joblib tests that require multiprocessing as they are prone to random
-  # slow down
-  - "python -c \"import nose; nose.main()\" -s sklearn"
+  - "python -c \"import nose; nose.main()\" -s -v sklearn"
 
   # Move back to the project folder
   - "cd .."
