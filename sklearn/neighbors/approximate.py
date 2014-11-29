@@ -347,14 +347,8 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
         return self
 
-    def _query(self, query, n_neighbors=None, radius=None, is_radius=False):
-        """Finds neighbors and distances.
-
-        Returns the neighbors whose distances from the query is less
-        than radius if is_radius is True.
-        Otherwise returns m number of neighbors and the distances
-        for a given query.
-        """
+    def _query(self, query):
+        """Performs descending phase to find maximum depth."""
         bin_queries = []
         query = query.reshape((1, query.shape[0]))
 
@@ -370,13 +364,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
                 max_depth = k
             bin_queries.append(bin_query)
 
-        if is_radius:
-            return self._get_radius_neighbors(query, max_depth,
-                                              bin_queries, radius)
-
-        else:
-            return self._get_candidates(query, max_depth,
-                                        bin_queries, n_neighbors)
+        return bin_queries, query, max_depth
 
     def kneighbors(self, X, n_neighbors=None, return_distance=True):
         """
@@ -415,7 +403,10 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
         neighbors, distances = [], []
         for i in range(X.shape[0]):
-            neighs, dists = self._query(X[i], n_neighbors)
+            bin_queries, query, max_depth = self._query(X[i])
+            neighs, dists = self._get_candidates(query, max_depth,
+                                                 bin_queries,
+                                                 n_neighbors)
             neighbors.append(neighs)
             distances.append(dists)
 
@@ -461,8 +452,9 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
         neighbors, distances = [], []
         for i in range(X.shape[0]):
-            neighs, dists = self._query(X[i], radius=radius,
-                                        is_radius=True)
+            bin_queries, query, max_depth = self._query(X[i])
+            neighs, dists = self._get_radius_neighbors(query, max_depth,
+                                                       bin_queries, radius)
             neighbors.append(neighs)
             distances.append(dists)
 
