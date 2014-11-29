@@ -184,8 +184,6 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
 
     return _weighted_sum(score, sample_weight, normalize)
 
-#precision_score(y_true, y_pred, labels=None, pos_label=1,
-#                    average='weighted', sample_weight=None)
 
 def balanced_accuracy_score(y_true, y_pred, sample_weight=None, bal_value=0.5):
     """Balanced accuracy classification score.
