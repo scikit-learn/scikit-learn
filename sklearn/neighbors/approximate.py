@@ -185,18 +185,6 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         self.min_hash_match = min_hash_match
         self.radius_cutoff_ratio = radius_cutoff_ratio
 
-    def _create_tree(self, seed):
-        """Builds a single tree.
-
-        Hashing is done on an array of data points.
-        `GaussianRandomProjection` is used for hashing.
-        `n_components=hash_size and n_features=n_dim.
-        """
-        grph = GaussianRandomProjectionHash(n_components=MAX_HASH_SIZE,
-                                            random_state=seed)
-        grph.fit(self._fit_X)
-        return grph
-
     def _compute_distances(self, query, candidates):
         """Computes the cosine distance.
 
@@ -325,18 +313,23 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         self._trees = []
         self._original_indices = []
 
-        random_state = check_random_state(self.random_state)
+        rng = check_random_state(self.random_state)
         int_max = np.iinfo(np.int32).max
 
         for i in range(self.n_estimators):
             # This is g(p,x) for a particular tree.
-            grph = self._create_tree(random_state.randint(0, int_max))
-            hashes = grph.transform(self._fit_X)[:, 0]
+            # Builds a single tree. Hashing is done on an array of data points.
+            # `GaussianRandomProjection` is used for hashing.
+            # `n_components=hash size and n_features=n_dim.
+            hasher = GaussianRandomProjectionHash(MAX_HASH_SIZE,
+                                                  rng.randint(0, int_max))
+            hashes = hasher.fit_transform(self._fit_X)[:, 0]
             original_index = np.argsort(hashes)
             bin_hashes = hashes[original_index]
             self._original_indices.append(original_index)
             self._trees.append(bin_hashes)
-            self.hash_functions_.append(grph)
+            self.hash_functions_.append(hasher)
+
         self._generate_masks()
 
         return self
