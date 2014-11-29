@@ -15,7 +15,8 @@ from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_not_equal
-from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.neighbors import LSHForest
@@ -51,6 +52,9 @@ def test_neighbors_accuracy_with_n_candidates():
     # Sorted accuracies should be equal to original accuracies
     assert_true(np.all(np.diff(accuracies) >= 0),
                 msg="Accuracies are not non-decreasing.")
+    # Highest accuracy should be strictly greater than the lowest
+    assert_true(np.ptp(accuracies) > 0,
+                msg="Highest accuracy is not strictly greater than lowest.")
 
 
 def test_neighbors_accuracy_with_n_estimators():
@@ -82,8 +86,12 @@ def test_neighbors_accuracy_with_n_estimators():
     # Sorted accuracies should be equal to original accuracies
     assert_true(np.all(np.diff(accuracies) >= 0),
                 msg="Accuracies are not non-decreasing.")
+    # Highest accuracy should be strictly greater than the lowest
+    assert_true(np.ptp(accuracies) > 0,
+                msg="Highest accuracy is not strictly greater than lowest.")
 
 
+@ignore_warnings
 def test_kneighbors():
     """Checks whether desired number of neighbors are returned.
 
@@ -130,6 +138,9 @@ def test_kneighbors():
     # Test n_neighbors at initialization
     neighbors = lshf.kneighbors(query, return_distance=False)
     assert_equal(neighbors.shape[1], 5)
+    # Test `neighbors` has an integer dtype
+    assert_true(neighbors.dtype.kind == 'i',
+                msg="neighbors are not in integer dtype.")
 
 
 def test_radius_neighbors():
@@ -326,7 +337,13 @@ def test_candidates():
     lshf = LSHForest(min_hash_match=32)
     lshf.fit(X_train)
 
-    assert_warns(UserWarning, lshf.kneighbors, X_test, n_neighbors=3)
+    message = ("Number of candidates is not sufficient to retrieve"
+               " %i neighbors with"
+               " min_hash_match = %i. Candidates are filled up"
+               " uniformly from unselected"
+               " indices." % (3, 32))
+    assert_warns_message(UserWarning, message, lshf.kneighbors,
+                         X_test, n_neighbors=3)
     distances, neighbors = lshf.kneighbors(X_test, n_neighbors=3)
     assert_equal(distances.shape[1], 3)
 
@@ -334,7 +351,13 @@ def test_candidates():
     lshf = LSHForest(min_hash_match=31)
     lshf.fit(X_train)
 
-    assert_warns(UserWarning, lshf.kneighbors, X_test, n_neighbors=5)
+    message = ("Number of candidates is not sufficient to retrieve"
+               " %i neighbors with"
+               " min_hash_match = %i. Candidates are filled up"
+               " uniformly from unselected"
+               " indices." % (5, 31))
+    assert_warns_message(UserWarning, message, lshf.kneighbors,
+                         X_test, n_neighbors=5)
     distances, neighbors = lshf.kneighbors(X_test, n_neighbors=5)
     assert_equal(distances.shape[1], 5)
 
