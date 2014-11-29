@@ -167,7 +167,7 @@ print()
 if opts.use_hashing:
     feature_names = None
 else:
-    feature_names = np.asarray(vectorizer.get_feature_names())
+    feature_names = vectorizer.get_feature_names()
 
 if opts.select_chi2:
     print("Extracting %d best features by a chi-squared test" %
@@ -182,6 +182,9 @@ if opts.select_chi2:
                          in ch2.get_support(indices=True)]
     print("done in %fs" % (time() - t0))
     print()
+
+if feature_names:
+    feature_names = np.asarray(feature_names)
 
 
 def trim(s):
