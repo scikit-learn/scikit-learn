@@ -235,6 +235,19 @@ def test_PLSSVD():
         assert_equal(n_components, pls.y_scores_.shape[1])
 
 
+def test_univariate_pls_regression():
+    """Ensure 1d Y is correctly interpreted"""
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+
+    clf = pls_.PLSRegression()
+    # Compare 1d to column vector
+    model1 = clf.fit(X, Y[:, 0]).coefs
+    model2 = clf.fit(X, Y[:, :1]).coefs
+    assert_array_almost_equal(model1, model2)
+
+
 def test_scale():
     d = load_linnerud()
     X = d.data
