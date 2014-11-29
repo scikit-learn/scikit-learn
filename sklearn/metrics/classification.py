@@ -247,15 +247,12 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None, bal_value=0.5):
 
     if y_type is not 'binary':
         raise ValueError("Only binary classification supported")
-    
 
     accuracy_sc = accuracy_score(y_true, y_pred, normalize=True,
-     sample_weight=sample_weight)
+                                 sample_weight=sample_weight)
     precision_sc = precision_score(y_true, y_pred, labels=None, pos_label=1,
-                   average='weighted', sample_weight=sample_weight)
-
-
-
+                                   average='weighted',
+                                   sample_weight=sample_weight)
 
     return accuracy_sc*bal_value + precision_sc*(1. - bal_value)
 
