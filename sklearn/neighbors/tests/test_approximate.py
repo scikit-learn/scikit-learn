@@ -234,14 +234,14 @@ def test_fit():
     assert_equal(n_estimators, len(lshf.hash_functions_))
     # Hash length = 32
     assert_equal(32, lshf.hash_functions_[0].components_.shape[0])
-    # Number of trees in the forest
-    assert_equal(n_estimators, len(lshf._trees))
+    # Number of trees_ in the forest
+    assert_equal(n_estimators, len(lshf.trees_))
     # Each tree has entries for every data point
-    assert_equal(n_samples, len(lshf._trees[0]))
+    assert_equal(n_samples, len(lshf.trees_[0]))
     # Original indices after sorting the hashes
-    assert_equal(n_estimators, len(lshf._original_indices))
+    assert_equal(n_estimators, len(lshf.original_indices_))
     # Each set of original indices in a tree has entries for every data point
-    assert_equal(n_samples, len(lshf._original_indices[0]))
+    assert_equal(n_samples, len(lshf.original_indices_[0]))
 
 
 def test_partial_fit():
@@ -271,11 +271,11 @@ def test_partial_fit():
     # size of _input_array = samples + 1 after insertion
     assert_equal(lshf._fit_X.shape[0],
                  n_samples + n_samples_partial_fit)
-    # size of _original_indices[1] = samples + 1
-    assert_equal(len(lshf._original_indices[0]),
+    # size of original_indices_[1] = samples + 1
+    assert_equal(len(lshf.original_indices_[0]),
                  n_samples + n_samples_partial_fit)
-    # size of _trees[1] = samples + 1
-    assert_equal(len(lshf._trees[1]),
+    # size of trees_[1] = samples + 1
+    assert_equal(len(lshf.trees_[1]),
                  n_samples + n_samples_partial_fit)
 
 

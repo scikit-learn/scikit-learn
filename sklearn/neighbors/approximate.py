@@ -101,6 +101,8 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
     method for vanilla approximate nearest neighbor search methods.
     LSH forest data structure has been implemented using sorted
     arrays and binary search and 32 bit fixed-length hashes.
+    Random projection is used as the hash family which approximates
+    cosine distance.
 
     Parameters
     ----------
@@ -125,8 +127,10 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         space to use by default for the :meth`radius_neighbors` queries.
 
     radius_cutoff_ratio : float, optional (defualt = 0.9)
-        Cut off ratio of radius neighbors to candidates at the radius
-        neighbor search
+        A value ranges from 0 to 1. Radius neighbors will be searched until
+        the ratio between total neighbors within the radius and the total
+        candidates becomes less than this value unless it is terminated by
+        hash length reaching `min_hash_match`.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -137,11 +141,19 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
     Attributes
     ----------
 
-    `hash_functions_` : list of GaussianRandomProjectionHash objects
+    hash_functions_ : list of GaussianRandomProjectionHash objects
         Hash function g(p,x) for a tree is an array of 32 randomly generated
         float arrays with the same dimenstion as the data set. This array is
         stored in GaussianRandomProjectionHash object and can be obtained
-        from `components_` attribute.
+        from ``components_`` attribute.
+
+    trees_ : array, shape (n_estimators, n_samples)
+        Each tree (corresponding to a hash function) contains an array of
+        sorted hashed values. The array representation may change in future
+        versions.
+
+    original_indices_ : array, shape (n_estimators, n_samples)
+        Original indices of sorted hashed values in the fitted index.
 
     References
     ----------
@@ -200,6 +212,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
     def _generate_masks(self):
         """Creates left and right masks for all hash lengths."""
         tri_size = MAX_HASH_SIZE + 1
+        # Called once on fitting, output is independent of hashes
         left_mask = np.tril(np.ones((tri_size, tri_size), dtype=int))[:, 1:]
         right_mask = left_mask[::-1, ::-1]
 
@@ -222,8 +235,8 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
             for i in range(self.n_estimators):
                 candidates.extend(
-                    self._original_indices[i][_find_matching_indices(
-                        self._trees[i],
+                    self.original_indices_[i][_find_matching_indices(
+                        self.trees_[i],
                         bin_queries[i],
                         self._left_mask[max_depth],
                         self._right_mask[max_depth])].tolist())
@@ -266,8 +279,8 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
             candidates = []
             for i in range(self.n_estimators):
                 candidates.extend(
-                    self._original_indices[i][_find_matching_indices(
-                        self._trees[i],
+                    self.original_indices_[i][_find_matching_indices(
+                        self.trees_[i],
                         bin_queries[i],
                         self._left_mask[max_depth],
                         self._right_mask[max_depth])].tolist())
@@ -310,8 +323,8 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
         # Creates a g(p,x) for each tree
         self.hash_functions_ = []
-        self._trees = []
-        self._original_indices = []
+        self.trees_ = []
+        self.original_indices_ = []
 
         rng = check_random_state(self.random_state)
         int_max = np.iinfo(np.int32).max
@@ -326,8 +339,8 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
             hashes = hasher.fit_transform(self._fit_X)[:, 0]
             original_index = np.argsort(hashes)
             bin_hashes = hashes[original_index]
-            self._original_indices.append(original_index)
-            self._trees.append(bin_hashes)
+            self.original_indices_.append(original_index)
+            self.trees_.append(bin_hashes)
             self.hash_functions_.append(hasher)
 
         self._generate_masks()
@@ -349,7 +362,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         max_depth = 0
         for i in range(self.n_estimators):
             bin_query = self.hash_functions_[i].transform(query)[0][0]
-            k = _find_longest_prefix_match(self._trees[i], bin_query,
+            k = _find_longest_prefix_match(self.trees_[i], bin_query,
                                            MAX_HASH_SIZE,
                                            self._left_mask,
                                            self._right_mask)
@@ -384,11 +397,11 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
         Returns
         -------
-        dist : array
-            Array representing the lengths to point, only present if
-            return_distance=True
+        dist : array, shape (n_samples, n_neighbors)
+            Array representing the cosine distances to each point,
+            only present if return_distance=True.
 
-        ind : array
+        ind : array, shape (n_samples, n_neighbors)
             Indices of the approximate nearest points in the population
             matrix.
         """
@@ -430,11 +443,11 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
         Returns
         -------
-        dist : array
+        dist : array, shape (n_samples,) of arrays
             Array representing the cosine distances to each point,
             only present if return_distance=True.
 
-        ind : array
+        ind : array, shape (n_samples,) of arrays
             An array of arrays of indices of the approximated nearest points
             with in the `radius` to the query in the population matrix.
         """
@@ -484,12 +497,12 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         for i in range(self.n_estimators):
             bin_X = self.hash_functions_[i].transform(X)[:, 0]
             # gets the position to be added in the tree.
-            positions = self._trees[i].searchsorted(bin_X)
+            positions = self.trees_[i].searchsorted(bin_X)
             # adds the hashed value into the tree.
-            self._trees[i] = np.insert(self._trees[i],
+            self.trees_[i] = np.insert(self.trees_[i],
                                        positions, bin_X)
-            # add the entry into the original_indices.
-            self._original_indices[i] = np.insert(self._original_indices[i],
+            # add the entry into the original_indices_.
+            self.original_indices_[i] = np.insert(self.original_indices_[i],
                                                   positions,
                                                   np.arange(input_array_size,
                                                             input_array_size +
