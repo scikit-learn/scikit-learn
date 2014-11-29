@@ -44,9 +44,20 @@ extension in place::
 
 
 Another option is to use the ``develop`` option if you change your code a lot
-and do not want to have to reinstall every time::
+and do not want to have to reinstall every time. This basically builds the
+extension in place and creates a link to the development directory (see
+<https://pythonhosted.org/setuptools/setuptools.html#development-mode>)::
 
     python setup.py develop
+
+.. note::
+
+    if you decide to do that you have to rerun::
+
+        python setup.py build_ext --inplace
+
+    every time the source code of a compiled extension is
+    changed (for instance when switching branches or pulling changes from upstream).
 
 On Unix-like systems, you can simply type ``make`` in the top-level folder to
 build in-place and launch all the tests. Have a look at the ``Makefile`` for
@@ -583,7 +594,7 @@ multiple interfaces):
 
     Classification algorithms usually also offer a way to quantify certainty
     of a prediction, either using ``decision_function`` or ``predict_proba``::
-        
+
       probability = obj.predict_proba(data)
 
 :Transformer:
