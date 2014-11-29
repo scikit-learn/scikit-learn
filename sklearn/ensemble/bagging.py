@@ -181,9 +181,8 @@ def _parallel_decision_function(estimators, estimators_features, X):
 
 def _parallel_predict_regression(estimators, estimators_features, X):
     """Private function used to compute predictions within a job."""
-    return sum(estimator.predict(X[:, features])
-               for estimator, features in zip(estimators,
-                                              estimators_features))
+    return [estimator.predict(X[:, features])
+            for estimator, features in zip(estimators, estimators_features)]
 
 
 class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
@@ -792,11 +791,13 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
             random_state=random_state,
             verbose=verbose)
 
-    def predict(self, X):
+    def predict(self, X, with_std=False):
         """Predict regression target for X.
 
         The predicted regression target of an input sample is computed as the
         mean predicted regression targets of the estimators in the ensemble.
+        Optionally, the standard deviation of the predictions of the ensemble's
+        estimators is computed in addition.
 
         Parameters
         ----------
@@ -804,10 +805,17 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
             The training input samples. Sparse matrices are accepted only if
             they are supported by the base estimator.
 
+        with_std : boolean, optional, default=False
+            When True, the standard deviation of the predictions of the
+            ensemble's estimators is returned in addition to the mean.
+
         Returns
         -------
-        y : array of shape = [n_samples]
-            The predicted values.
+        y_mean : array of shape = [n_samples]
+            The mean of the predicted values.
+
+        y_std : array of shape = [n_samples], optional (if with_std == True)
+            The standard deviation of the ensemble's predicted values.
         """
         # Check data
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
@@ -824,9 +832,12 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
             for i in range(n_jobs))
 
         # Reduce
-        y_hat = sum(all_y_hat) / self.n_estimators
-
-        return y_hat
+        all_y_hat = np.array(all_y_hat).reshape(self.n_estimators, -1)
+        y_mean = np.mean(all_y_hat, axis=0)
+        if with_std:
+            return y_mean, np.std(all_y_hat, axis=0)
+        else:
+            return y_mean
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""

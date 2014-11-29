@@ -541,11 +541,13 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             verbose=verbose,
             warm_start=warm_start)
 
-    def predict(self, X):
+    def predict(self, X, with_std=False):
         """Predict regression target for X.
 
         The predicted regression target of an input sample is computed as the
         mean predicted regression targets of the trees in the forest.
+        Optionally, the standard deviation of the predictions of the ensemble's
+        estimators is computed in addition.
 
         Parameters
         ----------
@@ -554,10 +556,17 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
+        with_std : boolean, optional, default=False
+            When True, the standard deviation of the predictions of the
+            ensemble's estimators is returned in addition to the mean.
+
         Returns
         -------
-        y: array of shape = [n_samples] or [n_samples, n_outputs]
-            The predicted values.
+        y_mean: array of shape = [n_samples] or [n_samples, n_outputs]
+            The mean of the predicted values.
+
+        y_std : array of shape = [n_samples], optional (if with_std == True)
+            The standard deviation of the predicted values.
         """
         # Check data
         X = check_array(X, dtype=DTYPE, accept_sparse="csr")
@@ -572,10 +581,11 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             delayed(_parallel_helper)(e, 'predict', X)
             for e in self.estimators_)
 
-        # Reduce
-        y_hat = sum(all_y_hat) / len(self.estimators_)
-
-        return y_hat
+        y_mean = np.mean(all_y_hat, axis=0)
+        if with_std:
+            return y_mean, np.std(all_y_hat, axis=0)
+        else:
+            return y_mean
 
     def _set_oob_score(self, X, y):
         """Compute out-of-bag scores"""
