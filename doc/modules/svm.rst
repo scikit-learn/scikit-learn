@@ -516,7 +516,7 @@ correctly.  ``gamma`` defines how much influence a single training example has.
 The larger ``gamma`` is, the closer other examples must be to be affected.
 
 Proper choice of ``C`` and ``gamma`` is critical to the SVM's performance.  One
-is advised to use :class:`GridSearchCV` with ``C`` and ``gamma`` spaced
+is advised to use :class:`sklearn.grid_search.GridSearchCV` with ``C`` and ``gamma`` spaced
 exponentially far apart to choose good values.
 
 .. topic:: Examples:
