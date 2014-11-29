@@ -94,6 +94,8 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
     method for vanilla approximate nearest neighbor search methods.
     LSH forest data structure has been implemented using sorted
     arrays and binary search and 32 bit fixed-length hashes.
+    Random projection is used as the hash family which approximates
+    cosine distance.
 
     Parameters
     ----------
@@ -118,8 +120,10 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         space to use by default for the :meth`radius_neighbors` queries.
 
     radius_cutoff_ratio : float, optional (defualt = 0.9)
-        Cut off ratio of radius neighbors to candidates at the radius
-        neighbor search
+        A value ranges from 0 to 1. Radius neighbors will be searched until
+        the ratio between total neighbors within the radius and the total
+        candidates becomes less than this value unless it is terminated by
+        hash length reaching `min_hash_match`.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -199,6 +203,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
     def _generate_masks(self):
         """Creates left and right masks for all hash lengths."""
         tri_size = MAX_HASH_SIZE + 1
+        # Called once on fitting, output is independent of hashes
         left_mask = np.tril(np.ones((tri_size, tri_size), dtype=int))[:, 1:]
         right_mask = left_mask[::-1, ::-1]
 
@@ -371,11 +376,11 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
         Returns
         -------
-        dist : array
+        dist : array, shape (n_samples, n_neighbors)
             Array representing the lengths to point, only present if
-            return_distance=True
+            return_distance=True. Cosine distance is used as the metric.
 
-        ind : array
+        ind : array, shape (n_samples, n_neighbors)
             Indices of the approximate nearest points in the population
             matrix.
         """
@@ -420,11 +425,12 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
         Returns
         -------
-        dist : array
+        dist : array, shape (n_samples,) of arrays
             Array representing the cosine distances to each point,
-            only present if return_distance=True.
+            only present if return_distance=True. Cosine distance is used as
+            the metric.
 
-        ind : array
+        ind : array, shape (n_samples,) of arrays
             An array of arrays of indices of the approximated nearest points
             with in the `radius` to the query in the population matrix.
         """
