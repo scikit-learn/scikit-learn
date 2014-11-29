@@ -43,7 +43,7 @@ from .base import MetaEstimatorMixin
 from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
-from .utils.validation import _num_samples
+from .utils.validation import _num_samples, check_consistent_length
 from .utils import deprecated
 from .externals.joblib import Parallel
 from .externals.joblib import delayed
@@ -485,13 +485,16 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         X : (sparse) array-like, shape = [n_samples, n_features]
             Data.
 
-        y : numpy array of shape [n_samples]
+        y : array-like, shape = [n_samples]
             Multi-class targets.
 
         Returns
         -------
         self
         """
+        y = np.asarray(y)
+        check_consistent_length(X, y)
+
         self.classes_ = np.unique(y)
         n_classes = self.classes_.shape[0]
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
