@@ -99,7 +99,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
     ----------
 
     n_estimators : int (default = 10)
-        Number of trees in the LSH Forest.
+        Number of trees_ in the LSH Forest.
 
     min_hash_match : int (default = 4)
         lowest hash length to be searched when candidate selection is
@@ -135,6 +135,12 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         float arrays with the same dimenstion as the data set. This array is
         stored in GaussianRandomProjectionHash object and can be obtained
         from `components_` attribute.
+
+    `trees_` : array, shape (n_estimators, n_samples)
+        Each tree(estimator) contains an array of sorted hashed values.
+
+    `original_indices_` : array, shape (n_estimators, n_samples)
+        Original indices of sorted hashed values in the fitted index.
 
     References
     ----------
@@ -215,8 +221,8 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
             for i in range(self.n_estimators):
                 candidates.extend(
-                    self._original_indices[i][_find_matching_indices(
-                        self._trees[i],
+                    self.original_indices_[i][_find_matching_indices(
+                        self.trees_[i],
                         bin_queries[i],
                         self._left_mask[max_depth],
                         self._right_mask[max_depth])].tolist())
@@ -259,8 +265,8 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
             candidates = []
             for i in range(self.n_estimators):
                 candidates.extend(
-                    self._original_indices[i][_find_matching_indices(
-                        self._trees[i],
+                    self.original_indices_[i][_find_matching_indices(
+                        self.trees_[i],
                         bin_queries[i],
                         self._left_mask[max_depth],
                         self._right_mask[max_depth])].tolist())
@@ -303,8 +309,8 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
         # Creates a g(p,x) for each tree
         self.hash_functions_ = []
-        self._trees = []
-        self._original_indices = []
+        self.trees_ = []
+        self.original_indices_ = []
 
         rng = check_random_state(self.random_state)
         int_max = np.iinfo(np.int32).max
@@ -319,8 +325,8 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
             hashes = hasher.fit_transform(self._fit_X)[:, 0]
             original_index = np.argsort(hashes)
             bin_hashes = hashes[original_index]
-            self._original_indices.append(original_index)
-            self._trees.append(bin_hashes)
+            self.original_indices_.append(original_index)
+            self.trees_.append(bin_hashes)
             self.hash_functions_.append(hasher)
 
         self._generate_masks()
@@ -342,7 +348,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         max_depth = 0
         for i in range(self.n_estimators):
             bin_query = self.hash_functions_[i].transform(query)[0][0]
-            k = _find_longest_prefix_match(self._trees[i], bin_query,
+            k = _find_longest_prefix_match(self.trees_[i], bin_query,
                                            MAX_HASH_SIZE,
                                            self._left_mask,
                                            self._right_mask)
@@ -478,12 +484,12 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         for i in range(self.n_estimators):
             bin_X = self.hash_functions_[i].transform(X)[:, 0]
             # gets the position to be added in the tree.
-            positions = self._trees[i].searchsorted(bin_X)
+            positions = self.trees_[i].searchsorted(bin_X)
             # adds the hashed value into the tree.
-            self._trees[i] = np.insert(self._trees[i],
+            self.trees_[i] = np.insert(self.trees_[i],
                                        positions, bin_X)
-            # add the entry into the original_indices.
-            self._original_indices[i] = np.insert(self._original_indices[i],
+            # add the entry into the original_indices_.
+            self.original_indices_[i] = np.insert(self.original_indices_[i],
                                                   positions,
                                                   np.arange(input_array_size,
                                                             input_array_size +
