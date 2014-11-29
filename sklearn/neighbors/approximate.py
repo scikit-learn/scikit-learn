@@ -474,17 +474,15 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         X : array_like, shape (n_samples, n_features)
             New data point to be inserted into the LSH Forest.
         """
-        if not hasattr(self, 'hash_functions_'):
-            raise ValueError("estimator should be fitted before"
-                             " inserting.")
-
         X = check_array(X)
+        if not hasattr(self, 'hash_functions_'):
+            return self.fit(X)
 
         if X.shape[1] != self._fit_X.shape[1]:
             raise ValueError("Number of features in X and"
                              " fitted array does not match.")
         n_samples = X.shape[0]
-        input_array_size = self._fit_X.shape[0]
+        n_indexed = self._fit_X.shape[0]
 
         for i in range(self.n_estimators):
             bin_X = self.hash_functions_[i].transform(X)[:, 0]
@@ -496,9 +494,11 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
             # add the entry into the original_indices_.
             self.original_indices_[i] = np.insert(self.original_indices_[i],
                                                   positions,
-                                                  np.arange(input_array_size,
-                                                            input_array_size +
+                                                  np.arange(n_indexed,
+                                                            n_indexed +
                                                             n_samples))
 
         # adds the entry into the input_array.
         self._fit_X = np.row_stack((self._fit_X, X))
+
+        return self

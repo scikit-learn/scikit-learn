@@ -257,8 +257,10 @@ def test_partial_fit():
     X_partial_fit = rng.rand(n_samples_partial_fit, n_features)
 
     lshf = LSHForest()
+
     # Test unfitted estimator
-    assert_raises(ValueError, lshf.partial_fit, X[0])
+    lshf.partial_fit(X)
+    assert_array_equal(X, lshf._fit_X)
 
     lshf.fit(X)
 
