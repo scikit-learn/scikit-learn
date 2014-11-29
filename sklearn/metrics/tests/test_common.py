@@ -25,6 +25,7 @@ from sklearn.utils.testing import ignore_warnings
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
+from sklearn.metrics import balanced_accuracy_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import coverage_error
 from sklearn.metrics import explained_variance_score
@@ -96,6 +97,7 @@ REGRESSION_METRICS = {
 
 CLASSIFICATION_METRICS = {
     "accuracy_score": accuracy_score,
+    "balanced_accuracy_score": balanced_accuracy_score,
     "unnormalized_accuracy_score": partial(accuracy_score, normalize=False),
     "confusion_matrix": confusion_matrix,
     "hamming_loss": hamming_loss,
@@ -186,6 +188,7 @@ METRIC_UNDEFINED_MULTICLASS = [
     "samples_precision_score", "samples_recall_score",
 
     # Those metrics don't support multiclass outputs
+    "balanced_accuracy_score",
     "average_precision_score", "weighted_average_precision_score",
     "micro_average_precision_score", "macro_average_precision_score",
     "samples_average_precision_score",
@@ -212,7 +215,8 @@ THRESHOLDED_METRICS_WITH_AVERAGING = [
 METRICS_WITH_POS_LABEL = [
     "roc_curve", "hinge_loss",
 
-    "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
+    "precision_score", "recall_score", "f1_score", "f2_score",
+    "f0.5_score",
 
     "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
     "weighted_precision_score", "weighted_recall_score",
@@ -295,7 +299,8 @@ MULTIOUTPUT_METRICS = [
 # Symmetric with respect to their input arguments y_true and y_pred
 # metric(y_true, y_pred) == metric(y_pred, y_true).
 SYMMETRIC_METRICS = [
-    "accuracy_score", "unnormalized_accuracy_score",
+    "accuracy_score",
+    "unnormalized_accuracy_score",
     "hamming_loss",
     "jaccard_similarity_score", "unnormalized_jaccard_similarity_score",
     "zero_one_loss", "unnormalized_zero_one_loss",
@@ -310,6 +315,8 @@ SYMMETRIC_METRICS = [
 # Asymmetric with respect to their input arguments y_true and y_pred
 # metric(y_true, y_pred) != metric(y_pred, y_true).
 NOT_SYMMETRIC_METRICS = [
+    "balanced_accuracy_score",
+
     "explained_variance_score",
     "r2_score",
     "confusion_matrix",
@@ -329,6 +336,7 @@ NOT_SYMMETRIC_METRICS = [
 
 # No Sample weight support
 METRICS_WITHOUT_SAMPLE_WEIGHT = [
+    "balanced_accuracy_score",
     "confusion_matrix",
     "hamming_loss",
     "matthews_corrcoef_score",
