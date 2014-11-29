@@ -163,6 +163,12 @@ print("done in %fs at %0.3fMB/s" % (duration, data_test_size_mb / duration))
 print("n_samples: %d, n_features: %d" % X_test.shape)
 print()
 
+# mapping from integer feature name to original token string
+if opts.use_hashing:
+    feature_names = None
+else:
+    feature_names = vectorizer.get_feature_names()
+
 if opts.select_chi2:
     print("Extracting %d best features by a chi-squared test" %
           opts.select_chi2)
@@ -170,20 +176,20 @@ if opts.select_chi2:
     ch2 = SelectKBest(chi2, k=opts.select_chi2)
     X_train = ch2.fit_transform(X_train, y_train)
     X_test = ch2.transform(X_test)
+    if feature_names:
+        # keep selected feature names
+        feature_names = [feature_names[i] for i
+                         in ch2.get_support(indices=True)]
     print("done in %fs" % (time() - t0))
     print()
+
+if feature_names:
+    feature_names = np.asarray(feature_names)
 
 
 def trim(s):
     """Trim string to fit on terminal (assuming 80-column display)"""
     return s if len(s) <= 80 else s[:77] + "..."
-
-
-# mapping from integer feature name to original token string
-if opts.use_hashing:
-    feature_names = None
-else:
-    feature_names = np.asarray(vectorizer.get_feature_names())
 
 
 ###############################################################################
