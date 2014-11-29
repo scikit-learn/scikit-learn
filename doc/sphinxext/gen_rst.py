@@ -971,6 +971,10 @@ def embed_code_links(app, exception):
         return
     print('Embedding documentation hyperlinks in examples..')
 
+    if app.builder.name == 'latex':
+        # Don't embed hyperlinks when a latex builder is used.
+        return
+
     # Add resolvers for the packages for which we want to show links
     doc_resolvers = {}
     doc_resolvers['sklearn'] = SphinxDocLinkResolver(app.builder.outdir,
