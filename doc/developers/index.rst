@@ -42,6 +42,12 @@ extension in place::
 
     python setup.py build_ext --inplace
 
+
+Another option is to use the ``develop`` option if you change your code a lot
+and do not want to have to reinstall every time::
+
+    python setup.py develop
+
 On Unix-like systems, you can simply type ``make`` in the top-level folder to
 build in-place and launch all the tests. Have a look at the ``Makefile`` for
 additional utilities.
