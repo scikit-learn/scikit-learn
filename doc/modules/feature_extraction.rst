@@ -127,11 +127,12 @@ determines the sign of the value stored in the output matrix for a feature.
 This way, collisions are likely to cancel out rather than accumulate error,
 and the expected mean of any output feature's value is zero.
 
-If ``non_negative=True`` is passed to the constructor,
-the absolute value is taken.
-This undoes some of the collision handling,
-but allows the output to be passed to estimators like :class:`MultinomialNB`
-or ``chi2`` feature selectors that expect non-negative inputs.
+If ``non_negative=True`` is passed to the constructor, the absolute
+value is taken.  This undoes some of the collision handling, but allows
+the output to be passed to estimators like
+:class:`sklearn.naive_bayes.MultinomialNB` or
+:class:`sklearn.feature_selection.chi2`
+feature selectors that expect non-negative inputs.
 
 :class:`FeatureHasher` accepts either mappings
 (like Python's ``dict`` and its variants in the ``collections`` module),
