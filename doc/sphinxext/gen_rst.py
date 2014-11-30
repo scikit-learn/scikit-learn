@@ -499,8 +499,7 @@ def generate_example_rst(app):
     <style type="text/css">
     div#sidebarbutton {
         /* hide the sidebar collapser, while ensuring vertical arrangement */
-        width: 0px;
-        overflow: hidden;
+        display: none;
     }
     </style>
 
