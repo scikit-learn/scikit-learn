@@ -838,6 +838,8 @@ further details.
 Pairwise metrics
 ----------------
 
+See the :ref:`metrics` section of the user guide for further details.
+
 .. automodule:: sklearn.metrics.pairwise
    :no-members:
    :no-inherited-members:
