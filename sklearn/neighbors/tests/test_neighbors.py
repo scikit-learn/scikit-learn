@@ -867,6 +867,34 @@ def test_predict_sparse_ball_kd_tree():
         model.fit(X, y)
         assert_raises(ValueError, model.predict, csr_matrix(X))
 
+def test_radius_neighbors_boundary_consistency():
+    """Test if the points at the boundaries of a radius search are included. 
+
+    Test that the neighbors returned by the brute force algorithm are consistent 
+    with the ones returned by the tree-based implementations and that all include 
+    the points at the boundaries.    
+    """
+    X = np.array([[-1, 0], [0, 0], [1, 0]])
+    radius = 1.0
+    query_points = np.array([[0,0], [1,0]])
+    correct_number_of_neighbors = [3, 2]
+
+    nbrs_brute    = neighbors.NearestNeighbors(radius=radius, algorithm='brute').fit(X)
+    nbrs_kdtree   = neighbors.NearestNeighbors(radius=radius, algorithm='kd_tree').fit(X)
+    nbrs_balltree = neighbors.NearestNeighbors(radius=radius, algorithm='ball_tree').fit(X)
+
+    results_brute = nbrs_brute.radius_neighbors(query_points)
+    results_kdtree = nbrs_kdtree.radius_neighbors(query_points)
+    results_balltree = nbrs_balltree.radius_neighbors(query_points)
+
+    for i in range(len(query_points)):
+        assert_array_almost_equal(results_brute[0][i], results_kdtree[0][i])
+        assert_array_equal(results_brute[1][i], results_kdtree[1][i])
+
+        assert_array_almost_equal(results_brute[0][i], results_balltree[0][i])
+        assert_array_equal(results_brute[1][i], results_balltree[1][i])
+
+        assert_equal(len(results_brute[1][i]), correct_number_of_neighbors[i])
 
 if __name__ == '__main__':
     import nose
