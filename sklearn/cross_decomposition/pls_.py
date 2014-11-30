@@ -563,7 +563,7 @@ class PLSRegression(_PLS):
     def coefs(self):
         DeprecationWarning("'coefs' attribute has been deprecated. Use 'coef_' "
                            "instead")
-        return self._coef
+        return self.coef_
 
 
 
