@@ -243,7 +243,7 @@ for clf, name in (
         (Perceptron(n_iter=50), "Perceptron"),
         (PassiveAggressiveClassifier(n_iter=50), "Passive-Aggressive"),
         (KNeighborsClassifier(n_neighbors=10), "kNN"),
-        (RandomForestClassifier(n_estimators=100), "RF")):
+        (RandomForestClassifier(n_estimators=100), "Random forest")):
     print('=' * 80)
     print(name)
     results.append(benchmark(clf))
