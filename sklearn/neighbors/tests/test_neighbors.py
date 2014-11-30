@@ -867,21 +867,32 @@ def test_predict_sparse_ball_kd_tree():
         model.fit(X, y)
         assert_raises(ValueError, model.predict, csr_matrix(X))
 
-def test_radius_neighbors_boundary_consistency():
-    """Test if the points at the boundaries of a radius search are included. 
 
-    Test that the neighbors returned by the brute force algorithm are consistent 
-    with the ones returned by the tree-based implementations and that all include 
-    the points at the boundaries.    
+def test_radius_neighbors_boundary_consistency():
+    """Test if the points at the boundaries of a radius search are included.
+
+    Test that neighbors returned by the brute force algorithm are consistent
+    with the ones returned by the tree-based implementations. All should
+    include the points at the boundaries.
     """
     X = np.array([[-1, 0], [0, 0], [1, 0]])
     radius = 1.0
-    query_points = np.array([[0,0], [1,0]])
+    query_points = np.array([[0, 0], [1, 0]])
     correct_number_of_neighbors = [3, 2]
 
-    nbrs_brute    = neighbors.NearestNeighbors(radius=radius, algorithm='brute').fit(X)
-    nbrs_kdtree   = neighbors.NearestNeighbors(radius=radius, algorithm='kd_tree').fit(X)
-    nbrs_balltree = neighbors.NearestNeighbors(radius=radius, algorithm='ball_tree').fit(X)
+    nbrs_brute = neighbors.NearestNeighbors(
+        radius=radius,
+        algorithm='brute')
+    nbrs_kdtree = neighbors.NearestNeighbors(
+        radius=radius,
+        algorithm='kd_tree')
+    nbrs_balltree = neighbors.NearestNeighbors(
+        radius=radius,
+        algorithm='ball_tree')
+
+    nbrs_brute.fit(X)
+    nbrs_kdtree.fit(X)
+    nbrs_balltree.fit(X)
 
     results_brute = nbrs_brute.radius_neighbors(query_points)
     results_kdtree = nbrs_kdtree.radius_neighbors(query_points)
