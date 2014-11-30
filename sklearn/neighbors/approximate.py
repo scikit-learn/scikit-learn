@@ -134,16 +134,18 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
     Attributes
     ----------
 
-    `hash_functions_` : list of GaussianRandomProjectionHash objects
+    hash_functions_ : list of GaussianRandomProjectionHash objects
         Hash function g(p,x) for a tree is an array of 32 randomly generated
         float arrays with the same dimenstion as the data set. This array is
         stored in GaussianRandomProjectionHash object and can be obtained
-        from `components_` attribute.
+        from ``components_`` attribute.
 
-    `trees_` : array, shape (n_estimators, n_samples)
-        Each tree(estimator) contains an array of sorted hashed values.
+    trees_ : array, shape (n_estimators, n_samples)
+        Each tree (corresponding to a hash function) contains an array of
+        sorted hashed values. The array representation may change in future
+        versions.
 
-    `original_indices_` : array, shape (n_estimators, n_samples)
+    original_indices_ : array, shape (n_estimators, n_samples)
         Original indices of sorted hashed values in the fitted index.
 
     References
@@ -377,8 +379,8 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         Returns
         -------
         dist : array, shape (n_samples, n_neighbors)
-            Array representing the lengths to point, only present if
-            return_distance=True. Cosine distance is used as the metric.
+            Array representing the cosine distances to each point,
+            only present if return_distance=True.
 
         ind : array, shape (n_samples, n_neighbors)
             Indices of the approximate nearest points in the population
@@ -427,8 +429,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         -------
         dist : array, shape (n_samples,) of arrays
             Array representing the cosine distances to each point,
-            only present if return_distance=True. Cosine distance is used as
-            the metric.
+            only present if return_distance=True.
 
         ind : array, shape (n_samples,) of arrays
             An array of arrays of indices of the approximated nearest points
