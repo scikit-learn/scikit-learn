@@ -178,8 +178,8 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
     y_rotations_ : array, [q, n_components]
         Y block to latents rotations.
 
-    coefs: array, [p, q]
-        The coefficients of the linear model: Y = X coefs + Err
+    coef_: array, [p, q]
+        The coefficients of the linear model: Y = X coef_ + Err
 
     n_iter_ : array-like
         Number of iterations of the NIPALS inner loop for each
@@ -342,8 +342,8 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             # Then express in function of X
             # Y = X W(P'W)^-1Q' + Err = XB + Err
             # => B = W*Q' (p x q)
-            self.coefs = np.dot(self.x_rotations_, self.y_loadings_.T)
-            self.coefs = (1. / self.x_std_.reshape((p, 1)) * self.coefs *
+            self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
+            self.coef_ = (1. / self.x_std_.reshape((p, 1)) * self.coef_ *
                           self.y_std_)
         return self
 
@@ -412,7 +412,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             X = np.asarray(X)
             Xc -= self.x_mean_
             Xc /= self.x_std_
-        Ypred = np.dot(Xc, self.coefs)
+        Ypred = np.dot(Xc, self.coef_)
         return Ypred + self.y_mean_
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -499,8 +499,8 @@ class PLSRegression(_PLS):
     y_rotations_ : array, [q, n_components]
         Y block to latents rotations.
 
-    coefs: array, [p, q]
-        The coefficients of the linear model: Y = X coefs + Err
+    coef_: array, [p, q]
+        The coefficients of the linear model: Y = X coef_ + Err
 
     n_iter_ : array-like
         Number of iterations of the NIPALS inner loop for each
@@ -684,6 +684,12 @@ class PLSCanonical(_PLS):
                       deflation_mode="canonical", mode="A",
                       norm_y_weights=True, algorithm=algorithm,
                       max_iter=max_iter, tol=tol, copy=copy)
+
+    @property
+    def coefs(self):
+        DeprecationWarning("'coefs' attribute has been deprecated. Use 'coef_' "
+                           "instead")
+        return self._coef
 
 
 class PLSSVD(BaseEstimator, TransformerMixin):
