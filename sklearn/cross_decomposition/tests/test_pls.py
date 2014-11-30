@@ -243,8 +243,8 @@ def test_univariate_pls_regression():
 
     clf = pls_.PLSRegression()
     # Compare 1d to column vector
-    model1 = clf.fit(X, Y[:, 0]).coefs
-    model2 = clf.fit(X, Y[:, :1]).coefs
+    model1 = clf.fit(X, Y[:, 0]).coef_
+    model2 = clf.fit(X, Y[:, :1]).coef_
     assert_array_almost_equal(model1, model2)
 
 
