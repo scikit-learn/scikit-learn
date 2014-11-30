@@ -330,8 +330,9 @@ def test_candidates():
     User should be warned when number of candidates is less than
     requested number of neighbors.
     """
-    X_train = [[5, 5, 2], [21, 5, 5], [1, 1, 1], [8, 9, 1], [6, 10, 2]]
-    X_test = [7, 10, 3]
+    X_train = np.array([[5, 5, 2], [21, 5, 5], [1, 1, 1], [8, 9, 1],
+                        [6, 10, 2]], dtype=np.float32)
+    X_test = np.array([7, 10, 3], dtype=np.float32)
 
     # For zero candidates
     lshf = LSHForest(min_hash_match=32)
