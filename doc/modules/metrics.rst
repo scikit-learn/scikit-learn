@@ -9,7 +9,7 @@ pairwise distances or affinity of sets of samples.
 This module contains both distance metrics and kernels. A brief summary is
 given on the two here.
 
-Distance metrics are a function ``d(a, b)`` such that ``d(a, b) < d(a, c)``
+Distance metrics are functions ``d(a, b)`` such that ``d(a, b) < d(a, c)``
 if objects ``a`` and ``b`` are considered "more similar" than objects ``a`` 
 and ``c``. Two objects exactly alike would have a distance of zero.
 One of the most popular examples is Euclidean distance.
@@ -63,7 +63,7 @@ is equivalent to :func:`linear_kernel`, only slower.)
       Information Retrieval. Cambridge University Press.
       http://nlp.stanford.edu/IR-book/html/htmledition/the-vector-space-model-for-scoring-1.html
 
-Linear Kernel
+Linear kernel
 -------------
 The function :func:`linear_kernel` computes the linear kernel, that is, a
 special case of :func:`polynomial_kernel` with ``degree=3`` and ``coef0=0`` (homogeneous).
@@ -73,7 +73,7 @@ If ``x`` and ``y`` are column vectors, their linear kernel is:
 
     k(x, y) = x^\top y
 
-Polynomial Kernel
+Polynomial kernel
 -----------------
 The function :func:`polynomial_kernel` computes the degree-d polynomial kernel
 between two vectors. The polynomial kernel represents the similarity between two
@@ -94,7 +94,7 @@ where:
 
 If :math:`c_0 = 0` the kernel is said to be homogeneous.
 
-Sigmoid Kernel
+Sigmoid kernel
 --------------
 The function :func:`sigmoid_kernel` computes the sigmoid kernel between two
 vectors. The sigmoid kernel is also known as hyperbolic tangent, or Multilayer
@@ -111,7 +111,7 @@ where:
     * :math:`\gamma` is known as slope
     * :math:`c_0` is known as intercept
 
-RBF Kernel
+RBF kernel
 ----------
 The function :func:`rbf_kernel` computes the Radial Basis Function (RBF) kernel 
 between two vectors. This kernel is defined as:
@@ -123,7 +123,7 @@ between two vectors. This kernel is defined as:
 where ``x`` and ``y`` are the input vectors. If :math:`\gamma = \sigma^{-2}` the
 kernel is known as Gaussian kernel of variance :math:`\sigma^2`.
 
-Chi Squared Kernel
+Chi squared kernel
 ------------------
 The chi squared kernel is a very popular choice for training non-linear SVMs in
 Computer Vision applications.
