@@ -66,7 +66,7 @@ is equivalent to :func:`linear_kernel`, only slower.)
 Linear kernel
 -------------
 The function :func:`linear_kernel` computes the linear kernel, that is, a
-special case of :func:`polynomial_kernel` with ``degree=3`` and ``coef0=0`` (homogeneous).
+special case of :func:`polynomial_kernel` with ``degree=1`` and ``coef0=0`` (homogeneous).
 If ``x`` and ``y`` are column vectors, their linear kernel is:
 
 .. math::
