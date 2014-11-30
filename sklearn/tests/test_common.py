@@ -15,7 +15,7 @@ import pkgutil
 from sklearn.externals.six import PY3
 from sklearn.externals.six.moves import zip
 from sklearn.utils.testing import assert_false, clean_warning_registry
-from sklearn.utils.testing import all_estimators as testing_all_estimators
+from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import SkipTest
@@ -60,10 +60,6 @@ from sklearn.utils.estimator_checks import (
     check_non_transformer_estimators_n_iter,
     CROSS_DECOMPOSITION)
 
-def all_estimators(*args, **kwargs):
-    # wrap all_estimators in ignore_warnings to suppress warnings
-    # about deprecated modules automatically imported
-    return ignore_warnings(testing_all_estimators)(*args, **kwargs)
 
 def test_all_estimator_no_base_class():
     # test that all_estimators doesn't find abstract classes.

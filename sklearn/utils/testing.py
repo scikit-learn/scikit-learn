@@ -536,7 +536,11 @@ def all_estimators(include_meta_estimators=False, include_other=False,
             path=path, prefix='sklearn.', onerror=lambda x: None):
         if ".tests." in modname:
             continue
-        module = __import__(modname, fromlist="dummy")
+        
+        # wrap __import__ in ignore_warnings to suppress warnings
+        # about deprecated modules
+        module = ignore_warnings(__import__)(modname, fromlist="dummy")
+        
         classes = inspect.getmembers(module, inspect.isclass)
         all_classes.extend(classes)
 
