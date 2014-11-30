@@ -454,7 +454,7 @@ class Ridge(_BaseRidge, RegressorMixin):
 
     See also
     --------
-    RidgeClassifier, RidgeCV
+    RidgeClassifier, RidgeCV, KernelRidge
 
     Examples
     --------
