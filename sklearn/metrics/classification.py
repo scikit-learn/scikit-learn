@@ -185,6 +185,78 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     return _weighted_sum(score, sample_weight, normalize)
 
 
+def balanced_accuracy_score(y_true, y_pred, sample_weight=None, bal_value=0.5):
+    """Balanced accuracy classification score.
+
+    Supports only binary classification. It returns a weighted average of the
+    accuracy and precision: 
+    accuracy*bal_value + precision*(1. - bal_value)
+
+
+    Parameters
+    ----------
+    y_true : 1d array-like (binary values, positive labels are 1), or label 
+        indicator array / sparse matrix. Ground truth (correct) labels.
+
+    y_pred : 1d array-like (binary values), or label indicator array / sparse matrix
+        Predicted labels, as returned by a classifier.
+
+   
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
+    bal_value : float, has to be between 0 and 1, is the balance between the accuracy 
+        and precision.
+        if 'bal_value == 1', it is the same as accuracy
+        if 'bal_value == 0', it is the same as precision
+
+    Returns
+    -------
+    score : float
+        accuracy*bal_value + precision*(1. - bal_value)
+        The best performance is 1, the worst is 0.
+
+    See also
+    --------
+    accuracy_score, precision_score
+
+    Notes
+    -----
+
+    see http://en.wikipedia.org/wiki/Accuracy_and_precision
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import balanced_accuracy_score
+    >>> y_pred = [0, 1, 1, 0]
+    >>> y_true = [1, 1, 1, 0]
+    >>> balanced_accuracy_score(y_true, y_pred, bal_value = 0.)
+    0.666666666667
+    >>> accuracy_score(y_true, y_pred, bal_value = 0.5)
+    0.708333333333
+    >>> accuracy_score(y_true, y_pred, bal_value = 1.)
+    0.75
+
+    """
+
+    if bal_value > 1. or bal_value < 0.:
+        raise ValueError("bal_value has to be between 0 and 1")
+
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+
+    if y_type is not 'binary':
+        raise ValueError("Only binary classification supported")
+
+    accuracy_sc = accuracy_score(y_true, y_pred, normalize=True,
+                                 sample_weight=sample_weight)
+    precision_sc = precision_score(y_true, y_pred, labels=None, pos_label=1,
+                                   average='weighted',
+                                   sample_weight=sample_weight)
+
+    return accuracy_sc*bal_value + precision_sc*(1. - bal_value)
+
+
 def confusion_matrix(y_true, y_pred, labels=None):
     """Compute confusion matrix to evaluate the accuracy of a classification
 

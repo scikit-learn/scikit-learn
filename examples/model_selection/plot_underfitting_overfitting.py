@@ -13,8 +13,13 @@ linear function (polynomial with degree 1) is not sufficient to fit the
 training samples. This is called **underfitting**. A polynomial of degree 4
 approximates the true function almost perfectly. However, for higher degrees
 the model will **overfit** the training data, i.e. it learns the noise of the
-training data.
+training data.  
+We evaluate quantitavely **overfitting** / **underfitting** by using 
+cross-validation. We calculate the mean squared error (MSE) on the validation 
+set, the higher, the less likely the model describes correctly the data (but 
+note that the method returns the MSE as a negative number!).
 """
+
 print(__doc__)
 
 import numpy as np
@@ -45,6 +50,10 @@ for i in range(len(degrees)):
                          ("linear_regression", linear_regression)])
     pipeline.fit(X[:, np.newaxis], y)
 
+    # EVALUATE THE MODEL USING CROSS-VALIDATION
+    scores = cross_validation.cross_val_score(pipeline, 
+        X[:, np.newaxis], y, scoring="mean_squared_error", cv=10)
+    
     X_test = np.linspace(0, 1, 100)
     plt.plot(X_test, pipeline.predict(X_test[:, np.newaxis]), label="Model")
     plt.plot(X_test, true_fun(X_test), label="True function")
@@ -54,5 +63,6 @@ for i in range(len(degrees)):
     plt.xlim((0, 1))
     plt.ylim((-2, 2))
     plt.legend(loc="best")
-    plt.title("Degree %d" % degrees[i])
+    plt.title("Degree {}\nMSE = {:.2e}(+/- {:.2e})" .format(degrees[i],
+     -scores.mean(), scores.std()))
 plt.show()
