@@ -126,8 +126,8 @@ def plot_qda_cov(qda, splot):
 ###############################################################################
 for i, (X, y) in enumerate([dataset_fixed_cov(), dataset_cov()]):
     # LDA
-    lda = LDA()
-    y_pred = lda.fit(X, y, store_covariance=True).predict(X)
+    lda = LDA(solver="svd", store_covariance=True)
+    y_pred = lda.fit(X, y).predict(X)
     splot = plot_data(lda, X, y, y_pred, fig_index=2 * i + 1)
     plot_lda_cov(lda, splot)
     plt.axis('tight')
