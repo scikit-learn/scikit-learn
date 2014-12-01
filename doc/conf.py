@@ -233,8 +233,6 @@ trim_doctests_flags = True
 def setup(app):
     # to hide/show the prompt in code examples:
     app.add_javascript('js/copybutton.js')
-    # to format example galleries:
-    app.add_javascript('js/examples.js')
 
 
 # The following is used by sphinx.ext.linkcode to provide links to github
