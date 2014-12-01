@@ -203,7 +203,7 @@ class LossFunction(six.with_metaclass(ABCMeta, object)):
             The residuals (usually the negative gradient).
         y_pred : np.ndarray, shape=(n,):
             The predictions.
-        sample_weight np.ndarray, shape=(n,):
+        sample_weight : np.ndarray, shape=(n,):
             The weight of each sample.
         """
         # compute leaf for each sample in ``X``.
@@ -1534,7 +1534,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
         Returns
         -------
-        y: array of shape = [n_samples]
+        y : array of shape = [n_samples]
             The predicted values.
         """
         return self.decision_function(X).ravel()

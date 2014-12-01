@@ -598,7 +598,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         is an L1 penalty.  For ``0 < l1_ratio < 1``, the penalty is a
         combination of L1 and L2.
 
-    fit_intercept: bool
+    fit_intercept : bool
         Whether the intercept should be estimated or not. If ``False``, the
         data is assumed to be already centered.
 
@@ -619,7 +619,7 @@ class ElasticNet(LinearModel, RegressorMixin):
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    tol: float, optional
+    tol : float, optional
         The tolerance for the optimization: if the updates are
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
@@ -629,7 +629,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
-    positive: bool, optional
+    positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
     selection : str, default 'cyclic'
@@ -961,7 +961,7 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
     path_params : dictionary
         Parameters passed to the path function
 
-    alphas: array-like, optional
+    alphas : array-like, optional
         Array of float that is used for cross-validation. If not
         provided, computed using 'path'
 
@@ -975,7 +975,7 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
         The order of the arrays expected by the path function to
         avoid memory copies
 
-    dtype: a numpy dtype or None
+    dtype : a numpy dtype or None
         The dtype of the arrays expected by the path function to
         avoid memory copies
     """
@@ -1261,10 +1261,10 @@ class LassoCV(LinearModelCV, RegressorMixin):
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
-    max_iter: int, optional
+    max_iter : int, optional
         The maximum number of iterations
 
-    tol: float, optional
+    tol : float, optional
         The tolerance for the optimization: if the updates are
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller

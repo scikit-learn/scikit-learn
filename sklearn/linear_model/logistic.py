@@ -356,7 +356,7 @@ def _multinomial_loss_grad_hess(w, X, Y, alpha, sample_weight):
         (n_classes * (n_features + 1),)
         Ravelled gradient of the multinomial loss.
 
-    hessp: callable
+    hessp : callable
         Function that takes in a vector input of shape (n_classes * n_features)
         or (n_classes * (n_features + 1)) and returns matrix-vector product
         with hessian.
