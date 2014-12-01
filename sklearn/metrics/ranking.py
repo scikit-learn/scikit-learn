@@ -643,8 +643,8 @@ def coverage_error(y_true, y_score, sample_weight=None):
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
-    Return
-    ------
+    Returns
+    -------
     coverage_error : float
 
     References

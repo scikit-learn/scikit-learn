@@ -15,7 +15,8 @@ from ..metrics.pairwise import pairwise_kernels
 class KernelPCA(BaseEstimator, TransformerMixin):
     """Kernel Principal component analysis (KPCA)
 
-    Non-linear dimensionality reduction through the use of kernels.
+    Non-linear dimensionality reduction through the use of kernels (see
+    :ref:`metrics`).
 
     Parameters
     ----------
