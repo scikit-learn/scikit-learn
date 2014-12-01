@@ -2,6 +2,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from abc import ABCMeta, abstractmethod
+import warnings
 
 from .base import LinearClassifierMixin, LinearModel, SparseCoefMixin
 from ..base import RegressorMixin, BaseEstimator
@@ -34,7 +35,7 @@ def multiprocess_method(instance, name, args=()):
 # https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf
 class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
     def __init__(self, alpha=0.0001, fit_intercept=True, max_iter=1000,
-                 tol=.01, verbose=0,
+                 tol=0.01, verbose=0,
                  random_state=None, eta0='auto', warm_start=False):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
@@ -113,19 +114,24 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
         else:
             step_size = self.eta0
 
-        intercept_, num_seen = sag_sparse(dataset, coef_init.ravel(),
-                                          intercept_init, n_samples,
-                                          n_features, self.tol,
-                                          self.max_iter,
-                                          self.loss_function,
-                                          step_size, self.alpha,
-                                          sum_gradient_init.ravel(),
-                                          gradient_memory_init.ravel(),
-                                          seen_init.ravel(),
-                                          num_seen_init, weight_pos,
-                                          weight_neg,
-                                          intercept_decay,
-                                          self.verbose)
+        intercept_, num_seen, max_iter_reached = \
+            sag_sparse(dataset, coef_init.ravel(),
+                       intercept_init, n_samples,
+                       n_features, self.tol,
+                       self.max_iter,
+                       self.loss_function,
+                       step_size, self.alpha,
+                       sum_gradient_init.ravel(),
+                       gradient_memory_init.ravel(),
+                       seen_init.ravel(),
+                       num_seen_init, weight_pos,
+                       weight_neg,
+                       intercept_decay,
+                       self.verbose)
+
+        if max_iter_reached:
+            warnings.warn("The max_iter was reached which means "
+                          "the coef_ did not converge")
 
         return (coef_init.reshape(1, -1), intercept_,
                 sum_gradient_init.reshape(1, -1),
@@ -137,7 +143,7 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
 class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
     @abstractmethod
     def __init__(self, alpha=0.0001,
-                 fit_intercept=True, max_iter=1000, tol=.01, verbose=0,
+                 fit_intercept=True, max_iter=1000, tol=0.01, verbose=0,
                  n_jobs=1, random_state=None,
                  eta0='auto', class_weight=None, warm_start=False):
         self.n_jobs = n_jobs
@@ -279,7 +285,7 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
 class BaseSAGRegressor(six.with_metaclass(ABCMeta, BaseSAG)):
     @abstractmethod
     def __init__(self, alpha=0.0001, fit_intercept=True, max_iter=1000,
-                 tol=.01, verbose=0, random_state=None, eta0='auto',
+                 tol=0.01, verbose=0, random_state=None, eta0='auto',
                  warm_start=False):
 
         self.loss_function = SquaredLoss()
@@ -402,7 +408,7 @@ class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin,
     SAGClassifier(alpha=0.0001, class_weight=None,
                   eta0='auto', fit_intercept=True,
                   max_iter=1000, n_jobs=1, random_state=None,
-                  tol=.01, verbose=0, warm_start=False)
+                  tol=0.01, verbose=0, warm_start=False)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -412,7 +418,7 @@ class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin,
 
     """
     def __init__(self, alpha=0.0001, fit_intercept=True, max_iter=1000,
-                 tol=.01, verbose=0, n_jobs=1, random_state=None,
+                 tol=0.01, verbose=0, n_jobs=1, random_state=None,
                  eta0='auto', class_weight=None, warm_start=False):
 
         super(SAGClassifier, self).__init__(alpha=alpha,
@@ -505,7 +511,7 @@ class SAGRegressor(BaseSAGRegressor, _LearntSelectorMixin,
     ... #doctest: +NORMALIZE_WHITESPACE
     SAGRegressor(alpha=0.0001, eta0='auto',
                  fit_intercept=True, max_iter=1000, random_state=None,
-                 tol=.01, verbose=0, warm_start=False)
+                 tol=0.01, verbose=0, warm_start=False)
 
     See also
     --------
@@ -513,12 +519,13 @@ class SAGRegressor(BaseSAGRegressor, _LearntSelectorMixin,
 
     """
     def __init__(self, alpha=0.0001, fit_intercept=True, max_iter=1000,
-                 tol=.01, verbose=0, random_state=None, eta0='auto',
+                 tol=0.01, verbose=0, random_state=None, eta0='auto',
                  warm_start=False):
         super(SAGRegressor, self).__init__(alpha=alpha,
                                            fit_intercept=fit_intercept,
                                            max_iter=max_iter,
                                            verbose=verbose,
+                                           tol=tol,
                                            random_state=random_state,
                                            eta0=eta0, warm_start=warm_start)
 

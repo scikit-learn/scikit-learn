@@ -225,11 +225,7 @@ def sag_sparse(SequentialDataset dataset,
                           " with StandardScaler or"
                           " MinMaxScaler might help.") % (total_iter + 1))
 
-    if max_iter_reached:
-        warnings.warn("The max_iter was reached which means "
-                      "the coef_ did not converge")
-
-    return intercept, num_seen
+    return intercept, num_seen, max_iter_reached
 
 
 cdef void scale_weights(double* weights, double wscale, int n_features,

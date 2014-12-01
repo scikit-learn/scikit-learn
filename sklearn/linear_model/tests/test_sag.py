@@ -10,6 +10,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.datasets import make_blobs
 
+
 # this is used for sag classification
 def log_dloss(p, y):
     z = p * y
@@ -164,9 +165,11 @@ class DenseSAGRegressorTestCase(unittest.TestCase, CommonTest):
         alpha = .1
         n_features = 20
         n_samples = 100
-        n_iter = 60
+        max_iter = 1000
+        tol = .001
+        n_iter = 51
         clf1 = self.factory(eta0=eta, alpha=alpha,
-                            n_iter=n_iter, random_state=77)
+                            max_iter=max_iter, tol=tol, random_state=77)
         rng = np.random.RandomState(0)
         X = rng.normal(size=(n_samples, n_features))
         w = rng.normal(size=n_features)
@@ -174,11 +177,8 @@ class DenseSAGRegressorTestCase(unittest.TestCase, CommonTest):
 
         clf1.fit(X, y)
 
-        indexes = np.random.random_integers(0, n_samples - 1,
-                                            n_iter * n_samples)
-
         spweights, spintercept = self.sag_sparse(X, y, eta, alpha,
-                                                 indexes=indexes,
+                                                 n_iter=n_iter,
                                                  dloss=squared_dloss)
 
         assert_array_almost_equal(clf1.coef_.ravel(),
@@ -192,9 +192,11 @@ class DenseSAGRegressorTestCase(unittest.TestCase, CommonTest):
         alpha = .1
         n_features = 20
         n_samples = 100
-        n_iter = 100
-        clf1 = self.factory(eta0=eta, alpha=alpha,
-                            n_iter=n_iter, random_state=77)
+        n_iter = 53
+        max_iter = 1000
+        tol = .001
+        clf1 = self.factory(eta0=eta, alpha=alpha, warm_start=True,
+                            max_iter=max_iter, tol=tol, random_state=77)
         rng = np.random.RandomState(0)
         X = rng.normal(size=(n_samples, n_features))
         w = rng.normal(size=n_features)
@@ -203,11 +205,8 @@ class DenseSAGRegressorTestCase(unittest.TestCase, CommonTest):
         clf1.fit(X, y)
         clf1.fit(X, y)
 
-        indexes = np.random.random_integers(0, n_samples - 1,
-                                            n_iter * n_samples)
-
         spweights, spintercept = self.sag_sparse(X, y, eta, alpha,
-                                                 indexes=indexes,
+                                                 n_iter=n_iter,
                                                  dloss=squared_dloss)
 
         assert_array_almost_equal(clf1.coef_.ravel(),
@@ -217,21 +216,21 @@ class DenseSAGRegressorTestCase(unittest.TestCase, CommonTest):
 
     def test_auto_eta(self):
         """tests the auto eta computed correctly"""
-        indexes = [2, 0, 0, 0, 2, 2]
         X = np.array([[1, 2, 3], [2, 3, 4], [2, 3, 2]])
         y = [.5, .6, .7]
         alpha = 1.0
-        n_iter = 600
-        indexes = np.random.random_integers(0, 2, n_iter * 3)
+        n_iter = 10
+        tol = .01
+        max_iter = 1000
         # sum the squares of the second sample because that's the largest
         eta = 4 + 9 + 16
         eta = 1.0 / (eta + alpha)
 
         clf1 = self.factory(eta0='auto', alpha=alpha,
-                            n_iter=n_iter, random_state=77)
+                            max_iter=max_iter, tol=tol, random_state=77)
         clf1.fit(X, y)
         spweights, spintercept = self.sag_sparse(X, y, eta, alpha,
-                                                 indexes=indexes,
+                                                 n_iter=n_iter,
                                                  dloss=squared_dloss)
 
         assert_array_almost_equal(clf1.coef_.ravel(),
@@ -243,13 +242,15 @@ class DenseSAGRegressorTestCase(unittest.TestCase, CommonTest):
         """tests the if the sag regressor performs well"""
         xmin, xmax = -5, 5
         n_samples = 100
+        tol = .001
+        max_iter = 20
         rng = np.random.RandomState(0)
         X = np.linspace(xmin, xmax, n_samples).reshape(n_samples, 1)
 
         # simple linear function without noise
         y = 0.5 * X.ravel()
 
-        clf = self.factory(eta0=.001, alpha=0.1, n_iter=20)
+        clf = self.factory(eta0=.001, alpha=0.1, max_iter=max_iter, tol=tol)
         clf.fit(X, y)
         score = clf.score(X, y)
         assert_greater(score, 0.99)
@@ -257,7 +258,7 @@ class DenseSAGRegressorTestCase(unittest.TestCase, CommonTest):
         # simple linear function with noise
         y = 0.5 * X.ravel() + rng.randn(n_samples, 1).ravel()
 
-        clf = self.factory(eta0=.001, alpha=0.1, n_iter=20)
+        clf = self.factory(eta0=.001, alpha=0.1, max_iter=max_iter, tol=tol)
         clf.fit(X, y)
         score = clf.score(X, y)
         assert_greater(score, 0.5)
@@ -277,9 +278,11 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
         eta = .001
         alpha = .1
         n_samples = 50
-        n_iter = 20
+        n_iter = 8
+        tol = .1
+        max_iter = 1000
         clf1 = self.factory(eta0=eta, alpha=alpha,
-                            n_iter=n_iter, random_state=77)
+                            max_iter=max_iter, tol=tol, random_state=77)
         X, y = make_blobs(n_samples=n_samples, centers=2, random_state=0,
                           cluster_std=0.1)
 
@@ -307,28 +310,26 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
         eta = .001
         alpha = .1
         n_samples = 50
-        n_iter = 40
+        tol = .05
+        max_iter = 1000
         clf1 = self.factory(eta0=eta, alpha=alpha,
-                            n_iter=n_iter, random_state=77)
-        rng = np.random.RandomState(0)
+                            max_iter=max_iter, tol=tol, random_state=77)
         X, y = make_blobs(n_samples=n_samples, centers=3, random_state=0,
                           cluster_std=0.1)
         classes = np.unique(y)
+        itrs = [16, 12, 16]
 
         clf1.fit(X, y)
 
-        indexes = rng.random_integers(0, n_samples - 1,
-                                      n_iter * n_samples)
-
         coef = []
         intercept = []
-        for cl in classes:
+        for cl, it in zip(classes, itrs):
             y_encoded = np.ones(n_samples)
             y_encoded[y != cl] = -1
 
             spweights, spintercept = self.sag_sparse(X, y_encoded, eta, alpha,
-                                                     indexes=indexes,
-                                                     dloss=log_dloss)
+                                                     dloss=log_dloss,
+                                                     n_iter=it)
             coef.append(spweights)
             intercept.append(spintercept)
 
@@ -347,12 +348,14 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
         alpha = .1
         n_features = 20
         n_samples = 10
+        tol = .01
+        max_iter = 2000
         rng = np.random.RandomState(0)
         X = rng.normal(size=(n_samples, n_features))
         w = rng.normal(size=n_features)
         y = np.dot(X, w)
         y = np.sign(y)
-        clf = self.factory(eta0=eta, alpha=alpha, n_iter=20)
+        clf = self.factory(eta0=eta, alpha=alpha,  max_iter=max_iter, tol=tol)
         clf.fit(X, y)
         pred = clf.predict(X)
         assert_almost_equal(pred, y, decimal=12)
@@ -363,8 +366,11 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
         alpha = .1
         n_samples = 50
         n_iter = 30
+        tol = .01
+        max_iter = 2000
         clf1 = self.factory(eta0=eta, alpha=alpha,
-                            n_iter=n_iter, random_state=77, warm_start=True)
+                            max_iter=max_iter, tol=tol, random_state=77,
+                            warm_start=True)
         rng = np.random.RandomState(0)
         X, y = make_blobs(n_samples=n_samples, centers=2, random_state=0,
                           cluster_std=0.1)
@@ -394,10 +400,11 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
         eta = .001
         alpha = .1
         n_samples = 20
-        n_iter = 150
+        tol = .1
+        max_iter = 3000
         clf1 = self.factory(eta0=eta, alpha=alpha,
-                            n_iter=n_iter, random_state=77, warm_start=True)
-        rng = np.random.RandomState(0)
+                            max_iter=max_iter, tol=tol, random_state=77,
+                            warm_start=True)
         X, y = make_blobs(n_samples=n_samples, centers=3, random_state=0,
                           cluster_std=0.1)
         classes = np.unique(y)
@@ -405,17 +412,16 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
         clf1.fit(X, y)
         clf1.fit(X, y)
 
-        indexes = rng.random_integers(0, n_samples - 1,
-                                      2 * n_iter * n_samples)
+        itrs = [13, 11, 12]
 
         coef = []
         intercept = []
-        for cl in classes:
+        for cl, it in zip(classes, itrs):
             y_encoded = np.ones(n_samples)
             y_encoded[y != cl] = -1
 
             spweights, spintercept = self.sag_sparse(X, y_encoded, eta, alpha,
-                                                     indexes=indexes,
+                                                     n_iter=it,
                                                      dloss=log_dloss)
             coef.append(spweights)
             intercept.append(spintercept)
@@ -434,7 +440,9 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
         eta = .001
         alpha = .1
         n_samples = 50
-        n_iter = 20
+        n_iter = 9
+        tol = .1
+        max_iter = 1000
         rng = np.random.RandomState(0)
         X, y = make_blobs(n_samples=n_samples, centers=2, random_state=0,
                           cluster_std=0.1)
@@ -445,7 +453,7 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
 
         class_weight = {1: .45, -1: .55}
 
-        clf1 = self.factory(eta0=eta, alpha=alpha, n_iter=n_iter,
+        clf1 = self.factory(eta0=eta, alpha=alpha, max_iter=max_iter, tol=tol,
                             random_state=77, warm_start=True,
                             class_weight=class_weight)
 
@@ -470,32 +478,32 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
         eta = .001
         alpha = .1
         n_samples = 20
-        n_iter = 100
+        tol = .1
+        max_iter = 1000
         class_weight = {0: .45, 1: .55, 2: .75}
 
-        rng = np.random.RandomState(0)
         X, y = make_blobs(n_samples=n_samples, centers=3, random_state=0,
                           cluster_std=0.1)
         classes = np.unique(y)
 
-        clf1 = self.factory(eta0=eta, alpha=alpha, n_iter=n_iter,
+        clf1 = self.factory(eta0=eta, alpha=alpha, max_iter=max_iter, tol=tol,
                             random_state=77, warm_start=True,
                             class_weight=class_weight)
 
         clf1.fit(X, y)
 
-        indexes = rng.random_integers(0, n_samples - 1, n_iter * n_samples)
+        itrs = [9, 9, 10]
 
         coef = []
         intercept = []
-        for cl in classes:
+        for cl, it in zip(classes, itrs):
             y_encoded = np.ones(n_samples)
             y_encoded[y != cl] = -1
             cl_weight = {-1: 1.0, 1: 1.0}
             cl_weight[1] = class_weight[cl]
 
             spweights, spintercept = self.sag_sparse(X, y_encoded, eta, alpha,
-                                                     indexes=indexes,
+                                                     n_iter=it,
                                                      dloss=log_dloss,
                                                      class_weight=cl_weight)
             coef.append(spweights)
