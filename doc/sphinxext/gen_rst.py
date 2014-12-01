@@ -942,7 +942,7 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
             image_list += HLIST_IMAGE_TEMPLATE % figure_name.lstrip('/')
 
     time_m, time_s = divmod(time_elapsed, 60)
-    f = open(os.path.join(target_dir, base_image_name + 'rst'), 'w')
+    f = open(os.path.join(target_dir, base_image_name + '.rst'), 'w')
     f.write(this_template % locals())
     f.flush()
 
