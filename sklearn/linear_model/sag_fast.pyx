@@ -55,6 +55,8 @@ def sag_sparse(SequentialDataset dataset,
     cdef int idx
     # the total number of interations through the data
     cdef int total_iter = 0
+    # helper to track iterations through samples
+    cdef int itr
     # the index (row number) of the current sample
     cdef int current_index
     # helper variable for the weight of a pos/neg class
@@ -84,7 +86,7 @@ def sag_sparse(SequentialDataset dataset,
 
     # the cumulative sums needed for JIT params
     cdef np.ndarray[double, ndim=1] cumulative_sums_array = \
-        np.empty(max_iter * n_samples + 1,
+        np.empty(n_samples + 1,
                  dtype=np.double,
                  order="c")
     cdef double* cumulative_sums = <double*> cumulative_sums_array.data
@@ -114,7 +116,7 @@ def sag_sparse(SequentialDataset dataset,
     with nogil:
         start_time = time(NULL)
         while True:
-            for k in range(n_samples):
+            for itr in range(n_samples):
 
                 # extract a random sample
                 current_index = dataset.random(&x_data_ptr,
@@ -131,10 +133,10 @@ def sag_sparse(SequentialDataset dataset,
                 # make the weight updates
                 for j in range(xnnz):
                     idx = x_ind_ptr[j]
-                    weights[idx] -= ((cumulative_sums[total_iter] -
+                    weights[idx] -= ((cumulative_sums[itr] -
                                       cumulative_sums[feature_hist[idx]]) *
                                      sum_gradient[idx])
-                    feature_hist[idx] = total_iter
+                    feature_hist[idx] = itr
 
                     # check to see that the weight is not inf or NaN
                     if not skl_isfinite(weights[idx]):
@@ -176,19 +178,20 @@ def sag_sparse(SequentialDataset dataset,
 
                 # if wscale gets too small, we need to reset the scale
                 if wscale < 1e-9:
-                    scale_weights(weights, wscale, n_features, total_iter,
+                    scale_weights(weights, wscale, n_features, n_samples, itr,
                                   cumulative_sums, feature_hist, sum_gradient)
                     wscale = 1.0
 
-                cumulative_sums[total_iter + 1] = (cumulative_sums[total_iter]
-                                                   + eta / (wscale * num_seen))
+                cumulative_sums[itr + 1] = (cumulative_sums[itr]
+                                            + eta / (wscale * num_seen))
 
                 total_iter += 1
 
             # check if the stopping criteria is reached
-            scale_weights(weights, wscale, n_features, total_iter,
+            scale_weights(weights, wscale, n_features, n_samples, n_samples,
                           cumulative_sums, feature_hist, sum_gradient)
             wscale = 1.0
+
             max_change = 0.0
             max_weight = 0.0
             for j in range(n_features):
@@ -230,13 +233,20 @@ def sag_sparse(SequentialDataset dataset,
 
 
 cdef void scale_weights(double* weights, double wscale, int n_features,
-                        int total_iter, double* cumulative_sums,
+                        int n_samples, int total_iter, double* cumulative_sums,
                         int* feature_hist, double* sum_gradient) nogil:
     for j in range(n_features):
         weights[j] -= ((cumulative_sums[total_iter] -
-                            cumulative_sums[feature_hist[j]]) *
-                           sum_gradient[j])
+                        cumulative_sums[feature_hist[j]]) *
+                        sum_gradient[j])
         weights[j] *= wscale
+
+    # reset parameters
+    for j in range(n_samples + 1):
+        cumulative_sums[j] = 0.0
+    for j in range(n_features):
+        feature_hist[j] = 0
+
 
 def get_auto_eta(SequentialDataset dataset, double alpha,
                  int n_samples, LossFunction loss):
