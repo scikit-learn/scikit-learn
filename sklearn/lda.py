@@ -204,7 +204,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         self.n_components = n_components
         self.store_covariance = store_covariance
 
-    def _solve_lsqr(self, X, y, shrinkage, rcond=1e-11):
+    def _solve_lsqr(self, X, y, shrinkage, rcond=None):
         """Least squares solver.
 
         Parameters
@@ -222,13 +222,8 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
               - float between 0 and 1: fixed shrinkage constant.
         """
         self.means_, self.covariance_ = _means_cov(X, y, shrinkage)
-        self.xbar_ = np.dot(self.priors_, self.means_)
-
-        # TODO: weight covariances with priors?
-        means = self.means_ - self.xbar_
-
-        self.coef_ = linalg.lstsq(self.covariance_, means.T, rcond)[0].T
-        self.intercept_ = (-0.5 * np.diag(np.dot(means, self.coef_.T))
+        self.coef_ = linalg.lstsq(self.covariance_, self.means_.T, rcond)[0].T
+        self.intercept_ = (-0.5 * np.diag(np.dot(self.means_, self.coef_.T))
                            + np.log(self.priors_))
 
     def _solve_eigen(self, X, y, shrinkage):
@@ -249,18 +244,12 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
               - float between 0 and 1: fixed shrinkage constant.
         """
         self.means_, self.covariance_ = _means_cov(X, y, shrinkage)
-        self.xbar_ = np.dot(self.priors_, self.means_)
-
-        St = _cov(X, shrinkage)
-        Sb = St - self.covariance_
-        means = self.means_ - self.xbar_
-
-        _, self.scalings_ = linalg.eigh(Sb, self.covariance_)
-
-        coef = np.dot(means, self.scalings_)
-        self.intercept_ = (-0.5 * np.diag(np.dot(means, coef.T))
+        St = _cov(X, shrinkage)  # total scatter
+        Sb = St - self.covariance_  # between scatter, Sb = St - Sw
+        w, v = linalg.eigh(Sb, self.covariance_)
+        self.coef_ = np.dot(self.means_, v).dot(v.T)
+        self.intercept_ = (-0.5 * np.diag(np.dot(self.means_, self.coef_.T))
                            + np.log(self.priors_))
-        self.coef_ = np.dot(coef, self.scalings_.T)
 
     def _solve_svd(self, X, y, tol=1.0e-4):
         """SVD solver.
@@ -324,6 +313,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         self.intercept_ = (-0.5 * np.sum(coef**2, axis=1)
                            + np.log(self.priors_))
         self.coef_ = np.dot(coef, self.scalings_.T)
+        self.intercept_ -= np.dot(self.xbar_, self.coef_.T)
 
     def fit(self, X, y):
         """Fit LDA model according to the given training data and parameters.
@@ -361,7 +351,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     def _decision_function(self, X):
         X = check_array(X)
-        return np.dot(X - self.xbar_, self.coef_.T) + self.intercept_
+        return np.dot(X, self.coef_.T) + self.intercept_
 
     def decision_function(self, X):
         """Return decision function values for test vector X.
