@@ -18,26 +18,26 @@ class Perceptron(BaseSGDClassifier, _LearntSelectorMixin):
         Constant that multiplies the regularization term if regularization is
         used. Defaults to 0.0001
 
-    fit_intercept: bool
+    fit_intercept : bool
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
-    n_iter: int, optional
+    n_iter : int, optional
         The number of passes over the training data (aka epochs).
         Defaults to 5.
 
-    shuffle: bool, optional
+    shuffle : bool, optional
         Whether or not the training data should be shuffled after each epoch.
         Defaults to False.
 
-    random_state: int seed, RandomState instance, or None (default)
+    random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
         shuffling the data.
 
-    verbose: integer, optional
+    verbose : integer, optional
         The verbosity level
 
-    n_jobs: integer, optional
+    n_jobs : integer, optional
         The number of CPUs to use to do the OVA (One Versus All, for
         multi-class problems) computation. -1 means 'all CPUs'. Defaults
         to 1.
@@ -45,7 +45,7 @@ class Perceptron(BaseSGDClassifier, _LearntSelectorMixin):
     eta0 : double
         Constant by which the updates are multiplied. Defaults to 1.
 
-    class_weight : dict, {class_label : weight} or "auto" or None, optional
+    class_weight : dict, {class_label: weight} or "auto" or None, optional
         Preset for the class_weight fit parameter.
 
         Weights associated with classes. If not given, all classes
@@ -60,8 +60,8 @@ class Perceptron(BaseSGDClassifier, _LearntSelectorMixin):
 
     Attributes
     ----------
-    coef_ : array, shape = [1, n_features] if n_classes == 2 else [n_classes,
-    n_features]
+    coef_ : array, shape = [1, n_features] if n_classes == 2 else [n_classes,\
+            n_features]
         Weights assigned to the features.
 
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]

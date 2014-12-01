@@ -556,7 +556,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
 
         Returns
         -------
-        y: array of shape = [n_samples] or [n_samples, n_outputs]
+        y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted values.
         """
         # Check data
@@ -1288,7 +1288,7 @@ class RandomTreesEmbedding(BaseForest):
         If not None then ``max_depth`` will be ignored.
         Note: this parameter is tree-specific.
 
-    sparse_output: bool, optional (default=True)
+    sparse_output : bool, optional (default=True)
         Whether or not to return a sparse CSR matrix, as default behavior,
         or to return a dense array compatible with dense pipeline operators.
 
@@ -1393,7 +1393,7 @@ class RandomTreesEmbedding(BaseForest):
 
         Returns
         -------
-        X_transformed: sparse matrix, shape=(n_samples, n_out)
+        X_transformed : sparse matrix, shape=(n_samples, n_out)
             Transformed dataset.
         """
         # ensure_2d=False because there are actually unit test checking we fail
@@ -1424,7 +1424,7 @@ class RandomTreesEmbedding(BaseForest):
 
         Returns
         -------
-        X_transformed: sparse matrix, shape=(n_samples, n_out)
+        X_transformed : sparse matrix, shape=(n_samples, n_out)
             Transformed dataset.
         """
         return self.one_hot_encoder_.transform(self.apply(X))

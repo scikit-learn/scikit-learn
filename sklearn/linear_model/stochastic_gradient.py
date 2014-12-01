@@ -605,27 +605,27 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
         Defaults to 0.15.
 
-    fit_intercept: bool
+    fit_intercept : bool
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
-    n_iter: int, optional
+    n_iter : int, optional
         The number of passes over the training data (aka epochs). The number
         of iterations is set to 1 if using partial_fit.
         Defaults to 5.
 
-    shuffle: bool, optional
+    shuffle : bool, optional
         Whether or not the training data should be shuffled after each epoch.
         Defaults to False.
 
-    random_state: int seed, RandomState instance, or None (default)
+    random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
         shuffling the data.
 
-    verbose: integer, optional
+    verbose : integer, optional
         The verbosity level
 
-    epsilon: float
+    epsilon : float
         Epsilon in the epsilon-insensitive loss functions; only if `loss` is
         'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'.
         For 'huber', determines the threshold at which it becomes less
@@ -633,7 +633,7 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         For epsilon-insensitive, any differences between the current prediction
         and the correct label are ignored if they are less than this threshold.
 
-    n_jobs: integer, optional
+    n_jobs : integer, optional
         The number of CPUs to use to do the OVA (One Versus All, for
         multi-class problems) computation. -1 means 'all CPUs'. Defaults
         to 1.
@@ -652,7 +652,7 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     power_t : double
         The exponent for inverse scaling learning rate [default 0.5].
 
-    class_weight : dict, {class_label : weight} or "auto" or None, optional
+    class_weight : dict, {class_label: weight} or "auto" or None, optional
         Preset for the class_weight fit parameter.
 
         Weights associated with classes. If not given, all classes
@@ -673,8 +673,8 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
 
     Attributes
     ----------
-    coef_ : array, shape (1, n_features) if n_classes == 2 else (n_classes,
-    n_features)
+    coef_ : array, shape (1, n_features) if n_classes == 2 else (n_classes,\
+            n_features)
         Weights assigned to the features.
 
     intercept_ : array, shape (1,) if n_classes == 2 else (n_classes,)
@@ -1114,7 +1114,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
         Defaults to 0.15.
 
-    fit_intercept: bool
+    fit_intercept : bool
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
@@ -1123,18 +1123,18 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
         of iterations is set to 1 if using partial_fit.
         Defaults to 5.
 
-    shuffle: bool, optional
+    shuffle : bool, optional
         Whether or not the training data should be shuffled after each epoch.
         Defaults to False.
 
-    random_state: int seed, RandomState instance, or None (default)
+    random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
         shuffling the data.
 
-    verbose: integer, optional
+    verbose : integer, optional
         The verbosity level.
 
-    epsilon: float
+    epsilon : float
         Epsilon in the epsilon-insensitive loss functions; only if `loss` is
         'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'.
         For 'huber', determines the threshold at which it becomes less

@@ -85,22 +85,22 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     verbose : int (default=0)
         Controls output verbosity.
 
-    return_path: bool, (optional=True)
+    return_path : bool, (optional=True)
         If ``return_path==True`` returns the entire path, else returns only the
         last point of the path.
 
     Returns
     --------
-    alphas: array, shape: [n_alphas + 1]
+    alphas : array, shape: [n_alphas + 1]
         Maximum of covariances (in absolute value) at each iteration.
         ``n_alphas`` is either ``max_iter``, ``n_features`` or the
         number of nodes in the path with ``alpha >= alpha_min``, whichever
         is smaller.
 
-    active: array, shape [n_alphas]
+    active : array, shape [n_alphas]
         Indices of active variables at the end of the path.
 
-    coefs: array, shape (n_features, n_alphas + 1)
+    coefs : array, shape (n_features, n_alphas + 1)
         Coefficients along the path
 
     n_iter : int
@@ -486,7 +486,7 @@ class Lars(LinearModel, RegressorMixin):
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    eps: float, optional
+    eps : float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. Unlike the ``tol`` parameter in some iterative
@@ -909,7 +909,7 @@ class LarsCV(Lars):
         Number of CPUs to use during the cross validation. If ``-1``, use
         all the CPUs
 
-    eps: float, optional
+    eps : float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems.
@@ -1067,7 +1067,7 @@ class LassoLarsCV(LarsCV):
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
-    max_iter: integer, optional
+    max_iter : integer, optional
         Maximum number of iterations to perform.
 
     cv : cross-validation generator, optional
@@ -1082,7 +1082,7 @@ class LassoLarsCV(LarsCV):
         Number of CPUs to use during the cross validation. If ``-1``, use
         all the CPUs
 
-    eps: float, optional
+    eps : float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems.
@@ -1152,7 +1152,7 @@ class LassoLarsIC(LassoLars):
 
     Parameters
     ----------
-    criterion: 'bic' | 'aic'
+    criterion : 'bic' | 'aic'
         The type of criterion to use.
 
     fit_intercept : boolean
@@ -1174,11 +1174,11 @@ class LassoLarsIC(LassoLars):
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
-    max_iter: integer, optional
+    max_iter : integer, optional
         Maximum number of iterations to perform. Can be used for
         early stopping.
 
-    eps: float, optional
+    eps : float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. Unlike the ``tol`` parameter in some iterative

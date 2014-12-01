@@ -15,26 +15,26 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     C : float
         Maximum step size (regularization). Defaults to 1.0.
 
-    fit_intercept: bool
+    fit_intercept : bool
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
-    n_iter: int, optional
+    n_iter : int, optional
         The number of passes over the training data (aka epochs).
         Defaults to 5.
 
-    shuffle: bool, optional
+    shuffle : bool, optional
         Whether or not the training data should be shuffled after each epoch.
         Defaults to False.
 
-    random_state: int seed, RandomState instance, or None (default)
+    random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
         shuffling the data.
 
-    verbose: integer, optional
+    verbose : integer, optional
         The verbosity level
 
-    n_jobs: integer, optional
+    n_jobs : integer, optional
         The number of CPUs to use to do the OVA (One Versus All, for
         multi-class problems) computation. -1 means 'all CPUs'. Defaults
         to 1.
@@ -50,8 +50,8 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
     Attributes
     ----------
-    coef_ : array, shape = [1, n_features] if n_classes == 2 else [n_classes,
-    n_features]
+    coef_ : array, shape = [1, n_features] if n_classes == 2 else [n_classes,\
+            n_features]
         Weights assigned to the features.
 
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
@@ -155,27 +155,27 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     C : float
         Maximum step size (regularization). Defaults to 1.0.
 
-    epsilon: float
+    epsilon : float
         If the difference between the current prediction and the correct label
         is below this threshold, the model is not updated.
 
-    fit_intercept: bool
+    fit_intercept : bool
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
-    n_iter: int, optional
+    n_iter : int, optional
         The number of passes over the training data (aka epochs).
         Defaults to 5.
 
-    shuffle: bool, optional
+    shuffle : bool, optional
         Whether or not the training data should be shuffled after each epoch.
         Defaults to False.
 
-    random_state: int seed, RandomState instance, or None (default)
+    random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
         shuffling the data.
 
-    verbose: integer, optional
+    verbose : integer, optional
         The verbosity level
 
     loss : string, optional
@@ -190,8 +190,8 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
     Attributes
     ----------
-    coef_ : array, shape = [1, n_features] if n_classes == 2 else [n_classes,
-    n_features]
+    coef_ : array, shape = [1, n_features] if n_classes == 2 else [n_classes,\
+            n_features]
         Weights assigned to the features.
 
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
