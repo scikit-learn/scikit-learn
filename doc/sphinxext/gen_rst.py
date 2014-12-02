@@ -503,11 +503,11 @@ def generate_example_rst(app):
     }
     </style>
 
+.. _examples-index:
 
 Examples
 ========
 
-.. _examples-index:
 """)
     # Here we don't use an os.walk, but we recurse only twice: flat is
     # better than nested.
@@ -570,11 +570,9 @@ def _thumbnail_div(subdir, full_dir, fname, snippet):
 .. raw:: html
 
 
-    <div class="thumbnailContainer">
-        <div class="docstringWrapper">
+    <div class="thumbnailContainer" tooltip="{}">
 
-
-""")
+""".format(snippet))
 
     out.append('.. figure:: %s\n' % thumb)
     if link_name.startswith('._'):
@@ -588,12 +586,9 @@ def _thumbnail_div(subdir, full_dir, fname, snippet):
 
 .. raw:: html
 
-
-    <p>%s
-    </p></div>
     </div>
 
-""" % (ref_name, snippet))
+""" % (ref_name))
     return ''.join(out)
 
 
@@ -826,7 +821,7 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
                                'stdout_%s.txt' % base_image_name)
     time_path = os.path.join(image_dir,
                              'time_%s.txt' % base_image_name)
-    thumb_file = os.path.join(thumb_dir, fname[:-3] + '.png')
+    thumb_file = os.path.join(thumb_dir, base_image_name + '.png')
     time_elapsed = 0
     if plot_gallery and fname.startswith('plot'):
         # generate the plot as png image if file name
@@ -923,7 +918,7 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
             os.makedirs(car_thumb_path)
         if os.path.exists(first_image_file):
             # We generate extra special thumbnails for the carousel
-            carousel_tfile = os.path.join(car_thumb_path, fname[:-3] + '_carousel.png')
+            carousel_tfile = os.path.join(car_thumb_path, base_image_name + '_carousel.png')
             first_img = image_fname % 1
             if first_img in carousel_thumbs:
                 make_thumbnail((image_path % carousel_thumbs[first_img][0]),
@@ -947,7 +942,7 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
             image_list += HLIST_IMAGE_TEMPLATE % figure_name.lstrip('/')
 
     time_m, time_s = divmod(time_elapsed, 60)
-    f = open(os.path.join(target_dir, fname[:-2] + 'rst'), 'w')
+    f = open(os.path.join(target_dir, base_image_name + '.rst'), 'w')
     f.write(this_template % locals())
     f.flush()
 
