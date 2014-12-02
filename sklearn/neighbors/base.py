@@ -482,7 +482,7 @@ class RadiusNeighborsMixin(object):
                 dist = pairwise_distances(X, self._fit_X,
                                           self.effective_metric_,
                                           **self.effective_metric_params_)
-            neigh_ind = [np.where(d < radius)[0] for d in dist]
+            neigh_ind = [np.where(d <= radius)[0] for d in dist]
 
             # if there are the same number of neighbors for each point,
             # we can do a normal array.  Otherwise, we return an object
