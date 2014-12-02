@@ -27,6 +27,7 @@ import matplotlib.pyplot as plt
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
+from sklearn import cross_validation
 
 np.random.seed(0)
 
@@ -37,7 +38,7 @@ true_fun = lambda X: np.cos(1.5 * np.pi * X)
 X = np.sort(np.random.rand(n_samples))
 y = true_fun(X) + np.random.randn(n_samples) * 0.1
 
-plt.figure(figsize=(14, 4))
+plt.figure(figsize=(14, 5))
 for i in range(len(degrees)):
     ax = plt.subplot(1, len(degrees), i+1)
     plt.setp(ax, xticks=(), yticks=())
