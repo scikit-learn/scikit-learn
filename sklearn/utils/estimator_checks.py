@@ -32,6 +32,7 @@ from sklearn.feature_selection import SelectKBest
 from sklearn.svm.base import BaseLibSVM
 
 from sklearn.utils.validation import DataConversionWarning
+from sklearn.utils import ConvergenceWarning
 from sklearn.cross_validation import train_test_split
 
 from sklearn.utils import shuffle
@@ -54,16 +55,16 @@ def _boston_subset(n_samples=200):
         BOSTON = X, y
     return BOSTON
 
-
 def set_fast_parameters(estimator):
     # speed up some estimators
     params = estimator.get_params()
     if "n_iter" in params:
         estimator.set_params(n_iter=5)
     if "max_iter" in params:
-        # NMF
+        warnings.simplefilter("ignore", ConvergenceWarning)
         if estimator.max_iter is not None:
-            estimator.set_params(max_iter=min(5, estimator.max_iter))
+            # NMF, SVC, NuSVC, SAGRegressor, SAGClassifier
+            estimator.set_params(max_iter=10)
     if "n_resampling" in params:
         # randomized lasso
         estimator.set_params(n_resampling=5)
@@ -519,7 +520,6 @@ def check_classifiers_train(name, Classifier):
             # raises error on malformed input for predict_proba
             assert_raises(ValueError, classifier.predict_proba, X.T)
 
-
 def check_classifiers_input_shapes(name, Classifier):
     iris = load_iris()
     X, y = iris.data, iris.target
@@ -540,7 +540,7 @@ def check_classifiers_input_shapes(name, Classifier):
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always", DataConversionWarning)
         classifier.fit(X, y[:, np.newaxis])
-    assert_equal(len(w), 1)
+    assert_true(issubclass(w[0].category, DataConversionWarning))
     assert_array_equal(y_pred, classifier.predict(X))
 
 

@@ -137,7 +137,6 @@ def test_clustering():
             yield check_clustering, name, Alg
             yield check_estimators_partial_fit_n_features, name, Alg
 
-
 def test_classifiers():
     # test if classifiers can cope with non-consecutive classes
     classifiers = all_estimators(type_filter='classifier')
@@ -364,7 +363,8 @@ def test_non_transformer_estimators_n_iter():
                 # libsvm and accessing the iter parameter is non-trivial.
                 if name in (['Ridge', 'SVR', 'NuSVR', 'NuSVC',
                              'RidgeClassifier', 'SVC', 'RandomizedLasso',
-                             'LogisticRegressionCV']):
+                             'LogisticRegressionCV', 'SAGClassifier',
+                             'SAGRegressor']):
                     continue
 
                 # Tested in test_transformer_n_iter below

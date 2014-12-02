@@ -6,8 +6,8 @@ import warnings
 
 from .base import LinearClassifierMixin, LinearModel, SparseCoefMixin
 from ..base import RegressorMixin, BaseEstimator
-from sklearn.feature_selection.from_model import _LearntSelectorMixin
 from ..utils import check_X_y, compute_class_weight, check_random_state
+from ..utils import ConvergenceWarning
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
@@ -131,7 +131,7 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
 
         if max_iter_reached:
             warnings.warn("The max_iter was reached which means "
-                          "the coef_ did not converge")
+                          "the coef_ did not converge", ConvergenceWarning)
 
         return (coef_init.reshape(1, -1), intercept_,
                 sum_gradient_init.reshape(1, -1),
@@ -323,8 +323,7 @@ class BaseSAGRegressor(six.with_metaclass(ABCMeta, BaseSAG)):
                                                seen_init, num_seen_init)
 
 
-class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin,
-                    LinearClassifierMixin, BaseEstimator):
+class SAGClassifier(BaseSAGClassifier, LinearClassifierMixin, BaseEstimator):
     """Linear classifiers (SVM, logistic regression, a.o.) with SAG training.
 
     This estimator implements regularized linear models with stochastic
@@ -354,9 +353,12 @@ class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin,
         data is assumed to be already centered. Defaults to True.
 
     max_iter: int, optional
-        The number of passes over the training data (aka epochs). The number
-        of iterations is set to 1 if using partial_fit.
-        Defaults to 5.
+        The max number of passes over the training data if the stopping
+        criterea is not reached. Defaults to 1000.
+
+    tol: double, optional
+        The stopping criterea for the weights. THe iterations will stop when
+        max(change in weights) / max(weights) < tol. Defaults to .001
 
     random_state: int or numpy.random.RandomState, optional
         The random_state of the pseudo random number generator to use when
@@ -445,8 +447,8 @@ class SAGClassifier(BaseSAGClassifier, _LearntSelectorMixin,
         return self
 
 
-class SAGRegressor(BaseSAGRegressor, _LearntSelectorMixin,
-                   LinearModel, RegressorMixin, BaseEstimator):
+class SAGRegressor(BaseSAGRegressor, LinearModel, RegressorMixin,
+                   BaseEstimator):
     """Linear model fitted by minimizing a regularized empirical loss with SAG
 
     SAG stands for Stochastic Average Gradient: the gradient of the loss is
@@ -472,9 +474,13 @@ class SAGRegressor(BaseSAGRegressor, _LearntSelectorMixin,
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
-    max_iter : int, optional
-        The number of passes over the training data (aka epochs).
-        Defaults to 5.
+    max_iter: int, optional
+        The max number of passes over the training data if the stopping
+        criterea is not reached. Defaults to 1000.
+
+    tol: double, optional
+        The stopping criterea for the weights. THe iterations will stop when
+        max(change in weights) / max(weights) < tol. Defaults to .001
 
     random_state: int or numpy.random.RandomState, optional
         The random_state of the pseudo random number generator to use when
