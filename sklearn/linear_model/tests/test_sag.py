@@ -302,7 +302,7 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
 
         assert_array_almost_equal(clf1.coef_.ravel(),
                                   spweights.ravel(),
-                                  decimal=2)
+                                  decimal=1)
         assert_almost_equal(clf1.intercept_, spintercept, decimal=1)
 
     def test_sag_multiclass_computed_correctly(self):
