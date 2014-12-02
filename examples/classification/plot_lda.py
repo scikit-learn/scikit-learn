@@ -19,6 +19,7 @@ n_train = 20  # samples for training
 n_test = 200  # samples for testing
 n_averages = 50  # how often to repeat classification
 n_features_max = 75  # maximum number of features
+step = 4  # step size for the calculation
 
 
 def generate_data(n_samples, n_features):
@@ -38,7 +39,7 @@ def generate_data(n_samples, n_features):
     return X, y
 
 acc_clf1, acc_clf2 = [], []
-n_features_range = range(1, n_features_max + 1)
+n_features_range = range(1, n_features_max + 1, step)
 for n_features in n_features_range:
     score_clf1, score_clf2 = 0, 0
     for _ in range(n_averages):
