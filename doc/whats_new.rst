@@ -123,7 +123,7 @@ Enhancements
      memory allocations of large temporary data-structures. By `Antony Lee`_.
 
    -  Parellization of the computation of feature importances in random forest.
-      By `Olivier Grisel`_ and `Gilles Louppe`_.
+      By `Olivier Grisel`_ and `Arnaud Joly`_.
 
 Documentation improvements
 ..........................
