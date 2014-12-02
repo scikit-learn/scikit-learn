@@ -196,7 +196,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         return self
 
 
-class LinearSVR(LinearModel, RegressorMixin, SparseCoefMixin):
+class LinearSVR(LinearModel, RegressorMixin):
     """Linear Support Vector Regression.
 
     Similar to SVR with parameter kernel='linear', but implemented in terms of
