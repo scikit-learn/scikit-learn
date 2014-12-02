@@ -289,7 +289,7 @@ class LinearSVR(LinearModel, RegressorMixin):
     """
 
 
-    def __init__(self, epsilon=0.1, tol=1e-4, C=1.0, loss='l1', fit_intercept=True, 
+    def __init__(self, epsilon=0.0, tol=1e-4, C=1.0, loss='l1', fit_intercept=True, 
                  intercept_scaling=1., dual=False, verbose=0, random_state=None, 
                  max_iter=1000):
         self.tol = tol
