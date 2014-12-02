@@ -278,10 +278,10 @@ class DenseSAGClassifierTestCase(unittest.TestCase, CommonTest):
         eta = .001
         alpha = .1
         n_samples = 50
-        n_iter = 8
-        tol = .1
+        n_iter = 59
+        tol = .01
         max_iter = 1000
-        clf1 = self.factory(eta0=eta, alpha=alpha,
+        clf1 = self.factory(eta0=eta, alpha=alpha, verbose=1,
                             max_iter=max_iter, tol=tol, random_state=77)
         X, y = make_blobs(n_samples=n_samples, centers=2, random_state=0,
                           cluster_std=0.1)
