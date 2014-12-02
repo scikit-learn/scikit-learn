@@ -175,7 +175,8 @@ def test_svr():
     for clf in (svm.NuSVR(kernel='linear', nu=.4, C=1.0),
                 svm.NuSVR(kernel='linear', nu=.4, C=10.),
                 svm.SVR(kernel='linear', C=10.), 
-                svm.LinearSVR(C=10.)
+                svm.LinearSVR(C=10.),
+                svm.LinearSVR(C=10.),
                 ):
         clf.fit(diabetes.data, diabetes.target)
         assert_greater(clf.score(diabetes.data, diabetes.target), 0.02)
@@ -195,8 +196,8 @@ def test_linearsvr():
     
     svr = svm.SVR(kernel='linear', C=1e3).fit(diabetes.data, diabetes.target)
     score2 = svr.score(diabetes.data, diabetes.target)
-    
-    assert_almost_equal(score1, score2, decimal=1)
+
+    assert np.abs(score1 - score2) < 0.1
 
 
 def test_svr_errors():

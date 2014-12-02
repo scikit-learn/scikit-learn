@@ -209,15 +209,17 @@ class LinearSVR(LinearModel, RegressorMixin, SparseCoefMixin):
     Parameters
     ----------
     C : float, optional (default=1.0)
-        Penalty parameter C of the error term.
+        Penalty parameter C of the error term. The penalty is a squared
+        l2 penalty. The bigger this parater, the less regularization is used.
+
+    loss : string, 'l1' or 'l2' (default='l2')
+        Specifies the loss function. 'l1' is the epsilon-insensitive loss
+        (standard SVR) while 'l2' is the squared epsilon-insensitive loss.
 
     epsilon : float, optional (default=0.1)
-        Epsilon parameter in the epsilon-insensitive loss function.
-
-    penalty : string, 'l1' or 'l2' (default='l2')
-        Specifies the norm used in the penalization. The 'l2'
-        penalty is the standard used in SVC. The 'l1' leads to `coef_`
-        vectors that are sparse.
+        Epsilon parameter in the epsilon-insensitive loss function. Note
+        that the value of this parameter depends on the scale of the target
+        variable y. If unsure, set epsilon=0.
 
     dual : bool, (default=True)
         Select the algorithm to either solve the dual or primal
@@ -287,9 +289,9 @@ class LinearSVR(LinearModel, RegressorMixin, SparseCoefMixin):
     """
 
 
-    def __init__(self, penalty='l2', epsilon=0.1, tol=1e-4, C=1.0, fit_intercept=True, intercept_scaling=1,
-                 verbose=0, random_state=None, max_iter=1000):
-        self.penalty = penalty
+    def __init__(self, epsilon=0.1, tol=1e-4, C=1.0, loss='l1', fit_intercept=True, 
+                 intercept_scaling=1., dual=False, verbose=0, random_state=None, 
+                 max_iter=1000):
         self.tol = tol
         self.C = C
         self.epsilon = epsilon
@@ -298,6 +300,8 @@ class LinearSVR(LinearModel, RegressorMixin, SparseCoefMixin):
         self.verbose = verbose
         self.random_state = random_state
         self.max_iter = max_iter
+        self.dual = dual
+        self.loss = loss
 
     def fit(self, X, y):
         """Fit the model according to the given training data.
@@ -321,11 +325,11 @@ class LinearSVR(LinearModel, RegressorMixin, SparseCoefMixin):
                              % self.C)
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64, order="C")
-
+        loss = {'l1': 'ei', 'l2' : 'se'}.get(self.loss)
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
-            None, self.penalty, False, self.verbose,
-            self.max_iter, self.tol, self.random_state, loss='ei',
+            None, 'l2', self.dual, self.verbose,
+            self.max_iter, self.tol, self.random_state, loss=loss,
             epsilon=self.epsilon)
         self.coef_ = self.coef_.ravel()
 

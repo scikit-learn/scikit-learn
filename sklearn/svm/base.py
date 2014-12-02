@@ -616,7 +616,10 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
         'PL1_LL2_D0': 5,  # L1 penalty, L2 Loss, primal form
         'PL1_LLR_D0': 6,  # L1 penalty, logistic regression
         'PL2_LLR_D1': 7,  # L2 penalty, logistic regression, dual form
-        'PL2_LEI_D0': 11, # L2 penalty, epsilon-insensitive loss, primal form
+        'PL2_LSE_D0': 11, # L2 penalty, squared epsilon-insensitive loss, primal form
+        'PL2_LSE_D1': 12, # L2 penalty, squared epsilon-insensitive loss, dual form
+        'PL2_LEI_D0': 13, # L2 penalty, epsilon-insensitive loss, primal form
+        
     }
 
     if multi_class == 'crammer_singer':
