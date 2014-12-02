@@ -18,7 +18,6 @@ from six import string_types
 
 from .base import BaseEstimator, ClassifierMixin, TransformerMixin
 from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
-from .utils.extmath import logsumexp
 from .utils.multiclass import unique_labels
 from .utils import check_array, check_X_y
 from .preprocessing import StandardScaler
@@ -346,12 +345,11 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         else:
             raise ValueError("unknown solver {} (valid solvers are 'svd', "
                              "'lsqr', and 'eigen').".format(self.solver))
-
+        if self.classes_.size == 2:  # treat binary case as a special case
+            self.coef_ = np.array(self.coef_[1, :] - self.coef_[0, :], ndmin=2)
+            self.intercept_ = np.array(self.intercept_[1] - self.intercept_[0],
+                                       ndmin=1)
         return self
-
-    def _decision_function(self, X):
-        X = check_array(X)
-        return np.dot(X, self.coef_.T) + self.intercept_
 
     def decision_function(self, X):
         """Return decision function values for test vector X.
@@ -368,10 +366,15 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             In the two-class case, the shape is (n_samples,), giving the
             log likelihood ratio of the positive class.
         """
-        dec_func = self._decision_function(X)
+        X = check_array(X)
+        try:
+            d = np.dot(X, self.coef_.T) + self.intercept_
+        except:
+            raise ValueError("Malformed input X.")
         if len(self.classes_) == 2:
-            return dec_func[:, 1] - dec_func[:, 0]
-        return dec_func
+            return np.squeeze(d)
+        else:
+            return d
 
     def transform(self, X):
         """Project data to maximize class separation.
@@ -408,9 +411,11 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         C : array, shape (n_samples,)
             Predicted class labels.
         """
-        d = self._decision_function(X)
-        y_pred = self.classes_.take(d.argmax(1))
-        return y_pred
+        d = self.decision_function(X)
+        if len(self.classes_) == 2:
+            return self.classes_.take(d > 0).ravel()
+        else:
+            return self.classes_.take(d.argmax(1))
 
     def predict_proba(self, X):
         """Probability estimates.
@@ -425,12 +430,17 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         C : array, shape (n_samples, n_classes)
             Estimated probabilities.
         """
-        values = self._decision_function(X)
-        # compute the likelihood of the underlying gaussian models
-        # up to a multiplicative constant.
-        likelihood = np.exp(values - values.max(axis=1)[:, np.newaxis])
-        # compute posterior probabilities
-        return likelihood / likelihood.sum(axis=1)[:, np.newaxis]
+        prob = self.decision_function(X)
+        prob *= -1
+        np.exp(prob, prob)
+        prob += 1
+        np.reciprocal(prob, prob)
+        if len(self.classes_) == 2:  # binary case
+            return np.column_stack([1 - prob, prob])
+        else:
+            # OvR normalization, like LibLinear's predict_probability
+            prob /= prob.sum(axis=1).reshape((prob.shape[0], -1))
+            return prob
 
     def predict_log_proba(self, X):
         """Log of probability estimates.
@@ -445,7 +455,4 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         C : array, shape (n_samples, n_classes)
             Estimated log probabilities.
         """
-        values = self._decision_function(X)
-        loglikelihood = (values - values.max(axis=1)[:, np.newaxis])
-        normalization = logsumexp(loglikelihood, axis=1)
-        return loglikelihood - normalization[:, np.newaxis]
+        return np.log(self.predict_proba(X))
