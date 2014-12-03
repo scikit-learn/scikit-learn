@@ -91,7 +91,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     ----------
     coef_ : array, shape = [n_features] if n_classes == 2 \
             else [n_classes, n_features]
-        Weights asigned to the features (coefficients in the primal
+        Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
         `coef_` is a readonly property derived from `raw_coef_` that \
@@ -260,7 +260,7 @@ class LinearSVR(LinearModel, RegressorMixin):
     ----------
     coef_ : array, shape = [n_features] if n_classes == 2 \
             else [n_classes, n_features]
-        Weights asigned to the features (coefficients in the primal
+        Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
         `coef_` is a readonly property derived from `raw_coef_` that \
@@ -427,7 +427,7 @@ class SVC(BaseSVC):
         SVM section of the User Guide for details.
 
     coef_ : array, shape = [n_class-1, n_features]
-        Weights asigned to the features (coefficients in the primal
+        Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
         `coef_` is a readonly property derived from `dual_coef_` and
@@ -551,7 +551,7 @@ class NuSVC(BaseSVC):
         the SVM section of the User Guide for details.
 
     coef_ : array, shape = [n_class-1, n_features]
-        Weights asigned to the features (coefficients in the primal
+        Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
@@ -668,7 +668,7 @@ class SVR(BaseLibSVM, RegressorMixin):
         Coefficients of the support vector in the decision function.
 
     coef_ : array, shape = [1, n_features]
-        Weights asigned to the features (coefficients in the primal
+        Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
@@ -784,7 +784,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         Coefficients of the support vector in the decision function.
 
     coef_ : array, shape = [1, n_features]
-        Weights asigned to the features (coefficients in the primal
+        Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
@@ -894,7 +894,7 @@ class OneClassSVM(BaseLibSVM):
         Coefficient of the support vector in the decision function.
 
     coef_ : array, shape = [n_classes-1, n_features]
-        Weights asigned to the features (coefficients in the primal
+        Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
