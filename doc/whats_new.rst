@@ -12,6 +12,12 @@ Changelog
 New features
 ............
 
+
+   - Added :class:`svm.LinearSVR`. This class uses the liblinear implementation
+     of Support Vector Regression which is much faster for large
+     sample sizes than :class:`svm.SVR` with linear kernel. By 
+     `Fabian Pedregosa`_ and Qiang Luo.
+
    - Incremental fit for :class:`GaussianNB <naive_bayes.GaussianNB>`.
 
    - Add ``sample_weight`` support to :class:`dummy.DummyClassifier` and

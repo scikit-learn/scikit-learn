@@ -64,6 +64,9 @@ def set_fast_parameters(estimator):
         # NMF
         if estimator.max_iter is not None:
             estimator.set_params(max_iter=min(5, estimator.max_iter))
+        # LinearSVR
+        if estimator.__class__.__name__ == 'LinearSVR':
+            estimator.set_params(max_iter=20)
     if "n_resampling" in params:
         # randomized lasso
         estimator.set_params(n_resampling=5)
