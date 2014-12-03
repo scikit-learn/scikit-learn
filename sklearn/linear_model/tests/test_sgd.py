@@ -597,6 +597,41 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf = self.factory(alpha=0.1, n_iter=1000, class_weight=[0.5])
         clf.fit(X, Y)
 
+    def test_weights_in_fit(self):
+        """Tests to see if weights passed through fit method"""
+        weights = {1: .6, 2: .3}
+        different_weights = {1: 1.1, 2: .7}
+
+        clf1 = self.factory(alpha=0.1, n_iter=20, class_weight=weights)
+        clf2 = self.factory(alpha=0.1, n_iter=20,
+                            class_weight=different_weights)
+
+        clf1.fit(X4, Y4)
+        clf2.fit(X4, Y4)
+        clf2.fit(X4, Y4, class_weight=weights)
+
+        assert_array_equal(clf1.coef_, clf2.coef_)
+
+    def test_weights_multiplied(self):
+        """Tests that class_weight and sample_weight are multiplicative"""
+        class_weights = {1: .6, 2: .3}
+        sample_weights = np.random.random(Y4.shape[0])
+        multiplied_together = np.copy(sample_weights)
+        multiplied_together[Y4 == 1] *= class_weights[1]
+        multiplied_together[Y4 == 2] *= class_weights[2]
+
+        clf1 = self.factory(alpha=0.1, n_iter=20, class_weight=class_weights)
+        clf2 = self.factory(alpha=0.1, n_iter=20)
+        clf3 = self.factory(alpha=0.1, n_iter=20)
+
+        clf1.fit(X4, Y4, sample_weight=sample_weights)
+        clf2.fit(X4, Y4, sample_weight=multiplied_together)
+        clf3.fit(X4, Y4, class_weight=class_weights,
+                 sample_weight=sample_weights)
+
+        assert_array_equal(clf1.coef_, clf2.coef_)
+        assert_array_equal(clf2.coef_, clf3.coef_)
+
     def test_auto_weight(self):
         """Test class weights for imbalanced data"""
         # compute reference metrics on iris dataset that is quite balanced by
