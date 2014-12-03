@@ -188,7 +188,7 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
     >>> clf = LDA()
     >>> clf.fit(X, y)
     LDA(n_components=None, priors=None, shrinkage=None, solver='svd',
-      store_covariance=False)
+      store_covariance=False, tol=0.0001)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -197,12 +197,13 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
     sklearn.qda.QDA: Quadratic discriminant analysis
     """
     def __init__(self, solver='svd', shrinkage=None, priors=None,
-                 n_components=None, store_covariance=False):
+                 n_components=None, store_covariance=False, tol=1e-4):
         self.solver = solver
         self.shrinkage = shrinkage
         self.priors = priors
         self.n_components = n_components
-        self.store_covariance = store_covariance
+        self.store_covariance = store_covariance  # used only in svd solver
+        self.tol = tol  # used only in svd solver
 
     def _solve_lsqr(self, X, y, shrinkage, rcond=None):
         """Least squares solver.
@@ -315,7 +316,7 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
         self.coef_ = np.dot(coef, self.scalings_.T)
         self.intercept_ -= np.dot(self.xbar_, self.coef_.T)
 
-    def fit(self, X, y):
+    def fit(self, X, y, store_covariance=False, tol=1.0e-4):
         """Fit LDA model according to the given training data and parameters.
 
         Parameters
@@ -326,6 +327,14 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
         y : array, shape (n_samples,)
             Target values.
         """
+        if store_covariance:
+            warnings.warn("'store_covariance' was moved to __init__() method.",
+                          DeprecationWarning)
+            self.store_covariance = store_covariance
+        if tol != 1.0e-4:
+            warnings.warn("'tol' was moved to __init__() method.",
+                          DeprecationWarning)
+            self.tol = tol
         X, y = check_X_y(X, y)
         self.classes_ = unique_labels(y)
 
@@ -338,7 +347,7 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
         if self.solver == 'svd':
             if self.shrinkage is not None:
                 raise NotImplementedError('shrinkage not supported')
-            self._solve_svd(X, y)
+            self._solve_svd(X, y, tol=tol)
         elif self.solver == 'lsqr':
             self._solve_lsqr(X, y, shrinkage=self.shrinkage)
         elif self.solver == 'eigen':
