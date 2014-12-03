@@ -618,8 +618,8 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
         'PL2_LLR_D1': 7,  # L2 penalty, logistic regression, dual form
         'PL2_LSE_D0': 11, # L2 penalty, squared epsilon-insensitive loss, primal form
         'PL2_LSE_D1': 12, # L2 penalty, squared epsilon-insensitive loss, dual form
-        'PL2_LEI_D0': 13, # L2 penalty, epsilon-insensitive loss, primal form
-        
+        'PL2_LEI_D1': 13, # L2 penalty, epsilon-insensitive loss, dual form
+
     }
 
     if multi_class == 'crammer_singer':
@@ -650,7 +650,7 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
 
 def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
                    penalty, dual, verbose, max_iter, tol,
-                   random_state=None, multi_class='ovr', loss='lr', 
+                   random_state=None, multi_class='ovr', loss='lr',
                    epsilon=0.1):
     """Used by Logistic Regression (and CV) and LinearSVC.
 

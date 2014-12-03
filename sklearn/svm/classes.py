@@ -221,7 +221,7 @@ class LinearSVR(LinearModel, RegressorMixin):
         that the value of this parameter depends on the scale of the target
         variable y. If unsure, set epsilon=0.
 
-    dual : bool, (default=False)
+    dual : bool, (default=True)
         Select the algorithm to either solve the dual or primal
         optimization problem. Prefer dual=False when n_samples > n_features.
 
@@ -289,8 +289,8 @@ class LinearSVR(LinearModel, RegressorMixin):
     """
 
 
-    def __init__(self, epsilon=0.0, tol=1e-4, C=1.0, loss='l1', fit_intercept=True, 
-                 intercept_scaling=1., dual=False, verbose=0, random_state=None, 
+    def __init__(self, epsilon=0.0, tol=1e-4, C=1.0, loss='l1', fit_intercept=True,
+                 intercept_scaling=1., dual=True, verbose=0, random_state=None,
                  max_iter=1000):
         self.tol = tol
         self.C = C
