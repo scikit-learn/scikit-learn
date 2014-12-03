@@ -71,8 +71,12 @@ estimator. Shrinkage LDA can be used by setting the ``shrinkage`` parameter of
 the :class:`lda.LDA` class to 'auto'. This automatically determines the
 optimal shrinkage parameter in an analytic way following the lemma introduced
 by Ledoit and Wolf. Note that currently shrinkage only works when setting the
-``solver`` parameter to 'lsqr' or 'eigen'. The shrinkage parameter
-``shrinkage`` can also be manually set to a number between 0 and 1.
+``solver`` parameter to 'lsqr' or 'eigen'. Both solvers yield almost identical
+results, but `lsqr` also works (without shrinkage) in the case where the number
+of features is greater than the number of samples. Therefore, `lsqr` is
+recommended over `eigen`.
+
+The ``shrinkage`` parameter can also be manually set between 0 and 1.
 
 .. |shrinkage| image:: ../auto_examples/classification/images/plot_lda_001.png
         :target: ../auto_examples/classification/plot_lda.html
