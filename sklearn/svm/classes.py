@@ -221,7 +221,7 @@ class LinearSVR(LinearModel, RegressorMixin):
         that the value of this parameter depends on the scale of the target
         variable y. If unsure, set epsilon=0.
 
-    dual : bool, (default=True)
+    dual : bool, (default=False)
         Select the algorithm to either solve the dual or primal
         optimization problem. Prefer dual=False when n_samples > n_features.
 
