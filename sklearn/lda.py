@@ -39,7 +39,7 @@ def _cov(X, shrinkage=None):
         Shrinkage parameter, possible values:
           - None: no shrinkage (default).
           - 'empirical': same as None.
-          - 'ledoit_wolf': shrinkage using the Ledoit-Wolf lemma.
+          - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
           - float between 0 and 1: fixed shrinkage constant.
 
     Returns
@@ -49,7 +49,7 @@ def _cov(X, shrinkage=None):
     """
     shrinkage = "empirical" if shrinkage is None else shrinkage
     if isinstance(shrinkage, string_types):
-        if shrinkage == 'ledoit_wolf':
+        if shrinkage == 'auto':
             # standardize features
             sc = StandardScaler()
             X = sc.fit_transform(X)
@@ -102,7 +102,7 @@ def _means_cov(X, y, shrinkage=None):
     shrinkage : string or float, optional
         Shrinkage parameter, possible values:
           - None: no shrinkage (default).
-          - 'ledoit_wolf': shrinkage using the Ledoit-Wolf lemma.
+          - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
           - float between 0 and 1: fixed shrinkage constant.
     """
     means = []
@@ -143,7 +143,7 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
     shrinkage : string or float, optional
         Shrinkage parameter, possible values:
           - None: no shrinkage (default).
-          - 'ledoit_wolf': shrinkage using the Ledoit-Wolf lemma.
+          - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
           - float between 0 and 1: fixed shrinkage constant.
         Note that shrinkage works only with 'lsqr' and 'eigen' solvers.
 
@@ -218,7 +218,7 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
         shrinkage : string or float, optional
             Shrinkage parameter, possible values:
               - None: no shrinkage (default).
-              - 'ledoit_wolf': shrinkage using the Ledoit-Wolf lemma.
+              - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
               - float between 0 and 1: fixed shrinkage constant.
         """
         self.means_, self.covariance_ = _means_cov(X, y, shrinkage)
@@ -240,7 +240,7 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
         shrinkage : string or float, optional
             Shrinkage parameter, possible values:
               - None: no shrinkage (default).
-              - 'ledoit_wolf': shrinkage using the Ledoit-Wolf lemma.
+              - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
               - float between 0 and 1: fixed shrinkage constant.
         """
         self.means_, self.covariance_ = _means_cov(X, y, shrinkage)

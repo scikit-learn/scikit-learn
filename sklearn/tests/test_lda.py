@@ -20,8 +20,8 @@ y3 = np.array([1, 1, 2, 2, 3, 3])
 X1 = np.array([[-2, ], [-1, ], [-1, ], [1, ], [1, ], [2, ]], dtype='f')
 
 solver_shrinkage = [('svd', None), ('lsqr', None), ('eigen', None),
-                    ('lsqr', 'ledoit_wolf'), ('lsqr', 0), ('lsqr', 0.43),
-                    ('eigen', 'ledoit_wolf'), ('eigen', 0), ('eigen', 0.43)]
+                    ('lsqr', 'auto'), ('lsqr', 0), ('lsqr', 0.43),
+                    ('eigen', 'auto'), ('eigen', 0), ('eigen', 0.43)]
 
 
 def test_lda_predict():
@@ -58,7 +58,7 @@ def test_lda_predict():
     assert_raises(ValueError, clf.fit, X, y)
     clf = lda.LDA(solver="eigen", shrinkage="dummy")
     assert_raises(ValueError, clf.fit, X, y)
-    clf = lda.LDA(solver="svd", shrinkage="ledoit_wolf")
+    clf = lda.LDA(solver="svd", shrinkage="auto")
     assert_raises(NotImplementedError, clf.fit, X, y)
     # Test unknown solver
     clf = lda.LDA(solver="dummy")

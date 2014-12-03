@@ -45,7 +45,7 @@ for n_features in n_features_range:
     for _ in range(n_averages):
         X, y = generate_data(n_train, n_features)
 
-        clf1 = LDA(solver='lsqr', shrinkage='ledoit_wolf').fit(X, y)
+        clf1 = LDA(solver='lsqr', shrinkage='auto').fit(X, y)
         clf2 = LDA(solver='lsqr', shrinkage=None).fit(X, y)
 
         X, y = generate_data(n_test, n_features)

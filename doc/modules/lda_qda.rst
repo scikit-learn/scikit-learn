@@ -68,7 +68,7 @@ Shrinkage is a tool to improve estimation of covariance matrices in situations
 where the number of training samples is small compared to the number of
 features. In this scenario, the empirical sample covariance is a poor
 estimator. Shrinkage LDA can be used by setting the ``shrinkage`` parameter of
-the :class:`lda.LDA` class to 'ledoit_wolf'. This automatically determines the
+the :class:`lda.LDA` class to 'auto'. This automatically determines the
 optimal shrinkage parameter in an analytic way following the lemma introduced
 by Ledoit and Wolf. Note that currently shrinkage only works when setting the
 ``solver`` parameter to 'lsqr' or 'eigen'. The shrinkage parameter
