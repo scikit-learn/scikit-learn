@@ -75,16 +75,16 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         automatically adjust weights inversely proportional to
         class frequencies.
 
-    verbose : int, default: 0
+    verbose : int, (default=0)
         Enable verbose output. Note that this setting takes advantage of a
         per-process runtime setting in liblinear that, if enabled, may not work
         properly in a multithreaded context.
 
-    random_state : int seed, RandomState instance, or None (default)
+    random_state : int seed, RandomState instance, or None (default=None)
         The seed of the pseudo random number generator to use when
         shuffling the data.
 
-    max_iter : int, default 1000
+    max_iter : int, (default=1000)
         The maximum number of iterations to be run.
 
     Attributes
@@ -94,7 +94,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-        `coef_` is readonly property derived from `raw_coef_` that \
+        `coef_` is a readonly property derived from `raw_coef_` that \
         follows the internal memory layout of liblinear.
 
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
@@ -244,16 +244,16 @@ class LinearSVR(LinearModel, RegressorMixin):
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased
 
-    verbose : int, default: 0
+    verbose : int, (default=0)
         Enable verbose output. Note that this setting takes advantage of a
         per-process runtime setting in liblinear that, if enabled, may not work
         properly in a multithreaded context.
 
-    random_state : int seed, RandomState instance, or None (default)
+    random_state : int seed, RandomState instance, or None (default=None)
         The seed of the pseudo random number generator to use when
         shuffling the data.
 
-    max_iter : int, default 1000
+    max_iter : int, (default=1000)
         The maximum number of iterations to be run.
 
     Attributes
@@ -263,7 +263,7 @@ class LinearSVR(LinearModel, RegressorMixin):
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-        `coef_` is readonly property derived from `raw_coef_` that \
+        `coef_` is a readonly property derived from `raw_coef_` that \
         follows the internal memory layout of liblinear.
 
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
@@ -430,7 +430,7 @@ class SVC(BaseSVC):
         Weights asigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-        `coef_` is readonly property derived from `dual_coef_` and
+        `coef_` is a readonly property derived from `dual_coef_` and
         `support_vectors_`
 
     intercept_ : array, shape = [n_class * (n_class-1) / 2]
