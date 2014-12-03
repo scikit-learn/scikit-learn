@@ -413,7 +413,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         """
         d = self.decision_function(X)
         if len(self.classes_) == 2:
-            return self.classes_.take(d > 0).astype(np.int).ravel()
+            return self.classes_.take(d > 0).flatten()
         else:
             return self.classes_.take(d.argmax(1))
 
