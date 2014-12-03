@@ -15,17 +15,16 @@ New features
 
    - Added :class:`svm.LinearSVR`. This class uses the liblinear implementation
      of Support Vector Regression which is much faster for large
-     sample sizes than :class:`svm.SVR` with linear kernel. By 
+     sample sizes than :class:`svm.SVR` with linear kernel. By
      `Fabian Pedregosa`_ and Qiang Luo.
 
    - Incremental fit for :class:`GaussianNB <naive_bayes.GaussianNB>`.
 
-   - Add ``sample_weight`` support to :class:`dummy.DummyClassifier` and
-     :class:`dummy.DummyRegressor`. By
-     `Arnaud Joly`_.
+   - Added ``sample_weight`` support to :class:`dummy.DummyClassifier` and
+     :class:`dummy.DummyRegressor`. By `Arnaud Joly`_.
 
-   - Add the :func:`metrics.label_ranking_average_precision_score` metrics. By
-     `Arnaud Joly`_.
+   - Added the :func:`metrics.label_ranking_average_precision_score` metrics.
+     By `Arnaud Joly`_.
 
    - Add the :func:`metrics.coverage_error` metrics. By `Arnaud Joly`_.
 
@@ -37,9 +36,8 @@ New features
      trained forest model to grow additional trees incrementally. By
      `Laurent Direr`_.
 
-   - Add ``sample_weight`` support to :class:`ensemble.GradientBoostingClassifier` and
-     :class:`ensemble.GradientBoostingRegressor`. By
-     `Peter Prettenhofer`_.
+   - Added ``sample_weight`` support to :class:`ensemble.GradientBoostingClassifier` and
+     :class:`ensemble.GradientBoostingRegressor`. By `Peter Prettenhofer`_.
 
    - Added :class:`decomposition.IncrementalPCA`, an implementation of the PCA
      algorithm that supports out-of-core learning with a ``partial_fit``
@@ -60,6 +58,9 @@ New features
 
    - Add :class:`cluster.Birch`, an online clustering algorithm. By
      `Manoj Kumar`_, `Alexandre Gramfort`_ and `Joel Nothman`_.
+
+   - Added shrinkage support to :class:`lda.LDA` using two new solvers. By
+     `Clemens Brunner`_ and `Martin Billinger`_.
 
 Enhancements
 ............
@@ -3129,5 +3130,9 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Matt Terry: https://github.com/mrterry
 
 .. _Antony Lee: https://www.ocf.berkeley.edu/~antonyl/
+
+.. _Clemens Brunner: https://github.com/cle1109
+
+.. _Martin Billinger: https://github.com/kazemakase
 
 .. _Matteo Visconti di Oleggio Castello: http://www.mvdoc.me
