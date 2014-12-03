@@ -84,7 +84,7 @@ def test_lda_coefs():
 
     assert_array_almost_equal(clf_lda_svd.coef_, clf_lda_lsqr.coef_, 1)
     assert_array_almost_equal(clf_lda_svd.coef_, clf_lda_eigen.coef_, 1)
-    assert_array_almost_equal(clf_lda_eigen.coef_, clf_lda_lsqr.coef_, 1)
+    assert_array_almost_equal(clf_lda_eigen.coef_, clf_lda_lsqr.coef_)
 
 
 def test_lda_transform():
