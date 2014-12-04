@@ -38,7 +38,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
     def __init__(self, hidden_layer_sizes, activation, algorithm,
                  alpha, batch_size, learning_rate, learning_rate_init, power_t,
                  max_iter, loss, shuffle, random_state, tol, verbose,
-                 warm_start):
+                 warm_start, momentum):
         self.activation = activation
         self.algorithm = algorithm
         self.alpha = alpha
@@ -54,6 +54,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.tol = tol
         self.verbose = verbose
         self.warm_start = warm_start
+        self.momentum = momentum
 
         self.layers_coef_ = None
         self.layers_intercept_ = None
@@ -373,9 +374,65 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         # Run the Stochastic Gradient Descent algorithm
         if self.algorithm == 'sgd':
-            prev_cost = np.inf
-            cost_increase_count = 0
+            self._fit_sgd(X, y, activations, deltas, coef_grads,
+                          intercept_grads, layer_units, incremental)
 
+        # Run the LBFGS algorithm
+        elif self.algorithm == 'l-bfgs':
+            self._fit_lbfgs(X, y, activations, deltas, coef_grads,
+                            intercept_grads, layer_units)
+        return self
+
+    def _fit_lbfgs(self, X, y, activations, deltas, coef_grads, intercept_grads,
+                   layer_units):
+        # Store meta information for the parameters
+        self._coef_indptr = []
+        self._intercept_indptr = []
+        start = 0
+
+        # Save sizes and indices of coefficients for faster unpacking
+        for i in range(self.n_layers_ - 1):
+            n_fan_in, n_fan_out = layer_units[i], layer_units[i + 1]
+
+            end = start + (n_fan_in * n_fan_out)
+            self._coef_indptr.append((start, end, (n_fan_in, n_fan_out)))
+            start = end
+
+        # Save sizes and indices of intercepts for faster unpacking
+        for i in range(self.n_layers_ - 1):
+            end = start + layer_units[i + 1]
+            self._intercept_indptr.append((start, end))
+            start = end
+
+        # Run LBFGS
+        packed_coef_inter = _pack(self.layers_coef_,
+                                  self.layers_intercept_)
+
+        if self.verbose is True or self.verbose >= 1:
+            iprint = 1
+        else:
+            iprint = -1
+
+        optimal_parameters, self.cost_, d = fmin_l_bfgs_b(
+            x0=packed_coef_inter,
+            func=self._cost_grad_lbfgs,
+            maxfun=self.max_iter,
+            iprint=iprint,
+            pgtol=self.tol,
+            args=(X, y, activations, deltas, coef_grads, intercept_grads))
+
+        self._unpack(optimal_parameters)
+
+    def _fit_sgd(self, X, y, activations, deltas, coef_grads, intercept_grads,
+                 layer_units, incremental):
+        prev_cost = np.inf
+        cost_increase_count = 0
+        n_samples = X.shape[0]
+        batch_size = np.clip(self.batch_size, 1, n_samples)
+        intercept_update_prev = [np.zeros_like(grads) for grads in intercept_grads]
+        coef_update_prev = [np.zeros_like(grads) for grads in coef_grads]
+
+        try:
             for i in range(self.max_iter):
                 for batch_slice in gen_batches(n_samples, batch_size):
                     activations[0] = X[batch_slice]
@@ -386,10 +443,13 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
                     # update weights
                     for i in range(self.n_layers_ - 1):
-                        self.layers_coef_[i] -= (self.learning_rate_ *
-                                                 coef_grads[i])
-                        self.layers_intercept_[i] -= (self.learning_rate_ *
-                                                      intercept_grads[i])
+                        coef_update_prev[i] = ((1 - self.momentum) * coef_grads[i]
+                                               + self.momentum * coef_update_prev[i])
+                        self.layers_coef_[i] -= self.learning_rate_ * coef_update_prev[i]
+
+                        intercept_update_prev[i] = ((1 - self.momentum) * intercept_grads[i]
+                                                    + self.momentum * intercept_update_prev[i])
+                        self.layers_intercept_[i] -= self.learning_rate_ * intercept_update_prev[i]
 
                     if self.learning_rate == 'invscaling':
                         self.learning_rate_ = self.learning_rate_init / \
@@ -423,47 +483,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                     warnings.warn('SGD: Maximum iterations have reached and'
                                   ' the optimization hasn\'t converged yet.'
                                   % (), ConvergenceWarning)
-        # Run the LBFGS algorithm
-        elif self.algorithm == 'l-bfgs':
-            # Store meta information for the parameters
-            self._coef_indptr = []
-            self._intercept_indptr = []
-            start = 0
-
-            # Save sizes and indices of coefficients for faster unpacking
-            for i in range(self.n_layers_ - 1):
-                n_fan_in, n_fan_out = layer_units[i], layer_units[i + 1]
-
-                end = start + (n_fan_in * n_fan_out)
-                self._coef_indptr.append((start, end, (n_fan_in, n_fan_out)))
-                start = end
-
-            # Save sizes and indices of intercepts for faster unpacking
-            for i in range(self.n_layers_ - 1):
-                end = start + layer_units[i + 1]
-                self._intercept_indptr.append((start, end))
-                start = end
-
-            # Run LBFGS
-            packed_coef_inter = _pack(self.layers_coef_,
-                                      self.layers_intercept_)
-
-            if self.verbose is True or self.verbose >= 1:
-                iprint = 1
-            else:
-                iprint = -1
-
-            optimal_parameters, self.cost_, d = fmin_l_bfgs_b(
-                x0=packed_coef_inter,
-                func=self._cost_grad_lbfgs,
-                maxfun=self.max_iter,
-                iprint=iprint,
-                pgtol=self.tol,
-                args=(X, y, activations, deltas, coef_grads, intercept_grads))
-
-            self._unpack(optimal_parameters)
-
-        return self
+        except KeyboardInterrupt:
+            pass
 
     def fit(self, X, y):
         """Fit the model to the data X and target y.
@@ -592,6 +613,8 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
           each time step 't' using an inverse scaling exponent of 'power_t'.
           learning_rate_ = learning_rate_init / pow(t, power_t)
 
+         Only used when algorithm='sgd'.
+
     max_iter : int, optional, default 200
         Maximum number of iterations. The algorithm
         iterates until convergence (determined by 'tol') or
@@ -600,7 +623,7 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
     random_state : int or RandomState, optional, default None
         State of or seed for random number generator.
 
-    shuffle : bool, optional, default False
+    shuffle : bool, optional, default True
         Whether to shuffle samples in each iteration before extracting
         minibatches.
 
@@ -611,12 +634,12 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
 
     learning_rate_init : double, optional, default 0.5
         The initial learning rate used. It controls the step-size
-        in updating the weights.
+        in updating the weights. Only used when algorithm='sgd'.
 
     power_t : double, optional, default 0.5
         The exponent for inverse scaling learning rate.
         It is used in updating learning_rate_init when the learning_rate
-        is set to 'invscaling'.
+        is set to 'invscaling'. Only used when algorithm='sgd'.
 
     verbose : bool, optional, default False
         Whether to print progress messages to stdout.
@@ -625,6 +648,10 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
         When set to True, reuse the solution of the previous
         call to fit as initialization, otherwise, just erase the
         previous solution.
+
+    momentum : float, default 0
+        Momentum for gradient descent update.  Should be between 0 and 1. Only
+        used when algorithm='sgd'.
 
     Attributes
     ----------
@@ -686,8 +713,8 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
                  algorithm='l-bfgs', alpha=0.00001,
                  batch_size=200, learning_rate="constant",
                  learning_rate_init=0.5, power_t=0.5, max_iter=200,
-                 shuffle=False, random_state=None, tol=1e-5,
-                 verbose=False, warm_start=False):
+                 shuffle=True, random_state=None, tol=1e-5,
+                 verbose=False, warm_start=False, momentum=0):
 
         sup = super(MultilayerPerceptronClassifier, self)
         sup.__init__(hidden_layer_sizes=hidden_layer_sizes,
@@ -696,7 +723,7 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
                      learning_rate_init=learning_rate_init, power_t=power_t,
                      max_iter=max_iter, loss='log_loss', shuffle=shuffle,
                      random_state=random_state, tol=tol,
-                     verbose=verbose, warm_start=warm_start)
+                     verbose=verbose, warm_start=warm_start, momentum=momentum)
 
         self.label_binarizer_ = LabelBinarizer()
 
@@ -859,6 +886,8 @@ class MultilayerPerceptronRegressor(BaseMultilayerPerceptron, RegressorMixin):
           each time step 't' using an inverse scaling exponent of 'power_t'.
           learning_rate_ = learning_rate_init / pow(t, power_t)
 
+         Only used when algorithm='sgd'.
+
     max_iter : int, optional, default 200
         Maximum number of iterations. The algorithm
         iterates until convergence (determined by 'tol') or
@@ -867,9 +896,9 @@ class MultilayerPerceptronRegressor(BaseMultilayerPerceptron, RegressorMixin):
     random_state : int or RandomState, optional, default None
         State of or seed for random number generator.
 
-    shuffle : bool, optional, default False
+    shuffle : bool, optional, default True
         Whether to shuffle samples in each iteration before extracting
-        minibatches.
+        minibatches. Only used when algorithm='sgd'.
 
     tol : float, optional, default 1e-5
         Tolerance for the optimization. When the loss at iteration i+1 differs
@@ -878,12 +907,12 @@ class MultilayerPerceptronRegressor(BaseMultilayerPerceptron, RegressorMixin):
 
     learning_rate_init : double, optional, default 0.5
         The initial learning rate used. It controls the step-size
-        in updating the weights.
+        in updating the weights. Only used when algorithm='sgd'.
 
     power_t : double, optional, default 0.5
         The exponent for inverse scaling learning rate.
         It is used for updating learning_rate_ when it
-        is set to 'invscaling'.
+        is set to 'invscaling'. Only used when algorithm='sgd'.
 
     verbose : bool, optional, default False
         Whether to print progress messages to stdout.
@@ -892,6 +921,10 @@ class MultilayerPerceptronRegressor(BaseMultilayerPerceptron, RegressorMixin):
         When set to True, reuse the solution of the previous
         call to fit as initialization, otherwise, just erase the
         previous solution.
+
+    momentum : float, default 0
+        Momentum for gradient descent update.  Should be between 0 and 1. Only
+        used when algorithm='sgd'.
 
     Attributes
     ----------
@@ -947,9 +980,9 @@ class MultilayerPerceptronRegressor(BaseMultilayerPerceptron, RegressorMixin):
                  algorithm='l-bfgs', alpha=0.00001,
                  batch_size=200, learning_rate="constant",
                  learning_rate_init=0.1,
-                 power_t=0.5, max_iter=100, shuffle=False,
+                 power_t=0.5, max_iter=100, shuffle=True,
                  random_state=None, tol=1e-5,
-                 verbose=False, warm_start=False):
+                 verbose=False, warm_start=False, momentum=0):
 
         sup = super(MultilayerPerceptronRegressor, self)
         sup.__init__(hidden_layer_sizes=hidden_layer_sizes,
@@ -958,7 +991,7 @@ class MultilayerPerceptronRegressor(BaseMultilayerPerceptron, RegressorMixin):
                      learning_rate_init=learning_rate_init, power_t=power_t,
                      max_iter=max_iter, loss='squared_loss', shuffle=shuffle,
                      random_state=random_state, tol=tol,
-                     verbose=verbose, warm_start=warm_start)
+                     verbose=verbose, warm_start=warm_start, momentum=momentum)
 
     def predict(self, X):
         """Predict using the multi-layer perceptron model.
