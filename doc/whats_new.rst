@@ -150,6 +150,10 @@ Documentation improvements
    - More explicit documentation of sample generators and of data
      transformation. By `Joel Nothman`_.
 
+   - :class:`sklearn.neighbors.BallTree` and :class:`sklearn.neighbors.KDTree`
+     used to point to empty pages stating that they are aliases of BinaryTree.
+     This has been fixed to show the correct class docs. By `Manoj Kumar`_.
+
 Bug fixes
 .........
 
