@@ -106,14 +106,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.class_weight = class_weight
         self.presort = presort
 
-        self.n_features_ = None
-        self.n_outputs_ = None
-        self.classes_ = None
-        self.n_classes_ = None
-
-        self.tree_ = None
-        self.max_features_ = None
-
     def fit(self, X, y, sample_weight=None, check_input=True,
             X_idx_sorted=None):
         """Build a decision tree from the training set (X, y).
@@ -519,7 +511,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         -------
         feature_importances_ : array, shape = [n_features]
         """
-        if self.tree_ is None:
+        if getattr(self, "tree_", None) is None:
             raise NotFittedError("Estimator not fitted, call `fit` before"
                                  " `feature_importances_`.")
 

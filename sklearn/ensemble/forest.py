@@ -282,7 +282,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         random_state = check_random_state(self.random_state)
 
-        if not self.warm_start:
+        if not self.warm_start or not hasattr(self, "estimators_"):
             # Free allocated memory, if any
             self.estimators_ = []
 
@@ -357,7 +357,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         -------
         feature_importances_ : array, shape = [n_features]
         """
-        if self.estimators_ is None or len(self.estimators_) == 0:
+        if (getattr(self, "estimators_", None) is None
+                or len(self.estimators_) == 0):
             raise NotFittedError("Estimator not fitted, "
                                  "call `fit` before `feature_importances_`.")
 

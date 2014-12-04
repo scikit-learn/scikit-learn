@@ -32,6 +32,7 @@ from sklearn.utils.estimator_checks import (
     CROSS_DECOMPOSITION,
     check_parameters_default_constructible,
     check_class_weight_balanced_linear_classifier,
+    check_no_fit_attributes_set_in_init,
     check_transformer_n_iter,
     check_non_transformer_estimators_n_iter,
     check_get_params_invariance)
@@ -118,6 +119,54 @@ def test_class_weight_balanced_linear_classifiers():
     for name, Classifier in linear_classifiers:
         yield _named_check(check_class_weight_balanced_linear_classifier,
                              name), name, Classifier
+
+
+# These are the known trailing-_ properties on current estimators.
+#
+# Such properties cause hasattr(estimator, "param_") to return True even if
+# fit has not yet been called, making it harder to check whether the estimator
+# has been properly fitted to data, but we allow these for backwards compat.
+#
+# If you're sure you need to add such a property, list it here.
+_KNOWN_PROPERTIES = {
+    'AdaBoostClassifier': ['feature_importances_'],
+    'AdaBoostRegressor': ['feature_importances_'],
+    'BernoulliNB': ['coef_', 'intercept_'],
+    'DecisionTreeClassifier': ['feature_importances_'],
+    'DecisionTreeRegressor': ['feature_importances_'],
+    'ElasticNet': ['sparse_coef_'],
+    'ExtraTreeClassifier': ['feature_importances_'],
+    'ExtraTreeRegressor': ['feature_importances_'],
+    'ExtraTreesClassifier': ['feature_importances_'],
+    'ExtraTreesRegressor': ['feature_importances_'],
+    'GradientBoostingClassifier': ['feature_importances_'],
+    'GradientBoostingRegressor': ['feature_importances_'],
+    'Lasso': ['sparse_coef_'],
+    'MultinomialNB': ['coef_', 'intercept_'],
+    'MultiTaskLasso': ['sparse_coef_'],
+    'MultiTaskElasticNet': ['sparse_coef_'],
+    'NuSVC': ['coef_'],
+    'NuSVR': ['coef_'],
+    'OneClassSVM': ['coef_'],
+    'RandomForestClassifier': ['feature_importances_'],
+    'RandomForestRegressor': ['feature_importances_'],
+    'RidgeClassifier': ['classes_'],
+    'RidgeClassifierCV': ['classes_'],
+    'SpectralBiclustering': ['biclusters_'],
+    'SpectralCoclustering': ['biclusters_'],
+    'SVC': ['coef_'],
+    'SVR': ['coef_'],
+    'TfidfVectorizer': ['idf_'],
+}
+
+
+def test_no_fit_attributes_set_in_init():
+    # Assert that estimators do not set fit attributes (ending in "_")
+    # at initialization time.
+    for name, Estimator in all_estimators():
+        if name not in ['_BaseHMM', "GaussianHMM", "GMMHMM", 'MultinomialHMM']:
+            yield (check_no_fit_attributes_set_in_init,
+                   name, Estimator, _KNOWN_PROPERTIES.get(name, []))
 
 
 @ignore_warnings
