@@ -22,8 +22,6 @@ from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import ignore_warnings
 
 import sklearn
-from sklearn.base import (ClassifierMixin, RegressorMixin,
-                          TransformerMixin, ClusterMixin)
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import make_classification
 
@@ -86,9 +84,7 @@ def test_all_estimators():
 def test_estimators_sparse_data():
     # All estimators should either deal with sparse data or raise an
     # exception with type TypeError and an intelligible error message
-    estimators = all_estimators()
-    estimators = [(name, Estimator) for name, Estimator in estimators
-                  if issubclass(Estimator, (ClassifierMixin, RegressorMixin))]
+    estimators = all_estimators(type_filter=['classifier', 'regressor'])
     for name, Estimator in estimators:
         yield check_regressors_classifiers_sparse_data, name, Estimator
 
@@ -113,12 +109,8 @@ def test_transformers():
 
 def test_estimators_nan_inf():
     # Test that all estimators check their input for NaN's and infs
-    estimators = all_estimators()
-    estimators = [(name, E) for name, E in estimators
-                  if (issubclass(E, ClassifierMixin) or
-                      issubclass(E, RegressorMixin) or
-                      issubclass(E, TransformerMixin) or
-                      issubclass(E, ClusterMixin))]
+    estimators = all_estimators(type_filter=['classifier', 'regressor',
+                                             'transformer', 'cluster'])
     for name, Estimator in estimators:
         if name not in CROSS_DECOMPOSITION + ['Imputer']:
             yield check_estimators_nan_inf, name, Estimator
