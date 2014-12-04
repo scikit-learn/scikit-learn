@@ -608,41 +608,51 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
     solver to use.
     """
 
+    # nested dicts containing level 1: available loss functions, 
+    # level2: available penalties for the given loss functin,
+    # level3: wether the dual solver is available for the specified
+    # combination of loss function and penalty
     _solver_type_dict = {
-        'PL2_LLR_D0': 0,  # L2 penalty, logistic regression
-        'PL2_LL2_D1': 1,  # L2 penalty, L2 loss, dual form
-        'PL2_LL2_D0': 2,  # L2 penalty, L2 loss, primal form
-        'PL2_LL1_D1': 3,  # L2 penalty, L1 Loss, dual form
-        'MC_SVC': 4,      # Multi-class Support Vector Classification
-        'PL1_LL2_D0': 5,  # L1 penalty, L2 Loss, primal form
-        'PL1_LLR_D0': 6,  # L1 penalty, logistic regression
-        'PL2_LLR_D1': 7,  # L2 penalty, logistic regression, dual form
-        'PL2_LSE_D0': 11, # L2 penalty, squared epsilon-insensitive loss, primal form
-        'PL2_LSE_D1': 12, # L2 penalty, squared epsilon-insensitive loss, dual form
-        'PL2_LEI_D1': 13, # L2 penalty, epsilon-insensitive loss, dual form
+        'logistic_regression': {
+            'l1': {False: 6},
+            'l2': {False: 0, True: 7}},
+        'hinge' : {
+            'l2' : {True: 3}},
+        'squared_hinge': {
+            'l1': {False : 5},
+            'l2': {False: 2, True: 1}},
+        'epsilon_insensitive': {
+            'l2': {True: 13}},
+        'squared_epsilon_insensitive': {
+            'l2': {False: 11, True: 12}},
+        'crammer_singer': 4
     }
+    
 
     if multi_class == 'crammer_singer':
-        solver_type = 'MC_SVC'
-    elif multi_class == 'ovr':
-        solver_type = "P%s_L%s_D%d" % (
-            penalty.upper(), loss.upper(), int(dual))
-    else:
+        return _solver_type_dict[multi_class]
+    elif multi_class != 'ovr':
         raise ValueError("`multi_class` must be one of `ovr`, "
                          "`crammer_singer`, got %r" % multi_class)
-    if not solver_type in _solver_type_dict:
-        if penalty.upper() == 'L1' and loss.upper() == 'L1':
-            error_string = ("The combination of penalty='l1' "
-                            "and loss='l1' is not supported.")
-        elif penalty.upper() == 'L2' and loss.upper() == 'L1':
-            # this has to be in primal
-            error_string = ("penalty='l2' and loss='l1' is "
-                            "only supported when dual='true'.")
+
+    _solver_pen = _solver_type_dict.get(loss, None)
+    if _solver_pen is None:
+        error_string = ("Loss %s is not supported" % loss)
+    else:
+        _solver_dual = _solver_pen.get(penalty, None)
+        if _solver_dual is None:
+            error_string = ("The combination of penalty='%s'"
+                            "and loss='%s' is not supported"
+                            % (loss, penalty))
         else:
-            # only PL1 in dual remains
-            error_string = ("penalty='l1' is only supported "
-                            "when dual='false'.")
-        raise ValueError('Unsupported set of arguments: %s, '
+            solver_num = _solver_dual.get(dual, None)
+            if solver_num is None:
+                error_string = ("loss='%s' and penalty='%s'"
+                                "are not supported when dual=%s"
+                                % (loss, penalty, dual))
+            else:
+                return solver_num
+    raise ValueError('Unsupported set of arguments: %s, '
                          'Parameters: penalty=%r, loss=%r, dual=%r'
                          % (error_string, penalty, loss, dual))
     return _solver_type_dict[solver_type]
@@ -650,8 +660,8 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
 
 def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
                    penalty, dual, verbose, max_iter, tol,
-                   random_state=None, multi_class='ovr', loss='lr',
-                   epsilon=0.1):
+                   random_state=None, multi_class='ovr', 
+                   loss='logistic_regression', epsilon=0.1):
     """Used by Logistic Regression (and CV) and LinearSVC.
 
     Preprocessing is done in this function before supplying it to liblinear.
@@ -712,10 +722,9 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         If `crammer_singer` is chosen, the options loss, penalty and dual will
         be ignored.
 
-    loss : str, {'lr', 'l1', 'l2', 'ei'}
-        The loss function. 'l1' is the hinge loss while 'l2' is the squared
-        hinge loss, 'lr' is the Logistic loss and 'ei' is the epsilon-insensitive
-        loss.
+    loss : str, {'logistic_regression', 'hinge', 'squared_hinge', 
+                 'epsilon_insensitive', 'squared_epsilon_insensitive}
+        The loss function used to fit the model.
 
     epsilon : float, optional (default=0.1)
         Epsilon parameter in the epsilon-insensitive loss function. Note
@@ -734,7 +743,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     n_iter_ : int
         Maximum number of iterations run across all classes.
     """
-    if loss is not 'ei':
+    if loss not in ['epsilon_insensitive', 'squared_epsilon_insensitive']:
         enc = LabelEncoder()
         y_ind = enc.fit_transform(y)
         classes_ = enc.classes_

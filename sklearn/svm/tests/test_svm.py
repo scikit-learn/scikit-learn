@@ -459,14 +459,15 @@ def test_linearsvc_parameters():
     """
     # generate list of possible parameter combinations
     params = [(dual, loss, penalty) for dual in [True, False]
-              for loss in ['l1', 'l2', 'lr'] for penalty in ['l1', 'l2']]
+              for loss in ['hinge', 'squared_hinge', 'logistic_regression']
+              for penalty in ['l1', 'l2']]
 
     X, y = make_classification(n_samples=5, n_features=5)
 
     for dual, loss, penalty in params:
         clf = svm.LinearSVC(penalty=penalty, loss=loss, dual=dual)
-        if (loss == 'l1' and penalty == 'l1') or (
-            loss == 'l1' and penalty == 'l2' and not dual) or (
+        if (loss == 'hinge' and penalty == 'l1') or (
+            loss == 'hinge' and penalty == 'l2' and not dual) or (
             penalty == 'l1' and dual):
             assert_raises(ValueError, clf.fit, X, y)
         else:
@@ -486,7 +487,7 @@ def test_linearsvc():
     assert_array_almost_equal(clf.intercept_, [0], decimal=3)
 
     # the same with l1 penalty
-    clf = svm.LinearSVC(penalty='l1', dual=False, random_state=0).fit(X, Y)
+    clf = svm.LinearSVC(penalty='l1', loss='l2', dual=False, random_state=0).fit(X, Y)
     assert_array_equal(clf.predict(T), true_result)
 
     # l2 penalty with dual formulation

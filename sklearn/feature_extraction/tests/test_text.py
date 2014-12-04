@@ -715,7 +715,7 @@ def test_count_vectorizer_pipeline_grid_selection():
 
     parameters = {
         'vect__ngram_range': [(1, 1), (1, 2)],
-        'svc__loss': ('l1', 'l2')
+        'svc__loss': ('hinge', 'squared_hinge')
     }
 
     # find the best parameters for both the feature extraction and the
