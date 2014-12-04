@@ -2224,7 +2224,7 @@ static int train_one(const problem *prob, const parameter *param, double *w, dou
 	int max_iter=param->max_iter;
 	int pos = 0;
 	int neg = 0;
-	int n_iter;
+	int n_iter = -1;
 	for(int i=0;i<prob->l;i++)
 		if(prob->y[i] > 0)
 			pos++;
