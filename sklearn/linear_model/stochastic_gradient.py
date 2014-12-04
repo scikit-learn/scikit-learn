@@ -6,6 +6,7 @@
 
 import numpy as np
 import scipy.sparse as sp
+import warnings
 
 from abc import ABCMeta, abstractmethod
 
@@ -394,7 +395,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         return self
 
     def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
-             intercept_init=None, sample_weight=None, class_weight=None):
+             intercept_init=None, sample_weight=None):
         if hasattr(self, "classes_"):
             self.classes_ = None
 
@@ -405,8 +406,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         # np.unique sorts in asc order; largest class id is positive class
         classes = np.unique(y)
 
-        if class_weight is not None:
-            self.class_weight = class_weight
         if self.warm_start and self.coef_ is not None:
             if coef_init is None:
                 coef_init = self.coef_
@@ -526,7 +525,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                                  coef_init=None, intercept_init=None)
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
-            sample_weight=None, class_weight=None):
+            class_weight=None, sample_weight=None):
         """Fit linear model with Stochastic Gradient Descent.
 
         Parameters
@@ -546,29 +545,21 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         sample_weight : array-like, shape (n_samples,), optional
             Weights applied to individual samples.
             If not provided, uniform weights are assumed. These weights will
-            be multiplied with the class_weight if the class_weight is
-            specified
-
-        class_weight : dict, {class_label: weight} or "auto" or None, optional
-            Weights associated with classes. If not given, all classes
-            are supposed to have weight one.
-
-            This parameter will overwrite the class_weight parameter passed
-            into the constructor. If both the sample_weight and
-            class_weight are specified, the weights will be multiplied
-            together
-
-            The "auto" mode uses the values of y to automatically adjust
-            weights inversely proportional to class frequencies.
+            be multiplied with class_weight (passed through the
+            contructor) if class_weight is specified
 
         Returns
         -------
         self : returns an instance of self.
         """
+        if class_weight is not None:
+            warnings.warn("You are trying to set class_weight through the fit "
+                          "method, which will not be possible in a later "
+                          "version of scikit. Pass the class_weight into "
+                          "the constructor instead.")
         return self._fit(X, y, alpha=self.alpha, C=1.0,
                          loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init, intercept_init=intercept_init,
-                         class_weight=class_weight,
                          sample_weight=sample_weight)
 
 

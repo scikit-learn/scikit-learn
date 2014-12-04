@@ -597,20 +597,20 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf = self.factory(alpha=0.1, n_iter=1000, class_weight=[0.5])
         clf.fit(X, Y)
 
-    def test_weights_in_fit(self):
-        """Tests to see if weights passed through fit method"""
-        weights = {1: .6, 2: .3}
-        different_weights = {1: 1.1, 2: .7}
+    def test_class_weight_warning(self):
+        """Tests that class_weight passed through fit raises warning.
+           This test should be removed after deprecating support for this"""
 
-        clf1 = self.factory(alpha=0.1, n_iter=20, class_weight=weights)
-        clf2 = self.factory(alpha=0.1, n_iter=20,
-                            class_weight=different_weights)
-
-        clf1.fit(X4, Y4)
-        clf2.fit(X4, Y4)
-        clf2.fit(X4, Y4, class_weight=weights)
-
-        assert_array_equal(clf1.coef_, clf2.coef_)
+        clf = self.factory()
+        warning_message = ("You are trying to set class_weight through the "
+                           "fit "
+                           "method, which will not be possible in a later "
+                           "version of scikit. Pass the class_weight into "
+                           "the constructor instead.")
+        import warnings
+        with warnings.catch_warnings(record=True) as w:
+            clf.fit(X4, Y4, class_weight=1)
+            assert_true(warning_message == str(w[-1].message))
 
     def test_weights_multiplied(self):
         """Tests that class_weight and sample_weight are multiplicative"""
@@ -622,15 +622,11 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
         clf1 = self.factory(alpha=0.1, n_iter=20, class_weight=class_weights)
         clf2 = self.factory(alpha=0.1, n_iter=20)
-        clf3 = self.factory(alpha=0.1, n_iter=20)
 
         clf1.fit(X4, Y4, sample_weight=sample_weights)
         clf2.fit(X4, Y4, sample_weight=multiplied_together)
-        clf3.fit(X4, Y4, class_weight=class_weights,
-                 sample_weight=sample_weights)
 
         assert_array_equal(clf1.coef_, clf2.coef_)
-        assert_array_equal(clf2.coef_, clf3.coef_)
 
     def test_auto_weight(self):
         """Test class weights for imbalanced data"""
