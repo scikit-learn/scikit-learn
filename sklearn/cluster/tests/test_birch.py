@@ -42,7 +42,8 @@ def test_partial_fit():
     brc_partial = Birch(global_clusters=None)
     brc_partial.partial_fit(X[:50])
     brc_partial.partial_fit(X[50:])
-    assert_array_equal(brc_partial.subcluster_centers_, brc.subcluster_centers_)
+    assert_array_equal(brc_partial.subcluster_centers_,
+                       brc.subcluster_centers_)
 
     # Test that same global labels are obtained after calling partial_fit
     # with None

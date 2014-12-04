@@ -17,8 +17,7 @@ from .hierarchical import AgglomerativeClustering
 
 
 def _iterate_sparse_X(X):
-    """
-    This little hack returns a densified row when iterating over a sparse
+    """This little hack returns a densified row when iterating over a sparse
     matrix, insted of constructing a sparse matrix for every row that is
     expensive.
     """
@@ -30,9 +29,63 @@ def _iterate_sparse_X(X):
     for i in xrange(n_samples):
         row = np.zeros(X.shape[1])
         startptr, endptr = X_indptr[i], X_indptr[i + 1]
-        nonzero_indices = X_indices[startptr: endptr]
-        row[nonzero_indices] = X_data[startptr: endptr]
+        nonzero_indices = X_indices[startptr:endptr]
+        row[nonzero_indices] = X_data[startptr:endptr]
         yield row
+
+
+def _split_node(node, threshold, branching_factor):
+    """The node has to be split if there is no place for a new subcluster
+    in the node.
+    1. Two empty nodes and two empty subclusters are initialized.
+    2. The pair of distant subclusters are found.
+    3. The properties of the empty subclusters and nodes are updated
+       according to the nearest distance between the subclusters to the
+       pair of distant subclusters.
+    4. The two nodes are set as children to the two subclusters.
+    """
+    new_subcluster1 = _CFSubcluster()
+    new_subcluster2 = _CFSubcluster()
+    new_node1 = _CFNode(
+        threshold, branching_factor, is_leaf=node.is_leaf,
+        n_features=node.n_features
+        )
+    new_node2 = _CFNode(
+        threshold, branching_factor, is_leaf=node.is_leaf,
+        n_features=node.n_features
+        )
+    new_subcluster1.child_ = new_node1
+    new_subcluster2.child_ = new_node2
+
+    if node.is_leaf:
+        if node.prev_leaf_ is not None:
+            node.prev_leaf_.next_leaf_ = new_node1
+        new_node1.prev_leaf_ = node.prev_leaf_
+        new_node1.next_leaf_ = new_node2
+        new_node2.prev_leaf_ = new_node1
+        new_node2.next_leaf_ = node.next_leaf_
+        if node.next_leaf_ is not None:
+            node.next_leaf_.prev_leaf_ = new_node2
+
+    dist = euclidean_distances(
+        node.centroids_, Y_norm_squared=node.squared_norm_, squared=True)
+    n_clusters = dist.shape[0]
+
+    # Dist_idx is a (2 X n_clusters) array whose rows corresponds to
+    # the distance between the two farthest clusters and the other clusters.
+    farthest_idx = np.unravel_index(
+        dist.argmax(), (n_clusters, n_clusters))
+    dist_idx = dist[[farthest_idx]]
+
+    farthest_dist = dist_idx[1] > dist_idx[0]
+    for idx, subcluster in enumerate(node.subclusters_):
+        if farthest_dist[idx]:
+            new_node1.append_subcluster(subcluster)
+            new_subcluster1.update(subcluster)
+        else:
+            new_node2.append_subcluster(subcluster)
+            new_subcluster2.update(subcluster)
+    return new_subcluster1, new_subcluster2
 
 
 class _CFNode(object):
@@ -47,7 +100,7 @@ class _CFNode(object):
         Threshold needed for a new subcluster to enter a CFSubcluster.
 
     branching_factor : int
-       Maximun number of CF subclusters in each node.
+       Maximum number of CF subclusters in each node.
 
     is_leaf : bool
         We need to know if the CFNode is a leaf or not, in order to
@@ -78,8 +131,6 @@ class _CFNode(object):
     squared_norm_ : ndarray
         view of init_sq_norm_.
 
-    n_ : int
-        number of subclusters in the node.
     """
     def __init__(self, threshold, branching_factor, is_leaf, n_features):
         self.threshold = threshold
@@ -92,89 +143,48 @@ class _CFNode(object):
         self.subclusters_ = []
         self.init_centroids_ = np.zeros((branching_factor + 1, n_features))
         self.init_sq_norm_ = np.zeros((branching_factor + 1))
-        self.n_samples_ = 0
         self.squared_norm_ = []
         self.prev_leaf_ = None
         self.next_leaf_ = None
 
-    def update(self, subcluster):
+    def append_subcluster(self, subcluster):
+        n_samples = len(self.subclusters_)
         self.subclusters_.append(subcluster)
-        self.init_centroids_[self.n_samples_] = subcluster.centroid_
-        self.init_sq_norm_[self.n_samples_] = subcluster.sq_norm_
-        self.n_samples_ += 1
+        self.init_centroids_[n_samples] = subcluster.centroid_
+        self.init_sq_norm_[n_samples] = subcluster.sq_norm_
 
         # Keep centroids and squared norm as views. In this way
         # if we change init_centroids and init_sq_norm_, it is
         # sufficient,
-        self.centroids_ = self.init_centroids_[:self.n_samples_, :]
-        self.squared_norm_ = self.init_sq_norm_[:self.n_samples_]
+        self.centroids_ = self.init_centroids_[:n_samples + 1, :]
+        self.squared_norm_ = self.init_sq_norm_[:n_samples + 1]
 
-    def split_node(self, child_node, parent_subcluster):
-        r"""
-        Split the node if there is no place for a new subcluster.
+    def update_split_subclusters(self, subcluster,
+                                 new_subcluster1, new_subcluster2):
+        """Remove a subcluster from a node and update it with the
+        split subclusters.
         """
-        dist = euclidean_distances(
-            child_node.centroids_, Y_norm_squared=child_node.squared_norm_,
-            squared=True)
-        n_clusters = dist.shape[0]
+        n_samples = len(self.subclusters_)
+        ind = self.subclusters_.index(subcluster)
+        del self.subclusters_[ind]
+        self.init_centroids_[ind:n_samples - 1, :] = \
+            self.init_centroids_[ind + 1:n_samples, :]
+        self.init_sq_norm_[ind:n_samples - 1] = \
+            self.init_sq_norm_[ind + 1:n_samples]
+        self.append_subcluster(new_subcluster1)
+        self.append_subcluster(new_subcluster2)
 
-        farthest_idx = np.unravel_index(
-            dist.argmax(), (n_clusters, n_clusters))
-        dist_idx = dist[[farthest_idx]]
-        newsubcluster1 = _CFSubcluster()
-        newsubcluster2 = _CFSubcluster()
+    def insert_cf_subcluster(self, subcluster):
+        """Insert a new subcluster into the node."""
+        if not self.subclusters_:
+            self.append_subcluster(subcluster)
+            return False
 
         threshold = self.threshold
         branching_factor = self.branching_factor
-        new_node1 = _CFNode(threshold, branching_factor,
-                            is_leaf=child_node.is_leaf,
-                            n_features=child_node.n_features)
-        new_node2 = _CFNode(threshold, branching_factor,
-                            is_leaf=child_node.is_leaf,
-                            n_features=child_node.n_features)
-        newsubcluster1.child_ = new_node1
-        newsubcluster2.child_ = new_node2
-
-        if child_node.is_leaf:
-            if child_node.prev_leaf_ is not None:
-                child_node.prev_leaf_.next_leaf_ = new_node1
-            new_node1.prev_leaf_ = child_node.prev_leaf_
-            new_node1.next_leaf_ = new_node2
-            new_node2.prev_leaf_ = new_node1
-            new_node2.next_leaf_ = child_node.next_leaf_
-            if child_node.next_leaf_ is not None:
-                child_node.next_leaf_.prev_leaf_ = new_node2
-
-        for idx, subcluster in enumerate(child_node.subclusters_):
-            if dist_idx[0][idx] > dist_idx[1][idx]:
-                new_node1.update(subcluster)
-                newsubcluster1.update(subcluster)
-            else:
-                new_node2.update(subcluster)
-                newsubcluster2.update(subcluster)
-
-        ind = self.subclusters_.index(parent_subcluster)
-        self.subclusters_.remove(parent_subcluster)
-        self.init_centroids_[ind: self.n_samples_ - 1, :] = \
-            self.init_centroids_[ind + 1: self.n_samples_, :]
-        self.init_sq_norm_[ind: self.n_samples_ - 1] = \
-            self.init_sq_norm_[ind + 1: self.n_samples_]
-        self.n_samples_ -= 1
-        self.update(newsubcluster1)
-        self.update(newsubcluster2)
-
-    def insert_cf_subcluster(self, subcluster):
-        """
-        Insert a new subcluster into the node
-        """
-        if not self.subclusters_:
-            self.update(subcluster)
-            return False
-
         # We need to find the closest subcluster among all the
         # subclusters so that we can insert our new subcluster.
-        dist_matrix = safe_sparse_dot(
-            self.centroids_, subcluster.centroid_)
+        dist_matrix = np.dot(self.centroids_, subcluster.centroid_)
         dist_matrix *= -2.
         dist_matrix += self.squared_norm_
         closest_index = np.argmin(dist_matrix)
@@ -199,7 +209,10 @@ class _CFNode(object):
             # our child node, and add a new subcluster in the parent
             # subcluster to accomodate the new child.
             else:
-                self.split_node(closest_subcluster.child_, closest_subcluster)
+                new_subcluster1, new_subcluster2 = _split_node(
+                    closest_subcluster.child_, threshold, branching_factor)
+                self.update_split_subclusters(
+                    closest_subcluster, new_subcluster1, new_subcluster2)
 
                 if len(self.subclusters_) > self.branching_factor:
                     return True
@@ -207,9 +220,9 @@ class _CFNode(object):
 
         # good to go!
         else:
-            should_merge = closest_subcluster.merge_subcluster(
+            merged = closest_subcluster.merge_subcluster(
                 subcluster, self.threshold)
-            if should_merge:
+            if merged:
                 self.init_centroids_[closest_index] = \
                     closest_subcluster.centroid_
                 self.init_sq_norm_[closest_index] = \
@@ -219,13 +232,13 @@ class _CFNode(object):
             # not close to any other subclusters, and we still
             # have space, so add.
             elif len(self.subclusters_) < self.branching_factor:
-                self.update(subcluster)
+                self.append_subcluster(subcluster)
                 return False
 
             # We do not have enough space nor is it closer to an
             # other subcluster. We need to split.
             else:
-                self.update(subcluster)
+                self.append_subcluster(subcluster)
                 return True
 
 
@@ -236,7 +249,7 @@ class _CFSubcluster(object):
 
     Parameters
     ----------
-    X : ndarray, optional
+    linear_sum : ndarray, shape (n_features,), optional
         Sample. This is kept optional to allow initialization of empty
         subclusters.
 
@@ -258,7 +271,7 @@ class _CFSubcluster(object):
 
     centroid_ : ndarray
         Centroid of the subcluster. Prevent recomputing of centroids when
-        self.centroids_ is called.
+        CFNode.centroids_ is called.
 
     child_ : _CFNode
         Child Node of the subcluster. Once a given _CFNode is set as the child
@@ -268,41 +281,40 @@ class _CFSubcluster(object):
         Squared norm of the subcluster. Used to prevent recomputing when
         pairwise minimum distances are computed.
     """
-    def __init__(self, X=None):
-        self.X = X
-        if X is None:
+    def __init__(self, linear_sum=None):
+        if linear_sum is None:
             self.n_samples_ = 0
-            self.linear_sum_ = self.squared_sum_ = 0.0
+            self.squared_sum_ = 0.0
+            self.linear_sum_ = 0
         else:
             self.n_samples_ = 1
-            self.linear_sum_ = self.centroid_ = X
-            self.squared_sum_ = np.dot(self.linear_sum_, self.linear_sum_)
-            self.sq_norm_ = np.dot(self.linear_sum_, self.linear_sum_)
+            self.centroid_ = self.linear_sum_ = linear_sum
+            self.squared_sum_ = self.sq_norm_ = np.dot(
+                self.linear_sum_, self.linear_sum_)
         self.child_ = None
 
     def update(self, subcluster):
         self.n_samples_ += subcluster.n_samples_
-        self.linear_sum_ = self.linear_sum_ + subcluster.linear_sum_
-        self.squared_sum_ = self.squared_sum_ + subcluster.squared_sum_
+        self.linear_sum_ += subcluster.linear_sum_
+        self.squared_sum_ += subcluster.squared_sum_
         self.centroid_ = self.linear_sum_ / self.n_samples_
         self.sq_norm_ = np.dot(self.centroid_, self.centroid_)
 
     def merge_subcluster(self, nominee_cluster, threshold):
         """Check if a cluster is worthy enough to be merged. If
-           yes than merge."""
+        yes then merge.
+        """
         new_ss = self.squared_sum_ + nominee_cluster.squared_sum_
         new_ls = self.linear_sum_ + nominee_cluster.linear_sum_
         new_n = self.n_samples_ + nominee_cluster.n_samples_
-        new_centroid = new_ls / new_n
-        dot_product = -2 * np.dot(new_ls, new_centroid)
+        new_centroid = (1 / new_n) * new_ls
         new_norm = np.dot(new_centroid, new_centroid)
-        new_radius = (new_ss + dot_product) / new_n + new_norm
-        if new_radius <= threshold ** 2:
+        dot_product = (-2 * new_n) * new_norm
+        sq_radius = (new_ss + dot_product) / new_n + new_norm
+        if sq_radius <= threshold ** 2:
             (self.n_samples_, self.linear_sum_, self.squared_sum_,
-             self.centroid_, self.sq_norm_) =  (
-             new_n, new_ls, new_ss, new_centroid, new_norm
-             )
-
+             self.centroid_, self.sq_norm_) = \
+                new_n, new_ls, new_ss, new_centroid, new_norm
             return True
         return False
 
@@ -327,8 +339,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     ----------
     threshold : float, default 0.5
         The radius of the subcluster obtained by merging a new sample and the
-        closest subcluster should be greater than the square of the threshold.
-        If the radius is greater than the square of the threshold, than a new
+        closest subcluster should be lesser than the threshold. Otherwise a new
         subcluster is started.
 
     branching_factor : int, default 50
@@ -341,12 +352,16 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     global_clusters : int, instance of sklearn.cluster model, default None
         Number of clusters after the final clustering step, which treats the
         subclusters from the leaves as new samples. By default the global
-        clustering step is AgglomerativeClustering with global_clusters set to 3.
-        By default, this final clustering step is not performed and the
+        clustering step is AgglomerativeClustering with global_clusters set to
+        3. By default, this final clustering step is not performed and the
         subclusters are returned as they are.
 
     compute_labels : bool, default True
         Whether or not to compute labels for each fit.
+
+    copy : bool, default True
+        Whether or not to make a copy of the given data. If set to False,
+        the initial data will be overwritten.
 
     Attributes
     ----------
@@ -392,12 +407,13 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     """
 
     def __init__(self, threshold=0.5, branching_factor=50, global_clusters=3,
-                 compute_labels=True):
+                 compute_labels=True, copy=True):
         self.threshold = threshold
         self.branching_factor = branching_factor
         self.global_clusters = global_clusters
         self.compute_labels = compute_labels
         self.partial_fit_ = False
+        self.copy = copy
         self.root_ = None
 
     def fit(self, X, y=None):
@@ -409,7 +425,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Input data.
         """
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse='csr', copy=self.copy)
         threshold = self.threshold
         branching_factor = self.branching_factor
 
@@ -427,6 +443,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
             self.dummy_leaf_ = _CFNode(threshold, branching_factor,
                                        is_leaf=True, n_features=n_features)
             self.dummy_leaf_.next_leaf_ = self.root_
+            self.root_.prev_leaf_ = self.dummy_leaf_
 
         # Cannot vectorize. Enough to convince to use cython.
         if not sparse.issparse(X):
@@ -435,54 +452,18 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
             iter_func = _iterate_sparse_X
 
         for sample in iter_func(X):
-            subcluster = _CFSubcluster(sample)
+            subcluster = _CFSubcluster(linear_sum=sample)
             split = self.root_.insert_cf_subcluster(subcluster)
 
             if split:
-                subclusters_pairwise = euclidean_distances(
-                    self.root_.centroids_,
-                    Y_norm_squared=self.root_.squared_norm_,
-                    squared=True)
-
-                # Separating the two farthest clusters.
-                n_clusters = subclusters_pairwise.shape[0]
-                farthest_idx = np.unravel_index(
-                    subclusters_pairwise.argmax(),
-                    (n_clusters, n_clusters))
-                dist_idx = subclusters_pairwise[[farthest_idx]]
-
-                new_node1 = _CFNode(
-                    threshold, branching_factor, is_leaf=self.root_.is_leaf,
-                    n_features=n_features)
-                new_node2 = _CFNode(
-                    threshold, branching_factor, is_leaf=self.root_.is_leaf,
-                    n_features=n_features)
-
-                new_subcluster1 = _CFSubcluster()
-                new_subcluster2 = _CFSubcluster()
-                new_subcluster1.child_ = new_node1
-                new_subcluster2.child_ = new_node2
-
-                for idx, subcluster in enumerate(self.root_.subclusters_):
-                    if dist_idx[0][idx] > dist_idx[1][idx]:
-                        new_node1.update(subcluster)
-                        new_subcluster1.update(subcluster)
-                    else:
-                        new_node2.update(subcluster)
-                        new_subcluster2.update(subcluster)
-
-                if self.root_.is_leaf:
-                    self.dummy_leaf_.next_leaf_ = new_node1
-                    new_node1.prev_leaf_ = self.dummy_leaf_
-                    new_node1.next_leaf_ = new_node2
-                    new_node2.prev_leaf_ = new_node1
-
+                new_subcluster1, new_subcluster2 = _split_node(
+                    self.root_, threshold, branching_factor)
                 del self.root_
                 self.root_ = _CFNode(threshold, branching_factor,
                                      is_leaf=False,
                                      n_features=n_features)
-                self.root_.update(new_subcluster1)
-                self.root_.update(new_subcluster2)
+                self.root_.append_subcluster(new_subcluster1)
+                self.root_.append_subcluster(new_subcluster2)
 
         centroids = np.concatenate([
             leaf.centroids_ for leaf in self._get_leaves()])
