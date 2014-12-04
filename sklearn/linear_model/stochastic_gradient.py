@@ -70,15 +70,6 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
 
         self._validate_params()
 
-        self.coef_ = None
-
-        if self.average > 0:
-            self.standard_coef_ = None
-            self.average_coef_ = None
-        # iteration count for learning rate schedule
-        # must not be int (e.g. if ``learning_rate=='optimal'``)
-        self.t_ = None
-
     def set_params(self, *args, **kwargs):
         super(BaseSGD, self).set_params(*args, **kwargs)
         self._validate_params()
@@ -334,7 +325,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                                                 warm_start=warm_start,
                                                 average=average)
         self.class_weight = class_weight
-        self.classes_ = None
         self.n_jobs = int(n_jobs)
 
     def _partial_fit(self, X, y, alpha, C,
@@ -355,7 +345,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                                                            self.classes_, y)
         sample_weight = self._validate_sample_weight(sample_weight, n_samples)
 
-        if self.coef_ is None or coef_init is not None:
+        if getattr(self, "coef_", None) is None or coef_init is not None:
             self._allocate_parameter_mem(n_classes, n_features,
                                          coef_init, intercept_init)
         elif n_features != self.coef_.shape[-1]:
@@ -363,7 +353,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                              "data %d." % (n_features, self.coef_.shape[-1]))
 
         self.loss_function = self._get_loss_function(loss)
-        if self.t_ is None:
+        if getattr(self, "t_", None) is None:
             self.t_ = 1.0
 
         # delegate to concrete training procedure
@@ -383,7 +373,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
     def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
              intercept_init=None, sample_weight=None):
-        if hasattr(self, "classes_"):
+        if getattr(self, "classes_", None) is not None:
             self.classes_ = None
 
         X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C")
@@ -393,7 +383,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         # np.unique sorts in asc order; largest class id is positive class
         classes = np.unique(y)
 
-        if self.warm_start and self.coef_ is not None:
+        if self.warm_start and getattr(self, "coef_", None) is not None:
             if coef_init is None:
                 coef_init = self.coef_
             if intercept_init is None:
@@ -409,7 +399,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
             self.average_intercept_ = None
 
         # Clear iteration count for multiple call to fit.
-        self.t_ = None
+        self.t_ = 1.0
 
         self._partial_fit(X, y, alpha, C, loss, learning_rate, self.n_iter,
                           classes, sample_weight, coef_init, intercept_init)
@@ -873,13 +863,13 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         # Allocate datastructures from input arguments
         sample_weight = self._validate_sample_weight(sample_weight, n_samples)
 
-        if self.coef_ is None:
+        if getattr(self, "coef_", None) is None:
             self._allocate_parameter_mem(1, n_features,
                                          coef_init, intercept_init)
         elif n_features != self.coef_.shape[-1]:
             raise ValueError("Number of features %d does not match previous "
                              "data %d." % (n_features, self.coef_.shape[-1]))
-        if self.average > 0 and self.average_coef_ is None:
+        if self.average > 0 and getattr(self, "average_coef_", None) is None:
             self.average_coef_ = np.zeros(n_features,
                                           dtype=np.float64,
                                           order="C")
@@ -919,7 +909,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
     def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
              intercept_init=None, sample_weight=None):
-        if self.warm_start and self.coef_ is not None:
+        if self.warm_start and getattr(self, "coef_", None) is not None:
             if coef_init is None:
                 coef_init = self.coef_
             if intercept_init is None:
@@ -935,7 +925,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
             self.average_intercept_ = None
 
         # Clear iteration count for multiple call to fit.
-        self.t_ = None
+        self.t_ = 1.0
 
         return self._partial_fit(X, y, alpha, C, loss, learning_rate,
                                  self.n_iter, sample_weight,
@@ -1029,7 +1019,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         penalty_type = self._get_penalty_type(self.penalty)
         learning_rate_type = self._get_learning_rate_type(learning_rate)
 
-        if self.t_ is None:
+        if getattr(self, "t_", None) is None:
             self.t_ = 1.0
 
         random_state = check_random_state(self.random_state)

@@ -121,7 +121,7 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
     """
     if not isinstance(gbrt, BaseGradientBoosting):
         raise ValueError('gbrt has to be an instance of BaseGradientBoosting')
-    if gbrt.estimators_.shape[0] == 0:
+    if len(getattr(gbrt, "estimators_", [])) == 0:
         raise ValueError('Call %s.fit before partial_dependence' %
                          gbrt.__class__.__name__)
     if (grid is None and X is None) or (grid is not None and X is not None):

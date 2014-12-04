@@ -625,7 +625,6 @@ class ElasticNet(LinearModel, RegressorMixin):
                  random_state=None, selection='cyclic'):
         self.alpha = alpha
         self.l1_ratio = l1_ratio
-        self.coef_ = None
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.precompute = precompute
@@ -634,7 +633,6 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.tol = tol
         self.warm_start = warm_start
         self.positive = positive
-        self.intercept_ = 0.0
         self.random_state = random_state
         self.selection = selection
 
@@ -697,7 +695,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         if self.selection not in ['cyclic', 'random']:
             raise ValueError("selection should be either random or cyclic.")
 
-        if not self.warm_start or self.coef_ is None:
+        if not self.warm_start or getattr(self, "coef_", None) is None:
             coef_ = np.zeros((n_targets, n_features), dtype=X.dtype,
                              order='F')
         else:
@@ -1663,7 +1661,6 @@ class MultiTaskElasticNet(Lasso):
                  warm_start=False, random_state=None, selection='cyclic'):
         self.l1_ratio = l1_ratio
         self.alpha = alpha
-        self.coef_ = None
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.max_iter = max_iter
@@ -1847,7 +1844,6 @@ class MultiTaskLasso(MultiTaskElasticNet):
                  copy_X=True, max_iter=1000, tol=1e-4, warm_start=False,
                  random_state=None, selection='cyclic'):
         self.alpha = alpha
-        self.coef_ = None
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.max_iter = max_iter
