@@ -710,8 +710,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         self.max_leaf_nodes = max_leaf_nodes
         self.warm_start = warm_start
 
-        self.estimators_ = np.empty((0, 0), dtype=np.object)
-
     def _fit_stage(self, i, X, y, y_pred, sample_weight, sample_mask,
                    criterion, splitter, random_state):
         """Fit another stage of ``n_classes_`` trees to the boosting model. """
@@ -1037,7 +1035,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
     def _init_decision_function(self, X):
         """Check input and compute prediction of ``init``. """
-        if self.estimators_ is None or len(self.estimators_) == 0:
+
+        if len(getattr(self, "estimators_", [])) == 0:
             raise ValueError("Estimator not fitted, call `fit` "
                              "before making predictions`.")
         if X.shape[1] != self.n_features:
@@ -1109,7 +1108,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         -------
         feature_importances_ : array, shape = [n_features]
         """
-        if self.estimators_ is None or len(self.estimators_) == 0:
+        if len(getattr(self, "estimators_", [])) == 0:
             raise ValueError("Estimator not fitted, "
                              "call `fit` before `feature_importances_`.")
 

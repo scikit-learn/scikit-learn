@@ -244,12 +244,6 @@ class GMM(BaseEstimator):
         if n_init < 1:
             raise ValueError('GMM estimation requires at least one run')
 
-        self.weights_ = np.ones(self.n_components) / self.n_components
-
-        # flag to indicate exit status of fit() method: converged (True) or
-        # n_iter reached (False)
-        self.converged_ = False
-
     def _get_covars(self):
         """Covariance parameters for each mixture component.
         The shape depends on `cvtype`::
