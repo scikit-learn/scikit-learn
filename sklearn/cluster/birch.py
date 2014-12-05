@@ -470,7 +470,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
             leaf.centroids_ for leaf in self._get_leaves()])
         self.subcluster_centers_ = centroids
 
-        self.global_clustering(X)
+        self._global_clustering(X)
         return self
 
     def _get_leaves(self):
@@ -490,9 +490,14 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         return leaves
 
     def _check_fit(self, X):
-        if not hasattr(self, 'subcluster_centers_'):
+        is_fitted = hasattr(self, 'subcluster_centers_')
+        has_partial_fit = hasattr(self, 'partial_fit')
+
+        # Should raise an error if one does not fit before predicting.
+        if not has_partial_fit and not is_fitted:
             raise ValueError("Fit training data before predicting")
-        if X.shape[1] != self.subcluster_centers_.shape[1]:
+
+        if is_fitted and X.shape[1] != self.subcluster_centers_.shape[1]:
             raise ValueError(
                 "Training data and predicted data do "
                 "not have same no. of features.")
@@ -532,9 +537,10 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         """
         if X is None:
             # Perform just the final global clustering step.
-            self.global_clustering()
+            self._global_clustering()
             return self
         else:
+            self._check_fit(X)
             return self.fit(X)
 
     def transform(self, X, y=None):
@@ -557,7 +563,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
             raise ValueError("Fit training data before predicting")
         return euclidean_distances(X, self.subcluster_centers_)
 
-    def global_clustering(self, X=None):
+    def _global_clustering(self, X=None):
         """
         Global clustering for the subclusters obtained after fitting
         """
