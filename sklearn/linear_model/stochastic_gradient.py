@@ -45,6 +45,13 @@ DEFAULT_EPSILON = 0.1
 """Default value of ``epsilon`` parameter. """
 
 
+# taken from http://stackoverflow.com/questions/1816958
+# useful for passing instance methods to Parallel
+def multiprocess_method(instance, name, args=()):
+    "indirect caller for instance methods and multiprocessing"
+    return getattr(instance, name)(*args)
+
+
 class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
     """Base class for SGD classification and regression."""
 
@@ -486,9 +493,11 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         # Use joblib to fit OvA in parallel.
         result = Parallel(n_jobs=self.n_jobs, backend="threading",
                           verbose=self.verbose)(
-            delayed(self._fit_class)(X, y, cl, loss, learning_rate, n_iter,
-                                     self._expanded_class_weight[i], 1.,
-                                     sample_weight)
+            delayed(multiprocess_method)(self, "_fit_class",
+                                         (X, y, cl, loss, learning_rate,
+                                          n_iter,
+                                          self._expanded_class_weight[i], 1.,
+                                          sample_weight))
             for i, cl in enumerate(self.classes_))
 
         for i, (coefs, intercepts) in enumerate(result):
