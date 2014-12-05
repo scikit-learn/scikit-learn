@@ -604,13 +604,14 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf = self.factory()
         warning_message = ("You are trying to set class_weight through the "
                            "fit "
-                           "method, which will not be possible in a later "
-                           "version of scikit. Pass the class_weight into "
+                           "method, which will be deprecated in version "
+                           "v0.17 of scikit-learn. Pass the class_weight into "
                            "the constructor instead.")
         import warnings
         with warnings.catch_warnings(record=True) as w:
             clf.fit(X4, Y4, class_weight=1)
-            assert_true(warning_message == str(w[-1].message))
+            assert_true(warning_message == str(w[0].message))
+            assert_true(issubclass(w[0].category, DeprecationWarning))
 
     def test_weights_multiplied(self):
         """Tests that class_weight and sample_weight are multiplicative"""
