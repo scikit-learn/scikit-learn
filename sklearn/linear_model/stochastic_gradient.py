@@ -211,7 +211,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                                                order="C")
 
     def _partial_fit(self, X, y, coef_init, intercept_init, average_coef_init,
-                     average_intercept_init, alpha, C, learning_rate, n_iter,
+                     average_intercept_init, loss, learning_rate, n_iter,
                      pos_weight, neg_weight, sample_weight):
         """Fit a X and y"""
         n_samples, n_features = X.shape
@@ -233,11 +233,15 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
             if intercept_init is None:
                 average_intercept_init = 0.0
 
+        if self.t_ is None:
+            self.t_ = 1.0
+
         assert y.shape[0] == sample_weight.shape[0]
         dataset, intercept_decay = self._make_dataset(X, y, sample_weight)
 
         penalty_type = self._get_penalty_type(self.penalty)
         learning_rate_type = self._get_learning_rate_type(learning_rate)
+        loss_function = self._get_loss_function(loss)
 
         # XXX should have random_state_!
         random_state = check_random_state(self.random_state)
@@ -247,10 +251,10 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
 
         intercepts = {}
         coefs = {}
-        if not self.average:
+        if not self.average > 0:
             standard_coef, standard_intercept = \
-                plain_sgd(coef_init, intercept_init, self.loss_function,
-                          penalty_type, alpha, C, self.l1_ratio,
+                plain_sgd(coef_init, intercept_init, loss_function,
+                          penalty_type, self.alpha, self.C, self.l1_ratio,
                           dataset, n_iter, int(self.fit_intercept),
                           int(self.verbose), int(self.shuffle), seed,
                           pos_weight, neg_weight,
@@ -265,8 +269,8 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                 average_intercept = \
                 average_sgd(coef_init, intercept_init, average_coef_init,
                             average_intercept_init,
-                            self.loss_function, penalty_type,
-                            alpha, C, self.l1_ratio, dataset,
+                            loss_function, penalty_type,
+                            self.alpha, self.C, self.l1_ratio, dataset,
                             n_iter, int(self.fit_intercept),
                             int(self.verbose), int(self.shuffle),
                             seed, pos_weight, neg_weight,
@@ -351,8 +355,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         self.classes_ = None
         self.n_jobs = int(n_jobs)
 
-    def _partial_fit(self, X, y, alpha, C,
-                     loss, learning_rate, n_iter,
+    def _partial_fit(self, X, y, loss, learning_rate, n_iter,
                      classes, sample_weight,
                      coef_init, intercept_init):
         X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C")
@@ -376,18 +379,12 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
             raise ValueError("Number of features %d does not match previous data %d."
                              % (n_features, self.coef_.shape[-1]))
 
-        self.loss_function = self._get_loss_function(loss)
-        if self.t_ is None:
-            self.t_ = 1.0
-
         # delegate to concrete training procedure
         if n_classes > 2:
-            self._fit_multiclass(X, y, alpha=alpha, C=C,
-                                 learning_rate=learning_rate,
+            self._fit_multiclass(X, y, loss=loss, learning_rate=learning_rate,
                                  sample_weight=sample_weight, n_iter=n_iter)
         elif n_classes == 2:
-            self._fit_binary(X, y, alpha=alpha, C=C,
-                             learning_rate=learning_rate,
+            self._fit_binary(X, y, loss=loss, learning_rate=learning_rate,
                              sample_weight=sample_weight, n_iter=n_iter)
         else:
             raise ValueError("The number of class labels must be "
@@ -395,7 +392,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
         return self
 
-    def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
+    def _fit(self, X, y, loss, learning_rate, coef_init=None,
              intercept_init=None, sample_weight=None):
         if hasattr(self, "classes_"):
             self.classes_ = None
@@ -425,15 +422,14 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         # Clear iteration count for multiple call to fit.
         self.t_ = None
 
-        self._partial_fit(X, y, alpha, C, loss, learning_rate, self.n_iter,
+        self._partial_fit(X, y, loss, learning_rate, self.n_iter,
                           classes, sample_weight, coef_init, intercept_init)
 
         return self
 
-    def _fit_binary(self, X, y, alpha, C, sample_weight,
-                    learning_rate, n_iter):
-        coefs, intercepts = self._fit_class(X, y, self.classes_[1], alpha, C,
-                                            learning_rate, n_iter,
+    def _fit_binary(self, X, y, loss, learning_rate, n_iter, sample_weight):
+        coefs, intercepts = self._fit_class(X, y, self.classes_[1],
+                                            loss, learning_rate, n_iter,
                                             self._expanded_class_weight[1],
                                             self._expanded_class_weight[0],
                                             sample_weight)
@@ -444,7 +440,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         if self.average > 0:
             if self.average <= self.t_ - 1:
                 self.coef_ = coefs["average"].reshape(1, -1)
-                self.intercept_ = intercepts["average"]
+                self.intercept_ = np.atleast_1d(intercepts["average"])
             else:
                 self.coef_ = coefs["standard"].reshape(1, -1)
                 self.standard_intercept_ = \
@@ -455,9 +451,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
             # intercept is a float, need to convert it to an array of length 1
             self.intercept_ = np.atleast_1d(intercepts["standard"])
 
-    def _fit_class(self, X, y, target_class, alpha, C,
-                   learning_rate, n_iter, pos_weight, neg_weight,
-                   sample_weight):
+    def _fit_class(self, X, y, target_class, loss, learning_rate, n_iter,
+                   pos_weight, neg_weight, sample_weight):
         """Fit a classifier on target class. """
 
         y_encoded = np.ones(y.shape, dtype=np.float64, order="C")
@@ -490,14 +485,14 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         return super(BaseSGDClassifier,
                      self)._partial_fit(X, y_encoded, coef_init,
                                         intercept_init, average_coef_init,
-                                        average_intercept_init, alpha, C,
-                                        learning_rate, n_iter,
+                                        average_intercept_init,
+                                        loss, learning_rate, n_iter,
                                         pos_weight,
                                         neg_weight,
                                         sample_weight)
 
-    def _fit_multiclass(self, X, y, alpha, C, learning_rate,
-                        sample_weight, n_iter):
+    def _fit_multiclass(self, X, y, loss, learning_rate, n_iter,
+                        sample_weight):
         """Fit a multi-class classifier by combining binary classifiers
 
         Each binary classifier predicts one class versus all others. This
@@ -506,8 +501,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         # Use joblib to fit OvA in parallel.
         result = Parallel(n_jobs=self.n_jobs, backend="threading",
                           verbose=self.verbose)(
-            delayed(self._fit_class)(X, y, cl, alpha, C,
-                                     learning_rate, n_iter,
+            delayed(self._fit_class)(X, y, cl, loss, learning_rate, n_iter,
                                      self._expanded_class_weight[i], 1.,
                                      sample_weight)
             for i, cl in enumerate(self.classes_))
@@ -569,10 +563,11 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                              "estimate the class frequency distributions. "
                              "Pass the resulting weights as the class_weight "
                              "parameter.")
-        return self._partial_fit(X, y, alpha=self.alpha, C=1.0, loss=self.loss,
-                                 learning_rate=self.learning_rate, n_iter=1,
-                                 classes=classes, sample_weight=sample_weight,
-                                 coef_init=None, intercept_init=None)
+        return self._partial_fit(X, y, loss=self.loss,
+                                 learning_rate=self.learning_rate,
+                                 n_iter=1, classes=classes,
+                                 sample_weight=sample_weight, coef_init=None,
+                                 intercept_init=None)
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
             class_weight=None, sample_weight=None):
@@ -600,9 +595,9 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         -------
         self : returns an instance of self.
         """
-        return self._fit(X, y, alpha=self.alpha, C=1.0,
-                         loss=self.loss, learning_rate=self.learning_rate,
-                         coef_init=coef_init, intercept_init=intercept_init,
+        return self._fit(X, y, loss=self.loss,
+                         learning_rate=self.learning_rate, coef_init=coef_init,
+                         intercept_init=intercept_init,
                          sample_weight=sample_weight)
 
 
@@ -906,8 +901,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                                                warm_start=warm_start,
                                                average=average)
 
-    def _partial_fit(self, X, y, alpha, C, loss, learning_rate,
-                     n_iter, sample_weight,
+    def _partial_fit(self, X, y, loss, learning_rate, n_iter, sample_weight,
                      coef_init, intercept_init):
         X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
         y = y.astype(np.float64)
@@ -932,9 +926,37 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
             self.average_intercept_ = np.zeros(1,
                                                dtype=np.float64,
                                                order="C")
+        if self.average > 0:
+            coef_init = self.standard_coef_.ravel()
+            intercept_init = self.standard_intercept_
+            average_coef_init = self.average_coef_.ravel()
+            average_intercept_init = self.average_intercept_
+        else:
+            coef_init = self.coef_.ravel()
+            intercept_init = self.intercept_
+            average_coef_init = None
+            average_intercept_init = None
 
-        self._fit_regressor(X, y, alpha, C, loss, learning_rate,
-                            sample_weight, n_iter)
+        coefs, intercepts = super(BaseSGDRegressor,
+                                  self)._partial_fit(X, y, coef_init,
+                                                     intercept_init,
+                                                     average_coef_init,
+                                                     average_intercept_init,
+                                                     loss, learning_rate,
+                                                     n_iter, 1.0, 1.0,
+                                                     sample_weight)
+        if not self.average > 0:
+            self.coef_ = coefs["standard"]
+            self.intercept_ = np.atleast_1d(intercepts["standard"])
+        else:
+            self.standard_coef_ = coefs["standard"]
+            self.standard_intercept_ = np.atleast_1d(intercepts["standard"])
+            self.average_coef_ = coefs["average"]
+            self.average_intercept_ = np.atleast_1d(intercepts["average"])
+            self.coef_ = self.average_coef_
+            self.intercept_ = self.average_intercept_
+
+        self.t_ += n_iter * X.shape[0]
 
         return self
 
@@ -957,14 +979,12 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        return self._partial_fit(X, y, self.alpha, C=1.0,
-                                 loss=self.loss,
-                                 learning_rate=self.learning_rate, n_iter=1,
-                                 sample_weight=sample_weight,
-                                 coef_init=None, intercept_init=None)
+        return self._partial_fit(X, y, self.loss, self.learning_rate, n_iter=1,
+                                 sample_weight=sample_weight, coef_init=None,
+                                 intercept_init=None)
 
-    def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
-             intercept_init=None, sample_weight=None):
+    def _fit(self, X, y, loss, learning_rate, coef_init=None, intercept_init=None,
+             sample_weight=None):
         if self.warm_start and self.coef_ is not None:
             if coef_init is None:
                 coef_init = self.coef_
@@ -983,9 +1003,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         # Clear iteration count for multiple call to fit.
         self.t_ = None
 
-        return self._partial_fit(X, y, alpha, C, loss, learning_rate,
-                                 self.n_iter, sample_weight,
-                                 coef_init, intercept_init)
+        return self._partial_fit(X, y, loss, learning_rate, self.n_iter,
+                                 sample_weight, coef_init, intercept_init)
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
             sample_weight=None):
@@ -1012,10 +1031,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        return self._fit(X, y, alpha=self.alpha, C=1.0,
-                         loss=self.loss, learning_rate=self.learning_rate,
-                         coef_init=coef_init,
-                         intercept_init=intercept_init,
+        return self._fit(X, y, self.loss, self.learning_rate,
+                         coef_init=coef_init, intercept_init=intercept_init,
                          sample_weight=sample_weight)
 
     def decision_function(self, X):
