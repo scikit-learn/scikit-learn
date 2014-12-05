@@ -412,9 +412,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         self.branching_factor = branching_factor
         self.n_clusters = n_clusters
         self.compute_labels = compute_labels
-        self.partial_fit_ = False
         self.copy = copy
-        self.root_ = None
 
     def fit(self, X, y=None):
         """
@@ -432,9 +430,12 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         if branching_factor <= 1:
             raise ValueError("Branching_factor should be greater than one.")
         n_samples, n_features = X.shape
+
         # If partial_fit is called for the first time or if fit is called,
         # we need to initialize the root.
-        if not self.partial_fit_ or (self.root_ is None and self.partial_fit_):
+        partial_fit_ = hasattr(self, 'partial_fit')
+        has_root = hasattr(self, 'root_')
+        if not partial_fit_ or (partial_fit_ and not has_root):
             # The first root is the leaf. Manipulate this object throughout.
             self.root_ = _CFNode(threshold, branching_factor, is_leaf=True,
                                  n_features=n_features)
@@ -529,7 +530,6 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
             Input data. If X is not provided, only the global clustering
             step is done.
         """
-        self.partial_fit_ = True
         if X is None:
             # Perform just the final global clustering step.
             self.global_clustering()
