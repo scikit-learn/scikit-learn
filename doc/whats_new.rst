@@ -75,6 +75,10 @@ New features
      for fixed user-provided cross-validation folds.
      By `untom <https://github.com/untom>`_.
 
+   - Added :func:`metrics.pairwise.matern_kernel`, a kernel where the
+     smoothness of the learned function can be controlled.
+     By `Jan Hendrik Metzen`_.
+
 
 Enhancements
 ............

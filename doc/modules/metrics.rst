@@ -123,6 +123,62 @@ between two vectors. This kernel is defined as:
 where ``x`` and ``y`` are the input vectors. If :math:`\gamma = \sigma^{-2}`
 the kernel is known as the Gaussian kernel of variance :math:`\sigma^2`.
 
+Matérn kernel
+-------------
+The function :func:`matern_kernel` is a generalization of the RBF kernel. It has
+an additional parameter :math:`\nu` (set via the keyword coef0) which controls
+the smoothness of the resulting function. The general functional form of a
+Matérn is given by
+
+.. math::
+
+    k(d) = \sigma^2\frac{1}{\Gamma(\nu)2^{\nu-1}}\Bigg(\gamma\sqrt{2\nu} d\Bigg)^\nu K_\nu\Bigg(\gamma\sqrt{2\nu} d\Bigg),
+
+where :math:`d=\| x-y \|` and ``x`` and ``y`` are the input vectors. 
+
+As :math:`\nu\rightarrow\infty`, the Matérn kernel converges to the RBF kernel.
+When :math:`\nu = 1/2`, the Matérn kernel becomes identical to the absolute
+exponential kernel, i.e.,
+
+.. math::
+    k(d) = \sigma^2 \exp \Bigg(-\gamma d \Bigg) \quad \quad \nu= \tfrac{1}{2}
+
+In particular, :math:`\nu = 3/2`:
+
+.. math::
+    k(d) = \sigma^2 \Bigg(1 + \gamma \sqrt{3} d \Bigg) \exp \Bigg(-\gamma \sqrt{3}d \Bigg) \quad \quad \nu= \tfrac{3}{2}
+
+and :math:`\nu = 5/2`:
+
+.. math::
+    k(d) = \sigma^2 \Bigg(1 + \gamma \sqrt{5}d +\frac{5}{3} \gamma^2d^2 \Bigg) \exp \Bigg(-\gamma \sqrt{5}d \Bigg) \quad \quad \nu= \tfrac{5}{2}
+
+are popular choices for learning functions that are not infinitely
+differentiable (as assumed by the RBF kernel) but at least once (:math:`\nu =
+3/2`) or twice differentiable (:math:`\nu = 5/2`).
+
+The following example illustrates how the Matérn kernel's covariance decreases
+with increasing dissimilarity of the two inputs for different values of coef0
+(the parameter :math:`\nu` of the Matérn kernel):
+
+.. figure:: ../auto_examples/metrics/images/plot_matern_kernel_001.png
+    :target: ../auto_examples/metrics/plot_matern_kernel.html
+    :align: center
+
+The flexibility of controlling the smoothness of the learned function via coef0
+allows adapting to the properties of the true underlying functional relation.
+The following example shows that support vector regression with Matérn kernel
+with smaller values of coef0 can better approximate a discontinuous 
+step-function:
+
+.. figure:: ../auto_examples/svm/images/plot_svm_matern_kernel_001.png
+    :target: ../auto_examples/svm/plot_svm_matern_kernel.html
+    :align: center
+
+See Rasmussen and Williams 2006, pp84 for further details regarding the
+different variants of the Matérn kernel.
+
+
 Chi-squared kernel
 ------------------
 The chi-squared kernel is a very popular choice for training non-linear SVMs in
@@ -171,4 +227,9 @@ The chi squared kernel is most commonly used on histograms (bags) of visual word
       categories: A comprehensive study
       International Journal of Computer Vision 2007
       http://eprints.pascal-network.org/archive/00002309/01/Zhang06-IJCV.pdf
+
+    * Rasmussen, C. E. and Williams, C.
+      Gaussian Processes for Machine Learning
+      The MIT Press, 2006
+      http://www.gaussianprocess.org/gpml/chapters/
 

@@ -775,7 +775,7 @@ def matern_kernel(X, Y=None, gamma=None, coef0=1.5):
     The class of Matern kernels is a generalization of the RBF and
     absolute exponential kernel parameterized by an additional parameter
     coef0 (commonly denoted as nu in the literature). The smaller coef0,
-    the less smooth the approximated function is. For nu->inf, the kernel
+    the less smooth the approximated function is. For nu=inf, the kernel
     becomes equivalent to the RBF kernel and for nu=0.5 to the absolute
     exponential kernel. Important intermediate values are nu=1.5 (once
     differentiable functions) and nu=2.5 (twice differentiable functions).
@@ -791,7 +791,17 @@ def matern_kernel(X, Y=None, gamma=None, coef0=1.5):
 
     gamma : float
 
-    coef0 : float in [0.5, 1.5, 2.5, inf]
+    coef0 : float>0.0 (the parameter nu)
+        The parameter nu controlling the smoothness of the learned function.
+        The smaller coef0, the less smooth the approximated function is. 
+        For nu=inf, the kernel becomes equivalent to the RBF kernel and for 
+        nu=0.5 to the absolute exponential kernel. Important intermediate 
+        values are nu=1.5 (once differentiable functions) and nu=2.5 
+        (twice differentiable functions). Note that values of nu not in 
+        [0.5, 1.5, 2.5, inf] incur a considerably higher computational cost
+        (appr. 10 times higher) since they require to evaluate the modified
+        Bessel function.
+
 
     Returns
     -------
@@ -799,6 +809,8 @@ def matern_kernel(X, Y=None, gamma=None, coef0=1.5):
     """
     if coef0 == np.inf:  # fall back to rbf-kernel
         return rbf_kernel(X, Y, gamma)
+    elif coef0 <= 0.0:
+        raise ValueError("coef0 of Matérn kernel must be strictly positive.")
 
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
