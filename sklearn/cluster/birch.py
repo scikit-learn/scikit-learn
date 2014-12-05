@@ -423,6 +423,10 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Input data.
         """
+        self.fit_, self.partial_fit_ = True, False
+        return self._fit(X)
+
+    def _fit(self, X):
         X = check_array(X, accept_sparse='csr', copy=self.copy)
         threshold = self.threshold
         branching_factor = self.branching_factor
@@ -431,11 +435,11 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
             raise ValueError("Branching_factor should be greater than one.")
         n_samples, n_features = X.shape
 
-        # If partial_fit is called for the first time or if fit is called,
-        # we need to initialize the root.
-        partial_fit_ = hasattr(self, 'partial_fit')
-        has_root = hasattr(self, 'root_')
-        if not partial_fit_ or (partial_fit_ and not has_root):
+        # If partial_fit is called for the first time or fit is called, we
+        # start a new tree.
+        partial_fit = getattr(self, 'partial_fit_')
+        has_root = getattr(self, 'root_', None)
+        if getattr(self, 'fit_') or (partial_fit and not has_root):
             # The first root is the leaf. Manipulate this object throughout.
             self.root_ = _CFNode(threshold, branching_factor, is_leaf=True,
                                  n_features=n_features)
@@ -535,13 +539,14 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
             Input data. If X is not provided, only the global clustering
             step is done.
         """
+        self.partial_fit_, self.fit_ = True, False
         if X is None:
             # Perform just the final global clustering step.
             self._global_clustering()
             return self
         else:
             self._check_fit(X)
-            return self.fit(X)
+            return self._fit(X)
 
     def transform(self, X, y=None):
         """
