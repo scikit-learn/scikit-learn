@@ -128,8 +128,11 @@ Enhancements
    - Optimized :class:`cluster.AffinityPropagation` by reducing the number of
      memory allocations of large temporary data-structures. By `Antony Lee`_.
 
-   -  Parellization of the computation of feature importances in random forest.
-      By `Olivier Grisel`_ and `Arnaud Joly`_.
+   - Parellization of the computation of feature importances in random forest.
+     By `Olivier Grisel`_ and `Arnaud Joly`_.
+
+   - Add ``n_iter_`` attribute to estimators that accept a ``max_iter`` attribute
+     in their constructor. By `Manoj Kumar`_.
 
 Documentation improvements
 ..........................
