@@ -829,6 +829,11 @@ The easiest and recommended way to accomplish this is to
 All logic behind estimator parameters,
 like translating string arguments into functions, should be done in ``fit``.
 
+Also it is expected that parameters with trailing ``_`` are **not to be set
+inside the ``__init__`` method**. All and only the public attributes set by
+fit have a trailing ``_``. As a result the existence of parameters with
+trailing ``_`` is used to check if the estimator has been fitted.
+
 .. _cloning:
 
 Cloning
