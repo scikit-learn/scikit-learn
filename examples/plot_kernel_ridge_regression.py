@@ -135,9 +135,9 @@ for name, estimator in {"KRR": KernelRidge(kernel='rbf', alpha=1e-1,
 		estimator.predict(X_plot[:1000])
 		test_time.append(time.time() - t0)
 
-	plt.plot(sizes, train_time, 'o-', color="r" if name == "svr" else "g",
+	plt.plot(sizes, train_time, 'o-', color="r" if name == "SVR" else "g",
  		 label="%s (train)" % name)
-	plt.plot(sizes, test_time, 'o--', color="r" if name == "svr" else "g",
+	plt.plot(sizes, test_time, 'o--', color="r" if name == "SVR" else "g",
 		 label="%s (test)" % name)
 
 plt.xscale("log")
