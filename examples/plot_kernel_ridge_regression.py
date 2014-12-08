@@ -1,15 +1,16 @@
 """
-================================================
-Comapriation of kernel ridge regression and SVR
-================================================
+=============================================
+Comparison of kernel ridge regression and SVR
+=============================================
 
-Both kernel ridge regression (KRR) and SVR learn a non-linear function by 
-employing the kernel trick, i.e., they learn a
-linear function in the Reproducing kernel Hilbert space induced by the
-respective kernel. They differ in the loss functions (ridge versus epsilon-
-insensitive loss). In contrast to SVR, fitting a KRR can be done in closed-
-form and is typically faster for medium-sized datasets. On the other hand,
-the learned model is non-sparse and thus slower than SVR at prediction-time.
+Both kernel ridge regression (KRR) and SVR learn a non-linear function by
+employing the kernel trick, i.e., they learn a linear function in the space
+induced by the respective kernel which corresponds to a non-linear function in
+the original space. They differ in the loss functions (ridge versus 
+epsilon-insensitive loss). In contrast to SVR, fitting a KRR can be done in 
+closed-form and is typically faster for medium-sized datasets. On the other 
+hand, the learned model is non-sparse and thus slower than SVR at 
+prediction-time.
 
 This example illustrates both methods on an artificial dataset, which
 consists of a sinusoidal target function and strong noise added to every fifth

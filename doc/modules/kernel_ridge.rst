@@ -6,11 +6,11 @@ Kernelized ridge regression
 
 .. currentmodule:: sklearn.kernel_ridge
 
-Kernelized ridge regression implemented in the class :class:`KernelRidge`
-combines ridge regression (linear least squares plus l2-norm  regularization)
-with the kernel trick. It thus learns a linear function in the Reproducing
-kernel Hilbert space induced by the respective kernel. This corresponds to a
-non-linear function in the original space.
+Kernelized ridge regression (KRR) combines ridge regression (linear least
+squares plus l2-norm regularization) with the kernel trick. It thus
+learns a linear function in the space induced by the respective kernel and
+the data. For non-linear kernels, this corresponds to a non-linear
+function in the original space.
 
 The model learned by :class:`KernelRidge` is identical to support vector regression
 (:class:`SVR`). However, different loss functions are used (ridge versus
@@ -37,7 +37,7 @@ than tree times faster with SVR since it has learned a sparse model using only
 approx. 1/3 of the 100 training datapoints as support vectors.
 
 .. figure:: ../auto_examples/images/plot_kernel_ridge_regression_001.png
-   :target: ../auto_examples/images/plot_kernel_ridge_regression.html
+   :target: ../auto_examples/plot_kernel_ridge_regression.html
    :align: center
 
 The next figure compares the time for fitting and prediction of
@@ -51,5 +51,5 @@ prediction time depends on the parameters :math:`epsilon` and :math:`C` of the
 :class:`SVR`.
 
 .. figure:: ../auto_examples/images/plot_kernel_ridge_regression_002.png
-   :target: ../auto_examples/images/plot_kernel_ridge_regression.html
+   :target: ../auto_examples/plot_kernel_ridge_regression.html
    :align: center

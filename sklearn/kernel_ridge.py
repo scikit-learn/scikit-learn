@@ -72,9 +72,10 @@ class KernelRidge(BaseEstimator, RegressorMixin):
     """Kernelized ridge regression.
 
     Kernelized ridge regression (KRR) combines ridge regression (linear least
-    squares plus l2-norm  regularization) with the kernel trick. It thus learns
-    a linear function in the Reproducing kernel Hilbert space induced by the
-    respective kernel. This corresponds to a non-linear in the original space.
+    squares plus l2-norm regularization) with the kernel trick. It thus
+    learns a linear function in the space induced by the respective kernel and
+    the data. For non-linear kernels, this corresponds to a non-linear
+    function in the original space.
 
     The model learned by KRR is identical to support vector regression (SVR).
     However, different loss functions are used (ridge versus  epsilon-
@@ -205,7 +206,6 @@ class KernelRidge(BaseEstimator, RegressorMixin):
         if len(y.shape) == 1:
             y = y.reshape(-1, 1)
             ravel = True
-
 
         copy = self.kernel == "precomputed"
         self.dual_coef_ = _solve_dense_cholesky_kernel(K, y, alpha,
