@@ -21,7 +21,7 @@ def _solve_dense_cholesky_kernel(K, y, alpha, sample_weight=1.0, copy=True):
     n_samples = K.shape[0]
     n_targets = y.shape[1]
 
-    one_alpha = np.array_equal(alpha, len(alpha) * [alpha[0]])
+    one_alpha = (alpha == alpha[0]).all()
     has_sw = isinstance(sample_weight, np.ndarray) or sample_weight != 1.0
 
     if has_sw:
@@ -200,7 +200,7 @@ class KernelRidge(BaseEstimator, RegressorMixin):
         """
         n_samples = X.shape[0]
         K = self._get_kernel(X)
-        alpha = np.array([self.alpha])
+        alpha = np.atleast_1d(self.alpha)
 
         ravel = False
         if len(y.shape) == 1:
