@@ -667,6 +667,77 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
 
 
 class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
+    """Agglomerate features.
+
+    Similar to AgglomerativeClustering, but recursively merges features
+    instead of samples.
+
+    Parameters
+    ----------
+    n_clusters : int, default 2
+        The number of clusters to find.
+
+    connectivity : sparse matrix, optional
+        Connectivity matrix. Defines for each sample the neighboring
+        samples following a given structure of the data.
+        Default is None, i.e, the hierarchical clustering algorithm is
+        unstructured.
+
+    affinity : string or callable, default "euclidean"
+        Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
+        "manhattan", "cosine", or 'precomputed'.
+        If linkage is "ward", only "euclidean" is accepted.
+
+    memory : Instance of joblib.Memory or string, optional
+        Used to cache the output of the computation of the tree.
+        By default, no caching is done. If a string is given, it is the
+        path to the caching directory.
+
+    n_components : int, optional
+        The number of connected components in the graph defined by the
+        connectivity matrix. If not set, it is estimated.
+
+    compute_full_tree : bool or 'auto', optional, default "auto"
+        Stop early the construction of the tree at n_clusters. This is
+        useful to decrease computation time if the number of clusters is
+        not small compared to the number of samples. This option is
+        useful only when specifying a connectivity matrix. Note also that
+        when varying the number of clusters and using caching, it may
+        be advantageous to compute the full tree.
+
+    linkage : {"ward", "complete", "average"}, optional, default "ward"
+        Which linkage criterion to use. The linkage criterion determines which
+        distance to use between sets of observation. The algorithm will merge
+        the pairs of cluster that minimize this criterion.
+
+        - ward minimizes the variance of the clusters being merged.
+        - average uses the average of the distances of each observation of
+          the two sets.
+        - complete or maximum linkage uses the maximum distances between
+          all observations of the two sets.
+
+    pooling_func : callable, default np.mean
+        This combines the values of agglomerated features into a single
+        value, and should accept an array of shape [M, N] and the keyword
+        argument `axis=1`, and reduce it to an array of size [M].
+
+    Attributes
+    ----------
+    labels_ : array-like, (n_samples,)
+        cluster labels for each point
+
+    n_leaves_ : int
+        Number of leaves in the hierarchical tree.
+
+    n_components_ : int
+        The estimated number of connected components in the graph.
+
+    children_ : array-like, shape (n_nodes, 2)
+        The children of each non-leaf node. Values less than `n_samples`
+        refer to leaves of the tree. A greater value `i` indicates a node with
+        children `children_[i - n_samples]`.
+    """
+
     def fit(self, X, y=None, **params):
         """Fit the hierarchical clustering on the data
 
