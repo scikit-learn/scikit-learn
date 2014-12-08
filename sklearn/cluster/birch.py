@@ -71,15 +71,13 @@ def _split_node(node, threshold, branching_factor):
         node.centroids_, Y_norm_squared=node.squared_norm_, squared=True)
     n_clusters = dist.shape[0]
 
-    # Dist_idx is a (2 X n_clusters) array whose rows corresponds to
-    # the distance between the two farthest clusters and the other clusters.
     farthest_idx = np.unravel_index(
         dist.argmax(), (n_clusters, n_clusters))
-    dist_idx = dist[[farthest_idx]]
+    node1_dist, node2_dist = dist[[farthest_idx]]
 
-    farthest_dist = dist_idx[1] > dist_idx[0]
+    node1_closer = node1_dist < node2_dist
     for idx, subcluster in enumerate(node.subclusters_):
-        if farthest_dist[idx]:
+        if node1_closer[idx]:
             new_node1.append_subcluster(subcluster)
             new_subcluster1.update(subcluster)
         else:
