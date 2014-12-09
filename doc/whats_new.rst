@@ -234,6 +234,17 @@ API changes summary
       :func:`linear_model.enet_path` which constrains coefficients to be
       positive. By `Manoj Kumar`_.
 
+    - Users should now supply an explicit ``average`` parameter to
+      :func:`sklearn.metrics.f1_score`, :func:`sklearn.metrics.fbeta_score`,
+      :func:`sklearn.metrics.recall_score` and
+      :func:`sklearn.metrics.precision_score` when performing multiclass
+      or multilabel (i.e. not binary) classification. By `Joel Nothman`_.
+
+    - `scoring` parameter for cross validation now accepts `'f1_micro'`,
+      `'f1_macro'` or `'f1_weighted'`. `'f1'` is now for binary classification
+      only. Similar changes apply to `'precision'` and `'recall'`.
+      By `Joel Nothman`_.
+
 .. _changes_0_15_2:
 
 0.15.2
@@ -274,7 +285,7 @@ Bug fixes
     running the tests. By `Joel Nothman`_.
 
   - Many documentation and website fixes by `Joel Nothman`_, `Lars Buitinck`_
-    and others.
+    `Matt Pico`_, and others.
 
 .. _changes_0_15_1:
 
