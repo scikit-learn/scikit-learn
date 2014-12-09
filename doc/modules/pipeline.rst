@@ -40,7 +40,7 @@ is an estimator object::
     >>> estimators = [('reduce_dim', PCA()), ('svm', SVC())]
     >>> clf = Pipeline(estimators)   
     >>> clf # doctest: +NORMALIZE_WHITESPACE
-    Pipeline(steps=[('reduce_dim', PCA(copy=True, n_components=None,
+    Pipeline(cache=False, steps=[('reduce_dim', PCA(copy=True, n_components=None,
         whiten=False)), ('svm', SVC(C=1.0, cache_size=200, class_weight=None,
         coef0=0.0, degree=3, gamma=0.0, kernel='rbf', max_iter=-1,
         probability=False, random_state=None, shrinking=True, tol=0.001,
@@ -55,7 +55,7 @@ filling in the names automatically::
     >>> from sklearn.naive_bayes import MultinomialNB
     >>> from sklearn.preprocessing import Binarizer
     >>> make_pipeline(Binarizer(), MultinomialNB()) # doctest: +NORMALIZE_WHITESPACE
-    Pipeline(steps=[('binarizer', Binarizer(copy=True, threshold=0.0)),
+    Pipeline(cache=False, steps=[('binarizer', Binarizer(copy=True, threshold=0.0)),
                     ('multinomialnb', MultinomialNB(alpha=1.0,
                                                     class_prior=None,
                                                     fit_prior=True))])
@@ -74,7 +74,7 @@ Parameters of the estimators in the pipeline can be accessed using the
 ``<estimator>__<parameter>`` syntax::
 
     >>> clf.set_params(svm__C=10) # doctest: +NORMALIZE_WHITESPACE
-    Pipeline(steps=[('reduce_dim', PCA(copy=True, n_components=None,
+    Pipeline(cache=False, steps=[('reduce_dim', PCA(copy=True, n_components=None,
         whiten=False)), ('svm', SVC(C=10, cache_size=200, class_weight=None,
         coef0=0.0, degree=3, gamma=0.0, kernel='rbf', max_iter=-1,
         probability=False, random_state=None, shrinking=True, tol=0.001,
