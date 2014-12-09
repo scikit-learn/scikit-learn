@@ -32,6 +32,7 @@ from sklearn.utils.estimator_checks import (
     check_regressors_classifiers_sparse_data,
     check_transformer,
     check_clustering,
+    check_clusterer_compute_labels_predict,
     check_regressors_int,
     check_regressors_train,
     check_regressors_pickle,
@@ -123,6 +124,7 @@ def test_clustering():
     for name, Alg in clustering:
         # test whether any classifier overwrites his init parameters during fit
         yield check_cluster_overwrite_params, name, Alg
+        yield check_clusterer_compute_labels_predict, name, Alg
         if name not in ('WardAgglomeration', "FeatureAgglomeration"):
             # this is clustering on the features
             # let's not test that here.

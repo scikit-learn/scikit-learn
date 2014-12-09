@@ -158,16 +158,3 @@ def test_threshold():
     brc = Birch(threshold=5.0, n_clusters=None)
     brc.fit(X)
     check_threshold(brc, 5.)
-
-
-def test_compute_label_predict():
-    """Test predict is invariant of the param 'compute_labels'"""
-    X, y = make_blobs(n_samples=80, centers=4)
-    brc1 = Birch(threshold=0.5, n_clusters=None, compute_labels=True)
-    brc1.fit(X)
-    brc1_labels = brc1.predict(X)
-
-    brc2 = Birch(threshold=0.5, n_clusters=None, compute_labels=False)
-    brc2.fit(X)
-    brc2_labels = brc2.predict(X)
-    assert_almost_equal(v_measure_score(brc1_labels, brc2_labels), 1.0)
