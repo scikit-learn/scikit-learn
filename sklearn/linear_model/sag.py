@@ -126,6 +126,7 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
                        seen_init.ravel(),
                        num_seen_init, weight_pos,
                        weight_neg,
+                       self.fit_intercept,
                        intercept_decay,
                        self.verbose)
 
