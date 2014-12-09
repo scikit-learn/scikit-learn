@@ -14,6 +14,7 @@ from sklearn.metrics import pairwise_distances_argmin, v_measure_score
 
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
@@ -34,8 +35,6 @@ def test_n_samples_leaves_roots():
 
 def test_partial_fit():
     """Test that fit is equivalent to calling partial_fit multiple times"""
-    # Test that same subcluster centres are obtained after calling partial
-    # fit twice
     X, y = make_blobs(n_samples=100)
     brc = Birch(n_clusters=3)
     brc.fit(X)
@@ -75,6 +74,7 @@ def test_n_clusters():
     X, y = make_blobs(n_samples=100, centers=10)
     brc1 = Birch(n_clusters=10)
     brc1.fit(X)
+    assert_greater(len(brc1.subcluster_centers_), 10)
     assert_equal(len(np.unique(brc1.labels_)), 10)
 
     # Test that n_clusters = Agglomerative Clustering gives
@@ -144,7 +144,7 @@ def check_threshold(birch_instance, threshold):
     while current_leaf:
         subclusters = current_leaf.subclusters_
         for sc in subclusters:
-            assert_greater_equal(threshold, sc.radius())
+            assert_greater_equal(threshold, sc.radius)
         current_leaf = current_leaf.next_leaf_
 
 
@@ -158,3 +158,16 @@ def test_threshold():
     brc = Birch(threshold=5.0, n_clusters=None)
     brc.fit(X)
     check_threshold(brc, 5.)
+
+
+def test_compute_label_predict():
+    """Test predict is invariant of the param 'compute_labels'"""
+    X, y = make_blobs(n_samples=80, centers=4)
+    brc1 = Birch(threshold=0.5, n_clusters=None, compute_labels=True)
+    brc1.fit(X)
+    brc1_labels = brc1.predict(X)
+
+    brc2 = Birch(threshold=0.5, n_clusters=None, compute_labels=False)
+    brc2.fit(X)
+    brc2_labels = brc2.predict(X)
+    assert_almost_equal(v_measure_score(brc1_labels, brc2_labels), 1.0)

@@ -1,5 +1,6 @@
 # Authors: Manoj Kumar <manojkumarsivaraj334@gmail.com>
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+#          Joel Nothman <joel.nothman@gmail.com>
 # License: BSD 3 clause
 from __future__ import division
 
@@ -117,11 +118,11 @@ class _CFNode(object):
         the final subclusters.
 
     init_centroids_ : ndarray, shape (branching_factor + 1, n_features)
-        manipulate init_centroids throughout rather than centroids_ since
+        manipulate init_centroids_ throughout rather than centroids_ since
         the centroids are just a view of the init_centroids_ .
 
     init_sq_norm_ : ndarray, shape (branching_factor + 1,)
-        manipulate squared_norms throughout. similar to init_centroids_.
+        manipulate init_sq_norm_ throughout. similar to init_centroids_.
 
     centroids_ : ndarray
         view of init_centroids_.
@@ -164,12 +165,9 @@ class _CFNode(object):
         """
         n_samples = len(self.subclusters_)
         ind = self.subclusters_.index(subcluster)
-        del self.subclusters_[ind]
-        self.init_centroids_[ind:n_samples - 1, :] = \
-            self.init_centroids_[ind + 1:n_samples, :]
-        self.init_sq_norm_[ind:n_samples - 1] = \
-            self.init_sq_norm_[ind + 1:n_samples]
-        self.append_subcluster(new_subcluster1)
+        self.subclusters_[ind] = new_subcluster1
+        self.init_centroids_[ind] = new_subcluster1.centroid_
+        self.init_sq_norm_[ind] = new_subcluster1.sq_norm_
         self.append_subcluster(new_subcluster2)
 
     def insert_cf_subcluster(self, subcluster):
@@ -316,6 +314,7 @@ class _CFSubcluster(object):
             return True
         return False
 
+    @property
     def radius(self):
         """Return radius of the subcluster"""
         dot_product = -2 * np.dot(self.linear_sum_, self.centroid_)
@@ -349,10 +348,12 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
 
     n_clusters : int, instance of sklearn.cluster model, default None
         Number of clusters after the final clustering step, which treats the
-        subclusters from the leaves as new samples. By default the global
-        clustering step is AgglomerativeClustering with n_clusters set to
-        3. By default, this final clustering step is not performed and the
-        subclusters are returned as they are.
+        subclusters from the leaves as new samples. By default, this final
+        clustering step is not performed and the subclusters are returned
+        as they are. If a model is provided, the model is fit treating
+        the subclusters as new samples and the initial data is mapped to the
+        label of the closest subcluster. If an int is provided, the model
+        fit is AgglomerativeClustering with n_clusters set to the int.
 
     compute_labels : bool, default True
         Whether or not to compute labels for each fit.
@@ -486,14 +487,35 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         """
         leaf_ptr = self.dummy_leaf_.next_leaf_
         leaves = []
-        while leaf_ptr:
+        while leaf_ptr is not None:
             leaves.append(leaf_ptr)
             leaf_ptr = leaf_ptr.next_leaf_
         return leaves
 
+    def partial_fit(self, X=None, y=None):
+        """
+        Online learning. Prevents rebuilding of CFTree from scratch.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features), None
+            Input data. If X is not provided, only the global clustering
+            step is done.
+        """
+        self.partial_fit_, self.fit_ = True, False
+        if X is None:
+            # Perform just the final global clustering step.
+            self._global_clustering()
+            return self
+        else:
+            self._check_fit(X)
+            return self._fit(X)
+
     def _check_fit(self, X):
         is_fitted = hasattr(self, 'subcluster_centers_')
-        has_partial_fit = hasattr(self, 'partial_fit')
+
+        # Called by partial_fit, before fitting.
+        has_partial_fit = hasattr(self, 'partial_fit_')
 
         # Should raise an error if one does not fit before predicting.
         if not has_partial_fit and not is_fitted:
@@ -502,7 +524,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         if is_fitted and X.shape[1] != self.subcluster_centers_.shape[1]:
             raise ValueError(
                 "Training data and predicted data do "
-                "not have same no. of features.")
+                "not have same number of features.")
 
     def predict(self, X):
         """
@@ -527,30 +549,12 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         reduced_distance += self._subcluster_norms
         return self.subcluster_labels_[np.argmin(reduced_distance, axis=1)]
 
-    def partial_fit(self, X=None, y=None):
-        """
-        Online learning. Prevents rebuilding of CFTree from scratch.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features), None
-            Input data. If X is not provided, only the global clustering
-            step is done.
-        """
-        self.partial_fit_, self.fit_ = True, False
-        if X is None:
-            # Perform just the final global clustering step.
-            self._global_clustering()
-            return self
-        else:
-            self._check_fit(X)
-            return self._fit(X)
-
     def transform(self, X, y=None):
         """
         Transform X into subcluster centroids dimension.
 
-        Each dimension represents the distance between each cluster centroid.
+        Each dimension represents the distance from the sample point to each
+        cluster centroid.
 
         Parameters
         ----------
@@ -570,30 +574,28 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         """
         Global clustering for the subclusters obtained after fitting
         """
-        clusters = self.n_clusters
+        clusterer = self.n_clusters
         centroids = self.subcluster_centers_
         compute_labels = (X is not None) and self.compute_labels
 
         # Preprocessing for the global clustering.
         not_enough_centroids = False
-        if hasattr(clusters, 'fit_predict'):
-            n_cluster = clusters
-        elif isinstance(clusters, int):
-            n_cluster = AgglomerativeClustering(
-                n_clusters=clusters)
+        if isinstance(clusterer, int):
+            clusterer = AgglomerativeClustering(
+                n_clusters=self.n_clusters)
             # There is no need to perform the global clustering step.
-            if len(centroids) < clusters:
+            if len(centroids) < self.n_clusters:
                 not_enough_centroids = True
-        elif clusters is not None:
+        elif (clusterer is not None and not
+              hasattr(clusterer, 'fit_predict')):
             raise ValueError("n_clusters should be an instance of "
                              "ClusterMixin or an int")
 
         # To use in predict to avoid recalculation.
-        if compute_labels:
-            self._subcluster_norms = row_norms(
-                self.subcluster_centers_, squared=True)
+        self._subcluster_norms = row_norms(
+            self.subcluster_centers_, squared=True)
 
-        if self.n_clusters is None or not_enough_centroids:
+        if clusterer is None or not_enough_centroids:
             self.subcluster_labels_ = np.arange(len(centroids))
             if not_enough_centroids:
                 warnings.warn(
@@ -604,7 +606,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
             # The global clustering step that clusters the subclusters of
             # the leaves. It assumes the centroids of the subclusters as
             # samples and finds the final centroids.
-            self.subcluster_labels_ = n_cluster.fit_predict(
+            self.subcluster_labels_ = clusterer.fit_predict(
                 self.subcluster_centers_)
 
         if compute_labels:
