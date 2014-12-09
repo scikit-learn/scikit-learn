@@ -723,8 +723,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
 
     Attributes
     ----------
-    labels_ : array-like, (n_samples,)
-        cluster labels for each point
+    labels_ : array-like, (n_features,)
+        cluster labels for each feature.
 
     n_leaves_ : int
         Number of leaves in the hierarchical tree.
@@ -757,6 +757,9 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
                 % (X.shape, ))
         return AgglomerativeClustering.fit(self, X.T, **params)
 
+    @property
+    def fit_predict(self):
+        raise AttributeError
 
 ###############################################################################
 # Backward compatibility: class for Ward hierarchical clustering
@@ -898,3 +901,7 @@ class WardAgglomeration(AgglomerationTransform, Ward):
         """
         X = check_array(X)
         return Ward.fit(self, X.T, **params)
+
+    @property
+    def fit_predict(self):
+        raise AttributeError
