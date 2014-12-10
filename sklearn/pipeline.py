@@ -86,10 +86,10 @@ class Pipeline(BaseEstimator):
     0.77...
     >>> # we may want these results again in the future--let's
     >>> # persistently cache them
-    >>> caching_anova_svm = Pipeline(steps, cache=True)
+    >>> caching_anova_svm = Pipeline(steps, cache=False)
     >>> caching_anova_svm.set_params(anova__k=10, svc__C=.1).fit(X, y)
     ...                        # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    Pipeline(cache=True, steps=[...])
+    Pipeline(cache=False, steps=[...])
     >>> prediction2 = caching_anova_svm.predict(X)
     >>> all(prediction == prediction2)
     True
@@ -101,10 +101,10 @@ class Pipeline(BaseEstimator):
     >>> # the cached results will be retrieved even if we construct a
     >>> # new object, as long as the steps, parameters, and arguments
     >>> # are the same
-    >>> caching_anova_svm2 = Pipeline(steps, cache=True)
+    >>> caching_anova_svm2 = Pipeline(steps, cache=False)
     >>> caching_anova_svm2.set_params(anova__k=10, svc__C=.1).fit(X, y)
     ...                        # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    Pipeline(cache=True, steps=[...])
+    Pipeline(cache=False, steps=[...])
     >>> prediction4 = caching_anova_svm2.predict(X)
     >>> all(prediction == prediction4)
     True
@@ -160,7 +160,11 @@ class Pipeline(BaseEstimator):
             name, transform = step
             fit_params = fit_params_steps[name]
             Xt, fitted = self._fit_transform(transform, Xt, y, **fit_params)
-            self.steps[i] = (name, fitted)  # store fitted estimator
+
+            # store fitted estimator
+            self.steps[i] = (name, fitted)
+            self.named_steps[name] = fitted
+
         return Xt, fit_params_steps[self.steps[-1][0]]
 
     def fit(self, X, y=None, **fit_params):
@@ -263,6 +267,7 @@ class Pipeline(BaseEstimator):
     def _set_last_estimator(self, estimator):
         name, _ = self.steps[-1]
         self.steps[-1] = (name, estimator)
+        self.named_steps[name] = estimator
 
     @property
     def classes_(self):
