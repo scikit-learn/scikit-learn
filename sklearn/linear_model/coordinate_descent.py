@@ -98,6 +98,8 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
             Xy /= X_std[:, np.newaxis]
     alpha_max = (np.sqrt(np.sum(Xy ** 2, axis=1)).max() /
                  (n_samples * l1_ratio))
+    if alpha_max == 0:
+        alpha_max = 1e-10
     alphas = np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max),
                          num=n_alphas)[::-1]
     return alphas
@@ -277,7 +279,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, fit_intercept=True,
               normalize=False, copy_X=True, coef_init=None,
               verbose=False, return_models=False, return_n_iter=False,
-              positive=False, **params):
+              positive=False, accelerated=False, **params):
     """Compute elastic net path with coordinate descent
 
     The elastic net optimization function varies for mono and multi-outputs.
@@ -492,21 +494,41 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         l1_reg = alpha * l1_ratio * n_samples
         l2_reg = alpha * (1.0 - l1_ratio) * n_samples
         if not multi_output and sparse.isspmatrix(X):
-            model = cd_fast.sparse_enet_coordinate_descent(
-                coef_, l1_reg, l2_reg, X.data, X.indices,
-                X.indptr, y, X_sparse_scaling,
-                max_iter, tol, rng, random, positive)
+            if accelerated is True:
+                model = cd_fast.sparse_enet_accelerated_coordinate_descent(
+                    coef_, l1_reg, l2_reg, X.data, X.indices,
+                    X.indptr, y, X_sparse_scaling,
+                    max_iter, tol, rng, random, positive)
+            else:
+                model = cd_fast.sparse_enet_coordinate_descent(
+                    coef_, l1_reg, l2_reg, X.data, X.indices,
+                    X.indptr, y, X_sparse_scaling,
+                    max_iter, tol, rng, random, positive)
         elif multi_output:
+            if accelerated is True:
+                warning.warn("Accelerated coordinate descent not "
+                             "coded yet for the multi-task lasso. "
+                             "Switching to the non-accelerated version.")
             model = cd_fast.enet_coordinate_descent_multi_task(
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random)
         elif isinstance(precompute, np.ndarray):
-            model = cd_fast.enet_coordinate_descent_gram(
-                coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
-                tol, rng, random, positive)
+            if accelerated is True:
+                model = cd_fast.enet_accelerated_coordinate_descent_gram(
+                    coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
+                    tol, rng, random, positive)
+            else:
+                model = cd_fast.enet_coordinate_descent_gram(
+                    coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
+                    tol, rng, random, positive)
         elif precompute is False:
-            model = cd_fast.enet_coordinate_descent(
-                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random,
-                positive)
+            if accelerated is True:
+                model = cd_fast.enet_accelerated_coordinate_descent(
+                    coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random,
+                    positive)
+            else:
+                model = cd_fast.enet_coordinate_descent(
+                    coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random,
+                    positive)
         else:
             raise ValueError("Precompute should be one of True, False, "
                              "'auto' or array-like")
