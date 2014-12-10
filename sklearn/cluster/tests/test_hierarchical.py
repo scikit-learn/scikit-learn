@@ -6,6 +6,7 @@ Several basic tests for hierarchical clustering procedures
 #          Matteo Visconti di Oleggio Castello 2014
 # License: BSD 3 clause
 from tempfile import mkdtemp
+from functools import partial
 import warnings
 
 import numpy as np
@@ -27,6 +28,7 @@ from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.metrics.pairwise import PAIRED_DISTANCES, cosine_distances,\
     manhattan_distances
 from sklearn.metrics.cluster import normalized_mutual_info_score
+from sklearn.neighbors.graph import kneighbors_graph
 from sklearn.cluster._hierarchical import average_merge, max_merge
 from sklearn.utils.fast_dict import IntFloatDict
 from sklearn.utils.testing import assert_array_equal
@@ -264,8 +266,6 @@ def test_connectivity_popagation():
     Check that connectivity in the ward tree is propagated correctly during
     merging.
     """
-    from sklearn.neighbors import kneighbors_graph
-
     X = np.array([(.014, .120), (.014, .099), (.014, .097),
                   (.017, .153), (.017, .153), (.018, .153),
                   (.018, .153), (.018, .153), (.018, .153),
@@ -331,6 +331,21 @@ def test_int_float_dict():
     # Complete smoke test
     max_merge(d, other, mask=np.ones(100, dtype=np.intp), n_a=1, n_b=1)
     average_merge(d, other, mask=np.ones(100, dtype=np.intp), n_a=1, n_b=1)
+
+
+def test_connectivity_callable():
+    rng = np.random.RandomState(0)
+    X = rng.rand(20, 5)
+    connectivity = kneighbors_graph(X, 3)
+    aglc1 = AgglomerativeClustering(connectivity=connectivity)
+    aglc2 = AgglomerativeClustering(
+        connectivity=partial(kneighbors_graph, n_neighbors=3))
+    aglc3 = AgglomerativeClustering(connectivity=3)
+    aglc1.fit(X)
+    aglc2.fit(X)
+    aglc3.fit(X)
+    assert_array_equal(aglc1.labels_, aglc2.labels_)
+    assert_array_equal(aglc2.labels_, aglc3.labels_)
 
 
 if __name__ == '__main__':

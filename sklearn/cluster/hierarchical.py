@@ -23,6 +23,7 @@ from ..utils.sparsetools import connected_components
 
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
+from ..neighbors.graph import kneighbors_graph
 from ..utils.fast_dict import IntFloatDict
 
 if sys.version_info[0] > 2:
@@ -524,11 +525,15 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     n_clusters : int, default=2
         The number of clusters to find.
 
-    connectivity : sparse matrix (optional)
+    connectivity : int, array-like, callable, optional
         Connectivity matrix. Defines for each sample the neighboring
         samples following a given structure of the data.
-        Default is None, i.e, the hierarchical clustering algorithm is
-        unstructured.
+        This can be a connectivity matrix itself, a callable that transforms
+        the data into a connectivity matrix, such as derived from
+        kneighbors_graph or an integer. If an integer is provided, then
+        each sample point is connected to its connectivity nearest neighbors
+        in Euclidean space. Default is None, i.e, the hierarchical clustering
+        algorithm is unstructured.
 
     affinity : string or callable, default: "euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
@@ -627,9 +632,16 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
                                                        _TREE_BUILDERS.keys()))
         tree_builder = _TREE_BUILDERS[self.linkage]
 
-        if not self.connectivity is None:
-            if (self.connectivity.shape[0] != X.shape[0] or
-                    self.connectivity.shape[1] != X.shape[0]):
+        connectivity = self.connectivity
+        if self.connectivity is not None:
+            if callable(self.connectivity):
+                connectivity = self.connectivity(X)
+            elif isinstance(connectivity, int):
+                connectivity = kneighbors_graph(
+                    X, n_neighbors=self.connectivity)
+            # Unnecessary check if an int is provided but we can live with it.
+            if (connectivity.shape[0] != X.shape[0] or
+                    connectivity.shape[1] != X.shape[0]):
                 raise ValueError("`connectivity` does not have shape "
                                  "(n_samples, n_samples)")
 
@@ -652,7 +664,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             kwargs['linkage'] = self.linkage
             kwargs['affinity'] = self.affinity
         self.children_, self.n_components_, self.n_leaves_, parents = \
-            memory.cache(tree_builder)(X, self.connectivity,
+            memory.cache(tree_builder)(X, connectivity,
                                        n_components=self.n_components,
                                        n_clusters=n_clusters,
                                        **kwargs)
@@ -849,10 +861,13 @@ class WardAgglomeration(AgglomerationTransform, Ward):
     n_clusters : int or ndarray
         The number of clusters.
 
-    connectivity : sparse matrix, optional
-        connectivity matrix. Defines for each feature the neighboring
-        features following a given structure of the data.
-        Default is None, i.e, the hierarchical agglomeration algorithm is
+    connectivity : int, array-like, callable, optional, default None
+        Connectivity matrix. Defines for each sample the neighboring
+        samples following a given structure of the data.
+        This can be a connectivity matrix itself, a callable that returns
+        a connectivity matrix or an integer. If an integer is provided,
+        then a kneighbors_graph is used by default.
+        Default is None, i.e, the hierarchical clustering algorithm is
         unstructured.
 
     memory : Instance of joblib.Memory or string, optional
