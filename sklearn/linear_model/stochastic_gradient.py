@@ -591,7 +591,7 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         The other losses are designed for regression but can be useful in
         classification as well; see SGDRegressor for a description.
 
-    penalty : str, 'l2' or 'l1' or 'elasticnet'
+    penalty : str, 'none', 'l2', 'l1', or 'elasticnet'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
         which is the standard regularizer for linear SVM models. 'l1' and
         'elasticnet' might bring sparsity to the model (feature selection)
@@ -1100,7 +1100,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
         function used in SVR. 'squared_epsilon_insensitive' is the same but
         becomes squared loss past a tolerance of epsilon.
 
-    penalty : str, 'l2' or 'l1' or 'elasticnet'
+    penalty : str, 'none', 'l2', 'l1', or 'elasticnet'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
         which is the standard regularizer for linear SVM models. 'l1' and
         'elasticnet' might bring sparsity to the model (feature selection)
