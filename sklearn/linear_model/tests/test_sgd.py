@@ -609,6 +609,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
                            "the constructor instead.")
         import warnings
         with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always", DeprecationWarning)
             clf.fit(X4, Y4, class_weight=1)
             assert_true(warning_message == str(w[0].message))
             assert_true(issubclass(w[0].category, DeprecationWarning))
