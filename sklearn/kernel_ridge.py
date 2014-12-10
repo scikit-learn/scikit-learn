@@ -9,6 +9,7 @@ import warnings
 import numpy as np
 from scipy import linalg
 
+from .utils import check_X_y
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.metrics.pairwise import pairwise_kernels
 
@@ -198,6 +199,9 @@ class KernelRidge(BaseEstimator, RegressorMixin):
         -------
         self : returns an instance of self.
         """
+        # Convert data
+        X, y = check_X_y(X, y)
+
         n_samples = X.shape[0]
         K = self._get_kernel(X)
         alpha = np.atleast_1d(self.alpha)
