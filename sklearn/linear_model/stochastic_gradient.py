@@ -563,6 +563,8 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     each sample at a time and the model is updated along the way with a
     decreasing strength schedule (aka learning rate). SGD allows minibatch
     (online/out-of-core) learning, see the partial_fit method.
+    For best results using the default learning rate schedule, the data should
+    have zero mean and unit variance.
 
     This implementation works with data represented as dense or sparse arrays
     of floating point values for the features. The model it fits can be
@@ -639,10 +641,11 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         to 1.
 
     learning_rate : string, optional
-        The learning rate:
+        The learning rate schedule:
         constant: eta = eta0
         optimal: eta = 1.0 / (t + t0) [default]
         invscaling: eta = eta0 / pow(t, power_t)
+        where t0 is chosen by a heuristic proposed by Leon Bottou.
 
     eta0 : double
         The initial learning rate for the 'constant' or 'invscaling'
