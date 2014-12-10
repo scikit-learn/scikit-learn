@@ -1,8 +1,10 @@
 import math
 
 import numpy as np
+import warnings
 import scipy.sparse as sp
 from sklearn.linear_model import SAGRegressor, SAGClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_greater
@@ -24,6 +26,14 @@ def log_dloss(p, y):
 # this is used for sag regression
 def squared_dloss(p, y):
     return p - y
+
+
+# function for measuring the log loss
+def get_pobj(w, alpha, myX, myy):
+    w = w.ravel()
+    p = np.mean(np.log(1. + np.exp(-myy * (np.dot(myX, w)))))
+    p += alpha * w.dot(w) / 2.
+    return p
 
 
 class SparseSAGClassifier(SAGClassifier):
@@ -78,8 +88,7 @@ def sag(X, y, eta, alpha, intercept_init=0.0,
 
     for epoch in range(n_iter):
         for k in range(n_samples):
-            # idx = int(rng.rand(1) * n_samples)
-            idx = k
+            idx = int(rng.rand(1) * n_samples)
             entry = X[idx]
             seen.add(idx)
             p = np.dot(entry, weights) + intercept
@@ -114,12 +123,10 @@ def sag_sparse(X, y, eta, alpha, intercept_init=0.0, n_iter=1,
     if sparse:
         decay = .01
 
-    print("test", decay)
     counter = 0
     for epoch in range(n_iter):
         for k in range(n_samples):
-            # idx = int(rng.rand(1) * n_samples)
-            idx = k
+            idx = int(rng.rand(1) * n_samples)
             entry = X[idx]
             seen.add(idx)
 
@@ -152,7 +159,36 @@ def sag_sparse(X, y, eta, alpha, intercept_init=0.0, n_iter=1,
     return weights, intercept
 
 
-def test_sag_computed_correctly():
+def test_sag_pobj_matches_logistic_regression():
+    """tests the if the sag pobj matches log reg"""
+    n_samples = 500
+    alpha = 1.0
+    n_iter = 20
+    X, y = make_blobs(n_samples=n_samples, centers=2, random_state=0,
+                      cluster_std=0.1)
+
+    clf1 = SAGClassifier(fit_intercept=False, tol=.0000001, alpha=alpha,
+                         max_iter=n_iter, random_state=10)
+    clf2 = SparseSAGClassifier(fit_intercept=False, tol=.0000001, alpha=alpha,
+                               max_iter=n_iter, random_state=10)
+    clf3 = LogisticRegression(fit_intercept=False, tol=.0000001,
+                              C=1.0 / (alpha * n_samples), max_iter=n_iter,
+                              random_state=10)
+
+    clf1.fit(X, y)
+    clf2.fit(X, y)
+    clf3.fit(X, y)
+
+    pobj1 = get_pobj(clf1.coef_, alpha, X, y)
+    pobj2 = get_pobj(clf2.coef_, alpha, X, y)
+    pobj3 = get_pobj(clf3.coef_, alpha, X, y)
+
+    assert_array_almost_equal(pobj1, pobj2, decimal=4)
+    assert_array_almost_equal(pobj2, pobj3, decimal=4)
+    assert_array_almost_equal(pobj3, pobj1, decimal=4)
+
+
+def test_sag_regressor_computed_correctly():
     """tests the if the sag regressor computed correctly"""
     eta = .001
     alpha = .1
@@ -164,7 +200,7 @@ def test_sag_computed_correctly():
     clf1 = SAGRegressor(eta0=eta, alpha=alpha,
                         max_iter=max_iter, tol=tol, random_state=77)
     clf2 = SparseSAGRegressor(eta0=eta, alpha=alpha,
-                        max_iter=max_iter, tol=tol, random_state=77)
+                              max_iter=max_iter, tol=tol, random_state=77)
     rng = np.random.RandomState(0)
     X = rng.normal(size=(n_samples, n_features))
     w = rng.normal(size=n_features)
@@ -178,8 +214,8 @@ def test_sag_computed_correctly():
                                         dloss=squared_dloss)
 
     spweights2, spintercept2 = sag_sparse(X, y, eta, alpha,
-                                        n_iter=n_iter,
-                                        dloss=squared_dloss, sparse=True)
+                                          n_iter=n_iter,
+                                          dloss=squared_dloss, sparse=True)
 
     assert_array_almost_equal(clf1.coef_.ravel(),
                               spweights.ravel(),
@@ -204,7 +240,7 @@ def test_regressor_warm_start():
     clf1 = SAGRegressor(eta0=eta, alpha=alpha, warm_start=True,
                         max_iter=max_iter, tol=tol, random_state=77)
     clf2 = SparseSAGRegressor(eta0=eta, alpha=alpha, warm_start=True,
-                        max_iter=max_iter, tol=tol, random_state=77)
+                              max_iter=max_iter, tol=tol, random_state=77)
     rng = np.random.RandomState(0)
     X = rng.normal(size=(n_samples, n_features))
     w = rng.normal(size=n_features)
@@ -220,8 +256,8 @@ def test_regressor_warm_start():
                                         n_iter=n_iter,
                                         dloss=squared_dloss)
     spweights2, spintercept2 = sag_sparse(X, y, eta, alpha,
-                                        n_iter=n_iter,
-                                        dloss=squared_dloss, sparse=True)
+                                          n_iter=n_iter,
+                                          dloss=squared_dloss, sparse=True)
 
     assert_array_almost_equal(clf1.coef_.ravel(),
                               spweights.ravel(),
@@ -248,9 +284,10 @@ def test_auto_eta():
     eta = 1.0 / (eta + alpha)
 
     clf1 = SAGRegressor(eta0='auto', alpha=alpha,
-                        max_iter=max_iter, tol=tol, random_state=77, verbose=1)
+                        max_iter=max_iter, tol=tol, random_state=77)
     clf2 = SparseSAGRegressor(eta0='auto', alpha=alpha,
-                        max_iter=max_iter, tol=.001, random_state=77, verbose=1)
+                              max_iter=max_iter, tol=.001,
+                              random_state=77)
     clf1.fit(X, y)
     clf2.fit(X, y)
     spweights, spintercept = sag_sparse(X, y, eta, alpha,
@@ -258,8 +295,8 @@ def test_auto_eta():
                                         dloss=squared_dloss)
 
     spweights2, spintercept2 = sag_sparse(X, y, eta, alpha,
-                                        n_iter=sp_n_iter,
-                                        dloss=squared_dloss, sparse=True)
+                                          n_iter=sp_n_iter,
+                                          dloss=squared_dloss, sparse=True)
 
     assert_array_almost_equal(clf1.coef_.ravel(),
                               spweights.ravel(),
@@ -307,7 +344,7 @@ def test_sag_regressor():
     assert_greater(score2, 0.5)
 
 
-def test_sag_computed_correctly():
+def test_sag_classifier_computed_correctly():
     """tests the binary classifier computed correctly"""
     eta = .001
     alpha = .1
@@ -353,16 +390,17 @@ def test_sag_multiclass_computed_correctly():
     eta = .001
     alpha = .1
     n_samples = 50
-    tol = .05
+    tol = .01
     max_iter = 1000
     clf1 = SAGClassifier(eta0=eta, alpha=alpha,
                          max_iter=max_iter, tol=tol, random_state=77)
     clf2 = SparseSAGClassifier(eta0=eta, alpha=alpha,
-                         max_iter=max_iter, tol=tol, random_state=77)
+                               max_iter=max_iter, tol=tol, random_state=77)
     X, y = make_blobs(n_samples=n_samples, centers=3, random_state=0,
                       cluster_std=0.1)
     classes = np.unique(y)
-    itrs = [16, 12, 16]
+    itrs = [84, 53, 49]
+    sp_itrs = [48, 55, 49]
 
     clf1.fit(X, y)
     clf2.fit(X, y)
@@ -371,7 +409,7 @@ def test_sag_multiclass_computed_correctly():
     intercept = []
     coef2 = []
     intercept2 = []
-    for cl, it in zip(classes, itrs):
+    for cl, it, sp_it in zip(classes, itrs, sp_itrs):
         y_encoded = np.ones(n_samples)
         y_encoded[y != cl] = -1
 
@@ -379,8 +417,8 @@ def test_sag_multiclass_computed_correctly():
                                             dloss=log_dloss,
                                             n_iter=it)
         spweights2, spintercept2 = sag_sparse(X, y_encoded, eta, alpha,
-                                            dloss=log_dloss,
-                                            n_iter=it, sparse=True)
+                                              dloss=log_dloss,
+                                              n_iter=sp_it, sparse=True)
         coef.append(spweights)
         intercept.append(spintercept)
 
@@ -417,8 +455,9 @@ def test_classifier_results():
     w = rng.normal(size=n_features)
     y = np.dot(X, w)
     y = np.sign(y)
-    clf = SAGClassifier(eta0=eta, alpha=alpha,  max_iter=max_iter, tol=tol)
-    clf2 = SparseSAGClassifier(eta0=eta, alpha=alpha,  max_iter=max_iter, tol=tol)
+    clf = SAGClassifier(eta0=eta, alpha=alpha, max_iter=max_iter, tol=tol)
+    clf2 = SparseSAGClassifier(eta0=eta, alpha=alpha,
+                               max_iter=max_iter, tol=tol)
     clf.fit(X, y)
     clf2.fit(X, y)
     pred = clf.predict(X)
@@ -438,10 +477,8 @@ def test_binary_classifier_warm_start():
     clf1 = SAGClassifier(eta0=eta, alpha=alpha,
                          max_iter=max_iter, tol=tol, random_state=77,
                          warm_start=True)
-    clf2 = SparseSAGClassifier(eta0=eta, alpha=alpha,
-                         max_iter=max_iter, tol=tol, random_state=77,
-                         warm_start=True, verbose=True)
-    rng = np.random.RandomState(0)
+    clf2 = SparseSAGClassifier(eta0=eta, alpha=alpha, max_iter=max_iter,
+                               tol=tol, random_state=77, warm_start=True)
     X, y = make_blobs(n_samples=n_samples, centers=2, random_state=0,
                       cluster_std=0.1)
 
@@ -459,8 +496,8 @@ def test_binary_classifier_warm_start():
                                         n_iter=n_iter,
                                         dloss=log_dloss)
     spweights2, spintercept2 = sag_sparse(X, y, eta, alpha,
-                                        n_iter=61,
-                                        dloss=log_dloss, sparse=True)
+                                          n_iter=61,
+                                          dloss=log_dloss, sparse=True)
 
     assert_array_almost_equal(clf1.coef_.ravel(),
                               spweights.ravel(),
@@ -509,8 +546,8 @@ def test_multiclass_classifier_warm_start():
                                             n_iter=it,
                                             dloss=log_dloss)
         spweights2, spintercept2 = sag_sparse(X, y_encoded, eta, alpha,
-                                            n_iter=it,
-                                            dloss=log_dloss, sparse=True)
+                                              n_iter=it,
+                                              dloss=log_dloss, sparse=True)
         coef.append(spweights)
         intercept.append(spintercept)
         coef2.append(spweights2)
@@ -541,7 +578,6 @@ def test_binary_classifier_class_weight():
     n_iter = 9
     tol = .1
     max_iter = 1000
-    rng = np.random.RandomState(0)
     X, y = make_blobs(n_samples=n_samples, centers=2, random_state=0,
                       cluster_std=0.1)
     classes = np.unique(y)
@@ -554,9 +590,9 @@ def test_binary_classifier_class_weight():
     clf1 = SAGClassifier(eta0=eta, alpha=alpha, max_iter=max_iter, tol=tol,
                          random_state=77, warm_start=True,
                          class_weight=class_weight)
-    clf2 = SparseSAGClassifier(eta0=eta, alpha=alpha, max_iter=max_iter, tol=tol,
-                         random_state=77, warm_start=True,
-                         class_weight=class_weight)
+    clf2 = SparseSAGClassifier(eta0=eta, alpha=alpha, max_iter=max_iter,
+                               tol=tol, random_state=77, warm_start=True,
+                               class_weight=class_weight)
     clf1.fit(X, y)
     clf2.fit(X, y)
 
@@ -565,9 +601,10 @@ def test_binary_classifier_class_weight():
                                         dloss=log_dloss,
                                         class_weight=class_weight)
     spweights2, spintercept2 = sag_sparse(X, y, eta, alpha,
-                                        n_iter=n_iter,
-                                        dloss=log_dloss,
-                                        class_weight=class_weight, sparse=True)
+                                          n_iter=n_iter,
+                                          dloss=log_dloss,
+                                          class_weight=class_weight,
+                                          sparse=True)
 
     assert_array_almost_equal(clf1.coef_.ravel(),
                               spweights.ravel(),
@@ -597,9 +634,9 @@ def test_multiclass_classifier_class_weight():
     clf1 = SAGClassifier(eta0=eta, alpha=alpha, max_iter=max_iter, tol=tol,
                          random_state=77, warm_start=True,
                          class_weight=class_weight)
-    clf2 = SparseSAGClassifier(eta0=eta, alpha=alpha, max_iter=max_iter, tol=tol,
-                         random_state=77, warm_start=True,
-                         class_weight=class_weight)
+    clf2 = SparseSAGClassifier(eta0=eta, alpha=alpha, max_iter=max_iter,
+                               tol=tol, random_state=77, warm_start=True,
+                               class_weight=class_weight)
     clf1.fit(X, y)
     clf2.fit(X, y)
 
@@ -615,12 +652,13 @@ def test_multiclass_classifier_class_weight():
         cl_weight = {-1: 1.0, 1: 1.0}
         cl_weight[1] = class_weight[cl]
 
-        spweights, spintercept = sag_sparse(X, y_encoded, eta, alpha, n_iter=it,
-                                            dloss=log_dloss,
+        spweights, spintercept = sag_sparse(X, y_encoded, eta, alpha,
+                                            n_iter=it, dloss=log_dloss,
                                             class_weight=cl_weight)
-        spweights2, spintercept2 = sag_sparse(X, y_encoded, eta, alpha, n_iter=it,
-                                            dloss=log_dloss,
-                                            class_weight=cl_weight, sparse=True)
+        spweights2, spintercept2 = sag_sparse(X, y_encoded, eta, alpha,
+                                              n_iter=it, dloss=log_dloss,
+                                              class_weight=cl_weight,
+                                              sparse=True)
         coef.append(spweights)
         intercept.append(spintercept)
         coef2.append(spweights2)

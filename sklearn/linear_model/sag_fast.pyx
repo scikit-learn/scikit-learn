@@ -38,8 +38,6 @@ def sag_sparse(SequentialDataset dataset,
                double intercept_decay,
                bint verbose):
 
-    print(intercept_decay)
-
     # true if the weights or intercept are NaN or infinity
     cdef bint infinity = False
     # the pointer to the coef_ or weights
