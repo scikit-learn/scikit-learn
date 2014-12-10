@@ -1,10 +1,9 @@
 import math
 
 import numpy as np
-import warnings
 import scipy.sparse as sp
 from sklearn.linear_model import SAGRegressor, SAGClassifier
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_greater
@@ -23,15 +22,24 @@ def log_dloss(p, y):
     return -y / (math.exp(z) + 1.0)
 
 
+def log_loss(p, y):
+    return np.mean(np.log(1. + np.exp(-y * p)))
+
+
 # this is used for sag regression
 def squared_dloss(p, y):
     return p - y
 
 
+def squared_loss(p, y):
+    return np.mean(0.5 * (p - y) * (p - y))
+
+
 # function for measuring the log loss
-def get_pobj(w, alpha, myX, myy):
+def get_pobj(w, alpha, myX, myy, loss):
     w = w.ravel()
-    p = np.mean(np.log(1. + np.exp(-myy * (np.dot(myX, w)))))
+    pred = np.dot(myX, w)
+    p = loss(pred, myy)
     p += alpha * w.dot(w) / 2.
     return p
 
@@ -160,7 +168,7 @@ def sag_sparse(X, y, eta, alpha, intercept_init=0.0, n_iter=1,
 
 
 def test_sag_pobj_matches_logistic_regression():
-    """tests the if the sag pobj matches log reg"""
+    """tests if the sag pobj matches log reg"""
     n_samples = 500
     alpha = 1.0
     n_iter = 20
@@ -179,9 +187,40 @@ def test_sag_pobj_matches_logistic_regression():
     clf2.fit(X, y)
     clf3.fit(X, y)
 
-    pobj1 = get_pobj(clf1.coef_, alpha, X, y)
-    pobj2 = get_pobj(clf2.coef_, alpha, X, y)
-    pobj3 = get_pobj(clf3.coef_, alpha, X, y)
+    pobj1 = get_pobj(clf1.coef_, alpha, X, y, log_loss)
+    pobj2 = get_pobj(clf2.coef_, alpha, X, y, log_loss)
+    pobj3 = get_pobj(clf3.coef_, alpha, X, y, log_loss)
+
+    assert_array_almost_equal(pobj1, pobj2, decimal=4)
+    assert_array_almost_equal(pobj2, pobj3, decimal=4)
+    assert_array_almost_equal(pobj3, pobj1, decimal=4)
+
+
+def test_sag_pobj_matches_ridge_regression():
+    """tests if the sag pobj matches ridge reg"""
+    n_samples = 500
+    n_features = 10
+    alpha = 1.0
+    n_iter = 100
+    np.random.seed(10)
+    X = np.random.random((n_samples, n_features))
+    true_w = np.random.random(n_features)
+    y = X.dot(true_w)
+
+    clf1 = SAGRegressor(fit_intercept=False, tol=.00001, alpha=alpha,
+                        max_iter=n_iter, random_state=10)
+    clf2 = SparseSAGRegressor(fit_intercept=False, tol=.00001, alpha=alpha,
+                              max_iter=n_iter, random_state=10)
+    clf3 = Ridge(fit_intercept=False, tol=.00001,
+                 alpha=alpha * n_samples, max_iter=n_iter, solver="lsqr")
+
+    clf1.fit(X, y)
+    clf2.fit(X, y)
+    clf3.fit(X, y)
+
+    pobj1 = get_pobj(clf1.coef_, alpha, X, y, log_loss)
+    pobj2 = get_pobj(clf2.coef_, alpha, X, y, log_loss)
+    pobj3 = get_pobj(clf3.coef_, alpha, X, y, log_loss)
 
     assert_array_almost_equal(pobj1, pobj2, decimal=4)
     assert_array_almost_equal(pobj2, pobj3, decimal=4)
