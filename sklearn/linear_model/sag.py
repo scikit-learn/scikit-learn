@@ -55,6 +55,7 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
         self.seen_ = None
         self.sum_gradient_ = None
         self.gradient_memory_ = None
+        self.intercept_sum_gradient_ = None
 
     def _validate_params(self):
         if not isinstance(self.max_iter, int):
@@ -65,6 +66,7 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
     def _fit(self, X, y, coef_init=None, intercept_init=None,
              sample_weight=None, sum_gradient_init=None,
              gradient_memory_init=None, seen_init=None, num_seen_init=None,
+             intercept_sum_gradient_init=None,
              weight_pos=1.0, weight_neg=1.0):
 
         n_samples, n_features = X.shape[0], X.shape[1]
@@ -75,6 +77,9 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
 
         if intercept_init is None:
             intercept_init = 0.0
+
+        if intercept_sum_gradient_init is None:
+            intercept_sum_gradient_init = 0.0
 
         if coef_init is None:
             coef_init = np.zeros(n_features, dtype=np.float64, order='C')
@@ -110,11 +115,11 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
         # squares for over all samples
         if self.eta0 == 'auto':
             step_size = get_auto_eta(dataset, self.alpha, n_samples,
-                                     self.loss_function)
+                                     self.loss_function, self.fit_intercept)
         else:
             step_size = self.eta0
 
-        intercept_, num_seen, max_iter_reached = \
+        intercept_, num_seen, max_iter_reached, intercept_sum_gradient = \
             sag_sparse(dataset, coef_init.ravel(),
                        intercept_init, n_samples,
                        n_features, self.tol,
@@ -127,6 +132,7 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
                        num_seen_init, weight_pos,
                        weight_neg,
                        self.fit_intercept,
+                       intercept_sum_gradient_init,
                        intercept_decay,
                        self.verbose)
 
@@ -138,7 +144,7 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
                 sum_gradient_init.reshape(1, -1),
                 gradient_memory_init.reshape(1, -1),
                 seen_init.reshape(1, -1),
-                num_seen)
+                num_seen, intercept_sum_gradient)
 
 
 class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
@@ -162,7 +168,7 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
     def _fit(self, X, y, coef_init=None, intercept_init=None,
              sample_weight=None, sum_gradient_init=None,
              gradient_memory_init=None, seen_init=None,
-             num_seen_init=None):
+             num_seen_init=None, intercept_sum_gradient_init=None):
         X, y = check_X_y(X, y, "csr", copy=False, order='C',
                          dtype=np.float64)
         n_samples, n_features = X.shape[0], X.shape[1]
@@ -177,12 +183,14 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
                              "greater than one.")
         elif self.classes_.shape[0] == 2:
             # binary classifier
-            coef, intercept, sum_gradient, gradient_memory, seen, num_seen = \
+            (coef, intercept, sum_gradient, gradient_memory,
+             seen, num_seen, intercept_sum_gradient) = \
                 self._fit_target_class(X, y, self.classes_[1],
                                        coef_init, intercept_init,
                                        sample_weight, sum_gradient_init,
                                        gradient_memory_init,
-                                       seen_init, num_seen_init)
+                                       seen_init, num_seen_init,
+                                       intercept_sum_gradient_init)
         else:
             # multiclass classifier
             coef = []
@@ -191,6 +199,7 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
             gradient_memory = []
             seen = []
             num_seen = []
+            intercept_sum_gradient = []
 
             # perform a fit for all classes, one verse all
             results = Parallel(n_jobs=self.n_jobs,
@@ -205,18 +214,20 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
                                               sample_weight,
                                               sum_gradient_init,
                                               gradient_memory_init,
-                                              seen_init, num_seen_init))
+                                              seen_init, num_seen_init,
+                                              intercept_sum_gradient_init))
                 for cl in self.classes_)
 
             # append results to the correct array
             for (coef_cl, intercept_cl, sum_gradient_cl, gradient_memory_cl,
-                 seen_cl, num_seen_cl) in results:
+                 seen_cl, num_seen_cl, intercept_sum_gradient_cl) in results:
                 coef.append(coef_cl)
                 intercept.append(intercept_cl)
                 sum_gradient.append(sum_gradient_cl)
                 gradient_memory.append(gradient_memory_cl)
                 seen.append(seen_cl)
                 num_seen.append(num_seen_cl)
+                intercept_sum_gradient.append(intercept_sum_gradient_cl)
 
             # stack all arrays to transform into np arrays
             coef = np.vstack(coef)
@@ -225,6 +236,7 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
             gradient_memory = np.vstack(gradient_memory)
             seen = np.vstack(seen)
             num_seen = np.array(num_seen)
+            intercept_sum_gradient = np.array(intercept_sum_gradient)
 
         self.coef_ = coef
         self.intercept_ = intercept
@@ -232,11 +244,13 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
         self.gradient_memory_ = gradient_memory
         self.seen_ = seen
         self.num_seen_ = num_seen
+        self.intercept_sum_gradient_ = intercept_sum_gradient
 
     def _fit_target_class(self, X, y, target_class, coef_init=None,
                           intercept_init=None, sample_weight=None,
                           sum_gradient_init=None, gradient_memory_init=None,
-                          seen_init=None, num_seen_init=None):
+                          seen_init=None, num_seen_init=None,
+                          intercept_sum_gradient_init=None):
         if self.classes_.shape[0] == 2:
             if self.warm_start:
                 # init parameters for binary classifier
@@ -246,6 +260,8 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
                 gradient_memory_init = self.gradient_memory_
                 seen_init = self.seen_
                 num_seen_init = self.num_seen_
+                intercept_sum_gradient_init = \
+                    self.intercept_sum_gradient_init_
 
             weight_pos = self.expanded_class_weight_[1]
             weight_neg = self.expanded_class_weight_[0]
@@ -265,6 +281,9 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
                     seen_init = self.seen_[class_index]
                 if self.num_seen_ is not None:
                     num_seen_init = self.num_seen_[class_index]
+                if self.intercept_sum_gradient_init_ is not None:
+                    intercept_sum_gradient_init = \
+                        self.intercept_sum_gradient_init_[class_index]
 
             weight_pos = self.expanded_class_weight_[class_index]
             weight_neg = 1.0
@@ -274,13 +293,15 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
         y_encoded = np.ones(n_samples)
         y_encoded[y != target_class] = -1.0
 
-        return super(BaseSAGClassifier, self)._fit(X, y_encoded,
-                                                   coef_init, intercept_init,
-                                                   sample_weight,
-                                                   sum_gradient_init,
-                                                   gradient_memory_init,
-                                                   seen_init, num_seen_init,
-                                                   weight_pos, weight_neg)
+        return super(BaseSAGClassifier, self).\
+            _fit(X, y_encoded,
+                 coef_init, intercept_init,
+                 sample_weight,
+                 sum_gradient_init,
+                 gradient_memory_init,
+                 seen_init, num_seen_init,
+                 intercept_sum_gradient_init,
+                 weight_pos, weight_neg)
 
 
 class BaseSAGRegressor(six.with_metaclass(ABCMeta, BaseSAG)):
@@ -313,15 +334,18 @@ class BaseSAGRegressor(six.with_metaclass(ABCMeta, BaseSAG)):
             gradient_memory_init = self.gradient_memory_
             seen_init = self.seen_
             num_seen_init = self.num_seen_
+            intercept_sum_gradient_init = self.intercept_sum_gradient_
 
         (self.coef_, self.intercept_, self.sum_gradient_,
-         self.gradient_memory_, self.seen_, self.num_seen_) = \
+         self.gradient_memory_, self.seen_, self.num_seen_,
+         self.intercept_sum_gradient_) = \
             super(BaseSAGRegressor, self)._fit(X, y, coef_init,
                                                intercept_init,
                                                sample_weight,
                                                sum_gradient_init,
                                                gradient_memory_init,
-                                               seen_init, num_seen_init)
+                                               seen_init, num_seen_init,
+                                               intercept_sum_gradient_init)
 
 
 class SAGClassifier(BaseSAGClassifier, LinearClassifierMixin, BaseEstimator):

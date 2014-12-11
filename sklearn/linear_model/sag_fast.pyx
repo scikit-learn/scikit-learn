@@ -20,7 +20,7 @@ from .sgd_fast cimport LossFunction, Classification
 
 def sag_sparse(SequentialDataset dataset,
                np.ndarray[double, ndim=1, mode='c'] weights_array,
-               double intercept_init,
+               double intercept,
                int n_samples,
                int n_features,
                double tol,
@@ -31,10 +31,11 @@ def sag_sparse(SequentialDataset dataset,
                np.ndarray[double, ndim=1, mode='c'] sum_gradient_init,
                np.ndarray[double, ndim=1, mode='c'] gradient_memory_init,
                np.ndarray[bint, ndim=1, mode='c'] seen_init,
-               int num_seen_init,
+               int num_seen,
                double weight_pos,
                double weight_neg,
                bint fit_intercept,
+               double intercept_sum_gradient,
                double intercept_decay,
                bint verbose):
 
@@ -73,9 +74,6 @@ def sag_sparse(SequentialDataset dataset,
     # the end time of the fit
     cdef time_t end_time
 
-    # the total number of samples seen
-    cdef double num_seen = num_seen_init
-
     # vector of booleans indicating whether this sample has been seen
     cdef bint* seen = <bint*> seen_init.data
 
@@ -87,7 +85,7 @@ def sag_sparse(SequentialDataset dataset,
 
     # the cumulative sums needed for JIT params
     cdef np.ndarray[double, ndim=1] cumulative_sums_array = \
-        np.empty(n_samples + 1,
+        np.empty(n_samples,
                  dtype=np.double,
                  order="c")
     cdef double* cumulative_sums = <double*> cumulative_sums_array.data
@@ -112,8 +110,6 @@ def sag_sparse(SequentialDataset dataset,
     # the cumulative sums for each iteration for the sparse implementation
     cumulative_sums[0] = 0.0
 
-    cdef double intercept = intercept_init
-
     with nogil:
         start_time = time(NULL)
         while True:
@@ -125,24 +121,36 @@ def sag_sparse(SequentialDataset dataset,
                                                &xnnz,
                                                &y,
                                                &sample_weight)
+                # dataset.next(&x_data_ptr,
+                #              &x_ind_ptr,
+                #              &xnnz,
+                #              &y,
+                #              &sample_weight)
+                # current_index = itr
 
                 # update the number of samples seen and the seen array
                 if seen[current_index] == 0:
-                    num_seen += 1.0
+                    num_seen += 1
                     seen[current_index] = 1
 
                 # make the weight updates
-                for j in range(xnnz):
-                    idx = x_ind_ptr[j]
-                    weights[idx] -= ((cumulative_sums[itr] -
-                                      cumulative_sums[feature_hist[idx]]) *
-                                     sum_gradient[idx])
-                    feature_hist[idx] = itr
+                if itr > 0:
+                    for j in range(xnnz):
+                        idx = x_ind_ptr[j]
+                        if feature_hist[idx] == 0:
+                            weights[idx] -= (cumulative_sums[itr - 1] *
+                                             sum_gradient[idx])
+                        else:
+                            weights[idx] -= \
+                                ((cumulative_sums[itr - 1] -
+                                  cumulative_sums[feature_hist[idx] - 1]) *
+                                 sum_gradient[idx])
+                        feature_hist[idx] = itr
 
-                    # check to see that the weight is not inf or NaN
-                    if not skl_isfinite(weights[idx]):
-                        infinity = True
-                        break
+                        # check to see that the weight is not inf or NaN
+                        if not skl_isfinite(weights[idx]):
+                            infinity = True
+                            break
 
                 # check to see if we have already encountered a bad weight or
                 # that the intercept is not inf or NaN
@@ -171,26 +179,38 @@ def sag_sparse(SequentialDataset dataset,
                     sum_gradient[idx] += (update -
                                           gradient_memory[current_index] * val)
 
-                gradient_memory[current_index] = gradient
-
                 if fit_intercept:
-                    intercept -= eta * gradient * intercept_decay
+                    intercept_sum_gradient += \
+                        gradient - gradient_memory[current_index]
+                    intercept -= (eta *
+                                  (intercept_sum_gradient / num_seen) *
+                                  intercept_decay)
+
+                # update the gradient memory for this sample
+                gradient_memory[current_index] = gradient
 
                 wscale *= 1.0 - eta * alpha
 
+                if itr == 0:
+                    cumulative_sums[0] = eta / (wscale * num_seen)
+                else:
+                    cumulative_sums[itr] = (cumulative_sums[itr - 1]
+                                            + eta / (wscale * num_seen))
+
                 # if wscale gets too small, we need to reset the scale
                 if wscale < 1e-9:
-                    scale_weights(weights, wscale, n_features, n_samples, itr,
-                                  cumulative_sums, feature_hist, sum_gradient)
+                    if verbose:
+                        with gil:
+                            print("rescaling...")
+                    scale_weights(weights, wscale, n_features, n_samples,
+                                  itr, cumulative_sums, feature_hist,
+                                  sum_gradient)
                     wscale = 1.0
-
-                cumulative_sums[itr + 1] = (cumulative_sums[itr]
-                                            + eta / (wscale * num_seen))
 
                 total_iter += 1
 
             # check if the stopping criteria is reached
-            scale_weights(weights, wscale, n_features, n_samples, n_samples,
+            scale_weights(weights, wscale, n_features, n_samples, n_samples - 1,
                           cumulative_sums, feature_hist, sum_gradient)
             wscale = 1.0
 
@@ -227,26 +247,26 @@ def sag_sparse(SequentialDataset dataset,
                           " with StandardScaler or"
                           " MinMaxScaler might help.") % (total_iter + 1))
 
-    return intercept, num_seen, max_iter_reached
+    return intercept, num_seen, max_iter_reached, intercept_sum_gradient
 
 cdef void scale_weights(double* weights, double wscale, int n_features,
                         int n_samples, int total_iter, double* cumulative_sums,
                         int* feature_hist, double* sum_gradient) nogil:
     for j in range(n_features):
-        weights[j] -= ((cumulative_sums[total_iter] -
-                        cumulative_sums[feature_hist[j]]) *
-                        sum_gradient[j])
+        if feature_hist[j] == 0:
+            weights[j] -= (cumulative_sums[total_iter] *
+                           sum_gradient[j])
+        else:
+            weights[j] -= ((cumulative_sums[total_iter] -
+                            cumulative_sums[feature_hist[j] - 1]) *
+                            sum_gradient[j])
         weights[j] *= wscale
+        feature_hist[j] = (total_iter + 1) % n_samples
 
-    # reset parameters
-    for j in range(total_iter + 1):
-        cumulative_sums[j] = 0.0
-    for j in range(n_features):
-        feature_hist[j] = 0
-
+    cumulative_sums[total_iter % n_samples] = 0.0
 
 def get_auto_eta(SequentialDataset dataset, double alpha,
-                 int n_samples, LossFunction loss):
+                 int n_samples, LossFunction loss, bint fit_intercept):
     cdef double *x_data_ptr
     cdef int *x_ind_ptr
     cdef double y
@@ -272,10 +292,10 @@ def get_auto_eta(SequentialDataset dataset, double alpha,
 
     if isinstance(loss, Classification):
         # Lipschitz for log loss
-        return 4.0 / (max_squared_sum + 4.0 * alpha)
+        return 4.0 / (max_squared_sum + fit_intercept + 4.0 * alpha)
     else:
         # Lipschitz for squared loss
-        return 1.0 / (max_squared_sum + alpha)
+        return 1.0 / (max_squared_sum + fit_intercept + alpha)
 
 cdef double dot(double* x_data_ptr, int* x_ind_ptr, double* w_data_ptr,
                 int xnnz) nogil:

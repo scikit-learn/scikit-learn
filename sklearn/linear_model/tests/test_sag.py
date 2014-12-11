@@ -78,14 +78,14 @@ class SparseSAGRegressor(SAGRegressor):
         return SAGRegressor.decision_function(self, X, *args, **kw)
 
 
-def sag(X, y, eta, alpha, intercept_init=0.0,
-        n_iter=1, dloss=None, sparse=False):
+def sag(X, y, eta, alpha, n_iter=1, dloss=None, sparse=False,
+        class_weight=None, fit_intercept=False):
     n_samples, n_features = X.shape[0], X.shape[1]
 
     weights = np.zeros(X.shape[1])
     sum_gradient = np.zeros(X.shape[1])
     gradient_memory = np.zeros((n_samples, n_features))
-    intercept = intercept_init
+    intercept = 0.0
     rng = np.random.RandomState(77)
     decay = 1.0
     seen = set()
@@ -97,35 +97,42 @@ def sag(X, y, eta, alpha, intercept_init=0.0,
     for epoch in range(n_iter):
         for k in range(n_samples):
             idx = int(rng.rand(1) * n_samples)
+            # idx = k
             entry = X[idx]
             seen.add(idx)
             p = np.dot(entry, weights) + intercept
             gradient = dloss(p, y[idx])
+            if class_weight:
+                gradient *= class_weight[y[idx]]
             update = entry * gradient + alpha * weights
             sum_gradient += update - gradient_memory[idx]
             gradient_memory[idx] = update
 
-            intercept -= eta * gradient * decay
+            if fit_intercept:
+                intercept -= eta * gradient * decay
+
             weights -= eta * sum_gradient / len(seen)
 
     return weights, intercept
 
 
-def sag_sparse(X, y, eta, alpha, intercept_init=0.0, n_iter=1,
-               dloss=None, class_weight=None, sparse=False):
+def sag_sparse(X, y, eta, alpha, n_iter=1,
+               dloss=None, class_weight=None, sparse=False,
+               fit_intercept=False):
     n_samples, n_features = X.shape[0], X.shape[1]
 
     weights = np.zeros(n_features)
     sum_gradient = np.zeros(n_features)
     last_updated = np.zeros(n_features, dtype=np.int)
-    gradient_memory = np.zeros((n_samples, n_features))
+    gradient_memory = np.zeros(n_samples)
     rng = np.random.RandomState(77)
-    intercept = intercept_init
+    intercept = 0.0
+    intercept_sum_gradient = 0.0
     wscale = 1.0
     decay = 1.0
     seen = set()
 
-    c_sum = np.zeros(n_iter * n_samples + 1)
+    c_sum = np.zeros(n_iter * n_samples)
 
     # sparse data has a fixed decay of .01
     if sparse:
@@ -134,14 +141,20 @@ def sag_sparse(X, y, eta, alpha, intercept_init=0.0, n_iter=1,
     counter = 0
     for epoch in range(n_iter):
         for k in range(n_samples):
+            # idx = k
             idx = int(rng.rand(1) * n_samples)
             entry = X[idx]
             seen.add(idx)
 
-            for j in range(n_features):
-                weights[j] -= ((c_sum[counter] - c_sum[last_updated[j]]) *
-                               sum_gradient[j])
-                last_updated[j] = counter
+            if counter >= 1:
+                for j in range(n_features):
+                    if last_updated[j] == 0:
+                        weights[j] -= c_sum[counter - 1] * sum_gradient[j]
+                    else:
+                        weights[j] -= ((c_sum[counter - 1] -
+                                        c_sum[last_updated[j] - 1]) *
+                                       sum_gradient[j])
+                    last_updated[j] = counter
 
             p = (wscale * np.dot(entry, weights)) + intercept
             gradient = dloss(p, y[idx])
@@ -150,21 +163,79 @@ def sag_sparse(X, y, eta, alpha, intercept_init=0.0, n_iter=1,
                 gradient *= class_weight[y[idx]]
 
             update = entry * gradient
-            sum_gradient += update - gradient_memory[idx]
-            gradient_memory[idx] = update
+            sum_gradient += update - (gradient_memory[idx] * entry)
+
+            if fit_intercept:
+                intercept_sum_gradient += gradient - gradient_memory[idx]
+                intercept -= eta * (intercept_sum_gradient / len(seen)) * decay
+
+            gradient_memory[idx] = gradient
 
             wscale *= (1.0 - alpha * eta)
-            c_sum[counter + 1] = c_sum[counter] + eta / (wscale * len(seen))
+            if counter == 0:
+                c_sum[0] = eta / (wscale * len(seen))
+            else:
+                c_sum[counter] = (c_sum[counter - 1] +
+                                  eta / (wscale * len(seen)))
 
-            intercept -= eta * gradient * decay
+            if counter >= 1 and wscale < 1e-9:
+                for j in range(n_features):
+                    if last_updated[j] == 0:
+                        weights[j] -= c_sum[counter] * sum_gradient[j]
+                    else:
+                        weights[j] -= ((c_sum[counter] -
+                                        c_sum[last_updated[j] - 1]) *
+                                       sum_gradient[j])
+                    last_updated[j] = counter + 1
+                c_sum[counter] = 0
+                weights *= wscale
+                wscale = 1.0
+
             counter += 1
 
-    for k in range(n_features):
-        weights[k] -= (c_sum[counter] -
-                       c_sum[last_updated[k]]) * sum_gradient[k]
+    for j in range(n_features):
+        if last_updated[j] == 0:
+            weights[j] -= c_sum[counter - 1] * sum_gradient[j]
+        else:
+            weights[j] -= ((c_sum[counter - 1] -
+                            c_sum[last_updated[j] - 1]) *
+                           sum_gradient[j])
     weights *= wscale
-
     return weights, intercept
+
+
+def get_eta(X, alpha, fit_intercept):
+    return 4.0 / (np.max(np.sum(X * X, axis=1)) + fit_intercept + 4.0 * alpha)
+
+
+def test_matching():
+    n_samples = 40
+    X, y = make_blobs(n_samples=n_samples, centers=2, random_state=0,
+                      cluster_std=0.1)
+    y[y == 0] = -1
+    alpha = 1.1
+    n_iter = 100
+    fit_intercept = False
+    eta = get_eta(X, alpha, fit_intercept)
+    clf = SAGClassifier(fit_intercept=fit_intercept, tol=.00000000001,
+                        alpha=alpha, max_iter=n_iter, random_state=10)
+    clf.fit(X, y)
+
+    weights, intercept = sag_sparse(X, y, eta, alpha, n_iter=n_iter,
+                                    dloss=log_dloss,
+                                    fit_intercept=fit_intercept)
+    weights2, intercept2 = sag(X, y, eta, alpha, n_iter=n_iter,
+                               dloss=log_dloss,
+                               fit_intercept=fit_intercept)
+    weights = np.atleast_2d(weights)
+    intercept = np.atleast_1d(intercept)
+    weights2 = np.atleast_2d(weights2)
+    intercept2 = np.atleast_1d(intercept2)
+
+    assert_array_almost_equal(weights, clf.coef_, decimal=10)
+    assert_array_almost_equal(intercept, clf.intercept_, decimal=10)
+    assert_array_almost_equal(weights2, clf.coef_, decimal=10)
+    assert_array_almost_equal(intercept2, clf.intercept_, decimal=10)
 
 
 def test_sag_pobj_matches_logistic_regression():
@@ -437,6 +508,7 @@ def test_sag_multiclass_computed_correctly():
                                max_iter=max_iter, tol=tol, random_state=77)
     X, y = make_blobs(n_samples=n_samples, centers=3, random_state=0,
                       cluster_std=0.1)
+    y[y == 0] = -1
     classes = np.unique(y)
     itrs = [84, 53, 49]
     sp_itrs = [48, 55, 49]
