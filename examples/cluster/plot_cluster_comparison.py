@@ -45,13 +45,20 @@ no_structure = np.random.rand(n_samples, 2), None
 colors = np.array([x for x in 'bgrcmykbgrcmykbgrcmykbgrcmyk'])
 colors = np.hstack([colors] * 20)
 
-plt.figure(figsize=(17, 9.5))
-plt.subplots_adjust(left=.001, right=.999, bottom=.001, top=.96, wspace=.05,
+clustering_names =  [
+    'MiniBatchKMeans', 'AffinityPropagation', 'MeanShift',
+    'SpectralClustering', 'Ward', 'AgglomerativeClustering',
+    'DBSCAN', 'Birch'
+    ]
+
+plt.figure(figsize=(len(clustering_names) * 2 + 3, 9.5))
+plt.subplots_adjust(left=.02, right=.98, bottom=.001, top=.96, wspace=.05,
                     hspace=.01)
 
 plot_num = 1
-for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
-                                     no_structure]):
+
+datasets = [noisy_circles, noisy_moons, blobs, no_structure]
+for i_dataset, dataset in enumerate(datasets):
     X, y = dataset
     # normalize dataset for easier parameter selection
     X = StandardScaler().fit_transform(X)
@@ -80,15 +87,13 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
                             affinity="cityblock", n_clusters=2,
                             connectivity=connectivity)
 
-    for name, algorithm in [
-                            ('MiniBatchKMeans', two_means),
-                            ('AffinityPropagation', affinity_propagation),
-                            ('MeanShift', ms),
-                            ('SpectralClustering', spectral),
-                            ('Ward', ward),
-                            ('AgglomerativeClustering', average_linkage),
-                            ('DBSCAN', dbscan)
-                           ]:
+    birch = cluster.Birch(n_clusters=2)
+    clustering_algorithms = [
+        two_means, affinity_propagation, ms, spectral, ward, average_linkage,
+        dbscan, birch
+        ]
+
+    for name, algorithm in zip(clustering_names, clustering_algorithms):
         # predict cluster memberships
         t0 = time.time()
         algorithm.fit(X)
@@ -99,7 +104,7 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
             y_pred = algorithm.predict(X)
 
         # plot
-        plt.subplot(4, 7, plot_num)
+        plt.subplot(4, len(clustering_algorithms), plot_num)
         if i_dataset == 0:
             plt.title(name, size=18)
         plt.scatter(X[:, 0], X[:, 1], color=colors[y_pred].tolist(), s=10)

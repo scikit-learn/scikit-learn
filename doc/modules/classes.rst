@@ -63,6 +63,7 @@ Classes
 
    cluster.AffinityPropagation
    cluster.AgglomerativeClustering
+   cluster.Birch
    cluster.DBSCAN
    cluster.FeatureAgglomeration
    cluster.KMeans
