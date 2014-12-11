@@ -2041,7 +2041,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
                                                   sample_weight=sample_weight)
 
     for i, label in enumerate(labels):
-        values = [target_names[i]]
+        values = [target_names[label]]
         for v in (p[i], r[i], f1[i]):
             values += ["{0:0.2f}".format(v)]
         values += ["{0}".format(s[i])]
