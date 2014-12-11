@@ -360,6 +360,11 @@ class SAGClassifier(BaseSAGClassifier, LinearClassifierMixin, BaseEstimator):
     Roux, and Francis Bach. 2013. <hal-00860051>
     https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf
 
+    IMPORTANT NOTE: SAGClassifier and models from linear_model in general
+    depend on columns that are on the same scale. You can make sure that the
+    data will be normalized by using sklearn.preprocessing.StandardScaler on
+    your data before passing it to the fit method.
+
     This implementation works with data represented as dense or sparse arrays
     of floating point values for the features. It will fit the data according
     to log loss.
@@ -482,6 +487,11 @@ class SAGRegressor(BaseSAGRegressor, LinearModel, RegressorMixin,
     Finite Sums with the Stochastic Average Gradient" by Mark Schmidt,
     Nicolas Le Roux, and Francis Bach. 2013. <hal-00860051>
     https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf
+
+    IMPORTANT NOTE: SAGRegressor and models from linear_model in general depend
+    on columns that are on the same scale. You can make sure that the data will
+    be normalized by using sklearn.preprocessing.StandardScaler on your data
+    before passing it to the fit method.
 
     The regularizer is a penalty added to the loss function that shrinks model
     parameters towards the zero vector using the squared euclidean norm
