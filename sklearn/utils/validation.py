@@ -86,6 +86,13 @@ def as_float_array(X, copy=True, force_all_finite=True):
         return X.astype(np.float32 if X.dtype == np.int32 else np.float64)
 
 
+def _is_arraylike(x):
+    """Returns whether the input is array-like"""
+    return (hasattr(x, '__len__') or
+            hasattr(x, 'shape') or
+            hasattr(x, '__array__'))
+
+
 def _num_samples(x):
     """Return number of samples in array-like x."""
     if not hasattr(x, '__len__') and not hasattr(x, 'shape'):
