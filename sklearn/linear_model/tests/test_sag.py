@@ -79,13 +79,17 @@ class SparseSAGRegressor(SAGRegressor):
 
 
 def sag(X, y, eta, alpha, n_iter=1, dloss=None, sparse=False,
-        class_weight=None, fit_intercept=False):
+        class_weight=None, fit_intercept=True):
     n_samples, n_features = X.shape[0], X.shape[1]
 
     weights = np.zeros(X.shape[1])
     sum_gradient = np.zeros(X.shape[1])
     gradient_memory = np.zeros((n_samples, n_features))
+
     intercept = 0.0
+    intercept_sum_gradient = 0.0
+    intercept_gradient_memory = np.zeros(n_samples)
+
     rng = np.random.RandomState(77)
     decay = 1.0
     seen = set()
@@ -109,7 +113,10 @@ def sag(X, y, eta, alpha, n_iter=1, dloss=None, sparse=False,
             gradient_memory[idx] = update
 
             if fit_intercept:
-                intercept -= eta * gradient * decay
+                intercept_sum_gradient += (gradient -
+                                           intercept_gradient_memory[idx])
+                intercept_gradient_memory[idx] = gradient
+                intercept -= eta * intercept_sum_gradient / len(seen) * decay
 
             weights -= eta * sum_gradient / len(seen)
 
@@ -118,7 +125,7 @@ def sag(X, y, eta, alpha, n_iter=1, dloss=None, sparse=False,
 
 def sag_sparse(X, y, eta, alpha, n_iter=1,
                dloss=None, class_weight=None, sparse=False,
-               fit_intercept=False):
+               fit_intercept=True):
     n_samples, n_features = X.shape[0], X.shape[1]
 
     weights = np.zeros(n_features)
@@ -204,18 +211,22 @@ def sag_sparse(X, y, eta, alpha, n_iter=1,
     return weights, intercept
 
 
-def get_eta(X, alpha, fit_intercept):
-    return 4.0 / (np.max(np.sum(X * X, axis=1)) + fit_intercept + 4.0 * alpha)
+def get_eta(X, alpha, fit_intercept, classification=True):
+    if classification:
+        return (4.0 / (np.max(np.sum(X * X, axis=1))
+                + fit_intercept + 4.0 * alpha))
+    else:
+        return 1.0 / (np.max(np.sum(X * X, axis=1)) + fit_intercept + alpha)
 
 
-def test_matching():
+def test_classifier_matching():
     n_samples = 40
     X, y = make_blobs(n_samples=n_samples, centers=2, random_state=0,
                       cluster_std=0.1)
     y[y == 0] = -1
     alpha = 1.1
     n_iter = 100
-    fit_intercept = False
+    fit_intercept = True
     eta = get_eta(X, alpha, fit_intercept)
     clf = SAGClassifier(fit_intercept=fit_intercept, tol=.00000000001,
                         alpha=alpha, max_iter=n_iter, random_state=10)
@@ -226,6 +237,41 @@ def test_matching():
                                     fit_intercept=fit_intercept)
     weights2, intercept2 = sag(X, y, eta, alpha, n_iter=n_iter,
                                dloss=log_dloss,
+                               fit_intercept=fit_intercept)
+    weights = np.atleast_2d(weights)
+    intercept = np.atleast_1d(intercept)
+    weights2 = np.atleast_2d(weights2)
+    intercept2 = np.atleast_1d(intercept2)
+
+    assert_array_almost_equal(weights, clf.coef_, decimal=10)
+    assert_array_almost_equal(intercept, clf.intercept_, decimal=10)
+    assert_array_almost_equal(weights2, clf.coef_, decimal=10)
+    assert_array_almost_equal(intercept2, clf.intercept_, decimal=10)
+
+
+def test_regressor_matching():
+    n_samples = 30
+    n_features = 10
+
+    np.random.seed(10)
+    X = np.random.random((n_samples, n_features))
+    true_w = np.random.random(n_features)
+    y = X.dot(true_w)
+
+    alpha = 1.1
+    n_iter = 100
+    fit_intercept = True
+
+    eta = get_eta(X, alpha, fit_intercept, classification=False)
+    clf = SAGRegressor(fit_intercept=fit_intercept, tol=.00000000001,
+                       alpha=alpha, max_iter=n_iter, random_state=10)
+    clf.fit(X, y)
+
+    weights, intercept = sag_sparse(X, y, eta, alpha, n_iter=n_iter,
+                                    dloss=squared_dloss,
+                                    fit_intercept=fit_intercept)
+    weights2, intercept2 = sag(X, y, eta, alpha, n_iter=n_iter,
+                               dloss=squared_dloss,
                                fit_intercept=fit_intercept)
     weights = np.atleast_2d(weights)
     intercept = np.atleast_1d(intercept)

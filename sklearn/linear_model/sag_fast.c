@@ -2173,23 +2173,14 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_8sag_fast_sag_sparse(CYTHON_UN
           for (__pyx_t_10 = 0; __pyx_t_10 < __pyx_t_9; __pyx_t_10+=1) {
             __pyx_v_itr = __pyx_t_10;
 
-            /* "sklearn/linear_model/sag_fast.pyx":124
- *                 #                                &y,
- *                 #                                &sample_weight)
- *                 dataset.next(&x_data_ptr,             # <<<<<<<<<<<<<<
- *                              &x_ind_ptr,
- *                              &xnnz,
- */
-            ((struct __pyx_vtabstruct_7sklearn_5utils_11seq_dataset_SequentialDataset *)__pyx_v_dataset->__pyx_vtab)->next(__pyx_v_dataset, (&__pyx_v_x_data_ptr), (&__pyx_v_x_ind_ptr), (&__pyx_v_xnnz), (&__pyx_v_y), (&__pyx_v_sample_weight));
-
-            /* "sklearn/linear_model/sag_fast.pyx":129
- *                              &y,
- *                              &sample_weight)
- *                 current_index = itr             # <<<<<<<<<<<<<<
+            /* "sklearn/linear_model/sag_fast.pyx":119
  * 
- *                 # update the number of samples seen and the seen array
+ *                 # extract a random sample
+ *                 current_index = dataset.random(&x_data_ptr,             # <<<<<<<<<<<<<<
+ *                                                &x_ind_ptr,
+ *                                                &xnnz,
  */
-            __pyx_v_current_index = __pyx_v_itr;
+            __pyx_v_current_index = ((struct __pyx_vtabstruct_7sklearn_5utils_11seq_dataset_SequentialDataset *)__pyx_v_dataset->__pyx_vtab)->random(__pyx_v_dataset, (&__pyx_v_x_data_ptr), (&__pyx_v_x_ind_ptr), (&__pyx_v_xnnz), (&__pyx_v_y), (&__pyx_v_sample_weight));
 
             /* "sklearn/linear_model/sag_fast.pyx":132
  * 
@@ -2620,7 +2611,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_8sag_fast_sag_sparse(CYTHON_UN
  *                         with gil:
  *                             print("rescaling...")             # <<<<<<<<<<<<<<
  *                     scale_weights(weights, wscale, n_features, n_samples,
- *                                   itr - 1, cumulative_sums, feature_hist,
+ *                                   itr, cumulative_sums, feature_hist,
  */
                       if (__Pyx_PrintOne(0, __pyx_kp_s_rescaling) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 204; __pyx_clineno = __LINE__; goto __pyx_L29_error;}
                     }
@@ -2656,13 +2647,13 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_8sag_fast_sag_sparse(CYTHON_UN
  *                         with gil:
  *                             print("rescaling...")
  *                     scale_weights(weights, wscale, n_features, n_samples,             # <<<<<<<<<<<<<<
- *                                   itr - 1, cumulative_sums, feature_hist,
+ *                                   itr, cumulative_sums, feature_hist,
  *                                   sum_gradient)
  */
-              __pyx_f_7sklearn_12linear_model_8sag_fast_scale_weights(__pyx_v_weights, __pyx_v_wscale, __pyx_v_n_features, __pyx_v_n_samples, (__pyx_v_itr - 1), __pyx_v_cumulative_sums, __pyx_v_feature_hist, __pyx_v_sum_gradient);
+              __pyx_f_7sklearn_12linear_model_8sag_fast_scale_weights(__pyx_v_weights, __pyx_v_wscale, __pyx_v_n_features, __pyx_v_n_samples, __pyx_v_itr, __pyx_v_cumulative_sums, __pyx_v_feature_hist, __pyx_v_sum_gradient);
 
               /* "sklearn/linear_model/sag_fast.pyx":208
- *                                   itr - 1, cumulative_sums, feature_hist,
+ *                                   itr, cumulative_sums, feature_hist,
  *                                   sum_gradient)
  *                     wscale = 1.0             # <<<<<<<<<<<<<<
  * 

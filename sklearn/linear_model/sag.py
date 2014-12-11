@@ -261,7 +261,7 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
                 seen_init = self.seen_
                 num_seen_init = self.num_seen_
                 intercept_sum_gradient_init = \
-                    self.intercept_sum_gradient_init_
+                    self.intercept_sum_gradient_
 
             weight_pos = self.expanded_class_weight_[1]
             weight_neg = self.expanded_class_weight_[0]
@@ -281,9 +281,9 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
                     seen_init = self.seen_[class_index]
                 if self.num_seen_ is not None:
                     num_seen_init = self.num_seen_[class_index]
-                if self.intercept_sum_gradient_init_ is not None:
+                if self.intercept_sum_gradient_ is not None:
                     intercept_sum_gradient_init = \
-                        self.intercept_sum_gradient_init_[class_index]
+                        self.intercept_sum_gradient_[class_index]
 
             weight_pos = self.expanded_class_weight_[class_index]
             weight_neg = 1.0
@@ -323,7 +323,7 @@ class BaseSAGRegressor(six.with_metaclass(ABCMeta, BaseSAG)):
     def _fit(self, X, y, coef_init=None, intercept_init=None,
              sample_weight=None, sum_gradient_init=None,
              gradient_memory_init=None, seen_init=None,
-             num_seen_init=None):
+             num_seen_init=None, intercept_sum_gradient_init=None):
         X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
         y = y.astype(np.float64)
 
