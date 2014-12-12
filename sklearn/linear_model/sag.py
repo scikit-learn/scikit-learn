@@ -35,7 +35,7 @@ def multiprocess_method(instance, name, args=()):
 # https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf
 class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
     def __init__(self, alpha=0.0001, fit_intercept=True, max_iter=1000,
-                 tol=0.01, verbose=0,
+                 tol=0.001, verbose=0,
                  random_state=None, eta0='auto', warm_start=False):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
@@ -150,7 +150,7 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
 class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
     @abstractmethod
     def __init__(self, alpha=0.0001,
-                 fit_intercept=True, max_iter=1000, tol=0.01, verbose=0,
+                 fit_intercept=True, max_iter=1000, tol=0.001, verbose=0,
                  n_jobs=1, random_state=None,
                  eta0='auto', class_weight=None, warm_start=False):
         self.n_jobs = n_jobs
@@ -307,7 +307,7 @@ class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
 class BaseSAGRegressor(six.with_metaclass(ABCMeta, BaseSAG)):
     @abstractmethod
     def __init__(self, alpha=0.0001, fit_intercept=True, max_iter=1000,
-                 tol=0.01, verbose=0, random_state=None, eta0='auto',
+                 tol=0.001, verbose=0, random_state=None, eta0='auto',
                  warm_start=False):
 
         self.loss_function = SquaredLoss()
@@ -440,7 +440,7 @@ class SAGClassifier(BaseSAGClassifier, LinearClassifierMixin, BaseEstimator):
     SAGClassifier(alpha=0.0001, class_weight=None,
                   eta0='auto', fit_intercept=True,
                   max_iter=1000, n_jobs=1, random_state=None,
-                  tol=0.01, verbose=0, warm_start=False)
+                  tol=0.001, verbose=0, warm_start=False)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -450,7 +450,7 @@ class SAGClassifier(BaseSAGClassifier, LinearClassifierMixin, BaseEstimator):
 
     """
     def __init__(self, alpha=0.0001, fit_intercept=True, max_iter=1000,
-                 tol=0.01, verbose=0, n_jobs=1, random_state=None,
+                 tol=0.001, verbose=0, n_jobs=1, random_state=None,
                  eta0='auto', class_weight=None, warm_start=False):
 
         super(SAGClassifier, self).__init__(alpha=alpha,
@@ -552,7 +552,7 @@ class SAGRegressor(BaseSAGRegressor, LinearModel, RegressorMixin,
     ... #doctest: +NORMALIZE_WHITESPACE
     SAGRegressor(alpha=0.0001, eta0='auto',
                  fit_intercept=True, max_iter=1000, random_state=None,
-                 tol=0.01, verbose=0, warm_start=False)
+                 tol=0.001, verbose=0, warm_start=False)
 
     See also
     --------
@@ -560,7 +560,7 @@ class SAGRegressor(BaseSAGRegressor, LinearModel, RegressorMixin,
 
     """
     def __init__(self, alpha=0.0001, fit_intercept=True, max_iter=1000,
-                 tol=0.01, verbose=0, random_state=None, eta0='auto',
+                 tol=0.001, verbose=0, random_state=None, eta0='auto',
                  warm_start=False):
         super(SAGRegressor, self).__init__(alpha=alpha,
                                            fit_intercept=fit_intercept,
