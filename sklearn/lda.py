@@ -183,6 +183,26 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
     classes_ : array-like, shape (n_classes,)
         Unique class labels.
 
+    See also
+    --------
+    sklearn.qda.QDA: Quadratic discriminant analysis
+
+    Notes
+    -----
+    The default solver is 'svd'. It can perform both classification and
+    transform, and it does not rely on the calculation of the covariance
+    matrix. This can be an advantage in situations where the number of features
+    is large. However, the 'svd' solver cannot be used with shrinkage.
+
+    The 'lsqr' solver is an efficient algorithm that only works for
+    classification. It supports shrinkage.
+
+    The 'eigen' solver is based on the optimization of the between class
+    scatter to within class scatter ratio. It can be used for both
+    classification and transform, and it supports shrinkage. However, the
+    'eigen' solver needs to compute the covariance matrix, so it might not be
+    suitable for situations with a high number of features.
+
     Examples
     --------
     >>> import numpy as np
@@ -195,10 +215,6 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
       store_covariance=False, tol=0.0001)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
-
-    See also
-    --------
-    sklearn.qda.QDA: Quadratic discriminant analysis
     """
     def __init__(self, solver='svd', shrinkage=None, priors=None,
                  n_components=None, store_covariance=False, tol=1e-4):

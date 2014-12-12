@@ -71,10 +71,7 @@ estimator. Shrinkage LDA can be used by setting the ``shrinkage`` parameter of
 the :class:`lda.LDA` class to 'auto'. This automatically determines the
 optimal shrinkage parameter in an analytic way following the lemma introduced
 by Ledoit and Wolf. Note that currently shrinkage only works when setting the
-``solver`` parameter to 'lsqr' or 'eigen'. Both solvers yield almost identical
-results, but `lsqr` also works (without shrinkage) in the case where the number
-of features is greater than the number of samples. Therefore, `lsqr` is
-recommended over `eigen`.
+``solver`` parameter to 'lsqr' or 'eigen'.
 
 The ``shrinkage`` parameter can also be manually set between 0 and 1.
 
@@ -84,6 +81,23 @@ The ``shrinkage`` parameter can also be manually set between 0 and 1.
 
 .. centered:: |shrinkage|
 
+
+Estimation algorithms
+=====================
+
+The default solver is 'svd'. It can perform both classification and transform,
+and it does not rely on the calculation of the covariance matrix. This can be
+an advantage in situations where the number of features is large. However, the
+'svd' solver cannot be used with shrinkage.
+
+The 'lsqr' solver is an efficient algorithm that only works for classification.
+It supports shrinkage.
+
+The 'eigen' solver is based on the optimization of the between class scatter to
+within class scatter ratio. It can be used for both classification and
+transform, and it supports shrinkage. However, the 'eigen' solver needs to
+compute the covariance matrix, so it might not be suitable for situations with
+a high number of features.
 
 .. topic:: Examples:
 
