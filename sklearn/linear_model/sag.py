@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 import warnings
 
 from .base import LinearClassifierMixin, LinearModel, SparseCoefMixin
@@ -147,208 +147,7 @@ class BaseSAG(six.with_metaclass(ABCMeta, SparseCoefMixin)):
                 num_seen, intercept_sum_gradient)
 
 
-class BaseSAGClassifier(six.with_metaclass(ABCMeta, BaseSAG)):
-    @abstractmethod
-    def __init__(self, alpha=0.0001,
-                 fit_intercept=True, max_iter=1000, tol=0.001, verbose=0,
-                 n_jobs=1, random_state=None,
-                 eta0='auto', class_weight=None, warm_start=False):
-        self.n_jobs = n_jobs
-        self.class_weight = class_weight
-        self.loss_function = Log()
-        super(BaseSAGClassifier, self).__init__(alpha=alpha,
-                                                fit_intercept=fit_intercept,
-                                                max_iter=max_iter,
-                                                verbose=verbose,
-                                                random_state=random_state,
-                                                tol=tol,
-                                                eta0=eta0,
-                                                warm_start=warm_start)
-
-    def _fit(self, X, y, coef_init=None, intercept_init=None,
-             sample_weight=None, sum_gradient_init=None,
-             gradient_memory_init=None, seen_init=None,
-             num_seen_init=None, intercept_sum_gradient_init=None):
-        X, y = check_X_y(X, y, "csr", copy=False, order='C',
-                         dtype=np.float64)
-        n_samples, n_features = X.shape[0], X.shape[1]
-
-        self.classes_ = np.unique(y)
-        self.expanded_class_weight_ = compute_class_weight(self.class_weight,
-                                                           self.classes_, y)
-
-        if self.classes_.shape[0] <= 1:
-            # there is only one class
-            raise ValueError("The number of class labels must be "
-                             "greater than one.")
-        elif self.classes_.shape[0] == 2:
-            # binary classifier
-            (coef, intercept, sum_gradient, gradient_memory,
-             seen, num_seen, intercept_sum_gradient) = \
-                self._fit_target_class(X, y, self.classes_[1],
-                                       coef_init, intercept_init,
-                                       sample_weight, sum_gradient_init,
-                                       gradient_memory_init,
-                                       seen_init, num_seen_init,
-                                       intercept_sum_gradient_init)
-        else:
-            # multiclass classifier
-            coef = []
-            intercept = []
-            sum_gradient = []
-            gradient_memory = []
-            seen = []
-            num_seen = []
-            intercept_sum_gradient = []
-
-            # perform a fit for all classes, one verse all
-            results = Parallel(n_jobs=self.n_jobs,
-                               backend="threading",
-                               verbose=self.verbose)(
-                # we have to use a call to multiprocess_method instead of the
-                # plain instance method because pickle will not work on
-                # instance methods in python 2.6 and 2.7
-                delayed(multiprocess_method)(self, "_fit_target_class",
-                                             (X, y, cl,
-                                              coef_init, intercept_init,
-                                              sample_weight,
-                                              sum_gradient_init,
-                                              gradient_memory_init,
-                                              seen_init, num_seen_init,
-                                              intercept_sum_gradient_init))
-                for cl in self.classes_)
-
-            # append results to the correct array
-            for (coef_cl, intercept_cl, sum_gradient_cl, gradient_memory_cl,
-                 seen_cl, num_seen_cl, intercept_sum_gradient_cl) in results:
-                coef.append(coef_cl)
-                intercept.append(intercept_cl)
-                sum_gradient.append(sum_gradient_cl)
-                gradient_memory.append(gradient_memory_cl)
-                seen.append(seen_cl)
-                num_seen.append(num_seen_cl)
-                intercept_sum_gradient.append(intercept_sum_gradient_cl)
-
-            # stack all arrays to transform into np arrays
-            coef = np.vstack(coef)
-            intercept = np.array(intercept)
-            sum_gradient = np.vstack(sum_gradient)
-            gradient_memory = np.vstack(gradient_memory)
-            seen = np.vstack(seen)
-            num_seen = np.array(num_seen)
-            intercept_sum_gradient = np.array(intercept_sum_gradient)
-
-        self.coef_ = coef
-        self.intercept_ = intercept
-        self.sum_gradient_ = sum_gradient
-        self.gradient_memory_ = gradient_memory
-        self.seen_ = seen
-        self.num_seen_ = num_seen
-        self.intercept_sum_gradient_ = intercept_sum_gradient
-
-    def _fit_target_class(self, X, y, target_class, coef_init=None,
-                          intercept_init=None, sample_weight=None,
-                          sum_gradient_init=None, gradient_memory_init=None,
-                          seen_init=None, num_seen_init=None,
-                          intercept_sum_gradient_init=None):
-        if self.classes_.shape[0] == 2:
-            if self.warm_start:
-                # init parameters for binary classifier
-                coef_init = self.coef_
-                intercept_init = self.intercept_
-                sum_gradient_init = self.sum_gradient_
-                gradient_memory_init = self.gradient_memory_
-                seen_init = self.seen_
-                num_seen_init = self.num_seen_
-                intercept_sum_gradient_init = \
-                    self.intercept_sum_gradient_
-
-            weight_pos = self.expanded_class_weight_[1]
-            weight_neg = self.expanded_class_weight_[0]
-        else:
-            class_index = np.where(self.classes_ == target_class)[0][0]
-            if self.warm_start:
-                # init parameters for multi-class classifier
-                if self.coef_ is not None:
-                    coef_init = self.coef_[class_index]
-                if self.intercept_ is not None:
-                    intercept_init = self.intercept_[class_index]
-                if self.sum_gradient_ is not None:
-                    sum_gradient_init = self.sum_gradient_[class_index]
-                if self.gradient_memory_ is not None:
-                    gradient_memory_init = self.gradient_memory_[class_index]
-                if self.seen_ is not None:
-                    seen_init = self.seen_[class_index]
-                if self.num_seen_ is not None:
-                    num_seen_init = self.num_seen_[class_index]
-                if self.intercept_sum_gradient_ is not None:
-                    intercept_sum_gradient_init = \
-                        self.intercept_sum_gradient_[class_index]
-
-            weight_pos = self.expanded_class_weight_[class_index]
-            weight_neg = 1.0
-
-        n_samples, n_features = X.shape[0], X.shape[1]
-
-        y_encoded = np.ones(n_samples)
-        y_encoded[y != target_class] = -1.0
-
-        return super(BaseSAGClassifier, self).\
-            _fit(X, y_encoded,
-                 coef_init, intercept_init,
-                 sample_weight,
-                 sum_gradient_init,
-                 gradient_memory_init,
-                 seen_init, num_seen_init,
-                 intercept_sum_gradient_init,
-                 weight_pos, weight_neg)
-
-
-class BaseSAGRegressor(six.with_metaclass(ABCMeta, BaseSAG)):
-    @abstractmethod
-    def __init__(self, alpha=0.0001, fit_intercept=True, max_iter=1000,
-                 tol=0.001, verbose=0, random_state=None, eta0='auto',
-                 warm_start=False):
-
-        self.loss_function = SquaredLoss()
-        super(BaseSAGRegressor, self).__init__(alpha=alpha,
-                                               fit_intercept=fit_intercept,
-                                               max_iter=max_iter,
-                                               verbose=verbose,
-                                               random_state=random_state,
-                                               tol=tol,
-                                               eta0=eta0,
-                                               warm_start=warm_start)
-
-    def _fit(self, X, y, coef_init=None, intercept_init=None,
-             sample_weight=None, sum_gradient_init=None,
-             gradient_memory_init=None, seen_init=None,
-             num_seen_init=None, intercept_sum_gradient_init=None):
-        X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
-        y = y.astype(np.float64)
-
-        if self.warm_start:
-            coef_init = self.coef_
-            intercept_init = self.intercept_
-            sum_gradient_init = self.sum_gradient_
-            gradient_memory_init = self.gradient_memory_
-            seen_init = self.seen_
-            num_seen_init = self.num_seen_
-            intercept_sum_gradient_init = self.intercept_sum_gradient_
-
-        (self.coef_, self.intercept_, self.sum_gradient_,
-         self.gradient_memory_, self.seen_, self.num_seen_,
-         self.intercept_sum_gradient_) = \
-            super(BaseSAGRegressor, self)._fit(X, y, coef_init,
-                                               intercept_init,
-                                               sample_weight,
-                                               sum_gradient_init,
-                                               gradient_memory_init,
-                                               seen_init, num_seen_init,
-                                               intercept_sum_gradient_init)
-
-
-class SAGClassifier(BaseSAGClassifier, LinearClassifierMixin, BaseEstimator):
+class SAGClassifier(BaseSAG, LinearClassifierMixin, BaseEstimator):
     """Linear classifiers (SVM, logistic regression, a.o.) with SAG training.
 
     This estimator implements regularized linear models with stochastic
@@ -449,35 +248,171 @@ class SAGClassifier(BaseSAGClassifier, LinearClassifierMixin, BaseEstimator):
     SGDClassifier, LinearSVC, LogisticRegression, Perceptron
 
     """
-    def __init__(self, alpha=0.0001, fit_intercept=True, max_iter=1000,
-                 tol=0.001, verbose=0, n_jobs=1, random_state=None,
+    def __init__(self, alpha=0.0001,
+                 fit_intercept=True, max_iter=1000, tol=0.001, verbose=0,
+                 n_jobs=1, random_state=None,
                  eta0='auto', class_weight=None, warm_start=False):
-
+        self.n_jobs = n_jobs
+        self.class_weight = class_weight
+        self.loss_function = Log()
         super(SAGClassifier, self).__init__(alpha=alpha,
-                                            class_weight=class_weight,
                                             fit_intercept=fit_intercept,
                                             max_iter=max_iter,
                                             verbose=verbose,
-                                            n_jobs=n_jobs,
                                             random_state=random_state,
                                             tol=tol,
                                             eta0=eta0,
                                             warm_start=warm_start)
 
-    def fit(self, X, y, coef_init=None, intercept_init=None,
-            sample_weight=None, sum_gradient_init=None,
-            gradient_memory_init=None, seen_init=None,
-            num_seen_init=None):
-        super(SAGClassifier, self)._fit(X, y, coef_init,
-                                        intercept_init,
-                                        sample_weight,
-                                        sum_gradient_init,
-                                        gradient_memory_init,
-                                        seen_init, num_seen_init)
+    """Fit linear model with Stochastic Average Gradient.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Training data
+
+        y : numpy array, shape (n_samples,)
+            Target values
+
+        sample_weight : array-like, shape (n_samples,), optional
+            Weights applied to individual samples (1. for unweighted).
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+    def fit(self, X, y, sample_weight=None):
+        X, y = check_X_y(X, y, "csr", copy=False, order='C',
+                         dtype=np.float64)
+        n_samples, n_features = X.shape[0], X.shape[1]
+
+        self.classes_ = np.unique(y)
+        self.expanded_class_weight_ = compute_class_weight(self.class_weight,
+                                                           self.classes_, y)
+
+        if self.classes_.shape[0] <= 1:
+            # there is only one class
+            raise ValueError("The number of class labels must be "
+                             "greater than one.")
+        elif self.classes_.shape[0] == 2:
+            # binary classifier
+            (coef, intercept, sum_gradient, gradient_memory,
+             seen, num_seen, intercept_sum_gradient) = \
+                self._fit_target_class(X, y, self.classes_[1], sample_weight)
+        else:
+            # multiclass classifier
+            coef = []
+            intercept = []
+            sum_gradient = []
+            gradient_memory = []
+            seen = []
+            num_seen = []
+            intercept_sum_gradient = []
+
+            # perform a fit for all classes, one verse all
+            results = Parallel(n_jobs=self.n_jobs,
+                               backend="threading",
+                               verbose=self.verbose)(
+                # we have to use a call to multiprocess_method instead of the
+                # plain instance method because pickle will not work on
+                # instance methods in python 2.6 and 2.7
+                delayed(multiprocess_method)(self, "_fit_target_class",
+                                             (X, y, cl, sample_weight))
+                for cl in self.classes_)
+
+            # append results to the correct array
+            for (coef_cl, intercept_cl, sum_gradient_cl, gradient_memory_cl,
+                 seen_cl, num_seen_cl, intercept_sum_gradient_cl) in results:
+                coef.append(coef_cl)
+                intercept.append(intercept_cl)
+                sum_gradient.append(sum_gradient_cl)
+                gradient_memory.append(gradient_memory_cl)
+                seen.append(seen_cl)
+                num_seen.append(num_seen_cl)
+                intercept_sum_gradient.append(intercept_sum_gradient_cl)
+
+            # stack all arrays to transform into np arrays
+            coef = np.vstack(coef)
+            intercept = np.array(intercept)
+            sum_gradient = np.vstack(sum_gradient)
+            gradient_memory = np.vstack(gradient_memory)
+            seen = np.vstack(seen)
+            num_seen = np.array(num_seen)
+            intercept_sum_gradient = np.array(intercept_sum_gradient)
+
+        self.coef_ = coef
+        self.intercept_ = intercept
+        self.sum_gradient_ = sum_gradient
+        self.gradient_memory_ = gradient_memory
+        self.seen_ = seen
+        self.num_seen_ = num_seen
+        self.intercept_sum_gradient_ = intercept_sum_gradient
+
         return self
 
+    def _fit_target_class(self, X, y, target_class, sample_weight=None):
+        coef_init = None
+        intercept_init = None
+        sum_gradient_init = None
+        gradient_memory_init = None
+        seen_init = None
+        num_seen_init = None
+        intercept_sum_gradient_init = None
 
-class SAGRegressor(BaseSAGRegressor, LinearModel, RegressorMixin,
+        if self.classes_.shape[0] == 2:
+            if self.warm_start:
+                # init parameters for binary classifier
+                coef_init = self.coef_
+                intercept_init = self.intercept_
+                sum_gradient_init = self.sum_gradient_
+                gradient_memory_init = self.gradient_memory_
+                seen_init = self.seen_
+                num_seen_init = self.num_seen_
+                intercept_sum_gradient_init = \
+                    self.intercept_sum_gradient_
+
+            weight_pos = self.expanded_class_weight_[1]
+            weight_neg = self.expanded_class_weight_[0]
+        else:
+            class_index = np.where(self.classes_ == target_class)[0][0]
+            if self.warm_start:
+                # init parameters for multi-class classifier
+                if self.coef_ is not None:
+                    coef_init = self.coef_[class_index]
+                if self.intercept_ is not None:
+                    intercept_init = self.intercept_[class_index]
+                if self.sum_gradient_ is not None:
+                    sum_gradient_init = self.sum_gradient_[class_index]
+                if self.gradient_memory_ is not None:
+                    gradient_memory_init = self.gradient_memory_[class_index]
+                if self.seen_ is not None:
+                    seen_init = self.seen_[class_index]
+                if self.num_seen_ is not None:
+                    num_seen_init = self.num_seen_[class_index]
+                if self.intercept_sum_gradient_ is not None:
+                    intercept_sum_gradient_init = \
+                        self.intercept_sum_gradient_[class_index]
+
+            weight_pos = self.expanded_class_weight_[class_index]
+            weight_neg = 1.0
+
+        n_samples, n_features = X.shape[0], X.shape[1]
+
+        y_encoded = np.ones(n_samples)
+        y_encoded[y != target_class] = -1.0
+
+        return super(SAGClassifier, self).\
+            _fit(X, y_encoded,
+                 coef_init, intercept_init,
+                 sample_weight,
+                 sum_gradient_init,
+                 gradient_memory_init,
+                 seen_init, num_seen_init,
+                 intercept_sum_gradient_init,
+                 weight_pos, weight_neg)
+
+
+class SAGRegressor(BaseSAG, LinearModel, RegressorMixin,
                    BaseEstimator):
     """Linear model fitted by minimizing a regularized empirical loss with SAG
 
@@ -562,22 +497,64 @@ class SAGRegressor(BaseSAGRegressor, LinearModel, RegressorMixin,
     def __init__(self, alpha=0.0001, fit_intercept=True, max_iter=1000,
                  tol=0.001, verbose=0, random_state=None, eta0='auto',
                  warm_start=False):
+
+        self.loss_function = SquaredLoss()
         super(SAGRegressor, self).__init__(alpha=alpha,
                                            fit_intercept=fit_intercept,
                                            max_iter=max_iter,
                                            verbose=verbose,
-                                           tol=tol,
                                            random_state=random_state,
-                                           eta0=eta0, warm_start=warm_start)
+                                           tol=tol,
+                                           eta0=eta0,
+                                           warm_start=warm_start)
 
-    def fit(self, X, y, coef_init=None, intercept_init=None,
-            sample_weight=None, sum_gradient_init=None,
-            gradient_memory_init=None, seen_init=None,
-            num_seen_init=None):
-        super(SAGRegressor, self)._fit(X, y, coef_init,
-                                       intercept_init,
-                                       sample_weight,
-                                       sum_gradient_init,
-                                       gradient_memory_init,
-                                       seen_init, num_seen_init)
+    """Fit linear model with Stochastic Average Gradient.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Training data
+
+        y : numpy array, shape (n_samples,)
+            Target values
+
+        sample_weight : array-like, shape (n_samples,), optional
+            Weights applied to individual samples (1. for unweighted).
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+    def fit(self, X, y, sample_weight=None):
+        X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
+        y = y.astype(np.float64)
+
+        coef_init = None
+        intercept_init = None
+        sum_gradient_init = None
+        gradient_memory_init = None
+        seen_init = None
+        num_seen_init = None
+        intercept_sum_gradient_init = None
+
+        if self.warm_start:
+            coef_init = self.coef_
+            intercept_init = self.intercept_
+            sum_gradient_init = self.sum_gradient_
+            gradient_memory_init = self.gradient_memory_
+            seen_init = self.seen_
+            num_seen_init = self.num_seen_
+            intercept_sum_gradient_init = self.intercept_sum_gradient_
+
+        (self.coef_, self.intercept_, self.sum_gradient_,
+         self.gradient_memory_, self.seen_, self.num_seen_,
+         self.intercept_sum_gradient_) = \
+            super(SAGRegressor, self)._fit(X, y, coef_init,
+                                           intercept_init,
+                                           sample_weight,
+                                           sum_gradient_init,
+                                           gradient_memory_init,
+                                           seen_init, num_seen_init,
+                                           intercept_sum_gradient_init)
+
         return self
