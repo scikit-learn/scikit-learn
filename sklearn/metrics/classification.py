@@ -475,7 +475,7 @@ def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
         return n_samples - score
 
 
-def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted',
+def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
              sample_weight=None):
     """Compute the F1 score, also known as balanced F-score or F-measure
 
@@ -504,7 +504,8 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted',
         If ``average`` is not ``None`` and the classification target is binary,
         only this class's scores will be returned.
 
-    average : string, [None, 'micro', 'macro', 'samples', 'weighted' (default)]
+    average : one of [None, 'micro', 'macro', 'samples', 'weighted']
+        This parameter is required for multiclass/multilabel targets.
         If ``None``, the scores for each class are returned. Otherwise,
         unless ``pos_label`` is given in binary classification, this
         determines the type of averaging performed on the data:
@@ -561,7 +562,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted',
 
 
 def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
-                average='weighted', sample_weight=None):
+                average='binary', sample_weight=None):
     """Compute the F-beta score
 
     The F-beta score is the weighted harmonic mean of precision and recall,
@@ -590,7 +591,8 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
         If ``average`` is not ``None`` and the classification target is binary,
         only this class's scores will be returned.
 
-    average : string, [None, 'micro', 'macro', 'samples', 'weighted' (default)]
+    average : one of [None, 'micro', 'macro', 'samples', 'weighted']
+        This parameter is required for multiclass/multilabel targets.
         If ``None``, the scores for each class are returned. Otherwise,
         unless ``pos_label`` is given in binary classification, this
         determines the type of averaging performed on the data:
@@ -822,13 +824,24 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     """
     average_options = (None, 'micro', 'macro', 'weighted', 'samples')
-    if average not in average_options:
+    if average not in average_options and average != 'binary':
         raise ValueError('average has to be one of ' +
                          str(average_options))
     if beta <= 0:
         raise ValueError("beta should be >0 in the F-beta score")
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+
+    if average == 'binary' and y_type != 'binary':
+        warnings.warn('The default `weighted` averaging is deprecated, '
+                      'and from version 0.18, use of precision, recall or '
+                      'F-score with multiclass or multilabel data will result '
+                      'in an exception. '
+                      'Please set an explicit value for `average`, one of '
+                      '%s. In cross validation use, for instance, '
+                      'scoring="f1_weighted" instead of scoring="f1".'
+                      % str(average_options), DeprecationWarning, stacklevel=2)
+        average = 'weighted'
 
     label_order = labels  # save this for later
     if labels is None:
@@ -852,7 +865,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     elif average == 'samples':
         raise ValueError("Sample-based precision, recall, fscore is "
-                         "not meaningful outside multilabel"
+                         "not meaningful outside multilabel "
                          "classification. See the accuracy_score instead.")
     else:
         lb = LabelEncoder()
@@ -885,11 +898,12 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     ### Select labels to keep ###
 
     if y_type == 'binary' and average is not None and pos_label is not None:
-        if label_order is not None and len(label_order) == 2:
+        if average != 'binary' and label_order is not None \
+           and len(label_order) == 2:
             warnings.warn('In the future, providing two `labels` values, as '
-                          'well as `average` will average over those '
-                          'labels. For now, please use `labels=None` with '
-                          '`pos_label` to evaluate precision, recall and '
+                          'well as `average!=`binary`` will average over '
+                          'those labels. For now, please use `labels=None` '
+                          'with `pos_label` to evaluate precision, recall and '
                           'F-score for the positive label only.',
                           FutureWarning)
         if pos_label not in labels:
@@ -954,7 +968,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
 
 def precision_score(y_true, y_pred, labels=None, pos_label=1,
-                    average='weighted', sample_weight=None):
+                    average='binary', sample_weight=None):
     """Compute the precision
 
     The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
@@ -979,7 +993,8 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
         If ``average`` is not ``None`` and the classification target is binary,
         only this class's scores will be returned.
 
-    average : string, [None, 'micro', 'macro', 'samples', 'weighted' (default)]
+    average : one of [None, 'micro', 'macro', 'samples', 'weighted']
+        This parameter is required for multiclass/multilabel targets.
         If ``None``, the scores for each class are returned. Otherwise,
         unless ``pos_label`` is given in binary classification, this
         determines the type of averaging performed on the data:
@@ -1036,7 +1051,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     return p
 
 
-def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted',
+def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
                  sample_weight=None):
     """Compute the recall
 
@@ -1061,7 +1076,8 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted',
         If ``average`` is not ``None`` and the classification target is binary,
         only this class's scores will be returned.
 
-    average : string, [None, 'micro', 'macro', 'samples', 'weighted' (default)]
+    average : one of [None, 'micro', 'macro', 'samples', 'weighted']
+        This parameter is required for multiclass/multilabel targets.
         If ``None``, the scores for each class are returned. Otherwise,
         unless ``pos_label`` is given in binary classification, this
         determines the type of averaging performed on the data:

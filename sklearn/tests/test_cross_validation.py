@@ -683,7 +683,7 @@ def test_cross_val_score_with_score_func_classification():
     # F1 score (class are balanced so f1_score should be equal to zero/one
     # score
     f1_scores = cval.cross_val_score(clf, iris.data, iris.target,
-                                     scoring="f1", cv=5)
+                                     scoring="f1_weighted", cv=5)
     assert_array_almost_equal(f1_scores, [0.97, 1., 0.97, 0.97, 1.], 2)
 
 

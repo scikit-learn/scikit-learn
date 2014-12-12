@@ -101,6 +101,12 @@ Overview of clustering methods
      - Flat geometry, good for density estimation
      - Mahalanobis distances to  centers
 
+   * - :ref:`Birch`
+     - branching factor, threshold, optional global clusterer.
+     - Large ``n_clusters`` and ``n_samples``
+     - Large dataset, outlier removal, data reduction.
+     - Euclidean distance between points
+
 Non-flat geometry clustering is useful when the clusters have a specific
 shape, i.e. a non-flat manifold, and the standard euclidean distance is
 not the right metric. This case arises in the two top rows of the figure
@@ -766,6 +772,93 @@ by black points below.
    Ester, M., H. P. Kriegel, J. Sander, and X. Xu,
    In Proceedings of the 2nd International Conference on Knowledge Discovery
    and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
+
+.. _birch:
+
+Birch
+=====
+
+The :class:`Birch` builds a tree called the Characteristic Feature Tree(CFT) for
+the given data. The data is essentially lossy compressed to a set of Characteristic
+Feature nodes (CF Nodes). The CF Nodes have a number of subclusters called
+Characteristic Feature subclusters (CF Subclusters) and these CF Subclusters
+located in the non-terminal CF Nodes can have CF Nodes as children. 
+
+The CF Subclusters hold the necessary information for clustering which prevents
+the need to hold the entire input data in memory. This information includes:
+
+- Number of samples in a subcluster.
+- Linear Sum - A n-dimensional vector holding the sum of all samples
+- Squared Sum - Sum of the squared L2 norm of all samples.
+- Centroids - To avoid recalculation linear sum / n_samples.
+- Squared norm of the centroids.
+
+The Birch algorithm has two parameters, the threshold and the branching factor.
+The branching factor limits the number of subclusters in a node and the
+threshold limits the distance between the entering sample and the existing
+subclusters.
+
+This algorithm can be viewed as an instance or data reduction method,
+since it reduces the input data to a set of subclusters which are obtained directly
+from the leaves of the CFT. This reduced data can be further processed by feeding
+it into a global clusterer. This global clusterer can be set by ``n_clusters``.
+If ``n_clusters`` is set to None, the subclusters from the leaves are directly
+read off, otherwise a global clustering step labels these subclusters into global
+clusters(labels) and the samples are mapped to the global label of the nearest subcluster.
+
+**Algorithm description:**
+
+- A new sample is inserted into the root of the CF Tree which is a CF Node.
+  It is then merged with the subcluster of the root, that has the smallest
+  radius after merging, constrained by the threshold and branching factor conditions.
+  If the subcluster has any child node, then this is done repeatedly till it reaches
+  a leaf. After finding the nearest subcluster in the leaf, the properties of this
+  subcluster and the parent subclusters are recursively updated.
+
+- If the radius of the subcluster obtained by merging the new sample and the
+  nearest subcluster is greater than the square of the threshold and if the
+  number of subclusters is greater than the branching factor, then a space is temporarily
+  allocated to this new sample. The two farthest subclusters are taken and
+  the subclusters are divided into two groups on the basis of the distance
+  between these subclusters.
+
+- If this split node has a parent subcluster and there is room
+  for a new subcluster, then the parent is split into two. If there is no room,
+  then this node is again split into two and the process is continued
+  recursively, till it reaches the root.
+
+**Birch or MiniBatchKMeans?**
+
+ - Birch does not scale very well to high dimensionsal data. As a rule of thumb if
+   ``n_features`` is greater than twenty, it is generally better to use MiniBatchKMeans.
+ - If the number of instances of data needs to be reduced, or if one wants a
+   large number of subclusters either as a preprocessing step or otherwise,
+   Birch is more useful than MiniBatchKMeans.
+
+
+**How to use partial_fit?**
+
+To avoid the computation of global clustering, for every call of ``partial_fit``
+the user is advised
+1. To set ``n_clusters=None`` initially
+2. Train all data by multiple calls to partial_fit.
+3. Set ``n_clusters`` to a required value using
+   ``brc.set_params(n_clusters=n_clusters)``
+4. Call ``partial_fit`` finally with no arguments, i.e ``brc.partial_fit()``
+   which performs the global clustering.
+
+.. image:: ../auto_examples/cluster/images/plot_birch_vs_minibatchkmeans_001.png
+    :target: ../auto_examples/cluster/plot_birch_vs_minibatchkmeans.html
+
+.. topic:: References:
+
+ * Tian Zhang, Raghu Ramakrishnan, Maron Livny
+   BIRCH: An efficient data clustering method for large databases.
+   http://www.cs.sfu.ca/CourseCentral/459/han/papers/zhang96.pdf
+
+ * Roberto Perdisci
+   JBirch - Java implementation of BIRCH clustering algorithm
+   https://code.google.com/p/jbirch/
 
 .. _clustering_evaluation:
 

@@ -287,8 +287,12 @@ Vector Regression depends only on a subset of the training data,
 because the cost function for building the model ignores any training
 data close to the model prediction.
 
-There are two flavors of Support Vector Regression: :class:`SVR` and
-:class:`NuSVR`.
+There are three different implementations of Support Vector Regression: 
+:class:`SVR`, :class:`NuSVR` and :class:`LinearSVR`. :class:`LinearSVR` 
+provides a faster implementation than :class:`SVR` but only considers
+linear kernels, while :class:`NuSVR` implements a slightly different
+formulation than :class:`SVR` and :class:`LinearSVR`. See
+:ref:`svm_implementation_details` for further details.
 
 As with classification classes, the fit method will take as
 argument vectors X, y, only that in this case y is expected to have
@@ -309,6 +313,8 @@ floating point values instead of integer values::
 .. topic:: Examples:
 
  * :ref:`example_svm_plot_svm_regression.py`
+
+
 
 .. _svm_outlier_detection:
 
@@ -516,7 +522,7 @@ correctly.  ``gamma`` defines how much influence a single training example has.
 The larger ``gamma`` is, the closer other examples must be to be affected.
 
 Proper choice of ``C`` and ``gamma`` is critical to the SVM's performance.  One
-is advised to use :class:`GridSearchCV` with ``C`` and ``gamma`` spaced
+is advised to use :class:`sklearn.grid_search.GridSearchCV` with ``C`` and ``gamma`` spaced
 exponentially far apart to choose good values.
 
 .. topic:: Examples:
@@ -617,6 +623,7 @@ bound of the fraction of support vectors.
 It can be shown that the :math:`\nu`-SVC formulation is a reparametrization
 of the :math:`C`-SVC and therefore mathematically equivalent.
 
+.. _svm_implementation_details:
 
 Implementation details
 ======================

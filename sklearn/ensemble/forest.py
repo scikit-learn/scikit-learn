@@ -296,7 +296,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             raise ValueError("Estimator not fitted, "
                              "call `fit` before `feature_importances_`.")
 
-        all_importances = Parallel(n_jobs=self.n_jobs)(
+        all_importances = Parallel(n_jobs=self.n_jobs, backend="threading")(
             delayed(getattr)(tree, 'feature_importances_')
             for tree in self.estimators_)
         return sum(all_importances) / self.n_estimators
@@ -556,7 +556,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
 
         Returns
         -------
-        y: array of shape = [n_samples] or [n_samples, n_outputs]
+        y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted values.
         """
         # Check data
@@ -1250,10 +1250,12 @@ class RandomTreesEmbedding(BaseForest):
     An unsupervised transformation of a dataset to a high-dimensional
     sparse representation. A datapoint is coded according to which leaf of
     each tree it is sorted into. Using a one-hot encoding of the leaves,
-    this leads to a binary coding with as many ones as trees in the forest.
+    this leads to a binary coding with as many ones as there are trees in
+    the forest.
 
-    The dimensionality of the resulting representation is approximately
-    ``n_estimators * 2 ** max_depth``.
+    The dimensionality of the resulting representation is
+    ``n_out <= n_estimators * max_leaf_nodes``. If ``max_leaf_nodes == None``,
+    the number of leaf nodes is at most ``n_estimators * 2 ** max_depth``.
 
     Parameters
     ----------
@@ -1268,27 +1270,23 @@ class RandomTreesEmbedding(BaseForest):
 
     min_samples_split : integer, optional (default=2)
         The minimum number of samples required to split an internal node.
-        Note: this parameter is tree-specific.
 
     min_samples_leaf : integer, optional (default=1)
         The minimum number of samples in newly created leaves.  A split is
         discarded if after the split, one of the leaves would contain less then
         ``min_samples_leaf`` samples.
-        Note: this parameter is tree-specific.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the input samples required to be at a
         leaf node.
-        Note: this parameter is tree-specific.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
-        Note: this parameter is tree-specific.
 
-    sparse_output: bool, optional (default=True)
+    sparse_output : bool, optional (default=True)
         Whether or not to return a sparse CSR matrix, as default behavior,
         or to return a dense array compatible with dense pipeline operators.
 
@@ -1393,7 +1391,7 @@ class RandomTreesEmbedding(BaseForest):
 
         Returns
         -------
-        X_transformed: sparse matrix, shape=(n_samples, n_out)
+        X_transformed : sparse matrix, shape=(n_samples, n_out)
             Transformed dataset.
         """
         # ensure_2d=False because there are actually unit test checking we fail
@@ -1424,7 +1422,7 @@ class RandomTreesEmbedding(BaseForest):
 
         Returns
         -------
-        X_transformed: sparse matrix, shape=(n_samples, n_out)
+        X_transformed : sparse matrix, shape=(n_samples, n_out)
             Transformed dataset.
         """
         return self.one_hot_encoder_.transform(self.apply(X))

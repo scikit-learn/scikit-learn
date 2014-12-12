@@ -12,6 +12,12 @@ Changelog
 New features
 ............
 
+
+   - Added :class:`svm.LinearSVR`. This class uses the liblinear implementation
+     of Support Vector Regression which is much faster for large
+     sample sizes than :class:`svm.SVR` with linear kernel. By 
+     `Fabian Pedregosa`_ and Qiang Luo.
+
    - Incremental fit for :class:`GaussianNB <naive_bayes.GaussianNB>`.
 
    - Add ``sample_weight`` support to :class:`dummy.DummyClassifier` and
@@ -20,6 +26,8 @@ New features
 
    - Add the :func:`metrics.label_ranking_average_precision_score` metrics. By
      `Arnaud Joly`_.
+
+   - Add the :func:`metrics.coverage_error` metrics. By `Arnaud Joly`_.
 
    - Added :class:`linear_model.LogisticRegressionCV`. By
      `Manoj Kumar`_, `Fabian Pedregosa`_, `Gael Varoquaux`_
@@ -50,6 +58,8 @@ New features
    - Added :func:`metrics.median_absolute_error`, a robust metric.
      By `Gael Varoquaux`_ and `Florian Wilhelm`_.
 
+   - Add :class:`cluster.Birch`, an online clustering algorithm. By
+     `Manoj Kumar`_, `Alexandre Gramfort`_ and `Joel Nothman`_.
 
 Enhancements
 ............
@@ -120,6 +130,12 @@ Enhancements
    - Optimized :class:`cluster.AffinityPropagation` by reducing the number of
      memory allocations of large temporary data-structures. By `Antony Lee`_.
 
+   - Parellization of the computation of feature importances in random forest.
+     By `Olivier Grisel`_ and `Arnaud Joly`_.
+
+   - Add ``n_iter_`` attribute to estimators that accept a ``max_iter`` attribute
+     in their constructor. By `Manoj Kumar`_.
+
 Documentation improvements
 ..........................
 
@@ -138,6 +154,10 @@ Documentation improvements
 
    - More explicit documentation of sample generators and of data
      transformation. By `Joel Nothman`_.
+
+   - :class:`sklearn.neighbors.BallTree` and :class:`sklearn.neighbors.KDTree`
+     used to point to empty pages stating that they are aliases of BinaryTree.
+     This has been fixed to show the correct class docs. By `Manoj Kumar`_.
 
 Bug fixes
 .........
@@ -216,6 +236,17 @@ API changes summary
       :func:`linear_model.enet_path` which constrains coefficients to be
       positive. By `Manoj Kumar`_.
 
+    - Users should now supply an explicit ``average`` parameter to
+      :func:`sklearn.metrics.f1_score`, :func:`sklearn.metrics.fbeta_score`,
+      :func:`sklearn.metrics.recall_score` and
+      :func:`sklearn.metrics.precision_score` when performing multiclass
+      or multilabel (i.e. not binary) classification. By `Joel Nothman`_.
+
+    - `scoring` parameter for cross validation now accepts `'f1_micro'`,
+      `'f1_macro'` or `'f1_weighted'`. `'f1'` is now for binary classification
+      only. Similar changes apply to `'precision'` and `'recall'`.
+      By `Joel Nothman`_.
+
 .. _changes_0_15_2:
 
 0.15.2
@@ -256,7 +287,7 @@ Bug fixes
     running the tests. By `Joel Nothman`_.
 
   - Many documentation and website fixes by `Joel Nothman`_, `Lars Buitinck`_
-    and others.
+    `Matt Pico`_, and others.
 
 .. _changes_0_15_1:
 

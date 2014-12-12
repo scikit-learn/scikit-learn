@@ -145,9 +145,9 @@ The 2013' Paris international sprint
    :target: http://www.telecom-paristech.fr/
 
 
-.. |tinyclues| image:: http://www.tinyclues.com/item/50b77d01e4b0bff132989dfd?format=original
+.. |tinyclues| image:: http://www.tinyclues.com/static/img/logo.png
    :width: 150px
-   :target: http://www.tinyclues.fr
+   :target: http://www.tinyclues.com/
 
 
 .. |afpy| image:: http://www.afpy.org/logo.png

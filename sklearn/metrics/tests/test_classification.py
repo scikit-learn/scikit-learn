@@ -991,6 +991,24 @@ def test_fscore_warnings():
                          'being set to 0.0 due to no true samples.')
 
 
+def test_prf_average_compat():
+    """Ensure warning if f1_score et al.'s average is implicit for multiclass
+    """
+    y_true = [1, 2, 3, 3]
+    y_pred = [1, 2, 3, 1]
+
+    for metric in [precision_score, recall_score, f1_score,
+                   partial(fbeta_score, beta=2)]:
+        score = assert_warns(DeprecationWarning, metric, y_true, y_pred)
+        score_weighted = assert_no_warnings(metric, y_true, y_pred,
+                                            average='weighted')
+        assert_equal(score, score_weighted,
+                     'average does not act like "weighted" by default')
+
+        # check binary passes without warning
+        assert_no_warnings(metric, [0, 1, 1], [0, 1, 0])
+
+
 @ignore_warnings  # sequence of sequences is deprecated
 def test__check_targets():
     """Check that _check_targets correctly merges target types, squeezes

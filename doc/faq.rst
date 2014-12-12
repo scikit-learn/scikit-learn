@@ -27,7 +27,10 @@ See :ref:`contributing`.
 Can I add this new algorithm that I (or someone else) just published?
 -------------------------------------------------------------------------
 No. As a rule we only add well-established algorithms. A rule of thumb is at least
-3 years since publications, 1000+ cites and wide use and usefullness.
+3 years since publications, 1000+ citations and wide use and usefullness. A
+technique that provides a clear-cut improvement (e.g. an enhanced  data
+structure or efficient approximation) on a widely-used method will also be
+considered for inclusion.
 
 Can I add this classical algorithm from the 80s?
 ---------------------------------------------------

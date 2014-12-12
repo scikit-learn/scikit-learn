@@ -65,7 +65,7 @@ int TRON::tron(double *w)
 	for (i=0; i<n; i++)
 		w[i] = 0;
 
-        f = fun_obj->fun(w);
+	f = fun_obj->fun(w);
 	fun_obj->grad(w, g);
 	delta = cblas_dnrm2(n, g, inc);
 	double gnorm1 = delta;
@@ -85,10 +85,10 @@ int TRON::tron(double *w)
 
 		gs = cblas_ddot(n, g, inc, s, inc);
 		prered = -0.5*(gs - cblas_ddot(n, s, inc, r, inc));
-                fnew = fun_obj->fun(w_new);
+		fnew = fun_obj->fun(w_new);
 
 		// Compute the actual reduction.
-	        actred = f - fnew;
+		actred = f - fnew;
 
 		// On the first iteration, adjust the initial step bound.
 		snorm = cblas_dnrm2(n, s, inc);
@@ -118,7 +118,7 @@ int TRON::tron(double *w)
 			iter++;
 			memcpy(w, w_new, sizeof(double)*n);
 			f = fnew;
-		        fun_obj->grad(w, g);
+			fun_obj->grad(w, g);
 
 			gnorm = cblas_dnrm2(n, g, inc);
 			if (gnorm <= eps*gnorm1)

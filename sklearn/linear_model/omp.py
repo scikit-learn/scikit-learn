@@ -271,29 +271,29 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
 
     Parameters
     ----------
-    X: array, shape (n_samples, n_features)
+    X : array, shape (n_samples, n_features)
         Input data. Columns are assumed to have unit norm.
 
-    y: array, shape (n_samples,) or (n_samples, n_targets)
+    y : array, shape (n_samples,) or (n_samples, n_targets)
         Input targets
 
-    n_nonzero_coefs: int
+    n_nonzero_coefs : int
         Desired number of non-zero entries in the solution. If None (by
         default) this value is set to 10% of n_features.
 
-    tol: float
+    tol : float
         Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
 
-    precompute: {True, False, 'auto'},
+    precompute : {True, False, 'auto'},
         Whether to perform precomputations. Improves performance when n_targets
         or n_samples is very large.
 
-    copy_X: bool, optional
+    copy_X : bool, optional
         Whether the design matrix X must be copied by the algorithm. A false
         value is only helpful if X is already Fortran-ordered, otherwise a
         copy is made anyway.
 
-    return_path: bool, optional. Default: False
+    return_path : bool, optional. Default: False
         Whether to return every value of the nonzero coefficients along the
         forward path. Useful for cross-validation.
 
@@ -302,7 +302,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
 
     Returns
     -------
-    coef: array, shape (n_features,) or (n_features, n_targets)
+    coef : array, shape (n_features,) or (n_features, n_targets)
         Coefficients of the OMP solution. If `return_path=True`, this contains
         the whole coefficient path. In this case its shape is
         (n_features, n_features) or (n_features, n_targets, n_features) and
@@ -405,32 +405,32 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
 
     Parameters
     ----------
-    Gram: array, shape (n_features, n_features)
+    Gram : array, shape (n_features, n_features)
         Gram matrix of the input data: X.T * X
 
-    Xy: array, shape (n_features,) or (n_features, n_targets)
+    Xy : array, shape (n_features,) or (n_features, n_targets)
         Input targets multiplied by X: X.T * y
 
-    n_nonzero_coefs: int
+    n_nonzero_coefs : int
         Desired number of non-zero entries in the solution. If None (by
         default) this value is set to 10% of n_features.
 
-    tol: float
+    tol : float
         Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
 
-    norms_squared: array-like, shape (n_targets,)
+    norms_squared : array-like, shape (n_targets,)
         Squared L2 norms of the lines of y. Required if tol is not None.
 
-    copy_Gram: bool, optional
+    copy_Gram : bool, optional
         Whether the gram matrix must be copied by the algorithm. A false
         value is only helpful if it is already Fortran-ordered, otherwise a
         copy is made anyway.
 
-    copy_Xy: bool, optional
+    copy_Xy : bool, optional
         Whether the covariance vector Xy must be copied by the algorithm.
         If False, it may be overwritten.
 
-    return_path: bool, optional. Default: False
+    return_path : bool, optional. Default: False
         Whether to return every value of the nonzero coefficients along the
         forward path. Useful for cross-validation.
 
@@ -439,7 +439,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
 
     Returns
     -------
-    coef: array, shape (n_features,) or (n_features, n_targets)
+    coef : array, shape (n_features,) or (n_features, n_targets)
         Coefficients of the OMP solution. If `return_path=True`, this contains
         the whole coefficient path. In this case its shape is
         (n_features, n_features) or (n_features, n_targets, n_features) and
@@ -606,7 +606,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
 
         Returns
         -------
-        self: object
+        self : object
             returns an instance of self.
         """
         X = check_array(X)

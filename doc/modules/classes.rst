@@ -63,6 +63,7 @@ Classes
 
    cluster.AffinityPropagation
    cluster.AgglomerativeClustering
+   cluster.Birch
    cluster.DBSCAN
    cluster.FeatureAgglomeration
    cluster.KMeans
@@ -223,6 +224,7 @@ Loaders
    datasets.load_sample_image
    datasets.load_sample_images
    datasets.load_svmlight_file
+   datasets.load_svmlight_files
    datasets.dump_svmlight_file
 
 Samples generator
@@ -731,6 +733,7 @@ details.
    :template: function.rst
 
    metrics.make_scorer
+   metrics.get_scorer
 
 Classification metrics
 ----------------------
@@ -787,6 +790,7 @@ details.
    :toctree: generated/
    :template: function.rst
 
+   metrics.coverage_error
    metrics.label_ranking_average_precision_score
 
 
@@ -835,6 +839,8 @@ further details.
 
 Pairwise metrics
 ----------------
+
+See the :ref:`metrics` section of the user guide for further details.
 
 .. automodule:: sklearn.metrics.pairwise
    :no-members:

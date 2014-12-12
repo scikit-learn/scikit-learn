@@ -589,7 +589,7 @@ class Parallel(Logger):
                     raise ImportError('[joblib] Attempting to do parallel computing '
                             'without protecting your import on a system that does '
                             'not support forking. To use parallel-computing in a '
-                            'script, you must protect you main loop using "if '
+                            'script, you must protect your main loop using "if '
                             "__name__ == '__main__'"
                             '". Please see the joblib documentation on Parallel '
                             'for more information'
