@@ -37,10 +37,9 @@ def _cov(X, shrinkage=None):
 
     shrinkage : string or float, optional
         Shrinkage parameter, possible values:
-          - None: no shrinkage (default).
-          - 'empirical': same as None.
+          - None or 'empirical': no shrinkage (default).
           - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
-          - float between 0 and 1: fixed shrinkage constant.
+          - float between 0 and 1: fixed shrinkage parameter.
 
     Returns
     -------
@@ -50,8 +49,7 @@ def _cov(X, shrinkage=None):
     shrinkage = "empirical" if shrinkage is None else shrinkage
     if isinstance(shrinkage, string_types):
         if shrinkage == 'auto':
-            # standardize features
-            sc = StandardScaler()
+            sc = StandardScaler()  # standardize features
             X = sc.fit_transform(X)
             s = sc.std_ * ledoit_wolf(X)[0] * sc.std_  # scale back
         elif shrinkage == 'empirical':
@@ -61,61 +59,67 @@ def _cov(X, shrinkage=None):
     elif isinstance(shrinkage, float) or isinstance(shrinkage, int):
         if shrinkage < 0 or shrinkage > 1:
             raise ValueError('shrinkage parameter must be between 0 and 1')
-        s = empirical_covariance(X)
-        s = shrunk_covariance(s, shrinkage)
+        s = shrunk_covariance(empirical_covariance(X), shrinkage)
     else:
         raise TypeError('shrinkage must be of string or int type')
     return s
 
 
-def _means(X, y):
+def _class_means(X, y):
     """Compute class means.
 
     Parameters
     ----------
     X : array-like, shape (n_samples, n_features)
-        Training data.
+        Input data.
 
     y : array-like, shape (n_samples,) or (n_samples, n_targets)
         Target values.
+
+    Returns
+    -------
+    means : array-like, shape (n_features,)
+        Class means.
     """
     means = []
     classes = np.unique(y)
     for group in classes:
         Xg = X[y == group, :]
-        meang = Xg.mean(0)
-        means.append(meang)
+        means.append(Xg.mean(0))
     return np.asarray(means)
 
 
-def _means_cov(X, y, shrinkage=None):
-    """Compute class means and covariance matrix.
+def _class_cov(X, y, priors=None, shrinkage=None):
+    """Compute class covariance matrix.
 
     Parameters
     ----------
     X : array-like, shape (n_samples, n_features)
-        Training data.
+        Input data.
 
     y : array-like, shape (n_samples,) or (n_samples, n_targets)
         Target values.
+
+    priors : array-like, shape (n_classes,)
+        Class priors.
 
     shrinkage : string or float, optional
         Shrinkage parameter, possible values:
           - None: no shrinkage (default).
           - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
-          - float between 0 and 1: fixed shrinkage constant.
+          - float between 0 and 1: fixed shrinkage parameter.
+
+    Returns
+    -------
+    cov : array-like, shape (n_features, n_features)
+        Class covariance matrix.
     """
-    means = []
     classes = np.unique(y)
     covs = []
     for group in classes:
         Xg = X[y == group, :]
-        meang = Xg.mean(0)
-        means.append(meang)
-        covg = _cov(Xg, shrinkage)
-        covg = np.atleast_2d(covg)
-        covs.append(covg)
-    return np.asarray(means), np.mean(covs, 0)
+        covs.append(_cov(Xg, shrinkage))
+    return np.average(covs, axis=0, weights=priors)
 
 
 class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
@@ -136,7 +140,7 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
         Solver to use, possible values:
           - 'svd': Singular value decomposition (default). Does not compute the
                 covariance matrix, therefore this solver is recommended for
-                data with a very large number of features.
+                data with a large number of features.
           - 'lsqr': Least squares solution, can be combined with shrinkage.
           - 'eigen': Eigenvalue decomposition, can be combined with shrinkage.
 
@@ -144,11 +148,11 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
         Shrinkage parameter, possible values:
           - None: no shrinkage (default).
           - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
-          - float between 0 and 1: fixed shrinkage constant.
+          - float between 0 and 1: fixed shrinkage parameter.
         Note that shrinkage works only with 'lsqr' and 'eigen' solvers.
 
     priors : array, optional, shape (n_classes,)
-        Priors on classes.
+        Class priors.
 
     n_components : int, optional
         Number of components (< n_classes - 1) for dimensionality reduction.
@@ -205,30 +209,52 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
         self.store_covariance = store_covariance  # used only in svd solver
         self.tol = tol  # used only in svd solver
 
-    def _solve_lsqr(self, X, y, shrinkage, rcond=None):
+    def _solve_lsqr(self, X, y, shrinkage):
         """Least squares solver.
+
+        The least squares solver computes a straightforward solution of the
+        optimal decision rule based directly on the discriminant functions. It
+        can only be used for classification (with optional shrinkage), because
+        estimation of eigenvectors is not performed. Therefore, dimensionality
+        reduction with the transform is not supported.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
             Training data.
 
-        y : array-like, shape (n_samples,) or (n_samples, n_targets)
+        y : array-like, shape (n_samples,) or (n_samples, n_classes)
             Target values.
 
         shrinkage : string or float, optional
             Shrinkage parameter, possible values:
               - None: no shrinkage (default).
               - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
-              - float between 0 and 1: fixed shrinkage constant.
+              - float between 0 and 1: fixed shrinkage parameter.
+
+        Notes
+        -----
+        This solver is based on [1]_, section 2.6.2, pp. 39-41.
+
+        References
+        ----------
+        .. [1] R. O. Duda, P. E. Hart, D. G. Stork. Pattern Classification
+           (Second Edition). John Wiley & Sons, Inc., New York, 2001. ISBN
+           0-471-05669-3.
         """
-        self.means_, self.covariance_ = _means_cov(X, y, shrinkage)
-        self.coef_ = linalg.lstsq(self.covariance_, self.means_.T, rcond)[0].T
+        self.means_ = _class_means(X, y)
+        self.covariance_ = _class_cov(X, y, self.priors_, shrinkage)
+        self.coef_ = linalg.lstsq(self.covariance_, self.means_.T)[0].T
         self.intercept_ = (-0.5 * np.diag(np.dot(self.means_, self.coef_.T))
                            + np.log(self.priors_))
 
     def _solve_eigen(self, X, y, shrinkage):
-        """Eigenvalue decomposition solver.
+        """Eigenvalue solver.
+
+        The eigenvalue solver computes the optimal solution of the Rayleigh
+        coefficient (basically the ratio of between class scatter to within
+        class scatter). This solver supports both classification and
+        dimensionality reduction (with optional shrinkage).
 
         Parameters
         ----------
@@ -243,16 +269,34 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
               - None: no shrinkage (default).
               - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
               - float between 0 and 1: fixed shrinkage constant.
+
+        Notes
+        -----
+        This solver is based on [1]_, section 3.8.3, pp. 121-124.
+
+        References
+        ----------
+        .. [1] R. O. Duda, P. E. Hart, D. G. Stork. Pattern Classification
+           (Second Edition). John Wiley & Sons, Inc., New York, 2001. ISBN
+           0-471-05669-3.
         """
-        self.means_, self.covariance_ = _means_cov(X, y, shrinkage)
+        self.means_ = _class_means(X, y)
+        self.covariance_ = _class_cov(X, y, self.priors_, shrinkage)
+
+        Sw = self.covariance_  # within scatter
         St = _cov(X, shrinkage)  # total scatter
-        Sb = St - self.covariance_  # between scatter, Sb = St - Sw
-        w, v = linalg.eigh(Sb, self.covariance_)
-        self.coef_ = np.dot(self.means_, v).dot(v.T)
+        Sb = St - Sw  # between scatter
+
+        evals, evecs = linalg.eigh(Sb, Sw)
+        evecs = evecs[:, np.argsort(evals)[::-1]]  # sort eigenvectors
+        evecs /= np.linalg.norm(evecs, axis=0)  # normalize eigenvectors
+
+        self.scalings_ = evecs
+        self.coef_ = np.dot(self.means_, evecs).dot(evecs.T)
         self.intercept_ = (-0.5 * np.diag(np.dot(self.means_, self.coef_.T))
                            + np.log(self.priors_))
 
-    def _solve_svd(self, X, y, tol=1.0e-4):
+    def _solve_svd(self, X, y, store_covariance=False, tol=1.0e-4):
         """SVD solver.
 
         Parameters
@@ -263,15 +307,18 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
         y : array-like, shape (n_samples,) or (n_samples, n_targets)
             Target values.
 
+        store_covariance : bool, optional
+            Additionally compute class covariance matrix (default False).
+
         tol : float, optional
             Threshold used for rank estimation.
         """
         n_samples, n_features = X.shape
         n_classes = len(self.classes_)
-        if self.store_covariance:
-            self.means_, self.covariance_ = _means_cov(X, y, shrinkage=None)
-        else:
-            self.means_ = _means(X, y)
+
+        self.means_ = _class_means(X, y)
+        if store_covariance:
+            self.covariance_ = _class_cov(X, y, self.priors_)
 
         Xc = []
         for idx, group in enumerate(self.classes_):
@@ -328,9 +375,11 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
             Target values.
         """
         if store_covariance:
-            warnings.warn("'store_covariance' was moved to __init__() method.",
-                          DeprecationWarning)
-            self.store_covariance = store_covariance
+            warnings.warn("'store_covariance' was moved to the __init__()"
+                          "method in version 0.16 and will be removed from"
+                          "fit() in version 0.18.", DeprecationWarning)
+        else:
+            store_covariance = self.store_covariance
         if tol != 1.0e-4:
             warnings.warn("'tol' was moved to __init__() method.",
                           DeprecationWarning)
@@ -347,7 +396,7 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
         if self.solver == 'svd':
             if self.shrinkage is not None:
                 raise NotImplementedError('shrinkage not supported')
-            self._solve_svd(X, y, tol=tol)
+            self._solve_svd(X, y, store_covariance=store_covariance, tol=tol)
         elif self.solver == 'lsqr':
             self._solve_lsqr(X, y, shrinkage=self.shrinkage)
         elif self.solver == 'eigen':
@@ -375,16 +424,19 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
             Transformed data.
         """
         X = check_array(X)
-        if self.solver == 'lsqr' or self.solver == 'eigen':
-            raise NotImplementedError("transform not implemented for solver "
-                                      "'{}'; use 'svd'.".format(self.solver))
-        X_new = np.dot(X - self.xbar_, self.scalings_)  # center and scale data
+        if self.solver == 'lsqr':
+            raise NotImplementedError("transform not implemented for 'lsqr' "
+                                      "solver (use 'svd' or 'eigen').")
+        elif self.solver == 'svd':
+            X_new = np.dot(X - self.xbar_, self.scalings_)
+        elif self.solver == 'eigen':
+            X_new = np.dot(X, self.scalings_)
         n_components = X.shape[1] if self.n_components is None \
             else self.n_components
         return X_new[:, :n_components]
 
     def predict_proba(self, X):
-        """Probability estimates.
+        """Estimate probability.
 
         Parameters
         ----------
@@ -409,7 +461,7 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
             return prob
 
     def predict_log_proba(self, X):
-        """Log of probability estimates.
+        """Estimate log probability.
 
         Parameters
         ----------
