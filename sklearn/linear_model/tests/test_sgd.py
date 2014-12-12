@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regexp
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn import linear_model, datasets, metrics
 from sklearn.base import clone
@@ -607,12 +608,10 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
                            "method, which will be deprecated in version "
                            "v0.17 of scikit-learn. Pass the class_weight into "
                            "the constructor instead.")
-        import warnings
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always", DeprecationWarning)
-            clf.fit(X4, Y4, class_weight=1)
-            assert_true(warning_message == str(w[0].message))
-            assert_true(issubclass(w[0].category, DeprecationWarning))
+        assert_warns_message(DeprecationWarning,
+                             warning_message,
+                             clf.fit, X4, Y4,
+                             class_weight=1)
 
     def test_weights_multiplied(self):
         """Tests that class_weight and sample_weight are multiplicative"""
