@@ -131,7 +131,7 @@ cdef extern from "cblas.h":
 
 
 # Function to compute the duality gap
-cdef double duality_gap( # Data
+cdef double enet_duality_gap( # Data
                         unsigned int n_samples,
                         unsigned int n_features,
                         unsigned int n_tasks,
@@ -170,19 +170,22 @@ cdef double duality_gap( # Data
         dual_norm_XtA[0] = abs_max(n_features, XtA_data)
 
     # R_norm2 = np.dot(R, R)
-    R_norm2 = ddot(n_samples, R_data, 1,
-                   R_data, 1)
+    R_norm2 = ddot(n_samples, R_data, 1, R_data, 1)
 
     # w_norm2 = np.dot(w, w)
-    w_norm2 = ddot(n_features, w_data, 1,
-                   w_data, 1)
+    w_norm2 = ddot(n_features, w_data, 1, w_data, 1)
 
     # ytA = np.dot(y.T, R)
     ytA = ddot(n_samples, R_data, 1, y_data, n_tasks)
 
     # Determining the dual feasible point which is
     # proportional to R and closest to y / alpha
-    if positive:
+    if dual_norm_XtA[0] <= 0:
+        if R_norm2 == 0:
+            const = 1.
+        else:
+            const = ytA / R_norm2
+    elif positive:
         const = alpha * fmin(ytA / (alpha * R_norm2),
                              1. / dual_norm_XtA[0])
     else:
@@ -199,7 +202,7 @@ cdef double duality_gap( # Data
 
 
 # Function to compute the primal value
-cdef double primal_value( # Data
+cdef double enet_primal_value( # Data
                         unsigned int n_samples,
                         unsigned int n_features,
                         DOUBLE * R_data,
@@ -295,7 +298,7 @@ def enet_accelerated_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef unsigned int n_iter
     cdef unsigned int f_iter
     
-    cdef UINT32_t rand_r_state_seed = rng.randint(1, RAND_R_MAX)
+    cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
    
     if alpha == 0:
@@ -325,8 +328,8 @@ def enet_accelerated_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
         ### scaling tolerance
         # tol *= np.dot(y, y)
-        tol *= ddot(n_samples, <DOUBLE*>y.data, n_tasks,
-                    <DOUBLE*>y.data, n_tasks)
+        tol *= fmax(1e-15,ddot(n_samples, <DOUBLE*>y.data, n_tasks,
+                    <DOUBLE*>y.data, n_tasks))
 
         ### main loop
         for n_iter in range(max_iter):
@@ -431,9 +434,9 @@ def enet_accelerated_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             # if nnze < nnz and F(we) < F(w) then w <- we
             # (helps promoting sparsity to w)
             elif (nnze < nnz) \
-                     and ( primal_value(n_samples, n_features, <DOUBLE*>Re.data,
+                     and ( enet_primal_value(n_samples, n_features, <DOUBLE*>Re.data,
                                         <DOUBLE*>we.data, alpha, beta) <
-                           primal_value(n_samples, n_features, <DOUBLE*>R.data,
+                           enet_primal_value(n_samples, n_features, <DOUBLE*>R.data,
                                         <DOUBLE*>w.data, alpha, beta)):
                 for ii in range(n_features):
                     wc[ii] = 0
@@ -453,7 +456,7 @@ def enet_accelerated_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 # than the tolerance: check the duality gap as ultimate
                 # stopping criterion
 
-                gap = duality_gap(n_samples, n_features, n_tasks,
+                gap = enet_duality_gap(n_samples, n_features, n_tasks,
                                   <DOUBLE*>X.data, <DOUBLE*>y.data,
                                   <DOUBLE*>R.data, <DOUBLE*>w.data,
                                   <DOUBLE*>XtA.data, &dual_norm_XtA,
@@ -513,18 +516,14 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef unsigned int i
     cdef unsigned int n_iter
     cdef unsigned int f_iter
-    cdef UINT32_t rand_r_state_seed = rng.randint(1, RAND_R_MAX)
+    cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
 
     if alpha == 0:
         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
             " results and is discouraged.")
 
-    if not random:
-        warnings.warn("Accelerated coordinate descent with cyclic sampling"
-            " may be slower than with random sampling and is discouraged.")     
-
-    with nogil:
+    if True: #with nogil:
 
         # R = y - np.dot(X, w)
         for i in range(n_samples):
@@ -533,8 +532,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                                n_samples, <DOUBLE*>w.data, 1)
 
         # tol *= np.dot(y, y)
-        tol *= ddot(n_samples, <DOUBLE*>y.data, n_tasks,
-                    <DOUBLE*>y.data, n_tasks)
+        tol *= fmax(1e-15, ddot(n_samples, <DOUBLE*>y.data, n_tasks,
+                    <DOUBLE*>y.data, n_tasks))
 
         for n_iter in range(max_iter):
             w_max = 0.0
@@ -583,12 +582,11 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 # than the tolerance: check the duality gap as ultimate
                 # stopping criterion
 
-                gap = duality_gap(n_samples, n_features, n_tasks,
+                gap = enet_duality_gap(n_samples, n_features, n_tasks,
                                   <DOUBLE*>X.data, <DOUBLE*>y.data,
                                   <DOUBLE*>R.data, <DOUBLE*>w.data,
                                   <DOUBLE*>XtA.data, &dual_norm_XtA,
                                   alpha, beta, positive)
-                
                 
                 if gap < tol:
                     # return if we reached desired tolerance
@@ -601,7 +599,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 # Sparse matrices
 
 # Function to compute the duality gap
-cdef double sparse_duality_gap( # Data
+cdef double sparse_enet_duality_gap( # Data
                         unsigned int n_samples,
                         unsigned int n_features,
                         unsigned int n_tasks,
@@ -623,7 +621,7 @@ cdef double sparse_duality_gap( # Data
     
     cdef double R_norm2
     cdef double R_sum
-    cdef double w_norm2
+    cdef double w_norm2 = 0
     cdef double ytA
     cdef double y_norm2
     cdef double l1_norm
@@ -651,14 +649,20 @@ cdef double sparse_duality_gap( # Data
     R_norm2 = ddot(n_samples, R_data, 1, R_data, 1)
     
     # w_norm2 = np.dot(w, w)
-    w_norm2 = ddot(n_features, w_data, 1, w_data, 1)
+    if beta>0:
+        w_norm2 = ddot(n_features, w_data, 1, w_data, 1)
  
     # ytA = np.dot(y.T, R)
     ytA = ddot(n_samples, R_data, 1, y_data, n_tasks)
 
     # Determining the dual feasible point which is
     # proportional to R and closest to y / alpha
-    if positive:
+    if dual_norm_XtA[0] <= 0:
+        if R_norm2 == 0:
+            const = 1.
+        else:
+            const = ytA / R_norm2
+    elif positive:
         const = alpha * fmin(ytA / (alpha * R_norm2),
                              1. / dual_norm_XtA[0])
     else:
@@ -742,9 +746,13 @@ def sparse_enet_accelerated_coordinate_descent(double[:] w,
     cdef unsigned int f_iter
     cdef unsigned int nnz
     cdef unsigned int nnze
-    cdef UINT32_t rand_r_state_seed = rng.randint(1, RAND_R_MAX)
+    cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
     cdef bint center = False
+
+    if not random:
+        warnings.warn("Accelerated coordinate descent with cyclic sampling"
+            " may be slower than with random sampling and is discouraged.")
 
     with nogil:
         # center = (X_mean != 0).any()
@@ -777,7 +785,7 @@ def sparse_enet_accelerated_coordinate_descent(double[:] w,
             we[ii] = w[ii]
 
         # tol *= np.dot(y, y)
-        tol *= ddot(n_samples, <DOUBLE*>&y[0], 1, <DOUBLE*>&y[0], 1)
+        tol *= fmax(1e-15, ddot(n_samples, <DOUBLE*>&y[0], 1, <DOUBLE*>&y[0], 1))
 
         # main loop
         for n_iter in range(max_iter):
@@ -906,9 +914,9 @@ def sparse_enet_accelerated_coordinate_descent(double[:] w,
             # if nnze < nnz and F(we) < F(w) then w <- we
             # (helps promoting sparsity to w)
             elif (nnze < nnz) \
-                     and ( primal_value(n_samples, n_features, <DOUBLE*> &Re[0],
+                     and ( enet_primal_value(n_samples, n_features, <DOUBLE*> &Re[0],
                                         <DOUBLE*> &we[0], alpha, beta) <
-                           primal_value(n_samples, n_features, <DOUBLE*> &R[0],
+                           enet_primal_value(n_samples, n_features, <DOUBLE*> &R[0],
                                         <DOUBLE*> &w[0], alpha, beta) ):
                 for i in range(n_features):
                     wc[i] = 0
@@ -926,7 +934,7 @@ def sparse_enet_accelerated_coordinate_descent(double[:] w,
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
 
-                gap = sparse_duality_gap(n_samples, n_features, n_tasks,
+                gap = sparse_enet_duality_gap(n_samples, n_features, n_tasks,
                                          <DOUBLE*> &X_data[0], <int*> &X_indptr[0],
                                          <int*> &X_indices[0], <DOUBLE*> &X_mean[0],
                                          <DOUBLE*> &y[0], <DOUBLE*> &R[0],
@@ -995,7 +1003,7 @@ def sparse_enet_coordinate_descent(double[:] w,
     cdef unsigned int jj
     cdef unsigned int n_iter
     cdef unsigned int f_iter
-    cdef UINT32_t rand_r_state_seed = rng.randint(1, RAND_R_MAX)
+    cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
     cdef bint center = False
 
@@ -1024,7 +1032,7 @@ def sparse_enet_coordinate_descent(double[:] w,
             startptr = endptr
 
         # tol *= np.dot(y, y)
-        tol *= ddot(n_samples, <DOUBLE*>&y[0], 1, <DOUBLE*>&y[0], 1)
+        tol *= fmax(1e-15,ddot(n_samples, <DOUBLE*>&y[0], 1, <DOUBLE*>&y[0], 1))
 
         for n_iter in range(max_iter):
 
@@ -1088,7 +1096,7 @@ def sparse_enet_coordinate_descent(double[:] w,
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
 
-                gap = sparse_duality_gap(n_samples, n_features, n_tasks,
+                gap = sparse_enet_duality_gap(n_samples, n_features, n_tasks,
                                          <DOUBLE*> &X_data[0], <int*> &X_indptr[0],
                                          <int*> &X_indices[0], <DOUBLE*> &X_mean[0],
                                          <DOUBLE*> &y[0], <DOUBLE*> &R[0],
@@ -1107,7 +1115,7 @@ def sparse_enet_coordinate_descent(double[:] w,
 # Precomputed Gram matrices
 
 # Function to compute the duality gap
-cdef double gram_duality_gap( # Data
+cdef double gram_enet_duality_gap( # Data
                         unsigned int n_features,
                         unsigned int n_tasks,
                         DOUBLE * q_data,
@@ -1125,7 +1133,7 @@ cdef double gram_duality_gap( # Data
 
     cdef double q_dot_w
     cdef double R_norm2
-    cdef double w_norm2
+    cdef double w_norm2 = 0
     cdef double l1_norm
     cdef double const
     cdef double gap
@@ -1150,11 +1158,17 @@ cdef double gram_duality_gap( # Data
     R_norm2 = y_norm2 + tmp - 2.0 * q_dot_w
 
     # w_norm2 = np.dot(w, w)
-    w_norm2 = ddot(n_features, w_data, 1, w_data, 1)
+    if beta>0:
+        w_norm2 = ddot(n_features, w_data, 1, w_data, 1)
 
     # Determining the dual feasible point which is
     # proportional to R and closest to y / alpha
-    if positive:
+    if dual_norm_XtA[0] <= 0:
+        if R_norm2 == 0:
+            const = 1.
+        else:
+            const = (y_norm2 - q_dot_w) / R_norm2
+    elif positive:
         const = alpha * fmin( (y_norm2 - q_dot_w) / (alpha * R_norm2),
                              1. / dual_norm_XtA[0])
     else:
@@ -1171,7 +1185,7 @@ cdef double gram_duality_gap( # Data
 
 
 # Function to compute the primal value
-cdef double gram_primal_value( # Data
+cdef double gram_enet_primal_value( # Data
                         unsigned int n_features,
                         unsigned int n_tasks,
                         DOUBLE * q_data,
@@ -1272,7 +1286,7 @@ def enet_accelerated_coordinate_descent_gram(double[:] w, double alpha, double b
     cdef double* H_ptr = &H[0]
     cdef double* He_ptr = &He[0]
     cdef double* Hc_ptr = &Hc[0]
-    tol = tol * y_norm2
+    tol = tol * fmax(1e-15, y_norm2)
 
     if alpha == 0:
         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
@@ -1361,11 +1375,11 @@ def enet_accelerated_coordinate_descent_gram(double[:] w, double alpha, double b
             # if nnze < nnz and F(we) < F(w) then w <- we
             # (helps promoting sparsity to w)
             elif (nnze < nnz) \
-                     and ( gram_primal_value(n_features, n_tasks,
+                     and ( gram_enet_primal_value(n_features, n_tasks,
                                              <DOUBLE*> &q[0], y_norm2,
                                              <DOUBLE*> &He[0], <DOUBLE*> &we[0],
                                              alpha, beta) <
-                           gram_primal_value(n_features, n_tasks,
+                           gram_enet_primal_value(n_features, n_tasks,
                                              <DOUBLE*> &q[0], y_norm2,
                                              <DOUBLE*> &H[0], <DOUBLE*> &w[0],
                                              alpha, beta) ):
@@ -1383,7 +1397,7 @@ def enet_accelerated_coordinate_descent_gram(double[:] w, double alpha, double b
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
 
-                gap = gram_duality_gap(n_features, n_tasks, <DOUBLE*> &q[0],
+                gap = gram_enet_duality_gap(n_features, n_tasks, <DOUBLE*> &q[0],
                                        y_norm2, <DOUBLE*> &H[0],
                                        <DOUBLE*> &w[0], <DOUBLE*> &XtA[0],
                                        &dual_norm_XtA,
@@ -1442,7 +1456,7 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
 
     cdef double y_norm2 = np.dot(y, y)
     cdef double* Q_ptr = &Q[0, 0]
-    tol = tol * y_norm2
+    tol = tol * fmax(1e-15, y_norm2)
 
     if alpha == 0:
         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
@@ -1489,7 +1503,7 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
 
-                gap = gram_duality_gap(n_features, n_tasks, <DOUBLE*> &q[0],
+                gap = gram_enet_duality_gap(n_features, n_tasks, <DOUBLE*> &q[0],
                                        y_norm2, <DOUBLE*> &H[0],
                                        <DOUBLE*> &w[0], <DOUBLE*> &XtA[0],
                                        &dual_norm_XtA,

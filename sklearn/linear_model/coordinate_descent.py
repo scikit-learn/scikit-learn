@@ -109,7 +109,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                precompute='auto', Xy=None, fit_intercept=None,
                normalize=None, copy_X=True, coef_init=None,
                verbose=False, return_models=False, return_n_iter=False,
-               positive=False, **params):
+               positive=False, accelerated=False, **params):
     """Compute Lasso path with coordinate descent
 
     The Lasso optimization function varies for mono and multi-outputs.
@@ -187,6 +187,10 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     positive : bool, default False
         If set to True, forces coefficients to be positive.
 
+    accelerated : bool, default False
+        If set to True, runs the accelerated coordinate descent method
+        instead of coordinate descent
+        
     Returns
     -------
     models : a list of models along the regularization path
@@ -272,7 +276,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                      fit_intercept=fit_intercept, normalize=normalize,
                      copy_X=copy_X, coef_init=coef_init, verbose=verbose,
                      return_models=return_models, positive=positive,
-                     **params)
+                     accelerated=accelerated, **params)
 
 
 def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
@@ -367,6 +371,10 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     positive : bool, default False
         If set to True, forces coefficients to be positive.
+
+    accelerated : bool, default False
+        If set to True, runs the accelerated coordinate descent method
+        instead of coordinate descent
 
     Returns
     -------
@@ -665,6 +673,10 @@ class ElasticNet(LinearModel, RegressorMixin):
         a random feature to update. Useful only when selection is set to
         'random'.
 
+    accelerated : bool, default False
+        If set to True, runs the accelerated coordinate descent method
+        instead of coordinate descent
+        
     Attributes
     ----------
     coef_ : array, shape = (n_features,) | (n_targets, n_features)
@@ -697,7 +709,7 @@ class ElasticNet(LinearModel, RegressorMixin):
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, precompute=False, max_iter=1000,
                  copy_X=True, tol=1e-4, warm_start=False, positive=False,
-                 random_state=None, selection='cyclic'):
+                 random_state=None, selection='cyclic', accelerated=False):
         self.alpha = alpha
         self.l1_ratio = l1_ratio
         self.coef_ = None
@@ -712,6 +724,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.intercept_ = 0.0
         self.random_state = random_state
         self.selection = selection
+        self.accelerated = accelerated
 
     def fit(self, X, y):
         """Fit model with coordinate descent.
@@ -790,7 +803,7 @@ class ElasticNet(LinearModel, RegressorMixin):
                           X_mean=X_mean, X_std=X_std, return_n_iter=True,
                           coef_init=coef_[k], max_iter=self.max_iter,
                           random_state=self.random_state,
-                          selection=self.selection)
+                          selection=self.selection, accelerated=self.accelerated)
             coef_[k] = this_coef[:, 0]
             dual_gaps_[k] = this_dual_gap[0]
             self.n_iter_.append(this_iter[0])
@@ -895,6 +908,10 @@ class Lasso(ElasticNet):
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when selection is set to
         'random'.
+        
+    accelerated : bool, default False
+        If set to True, runs the accelerated coordinate descent method
+        instead of coordinate descent
 
     Attributes
     ----------
@@ -946,13 +963,13 @@ class Lasso(ElasticNet):
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  precompute=False, copy_X=True, max_iter=1000,
                  tol=1e-4, warm_start=False, positive=False,
-                 random_state=None, selection='cyclic'):
+                 random_state=None, selection='cyclic', accelerated=False):
         super(Lasso, self).__init__(
             alpha=alpha, l1_ratio=1.0, fit_intercept=fit_intercept,
             normalize=normalize, precompute=precompute, copy_X=copy_X,
             max_iter=max_iter, tol=tol, warm_start=warm_start,
             positive=positive, random_state=random_state,
-            selection=selection)
+            selection=selection, accelerated=accelerated)
 
 
 ###############################################################################

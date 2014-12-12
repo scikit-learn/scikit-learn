@@ -1549,11 +1549,11 @@ static CYTHON_INLINE double __pyx_f_7sklearn_12linear_model_7cd_fast_fsign(doubl
 static double __pyx_f_7sklearn_12linear_model_7cd_fast_abs_max(int, double *); /*proto*/
 static double __pyx_f_7sklearn_12linear_model_7cd_fast_max(int, double *); /*proto*/
 static double __pyx_f_7sklearn_12linear_model_7cd_fast_diff_abs_max(int, double *, double *); /*proto*/
-static double __pyx_f_7sklearn_12linear_model_7cd_fast_duality_gap(unsigned int, unsigned int, unsigned int, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, double *, double, double, int); /*proto*/
-static double __pyx_f_7sklearn_12linear_model_7cd_fast_primal_value(unsigned int, unsigned int, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, double, double); /*proto*/
-static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(unsigned int, unsigned int, unsigned int, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, int *, int *, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, double *, double, double, int); /*proto*/
-static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_duality_gap(unsigned int, unsigned int, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, double, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, double *, double, double, int); /*proto*/
-static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_primal_value(unsigned int, unsigned int, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, double, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, double, double); /*proto*/
+static double __pyx_f_7sklearn_12linear_model_7cd_fast_enet_duality_gap(unsigned int, unsigned int, unsigned int, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, double *, double, double, int); /*proto*/
+static double __pyx_f_7sklearn_12linear_model_7cd_fast_enet_primal_value(unsigned int, unsigned int, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, double, double); /*proto*/
+static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_enet_duality_gap(unsigned int, unsigned int, unsigned int, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, int *, int *, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, double *, double, double, int); /*proto*/
+static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_enet_duality_gap(unsigned int, unsigned int, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, double, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, double *, double, double, int); /*proto*/
+static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_enet_primal_value(unsigned int, unsigned int, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, double, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, double, double); /*proto*/
 static struct __pyx_array_obj *__pyx_array_new(PyObject *, Py_ssize_t, char *, char *, char *); /*proto*/
 static void *__pyx_align_pointer(void *, size_t); /*proto*/
 static PyObject *__pyx_memoryview_new(PyObject *, int, int, __Pyx_TypeInfo *); /*proto*/
@@ -2680,12 +2680,12 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_diff_abs_max(int __pyx_v_
 /* "sklearn/linear_model/cd_fast.pyx":134
  * 
  * # Function to compute the duality gap
- * cdef double duality_gap( # Data             # <<<<<<<<<<<<<<
+ * cdef double enet_duality_gap( # Data             # <<<<<<<<<<<<<<
  *                         unsigned int n_samples,
  *                         unsigned int n_features,
  */
 
-static double __pyx_f_7sklearn_12linear_model_7cd_fast_duality_gap(unsigned int __pyx_v_n_samples, unsigned int __pyx_v_n_features, unsigned int __pyx_v_n_tasks, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_X_data, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_y_data, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_R_data, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_w_data, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_XtA_data, double *__pyx_v_dual_norm_XtA, double __pyx_v_alpha, double __pyx_v_beta, int __pyx_v_positive) {
+static double __pyx_f_7sklearn_12linear_model_7cd_fast_enet_duality_gap(unsigned int __pyx_v_n_samples, unsigned int __pyx_v_n_features, unsigned int __pyx_v_n_tasks, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_X_data, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_y_data, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_R_data, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_w_data, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_XtA_data, double *__pyx_v_dual_norm_XtA, double __pyx_v_alpha, double __pyx_v_beta, int __pyx_v_positive) {
   double __pyx_v_R_norm2;
   double __pyx_v_w_norm2;
   double __pyx_v_ytA;
@@ -2759,22 +2759,22 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_duality_gap(unsigned int 
   /* "sklearn/linear_model/cd_fast.pyx":173
  * 
  *     # R_norm2 = np.dot(R, R)
- *     R_norm2 = ddot(n_samples, R_data, 1,             # <<<<<<<<<<<<<<
- *                    R_data, 1)
+ *     R_norm2 = ddot(n_samples, R_data, 1, R_data, 1)             # <<<<<<<<<<<<<<
  * 
+ *     # w_norm2 = np.dot(w, w)
  */
   __pyx_v_R_norm2 = cblas_ddot(__pyx_v_n_samples, __pyx_v_R_data, 1, __pyx_v_R_data, 1);
 
-  /* "sklearn/linear_model/cd_fast.pyx":177
+  /* "sklearn/linear_model/cd_fast.pyx":176
  * 
  *     # w_norm2 = np.dot(w, w)
- *     w_norm2 = ddot(n_features, w_data, 1,             # <<<<<<<<<<<<<<
- *                    w_data, 1)
+ *     w_norm2 = ddot(n_features, w_data, 1, w_data, 1)             # <<<<<<<<<<<<<<
  * 
+ *     # ytA = np.dot(y.T, R)
  */
   __pyx_v_w_norm2 = cblas_ddot(__pyx_v_n_features, __pyx_v_w_data, 1, __pyx_v_w_data, 1);
 
-  /* "sklearn/linear_model/cd_fast.pyx":181
+  /* "sklearn/linear_model/cd_fast.pyx":179
  * 
  *     # ytA = np.dot(y.T, R)
  *     ytA = ddot(n_samples, R_data, 1, y_data, n_tasks)             # <<<<<<<<<<<<<<
@@ -2783,19 +2783,74 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_duality_gap(unsigned int 
  */
   __pyx_v_ytA = cblas_ddot(__pyx_v_n_samples, __pyx_v_R_data, 1, __pyx_v_y_data, __pyx_v_n_tasks);
 
-  /* "sklearn/linear_model/cd_fast.pyx":185
+  /* "sklearn/linear_model/cd_fast.pyx":183
  *     # Determining the dual feasible point which is
  *     # proportional to R and closest to y / alpha
- *     if positive:             # <<<<<<<<<<<<<<
+ *     if dual_norm_XtA[0] <= 0:             # <<<<<<<<<<<<<<
+ *         if R_norm2 == 0:
+ *             const = 1.
+ */
+  __pyx_t_3 = (((__pyx_v_dual_norm_XtA[0]) <= 0.0) != 0);
+  if (__pyx_t_3) {
+
+    /* "sklearn/linear_model/cd_fast.pyx":184
+ *     # proportional to R and closest to y / alpha
+ *     if dual_norm_XtA[0] <= 0:
+ *         if R_norm2 == 0:             # <<<<<<<<<<<<<<
+ *             const = 1.
+ *         else:
+ */
+    __pyx_t_3 = ((__pyx_v_R_norm2 == 0.0) != 0);
+    if (__pyx_t_3) {
+
+      /* "sklearn/linear_model/cd_fast.pyx":185
+ *     if dual_norm_XtA[0] <= 0:
+ *         if R_norm2 == 0:
+ *             const = 1.             # <<<<<<<<<<<<<<
+ *         else:
+ *             const = ytA / R_norm2
+ */
+      __pyx_v_const = 1.;
+      goto __pyx_L7;
+    }
+    /*else*/ {
+
+      /* "sklearn/linear_model/cd_fast.pyx":187
+ *             const = 1.
+ *         else:
+ *             const = ytA / R_norm2             # <<<<<<<<<<<<<<
+ *     elif positive:
+ *         const = alpha * fmin(ytA / (alpha * R_norm2),
+ */
+      if (unlikely(__pyx_v_R_norm2 == 0)) {
+        #ifdef WITH_THREAD
+        PyGILState_STATE __pyx_gilstate_save = PyGILState_Ensure();
+        #endif
+        PyErr_SetString(PyExc_ZeroDivisionError, "float division");
+        #ifdef WITH_THREAD
+        PyGILState_Release(__pyx_gilstate_save);
+        #endif
+        {__pyx_filename = __pyx_f[0]; __pyx_lineno = 187; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      }
+      __pyx_v_const = (__pyx_v_ytA / __pyx_v_R_norm2);
+    }
+    __pyx_L7:;
+    goto __pyx_L6;
+  }
+
+  /* "sklearn/linear_model/cd_fast.pyx":188
+ *         else:
+ *             const = ytA / R_norm2
+ *     elif positive:             # <<<<<<<<<<<<<<
  *         const = alpha * fmin(ytA / (alpha * R_norm2),
  *                              1. / dual_norm_XtA[0])
  */
   __pyx_t_3 = (__pyx_v_positive != 0);
   if (__pyx_t_3) {
 
-    /* "sklearn/linear_model/cd_fast.pyx":186
- *     # proportional to R and closest to y / alpha
- *     if positive:
+    /* "sklearn/linear_model/cd_fast.pyx":189
+ *             const = ytA / R_norm2
+ *     elif positive:
  *         const = alpha * fmin(ytA / (alpha * R_norm2),             # <<<<<<<<<<<<<<
  *                              1. / dual_norm_XtA[0])
  *     else:
@@ -2809,11 +2864,11 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_duality_gap(unsigned int 
       #ifdef WITH_THREAD
       PyGILState_Release(__pyx_gilstate_save);
       #endif
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 186; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 189; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     }
 
-    /* "sklearn/linear_model/cd_fast.pyx":187
- *     if positive:
+    /* "sklearn/linear_model/cd_fast.pyx":190
+ *     elif positive:
  *         const = alpha * fmin(ytA / (alpha * R_norm2),
  *                              1. / dual_norm_XtA[0])             # <<<<<<<<<<<<<<
  *     else:
@@ -2827,12 +2882,12 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_duality_gap(unsigned int 
       #ifdef WITH_THREAD
       PyGILState_Release(__pyx_gilstate_save);
       #endif
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 187; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 190; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     }
 
-    /* "sklearn/linear_model/cd_fast.pyx":186
- *     # proportional to R and closest to y / alpha
- *     if positive:
+    /* "sklearn/linear_model/cd_fast.pyx":189
+ *             const = ytA / R_norm2
+ *     elif positive:
  *         const = alpha * fmin(ytA / (alpha * R_norm2),             # <<<<<<<<<<<<<<
  *                              1. / dual_norm_XtA[0])
  *     else:
@@ -2842,7 +2897,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_duality_gap(unsigned int 
   }
   /*else*/ {
 
-    /* "sklearn/linear_model/cd_fast.pyx":189
+    /* "sklearn/linear_model/cd_fast.pyx":192
  *                              1. / dual_norm_XtA[0])
  *     else:
  *         const = alpha * fmax(-1. / dual_norm_XtA[0],             # <<<<<<<<<<<<<<
@@ -2857,10 +2912,10 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_duality_gap(unsigned int 
       #ifdef WITH_THREAD
       PyGILState_Release(__pyx_gilstate_save);
       #endif
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 189; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 192; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     }
 
-    /* "sklearn/linear_model/cd_fast.pyx":190
+    /* "sklearn/linear_model/cd_fast.pyx":193
  *     else:
  *         const = alpha * fmax(-1. / dual_norm_XtA[0],
  *                          fmin(ytA / (alpha * R_norm2),             # <<<<<<<<<<<<<<
@@ -2876,10 +2931,10 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_duality_gap(unsigned int 
       #ifdef WITH_THREAD
       PyGILState_Release(__pyx_gilstate_save);
       #endif
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 190; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 193; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     }
 
-    /* "sklearn/linear_model/cd_fast.pyx":191
+    /* "sklearn/linear_model/cd_fast.pyx":194
  *         const = alpha * fmax(-1. / dual_norm_XtA[0],
  *                          fmin(ytA / (alpha * R_norm2),
  *                               1. / dual_norm_XtA[0]) )             # <<<<<<<<<<<<<<
@@ -2894,10 +2949,10 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_duality_gap(unsigned int 
       #ifdef WITH_THREAD
       PyGILState_Release(__pyx_gilstate_save);
       #endif
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 191; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 194; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     }
 
-    /* "sklearn/linear_model/cd_fast.pyx":189
+    /* "sklearn/linear_model/cd_fast.pyx":192
  *                              1. / dual_norm_XtA[0])
  *     else:
  *         const = alpha * fmax(-1. / dual_norm_XtA[0],             # <<<<<<<<<<<<<<
@@ -2908,7 +2963,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_duality_gap(unsigned int 
   }
   __pyx_L6:;
 
-  /* "sklearn/linear_model/cd_fast.pyx":193
+  /* "sklearn/linear_model/cd_fast.pyx":196
  *                               1. / dual_norm_XtA[0]) )
  * 
  *     l1_norm = dasum(n_features, w_data, 1)             # <<<<<<<<<<<<<<
@@ -2917,7 +2972,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_duality_gap(unsigned int 
  */
   __pyx_v_l1_norm = cblas_dasum(__pyx_v_n_features, __pyx_v_w_data, 1);
 
-  /* "sklearn/linear_model/cd_fast.pyx":196
+  /* "sklearn/linear_model/cd_fast.pyx":199
  * 
  *     gap = 0.5 * (1 + const ** 2) * (R_norm2 + beta * w_norm2) \
  *           + alpha * l1_norm - const * ytA             # <<<<<<<<<<<<<<
@@ -2926,7 +2981,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_duality_gap(unsigned int 
  */
   __pyx_v_gap = ((((0.5 * (1.0 + pow(__pyx_v_const, 2.0))) * (__pyx_v_R_norm2 + (__pyx_v_beta * __pyx_v_w_norm2))) + (__pyx_v_alpha * __pyx_v_l1_norm)) - (__pyx_v_const * __pyx_v_ytA));
 
-  /* "sklearn/linear_model/cd_fast.pyx":198
+  /* "sklearn/linear_model/cd_fast.pyx":201
  *           + alpha * l1_norm - const * ytA
  * 
  *     return gap             # <<<<<<<<<<<<<<
@@ -2939,28 +2994,28 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_duality_gap(unsigned int 
   /* "sklearn/linear_model/cd_fast.pyx":134
  * 
  * # Function to compute the duality gap
- * cdef double duality_gap( # Data             # <<<<<<<<<<<<<<
+ * cdef double enet_duality_gap( # Data             # <<<<<<<<<<<<<<
  *                         unsigned int n_samples,
  *                         unsigned int n_features,
  */
 
   /* function exit code */
   __pyx_L1_error:;
-  __Pyx_WriteUnraisable("sklearn.linear_model.cd_fast.duality_gap", __pyx_clineno, __pyx_lineno, __pyx_filename, 0);
+  __Pyx_WriteUnraisable("sklearn.linear_model.cd_fast.enet_duality_gap", __pyx_clineno, __pyx_lineno, __pyx_filename, 0);
   __pyx_r = 0;
   __pyx_L0:;
   return __pyx_r;
 }
 
-/* "sklearn/linear_model/cd_fast.pyx":202
+/* "sklearn/linear_model/cd_fast.pyx":205
  * 
  * # Function to compute the primal value
- * cdef double primal_value( # Data             # <<<<<<<<<<<<<<
+ * cdef double enet_primal_value( # Data             # <<<<<<<<<<<<<<
  *                         unsigned int n_samples,
  *                         unsigned int n_features,
  */
 
-static double __pyx_f_7sklearn_12linear_model_7cd_fast_primal_value(unsigned int __pyx_v_n_samples, unsigned int __pyx_v_n_features, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_R_data, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_w_data, double __pyx_v_alpha, double __pyx_v_beta) {
+static double __pyx_f_7sklearn_12linear_model_7cd_fast_enet_primal_value(unsigned int __pyx_v_n_samples, unsigned int __pyx_v_n_features, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_R_data, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_w_data, double __pyx_v_alpha, double __pyx_v_beta) {
   double __pyx_v_R_norm2;
   double __pyx_v_w_norm2;
   double __pyx_v_l1_norm;
@@ -2968,7 +3023,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_primal_value(unsigned int
   double __pyx_r;
   int __pyx_t_1;
 
-  /* "sklearn/linear_model/cd_fast.pyx":213
+  /* "sklearn/linear_model/cd_fast.pyx":216
  * 
  *     cdef double R_norm2
  *     cdef double w_norm2 = 0             # <<<<<<<<<<<<<<
@@ -2977,7 +3032,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_primal_value(unsigned int
  */
   __pyx_v_w_norm2 = 0.0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":218
+  /* "sklearn/linear_model/cd_fast.pyx":221
  * 
  *     # R_norm2 = np.dot(R, R)
  *     R_norm2 = ddot(n_samples, R_data, 1,             # <<<<<<<<<<<<<<
@@ -2986,7 +3041,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_primal_value(unsigned int
  */
   __pyx_v_R_norm2 = cblas_ddot(__pyx_v_n_samples, __pyx_v_R_data, 1, __pyx_v_R_data, 1);
 
-  /* "sklearn/linear_model/cd_fast.pyx":222
+  /* "sklearn/linear_model/cd_fast.pyx":225
  * 
  *     # w_norm2 = np.dot(w, w)
  *     if beta>0:             # <<<<<<<<<<<<<<
@@ -2996,7 +3051,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_primal_value(unsigned int
   __pyx_t_1 = ((__pyx_v_beta > 0.0) != 0);
   if (__pyx_t_1) {
 
-    /* "sklearn/linear_model/cd_fast.pyx":223
+    /* "sklearn/linear_model/cd_fast.pyx":226
  *     # w_norm2 = np.dot(w, w)
  *     if beta>0:
  *         w_norm2 = ddot(n_features, w_data, 1,             # <<<<<<<<<<<<<<
@@ -3008,7 +3063,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_primal_value(unsigned int
   }
   __pyx_L3:;
 
-  /* "sklearn/linear_model/cd_fast.pyx":226
+  /* "sklearn/linear_model/cd_fast.pyx":229
  *                        w_data, 1)
  * 
  *     l1_norm = dasum(n_features, w_data, 1)             # <<<<<<<<<<<<<<
@@ -3017,7 +3072,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_primal_value(unsigned int
  */
   __pyx_v_l1_norm = cblas_dasum(__pyx_v_n_features, __pyx_v_w_data, 1);
 
-  /* "sklearn/linear_model/cd_fast.pyx":228
+  /* "sklearn/linear_model/cd_fast.pyx":231
  *     l1_norm = dasum(n_features, w_data, 1)
  * 
  *     fval = 0.5 * R_norm2 + alpha * l1_norm + 0.5 * beta * w_norm2             # <<<<<<<<<<<<<<
@@ -3026,7 +3081,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_primal_value(unsigned int
  */
   __pyx_v_fval = (((0.5 * __pyx_v_R_norm2) + (__pyx_v_alpha * __pyx_v_l1_norm)) + ((0.5 * __pyx_v_beta) * __pyx_v_w_norm2));
 
-  /* "sklearn/linear_model/cd_fast.pyx":230
+  /* "sklearn/linear_model/cd_fast.pyx":233
  *     fval = 0.5 * R_norm2 + alpha * l1_norm + 0.5 * beta * w_norm2
  * 
  *     return fval             # <<<<<<<<<<<<<<
@@ -3036,10 +3091,10 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_primal_value(unsigned int
   __pyx_r = __pyx_v_fval;
   goto __pyx_L0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":202
+  /* "sklearn/linear_model/cd_fast.pyx":205
  * 
  * # Function to compute the primal value
- * cdef double primal_value( # Data             # <<<<<<<<<<<<<<
+ * cdef double enet_primal_value( # Data             # <<<<<<<<<<<<<<
  *                         unsigned int n_samples,
  *                         unsigned int n_features,
  */
@@ -3049,7 +3104,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_primal_value(unsigned int
   return __pyx_r;
 }
 
-/* "sklearn/linear_model/cd_fast.pyx":235
+/* "sklearn/linear_model/cd_fast.pyx":238
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def enet_accelerated_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,             # <<<<<<<<<<<<<<
@@ -3106,37 +3161,37 @@ static PyObject *__pyx_pw_7sklearn_12linear_model_7cd_fast_1enet_accelerated_coo
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_alpha)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent", 0, 8, 10, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 235; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent", 0, 8, 10, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 238; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_beta)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent", 0, 8, 10, 2); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 235; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent", 0, 8, 10, 2); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 238; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_X)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent", 0, 8, 10, 3); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 235; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent", 0, 8, 10, 3); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 238; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  4:
         if (likely((values[4] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_y)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent", 0, 8, 10, 4); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 235; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent", 0, 8, 10, 4); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 238; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  5:
         if (likely((values[5] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_max_iter)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent", 0, 8, 10, 5); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 235; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent", 0, 8, 10, 5); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 238; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  6:
         if (likely((values[6] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_tol)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent", 0, 8, 10, 6); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 235; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent", 0, 8, 10, 6); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 238; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  7:
         if (likely((values[7] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_rng)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent", 0, 8, 10, 7); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 235; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent", 0, 8, 10, 7); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 238; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  8:
         if (kw_args > 0) {
@@ -3150,7 +3205,7 @@ static PyObject *__pyx_pw_7sklearn_12linear_model_7cd_fast_1enet_accelerated_coo
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "enet_accelerated_coordinate_descent") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 235; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "enet_accelerated_coordinate_descent") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 238; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -3169,35 +3224,35 @@ static PyObject *__pyx_pw_7sklearn_12linear_model_7cd_fast_1enet_accelerated_coo
       }
     }
     __pyx_v_w = ((PyArrayObject *)values[0]);
-    __pyx_v_alpha = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_alpha == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 236; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_beta = __pyx_PyFloat_AsDouble(values[2]); if (unlikely((__pyx_v_beta == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 236; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_alpha = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_alpha == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 239; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_beta = __pyx_PyFloat_AsDouble(values[2]); if (unlikely((__pyx_v_beta == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 239; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     __pyx_v_X = ((PyArrayObject *)values[3]);
     __pyx_v_y = ((PyArrayObject *)values[4]);
-    __pyx_v_max_iter = __Pyx_PyInt_As_int(values[5]); if (unlikely((__pyx_v_max_iter == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 239; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_tol = __pyx_PyFloat_AsDouble(values[6]); if (unlikely((__pyx_v_tol == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 239; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_max_iter = __Pyx_PyInt_As_int(values[5]); if (unlikely((__pyx_v_max_iter == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 242; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_tol = __pyx_PyFloat_AsDouble(values[6]); if (unlikely((__pyx_v_tol == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 242; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     __pyx_v_rng = values[7];
     if (values[8]) {
-      __pyx_v_random = __Pyx_PyObject_IsTrue(values[8]); if (unlikely((__pyx_v_random == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 240; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+      __pyx_v_random = __Pyx_PyObject_IsTrue(values[8]); if (unlikely((__pyx_v_random == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 243; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     } else {
       __pyx_v_random = ((int)1);
     }
     if (values[9]) {
-      __pyx_v_positive = __Pyx_PyObject_IsTrue(values[9]); if (unlikely((__pyx_v_positive == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 241; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+      __pyx_v_positive = __Pyx_PyObject_IsTrue(values[9]); if (unlikely((__pyx_v_positive == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 244; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     } else {
       __pyx_v_positive = ((int)0);
     }
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent", 0, 8, 10, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 235; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent", 0, 8, 10, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 238; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_AddTraceback("sklearn.linear_model.cd_fast.enet_accelerated_coordinate_descent", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_w), __pyx_ptype_5numpy_ndarray, 1, "w", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 235; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_X), __pyx_ptype_5numpy_ndarray, 1, "X", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 237; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_y), __pyx_ptype_5numpy_ndarray, 1, "y", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 238; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_w), __pyx_ptype_5numpy_ndarray, 1, "w", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 238; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_X), __pyx_ptype_5numpy_ndarray, 1, "X", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 240; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_y), __pyx_ptype_5numpy_ndarray, 1, "y", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 241; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_r = __pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coordinate_descent(__pyx_self, __pyx_v_w, __pyx_v_alpha, __pyx_v_beta, __pyx_v_X, __pyx_v_y, __pyx_v_max_iter, __pyx_v_tol, __pyx_v_rng, __pyx_v_random, __pyx_v_positive);
 
   /* function exit code */
@@ -3382,21 +3437,21 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
   __pyx_pybuffernd_y.rcbuffer = &__pyx_pybuffer_y;
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_w.rcbuffer->pybuffer, (PyObject*)__pyx_v_w, &__Pyx_TypeInfo_nn___pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 1, 0, __pyx_stack) == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 235; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_w.rcbuffer->pybuffer, (PyObject*)__pyx_v_w, &__Pyx_TypeInfo_nn___pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 1, 0, __pyx_stack) == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 238; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
   __pyx_pybuffernd_w.diminfo[0].strides = __pyx_pybuffernd_w.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_w.diminfo[0].shape = __pyx_pybuffernd_w.rcbuffer->pybuffer.shape[0];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_X.rcbuffer->pybuffer, (PyObject*)__pyx_v_X, &__Pyx_TypeInfo_nn___pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE, PyBUF_FORMAT| PyBUF_STRIDES, 2, 0, __pyx_stack) == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 235; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_X.rcbuffer->pybuffer, (PyObject*)__pyx_v_X, &__Pyx_TypeInfo_nn___pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE, PyBUF_FORMAT| PyBUF_STRIDES, 2, 0, __pyx_stack) == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 238; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
   __pyx_pybuffernd_X.diminfo[0].strides = __pyx_pybuffernd_X.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_X.diminfo[0].shape = __pyx_pybuffernd_X.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_X.diminfo[1].strides = __pyx_pybuffernd_X.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_X.diminfo[1].shape = __pyx_pybuffernd_X.rcbuffer->pybuffer.shape[1];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_y.rcbuffer->pybuffer, (PyObject*)__pyx_v_y, &__Pyx_TypeInfo_nn___pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 235; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_y.rcbuffer->pybuffer, (PyObject*)__pyx_v_y, &__Pyx_TypeInfo_nn___pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 238; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
   __pyx_pybuffernd_y.diminfo[0].strides = __pyx_pybuffernd_y.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_y.diminfo[0].shape = __pyx_pybuffernd_y.rcbuffer->pybuffer.shape[0];
 
-  /* "sklearn/linear_model/cd_fast.pyx":255
+  /* "sklearn/linear_model/cd_fast.pyx":258
  * 
  *     # get the data information into easy vars
  *     cdef unsigned int n_samples = X.shape[0]             # <<<<<<<<<<<<<<
@@ -3405,7 +3460,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
  */
   __pyx_v_n_samples = (__pyx_v_X->dimensions[0]);
 
-  /* "sklearn/linear_model/cd_fast.pyx":256
+  /* "sklearn/linear_model/cd_fast.pyx":259
  *     # get the data information into easy vars
  *     cdef unsigned int n_samples = X.shape[0]
  *     cdef unsigned int n_features = X.shape[1]             # <<<<<<<<<<<<<<
@@ -3414,7 +3469,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
  */
   __pyx_v_n_features = (__pyx_v_X->dimensions[1]);
 
-  /* "sklearn/linear_model/cd_fast.pyx":259
+  /* "sklearn/linear_model/cd_fast.pyx":262
  * 
  *     # get the number of tasks indirectly, using strides
  *     cdef unsigned int n_tasks = y.strides[0] / sizeof(DOUBLE)             # <<<<<<<<<<<<<<
@@ -3423,32 +3478,32 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
  */
   __pyx_v_n_tasks = ((__pyx_v_y->strides[0]) / (sizeof(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE)));
 
-  /* "sklearn/linear_model/cd_fast.pyx":262
+  /* "sklearn/linear_model/cd_fast.pyx":265
  * 
  *     # compute norms of the columns of X
  *     cdef np.ndarray[DOUBLE, ndim=1] norm_cols_X = (X**2).sum(axis=0)             # <<<<<<<<<<<<<<
  * 
  *     # additional variables
  */
-  __pyx_t_1 = PyNumber_Power(((PyObject *)__pyx_v_X), __pyx_int_2, Py_None); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 262; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyNumber_Power(((PyObject *)__pyx_v_X), __pyx_int_2, Py_None); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 265; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_sum); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 262; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_sum); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 265; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 262; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 265; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_axis, __pyx_int_0) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 262; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 262; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_axis, __pyx_int_0) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 265; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 265; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 262; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 265; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_t_4 = ((PyArrayObject *)__pyx_t_3);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_norm_cols_X.rcbuffer->pybuffer, (PyObject*)__pyx_t_4, &__Pyx_TypeInfo_nn___pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) {
       __pyx_v_norm_cols_X = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_norm_cols_X.rcbuffer->pybuffer.buf = NULL;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 262; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 265; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     } else {__pyx_pybuffernd_norm_cols_X.diminfo[0].strides = __pyx_pybuffernd_norm_cols_X.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_norm_cols_X.diminfo[0].shape = __pyx_pybuffernd_norm_cols_X.rcbuffer->pybuffer.shape[0];
     }
   }
@@ -3456,19 +3511,19 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
   __pyx_v_norm_cols_X = ((PyArrayObject *)__pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":265
+  /* "sklearn/linear_model/cd_fast.pyx":268
  * 
  *     # additional variables
  *     cdef np.ndarray[DOUBLE, ndim=1] we = np.empty(n_features) # exploration variable             # <<<<<<<<<<<<<<
  *     cdef np.ndarray[DOUBLE, ndim=1] wc = np.zeros(n_features) # correction variable
  *     # initial value of the residuals
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 265; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 268; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_empty); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 265; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_empty); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 268; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 265; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 268; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_t_5 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_2))) {
@@ -3481,28 +3536,28 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
     }
   }
   if (!__pyx_t_5) {
-    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 265; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 268; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_GOTREF(__pyx_t_3);
   } else {
-    __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 265; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 268; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_6);
     PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5); __Pyx_GIVEREF(__pyx_t_5); __pyx_t_5 = NULL;
     PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_t_1);
     __Pyx_GIVEREF(__pyx_t_1);
     __pyx_t_1 = 0;
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_6, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 265; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_6, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 268; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 265; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 268; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_t_7 = ((PyArrayObject *)__pyx_t_3);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_we.rcbuffer->pybuffer, (PyObject*)__pyx_t_7, &__Pyx_TypeInfo_nn___pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 1, 0, __pyx_stack) == -1)) {
       __pyx_v_we = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_we.rcbuffer->pybuffer.buf = NULL;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 265; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 268; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     } else {__pyx_pybuffernd_we.diminfo[0].strides = __pyx_pybuffernd_we.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_we.diminfo[0].shape = __pyx_pybuffernd_we.rcbuffer->pybuffer.shape[0];
     }
   }
@@ -3510,19 +3565,19 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
   __pyx_v_we = ((PyArrayObject *)__pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":266
+  /* "sklearn/linear_model/cd_fast.pyx":269
  *     # additional variables
  *     cdef np.ndarray[DOUBLE, ndim=1] we = np.empty(n_features) # exploration variable
  *     cdef np.ndarray[DOUBLE, ndim=1] wc = np.zeros(n_features) # correction variable             # <<<<<<<<<<<<<<
  *     # initial value of the residuals
  *     cdef np.ndarray[DOUBLE, ndim=1] R = np.empty(n_samples)  # normal variable
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 266; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 269; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_zeros); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 266; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_zeros); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 269; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 266; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 269; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_1 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_6))) {
@@ -3535,28 +3590,28 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
     }
   }
   if (!__pyx_t_1) {
-    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_2); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 266; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_2); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 269; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_GOTREF(__pyx_t_3);
   } else {
-    __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 266; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 269; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_5);
     PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_1); __Pyx_GIVEREF(__pyx_t_1); __pyx_t_1 = NULL;
     PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_t_2);
     __Pyx_GIVEREF(__pyx_t_2);
     __pyx_t_2 = 0;
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_5, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 266; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_5, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 269; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   }
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 266; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 269; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_t_8 = ((PyArrayObject *)__pyx_t_3);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_wc.rcbuffer->pybuffer, (PyObject*)__pyx_t_8, &__Pyx_TypeInfo_nn___pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 1, 0, __pyx_stack) == -1)) {
       __pyx_v_wc = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_wc.rcbuffer->pybuffer.buf = NULL;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 266; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 269; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     } else {__pyx_pybuffernd_wc.diminfo[0].strides = __pyx_pybuffernd_wc.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_wc.diminfo[0].shape = __pyx_pybuffernd_wc.rcbuffer->pybuffer.shape[0];
     }
   }
@@ -3564,19 +3619,19 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
   __pyx_v_wc = ((PyArrayObject *)__pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":268
+  /* "sklearn/linear_model/cd_fast.pyx":271
  *     cdef np.ndarray[DOUBLE, ndim=1] wc = np.zeros(n_features) # correction variable
  *     # initial value of the residuals
  *     cdef np.ndarray[DOUBLE, ndim=1] R = np.empty(n_samples)  # normal variable             # <<<<<<<<<<<<<<
  *     cdef np.ndarray[DOUBLE, ndim=1] Re = np.empty(n_samples) # exploration variable
  *     cdef np.ndarray[DOUBLE, ndim=1] Rc = np.zeros(n_samples) # correction variable
  */
-  __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 268; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 271; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_empty); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 268; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_empty); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 271; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_6 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_samples); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 268; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_6 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_samples); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 271; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_6);
   __pyx_t_2 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_5))) {
@@ -3589,28 +3644,28 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
     }
   }
   if (!__pyx_t_2) {
-    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_6); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 268; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_6); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 271; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_GOTREF(__pyx_t_3);
   } else {
-    __pyx_t_1 = PyTuple_New(1+1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 268; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyTuple_New(1+1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 271; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_2); __Pyx_GIVEREF(__pyx_t_2); __pyx_t_2 = NULL;
     PyTuple_SET_ITEM(__pyx_t_1, 0+1, __pyx_t_6);
     __Pyx_GIVEREF(__pyx_t_6);
     __pyx_t_6 = 0;
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_1, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 268; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_1, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 271; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 268; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 271; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_t_9 = ((PyArrayObject *)__pyx_t_3);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_R.rcbuffer->pybuffer, (PyObject*)__pyx_t_9, &__Pyx_TypeInfo_nn___pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 1, 0, __pyx_stack) == -1)) {
       __pyx_v_R = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_R.rcbuffer->pybuffer.buf = NULL;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 268; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 271; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     } else {__pyx_pybuffernd_R.diminfo[0].strides = __pyx_pybuffernd_R.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_R.diminfo[0].shape = __pyx_pybuffernd_R.rcbuffer->pybuffer.shape[0];
     }
   }
@@ -3618,19 +3673,19 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
   __pyx_v_R = ((PyArrayObject *)__pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":269
+  /* "sklearn/linear_model/cd_fast.pyx":272
  *     # initial value of the residuals
  *     cdef np.ndarray[DOUBLE, ndim=1] R = np.empty(n_samples)  # normal variable
  *     cdef np.ndarray[DOUBLE, ndim=1] Re = np.empty(n_samples) # exploration variable             # <<<<<<<<<<<<<<
  *     cdef np.ndarray[DOUBLE, ndim=1] Rc = np.zeros(n_samples) # correction variable
  * 
  */
-  __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 269; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 272; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_empty); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 269; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_empty); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 272; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_samples); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 269; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_samples); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 272; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
   __pyx_t_6 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_1))) {
@@ -3643,28 +3698,28 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
     }
   }
   if (!__pyx_t_6) {
-    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_5); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 269; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_5); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 272; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_GOTREF(__pyx_t_3);
   } else {
-    __pyx_t_2 = PyTuple_New(1+1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 269; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = PyTuple_New(1+1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 272; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
     PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_6); __Pyx_GIVEREF(__pyx_t_6); __pyx_t_6 = NULL;
     PyTuple_SET_ITEM(__pyx_t_2, 0+1, __pyx_t_5);
     __Pyx_GIVEREF(__pyx_t_5);
     __pyx_t_5 = 0;
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_2, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 269; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_2, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 272; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   }
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 269; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 272; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_t_10 = ((PyArrayObject *)__pyx_t_3);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_Re.rcbuffer->pybuffer, (PyObject*)__pyx_t_10, &__Pyx_TypeInfo_nn___pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 1, 0, __pyx_stack) == -1)) {
       __pyx_v_Re = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_Re.rcbuffer->pybuffer.buf = NULL;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 269; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 272; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     } else {__pyx_pybuffernd_Re.diminfo[0].strides = __pyx_pybuffernd_Re.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_Re.diminfo[0].shape = __pyx_pybuffernd_Re.rcbuffer->pybuffer.shape[0];
     }
   }
@@ -3672,19 +3727,19 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
   __pyx_v_Re = ((PyArrayObject *)__pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":270
+  /* "sklearn/linear_model/cd_fast.pyx":273
  *     cdef np.ndarray[DOUBLE, ndim=1] R = np.empty(n_samples)  # normal variable
  *     cdef np.ndarray[DOUBLE, ndim=1] Re = np.empty(n_samples) # exploration variable
  *     cdef np.ndarray[DOUBLE, ndim=1] Rc = np.zeros(n_samples) # correction variable             # <<<<<<<<<<<<<<
  * 
  *     cdef np.ndarray[DOUBLE, ndim=1] XtA = np.empty(n_features)
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 270; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 273; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 270; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 273; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_samples); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 270; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_samples); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 273; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_t_5 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_2))) {
@@ -3697,28 +3752,28 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
     }
   }
   if (!__pyx_t_5) {
-    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 270; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 273; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_GOTREF(__pyx_t_3);
   } else {
-    __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 270; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 273; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_6);
     PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5); __Pyx_GIVEREF(__pyx_t_5); __pyx_t_5 = NULL;
     PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_t_1);
     __Pyx_GIVEREF(__pyx_t_1);
     __pyx_t_1 = 0;
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_6, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 270; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_6, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 273; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 270; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 273; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_t_11 = ((PyArrayObject *)__pyx_t_3);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_Rc.rcbuffer->pybuffer, (PyObject*)__pyx_t_11, &__Pyx_TypeInfo_nn___pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 1, 0, __pyx_stack) == -1)) {
       __pyx_v_Rc = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_Rc.rcbuffer->pybuffer.buf = NULL;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 270; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 273; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     } else {__pyx_pybuffernd_Rc.diminfo[0].strides = __pyx_pybuffernd_Rc.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_Rc.diminfo[0].shape = __pyx_pybuffernd_Rc.rcbuffer->pybuffer.shape[0];
     }
   }
@@ -3726,19 +3781,19 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
   __pyx_v_Rc = ((PyArrayObject *)__pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":272
+  /* "sklearn/linear_model/cd_fast.pyx":275
  *     cdef np.ndarray[DOUBLE, ndim=1] Rc = np.zeros(n_samples) # correction variable
  * 
  *     cdef np.ndarray[DOUBLE, ndim=1] XtA = np.empty(n_features)             # <<<<<<<<<<<<<<
  *     cdef np.ndarray[DOUBLE, ndim=1] Xty = np.empty(n_features)
  * 
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 272; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 275; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_empty); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 272; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_empty); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 275; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 272; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 275; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_1 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_6))) {
@@ -3751,28 +3806,28 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
     }
   }
   if (!__pyx_t_1) {
-    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_2); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 272; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_2); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 275; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_GOTREF(__pyx_t_3);
   } else {
-    __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 272; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 275; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_5);
     PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_1); __Pyx_GIVEREF(__pyx_t_1); __pyx_t_1 = NULL;
     PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_t_2);
     __Pyx_GIVEREF(__pyx_t_2);
     __pyx_t_2 = 0;
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_5, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 272; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_5, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 275; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   }
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 272; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 275; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_t_12 = ((PyArrayObject *)__pyx_t_3);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_XtA.rcbuffer->pybuffer, (PyObject*)__pyx_t_12, &__Pyx_TypeInfo_nn___pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) {
       __pyx_v_XtA = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_XtA.rcbuffer->pybuffer.buf = NULL;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 272; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 275; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     } else {__pyx_pybuffernd_XtA.diminfo[0].strides = __pyx_pybuffernd_XtA.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_XtA.diminfo[0].shape = __pyx_pybuffernd_XtA.rcbuffer->pybuffer.shape[0];
     }
   }
@@ -3780,19 +3835,19 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
   __pyx_v_XtA = ((PyArrayObject *)__pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":273
+  /* "sklearn/linear_model/cd_fast.pyx":276
  * 
  *     cdef np.ndarray[DOUBLE, ndim=1] XtA = np.empty(n_features)
  *     cdef np.ndarray[DOUBLE, ndim=1] Xty = np.empty(n_features)             # <<<<<<<<<<<<<<
  * 
  *     cdef double tmp
  */
-  __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 273; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 276; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_empty); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 273; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_empty); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 276; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_6 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 273; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_6 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 276; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_6);
   __pyx_t_2 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_5))) {
@@ -3805,28 +3860,28 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
     }
   }
   if (!__pyx_t_2) {
-    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_6); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 273; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_6); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 276; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_GOTREF(__pyx_t_3);
   } else {
-    __pyx_t_1 = PyTuple_New(1+1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 273; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyTuple_New(1+1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 276; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_2); __Pyx_GIVEREF(__pyx_t_2); __pyx_t_2 = NULL;
     PyTuple_SET_ITEM(__pyx_t_1, 0+1, __pyx_t_6);
     __Pyx_GIVEREF(__pyx_t_6);
     __pyx_t_6 = 0;
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_1, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 273; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_1, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 276; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 273; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 276; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_t_13 = ((PyArrayObject *)__pyx_t_3);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_Xty.rcbuffer->pybuffer, (PyObject*)__pyx_t_13, &__Pyx_TypeInfo_nn___pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) {
       __pyx_v_Xty = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_Xty.rcbuffer->pybuffer.buf = NULL;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 273; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 276; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     } else {__pyx_pybuffernd_Xty.diminfo[0].strides = __pyx_pybuffernd_Xty.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_Xty.diminfo[0].shape = __pyx_pybuffernd_Xty.rcbuffer->pybuffer.shape[0];
     }
   }
@@ -3834,7 +3889,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
   __pyx_v_Xty = ((PyArrayObject *)__pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":281
+  /* "sklearn/linear_model/cd_fast.pyx":284
  *     cdef double w_max
  *     cdef double d_w_ii
  *     cdef double gap = tol + 1.0             # <<<<<<<<<<<<<<
@@ -3843,7 +3898,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
  */
   __pyx_v_gap = (__pyx_v_tol + 1.0);
 
-  /* "sklearn/linear_model/cd_fast.pyx":282
+  /* "sklearn/linear_model/cd_fast.pyx":285
  *     cdef double d_w_ii
  *     cdef double gap = tol + 1.0
  *     cdef double d_w_tol = tol             # <<<<<<<<<<<<<<
@@ -3852,7 +3907,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
  */
   __pyx_v_d_w_tol = __pyx_v_tol;
 
-  /* "sklearn/linear_model/cd_fast.pyx":286
+  /* "sklearn/linear_model/cd_fast.pyx":289
  * 
  *     # initializing momentum parameter
  *     cdef double theta0 = 1. / fmax(1., n_features)             # <<<<<<<<<<<<<<
@@ -3861,7 +3916,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
  */
   __pyx_v_theta0 = (1. / __pyx_f_7sklearn_12linear_model_7cd_fast_fmax(1., __pyx_v_n_features));
 
-  /* "sklearn/linear_model/cd_fast.pyx":287
+  /* "sklearn/linear_model/cd_fast.pyx":290
  *     # initializing momentum parameter
  *     cdef double theta0 = 1. / fmax(1., n_features)
  *     cdef double theta = theta0             # <<<<<<<<<<<<<<
@@ -3870,7 +3925,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
  */
   __pyx_v_theta = __pyx_v_theta0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":289
+  /* "sklearn/linear_model/cd_fast.pyx":292
  *     cdef double theta = theta0
  * 
  *     cdef double test_restart = 0             # <<<<<<<<<<<<<<
@@ -3879,16 +3934,16 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
  */
   __pyx_v_test_restart = 0.0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":298
+  /* "sklearn/linear_model/cd_fast.pyx":301
  *     cdef unsigned int f_iter
  * 
- *     cdef UINT32_t rand_r_state_seed = rng.randint(1, RAND_R_MAX)             # <<<<<<<<<<<<<<
+ *     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)             # <<<<<<<<<<<<<<
  *     cdef UINT32_t* rand_r_state = &rand_r_state_seed
  * 
  */
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_rng, __pyx_n_s_randint); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 298; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_rng, __pyx_n_s_randint); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 301; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_e_7sklearn_12linear_model_7cd_fast_RAND_R_MAX); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 298; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_e_7sklearn_12linear_model_7cd_fast_RAND_R_MAX); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 301; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_t_6 = NULL;
   __pyx_t_14 = 0;
@@ -3902,35 +3957,35 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
       __pyx_t_14 = 1;
     }
   }
-  __pyx_t_2 = PyTuple_New(2+__pyx_t_14); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 298; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyTuple_New(2+__pyx_t_14); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 301; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   if (__pyx_t_6) {
     PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_6); __Pyx_GIVEREF(__pyx_t_6); __pyx_t_6 = NULL;
   }
-  __Pyx_INCREF(__pyx_int_1);
-  PyTuple_SET_ITEM(__pyx_t_2, 0+__pyx_t_14, __pyx_int_1);
-  __Pyx_GIVEREF(__pyx_int_1);
+  __Pyx_INCREF(__pyx_int_0);
+  PyTuple_SET_ITEM(__pyx_t_2, 0+__pyx_t_14, __pyx_int_0);
+  __Pyx_GIVEREF(__pyx_int_0);
   PyTuple_SET_ITEM(__pyx_t_2, 1+__pyx_t_14, __pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
   __pyx_t_1 = 0;
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_2, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 298; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_2, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 301; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_15 = __Pyx_PyInt_As_npy_uint32(__pyx_t_3); if (unlikely((__pyx_t_15 == (npy_uint32)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 298; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_15 = __Pyx_PyInt_As_npy_uint32(__pyx_t_3); if (unlikely((__pyx_t_15 == (npy_uint32)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 301; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_v_rand_r_state_seed = __pyx_t_15;
 
-  /* "sklearn/linear_model/cd_fast.pyx":299
+  /* "sklearn/linear_model/cd_fast.pyx":302
  * 
- *     cdef UINT32_t rand_r_state_seed = rng.randint(1, RAND_R_MAX)
+ *     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
  *     cdef UINT32_t* rand_r_state = &rand_r_state_seed             # <<<<<<<<<<<<<<
  * 
  *     if alpha == 0:
  */
   __pyx_v_rand_r_state = (&__pyx_v_rand_r_state_seed);
 
-  /* "sklearn/linear_model/cd_fast.pyx":301
+  /* "sklearn/linear_model/cd_fast.pyx":304
  *     cdef UINT32_t* rand_r_state = &rand_r_state_seed
  * 
  *     if alpha == 0:             # <<<<<<<<<<<<<<
@@ -3940,19 +3995,19 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
   __pyx_t_16 = ((__pyx_v_alpha == 0.0) != 0);
   if (__pyx_t_16) {
 
-    /* "sklearn/linear_model/cd_fast.pyx":302
+    /* "sklearn/linear_model/cd_fast.pyx":305
  * 
  *     if alpha == 0:
  *         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"             # <<<<<<<<<<<<<<
  *             " results and is discouraged.")
  * 
  */
-    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 302; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 305; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_warn); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 302; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_warn); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 305; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_tuple_, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 302; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_tuple_, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 305; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -3960,7 +4015,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
   }
   __pyx_L3:;
 
-  /* "sklearn/linear_model/cd_fast.pyx":305
+  /* "sklearn/linear_model/cd_fast.pyx":308
  *             " results and is discouraged.")
  * 
  *     if not random:             # <<<<<<<<<<<<<<
@@ -3970,19 +4025,19 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
   __pyx_t_16 = ((!(__pyx_v_random != 0)) != 0);
   if (__pyx_t_16) {
 
-    /* "sklearn/linear_model/cd_fast.pyx":306
+    /* "sklearn/linear_model/cd_fast.pyx":309
  * 
  *     if not random:
  *         warnings.warn("Accelerated coordinate descent with cyclic sampling"             # <<<<<<<<<<<<<<
  *             " may be slower than with random sampling and is discouraged.")
  * 
  */
-    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 306; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 309; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_warn); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 306; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_warn); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 309; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_tuple__2, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 306; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_tuple__2, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 309; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -3990,7 +4045,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
   }
   __pyx_L4:;
 
-  /* "sklearn/linear_model/cd_fast.pyx":310
+  /* "sklearn/linear_model/cd_fast.pyx":313
  * 
  * 
  *     with nogil:             # <<<<<<<<<<<<<<
@@ -4004,7 +4059,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
       #endif
       /*try:*/ {
 
-        /* "sklearn/linear_model/cd_fast.pyx":313
+        /* "sklearn/linear_model/cd_fast.pyx":316
  * 
  *         # R = y - np.dot(X, w)
  *         for jj in range(n_samples):             # <<<<<<<<<<<<<<
@@ -4015,7 +4070,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
         for (__pyx_t_18 = 0; __pyx_t_18 < __pyx_t_17; __pyx_t_18+=1) {
           __pyx_v_jj = __pyx_t_18;
 
-          /* "sklearn/linear_model/cd_fast.pyx":314
+          /* "sklearn/linear_model/cd_fast.pyx":317
  *         # R = y - np.dot(X, w)
  *         for jj in range(n_samples):
  *             R[jj] = y[jj]             # <<<<<<<<<<<<<<
@@ -4027,7 +4082,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
           *__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_R.rcbuffer->pybuffer.buf, __pyx_t_20, __pyx_pybuffernd_R.diminfo[0].strides) = (*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_y.rcbuffer->pybuffer.buf, __pyx_t_19, __pyx_pybuffernd_y.diminfo[0].strides));
         }
 
-        /* "sklearn/linear_model/cd_fast.pyx":315
+        /* "sklearn/linear_model/cd_fast.pyx":318
  *         for jj in range(n_samples):
  *             R[jj] = y[jj]
  *         for ii in range(n_features):             # <<<<<<<<<<<<<<
@@ -4038,7 +4093,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
         for (__pyx_t_18 = 0; __pyx_t_18 < __pyx_t_17; __pyx_t_18+=1) {
           __pyx_v_ii = __pyx_t_18;
 
-          /* "sklearn/linear_model/cd_fast.pyx":317
+          /* "sklearn/linear_model/cd_fast.pyx":320
  *         for ii in range(n_features):
  *             # R -=  w[ii] * X[:,ii] # Update residual
  *             daxpy(n_samples, -w[ii],             # <<<<<<<<<<<<<<
@@ -4047,7 +4102,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
  */
           __pyx_t_21 = __pyx_v_ii;
 
-          /* "sklearn/linear_model/cd_fast.pyx":319
+          /* "sklearn/linear_model/cd_fast.pyx":322
  *             daxpy(n_samples, -w[ii],
  *                   <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)),
  *                   1, <DOUBLE*>R.data, 1)             # <<<<<<<<<<<<<<
@@ -4057,7 +4112,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
           cblas_daxpy(__pyx_v_n_samples, (-(*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_w.rcbuffer->pybuffer.buf, __pyx_t_21, __pyx_pybuffernd_w.diminfo[0].strides))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(__pyx_v_X->data + ((__pyx_v_ii * __pyx_v_n_samples) * (sizeof(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE))))), 1, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_R->data), 1);
         }
 
-        /* "sklearn/linear_model/cd_fast.pyx":321
+        /* "sklearn/linear_model/cd_fast.pyx":324
  *                   1, <DOUBLE*>R.data, 1)
  *         # Re = R,  Rc = - np.dot(X, wc) = 0 (already initialized)
  *         for jj in range(n_samples):             # <<<<<<<<<<<<<<
@@ -4068,7 +4123,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
         for (__pyx_t_18 = 0; __pyx_t_18 < __pyx_t_17; __pyx_t_18+=1) {
           __pyx_v_jj = __pyx_t_18;
 
-          /* "sklearn/linear_model/cd_fast.pyx":322
+          /* "sklearn/linear_model/cd_fast.pyx":325
  *         # Re = R,  Rc = - np.dot(X, wc) = 0 (already initialized)
  *         for jj in range(n_samples):
  *             Re[jj] = R[jj]             # <<<<<<<<<<<<<<
@@ -4080,7 +4135,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
           *__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_Re.rcbuffer->pybuffer.buf, __pyx_t_23, __pyx_pybuffernd_Re.diminfo[0].strides) = (*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_R.rcbuffer->pybuffer.buf, __pyx_t_22, __pyx_pybuffernd_R.diminfo[0].strides));
         }
 
-        /* "sklearn/linear_model/cd_fast.pyx":323
+        /* "sklearn/linear_model/cd_fast.pyx":326
  *         for jj in range(n_samples):
  *             Re[jj] = R[jj]
  *         for ii in range(n_features):             # <<<<<<<<<<<<<<
@@ -4091,7 +4146,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
         for (__pyx_t_18 = 0; __pyx_t_18 < __pyx_t_17; __pyx_t_18+=1) {
           __pyx_v_ii = __pyx_t_18;
 
-          /* "sklearn/linear_model/cd_fast.pyx":324
+          /* "sklearn/linear_model/cd_fast.pyx":327
  *             Re[jj] = R[jj]
  *         for ii in range(n_features):
  *             we[ii] = w[ii]             # <<<<<<<<<<<<<<
@@ -4103,16 +4158,16 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
           *__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_we.rcbuffer->pybuffer.buf, __pyx_t_25, __pyx_pybuffernd_we.diminfo[0].strides) = (*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_w.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_w.diminfo[0].strides));
         }
 
-        /* "sklearn/linear_model/cd_fast.pyx":328
+        /* "sklearn/linear_model/cd_fast.pyx":331
  *         ### scaling tolerance
  *         # tol *= np.dot(y, y)
- *         tol *= ddot(n_samples, <DOUBLE*>y.data, n_tasks,             # <<<<<<<<<<<<<<
- *                     <DOUBLE*>y.data, n_tasks)
+ *         tol *= fmax(1e-15,ddot(n_samples, <DOUBLE*>y.data, n_tasks,             # <<<<<<<<<<<<<<
+ *                     <DOUBLE*>y.data, n_tasks))
  * 
  */
-        __pyx_v_tol = (__pyx_v_tol * cblas_ddot(__pyx_v_n_samples, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_y->data), __pyx_v_n_tasks, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_y->data), __pyx_v_n_tasks));
+        __pyx_v_tol = (__pyx_v_tol * __pyx_f_7sklearn_12linear_model_7cd_fast_fmax(1e-15, cblas_ddot(__pyx_v_n_samples, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_y->data), __pyx_v_n_tasks, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_y->data), __pyx_v_n_tasks)));
 
-        /* "sklearn/linear_model/cd_fast.pyx":332
+        /* "sklearn/linear_model/cd_fast.pyx":335
  * 
  *         ### main loop
  *         for n_iter in range(max_iter):             # <<<<<<<<<<<<<<
@@ -4123,7 +4178,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
         for (__pyx_t_17 = 0; __pyx_t_17 < __pyx_t_26; __pyx_t_17+=1) {
           __pyx_v_n_iter = __pyx_t_17;
 
-          /* "sklearn/linear_model/cd_fast.pyx":339
+          /* "sklearn/linear_model/cd_fast.pyx":342
  *             #  and proximal coordinate descent. arXiv preprint arXiv:1312.5799.
  * 
  *             w_max = 0.0             # <<<<<<<<<<<<<<
@@ -4132,7 +4187,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
  */
           __pyx_v_w_max = 0.0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":340
+          /* "sklearn/linear_model/cd_fast.pyx":343
  * 
  *             w_max = 0.0
  *             d_w_max = 0.0             # <<<<<<<<<<<<<<
@@ -4141,7 +4196,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
  */
           __pyx_v_d_w_max = 0.0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":341
+          /* "sklearn/linear_model/cd_fast.pyx":344
  *             w_max = 0.0
  *             d_w_max = 0.0
  *             for f_iter in range(n_features):  # Loop over coordinates             # <<<<<<<<<<<<<<
@@ -4152,7 +4207,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
           for (__pyx_t_27 = 0; __pyx_t_27 < __pyx_t_18; __pyx_t_27+=1) {
             __pyx_v_f_iter = __pyx_t_27;
 
-            /* "sklearn/linear_model/cd_fast.pyx":342
+            /* "sklearn/linear_model/cd_fast.pyx":345
  *             d_w_max = 0.0
  *             for f_iter in range(n_features):  # Loop over coordinates
  *                 if random:             # <<<<<<<<<<<<<<
@@ -4162,7 +4217,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             __pyx_t_16 = (__pyx_v_random != 0);
             if (__pyx_t_16) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":343
+              /* "sklearn/linear_model/cd_fast.pyx":346
  *             for f_iter in range(n_features):  # Loop over coordinates
  *                 if random:
  *                     ii = rand_int(n_features, rand_r_state)             # <<<<<<<<<<<<<<
@@ -4174,7 +4229,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             }
             /*else*/ {
 
-              /* "sklearn/linear_model/cd_fast.pyx":345
+              /* "sklearn/linear_model/cd_fast.pyx":348
  *                     ii = rand_int(n_features, rand_r_state)
  *                 else:
  *                     ii = f_iter             # <<<<<<<<<<<<<<
@@ -4185,7 +4240,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             }
             __pyx_L20:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":347
+            /* "sklearn/linear_model/cd_fast.pyx":350
  *                     ii = f_iter
  * 
  *                 if norm_cols_X[ii] == 0.0:             # <<<<<<<<<<<<<<
@@ -4196,7 +4251,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             __pyx_t_16 = (((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_norm_cols_X.rcbuffer->pybuffer.buf, __pyx_t_28, __pyx_pybuffernd_norm_cols_X.diminfo[0].strides)) == 0.0) != 0);
             if (__pyx_t_16) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":348
+              /* "sklearn/linear_model/cd_fast.pyx":351
  * 
  *                 if norm_cols_X[ii] == 0.0:
  *                     continue             # <<<<<<<<<<<<<<
@@ -4206,7 +4261,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
               goto __pyx_L18_continue;
             }
 
-            /* "sklearn/linear_model/cd_fast.pyx":350
+            /* "sklearn/linear_model/cd_fast.pyx":353
  *                     continue
  * 
  *                 we_ii = we[ii]  # Store previous value             # <<<<<<<<<<<<<<
@@ -4216,7 +4271,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             __pyx_t_29 = __pyx_v_ii;
             __pyx_v_we_ii = (*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_we.rcbuffer->pybuffer.buf, __pyx_t_29, __pyx_pybuffernd_we.diminfo[0].strides));
 
-            /* "sklearn/linear_model/cd_fast.pyx":351
+            /* "sklearn/linear_model/cd_fast.pyx":354
  * 
  *                 we_ii = we[ii]  # Store previous value
  *                 wc_ii = wc[ii]             # <<<<<<<<<<<<<<
@@ -4226,7 +4281,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             __pyx_t_30 = __pyx_v_ii;
             __pyx_v_wc_ii = (*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_wc.rcbuffer->pybuffer.buf, __pyx_t_30, __pyx_pybuffernd_wc.diminfo[0].strides));
 
-            /* "sklearn/linear_model/cd_fast.pyx":361
+            /* "sklearn/linear_model/cd_fast.pyx":364
  *                             <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)),
  *                             1, <DOUBLE*>Re.data, 1) \
  *                          + norm_cols_X[ii] * theta / theta0 * we_ii             # <<<<<<<<<<<<<<
@@ -4236,7 +4291,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             __pyx_t_31 = __pyx_v_ii;
             __pyx_v_tmp = (((pow(__pyx_v_theta, 2.0) * cblas_ddot(__pyx_v_n_samples, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(__pyx_v_X->data + ((__pyx_v_ii * __pyx_v_n_samples) * (sizeof(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE))))), 1, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_Rc->data), 1)) + cblas_ddot(__pyx_v_n_samples, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(__pyx_v_X->data + ((__pyx_v_ii * __pyx_v_n_samples) * (sizeof(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE))))), 1, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_Re->data), 1)) + ((((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_norm_cols_X.rcbuffer->pybuffer.buf, __pyx_t_31, __pyx_pybuffernd_norm_cols_X.diminfo[0].strides)) * __pyx_v_theta) / __pyx_v_theta0) * __pyx_v_we_ii));
 
-            /* "sklearn/linear_model/cd_fast.pyx":363
+            /* "sklearn/linear_model/cd_fast.pyx":366
  *                          + norm_cols_X[ii] * theta / theta0 * we_ii
  * 
  *                 if positive and tmp < 0:             # <<<<<<<<<<<<<<
@@ -4256,7 +4311,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             __pyx_L23_bool_binop_done:;
             if (__pyx_t_16) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":364
+              /* "sklearn/linear_model/cd_fast.pyx":367
  * 
  *                 if positive and tmp < 0:
  *                     we[ii] = 0.0             # <<<<<<<<<<<<<<
@@ -4269,7 +4324,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             }
             /*else*/ {
 
-              /* "sklearn/linear_model/cd_fast.pyx":367
+              /* "sklearn/linear_model/cd_fast.pyx":370
  *                 else:
  *                     we[ii] = (fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
  *                              / (norm_cols_X[ii]*theta/theta0 + beta))             # <<<<<<<<<<<<<<
@@ -4278,7 +4333,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
  */
               __pyx_t_34 = __pyx_v_ii;
 
-              /* "sklearn/linear_model/cd_fast.pyx":366
+              /* "sklearn/linear_model/cd_fast.pyx":369
  *                     we[ii] = 0.0
  *                 else:
  *                     we[ii] = (fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \             # <<<<<<<<<<<<<<
@@ -4290,7 +4345,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             }
             __pyx_L22:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":369
+            /* "sklearn/linear_model/cd_fast.pyx":372
  *                              / (norm_cols_X[ii]*theta/theta0 + beta))
  * 
  *                 if we[ii] != we_ii:             # <<<<<<<<<<<<<<
@@ -4301,7 +4356,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             __pyx_t_16 = (((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_we.rcbuffer->pybuffer.buf, __pyx_t_36, __pyx_pybuffernd_we.diminfo[0].strides)) != __pyx_v_we_ii) != 0);
             if (__pyx_t_16) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":371
+              /* "sklearn/linear_model/cd_fast.pyx":374
  *                 if we[ii] != we_ii:
  *                     # Re -=  (we[ii]-we_ii) * X[:,ii] # Update exploration residual
  *                     daxpy(n_samples, -we[ii] + we_ii,             # <<<<<<<<<<<<<<
@@ -4310,7 +4365,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
  */
               __pyx_t_37 = __pyx_v_ii;
 
-              /* "sklearn/linear_model/cd_fast.pyx":373
+              /* "sklearn/linear_model/cd_fast.pyx":376
  *                     daxpy(n_samples, -we[ii] + we_ii,
  *                           <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)),
  *                           1, <DOUBLE*>Re.data, 1)             # <<<<<<<<<<<<<<
@@ -4319,7 +4374,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
  */
               cblas_daxpy(__pyx_v_n_samples, ((-(*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_we.rcbuffer->pybuffer.buf, __pyx_t_37, __pyx_pybuffernd_we.diminfo[0].strides))) + __pyx_v_we_ii), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(__pyx_v_X->data + ((__pyx_v_ii * __pyx_v_n_samples) * (sizeof(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE))))), 1, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_Re->data), 1);
 
-              /* "sklearn/linear_model/cd_fast.pyx":375
+              /* "sklearn/linear_model/cd_fast.pyx":378
  *                           1, <DOUBLE*>Re.data, 1)
  * 
  *                     wc[ii] -= (we[ii] - we_ii) * (1-theta/theta0)/(theta**2)             # <<<<<<<<<<<<<<
@@ -4330,7 +4385,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
               __pyx_t_39 = __pyx_v_ii;
               *__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_wc.rcbuffer->pybuffer.buf, __pyx_t_39, __pyx_pybuffernd_wc.diminfo[0].strides) -= ((((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_we.rcbuffer->pybuffer.buf, __pyx_t_38, __pyx_pybuffernd_we.diminfo[0].strides)) - __pyx_v_we_ii) * (1.0 - (__pyx_v_theta / __pyx_v_theta0))) / pow(__pyx_v_theta, 2.0));
 
-              /* "sklearn/linear_model/cd_fast.pyx":377
+              /* "sklearn/linear_model/cd_fast.pyx":380
  *                     wc[ii] -= (we[ii] - we_ii) * (1-theta/theta0)/(theta**2)
  *                     # Rc -=  (wc[ii]-wc_ii) * X[:,ii] # Update correction residual
  *                     daxpy(n_samples, -wc[ii] + wc_ii,             # <<<<<<<<<<<<<<
@@ -4339,7 +4394,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
  */
               __pyx_t_40 = __pyx_v_ii;
 
-              /* "sklearn/linear_model/cd_fast.pyx":379
+              /* "sklearn/linear_model/cd_fast.pyx":382
  *                     daxpy(n_samples, -wc[ii] + wc_ii,
  *                           <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)),
  *                           1, <DOUBLE*>Rc.data, 1)             # <<<<<<<<<<<<<<
@@ -4351,7 +4406,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             }
             __pyx_L25:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":382
+            /* "sklearn/linear_model/cd_fast.pyx":385
  * 
  *                 # update the test for restarting when minimizing a strongly convex functions
  *                 eta = 1. / n_features             # <<<<<<<<<<<<<<
@@ -4360,7 +4415,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
  */
             __pyx_v_eta = (1. / __pyx_v_n_features);
 
-            /* "sklearn/linear_model/cd_fast.pyx":387
+            /* "sklearn/linear_model/cd_fast.pyx":390
  *                 #  Adaptation of Coordinate Frequencies. arXiv preprint arXiv:1401.3737.
  *                 test_restart = (1-eta) * test_restart \
  *                                - eta * (we[ii]-we_ii)*( we[ii] - (theta**2 * wc_ii+we_ii) )             # <<<<<<<<<<<<<<
@@ -4371,7 +4426,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             __pyx_t_42 = __pyx_v_ii;
             __pyx_v_test_restart = (((1.0 - __pyx_v_eta) * __pyx_v_test_restart) - ((__pyx_v_eta * ((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_we.rcbuffer->pybuffer.buf, __pyx_t_41, __pyx_pybuffernd_we.diminfo[0].strides)) - __pyx_v_we_ii)) * ((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_we.rcbuffer->pybuffer.buf, __pyx_t_42, __pyx_pybuffernd_we.diminfo[0].strides)) - ((pow(__pyx_v_theta, 2.0) * __pyx_v_wc_ii) + __pyx_v_we_ii))));
 
-            /* "sklearn/linear_model/cd_fast.pyx":390
+            /* "sklearn/linear_model/cd_fast.pyx":393
  * 
  *                 # update the maximum absolute coefficient update
  *                 d_w_ii = fabs((theta ** 2) * (wc[ii] - wc_ii) + (we[ii] - we_ii))             # <<<<<<<<<<<<<<
@@ -4382,7 +4437,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             __pyx_t_44 = __pyx_v_ii;
             __pyx_v_d_w_ii = fabs(((pow(__pyx_v_theta, 2.0) * ((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_wc.rcbuffer->pybuffer.buf, __pyx_t_43, __pyx_pybuffernd_wc.diminfo[0].strides)) - __pyx_v_wc_ii)) + ((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_we.rcbuffer->pybuffer.buf, __pyx_t_44, __pyx_pybuffernd_we.diminfo[0].strides)) - __pyx_v_we_ii)));
 
-            /* "sklearn/linear_model/cd_fast.pyx":391
+            /* "sklearn/linear_model/cd_fast.pyx":394
  *                 # update the maximum absolute coefficient update
  *                 d_w_ii = fabs((theta ** 2) * (wc[ii] - wc_ii) + (we[ii] - we_ii))
  *                 if d_w_ii > d_w_max:             # <<<<<<<<<<<<<<
@@ -4392,7 +4447,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             __pyx_t_16 = ((__pyx_v_d_w_ii > __pyx_v_d_w_max) != 0);
             if (__pyx_t_16) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":392
+              /* "sklearn/linear_model/cd_fast.pyx":395
  *                 d_w_ii = fabs((theta ** 2) * (wc[ii] - wc_ii) + (we[ii] - we_ii))
  *                 if d_w_ii > d_w_max:
  *                     d_w_max = d_w_ii             # <<<<<<<<<<<<<<
@@ -4404,7 +4459,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             }
             __pyx_L26:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":395
+            /* "sklearn/linear_model/cd_fast.pyx":398
  * 
  *                 # update theta
  *                 theta = 0.5 * (sqrt((theta ** 4) + 4 * (theta ** 2)) - theta ** 2)             # <<<<<<<<<<<<<<
@@ -4415,7 +4470,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             __pyx_L18_continue:;
           }
 
-          /* "sklearn/linear_model/cd_fast.pyx":401
+          /* "sklearn/linear_model/cd_fast.pyx":404
  *             # Tricks to make accelerated coordinate descent efficient for the lasso
  * 
  *             tmp = (theta ** 2)/(1-theta)             # <<<<<<<<<<<<<<
@@ -4424,7 +4479,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
  */
           __pyx_v_tmp = (pow(__pyx_v_theta, 2.0) / (1.0 - __pyx_v_theta));
 
-          /* "sklearn/linear_model/cd_fast.pyx":402
+          /* "sklearn/linear_model/cd_fast.pyx":405
  * 
  *             tmp = (theta ** 2)/(1-theta)
  *             for ii in range(n_features):             # <<<<<<<<<<<<<<
@@ -4435,7 +4490,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
           for (__pyx_t_27 = 0; __pyx_t_27 < __pyx_t_18; __pyx_t_27+=1) {
             __pyx_v_ii = __pyx_t_27;
 
-            /* "sklearn/linear_model/cd_fast.pyx":403
+            /* "sklearn/linear_model/cd_fast.pyx":406
  *             tmp = (theta ** 2)/(1-theta)
  *             for ii in range(n_features):
  *                 w[ii] = tmp * wc[ii] + we[ii]             # <<<<<<<<<<<<<<
@@ -4447,7 +4502,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             __pyx_t_47 = __pyx_v_ii;
             *__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_w.rcbuffer->pybuffer.buf, __pyx_t_47, __pyx_pybuffernd_w.diminfo[0].strides) = ((__pyx_v_tmp * (*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_wc.rcbuffer->pybuffer.buf, __pyx_t_45, __pyx_pybuffernd_wc.diminfo[0].strides))) + (*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_we.rcbuffer->pybuffer.buf, __pyx_t_46, __pyx_pybuffernd_we.diminfo[0].strides)));
 
-            /* "sklearn/linear_model/cd_fast.pyx":404
+            /* "sklearn/linear_model/cd_fast.pyx":407
  *             for ii in range(n_features):
  *                 w[ii] = tmp * wc[ii] + we[ii]
  *                 if fabs(w[ii]) > w_max:             # <<<<<<<<<<<<<<
@@ -4458,7 +4513,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             __pyx_t_16 = ((fabs((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_w.rcbuffer->pybuffer.buf, __pyx_t_48, __pyx_pybuffernd_w.diminfo[0].strides))) > __pyx_v_w_max) != 0);
             if (__pyx_t_16) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":405
+              /* "sklearn/linear_model/cd_fast.pyx":408
  *                 w[ii] = tmp * wc[ii] + we[ii]
  *                 if fabs(w[ii]) > w_max:
  *                     w_max = fabs(w[ii])             # <<<<<<<<<<<<<<
@@ -4472,7 +4527,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             __pyx_L29:;
           }
 
-          /* "sklearn/linear_model/cd_fast.pyx":406
+          /* "sklearn/linear_model/cd_fast.pyx":409
  *                 if fabs(w[ii]) > w_max:
  *                     w_max = fabs(w[ii])
  *             for jj in range(n_samples):             # <<<<<<<<<<<<<<
@@ -4483,7 +4538,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
           for (__pyx_t_27 = 0; __pyx_t_27 < __pyx_t_18; __pyx_t_27+=1) {
             __pyx_v_jj = __pyx_t_27;
 
-            /* "sklearn/linear_model/cd_fast.pyx":407
+            /* "sklearn/linear_model/cd_fast.pyx":410
  *                     w_max = fabs(w[ii])
  *             for jj in range(n_samples):
  *                 R[jj] = tmp * Rc[jj] + Re[jj]             # <<<<<<<<<<<<<<
@@ -4496,7 +4551,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             *__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_R.rcbuffer->pybuffer.buf, __pyx_t_52, __pyx_pybuffernd_R.diminfo[0].strides) = ((__pyx_v_tmp * (*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_Rc.rcbuffer->pybuffer.buf, __pyx_t_50, __pyx_pybuffernd_Rc.diminfo[0].strides))) + (*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_Re.rcbuffer->pybuffer.buf, __pyx_t_51, __pyx_pybuffernd_Re.diminfo[0].strides)));
           }
 
-          /* "sklearn/linear_model/cd_fast.pyx":409
+          /* "sklearn/linear_model/cd_fast.pyx":412
  *                 R[jj] = tmp * Rc[jj] + Re[jj]
  * 
  *             nnz=0             # <<<<<<<<<<<<<<
@@ -4505,7 +4560,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
  */
           __pyx_v_nnz = 0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":410
+          /* "sklearn/linear_model/cd_fast.pyx":413
  * 
  *             nnz=0
  *             nnze=0             # <<<<<<<<<<<<<<
@@ -4514,7 +4569,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
  */
           __pyx_v_nnze = 0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":411
+          /* "sklearn/linear_model/cd_fast.pyx":414
  *             nnz=0
  *             nnze=0
  *             for ii in range(n_features):             # <<<<<<<<<<<<<<
@@ -4525,7 +4580,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
           for (__pyx_t_27 = 0; __pyx_t_27 < __pyx_t_18; __pyx_t_27+=1) {
             __pyx_v_ii = __pyx_t_27;
 
-            /* "sklearn/linear_model/cd_fast.pyx":412
+            /* "sklearn/linear_model/cd_fast.pyx":415
  *             nnze=0
  *             for ii in range(n_features):
  *                 if w[ii] != 0:             # <<<<<<<<<<<<<<
@@ -4536,7 +4591,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             __pyx_t_16 = (((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_w.rcbuffer->pybuffer.buf, __pyx_t_53, __pyx_pybuffernd_w.diminfo[0].strides)) != 0.0) != 0);
             if (__pyx_t_16) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":413
+              /* "sklearn/linear_model/cd_fast.pyx":416
  *             for ii in range(n_features):
  *                 if w[ii] != 0:
  *                     nnz += 1             # <<<<<<<<<<<<<<
@@ -4548,7 +4603,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             }
             __pyx_L34:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":414
+            /* "sklearn/linear_model/cd_fast.pyx":417
  *                 if w[ii] != 0:
  *                     nnz += 1
  *                 if we[ii] != 0:             # <<<<<<<<<<<<<<
@@ -4559,7 +4614,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             __pyx_t_16 = (((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_we.rcbuffer->pybuffer.buf, __pyx_t_54, __pyx_pybuffernd_we.diminfo[0].strides)) != 0.0) != 0);
             if (__pyx_t_16) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":415
+              /* "sklearn/linear_model/cd_fast.pyx":418
  *                     nnz += 1
  *                 if we[ii] != 0:
  *                     nnze +=1             # <<<<<<<<<<<<<<
@@ -4572,7 +4627,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             __pyx_L35:;
           }
 
-          /* "sklearn/linear_model/cd_fast.pyx":421
+          /* "sklearn/linear_model/cd_fast.pyx":424
  *             # cf. ODonoghue, B., & Candes, E. (2012). Adaptive restart for accelerated
  *             #  gradient schemes. Foundations of Computational Mathematics, 1-18.
  *             if test_restart>0:             # <<<<<<<<<<<<<<
@@ -4582,7 +4637,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
           __pyx_t_16 = ((__pyx_v_test_restart > 0.0) != 0);
           if (__pyx_t_16) {
 
-            /* "sklearn/linear_model/cd_fast.pyx":422
+            /* "sklearn/linear_model/cd_fast.pyx":425
  *             #  gradient schemes. Foundations of Computational Mathematics, 1-18.
  *             if test_restart>0:
  *                 for ii in range(n_features):             # <<<<<<<<<<<<<<
@@ -4593,7 +4648,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             for (__pyx_t_27 = 0; __pyx_t_27 < __pyx_t_18; __pyx_t_27+=1) {
               __pyx_v_ii = __pyx_t_27;
 
-              /* "sklearn/linear_model/cd_fast.pyx":423
+              /* "sklearn/linear_model/cd_fast.pyx":426
  *             if test_restart>0:
  *                 for ii in range(n_features):
  *                     wc[ii] = 0             # <<<<<<<<<<<<<<
@@ -4603,7 +4658,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
               __pyx_t_55 = __pyx_v_ii;
               *__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_wc.rcbuffer->pybuffer.buf, __pyx_t_55, __pyx_pybuffernd_wc.diminfo[0].strides) = 0.0;
 
-              /* "sklearn/linear_model/cd_fast.pyx":424
+              /* "sklearn/linear_model/cd_fast.pyx":427
  *                 for ii in range(n_features):
  *                     wc[ii] = 0
  *                     we[ii] = w[ii]             # <<<<<<<<<<<<<<
@@ -4615,7 +4670,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
               *__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_we.rcbuffer->pybuffer.buf, __pyx_t_57, __pyx_pybuffernd_we.diminfo[0].strides) = (*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_w.rcbuffer->pybuffer.buf, __pyx_t_56, __pyx_pybuffernd_w.diminfo[0].strides));
             }
 
-            /* "sklearn/linear_model/cd_fast.pyx":425
+            /* "sklearn/linear_model/cd_fast.pyx":428
  *                     wc[ii] = 0
  *                     we[ii] = w[ii]
  *                 for jj in range(n_samples):             # <<<<<<<<<<<<<<
@@ -4626,7 +4681,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             for (__pyx_t_27 = 0; __pyx_t_27 < __pyx_t_18; __pyx_t_27+=1) {
               __pyx_v_jj = __pyx_t_27;
 
-              /* "sklearn/linear_model/cd_fast.pyx":426
+              /* "sklearn/linear_model/cd_fast.pyx":429
  *                     we[ii] = w[ii]
  *                 for jj in range(n_samples):
  *                     Rc[jj] = 0             # <<<<<<<<<<<<<<
@@ -4636,7 +4691,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
               __pyx_t_58 = __pyx_v_jj;
               *__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_Rc.rcbuffer->pybuffer.buf, __pyx_t_58, __pyx_pybuffernd_Rc.diminfo[0].strides) = 0.0;
 
-              /* "sklearn/linear_model/cd_fast.pyx":427
+              /* "sklearn/linear_model/cd_fast.pyx":430
  *                 for jj in range(n_samples):
  *                     Rc[jj] = 0
  *                     Re[jj] = R[jj]             # <<<<<<<<<<<<<<
@@ -4648,7 +4703,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
               *__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_Re.rcbuffer->pybuffer.buf, __pyx_t_60, __pyx_pybuffernd_Re.diminfo[0].strides) = (*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_R.rcbuffer->pybuffer.buf, __pyx_t_59, __pyx_pybuffernd_R.diminfo[0].strides));
             }
 
-            /* "sklearn/linear_model/cd_fast.pyx":429
+            /* "sklearn/linear_model/cd_fast.pyx":432
  *                     Re[jj] = R[jj]
  * 
  *                 theta = theta0             # <<<<<<<<<<<<<<
@@ -4659,11 +4714,11 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             goto __pyx_L36;
           }
 
-          /* "sklearn/linear_model/cd_fast.pyx":433
+          /* "sklearn/linear_model/cd_fast.pyx":436
  *             # if nnze < nnz and F(we) < F(w) then w <- we
  *             # (helps promoting sparsity to w)
  *             elif (nnze < nnz) \             # <<<<<<<<<<<<<<
- *                      and ( primal_value(n_samples, n_features, <DOUBLE*>Re.data,
+ *                      and ( enet_primal_value(n_samples, n_features, <DOUBLE*>Re.data,
  *                                         <DOUBLE*>we.data, alpha, beta) <
  */
           __pyx_t_32 = ((__pyx_v_nnze < __pyx_v_nnz) != 0);
@@ -4675,20 +4730,20 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
           }
           __pyx_L42_next_and:;
 
-          /* "sklearn/linear_model/cd_fast.pyx":435
+          /* "sklearn/linear_model/cd_fast.pyx":438
  *             elif (nnze < nnz) \
- *                      and ( primal_value(n_samples, n_features, <DOUBLE*>Re.data,
+ *                      and ( enet_primal_value(n_samples, n_features, <DOUBLE*>Re.data,
  *                                         <DOUBLE*>we.data, alpha, beta) <             # <<<<<<<<<<<<<<
- *                            primal_value(n_samples, n_features, <DOUBLE*>R.data,
+ *                            enet_primal_value(n_samples, n_features, <DOUBLE*>R.data,
  *                                         <DOUBLE*>w.data, alpha, beta)):
  */
-          __pyx_t_32 = ((__pyx_f_7sklearn_12linear_model_7cd_fast_primal_value(__pyx_v_n_samples, __pyx_v_n_features, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_Re->data), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_we->data), __pyx_v_alpha, __pyx_v_beta) < __pyx_f_7sklearn_12linear_model_7cd_fast_primal_value(__pyx_v_n_samples, __pyx_v_n_features, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_R->data), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_w->data), __pyx_v_alpha, __pyx_v_beta)) != 0);
+          __pyx_t_32 = ((__pyx_f_7sklearn_12linear_model_7cd_fast_enet_primal_value(__pyx_v_n_samples, __pyx_v_n_features, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_Re->data), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_we->data), __pyx_v_alpha, __pyx_v_beta) < __pyx_f_7sklearn_12linear_model_7cd_fast_enet_primal_value(__pyx_v_n_samples, __pyx_v_n_features, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_R->data), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_w->data), __pyx_v_alpha, __pyx_v_beta)) != 0);
           __pyx_t_16 = __pyx_t_32;
           __pyx_L41_bool_binop_done:;
           if (__pyx_t_16) {
 
-            /* "sklearn/linear_model/cd_fast.pyx":438
- *                            primal_value(n_samples, n_features, <DOUBLE*>R.data,
+            /* "sklearn/linear_model/cd_fast.pyx":441
+ *                            enet_primal_value(n_samples, n_features, <DOUBLE*>R.data,
  *                                         <DOUBLE*>w.data, alpha, beta)):
  *                 for ii in range(n_features):             # <<<<<<<<<<<<<<
  *                     wc[ii] = 0
@@ -4698,7 +4753,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             for (__pyx_t_27 = 0; __pyx_t_27 < __pyx_t_18; __pyx_t_27+=1) {
               __pyx_v_ii = __pyx_t_27;
 
-              /* "sklearn/linear_model/cd_fast.pyx":439
+              /* "sklearn/linear_model/cd_fast.pyx":442
  *                                         <DOUBLE*>w.data, alpha, beta)):
  *                 for ii in range(n_features):
  *                     wc[ii] = 0             # <<<<<<<<<<<<<<
@@ -4708,7 +4763,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
               __pyx_t_61 = __pyx_v_ii;
               *__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_wc.rcbuffer->pybuffer.buf, __pyx_t_61, __pyx_pybuffernd_wc.diminfo[0].strides) = 0.0;
 
-              /* "sklearn/linear_model/cd_fast.pyx":440
+              /* "sklearn/linear_model/cd_fast.pyx":443
  *                 for ii in range(n_features):
  *                     wc[ii] = 0
  *                     w[ii] = we[ii]             # <<<<<<<<<<<<<<
@@ -4720,7 +4775,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
               *__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_w.rcbuffer->pybuffer.buf, __pyx_t_63, __pyx_pybuffernd_w.diminfo[0].strides) = (*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_we.rcbuffer->pybuffer.buf, __pyx_t_62, __pyx_pybuffernd_we.diminfo[0].strides));
             }
 
-            /* "sklearn/linear_model/cd_fast.pyx":441
+            /* "sklearn/linear_model/cd_fast.pyx":444
  *                     wc[ii] = 0
  *                     w[ii] = we[ii]
  *                 for jj in range(n_samples):             # <<<<<<<<<<<<<<
@@ -4731,7 +4786,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             for (__pyx_t_27 = 0; __pyx_t_27 < __pyx_t_18; __pyx_t_27+=1) {
               __pyx_v_jj = __pyx_t_27;
 
-              /* "sklearn/linear_model/cd_fast.pyx":442
+              /* "sklearn/linear_model/cd_fast.pyx":445
  *                     w[ii] = we[ii]
  *                 for jj in range(n_samples):
  *                     Rc[jj] = 0             # <<<<<<<<<<<<<<
@@ -4741,7 +4796,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
               __pyx_t_64 = __pyx_v_jj;
               *__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_Rc.rcbuffer->pybuffer.buf, __pyx_t_64, __pyx_pybuffernd_Rc.diminfo[0].strides) = 0.0;
 
-              /* "sklearn/linear_model/cd_fast.pyx":443
+              /* "sklearn/linear_model/cd_fast.pyx":446
  *                 for jj in range(n_samples):
  *                     Rc[jj] = 0
  *                     R[jj] = Re[jj]             # <<<<<<<<<<<<<<
@@ -4753,7 +4808,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
               *__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_R.rcbuffer->pybuffer.buf, __pyx_t_66, __pyx_pybuffernd_R.diminfo[0].strides) = (*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_Re.rcbuffer->pybuffer.buf, __pyx_t_65, __pyx_pybuffernd_Re.diminfo[0].strides));
             }
 
-            /* "sklearn/linear_model/cd_fast.pyx":444
+            /* "sklearn/linear_model/cd_fast.pyx":447
  *                     Rc[jj] = 0
  *                     R[jj] = Re[jj]
  *                 d_w_max = 10000 * w_max * d_w_tol  # we've made a big change             # <<<<<<<<<<<<<<
@@ -4765,7 +4820,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
           }
           __pyx_L36:;
 
-          /* "sklearn/linear_model/cd_fast.pyx":449
+          /* "sklearn/linear_model/cd_fast.pyx":452
  *             # Termination criterion
  * 
  *             if (w_max == 0.0             # <<<<<<<<<<<<<<
@@ -4781,7 +4836,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
           }
           __pyx_L49_next_or:;
 
-          /* "sklearn/linear_model/cd_fast.pyx":450
+          /* "sklearn/linear_model/cd_fast.pyx":453
  * 
  *             if (w_max == 0.0
  *                     or d_w_max / w_max < d_w_tol             # <<<<<<<<<<<<<<
@@ -4797,7 +4852,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
           }
           __pyx_L50_next_or:;
 
-          /* "sklearn/linear_model/cd_fast.pyx":451
+          /* "sklearn/linear_model/cd_fast.pyx":454
  *             if (w_max == 0.0
  *                     or d_w_max / w_max < d_w_tol
  *                     or n_iter == max_iter - 1):             # <<<<<<<<<<<<<<
@@ -4809,16 +4864,16 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
           __pyx_L48_bool_binop_done:;
           if (__pyx_t_16) {
 
-            /* "sklearn/linear_model/cd_fast.pyx":456
+            /* "sklearn/linear_model/cd_fast.pyx":459
  *                 # stopping criterion
  * 
- *                 gap = duality_gap(n_samples, n_features, n_tasks,             # <<<<<<<<<<<<<<
+ *                 gap = enet_duality_gap(n_samples, n_features, n_tasks,             # <<<<<<<<<<<<<<
  *                                   <DOUBLE*>X.data, <DOUBLE*>y.data,
  *                                   <DOUBLE*>R.data, <DOUBLE*>w.data,
  */
-            __pyx_v_gap = __pyx_f_7sklearn_12linear_model_7cd_fast_duality_gap(__pyx_v_n_samples, __pyx_v_n_features, __pyx_v_n_tasks, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_X->data), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_y->data), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_R->data), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_w->data), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_XtA->data), (&__pyx_v_dual_norm_XtA), __pyx_v_alpha, __pyx_v_beta, __pyx_v_positive);
+            __pyx_v_gap = __pyx_f_7sklearn_12linear_model_7cd_fast_enet_duality_gap(__pyx_v_n_samples, __pyx_v_n_features, __pyx_v_n_tasks, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_X->data), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_y->data), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_R->data), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_w->data), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_XtA->data), (&__pyx_v_dual_norm_XtA), __pyx_v_alpha, __pyx_v_beta, __pyx_v_positive);
 
-            /* "sklearn/linear_model/cd_fast.pyx":462
+            /* "sklearn/linear_model/cd_fast.pyx":465
  *                                   alpha, beta, positive)
  * 
  *                 if gap < tol:             # <<<<<<<<<<<<<<
@@ -4828,7 +4883,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
             __pyx_t_16 = ((__pyx_v_gap < __pyx_v_tol) != 0);
             if (__pyx_t_16) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":464
+              /* "sklearn/linear_model/cd_fast.pyx":467
  *                 if gap < tol:
  *                     # return if we reached desired tolerance
  *                     break             # <<<<<<<<<<<<<<
@@ -4844,7 +4899,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
         __pyx_L17_break:;
       }
 
-      /* "sklearn/linear_model/cd_fast.pyx":310
+      /* "sklearn/linear_model/cd_fast.pyx":313
  * 
  * 
  *     with nogil:             # <<<<<<<<<<<<<<
@@ -4862,7 +4917,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
       }
   }
 
-  /* "sklearn/linear_model/cd_fast.pyx":466
+  /* "sklearn/linear_model/cd_fast.pyx":469
  *                     break
  * 
  *     return w, gap, tol, n_iter + 1             # <<<<<<<<<<<<<<
@@ -4870,13 +4925,13 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
  * 
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_3 = PyFloat_FromDouble(__pyx_v_gap); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 466; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyFloat_FromDouble(__pyx_v_gap); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 469; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_5 = PyFloat_FromDouble(__pyx_v_tol); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 466; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = PyFloat_FromDouble(__pyx_v_tol); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 469; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_2 = __Pyx_PyInt_From_long((__pyx_v_n_iter + 1)); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 466; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyInt_From_long((__pyx_v_n_iter + 1)); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 469; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = PyTuple_New(4); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 466; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyTuple_New(4); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 469; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(((PyObject *)__pyx_v_w));
   PyTuple_SET_ITEM(__pyx_t_1, 0, ((PyObject *)__pyx_v_w));
@@ -4894,7 +4949,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
   __pyx_t_1 = 0;
   goto __pyx_L0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":235
+  /* "sklearn/linear_model/cd_fast.pyx":238
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def enet_accelerated_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,             # <<<<<<<<<<<<<<
@@ -4952,7 +5007,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_enet_accelerated_coor
   return __pyx_r;
 }
 
-/* "sklearn/linear_model/cd_fast.pyx":473
+/* "sklearn/linear_model/cd_fast.pyx":476
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,             # <<<<<<<<<<<<<<
@@ -5009,37 +5064,37 @@ static PyObject *__pyx_pw_7sklearn_12linear_model_7cd_fast_3enet_coordinate_desc
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_alpha)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent", 0, 8, 10, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 473; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent", 0, 8, 10, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 476; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_beta)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent", 0, 8, 10, 2); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 473; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent", 0, 8, 10, 2); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 476; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_X)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent", 0, 8, 10, 3); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 473; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent", 0, 8, 10, 3); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 476; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  4:
         if (likely((values[4] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_y)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent", 0, 8, 10, 4); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 473; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent", 0, 8, 10, 4); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 476; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  5:
         if (likely((values[5] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_max_iter)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent", 0, 8, 10, 5); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 473; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent", 0, 8, 10, 5); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 476; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  6:
         if (likely((values[6] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_tol)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent", 0, 8, 10, 6); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 473; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent", 0, 8, 10, 6); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 476; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  7:
         if (likely((values[7] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_rng)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent", 0, 8, 10, 7); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 473; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent", 0, 8, 10, 7); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 476; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  8:
         if (kw_args > 0) {
@@ -5053,7 +5108,7 @@ static PyObject *__pyx_pw_7sklearn_12linear_model_7cd_fast_3enet_coordinate_desc
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "enet_coordinate_descent") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 473; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "enet_coordinate_descent") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 476; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -5072,35 +5127,35 @@ static PyObject *__pyx_pw_7sklearn_12linear_model_7cd_fast_3enet_coordinate_desc
       }
     }
     __pyx_v_w = ((PyArrayObject *)values[0]);
-    __pyx_v_alpha = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_alpha == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 474; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_beta = __pyx_PyFloat_AsDouble(values[2]); if (unlikely((__pyx_v_beta == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 474; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_alpha = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_alpha == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 477; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_beta = __pyx_PyFloat_AsDouble(values[2]); if (unlikely((__pyx_v_beta == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 477; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     __pyx_v_X = ((PyArrayObject *)values[3]);
     __pyx_v_y = ((PyArrayObject *)values[4]);
-    __pyx_v_max_iter = __Pyx_PyInt_As_int(values[5]); if (unlikely((__pyx_v_max_iter == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 477; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_tol = __pyx_PyFloat_AsDouble(values[6]); if (unlikely((__pyx_v_tol == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 477; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_max_iter = __Pyx_PyInt_As_int(values[5]); if (unlikely((__pyx_v_max_iter == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 480; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_tol = __pyx_PyFloat_AsDouble(values[6]); if (unlikely((__pyx_v_tol == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 480; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     __pyx_v_rng = values[7];
     if (values[8]) {
-      __pyx_v_random = __Pyx_PyObject_IsTrue(values[8]); if (unlikely((__pyx_v_random == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 478; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+      __pyx_v_random = __Pyx_PyObject_IsTrue(values[8]); if (unlikely((__pyx_v_random == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 481; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     } else {
       __pyx_v_random = ((int)0);
     }
     if (values[9]) {
-      __pyx_v_positive = __Pyx_PyObject_IsTrue(values[9]); if (unlikely((__pyx_v_positive == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 478; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+      __pyx_v_positive = __Pyx_PyObject_IsTrue(values[9]); if (unlikely((__pyx_v_positive == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 481; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     } else {
       __pyx_v_positive = ((int)0);
     }
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent", 0, 8, 10, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 473; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent", 0, 8, 10, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 476; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_AddTraceback("sklearn.linear_model.cd_fast.enet_coordinate_descent", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_w), __pyx_ptype_5numpy_ndarray, 1, "w", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 473; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_X), __pyx_ptype_5numpy_ndarray, 1, "X", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 475; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_y), __pyx_ptype_5numpy_ndarray, 1, "y", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 476; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_w), __pyx_ptype_5numpy_ndarray, 1, "w", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 476; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_X), __pyx_ptype_5numpy_ndarray, 1, "X", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 478; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_y), __pyx_ptype_5numpy_ndarray, 1, "y", 0))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 479; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_r = __pyx_pf_7sklearn_12linear_model_7cd_fast_2enet_coordinate_descent(__pyx_self, __pyx_v_w, __pyx_v_alpha, __pyx_v_beta, __pyx_v_X, __pyx_v_y, __pyx_v_max_iter, __pyx_v_tol, __pyx_v_rng, __pyx_v_random, __pyx_v_positive);
 
   /* function exit code */
@@ -5206,21 +5261,21 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_2enet_coordinate_desc
   __pyx_pybuffernd_y.rcbuffer = &__pyx_pybuffer_y;
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_w.rcbuffer->pybuffer, (PyObject*)__pyx_v_w, &__Pyx_TypeInfo_nn___pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 1, 0, __pyx_stack) == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 473; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_w.rcbuffer->pybuffer, (PyObject*)__pyx_v_w, &__Pyx_TypeInfo_nn___pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 1, 0, __pyx_stack) == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 476; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
   __pyx_pybuffernd_w.diminfo[0].strides = __pyx_pybuffernd_w.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_w.diminfo[0].shape = __pyx_pybuffernd_w.rcbuffer->pybuffer.shape[0];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_X.rcbuffer->pybuffer, (PyObject*)__pyx_v_X, &__Pyx_TypeInfo_nn___pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE, PyBUF_FORMAT| PyBUF_STRIDES, 2, 0, __pyx_stack) == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 473; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_X.rcbuffer->pybuffer, (PyObject*)__pyx_v_X, &__Pyx_TypeInfo_nn___pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE, PyBUF_FORMAT| PyBUF_STRIDES, 2, 0, __pyx_stack) == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 476; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
   __pyx_pybuffernd_X.diminfo[0].strides = __pyx_pybuffernd_X.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_X.diminfo[0].shape = __pyx_pybuffernd_X.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_X.diminfo[1].strides = __pyx_pybuffernd_X.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_X.diminfo[1].shape = __pyx_pybuffernd_X.rcbuffer->pybuffer.shape[1];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_y.rcbuffer->pybuffer, (PyObject*)__pyx_v_y, &__Pyx_TypeInfo_nn___pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 473; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_y.rcbuffer->pybuffer, (PyObject*)__pyx_v_y, &__Pyx_TypeInfo_nn___pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 476; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
   __pyx_pybuffernd_y.diminfo[0].strides = __pyx_pybuffernd_y.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_y.diminfo[0].shape = __pyx_pybuffernd_y.rcbuffer->pybuffer.shape[0];
 
-  /* "sklearn/linear_model/cd_fast.pyx":491
+  /* "sklearn/linear_model/cd_fast.pyx":494
  * 
  *     # get the data information into easy vars
  *     cdef unsigned int n_samples = X.shape[0]             # <<<<<<<<<<<<<<
@@ -5229,7 +5284,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_2enet_coordinate_desc
  */
   __pyx_v_n_samples = (__pyx_v_X->dimensions[0]);
 
-  /* "sklearn/linear_model/cd_fast.pyx":492
+  /* "sklearn/linear_model/cd_fast.pyx":495
  *     # get the data information into easy vars
  *     cdef unsigned int n_samples = X.shape[0]
  *     cdef unsigned int n_features = X.shape[1]             # <<<<<<<<<<<<<<
@@ -5238,7 +5293,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_2enet_coordinate_desc
  */
   __pyx_v_n_features = (__pyx_v_X->dimensions[1]);
 
-  /* "sklearn/linear_model/cd_fast.pyx":495
+  /* "sklearn/linear_model/cd_fast.pyx":498
  * 
  *     # get the number of tasks indirectly, using strides
  *     cdef unsigned int n_tasks = y.strides[0] / sizeof(DOUBLE)             # <<<<<<<<<<<<<<
@@ -5247,32 +5302,32 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_2enet_coordinate_desc
  */
   __pyx_v_n_tasks = ((__pyx_v_y->strides[0]) / (sizeof(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE)));
 
-  /* "sklearn/linear_model/cd_fast.pyx":498
+  /* "sklearn/linear_model/cd_fast.pyx":501
  * 
  *     # compute norms of the columns of X
  *     cdef np.ndarray[DOUBLE, ndim=1] norm_cols_X = (X**2).sum(axis=0)             # <<<<<<<<<<<<<<
  * 
  *     # initial value of the residuals
  */
-  __pyx_t_1 = PyNumber_Power(((PyObject *)__pyx_v_X), __pyx_int_2, Py_None); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 498; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyNumber_Power(((PyObject *)__pyx_v_X), __pyx_int_2, Py_None); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 501; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_sum); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 498; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_sum); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 501; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 498; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 501; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_axis, __pyx_int_0) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 498; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 498; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_axis, __pyx_int_0) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 501; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_empty_tuple, __pyx_t_1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 501; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 498; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 501; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_t_4 = ((PyArrayObject *)__pyx_t_3);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_norm_cols_X.rcbuffer->pybuffer, (PyObject*)__pyx_t_4, &__Pyx_TypeInfo_nn___pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) {
       __pyx_v_norm_cols_X = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_norm_cols_X.rcbuffer->pybuffer.buf = NULL;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 498; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 501; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     } else {__pyx_pybuffernd_norm_cols_X.diminfo[0].strides = __pyx_pybuffernd_norm_cols_X.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_norm_cols_X.diminfo[0].shape = __pyx_pybuffernd_norm_cols_X.rcbuffer->pybuffer.shape[0];
     }
   }
@@ -5280,19 +5335,19 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_2enet_coordinate_desc
   __pyx_v_norm_cols_X = ((PyArrayObject *)__pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":501
+  /* "sklearn/linear_model/cd_fast.pyx":504
  * 
  *     # initial value of the residuals
  *     cdef np.ndarray[DOUBLE, ndim=1] R = np.empty(n_samples)             # <<<<<<<<<<<<<<
  * 
  *     cdef np.ndarray[DOUBLE, ndim=1] XtA = np.empty(n_features)
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 501; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 504; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_empty); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 501; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_empty); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 504; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_samples); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 501; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_samples); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 504; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_t_5 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_2))) {
@@ -5305,28 +5360,28 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_2enet_coordinate_desc
     }
   }
   if (!__pyx_t_5) {
-    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 501; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 504; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     __Pyx_GOTREF(__pyx_t_3);
   } else {
-    __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 501; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 504; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_6);
     PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5); __Pyx_GIVEREF(__pyx_t_5); __pyx_t_5 = NULL;
     PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_t_1);
     __Pyx_GIVEREF(__pyx_t_1);
     __pyx_t_1 = 0;
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_6, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 501; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_6, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 504; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 501; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 504; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_t_7 = ((PyArrayObject *)__pyx_t_3);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_R.rcbuffer->pybuffer, (PyObject*)__pyx_t_7, &__Pyx_TypeInfo_nn___pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 1, 0, __pyx_stack) == -1)) {
       __pyx_v_R = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_R.rcbuffer->pybuffer.buf = NULL;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 501; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 504; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     } else {__pyx_pybuffernd_R.diminfo[0].strides = __pyx_pybuffernd_R.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_R.diminfo[0].shape = __pyx_pybuffernd_R.rcbuffer->pybuffer.shape[0];
     }
   }
@@ -5334,19 +5389,19 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_2enet_coordinate_desc
   __pyx_v_R = ((PyArrayObject *)__pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":503
+  /* "sklearn/linear_model/cd_fast.pyx":506
  *     cdef np.ndarray[DOUBLE, ndim=1] R = np.empty(n_samples)
  * 
  *     cdef np.ndarray[DOUBLE, ndim=1] XtA = np.empty(n_features)             # <<<<<<<<<<<<<<
  *     cdef double tmp
  *     cdef double w_ii
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 503; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 506; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_empty); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 503; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_empty); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 506; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 503; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 506; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_1 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_6))) {
@@ -5359,28 +5414,28 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_2enet_coordinate_desc
     }
   }
   if (!__pyx_t_1) {
-    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_2); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 503; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_2); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 506; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_GOTREF(__pyx_t_3);
   } else {
-    __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 503; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 506; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_5);
     PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_1); __Pyx_GIVEREF(__pyx_t_1); __pyx_t_1 = NULL;
     PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_t_2);
     __Pyx_GIVEREF(__pyx_t_2);
     __pyx_t_2 = 0;
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_5, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 503; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_5, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 506; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   }
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 503; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 506; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_t_8 = ((PyArrayObject *)__pyx_t_3);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_XtA.rcbuffer->pybuffer, (PyObject*)__pyx_t_8, &__Pyx_TypeInfo_nn___pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE, PyBUF_FORMAT| PyBUF_STRIDES, 1, 0, __pyx_stack) == -1)) {
       __pyx_v_XtA = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_XtA.rcbuffer->pybuffer.buf = NULL;
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 503; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 506; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     } else {__pyx_pybuffernd_XtA.diminfo[0].strides = __pyx_pybuffernd_XtA.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_XtA.diminfo[0].shape = __pyx_pybuffernd_XtA.rcbuffer->pybuffer.shape[0];
     }
   }
@@ -5388,7 +5443,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_2enet_coordinate_desc
   __pyx_v_XtA = ((PyArrayObject *)__pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":509
+  /* "sklearn/linear_model/cd_fast.pyx":512
  *     cdef double w_max
  *     cdef double d_w_ii
  *     cdef double gap = tol + 1.0             # <<<<<<<<<<<<<<
@@ -5397,7 +5452,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_2enet_coordinate_desc
  */
   __pyx_v_gap = (__pyx_v_tol + 1.0);
 
-  /* "sklearn/linear_model/cd_fast.pyx":510
+  /* "sklearn/linear_model/cd_fast.pyx":513
  *     cdef double d_w_ii
  *     cdef double gap = tol + 1.0
  *     cdef double d_w_tol = tol             # <<<<<<<<<<<<<<
@@ -5406,16 +5461,16 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_2enet_coordinate_desc
  */
   __pyx_v_d_w_tol = __pyx_v_tol;
 
-  /* "sklearn/linear_model/cd_fast.pyx":516
+  /* "sklearn/linear_model/cd_fast.pyx":519
  *     cdef unsigned int n_iter
  *     cdef unsigned int f_iter
- *     cdef UINT32_t rand_r_state_seed = rng.randint(1, RAND_R_MAX)             # <<<<<<<<<<<<<<
+ *     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)             # <<<<<<<<<<<<<<
  *     cdef UINT32_t* rand_r_state = &rand_r_state_seed
  * 
  */
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_rng, __pyx_n_s_randint); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 516; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_rng, __pyx_n_s_randint); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 519; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_5 = __Pyx_PyInt_From_int(__pyx_e_7sklearn_12linear_model_7cd_fast_RAND_R_MAX); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 516; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = __Pyx_PyInt_From_int(__pyx_e_7sklearn_12linear_model_7cd_fast_RAND_R_MAX); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 519; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
   __pyx_t_2 = NULL;
   __pyx_t_9 = 0;
@@ -5429,35 +5484,35 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_2enet_coordinate_desc
       __pyx_t_9 = 1;
     }
   }
-  __pyx_t_1 = PyTuple_New(2+__pyx_t_9); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 516; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyTuple_New(2+__pyx_t_9); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 519; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   if (__pyx_t_2) {
     PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_2); __Pyx_GIVEREF(__pyx_t_2); __pyx_t_2 = NULL;
   }
-  __Pyx_INCREF(__pyx_int_1);
-  PyTuple_SET_ITEM(__pyx_t_1, 0+__pyx_t_9, __pyx_int_1);
-  __Pyx_GIVEREF(__pyx_int_1);
+  __Pyx_INCREF(__pyx_int_0);
+  PyTuple_SET_ITEM(__pyx_t_1, 0+__pyx_t_9, __pyx_int_0);
+  __Pyx_GIVEREF(__pyx_int_0);
   PyTuple_SET_ITEM(__pyx_t_1, 1+__pyx_t_9, __pyx_t_5);
   __Pyx_GIVEREF(__pyx_t_5);
   __pyx_t_5 = 0;
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_1, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 516; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_1, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 519; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_10 = __Pyx_PyInt_As_npy_uint32(__pyx_t_3); if (unlikely((__pyx_t_10 == (npy_uint32)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 516; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_10 = __Pyx_PyInt_As_npy_uint32(__pyx_t_3); if (unlikely((__pyx_t_10 == (npy_uint32)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 519; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_v_rand_r_state_seed = __pyx_t_10;
 
-  /* "sklearn/linear_model/cd_fast.pyx":517
+  /* "sklearn/linear_model/cd_fast.pyx":520
  *     cdef unsigned int f_iter
- *     cdef UINT32_t rand_r_state_seed = rng.randint(1, RAND_R_MAX)
+ *     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
  *     cdef UINT32_t* rand_r_state = &rand_r_state_seed             # <<<<<<<<<<<<<<
  * 
  *     if alpha == 0:
  */
   __pyx_v_rand_r_state = (&__pyx_v_rand_r_state_seed);
 
-  /* "sklearn/linear_model/cd_fast.pyx":519
+  /* "sklearn/linear_model/cd_fast.pyx":522
  *     cdef UINT32_t* rand_r_state = &rand_r_state_seed
  * 
  *     if alpha == 0:             # <<<<<<<<<<<<<<
@@ -5467,19 +5522,19 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_2enet_coordinate_desc
   __pyx_t_11 = ((__pyx_v_alpha == 0.0) != 0);
   if (__pyx_t_11) {
 
-    /* "sklearn/linear_model/cd_fast.pyx":520
+    /* "sklearn/linear_model/cd_fast.pyx":523
  * 
  *     if alpha == 0:
  *         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"             # <<<<<<<<<<<<<<
  *             " results and is discouraged.")
  * 
  */
-    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 520; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 523; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_warn); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 520; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_warn); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 523; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_tuple__3, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 520; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_tuple__3, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 523; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -5487,446 +5542,383 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_2enet_coordinate_desc
   }
   __pyx_L3:;
 
-  /* "sklearn/linear_model/cd_fast.pyx":523
- *             " results and is discouraged.")
- * 
- *     if not random:             # <<<<<<<<<<<<<<
- *         warnings.warn("Accelerated coordinate descent with cyclic sampling"
- *             " may be slower than with random sampling and is discouraged.")
- */
-  __pyx_t_11 = ((!(__pyx_v_random != 0)) != 0);
-  if (__pyx_t_11) {
-
-    /* "sklearn/linear_model/cd_fast.pyx":524
- * 
- *     if not random:
- *         warnings.warn("Accelerated coordinate descent with cyclic sampling"             # <<<<<<<<<<<<<<
- *             " may be slower than with random sampling and is discouraged.")
- * 
- */
-    __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 524; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_warn); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 524; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_6);
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_tuple__4, NULL); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 524; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-    __Pyx_GOTREF(__pyx_t_3);
-    __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    goto __pyx_L4;
-  }
-  __pyx_L4:;
-
-  /* "sklearn/linear_model/cd_fast.pyx":527
- *             " may be slower than with random sampling and is discouraged.")
- * 
- *     with nogil:             # <<<<<<<<<<<<<<
- * 
- *         # R = y - np.dot(X, w)
- */
-  {
-      #ifdef WITH_THREAD
-      PyThreadState *_save;
-      Py_UNBLOCK_THREADS
-      #endif
-      /*try:*/ {
-
-        /* "sklearn/linear_model/cd_fast.pyx":530
+  /* "sklearn/linear_model/cd_fast.pyx":529
  * 
  *         # R = y - np.dot(X, w)
  *         for i in range(n_samples):             # <<<<<<<<<<<<<<
  *             R[i] = y[i] - ddot(n_features,
  *                                <DOUBLE*>(X.data + i * sizeof(DOUBLE)),
  */
-        __pyx_t_12 = __pyx_v_n_samples;
-        for (__pyx_t_13 = 0; __pyx_t_13 < __pyx_t_12; __pyx_t_13+=1) {
-          __pyx_v_i = __pyx_t_13;
+  __pyx_t_12 = __pyx_v_n_samples;
+  for (__pyx_t_13 = 0; __pyx_t_13 < __pyx_t_12; __pyx_t_13+=1) {
+    __pyx_v_i = __pyx_t_13;
 
-          /* "sklearn/linear_model/cd_fast.pyx":531
+    /* "sklearn/linear_model/cd_fast.pyx":530
  *         # R = y - np.dot(X, w)
  *         for i in range(n_samples):
  *             R[i] = y[i] - ddot(n_features,             # <<<<<<<<<<<<<<
  *                                <DOUBLE*>(X.data + i * sizeof(DOUBLE)),
  *                                n_samples, <DOUBLE*>w.data, 1)
  */
-          __pyx_t_14 = __pyx_v_i;
+    __pyx_t_14 = __pyx_v_i;
 
-          /* "sklearn/linear_model/cd_fast.pyx":533
+    /* "sklearn/linear_model/cd_fast.pyx":532
  *             R[i] = y[i] - ddot(n_features,
  *                                <DOUBLE*>(X.data + i * sizeof(DOUBLE)),
  *                                n_samples, <DOUBLE*>w.data, 1)             # <<<<<<<<<<<<<<
  * 
  *         # tol *= np.dot(y, y)
  */
-          __pyx_t_15 = __pyx_v_i;
-          *__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_R.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_R.diminfo[0].strides) = ((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_y.rcbuffer->pybuffer.buf, __pyx_t_14, __pyx_pybuffernd_y.diminfo[0].strides)) - cblas_ddot(__pyx_v_n_features, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(__pyx_v_X->data + (__pyx_v_i * (sizeof(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE))))), __pyx_v_n_samples, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_w->data), 1));
-        }
+    __pyx_t_15 = __pyx_v_i;
+    *__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_R.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_R.diminfo[0].strides) = ((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_y.rcbuffer->pybuffer.buf, __pyx_t_14, __pyx_pybuffernd_y.diminfo[0].strides)) - cblas_ddot(__pyx_v_n_features, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(__pyx_v_X->data + (__pyx_v_i * (sizeof(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE))))), __pyx_v_n_samples, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_w->data), 1));
+  }
 
-        /* "sklearn/linear_model/cd_fast.pyx":536
+  /* "sklearn/linear_model/cd_fast.pyx":535
  * 
  *         # tol *= np.dot(y, y)
- *         tol *= ddot(n_samples, <DOUBLE*>y.data, n_tasks,             # <<<<<<<<<<<<<<
- *                     <DOUBLE*>y.data, n_tasks)
+ *         tol *= fmax(1e-15, ddot(n_samples, <DOUBLE*>y.data, n_tasks,             # <<<<<<<<<<<<<<
+ *                     <DOUBLE*>y.data, n_tasks))
  * 
  */
-        __pyx_v_tol = (__pyx_v_tol * cblas_ddot(__pyx_v_n_samples, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_y->data), __pyx_v_n_tasks, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_y->data), __pyx_v_n_tasks));
+  __pyx_v_tol = (__pyx_v_tol * __pyx_f_7sklearn_12linear_model_7cd_fast_fmax(1e-15, cblas_ddot(__pyx_v_n_samples, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_y->data), __pyx_v_n_tasks, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_y->data), __pyx_v_n_tasks)));
 
-        /* "sklearn/linear_model/cd_fast.pyx":539
- *                     <DOUBLE*>y.data, n_tasks)
+  /* "sklearn/linear_model/cd_fast.pyx":538
+ *                     <DOUBLE*>y.data, n_tasks))
  * 
  *         for n_iter in range(max_iter):             # <<<<<<<<<<<<<<
  *             w_max = 0.0
  *             d_w_max = 0.0
  */
-        __pyx_t_16 = __pyx_v_max_iter;
-        for (__pyx_t_12 = 0; __pyx_t_12 < __pyx_t_16; __pyx_t_12+=1) {
-          __pyx_v_n_iter = __pyx_t_12;
+  __pyx_t_16 = __pyx_v_max_iter;
+  for (__pyx_t_12 = 0; __pyx_t_12 < __pyx_t_16; __pyx_t_12+=1) {
+    __pyx_v_n_iter = __pyx_t_12;
 
-          /* "sklearn/linear_model/cd_fast.pyx":540
+    /* "sklearn/linear_model/cd_fast.pyx":539
  * 
  *         for n_iter in range(max_iter):
  *             w_max = 0.0             # <<<<<<<<<<<<<<
  *             d_w_max = 0.0
  *             for f_iter in range(n_features):  # Loop over coordinates
  */
-          __pyx_v_w_max = 0.0;
+    __pyx_v_w_max = 0.0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":541
+    /* "sklearn/linear_model/cd_fast.pyx":540
  *         for n_iter in range(max_iter):
  *             w_max = 0.0
  *             d_w_max = 0.0             # <<<<<<<<<<<<<<
  *             for f_iter in range(n_features):  # Loop over coordinates
  *                 if random:
  */
-          __pyx_v_d_w_max = 0.0;
+    __pyx_v_d_w_max = 0.0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":542
+    /* "sklearn/linear_model/cd_fast.pyx":541
  *             w_max = 0.0
  *             d_w_max = 0.0
  *             for f_iter in range(n_features):  # Loop over coordinates             # <<<<<<<<<<<<<<
  *                 if random:
  *                     ii = rand_int(n_features, rand_r_state)
  */
-          __pyx_t_13 = __pyx_v_n_features;
-          for (__pyx_t_17 = 0; __pyx_t_17 < __pyx_t_13; __pyx_t_17+=1) {
-            __pyx_v_f_iter = __pyx_t_17;
+    __pyx_t_13 = __pyx_v_n_features;
+    for (__pyx_t_17 = 0; __pyx_t_17 < __pyx_t_13; __pyx_t_17+=1) {
+      __pyx_v_f_iter = __pyx_t_17;
 
-            /* "sklearn/linear_model/cd_fast.pyx":543
+      /* "sklearn/linear_model/cd_fast.pyx":542
  *             d_w_max = 0.0
  *             for f_iter in range(n_features):  # Loop over coordinates
  *                 if random:             # <<<<<<<<<<<<<<
  *                     ii = rand_int(n_features, rand_r_state)
  *                 else:
  */
-            __pyx_t_11 = (__pyx_v_random != 0);
-            if (__pyx_t_11) {
+      __pyx_t_11 = (__pyx_v_random != 0);
+      if (__pyx_t_11) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":544
+        /* "sklearn/linear_model/cd_fast.pyx":543
  *             for f_iter in range(n_features):  # Loop over coordinates
  *                 if random:
  *                     ii = rand_int(n_features, rand_r_state)             # <<<<<<<<<<<<<<
  *                 else:
  *                     ii = f_iter
  */
-              __pyx_v_ii = __pyx_f_7sklearn_12linear_model_7cd_fast_rand_int(__pyx_v_n_features, __pyx_v_rand_r_state);
-              goto __pyx_L14;
-            }
-            /*else*/ {
+        __pyx_v_ii = __pyx_f_7sklearn_12linear_model_7cd_fast_rand_int(__pyx_v_n_features, __pyx_v_rand_r_state);
+        goto __pyx_L10;
+      }
+      /*else*/ {
 
-              /* "sklearn/linear_model/cd_fast.pyx":546
+        /* "sklearn/linear_model/cd_fast.pyx":545
  *                     ii = rand_int(n_features, rand_r_state)
  *                 else:
  *                     ii = f_iter             # <<<<<<<<<<<<<<
  * 
  *                 if norm_cols_X[ii] == 0.0:
  */
-              __pyx_v_ii = __pyx_v_f_iter;
-            }
-            __pyx_L14:;
+        __pyx_v_ii = __pyx_v_f_iter;
+      }
+      __pyx_L10:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":548
+      /* "sklearn/linear_model/cd_fast.pyx":547
  *                     ii = f_iter
  * 
  *                 if norm_cols_X[ii] == 0.0:             # <<<<<<<<<<<<<<
  *                     continue
  * 
  */
-            __pyx_t_18 = __pyx_v_ii;
-            __pyx_t_11 = (((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_norm_cols_X.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd_norm_cols_X.diminfo[0].strides)) == 0.0) != 0);
-            if (__pyx_t_11) {
+      __pyx_t_18 = __pyx_v_ii;
+      __pyx_t_11 = (((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_norm_cols_X.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd_norm_cols_X.diminfo[0].strides)) == 0.0) != 0);
+      if (__pyx_t_11) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":549
+        /* "sklearn/linear_model/cd_fast.pyx":548
  * 
  *                 if norm_cols_X[ii] == 0.0:
  *                     continue             # <<<<<<<<<<<<<<
  * 
  *                 w_ii = w[ii]  # Store previous value
  */
-              goto __pyx_L12_continue;
-            }
+        goto __pyx_L8_continue;
+      }
 
-            /* "sklearn/linear_model/cd_fast.pyx":551
+      /* "sklearn/linear_model/cd_fast.pyx":550
  *                     continue
  * 
  *                 w_ii = w[ii]  # Store previous value             # <<<<<<<<<<<<<<
  * 
  *                 # tmp = (X[:,ii]*R).sum() + norm_cols_X[ii] * w_ii
  */
-            __pyx_t_19 = __pyx_v_ii;
-            __pyx_v_w_ii = (*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_w.rcbuffer->pybuffer.buf, __pyx_t_19, __pyx_pybuffernd_w.diminfo[0].strides));
+      __pyx_t_19 = __pyx_v_ii;
+      __pyx_v_w_ii = (*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_w.rcbuffer->pybuffer.buf, __pyx_t_19, __pyx_pybuffernd_w.diminfo[0].strides));
 
-            /* "sklearn/linear_model/cd_fast.pyx":556
+      /* "sklearn/linear_model/cd_fast.pyx":555
  *                 tmp = ddot(n_samples,
  *                            <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)),
  *                            1, <DOUBLE*>R.data, 1) + norm_cols_X[ii] * w_ii             # <<<<<<<<<<<<<<
  * 
  *                 # soft thresholding
  */
-            __pyx_t_20 = __pyx_v_ii;
-            __pyx_v_tmp = (cblas_ddot(__pyx_v_n_samples, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(__pyx_v_X->data + ((__pyx_v_ii * __pyx_v_n_samples) * (sizeof(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE))))), 1, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_R->data), 1) + ((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_norm_cols_X.rcbuffer->pybuffer.buf, __pyx_t_20, __pyx_pybuffernd_norm_cols_X.diminfo[0].strides)) * __pyx_v_w_ii));
+      __pyx_t_20 = __pyx_v_ii;
+      __pyx_v_tmp = (cblas_ddot(__pyx_v_n_samples, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(__pyx_v_X->data + ((__pyx_v_ii * __pyx_v_n_samples) * (sizeof(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE))))), 1, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_R->data), 1) + ((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_norm_cols_X.rcbuffer->pybuffer.buf, __pyx_t_20, __pyx_pybuffernd_norm_cols_X.diminfo[0].strides)) * __pyx_v_w_ii));
 
-            /* "sklearn/linear_model/cd_fast.pyx":559
+      /* "sklearn/linear_model/cd_fast.pyx":558
  * 
  *                 # soft thresholding
  *                 if positive and tmp < 0:             # <<<<<<<<<<<<<<
  *                     w[ii] = 0.0
  *                 else:
  */
-            __pyx_t_21 = (__pyx_v_positive != 0);
-            if (__pyx_t_21) {
-              goto __pyx_L18_next_and;
-            } else {
-              __pyx_t_11 = __pyx_t_21;
-              goto __pyx_L17_bool_binop_done;
-            }
-            __pyx_L18_next_and:;
-            __pyx_t_21 = ((__pyx_v_tmp < 0.0) != 0);
-            __pyx_t_11 = __pyx_t_21;
-            __pyx_L17_bool_binop_done:;
-            if (__pyx_t_11) {
+      __pyx_t_21 = (__pyx_v_positive != 0);
+      if (__pyx_t_21) {
+        goto __pyx_L14_next_and;
+      } else {
+        __pyx_t_11 = __pyx_t_21;
+        goto __pyx_L13_bool_binop_done;
+      }
+      __pyx_L14_next_and:;
+      __pyx_t_21 = ((__pyx_v_tmp < 0.0) != 0);
+      __pyx_t_11 = __pyx_t_21;
+      __pyx_L13_bool_binop_done:;
+      if (__pyx_t_11) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":560
+        /* "sklearn/linear_model/cd_fast.pyx":559
  *                 # soft thresholding
  *                 if positive and tmp < 0:
  *                     w[ii] = 0.0             # <<<<<<<<<<<<<<
  *                 else:
  *                     w[ii] = (fsign(tmp) * fmax(fabs(tmp) - alpha, 0)
  */
-              __pyx_t_22 = __pyx_v_ii;
-              *__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_w.rcbuffer->pybuffer.buf, __pyx_t_22, __pyx_pybuffernd_w.diminfo[0].strides) = 0.0;
-              goto __pyx_L16;
-            }
-            /*else*/ {
+        __pyx_t_22 = __pyx_v_ii;
+        *__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_w.rcbuffer->pybuffer.buf, __pyx_t_22, __pyx_pybuffernd_w.diminfo[0].strides) = 0.0;
+        goto __pyx_L12;
+      }
+      /*else*/ {
 
-              /* "sklearn/linear_model/cd_fast.pyx":563
+        /* "sklearn/linear_model/cd_fast.pyx":562
  *                 else:
  *                     w[ii] = (fsign(tmp) * fmax(fabs(tmp) - alpha, 0)
  *                              / (norm_cols_X[ii] + beta))             # <<<<<<<<<<<<<<
  * 
  *                 if w[ii] != w_ii:
  */
-              __pyx_t_23 = __pyx_v_ii;
+        __pyx_t_23 = __pyx_v_ii;
 
-              /* "sklearn/linear_model/cd_fast.pyx":562
+        /* "sklearn/linear_model/cd_fast.pyx":561
  *                     w[ii] = 0.0
  *                 else:
  *                     w[ii] = (fsign(tmp) * fmax(fabs(tmp) - alpha, 0)             # <<<<<<<<<<<<<<
  *                              / (norm_cols_X[ii] + beta))
  * 
  */
-              __pyx_t_24 = __pyx_v_ii;
-              *__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_w.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_w.diminfo[0].strides) = ((__pyx_f_7sklearn_12linear_model_7cd_fast_fsign(__pyx_v_tmp) * __pyx_f_7sklearn_12linear_model_7cd_fast_fmax((fabs(__pyx_v_tmp) - __pyx_v_alpha), 0.0)) / ((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_norm_cols_X.rcbuffer->pybuffer.buf, __pyx_t_23, __pyx_pybuffernd_norm_cols_X.diminfo[0].strides)) + __pyx_v_beta));
-            }
-            __pyx_L16:;
+        __pyx_t_24 = __pyx_v_ii;
+        *__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_w.rcbuffer->pybuffer.buf, __pyx_t_24, __pyx_pybuffernd_w.diminfo[0].strides) = ((__pyx_f_7sklearn_12linear_model_7cd_fast_fsign(__pyx_v_tmp) * __pyx_f_7sklearn_12linear_model_7cd_fast_fmax((fabs(__pyx_v_tmp) - __pyx_v_alpha), 0.0)) / ((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_norm_cols_X.rcbuffer->pybuffer.buf, __pyx_t_23, __pyx_pybuffernd_norm_cols_X.diminfo[0].strides)) + __pyx_v_beta));
+      }
+      __pyx_L12:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":565
+      /* "sklearn/linear_model/cd_fast.pyx":564
  *                              / (norm_cols_X[ii] + beta))
  * 
  *                 if w[ii] != w_ii:             # <<<<<<<<<<<<<<
  *                     # R -=  (w[ii]-w_ii) * X[:,ii] # Update residual
  *                     daxpy(n_samples, -w[ii] + w_ii,
  */
-            __pyx_t_25 = __pyx_v_ii;
-            __pyx_t_11 = (((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_w.rcbuffer->pybuffer.buf, __pyx_t_25, __pyx_pybuffernd_w.diminfo[0].strides)) != __pyx_v_w_ii) != 0);
-            if (__pyx_t_11) {
+      __pyx_t_25 = __pyx_v_ii;
+      __pyx_t_11 = (((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_w.rcbuffer->pybuffer.buf, __pyx_t_25, __pyx_pybuffernd_w.diminfo[0].strides)) != __pyx_v_w_ii) != 0);
+      if (__pyx_t_11) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":567
+        /* "sklearn/linear_model/cd_fast.pyx":566
  *                 if w[ii] != w_ii:
  *                     # R -=  (w[ii]-w_ii) * X[:,ii] # Update residual
  *                     daxpy(n_samples, -w[ii] + w_ii,             # <<<<<<<<<<<<<<
  *                           <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)),
  *                           1, <DOUBLE*>R.data, 1)
  */
-              __pyx_t_26 = __pyx_v_ii;
+        __pyx_t_26 = __pyx_v_ii;
 
-              /* "sklearn/linear_model/cd_fast.pyx":569
+        /* "sklearn/linear_model/cd_fast.pyx":568
  *                     daxpy(n_samples, -w[ii] + w_ii,
  *                           <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)),
  *                           1, <DOUBLE*>R.data, 1)             # <<<<<<<<<<<<<<
  * 
  *                 # update the maximum absolute coefficient update
  */
-              cblas_daxpy(__pyx_v_n_samples, ((-(*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_w.rcbuffer->pybuffer.buf, __pyx_t_26, __pyx_pybuffernd_w.diminfo[0].strides))) + __pyx_v_w_ii), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(__pyx_v_X->data + ((__pyx_v_ii * __pyx_v_n_samples) * (sizeof(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE))))), 1, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_R->data), 1);
-              goto __pyx_L19;
-            }
-            __pyx_L19:;
+        cblas_daxpy(__pyx_v_n_samples, ((-(*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_w.rcbuffer->pybuffer.buf, __pyx_t_26, __pyx_pybuffernd_w.diminfo[0].strides))) + __pyx_v_w_ii), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(__pyx_v_X->data + ((__pyx_v_ii * __pyx_v_n_samples) * (sizeof(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE))))), 1, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_R->data), 1);
+        goto __pyx_L15;
+      }
+      __pyx_L15:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":572
+      /* "sklearn/linear_model/cd_fast.pyx":571
  * 
  *                 # update the maximum absolute coefficient update
  *                 d_w_ii = fabs(w[ii] - w_ii)             # <<<<<<<<<<<<<<
  *                 if d_w_ii > d_w_max:
  *                     d_w_max = d_w_ii
  */
-            __pyx_t_27 = __pyx_v_ii;
-            __pyx_v_d_w_ii = fabs(((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_w.rcbuffer->pybuffer.buf, __pyx_t_27, __pyx_pybuffernd_w.diminfo[0].strides)) - __pyx_v_w_ii));
+      __pyx_t_27 = __pyx_v_ii;
+      __pyx_v_d_w_ii = fabs(((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_w.rcbuffer->pybuffer.buf, __pyx_t_27, __pyx_pybuffernd_w.diminfo[0].strides)) - __pyx_v_w_ii));
 
-            /* "sklearn/linear_model/cd_fast.pyx":573
+      /* "sklearn/linear_model/cd_fast.pyx":572
  *                 # update the maximum absolute coefficient update
  *                 d_w_ii = fabs(w[ii] - w_ii)
  *                 if d_w_ii > d_w_max:             # <<<<<<<<<<<<<<
  *                     d_w_max = d_w_ii
  * 
  */
-            __pyx_t_11 = ((__pyx_v_d_w_ii > __pyx_v_d_w_max) != 0);
-            if (__pyx_t_11) {
+      __pyx_t_11 = ((__pyx_v_d_w_ii > __pyx_v_d_w_max) != 0);
+      if (__pyx_t_11) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":574
+        /* "sklearn/linear_model/cd_fast.pyx":573
  *                 d_w_ii = fabs(w[ii] - w_ii)
  *                 if d_w_ii > d_w_max:
  *                     d_w_max = d_w_ii             # <<<<<<<<<<<<<<
  * 
  *                 if fabs(w[ii]) > w_max:
  */
-              __pyx_v_d_w_max = __pyx_v_d_w_ii;
-              goto __pyx_L20;
-            }
-            __pyx_L20:;
+        __pyx_v_d_w_max = __pyx_v_d_w_ii;
+        goto __pyx_L16;
+      }
+      __pyx_L16:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":576
+      /* "sklearn/linear_model/cd_fast.pyx":575
  *                     d_w_max = d_w_ii
  * 
  *                 if fabs(w[ii]) > w_max:             # <<<<<<<<<<<<<<
  *                     w_max = fabs(w[ii])
  * 
  */
-            __pyx_t_28 = __pyx_v_ii;
-            __pyx_t_11 = ((fabs((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_w.rcbuffer->pybuffer.buf, __pyx_t_28, __pyx_pybuffernd_w.diminfo[0].strides))) > __pyx_v_w_max) != 0);
-            if (__pyx_t_11) {
+      __pyx_t_28 = __pyx_v_ii;
+      __pyx_t_11 = ((fabs((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_w.rcbuffer->pybuffer.buf, __pyx_t_28, __pyx_pybuffernd_w.diminfo[0].strides))) > __pyx_v_w_max) != 0);
+      if (__pyx_t_11) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":577
+        /* "sklearn/linear_model/cd_fast.pyx":576
  * 
  *                 if fabs(w[ii]) > w_max:
  *                     w_max = fabs(w[ii])             # <<<<<<<<<<<<<<
  * 
  *             if (w_max == 0.0
  */
-              __pyx_t_29 = __pyx_v_ii;
-              __pyx_v_w_max = fabs((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_w.rcbuffer->pybuffer.buf, __pyx_t_29, __pyx_pybuffernd_w.diminfo[0].strides)));
-              goto __pyx_L21;
-            }
-            __pyx_L21:;
-            __pyx_L12_continue:;
-          }
+        __pyx_t_29 = __pyx_v_ii;
+        __pyx_v_w_max = fabs((*__Pyx_BufPtrStrided1d(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *, __pyx_pybuffernd_w.rcbuffer->pybuffer.buf, __pyx_t_29, __pyx_pybuffernd_w.diminfo[0].strides)));
+        goto __pyx_L17;
+      }
+      __pyx_L17:;
+      __pyx_L8_continue:;
+    }
 
-          /* "sklearn/linear_model/cd_fast.pyx":579
+    /* "sklearn/linear_model/cd_fast.pyx":578
  *                     w_max = fabs(w[ii])
  * 
  *             if (w_max == 0.0             # <<<<<<<<<<<<<<
  *                     or d_w_max / w_max < d_w_tol
  *                     or n_iter == max_iter - 1):
  */
-          __pyx_t_21 = ((__pyx_v_w_max == 0.0) != 0);
-          if (!__pyx_t_21) {
-            goto __pyx_L24_next_or;
-          } else {
-            __pyx_t_11 = __pyx_t_21;
-            goto __pyx_L23_bool_binop_done;
-          }
-          __pyx_L24_next_or:;
+    __pyx_t_21 = ((__pyx_v_w_max == 0.0) != 0);
+    if (!__pyx_t_21) {
+      goto __pyx_L20_next_or;
+    } else {
+      __pyx_t_11 = __pyx_t_21;
+      goto __pyx_L19_bool_binop_done;
+    }
+    __pyx_L20_next_or:;
 
-          /* "sklearn/linear_model/cd_fast.pyx":580
+    /* "sklearn/linear_model/cd_fast.pyx":579
  * 
  *             if (w_max == 0.0
  *                     or d_w_max / w_max < d_w_tol             # <<<<<<<<<<<<<<
  *                     or n_iter == max_iter - 1):
  *                 # the biggest coordinate update of this iteration was smaller
  */
-          __pyx_t_21 = (((__pyx_v_d_w_max / __pyx_v_w_max) < __pyx_v_d_w_tol) != 0);
-          if (!__pyx_t_21) {
-            goto __pyx_L25_next_or;
-          } else {
-            __pyx_t_11 = __pyx_t_21;
-            goto __pyx_L23_bool_binop_done;
-          }
-          __pyx_L25_next_or:;
+    __pyx_t_21 = (((__pyx_v_d_w_max / __pyx_v_w_max) < __pyx_v_d_w_tol) != 0);
+    if (!__pyx_t_21) {
+      goto __pyx_L21_next_or;
+    } else {
+      __pyx_t_11 = __pyx_t_21;
+      goto __pyx_L19_bool_binop_done;
+    }
+    __pyx_L21_next_or:;
 
-          /* "sklearn/linear_model/cd_fast.pyx":581
+    /* "sklearn/linear_model/cd_fast.pyx":580
  *             if (w_max == 0.0
  *                     or d_w_max / w_max < d_w_tol
  *                     or n_iter == max_iter - 1):             # <<<<<<<<<<<<<<
  *                 # the biggest coordinate update of this iteration was smaller
  *                 # than the tolerance: check the duality gap as ultimate
  */
-          __pyx_t_21 = ((__pyx_v_n_iter == (__pyx_v_max_iter - 1)) != 0);
-          __pyx_t_11 = __pyx_t_21;
-          __pyx_L23_bool_binop_done:;
-          if (__pyx_t_11) {
+    __pyx_t_21 = ((__pyx_v_n_iter == (__pyx_v_max_iter - 1)) != 0);
+    __pyx_t_11 = __pyx_t_21;
+    __pyx_L19_bool_binop_done:;
+    if (__pyx_t_11) {
 
-            /* "sklearn/linear_model/cd_fast.pyx":586
+      /* "sklearn/linear_model/cd_fast.pyx":585
  *                 # stopping criterion
  * 
- *                 gap = duality_gap(n_samples, n_features, n_tasks,             # <<<<<<<<<<<<<<
+ *                 gap = enet_duality_gap(n_samples, n_features, n_tasks,             # <<<<<<<<<<<<<<
  *                                   <DOUBLE*>X.data, <DOUBLE*>y.data,
  *                                   <DOUBLE*>R.data, <DOUBLE*>w.data,
  */
-            __pyx_v_gap = __pyx_f_7sklearn_12linear_model_7cd_fast_duality_gap(__pyx_v_n_samples, __pyx_v_n_features, __pyx_v_n_tasks, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_X->data), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_y->data), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_R->data), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_w->data), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_XtA->data), (&__pyx_v_dual_norm_XtA), __pyx_v_alpha, __pyx_v_beta, __pyx_v_positive);
+      __pyx_v_gap = __pyx_f_7sklearn_12linear_model_7cd_fast_enet_duality_gap(__pyx_v_n_samples, __pyx_v_n_features, __pyx_v_n_tasks, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_X->data), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_y->data), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_R->data), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_w->data), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)__pyx_v_XtA->data), (&__pyx_v_dual_norm_XtA), __pyx_v_alpha, __pyx_v_beta, __pyx_v_positive);
 
-            /* "sklearn/linear_model/cd_fast.pyx":593
- * 
+      /* "sklearn/linear_model/cd_fast.pyx":591
+ *                                   alpha, beta, positive)
  * 
  *                 if gap < tol:             # <<<<<<<<<<<<<<
  *                     # return if we reached desired tolerance
  *                     break
  */
-            __pyx_t_11 = ((__pyx_v_gap < __pyx_v_tol) != 0);
-            if (__pyx_t_11) {
+      __pyx_t_11 = ((__pyx_v_gap < __pyx_v_tol) != 0);
+      if (__pyx_t_11) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":595
+        /* "sklearn/linear_model/cd_fast.pyx":593
  *                 if gap < tol:
  *                     # return if we reached desired tolerance
  *                     break             # <<<<<<<<<<<<<<
  * 
  *     return w, gap, tol, n_iter + 1
  */
-              goto __pyx_L11_break;
-            }
-            goto __pyx_L22;
-          }
-          __pyx_L22:;
-        }
-        __pyx_L11_break:;
+        goto __pyx_L7_break;
       }
-
-      /* "sklearn/linear_model/cd_fast.pyx":527
- *             " may be slower than with random sampling and is discouraged.")
- * 
- *     with nogil:             # <<<<<<<<<<<<<<
- * 
- *         # R = y - np.dot(X, w)
- */
-      /*finally:*/ {
-        /*normal exit:*/{
-          #ifdef WITH_THREAD
-          Py_BLOCK_THREADS
-          #endif
-          goto __pyx_L7;
-        }
-        __pyx_L7:;
-      }
+      goto __pyx_L18;
+    }
+    __pyx_L18:;
   }
+  __pyx_L7_break:;
 
-  /* "sklearn/linear_model/cd_fast.pyx":597
+  /* "sklearn/linear_model/cd_fast.pyx":595
  *                     break
  * 
  *     return w, gap, tol, n_iter + 1             # <<<<<<<<<<<<<<
@@ -5934,13 +5926,13 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_2enet_coordinate_desc
  * 
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_3 = PyFloat_FromDouble(__pyx_v_gap); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 597; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyFloat_FromDouble(__pyx_v_gap); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 595; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_6 = PyFloat_FromDouble(__pyx_v_tol); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 597; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_6 = PyFloat_FromDouble(__pyx_v_tol); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 595; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_1 = __Pyx_PyInt_From_long((__pyx_v_n_iter + 1)); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 597; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyInt_From_long((__pyx_v_n_iter + 1)); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 595; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_5 = PyTuple_New(4); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 597; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = PyTuple_New(4); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 595; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_INCREF(((PyObject *)__pyx_v_w));
   PyTuple_SET_ITEM(__pyx_t_5, 0, ((PyObject *)__pyx_v_w));
@@ -5958,7 +5950,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_2enet_coordinate_desc
   __pyx_t_5 = 0;
   goto __pyx_L0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":473
+  /* "sklearn/linear_model/cd_fast.pyx":476
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,             # <<<<<<<<<<<<<<
@@ -6001,15 +5993,15 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_2enet_coordinate_desc
   return __pyx_r;
 }
 
-/* "sklearn/linear_model/cd_fast.pyx":604
+/* "sklearn/linear_model/cd_fast.pyx":602
  * 
  * # Function to compute the duality gap
- * cdef double sparse_duality_gap( # Data             # <<<<<<<<<<<<<<
+ * cdef double sparse_enet_duality_gap( # Data             # <<<<<<<<<<<<<<
  *                         unsigned int n_samples,
  *                         unsigned int n_features,
  */
 
-static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(unsigned int __pyx_v_n_samples, unsigned int __pyx_v_n_features, unsigned int __pyx_v_n_tasks, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_X_data, int *__pyx_v_X_indptr, int *__pyx_v_X_indices, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_X_mean_data, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_y_data, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_R_data, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_w_data, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_XtA_data, double *__pyx_v_dual_norm_XtA, double __pyx_v_alpha, double __pyx_v_beta, int __pyx_v_positive) {
+static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_enet_duality_gap(unsigned int __pyx_v_n_samples, unsigned int __pyx_v_n_features, unsigned int __pyx_v_n_tasks, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_X_data, int *__pyx_v_X_indptr, int *__pyx_v_X_indices, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_X_mean_data, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_y_data, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_R_data, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_w_data, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_XtA_data, double *__pyx_v_dual_norm_XtA, double __pyx_v_alpha, double __pyx_v_beta, int __pyx_v_positive) {
   double __pyx_v_R_norm2;
   double __pyx_v_R_sum;
   double __pyx_v_w_norm2;
@@ -6031,7 +6023,16 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(unsign
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":635
+  /* "sklearn/linear_model/cd_fast.pyx":624
+ *     cdef double R_norm2
+ *     cdef double R_sum
+ *     cdef double w_norm2 = 0             # <<<<<<<<<<<<<<
+ *     cdef double ytA
+ *     cdef double y_norm2
+ */
+  __pyx_v_w_norm2 = 0.0;
+
+  /* "sklearn/linear_model/cd_fast.pyx":633
  * 
  *     # sparse X.T / dense R dot product
  *     for ii in range(n_features):             # <<<<<<<<<<<<<<
@@ -6042,7 +6043,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(unsign
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v_ii = __pyx_t_2;
 
-    /* "sklearn/linear_model/cd_fast.pyx":636
+    /* "sklearn/linear_model/cd_fast.pyx":634
  *     # sparse X.T / dense R dot product
  *     for ii in range(n_features):
  *         XtA_data[ii] = 0.0             # <<<<<<<<<<<<<<
@@ -6051,7 +6052,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(unsign
  */
     (__pyx_v_XtA_data[__pyx_v_ii]) = 0.0;
 
-    /* "sklearn/linear_model/cd_fast.pyx":637
+    /* "sklearn/linear_model/cd_fast.pyx":635
  *     for ii in range(n_features):
  *         XtA_data[ii] = 0.0
  *         for jj in range(X_indptr[ii], X_indptr[ii + 1]):             # <<<<<<<<<<<<<<
@@ -6062,7 +6063,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(unsign
     for (__pyx_t_4 = (__pyx_v_X_indptr[__pyx_v_ii]); __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
       __pyx_v_jj = __pyx_t_4;
 
-      /* "sklearn/linear_model/cd_fast.pyx":638
+      /* "sklearn/linear_model/cd_fast.pyx":636
  *         XtA_data[ii] = 0.0
  *         for jj in range(X_indptr[ii], X_indptr[ii + 1]):
  *             XtA_data[ii] += X_data[jj] * R_data[X_indices[jj]]             # <<<<<<<<<<<<<<
@@ -6073,7 +6074,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(unsign
       (__pyx_v_XtA_data[__pyx_t_5]) = ((__pyx_v_XtA_data[__pyx_t_5]) + ((__pyx_v_X_data[__pyx_v_jj]) * (__pyx_v_R_data[(__pyx_v_X_indices[__pyx_v_jj])])));
     }
 
-    /* "sklearn/linear_model/cd_fast.pyx":639
+    /* "sklearn/linear_model/cd_fast.pyx":637
  *         for jj in range(X_indptr[ii], X_indptr[ii + 1]):
  *             XtA_data[ii] += X_data[jj] * R_data[X_indices[jj]]
  *         R_sum = 0.0             # <<<<<<<<<<<<<<
@@ -6082,7 +6083,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(unsign
  */
     __pyx_v_R_sum = 0.0;
 
-    /* "sklearn/linear_model/cd_fast.pyx":640
+    /* "sklearn/linear_model/cd_fast.pyx":638
  *             XtA_data[ii] += X_data[jj] * R_data[X_indices[jj]]
  *         R_sum = 0.0
  *         for jj in range(n_samples):             # <<<<<<<<<<<<<<
@@ -6093,7 +6094,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(unsign
     for (__pyx_t_5 = 0; __pyx_t_5 < __pyx_t_4; __pyx_t_5+=1) {
       __pyx_v_jj = __pyx_t_5;
 
-      /* "sklearn/linear_model/cd_fast.pyx":641
+      /* "sklearn/linear_model/cd_fast.pyx":639
  *         R_sum = 0.0
  *         for jj in range(n_samples):
  *             R_sum += R_data[jj]             # <<<<<<<<<<<<<<
@@ -6103,7 +6104,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(unsign
       __pyx_v_R_sum = (__pyx_v_R_sum + (__pyx_v_R_data[__pyx_v_jj]));
     }
 
-    /* "sklearn/linear_model/cd_fast.pyx":642
+    /* "sklearn/linear_model/cd_fast.pyx":640
  *         for jj in range(n_samples):
  *             R_sum += R_data[jj]
  *         XtA_data[ii] -= X_mean_data[ii] * R_sum             # <<<<<<<<<<<<<<
@@ -6113,7 +6114,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(unsign
     __pyx_t_4 = __pyx_v_ii;
     (__pyx_v_XtA_data[__pyx_t_4]) = ((__pyx_v_XtA_data[__pyx_t_4]) - ((__pyx_v_X_mean_data[__pyx_v_ii]) * __pyx_v_R_sum));
 
-    /* "sklearn/linear_model/cd_fast.pyx":643
+    /* "sklearn/linear_model/cd_fast.pyx":641
  *             R_sum += R_data[jj]
  *         XtA_data[ii] -= X_mean_data[ii] * R_sum
  *         XtA_data[ii] -= beta * w_data[ii]             # <<<<<<<<<<<<<<
@@ -6124,7 +6125,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(unsign
     (__pyx_v_XtA_data[__pyx_t_4]) = ((__pyx_v_XtA_data[__pyx_t_4]) - (__pyx_v_beta * (__pyx_v_w_data[__pyx_v_ii])));
   }
 
-  /* "sklearn/linear_model/cd_fast.pyx":645
+  /* "sklearn/linear_model/cd_fast.pyx":643
  *         XtA_data[ii] -= beta * w_data[ii]
  * 
  *     if positive:             # <<<<<<<<<<<<<<
@@ -6134,7 +6135,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(unsign
   __pyx_t_6 = (__pyx_v_positive != 0);
   if (__pyx_t_6) {
 
-    /* "sklearn/linear_model/cd_fast.pyx":646
+    /* "sklearn/linear_model/cd_fast.pyx":644
  * 
  *     if positive:
  *         dual_norm_XtA[0] = max(n_features, XtA_data)             # <<<<<<<<<<<<<<
@@ -6146,7 +6147,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(unsign
   }
   /*else*/ {
 
-    /* "sklearn/linear_model/cd_fast.pyx":648
+    /* "sklearn/linear_model/cd_fast.pyx":646
  *         dual_norm_XtA[0] = max(n_features, XtA_data)
  *     else:
  *         dual_norm_XtA[0] = abs_max(n_features, XtA_data)             # <<<<<<<<<<<<<<
@@ -6157,7 +6158,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(unsign
   }
   __pyx_L9:;
 
-  /* "sklearn/linear_model/cd_fast.pyx":651
+  /* "sklearn/linear_model/cd_fast.pyx":649
  * 
  *     # R_norm2 = np.dot(R, R)
  *     R_norm2 = ddot(n_samples, R_data, 1, R_data, 1)             # <<<<<<<<<<<<<<
@@ -6166,16 +6167,29 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(unsign
  */
   __pyx_v_R_norm2 = cblas_ddot(__pyx_v_n_samples, __pyx_v_R_data, 1, __pyx_v_R_data, 1);
 
-  /* "sklearn/linear_model/cd_fast.pyx":654
+  /* "sklearn/linear_model/cd_fast.pyx":652
  * 
  *     # w_norm2 = np.dot(w, w)
- *     w_norm2 = ddot(n_features, w_data, 1, w_data, 1)             # <<<<<<<<<<<<<<
+ *     if beta>0:             # <<<<<<<<<<<<<<
+ *         w_norm2 = ddot(n_features, w_data, 1, w_data, 1)
+ * 
+ */
+  __pyx_t_6 = ((__pyx_v_beta > 0.0) != 0);
+  if (__pyx_t_6) {
+
+    /* "sklearn/linear_model/cd_fast.pyx":653
+ *     # w_norm2 = np.dot(w, w)
+ *     if beta>0:
+ *         w_norm2 = ddot(n_features, w_data, 1, w_data, 1)             # <<<<<<<<<<<<<<
  * 
  *     # ytA = np.dot(y.T, R)
  */
-  __pyx_v_w_norm2 = cblas_ddot(__pyx_v_n_features, __pyx_v_w_data, 1, __pyx_v_w_data, 1);
+    __pyx_v_w_norm2 = cblas_ddot(__pyx_v_n_features, __pyx_v_w_data, 1, __pyx_v_w_data, 1);
+    goto __pyx_L10;
+  }
+  __pyx_L10:;
 
-  /* "sklearn/linear_model/cd_fast.pyx":657
+  /* "sklearn/linear_model/cd_fast.pyx":656
  * 
  *     # ytA = np.dot(y.T, R)
  *     ytA = ddot(n_samples, R_data, 1, y_data, n_tasks)             # <<<<<<<<<<<<<<
@@ -6184,19 +6198,74 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(unsign
  */
   __pyx_v_ytA = cblas_ddot(__pyx_v_n_samples, __pyx_v_R_data, 1, __pyx_v_y_data, __pyx_v_n_tasks);
 
-  /* "sklearn/linear_model/cd_fast.pyx":661
+  /* "sklearn/linear_model/cd_fast.pyx":660
  *     # Determining the dual feasible point which is
  *     # proportional to R and closest to y / alpha
- *     if positive:             # <<<<<<<<<<<<<<
+ *     if dual_norm_XtA[0] <= 0:             # <<<<<<<<<<<<<<
+ *         if R_norm2 == 0:
+ *             const = 1.
+ */
+  __pyx_t_6 = (((__pyx_v_dual_norm_XtA[0]) <= 0.0) != 0);
+  if (__pyx_t_6) {
+
+    /* "sklearn/linear_model/cd_fast.pyx":661
+ *     # proportional to R and closest to y / alpha
+ *     if dual_norm_XtA[0] <= 0:
+ *         if R_norm2 == 0:             # <<<<<<<<<<<<<<
+ *             const = 1.
+ *         else:
+ */
+    __pyx_t_6 = ((__pyx_v_R_norm2 == 0.0) != 0);
+    if (__pyx_t_6) {
+
+      /* "sklearn/linear_model/cd_fast.pyx":662
+ *     if dual_norm_XtA[0] <= 0:
+ *         if R_norm2 == 0:
+ *             const = 1.             # <<<<<<<<<<<<<<
+ *         else:
+ *             const = ytA / R_norm2
+ */
+      __pyx_v_const = 1.;
+      goto __pyx_L12;
+    }
+    /*else*/ {
+
+      /* "sklearn/linear_model/cd_fast.pyx":664
+ *             const = 1.
+ *         else:
+ *             const = ytA / R_norm2             # <<<<<<<<<<<<<<
+ *     elif positive:
+ *         const = alpha * fmin(ytA / (alpha * R_norm2),
+ */
+      if (unlikely(__pyx_v_R_norm2 == 0)) {
+        #ifdef WITH_THREAD
+        PyGILState_STATE __pyx_gilstate_save = PyGILState_Ensure();
+        #endif
+        PyErr_SetString(PyExc_ZeroDivisionError, "float division");
+        #ifdef WITH_THREAD
+        PyGILState_Release(__pyx_gilstate_save);
+        #endif
+        {__pyx_filename = __pyx_f[0]; __pyx_lineno = 664; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      }
+      __pyx_v_const = (__pyx_v_ytA / __pyx_v_R_norm2);
+    }
+    __pyx_L12:;
+    goto __pyx_L11;
+  }
+
+  /* "sklearn/linear_model/cd_fast.pyx":665
+ *         else:
+ *             const = ytA / R_norm2
+ *     elif positive:             # <<<<<<<<<<<<<<
  *         const = alpha * fmin(ytA / (alpha * R_norm2),
  *                              1. / dual_norm_XtA[0])
  */
   __pyx_t_6 = (__pyx_v_positive != 0);
   if (__pyx_t_6) {
 
-    /* "sklearn/linear_model/cd_fast.pyx":662
- *     # proportional to R and closest to y / alpha
- *     if positive:
+    /* "sklearn/linear_model/cd_fast.pyx":666
+ *             const = ytA / R_norm2
+ *     elif positive:
  *         const = alpha * fmin(ytA / (alpha * R_norm2),             # <<<<<<<<<<<<<<
  *                              1. / dual_norm_XtA[0])
  *     else:
@@ -6210,11 +6279,11 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(unsign
       #ifdef WITH_THREAD
       PyGILState_Release(__pyx_gilstate_save);
       #endif
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 662; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 666; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     }
 
-    /* "sklearn/linear_model/cd_fast.pyx":663
- *     if positive:
+    /* "sklearn/linear_model/cd_fast.pyx":667
+ *     elif positive:
  *         const = alpha * fmin(ytA / (alpha * R_norm2),
  *                              1. / dual_norm_XtA[0])             # <<<<<<<<<<<<<<
  *     else:
@@ -6228,22 +6297,22 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(unsign
       #ifdef WITH_THREAD
       PyGILState_Release(__pyx_gilstate_save);
       #endif
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 663; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 667; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     }
 
-    /* "sklearn/linear_model/cd_fast.pyx":662
- *     # proportional to R and closest to y / alpha
- *     if positive:
+    /* "sklearn/linear_model/cd_fast.pyx":666
+ *             const = ytA / R_norm2
+ *     elif positive:
  *         const = alpha * fmin(ytA / (alpha * R_norm2),             # <<<<<<<<<<<<<<
  *                              1. / dual_norm_XtA[0])
  *     else:
  */
     __pyx_v_const = (__pyx_v_alpha * __pyx_f_7sklearn_12linear_model_7cd_fast_fmin((__pyx_v_ytA / __pyx_t_7), (1. / (__pyx_v_dual_norm_XtA[0]))));
-    goto __pyx_L10;
+    goto __pyx_L11;
   }
   /*else*/ {
 
-    /* "sklearn/linear_model/cd_fast.pyx":665
+    /* "sklearn/linear_model/cd_fast.pyx":669
  *                              1. / dual_norm_XtA[0])
  *     else:
  *         const = alpha * fmax(-1. / dual_norm_XtA[0],             # <<<<<<<<<<<<<<
@@ -6258,10 +6327,10 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(unsign
       #ifdef WITH_THREAD
       PyGILState_Release(__pyx_gilstate_save);
       #endif
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 665; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 669; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     }
 
-    /* "sklearn/linear_model/cd_fast.pyx":666
+    /* "sklearn/linear_model/cd_fast.pyx":670
  *     else:
  *         const = alpha * fmax(-1. / dual_norm_XtA[0],
  *                          fmin(ytA / (alpha * R_norm2),             # <<<<<<<<<<<<<<
@@ -6277,10 +6346,10 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(unsign
       #ifdef WITH_THREAD
       PyGILState_Release(__pyx_gilstate_save);
       #endif
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 666; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 670; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     }
 
-    /* "sklearn/linear_model/cd_fast.pyx":667
+    /* "sklearn/linear_model/cd_fast.pyx":671
  *         const = alpha * fmax(-1. / dual_norm_XtA[0],
  *                          fmin(ytA / (alpha * R_norm2),
  *                               1. / dual_norm_XtA[0]) )             # <<<<<<<<<<<<<<
@@ -6295,10 +6364,10 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(unsign
       #ifdef WITH_THREAD
       PyGILState_Release(__pyx_gilstate_save);
       #endif
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 667; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 671; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     }
 
-    /* "sklearn/linear_model/cd_fast.pyx":665
+    /* "sklearn/linear_model/cd_fast.pyx":669
  *                              1. / dual_norm_XtA[0])
  *     else:
  *         const = alpha * fmax(-1. / dual_norm_XtA[0],             # <<<<<<<<<<<<<<
@@ -6307,9 +6376,9 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(unsign
  */
     __pyx_v_const = (__pyx_v_alpha * __pyx_f_7sklearn_12linear_model_7cd_fast_fmax((-1. / (__pyx_v_dual_norm_XtA[0])), __pyx_f_7sklearn_12linear_model_7cd_fast_fmin((__pyx_v_ytA / __pyx_t_7), (1. / (__pyx_v_dual_norm_XtA[0])))));
   }
-  __pyx_L10:;
+  __pyx_L11:;
 
-  /* "sklearn/linear_model/cd_fast.pyx":669
+  /* "sklearn/linear_model/cd_fast.pyx":673
  *                               1. / dual_norm_XtA[0]) )
  * 
  *     l1_norm = dasum(n_features, w_data, 1)             # <<<<<<<<<<<<<<
@@ -6318,7 +6387,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(unsign
  */
   __pyx_v_l1_norm = cblas_dasum(__pyx_v_n_features, __pyx_v_w_data, 1);
 
-  /* "sklearn/linear_model/cd_fast.pyx":672
+  /* "sklearn/linear_model/cd_fast.pyx":676
  * 
  *     gap = 0.5 * (1 + const ** 2) * (R_norm2 + beta * w_norm2) \
  *           + alpha * l1_norm - const * ytA             # <<<<<<<<<<<<<<
@@ -6327,7 +6396,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(unsign
  */
   __pyx_v_gap = ((((0.5 * (1.0 + pow(__pyx_v_const, 2.0))) * (__pyx_v_R_norm2 + (__pyx_v_beta * __pyx_v_w_norm2))) + (__pyx_v_alpha * __pyx_v_l1_norm)) - (__pyx_v_const * __pyx_v_ytA));
 
-  /* "sklearn/linear_model/cd_fast.pyx":675
+  /* "sklearn/linear_model/cd_fast.pyx":679
  * 
  * 
  *     return gap             # <<<<<<<<<<<<<<
@@ -6337,23 +6406,23 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(unsign
   __pyx_r = __pyx_v_gap;
   goto __pyx_L0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":604
+  /* "sklearn/linear_model/cd_fast.pyx":602
  * 
  * # Function to compute the duality gap
- * cdef double sparse_duality_gap( # Data             # <<<<<<<<<<<<<<
+ * cdef double sparse_enet_duality_gap( # Data             # <<<<<<<<<<<<<<
  *                         unsigned int n_samples,
  *                         unsigned int n_features,
  */
 
   /* function exit code */
   __pyx_L1_error:;
-  __Pyx_WriteUnraisable("sklearn.linear_model.cd_fast.sparse_duality_gap", __pyx_clineno, __pyx_lineno, __pyx_filename, 0);
+  __Pyx_WriteUnraisable("sklearn.linear_model.cd_fast.sparse_enet_duality_gap", __pyx_clineno, __pyx_lineno, __pyx_filename, 0);
   __pyx_r = 0;
   __pyx_L0:;
   return __pyx_r;
 }
 
-/* "sklearn/linear_model/cd_fast.pyx":681
+/* "sklearn/linear_model/cd_fast.pyx":685
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def sparse_enet_accelerated_coordinate_descent(double[:] w,             # <<<<<<<<<<<<<<
@@ -6416,52 +6485,52 @@ static PyObject *__pyx_pw_7sklearn_12linear_model_7cd_fast_5sparse_enet_accelera
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_alpha)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("sparse_enet_accelerated_coordinate_descent", 0, 11, 13, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 681; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("sparse_enet_accelerated_coordinate_descent", 0, 11, 13, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_beta)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("sparse_enet_accelerated_coordinate_descent", 0, 11, 13, 2); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 681; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("sparse_enet_accelerated_coordinate_descent", 0, 11, 13, 2); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_X_data)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("sparse_enet_accelerated_coordinate_descent", 0, 11, 13, 3); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 681; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("sparse_enet_accelerated_coordinate_descent", 0, 11, 13, 3); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  4:
         if (likely((values[4] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_X_indices)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("sparse_enet_accelerated_coordinate_descent", 0, 11, 13, 4); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 681; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("sparse_enet_accelerated_coordinate_descent", 0, 11, 13, 4); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  5:
         if (likely((values[5] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_X_indptr)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("sparse_enet_accelerated_coordinate_descent", 0, 11, 13, 5); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 681; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("sparse_enet_accelerated_coordinate_descent", 0, 11, 13, 5); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  6:
         if (likely((values[6] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_y)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("sparse_enet_accelerated_coordinate_descent", 0, 11, 13, 6); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 681; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("sparse_enet_accelerated_coordinate_descent", 0, 11, 13, 6); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  7:
         if (likely((values[7] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_X_mean)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("sparse_enet_accelerated_coordinate_descent", 0, 11, 13, 7); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 681; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("sparse_enet_accelerated_coordinate_descent", 0, 11, 13, 7); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  8:
         if (likely((values[8] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_max_iter)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("sparse_enet_accelerated_coordinate_descent", 0, 11, 13, 8); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 681; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("sparse_enet_accelerated_coordinate_descent", 0, 11, 13, 8); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  9:
         if (likely((values[9] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_tol)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("sparse_enet_accelerated_coordinate_descent", 0, 11, 13, 9); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 681; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("sparse_enet_accelerated_coordinate_descent", 0, 11, 13, 9); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case 10:
         if (likely((values[10] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_rng)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("sparse_enet_accelerated_coordinate_descent", 0, 11, 13, 10); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 681; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("sparse_enet_accelerated_coordinate_descent", 0, 11, 13, 10); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case 11:
         if (kw_args > 0) {
@@ -6475,7 +6544,7 @@ static PyObject *__pyx_pw_7sklearn_12linear_model_7cd_fast_5sparse_enet_accelera
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "sparse_enet_accelerated_coordinate_descent") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 681; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "sparse_enet_accelerated_coordinate_descent") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -6496,31 +6565,31 @@ static PyObject *__pyx_pw_7sklearn_12linear_model_7cd_fast_5sparse_enet_accelera
         default: goto __pyx_L5_argtuple_error;
       }
     }
-    __pyx_v_w = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[0]); if (unlikely(!__pyx_v_w.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 681; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_alpha = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_alpha == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 682; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_beta = __pyx_PyFloat_AsDouble(values[2]); if (unlikely((__pyx_v_beta == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 682; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_X_data = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[3]); if (unlikely(!__pyx_v_X_data.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 683; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_X_indices = __Pyx_PyObject_to_MemoryviewSlice_ds_int(values[4]); if (unlikely(!__pyx_v_X_indices.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 683; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_X_indptr = __Pyx_PyObject_to_MemoryviewSlice_ds_int(values[5]); if (unlikely(!__pyx_v_X_indptr.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 684; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_y = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[6]); if (unlikely(!__pyx_v_y.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 684; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_X_mean = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[7]); if (unlikely(!__pyx_v_X_mean.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_max_iter = __Pyx_PyInt_As_int(values[8]); if (unlikely((__pyx_v_max_iter == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_tol = __pyx_PyFloat_AsDouble(values[9]); if (unlikely((__pyx_v_tol == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 686; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_w = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[0]); if (unlikely(!__pyx_v_w.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_alpha = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_alpha == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 686; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_beta = __pyx_PyFloat_AsDouble(values[2]); if (unlikely((__pyx_v_beta == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 686; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_X_data = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[3]); if (unlikely(!__pyx_v_X_data.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 687; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_X_indices = __Pyx_PyObject_to_MemoryviewSlice_ds_int(values[4]); if (unlikely(!__pyx_v_X_indices.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 687; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_X_indptr = __Pyx_PyObject_to_MemoryviewSlice_ds_int(values[5]); if (unlikely(!__pyx_v_X_indptr.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 688; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_y = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[6]); if (unlikely(!__pyx_v_y.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 688; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_X_mean = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[7]); if (unlikely(!__pyx_v_X_mean.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 689; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_max_iter = __Pyx_PyInt_As_int(values[8]); if (unlikely((__pyx_v_max_iter == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 689; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_tol = __pyx_PyFloat_AsDouble(values[9]); if (unlikely((__pyx_v_tol == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 690; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     __pyx_v_rng = values[10];
     if (values[11]) {
-      __pyx_v_random = __Pyx_PyObject_IsTrue(values[11]); if (unlikely((__pyx_v_random == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 686; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+      __pyx_v_random = __Pyx_PyObject_IsTrue(values[11]); if (unlikely((__pyx_v_random == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 690; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     } else {
       __pyx_v_random = ((int)1);
     }
     if (values[12]) {
-      __pyx_v_positive = __Pyx_PyObject_IsTrue(values[12]); if (unlikely((__pyx_v_positive == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 687; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+      __pyx_v_positive = __Pyx_PyObject_IsTrue(values[12]); if (unlikely((__pyx_v_positive == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 691; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     } else {
       __pyx_v_positive = ((int)0);
     }
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("sparse_enet_accelerated_coordinate_descent", 0, 11, 13, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 681; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("sparse_enet_accelerated_coordinate_descent", 0, 11, 13, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_AddTraceback("sklearn.linear_model.cd_fast.sparse_enet_accelerated_coordinate_descent", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -6594,10 +6663,10 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
   __Pyx_memviewslice __pyx_t_14 = { 0, 0, { 0 }, { 0 }, { 0 } };
   Py_ssize_t __pyx_t_15;
   __pyx_t_7sklearn_12linear_model_7cd_fast_UINT32_t __pyx_t_16;
-  unsigned int __pyx_t_17;
+  int __pyx_t_17;
   unsigned int __pyx_t_18;
   unsigned int __pyx_t_19;
-  int __pyx_t_20;
+  unsigned int __pyx_t_20;
   unsigned int __pyx_t_21;
   long __pyx_t_22;
   unsigned int __pyx_t_23;
@@ -6688,7 +6757,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("sparse_enet_accelerated_coordinate_descent", 0);
 
-  /* "sklearn/linear_model/cd_fast.pyx":699
+  /* "sklearn/linear_model/cd_fast.pyx":703
  * 
  *     # get the data information into easy vars
  *     cdef unsigned int n_samples = y.shape[0]             # <<<<<<<<<<<<<<
@@ -6697,7 +6766,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
   __pyx_v_n_samples = (__pyx_v_y.shape[0]);
 
-  /* "sklearn/linear_model/cd_fast.pyx":700
+  /* "sklearn/linear_model/cd_fast.pyx":704
  *     # get the data information into easy vars
  *     cdef unsigned int n_samples = y.shape[0]
  *     cdef unsigned int n_features = w.shape[0]             # <<<<<<<<<<<<<<
@@ -6706,23 +6775,23 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
   __pyx_v_n_features = (__pyx_v_w.shape[0]);
 
-  /* "sklearn/linear_model/cd_fast.pyx":704
+  /* "sklearn/linear_model/cd_fast.pyx":708
  *     # compute norms of the columns of X
  *     cdef unsigned int ii
  *     cdef double[:] norm_cols_X = np.zeros(n_features, np.float64)             # <<<<<<<<<<<<<<
  * 
  *     cdef unsigned int startptr = X_indptr[0]
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 704; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 708; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_zeros); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 704; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_zeros); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 708; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 704; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 708; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 704; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 708; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_float64); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 704; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_float64); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 708; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __pyx_t_4 = NULL;
@@ -6737,7 +6806,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
       __pyx_t_6 = 1;
     }
   }
-  __pyx_t_7 = PyTuple_New(2+__pyx_t_6); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 704; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_7 = PyTuple_New(2+__pyx_t_6); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 708; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_7);
   if (__pyx_t_4) {
     PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_4); __Pyx_GIVEREF(__pyx_t_4); __pyx_t_4 = NULL;
@@ -6748,18 +6817,18 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
   __Pyx_GIVEREF(__pyx_t_5);
   __pyx_t_2 = 0;
   __pyx_t_5 = 0;
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 704; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 708; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_t_8 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(__pyx_t_1);
-  if (unlikely(!__pyx_t_8.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 704; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__pyx_t_8.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 708; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_norm_cols_X = __pyx_t_8;
   __pyx_t_8.memview = NULL;
   __pyx_t_8.data = NULL;
 
-  /* "sklearn/linear_model/cd_fast.pyx":706
+  /* "sklearn/linear_model/cd_fast.pyx":710
  *     cdef double[:] norm_cols_X = np.zeros(n_features, np.float64)
  * 
  *     cdef unsigned int startptr = X_indptr[0]             # <<<<<<<<<<<<<<
@@ -6769,7 +6838,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
   __pyx_t_6 = 0;
   __pyx_v_startptr = (*((int *) ( /* dim=0 */ (__pyx_v_X_indptr.data + __pyx_t_6 * __pyx_v_X_indptr.strides[0]) )));
 
-  /* "sklearn/linear_model/cd_fast.pyx":710
+  /* "sklearn/linear_model/cd_fast.pyx":714
  * 
  *     # get the number of tasks indirectly, using strides
  *     cdef unsigned int n_tasks = y.strides[0] / sizeof(DOUBLE)             # <<<<<<<<<<<<<<
@@ -6778,19 +6847,19 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
   __pyx_v_n_tasks = ((__pyx_v_y.strides[0]) / (sizeof(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE)));
 
-  /* "sklearn/linear_model/cd_fast.pyx":713
+  /* "sklearn/linear_model/cd_fast.pyx":717
  * 
  *     # additional variables
  *     cdef double[:] we = np.empty(n_features) # exploration variable             # <<<<<<<<<<<<<<
  *     cdef double[:] wc = np.zeros(n_features) # correction variable
  *     # initial value of the residuals
  */
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 713; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 717; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_empty); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 713; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_empty); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 717; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 713; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 717; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_t_5 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_7))) {
@@ -6803,41 +6872,41 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
     }
   }
   if (!__pyx_t_5) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_3); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 713; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_3); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 717; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else {
-    __pyx_t_2 = PyTuple_New(1+1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 713; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = PyTuple_New(1+1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 717; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
     PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_5); __Pyx_GIVEREF(__pyx_t_5); __pyx_t_5 = NULL;
     PyTuple_SET_ITEM(__pyx_t_2, 0+1, __pyx_t_3);
     __Pyx_GIVEREF(__pyx_t_3);
     __pyx_t_3 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 713; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 717; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   }
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   __pyx_t_9 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(__pyx_t_1);
-  if (unlikely(!__pyx_t_9.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 713; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__pyx_t_9.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 717; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_we = __pyx_t_9;
   __pyx_t_9.memview = NULL;
   __pyx_t_9.data = NULL;
 
-  /* "sklearn/linear_model/cd_fast.pyx":714
+  /* "sklearn/linear_model/cd_fast.pyx":718
  *     # additional variables
  *     cdef double[:] we = np.empty(n_features) # exploration variable
  *     cdef double[:] wc = np.zeros(n_features) # correction variable             # <<<<<<<<<<<<<<
  *     # initial value of the residuals
  *     cdef double[:] R = y.copy()             # normal variable
  */
-  __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 714; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 718; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 714; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 718; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  __pyx_t_7 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 714; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_7 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 718; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_7);
   __pyx_t_3 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_2))) {
@@ -6850,53 +6919,53 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
     }
   }
   if (!__pyx_t_3) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_7); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 714; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_7); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 718; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else {
-    __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 714; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 718; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_5);
     PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_3); __Pyx_GIVEREF(__pyx_t_3); __pyx_t_3 = NULL;
     PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_t_7);
     __Pyx_GIVEREF(__pyx_t_7);
     __pyx_t_7 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 714; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 718; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_10 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(__pyx_t_1);
-  if (unlikely(!__pyx_t_10.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 714; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__pyx_t_10.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 718; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_wc = __pyx_t_10;
   __pyx_t_10.memview = NULL;
   __pyx_t_10.data = NULL;
 
-  /* "sklearn/linear_model/cd_fast.pyx":716
+  /* "sklearn/linear_model/cd_fast.pyx":720
  *     cdef double[:] wc = np.zeros(n_features) # correction variable
  *     # initial value of the residuals
  *     cdef double[:] R = y.copy()             # normal variable             # <<<<<<<<<<<<<<
  *     cdef double[:] Re = np.empty(n_samples) # exploration variable
  *     cdef double[:] Rc = np.zeros(n_samples) # correction variable
  */
-  __pyx_t_11 = __pyx_memoryview_copy_slice_dc_double_c(__pyx_v_y); if (unlikely(!__pyx_t_11.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 716; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_11 = __pyx_memoryview_copy_slice_dc_double_c(__pyx_v_y); if (unlikely(!__pyx_t_11.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 720; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_v_R = __pyx_t_11;
   __pyx_t_11.memview = NULL;
   __pyx_t_11.data = NULL;
 
-  /* "sklearn/linear_model/cd_fast.pyx":717
+  /* "sklearn/linear_model/cd_fast.pyx":721
  *     # initial value of the residuals
  *     cdef double[:] R = y.copy()             # normal variable
  *     cdef double[:] Re = np.empty(n_samples) # exploration variable             # <<<<<<<<<<<<<<
  *     cdef double[:] Rc = np.zeros(n_samples) # correction variable
  * 
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 717; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 721; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_empty); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 717; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_empty); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 721; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_samples); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 717; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_samples); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 721; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_7 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_5))) {
@@ -6909,41 +6978,41 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
     }
   }
   if (!__pyx_t_7) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_2); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 717; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_2); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 721; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else {
-    __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 717; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 721; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
     PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_7); __Pyx_GIVEREF(__pyx_t_7); __pyx_t_7 = NULL;
     PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_t_2);
     __Pyx_GIVEREF(__pyx_t_2);
     __pyx_t_2 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_3, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 717; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_3, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 721; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __pyx_t_12 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(__pyx_t_1);
-  if (unlikely(!__pyx_t_12.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 717; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__pyx_t_12.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 721; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_Re = __pyx_t_12;
   __pyx_t_12.memview = NULL;
   __pyx_t_12.data = NULL;
 
-  /* "sklearn/linear_model/cd_fast.pyx":718
+  /* "sklearn/linear_model/cd_fast.pyx":722
  *     cdef double[:] R = y.copy()             # normal variable
  *     cdef double[:] Re = np.empty(n_samples) # exploration variable
  *     cdef double[:] Rc = np.zeros(n_samples) # correction variable             # <<<<<<<<<<<<<<
  * 
  *     cdef double[:] XtA = np.zeros(n_features)
  */
-  __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 718; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 722; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_zeros); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 718; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_zeros); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 722; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_samples); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 718; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_samples); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 722; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
   __pyx_t_2 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
@@ -6956,41 +7025,41 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
     }
   }
   if (!__pyx_t_2) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 718; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 722; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else {
-    __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 718; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 722; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_7);
     PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_2); __Pyx_GIVEREF(__pyx_t_2); __pyx_t_2 = NULL;
     PyTuple_SET_ITEM(__pyx_t_7, 0+1, __pyx_t_5);
     __Pyx_GIVEREF(__pyx_t_5);
     __pyx_t_5 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 718; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 722; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   }
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_t_13 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(__pyx_t_1);
-  if (unlikely(!__pyx_t_13.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 718; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__pyx_t_13.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 722; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_Rc = __pyx_t_13;
   __pyx_t_13.memview = NULL;
   __pyx_t_13.data = NULL;
 
-  /* "sklearn/linear_model/cd_fast.pyx":720
+  /* "sklearn/linear_model/cd_fast.pyx":724
  *     cdef double[:] Rc = np.zeros(n_samples) # correction variable
  * 
  *     cdef double[:] XtA = np.zeros(n_features)             # <<<<<<<<<<<<<<
  * 
  *     cdef double tmp
  */
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 720; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 724; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_zeros); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 720; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_zeros); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 724; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 720; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 724; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_t_5 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_7))) {
@@ -7003,29 +7072,29 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
     }
   }
   if (!__pyx_t_5) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_3); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 720; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_3); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 724; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else {
-    __pyx_t_2 = PyTuple_New(1+1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 720; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = PyTuple_New(1+1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 724; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
     PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_5); __Pyx_GIVEREF(__pyx_t_5); __pyx_t_5 = NULL;
     PyTuple_SET_ITEM(__pyx_t_2, 0+1, __pyx_t_3);
     __Pyx_GIVEREF(__pyx_t_3);
     __pyx_t_3 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 720; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 724; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   }
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   __pyx_t_14 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(__pyx_t_1);
-  if (unlikely(!__pyx_t_14.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 720; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__pyx_t_14.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 724; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_XtA = __pyx_t_14;
   __pyx_t_14.memview = NULL;
   __pyx_t_14.data = NULL;
 
-  /* "sklearn/linear_model/cd_fast.pyx":734
+  /* "sklearn/linear_model/cd_fast.pyx":738
  *     cdef double Rc_sum
  *     cdef double normalize_sum
  *     cdef double gap = tol + 1.0             # <<<<<<<<<<<<<<
@@ -7034,7 +7103,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
   __pyx_v_gap = (__pyx_v_tol + 1.0);
 
-  /* "sklearn/linear_model/cd_fast.pyx":735
+  /* "sklearn/linear_model/cd_fast.pyx":739
  *     cdef double normalize_sum
  *     cdef double gap = tol + 1.0
  *     cdef double d_w_tol = tol             # <<<<<<<<<<<<<<
@@ -7043,7 +7112,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
   __pyx_v_d_w_tol = __pyx_v_tol;
 
-  /* "sklearn/linear_model/cd_fast.pyx":737
+  /* "sklearn/linear_model/cd_fast.pyx":741
  *     cdef double d_w_tol = tol
  *     cdef double dual_norm_XtA
  *     cdef double theta0 = 1. / fmax(1., n_features)             # <<<<<<<<<<<<<<
@@ -7052,7 +7121,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
   __pyx_v_theta0 = (1. / __pyx_f_7sklearn_12linear_model_7cd_fast_fmax(1., __pyx_v_n_features));
 
-  /* "sklearn/linear_model/cd_fast.pyx":738
+  /* "sklearn/linear_model/cd_fast.pyx":742
  *     cdef double dual_norm_XtA
  *     cdef double theta0 = 1. / fmax(1., n_features)
  *     cdef double theta = theta0             # <<<<<<<<<<<<<<
@@ -7061,7 +7130,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
   __pyx_v_theta = __pyx_v_theta0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":739
+  /* "sklearn/linear_model/cd_fast.pyx":743
  *     cdef double theta0 = 1. / fmax(1., n_features)
  *     cdef double theta = theta0
  *     cdef double test_restart = 0.             # <<<<<<<<<<<<<<
@@ -7070,16 +7139,16 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
   __pyx_v_test_restart = 0.;
 
-  /* "sklearn/linear_model/cd_fast.pyx":745
+  /* "sklearn/linear_model/cd_fast.pyx":749
  *     cdef unsigned int nnz
  *     cdef unsigned int nnze
- *     cdef UINT32_t rand_r_state_seed = rng.randint(1, RAND_R_MAX)             # <<<<<<<<<<<<<<
+ *     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)             # <<<<<<<<<<<<<<
  *     cdef UINT32_t* rand_r_state = &rand_r_state_seed
  *     cdef bint center = False
  */
-  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_rng, __pyx_n_s_randint); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 745; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_rng, __pyx_n_s_randint); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 749; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_e_7sklearn_12linear_model_7cd_fast_RAND_R_MAX); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 745; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_e_7sklearn_12linear_model_7cd_fast_RAND_R_MAX); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 749; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_3 = NULL;
   __pyx_t_15 = 0;
@@ -7093,45 +7162,75 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
       __pyx_t_15 = 1;
     }
   }
-  __pyx_t_5 = PyTuple_New(2+__pyx_t_15); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 745; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = PyTuple_New(2+__pyx_t_15); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 749; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
   if (__pyx_t_3) {
     PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_3); __Pyx_GIVEREF(__pyx_t_3); __pyx_t_3 = NULL;
   }
-  __Pyx_INCREF(__pyx_int_1);
-  PyTuple_SET_ITEM(__pyx_t_5, 0+__pyx_t_15, __pyx_int_1);
-  __Pyx_GIVEREF(__pyx_int_1);
+  __Pyx_INCREF(__pyx_int_0);
+  PyTuple_SET_ITEM(__pyx_t_5, 0+__pyx_t_15, __pyx_int_0);
+  __Pyx_GIVEREF(__pyx_int_0);
   PyTuple_SET_ITEM(__pyx_t_5, 1+__pyx_t_15, __pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_2);
   __pyx_t_2 = 0;
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 745; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 749; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  __pyx_t_16 = __Pyx_PyInt_As_npy_uint32(__pyx_t_1); if (unlikely((__pyx_t_16 == (npy_uint32)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 745; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_16 = __Pyx_PyInt_As_npy_uint32(__pyx_t_1); if (unlikely((__pyx_t_16 == (npy_uint32)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 749; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_rand_r_state_seed = __pyx_t_16;
 
-  /* "sklearn/linear_model/cd_fast.pyx":746
+  /* "sklearn/linear_model/cd_fast.pyx":750
  *     cdef unsigned int nnze
- *     cdef UINT32_t rand_r_state_seed = rng.randint(1, RAND_R_MAX)
+ *     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
  *     cdef UINT32_t* rand_r_state = &rand_r_state_seed             # <<<<<<<<<<<<<<
  *     cdef bint center = False
  * 
  */
   __pyx_v_rand_r_state = (&__pyx_v_rand_r_state_seed);
 
-  /* "sklearn/linear_model/cd_fast.pyx":747
- *     cdef UINT32_t rand_r_state_seed = rng.randint(1, RAND_R_MAX)
+  /* "sklearn/linear_model/cd_fast.pyx":751
+ *     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
  *     cdef UINT32_t* rand_r_state = &rand_r_state_seed
  *     cdef bint center = False             # <<<<<<<<<<<<<<
  * 
- *     with nogil:
+ *     if not random:
  */
   __pyx_v_center = 0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":749
+  /* "sklearn/linear_model/cd_fast.pyx":753
  *     cdef bint center = False
+ * 
+ *     if not random:             # <<<<<<<<<<<<<<
+ *         warnings.warn("Accelerated coordinate descent with cyclic sampling"
+ *             " may be slower than with random sampling and is discouraged.")
+ */
+  __pyx_t_17 = ((!(__pyx_v_random != 0)) != 0);
+  if (__pyx_t_17) {
+
+    /* "sklearn/linear_model/cd_fast.pyx":754
+ * 
+ *     if not random:
+ *         warnings.warn("Accelerated coordinate descent with cyclic sampling"             # <<<<<<<<<<<<<<
+ *             " may be slower than with random sampling and is discouraged.")
+ * 
+ */
+    __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 754; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_warn); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 754; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_7);
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_tuple__4, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 754; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __Pyx_GOTREF(__pyx_t_1);
+    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    goto __pyx_L3;
+  }
+  __pyx_L3:;
+
+  /* "sklearn/linear_model/cd_fast.pyx":757
+ *             " may be slower than with random sampling and is discouraged.")
  * 
  *     with nogil:             # <<<<<<<<<<<<<<
  *         # center = (X_mean != 0).any()
@@ -7144,29 +7243,29 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
       #endif
       /*try:*/ {
 
-        /* "sklearn/linear_model/cd_fast.pyx":751
+        /* "sklearn/linear_model/cd_fast.pyx":759
  *     with nogil:
  *         # center = (X_mean != 0).any()
  *         for ii in range(n_features):             # <<<<<<<<<<<<<<
  *             if X_mean[ii]:
  *                 center = True
  */
-        __pyx_t_17 = __pyx_v_n_features;
-        for (__pyx_t_18 = 0; __pyx_t_18 < __pyx_t_17; __pyx_t_18+=1) {
-          __pyx_v_ii = __pyx_t_18;
+        __pyx_t_18 = __pyx_v_n_features;
+        for (__pyx_t_19 = 0; __pyx_t_19 < __pyx_t_18; __pyx_t_19+=1) {
+          __pyx_v_ii = __pyx_t_19;
 
-          /* "sklearn/linear_model/cd_fast.pyx":752
+          /* "sklearn/linear_model/cd_fast.pyx":760
  *         # center = (X_mean != 0).any()
  *         for ii in range(n_features):
  *             if X_mean[ii]:             # <<<<<<<<<<<<<<
  *                 center = True
  *                 break
  */
-          __pyx_t_19 = __pyx_v_ii;
-          __pyx_t_20 = ((*((double *) ( /* dim=0 */ (__pyx_v_X_mean.data + __pyx_t_19 * __pyx_v_X_mean.strides[0]) ))) != 0);
-          if (__pyx_t_20) {
+          __pyx_t_20 = __pyx_v_ii;
+          __pyx_t_17 = ((*((double *) ( /* dim=0 */ (__pyx_v_X_mean.data + __pyx_t_20 * __pyx_v_X_mean.strides[0]) ))) != 0);
+          if (__pyx_t_17) {
 
-            /* "sklearn/linear_model/cd_fast.pyx":753
+            /* "sklearn/linear_model/cd_fast.pyx":761
  *         for ii in range(n_features):
  *             if X_mean[ii]:
  *                 center = True             # <<<<<<<<<<<<<<
@@ -7175,30 +7274,30 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
             __pyx_v_center = 1;
 
-            /* "sklearn/linear_model/cd_fast.pyx":754
+            /* "sklearn/linear_model/cd_fast.pyx":762
  *             if X_mean[ii]:
  *                 center = True
  *                 break             # <<<<<<<<<<<<<<
  * 
  *         for ii in range(n_features):
  */
-            goto __pyx_L7_break;
+            goto __pyx_L8_break;
           }
         }
-        __pyx_L7_break:;
+        __pyx_L8_break:;
 
-        /* "sklearn/linear_model/cd_fast.pyx":756
+        /* "sklearn/linear_model/cd_fast.pyx":764
  *                 break
  * 
  *         for ii in range(n_features):             # <<<<<<<<<<<<<<
  *             X_mean_ii = X_mean[ii]
  *             endptr = X_indptr[ii + 1]
  */
-        __pyx_t_17 = __pyx_v_n_features;
-        for (__pyx_t_18 = 0; __pyx_t_18 < __pyx_t_17; __pyx_t_18+=1) {
-          __pyx_v_ii = __pyx_t_18;
+        __pyx_t_18 = __pyx_v_n_features;
+        for (__pyx_t_19 = 0; __pyx_t_19 < __pyx_t_18; __pyx_t_19+=1) {
+          __pyx_v_ii = __pyx_t_19;
 
-          /* "sklearn/linear_model/cd_fast.pyx":757
+          /* "sklearn/linear_model/cd_fast.pyx":765
  * 
  *         for ii in range(n_features):
  *             X_mean_ii = X_mean[ii]             # <<<<<<<<<<<<<<
@@ -7208,7 +7307,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
           __pyx_t_21 = __pyx_v_ii;
           __pyx_v_X_mean_ii = (*((double *) ( /* dim=0 */ (__pyx_v_X_mean.data + __pyx_t_21 * __pyx_v_X_mean.strides[0]) )));
 
-          /* "sklearn/linear_model/cd_fast.pyx":758
+          /* "sklearn/linear_model/cd_fast.pyx":766
  *         for ii in range(n_features):
  *             X_mean_ii = X_mean[ii]
  *             endptr = X_indptr[ii + 1]             # <<<<<<<<<<<<<<
@@ -7218,7 +7317,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
           __pyx_t_22 = (__pyx_v_ii + 1);
           __pyx_v_endptr = (*((int *) ( /* dim=0 */ (__pyx_v_X_indptr.data + __pyx_t_22 * __pyx_v_X_indptr.strides[0]) )));
 
-          /* "sklearn/linear_model/cd_fast.pyx":759
+          /* "sklearn/linear_model/cd_fast.pyx":767
  *             X_mean_ii = X_mean[ii]
  *             endptr = X_indptr[ii + 1]
  *             normalize_sum = 0.0             # <<<<<<<<<<<<<<
@@ -7227,7 +7326,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
           __pyx_v_normalize_sum = 0.0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":760
+          /* "sklearn/linear_model/cd_fast.pyx":768
  *             endptr = X_indptr[ii + 1]
  *             normalize_sum = 0.0
  *             w_ii = w[ii]             # <<<<<<<<<<<<<<
@@ -7237,7 +7336,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
           __pyx_t_23 = __pyx_v_ii;
           __pyx_v_w_ii = (*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_23 * __pyx_v_w.strides[0]) )));
 
-          /* "sklearn/linear_model/cd_fast.pyx":762
+          /* "sklearn/linear_model/cd_fast.pyx":770
  *             w_ii = w[ii]
  * 
  *             for jj in range(startptr, endptr):             # <<<<<<<<<<<<<<
@@ -7248,7 +7347,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
           for (__pyx_t_25 = __pyx_v_startptr; __pyx_t_25 < __pyx_t_24; __pyx_t_25+=1) {
             __pyx_v_jj = __pyx_t_25;
 
-            /* "sklearn/linear_model/cd_fast.pyx":763
+            /* "sklearn/linear_model/cd_fast.pyx":771
  * 
  *             for jj in range(startptr, endptr):
  *                 normalize_sum += (X_data[jj] - X_mean_ii) ** 2             # <<<<<<<<<<<<<<
@@ -7258,7 +7357,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
             __pyx_t_26 = __pyx_v_jj;
             __pyx_v_normalize_sum = (__pyx_v_normalize_sum + pow(((*((double *) ( /* dim=0 */ (__pyx_v_X_data.data + __pyx_t_26 * __pyx_v_X_data.strides[0]) ))) - __pyx_v_X_mean_ii), 2.0));
 
-            /* "sklearn/linear_model/cd_fast.pyx":764
+            /* "sklearn/linear_model/cd_fast.pyx":772
  *             for jj in range(startptr, endptr):
  *                 normalize_sum += (X_data[jj] - X_mean_ii) ** 2
  *                 R[X_indices[jj]] -= X_data[jj] * w_ii             # <<<<<<<<<<<<<<
@@ -7271,7 +7370,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
             *((double *) ( /* dim=0 */ (__pyx_v_R.data + __pyx_t_29 * __pyx_v_R.strides[0]) )) -= ((*((double *) ( /* dim=0 */ (__pyx_v_X_data.data + __pyx_t_27 * __pyx_v_X_data.strides[0]) ))) * __pyx_v_w_ii);
           }
 
-          /* "sklearn/linear_model/cd_fast.pyx":765
+          /* "sklearn/linear_model/cd_fast.pyx":773
  *                 normalize_sum += (X_data[jj] - X_mean_ii) ** 2
  *                 R[X_indices[jj]] -= X_data[jj] * w_ii
  *             norm_cols_X[ii] = normalize_sum + \             # <<<<<<<<<<<<<<
@@ -7281,17 +7380,17 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
           __pyx_t_24 = __pyx_v_ii;
           *((double *) ( /* dim=0 */ (__pyx_v_norm_cols_X.data + __pyx_t_24 * __pyx_v_norm_cols_X.strides[0]) )) = (__pyx_v_normalize_sum + (((__pyx_v_n_samples - __pyx_v_endptr) + __pyx_v_startptr) * pow(__pyx_v_X_mean_ii, 2.0)));
 
-          /* "sklearn/linear_model/cd_fast.pyx":768
+          /* "sklearn/linear_model/cd_fast.pyx":776
  *                 (n_samples - endptr + startptr) * X_mean_ii ** 2
  * 
  *             if center:             # <<<<<<<<<<<<<<
  *                 for jj in range(n_samples):
  *                     R[jj] += X_mean_ii * w_ii
  */
-          __pyx_t_20 = (__pyx_v_center != 0);
-          if (__pyx_t_20) {
+          __pyx_t_17 = (__pyx_v_center != 0);
+          if (__pyx_t_17) {
 
-            /* "sklearn/linear_model/cd_fast.pyx":769
+            /* "sklearn/linear_model/cd_fast.pyx":777
  * 
  *             if center:
  *                 for jj in range(n_samples):             # <<<<<<<<<<<<<<
@@ -7302,7 +7401,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
             for (__pyx_t_30 = 0; __pyx_t_30 < __pyx_t_25; __pyx_t_30+=1) {
               __pyx_v_jj = __pyx_t_30;
 
-              /* "sklearn/linear_model/cd_fast.pyx":770
+              /* "sklearn/linear_model/cd_fast.pyx":778
  *             if center:
  *                 for jj in range(n_samples):
  *                     R[jj] += X_mean_ii * w_ii             # <<<<<<<<<<<<<<
@@ -7312,11 +7411,11 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
               __pyx_t_31 = __pyx_v_jj;
               *((double *) ( /* dim=0 */ (__pyx_v_R.data + __pyx_t_31 * __pyx_v_R.strides[0]) )) += (__pyx_v_X_mean_ii * __pyx_v_w_ii);
             }
-            goto __pyx_L13;
+            goto __pyx_L14;
           }
-          __pyx_L13:;
+          __pyx_L14:;
 
-          /* "sklearn/linear_model/cd_fast.pyx":771
+          /* "sklearn/linear_model/cd_fast.pyx":779
  *                 for jj in range(n_samples):
  *                     R[jj] += X_mean_ii * w_ii
  *             startptr = endptr             # <<<<<<<<<<<<<<
@@ -7326,18 +7425,18 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
           __pyx_v_startptr = __pyx_v_endptr;
         }
 
-        /* "sklearn/linear_model/cd_fast.pyx":774
+        /* "sklearn/linear_model/cd_fast.pyx":782
  * 
  *         # Re = R,  Rc = - np.dot(X, wc) = 0 (already initialized)
  *         for jj in range(n_samples):             # <<<<<<<<<<<<<<
  *             Re[jj] = R[jj]
  *         for ii in range(n_features):
  */
-        __pyx_t_17 = __pyx_v_n_samples;
-        for (__pyx_t_18 = 0; __pyx_t_18 < __pyx_t_17; __pyx_t_18+=1) {
-          __pyx_v_jj = __pyx_t_18;
+        __pyx_t_18 = __pyx_v_n_samples;
+        for (__pyx_t_19 = 0; __pyx_t_19 < __pyx_t_18; __pyx_t_19+=1) {
+          __pyx_v_jj = __pyx_t_19;
 
-          /* "sklearn/linear_model/cd_fast.pyx":775
+          /* "sklearn/linear_model/cd_fast.pyx":783
  *         # Re = R,  Rc = - np.dot(X, wc) = 0 (already initialized)
  *         for jj in range(n_samples):
  *             Re[jj] = R[jj]             # <<<<<<<<<<<<<<
@@ -7349,18 +7448,18 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
           *((double *) ( /* dim=0 */ (__pyx_v_Re.data + __pyx_t_30 * __pyx_v_Re.strides[0]) )) = (*((double *) ( /* dim=0 */ (__pyx_v_R.data + __pyx_t_25 * __pyx_v_R.strides[0]) )));
         }
 
-        /* "sklearn/linear_model/cd_fast.pyx":776
+        /* "sklearn/linear_model/cd_fast.pyx":784
  *         for jj in range(n_samples):
  *             Re[jj] = R[jj]
  *         for ii in range(n_features):             # <<<<<<<<<<<<<<
  *             we[ii] = w[ii]
  * 
  */
-        __pyx_t_17 = __pyx_v_n_features;
-        for (__pyx_t_18 = 0; __pyx_t_18 < __pyx_t_17; __pyx_t_18+=1) {
-          __pyx_v_ii = __pyx_t_18;
+        __pyx_t_18 = __pyx_v_n_features;
+        for (__pyx_t_19 = 0; __pyx_t_19 < __pyx_t_18; __pyx_t_19+=1) {
+          __pyx_v_ii = __pyx_t_19;
 
-          /* "sklearn/linear_model/cd_fast.pyx":777
+          /* "sklearn/linear_model/cd_fast.pyx":785
  *             Re[jj] = R[jj]
  *         for ii in range(n_features):
  *             we[ii] = w[ii]             # <<<<<<<<<<<<<<
@@ -7372,18 +7471,18 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
           *((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_33 * __pyx_v_we.strides[0]) )) = (*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_32 * __pyx_v_w.strides[0]) )));
         }
 
-        /* "sklearn/linear_model/cd_fast.pyx":780
+        /* "sklearn/linear_model/cd_fast.pyx":788
  * 
  *         # tol *= np.dot(y, y)
- *         tol *= ddot(n_samples, <DOUBLE*>&y[0], 1, <DOUBLE*>&y[0], 1)             # <<<<<<<<<<<<<<
+ *         tol *= fmax(1e-15, ddot(n_samples, <DOUBLE*>&y[0], 1, <DOUBLE*>&y[0], 1))             # <<<<<<<<<<<<<<
  * 
  *         # main loop
  */
         __pyx_t_15 = 0;
         __pyx_t_34 = 0;
-        __pyx_v_tol = (__pyx_v_tol * cblas_ddot(__pyx_v_n_samples, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_y.data + __pyx_t_15 * __pyx_v_y.strides[0]) ))))), 1, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_y.data + __pyx_t_34 * __pyx_v_y.strides[0]) ))))), 1));
+        __pyx_v_tol = (__pyx_v_tol * __pyx_f_7sklearn_12linear_model_7cd_fast_fmax(1e-15, cblas_ddot(__pyx_v_n_samples, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_y.data + __pyx_t_15 * __pyx_v_y.strides[0]) ))))), 1, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_y.data + __pyx_t_34 * __pyx_v_y.strides[0]) ))))), 1)));
 
-        /* "sklearn/linear_model/cd_fast.pyx":783
+        /* "sklearn/linear_model/cd_fast.pyx":791
  * 
  *         # main loop
  *         for n_iter in range(max_iter):             # <<<<<<<<<<<<<<
@@ -7391,10 +7490,10 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  *             ###################
  */
         __pyx_t_35 = __pyx_v_max_iter;
-        for (__pyx_t_17 = 0; __pyx_t_17 < __pyx_t_35; __pyx_t_17+=1) {
-          __pyx_v_n_iter = __pyx_t_17;
+        for (__pyx_t_18 = 0; __pyx_t_18 < __pyx_t_35; __pyx_t_18+=1) {
+          __pyx_v_n_iter = __pyx_t_18;
 
-          /* "sklearn/linear_model/cd_fast.pyx":790
+          /* "sklearn/linear_model/cd_fast.pyx":798
  *             #  and proximal coordinate descent. arXiv preprint arXiv:1312.5799.
  * 
  *             w_max = 0.0             # <<<<<<<<<<<<<<
@@ -7403,7 +7502,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
           __pyx_v_w_max = 0.0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":791
+          /* "sklearn/linear_model/cd_fast.pyx":799
  * 
  *             w_max = 0.0
  *             d_w_max = 0.0             # <<<<<<<<<<<<<<
@@ -7412,28 +7511,28 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
           __pyx_v_d_w_max = 0.0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":793
+          /* "sklearn/linear_model/cd_fast.pyx":801
  *             d_w_max = 0.0
  * 
  *             for f_iter in range(n_features):  # Loop over coordinates             # <<<<<<<<<<<<<<
  *                 if random:
  *                     ii = rand_int(n_features, rand_r_state)
  */
-          __pyx_t_18 = __pyx_v_n_features;
-          for (__pyx_t_36 = 0; __pyx_t_36 < __pyx_t_18; __pyx_t_36+=1) {
+          __pyx_t_19 = __pyx_v_n_features;
+          for (__pyx_t_36 = 0; __pyx_t_36 < __pyx_t_19; __pyx_t_36+=1) {
             __pyx_v_f_iter = __pyx_t_36;
 
-            /* "sklearn/linear_model/cd_fast.pyx":794
+            /* "sklearn/linear_model/cd_fast.pyx":802
  * 
  *             for f_iter in range(n_features):  # Loop over coordinates
  *                 if random:             # <<<<<<<<<<<<<<
  *                     ii = rand_int(n_features, rand_r_state)
  *                 else:
  */
-            __pyx_t_20 = (__pyx_v_random != 0);
-            if (__pyx_t_20) {
+            __pyx_t_17 = (__pyx_v_random != 0);
+            if (__pyx_t_17) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":795
+              /* "sklearn/linear_model/cd_fast.pyx":803
  *             for f_iter in range(n_features):  # Loop over coordinates
  *                 if random:
  *                     ii = rand_int(n_features, rand_r_state)             # <<<<<<<<<<<<<<
@@ -7441,11 +7540,11 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  *                     ii = f_iter
  */
               __pyx_v_ii = __pyx_f_7sklearn_12linear_model_7cd_fast_rand_int(__pyx_v_n_features, __pyx_v_rand_r_state);
-              goto __pyx_L24;
+              goto __pyx_L25;
             }
             /*else*/ {
 
-              /* "sklearn/linear_model/cd_fast.pyx":797
+              /* "sklearn/linear_model/cd_fast.pyx":805
  *                     ii = rand_int(n_features, rand_r_state)
  *                 else:
  *                     ii = f_iter             # <<<<<<<<<<<<<<
@@ -7454,9 +7553,9 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
               __pyx_v_ii = __pyx_v_f_iter;
             }
-            __pyx_L24:;
+            __pyx_L25:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":799
+            /* "sklearn/linear_model/cd_fast.pyx":807
  *                     ii = f_iter
  * 
  *                 if norm_cols_X[ii] == 0.0:             # <<<<<<<<<<<<<<
@@ -7464,20 +7563,20 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  * 
  */
             __pyx_t_37 = __pyx_v_ii;
-            __pyx_t_20 = (((*((double *) ( /* dim=0 */ (__pyx_v_norm_cols_X.data + __pyx_t_37 * __pyx_v_norm_cols_X.strides[0]) ))) == 0.0) != 0);
-            if (__pyx_t_20) {
+            __pyx_t_17 = (((*((double *) ( /* dim=0 */ (__pyx_v_norm_cols_X.data + __pyx_t_37 * __pyx_v_norm_cols_X.strides[0]) ))) == 0.0) != 0);
+            if (__pyx_t_17) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":800
+              /* "sklearn/linear_model/cd_fast.pyx":808
  * 
  *                 if norm_cols_X[ii] == 0.0:
  *                     continue             # <<<<<<<<<<<<<<
  * 
  *                 startptr = X_indptr[ii]
  */
-              goto __pyx_L22_continue;
+              goto __pyx_L23_continue;
             }
 
-            /* "sklearn/linear_model/cd_fast.pyx":802
+            /* "sklearn/linear_model/cd_fast.pyx":810
  *                     continue
  * 
  *                 startptr = X_indptr[ii]             # <<<<<<<<<<<<<<
@@ -7487,7 +7586,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
             __pyx_t_38 = __pyx_v_ii;
             __pyx_v_startptr = (*((int *) ( /* dim=0 */ (__pyx_v_X_indptr.data + __pyx_t_38 * __pyx_v_X_indptr.strides[0]) )));
 
-            /* "sklearn/linear_model/cd_fast.pyx":803
+            /* "sklearn/linear_model/cd_fast.pyx":811
  * 
  *                 startptr = X_indptr[ii]
  *                 endptr = X_indptr[ii + 1]             # <<<<<<<<<<<<<<
@@ -7497,7 +7596,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
             __pyx_t_39 = (__pyx_v_ii + 1);
             __pyx_v_endptr = (*((int *) ( /* dim=0 */ (__pyx_v_X_indptr.data + __pyx_t_39 * __pyx_v_X_indptr.strides[0]) )));
 
-            /* "sklearn/linear_model/cd_fast.pyx":804
+            /* "sklearn/linear_model/cd_fast.pyx":812
  *                 startptr = X_indptr[ii]
  *                 endptr = X_indptr[ii + 1]
  *                 we_ii = we[ii]  # Store previous value             # <<<<<<<<<<<<<<
@@ -7507,7 +7606,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
             __pyx_t_40 = __pyx_v_ii;
             __pyx_v_we_ii = (*((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_40 * __pyx_v_we.strides[0]) )));
 
-            /* "sklearn/linear_model/cd_fast.pyx":805
+            /* "sklearn/linear_model/cd_fast.pyx":813
  *                 endptr = X_indptr[ii + 1]
  *                 we_ii = we[ii]  # Store previous value
  *                 wc_ii = wc[ii]             # <<<<<<<<<<<<<<
@@ -7517,7 +7616,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
             __pyx_t_41 = __pyx_v_ii;
             __pyx_v_wc_ii = (*((double *) ( /* dim=0 */ (__pyx_v_wc.data + __pyx_t_41 * __pyx_v_wc.strides[0]) )));
 
-            /* "sklearn/linear_model/cd_fast.pyx":806
+            /* "sklearn/linear_model/cd_fast.pyx":814
  *                 we_ii = we[ii]  # Store previous value
  *                 wc_ii = wc[ii]
  *                 X_mean_ii = X_mean[ii]             # <<<<<<<<<<<<<<
@@ -7527,7 +7626,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
             __pyx_t_42 = __pyx_v_ii;
             __pyx_v_X_mean_ii = (*((double *) ( /* dim=0 */ (__pyx_v_X_mean.data + __pyx_t_42 * __pyx_v_X_mean.strides[0]) )));
 
-            /* "sklearn/linear_model/cd_fast.pyx":812
+            /* "sklearn/linear_model/cd_fast.pyx":820
  *                 # tmp2 = (X[:,ii]*Rc).sum()
  *                 # tmp = (theta**2) * tmp2 + tmp + norm_cols_X[ii]* theta/theta0 * we_ii
  *                 tmp = 0.0             # <<<<<<<<<<<<<<
@@ -7536,7 +7635,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
             __pyx_v_tmp = 0.0;
 
-            /* "sklearn/linear_model/cd_fast.pyx":813
+            /* "sklearn/linear_model/cd_fast.pyx":821
  *                 # tmp = (theta**2) * tmp2 + tmp + norm_cols_X[ii]* theta/theta0 * we_ii
  *                 tmp = 0.0
  *                 tmp2 = 0.0             # <<<<<<<<<<<<<<
@@ -7545,7 +7644,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
             __pyx_v_tmp2 = 0.0;
 
-            /* "sklearn/linear_model/cd_fast.pyx":814
+            /* "sklearn/linear_model/cd_fast.pyx":822
  *                 tmp = 0.0
  *                 tmp2 = 0.0
  *                 for jj in range(startptr, endptr):             # <<<<<<<<<<<<<<
@@ -7556,7 +7655,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
             for (__pyx_t_44 = __pyx_v_startptr; __pyx_t_44 < __pyx_t_43; __pyx_t_44+=1) {
               __pyx_v_jj = __pyx_t_44;
 
-              /* "sklearn/linear_model/cd_fast.pyx":815
+              /* "sklearn/linear_model/cd_fast.pyx":823
  *                 tmp2 = 0.0
  *                 for jj in range(startptr, endptr):
  *                     tmp += Re[X_indices[jj]] * X_data[jj]             # <<<<<<<<<<<<<<
@@ -7568,7 +7667,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
               __pyx_t_47 = __pyx_v_jj;
               __pyx_v_tmp = (__pyx_v_tmp + ((*((double *) ( /* dim=0 */ (__pyx_v_Re.data + __pyx_t_46 * __pyx_v_Re.strides[0]) ))) * (*((double *) ( /* dim=0 */ (__pyx_v_X_data.data + __pyx_t_47 * __pyx_v_X_data.strides[0]) )))));
 
-              /* "sklearn/linear_model/cd_fast.pyx":816
+              /* "sklearn/linear_model/cd_fast.pyx":824
  *                 for jj in range(startptr, endptr):
  *                     tmp += Re[X_indices[jj]] * X_data[jj]
  *                     tmp2 += Rc[X_indices[jj]] * X_data[jj]             # <<<<<<<<<<<<<<
@@ -7581,17 +7680,17 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
               __pyx_v_tmp2 = (__pyx_v_tmp2 + ((*((double *) ( /* dim=0 */ (__pyx_v_Rc.data + __pyx_t_49 * __pyx_v_Rc.strides[0]) ))) * (*((double *) ( /* dim=0 */ (__pyx_v_X_data.data + __pyx_t_50 * __pyx_v_X_data.strides[0]) )))));
             }
 
-            /* "sklearn/linear_model/cd_fast.pyx":818
+            /* "sklearn/linear_model/cd_fast.pyx":826
  *                     tmp2 += Rc[X_indices[jj]] * X_data[jj]
  * 
  *                 if center:             # <<<<<<<<<<<<<<
  *                     Re_sum = 0.0
  *                     Rc_sum = 0.0
  */
-            __pyx_t_20 = (__pyx_v_center != 0);
-            if (__pyx_t_20) {
+            __pyx_t_17 = (__pyx_v_center != 0);
+            if (__pyx_t_17) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":819
+              /* "sklearn/linear_model/cd_fast.pyx":827
  * 
  *                 if center:
  *                     Re_sum = 0.0             # <<<<<<<<<<<<<<
@@ -7600,7 +7699,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
               __pyx_v_Re_sum = 0.0;
 
-              /* "sklearn/linear_model/cd_fast.pyx":820
+              /* "sklearn/linear_model/cd_fast.pyx":828
  *                 if center:
  *                     Re_sum = 0.0
  *                     Rc_sum = 0.0             # <<<<<<<<<<<<<<
@@ -7609,7 +7708,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
               __pyx_v_Rc_sum = 0.0;
 
-              /* "sklearn/linear_model/cd_fast.pyx":821
+              /* "sklearn/linear_model/cd_fast.pyx":829
  *                     Re_sum = 0.0
  *                     Rc_sum = 0.0
  *                     for jj in range(n_samples):             # <<<<<<<<<<<<<<
@@ -7620,7 +7719,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
               for (__pyx_t_44 = 0; __pyx_t_44 < __pyx_t_43; __pyx_t_44+=1) {
                 __pyx_v_jj = __pyx_t_44;
 
-                /* "sklearn/linear_model/cd_fast.pyx":822
+                /* "sklearn/linear_model/cd_fast.pyx":830
  *                     Rc_sum = 0.0
  *                     for jj in range(n_samples):
  *                         Re_sum += Re[jj]             # <<<<<<<<<<<<<<
@@ -7630,7 +7729,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
                 __pyx_t_51 = __pyx_v_jj;
                 __pyx_v_Re_sum = (__pyx_v_Re_sum + (*((double *) ( /* dim=0 */ (__pyx_v_Re.data + __pyx_t_51 * __pyx_v_Re.strides[0]) ))));
 
-                /* "sklearn/linear_model/cd_fast.pyx":823
+                /* "sklearn/linear_model/cd_fast.pyx":831
  *                     for jj in range(n_samples):
  *                         Re_sum += Re[jj]
  *                         Rc_sum += Rc[jj]             # <<<<<<<<<<<<<<
@@ -7641,7 +7740,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
                 __pyx_v_Rc_sum = (__pyx_v_Rc_sum + (*((double *) ( /* dim=0 */ (__pyx_v_Rc.data + __pyx_t_52 * __pyx_v_Rc.strides[0]) ))));
               }
 
-              /* "sklearn/linear_model/cd_fast.pyx":824
+              /* "sklearn/linear_model/cd_fast.pyx":832
  *                         Re_sum += Re[jj]
  *                         Rc_sum += Rc[jj]
  *                     tmp -= Re_sum * X_mean_ii             # <<<<<<<<<<<<<<
@@ -7650,7 +7749,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
               __pyx_v_tmp = (__pyx_v_tmp - (__pyx_v_Re_sum * __pyx_v_X_mean_ii));
 
-              /* "sklearn/linear_model/cd_fast.pyx":825
+              /* "sklearn/linear_model/cd_fast.pyx":833
  *                         Rc_sum += Rc[jj]
  *                     tmp -= Re_sum * X_mean_ii
  *                     tmp2 -= Rc_sum * X_mean_ii             # <<<<<<<<<<<<<<
@@ -7658,11 +7757,11 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  *                 tmp = (theta**2) * tmp2 + tmp \
  */
               __pyx_v_tmp2 = (__pyx_v_tmp2 - (__pyx_v_Rc_sum * __pyx_v_X_mean_ii));
-              goto __pyx_L28;
+              goto __pyx_L29;
             }
-            __pyx_L28:;
+            __pyx_L29:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":828
+            /* "sklearn/linear_model/cd_fast.pyx":836
  * 
  *                 tmp = (theta**2) * tmp2 + tmp \
  *                       + norm_cols_X[ii] * theta / theta0 * we_ii             # <<<<<<<<<<<<<<
@@ -7672,7 +7771,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
             __pyx_t_43 = __pyx_v_ii;
             __pyx_v_tmp = (((pow(__pyx_v_theta, 2.0) * __pyx_v_tmp2) + __pyx_v_tmp) + ((((*((double *) ( /* dim=0 */ (__pyx_v_norm_cols_X.data + __pyx_t_43 * __pyx_v_norm_cols_X.strides[0]) ))) * __pyx_v_theta) / __pyx_v_theta0) * __pyx_v_we_ii));
 
-            /* "sklearn/linear_model/cd_fast.pyx":831
+            /* "sklearn/linear_model/cd_fast.pyx":839
  * 
  *                 # soft thresholding
  *                 if positive and tmp < 0.0:             # <<<<<<<<<<<<<<
@@ -7681,18 +7780,18 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
             __pyx_t_53 = (__pyx_v_positive != 0);
             if (__pyx_t_53) {
-              goto __pyx_L33_next_and;
+              goto __pyx_L34_next_and;
             } else {
-              __pyx_t_20 = __pyx_t_53;
-              goto __pyx_L32_bool_binop_done;
+              __pyx_t_17 = __pyx_t_53;
+              goto __pyx_L33_bool_binop_done;
             }
-            __pyx_L33_next_and:;
+            __pyx_L34_next_and:;
             __pyx_t_53 = ((__pyx_v_tmp < 0.0) != 0);
-            __pyx_t_20 = __pyx_t_53;
-            __pyx_L32_bool_binop_done:;
-            if (__pyx_t_20) {
+            __pyx_t_17 = __pyx_t_53;
+            __pyx_L33_bool_binop_done:;
+            if (__pyx_t_17) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":832
+              /* "sklearn/linear_model/cd_fast.pyx":840
  *                 # soft thresholding
  *                 if positive and tmp < 0.0:
  *                     we[ii] = 0.0             # <<<<<<<<<<<<<<
@@ -7701,11 +7800,11 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
               __pyx_t_44 = __pyx_v_ii;
               *((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_44 * __pyx_v_we.strides[0]) )) = 0.0;
-              goto __pyx_L31;
+              goto __pyx_L32;
             }
             /*else*/ {
 
-              /* "sklearn/linear_model/cd_fast.pyx":835
+              /* "sklearn/linear_model/cd_fast.pyx":843
  *                 else:
  *                     we[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
  *                             / (norm_cols_X[ii] * theta / theta0 + beta)             # <<<<<<<<<<<<<<
@@ -7714,7 +7813,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
               __pyx_t_54 = __pyx_v_ii;
 
-              /* "sklearn/linear_model/cd_fast.pyx":834
+              /* "sklearn/linear_model/cd_fast.pyx":842
  *                     we[ii] = 0.0
  *                 else:
  *                     we[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \             # <<<<<<<<<<<<<<
@@ -7724,9 +7823,9 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
               __pyx_t_55 = __pyx_v_ii;
               *((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_55 * __pyx_v_we.strides[0]) )) = ((__pyx_f_7sklearn_12linear_model_7cd_fast_fsign(__pyx_v_tmp) * __pyx_f_7sklearn_12linear_model_7cd_fast_fmax((fabs(__pyx_v_tmp) - __pyx_v_alpha), 0.0)) / ((((*((double *) ( /* dim=0 */ (__pyx_v_norm_cols_X.data + __pyx_t_54 * __pyx_v_norm_cols_X.strides[0]) ))) * __pyx_v_theta) / __pyx_v_theta0) + __pyx_v_beta));
             }
-            __pyx_L31:;
+            __pyx_L32:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":837
+            /* "sklearn/linear_model/cd_fast.pyx":845
  *                             / (norm_cols_X[ii] * theta / theta0 + beta)
  * 
  *                 if we[ii] != we_ii:             # <<<<<<<<<<<<<<
@@ -7734,10 +7833,10 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  *                     d_w_ii = we[ii] - we_ii
  */
             __pyx_t_56 = __pyx_v_ii;
-            __pyx_t_20 = (((*((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_56 * __pyx_v_we.strides[0]) ))) != __pyx_v_we_ii) != 0);
-            if (__pyx_t_20) {
+            __pyx_t_17 = (((*((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_56 * __pyx_v_we.strides[0]) ))) != __pyx_v_we_ii) != 0);
+            if (__pyx_t_17) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":839
+              /* "sklearn/linear_model/cd_fast.pyx":847
  *                 if we[ii] != we_ii:
  *                     # Re -=  (we[ii]-we_ii) * X[:,ii] # Update exploration residual
  *                     d_w_ii = we[ii] - we_ii             # <<<<<<<<<<<<<<
@@ -7747,7 +7846,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
               __pyx_t_57 = __pyx_v_ii;
               __pyx_v_d_w_ii = ((*((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_57 * __pyx_v_we.strides[0]) ))) - __pyx_v_we_ii);
 
-              /* "sklearn/linear_model/cd_fast.pyx":840
+              /* "sklearn/linear_model/cd_fast.pyx":848
  *                     # Re -=  (we[ii]-we_ii) * X[:,ii] # Update exploration residual
  *                     d_w_ii = we[ii] - we_ii
  *                     for jj in range(startptr, endptr):             # <<<<<<<<<<<<<<
@@ -7758,7 +7857,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
               for (__pyx_t_59 = __pyx_v_startptr; __pyx_t_59 < __pyx_t_58; __pyx_t_59+=1) {
                 __pyx_v_jj = __pyx_t_59;
 
-                /* "sklearn/linear_model/cd_fast.pyx":841
+                /* "sklearn/linear_model/cd_fast.pyx":849
  *                     d_w_ii = we[ii] - we_ii
  *                     for jj in range(startptr, endptr):
  *                         Re[X_indices[jj]] -= X_data[jj] * d_w_ii             # <<<<<<<<<<<<<<
@@ -7771,17 +7870,17 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
                 *((double *) ( /* dim=0 */ (__pyx_v_Re.data + __pyx_t_62 * __pyx_v_Re.strides[0]) )) -= ((*((double *) ( /* dim=0 */ (__pyx_v_X_data.data + __pyx_t_60 * __pyx_v_X_data.strides[0]) ))) * __pyx_v_d_w_ii);
               }
 
-              /* "sklearn/linear_model/cd_fast.pyx":843
+              /* "sklearn/linear_model/cd_fast.pyx":851
  *                         Re[X_indices[jj]] -= X_data[jj] * d_w_ii
  * 
  *                     if center:             # <<<<<<<<<<<<<<
  *                         for jj in range(n_samples):
  *                             Re[jj] += X_mean_ii * d_w_ii
  */
-              __pyx_t_20 = (__pyx_v_center != 0);
-              if (__pyx_t_20) {
+              __pyx_t_17 = (__pyx_v_center != 0);
+              if (__pyx_t_17) {
 
-                /* "sklearn/linear_model/cd_fast.pyx":844
+                /* "sklearn/linear_model/cd_fast.pyx":852
  * 
  *                     if center:
  *                         for jj in range(n_samples):             # <<<<<<<<<<<<<<
@@ -7792,7 +7891,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
                 for (__pyx_t_59 = 0; __pyx_t_59 < __pyx_t_58; __pyx_t_59+=1) {
                   __pyx_v_jj = __pyx_t_59;
 
-                  /* "sklearn/linear_model/cd_fast.pyx":845
+                  /* "sklearn/linear_model/cd_fast.pyx":853
  *                     if center:
  *                         for jj in range(n_samples):
  *                             Re[jj] += X_mean_ii * d_w_ii             # <<<<<<<<<<<<<<
@@ -7802,11 +7901,11 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
                   __pyx_t_63 = __pyx_v_jj;
                   *((double *) ( /* dim=0 */ (__pyx_v_Re.data + __pyx_t_63 * __pyx_v_Re.strides[0]) )) += (__pyx_v_X_mean_ii * __pyx_v_d_w_ii);
                 }
-                goto __pyx_L37;
+                goto __pyx_L38;
               }
-              __pyx_L37:;
+              __pyx_L38:;
 
-              /* "sklearn/linear_model/cd_fast.pyx":848
+              /* "sklearn/linear_model/cd_fast.pyx":856
  * 
  *                     # Rc -=  (wc[ii]-wc_ii) * X[:,ii] # Update correction residual
  *                     d_w_ii = -(we[ii] - we_ii) * (1 - theta / theta0) / (theta**2)             # <<<<<<<<<<<<<<
@@ -7816,7 +7915,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
               __pyx_t_58 = __pyx_v_ii;
               __pyx_v_d_w_ii = (((-((*((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_58 * __pyx_v_we.strides[0]) ))) - __pyx_v_we_ii)) * (1.0 - (__pyx_v_theta / __pyx_v_theta0))) / pow(__pyx_v_theta, 2.0));
 
-              /* "sklearn/linear_model/cd_fast.pyx":849
+              /* "sklearn/linear_model/cd_fast.pyx":857
  *                     # Rc -=  (wc[ii]-wc_ii) * X[:,ii] # Update correction residual
  *                     d_w_ii = -(we[ii] - we_ii) * (1 - theta / theta0) / (theta**2)
  *                     wc[ii] += d_w_ii             # <<<<<<<<<<<<<<
@@ -7826,7 +7925,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
               __pyx_t_59 = __pyx_v_ii;
               *((double *) ( /* dim=0 */ (__pyx_v_wc.data + __pyx_t_59 * __pyx_v_wc.strides[0]) )) += __pyx_v_d_w_ii;
 
-              /* "sklearn/linear_model/cd_fast.pyx":850
+              /* "sklearn/linear_model/cd_fast.pyx":858
  *                     d_w_ii = -(we[ii] - we_ii) * (1 - theta / theta0) / (theta**2)
  *                     wc[ii] += d_w_ii
  *                     for jj in range(startptr, endptr):             # <<<<<<<<<<<<<<
@@ -7837,7 +7936,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
               for (__pyx_t_65 = __pyx_v_startptr; __pyx_t_65 < __pyx_t_64; __pyx_t_65+=1) {
                 __pyx_v_jj = __pyx_t_65;
 
-                /* "sklearn/linear_model/cd_fast.pyx":851
+                /* "sklearn/linear_model/cd_fast.pyx":859
  *                     wc[ii] += d_w_ii
  *                     for jj in range(startptr, endptr):
  *                         Rc[X_indices[jj]] -= X_data[jj] * d_w_ii             # <<<<<<<<<<<<<<
@@ -7850,17 +7949,17 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
                 *((double *) ( /* dim=0 */ (__pyx_v_Rc.data + __pyx_t_68 * __pyx_v_Rc.strides[0]) )) -= ((*((double *) ( /* dim=0 */ (__pyx_v_X_data.data + __pyx_t_66 * __pyx_v_X_data.strides[0]) ))) * __pyx_v_d_w_ii);
               }
 
-              /* "sklearn/linear_model/cd_fast.pyx":853
+              /* "sklearn/linear_model/cd_fast.pyx":861
  *                         Rc[X_indices[jj]] -= X_data[jj] * d_w_ii
  * 
  *                     if center:             # <<<<<<<<<<<<<<
  *                         for jj in range(n_samples):
  *                             Rc[jj] += X_mean_ii * d_w_ii
  */
-              __pyx_t_20 = (__pyx_v_center != 0);
-              if (__pyx_t_20) {
+              __pyx_t_17 = (__pyx_v_center != 0);
+              if (__pyx_t_17) {
 
-                /* "sklearn/linear_model/cd_fast.pyx":854
+                /* "sklearn/linear_model/cd_fast.pyx":862
  * 
  *                     if center:
  *                         for jj in range(n_samples):             # <<<<<<<<<<<<<<
@@ -7871,7 +7970,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
                 for (__pyx_t_65 = 0; __pyx_t_65 < __pyx_t_64; __pyx_t_65+=1) {
                   __pyx_v_jj = __pyx_t_65;
 
-                  /* "sklearn/linear_model/cd_fast.pyx":855
+                  /* "sklearn/linear_model/cd_fast.pyx":863
  *                     if center:
  *                         for jj in range(n_samples):
  *                             Rc[jj] += X_mean_ii * d_w_ii             # <<<<<<<<<<<<<<
@@ -7881,14 +7980,14 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
                   __pyx_t_69 = __pyx_v_jj;
                   *((double *) ( /* dim=0 */ (__pyx_v_Rc.data + __pyx_t_69 * __pyx_v_Rc.strides[0]) )) += (__pyx_v_X_mean_ii * __pyx_v_d_w_ii);
                 }
-                goto __pyx_L42;
+                goto __pyx_L43;
               }
-              __pyx_L42:;
-              goto __pyx_L34;
+              __pyx_L43:;
+              goto __pyx_L35;
             }
-            __pyx_L34:;
+            __pyx_L35:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":858
+            /* "sklearn/linear_model/cd_fast.pyx":866
  * 
  *                 # update the test for restarting when minimizing a strongly convex functions
  *                 eta = 1. / n_features             # <<<<<<<<<<<<<<
@@ -7897,7 +7996,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
             __pyx_v_eta = (1. / __pyx_v_n_features);
 
-            /* "sklearn/linear_model/cd_fast.pyx":863
+            /* "sklearn/linear_model/cd_fast.pyx":871
  *                 #  Adaptation of Coordinate Frequencies. arXiv preprint arXiv:1401.3737.
  *                 test_restart = (1-eta) * test_restart - eta * \
  *                                (we[ii]-we_ii)*( we[ii] - (theta**2 * wc_ii + we_ii) )             # <<<<<<<<<<<<<<
@@ -7906,7 +8005,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
             __pyx_t_64 = __pyx_v_ii;
 
-            /* "sklearn/linear_model/cd_fast.pyx":862
+            /* "sklearn/linear_model/cd_fast.pyx":870
  *                 #  Glasmachers, T., & Dogan, . (2014). Coordinate Descent with Online
  *                 #  Adaptation of Coordinate Frequencies. arXiv preprint arXiv:1401.3737.
  *                 test_restart = (1-eta) * test_restart - eta * \             # <<<<<<<<<<<<<<
@@ -7915,7 +8014,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
             __pyx_t_65 = __pyx_v_ii;
 
-            /* "sklearn/linear_model/cd_fast.pyx":863
+            /* "sklearn/linear_model/cd_fast.pyx":871
  *                 #  Adaptation of Coordinate Frequencies. arXiv preprint arXiv:1401.3737.
  *                 test_restart = (1-eta) * test_restart - eta * \
  *                                (we[ii]-we_ii)*( we[ii] - (theta**2 * wc_ii + we_ii) )             # <<<<<<<<<<<<<<
@@ -7924,7 +8023,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
             __pyx_v_test_restart = (((1.0 - __pyx_v_eta) * __pyx_v_test_restart) - ((__pyx_v_eta * ((*((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_64 * __pyx_v_we.strides[0]) ))) - __pyx_v_we_ii)) * ((*((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_65 * __pyx_v_we.strides[0]) ))) - ((pow(__pyx_v_theta, 2.0) * __pyx_v_wc_ii) + __pyx_v_we_ii))));
 
-            /* "sklearn/linear_model/cd_fast.pyx":867
+            /* "sklearn/linear_model/cd_fast.pyx":875
  * 
  *                 # update the maximum absolute coefficient update
  *                 d_w_ii = fabs((theta ** 2) * (wc[ii] - wc_ii) + (we[ii] - we_ii))             # <<<<<<<<<<<<<<
@@ -7935,17 +8034,17 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
             __pyx_t_71 = __pyx_v_ii;
             __pyx_v_d_w_ii = fabs(((pow(__pyx_v_theta, 2.0) * ((*((double *) ( /* dim=0 */ (__pyx_v_wc.data + __pyx_t_70 * __pyx_v_wc.strides[0]) ))) - __pyx_v_wc_ii)) + ((*((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_71 * __pyx_v_we.strides[0]) ))) - __pyx_v_we_ii)));
 
-            /* "sklearn/linear_model/cd_fast.pyx":868
+            /* "sklearn/linear_model/cd_fast.pyx":876
  *                 # update the maximum absolute coefficient update
  *                 d_w_ii = fabs((theta ** 2) * (wc[ii] - wc_ii) + (we[ii] - we_ii))
  *                 if d_w_ii > d_w_max:             # <<<<<<<<<<<<<<
  *                     d_w_max = d_w_ii
  * 
  */
-            __pyx_t_20 = ((__pyx_v_d_w_ii > __pyx_v_d_w_max) != 0);
-            if (__pyx_t_20) {
+            __pyx_t_17 = ((__pyx_v_d_w_ii > __pyx_v_d_w_max) != 0);
+            if (__pyx_t_17) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":869
+              /* "sklearn/linear_model/cd_fast.pyx":877
  *                 d_w_ii = fabs((theta ** 2) * (wc[ii] - wc_ii) + (we[ii] - we_ii))
  *                 if d_w_ii > d_w_max:
  *                     d_w_max = d_w_ii             # <<<<<<<<<<<<<<
@@ -7953,11 +8052,11 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  *                 # update theta
  */
               __pyx_v_d_w_max = __pyx_v_d_w_ii;
-              goto __pyx_L45;
+              goto __pyx_L46;
             }
-            __pyx_L45:;
+            __pyx_L46:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":872
+            /* "sklearn/linear_model/cd_fast.pyx":880
  * 
  *                 # update theta
  *                 theta = 0.5 * (sqrt((theta ** 4) + 4. * (theta ** 2)) - theta ** 2)             # <<<<<<<<<<<<<<
@@ -7965,10 +8064,10 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  *             #######################
  */
             __pyx_v_theta = (0.5 * (sqrt((pow(__pyx_v_theta, 4.0) + (4. * pow(__pyx_v_theta, 2.0)))) - pow(__pyx_v_theta, 2.0)));
-            __pyx_L22_continue:;
+            __pyx_L23_continue:;
           }
 
-          /* "sklearn/linear_model/cd_fast.pyx":877
+          /* "sklearn/linear_model/cd_fast.pyx":885
  *             # Tricks to make accelerated coordinate descent efficient for the lasso
  * 
  *             tmp = (theta ** 2) / (1 - theta)             # <<<<<<<<<<<<<<
@@ -7977,18 +8076,18 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
           __pyx_v_tmp = (pow(__pyx_v_theta, 2.0) / (1.0 - __pyx_v_theta));
 
-          /* "sklearn/linear_model/cd_fast.pyx":878
+          /* "sklearn/linear_model/cd_fast.pyx":886
  * 
  *             tmp = (theta ** 2) / (1 - theta)
  *             for ii in range(n_features):             # <<<<<<<<<<<<<<
  *                 w[ii] = tmp * wc[ii] + we[ii]
  *                 if fabs(w[ii]) > w_max:
  */
-          __pyx_t_18 = __pyx_v_n_features;
-          for (__pyx_t_36 = 0; __pyx_t_36 < __pyx_t_18; __pyx_t_36+=1) {
+          __pyx_t_19 = __pyx_v_n_features;
+          for (__pyx_t_36 = 0; __pyx_t_36 < __pyx_t_19; __pyx_t_36+=1) {
             __pyx_v_ii = __pyx_t_36;
 
-            /* "sklearn/linear_model/cd_fast.pyx":879
+            /* "sklearn/linear_model/cd_fast.pyx":887
  *             tmp = (theta ** 2) / (1 - theta)
  *             for ii in range(n_features):
  *                 w[ii] = tmp * wc[ii] + we[ii]             # <<<<<<<<<<<<<<
@@ -8000,7 +8099,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
             __pyx_t_74 = __pyx_v_ii;
             *((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_74 * __pyx_v_w.strides[0]) )) = ((__pyx_v_tmp * (*((double *) ( /* dim=0 */ (__pyx_v_wc.data + __pyx_t_72 * __pyx_v_wc.strides[0]) )))) + (*((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_73 * __pyx_v_we.strides[0]) ))));
 
-            /* "sklearn/linear_model/cd_fast.pyx":880
+            /* "sklearn/linear_model/cd_fast.pyx":888
  *             for ii in range(n_features):
  *                 w[ii] = tmp * wc[ii] + we[ii]
  *                 if fabs(w[ii]) > w_max:             # <<<<<<<<<<<<<<
@@ -8008,10 +8107,10 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  *             for jj in range(n_samples):
  */
             __pyx_t_75 = __pyx_v_ii;
-            __pyx_t_20 = ((fabs((*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_75 * __pyx_v_w.strides[0]) )))) > __pyx_v_w_max) != 0);
-            if (__pyx_t_20) {
+            __pyx_t_17 = ((fabs((*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_75 * __pyx_v_w.strides[0]) )))) > __pyx_v_w_max) != 0);
+            if (__pyx_t_17) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":881
+              /* "sklearn/linear_model/cd_fast.pyx":889
  *                 w[ii] = tmp * wc[ii] + we[ii]
  *                 if fabs(w[ii]) > w_max:
  *                     w_max = fabs(w[ii])             # <<<<<<<<<<<<<<
@@ -8020,23 +8119,23 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
               __pyx_t_76 = __pyx_v_ii;
               __pyx_v_w_max = fabs((*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_76 * __pyx_v_w.strides[0]) ))));
-              goto __pyx_L48;
+              goto __pyx_L49;
             }
-            __pyx_L48:;
+            __pyx_L49:;
           }
 
-          /* "sklearn/linear_model/cd_fast.pyx":882
+          /* "sklearn/linear_model/cd_fast.pyx":890
  *                 if fabs(w[ii]) > w_max:
  *                     w_max = fabs(w[ii])
  *             for jj in range(n_samples):             # <<<<<<<<<<<<<<
  *                 R[jj] = tmp * Rc[jj] + Re[jj]
  * 
  */
-          __pyx_t_18 = __pyx_v_n_samples;
-          for (__pyx_t_36 = 0; __pyx_t_36 < __pyx_t_18; __pyx_t_36+=1) {
+          __pyx_t_19 = __pyx_v_n_samples;
+          for (__pyx_t_36 = 0; __pyx_t_36 < __pyx_t_19; __pyx_t_36+=1) {
             __pyx_v_jj = __pyx_t_36;
 
-            /* "sklearn/linear_model/cd_fast.pyx":883
+            /* "sklearn/linear_model/cd_fast.pyx":891
  *                     w_max = fabs(w[ii])
  *             for jj in range(n_samples):
  *                 R[jj] = tmp * Rc[jj] + Re[jj]             # <<<<<<<<<<<<<<
@@ -8049,7 +8148,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
             *((double *) ( /* dim=0 */ (__pyx_v_R.data + __pyx_t_79 * __pyx_v_R.strides[0]) )) = ((__pyx_v_tmp * (*((double *) ( /* dim=0 */ (__pyx_v_Rc.data + __pyx_t_77 * __pyx_v_Rc.strides[0]) )))) + (*((double *) ( /* dim=0 */ (__pyx_v_Re.data + __pyx_t_78 * __pyx_v_Re.strides[0]) ))));
           }
 
-          /* "sklearn/linear_model/cd_fast.pyx":885
+          /* "sklearn/linear_model/cd_fast.pyx":893
  *                 R[jj] = tmp * Rc[jj] + Re[jj]
  * 
  *             nnz=0             # <<<<<<<<<<<<<<
@@ -8058,7 +8157,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
           __pyx_v_nnz = 0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":886
+          /* "sklearn/linear_model/cd_fast.pyx":894
  * 
  *             nnz=0
  *             nnze=0             # <<<<<<<<<<<<<<
@@ -8067,18 +8166,18 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
           __pyx_v_nnze = 0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":887
+          /* "sklearn/linear_model/cd_fast.pyx":895
  *             nnz=0
  *             nnze=0
  *             for ii in range(n_features):             # <<<<<<<<<<<<<<
  *                 if w[ii] != 0:
  *                     nnz += 1
  */
-          __pyx_t_18 = __pyx_v_n_features;
-          for (__pyx_t_36 = 0; __pyx_t_36 < __pyx_t_18; __pyx_t_36+=1) {
+          __pyx_t_19 = __pyx_v_n_features;
+          for (__pyx_t_36 = 0; __pyx_t_36 < __pyx_t_19; __pyx_t_36+=1) {
             __pyx_v_ii = __pyx_t_36;
 
-            /* "sklearn/linear_model/cd_fast.pyx":888
+            /* "sklearn/linear_model/cd_fast.pyx":896
  *             nnze=0
  *             for ii in range(n_features):
  *                 if w[ii] != 0:             # <<<<<<<<<<<<<<
@@ -8086,10 +8185,10 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  *                 if we[ii] != 0:
  */
             __pyx_t_80 = __pyx_v_ii;
-            __pyx_t_20 = (((*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_80 * __pyx_v_w.strides[0]) ))) != 0.0) != 0);
-            if (__pyx_t_20) {
+            __pyx_t_17 = (((*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_80 * __pyx_v_w.strides[0]) ))) != 0.0) != 0);
+            if (__pyx_t_17) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":889
+              /* "sklearn/linear_model/cd_fast.pyx":897
  *             for ii in range(n_features):
  *                 if w[ii] != 0:
  *                     nnz += 1             # <<<<<<<<<<<<<<
@@ -8097,11 +8196,11 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  *                     nnze +=1
  */
               __pyx_v_nnz = (__pyx_v_nnz + 1);
-              goto __pyx_L53;
+              goto __pyx_L54;
             }
-            __pyx_L53:;
+            __pyx_L54:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":890
+            /* "sklearn/linear_model/cd_fast.pyx":898
  *                 if w[ii] != 0:
  *                     nnz += 1
  *                 if we[ii] != 0:             # <<<<<<<<<<<<<<
@@ -8109,10 +8208,10 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  * 
  */
             __pyx_t_81 = __pyx_v_ii;
-            __pyx_t_20 = (((*((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_81 * __pyx_v_we.strides[0]) ))) != 0.0) != 0);
-            if (__pyx_t_20) {
+            __pyx_t_17 = (((*((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_81 * __pyx_v_we.strides[0]) ))) != 0.0) != 0);
+            if (__pyx_t_17) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":891
+              /* "sklearn/linear_model/cd_fast.pyx":899
  *                     nnz += 1
  *                 if we[ii] != 0:
  *                     nnze +=1             # <<<<<<<<<<<<<<
@@ -8120,33 +8219,33 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  *             # if test_restart > 0: restart
  */
               __pyx_v_nnze = (__pyx_v_nnze + 1);
-              goto __pyx_L54;
+              goto __pyx_L55;
             }
-            __pyx_L54:;
+            __pyx_L55:;
           }
 
-          /* "sklearn/linear_model/cd_fast.pyx":897
+          /* "sklearn/linear_model/cd_fast.pyx":905
  *             # cf. ODonoghue, B., & Candes, E. (2012). Adaptive restart for accelerated
  *             #  gradient schemes. Foundations of Computational Mathematics, 1-18.
  *             if test_restart > 0:             # <<<<<<<<<<<<<<
  *                 for ii in range(n_features):
  *                     wc[ii] = 0
  */
-          __pyx_t_20 = ((__pyx_v_test_restart > 0.0) != 0);
-          if (__pyx_t_20) {
+          __pyx_t_17 = ((__pyx_v_test_restart > 0.0) != 0);
+          if (__pyx_t_17) {
 
-            /* "sklearn/linear_model/cd_fast.pyx":898
+            /* "sklearn/linear_model/cd_fast.pyx":906
  *             #  gradient schemes. Foundations of Computational Mathematics, 1-18.
  *             if test_restart > 0:
  *                 for ii in range(n_features):             # <<<<<<<<<<<<<<
  *                     wc[ii] = 0
  *                     we[ii] = w[ii]
  */
-            __pyx_t_18 = __pyx_v_n_features;
-            for (__pyx_t_36 = 0; __pyx_t_36 < __pyx_t_18; __pyx_t_36+=1) {
+            __pyx_t_19 = __pyx_v_n_features;
+            for (__pyx_t_36 = 0; __pyx_t_36 < __pyx_t_19; __pyx_t_36+=1) {
               __pyx_v_ii = __pyx_t_36;
 
-              /* "sklearn/linear_model/cd_fast.pyx":899
+              /* "sklearn/linear_model/cd_fast.pyx":907
  *             if test_restart > 0:
  *                 for ii in range(n_features):
  *                     wc[ii] = 0             # <<<<<<<<<<<<<<
@@ -8156,7 +8255,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
               __pyx_t_82 = __pyx_v_ii;
               *((double *) ( /* dim=0 */ (__pyx_v_wc.data + __pyx_t_82 * __pyx_v_wc.strides[0]) )) = 0.0;
 
-              /* "sklearn/linear_model/cd_fast.pyx":900
+              /* "sklearn/linear_model/cd_fast.pyx":908
  *                 for ii in range(n_features):
  *                     wc[ii] = 0
  *                     we[ii] = w[ii]             # <<<<<<<<<<<<<<
@@ -8168,18 +8267,18 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
               *((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_84 * __pyx_v_we.strides[0]) )) = (*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_83 * __pyx_v_w.strides[0]) )));
             }
 
-            /* "sklearn/linear_model/cd_fast.pyx":901
+            /* "sklearn/linear_model/cd_fast.pyx":909
  *                     wc[ii] = 0
  *                     we[ii] = w[ii]
  *                 for jj in range(n_samples):             # <<<<<<<<<<<<<<
  *                     Rc[jj] = 0
  *                     Re[jj] = R[jj]
  */
-            __pyx_t_18 = __pyx_v_n_samples;
-            for (__pyx_t_36 = 0; __pyx_t_36 < __pyx_t_18; __pyx_t_36+=1) {
+            __pyx_t_19 = __pyx_v_n_samples;
+            for (__pyx_t_36 = 0; __pyx_t_36 < __pyx_t_19; __pyx_t_36+=1) {
               __pyx_v_jj = __pyx_t_36;
 
-              /* "sklearn/linear_model/cd_fast.pyx":902
+              /* "sklearn/linear_model/cd_fast.pyx":910
  *                     we[ii] = w[ii]
  *                 for jj in range(n_samples):
  *                     Rc[jj] = 0             # <<<<<<<<<<<<<<
@@ -8189,7 +8288,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
               __pyx_t_85 = __pyx_v_jj;
               *((double *) ( /* dim=0 */ (__pyx_v_Rc.data + __pyx_t_85 * __pyx_v_Rc.strides[0]) )) = 0.0;
 
-              /* "sklearn/linear_model/cd_fast.pyx":903
+              /* "sklearn/linear_model/cd_fast.pyx":911
  *                 for jj in range(n_samples):
  *                     Rc[jj] = 0
  *                     Re[jj] = R[jj]             # <<<<<<<<<<<<<<
@@ -8201,7 +8300,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
               *((double *) ( /* dim=0 */ (__pyx_v_Re.data + __pyx_t_87 * __pyx_v_Re.strides[0]) )) = (*((double *) ( /* dim=0 */ (__pyx_v_R.data + __pyx_t_86 * __pyx_v_R.strides[0]) )));
             }
 
-            /* "sklearn/linear_model/cd_fast.pyx":904
+            /* "sklearn/linear_model/cd_fast.pyx":912
  *                     Rc[jj] = 0
  *                     Re[jj] = R[jj]
  *                 theta = theta0             # <<<<<<<<<<<<<<
@@ -8209,85 +8308,85 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  *             # if nnze < nnz and F(we) < F(w) then w <- we
  */
             __pyx_v_theta = __pyx_v_theta0;
-            goto __pyx_L55;
+            goto __pyx_L56;
           }
 
-          /* "sklearn/linear_model/cd_fast.pyx":908
+          /* "sklearn/linear_model/cd_fast.pyx":916
  *             # if nnze < nnz and F(we) < F(w) then w <- we
  *             # (helps promoting sparsity to w)
  *             elif (nnze < nnz) \             # <<<<<<<<<<<<<<
- *                      and ( primal_value(n_samples, n_features, <DOUBLE*> &Re[0],
+ *                      and ( enet_primal_value(n_samples, n_features, <DOUBLE*> &Re[0],
  *                                         <DOUBLE*> &we[0], alpha, beta) <
  */
           __pyx_t_53 = ((__pyx_v_nnze < __pyx_v_nnz) != 0);
           if (__pyx_t_53) {
-            goto __pyx_L61_next_and;
+            goto __pyx_L62_next_and;
           } else {
-            __pyx_t_20 = __pyx_t_53;
-            goto __pyx_L60_bool_binop_done;
+            __pyx_t_17 = __pyx_t_53;
+            goto __pyx_L61_bool_binop_done;
           }
-          __pyx_L61_next_and:;
+          __pyx_L62_next_and:;
 
-          /* "sklearn/linear_model/cd_fast.pyx":909
+          /* "sklearn/linear_model/cd_fast.pyx":917
  *             # (helps promoting sparsity to w)
  *             elif (nnze < nnz) \
- *                      and ( primal_value(n_samples, n_features, <DOUBLE*> &Re[0],             # <<<<<<<<<<<<<<
+ *                      and ( enet_primal_value(n_samples, n_features, <DOUBLE*> &Re[0],             # <<<<<<<<<<<<<<
  *                                         <DOUBLE*> &we[0], alpha, beta) <
- *                            primal_value(n_samples, n_features, <DOUBLE*> &R[0],
+ *                            enet_primal_value(n_samples, n_features, <DOUBLE*> &R[0],
  */
           __pyx_t_88 = 0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":910
+          /* "sklearn/linear_model/cd_fast.pyx":918
  *             elif (nnze < nnz) \
- *                      and ( primal_value(n_samples, n_features, <DOUBLE*> &Re[0],
+ *                      and ( enet_primal_value(n_samples, n_features, <DOUBLE*> &Re[0],
  *                                         <DOUBLE*> &we[0], alpha, beta) <             # <<<<<<<<<<<<<<
- *                            primal_value(n_samples, n_features, <DOUBLE*> &R[0],
+ *                            enet_primal_value(n_samples, n_features, <DOUBLE*> &R[0],
  *                                         <DOUBLE*> &w[0], alpha, beta) ):
  */
           __pyx_t_89 = 0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":911
- *                      and ( primal_value(n_samples, n_features, <DOUBLE*> &Re[0],
+          /* "sklearn/linear_model/cd_fast.pyx":919
+ *                      and ( enet_primal_value(n_samples, n_features, <DOUBLE*> &Re[0],
  *                                         <DOUBLE*> &we[0], alpha, beta) <
- *                            primal_value(n_samples, n_features, <DOUBLE*> &R[0],             # <<<<<<<<<<<<<<
+ *                            enet_primal_value(n_samples, n_features, <DOUBLE*> &R[0],             # <<<<<<<<<<<<<<
  *                                         <DOUBLE*> &w[0], alpha, beta) ):
  *                 for i in range(n_features):
  */
           __pyx_t_90 = 0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":912
+          /* "sklearn/linear_model/cd_fast.pyx":920
  *                                         <DOUBLE*> &we[0], alpha, beta) <
- *                            primal_value(n_samples, n_features, <DOUBLE*> &R[0],
+ *                            enet_primal_value(n_samples, n_features, <DOUBLE*> &R[0],
  *                                         <DOUBLE*> &w[0], alpha, beta) ):             # <<<<<<<<<<<<<<
  *                 for i in range(n_features):
  *                     wc[i] = 0
  */
           __pyx_t_91 = 0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":910
+          /* "sklearn/linear_model/cd_fast.pyx":918
  *             elif (nnze < nnz) \
- *                      and ( primal_value(n_samples, n_features, <DOUBLE*> &Re[0],
+ *                      and ( enet_primal_value(n_samples, n_features, <DOUBLE*> &Re[0],
  *                                         <DOUBLE*> &we[0], alpha, beta) <             # <<<<<<<<<<<<<<
- *                            primal_value(n_samples, n_features, <DOUBLE*> &R[0],
+ *                            enet_primal_value(n_samples, n_features, <DOUBLE*> &R[0],
  *                                         <DOUBLE*> &w[0], alpha, beta) ):
  */
-          __pyx_t_53 = ((__pyx_f_7sklearn_12linear_model_7cd_fast_primal_value(__pyx_v_n_samples, __pyx_v_n_features, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_Re.data + __pyx_t_88 * __pyx_v_Re.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_89 * __pyx_v_we.strides[0]) ))))), __pyx_v_alpha, __pyx_v_beta) < __pyx_f_7sklearn_12linear_model_7cd_fast_primal_value(__pyx_v_n_samples, __pyx_v_n_features, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_R.data + __pyx_t_90 * __pyx_v_R.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_91 * __pyx_v_w.strides[0]) ))))), __pyx_v_alpha, __pyx_v_beta)) != 0);
-          __pyx_t_20 = __pyx_t_53;
-          __pyx_L60_bool_binop_done:;
-          if (__pyx_t_20) {
+          __pyx_t_53 = ((__pyx_f_7sklearn_12linear_model_7cd_fast_enet_primal_value(__pyx_v_n_samples, __pyx_v_n_features, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_Re.data + __pyx_t_88 * __pyx_v_Re.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_89 * __pyx_v_we.strides[0]) ))))), __pyx_v_alpha, __pyx_v_beta) < __pyx_f_7sklearn_12linear_model_7cd_fast_enet_primal_value(__pyx_v_n_samples, __pyx_v_n_features, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_R.data + __pyx_t_90 * __pyx_v_R.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_91 * __pyx_v_w.strides[0]) ))))), __pyx_v_alpha, __pyx_v_beta)) != 0);
+          __pyx_t_17 = __pyx_t_53;
+          __pyx_L61_bool_binop_done:;
+          if (__pyx_t_17) {
 
-            /* "sklearn/linear_model/cd_fast.pyx":913
- *                            primal_value(n_samples, n_features, <DOUBLE*> &R[0],
+            /* "sklearn/linear_model/cd_fast.pyx":921
+ *                            enet_primal_value(n_samples, n_features, <DOUBLE*> &R[0],
  *                                         <DOUBLE*> &w[0], alpha, beta) ):
  *                 for i in range(n_features):             # <<<<<<<<<<<<<<
  *                     wc[i] = 0
  *                     w[i] = we[i]
  */
-            __pyx_t_18 = __pyx_v_n_features;
-            for (__pyx_t_36 = 0; __pyx_t_36 < __pyx_t_18; __pyx_t_36+=1) {
+            __pyx_t_19 = __pyx_v_n_features;
+            for (__pyx_t_36 = 0; __pyx_t_36 < __pyx_t_19; __pyx_t_36+=1) {
               __pyx_v_i = __pyx_t_36;
 
-              /* "sklearn/linear_model/cd_fast.pyx":914
+              /* "sklearn/linear_model/cd_fast.pyx":922
  *                                         <DOUBLE*> &w[0], alpha, beta) ):
  *                 for i in range(n_features):
  *                     wc[i] = 0             # <<<<<<<<<<<<<<
@@ -8297,7 +8396,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
               __pyx_t_92 = __pyx_v_i;
               *((double *) ( /* dim=0 */ (__pyx_v_wc.data + __pyx_t_92 * __pyx_v_wc.strides[0]) )) = 0.0;
 
-              /* "sklearn/linear_model/cd_fast.pyx":915
+              /* "sklearn/linear_model/cd_fast.pyx":923
  *                 for i in range(n_features):
  *                     wc[i] = 0
  *                     w[i] = we[i]             # <<<<<<<<<<<<<<
@@ -8309,18 +8408,18 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
               *((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_94 * __pyx_v_w.strides[0]) )) = (*((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_93 * __pyx_v_we.strides[0]) )));
             }
 
-            /* "sklearn/linear_model/cd_fast.pyx":916
+            /* "sklearn/linear_model/cd_fast.pyx":924
  *                     wc[i] = 0
  *                     w[i] = we[i]
  *                 for j in range(n_samples):             # <<<<<<<<<<<<<<
  *                     Rc[j] = 0
  *                     R[j] = Re[j]
  */
-            __pyx_t_18 = __pyx_v_n_samples;
-            for (__pyx_t_36 = 0; __pyx_t_36 < __pyx_t_18; __pyx_t_36+=1) {
+            __pyx_t_19 = __pyx_v_n_samples;
+            for (__pyx_t_36 = 0; __pyx_t_36 < __pyx_t_19; __pyx_t_36+=1) {
               __pyx_v_j = __pyx_t_36;
 
-              /* "sklearn/linear_model/cd_fast.pyx":917
+              /* "sklearn/linear_model/cd_fast.pyx":925
  *                     w[i] = we[i]
  *                 for j in range(n_samples):
  *                     Rc[j] = 0             # <<<<<<<<<<<<<<
@@ -8330,7 +8429,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
               __pyx_t_95 = __pyx_v_j;
               *((double *) ( /* dim=0 */ (__pyx_v_Rc.data + __pyx_t_95 * __pyx_v_Rc.strides[0]) )) = 0.0;
 
-              /* "sklearn/linear_model/cd_fast.pyx":918
+              /* "sklearn/linear_model/cd_fast.pyx":926
  *                 for j in range(n_samples):
  *                     Rc[j] = 0
  *                     R[j] = Re[j]             # <<<<<<<<<<<<<<
@@ -8342,7 +8441,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
               *((double *) ( /* dim=0 */ (__pyx_v_R.data + __pyx_t_97 * __pyx_v_R.strides[0]) )) = (*((double *) ( /* dim=0 */ (__pyx_v_Re.data + __pyx_t_96 * __pyx_v_Re.strides[0]) )));
             }
 
-            /* "sklearn/linear_model/cd_fast.pyx":919
+            /* "sklearn/linear_model/cd_fast.pyx":927
  *                     Rc[j] = 0
  *                     R[j] = Re[j]
  *                 d_w_max = 10000 * w_max * d_w_tol  # we've made a big change             # <<<<<<<<<<<<<<
@@ -8350,11 +8449,11 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  *             #######################
  */
             __pyx_v_d_w_max = ((10000.0 * __pyx_v_w_max) * __pyx_v_d_w_tol);
-            goto __pyx_L55;
+            goto __pyx_L56;
           }
-          __pyx_L55:;
+          __pyx_L56:;
 
-          /* "sklearn/linear_model/cd_fast.pyx":924
+          /* "sklearn/linear_model/cd_fast.pyx":932
  *             # Termination criterion
  * 
  *             if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:             # <<<<<<<<<<<<<<
@@ -8363,28 +8462,28 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  */
           __pyx_t_53 = ((__pyx_v_w_max == 0.0) != 0);
           if (!__pyx_t_53) {
-            goto __pyx_L68_next_or;
-          } else {
-            __pyx_t_20 = __pyx_t_53;
-            goto __pyx_L67_bool_binop_done;
-          }
-          __pyx_L68_next_or:;
-          __pyx_t_53 = (((__pyx_v_d_w_max / __pyx_v_w_max) < __pyx_v_d_w_tol) != 0);
-          if (!__pyx_t_53) {
             goto __pyx_L69_next_or;
           } else {
-            __pyx_t_20 = __pyx_t_53;
-            goto __pyx_L67_bool_binop_done;
+            __pyx_t_17 = __pyx_t_53;
+            goto __pyx_L68_bool_binop_done;
           }
           __pyx_L69_next_or:;
+          __pyx_t_53 = (((__pyx_v_d_w_max / __pyx_v_w_max) < __pyx_v_d_w_tol) != 0);
+          if (!__pyx_t_53) {
+            goto __pyx_L70_next_or;
+          } else {
+            __pyx_t_17 = __pyx_t_53;
+            goto __pyx_L68_bool_binop_done;
+          }
+          __pyx_L70_next_or:;
           __pyx_t_53 = ((__pyx_v_n_iter == (__pyx_v_max_iter - 1)) != 0);
-          __pyx_t_20 = __pyx_t_53;
-          __pyx_L67_bool_binop_done:;
-          if (__pyx_t_20) {
+          __pyx_t_17 = __pyx_t_53;
+          __pyx_L68_bool_binop_done:;
+          if (__pyx_t_17) {
 
-            /* "sklearn/linear_model/cd_fast.pyx":930
+            /* "sklearn/linear_model/cd_fast.pyx":938
  * 
- *                 gap = sparse_duality_gap(n_samples, n_features, n_tasks,
+ *                 gap = sparse_enet_duality_gap(n_samples, n_features, n_tasks,
  *                                          <DOUBLE*> &X_data[0], <int*> &X_indptr[0],             # <<<<<<<<<<<<<<
  *                                          <int*> &X_indices[0], <DOUBLE*> &X_mean[0],
  *                                          <DOUBLE*> &y[0], <DOUBLE*> &R[0],
@@ -8392,8 +8491,8 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
             __pyx_t_98 = 0;
             __pyx_t_99 = 0;
 
-            /* "sklearn/linear_model/cd_fast.pyx":931
- *                 gap = sparse_duality_gap(n_samples, n_features, n_tasks,
+            /* "sklearn/linear_model/cd_fast.pyx":939
+ *                 gap = sparse_enet_duality_gap(n_samples, n_features, n_tasks,
  *                                          <DOUBLE*> &X_data[0], <int*> &X_indptr[0],
  *                                          <int*> &X_indices[0], <DOUBLE*> &X_mean[0],             # <<<<<<<<<<<<<<
  *                                          <DOUBLE*> &y[0], <DOUBLE*> &R[0],
@@ -8402,7 +8501,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
             __pyx_t_100 = 0;
             __pyx_t_101 = 0;
 
-            /* "sklearn/linear_model/cd_fast.pyx":932
+            /* "sklearn/linear_model/cd_fast.pyx":940
  *                                          <DOUBLE*> &X_data[0], <int*> &X_indptr[0],
  *                                          <int*> &X_indices[0], <DOUBLE*> &X_mean[0],
  *                                          <DOUBLE*> &y[0], <DOUBLE*> &R[0],             # <<<<<<<<<<<<<<
@@ -8412,7 +8511,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
             __pyx_t_102 = 0;
             __pyx_t_103 = 0;
 
-            /* "sklearn/linear_model/cd_fast.pyx":933
+            /* "sklearn/linear_model/cd_fast.pyx":941
  *                                          <int*> &X_indices[0], <DOUBLE*> &X_mean[0],
  *                                          <DOUBLE*> &y[0], <DOUBLE*> &R[0],
  *                                          <DOUBLE*> &w[0], <DOUBLE*> &XtA[0],             # <<<<<<<<<<<<<<
@@ -8422,43 +8521,43 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
             __pyx_t_104 = 0;
             __pyx_t_105 = 0;
 
-            /* "sklearn/linear_model/cd_fast.pyx":929
+            /* "sklearn/linear_model/cd_fast.pyx":937
  *                 # criterion
  * 
- *                 gap = sparse_duality_gap(n_samples, n_features, n_tasks,             # <<<<<<<<<<<<<<
+ *                 gap = sparse_enet_duality_gap(n_samples, n_features, n_tasks,             # <<<<<<<<<<<<<<
  *                                          <DOUBLE*> &X_data[0], <int*> &X_indptr[0],
  *                                          <int*> &X_indices[0], <DOUBLE*> &X_mean[0],
  */
-            __pyx_v_gap = __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(__pyx_v_n_samples, __pyx_v_n_features, __pyx_v_n_tasks, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_X_data.data + __pyx_t_98 * __pyx_v_X_data.strides[0]) ))))), ((int *)(&(*((int *) ( /* dim=0 */ (__pyx_v_X_indptr.data + __pyx_t_99 * __pyx_v_X_indptr.strides[0]) ))))), ((int *)(&(*((int *) ( /* dim=0 */ (__pyx_v_X_indices.data + __pyx_t_100 * __pyx_v_X_indices.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_X_mean.data + __pyx_t_101 * __pyx_v_X_mean.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_y.data + __pyx_t_102 * __pyx_v_y.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_R.data + __pyx_t_103 * __pyx_v_R.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_104 * __pyx_v_w.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_XtA.data + __pyx_t_105 * __pyx_v_XtA.strides[0]) ))))), (&__pyx_v_dual_norm_XtA), __pyx_v_alpha, __pyx_v_beta, __pyx_v_positive);
+            __pyx_v_gap = __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_enet_duality_gap(__pyx_v_n_samples, __pyx_v_n_features, __pyx_v_n_tasks, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_X_data.data + __pyx_t_98 * __pyx_v_X_data.strides[0]) ))))), ((int *)(&(*((int *) ( /* dim=0 */ (__pyx_v_X_indptr.data + __pyx_t_99 * __pyx_v_X_indptr.strides[0]) ))))), ((int *)(&(*((int *) ( /* dim=0 */ (__pyx_v_X_indices.data + __pyx_t_100 * __pyx_v_X_indices.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_X_mean.data + __pyx_t_101 * __pyx_v_X_mean.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_y.data + __pyx_t_102 * __pyx_v_y.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_R.data + __pyx_t_103 * __pyx_v_R.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_104 * __pyx_v_w.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_XtA.data + __pyx_t_105 * __pyx_v_XtA.strides[0]) ))))), (&__pyx_v_dual_norm_XtA), __pyx_v_alpha, __pyx_v_beta, __pyx_v_positive);
 
-            /* "sklearn/linear_model/cd_fast.pyx":937
+            /* "sklearn/linear_model/cd_fast.pyx":945
  *                                          alpha, beta, positive)
  * 
  *                 if gap < tol:             # <<<<<<<<<<<<<<
  *                     # return if we reached desired tolerance
  *                     break
  */
-            __pyx_t_20 = ((__pyx_v_gap < __pyx_v_tol) != 0);
-            if (__pyx_t_20) {
+            __pyx_t_17 = ((__pyx_v_gap < __pyx_v_tol) != 0);
+            if (__pyx_t_17) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":939
+              /* "sklearn/linear_model/cd_fast.pyx":947
  *                 if gap < tol:
  *                     # return if we reached desired tolerance
  *                     break             # <<<<<<<<<<<<<<
  * 
  *     return w, gap, tol, n_iter + 1
  */
-              goto __pyx_L21_break;
+              goto __pyx_L22_break;
             }
-            goto __pyx_L66;
+            goto __pyx_L67;
           }
-          __pyx_L66:;
+          __pyx_L67:;
         }
-        __pyx_L21_break:;
+        __pyx_L22_break:;
       }
 
-      /* "sklearn/linear_model/cd_fast.pyx":749
- *     cdef bint center = False
+      /* "sklearn/linear_model/cd_fast.pyx":757
+ *             " may be slower than with random sampling and is discouraged.")
  * 
  *     with nogil:             # <<<<<<<<<<<<<<
  *         # center = (X_mean != 0).any()
@@ -8469,13 +8568,13 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
           #ifdef WITH_THREAD
           Py_BLOCK_THREADS
           #endif
-          goto __pyx_L5;
+          goto __pyx_L6;
         }
-        __pyx_L5:;
+        __pyx_L6:;
       }
   }
 
-  /* "sklearn/linear_model/cd_fast.pyx":941
+  /* "sklearn/linear_model/cd_fast.pyx":949
  *                     break
  * 
  *     return w, gap, tol, n_iter + 1             # <<<<<<<<<<<<<<
@@ -8483,15 +8582,15 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
  * 
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_memoryview_fromslice(__pyx_v_w, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 941; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __pyx_memoryview_fromslice(__pyx_v_w, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 949; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_7 = PyFloat_FromDouble(__pyx_v_gap); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 941; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_7 = PyFloat_FromDouble(__pyx_v_gap); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 949; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_5 = PyFloat_FromDouble(__pyx_v_tol); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 941; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = PyFloat_FromDouble(__pyx_v_tol); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 949; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_2 = __Pyx_PyInt_From_long((__pyx_v_n_iter + 1)); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 941; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyInt_From_long((__pyx_v_n_iter + 1)); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 949; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = PyTuple_New(4); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 941; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyTuple_New(4); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 949; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
@@ -8509,7 +8608,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
   __pyx_t_3 = 0;
   goto __pyx_L0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":681
+  /* "sklearn/linear_model/cd_fast.pyx":685
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def sparse_enet_accelerated_coordinate_descent(double[:] w,             # <<<<<<<<<<<<<<
@@ -8553,7 +8652,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_4sparse_enet_accelera
   return __pyx_r;
 }
 
-/* "sklearn/linear_model/cd_fast.pyx":948
+/* "sklearn/linear_model/cd_fast.pyx":956
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def sparse_enet_coordinate_descent(double[:] w,             # <<<<<<<<<<<<<<
@@ -8616,52 +8715,52 @@ static PyObject *__pyx_pw_7sklearn_12linear_model_7cd_fast_7sparse_enet_coordina
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_alpha)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("sparse_enet_coordinate_descent", 0, 11, 13, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 948; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("sparse_enet_coordinate_descent", 0, 11, 13, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 956; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_beta)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("sparse_enet_coordinate_descent", 0, 11, 13, 2); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 948; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("sparse_enet_coordinate_descent", 0, 11, 13, 2); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 956; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_X_data)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("sparse_enet_coordinate_descent", 0, 11, 13, 3); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 948; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("sparse_enet_coordinate_descent", 0, 11, 13, 3); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 956; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  4:
         if (likely((values[4] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_X_indices)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("sparse_enet_coordinate_descent", 0, 11, 13, 4); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 948; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("sparse_enet_coordinate_descent", 0, 11, 13, 4); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 956; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  5:
         if (likely((values[5] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_X_indptr)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("sparse_enet_coordinate_descent", 0, 11, 13, 5); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 948; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("sparse_enet_coordinate_descent", 0, 11, 13, 5); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 956; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  6:
         if (likely((values[6] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_y)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("sparse_enet_coordinate_descent", 0, 11, 13, 6); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 948; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("sparse_enet_coordinate_descent", 0, 11, 13, 6); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 956; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  7:
         if (likely((values[7] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_X_mean)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("sparse_enet_coordinate_descent", 0, 11, 13, 7); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 948; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("sparse_enet_coordinate_descent", 0, 11, 13, 7); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 956; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  8:
         if (likely((values[8] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_max_iter)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("sparse_enet_coordinate_descent", 0, 11, 13, 8); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 948; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("sparse_enet_coordinate_descent", 0, 11, 13, 8); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 956; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  9:
         if (likely((values[9] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_tol)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("sparse_enet_coordinate_descent", 0, 11, 13, 9); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 948; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("sparse_enet_coordinate_descent", 0, 11, 13, 9); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 956; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case 10:
         if (likely((values[10] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_rng)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("sparse_enet_coordinate_descent", 0, 11, 13, 10); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 948; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("sparse_enet_coordinate_descent", 0, 11, 13, 10); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 956; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case 11:
         if (kw_args > 0) {
@@ -8675,7 +8774,7 @@ static PyObject *__pyx_pw_7sklearn_12linear_model_7cd_fast_7sparse_enet_coordina
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "sparse_enet_coordinate_descent") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 948; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "sparse_enet_coordinate_descent") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 956; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -8696,31 +8795,31 @@ static PyObject *__pyx_pw_7sklearn_12linear_model_7cd_fast_7sparse_enet_coordina
         default: goto __pyx_L5_argtuple_error;
       }
     }
-    __pyx_v_w = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[0]); if (unlikely(!__pyx_v_w.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 948; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_alpha = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_alpha == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 949; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_beta = __pyx_PyFloat_AsDouble(values[2]); if (unlikely((__pyx_v_beta == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 949; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_X_data = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[3]); if (unlikely(!__pyx_v_X_data.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 950; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_X_indices = __Pyx_PyObject_to_MemoryviewSlice_ds_int(values[4]); if (unlikely(!__pyx_v_X_indices.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 950; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_X_indptr = __Pyx_PyObject_to_MemoryviewSlice_ds_int(values[5]); if (unlikely(!__pyx_v_X_indptr.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 951; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_y = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[6]); if (unlikely(!__pyx_v_y.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 951; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_X_mean = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[7]); if (unlikely(!__pyx_v_X_mean.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 952; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_max_iter = __Pyx_PyInt_As_int(values[8]); if (unlikely((__pyx_v_max_iter == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 952; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_tol = __pyx_PyFloat_AsDouble(values[9]); if (unlikely((__pyx_v_tol == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 953; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_w = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[0]); if (unlikely(!__pyx_v_w.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 956; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_alpha = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_alpha == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 957; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_beta = __pyx_PyFloat_AsDouble(values[2]); if (unlikely((__pyx_v_beta == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 957; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_X_data = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[3]); if (unlikely(!__pyx_v_X_data.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 958; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_X_indices = __Pyx_PyObject_to_MemoryviewSlice_ds_int(values[4]); if (unlikely(!__pyx_v_X_indices.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 958; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_X_indptr = __Pyx_PyObject_to_MemoryviewSlice_ds_int(values[5]); if (unlikely(!__pyx_v_X_indptr.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 959; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_y = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[6]); if (unlikely(!__pyx_v_y.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 959; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_X_mean = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[7]); if (unlikely(!__pyx_v_X_mean.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 960; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_max_iter = __Pyx_PyInt_As_int(values[8]); if (unlikely((__pyx_v_max_iter == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 960; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_tol = __pyx_PyFloat_AsDouble(values[9]); if (unlikely((__pyx_v_tol == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 961; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     __pyx_v_rng = values[10];
     if (values[11]) {
-      __pyx_v_random = __Pyx_PyObject_IsTrue(values[11]); if (unlikely((__pyx_v_random == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 953; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+      __pyx_v_random = __Pyx_PyObject_IsTrue(values[11]); if (unlikely((__pyx_v_random == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 961; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     } else {
       __pyx_v_random = ((int)0);
     }
     if (values[12]) {
-      __pyx_v_positive = __Pyx_PyObject_IsTrue(values[12]); if (unlikely((__pyx_v_positive == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 954; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+      __pyx_v_positive = __Pyx_PyObject_IsTrue(values[12]); if (unlikely((__pyx_v_positive == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 962; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     } else {
       __pyx_v_positive = ((int)0);
     }
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("sparse_enet_coordinate_descent", 0, 11, 13, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 948; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("sparse_enet_coordinate_descent", 0, 11, 13, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 956; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_AddTraceback("sklearn.linear_model.cd_fast.sparse_enet_coordinate_descent", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -8826,7 +8925,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("sparse_enet_coordinate_descent", 0);
 
-  /* "sklearn/linear_model/cd_fast.pyx":966
+  /* "sklearn/linear_model/cd_fast.pyx":974
  * 
  *     # get the data information into easy vars
  *     cdef unsigned int n_samples = y.shape[0]             # <<<<<<<<<<<<<<
@@ -8835,7 +8934,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
  */
   __pyx_v_n_samples = (__pyx_v_y.shape[0]);
 
-  /* "sklearn/linear_model/cd_fast.pyx":967
+  /* "sklearn/linear_model/cd_fast.pyx":975
  *     # get the data information into easy vars
  *     cdef unsigned int n_samples = y.shape[0]
  *     cdef unsigned int n_features = w.shape[0]             # <<<<<<<<<<<<<<
@@ -8844,23 +8943,23 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
  */
   __pyx_v_n_features = (__pyx_v_w.shape[0]);
 
-  /* "sklearn/linear_model/cd_fast.pyx":971
+  /* "sklearn/linear_model/cd_fast.pyx":979
  *     # compute norms of the columns of X
  *     cdef unsigned int ii
  *     cdef double[:] norm_cols_X = np.zeros(n_features, np.float64)             # <<<<<<<<<<<<<<
  * 
  *     cdef unsigned int startptr = X_indptr[0]
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 971; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 979; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_zeros); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 971; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_zeros); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 979; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 971; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 979; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 971; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 979; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_float64); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 971; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_float64); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 979; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __pyx_t_4 = NULL;
@@ -8875,7 +8974,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
       __pyx_t_6 = 1;
     }
   }
-  __pyx_t_7 = PyTuple_New(2+__pyx_t_6); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 971; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_7 = PyTuple_New(2+__pyx_t_6); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 979; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_7);
   if (__pyx_t_4) {
     PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_4); __Pyx_GIVEREF(__pyx_t_4); __pyx_t_4 = NULL;
@@ -8886,18 +8985,18 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
   __Pyx_GIVEREF(__pyx_t_5);
   __pyx_t_2 = 0;
   __pyx_t_5 = 0;
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 971; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 979; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_t_8 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(__pyx_t_1);
-  if (unlikely(!__pyx_t_8.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 971; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__pyx_t_8.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 979; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_norm_cols_X = __pyx_t_8;
   __pyx_t_8.memview = NULL;
   __pyx_t_8.data = NULL;
 
-  /* "sklearn/linear_model/cd_fast.pyx":973
+  /* "sklearn/linear_model/cd_fast.pyx":981
  *     cdef double[:] norm_cols_X = np.zeros(n_features, np.float64)
  * 
  *     cdef unsigned int startptr = X_indptr[0]             # <<<<<<<<<<<<<<
@@ -8907,7 +9006,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
   __pyx_t_6 = 0;
   __pyx_v_startptr = (*((int *) ( /* dim=0 */ (__pyx_v_X_indptr.data + __pyx_t_6 * __pyx_v_X_indptr.strides[0]) )));
 
-  /* "sklearn/linear_model/cd_fast.pyx":977
+  /* "sklearn/linear_model/cd_fast.pyx":985
  * 
  *     # get the number of tasks indirectly, using strides
  *     cdef unsigned int n_tasks = y.strides[0] / sizeof(DOUBLE)             # <<<<<<<<<<<<<<
@@ -8916,31 +9015,31 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
  */
   __pyx_v_n_tasks = ((__pyx_v_y.strides[0]) / (sizeof(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE)));
 
-  /* "sklearn/linear_model/cd_fast.pyx":980
+  /* "sklearn/linear_model/cd_fast.pyx":988
  * 
  *     # initial value of the residuals
  *     cdef double[:] R = y.copy()             # <<<<<<<<<<<<<<
  * 
  *     cdef double[:] XtA = np.zeros(n_features)
  */
-  __pyx_t_9 = __pyx_memoryview_copy_slice_dc_double_c(__pyx_v_y); if (unlikely(!__pyx_t_9.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 980; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_9 = __pyx_memoryview_copy_slice_dc_double_c(__pyx_v_y); if (unlikely(!__pyx_t_9.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 988; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_v_R = __pyx_t_9;
   __pyx_t_9.memview = NULL;
   __pyx_t_9.data = NULL;
 
-  /* "sklearn/linear_model/cd_fast.pyx":982
+  /* "sklearn/linear_model/cd_fast.pyx":990
  *     cdef double[:] R = y.copy()
  * 
  *     cdef double[:] XtA = np.zeros(n_features)             # <<<<<<<<<<<<<<
  * 
  *     cdef double tmp
  */
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 982; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 990; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_zeros); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 982; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_zeros); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 990; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 982; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 990; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_t_5 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_7))) {
@@ -8953,29 +9052,29 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
     }
   }
   if (!__pyx_t_5) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_3); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 982; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_3); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 990; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else {
-    __pyx_t_2 = PyTuple_New(1+1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 982; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = PyTuple_New(1+1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 990; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
     PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_5); __Pyx_GIVEREF(__pyx_t_5); __pyx_t_5 = NULL;
     PyTuple_SET_ITEM(__pyx_t_2, 0+1, __pyx_t_3);
     __Pyx_GIVEREF(__pyx_t_3);
     __pyx_t_3 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 982; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 990; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   }
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   __pyx_t_10 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(__pyx_t_1);
-  if (unlikely(!__pyx_t_10.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 982; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__pyx_t_10.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 990; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_XtA = __pyx_t_10;
   __pyx_t_10.memview = NULL;
   __pyx_t_10.data = NULL;
 
-  /* "sklearn/linear_model/cd_fast.pyx":992
+  /* "sklearn/linear_model/cd_fast.pyx":1000
  *     cdef double R_sum
  *     cdef double normalize_sum
  *     cdef double gap = tol + 1.0             # <<<<<<<<<<<<<<
@@ -8984,7 +9083,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
  */
   __pyx_v_gap = (__pyx_v_tol + 1.0);
 
-  /* "sklearn/linear_model/cd_fast.pyx":993
+  /* "sklearn/linear_model/cd_fast.pyx":1001
  *     cdef double normalize_sum
  *     cdef double gap = tol + 1.0
  *     cdef double d_w_tol = tol             # <<<<<<<<<<<<<<
@@ -8993,16 +9092,16 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
  */
   __pyx_v_d_w_tol = __pyx_v_tol;
 
-  /* "sklearn/linear_model/cd_fast.pyx":998
+  /* "sklearn/linear_model/cd_fast.pyx":1006
  *     cdef unsigned int n_iter
  *     cdef unsigned int f_iter
- *     cdef UINT32_t rand_r_state_seed = rng.randint(1, RAND_R_MAX)             # <<<<<<<<<<<<<<
+ *     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)             # <<<<<<<<<<<<<<
  *     cdef UINT32_t* rand_r_state = &rand_r_state_seed
  *     cdef bint center = False
  */
-  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_rng, __pyx_n_s_randint); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 998; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_rng, __pyx_n_s_randint); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1006; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_e_7sklearn_12linear_model_7cd_fast_RAND_R_MAX); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 998; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_e_7sklearn_12linear_model_7cd_fast_RAND_R_MAX); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1006; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_3 = NULL;
   __pyx_t_11 = 0;
@@ -9016,36 +9115,36 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
       __pyx_t_11 = 1;
     }
   }
-  __pyx_t_5 = PyTuple_New(2+__pyx_t_11); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 998; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = PyTuple_New(2+__pyx_t_11); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1006; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
   if (__pyx_t_3) {
     PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_3); __Pyx_GIVEREF(__pyx_t_3); __pyx_t_3 = NULL;
   }
-  __Pyx_INCREF(__pyx_int_1);
-  PyTuple_SET_ITEM(__pyx_t_5, 0+__pyx_t_11, __pyx_int_1);
-  __Pyx_GIVEREF(__pyx_int_1);
+  __Pyx_INCREF(__pyx_int_0);
+  PyTuple_SET_ITEM(__pyx_t_5, 0+__pyx_t_11, __pyx_int_0);
+  __Pyx_GIVEREF(__pyx_int_0);
   PyTuple_SET_ITEM(__pyx_t_5, 1+__pyx_t_11, __pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_2);
   __pyx_t_2 = 0;
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 998; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1006; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  __pyx_t_12 = __Pyx_PyInt_As_npy_uint32(__pyx_t_1); if (unlikely((__pyx_t_12 == (npy_uint32)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 998; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_12 = __Pyx_PyInt_As_npy_uint32(__pyx_t_1); if (unlikely((__pyx_t_12 == (npy_uint32)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1006; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_rand_r_state_seed = __pyx_t_12;
 
-  /* "sklearn/linear_model/cd_fast.pyx":999
+  /* "sklearn/linear_model/cd_fast.pyx":1007
  *     cdef unsigned int f_iter
- *     cdef UINT32_t rand_r_state_seed = rng.randint(1, RAND_R_MAX)
+ *     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
  *     cdef UINT32_t* rand_r_state = &rand_r_state_seed             # <<<<<<<<<<<<<<
  *     cdef bint center = False
  * 
  */
   __pyx_v_rand_r_state = (&__pyx_v_rand_r_state_seed);
 
-  /* "sklearn/linear_model/cd_fast.pyx":1000
- *     cdef UINT32_t rand_r_state_seed = rng.randint(1, RAND_R_MAX)
+  /* "sklearn/linear_model/cd_fast.pyx":1008
+ *     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
  *     cdef UINT32_t* rand_r_state = &rand_r_state_seed
  *     cdef bint center = False             # <<<<<<<<<<<<<<
  * 
@@ -9053,7 +9152,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
  */
   __pyx_v_center = 0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1002
+  /* "sklearn/linear_model/cd_fast.pyx":1010
  *     cdef bint center = False
  * 
  *     with nogil:             # <<<<<<<<<<<<<<
@@ -9067,7 +9166,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
       #endif
       /*try:*/ {
 
-        /* "sklearn/linear_model/cd_fast.pyx":1004
+        /* "sklearn/linear_model/cd_fast.pyx":1012
  *     with nogil:
  *         # center = (X_mean != 0).any()
  *         for ii in range(n_features):             # <<<<<<<<<<<<<<
@@ -9078,7 +9177,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
         for (__pyx_t_14 = 0; __pyx_t_14 < __pyx_t_13; __pyx_t_14+=1) {
           __pyx_v_ii = __pyx_t_14;
 
-          /* "sklearn/linear_model/cd_fast.pyx":1005
+          /* "sklearn/linear_model/cd_fast.pyx":1013
  *         # center = (X_mean != 0).any()
  *         for ii in range(n_features):
  *             if X_mean[ii]:             # <<<<<<<<<<<<<<
@@ -9089,7 +9188,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
           __pyx_t_16 = ((*((double *) ( /* dim=0 */ (__pyx_v_X_mean.data + __pyx_t_15 * __pyx_v_X_mean.strides[0]) ))) != 0);
           if (__pyx_t_16) {
 
-            /* "sklearn/linear_model/cd_fast.pyx":1006
+            /* "sklearn/linear_model/cd_fast.pyx":1014
  *         for ii in range(n_features):
  *             if X_mean[ii]:
  *                 center = True             # <<<<<<<<<<<<<<
@@ -9098,7 +9197,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
  */
             __pyx_v_center = 1;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1007
+            /* "sklearn/linear_model/cd_fast.pyx":1015
  *             if X_mean[ii]:
  *                 center = True
  *                 break             # <<<<<<<<<<<<<<
@@ -9110,7 +9209,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
         }
         __pyx_L7_break:;
 
-        /* "sklearn/linear_model/cd_fast.pyx":1009
+        /* "sklearn/linear_model/cd_fast.pyx":1017
  *                 break
  * 
  *         for ii in range(n_features):             # <<<<<<<<<<<<<<
@@ -9121,7 +9220,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
         for (__pyx_t_14 = 0; __pyx_t_14 < __pyx_t_13; __pyx_t_14+=1) {
           __pyx_v_ii = __pyx_t_14;
 
-          /* "sklearn/linear_model/cd_fast.pyx":1010
+          /* "sklearn/linear_model/cd_fast.pyx":1018
  * 
  *         for ii in range(n_features):
  *             X_mean_ii = X_mean[ii]             # <<<<<<<<<<<<<<
@@ -9131,7 +9230,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
           __pyx_t_17 = __pyx_v_ii;
           __pyx_v_X_mean_ii = (*((double *) ( /* dim=0 */ (__pyx_v_X_mean.data + __pyx_t_17 * __pyx_v_X_mean.strides[0]) )));
 
-          /* "sklearn/linear_model/cd_fast.pyx":1011
+          /* "sklearn/linear_model/cd_fast.pyx":1019
  *         for ii in range(n_features):
  *             X_mean_ii = X_mean[ii]
  *             endptr = X_indptr[ii + 1]             # <<<<<<<<<<<<<<
@@ -9141,7 +9240,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
           __pyx_t_18 = (__pyx_v_ii + 1);
           __pyx_v_endptr = (*((int *) ( /* dim=0 */ (__pyx_v_X_indptr.data + __pyx_t_18 * __pyx_v_X_indptr.strides[0]) )));
 
-          /* "sklearn/linear_model/cd_fast.pyx":1012
+          /* "sklearn/linear_model/cd_fast.pyx":1020
  *             X_mean_ii = X_mean[ii]
  *             endptr = X_indptr[ii + 1]
  *             normalize_sum = 0.0             # <<<<<<<<<<<<<<
@@ -9150,7 +9249,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
  */
           __pyx_v_normalize_sum = 0.0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":1013
+          /* "sklearn/linear_model/cd_fast.pyx":1021
  *             endptr = X_indptr[ii + 1]
  *             normalize_sum = 0.0
  *             w_ii = w[ii]             # <<<<<<<<<<<<<<
@@ -9160,7 +9259,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
           __pyx_t_19 = __pyx_v_ii;
           __pyx_v_w_ii = (*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_19 * __pyx_v_w.strides[0]) )));
 
-          /* "sklearn/linear_model/cd_fast.pyx":1015
+          /* "sklearn/linear_model/cd_fast.pyx":1023
  *             w_ii = w[ii]
  * 
  *             for jj in range(startptr, endptr):             # <<<<<<<<<<<<<<
@@ -9171,7 +9270,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
           for (__pyx_t_21 = __pyx_v_startptr; __pyx_t_21 < __pyx_t_20; __pyx_t_21+=1) {
             __pyx_v_jj = __pyx_t_21;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1016
+            /* "sklearn/linear_model/cd_fast.pyx":1024
  * 
  *             for jj in range(startptr, endptr):
  *                 normalize_sum += (X_data[jj] - X_mean_ii) ** 2             # <<<<<<<<<<<<<<
@@ -9181,7 +9280,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             __pyx_t_22 = __pyx_v_jj;
             __pyx_v_normalize_sum = (__pyx_v_normalize_sum + pow(((*((double *) ( /* dim=0 */ (__pyx_v_X_data.data + __pyx_t_22 * __pyx_v_X_data.strides[0]) ))) - __pyx_v_X_mean_ii), 2.0));
 
-            /* "sklearn/linear_model/cd_fast.pyx":1017
+            /* "sklearn/linear_model/cd_fast.pyx":1025
  *             for jj in range(startptr, endptr):
  *                 normalize_sum += (X_data[jj] - X_mean_ii) ** 2
  *                 R[X_indices[jj]] -= X_data[jj] * w_ii             # <<<<<<<<<<<<<<
@@ -9194,7 +9293,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             *((double *) ( /* dim=0 */ (__pyx_v_R.data + __pyx_t_25 * __pyx_v_R.strides[0]) )) -= ((*((double *) ( /* dim=0 */ (__pyx_v_X_data.data + __pyx_t_23 * __pyx_v_X_data.strides[0]) ))) * __pyx_v_w_ii);
           }
 
-          /* "sklearn/linear_model/cd_fast.pyx":1018
+          /* "sklearn/linear_model/cd_fast.pyx":1026
  *                 normalize_sum += (X_data[jj] - X_mean_ii) ** 2
  *                 R[X_indices[jj]] -= X_data[jj] * w_ii
  *             norm_cols_X[ii] = normalize_sum + \             # <<<<<<<<<<<<<<
@@ -9204,7 +9303,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
           __pyx_t_20 = __pyx_v_ii;
           *((double *) ( /* dim=0 */ (__pyx_v_norm_cols_X.data + __pyx_t_20 * __pyx_v_norm_cols_X.strides[0]) )) = (__pyx_v_normalize_sum + (((__pyx_v_n_samples - __pyx_v_endptr) + __pyx_v_startptr) * pow(__pyx_v_X_mean_ii, 2.0)));
 
-          /* "sklearn/linear_model/cd_fast.pyx":1021
+          /* "sklearn/linear_model/cd_fast.pyx":1029
  *                 (n_samples - endptr + startptr) * X_mean_ii ** 2
  * 
  *             if center:             # <<<<<<<<<<<<<<
@@ -9214,7 +9313,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
           __pyx_t_16 = (__pyx_v_center != 0);
           if (__pyx_t_16) {
 
-            /* "sklearn/linear_model/cd_fast.pyx":1022
+            /* "sklearn/linear_model/cd_fast.pyx":1030
  * 
  *             if center:
  *                 for jj in range(n_samples):             # <<<<<<<<<<<<<<
@@ -9225,7 +9324,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             for (__pyx_t_26 = 0; __pyx_t_26 < __pyx_t_21; __pyx_t_26+=1) {
               __pyx_v_jj = __pyx_t_26;
 
-              /* "sklearn/linear_model/cd_fast.pyx":1023
+              /* "sklearn/linear_model/cd_fast.pyx":1031
  *             if center:
  *                 for jj in range(n_samples):
  *                     R[jj] += X_mean_ii * w_ii             # <<<<<<<<<<<<<<
@@ -9239,7 +9338,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
           }
           __pyx_L13:;
 
-          /* "sklearn/linear_model/cd_fast.pyx":1024
+          /* "sklearn/linear_model/cd_fast.pyx":1032
  *                 for jj in range(n_samples):
  *                     R[jj] += X_mean_ii * w_ii
  *             startptr = endptr             # <<<<<<<<<<<<<<
@@ -9249,19 +9348,19 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
           __pyx_v_startptr = __pyx_v_endptr;
         }
 
-        /* "sklearn/linear_model/cd_fast.pyx":1027
+        /* "sklearn/linear_model/cd_fast.pyx":1035
  * 
  *         # tol *= np.dot(y, y)
- *         tol *= ddot(n_samples, <DOUBLE*>&y[0], 1, <DOUBLE*>&y[0], 1)             # <<<<<<<<<<<<<<
+ *         tol *= fmax(1e-15,ddot(n_samples, <DOUBLE*>&y[0], 1, <DOUBLE*>&y[0], 1))             # <<<<<<<<<<<<<<
  * 
  *         for n_iter in range(max_iter):
  */
         __pyx_t_11 = 0;
         __pyx_t_28 = 0;
-        __pyx_v_tol = (__pyx_v_tol * cblas_ddot(__pyx_v_n_samples, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_y.data + __pyx_t_11 * __pyx_v_y.strides[0]) ))))), 1, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_y.data + __pyx_t_28 * __pyx_v_y.strides[0]) ))))), 1));
+        __pyx_v_tol = (__pyx_v_tol * __pyx_f_7sklearn_12linear_model_7cd_fast_fmax(1e-15, cblas_ddot(__pyx_v_n_samples, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_y.data + __pyx_t_11 * __pyx_v_y.strides[0]) ))))), 1, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_y.data + __pyx_t_28 * __pyx_v_y.strides[0]) ))))), 1)));
 
-        /* "sklearn/linear_model/cd_fast.pyx":1029
- *         tol *= ddot(n_samples, <DOUBLE*>&y[0], 1, <DOUBLE*>&y[0], 1)
+        /* "sklearn/linear_model/cd_fast.pyx":1037
+ *         tol *= fmax(1e-15,ddot(n_samples, <DOUBLE*>&y[0], 1, <DOUBLE*>&y[0], 1))
  * 
  *         for n_iter in range(max_iter):             # <<<<<<<<<<<<<<
  * 
@@ -9271,7 +9370,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
         for (__pyx_t_13 = 0; __pyx_t_13 < __pyx_t_29; __pyx_t_13+=1) {
           __pyx_v_n_iter = __pyx_t_13;
 
-          /* "sklearn/linear_model/cd_fast.pyx":1031
+          /* "sklearn/linear_model/cd_fast.pyx":1039
  *         for n_iter in range(max_iter):
  * 
  *             w_max = 0.0             # <<<<<<<<<<<<<<
@@ -9280,7 +9379,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
  */
           __pyx_v_w_max = 0.0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":1032
+          /* "sklearn/linear_model/cd_fast.pyx":1040
  * 
  *             w_max = 0.0
  *             d_w_max = 0.0             # <<<<<<<<<<<<<<
@@ -9289,7 +9388,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
  */
           __pyx_v_d_w_max = 0.0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":1034
+          /* "sklearn/linear_model/cd_fast.pyx":1042
  *             d_w_max = 0.0
  * 
  *             for f_iter in range(n_features):  # Loop over coordinates             # <<<<<<<<<<<<<<
@@ -9300,7 +9399,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
           for (__pyx_t_21 = 0; __pyx_t_21 < __pyx_t_14; __pyx_t_21+=1) {
             __pyx_v_f_iter = __pyx_t_21;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1035
+            /* "sklearn/linear_model/cd_fast.pyx":1043
  * 
  *             for f_iter in range(n_features):  # Loop over coordinates
  *                 if random:             # <<<<<<<<<<<<<<
@@ -9310,7 +9409,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             __pyx_t_16 = (__pyx_v_random != 0);
             if (__pyx_t_16) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1036
+              /* "sklearn/linear_model/cd_fast.pyx":1044
  *             for f_iter in range(n_features):  # Loop over coordinates
  *                 if random:
  *                     ii = rand_int(n_features, rand_r_state)             # <<<<<<<<<<<<<<
@@ -9322,7 +9421,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             }
             /*else*/ {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1038
+              /* "sklearn/linear_model/cd_fast.pyx":1046
  *                     ii = rand_int(n_features, rand_r_state)
  *                 else:
  *                     ii = f_iter             # <<<<<<<<<<<<<<
@@ -9333,7 +9432,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             }
             __pyx_L20:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1040
+            /* "sklearn/linear_model/cd_fast.pyx":1048
  *                     ii = f_iter
  * 
  *                 if norm_cols_X[ii] == 0.0:             # <<<<<<<<<<<<<<
@@ -9344,7 +9443,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             __pyx_t_16 = (((*((double *) ( /* dim=0 */ (__pyx_v_norm_cols_X.data + __pyx_t_26 * __pyx_v_norm_cols_X.strides[0]) ))) == 0.0) != 0);
             if (__pyx_t_16) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1041
+              /* "sklearn/linear_model/cd_fast.pyx":1049
  * 
  *                 if norm_cols_X[ii] == 0.0:
  *                     continue             # <<<<<<<<<<<<<<
@@ -9354,7 +9453,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
               goto __pyx_L18_continue;
             }
 
-            /* "sklearn/linear_model/cd_fast.pyx":1043
+            /* "sklearn/linear_model/cd_fast.pyx":1051
  *                     continue
  * 
  *                 startptr = X_indptr[ii]             # <<<<<<<<<<<<<<
@@ -9364,7 +9463,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             __pyx_t_30 = __pyx_v_ii;
             __pyx_v_startptr = (*((int *) ( /* dim=0 */ (__pyx_v_X_indptr.data + __pyx_t_30 * __pyx_v_X_indptr.strides[0]) )));
 
-            /* "sklearn/linear_model/cd_fast.pyx":1044
+            /* "sklearn/linear_model/cd_fast.pyx":1052
  * 
  *                 startptr = X_indptr[ii]
  *                 endptr = X_indptr[ii + 1]             # <<<<<<<<<<<<<<
@@ -9374,7 +9473,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             __pyx_t_31 = (__pyx_v_ii + 1);
             __pyx_v_endptr = (*((int *) ( /* dim=0 */ (__pyx_v_X_indptr.data + __pyx_t_31 * __pyx_v_X_indptr.strides[0]) )));
 
-            /* "sklearn/linear_model/cd_fast.pyx":1045
+            /* "sklearn/linear_model/cd_fast.pyx":1053
  *                 startptr = X_indptr[ii]
  *                 endptr = X_indptr[ii + 1]
  *                 w_ii = w[ii]  # Store previous value             # <<<<<<<<<<<<<<
@@ -9384,7 +9483,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             __pyx_t_32 = __pyx_v_ii;
             __pyx_v_w_ii = (*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_32 * __pyx_v_w.strides[0]) )));
 
-            /* "sklearn/linear_model/cd_fast.pyx":1046
+            /* "sklearn/linear_model/cd_fast.pyx":1054
  *                 endptr = X_indptr[ii + 1]
  *                 w_ii = w[ii]  # Store previous value
  *                 X_mean_ii = X_mean[ii]             # <<<<<<<<<<<<<<
@@ -9394,7 +9493,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             __pyx_t_33 = __pyx_v_ii;
             __pyx_v_X_mean_ii = (*((double *) ( /* dim=0 */ (__pyx_v_X_mean.data + __pyx_t_33 * __pyx_v_X_mean.strides[0]) )));
 
-            /* "sklearn/linear_model/cd_fast.pyx":1049
+            /* "sklearn/linear_model/cd_fast.pyx":1057
  * 
  *                 # tmp = (X[:,ii]*R).sum() + norm_cols_X[ii] * w_ii
  *                 tmp = 0.0             # <<<<<<<<<<<<<<
@@ -9403,7 +9502,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
  */
             __pyx_v_tmp = 0.0;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1050
+            /* "sklearn/linear_model/cd_fast.pyx":1058
  *                 # tmp = (X[:,ii]*R).sum() + norm_cols_X[ii] * w_ii
  *                 tmp = 0.0
  *                 for jj in range(startptr, endptr):             # <<<<<<<<<<<<<<
@@ -9414,7 +9513,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             for (__pyx_t_35 = __pyx_v_startptr; __pyx_t_35 < __pyx_t_34; __pyx_t_35+=1) {
               __pyx_v_jj = __pyx_t_35;
 
-              /* "sklearn/linear_model/cd_fast.pyx":1051
+              /* "sklearn/linear_model/cd_fast.pyx":1059
  *                 tmp = 0.0
  *                 for jj in range(startptr, endptr):
  *                     tmp += R[X_indices[jj]] * X_data[jj]             # <<<<<<<<<<<<<<
@@ -9427,7 +9526,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
               __pyx_v_tmp = (__pyx_v_tmp + ((*((double *) ( /* dim=0 */ (__pyx_v_R.data + __pyx_t_37 * __pyx_v_R.strides[0]) ))) * (*((double *) ( /* dim=0 */ (__pyx_v_X_data.data + __pyx_t_38 * __pyx_v_X_data.strides[0]) )))));
             }
 
-            /* "sklearn/linear_model/cd_fast.pyx":1053
+            /* "sklearn/linear_model/cd_fast.pyx":1061
  *                     tmp += R[X_indices[jj]] * X_data[jj]
  * 
  *                 if center:             # <<<<<<<<<<<<<<
@@ -9437,7 +9536,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             __pyx_t_16 = (__pyx_v_center != 0);
             if (__pyx_t_16) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1054
+              /* "sklearn/linear_model/cd_fast.pyx":1062
  * 
  *                 if center:
  *                     R_sum = 0.0             # <<<<<<<<<<<<<<
@@ -9446,7 +9545,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
  */
               __pyx_v_R_sum = 0.0;
 
-              /* "sklearn/linear_model/cd_fast.pyx":1055
+              /* "sklearn/linear_model/cd_fast.pyx":1063
  *                 if center:
  *                     R_sum = 0.0
  *                     for jj in range(n_samples):             # <<<<<<<<<<<<<<
@@ -9457,7 +9556,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
               for (__pyx_t_35 = 0; __pyx_t_35 < __pyx_t_34; __pyx_t_35+=1) {
                 __pyx_v_jj = __pyx_t_35;
 
-                /* "sklearn/linear_model/cd_fast.pyx":1056
+                /* "sklearn/linear_model/cd_fast.pyx":1064
  *                     R_sum = 0.0
  *                     for jj in range(n_samples):
  *                         R_sum += R[jj]             # <<<<<<<<<<<<<<
@@ -9468,7 +9567,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
                 __pyx_v_R_sum = (__pyx_v_R_sum + (*((double *) ( /* dim=0 */ (__pyx_v_R.data + __pyx_t_39 * __pyx_v_R.strides[0]) ))));
               }
 
-              /* "sklearn/linear_model/cd_fast.pyx":1057
+              /* "sklearn/linear_model/cd_fast.pyx":1065
  *                     for jj in range(n_samples):
  *                         R_sum += R[jj]
  *                     tmp -= R_sum * X_mean_ii             # <<<<<<<<<<<<<<
@@ -9480,7 +9579,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             }
             __pyx_L24:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1059
+            /* "sklearn/linear_model/cd_fast.pyx":1067
  *                     tmp -= R_sum * X_mean_ii
  * 
  *                 tmp += norm_cols_X[ii] * w_ii             # <<<<<<<<<<<<<<
@@ -9490,7 +9589,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             __pyx_t_34 = __pyx_v_ii;
             __pyx_v_tmp = (__pyx_v_tmp + ((*((double *) ( /* dim=0 */ (__pyx_v_norm_cols_X.data + __pyx_t_34 * __pyx_v_norm_cols_X.strides[0]) ))) * __pyx_v_w_ii));
 
-            /* "sklearn/linear_model/cd_fast.pyx":1062
+            /* "sklearn/linear_model/cd_fast.pyx":1070
  * 
  *                 # soft thresholding
  *                 if positive and tmp < 0.0:             # <<<<<<<<<<<<<<
@@ -9510,7 +9609,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             __pyx_L28_bool_binop_done:;
             if (__pyx_t_16) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1063
+              /* "sklearn/linear_model/cd_fast.pyx":1071
  *                 # soft thresholding
  *                 if positive and tmp < 0.0:
  *                     w[ii] = 0.0             # <<<<<<<<<<<<<<
@@ -9523,7 +9622,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             }
             /*else*/ {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1066
+              /* "sklearn/linear_model/cd_fast.pyx":1074
  *                 else:
  *                     w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
  *                             / (norm_cols_X[ii] + beta)             # <<<<<<<<<<<<<<
@@ -9532,7 +9631,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
  */
               __pyx_t_41 = __pyx_v_ii;
 
-              /* "sklearn/linear_model/cd_fast.pyx":1065
+              /* "sklearn/linear_model/cd_fast.pyx":1073
  *                     w[ii] = 0.0
  *                 else:
  *                     w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \             # <<<<<<<<<<<<<<
@@ -9544,7 +9643,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             }
             __pyx_L27:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1068
+            /* "sklearn/linear_model/cd_fast.pyx":1076
  *                             / (norm_cols_X[ii] + beta)
  * 
  *                 if w[ii] != w_ii:             # <<<<<<<<<<<<<<
@@ -9555,7 +9654,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             __pyx_t_16 = (((*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_43 * __pyx_v_w.strides[0]) ))) != __pyx_v_w_ii) != 0);
             if (__pyx_t_16) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1070
+              /* "sklearn/linear_model/cd_fast.pyx":1078
  *                 if w[ii] != w_ii:
  *                     # R -=  (w[ii]-w_ii) * X[:,ii] # Update residual
  *                     d_w_ii = w[ii] - w_ii             # <<<<<<<<<<<<<<
@@ -9565,7 +9664,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
               __pyx_t_44 = __pyx_v_ii;
               __pyx_v_d_w_ii = ((*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_44 * __pyx_v_w.strides[0]) ))) - __pyx_v_w_ii);
 
-              /* "sklearn/linear_model/cd_fast.pyx":1071
+              /* "sklearn/linear_model/cd_fast.pyx":1079
  *                     # R -=  (w[ii]-w_ii) * X[:,ii] # Update residual
  *                     d_w_ii = w[ii] - w_ii
  *                     for jj in range(startptr, endptr):             # <<<<<<<<<<<<<<
@@ -9576,7 +9675,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
               for (__pyx_t_46 = __pyx_v_startptr; __pyx_t_46 < __pyx_t_45; __pyx_t_46+=1) {
                 __pyx_v_jj = __pyx_t_46;
 
-                /* "sklearn/linear_model/cd_fast.pyx":1072
+                /* "sklearn/linear_model/cd_fast.pyx":1080
  *                     d_w_ii = w[ii] - w_ii
  *                     for jj in range(startptr, endptr):
  *                         R[X_indices[jj]] -= X_data[jj] * d_w_ii             # <<<<<<<<<<<<<<
@@ -9589,7 +9688,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
                 *((double *) ( /* dim=0 */ (__pyx_v_R.data + __pyx_t_49 * __pyx_v_R.strides[0]) )) -= ((*((double *) ( /* dim=0 */ (__pyx_v_X_data.data + __pyx_t_47 * __pyx_v_X_data.strides[0]) ))) * __pyx_v_d_w_ii);
               }
 
-              /* "sklearn/linear_model/cd_fast.pyx":1074
+              /* "sklearn/linear_model/cd_fast.pyx":1082
  *                         R[X_indices[jj]] -= X_data[jj] * d_w_ii
  * 
  *                     if center:             # <<<<<<<<<<<<<<
@@ -9599,7 +9698,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
               __pyx_t_16 = (__pyx_v_center != 0);
               if (__pyx_t_16) {
 
-                /* "sklearn/linear_model/cd_fast.pyx":1075
+                /* "sklearn/linear_model/cd_fast.pyx":1083
  * 
  *                     if center:
  *                         for jj in range(n_samples):             # <<<<<<<<<<<<<<
@@ -9610,7 +9709,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
                 for (__pyx_t_46 = 0; __pyx_t_46 < __pyx_t_45; __pyx_t_46+=1) {
                   __pyx_v_jj = __pyx_t_46;
 
-                  /* "sklearn/linear_model/cd_fast.pyx":1076
+                  /* "sklearn/linear_model/cd_fast.pyx":1084
  *                     if center:
  *                         for jj in range(n_samples):
  *                             R[jj] += X_mean_ii * d_w_ii             # <<<<<<<<<<<<<<
@@ -9627,7 +9726,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             }
             __pyx_L30:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1079
+            /* "sklearn/linear_model/cd_fast.pyx":1087
  * 
  *                 # update the maximum absolute coefficient update
  *                 d_w_ii = fabs(w[ii] - w_ii)             # <<<<<<<<<<<<<<
@@ -9637,7 +9736,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             __pyx_t_45 = __pyx_v_ii;
             __pyx_v_d_w_ii = fabs(((*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_45 * __pyx_v_w.strides[0]) ))) - __pyx_v_w_ii));
 
-            /* "sklearn/linear_model/cd_fast.pyx":1080
+            /* "sklearn/linear_model/cd_fast.pyx":1088
  *                 # update the maximum absolute coefficient update
  *                 d_w_ii = fabs(w[ii] - w_ii)
  *                 if d_w_ii > d_w_max:             # <<<<<<<<<<<<<<
@@ -9647,7 +9746,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             __pyx_t_16 = ((__pyx_v_d_w_ii > __pyx_v_d_w_max) != 0);
             if (__pyx_t_16) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1081
+              /* "sklearn/linear_model/cd_fast.pyx":1089
  *                 d_w_ii = fabs(w[ii] - w_ii)
  *                 if d_w_ii > d_w_max:
  *                     d_w_max = d_w_ii             # <<<<<<<<<<<<<<
@@ -9659,7 +9758,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             }
             __pyx_L36:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1083
+            /* "sklearn/linear_model/cd_fast.pyx":1091
  *                     d_w_max = d_w_ii
  * 
  *                 if w[ii] > w_max:             # <<<<<<<<<<<<<<
@@ -9670,7 +9769,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             __pyx_t_16 = (((*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_46 * __pyx_v_w.strides[0]) ))) > __pyx_v_w_max) != 0);
             if (__pyx_t_16) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1084
+              /* "sklearn/linear_model/cd_fast.pyx":1092
  * 
  *                 if w[ii] > w_max:
  *                     w_max = w[ii]             # <<<<<<<<<<<<<<
@@ -9685,7 +9784,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             __pyx_L18_continue:;
           }
 
-          /* "sklearn/linear_model/cd_fast.pyx":1086
+          /* "sklearn/linear_model/cd_fast.pyx":1094
  *                     w_max = w[ii]
  * 
  *             if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:             # <<<<<<<<<<<<<<
@@ -9713,9 +9812,9 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
           __pyx_L39_bool_binop_done:;
           if (__pyx_t_16) {
 
-            /* "sklearn/linear_model/cd_fast.pyx":1092
+            /* "sklearn/linear_model/cd_fast.pyx":1100
  * 
- *                 gap = sparse_duality_gap(n_samples, n_features, n_tasks,
+ *                 gap = sparse_enet_duality_gap(n_samples, n_features, n_tasks,
  *                                          <DOUBLE*> &X_data[0], <int*> &X_indptr[0],             # <<<<<<<<<<<<<<
  *                                          <int*> &X_indices[0], <DOUBLE*> &X_mean[0],
  *                                          <DOUBLE*> &y[0], <DOUBLE*> &R[0],
@@ -9723,8 +9822,8 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             __pyx_t_52 = 0;
             __pyx_t_53 = 0;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1093
- *                 gap = sparse_duality_gap(n_samples, n_features, n_tasks,
+            /* "sklearn/linear_model/cd_fast.pyx":1101
+ *                 gap = sparse_enet_duality_gap(n_samples, n_features, n_tasks,
  *                                          <DOUBLE*> &X_data[0], <int*> &X_indptr[0],
  *                                          <int*> &X_indices[0], <DOUBLE*> &X_mean[0],             # <<<<<<<<<<<<<<
  *                                          <DOUBLE*> &y[0], <DOUBLE*> &R[0],
@@ -9733,7 +9832,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             __pyx_t_54 = 0;
             __pyx_t_55 = 0;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1094
+            /* "sklearn/linear_model/cd_fast.pyx":1102
  *                                          <DOUBLE*> &X_data[0], <int*> &X_indptr[0],
  *                                          <int*> &X_indices[0], <DOUBLE*> &X_mean[0],
  *                                          <DOUBLE*> &y[0], <DOUBLE*> &R[0],             # <<<<<<<<<<<<<<
@@ -9743,7 +9842,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             __pyx_t_56 = 0;
             __pyx_t_57 = 0;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1095
+            /* "sklearn/linear_model/cd_fast.pyx":1103
  *                                          <int*> &X_indices[0], <DOUBLE*> &X_mean[0],
  *                                          <DOUBLE*> &y[0], <DOUBLE*> &R[0],
  *                                          <DOUBLE*> &w[0], <DOUBLE*> &XtA[0],             # <<<<<<<<<<<<<<
@@ -9753,16 +9852,16 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             __pyx_t_58 = 0;
             __pyx_t_59 = 0;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1091
+            /* "sklearn/linear_model/cd_fast.pyx":1099
  *                 # criterion
  * 
- *                 gap = sparse_duality_gap(n_samples, n_features, n_tasks,             # <<<<<<<<<<<<<<
+ *                 gap = sparse_enet_duality_gap(n_samples, n_features, n_tasks,             # <<<<<<<<<<<<<<
  *                                          <DOUBLE*> &X_data[0], <int*> &X_indptr[0],
  *                                          <int*> &X_indices[0], <DOUBLE*> &X_mean[0],
  */
-            __pyx_v_gap = __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_duality_gap(__pyx_v_n_samples, __pyx_v_n_features, __pyx_v_n_tasks, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_X_data.data + __pyx_t_52 * __pyx_v_X_data.strides[0]) ))))), ((int *)(&(*((int *) ( /* dim=0 */ (__pyx_v_X_indptr.data + __pyx_t_53 * __pyx_v_X_indptr.strides[0]) ))))), ((int *)(&(*((int *) ( /* dim=0 */ (__pyx_v_X_indices.data + __pyx_t_54 * __pyx_v_X_indices.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_X_mean.data + __pyx_t_55 * __pyx_v_X_mean.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_y.data + __pyx_t_56 * __pyx_v_y.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_R.data + __pyx_t_57 * __pyx_v_R.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_58 * __pyx_v_w.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_XtA.data + __pyx_t_59 * __pyx_v_XtA.strides[0]) ))))), (&__pyx_v_dual_norm_XtA), __pyx_v_alpha, __pyx_v_beta, __pyx_v_positive);
+            __pyx_v_gap = __pyx_f_7sklearn_12linear_model_7cd_fast_sparse_enet_duality_gap(__pyx_v_n_samples, __pyx_v_n_features, __pyx_v_n_tasks, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_X_data.data + __pyx_t_52 * __pyx_v_X_data.strides[0]) ))))), ((int *)(&(*((int *) ( /* dim=0 */ (__pyx_v_X_indptr.data + __pyx_t_53 * __pyx_v_X_indptr.strides[0]) ))))), ((int *)(&(*((int *) ( /* dim=0 */ (__pyx_v_X_indices.data + __pyx_t_54 * __pyx_v_X_indices.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_X_mean.data + __pyx_t_55 * __pyx_v_X_mean.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_y.data + __pyx_t_56 * __pyx_v_y.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_R.data + __pyx_t_57 * __pyx_v_R.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_58 * __pyx_v_w.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_XtA.data + __pyx_t_59 * __pyx_v_XtA.strides[0]) ))))), (&__pyx_v_dual_norm_XtA), __pyx_v_alpha, __pyx_v_beta, __pyx_v_positive);
 
-            /* "sklearn/linear_model/cd_fast.pyx":1099
+            /* "sklearn/linear_model/cd_fast.pyx":1107
  *                                          alpha, beta, positive)
  * 
  *                 if gap < tol:             # <<<<<<<<<<<<<<
@@ -9772,7 +9871,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
             __pyx_t_16 = ((__pyx_v_gap < __pyx_v_tol) != 0);
             if (__pyx_t_16) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1101
+              /* "sklearn/linear_model/cd_fast.pyx":1109
  *                 if gap < tol:
  *                     # return if we reached desired tolerance
  *                     break             # <<<<<<<<<<<<<<
@@ -9788,7 +9887,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
         __pyx_L17_break:;
       }
 
-      /* "sklearn/linear_model/cd_fast.pyx":1002
+      /* "sklearn/linear_model/cd_fast.pyx":1010
  *     cdef bint center = False
  * 
  *     with nogil:             # <<<<<<<<<<<<<<
@@ -9806,7 +9905,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
       }
   }
 
-  /* "sklearn/linear_model/cd_fast.pyx":1103
+  /* "sklearn/linear_model/cd_fast.pyx":1111
  *                     break
  * 
  *     return w, gap, tol, n_iter + 1             # <<<<<<<<<<<<<<
@@ -9814,15 +9913,15 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
  * 
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __pyx_memoryview_fromslice(__pyx_v_w, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1103; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __pyx_memoryview_fromslice(__pyx_v_w, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1111; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_7 = PyFloat_FromDouble(__pyx_v_gap); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1103; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_7 = PyFloat_FromDouble(__pyx_v_gap); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1111; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_5 = PyFloat_FromDouble(__pyx_v_tol); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1103; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = PyFloat_FromDouble(__pyx_v_tol); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1111; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_2 = __Pyx_PyInt_From_long((__pyx_v_n_iter + 1)); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1103; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyInt_From_long((__pyx_v_n_iter + 1)); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1111; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = PyTuple_New(4); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1103; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyTuple_New(4); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1111; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
@@ -9840,7 +9939,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
   __pyx_t_3 = 0;
   goto __pyx_L0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":948
+  /* "sklearn/linear_model/cd_fast.pyx":956
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def sparse_enet_coordinate_descent(double[:] w,             # <<<<<<<<<<<<<<
@@ -9876,15 +9975,15 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_6sparse_enet_coordina
   return __pyx_r;
 }
 
-/* "sklearn/linear_model/cd_fast.pyx":1110
+/* "sklearn/linear_model/cd_fast.pyx":1118
  * 
  * # Function to compute the duality gap
- * cdef double gram_duality_gap( # Data             # <<<<<<<<<<<<<<
+ * cdef double gram_enet_duality_gap( # Data             # <<<<<<<<<<<<<<
  *                         unsigned int n_features,
  *                         unsigned int n_tasks,
  */
 
-static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_duality_gap(unsigned int __pyx_v_n_features, unsigned int __pyx_v_n_tasks, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_q_data, double __pyx_v_y_norm2, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_H_data, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_w_data, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_XtA_data, double *__pyx_v_dual_norm_XtA, double __pyx_v_alpha, double __pyx_v_beta, int __pyx_v_positive) {
+static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_enet_duality_gap(unsigned int __pyx_v_n_features, unsigned int __pyx_v_n_tasks, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_q_data, double __pyx_v_y_norm2, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_H_data, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_w_data, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_XtA_data, double *__pyx_v_dual_norm_XtA, double __pyx_v_alpha, double __pyx_v_beta, int __pyx_v_positive) {
   double __pyx_v_q_dot_w;
   double __pyx_v_R_norm2;
   double __pyx_v_w_norm2;
@@ -9903,7 +10002,16 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_duality_gap(unsigned
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1137
+  /* "sklearn/linear_model/cd_fast.pyx":1136
+ *     cdef double q_dot_w
+ *     cdef double R_norm2
+ *     cdef double w_norm2 = 0             # <<<<<<<<<<<<<<
+ *     cdef double l1_norm
+ *     cdef double const
+ */
+  __pyx_v_w_norm2 = 0.0;
+
+  /* "sklearn/linear_model/cd_fast.pyx":1145
  *     # Note that increment in q is not 1 because the strides
  *     # vary if q is sliced from a 2-D array.
  *     q_dot_w = ddot(n_features, w_data, 1, q_data, n_tasks)             # <<<<<<<<<<<<<<
@@ -9912,7 +10020,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_duality_gap(unsigned
  */
   __pyx_v_q_dot_w = cblas_ddot(__pyx_v_n_features, __pyx_v_w_data, 1, __pyx_v_q_data, __pyx_v_n_tasks);
 
-  /* "sklearn/linear_model/cd_fast.pyx":1139
+  /* "sklearn/linear_model/cd_fast.pyx":1147
  *     q_dot_w = ddot(n_features, w_data, 1, q_data, n_tasks)
  * 
  *     for ii in range(n_features):             # <<<<<<<<<<<<<<
@@ -9923,7 +10031,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_duality_gap(unsigned
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v_ii = __pyx_t_2;
 
-    /* "sklearn/linear_model/cd_fast.pyx":1140
+    /* "sklearn/linear_model/cd_fast.pyx":1148
  * 
  *     for ii in range(n_features):
  *         XtA_data[ii] = q_data[ii] - H_data[ii] - beta * w_data[ii]             # <<<<<<<<<<<<<<
@@ -9933,7 +10041,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_duality_gap(unsigned
     (__pyx_v_XtA_data[__pyx_v_ii]) = (((__pyx_v_q_data[__pyx_v_ii]) - (__pyx_v_H_data[__pyx_v_ii])) - (__pyx_v_beta * (__pyx_v_w_data[__pyx_v_ii])));
   }
 
-  /* "sklearn/linear_model/cd_fast.pyx":1141
+  /* "sklearn/linear_model/cd_fast.pyx":1149
  *     for ii in range(n_features):
  *         XtA_data[ii] = q_data[ii] - H_data[ii] - beta * w_data[ii]
  *     if positive:             # <<<<<<<<<<<<<<
@@ -9943,7 +10051,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_duality_gap(unsigned
   __pyx_t_3 = (__pyx_v_positive != 0);
   if (__pyx_t_3) {
 
-    /* "sklearn/linear_model/cd_fast.pyx":1142
+    /* "sklearn/linear_model/cd_fast.pyx":1150
  *         XtA_data[ii] = q_data[ii] - H_data[ii] - beta * w_data[ii]
  *     if positive:
  *         dual_norm_XtA[0] = max(n_features, XtA_data)             # <<<<<<<<<<<<<<
@@ -9955,7 +10063,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_duality_gap(unsigned
   }
   /*else*/ {
 
-    /* "sklearn/linear_model/cd_fast.pyx":1144
+    /* "sklearn/linear_model/cd_fast.pyx":1152
  *         dual_norm_XtA[0] = max(n_features, XtA_data)
  *     else:
  *         dual_norm_XtA[0] = abs_max(n_features, XtA_data)             # <<<<<<<<<<<<<<
@@ -9966,7 +10074,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_duality_gap(unsigned
   }
   __pyx_L5:;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1147
+  /* "sklearn/linear_model/cd_fast.pyx":1155
  * 
  *     # tmp = np.sum(w * H)
  *     tmp = 0.0             # <<<<<<<<<<<<<<
@@ -9975,7 +10083,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_duality_gap(unsigned
  */
   __pyx_v_tmp = 0.0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1148
+  /* "sklearn/linear_model/cd_fast.pyx":1156
  *     # tmp = np.sum(w * H)
  *     tmp = 0.0
  *     for ii in range(n_features):             # <<<<<<<<<<<<<<
@@ -9986,7 +10094,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_duality_gap(unsigned
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v_ii = __pyx_t_2;
 
-    /* "sklearn/linear_model/cd_fast.pyx":1149
+    /* "sklearn/linear_model/cd_fast.pyx":1157
  *     tmp = 0.0
  *     for ii in range(n_features):
  *         tmp += w_data[ii] * H_data[ii]             # <<<<<<<<<<<<<<
@@ -9996,7 +10104,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_duality_gap(unsigned
     __pyx_v_tmp = (__pyx_v_tmp + ((__pyx_v_w_data[__pyx_v_ii]) * (__pyx_v_H_data[__pyx_v_ii])));
   }
 
-  /* "sklearn/linear_model/cd_fast.pyx":1150
+  /* "sklearn/linear_model/cd_fast.pyx":1158
  *     for ii in range(n_features):
  *         tmp += w_data[ii] * H_data[ii]
  *     R_norm2 = y_norm2 + tmp - 2.0 * q_dot_w             # <<<<<<<<<<<<<<
@@ -10005,28 +10113,97 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_duality_gap(unsigned
  */
   __pyx_v_R_norm2 = ((__pyx_v_y_norm2 + __pyx_v_tmp) - (2.0 * __pyx_v_q_dot_w));
 
-  /* "sklearn/linear_model/cd_fast.pyx":1153
+  /* "sklearn/linear_model/cd_fast.pyx":1161
  * 
  *     # w_norm2 = np.dot(w, w)
- *     w_norm2 = ddot(n_features, w_data, 1, w_data, 1)             # <<<<<<<<<<<<<<
+ *     if beta>0:             # <<<<<<<<<<<<<<
+ *         w_norm2 = ddot(n_features, w_data, 1, w_data, 1)
+ * 
+ */
+  __pyx_t_3 = ((__pyx_v_beta > 0.0) != 0);
+  if (__pyx_t_3) {
+
+    /* "sklearn/linear_model/cd_fast.pyx":1162
+ *     # w_norm2 = np.dot(w, w)
+ *     if beta>0:
+ *         w_norm2 = ddot(n_features, w_data, 1, w_data, 1)             # <<<<<<<<<<<<<<
  * 
  *     # Determining the dual feasible point which is
  */
-  __pyx_v_w_norm2 = cblas_ddot(__pyx_v_n_features, __pyx_v_w_data, 1, __pyx_v_w_data, 1);
+    __pyx_v_w_norm2 = cblas_ddot(__pyx_v_n_features, __pyx_v_w_data, 1, __pyx_v_w_data, 1);
+    goto __pyx_L8;
+  }
+  __pyx_L8:;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1157
+  /* "sklearn/linear_model/cd_fast.pyx":1166
  *     # Determining the dual feasible point which is
  *     # proportional to R and closest to y / alpha
- *     if positive:             # <<<<<<<<<<<<<<
+ *     if dual_norm_XtA[0] <= 0:             # <<<<<<<<<<<<<<
+ *         if R_norm2 == 0:
+ *             const = 1.
+ */
+  __pyx_t_3 = (((__pyx_v_dual_norm_XtA[0]) <= 0.0) != 0);
+  if (__pyx_t_3) {
+
+    /* "sklearn/linear_model/cd_fast.pyx":1167
+ *     # proportional to R and closest to y / alpha
+ *     if dual_norm_XtA[0] <= 0:
+ *         if R_norm2 == 0:             # <<<<<<<<<<<<<<
+ *             const = 1.
+ *         else:
+ */
+    __pyx_t_3 = ((__pyx_v_R_norm2 == 0.0) != 0);
+    if (__pyx_t_3) {
+
+      /* "sklearn/linear_model/cd_fast.pyx":1168
+ *     if dual_norm_XtA[0] <= 0:
+ *         if R_norm2 == 0:
+ *             const = 1.             # <<<<<<<<<<<<<<
+ *         else:
+ *             const = (y_norm2 - q_dot_w) / R_norm2
+ */
+      __pyx_v_const = 1.;
+      goto __pyx_L10;
+    }
+    /*else*/ {
+
+      /* "sklearn/linear_model/cd_fast.pyx":1170
+ *             const = 1.
+ *         else:
+ *             const = (y_norm2 - q_dot_w) / R_norm2             # <<<<<<<<<<<<<<
+ *     elif positive:
+ *         const = alpha * fmin( (y_norm2 - q_dot_w) / (alpha * R_norm2),
+ */
+      __pyx_t_4 = (__pyx_v_y_norm2 - __pyx_v_q_dot_w);
+      if (unlikely(__pyx_v_R_norm2 == 0)) {
+        #ifdef WITH_THREAD
+        PyGILState_STATE __pyx_gilstate_save = PyGILState_Ensure();
+        #endif
+        PyErr_SetString(PyExc_ZeroDivisionError, "float division");
+        #ifdef WITH_THREAD
+        PyGILState_Release(__pyx_gilstate_save);
+        #endif
+        {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1170; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      }
+      __pyx_v_const = (__pyx_t_4 / __pyx_v_R_norm2);
+    }
+    __pyx_L10:;
+    goto __pyx_L9;
+  }
+
+  /* "sklearn/linear_model/cd_fast.pyx":1171
+ *         else:
+ *             const = (y_norm2 - q_dot_w) / R_norm2
+ *     elif positive:             # <<<<<<<<<<<<<<
  *         const = alpha * fmin( (y_norm2 - q_dot_w) / (alpha * R_norm2),
  *                              1. / dual_norm_XtA[0])
  */
   __pyx_t_3 = (__pyx_v_positive != 0);
   if (__pyx_t_3) {
 
-    /* "sklearn/linear_model/cd_fast.pyx":1158
- *     # proportional to R and closest to y / alpha
- *     if positive:
+    /* "sklearn/linear_model/cd_fast.pyx":1172
+ *             const = (y_norm2 - q_dot_w) / R_norm2
+ *     elif positive:
  *         const = alpha * fmin( (y_norm2 - q_dot_w) / (alpha * R_norm2),             # <<<<<<<<<<<<<<
  *                              1. / dual_norm_XtA[0])
  *     else:
@@ -10041,11 +10218,11 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_duality_gap(unsigned
       #ifdef WITH_THREAD
       PyGILState_Release(__pyx_gilstate_save);
       #endif
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1158; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1172; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     }
 
-    /* "sklearn/linear_model/cd_fast.pyx":1159
- *     if positive:
+    /* "sklearn/linear_model/cd_fast.pyx":1173
+ *     elif positive:
  *         const = alpha * fmin( (y_norm2 - q_dot_w) / (alpha * R_norm2),
  *                              1. / dual_norm_XtA[0])             # <<<<<<<<<<<<<<
  *     else:
@@ -10059,22 +10236,22 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_duality_gap(unsigned
       #ifdef WITH_THREAD
       PyGILState_Release(__pyx_gilstate_save);
       #endif
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1159; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1173; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     }
 
-    /* "sklearn/linear_model/cd_fast.pyx":1158
- *     # proportional to R and closest to y / alpha
- *     if positive:
+    /* "sklearn/linear_model/cd_fast.pyx":1172
+ *             const = (y_norm2 - q_dot_w) / R_norm2
+ *     elif positive:
  *         const = alpha * fmin( (y_norm2 - q_dot_w) / (alpha * R_norm2),             # <<<<<<<<<<<<<<
  *                              1. / dual_norm_XtA[0])
  *     else:
  */
     __pyx_v_const = (__pyx_v_alpha * __pyx_f_7sklearn_12linear_model_7cd_fast_fmin((__pyx_t_4 / __pyx_t_5), (1. / (__pyx_v_dual_norm_XtA[0]))));
-    goto __pyx_L8;
+    goto __pyx_L9;
   }
   /*else*/ {
 
-    /* "sklearn/linear_model/cd_fast.pyx":1161
+    /* "sklearn/linear_model/cd_fast.pyx":1175
  *                              1. / dual_norm_XtA[0])
  *     else:
  *         const = alpha * fmax(-1. / dual_norm_XtA[0],             # <<<<<<<<<<<<<<
@@ -10089,10 +10266,10 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_duality_gap(unsigned
       #ifdef WITH_THREAD
       PyGILState_Release(__pyx_gilstate_save);
       #endif
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1161; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1175; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     }
 
-    /* "sklearn/linear_model/cd_fast.pyx":1162
+    /* "sklearn/linear_model/cd_fast.pyx":1176
  *     else:
  *         const = alpha * fmax(-1. / dual_norm_XtA[0],
  *                          fmin( (y_norm2 - q_dot_w) / (alpha * R_norm2),             # <<<<<<<<<<<<<<
@@ -10109,10 +10286,10 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_duality_gap(unsigned
       #ifdef WITH_THREAD
       PyGILState_Release(__pyx_gilstate_save);
       #endif
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1162; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1176; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     }
 
-    /* "sklearn/linear_model/cd_fast.pyx":1163
+    /* "sklearn/linear_model/cd_fast.pyx":1177
  *         const = alpha * fmax(-1. / dual_norm_XtA[0],
  *                          fmin( (y_norm2 - q_dot_w) / (alpha * R_norm2),
  *                               1. / dual_norm_XtA[0]) )             # <<<<<<<<<<<<<<
@@ -10127,10 +10304,10 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_duality_gap(unsigned
       #ifdef WITH_THREAD
       PyGILState_Release(__pyx_gilstate_save);
       #endif
-      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1163; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+      {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1177; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     }
 
-    /* "sklearn/linear_model/cd_fast.pyx":1161
+    /* "sklearn/linear_model/cd_fast.pyx":1175
  *                              1. / dual_norm_XtA[0])
  *     else:
  *         const = alpha * fmax(-1. / dual_norm_XtA[0],             # <<<<<<<<<<<<<<
@@ -10139,9 +10316,9 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_duality_gap(unsigned
  */
     __pyx_v_const = (__pyx_v_alpha * __pyx_f_7sklearn_12linear_model_7cd_fast_fmax((-1. / (__pyx_v_dual_norm_XtA[0])), __pyx_f_7sklearn_12linear_model_7cd_fast_fmin((__pyx_t_5 / __pyx_t_4), (1. / (__pyx_v_dual_norm_XtA[0])))));
   }
-  __pyx_L8:;
+  __pyx_L9:;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1165
+  /* "sklearn/linear_model/cd_fast.pyx":1179
  *                               1. / dual_norm_XtA[0]) )
  * 
  *     l1_norm = dasum(n_features, w_data, 1)             # <<<<<<<<<<<<<<
@@ -10150,7 +10327,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_duality_gap(unsigned
  */
   __pyx_v_l1_norm = cblas_dasum(__pyx_v_n_features, __pyx_v_w_data, 1);
 
-  /* "sklearn/linear_model/cd_fast.pyx":1168
+  /* "sklearn/linear_model/cd_fast.pyx":1182
  * 
  *     gap = 0.5 * (1 + const ** 2) * (R_norm2 + beta * w_norm2) \
  *           + alpha * l1_norm - const * (y_norm2 - q_dot_w)             # <<<<<<<<<<<<<<
@@ -10159,7 +10336,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_duality_gap(unsigned
  */
   __pyx_v_gap = ((((0.5 * (1.0 + pow(__pyx_v_const, 2.0))) * (__pyx_v_R_norm2 + (__pyx_v_beta * __pyx_v_w_norm2))) + (__pyx_v_alpha * __pyx_v_l1_norm)) - (__pyx_v_const * (__pyx_v_y_norm2 - __pyx_v_q_dot_w)));
 
-  /* "sklearn/linear_model/cd_fast.pyx":1170
+  /* "sklearn/linear_model/cd_fast.pyx":1184
  *           + alpha * l1_norm - const * (y_norm2 - q_dot_w)
  * 
  *     return gap             # <<<<<<<<<<<<<<
@@ -10169,31 +10346,31 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_duality_gap(unsigned
   __pyx_r = __pyx_v_gap;
   goto __pyx_L0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1110
+  /* "sklearn/linear_model/cd_fast.pyx":1118
  * 
  * # Function to compute the duality gap
- * cdef double gram_duality_gap( # Data             # <<<<<<<<<<<<<<
+ * cdef double gram_enet_duality_gap( # Data             # <<<<<<<<<<<<<<
  *                         unsigned int n_features,
  *                         unsigned int n_tasks,
  */
 
   /* function exit code */
   __pyx_L1_error:;
-  __Pyx_WriteUnraisable("sklearn.linear_model.cd_fast.gram_duality_gap", __pyx_clineno, __pyx_lineno, __pyx_filename, 0);
+  __Pyx_WriteUnraisable("sklearn.linear_model.cd_fast.gram_enet_duality_gap", __pyx_clineno, __pyx_lineno, __pyx_filename, 0);
   __pyx_r = 0;
   __pyx_L0:;
   return __pyx_r;
 }
 
-/* "sklearn/linear_model/cd_fast.pyx":1174
+/* "sklearn/linear_model/cd_fast.pyx":1188
  * 
  * # Function to compute the primal value
- * cdef double gram_primal_value( # Data             # <<<<<<<<<<<<<<
+ * cdef double gram_enet_primal_value( # Data             # <<<<<<<<<<<<<<
  *                         unsigned int n_features,
  *                         unsigned int n_tasks,
  */
 
-static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_primal_value(unsigned int __pyx_v_n_features, unsigned int __pyx_v_n_tasks, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_q_data, double __pyx_v_y_norm2, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_H_data, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_w_data, double __pyx_v_alpha, double __pyx_v_beta) {
+static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_enet_primal_value(unsigned int __pyx_v_n_features, unsigned int __pyx_v_n_tasks, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_q_data, double __pyx_v_y_norm2, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_H_data, __pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *__pyx_v_w_data, double __pyx_v_alpha, double __pyx_v_beta) {
   double __pyx_v_R_norm2;
   double __pyx_v_w_norm2;
   double __pyx_v_l1_norm;
@@ -10206,7 +10383,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_primal_value(unsigne
   unsigned int __pyx_t_2;
   int __pyx_t_3;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1187
+  /* "sklearn/linear_model/cd_fast.pyx":1201
  * 
  *     cdef double R_norm2
  *     cdef double w_norm2 = 0             # <<<<<<<<<<<<<<
@@ -10215,7 +10392,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_primal_value(unsigne
  */
   __pyx_v_w_norm2 = 0.0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1192
+  /* "sklearn/linear_model/cd_fast.pyx":1206
  *     cdef double tmp
  * 
  *     q_dot_w = ddot(n_features, w_data, 1, q_data, n_tasks)             # <<<<<<<<<<<<<<
@@ -10224,7 +10401,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_primal_value(unsigne
  */
   __pyx_v_q_dot_w = cblas_ddot(__pyx_v_n_features, __pyx_v_w_data, 1, __pyx_v_q_data, __pyx_v_n_tasks);
 
-  /* "sklearn/linear_model/cd_fast.pyx":1195
+  /* "sklearn/linear_model/cd_fast.pyx":1209
  * 
  *     # tmp = np.sum(w * H)
  *     tmp = 0.0             # <<<<<<<<<<<<<<
@@ -10233,7 +10410,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_primal_value(unsigne
  */
   __pyx_v_tmp = 0.0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1196
+  /* "sklearn/linear_model/cd_fast.pyx":1210
  *     # tmp = np.sum(w * H)
  *     tmp = 0.0
  *     for ii in range(n_features):             # <<<<<<<<<<<<<<
@@ -10244,7 +10421,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_primal_value(unsigne
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v_ii = __pyx_t_2;
 
-    /* "sklearn/linear_model/cd_fast.pyx":1197
+    /* "sklearn/linear_model/cd_fast.pyx":1211
  *     tmp = 0.0
  *     for ii in range(n_features):
  *         tmp += w_data[ii] * H_data[ii]             # <<<<<<<<<<<<<<
@@ -10254,7 +10431,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_primal_value(unsigne
     __pyx_v_tmp = (__pyx_v_tmp + ((__pyx_v_w_data[__pyx_v_ii]) * (__pyx_v_H_data[__pyx_v_ii])));
   }
 
-  /* "sklearn/linear_model/cd_fast.pyx":1198
+  /* "sklearn/linear_model/cd_fast.pyx":1212
  *     for ii in range(n_features):
  *         tmp += w_data[ii] * H_data[ii]
  *     R_norm2 = y_norm2 + tmp - 2.0 * q_dot_w             # <<<<<<<<<<<<<<
@@ -10263,7 +10440,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_primal_value(unsigne
  */
   __pyx_v_R_norm2 = ((__pyx_v_y_norm2 + __pyx_v_tmp) - (2.0 * __pyx_v_q_dot_w));
 
-  /* "sklearn/linear_model/cd_fast.pyx":1201
+  /* "sklearn/linear_model/cd_fast.pyx":1215
  * 
  *     # w_norm2 = np.dot(w, w)
  *     if beta>0:             # <<<<<<<<<<<<<<
@@ -10273,7 +10450,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_primal_value(unsigne
   __pyx_t_3 = ((__pyx_v_beta > 0.0) != 0);
   if (__pyx_t_3) {
 
-    /* "sklearn/linear_model/cd_fast.pyx":1202
+    /* "sklearn/linear_model/cd_fast.pyx":1216
  *     # w_norm2 = np.dot(w, w)
  *     if beta>0:
  *         w_norm2 = ddot(n_features, w_data, 1,             # <<<<<<<<<<<<<<
@@ -10285,7 +10462,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_primal_value(unsigne
   }
   __pyx_L5:;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1205
+  /* "sklearn/linear_model/cd_fast.pyx":1219
  *                        w_data, 1)
  * 
  *     l1_norm = dasum(n_features, w_data, 1)             # <<<<<<<<<<<<<<
@@ -10294,7 +10471,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_primal_value(unsigne
  */
   __pyx_v_l1_norm = cblas_dasum(__pyx_v_n_features, __pyx_v_w_data, 1);
 
-  /* "sklearn/linear_model/cd_fast.pyx":1207
+  /* "sklearn/linear_model/cd_fast.pyx":1221
  *     l1_norm = dasum(n_features, w_data, 1)
  * 
  *     fval = 0.5 * R_norm2 + alpha * l1_norm + 0.5 * beta * w_norm2             # <<<<<<<<<<<<<<
@@ -10303,7 +10480,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_primal_value(unsigne
  */
   __pyx_v_fval = (((0.5 * __pyx_v_R_norm2) + (__pyx_v_alpha * __pyx_v_l1_norm)) + ((0.5 * __pyx_v_beta) * __pyx_v_w_norm2));
 
-  /* "sklearn/linear_model/cd_fast.pyx":1209
+  /* "sklearn/linear_model/cd_fast.pyx":1223
  *     fval = 0.5 * R_norm2 + alpha * l1_norm + 0.5 * beta * w_norm2
  * 
  *     return fval             # <<<<<<<<<<<<<<
@@ -10313,10 +10490,10 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_primal_value(unsigne
   __pyx_r = __pyx_v_fval;
   goto __pyx_L0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1174
+  /* "sklearn/linear_model/cd_fast.pyx":1188
  * 
  * # Function to compute the primal value
- * cdef double gram_primal_value( # Data             # <<<<<<<<<<<<<<
+ * cdef double gram_enet_primal_value( # Data             # <<<<<<<<<<<<<<
  *                         unsigned int n_features,
  *                         unsigned int n_tasks,
  */
@@ -10326,7 +10503,7 @@ static double __pyx_f_7sklearn_12linear_model_7cd_fast_gram_primal_value(unsigne
   return __pyx_r;
 }
 
-/* "sklearn/linear_model/cd_fast.pyx":1215
+/* "sklearn/linear_model/cd_fast.pyx":1229
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def enet_accelerated_coordinate_descent_gram(double[:] w, double alpha, double beta,             # <<<<<<<<<<<<<<
@@ -10385,42 +10562,42 @@ static PyObject *__pyx_pw_7sklearn_12linear_model_7cd_fast_9enet_accelerated_coo
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_alpha)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent_gram", 0, 9, 11, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1215; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent_gram", 0, 9, 11, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1229; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_beta)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent_gram", 0, 9, 11, 2); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1215; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent_gram", 0, 9, 11, 2); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1229; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_Q)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent_gram", 0, 9, 11, 3); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1215; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent_gram", 0, 9, 11, 3); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1229; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  4:
         if (likely((values[4] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_q)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent_gram", 0, 9, 11, 4); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1215; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent_gram", 0, 9, 11, 4); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1229; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  5:
         if (likely((values[5] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_y)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent_gram", 0, 9, 11, 5); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1215; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent_gram", 0, 9, 11, 5); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1229; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  6:
         if (likely((values[6] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_max_iter)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent_gram", 0, 9, 11, 6); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1215; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent_gram", 0, 9, 11, 6); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1229; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  7:
         if (likely((values[7] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_tol)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent_gram", 0, 9, 11, 7); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1215; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent_gram", 0, 9, 11, 7); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1229; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  8:
         if (likely((values[8] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_rng)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent_gram", 0, 9, 11, 8); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1215; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent_gram", 0, 9, 11, 8); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1229; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  9:
         if (kw_args > 0) {
@@ -10434,7 +10611,7 @@ static PyObject *__pyx_pw_7sklearn_12linear_model_7cd_fast_9enet_accelerated_coo
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "enet_accelerated_coordinate_descent_gram") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1215; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "enet_accelerated_coordinate_descent_gram") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1229; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -10453,29 +10630,29 @@ static PyObject *__pyx_pw_7sklearn_12linear_model_7cd_fast_9enet_accelerated_coo
         default: goto __pyx_L5_argtuple_error;
       }
     }
-    __pyx_v_w = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[0]); if (unlikely(!__pyx_v_w.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1215; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_alpha = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_alpha == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1215; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_beta = __pyx_PyFloat_AsDouble(values[2]); if (unlikely((__pyx_v_beta == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1215; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_Q = __Pyx_PyObject_to_MemoryviewSlice_dsds_double(values[3]); if (unlikely(!__pyx_v_Q.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1216; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_q = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[4]); if (unlikely(!__pyx_v_q.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1216; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_y = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[5]); if (unlikely(!__pyx_v_y.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1216; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_max_iter = __Pyx_PyInt_As_int(values[6]); if (unlikely((__pyx_v_max_iter == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1217; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_tol = __pyx_PyFloat_AsDouble(values[7]); if (unlikely((__pyx_v_tol == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1217; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_w = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[0]); if (unlikely(!__pyx_v_w.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1229; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_alpha = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_alpha == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1229; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_beta = __pyx_PyFloat_AsDouble(values[2]); if (unlikely((__pyx_v_beta == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1229; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_Q = __Pyx_PyObject_to_MemoryviewSlice_dsds_double(values[3]); if (unlikely(!__pyx_v_Q.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1230; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_q = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[4]); if (unlikely(!__pyx_v_q.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1230; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_y = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[5]); if (unlikely(!__pyx_v_y.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1230; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_max_iter = __Pyx_PyInt_As_int(values[6]); if (unlikely((__pyx_v_max_iter == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1231; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_tol = __pyx_PyFloat_AsDouble(values[7]); if (unlikely((__pyx_v_tol == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1231; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     __pyx_v_rng = values[8];
     if (values[9]) {
-      __pyx_v_random = __Pyx_PyObject_IsTrue(values[9]); if (unlikely((__pyx_v_random == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1218; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+      __pyx_v_random = __Pyx_PyObject_IsTrue(values[9]); if (unlikely((__pyx_v_random == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1232; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     } else {
       __pyx_v_random = ((int)0);
     }
     if (values[10]) {
-      __pyx_v_positive = __Pyx_PyObject_IsTrue(values[10]); if (unlikely((__pyx_v_positive == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1218; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+      __pyx_v_positive = __Pyx_PyObject_IsTrue(values[10]); if (unlikely((__pyx_v_positive == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1232; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     } else {
       __pyx_v_positive = ((int)0);
     }
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent_gram", 0, 9, 11, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1215; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("enet_accelerated_coordinate_descent_gram", 0, 9, 11, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1229; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_AddTraceback("sklearn.linear_model.cd_fast.enet_accelerated_coordinate_descent_gram", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -10608,7 +10785,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("enet_accelerated_coordinate_descent_gram", 0);
 
-  /* "sklearn/linear_model/cd_fast.pyx":1234
+  /* "sklearn/linear_model/cd_fast.pyx":1248
  * 
  *     # get the data information into easy vars
  *     cdef unsigned int n_samples = y.shape[0]             # <<<<<<<<<<<<<<
@@ -10617,7 +10794,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
  */
   __pyx_v_n_samples = (__pyx_v_y.shape[0]);
 
-  /* "sklearn/linear_model/cd_fast.pyx":1235
+  /* "sklearn/linear_model/cd_fast.pyx":1249
  *     # get the data information into easy vars
  *     cdef unsigned int n_samples = y.shape[0]
  *     cdef unsigned int n_features = Q.shape[0]             # <<<<<<<<<<<<<<
@@ -10626,7 +10803,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
  */
   __pyx_v_n_features = (__pyx_v_Q.shape[0]);
 
-  /* "sklearn/linear_model/cd_fast.pyx":1236
+  /* "sklearn/linear_model/cd_fast.pyx":1250
  *     cdef unsigned int n_samples = y.shape[0]
  *     cdef unsigned int n_features = Q.shape[0]
  *     cdef unsigned int n_tasks = y.strides[0] / sizeof(DOUBLE)             # <<<<<<<<<<<<<<
@@ -10635,31 +10812,31 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
  */
   __pyx_v_n_tasks = ((__pyx_v_y.strides[0]) / (sizeof(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE)));
 
-  /* "sklearn/linear_model/cd_fast.pyx":1239
+  /* "sklearn/linear_model/cd_fast.pyx":1253
  * 
  *     # additional variables
  *     cdef double[:] we = w.copy()             # exploration variable             # <<<<<<<<<<<<<<
  *     cdef double[:] wc = np.zeros(n_features) # correction variable
  *     # initial value "Q w" which will be kept of up to date in the iterations
  */
-  __pyx_t_1 = __pyx_memoryview_copy_slice_dc_double_c(__pyx_v_w); if (unlikely(!__pyx_t_1.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1239; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __pyx_memoryview_copy_slice_dc_double_c(__pyx_v_w); if (unlikely(!__pyx_t_1.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1253; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_v_we = __pyx_t_1;
   __pyx_t_1.memview = NULL;
   __pyx_t_1.data = NULL;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1240
+  /* "sklearn/linear_model/cd_fast.pyx":1254
  *     # additional variables
  *     cdef double[:] we = w.copy()             # exploration variable
  *     cdef double[:] wc = np.zeros(n_features) # correction variable             # <<<<<<<<<<<<<<
  *     # initial value "Q w" which will be kept of up to date in the iterations
  *     cdef double[:] H = np.dot(Q, w)
  */
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1240; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1254; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_zeros); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1240; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_zeros); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1254; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1240; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1254; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_t_5 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_4))) {
@@ -10672,43 +10849,43 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
     }
   }
   if (!__pyx_t_5) {
-    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_3); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1240; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_3); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1254; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_GOTREF(__pyx_t_2);
   } else {
-    __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1240; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1254; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_6);
     PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5); __Pyx_GIVEREF(__pyx_t_5); __pyx_t_5 = NULL;
     PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_t_3);
     __Pyx_GIVEREF(__pyx_t_3);
     __pyx_t_3 = 0;
-    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1240; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1254; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   }
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __pyx_t_7 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(__pyx_t_2);
-  if (unlikely(!__pyx_t_7.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1240; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__pyx_t_7.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1254; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_wc = __pyx_t_7;
   __pyx_t_7.memview = NULL;
   __pyx_t_7.data = NULL;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1242
+  /* "sklearn/linear_model/cd_fast.pyx":1256
  *     cdef double[:] wc = np.zeros(n_features) # correction variable
  *     # initial value "Q w" which will be kept of up to date in the iterations
  *     cdef double[:] H = np.dot(Q, w)             # <<<<<<<<<<<<<<
  *     cdef double[:] He = H.copy()
  *     cdef double[:] Hc = np.zeros(n_features)
  */
-  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1242; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1256; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_dot); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1242; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_dot); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1256; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __pyx_memoryview_fromslice(__pyx_v_Q, 2, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1242; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __pyx_memoryview_fromslice(__pyx_v_Q, 2, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1256; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = __pyx_memoryview_fromslice(__pyx_v_w, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1242; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __pyx_memoryview_fromslice(__pyx_v_w, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1256; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_t_5 = NULL;
   __pyx_t_8 = 0;
@@ -10722,7 +10899,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
       __pyx_t_8 = 1;
     }
   }
-  __pyx_t_9 = PyTuple_New(2+__pyx_t_8); if (unlikely(!__pyx_t_9)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1242; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_9 = PyTuple_New(2+__pyx_t_8); if (unlikely(!__pyx_t_9)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1256; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_9);
   if (__pyx_t_5) {
     PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_5); __Pyx_GIVEREF(__pyx_t_5); __pyx_t_5 = NULL;
@@ -10733,42 +10910,42 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
   __Pyx_GIVEREF(__pyx_t_3);
   __pyx_t_4 = 0;
   __pyx_t_3 = 0;
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_9, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1242; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_9, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1256; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   __pyx_t_10 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(__pyx_t_2);
-  if (unlikely(!__pyx_t_10.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1242; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__pyx_t_10.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1256; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_H = __pyx_t_10;
   __pyx_t_10.memview = NULL;
   __pyx_t_10.data = NULL;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1243
+  /* "sklearn/linear_model/cd_fast.pyx":1257
  *     # initial value "Q w" which will be kept of up to date in the iterations
  *     cdef double[:] H = np.dot(Q, w)
  *     cdef double[:] He = H.copy()             # <<<<<<<<<<<<<<
  *     cdef double[:] Hc = np.zeros(n_features)
  * 
  */
-  __pyx_t_10 = __pyx_memoryview_copy_slice_dc_double_c(__pyx_v_H); if (unlikely(!__pyx_t_10.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1243; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_10 = __pyx_memoryview_copy_slice_dc_double_c(__pyx_v_H); if (unlikely(!__pyx_t_10.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1257; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_v_He = __pyx_t_10;
   __pyx_t_10.memview = NULL;
   __pyx_t_10.data = NULL;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1244
+  /* "sklearn/linear_model/cd_fast.pyx":1258
  *     cdef double[:] H = np.dot(Q, w)
  *     cdef double[:] He = H.copy()
  *     cdef double[:] Hc = np.zeros(n_features)             # <<<<<<<<<<<<<<
  * 
  *     cdef double[:] XtA = np.zeros(n_features)
  */
-  __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1244; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1258; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_zeros); if (unlikely(!__pyx_t_9)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1244; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_zeros); if (unlikely(!__pyx_t_9)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1258; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_9);
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_6 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1244; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_6 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1258; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_6);
   __pyx_t_3 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_9))) {
@@ -10781,41 +10958,41 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
     }
   }
   if (!__pyx_t_3) {
-    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_9, __pyx_t_6); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1244; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_9, __pyx_t_6); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1258; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_GOTREF(__pyx_t_2);
   } else {
-    __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1244; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1258; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_4);
     PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_3); __Pyx_GIVEREF(__pyx_t_3); __pyx_t_3 = NULL;
     PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_t_6);
     __Pyx_GIVEREF(__pyx_t_6);
     __pyx_t_6 = 0;
-    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_9, __pyx_t_4, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1244; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_9, __pyx_t_4, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1258; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   }
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
   __pyx_t_11 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(__pyx_t_2);
-  if (unlikely(!__pyx_t_11.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1244; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__pyx_t_11.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1258; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_Hc = __pyx_t_11;
   __pyx_t_11.memview = NULL;
   __pyx_t_11.data = NULL;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1246
+  /* "sklearn/linear_model/cd_fast.pyx":1260
  *     cdef double[:] Hc = np.zeros(n_features)
  * 
  *     cdef double[:] XtA = np.zeros(n_features)             # <<<<<<<<<<<<<<
  *     cdef double tmp
  *     cdef double w_ii
  */
-  __pyx_t_9 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_9)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1246; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_9 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_9)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1260; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_9);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_9, __pyx_n_s_zeros); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1246; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_9, __pyx_n_s_zeros); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1260; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-  __pyx_t_9 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_9)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1246; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_9 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_9)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1260; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_9);
   __pyx_t_6 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_4))) {
@@ -10828,29 +11005,29 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
     }
   }
   if (!__pyx_t_6) {
-    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_9); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1246; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_4, __pyx_t_9); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1260; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
     __Pyx_GOTREF(__pyx_t_2);
   } else {
-    __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1246; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1260; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
     PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_6); __Pyx_GIVEREF(__pyx_t_6); __pyx_t_6 = NULL;
     PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_t_9);
     __Pyx_GIVEREF(__pyx_t_9);
     __pyx_t_9 = 0;
-    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1246; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1260; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __pyx_t_12 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(__pyx_t_2);
-  if (unlikely(!__pyx_t_12.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1246; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__pyx_t_12.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1260; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_XtA = __pyx_t_12;
   __pyx_t_12.memview = NULL;
   __pyx_t_12.data = NULL;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1254
+  /* "sklearn/linear_model/cd_fast.pyx":1268
  *     cdef double w_max
  *     cdef double d_w_ii
  *     cdef double gap = tol + 1.0             # <<<<<<<<<<<<<<
@@ -10859,7 +11036,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
  */
   __pyx_v_gap = (__pyx_v_tol + 1.0);
 
-  /* "sklearn/linear_model/cd_fast.pyx":1255
+  /* "sklearn/linear_model/cd_fast.pyx":1269
  *     cdef double d_w_ii
  *     cdef double gap = tol + 1.0
  *     cdef double d_w_tol = tol             # <<<<<<<<<<<<<<
@@ -10868,7 +11045,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
  */
   __pyx_v_d_w_tol = __pyx_v_tol;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1258
+  /* "sklearn/linear_model/cd_fast.pyx":1272
  *     cdef double dual_norm_XtA
  * 
  *     cdef double theta0 = 1. / fmax(1., n_features)             # <<<<<<<<<<<<<<
@@ -10877,7 +11054,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
  */
   __pyx_v_theta0 = (1. / __pyx_f_7sklearn_12linear_model_7cd_fast_fmax(1., __pyx_v_n_features));
 
-  /* "sklearn/linear_model/cd_fast.pyx":1259
+  /* "sklearn/linear_model/cd_fast.pyx":1273
  * 
  *     cdef double theta0 = 1. / fmax(1., n_features)
  *     cdef double theta = theta0             # <<<<<<<<<<<<<<
@@ -10886,7 +11063,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
  */
   __pyx_v_theta = __pyx_v_theta0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1260
+  /* "sklearn/linear_model/cd_fast.pyx":1274
  *     cdef double theta0 = 1. / fmax(1., n_features)
  *     cdef double theta = theta0
  *     cdef double test_restart = 0             # <<<<<<<<<<<<<<
@@ -10895,16 +11072,16 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
  */
   __pyx_v_test_restart = 0.0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1267
+  /* "sklearn/linear_model/cd_fast.pyx":1281
  *     cdef unsigned int n_iter
  *     cdef unsigned int f_iter
  *     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)             # <<<<<<<<<<<<<<
  *     cdef UINT32_t* rand_r_state = &rand_r_state_seed
  * 
  */
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_rng, __pyx_n_s_randint); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1267; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_rng, __pyx_n_s_randint); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1281; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_e_7sklearn_12linear_model_7cd_fast_RAND_R_MAX); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1267; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_e_7sklearn_12linear_model_7cd_fast_RAND_R_MAX); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1281; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_t_9 = NULL;
   __pyx_t_8 = 0;
@@ -10918,7 +11095,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
       __pyx_t_8 = 1;
     }
   }
-  __pyx_t_6 = PyTuple_New(2+__pyx_t_8); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1267; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_6 = PyTuple_New(2+__pyx_t_8); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1281; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_6);
   if (__pyx_t_9) {
     PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_9); __Pyx_GIVEREF(__pyx_t_9); __pyx_t_9 = NULL;
@@ -10929,15 +11106,15 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
   PyTuple_SET_ITEM(__pyx_t_6, 1+__pyx_t_8, __pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_3);
   __pyx_t_3 = 0;
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1267; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_6, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1281; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_13 = __Pyx_PyInt_As_npy_uint32(__pyx_t_2); if (unlikely((__pyx_t_13 == (npy_uint32)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1267; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_13 = __Pyx_PyInt_As_npy_uint32(__pyx_t_2); if (unlikely((__pyx_t_13 == (npy_uint32)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1281; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_rand_r_state_seed = __pyx_t_13;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1268
+  /* "sklearn/linear_model/cd_fast.pyx":1282
  *     cdef unsigned int f_iter
  *     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
  *     cdef UINT32_t* rand_r_state = &rand_r_state_seed             # <<<<<<<<<<<<<<
@@ -10946,21 +11123,21 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
  */
   __pyx_v_rand_r_state = (&__pyx_v_rand_r_state_seed);
 
-  /* "sklearn/linear_model/cd_fast.pyx":1270
+  /* "sklearn/linear_model/cd_fast.pyx":1284
  *     cdef UINT32_t* rand_r_state = &rand_r_state_seed
  * 
  *     cdef double y_norm2 = np.dot(y, y)             # <<<<<<<<<<<<<<
  *     cdef double* Q_ptr = &Q[0, 0]
  *     cdef double* H_ptr = &H[0]
  */
-  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1270; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1284; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_dot); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1270; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_dot); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1284; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __pyx_memoryview_fromslice(__pyx_v_y, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1270; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __pyx_memoryview_fromslice(__pyx_v_y, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1284; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = __pyx_memoryview_fromslice(__pyx_v_y, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1270; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __pyx_memoryview_fromslice(__pyx_v_y, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1284; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_t_9 = NULL;
   __pyx_t_8 = 0;
@@ -10974,7 +11151,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
       __pyx_t_8 = 1;
     }
   }
-  __pyx_t_5 = PyTuple_New(2+__pyx_t_8); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1270; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = PyTuple_New(2+__pyx_t_8); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1284; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
   if (__pyx_t_9) {
     PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_9); __Pyx_GIVEREF(__pyx_t_9); __pyx_t_9 = NULL;
@@ -10985,15 +11162,15 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
   __Pyx_GIVEREF(__pyx_t_3);
   __pyx_t_4 = 0;
   __pyx_t_3 = 0;
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1270; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_5, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1284; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_14 = __pyx_PyFloat_AsDouble(__pyx_t_2); if (unlikely((__pyx_t_14 == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1270; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_14 = __pyx_PyFloat_AsDouble(__pyx_t_2); if (unlikely((__pyx_t_14 == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1284; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_y_norm2 = __pyx_t_14;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1271
+  /* "sklearn/linear_model/cd_fast.pyx":1285
  * 
  *     cdef double y_norm2 = np.dot(y, y)
  *     cdef double* Q_ptr = &Q[0, 0]             # <<<<<<<<<<<<<<
@@ -11004,7 +11181,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
   __pyx_t_15 = 0;
   __pyx_v_Q_ptr = (&(*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_Q.data + __pyx_t_8 * __pyx_v_Q.strides[0]) ) + __pyx_t_15 * __pyx_v_Q.strides[1]) ))));
 
-  /* "sklearn/linear_model/cd_fast.pyx":1272
+  /* "sklearn/linear_model/cd_fast.pyx":1286
  *     cdef double y_norm2 = np.dot(y, y)
  *     cdef double* Q_ptr = &Q[0, 0]
  *     cdef double* H_ptr = &H[0]             # <<<<<<<<<<<<<<
@@ -11014,37 +11191,37 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
   __pyx_t_16 = 0;
   __pyx_v_H_ptr = (&(*((double *) ( /* dim=0 */ (__pyx_v_H.data + __pyx_t_16 * __pyx_v_H.strides[0]) ))));
 
-  /* "sklearn/linear_model/cd_fast.pyx":1273
+  /* "sklearn/linear_model/cd_fast.pyx":1287
  *     cdef double* Q_ptr = &Q[0, 0]
  *     cdef double* H_ptr = &H[0]
  *     cdef double* He_ptr = &He[0]             # <<<<<<<<<<<<<<
  *     cdef double* Hc_ptr = &Hc[0]
- *     tol = tol * y_norm2
+ *     tol = tol * fmax(1e-15, y_norm2)
  */
   __pyx_t_17 = 0;
   __pyx_v_He_ptr = (&(*((double *) ( /* dim=0 */ (__pyx_v_He.data + __pyx_t_17 * __pyx_v_He.strides[0]) ))));
 
-  /* "sklearn/linear_model/cd_fast.pyx":1274
+  /* "sklearn/linear_model/cd_fast.pyx":1288
  *     cdef double* H_ptr = &H[0]
  *     cdef double* He_ptr = &He[0]
  *     cdef double* Hc_ptr = &Hc[0]             # <<<<<<<<<<<<<<
- *     tol = tol * y_norm2
+ *     tol = tol * fmax(1e-15, y_norm2)
  * 
  */
   __pyx_t_18 = 0;
   __pyx_v_Hc_ptr = (&(*((double *) ( /* dim=0 */ (__pyx_v_Hc.data + __pyx_t_18 * __pyx_v_Hc.strides[0]) ))));
 
-  /* "sklearn/linear_model/cd_fast.pyx":1275
+  /* "sklearn/linear_model/cd_fast.pyx":1289
  *     cdef double* He_ptr = &He[0]
  *     cdef double* Hc_ptr = &Hc[0]
- *     tol = tol * y_norm2             # <<<<<<<<<<<<<<
+ *     tol = tol * fmax(1e-15, y_norm2)             # <<<<<<<<<<<<<<
  * 
  *     if alpha == 0:
  */
-  __pyx_v_tol = (__pyx_v_tol * __pyx_v_y_norm2);
+  __pyx_v_tol = (__pyx_v_tol * __pyx_f_7sklearn_12linear_model_7cd_fast_fmax(1e-15, __pyx_v_y_norm2));
 
-  /* "sklearn/linear_model/cd_fast.pyx":1277
- *     tol = tol * y_norm2
+  /* "sklearn/linear_model/cd_fast.pyx":1291
+ *     tol = tol * fmax(1e-15, y_norm2)
  * 
  *     if alpha == 0:             # <<<<<<<<<<<<<<
  *         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
@@ -11053,19 +11230,19 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
   __pyx_t_19 = ((__pyx_v_alpha == 0.0) != 0);
   if (__pyx_t_19) {
 
-    /* "sklearn/linear_model/cd_fast.pyx":1278
+    /* "sklearn/linear_model/cd_fast.pyx":1292
  * 
  *     if alpha == 0:
  *         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"             # <<<<<<<<<<<<<<
  *             " results and is discouraged.")
  * 
  */
-    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1278; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1292; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_warn); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1278; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_warn); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1292; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_tuple__5, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1278; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_tuple__5, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1292; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -11073,7 +11250,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
   }
   __pyx_L3:;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1281
+  /* "sklearn/linear_model/cd_fast.pyx":1295
  *             " results and is discouraged.")
  * 
  *     with nogil:             # <<<<<<<<<<<<<<
@@ -11087,7 +11264,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
       #endif
       /*try:*/ {
 
-        /* "sklearn/linear_model/cd_fast.pyx":1282
+        /* "sklearn/linear_model/cd_fast.pyx":1296
  * 
  *     with nogil:
  *         for n_iter in range(max_iter):             # <<<<<<<<<<<<<<
@@ -11098,7 +11275,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
         for (__pyx_t_21 = 0; __pyx_t_21 < __pyx_t_20; __pyx_t_21+=1) {
           __pyx_v_n_iter = __pyx_t_21;
 
-          /* "sklearn/linear_model/cd_fast.pyx":1285
+          /* "sklearn/linear_model/cd_fast.pyx":1299
  * 
  *             # Accelerated Coordinate descent
  *             w_max = 0.0             # <<<<<<<<<<<<<<
@@ -11107,7 +11284,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
  */
           __pyx_v_w_max = 0.0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":1286
+          /* "sklearn/linear_model/cd_fast.pyx":1300
  *             # Accelerated Coordinate descent
  *             w_max = 0.0
  *             d_w_max = 0.0             # <<<<<<<<<<<<<<
@@ -11116,7 +11293,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
  */
           __pyx_v_d_w_max = 0.0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":1287
+          /* "sklearn/linear_model/cd_fast.pyx":1301
  *             w_max = 0.0
  *             d_w_max = 0.0
  *             for f_iter in range(n_features):  # Loop over coordinates             # <<<<<<<<<<<<<<
@@ -11127,7 +11304,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
           for (__pyx_t_23 = 0; __pyx_t_23 < __pyx_t_22; __pyx_t_23+=1) {
             __pyx_v_f_iter = __pyx_t_23;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1288
+            /* "sklearn/linear_model/cd_fast.pyx":1302
  *             d_w_max = 0.0
  *             for f_iter in range(n_features):  # Loop over coordinates
  *                 if random:             # <<<<<<<<<<<<<<
@@ -11137,7 +11314,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             __pyx_t_19 = (__pyx_v_random != 0);
             if (__pyx_t_19) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1289
+              /* "sklearn/linear_model/cd_fast.pyx":1303
  *             for f_iter in range(n_features):  # Loop over coordinates
  *                 if random:
  *                     ii = rand_int(n_features, rand_r_state)             # <<<<<<<<<<<<<<
@@ -11149,7 +11326,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             }
             /*else*/ {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1291
+              /* "sklearn/linear_model/cd_fast.pyx":1305
  *                     ii = rand_int(n_features, rand_r_state)
  *                 else:
  *                     ii = f_iter             # <<<<<<<<<<<<<<
@@ -11160,7 +11337,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             }
             __pyx_L11:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1293
+            /* "sklearn/linear_model/cd_fast.pyx":1307
  *                     ii = f_iter
  * 
  *                 if Q[ii, ii] == 0.0:             # <<<<<<<<<<<<<<
@@ -11172,7 +11349,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             __pyx_t_19 = (((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_Q.data + __pyx_t_24 * __pyx_v_Q.strides[0]) ) + __pyx_t_25 * __pyx_v_Q.strides[1]) ))) == 0.0) != 0);
             if (__pyx_t_19) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1294
+              /* "sklearn/linear_model/cd_fast.pyx":1308
  * 
  *                 if Q[ii, ii] == 0.0:
  *                     continue             # <<<<<<<<<<<<<<
@@ -11182,7 +11359,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
               goto __pyx_L9_continue;
             }
 
-            /* "sklearn/linear_model/cd_fast.pyx":1296
+            /* "sklearn/linear_model/cd_fast.pyx":1310
  *                     continue
  * 
  *                 we_ii = we[ii]  # Store previous value             # <<<<<<<<<<<<<<
@@ -11192,7 +11369,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             __pyx_t_26 = __pyx_v_ii;
             __pyx_v_we_ii = (*((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_26 * __pyx_v_we.strides[0]) )));
 
-            /* "sklearn/linear_model/cd_fast.pyx":1297
+            /* "sklearn/linear_model/cd_fast.pyx":1311
  * 
  *                 we_ii = we[ii]  # Store previous value
  *                 wc_ii = wc[ii]             # <<<<<<<<<<<<<<
@@ -11202,7 +11379,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             __pyx_t_27 = __pyx_v_ii;
             __pyx_v_wc_ii = (*((double *) ( /* dim=0 */ (__pyx_v_wc.data + __pyx_t_27 * __pyx_v_wc.strides[0]) )));
 
-            /* "sklearn/linear_model/cd_fast.pyx":1300
+            /* "sklearn/linear_model/cd_fast.pyx":1314
  * 
  *                 # partial derivative at wd = (theta ** 2 * wc + we) and recall at we
  *                 tmp = q[ii] - (theta**2 * Hc[ii] + He[ii]) + Q[ii,ii]*theta/theta0 * we_ii             # <<<<<<<<<<<<<<
@@ -11216,7 +11393,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             __pyx_t_32 = __pyx_v_ii;
             __pyx_v_tmp = (((*((double *) ( /* dim=0 */ (__pyx_v_q.data + __pyx_t_28 * __pyx_v_q.strides[0]) ))) - ((pow(__pyx_v_theta, 2.0) * (*((double *) ( /* dim=0 */ (__pyx_v_Hc.data + __pyx_t_29 * __pyx_v_Hc.strides[0]) )))) + (*((double *) ( /* dim=0 */ (__pyx_v_He.data + __pyx_t_30 * __pyx_v_He.strides[0]) ))))) + ((((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_Q.data + __pyx_t_31 * __pyx_v_Q.strides[0]) ) + __pyx_t_32 * __pyx_v_Q.strides[1]) ))) * __pyx_v_theta) / __pyx_v_theta0) * __pyx_v_we_ii));
 
-            /* "sklearn/linear_model/cd_fast.pyx":1302
+            /* "sklearn/linear_model/cd_fast.pyx":1316
  *                 tmp = q[ii] - (theta**2 * Hc[ii] + He[ii]) + Q[ii,ii]*theta/theta0 * we_ii
  * 
  *                 if positive and tmp < 0:             # <<<<<<<<<<<<<<
@@ -11236,7 +11413,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             __pyx_L14_bool_binop_done:;
             if (__pyx_t_19) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1303
+              /* "sklearn/linear_model/cd_fast.pyx":1317
  * 
  *                 if positive and tmp < 0:
  *                     we[ii] = 0.0             # <<<<<<<<<<<<<<
@@ -11249,7 +11426,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             }
             /*else*/ {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1306
+              /* "sklearn/linear_model/cd_fast.pyx":1320
  *                 else:
  *                     we[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
  *                         / (Q[ii, ii]*theta/theta0 + beta)             # <<<<<<<<<<<<<<
@@ -11259,7 +11436,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
               __pyx_t_35 = __pyx_v_ii;
               __pyx_t_36 = __pyx_v_ii;
 
-              /* "sklearn/linear_model/cd_fast.pyx":1305
+              /* "sklearn/linear_model/cd_fast.pyx":1319
  *                     we[ii] = 0.0
  *                 else:
  *                     we[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \             # <<<<<<<<<<<<<<
@@ -11271,7 +11448,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             }
             __pyx_L13:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1308
+            /* "sklearn/linear_model/cd_fast.pyx":1322
  *                         / (Q[ii, ii]*theta/theta0 + beta)
  * 
  *                 if we[ii] != we_ii:             # <<<<<<<<<<<<<<
@@ -11282,7 +11459,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             __pyx_t_19 = (((*((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_38 * __pyx_v_we.strides[0]) ))) != __pyx_v_we_ii) != 0);
             if (__pyx_t_19) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1310
+              /* "sklearn/linear_model/cd_fast.pyx":1324
  *                 if we[ii] != we_ii:
  *                     # He +=  (we[ii] - we_ii) * Q[ii] # Update He = X.T X we
  *                     daxpy(n_features, we[ii] - we_ii, Q_ptr + ii * n_features, 1,             # <<<<<<<<<<<<<<
@@ -11291,7 +11468,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
  */
               __pyx_t_39 = __pyx_v_ii;
 
-              /* "sklearn/linear_model/cd_fast.pyx":1311
+              /* "sklearn/linear_model/cd_fast.pyx":1325
  *                     # He +=  (we[ii] - we_ii) * Q[ii] # Update He = X.T X we
  *                     daxpy(n_features, we[ii] - we_ii, Q_ptr + ii * n_features, 1,
  *                           He_ptr, 1)             # <<<<<<<<<<<<<<
@@ -11300,7 +11477,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
  */
               cblas_daxpy(__pyx_v_n_features, ((*((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_39 * __pyx_v_we.strides[0]) ))) - __pyx_v_we_ii), (__pyx_v_Q_ptr + (__pyx_v_ii * __pyx_v_n_features)), 1, __pyx_v_He_ptr, 1);
 
-              /* "sklearn/linear_model/cd_fast.pyx":1313
+              /* "sklearn/linear_model/cd_fast.pyx":1327
  *                           He_ptr, 1)
  * 
  *                     wc[ii] -= (we[ii] - we_ii) * (1-theta/theta0)/(theta**2)             # <<<<<<<<<<<<<<
@@ -11311,7 +11488,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
               __pyx_t_41 = __pyx_v_ii;
               *((double *) ( /* dim=0 */ (__pyx_v_wc.data + __pyx_t_41 * __pyx_v_wc.strides[0]) )) -= ((((*((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_40 * __pyx_v_we.strides[0]) ))) - __pyx_v_we_ii) * (1.0 - (__pyx_v_theta / __pyx_v_theta0))) / pow(__pyx_v_theta, 2.0));
 
-              /* "sklearn/linear_model/cd_fast.pyx":1315
+              /* "sklearn/linear_model/cd_fast.pyx":1329
  *                     wc[ii] -= (we[ii] - we_ii) * (1-theta/theta0)/(theta**2)
  *                     # Hc +=  (wc[ii] - wc_ii) * Q[ii] # Update Hc = X.T X wc
  *                     daxpy(n_features, wc[ii] - wc_ii, Q_ptr + ii * n_features, 1,             # <<<<<<<<<<<<<<
@@ -11320,7 +11497,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
  */
               __pyx_t_42 = __pyx_v_ii;
 
-              /* "sklearn/linear_model/cd_fast.pyx":1316
+              /* "sklearn/linear_model/cd_fast.pyx":1330
  *                     # Hc +=  (wc[ii] - wc_ii) * Q[ii] # Update Hc = X.T X wc
  *                     daxpy(n_features, wc[ii] - wc_ii, Q_ptr + ii * n_features, 1,
  *                           Hc_ptr, 1)             # <<<<<<<<<<<<<<
@@ -11332,7 +11509,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             }
             __pyx_L16:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1319
+            /* "sklearn/linear_model/cd_fast.pyx":1333
  * 
  *                 # update the test for restarting when minimizing a strongly convex functions
  *                 eta = 1. / n_features             # <<<<<<<<<<<<<<
@@ -11341,7 +11518,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
  */
             __pyx_v_eta = (1. / __pyx_v_n_features);
 
-            /* "sklearn/linear_model/cd_fast.pyx":1321
+            /* "sklearn/linear_model/cd_fast.pyx":1335
  *                 eta = 1. / n_features
  *                 test_restart = (1-eta) * test_restart \
  *                                - eta * (we[ii]-we_ii)*( we[ii] - (theta**2 * wc_ii+we_ii) )             # <<<<<<<<<<<<<<
@@ -11352,7 +11529,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             __pyx_t_44 = __pyx_v_ii;
             __pyx_v_test_restart = (((1.0 - __pyx_v_eta) * __pyx_v_test_restart) - ((__pyx_v_eta * ((*((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_43 * __pyx_v_we.strides[0]) ))) - __pyx_v_we_ii)) * ((*((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_44 * __pyx_v_we.strides[0]) ))) - ((pow(__pyx_v_theta, 2.0) * __pyx_v_wc_ii) + __pyx_v_we_ii))));
 
-            /* "sklearn/linear_model/cd_fast.pyx":1324
+            /* "sklearn/linear_model/cd_fast.pyx":1338
  * 
  *                 # update the maximum absolute coefficient update
  *                 d_w_ii = fabs((theta ** 2) * (wc[ii] - wc_ii) + (we[ii] - we_ii))             # <<<<<<<<<<<<<<
@@ -11363,7 +11540,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             __pyx_t_46 = __pyx_v_ii;
             __pyx_v_d_w_ii = fabs(((pow(__pyx_v_theta, 2.0) * ((*((double *) ( /* dim=0 */ (__pyx_v_wc.data + __pyx_t_45 * __pyx_v_wc.strides[0]) ))) - __pyx_v_wc_ii)) + ((*((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_46 * __pyx_v_we.strides[0]) ))) - __pyx_v_we_ii)));
 
-            /* "sklearn/linear_model/cd_fast.pyx":1325
+            /* "sklearn/linear_model/cd_fast.pyx":1339
  *                 # update the maximum absolute coefficient update
  *                 d_w_ii = fabs((theta ** 2) * (wc[ii] - wc_ii) + (we[ii] - we_ii))
  *                 if d_w_ii > d_w_max:             # <<<<<<<<<<<<<<
@@ -11373,7 +11550,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             __pyx_t_19 = ((__pyx_v_d_w_ii > __pyx_v_d_w_max) != 0);
             if (__pyx_t_19) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1326
+              /* "sklearn/linear_model/cd_fast.pyx":1340
  *                 d_w_ii = fabs((theta ** 2) * (wc[ii] - wc_ii) + (we[ii] - we_ii))
  *                 if d_w_ii > d_w_max:
  *                     d_w_max = d_w_ii             # <<<<<<<<<<<<<<
@@ -11385,7 +11562,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             }
             __pyx_L17:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1329
+            /* "sklearn/linear_model/cd_fast.pyx":1343
  * 
  *                 # update theta
  *                 theta = 0.5 * (sqrt((theta ** 4) + 4. * (theta ** 2)) - theta ** 2)             # <<<<<<<<<<<<<<
@@ -11396,7 +11573,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             __pyx_L9_continue:;
           }
 
-          /* "sklearn/linear_model/cd_fast.pyx":1333
+          /* "sklearn/linear_model/cd_fast.pyx":1347
  * 
  *             # Tricks to make accelerated coordinate descent efficient for the lasso
  *             tmp = (theta ** 2)/(1-theta)             # <<<<<<<<<<<<<<
@@ -11405,7 +11582,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
  */
           __pyx_v_tmp = (pow(__pyx_v_theta, 2.0) / (1.0 - __pyx_v_theta));
 
-          /* "sklearn/linear_model/cd_fast.pyx":1334
+          /* "sklearn/linear_model/cd_fast.pyx":1348
  *             # Tricks to make accelerated coordinate descent efficient for the lasso
  *             tmp = (theta ** 2)/(1-theta)
  *             for ii in range(n_features):             # <<<<<<<<<<<<<<
@@ -11416,7 +11593,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
           for (__pyx_t_23 = 0; __pyx_t_23 < __pyx_t_22; __pyx_t_23+=1) {
             __pyx_v_ii = __pyx_t_23;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1335
+            /* "sklearn/linear_model/cd_fast.pyx":1349
  *             tmp = (theta ** 2)/(1-theta)
  *             for ii in range(n_features):
  *                 w[ii] = tmp * wc[ii] + we[ii]             # <<<<<<<<<<<<<<
@@ -11428,7 +11605,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             __pyx_t_49 = __pyx_v_ii;
             *((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_49 * __pyx_v_w.strides[0]) )) = ((__pyx_v_tmp * (*((double *) ( /* dim=0 */ (__pyx_v_wc.data + __pyx_t_47 * __pyx_v_wc.strides[0]) )))) + (*((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_48 * __pyx_v_we.strides[0]) ))));
 
-            /* "sklearn/linear_model/cd_fast.pyx":1336
+            /* "sklearn/linear_model/cd_fast.pyx":1350
  *             for ii in range(n_features):
  *                 w[ii] = tmp * wc[ii] + we[ii]
  *                 if fabs(w[ii]) > w_max:             # <<<<<<<<<<<<<<
@@ -11439,7 +11616,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             __pyx_t_19 = ((fabs((*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_50 * __pyx_v_w.strides[0]) )))) > __pyx_v_w_max) != 0);
             if (__pyx_t_19) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1337
+              /* "sklearn/linear_model/cd_fast.pyx":1351
  *                 w[ii] = tmp * wc[ii] + we[ii]
  *                 if fabs(w[ii]) > w_max:
  *                     w_max = fabs(w[ii])             # <<<<<<<<<<<<<<
@@ -11453,7 +11630,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             __pyx_L20:;
           }
 
-          /* "sklearn/linear_model/cd_fast.pyx":1338
+          /* "sklearn/linear_model/cd_fast.pyx":1352
  *                 if fabs(w[ii]) > w_max:
  *                     w_max = fabs(w[ii])
  *             for ii in range(n_features):             # <<<<<<<<<<<<<<
@@ -11464,7 +11641,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
           for (__pyx_t_23 = 0; __pyx_t_23 < __pyx_t_22; __pyx_t_23+=1) {
             __pyx_v_ii = __pyx_t_23;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1339
+            /* "sklearn/linear_model/cd_fast.pyx":1353
  *                     w_max = fabs(w[ii])
  *             for ii in range(n_features):
  *                 H[ii] = tmp * Hc[ii] + He[ii]             # <<<<<<<<<<<<<<
@@ -11477,7 +11654,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             *((double *) ( /* dim=0 */ (__pyx_v_H.data + __pyx_t_54 * __pyx_v_H.strides[0]) )) = ((__pyx_v_tmp * (*((double *) ( /* dim=0 */ (__pyx_v_Hc.data + __pyx_t_52 * __pyx_v_Hc.strides[0]) )))) + (*((double *) ( /* dim=0 */ (__pyx_v_He.data + __pyx_t_53 * __pyx_v_He.strides[0]) ))));
           }
 
-          /* "sklearn/linear_model/cd_fast.pyx":1341
+          /* "sklearn/linear_model/cd_fast.pyx":1355
  *                 H[ii] = tmp * Hc[ii] + He[ii]
  * 
  *             nnz=0             # <<<<<<<<<<<<<<
@@ -11486,7 +11663,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
  */
           __pyx_v_nnz = 0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":1342
+          /* "sklearn/linear_model/cd_fast.pyx":1356
  * 
  *             nnz=0
  *             nnze=0             # <<<<<<<<<<<<<<
@@ -11495,7 +11672,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
  */
           __pyx_v_nnze = 0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":1343
+          /* "sklearn/linear_model/cd_fast.pyx":1357
  *             nnz=0
  *             nnze=0
  *             for ii in range(n_features):             # <<<<<<<<<<<<<<
@@ -11506,7 +11683,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
           for (__pyx_t_23 = 0; __pyx_t_23 < __pyx_t_22; __pyx_t_23+=1) {
             __pyx_v_ii = __pyx_t_23;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1344
+            /* "sklearn/linear_model/cd_fast.pyx":1358
  *             nnze=0
  *             for ii in range(n_features):
  *                 if w[ii] != 0:             # <<<<<<<<<<<<<<
@@ -11517,7 +11694,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             __pyx_t_19 = (((*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_55 * __pyx_v_w.strides[0]) ))) != 0.0) != 0);
             if (__pyx_t_19) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1345
+              /* "sklearn/linear_model/cd_fast.pyx":1359
  *             for ii in range(n_features):
  *                 if w[ii] != 0:
  *                     nnz += 1             # <<<<<<<<<<<<<<
@@ -11529,7 +11706,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             }
             __pyx_L25:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1346
+            /* "sklearn/linear_model/cd_fast.pyx":1360
  *                 if w[ii] != 0:
  *                     nnz += 1
  *                 if we[ii] != 0:             # <<<<<<<<<<<<<<
@@ -11540,7 +11717,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             __pyx_t_19 = (((*((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_56 * __pyx_v_we.strides[0]) ))) != 0.0) != 0);
             if (__pyx_t_19) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1347
+              /* "sklearn/linear_model/cd_fast.pyx":1361
  *                     nnz += 1
  *                 if we[ii] != 0:
  *                     nnze +=1             # <<<<<<<<<<<<<<
@@ -11553,7 +11730,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             __pyx_L26:;
           }
 
-          /* "sklearn/linear_model/cd_fast.pyx":1351
+          /* "sklearn/linear_model/cd_fast.pyx":1365
  *             # if test_restart > 0: restart
  *             # (improves behaviour in presence of strong convexity)
  *             if test_restart>0:             # <<<<<<<<<<<<<<
@@ -11563,7 +11740,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
           __pyx_t_19 = ((__pyx_v_test_restart > 0.0) != 0);
           if (__pyx_t_19) {
 
-            /* "sklearn/linear_model/cd_fast.pyx":1352
+            /* "sklearn/linear_model/cd_fast.pyx":1366
  *             # (improves behaviour in presence of strong convexity)
  *             if test_restart>0:
  *                 for ii in range(n_features):             # <<<<<<<<<<<<<<
@@ -11574,7 +11751,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             for (__pyx_t_23 = 0; __pyx_t_23 < __pyx_t_22; __pyx_t_23+=1) {
               __pyx_v_ii = __pyx_t_23;
 
-              /* "sklearn/linear_model/cd_fast.pyx":1353
+              /* "sklearn/linear_model/cd_fast.pyx":1367
  *             if test_restart>0:
  *                 for ii in range(n_features):
  *                     wc[ii] = 0             # <<<<<<<<<<<<<<
@@ -11584,7 +11761,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
               __pyx_t_57 = __pyx_v_ii;
               *((double *) ( /* dim=0 */ (__pyx_v_wc.data + __pyx_t_57 * __pyx_v_wc.strides[0]) )) = 0.0;
 
-              /* "sklearn/linear_model/cd_fast.pyx":1354
+              /* "sklearn/linear_model/cd_fast.pyx":1368
  *                 for ii in range(n_features):
  *                     wc[ii] = 0
  *                     we[ii] = w[ii]             # <<<<<<<<<<<<<<
@@ -11596,7 +11773,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
               *((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_59 * __pyx_v_we.strides[0]) )) = (*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_58 * __pyx_v_w.strides[0]) )));
             }
 
-            /* "sklearn/linear_model/cd_fast.pyx":1355
+            /* "sklearn/linear_model/cd_fast.pyx":1369
  *                     wc[ii] = 0
  *                     we[ii] = w[ii]
  *                 for ii in range(n_features):             # <<<<<<<<<<<<<<
@@ -11607,7 +11784,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             for (__pyx_t_23 = 0; __pyx_t_23 < __pyx_t_22; __pyx_t_23+=1) {
               __pyx_v_ii = __pyx_t_23;
 
-              /* "sklearn/linear_model/cd_fast.pyx":1356
+              /* "sklearn/linear_model/cd_fast.pyx":1370
  *                     we[ii] = w[ii]
  *                 for ii in range(n_features):
  *                     Hc[ii] = 0             # <<<<<<<<<<<<<<
@@ -11617,7 +11794,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
               __pyx_t_60 = __pyx_v_ii;
               *((double *) ( /* dim=0 */ (__pyx_v_Hc.data + __pyx_t_60 * __pyx_v_Hc.strides[0]) )) = 0.0;
 
-              /* "sklearn/linear_model/cd_fast.pyx":1357
+              /* "sklearn/linear_model/cd_fast.pyx":1371
  *                 for ii in range(n_features):
  *                     Hc[ii] = 0
  *                     He[ii] = H[ii]             # <<<<<<<<<<<<<<
@@ -11629,7 +11806,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
               *((double *) ( /* dim=0 */ (__pyx_v_He.data + __pyx_t_62 * __pyx_v_He.strides[0]) )) = (*((double *) ( /* dim=0 */ (__pyx_v_H.data + __pyx_t_61 * __pyx_v_H.strides[0]) )));
             }
 
-            /* "sklearn/linear_model/cd_fast.pyx":1359
+            /* "sklearn/linear_model/cd_fast.pyx":1373
  *                     He[ii] = H[ii]
  * 
  *                 theta = theta0             # <<<<<<<<<<<<<<
@@ -11640,11 +11817,11 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             goto __pyx_L27;
           }
 
-          /* "sklearn/linear_model/cd_fast.pyx":1363
+          /* "sklearn/linear_model/cd_fast.pyx":1377
  *             # if nnze < nnz and F(we) < F(w) then w <- we
  *             # (helps promoting sparsity to w)
  *             elif (nnze < nnz) \             # <<<<<<<<<<<<<<
- *                      and ( gram_primal_value(n_features, n_tasks,
+ *                      and ( gram_enet_primal_value(n_features, n_tasks,
  *                                              <DOUBLE*> &q[0], y_norm2,
  */
           __pyx_t_33 = ((__pyx_v_nnze < __pyx_v_nnz) != 0);
@@ -11656,36 +11833,36 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
           }
           __pyx_L33_next_and:;
 
-          /* "sklearn/linear_model/cd_fast.pyx":1365
+          /* "sklearn/linear_model/cd_fast.pyx":1379
  *             elif (nnze < nnz) \
- *                      and ( gram_primal_value(n_features, n_tasks,
+ *                      and ( gram_enet_primal_value(n_features, n_tasks,
  *                                              <DOUBLE*> &q[0], y_norm2,             # <<<<<<<<<<<<<<
  *                                              <DOUBLE*> &He[0], <DOUBLE*> &we[0],
  *                                              alpha, beta) <
  */
           __pyx_t_63 = 0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":1366
- *                      and ( gram_primal_value(n_features, n_tasks,
+          /* "sklearn/linear_model/cd_fast.pyx":1380
+ *                      and ( gram_enet_primal_value(n_features, n_tasks,
  *                                              <DOUBLE*> &q[0], y_norm2,
  *                                              <DOUBLE*> &He[0], <DOUBLE*> &we[0],             # <<<<<<<<<<<<<<
  *                                              alpha, beta) <
- *                            gram_primal_value(n_features, n_tasks,
+ *                            gram_enet_primal_value(n_features, n_tasks,
  */
           __pyx_t_64 = 0;
           __pyx_t_65 = 0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":1369
+          /* "sklearn/linear_model/cd_fast.pyx":1383
  *                                              alpha, beta) <
- *                            gram_primal_value(n_features, n_tasks,
+ *                            gram_enet_primal_value(n_features, n_tasks,
  *                                              <DOUBLE*> &q[0], y_norm2,             # <<<<<<<<<<<<<<
  *                                              <DOUBLE*> &H[0], <DOUBLE*> &w[0],
  *                                              alpha, beta) ):
  */
           __pyx_t_66 = 0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":1370
- *                            gram_primal_value(n_features, n_tasks,
+          /* "sklearn/linear_model/cd_fast.pyx":1384
+ *                            gram_enet_primal_value(n_features, n_tasks,
  *                                              <DOUBLE*> &q[0], y_norm2,
  *                                              <DOUBLE*> &H[0], <DOUBLE*> &w[0],             # <<<<<<<<<<<<<<
  *                                              alpha, beta) ):
@@ -11694,19 +11871,19 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
           __pyx_t_67 = 0;
           __pyx_t_68 = 0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":1367
+          /* "sklearn/linear_model/cd_fast.pyx":1381
  *                                              <DOUBLE*> &q[0], y_norm2,
  *                                              <DOUBLE*> &He[0], <DOUBLE*> &we[0],
  *                                              alpha, beta) <             # <<<<<<<<<<<<<<
- *                            gram_primal_value(n_features, n_tasks,
+ *                            gram_enet_primal_value(n_features, n_tasks,
  *                                              <DOUBLE*> &q[0], y_norm2,
  */
-          __pyx_t_33 = ((__pyx_f_7sklearn_12linear_model_7cd_fast_gram_primal_value(__pyx_v_n_features, __pyx_v_n_tasks, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_q.data + __pyx_t_63 * __pyx_v_q.strides[0]) ))))), __pyx_v_y_norm2, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_He.data + __pyx_t_64 * __pyx_v_He.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_65 * __pyx_v_we.strides[0]) ))))), __pyx_v_alpha, __pyx_v_beta) < __pyx_f_7sklearn_12linear_model_7cd_fast_gram_primal_value(__pyx_v_n_features, __pyx_v_n_tasks, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_q.data + __pyx_t_66 * __pyx_v_q.strides[0]) ))))), __pyx_v_y_norm2, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_H.data + __pyx_t_67 * __pyx_v_H.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_68 * __pyx_v_w.strides[0]) ))))), __pyx_v_alpha, __pyx_v_beta)) != 0);
+          __pyx_t_33 = ((__pyx_f_7sklearn_12linear_model_7cd_fast_gram_enet_primal_value(__pyx_v_n_features, __pyx_v_n_tasks, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_q.data + __pyx_t_63 * __pyx_v_q.strides[0]) ))))), __pyx_v_y_norm2, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_He.data + __pyx_t_64 * __pyx_v_He.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_65 * __pyx_v_we.strides[0]) ))))), __pyx_v_alpha, __pyx_v_beta) < __pyx_f_7sklearn_12linear_model_7cd_fast_gram_enet_primal_value(__pyx_v_n_features, __pyx_v_n_tasks, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_q.data + __pyx_t_66 * __pyx_v_q.strides[0]) ))))), __pyx_v_y_norm2, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_H.data + __pyx_t_67 * __pyx_v_H.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_68 * __pyx_v_w.strides[0]) ))))), __pyx_v_alpha, __pyx_v_beta)) != 0);
           __pyx_t_19 = __pyx_t_33;
           __pyx_L32_bool_binop_done:;
           if (__pyx_t_19) {
 
-            /* "sklearn/linear_model/cd_fast.pyx":1372
+            /* "sklearn/linear_model/cd_fast.pyx":1386
  *                                              <DOUBLE*> &H[0], <DOUBLE*> &w[0],
  *                                              alpha, beta) ):
  *                 for ii in range(n_features):             # <<<<<<<<<<<<<<
@@ -11717,7 +11894,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             for (__pyx_t_23 = 0; __pyx_t_23 < __pyx_t_22; __pyx_t_23+=1) {
               __pyx_v_ii = __pyx_t_23;
 
-              /* "sklearn/linear_model/cd_fast.pyx":1373
+              /* "sklearn/linear_model/cd_fast.pyx":1387
  *                                              alpha, beta) ):
  *                 for ii in range(n_features):
  *                     wc[ii] = 0             # <<<<<<<<<<<<<<
@@ -11727,7 +11904,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
               __pyx_t_69 = __pyx_v_ii;
               *((double *) ( /* dim=0 */ (__pyx_v_wc.data + __pyx_t_69 * __pyx_v_wc.strides[0]) )) = 0.0;
 
-              /* "sklearn/linear_model/cd_fast.pyx":1374
+              /* "sklearn/linear_model/cd_fast.pyx":1388
  *                 for ii in range(n_features):
  *                     wc[ii] = 0
  *                     w[ii] = we[ii]             # <<<<<<<<<<<<<<
@@ -11739,7 +11916,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
               *((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_71 * __pyx_v_w.strides[0]) )) = (*((double *) ( /* dim=0 */ (__pyx_v_we.data + __pyx_t_70 * __pyx_v_we.strides[0]) )));
             }
 
-            /* "sklearn/linear_model/cd_fast.pyx":1375
+            /* "sklearn/linear_model/cd_fast.pyx":1389
  *                     wc[ii] = 0
  *                     w[ii] = we[ii]
  *                 for ii in range(n_features):             # <<<<<<<<<<<<<<
@@ -11750,7 +11927,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             for (__pyx_t_23 = 0; __pyx_t_23 < __pyx_t_22; __pyx_t_23+=1) {
               __pyx_v_ii = __pyx_t_23;
 
-              /* "sklearn/linear_model/cd_fast.pyx":1376
+              /* "sklearn/linear_model/cd_fast.pyx":1390
  *                     w[ii] = we[ii]
  *                 for ii in range(n_features):
  *                     Hc[ii] = 0             # <<<<<<<<<<<<<<
@@ -11760,7 +11937,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
               __pyx_t_72 = __pyx_v_ii;
               *((double *) ( /* dim=0 */ (__pyx_v_Hc.data + __pyx_t_72 * __pyx_v_Hc.strides[0]) )) = 0.0;
 
-              /* "sklearn/linear_model/cd_fast.pyx":1377
+              /* "sklearn/linear_model/cd_fast.pyx":1391
  *                 for ii in range(n_features):
  *                     Hc[ii] = 0
  *                     H[ii] = He[ii]             # <<<<<<<<<<<<<<
@@ -11772,7 +11949,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
               *((double *) ( /* dim=0 */ (__pyx_v_H.data + __pyx_t_74 * __pyx_v_H.strides[0]) )) = (*((double *) ( /* dim=0 */ (__pyx_v_He.data + __pyx_t_73 * __pyx_v_He.strides[0]) )));
             }
 
-            /* "sklearn/linear_model/cd_fast.pyx":1378
+            /* "sklearn/linear_model/cd_fast.pyx":1392
  *                     Hc[ii] = 0
  *                     H[ii] = He[ii]
  *                 d_w_max = 10000 * w_max * d_w_tol  # we've made a big change             # <<<<<<<<<<<<<<
@@ -11784,7 +11961,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
           }
           __pyx_L27:;
 
-          /* "sklearn/linear_model/cd_fast.pyx":1381
+          /* "sklearn/linear_model/cd_fast.pyx":1395
  * 
  *             # Termination criterion
  *             if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:             # <<<<<<<<<<<<<<
@@ -11812,26 +11989,26 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
           __pyx_L39_bool_binop_done:;
           if (__pyx_t_19) {
 
-            /* "sklearn/linear_model/cd_fast.pyx":1386
+            /* "sklearn/linear_model/cd_fast.pyx":1400
  *                 # criterion
  * 
- *                 gap = gram_duality_gap(n_features, n_tasks, <DOUBLE*> &q[0],             # <<<<<<<<<<<<<<
+ *                 gap = gram_enet_duality_gap(n_features, n_tasks, <DOUBLE*> &q[0],             # <<<<<<<<<<<<<<
  *                                        y_norm2, <DOUBLE*> &H[0],
  *                                        <DOUBLE*> &w[0], <DOUBLE*> &XtA[0],
  */
             __pyx_t_75 = 0;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1387
+            /* "sklearn/linear_model/cd_fast.pyx":1401
  * 
- *                 gap = gram_duality_gap(n_features, n_tasks, <DOUBLE*> &q[0],
+ *                 gap = gram_enet_duality_gap(n_features, n_tasks, <DOUBLE*> &q[0],
  *                                        y_norm2, <DOUBLE*> &H[0],             # <<<<<<<<<<<<<<
  *                                        <DOUBLE*> &w[0], <DOUBLE*> &XtA[0],
  *                                        &dual_norm_XtA,
  */
             __pyx_t_76 = 0;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1388
- *                 gap = gram_duality_gap(n_features, n_tasks, <DOUBLE*> &q[0],
+            /* "sklearn/linear_model/cd_fast.pyx":1402
+ *                 gap = gram_enet_duality_gap(n_features, n_tasks, <DOUBLE*> &q[0],
  *                                        y_norm2, <DOUBLE*> &H[0],
  *                                        <DOUBLE*> &w[0], <DOUBLE*> &XtA[0],             # <<<<<<<<<<<<<<
  *                                        &dual_norm_XtA,
@@ -11840,16 +12017,16 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             __pyx_t_77 = 0;
             __pyx_t_78 = 0;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1386
+            /* "sklearn/linear_model/cd_fast.pyx":1400
  *                 # criterion
  * 
- *                 gap = gram_duality_gap(n_features, n_tasks, <DOUBLE*> &q[0],             # <<<<<<<<<<<<<<
+ *                 gap = gram_enet_duality_gap(n_features, n_tasks, <DOUBLE*> &q[0],             # <<<<<<<<<<<<<<
  *                                        y_norm2, <DOUBLE*> &H[0],
  *                                        <DOUBLE*> &w[0], <DOUBLE*> &XtA[0],
  */
-            __pyx_v_gap = __pyx_f_7sklearn_12linear_model_7cd_fast_gram_duality_gap(__pyx_v_n_features, __pyx_v_n_tasks, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_q.data + __pyx_t_75 * __pyx_v_q.strides[0]) ))))), __pyx_v_y_norm2, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_H.data + __pyx_t_76 * __pyx_v_H.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_77 * __pyx_v_w.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_XtA.data + __pyx_t_78 * __pyx_v_XtA.strides[0]) ))))), (&__pyx_v_dual_norm_XtA), __pyx_v_alpha, __pyx_v_beta, __pyx_v_positive);
+            __pyx_v_gap = __pyx_f_7sklearn_12linear_model_7cd_fast_gram_enet_duality_gap(__pyx_v_n_features, __pyx_v_n_tasks, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_q.data + __pyx_t_75 * __pyx_v_q.strides[0]) ))))), __pyx_v_y_norm2, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_H.data + __pyx_t_76 * __pyx_v_H.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_77 * __pyx_v_w.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_XtA.data + __pyx_t_78 * __pyx_v_XtA.strides[0]) ))))), (&__pyx_v_dual_norm_XtA), __pyx_v_alpha, __pyx_v_beta, __pyx_v_positive);
 
-            /* "sklearn/linear_model/cd_fast.pyx":1392
+            /* "sklearn/linear_model/cd_fast.pyx":1406
  *                                        alpha, beta, positive)
  * 
  *                 if gap < tol:             # <<<<<<<<<<<<<<
@@ -11859,7 +12036,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
             __pyx_t_19 = ((__pyx_v_gap < __pyx_v_tol) != 0);
             if (__pyx_t_19) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1394
+              /* "sklearn/linear_model/cd_fast.pyx":1408
  *                 if gap < tol:
  *                     # return if we reached desired tolerance
  *                     break             # <<<<<<<<<<<<<<
@@ -11875,7 +12052,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
         __pyx_L8_break:;
       }
 
-      /* "sklearn/linear_model/cd_fast.pyx":1281
+      /* "sklearn/linear_model/cd_fast.pyx":1295
  *             " results and is discouraged.")
  * 
  *     with nogil:             # <<<<<<<<<<<<<<
@@ -11893,7 +12070,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
       }
   }
 
-  /* "sklearn/linear_model/cd_fast.pyx":1396
+  /* "sklearn/linear_model/cd_fast.pyx":1410
  *                     break
  * 
  *     return np.asarray(w), gap, tol, n_iter + 1             # <<<<<<<<<<<<<<
@@ -11901,12 +12078,12 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
  * 
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1396; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_6 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1410; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_asarray); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1396; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_asarray); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1410; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_6 = __pyx_memoryview_fromslice(__pyx_v_w, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1396; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_6 = __pyx_memoryview_fromslice(__pyx_v_w, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1410; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_6);
   __pyx_t_3 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_5))) {
@@ -11919,28 +12096,28 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
     }
   }
   if (!__pyx_t_3) {
-    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_6); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1396; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_6); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1410; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_GOTREF(__pyx_t_2);
   } else {
-    __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1396; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1410; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_4);
     PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_3); __Pyx_GIVEREF(__pyx_t_3); __pyx_t_3 = NULL;
     PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_t_6);
     __Pyx_GIVEREF(__pyx_t_6);
     __pyx_t_6 = 0;
-    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_4, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1396; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_4, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1410; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   }
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = PyFloat_FromDouble(__pyx_v_gap); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1396; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = PyFloat_FromDouble(__pyx_v_gap); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1410; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_4 = PyFloat_FromDouble(__pyx_v_tol); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1396; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = PyFloat_FromDouble(__pyx_v_tol); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1410; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_6 = __Pyx_PyInt_From_long((__pyx_v_n_iter + 1)); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1396; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_6 = __Pyx_PyInt_From_long((__pyx_v_n_iter + 1)); if (unlikely(!__pyx_t_6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1410; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_3 = PyTuple_New(4); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1396; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyTuple_New(4); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1410; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_2);
@@ -11958,7 +12135,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
   __pyx_t_3 = 0;
   goto __pyx_L0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1215
+  /* "sklearn/linear_model/cd_fast.pyx":1229
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def enet_accelerated_coordinate_descent_gram(double[:] w, double alpha, double beta,             # <<<<<<<<<<<<<<
@@ -11997,7 +12174,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_8enet_accelerated_coo
   return __pyx_r;
 }
 
-/* "sklearn/linear_model/cd_fast.pyx":1402
+/* "sklearn/linear_model/cd_fast.pyx":1416
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,             # <<<<<<<<<<<<<<
@@ -12056,42 +12233,42 @@ static PyObject *__pyx_pw_7sklearn_12linear_model_7cd_fast_11enet_coordinate_des
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_alpha)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_gram", 0, 9, 11, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1402; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_gram", 0, 9, 11, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1416; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_beta)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_gram", 0, 9, 11, 2); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1402; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_gram", 0, 9, 11, 2); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1416; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_Q)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_gram", 0, 9, 11, 3); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1402; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_gram", 0, 9, 11, 3); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1416; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  4:
         if (likely((values[4] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_q)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_gram", 0, 9, 11, 4); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1402; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_gram", 0, 9, 11, 4); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1416; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  5:
         if (likely((values[5] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_y)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_gram", 0, 9, 11, 5); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1402; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_gram", 0, 9, 11, 5); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1416; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  6:
         if (likely((values[6] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_max_iter)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_gram", 0, 9, 11, 6); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1402; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_gram", 0, 9, 11, 6); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1416; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  7:
         if (likely((values[7] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_tol)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_gram", 0, 9, 11, 7); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1402; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_gram", 0, 9, 11, 7); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1416; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  8:
         if (likely((values[8] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_rng)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_gram", 0, 9, 11, 8); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1402; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_gram", 0, 9, 11, 8); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1416; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  9:
         if (kw_args > 0) {
@@ -12105,7 +12282,7 @@ static PyObject *__pyx_pw_7sklearn_12linear_model_7cd_fast_11enet_coordinate_des
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "enet_coordinate_descent_gram") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1402; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "enet_coordinate_descent_gram") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1416; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -12124,29 +12301,29 @@ static PyObject *__pyx_pw_7sklearn_12linear_model_7cd_fast_11enet_coordinate_des
         default: goto __pyx_L5_argtuple_error;
       }
     }
-    __pyx_v_w = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[0]); if (unlikely(!__pyx_v_w.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1402; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_alpha = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_alpha == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1402; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_beta = __pyx_PyFloat_AsDouble(values[2]); if (unlikely((__pyx_v_beta == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1402; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_Q = __Pyx_PyObject_to_MemoryviewSlice_dsds_double(values[3]); if (unlikely(!__pyx_v_Q.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1403; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_q = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[4]); if (unlikely(!__pyx_v_q.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1403; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_y = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[5]); if (unlikely(!__pyx_v_y.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1403; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_max_iter = __Pyx_PyInt_As_int(values[6]); if (unlikely((__pyx_v_max_iter == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1404; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_tol = __pyx_PyFloat_AsDouble(values[7]); if (unlikely((__pyx_v_tol == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1404; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_w = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[0]); if (unlikely(!__pyx_v_w.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1416; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_alpha = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_alpha == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1416; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_beta = __pyx_PyFloat_AsDouble(values[2]); if (unlikely((__pyx_v_beta == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1416; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_Q = __Pyx_PyObject_to_MemoryviewSlice_dsds_double(values[3]); if (unlikely(!__pyx_v_Q.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1417; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_q = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[4]); if (unlikely(!__pyx_v_q.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1417; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_y = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[5]); if (unlikely(!__pyx_v_y.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1417; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_max_iter = __Pyx_PyInt_As_int(values[6]); if (unlikely((__pyx_v_max_iter == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1418; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_tol = __pyx_PyFloat_AsDouble(values[7]); if (unlikely((__pyx_v_tol == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1418; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     __pyx_v_rng = values[8];
     if (values[9]) {
-      __pyx_v_random = __Pyx_PyObject_IsTrue(values[9]); if (unlikely((__pyx_v_random == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1405; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+      __pyx_v_random = __Pyx_PyObject_IsTrue(values[9]); if (unlikely((__pyx_v_random == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1419; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     } else {
       __pyx_v_random = ((int)0);
     }
     if (values[10]) {
-      __pyx_v_positive = __Pyx_PyObject_IsTrue(values[10]); if (unlikely((__pyx_v_positive == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1405; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+      __pyx_v_positive = __Pyx_PyObject_IsTrue(values[10]); if (unlikely((__pyx_v_positive == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1419; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     } else {
       __pyx_v_positive = ((int)0);
     }
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_gram", 0, 9, 11, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1402; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_gram", 0, 9, 11, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1416; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_AddTraceback("sklearn.linear_model.cd_fast.enet_coordinate_descent_gram", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -12226,7 +12403,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("enet_coordinate_descent_gram", 0);
 
-  /* "sklearn/linear_model/cd_fast.pyx":1421
+  /* "sklearn/linear_model/cd_fast.pyx":1435
  * 
  *     # get the data information into easy vars
  *     cdef unsigned int n_samples = y.shape[0]             # <<<<<<<<<<<<<<
@@ -12235,7 +12412,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
  */
   __pyx_v_n_samples = (__pyx_v_y.shape[0]);
 
-  /* "sklearn/linear_model/cd_fast.pyx":1422
+  /* "sklearn/linear_model/cd_fast.pyx":1436
  *     # get the data information into easy vars
  *     cdef unsigned int n_samples = y.shape[0]
  *     cdef unsigned int n_features = Q.shape[0]             # <<<<<<<<<<<<<<
@@ -12244,7 +12421,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
  */
   __pyx_v_n_features = (__pyx_v_Q.shape[0]);
 
-  /* "sklearn/linear_model/cd_fast.pyx":1423
+  /* "sklearn/linear_model/cd_fast.pyx":1437
  *     cdef unsigned int n_samples = y.shape[0]
  *     cdef unsigned int n_features = Q.shape[0]
  *     cdef unsigned int n_tasks = y.strides[0] / sizeof(DOUBLE)             # <<<<<<<<<<<<<<
@@ -12253,21 +12430,21 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
  */
   __pyx_v_n_tasks = ((__pyx_v_y.strides[0]) / (sizeof(__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE)));
 
-  /* "sklearn/linear_model/cd_fast.pyx":1426
+  /* "sklearn/linear_model/cd_fast.pyx":1440
  * 
  *     # initial value "Q w" which will be kept of up to date in the iterations
  *     cdef double[:] H = np.dot(Q, w)             # <<<<<<<<<<<<<<
  * 
  *     cdef double[:] XtA = np.zeros(n_features)
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1426; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1440; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_dot); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1426; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_dot); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1440; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_v_Q, 2, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1426; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_v_Q, 2, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1440; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = __pyx_memoryview_fromslice(__pyx_v_w, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1426; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __pyx_memoryview_fromslice(__pyx_v_w, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1440; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
   __pyx_t_5 = NULL;
   __pyx_t_6 = 0;
@@ -12281,7 +12458,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
       __pyx_t_6 = 1;
     }
   }
-  __pyx_t_7 = PyTuple_New(2+__pyx_t_6); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1426; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_7 = PyTuple_New(2+__pyx_t_6); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1440; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_7);
   if (__pyx_t_5) {
     PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_5); __Pyx_GIVEREF(__pyx_t_5); __pyx_t_5 = NULL;
@@ -12292,30 +12469,30 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
   __Pyx_GIVEREF(__pyx_t_4);
   __pyx_t_2 = 0;
   __pyx_t_4 = 0;
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1426; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1440; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_t_8 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(__pyx_t_1);
-  if (unlikely(!__pyx_t_8.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1426; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__pyx_t_8.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1440; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_H = __pyx_t_8;
   __pyx_t_8.memview = NULL;
   __pyx_t_8.data = NULL;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1428
+  /* "sklearn/linear_model/cd_fast.pyx":1442
  *     cdef double[:] H = np.dot(Q, w)
  * 
  *     cdef double[:] XtA = np.zeros(n_features)             # <<<<<<<<<<<<<<
  *     cdef double tmp
  *     cdef double w_ii
  */
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1428; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1442; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_zeros); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1428; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_zeros); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1442; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1428; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1442; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_t_4 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_7))) {
@@ -12328,29 +12505,29 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
     }
   }
   if (!__pyx_t_4) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_3); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1428; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_3); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1442; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else {
-    __pyx_t_2 = PyTuple_New(1+1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1428; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = PyTuple_New(1+1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1442; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
     PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_4); __Pyx_GIVEREF(__pyx_t_4); __pyx_t_4 = NULL;
     PyTuple_SET_ITEM(__pyx_t_2, 0+1, __pyx_t_3);
     __Pyx_GIVEREF(__pyx_t_3);
     __pyx_t_3 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1428; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1442; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   }
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   __pyx_t_9 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(__pyx_t_1);
-  if (unlikely(!__pyx_t_9.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1428; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__pyx_t_9.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1442; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_XtA = __pyx_t_9;
   __pyx_t_9.memview = NULL;
   __pyx_t_9.data = NULL;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1434
+  /* "sklearn/linear_model/cd_fast.pyx":1448
  *     cdef double w_max
  *     cdef double d_w_ii
  *     cdef double gap = tol + 1.0             # <<<<<<<<<<<<<<
@@ -12359,7 +12536,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
  */
   __pyx_v_gap = (__pyx_v_tol + 1.0);
 
-  /* "sklearn/linear_model/cd_fast.pyx":1435
+  /* "sklearn/linear_model/cd_fast.pyx":1449
  *     cdef double d_w_ii
  *     cdef double gap = tol + 1.0
  *     cdef double d_w_tol = tol             # <<<<<<<<<<<<<<
@@ -12368,16 +12545,16 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
  */
   __pyx_v_d_w_tol = __pyx_v_tol;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1440
+  /* "sklearn/linear_model/cd_fast.pyx":1454
  *     cdef unsigned int n_iter
  *     cdef unsigned int f_iter
  *     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)             # <<<<<<<<<<<<<<
  *     cdef UINT32_t* rand_r_state = &rand_r_state_seed
  * 
  */
-  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_rng, __pyx_n_s_randint); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1440; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_rng, __pyx_n_s_randint); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1454; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_e_7sklearn_12linear_model_7cd_fast_RAND_R_MAX); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1440; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_e_7sklearn_12linear_model_7cd_fast_RAND_R_MAX); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1454; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_3 = NULL;
   __pyx_t_6 = 0;
@@ -12391,7 +12568,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
       __pyx_t_6 = 1;
     }
   }
-  __pyx_t_4 = PyTuple_New(2+__pyx_t_6); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1440; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = PyTuple_New(2+__pyx_t_6); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1454; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
   if (__pyx_t_3) {
     PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_3); __Pyx_GIVEREF(__pyx_t_3); __pyx_t_3 = NULL;
@@ -12402,15 +12579,15 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
   PyTuple_SET_ITEM(__pyx_t_4, 1+__pyx_t_6, __pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_2);
   __pyx_t_2 = 0;
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1440; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1454; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  __pyx_t_10 = __Pyx_PyInt_As_npy_uint32(__pyx_t_1); if (unlikely((__pyx_t_10 == (npy_uint32)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1440; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_10 = __Pyx_PyInt_As_npy_uint32(__pyx_t_1); if (unlikely((__pyx_t_10 == (npy_uint32)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1454; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_rand_r_state_seed = __pyx_t_10;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1441
+  /* "sklearn/linear_model/cd_fast.pyx":1455
  *     cdef unsigned int f_iter
  *     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
  *     cdef UINT32_t* rand_r_state = &rand_r_state_seed             # <<<<<<<<<<<<<<
@@ -12419,21 +12596,21 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
  */
   __pyx_v_rand_r_state = (&__pyx_v_rand_r_state_seed);
 
-  /* "sklearn/linear_model/cd_fast.pyx":1443
+  /* "sklearn/linear_model/cd_fast.pyx":1457
  *     cdef UINT32_t* rand_r_state = &rand_r_state_seed
  * 
  *     cdef double y_norm2 = np.dot(y, y)             # <<<<<<<<<<<<<<
  *     cdef double* Q_ptr = &Q[0, 0]
- *     tol = tol * y_norm2
+ *     tol = tol * fmax(1e-15, y_norm2)
  */
-  __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1443; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1457; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_dot); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1443; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_dot); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1457; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  __pyx_t_7 = __pyx_memoryview_fromslice(__pyx_v_y, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1443; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_7 = __pyx_memoryview_fromslice(__pyx_v_y, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1457; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_v_y, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1443; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_v_y, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1457; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_3 = NULL;
   __pyx_t_6 = 0;
@@ -12447,7 +12624,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
       __pyx_t_6 = 1;
     }
   }
-  __pyx_t_5 = PyTuple_New(2+__pyx_t_6); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1443; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = PyTuple_New(2+__pyx_t_6); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1457; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
   if (__pyx_t_3) {
     PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_3); __Pyx_GIVEREF(__pyx_t_3); __pyx_t_3 = NULL;
@@ -12458,36 +12635,36 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
   __Pyx_GIVEREF(__pyx_t_2);
   __pyx_t_7 = 0;
   __pyx_t_2 = 0;
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1443; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1457; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_11 = __pyx_PyFloat_AsDouble(__pyx_t_1); if (unlikely((__pyx_t_11 == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1443; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_11 = __pyx_PyFloat_AsDouble(__pyx_t_1); if (unlikely((__pyx_t_11 == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1457; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_y_norm2 = __pyx_t_11;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1444
+  /* "sklearn/linear_model/cd_fast.pyx":1458
  * 
  *     cdef double y_norm2 = np.dot(y, y)
  *     cdef double* Q_ptr = &Q[0, 0]             # <<<<<<<<<<<<<<
- *     tol = tol * y_norm2
+ *     tol = tol * fmax(1e-15, y_norm2)
  * 
  */
   __pyx_t_6 = 0;
   __pyx_t_12 = 0;
   __pyx_v_Q_ptr = (&(*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_Q.data + __pyx_t_6 * __pyx_v_Q.strides[0]) ) + __pyx_t_12 * __pyx_v_Q.strides[1]) ))));
 
-  /* "sklearn/linear_model/cd_fast.pyx":1445
+  /* "sklearn/linear_model/cd_fast.pyx":1459
  *     cdef double y_norm2 = np.dot(y, y)
  *     cdef double* Q_ptr = &Q[0, 0]
- *     tol = tol * y_norm2             # <<<<<<<<<<<<<<
+ *     tol = tol * fmax(1e-15, y_norm2)             # <<<<<<<<<<<<<<
  * 
  *     if alpha == 0:
  */
-  __pyx_v_tol = (__pyx_v_tol * __pyx_v_y_norm2);
+  __pyx_v_tol = (__pyx_v_tol * __pyx_f_7sklearn_12linear_model_7cd_fast_fmax(1e-15, __pyx_v_y_norm2));
 
-  /* "sklearn/linear_model/cd_fast.pyx":1447
- *     tol = tol * y_norm2
+  /* "sklearn/linear_model/cd_fast.pyx":1461
+ *     tol = tol * fmax(1e-15, y_norm2)
  * 
  *     if alpha == 0:             # <<<<<<<<<<<<<<
  *         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
@@ -12496,19 +12673,19 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
   __pyx_t_13 = ((__pyx_v_alpha == 0.0) != 0);
   if (__pyx_t_13) {
 
-    /* "sklearn/linear_model/cd_fast.pyx":1448
+    /* "sklearn/linear_model/cd_fast.pyx":1462
  * 
  *     if alpha == 0:
  *         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"             # <<<<<<<<<<<<<<
  *             " results and is discouraged.")
  * 
  */
-    __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1448; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1462; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_warn); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1448; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_warn); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1462; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_tuple__6, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1448; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_tuple__6, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1462; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -12516,7 +12693,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
   }
   __pyx_L3:;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1451
+  /* "sklearn/linear_model/cd_fast.pyx":1465
  *             " results and is discouraged.")
  * 
  *     with nogil:             # <<<<<<<<<<<<<<
@@ -12530,7 +12707,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
       #endif
       /*try:*/ {
 
-        /* "sklearn/linear_model/cd_fast.pyx":1452
+        /* "sklearn/linear_model/cd_fast.pyx":1466
  * 
  *     with nogil:
  *         for n_iter in range(max_iter):             # <<<<<<<<<<<<<<
@@ -12541,7 +12718,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
         for (__pyx_t_15 = 0; __pyx_t_15 < __pyx_t_14; __pyx_t_15+=1) {
           __pyx_v_n_iter = __pyx_t_15;
 
-          /* "sklearn/linear_model/cd_fast.pyx":1453
+          /* "sklearn/linear_model/cd_fast.pyx":1467
  *     with nogil:
  *         for n_iter in range(max_iter):
  *             w_max = 0.0             # <<<<<<<<<<<<<<
@@ -12550,7 +12727,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
  */
           __pyx_v_w_max = 0.0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":1454
+          /* "sklearn/linear_model/cd_fast.pyx":1468
  *         for n_iter in range(max_iter):
  *             w_max = 0.0
  *             d_w_max = 0.0             # <<<<<<<<<<<<<<
@@ -12559,7 +12736,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
  */
           __pyx_v_d_w_max = 0.0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":1455
+          /* "sklearn/linear_model/cd_fast.pyx":1469
  *             w_max = 0.0
  *             d_w_max = 0.0
  *             for f_iter in range(n_features):  # Loop over coordinates             # <<<<<<<<<<<<<<
@@ -12570,7 +12747,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
           for (__pyx_t_17 = 0; __pyx_t_17 < __pyx_t_16; __pyx_t_17+=1) {
             __pyx_v_f_iter = __pyx_t_17;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1456
+            /* "sklearn/linear_model/cd_fast.pyx":1470
  *             d_w_max = 0.0
  *             for f_iter in range(n_features):  # Loop over coordinates
  *                 if random:             # <<<<<<<<<<<<<<
@@ -12580,7 +12757,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
             __pyx_t_13 = (__pyx_v_random != 0);
             if (__pyx_t_13) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1457
+              /* "sklearn/linear_model/cd_fast.pyx":1471
  *             for f_iter in range(n_features):  # Loop over coordinates
  *                 if random:
  *                     ii = rand_int(n_features, rand_r_state)             # <<<<<<<<<<<<<<
@@ -12592,7 +12769,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
             }
             /*else*/ {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1459
+              /* "sklearn/linear_model/cd_fast.pyx":1473
  *                     ii = rand_int(n_features, rand_r_state)
  *                 else:
  *                     ii = f_iter             # <<<<<<<<<<<<<<
@@ -12603,7 +12780,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
             }
             __pyx_L11:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1461
+            /* "sklearn/linear_model/cd_fast.pyx":1475
  *                     ii = f_iter
  * 
  *                 if Q[ii, ii] == 0.0:             # <<<<<<<<<<<<<<
@@ -12615,7 +12792,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
             __pyx_t_13 = (((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_Q.data + __pyx_t_18 * __pyx_v_Q.strides[0]) ) + __pyx_t_19 * __pyx_v_Q.strides[1]) ))) == 0.0) != 0);
             if (__pyx_t_13) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1462
+              /* "sklearn/linear_model/cd_fast.pyx":1476
  * 
  *                 if Q[ii, ii] == 0.0:
  *                     continue             # <<<<<<<<<<<<<<
@@ -12625,7 +12802,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
               goto __pyx_L9_continue;
             }
 
-            /* "sklearn/linear_model/cd_fast.pyx":1464
+            /* "sklearn/linear_model/cd_fast.pyx":1478
  *                     continue
  * 
  *                 w_ii = w[ii]  # Store previous value             # <<<<<<<<<<<<<<
@@ -12635,7 +12812,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
             __pyx_t_20 = __pyx_v_ii;
             __pyx_v_w_ii = (*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_20 * __pyx_v_w.strides[0]) )));
 
-            /* "sklearn/linear_model/cd_fast.pyx":1466
+            /* "sklearn/linear_model/cd_fast.pyx":1480
  *                 w_ii = w[ii]  # Store previous value
  * 
  *                 tmp = q[ii] - H[ii] + Q[ii, ii] * w_ii             # <<<<<<<<<<<<<<
@@ -12648,7 +12825,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
             __pyx_t_24 = __pyx_v_ii;
             __pyx_v_tmp = (((*((double *) ( /* dim=0 */ (__pyx_v_q.data + __pyx_t_21 * __pyx_v_q.strides[0]) ))) - (*((double *) ( /* dim=0 */ (__pyx_v_H.data + __pyx_t_22 * __pyx_v_H.strides[0]) )))) + ((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_Q.data + __pyx_t_23 * __pyx_v_Q.strides[0]) ) + __pyx_t_24 * __pyx_v_Q.strides[1]) ))) * __pyx_v_w_ii));
 
-            /* "sklearn/linear_model/cd_fast.pyx":1468
+            /* "sklearn/linear_model/cd_fast.pyx":1482
  *                 tmp = q[ii] - H[ii] + Q[ii, ii] * w_ii
  * 
  *                 if positive and tmp < 0:             # <<<<<<<<<<<<<<
@@ -12668,7 +12845,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
             __pyx_L14_bool_binop_done:;
             if (__pyx_t_13) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1469
+              /* "sklearn/linear_model/cd_fast.pyx":1483
  * 
  *                 if positive and tmp < 0:
  *                     w[ii] = 0.0             # <<<<<<<<<<<<<<
@@ -12681,7 +12858,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
             }
             /*else*/ {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1472
+              /* "sklearn/linear_model/cd_fast.pyx":1486
  *                 else:
  *                     w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
  *                         / (Q[ii, ii] + beta)             # <<<<<<<<<<<<<<
@@ -12691,7 +12868,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
               __pyx_t_27 = __pyx_v_ii;
               __pyx_t_28 = __pyx_v_ii;
 
-              /* "sklearn/linear_model/cd_fast.pyx":1471
+              /* "sklearn/linear_model/cd_fast.pyx":1485
  *                     w[ii] = 0.0
  *                 else:
  *                     w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \             # <<<<<<<<<<<<<<
@@ -12703,7 +12880,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
             }
             __pyx_L13:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1474
+            /* "sklearn/linear_model/cd_fast.pyx":1488
  *                         / (Q[ii, ii] + beta)
  * 
  *                 if w[ii] != w_ii:             # <<<<<<<<<<<<<<
@@ -12714,7 +12891,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
             __pyx_t_13 = (((*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_30 * __pyx_v_w.strides[0]) ))) != __pyx_v_w_ii) != 0);
             if (__pyx_t_13) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1476
+              /* "sklearn/linear_model/cd_fast.pyx":1490
  *                 if w[ii] != w_ii:
  *                     # H +=  (w[ii] - w_ii) * Q[ii] # Update H = X.T X w
  *                     daxpy(n_features, w[ii] - w_ii, Q_ptr + ii * n_features, 1,             # <<<<<<<<<<<<<<
@@ -12723,7 +12900,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
  */
               __pyx_t_31 = __pyx_v_ii;
 
-              /* "sklearn/linear_model/cd_fast.pyx":1477
+              /* "sklearn/linear_model/cd_fast.pyx":1491
  *                     # H +=  (w[ii] - w_ii) * Q[ii] # Update H = X.T X w
  *                     daxpy(n_features, w[ii] - w_ii, Q_ptr + ii * n_features, 1,
  *                           <DOUBLE*> &H[0], 1)             # <<<<<<<<<<<<<<
@@ -12732,7 +12909,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
  */
               __pyx_t_32 = 0;
 
-              /* "sklearn/linear_model/cd_fast.pyx":1476
+              /* "sklearn/linear_model/cd_fast.pyx":1490
  *                 if w[ii] != w_ii:
  *                     # H +=  (w[ii] - w_ii) * Q[ii] # Update H = X.T X w
  *                     daxpy(n_features, w[ii] - w_ii, Q_ptr + ii * n_features, 1,             # <<<<<<<<<<<<<<
@@ -12744,7 +12921,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
             }
             __pyx_L16:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1480
+            /* "sklearn/linear_model/cd_fast.pyx":1494
  * 
  *                 # update the maximum absolute coefficient update
  *                 d_w_ii = fabs(w[ii] - w_ii)             # <<<<<<<<<<<<<<
@@ -12754,7 +12931,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
             __pyx_t_33 = __pyx_v_ii;
             __pyx_v_d_w_ii = fabs(((*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_33 * __pyx_v_w.strides[0]) ))) - __pyx_v_w_ii));
 
-            /* "sklearn/linear_model/cd_fast.pyx":1481
+            /* "sklearn/linear_model/cd_fast.pyx":1495
  *                 # update the maximum absolute coefficient update
  *                 d_w_ii = fabs(w[ii] - w_ii)
  *                 if d_w_ii > d_w_max:             # <<<<<<<<<<<<<<
@@ -12764,7 +12941,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
             __pyx_t_13 = ((__pyx_v_d_w_ii > __pyx_v_d_w_max) != 0);
             if (__pyx_t_13) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1482
+              /* "sklearn/linear_model/cd_fast.pyx":1496
  *                 d_w_ii = fabs(w[ii] - w_ii)
  *                 if d_w_ii > d_w_max:
  *                     d_w_max = d_w_ii             # <<<<<<<<<<<<<<
@@ -12776,7 +12953,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
             }
             __pyx_L17:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1484
+            /* "sklearn/linear_model/cd_fast.pyx":1498
  *                     d_w_max = d_w_ii
  * 
  *                 if fabs(w[ii]) > w_max:             # <<<<<<<<<<<<<<
@@ -12787,7 +12964,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
             __pyx_t_13 = ((fabs((*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_34 * __pyx_v_w.strides[0]) )))) > __pyx_v_w_max) != 0);
             if (__pyx_t_13) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1485
+              /* "sklearn/linear_model/cd_fast.pyx":1499
  * 
  *                 if fabs(w[ii]) > w_max:
  *                     w_max = fabs(w[ii])             # <<<<<<<<<<<<<<
@@ -12802,7 +12979,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
             __pyx_L9_continue:;
           }
 
-          /* "sklearn/linear_model/cd_fast.pyx":1487
+          /* "sklearn/linear_model/cd_fast.pyx":1501
  *                     w_max = fabs(w[ii])
  * 
  *             if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:             # <<<<<<<<<<<<<<
@@ -12830,26 +13007,26 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
           __pyx_L20_bool_binop_done:;
           if (__pyx_t_13) {
 
-            /* "sklearn/linear_model/cd_fast.pyx":1492
+            /* "sklearn/linear_model/cd_fast.pyx":1506
  *                 # criterion
  * 
- *                 gap = gram_duality_gap(n_features, n_tasks, <DOUBLE*> &q[0],             # <<<<<<<<<<<<<<
+ *                 gap = gram_enet_duality_gap(n_features, n_tasks, <DOUBLE*> &q[0],             # <<<<<<<<<<<<<<
  *                                        y_norm2, <DOUBLE*> &H[0],
  *                                        <DOUBLE*> &w[0], <DOUBLE*> &XtA[0],
  */
             __pyx_t_36 = 0;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1493
+            /* "sklearn/linear_model/cd_fast.pyx":1507
  * 
- *                 gap = gram_duality_gap(n_features, n_tasks, <DOUBLE*> &q[0],
+ *                 gap = gram_enet_duality_gap(n_features, n_tasks, <DOUBLE*> &q[0],
  *                                        y_norm2, <DOUBLE*> &H[0],             # <<<<<<<<<<<<<<
  *                                        <DOUBLE*> &w[0], <DOUBLE*> &XtA[0],
  *                                        &dual_norm_XtA,
  */
             __pyx_t_37 = 0;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1494
- *                 gap = gram_duality_gap(n_features, n_tasks, <DOUBLE*> &q[0],
+            /* "sklearn/linear_model/cd_fast.pyx":1508
+ *                 gap = gram_enet_duality_gap(n_features, n_tasks, <DOUBLE*> &q[0],
  *                                        y_norm2, <DOUBLE*> &H[0],
  *                                        <DOUBLE*> &w[0], <DOUBLE*> &XtA[0],             # <<<<<<<<<<<<<<
  *                                        &dual_norm_XtA,
@@ -12858,16 +13035,16 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
             __pyx_t_38 = 0;
             __pyx_t_39 = 0;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1492
+            /* "sklearn/linear_model/cd_fast.pyx":1506
  *                 # criterion
  * 
- *                 gap = gram_duality_gap(n_features, n_tasks, <DOUBLE*> &q[0],             # <<<<<<<<<<<<<<
+ *                 gap = gram_enet_duality_gap(n_features, n_tasks, <DOUBLE*> &q[0],             # <<<<<<<<<<<<<<
  *                                        y_norm2, <DOUBLE*> &H[0],
  *                                        <DOUBLE*> &w[0], <DOUBLE*> &XtA[0],
  */
-            __pyx_v_gap = __pyx_f_7sklearn_12linear_model_7cd_fast_gram_duality_gap(__pyx_v_n_features, __pyx_v_n_tasks, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_q.data + __pyx_t_36 * __pyx_v_q.strides[0]) ))))), __pyx_v_y_norm2, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_H.data + __pyx_t_37 * __pyx_v_H.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_38 * __pyx_v_w.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_XtA.data + __pyx_t_39 * __pyx_v_XtA.strides[0]) ))))), (&__pyx_v_dual_norm_XtA), __pyx_v_alpha, __pyx_v_beta, __pyx_v_positive);
+            __pyx_v_gap = __pyx_f_7sklearn_12linear_model_7cd_fast_gram_enet_duality_gap(__pyx_v_n_features, __pyx_v_n_tasks, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_q.data + __pyx_t_36 * __pyx_v_q.strides[0]) ))))), __pyx_v_y_norm2, ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_H.data + __pyx_t_37 * __pyx_v_H.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_w.data + __pyx_t_38 * __pyx_v_w.strides[0]) ))))), ((__pyx_t_7sklearn_12linear_model_7cd_fast_DOUBLE *)(&(*((double *) ( /* dim=0 */ (__pyx_v_XtA.data + __pyx_t_39 * __pyx_v_XtA.strides[0]) ))))), (&__pyx_v_dual_norm_XtA), __pyx_v_alpha, __pyx_v_beta, __pyx_v_positive);
 
-            /* "sklearn/linear_model/cd_fast.pyx":1498
+            /* "sklearn/linear_model/cd_fast.pyx":1512
  *                                        alpha, beta, positive)
  * 
  *                 if gap < tol:             # <<<<<<<<<<<<<<
@@ -12877,7 +13054,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
             __pyx_t_13 = ((__pyx_v_gap < __pyx_v_tol) != 0);
             if (__pyx_t_13) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1500
+              /* "sklearn/linear_model/cd_fast.pyx":1514
  *                 if gap < tol:
  *                     # return if we reached desired tolerance
  *                     break             # <<<<<<<<<<<<<<
@@ -12893,7 +13070,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
         __pyx_L8_break:;
       }
 
-      /* "sklearn/linear_model/cd_fast.pyx":1451
+      /* "sklearn/linear_model/cd_fast.pyx":1465
  *             " results and is discouraged.")
  * 
  *     with nogil:             # <<<<<<<<<<<<<<
@@ -12911,7 +13088,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
       }
   }
 
-  /* "sklearn/linear_model/cd_fast.pyx":1502
+  /* "sklearn/linear_model/cd_fast.pyx":1516
  *                     break
  * 
  *     return np.asarray(w), gap, tol, n_iter + 1             # <<<<<<<<<<<<<<
@@ -12919,12 +13096,12 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
  * 
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1502; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1516; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_asarray); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1502; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_asarray); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1516; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __pyx_memoryview_fromslice(__pyx_v_w, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1502; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __pyx_memoryview_fromslice(__pyx_v_w, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1516; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
   __pyx_t_2 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_5))) {
@@ -12937,28 +13114,28 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
     }
   }
   if (!__pyx_t_2) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_4); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1502; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_4); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1516; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else {
-    __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1502; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1516; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_7);
     PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_2); __Pyx_GIVEREF(__pyx_t_2); __pyx_t_2 = NULL;
     PyTuple_SET_ITEM(__pyx_t_7, 0+1, __pyx_t_4);
     __Pyx_GIVEREF(__pyx_t_4);
     __pyx_t_4 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1502; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_7, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1516; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   }
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = PyFloat_FromDouble(__pyx_v_gap); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1502; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = PyFloat_FromDouble(__pyx_v_gap); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1516; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_7 = PyFloat_FromDouble(__pyx_v_tol); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1502; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_7 = PyFloat_FromDouble(__pyx_v_tol); if (unlikely(!__pyx_t_7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1516; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_4 = __Pyx_PyInt_From_long((__pyx_v_n_iter + 1)); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1502; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_PyInt_From_long((__pyx_v_n_iter + 1)); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1516; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_2 = PyTuple_New(4); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1502; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyTuple_New(4); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1516; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
@@ -12976,7 +13153,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
   __pyx_t_2 = 0;
   goto __pyx_L0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1402
+  /* "sklearn/linear_model/cd_fast.pyx":1416
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,             # <<<<<<<<<<<<<<
@@ -13008,7 +13185,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_10enet_coordinate_des
   return __pyx_r;
 }
 
-/* "sklearn/linear_model/cd_fast.pyx":1508
+/* "sklearn/linear_model/cd_fast.pyx":1522
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,             # <<<<<<<<<<<<<<
@@ -13063,37 +13240,37 @@ static PyObject *__pyx_pw_7sklearn_12linear_model_7cd_fast_13enet_coordinate_des
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_l1_reg)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_multi_task", 0, 8, 9, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1508; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_multi_task", 0, 8, 9, 1); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1522; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_l2_reg)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_multi_task", 0, 8, 9, 2); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1508; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_multi_task", 0, 8, 9, 2); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1522; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_X)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_multi_task", 0, 8, 9, 3); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1508; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_multi_task", 0, 8, 9, 3); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1522; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  4:
         if (likely((values[4] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_Y)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_multi_task", 0, 8, 9, 4); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1508; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_multi_task", 0, 8, 9, 4); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1522; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  5:
         if (likely((values[5] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_max_iter)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_multi_task", 0, 8, 9, 5); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1508; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_multi_task", 0, 8, 9, 5); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1522; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  6:
         if (likely((values[6] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_tol)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_multi_task", 0, 8, 9, 6); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1508; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_multi_task", 0, 8, 9, 6); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1522; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  7:
         if (likely((values[7] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_rng)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_multi_task", 0, 8, 9, 7); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1508; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+          __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_multi_task", 0, 8, 9, 7); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1522; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
         }
         case  8:
         if (kw_args > 0) {
@@ -13102,7 +13279,7 @@ static PyObject *__pyx_pw_7sklearn_12linear_model_7cd_fast_13enet_coordinate_des
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "enet_coordinate_descent_multi_task") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1508; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "enet_coordinate_descent_multi_task") < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1522; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -13119,23 +13296,23 @@ static PyObject *__pyx_pw_7sklearn_12linear_model_7cd_fast_13enet_coordinate_des
         default: goto __pyx_L5_argtuple_error;
       }
     }
-    __pyx_v_W = __Pyx_PyObject_to_MemoryviewSlice_dcd__double(values[0]); if (unlikely(!__pyx_v_W.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1508; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_l1_reg = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_l1_reg == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1508; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_l2_reg = __pyx_PyFloat_AsDouble(values[2]); if (unlikely((__pyx_v_l2_reg == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1509; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_X = __Pyx_PyObject_to_MemoryviewSlice_dcd__double(values[3]); if (unlikely(!__pyx_v_X.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1509; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_Y = __Pyx_PyObject_to_MemoryviewSlice_dsds_double(values[4]); if (unlikely(!__pyx_v_Y.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1510; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_max_iter = __Pyx_PyInt_As_int(values[5]); if (unlikely((__pyx_v_max_iter == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1510; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
-    __pyx_v_tol = __pyx_PyFloat_AsDouble(values[6]); if (unlikely((__pyx_v_tol == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1511; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_W = __Pyx_PyObject_to_MemoryviewSlice_dcd__double(values[0]); if (unlikely(!__pyx_v_W.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1522; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_l1_reg = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_l1_reg == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1522; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_l2_reg = __pyx_PyFloat_AsDouble(values[2]); if (unlikely((__pyx_v_l2_reg == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1523; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_X = __Pyx_PyObject_to_MemoryviewSlice_dcd__double(values[3]); if (unlikely(!__pyx_v_X.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1523; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_Y = __Pyx_PyObject_to_MemoryviewSlice_dsds_double(values[4]); if (unlikely(!__pyx_v_Y.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1524; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_max_iter = __Pyx_PyInt_As_int(values[5]); if (unlikely((__pyx_v_max_iter == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1524; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_tol = __pyx_PyFloat_AsDouble(values[6]); if (unlikely((__pyx_v_tol == (double)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1525; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     __pyx_v_rng = values[7];
     if (values[8]) {
-      __pyx_v_random = __Pyx_PyObject_IsTrue(values[8]); if (unlikely((__pyx_v_random == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1512; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+      __pyx_v_random = __Pyx_PyObject_IsTrue(values[8]); if (unlikely((__pyx_v_random == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1526; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
     } else {
       __pyx_v_random = ((int)0);
     }
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_multi_task", 0, 8, 9, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1508; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+  __Pyx_RaiseArgtupleInvalid("enet_coordinate_descent_multi_task", 0, 8, 9, PyTuple_GET_SIZE(__pyx_args)); {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1522; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   __pyx_L3_error:;
   __Pyx_AddTraceback("sklearn.linear_model.cd_fast.enet_coordinate_descent_multi_task", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -13247,7 +13424,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("enet_coordinate_descent_multi_task", 0);
 
-  /* "sklearn/linear_model/cd_fast.pyx":1524
+  /* "sklearn/linear_model/cd_fast.pyx":1538
  *     """
  *     # get the data information into easy vars
  *     cdef unsigned int n_samples = X.shape[0]             # <<<<<<<<<<<<<<
@@ -13256,7 +13433,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
  */
   __pyx_v_n_samples = (__pyx_v_X.shape[0]);
 
-  /* "sklearn/linear_model/cd_fast.pyx":1525
+  /* "sklearn/linear_model/cd_fast.pyx":1539
  *     # get the data information into easy vars
  *     cdef unsigned int n_samples = X.shape[0]
  *     cdef unsigned int n_features = X.shape[1]             # <<<<<<<<<<<<<<
@@ -13265,7 +13442,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
  */
   __pyx_v_n_features = (__pyx_v_X.shape[1]);
 
-  /* "sklearn/linear_model/cd_fast.pyx":1526
+  /* "sklearn/linear_model/cd_fast.pyx":1540
  *     cdef unsigned int n_samples = X.shape[0]
  *     cdef unsigned int n_features = X.shape[1]
  *     cdef unsigned int n_tasks = Y.shape[1]             # <<<<<<<<<<<<<<
@@ -13274,23 +13451,23 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
  */
   __pyx_v_n_tasks = (__pyx_v_Y.shape[1]);
 
-  /* "sklearn/linear_model/cd_fast.pyx":1529
+  /* "sklearn/linear_model/cd_fast.pyx":1543
  * 
  *     # to store XtA
  *     cdef double[:, ::1] XtA = np.zeros((n_features, n_tasks))             # <<<<<<<<<<<<<<
  *     cdef double XtA_axis1norm
  *     cdef double dual_norm_XtA
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1529; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1543; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_zeros); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1529; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_zeros); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1543; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1529; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1543; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_tasks); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1529; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_tasks); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1543; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1529; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1543; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
   PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_2);
@@ -13309,45 +13486,45 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
     }
   }
   if (!__pyx_t_4) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1529; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1543; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else {
-    __pyx_t_2 = PyTuple_New(1+1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1529; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = PyTuple_New(1+1); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1543; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
     PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_4); __Pyx_GIVEREF(__pyx_t_4); __pyx_t_4 = NULL;
     PyTuple_SET_ITEM(__pyx_t_2, 0+1, __pyx_t_5);
     __Pyx_GIVEREF(__pyx_t_5);
     __pyx_t_5 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1529; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_2, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1543; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   }
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_t_6 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_double(__pyx_t_1);
-  if (unlikely(!__pyx_t_6.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1529; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__pyx_t_6.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1543; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_XtA = __pyx_t_6;
   __pyx_t_6.memview = NULL;
   __pyx_t_6.data = NULL;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1534
+  /* "sklearn/linear_model/cd_fast.pyx":1548
  * 
  *     # initial value of the residuals
  *     cdef double[:, ::1] R = np.zeros((n_samples, n_tasks))             # <<<<<<<<<<<<<<
  * 
  *     cdef double[:] norm_cols_X = np.zeros(n_features)
  */
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1534; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1548; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1534; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1548; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_samples); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1534; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_samples); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1548; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_5 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_tasks); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1534; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_tasks); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1548; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1534; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1548; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
   PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_3);
@@ -13366,41 +13543,41 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
     }
   }
   if (!__pyx_t_5) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_4); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1534; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_4); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1548; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else {
-    __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1534; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1548; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_3);
     PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_5); __Pyx_GIVEREF(__pyx_t_5); __pyx_t_5 = NULL;
     PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_t_4);
     __Pyx_GIVEREF(__pyx_t_4);
     __pyx_t_4 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1534; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1548; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_7 = __Pyx_PyObject_to_MemoryviewSlice_d_dc_double(__pyx_t_1);
-  if (unlikely(!__pyx_t_7.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1534; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__pyx_t_7.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1548; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_R = __pyx_t_7;
   __pyx_t_7.memview = NULL;
   __pyx_t_7.data = NULL;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1536
+  /* "sklearn/linear_model/cd_fast.pyx":1550
  *     cdef double[:, ::1] R = np.zeros((n_samples, n_tasks))
  * 
  *     cdef double[:] norm_cols_X = np.zeros(n_features)             # <<<<<<<<<<<<<<
  *     cdef double[::1] tmp = np.zeros(n_tasks, dtype=np.float)
  *     cdef double[:] w_ii = np.zeros(n_tasks, dtype=np.float)
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1536; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1550; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_zeros); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1536; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_zeros); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1550; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1536; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_features); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1550; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_4 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
@@ -13413,109 +13590,109 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
     }
   }
   if (!__pyx_t_4) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1536; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1550; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else {
-    __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1536; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1550; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_5);
     PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4); __Pyx_GIVEREF(__pyx_t_4); __pyx_t_4 = NULL;
     PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_t_2);
     __Pyx_GIVEREF(__pyx_t_2);
     __pyx_t_2 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1536; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1550; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   }
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_t_8 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(__pyx_t_1);
-  if (unlikely(!__pyx_t_8.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1536; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__pyx_t_8.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1550; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_norm_cols_X = __pyx_t_8;
   __pyx_t_8.memview = NULL;
   __pyx_t_8.data = NULL;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1537
+  /* "sklearn/linear_model/cd_fast.pyx":1551
  * 
  *     cdef double[:] norm_cols_X = np.zeros(n_features)
  *     cdef double[::1] tmp = np.zeros(n_tasks, dtype=np.float)             # <<<<<<<<<<<<<<
  *     cdef double[:] w_ii = np.zeros(n_tasks, dtype=np.float)
  *     cdef double d_w_max
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1537; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1551; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_zeros); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1537; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_zeros); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1551; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_tasks); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1537; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_tasks); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1551; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1537; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1551; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
   PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_1);
   __pyx_t_1 = 0;
-  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1537; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1551; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1537; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1551; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_float); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1537; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_float); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1551; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_t_4) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1537; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_t_4) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1551; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, __pyx_t_1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1537; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, __pyx_t_1); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1551; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_t_9 = __Pyx_PyObject_to_MemoryviewSlice_dc_double(__pyx_t_4);
-  if (unlikely(!__pyx_t_9.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1537; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__pyx_t_9.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1551; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __pyx_v_tmp = __pyx_t_9;
   __pyx_t_9.memview = NULL;
   __pyx_t_9.data = NULL;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1538
+  /* "sklearn/linear_model/cd_fast.pyx":1552
  *     cdef double[:] norm_cols_X = np.zeros(n_features)
  *     cdef double[::1] tmp = np.zeros(n_tasks, dtype=np.float)
  *     cdef double[:] w_ii = np.zeros(n_tasks, dtype=np.float)             # <<<<<<<<<<<<<<
  *     cdef double d_w_max
  *     cdef double w_max
  */
-  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1538; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1552; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_zeros); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1538; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_zeros); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1552; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_tasks); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1538; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_PyInt_From_unsigned_int(__pyx_v_n_tasks); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1552; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1538; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1552; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
   PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4);
   __Pyx_GIVEREF(__pyx_t_4);
   __pyx_t_4 = 0;
-  __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1538; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1552; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1538; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1552; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_float); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1538; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_float); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1552; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1538; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1552; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_5, __pyx_t_4); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1538; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_5, __pyx_t_4); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1552; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __pyx_t_10 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(__pyx_t_2);
-  if (unlikely(!__pyx_t_10.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1538; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (unlikely(!__pyx_t_10.memview)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1552; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_w_ii = __pyx_t_10;
   __pyx_t_10.memview = NULL;
   __pyx_t_10.data = NULL;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1544
+  /* "sklearn/linear_model/cd_fast.pyx":1558
  *     cdef double nn
  *     cdef double W_ii_abs_max
  *     cdef double gap = tol + 1.0             # <<<<<<<<<<<<<<
@@ -13524,7 +13701,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
  */
   __pyx_v_gap = (__pyx_v_tol + 1.0);
 
-  /* "sklearn/linear_model/cd_fast.pyx":1545
+  /* "sklearn/linear_model/cd_fast.pyx":1559
  *     cdef double W_ii_abs_max
  *     cdef double gap = tol + 1.0
  *     cdef double d_w_tol = tol             # <<<<<<<<<<<<<<
@@ -13533,16 +13710,16 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
  */
   __pyx_v_d_w_tol = __pyx_v_tol;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1552
+  /* "sklearn/linear_model/cd_fast.pyx":1566
  *     cdef unsigned int n_iter
  *     cdef unsigned int f_iter
  *     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)             # <<<<<<<<<<<<<<
  *     cdef UINT32_t* rand_r_state = &rand_r_state_seed
  * 
  */
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_rng, __pyx_n_s_randint); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1552; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_v_rng, __pyx_n_s_randint); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1566; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = __Pyx_PyInt_From_int(__pyx_e_7sklearn_12linear_model_7cd_fast_RAND_R_MAX); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1552; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = __Pyx_PyInt_From_int(__pyx_e_7sklearn_12linear_model_7cd_fast_RAND_R_MAX); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1566; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
   __pyx_t_1 = NULL;
   __pyx_t_11 = 0;
@@ -13556,7 +13733,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
       __pyx_t_11 = 1;
     }
   }
-  __pyx_t_3 = PyTuple_New(2+__pyx_t_11); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1552; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyTuple_New(2+__pyx_t_11); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1566; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   if (__pyx_t_1) {
     PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1); __Pyx_GIVEREF(__pyx_t_1); __pyx_t_1 = NULL;
@@ -13567,15 +13744,15 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
   PyTuple_SET_ITEM(__pyx_t_3, 1+__pyx_t_11, __pyx_t_5);
   __Pyx_GIVEREF(__pyx_t_5);
   __pyx_t_5 = 0;
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1552; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_3, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1566; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_12 = __Pyx_PyInt_As_npy_uint32(__pyx_t_2); if (unlikely((__pyx_t_12 == (npy_uint32)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1552; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_12 = __Pyx_PyInt_As_npy_uint32(__pyx_t_2); if (unlikely((__pyx_t_12 == (npy_uint32)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1566; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_rand_r_state_seed = __pyx_t_12;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1553
+  /* "sklearn/linear_model/cd_fast.pyx":1567
  *     cdef unsigned int f_iter
  *     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
  *     cdef UINT32_t* rand_r_state = &rand_r_state_seed             # <<<<<<<<<<<<<<
@@ -13584,7 +13761,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
  */
   __pyx_v_rand_r_state = (&__pyx_v_rand_r_state_seed);
 
-  /* "sklearn/linear_model/cd_fast.pyx":1555
+  /* "sklearn/linear_model/cd_fast.pyx":1569
  *     cdef UINT32_t* rand_r_state = &rand_r_state_seed
  * 
  *     cdef double* X_ptr = &X[0, 0]             # <<<<<<<<<<<<<<
@@ -13595,7 +13772,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
   __pyx_t_13 = 0;
   __pyx_v_X_ptr = (&(*((double *) ( /* dim=1 */ (( /* dim=0 */ ((char *) (((double *) __pyx_v_X.data) + __pyx_t_11)) ) + __pyx_t_13 * __pyx_v_X.strides[1]) ))));
 
-  /* "sklearn/linear_model/cd_fast.pyx":1556
+  /* "sklearn/linear_model/cd_fast.pyx":1570
  * 
  *     cdef double* X_ptr = &X[0, 0]
  *     cdef double* W_ptr = &W[0, 0]             # <<<<<<<<<<<<<<
@@ -13606,7 +13783,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
   __pyx_t_15 = 0;
   __pyx_v_W_ptr = (&(*((double *) ( /* dim=1 */ (( /* dim=0 */ ((char *) (((double *) __pyx_v_W.data) + __pyx_t_14)) ) + __pyx_t_15 * __pyx_v_W.strides[1]) ))));
 
-  /* "sklearn/linear_model/cd_fast.pyx":1557
+  /* "sklearn/linear_model/cd_fast.pyx":1571
  *     cdef double* X_ptr = &X[0, 0]
  *     cdef double* W_ptr = &W[0, 0]
  *     cdef double* Y_ptr = &Y[0, 0]             # <<<<<<<<<<<<<<
@@ -13617,7 +13794,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
   __pyx_t_17 = 0;
   __pyx_v_Y_ptr = (&(*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_Y.data + __pyx_t_16 * __pyx_v_Y.strides[0]) ) + __pyx_t_17 * __pyx_v_Y.strides[1]) ))));
 
-  /* "sklearn/linear_model/cd_fast.pyx":1558
+  /* "sklearn/linear_model/cd_fast.pyx":1572
  *     cdef double* W_ptr = &W[0, 0]
  *     cdef double* Y_ptr = &Y[0, 0]
  *     cdef double* wii_ptr = &w_ii[0]             # <<<<<<<<<<<<<<
@@ -13627,7 +13804,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
   __pyx_t_18 = 0;
   __pyx_v_wii_ptr = (&(*((double *) ( /* dim=0 */ (__pyx_v_w_ii.data + __pyx_t_18 * __pyx_v_w_ii.strides[0]) ))));
 
-  /* "sklearn/linear_model/cd_fast.pyx":1560
+  /* "sklearn/linear_model/cd_fast.pyx":1574
  *     cdef double* wii_ptr = &w_ii[0]
  * 
  *     if l1_reg == 0:             # <<<<<<<<<<<<<<
@@ -13637,19 +13814,19 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
   __pyx_t_19 = ((__pyx_v_l1_reg == 0.0) != 0);
   if (__pyx_t_19) {
 
-    /* "sklearn/linear_model/cd_fast.pyx":1561
+    /* "sklearn/linear_model/cd_fast.pyx":1575
  * 
  *     if l1_reg == 0:
  *         warnings.warn("Coordinate descent with l1_reg=0 may lead to unexpected"             # <<<<<<<<<<<<<<
  *             " results and is discouraged.")
  * 
  */
-    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1561; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_warnings); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1575; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_warn); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1561; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_warn); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1575; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_tuple__7, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1561; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_tuple__7, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1575; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -13657,7 +13834,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
   }
   __pyx_L3:;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1564
+  /* "sklearn/linear_model/cd_fast.pyx":1578
  *             " results and is discouraged.")
  * 
  *     with nogil:             # <<<<<<<<<<<<<<
@@ -13671,7 +13848,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
       #endif
       /*try:*/ {
 
-        /* "sklearn/linear_model/cd_fast.pyx":1566
+        /* "sklearn/linear_model/cd_fast.pyx":1580
  *     with nogil:
  *         # norm_cols_X = (np.asarray(X) ** 2).sum(axis=0)
  *         for ii in range(n_features):             # <<<<<<<<<<<<<<
@@ -13682,7 +13859,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
         for (__pyx_t_21 = 0; __pyx_t_21 < __pyx_t_20; __pyx_t_21+=1) {
           __pyx_v_ii = __pyx_t_21;
 
-          /* "sklearn/linear_model/cd_fast.pyx":1567
+          /* "sklearn/linear_model/cd_fast.pyx":1581
  *         # norm_cols_X = (np.asarray(X) ** 2).sum(axis=0)
  *         for ii in range(n_features):
  *             for jj in range(n_samples):             # <<<<<<<<<<<<<<
@@ -13693,7 +13870,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
           for (__pyx_t_23 = 0; __pyx_t_23 < __pyx_t_22; __pyx_t_23+=1) {
             __pyx_v_jj = __pyx_t_23;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1568
+            /* "sklearn/linear_model/cd_fast.pyx":1582
  *         for ii in range(n_features):
  *             for jj in range(n_samples):
  *                 norm_cols_X[ii] += X[jj, ii] ** 2             # <<<<<<<<<<<<<<
@@ -13707,7 +13884,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
           }
         }
 
-        /* "sklearn/linear_model/cd_fast.pyx":1571
+        /* "sklearn/linear_model/cd_fast.pyx":1585
  * 
  *         # R = Y - np.dot(X, W.T)
  *         for ii in range(n_samples):             # <<<<<<<<<<<<<<
@@ -13718,7 +13895,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
         for (__pyx_t_21 = 0; __pyx_t_21 < __pyx_t_20; __pyx_t_21+=1) {
           __pyx_v_ii = __pyx_t_21;
 
-          /* "sklearn/linear_model/cd_fast.pyx":1572
+          /* "sklearn/linear_model/cd_fast.pyx":1586
  *         # R = Y - np.dot(X, W.T)
  *         for ii in range(n_samples):
  *             for jj in range(n_tasks):             # <<<<<<<<<<<<<<
@@ -13729,7 +13906,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
           for (__pyx_t_23 = 0; __pyx_t_23 < __pyx_t_22; __pyx_t_23+=1) {
             __pyx_v_jj = __pyx_t_23;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1573
+            /* "sklearn/linear_model/cd_fast.pyx":1587
  *         for ii in range(n_samples):
  *             for jj in range(n_tasks):
  *                 R[ii, jj] = Y[ii, jj] - (             # <<<<<<<<<<<<<<
@@ -13739,7 +13916,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
             __pyx_t_27 = __pyx_v_ii;
             __pyx_t_28 = __pyx_v_jj;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1574
+            /* "sklearn/linear_model/cd_fast.pyx":1588
  *             for jj in range(n_tasks):
  *                 R[ii, jj] = Y[ii, jj] - (
  *                     ddot(n_features, X_ptr + ii, n_samples, W_ptr + jj, n_tasks)             # <<<<<<<<<<<<<<
@@ -13752,7 +13929,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
           }
         }
 
-        /* "sklearn/linear_model/cd_fast.pyx":1578
+        /* "sklearn/linear_model/cd_fast.pyx":1592
  * 
  *         # tol = tol * linalg.norm(Y, ord='fro') ** 2
  *         tol = tol * dnrm2(n_samples * n_tasks, Y_ptr, 1) ** 2             # <<<<<<<<<<<<<<
@@ -13761,7 +13938,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
  */
         __pyx_v_tol = (__pyx_v_tol * pow(cblas_dnrm2((__pyx_v_n_samples * __pyx_v_n_tasks), __pyx_v_Y_ptr, 1), 2.0));
 
-        /* "sklearn/linear_model/cd_fast.pyx":1580
+        /* "sklearn/linear_model/cd_fast.pyx":1594
  *         tol = tol * dnrm2(n_samples * n_tasks, Y_ptr, 1) ** 2
  * 
  *         for n_iter in range(max_iter):             # <<<<<<<<<<<<<<
@@ -13772,7 +13949,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
         for (__pyx_t_20 = 0; __pyx_t_20 < __pyx_t_31; __pyx_t_20+=1) {
           __pyx_v_n_iter = __pyx_t_20;
 
-          /* "sklearn/linear_model/cd_fast.pyx":1581
+          /* "sklearn/linear_model/cd_fast.pyx":1595
  * 
  *         for n_iter in range(max_iter):
  *             w_max = 0.0             # <<<<<<<<<<<<<<
@@ -13781,7 +13958,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
  */
           __pyx_v_w_max = 0.0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":1582
+          /* "sklearn/linear_model/cd_fast.pyx":1596
  *         for n_iter in range(max_iter):
  *             w_max = 0.0
  *             d_w_max = 0.0             # <<<<<<<<<<<<<<
@@ -13790,7 +13967,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
  */
           __pyx_v_d_w_max = 0.0;
 
-          /* "sklearn/linear_model/cd_fast.pyx":1583
+          /* "sklearn/linear_model/cd_fast.pyx":1597
  *             w_max = 0.0
  *             d_w_max = 0.0
  *             for f_iter in range(n_features):  # Loop over coordinates             # <<<<<<<<<<<<<<
@@ -13801,7 +13978,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
           for (__pyx_t_22 = 0; __pyx_t_22 < __pyx_t_21; __pyx_t_22+=1) {
             __pyx_v_f_iter = __pyx_t_22;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1584
+            /* "sklearn/linear_model/cd_fast.pyx":1598
  *             d_w_max = 0.0
  *             for f_iter in range(n_features):  # Loop over coordinates
  *                 if random:             # <<<<<<<<<<<<<<
@@ -13811,7 +13988,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
             __pyx_t_19 = (__pyx_v_random != 0);
             if (__pyx_t_19) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1585
+              /* "sklearn/linear_model/cd_fast.pyx":1599
  *             for f_iter in range(n_features):  # Loop over coordinates
  *                 if random:
  *                     ii = rand_int(n_features, rand_r_state)             # <<<<<<<<<<<<<<
@@ -13823,7 +14000,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
             }
             /*else*/ {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1587
+              /* "sklearn/linear_model/cd_fast.pyx":1601
  *                     ii = rand_int(n_features, rand_r_state)
  *                 else:
  *                     ii = f_iter             # <<<<<<<<<<<<<<
@@ -13834,7 +14011,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
             }
             __pyx_L19:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1589
+            /* "sklearn/linear_model/cd_fast.pyx":1603
  *                     ii = f_iter
  * 
  *                 if norm_cols_X[ii] == 0.0:             # <<<<<<<<<<<<<<
@@ -13845,7 +14022,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
             __pyx_t_19 = (((*((double *) ( /* dim=0 */ (__pyx_v_norm_cols_X.data + __pyx_t_23 * __pyx_v_norm_cols_X.strides[0]) ))) == 0.0) != 0);
             if (__pyx_t_19) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1590
+              /* "sklearn/linear_model/cd_fast.pyx":1604
  * 
  *                 if norm_cols_X[ii] == 0.0:
  *                     continue             # <<<<<<<<<<<<<<
@@ -13855,7 +14032,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
               goto __pyx_L17_continue;
             }
 
-            /* "sklearn/linear_model/cd_fast.pyx":1593
+            /* "sklearn/linear_model/cd_fast.pyx":1607
  * 
  *                 # w_ii = W[:, ii] # Store previous value
  *                 dcopy(n_tasks, W_ptr + ii * n_tasks, 1, wii_ptr, 1)             # <<<<<<<<<<<<<<
@@ -13864,7 +14041,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
  */
             cblas_dcopy(__pyx_v_n_tasks, (__pyx_v_W_ptr + (__pyx_v_ii * __pyx_v_n_tasks)), 1, __pyx_v_wii_ptr, 1);
 
-            /* "sklearn/linear_model/cd_fast.pyx":1596
+            /* "sklearn/linear_model/cd_fast.pyx":1610
  * 
  *                 # if np.sum(w_ii ** 2) != 0.0:  # can do better
  *                 if dnrm2(n_tasks, wii_ptr, 1) != 0.0:             # <<<<<<<<<<<<<<
@@ -13874,7 +14051,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
             __pyx_t_19 = ((cblas_dnrm2(__pyx_v_n_tasks, __pyx_v_wii_ptr, 1) != 0.0) != 0);
             if (__pyx_t_19) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1600
+              /* "sklearn/linear_model/cd_fast.pyx":1614
  *                     dger(CblasRowMajor, n_samples, n_tasks, 1.0,
  *                          X_ptr + ii * n_samples, 1,
  *                          wii_ptr, 1, &R[0, 0], n_tasks)             # <<<<<<<<<<<<<<
@@ -13884,7 +14061,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
               __pyx_t_32 = 0;
               __pyx_t_33 = 0;
 
-              /* "sklearn/linear_model/cd_fast.pyx":1598
+              /* "sklearn/linear_model/cd_fast.pyx":1612
  *                 if dnrm2(n_tasks, wii_ptr, 1) != 0.0:
  *                     # R += np.dot(X[:, ii][:, None], w_ii[None, :]) # rank 1 update
  *                     dger(CblasRowMajor, n_samples, n_tasks, 1.0,             # <<<<<<<<<<<<<<
@@ -13896,7 +14073,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
             }
             __pyx_L21:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1604
+            /* "sklearn/linear_model/cd_fast.pyx":1618
  *                 # tmp = np.dot(X[:, ii][None, :], R).ravel()
  *                 dgemv(CblasRowMajor, CblasTrans,
  *                       n_samples, n_tasks, 1.0, &R[0, 0], n_tasks,             # <<<<<<<<<<<<<<
@@ -13906,7 +14083,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
             __pyx_t_34 = 0;
             __pyx_t_35 = 0;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1605
+            /* "sklearn/linear_model/cd_fast.pyx":1619
  *                 dgemv(CblasRowMajor, CblasTrans,
  *                       n_samples, n_tasks, 1.0, &R[0, 0], n_tasks,
  *                       X_ptr + ii * n_samples, 1, 0.0, &tmp[0], 1)             # <<<<<<<<<<<<<<
@@ -13915,7 +14092,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
  */
             __pyx_t_36 = 0;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1603
+            /* "sklearn/linear_model/cd_fast.pyx":1617
  * 
  *                 # tmp = np.dot(X[:, ii][None, :], R).ravel()
  *                 dgemv(CblasRowMajor, CblasTrans,             # <<<<<<<<<<<<<<
@@ -13924,7 +14101,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
  */
             cblas_dgemv(CblasRowMajor, CblasTrans, __pyx_v_n_samples, __pyx_v_n_tasks, 1.0, (&(*((double *) ( /* dim=1 */ ((char *) (((double *) ( /* dim=0 */ (__pyx_v_R.data + __pyx_t_34 * __pyx_v_R.strides[0]) )) + __pyx_t_35)) )))), __pyx_v_n_tasks, (__pyx_v_X_ptr + (__pyx_v_ii * __pyx_v_n_samples)), 1, 0.0, (&(*((double *) ( /* dim=0 */ ((char *) (((double *) __pyx_v_tmp.data) + __pyx_t_36)) )))), 1);
 
-            /* "sklearn/linear_model/cd_fast.pyx":1608
+            /* "sklearn/linear_model/cd_fast.pyx":1622
  * 
  *                 # nn = sqrt(np.sum(tmp ** 2))
  *                 nn = dnrm2(n_tasks, &tmp[0], 1)             # <<<<<<<<<<<<<<
@@ -13934,7 +14111,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
             __pyx_t_37 = 0;
             __pyx_v_nn = cblas_dnrm2(__pyx_v_n_tasks, (&(*((double *) ( /* dim=0 */ ((char *) (((double *) __pyx_v_tmp.data) + __pyx_t_37)) )))), 1);
 
-            /* "sklearn/linear_model/cd_fast.pyx":1611
+            /* "sklearn/linear_model/cd_fast.pyx":1625
  * 
  *                 # W[:, ii] = tmp * fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg)
  *                 dcopy(n_tasks, &tmp[0], 1, W_ptr + ii * n_tasks, 1)             # <<<<<<<<<<<<<<
@@ -13944,7 +14121,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
             __pyx_t_38 = 0;
             cblas_dcopy(__pyx_v_n_tasks, (&(*((double *) ( /* dim=0 */ ((char *) (((double *) __pyx_v_tmp.data) + __pyx_t_38)) )))), 1, (__pyx_v_W_ptr + (__pyx_v_ii * __pyx_v_n_tasks)), 1);
 
-            /* "sklearn/linear_model/cd_fast.pyx":1612
+            /* "sklearn/linear_model/cd_fast.pyx":1626
  *                 # W[:, ii] = tmp * fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg)
  *                 dcopy(n_tasks, &tmp[0], 1, W_ptr + ii * n_tasks, 1)
  *                 dscal(n_tasks, fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg),             # <<<<<<<<<<<<<<
@@ -13953,7 +14130,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
  */
             __pyx_t_39 = __pyx_v_ii;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1613
+            /* "sklearn/linear_model/cd_fast.pyx":1627
  *                 dcopy(n_tasks, &tmp[0], 1, W_ptr + ii * n_tasks, 1)
  *                 dscal(n_tasks, fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg),
  *                           W_ptr + ii * n_tasks, 1)             # <<<<<<<<<<<<<<
@@ -13962,7 +14139,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
  */
             cblas_dscal(__pyx_v_n_tasks, (__pyx_f_7sklearn_12linear_model_7cd_fast_fmax((1. - (__pyx_v_l1_reg / __pyx_v_nn)), 0.0) / ((*((double *) ( /* dim=0 */ (__pyx_v_norm_cols_X.data + __pyx_t_39 * __pyx_v_norm_cols_X.strides[0]) ))) + __pyx_v_l2_reg)), (__pyx_v_W_ptr + (__pyx_v_ii * __pyx_v_n_tasks)), 1);
 
-            /* "sklearn/linear_model/cd_fast.pyx":1616
+            /* "sklearn/linear_model/cd_fast.pyx":1630
  * 
  *                 # if np.sum(W[:, ii] ** 2) != 0.0:  # can do better
  *                 if dnrm2(n_tasks, W_ptr + ii * n_tasks, 1) != 0.0:             # <<<<<<<<<<<<<<
@@ -13972,7 +14149,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
             __pyx_t_19 = ((cblas_dnrm2(__pyx_v_n_tasks, (__pyx_v_W_ptr + (__pyx_v_ii * __pyx_v_n_tasks)), 1) != 0.0) != 0);
             if (__pyx_t_19) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1621
+              /* "sklearn/linear_model/cd_fast.pyx":1635
  *                     dger(CblasRowMajor, n_samples, n_tasks, -1.0,
  *                          X_ptr + ii * n_samples, 1, W_ptr + ii * n_tasks, 1,
  *                          &R[0, 0], n_tasks)             # <<<<<<<<<<<<<<
@@ -13982,7 +14159,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
               __pyx_t_40 = 0;
               __pyx_t_41 = 0;
 
-              /* "sklearn/linear_model/cd_fast.pyx":1619
+              /* "sklearn/linear_model/cd_fast.pyx":1633
  *                     # R -= np.dot(X[:, ii][:, None], W[:, ii][None, :])
  *                     # Update residual : rank 1 update
  *                     dger(CblasRowMajor, n_samples, n_tasks, -1.0,             # <<<<<<<<<<<<<<
@@ -13994,7 +14171,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
             }
             __pyx_L22:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1624
+            /* "sklearn/linear_model/cd_fast.pyx":1638
  * 
  *                 # update the maximum absolute coefficient update
  *                 d_w_ii = diff_abs_max(n_tasks, W_ptr + ii * n_tasks, wii_ptr)             # <<<<<<<<<<<<<<
@@ -14003,7 +14180,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
  */
             __pyx_v_d_w_ii = __pyx_f_7sklearn_12linear_model_7cd_fast_diff_abs_max(__pyx_v_n_tasks, (__pyx_v_W_ptr + (__pyx_v_ii * __pyx_v_n_tasks)), __pyx_v_wii_ptr);
 
-            /* "sklearn/linear_model/cd_fast.pyx":1626
+            /* "sklearn/linear_model/cd_fast.pyx":1640
  *                 d_w_ii = diff_abs_max(n_tasks, W_ptr + ii * n_tasks, wii_ptr)
  * 
  *                 if d_w_ii > d_w_max:             # <<<<<<<<<<<<<<
@@ -14013,7 +14190,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
             __pyx_t_19 = ((__pyx_v_d_w_ii > __pyx_v_d_w_max) != 0);
             if (__pyx_t_19) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1627
+              /* "sklearn/linear_model/cd_fast.pyx":1641
  * 
  *                 if d_w_ii > d_w_max:
  *                     d_w_max = d_w_ii             # <<<<<<<<<<<<<<
@@ -14025,7 +14202,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
             }
             __pyx_L23:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1629
+            /* "sklearn/linear_model/cd_fast.pyx":1643
  *                     d_w_max = d_w_ii
  * 
  *                 W_ii_abs_max = abs_max(n_tasks, W_ptr + ii * n_tasks)             # <<<<<<<<<<<<<<
@@ -14034,7 +14211,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
  */
             __pyx_v_W_ii_abs_max = __pyx_f_7sklearn_12linear_model_7cd_fast_abs_max(__pyx_v_n_tasks, (__pyx_v_W_ptr + (__pyx_v_ii * __pyx_v_n_tasks)));
 
-            /* "sklearn/linear_model/cd_fast.pyx":1630
+            /* "sklearn/linear_model/cd_fast.pyx":1644
  * 
  *                 W_ii_abs_max = abs_max(n_tasks, W_ptr + ii * n_tasks)
  *                 if W_ii_abs_max > w_max:             # <<<<<<<<<<<<<<
@@ -14044,7 +14221,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
             __pyx_t_19 = ((__pyx_v_W_ii_abs_max > __pyx_v_w_max) != 0);
             if (__pyx_t_19) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1631
+              /* "sklearn/linear_model/cd_fast.pyx":1645
  *                 W_ii_abs_max = abs_max(n_tasks, W_ptr + ii * n_tasks)
  *                 if W_ii_abs_max > w_max:
  *                     w_max = W_ii_abs_max             # <<<<<<<<<<<<<<
@@ -14058,7 +14235,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
             __pyx_L17_continue:;
           }
 
-          /* "sklearn/linear_model/cd_fast.pyx":1633
+          /* "sklearn/linear_model/cd_fast.pyx":1647
  *                     w_max = W_ii_abs_max
  * 
  *             if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:             # <<<<<<<<<<<<<<
@@ -14086,7 +14263,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
           __pyx_L26_bool_binop_done:;
           if (__pyx_t_19) {
 
-            /* "sklearn/linear_model/cd_fast.pyx":1639
+            /* "sklearn/linear_model/cd_fast.pyx":1653
  * 
  *                 # XtA = np.dot(X.T, R) - l2_reg * W.T
  *                 for ii in range(n_features):             # <<<<<<<<<<<<<<
@@ -14097,7 +14274,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
             for (__pyx_t_22 = 0; __pyx_t_22 < __pyx_t_21; __pyx_t_22+=1) {
               __pyx_v_ii = __pyx_t_22;
 
-              /* "sklearn/linear_model/cd_fast.pyx":1640
+              /* "sklearn/linear_model/cd_fast.pyx":1654
  *                 # XtA = np.dot(X.T, R) - l2_reg * W.T
  *                 for ii in range(n_features):
  *                     for jj in range(n_tasks):             # <<<<<<<<<<<<<<
@@ -14108,7 +14285,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
               for (__pyx_t_44 = 0; __pyx_t_44 < __pyx_t_43; __pyx_t_44+=1) {
                 __pyx_v_jj = __pyx_t_44;
 
-                /* "sklearn/linear_model/cd_fast.pyx":1643
+                /* "sklearn/linear_model/cd_fast.pyx":1657
  *                         XtA[ii, jj] = ddot(
  *                             n_samples, X_ptr + ii * n_samples, 1,
  *                             &R[0, 0] + jj, n_tasks             # <<<<<<<<<<<<<<
@@ -14118,7 +14295,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
                 __pyx_t_45 = 0;
                 __pyx_t_46 = 0;
 
-                /* "sklearn/linear_model/cd_fast.pyx":1644
+                /* "sklearn/linear_model/cd_fast.pyx":1658
  *                             n_samples, X_ptr + ii * n_samples, 1,
  *                             &R[0, 0] + jj, n_tasks
  *                             ) - l2_reg * W[jj, ii]             # <<<<<<<<<<<<<<
@@ -14128,7 +14305,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
                 __pyx_t_47 = __pyx_v_jj;
                 __pyx_t_48 = __pyx_v_ii;
 
-                /* "sklearn/linear_model/cd_fast.pyx":1641
+                /* "sklearn/linear_model/cd_fast.pyx":1655
  *                 for ii in range(n_features):
  *                     for jj in range(n_tasks):
  *                         XtA[ii, jj] = ddot(             # <<<<<<<<<<<<<<
@@ -14141,7 +14318,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
               }
             }
 
-            /* "sklearn/linear_model/cd_fast.pyx":1647
+            /* "sklearn/linear_model/cd_fast.pyx":1661
  * 
  *                 # dual_norm_XtA = np.max(np.sqrt(np.sum(XtA ** 2, axis=1)))
  *                 dual_norm_XtA = 0.0             # <<<<<<<<<<<<<<
@@ -14150,7 +14327,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
  */
             __pyx_v_dual_norm_XtA = 0.0;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1648
+            /* "sklearn/linear_model/cd_fast.pyx":1662
  *                 # dual_norm_XtA = np.max(np.sqrt(np.sum(XtA ** 2, axis=1)))
  *                 dual_norm_XtA = 0.0
  *                 for ii in range(n_features):             # <<<<<<<<<<<<<<
@@ -14161,7 +14338,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
             for (__pyx_t_22 = 0; __pyx_t_22 < __pyx_t_21; __pyx_t_22+=1) {
               __pyx_v_ii = __pyx_t_22;
 
-              /* "sklearn/linear_model/cd_fast.pyx":1650
+              /* "sklearn/linear_model/cd_fast.pyx":1664
  *                 for ii in range(n_features):
  *                     # np.sqrt(np.sum(XtA ** 2, axis=1))
  *                     XtA_axis1norm = dnrm2(n_tasks, &XtA[0, 0] + ii * n_tasks, 1)             # <<<<<<<<<<<<<<
@@ -14172,7 +14349,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
               __pyx_t_52 = 0;
               __pyx_v_XtA_axis1norm = cblas_dnrm2(__pyx_v_n_tasks, ((&(*((double *) ( /* dim=1 */ ((char *) (((double *) ( /* dim=0 */ (__pyx_v_XtA.data + __pyx_t_51 * __pyx_v_XtA.strides[0]) )) + __pyx_t_52)) )))) + (__pyx_v_ii * __pyx_v_n_tasks)), 1);
 
-              /* "sklearn/linear_model/cd_fast.pyx":1651
+              /* "sklearn/linear_model/cd_fast.pyx":1665
  *                     # np.sqrt(np.sum(XtA ** 2, axis=1))
  *                     XtA_axis1norm = dnrm2(n_tasks, &XtA[0, 0] + ii * n_tasks, 1)
  *                     if XtA_axis1norm > dual_norm_XtA:             # <<<<<<<<<<<<<<
@@ -14182,7 +14359,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
               __pyx_t_19 = ((__pyx_v_XtA_axis1norm > __pyx_v_dual_norm_XtA) != 0);
               if (__pyx_t_19) {
 
-                /* "sklearn/linear_model/cd_fast.pyx":1652
+                /* "sklearn/linear_model/cd_fast.pyx":1666
  *                     XtA_axis1norm = dnrm2(n_tasks, &XtA[0, 0] + ii * n_tasks, 1)
  *                     if XtA_axis1norm > dual_norm_XtA:
  *                         dual_norm_XtA = XtA_axis1norm             # <<<<<<<<<<<<<<
@@ -14195,7 +14372,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
               __pyx_L35:;
             }
 
-            /* "sklearn/linear_model/cd_fast.pyx":1657
+            /* "sklearn/linear_model/cd_fast.pyx":1671
  *                 # R_norm = linalg.norm(R, ord='fro')
  *                 # w_norm = linalg.norm(W, ord='fro')
  *                 R_norm = dnrm2(n_samples * n_tasks, &R[0, 0], 1)             # <<<<<<<<<<<<<<
@@ -14206,7 +14383,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
             __pyx_t_54 = 0;
             __pyx_v_R_norm = cblas_dnrm2((__pyx_v_n_samples * __pyx_v_n_tasks), (&(*((double *) ( /* dim=1 */ ((char *) (((double *) ( /* dim=0 */ (__pyx_v_R.data + __pyx_t_53 * __pyx_v_R.strides[0]) )) + __pyx_t_54)) )))), 1);
 
-            /* "sklearn/linear_model/cd_fast.pyx":1658
+            /* "sklearn/linear_model/cd_fast.pyx":1672
  *                 # w_norm = linalg.norm(W, ord='fro')
  *                 R_norm = dnrm2(n_samples * n_tasks, &R[0, 0], 1)
  *                 w_norm = dnrm2(n_features * n_tasks, W_ptr, 1)             # <<<<<<<<<<<<<<
@@ -14215,7 +14392,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
  */
             __pyx_v_w_norm = cblas_dnrm2((__pyx_v_n_features * __pyx_v_n_tasks), __pyx_v_W_ptr, 1);
 
-            /* "sklearn/linear_model/cd_fast.pyx":1659
+            /* "sklearn/linear_model/cd_fast.pyx":1673
  *                 R_norm = dnrm2(n_samples * n_tasks, &R[0, 0], 1)
  *                 w_norm = dnrm2(n_features * n_tasks, W_ptr, 1)
  *                 if (dual_norm_XtA > l1_reg):             # <<<<<<<<<<<<<<
@@ -14225,7 +14402,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
             __pyx_t_19 = ((__pyx_v_dual_norm_XtA > __pyx_v_l1_reg) != 0);
             if (__pyx_t_19) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1660
+              /* "sklearn/linear_model/cd_fast.pyx":1674
  *                 w_norm = dnrm2(n_features * n_tasks, W_ptr, 1)
  *                 if (dual_norm_XtA > l1_reg):
  *                     const =  l1_reg / dual_norm_XtA             # <<<<<<<<<<<<<<
@@ -14234,7 +14411,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
  */
               __pyx_v_const = (__pyx_v_l1_reg / __pyx_v_dual_norm_XtA);
 
-              /* "sklearn/linear_model/cd_fast.pyx":1661
+              /* "sklearn/linear_model/cd_fast.pyx":1675
  *                 if (dual_norm_XtA > l1_reg):
  *                     const =  l1_reg / dual_norm_XtA
  *                     A_norm = R_norm * const             # <<<<<<<<<<<<<<
@@ -14243,7 +14420,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
  */
               __pyx_v_A_norm = (__pyx_v_R_norm * __pyx_v_const);
 
-              /* "sklearn/linear_model/cd_fast.pyx":1662
+              /* "sklearn/linear_model/cd_fast.pyx":1676
  *                     const =  l1_reg / dual_norm_XtA
  *                     A_norm = R_norm * const
  *                     gap = 0.5 * (R_norm ** 2 + A_norm ** 2)             # <<<<<<<<<<<<<<
@@ -14255,7 +14432,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
             }
             /*else*/ {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1664
+              /* "sklearn/linear_model/cd_fast.pyx":1678
  *                     gap = 0.5 * (R_norm ** 2 + A_norm ** 2)
  *                 else:
  *                     const = 1.0             # <<<<<<<<<<<<<<
@@ -14264,7 +14441,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
  */
               __pyx_v_const = 1.0;
 
-              /* "sklearn/linear_model/cd_fast.pyx":1665
+              /* "sklearn/linear_model/cd_fast.pyx":1679
  *                 else:
  *                     const = 1.0
  *                     gap = R_norm ** 2             # <<<<<<<<<<<<<<
@@ -14275,7 +14452,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
             }
             __pyx_L36:;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1668
+            /* "sklearn/linear_model/cd_fast.pyx":1682
  * 
  *                 # ry_sum = np.sum(R * y)
  *                 ry_sum = 0.0             # <<<<<<<<<<<<<<
@@ -14284,7 +14461,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
  */
             __pyx_v_ry_sum = 0.0;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1669
+            /* "sklearn/linear_model/cd_fast.pyx":1683
  *                 # ry_sum = np.sum(R * y)
  *                 ry_sum = 0.0
  *                 for ii in range(n_samples):             # <<<<<<<<<<<<<<
@@ -14295,7 +14472,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
             for (__pyx_t_22 = 0; __pyx_t_22 < __pyx_t_21; __pyx_t_22+=1) {
               __pyx_v_ii = __pyx_t_22;
 
-              /* "sklearn/linear_model/cd_fast.pyx":1670
+              /* "sklearn/linear_model/cd_fast.pyx":1684
  *                 ry_sum = 0.0
  *                 for ii in range(n_samples):
  *                     for jj in range(n_tasks):             # <<<<<<<<<<<<<<
@@ -14306,7 +14483,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
               for (__pyx_t_44 = 0; __pyx_t_44 < __pyx_t_43; __pyx_t_44+=1) {
                 __pyx_v_jj = __pyx_t_44;
 
-                /* "sklearn/linear_model/cd_fast.pyx":1671
+                /* "sklearn/linear_model/cd_fast.pyx":1685
  *                 for ii in range(n_samples):
  *                     for jj in range(n_tasks):
  *                         ry_sum += R[ii, jj] * Y[ii, jj]             # <<<<<<<<<<<<<<
@@ -14321,7 +14498,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
               }
             }
 
-            /* "sklearn/linear_model/cd_fast.pyx":1674
+            /* "sklearn/linear_model/cd_fast.pyx":1688
  * 
  *                 # l21_norm = np.sqrt(np.sum(W ** 2, axis=0)).sum()
  *                 l21_norm = 0.0             # <<<<<<<<<<<<<<
@@ -14330,7 +14507,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
  */
             __pyx_v_l21_norm = 0.0;
 
-            /* "sklearn/linear_model/cd_fast.pyx":1675
+            /* "sklearn/linear_model/cd_fast.pyx":1689
  *                 # l21_norm = np.sqrt(np.sum(W ** 2, axis=0)).sum()
  *                 l21_norm = 0.0
  *                 for ii in range(n_features):             # <<<<<<<<<<<<<<
@@ -14341,7 +14518,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
             for (__pyx_t_22 = 0; __pyx_t_22 < __pyx_t_21; __pyx_t_22+=1) {
               __pyx_v_ii = __pyx_t_22;
 
-              /* "sklearn/linear_model/cd_fast.pyx":1677
+              /* "sklearn/linear_model/cd_fast.pyx":1691
  *                 for ii in range(n_features):
  *                     # np.sqrt(np.sum(W ** 2, axis=0))
  *                     l21_norm += dnrm2(n_tasks, W_ptr + n_tasks * ii, 1)             # <<<<<<<<<<<<<<
@@ -14351,7 +14528,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
               __pyx_v_l21_norm = (__pyx_v_l21_norm + cblas_dnrm2(__pyx_v_n_tasks, (__pyx_v_W_ptr + (__pyx_v_n_tasks * __pyx_v_ii)), 1));
             }
 
-            /* "sklearn/linear_model/cd_fast.pyx":1679
+            /* "sklearn/linear_model/cd_fast.pyx":1693
  *                     l21_norm += dnrm2(n_tasks, W_ptr + n_tasks * ii, 1)
  * 
  *                 gap += l1_reg * l21_norm - const * ry_sum + \             # <<<<<<<<<<<<<<
@@ -14360,7 +14537,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
  */
             __pyx_v_gap = (__pyx_v_gap + (((__pyx_v_l1_reg * __pyx_v_l21_norm) - (__pyx_v_const * __pyx_v_ry_sum)) + (((0.5 * __pyx_v_l2_reg) * (1.0 + pow(__pyx_v_const, 2.0))) * pow(__pyx_v_w_norm, 2.0))));
 
-            /* "sklearn/linear_model/cd_fast.pyx":1682
+            /* "sklearn/linear_model/cd_fast.pyx":1696
  *                      0.5 * l2_reg * (1 + const ** 2) * (w_norm ** 2)
  * 
  *                 if gap < tol:             # <<<<<<<<<<<<<<
@@ -14370,7 +14547,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
             __pyx_t_19 = ((__pyx_v_gap < __pyx_v_tol) != 0);
             if (__pyx_t_19) {
 
-              /* "sklearn/linear_model/cd_fast.pyx":1684
+              /* "sklearn/linear_model/cd_fast.pyx":1698
  *                 if gap < tol:
  *                     # return if we reached desired tolerance
  *                     break             # <<<<<<<<<<<<<<
@@ -14386,7 +14563,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
         __pyx_L16_break:;
       }
 
-      /* "sklearn/linear_model/cd_fast.pyx":1564
+      /* "sklearn/linear_model/cd_fast.pyx":1578
  *             " results and is discouraged.")
  * 
  *     with nogil:             # <<<<<<<<<<<<<<
@@ -14404,18 +14581,18 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
       }
   }
 
-  /* "sklearn/linear_model/cd_fast.pyx":1686
+  /* "sklearn/linear_model/cd_fast.pyx":1700
  *                     break
  * 
  *     return np.asarray(W), gap, tol, n_iter + 1             # <<<<<<<<<<<<<<
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1686; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1700; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_asarray); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1686; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_asarray); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1700; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __pyx_memoryview_fromslice(__pyx_v_W, 2, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1686; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __pyx_memoryview_fromslice(__pyx_v_W, 2, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1700; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
   __pyx_t_5 = NULL;
   if (CYTHON_COMPILING_IN_CPYTHON && unlikely(PyMethod_Check(__pyx_t_3))) {
@@ -14428,28 +14605,28 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
     }
   }
   if (!__pyx_t_5) {
-    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1686; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_4); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1700; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_GOTREF(__pyx_t_2);
   } else {
-    __pyx_t_1 = PyTuple_New(1+1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1686; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_1 = PyTuple_New(1+1); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1700; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_1);
     PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_5); __Pyx_GIVEREF(__pyx_t_5); __pyx_t_5 = NULL;
     PyTuple_SET_ITEM(__pyx_t_1, 0+1, __pyx_t_4);
     __Pyx_GIVEREF(__pyx_t_4);
     __pyx_t_4 = 0;
-    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_1, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1686; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_1, NULL); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1700; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = PyFloat_FromDouble(__pyx_v_gap); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1686; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyFloat_FromDouble(__pyx_v_gap); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1700; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_1 = PyFloat_FromDouble(__pyx_v_tol); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1686; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyFloat_FromDouble(__pyx_v_tol); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1700; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_4 = __Pyx_PyInt_From_long((__pyx_v_n_iter + 1)); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1686; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_PyInt_From_long((__pyx_v_n_iter + 1)); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1700; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = PyTuple_New(4); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1686; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = PyTuple_New(4); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1700; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
   PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_2);
@@ -14467,7 +14644,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_7cd_fast_12enet_coordinate_des
   __pyx_t_5 = 0;
   goto __pyx_L0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1508
+  /* "sklearn/linear_model/cd_fast.pyx":1522
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,             # <<<<<<<<<<<<<<
@@ -28061,80 +28238,80 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
-  /* "sklearn/linear_model/cd_fast.pyx":302
+  /* "sklearn/linear_model/cd_fast.pyx":305
  * 
  *     if alpha == 0:
  *         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"             # <<<<<<<<<<<<<<
  *             " results and is discouraged.")
  * 
  */
-  __pyx_tuple_ = PyTuple_Pack(1, __pyx_kp_s_Coordinate_descent_with_alpha_0); if (unlikely(!__pyx_tuple_)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 302; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple_ = PyTuple_Pack(1, __pyx_kp_s_Coordinate_descent_with_alpha_0); if (unlikely(!__pyx_tuple_)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 305; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple_);
   __Pyx_GIVEREF(__pyx_tuple_);
 
-  /* "sklearn/linear_model/cd_fast.pyx":306
+  /* "sklearn/linear_model/cd_fast.pyx":309
  * 
  *     if not random:
  *         warnings.warn("Accelerated coordinate descent with cyclic sampling"             # <<<<<<<<<<<<<<
  *             " may be slower than with random sampling and is discouraged.")
  * 
  */
-  __pyx_tuple__2 = PyTuple_Pack(1, __pyx_kp_s_Accelerated_coordinate_descent_w); if (unlikely(!__pyx_tuple__2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 306; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__2 = PyTuple_Pack(1, __pyx_kp_s_Accelerated_coordinate_descent_w); if (unlikely(!__pyx_tuple__2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 309; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__2);
   __Pyx_GIVEREF(__pyx_tuple__2);
 
-  /* "sklearn/linear_model/cd_fast.pyx":520
+  /* "sklearn/linear_model/cd_fast.pyx":523
  * 
  *     if alpha == 0:
  *         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"             # <<<<<<<<<<<<<<
  *             " results and is discouraged.")
  * 
  */
-  __pyx_tuple__3 = PyTuple_Pack(1, __pyx_kp_s_Coordinate_descent_with_alpha_0); if (unlikely(!__pyx_tuple__3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 520; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__3 = PyTuple_Pack(1, __pyx_kp_s_Coordinate_descent_with_alpha_0); if (unlikely(!__pyx_tuple__3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 523; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__3);
   __Pyx_GIVEREF(__pyx_tuple__3);
 
-  /* "sklearn/linear_model/cd_fast.pyx":524
+  /* "sklearn/linear_model/cd_fast.pyx":754
  * 
  *     if not random:
  *         warnings.warn("Accelerated coordinate descent with cyclic sampling"             # <<<<<<<<<<<<<<
  *             " may be slower than with random sampling and is discouraged.")
  * 
  */
-  __pyx_tuple__4 = PyTuple_Pack(1, __pyx_kp_s_Accelerated_coordinate_descent_w); if (unlikely(!__pyx_tuple__4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 524; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__4 = PyTuple_Pack(1, __pyx_kp_s_Accelerated_coordinate_descent_w); if (unlikely(!__pyx_tuple__4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 754; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__4);
   __Pyx_GIVEREF(__pyx_tuple__4);
 
-  /* "sklearn/linear_model/cd_fast.pyx":1278
+  /* "sklearn/linear_model/cd_fast.pyx":1292
  * 
  *     if alpha == 0:
  *         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"             # <<<<<<<<<<<<<<
  *             " results and is discouraged.")
  * 
  */
-  __pyx_tuple__5 = PyTuple_Pack(1, __pyx_kp_s_Coordinate_descent_with_alpha_0); if (unlikely(!__pyx_tuple__5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1278; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__5 = PyTuple_Pack(1, __pyx_kp_s_Coordinate_descent_with_alpha_0); if (unlikely(!__pyx_tuple__5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1292; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__5);
   __Pyx_GIVEREF(__pyx_tuple__5);
 
-  /* "sklearn/linear_model/cd_fast.pyx":1448
+  /* "sklearn/linear_model/cd_fast.pyx":1462
  * 
  *     if alpha == 0:
  *         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"             # <<<<<<<<<<<<<<
  *             " results and is discouraged.")
  * 
  */
-  __pyx_tuple__6 = PyTuple_Pack(1, __pyx_kp_s_Coordinate_descent_with_alpha_0); if (unlikely(!__pyx_tuple__6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1448; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__6 = PyTuple_Pack(1, __pyx_kp_s_Coordinate_descent_with_alpha_0); if (unlikely(!__pyx_tuple__6)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1462; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__6);
   __Pyx_GIVEREF(__pyx_tuple__6);
 
-  /* "sklearn/linear_model/cd_fast.pyx":1561
+  /* "sklearn/linear_model/cd_fast.pyx":1575
  * 
  *     if l1_reg == 0:
  *         warnings.warn("Coordinate descent with l1_reg=0 may lead to unexpected"             # <<<<<<<<<<<<<<
  *             " results and is discouraged.")
  * 
  */
-  __pyx_tuple__7 = PyTuple_Pack(1, __pyx_kp_s_Coordinate_descent_with_l1_reg_0); if (unlikely(!__pyx_tuple__7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1561; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__7 = PyTuple_Pack(1, __pyx_kp_s_Coordinate_descent_with_l1_reg_0); if (unlikely(!__pyx_tuple__7)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1575; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__7);
   __Pyx_GIVEREF(__pyx_tuple__7);
 
@@ -28325,89 +28502,89 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__24);
   __Pyx_GIVEREF(__pyx_tuple__24);
 
-  /* "sklearn/linear_model/cd_fast.pyx":235
+  /* "sklearn/linear_model/cd_fast.pyx":238
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def enet_accelerated_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,             # <<<<<<<<<<<<<<
  *                             double alpha, double beta,
  *                             np.ndarray[DOUBLE, ndim=2] X,
  */
-  __pyx_tuple__26 = PyTuple_Pack(42, __pyx_n_s_w, __pyx_n_s_alpha, __pyx_n_s_beta, __pyx_n_s_X, __pyx_n_s_y, __pyx_n_s_max_iter, __pyx_n_s_tol, __pyx_n_s_rng, __pyx_n_s_random, __pyx_n_s_positive, __pyx_n_s_n_samples, __pyx_n_s_n_features, __pyx_n_s_n_tasks, __pyx_n_s_norm_cols_X, __pyx_n_s_we, __pyx_n_s_wc, __pyx_n_s_R, __pyx_n_s_Re, __pyx_n_s_Rc, __pyx_n_s_XtA, __pyx_n_s_Xty, __pyx_n_s_tmp, __pyx_n_s_we_ii, __pyx_n_s_wc_ii, __pyx_n_s_d_w_max, __pyx_n_s_w_max, __pyx_n_s_d_w_ii, __pyx_n_s_gap, __pyx_n_s_d_w_tol, __pyx_n_s_dual_norm_XtA, __pyx_n_s_theta0, __pyx_n_s_theta, __pyx_n_s_test_restart, __pyx_n_s_nnz, __pyx_n_s_nnze, __pyx_n_s_ii, __pyx_n_s_jj, __pyx_n_s_n_iter, __pyx_n_s_f_iter, __pyx_n_s_rand_r_state_seed, __pyx_n_s_rand_r_state, __pyx_n_s_eta); if (unlikely(!__pyx_tuple__26)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 235; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__26 = PyTuple_Pack(42, __pyx_n_s_w, __pyx_n_s_alpha, __pyx_n_s_beta, __pyx_n_s_X, __pyx_n_s_y, __pyx_n_s_max_iter, __pyx_n_s_tol, __pyx_n_s_rng, __pyx_n_s_random, __pyx_n_s_positive, __pyx_n_s_n_samples, __pyx_n_s_n_features, __pyx_n_s_n_tasks, __pyx_n_s_norm_cols_X, __pyx_n_s_we, __pyx_n_s_wc, __pyx_n_s_R, __pyx_n_s_Re, __pyx_n_s_Rc, __pyx_n_s_XtA, __pyx_n_s_Xty, __pyx_n_s_tmp, __pyx_n_s_we_ii, __pyx_n_s_wc_ii, __pyx_n_s_d_w_max, __pyx_n_s_w_max, __pyx_n_s_d_w_ii, __pyx_n_s_gap, __pyx_n_s_d_w_tol, __pyx_n_s_dual_norm_XtA, __pyx_n_s_theta0, __pyx_n_s_theta, __pyx_n_s_test_restart, __pyx_n_s_nnz, __pyx_n_s_nnze, __pyx_n_s_ii, __pyx_n_s_jj, __pyx_n_s_n_iter, __pyx_n_s_f_iter, __pyx_n_s_rand_r_state_seed, __pyx_n_s_rand_r_state, __pyx_n_s_eta); if (unlikely(!__pyx_tuple__26)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 238; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__26);
   __Pyx_GIVEREF(__pyx_tuple__26);
-  __pyx_codeobj__27 = (PyObject*)__Pyx_PyCode_New(10, 0, 42, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__26, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_cal_homes_ofercoq_src_scikit_le, __pyx_n_s_enet_accelerated_coordinate_desc, 235, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__27)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 235; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__27 = (PyObject*)__Pyx_PyCode_New(10, 0, 42, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__26, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_cal_homes_ofercoq_src_scikit_le, __pyx_n_s_enet_accelerated_coordinate_desc, 238, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__27)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 238; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "sklearn/linear_model/cd_fast.pyx":473
+  /* "sklearn/linear_model/cd_fast.pyx":476
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,             # <<<<<<<<<<<<<<
  *                             double alpha, double beta,
  *                             np.ndarray[DOUBLE, ndim=2] X,
  */
-  __pyx_tuple__28 = PyTuple_Pack(30, __pyx_n_s_w, __pyx_n_s_alpha, __pyx_n_s_beta, __pyx_n_s_X, __pyx_n_s_y, __pyx_n_s_max_iter, __pyx_n_s_tol, __pyx_n_s_rng, __pyx_n_s_random, __pyx_n_s_positive, __pyx_n_s_n_samples, __pyx_n_s_n_features, __pyx_n_s_n_tasks, __pyx_n_s_norm_cols_X, __pyx_n_s_R, __pyx_n_s_XtA, __pyx_n_s_tmp, __pyx_n_s_w_ii, __pyx_n_s_d_w_max, __pyx_n_s_w_max, __pyx_n_s_d_w_ii, __pyx_n_s_gap, __pyx_n_s_d_w_tol, __pyx_n_s_dual_norm_XtA, __pyx_n_s_ii, __pyx_n_s_i, __pyx_n_s_n_iter, __pyx_n_s_f_iter, __pyx_n_s_rand_r_state_seed, __pyx_n_s_rand_r_state); if (unlikely(!__pyx_tuple__28)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 473; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__28 = PyTuple_Pack(30, __pyx_n_s_w, __pyx_n_s_alpha, __pyx_n_s_beta, __pyx_n_s_X, __pyx_n_s_y, __pyx_n_s_max_iter, __pyx_n_s_tol, __pyx_n_s_rng, __pyx_n_s_random, __pyx_n_s_positive, __pyx_n_s_n_samples, __pyx_n_s_n_features, __pyx_n_s_n_tasks, __pyx_n_s_norm_cols_X, __pyx_n_s_R, __pyx_n_s_XtA, __pyx_n_s_tmp, __pyx_n_s_w_ii, __pyx_n_s_d_w_max, __pyx_n_s_w_max, __pyx_n_s_d_w_ii, __pyx_n_s_gap, __pyx_n_s_d_w_tol, __pyx_n_s_dual_norm_XtA, __pyx_n_s_ii, __pyx_n_s_i, __pyx_n_s_n_iter, __pyx_n_s_f_iter, __pyx_n_s_rand_r_state_seed, __pyx_n_s_rand_r_state); if (unlikely(!__pyx_tuple__28)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 476; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__28);
   __Pyx_GIVEREF(__pyx_tuple__28);
-  __pyx_codeobj__29 = (PyObject*)__Pyx_PyCode_New(10, 0, 30, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__28, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_cal_homes_ofercoq_src_scikit_le, __pyx_n_s_enet_coordinate_descent, 473, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__29)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 473; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__29 = (PyObject*)__Pyx_PyCode_New(10, 0, 30, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__28, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_cal_homes_ofercoq_src_scikit_le, __pyx_n_s_enet_coordinate_descent, 476, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__29)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 476; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "sklearn/linear_model/cd_fast.pyx":681
+  /* "sklearn/linear_model/cd_fast.pyx":685
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def sparse_enet_accelerated_coordinate_descent(double[:] w,             # <<<<<<<<<<<<<<
  *                             double alpha, double beta,
  *                             double[:] X_data, int[:] X_indices,
  */
-  __pyx_tuple__30 = PyTuple_Pack(55, __pyx_n_s_w, __pyx_n_s_alpha, __pyx_n_s_beta, __pyx_n_s_X_data, __pyx_n_s_X_indices, __pyx_n_s_X_indptr, __pyx_n_s_y, __pyx_n_s_X_mean, __pyx_n_s_max_iter, __pyx_n_s_tol, __pyx_n_s_rng, __pyx_n_s_random, __pyx_n_s_positive, __pyx_n_s_n_samples, __pyx_n_s_n_features, __pyx_n_s_ii, __pyx_n_s_norm_cols_X, __pyx_n_s_startptr, __pyx_n_s_endptr, __pyx_n_s_n_tasks, __pyx_n_s_we, __pyx_n_s_wc, __pyx_n_s_R, __pyx_n_s_Re, __pyx_n_s_Rc, __pyx_n_s_XtA, __pyx_n_s_tmp, __pyx_n_s_tmp2, __pyx_n_s_w_ii, __pyx_n_s_we_ii, __pyx_n_s_wc_ii, __pyx_n_s_d_w_max, __pyx_n_s_w_max, __pyx_n_s_d_w_ii, __pyx_n_s_X_mean_ii, __pyx_n_s_Re_sum, __pyx_n_s_Rc_sum, __pyx_n_s_normalize_sum, __pyx_n_s_gap, __pyx_n_s_d_w_tol, __pyx_n_s_dual_norm_XtA, __pyx_n_s_theta0, __pyx_n_s_theta, __pyx_n_s_test_restart, __pyx_n_s_jj, __pyx_n_s_n_iter, __pyx_n_s_f_iter, __pyx_n_s_nnz, __pyx_n_s_nnze, __pyx_n_s_rand_r_state_seed, __pyx_n_s_rand_r_state, __pyx_n_s_center, __pyx_n_s_eta, __pyx_n_s_i, __pyx_n_s_j); if (unlikely(!__pyx_tuple__30)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 681; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__30 = PyTuple_Pack(55, __pyx_n_s_w, __pyx_n_s_alpha, __pyx_n_s_beta, __pyx_n_s_X_data, __pyx_n_s_X_indices, __pyx_n_s_X_indptr, __pyx_n_s_y, __pyx_n_s_X_mean, __pyx_n_s_max_iter, __pyx_n_s_tol, __pyx_n_s_rng, __pyx_n_s_random, __pyx_n_s_positive, __pyx_n_s_n_samples, __pyx_n_s_n_features, __pyx_n_s_ii, __pyx_n_s_norm_cols_X, __pyx_n_s_startptr, __pyx_n_s_endptr, __pyx_n_s_n_tasks, __pyx_n_s_we, __pyx_n_s_wc, __pyx_n_s_R, __pyx_n_s_Re, __pyx_n_s_Rc, __pyx_n_s_XtA, __pyx_n_s_tmp, __pyx_n_s_tmp2, __pyx_n_s_w_ii, __pyx_n_s_we_ii, __pyx_n_s_wc_ii, __pyx_n_s_d_w_max, __pyx_n_s_w_max, __pyx_n_s_d_w_ii, __pyx_n_s_X_mean_ii, __pyx_n_s_Re_sum, __pyx_n_s_Rc_sum, __pyx_n_s_normalize_sum, __pyx_n_s_gap, __pyx_n_s_d_w_tol, __pyx_n_s_dual_norm_XtA, __pyx_n_s_theta0, __pyx_n_s_theta, __pyx_n_s_test_restart, __pyx_n_s_jj, __pyx_n_s_n_iter, __pyx_n_s_f_iter, __pyx_n_s_nnz, __pyx_n_s_nnze, __pyx_n_s_rand_r_state_seed, __pyx_n_s_rand_r_state, __pyx_n_s_center, __pyx_n_s_eta, __pyx_n_s_i, __pyx_n_s_j); if (unlikely(!__pyx_tuple__30)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__30);
   __Pyx_GIVEREF(__pyx_tuple__30);
-  __pyx_codeobj__31 = (PyObject*)__Pyx_PyCode_New(13, 0, 55, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__30, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_cal_homes_ofercoq_src_scikit_le, __pyx_n_s_sparse_enet_accelerated_coordina, 681, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__31)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 681; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__31 = (PyObject*)__Pyx_PyCode_New(13, 0, 55, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__30, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_cal_homes_ofercoq_src_scikit_le, __pyx_n_s_sparse_enet_accelerated_coordina, 685, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__31)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "sklearn/linear_model/cd_fast.pyx":948
+  /* "sklearn/linear_model/cd_fast.pyx":956
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def sparse_enet_coordinate_descent(double[:] w,             # <<<<<<<<<<<<<<
  *                             double alpha, double beta,
  *                             double[:] X_data, int[:] X_indices,
  */
-  __pyx_tuple__32 = PyTuple_Pack(39, __pyx_n_s_w, __pyx_n_s_alpha, __pyx_n_s_beta, __pyx_n_s_X_data, __pyx_n_s_X_indices, __pyx_n_s_X_indptr, __pyx_n_s_y, __pyx_n_s_X_mean, __pyx_n_s_max_iter, __pyx_n_s_tol, __pyx_n_s_rng, __pyx_n_s_random, __pyx_n_s_positive, __pyx_n_s_n_samples, __pyx_n_s_n_features, __pyx_n_s_ii, __pyx_n_s_norm_cols_X, __pyx_n_s_startptr, __pyx_n_s_endptr, __pyx_n_s_n_tasks, __pyx_n_s_R, __pyx_n_s_XtA, __pyx_n_s_tmp, __pyx_n_s_w_ii, __pyx_n_s_d_w_max, __pyx_n_s_w_max, __pyx_n_s_d_w_ii, __pyx_n_s_X_mean_ii, __pyx_n_s_R_sum, __pyx_n_s_normalize_sum, __pyx_n_s_gap, __pyx_n_s_d_w_tol, __pyx_n_s_dual_norm_XtA, __pyx_n_s_jj, __pyx_n_s_n_iter, __pyx_n_s_f_iter, __pyx_n_s_rand_r_state_seed, __pyx_n_s_rand_r_state, __pyx_n_s_center); if (unlikely(!__pyx_tuple__32)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 948; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__32 = PyTuple_Pack(39, __pyx_n_s_w, __pyx_n_s_alpha, __pyx_n_s_beta, __pyx_n_s_X_data, __pyx_n_s_X_indices, __pyx_n_s_X_indptr, __pyx_n_s_y, __pyx_n_s_X_mean, __pyx_n_s_max_iter, __pyx_n_s_tol, __pyx_n_s_rng, __pyx_n_s_random, __pyx_n_s_positive, __pyx_n_s_n_samples, __pyx_n_s_n_features, __pyx_n_s_ii, __pyx_n_s_norm_cols_X, __pyx_n_s_startptr, __pyx_n_s_endptr, __pyx_n_s_n_tasks, __pyx_n_s_R, __pyx_n_s_XtA, __pyx_n_s_tmp, __pyx_n_s_w_ii, __pyx_n_s_d_w_max, __pyx_n_s_w_max, __pyx_n_s_d_w_ii, __pyx_n_s_X_mean_ii, __pyx_n_s_R_sum, __pyx_n_s_normalize_sum, __pyx_n_s_gap, __pyx_n_s_d_w_tol, __pyx_n_s_dual_norm_XtA, __pyx_n_s_jj, __pyx_n_s_n_iter, __pyx_n_s_f_iter, __pyx_n_s_rand_r_state_seed, __pyx_n_s_rand_r_state, __pyx_n_s_center); if (unlikely(!__pyx_tuple__32)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 956; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__32);
   __Pyx_GIVEREF(__pyx_tuple__32);
-  __pyx_codeobj__33 = (PyObject*)__Pyx_PyCode_New(13, 0, 39, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__32, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_cal_homes_ofercoq_src_scikit_le, __pyx_n_s_sparse_enet_coordinate_descent, 948, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__33)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 948; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__33 = (PyObject*)__Pyx_PyCode_New(13, 0, 39, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__32, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_cal_homes_ofercoq_src_scikit_le, __pyx_n_s_sparse_enet_coordinate_descent, 956, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__33)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 956; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "sklearn/linear_model/cd_fast.pyx":1215
+  /* "sklearn/linear_model/cd_fast.pyx":1229
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def enet_accelerated_coordinate_descent_gram(double[:] w, double alpha, double beta,             # <<<<<<<<<<<<<<
  *                                  double[:, :] Q, double[:] q, double[:] y,
  *                                  int max_iter, double tol, object rng,
  */
-  __pyx_tuple__34 = PyTuple_Pack(46, __pyx_n_s_w, __pyx_n_s_alpha, __pyx_n_s_beta, __pyx_n_s_Q, __pyx_n_s_q, __pyx_n_s_y, __pyx_n_s_max_iter, __pyx_n_s_tol, __pyx_n_s_rng, __pyx_n_s_random, __pyx_n_s_positive, __pyx_n_s_n_samples, __pyx_n_s_n_features, __pyx_n_s_n_tasks, __pyx_n_s_we, __pyx_n_s_wc, __pyx_n_s_H, __pyx_n_s_He, __pyx_n_s_Hc, __pyx_n_s_XtA, __pyx_n_s_tmp, __pyx_n_s_w_ii, __pyx_n_s_we_ii, __pyx_n_s_wc_ii, __pyx_n_s_d_w_max, __pyx_n_s_w_max, __pyx_n_s_d_w_ii, __pyx_n_s_gap, __pyx_n_s_d_w_tol, __pyx_n_s_dual_norm_XtA, __pyx_n_s_theta0, __pyx_n_s_theta, __pyx_n_s_test_restart, __pyx_n_s_nnz, __pyx_n_s_nnze, __pyx_n_s_ii, __pyx_n_s_n_iter, __pyx_n_s_f_iter, __pyx_n_s_rand_r_state_seed, __pyx_n_s_rand_r_state, __pyx_n_s_y_norm2, __pyx_n_s_Q_ptr, __pyx_n_s_H_ptr, __pyx_n_s_He_ptr, __pyx_n_s_Hc_ptr, __pyx_n_s_eta); if (unlikely(!__pyx_tuple__34)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1215; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__34 = PyTuple_Pack(46, __pyx_n_s_w, __pyx_n_s_alpha, __pyx_n_s_beta, __pyx_n_s_Q, __pyx_n_s_q, __pyx_n_s_y, __pyx_n_s_max_iter, __pyx_n_s_tol, __pyx_n_s_rng, __pyx_n_s_random, __pyx_n_s_positive, __pyx_n_s_n_samples, __pyx_n_s_n_features, __pyx_n_s_n_tasks, __pyx_n_s_we, __pyx_n_s_wc, __pyx_n_s_H, __pyx_n_s_He, __pyx_n_s_Hc, __pyx_n_s_XtA, __pyx_n_s_tmp, __pyx_n_s_w_ii, __pyx_n_s_we_ii, __pyx_n_s_wc_ii, __pyx_n_s_d_w_max, __pyx_n_s_w_max, __pyx_n_s_d_w_ii, __pyx_n_s_gap, __pyx_n_s_d_w_tol, __pyx_n_s_dual_norm_XtA, __pyx_n_s_theta0, __pyx_n_s_theta, __pyx_n_s_test_restart, __pyx_n_s_nnz, __pyx_n_s_nnze, __pyx_n_s_ii, __pyx_n_s_n_iter, __pyx_n_s_f_iter, __pyx_n_s_rand_r_state_seed, __pyx_n_s_rand_r_state, __pyx_n_s_y_norm2, __pyx_n_s_Q_ptr, __pyx_n_s_H_ptr, __pyx_n_s_He_ptr, __pyx_n_s_Hc_ptr, __pyx_n_s_eta); if (unlikely(!__pyx_tuple__34)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1229; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__34);
   __Pyx_GIVEREF(__pyx_tuple__34);
-  __pyx_codeobj__35 = (PyObject*)__Pyx_PyCode_New(11, 0, 46, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__34, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_cal_homes_ofercoq_src_scikit_le, __pyx_n_s_enet_accelerated_coordinate_desc_2, 1215, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__35)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1215; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__35 = (PyObject*)__Pyx_PyCode_New(11, 0, 46, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__34, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_cal_homes_ofercoq_src_scikit_le, __pyx_n_s_enet_accelerated_coordinate_desc_2, 1229, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__35)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1229; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "sklearn/linear_model/cd_fast.pyx":1402
+  /* "sklearn/linear_model/cd_fast.pyx":1416
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,             # <<<<<<<<<<<<<<
  *                                  double[:, :] Q, double[:] q, double[:] y,
  *                                  int max_iter, double tol, object rng,
  */
-  __pyx_tuple__36 = PyTuple_Pack(31, __pyx_n_s_w, __pyx_n_s_alpha, __pyx_n_s_beta, __pyx_n_s_Q, __pyx_n_s_q, __pyx_n_s_y, __pyx_n_s_max_iter, __pyx_n_s_tol, __pyx_n_s_rng, __pyx_n_s_random, __pyx_n_s_positive, __pyx_n_s_n_samples, __pyx_n_s_n_features, __pyx_n_s_n_tasks, __pyx_n_s_H, __pyx_n_s_XtA, __pyx_n_s_tmp, __pyx_n_s_w_ii, __pyx_n_s_d_w_max, __pyx_n_s_w_max, __pyx_n_s_d_w_ii, __pyx_n_s_gap, __pyx_n_s_d_w_tol, __pyx_n_s_dual_norm_XtA, __pyx_n_s_ii, __pyx_n_s_n_iter, __pyx_n_s_f_iter, __pyx_n_s_rand_r_state_seed, __pyx_n_s_rand_r_state, __pyx_n_s_y_norm2, __pyx_n_s_Q_ptr); if (unlikely(!__pyx_tuple__36)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1402; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__36 = PyTuple_Pack(31, __pyx_n_s_w, __pyx_n_s_alpha, __pyx_n_s_beta, __pyx_n_s_Q, __pyx_n_s_q, __pyx_n_s_y, __pyx_n_s_max_iter, __pyx_n_s_tol, __pyx_n_s_rng, __pyx_n_s_random, __pyx_n_s_positive, __pyx_n_s_n_samples, __pyx_n_s_n_features, __pyx_n_s_n_tasks, __pyx_n_s_H, __pyx_n_s_XtA, __pyx_n_s_tmp, __pyx_n_s_w_ii, __pyx_n_s_d_w_max, __pyx_n_s_w_max, __pyx_n_s_d_w_ii, __pyx_n_s_gap, __pyx_n_s_d_w_tol, __pyx_n_s_dual_norm_XtA, __pyx_n_s_ii, __pyx_n_s_n_iter, __pyx_n_s_f_iter, __pyx_n_s_rand_r_state_seed, __pyx_n_s_rand_r_state, __pyx_n_s_y_norm2, __pyx_n_s_Q_ptr); if (unlikely(!__pyx_tuple__36)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1416; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__36);
   __Pyx_GIVEREF(__pyx_tuple__36);
-  __pyx_codeobj__37 = (PyObject*)__Pyx_PyCode_New(11, 0, 31, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__36, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_cal_homes_ofercoq_src_scikit_le, __pyx_n_s_enet_coordinate_descent_gram, 1402, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__37)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1402; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__37 = (PyObject*)__Pyx_PyCode_New(11, 0, 31, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__36, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_cal_homes_ofercoq_src_scikit_le, __pyx_n_s_enet_coordinate_descent_gram, 1416, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__37)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1416; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "sklearn/linear_model/cd_fast.pyx":1508
+  /* "sklearn/linear_model/cd_fast.pyx":1522
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,             # <<<<<<<<<<<<<<
  *                                        double l2_reg, double[::1, :] X,
  *                                        double[:, :] Y, int max_iter,
  */
-  __pyx_tuple__38 = PyTuple_Pack(42, __pyx_n_s_W, __pyx_n_s_l1_reg, __pyx_n_s_l2_reg, __pyx_n_s_X, __pyx_n_s_Y, __pyx_n_s_max_iter, __pyx_n_s_tol, __pyx_n_s_rng, __pyx_n_s_random, __pyx_n_s_n_samples, __pyx_n_s_n_features, __pyx_n_s_n_tasks, __pyx_n_s_XtA, __pyx_n_s_XtA_axis1norm, __pyx_n_s_dual_norm_XtA, __pyx_n_s_R, __pyx_n_s_norm_cols_X, __pyx_n_s_tmp, __pyx_n_s_w_ii, __pyx_n_s_d_w_max, __pyx_n_s_w_max, __pyx_n_s_d_w_ii, __pyx_n_s_nn, __pyx_n_s_W_ii_abs_max, __pyx_n_s_gap, __pyx_n_s_d_w_tol, __pyx_n_s_ry_sum, __pyx_n_s_l21_norm, __pyx_n_s_ii, __pyx_n_s_jj, __pyx_n_s_n_iter, __pyx_n_s_f_iter, __pyx_n_s_rand_r_state_seed, __pyx_n_s_rand_r_state, __pyx_n_s_X_ptr, __pyx_n_s_W_ptr, __pyx_n_s_Y_ptr, __pyx_n_s_wii_ptr, __pyx_n_s_R_norm, __pyx_n_s_w_norm, __pyx_n_s_const, __pyx_n_s_A_norm); if (unlikely(!__pyx_tuple__38)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1508; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__38 = PyTuple_Pack(42, __pyx_n_s_W, __pyx_n_s_l1_reg, __pyx_n_s_l2_reg, __pyx_n_s_X, __pyx_n_s_Y, __pyx_n_s_max_iter, __pyx_n_s_tol, __pyx_n_s_rng, __pyx_n_s_random, __pyx_n_s_n_samples, __pyx_n_s_n_features, __pyx_n_s_n_tasks, __pyx_n_s_XtA, __pyx_n_s_XtA_axis1norm, __pyx_n_s_dual_norm_XtA, __pyx_n_s_R, __pyx_n_s_norm_cols_X, __pyx_n_s_tmp, __pyx_n_s_w_ii, __pyx_n_s_d_w_max, __pyx_n_s_w_max, __pyx_n_s_d_w_ii, __pyx_n_s_nn, __pyx_n_s_W_ii_abs_max, __pyx_n_s_gap, __pyx_n_s_d_w_tol, __pyx_n_s_ry_sum, __pyx_n_s_l21_norm, __pyx_n_s_ii, __pyx_n_s_jj, __pyx_n_s_n_iter, __pyx_n_s_f_iter, __pyx_n_s_rand_r_state_seed, __pyx_n_s_rand_r_state, __pyx_n_s_X_ptr, __pyx_n_s_W_ptr, __pyx_n_s_Y_ptr, __pyx_n_s_wii_ptr, __pyx_n_s_R_norm, __pyx_n_s_w_norm, __pyx_n_s_const, __pyx_n_s_A_norm); if (unlikely(!__pyx_tuple__38)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1522; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__38);
   __Pyx_GIVEREF(__pyx_tuple__38);
-  __pyx_codeobj__39 = (PyObject*)__Pyx_PyCode_New(9, 0, 42, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__38, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_cal_homes_ofercoq_src_scikit_le, __pyx_n_s_enet_coordinate_descent_multi_ta, 1508, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__39)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1508; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__39 = (PyObject*)__Pyx_PyCode_New(9, 0, 42, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__38, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_cal_homes_ofercoq_src_scikit_le, __pyx_n_s_enet_coordinate_descent_multi_ta, 1522, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__39)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1522; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
   /* "View.MemoryView":276
  *         return self.name
@@ -28664,88 +28841,88 @@ PyMODINIT_FUNC PyInit_cd_fast(void)
  */
   import_array();
 
-  /* "sklearn/linear_model/cd_fast.pyx":235
+  /* "sklearn/linear_model/cd_fast.pyx":238
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def enet_accelerated_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,             # <<<<<<<<<<<<<<
  *                             double alpha, double beta,
  *                             np.ndarray[DOUBLE, ndim=2] X,
  */
-  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_7sklearn_12linear_model_7cd_fast_1enet_accelerated_coordinate_descent, NULL, __pyx_n_s_sklearn_linear_model_cd_fast); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 235; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_7sklearn_12linear_model_7cd_fast_1enet_accelerated_coordinate_descent, NULL, __pyx_n_s_sklearn_linear_model_cd_fast); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 238; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_enet_accelerated_coordinate_desc, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 235; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_enet_accelerated_coordinate_desc, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 238; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":473
+  /* "sklearn/linear_model/cd_fast.pyx":476
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,             # <<<<<<<<<<<<<<
  *                             double alpha, double beta,
  *                             np.ndarray[DOUBLE, ndim=2] X,
  */
-  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_7sklearn_12linear_model_7cd_fast_3enet_coordinate_descent, NULL, __pyx_n_s_sklearn_linear_model_cd_fast); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 473; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_7sklearn_12linear_model_7cd_fast_3enet_coordinate_descent, NULL, __pyx_n_s_sklearn_linear_model_cd_fast); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 476; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_enet_coordinate_descent, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 473; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_enet_coordinate_descent, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 476; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":681
+  /* "sklearn/linear_model/cd_fast.pyx":685
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def sparse_enet_accelerated_coordinate_descent(double[:] w,             # <<<<<<<<<<<<<<
  *                             double alpha, double beta,
  *                             double[:] X_data, int[:] X_indices,
  */
-  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_7sklearn_12linear_model_7cd_fast_5sparse_enet_accelerated_coordinate_descent, NULL, __pyx_n_s_sklearn_linear_model_cd_fast); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 681; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_7sklearn_12linear_model_7cd_fast_5sparse_enet_accelerated_coordinate_descent, NULL, __pyx_n_s_sklearn_linear_model_cd_fast); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_sparse_enet_accelerated_coordina, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 681; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_sparse_enet_accelerated_coordina, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 685; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":948
+  /* "sklearn/linear_model/cd_fast.pyx":956
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def sparse_enet_coordinate_descent(double[:] w,             # <<<<<<<<<<<<<<
  *                             double alpha, double beta,
  *                             double[:] X_data, int[:] X_indices,
  */
-  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_7sklearn_12linear_model_7cd_fast_7sparse_enet_coordinate_descent, NULL, __pyx_n_s_sklearn_linear_model_cd_fast); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 948; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_7sklearn_12linear_model_7cd_fast_7sparse_enet_coordinate_descent, NULL, __pyx_n_s_sklearn_linear_model_cd_fast); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 956; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_sparse_enet_coordinate_descent, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 948; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_sparse_enet_coordinate_descent, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 956; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1215
+  /* "sklearn/linear_model/cd_fast.pyx":1229
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def enet_accelerated_coordinate_descent_gram(double[:] w, double alpha, double beta,             # <<<<<<<<<<<<<<
  *                                  double[:, :] Q, double[:] q, double[:] y,
  *                                  int max_iter, double tol, object rng,
  */
-  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_7sklearn_12linear_model_7cd_fast_9enet_accelerated_coordinate_descent_gram, NULL, __pyx_n_s_sklearn_linear_model_cd_fast); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1215; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_7sklearn_12linear_model_7cd_fast_9enet_accelerated_coordinate_descent_gram, NULL, __pyx_n_s_sklearn_linear_model_cd_fast); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1229; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_enet_accelerated_coordinate_desc_2, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1215; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_enet_accelerated_coordinate_desc_2, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1229; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1402
+  /* "sklearn/linear_model/cd_fast.pyx":1416
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,             # <<<<<<<<<<<<<<
  *                                  double[:, :] Q, double[:] q, double[:] y,
  *                                  int max_iter, double tol, object rng,
  */
-  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_7sklearn_12linear_model_7cd_fast_11enet_coordinate_descent_gram, NULL, __pyx_n_s_sklearn_linear_model_cd_fast); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1402; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_7sklearn_12linear_model_7cd_fast_11enet_coordinate_descent_gram, NULL, __pyx_n_s_sklearn_linear_model_cd_fast); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1416; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_enet_coordinate_descent_gram, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1402; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_enet_coordinate_descent_gram, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1416; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "sklearn/linear_model/cd_fast.pyx":1508
+  /* "sklearn/linear_model/cd_fast.pyx":1522
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,             # <<<<<<<<<<<<<<
  *                                        double l2_reg, double[::1, :] X,
  *                                        double[:, :] Y, int max_iter,
  */
-  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_7sklearn_12linear_model_7cd_fast_13enet_coordinate_descent_multi_task, NULL, __pyx_n_s_sklearn_linear_model_cd_fast); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1508; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_7sklearn_12linear_model_7cd_fast_13enet_coordinate_descent_multi_task, NULL, __pyx_n_s_sklearn_linear_model_cd_fast); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1522; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_enet_coordinate_descent_multi_ta, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1508; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_enet_coordinate_descent_multi_ta, __pyx_t_2) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1522; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "sklearn/linear_model/cd_fast.pyx":1
