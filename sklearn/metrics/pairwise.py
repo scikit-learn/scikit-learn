@@ -344,7 +344,8 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
 
 
 def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
-                              batch_size=500, metric_kwargs={}):
+                              batch_size=500, metric_kwargs={},
+                              check_X_y=True):
     """Compute minimum distances between one point and a set of points.
 
     This function computes for each row in X, the index of the row of Y which
@@ -399,6 +400,10 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
     metric_kwargs : dict
         keyword arguments to pass to specified metric function.
 
+    check_X_y : bool, default True
+        Whether or not to check X and y for shape, validity and dtype. Speed
+        improvements possible if set to False when called repeatedly.
+
     Returns
     =======
     argmin : numpy.ndarray
@@ -410,7 +415,7 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
     sklearn.metrics.pairwise_distances_argmin_min
     """
     return pairwise_distances_argmin_min(X, Y, axis, metric, batch_size,
-                                         metric_kwargs)[0]
+                                         metric_kwargs, check_X_y)[0]
 
 
 def manhattan_distances(X, Y=None, sum_over_features=True,
