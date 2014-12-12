@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 from sklearn import datasets
 
 from sklearn.cross_validation import train_test_split
-from sklearn.linear_model import SGDClassifier, Perceptron
+from sklearn.linear_model import SGDClassifier, Perceptron, SAGClassifier
 from sklearn.linear_model import PassiveAggressiveClassifier
 
 heldout = [0.95, 0.90, 0.75, 0.50, 0.01]
@@ -31,11 +31,13 @@ classifiers = [
                                                          C=1.0)),
     ("Passive-Aggressive II", PassiveAggressiveClassifier(loss='squared_hinge',
                                                           C=1.0)),
+    ("SAGClassifier", SAGClassifier(random_state=77, tol=.1))
 ]
 
 xx = 1. - np.array(heldout)
 
 for name, clf in classifiers:
+    print("training %s" % name)
     rng = np.random.RandomState(42)
     yy = []
     for i in heldout:
