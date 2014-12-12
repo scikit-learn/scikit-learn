@@ -118,7 +118,7 @@ def _class_cov(X, y, priors=None, shrinkage=None):
     covs = []
     for group in classes:
         Xg = X[y == group, :]
-        covs.append(_cov(Xg, shrinkage))
+        covs.append(np.atleast_2d(_cov(Xg, shrinkage)))
     return np.average(covs, axis=0, weights=priors)
 
 
