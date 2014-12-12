@@ -84,13 +84,16 @@ def test_lda_coefs():
 
     assert_array_almost_equal(clf_lda_svd.coef_, clf_lda_lsqr.coef_, 1)
     assert_array_almost_equal(clf_lda_svd.coef_, clf_lda_eigen.coef_, 1)
-    assert_array_almost_equal(clf_lda_eigen.coef_, clf_lda_lsqr.coef_)
+    assert_array_almost_equal(clf_lda_eigen.coef_, clf_lda_lsqr.coef_, 1)
 
 
 def test_lda_transform():
     """Test LDA transform.
     """
-    clf = lda.LDA(solver="svd")
+    clf = lda.LDA(solver="svd", n_components=1)
+    X_transformed = clf.fit(X, y).transform(X)
+    assert_equal(X_transformed.shape[1], 1)
+    clf = lda.LDA(solver="eigen", n_components=1)
     X_transformed = clf.fit(X, y).transform(X)
     assert_equal(X_transformed.shape[1], 1)
 
