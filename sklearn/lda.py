@@ -289,7 +289,8 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
 
         evals, evecs = linalg.eigh(Sb, Sw)
         evecs = evecs[:, np.argsort(evals)[::-1]]  # sort eigenvectors
-        evecs /= np.linalg.norm(evecs, axis=0)  # normalize eigenvectors
+        # evecs /= np.linalg.norm(evecs, axis=0)  # doesn't work with numpy 1.6
+        evecs /= np.apply_along_axis(np.linalg.norm, 0, evecs)
 
         self.scalings_ = evecs
         self.coef_ = np.dot(self.means_, evecs).dot(evecs.T)
