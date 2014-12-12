@@ -747,6 +747,53 @@ def test_1d_input():
         yield check_1d_input, name, X, X_2d, y
 
 
+def check_class_weights(name):
+    """Check class_weights resemble sample_weights behavior."""
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+
+    # Iris is balanced, so no effect expected for using 'auto' weights
+    clf1 = ForestClassifier(random_state=0)
+    clf1.fit(iris.data, iris.target)
+    clf2 = ForestClassifier(class_weight='auto', random_state=0)
+    clf2.fit(iris.data, iris.target)
+    assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
+
+    # Inflate importance of class 1, check against user-defined weights
+    sample_weight = np.ones(iris.target.shape)
+    sample_weight[iris.target == 1] *= 100
+    class_weight = {0: 1., 1: 100., 2: 1.}
+    clf1 = ForestClassifier(random_state=0)
+    clf1.fit(iris.data, iris.target, sample_weight)
+    clf2 = ForestClassifier(class_weight=class_weight, random_state=0)
+    clf2.fit(iris.data, iris.target)
+    assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
+
+    # Check that sample_weight and class_weight are multiplicative
+    clf1 = ForestClassifier(random_state=0)
+    clf1.fit(iris.data, iris.target, sample_weight**2)
+    clf2 = ForestClassifier(class_weight=class_weight, random_state=0)
+    clf2.fit(iris.data, iris.target, sample_weight)
+    assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
+
+
+def test_class_weights():
+    for name in FOREST_CLASSIFIERS:
+        yield check_class_weights, name
+
+
+def check_class_weight_failure_multi_output(name):
+    """Test class_weight failure for multi-output"""
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+    _y = np.vstack((y, np.array(y) * 2)).T
+    clf = ForestClassifier(class_weight='auto')
+    assert_raises(NotImplementedError, clf.fit, X, _y)
+
+
+def test_class_weight_failure_multi_output():
+    for name in FOREST_CLASSIFIERS:
+        yield check_class_weight_failure_multi_output, name
+
+
 def check_warm_start(name, random_state=42):
     """Test if fitting incrementally with warm start gives a forest of the
     right size and the same results as a normal fit."""

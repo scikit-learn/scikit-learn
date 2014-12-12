@@ -58,7 +58,7 @@ from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
 from ..tree._tree import DTYPE, DOUBLE
-from ..utils import check_random_state, check_array
+from ..utils import check_random_state, check_array, compute_class_weight
 from ..utils.validation import DataConversionWarning
 from .base import BaseEnsemble, _partition_estimators
 
@@ -122,7 +122,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
-                 warm_start=False):
+                 warm_start=False,
+                 class_weight=None):
         super(BaseForest, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
@@ -134,6 +135,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         self.random_state = random_state
         self.verbose = verbose
         self.warm_start = warm_start
+        self.class_weight = class_weight
 
     def apply(self, X):
         """Apply trees in the forest to X, return leaf indices.
@@ -211,10 +213,16 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         self.n_outputs_ = y.shape[1]
 
-        y = self._validate_y(y)
+        y, cw = self._validate_y_cw(y)
 
         if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
+
+        if cw is not None:
+            if sample_weight is not None:
+                sample_weight *= cw
+            else:
+                sample_weight = cw
 
         # Check parameters
         self._validate_estimator()
@@ -279,9 +287,9 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
     def _set_oob_score(self, X, y):
         """Calculate out of bag predictions and score."""
 
-    def _validate_y(self, y):
+    def _validate_y_cw(self, y):
         # Default implementation
-        return y
+        return y, None
 
     @property
     def feature_importances_(self):
@@ -320,7 +328,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
-                 warm_start=False):
+                 warm_start=False,
+                 class_weight=None):
 
         super(ForestClassifier, self).__init__(
             base_estimator,
@@ -331,7 +340,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
-            warm_start=warm_start)
+            warm_start=warm_start,
+            class_weight=class_weight)
 
     def _set_oob_score(self, X, y):
         """Compute out-of-bag score"""
@@ -377,8 +387,9 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         self.oob_score_ = oob_score / self.n_outputs_
 
-    def _validate_y(self, y):
-        y = np.copy(y)
+    def _validate_y_cw(self, y_org):
+        y = np.copy(y_org)
+        cw = None
 
         self.classes_ = []
         self.n_classes_ = []
@@ -388,7 +399,19 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             self.classes_.append(classes_k)
             self.n_classes_.append(classes_k.shape[0])
 
-        return y
+        if self.class_weight is not None:
+            if self.n_outputs_ == 1:
+                cw = compute_class_weight(self.class_weight,
+                                          self.classes_[0],
+                                          y_org[:, 0])
+                cw = cw[np.searchsorted(self.classes_[0], y_org[:, 0])]
+            else:
+                raise NotImplementedError('class_weights are not supported '
+                                          'for multi-output. You may use '
+                                          'sample_weights in the fit method '
+                                          'to weight by sample.')
+
+        return y, cw
 
     def predict(self, X):
         """Predict class for X.
@@ -707,6 +730,18 @@ class RandomForestClassifier(ForestClassifier):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest.
 
+    class_weight : dict, {class_label: weight} or "auto" or None, optional
+        Weights associated with classes. If not given, all classes
+        are supposed to have weight one.
+
+        The "auto" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies.
+
+        Note that this is only supported for single-output classification.
+
+        Note that these weights will be multiplied with class_weight (passed
+        through the fit method) if sample_weight is specified
+
     Attributes
     ----------
     estimators_ : list of DecisionTreeClassifier
@@ -755,7 +790,8 @@ class RandomForestClassifier(ForestClassifier):
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
-                 warm_start=False):
+                 warm_start=False,
+                 class_weight=None):
         super(RandomForestClassifier, self).__init__(
             base_estimator=DecisionTreeClassifier(),
             n_estimators=n_estimators,
@@ -768,7 +804,8 @@ class RandomForestClassifier(ForestClassifier):
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
-            warm_start=warm_start)
+            warm_start=warm_start,
+            class_weight=class_weight)
 
         self.criterion = criterion
         self.max_depth = max_depth
@@ -1017,6 +1054,18 @@ class ExtraTreesClassifier(ForestClassifier):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest.
 
+    class_weight : dict, {class_label: weight} or "auto" or None, optional
+        Weights associated with classes. If not given, all classes
+        are supposed to have weight one.
+
+        The "auto" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies.
+
+        Note that this is only supported for single-output classification.
+
+        Note that these weights will be multiplied with class_weight (passed
+        through the fit method) if sample_weight is specified
+
     Attributes
     ----------
     estimators_ : list of DecisionTreeClassifier
@@ -1068,7 +1117,8 @@ class ExtraTreesClassifier(ForestClassifier):
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
-                 warm_start=False):
+                 warm_start=False,
+                 class_weight=None):
         super(ExtraTreesClassifier, self).__init__(
             base_estimator=ExtraTreeClassifier(),
             n_estimators=n_estimators,
@@ -1080,7 +1130,8 @@ class ExtraTreesClassifier(ForestClassifier):
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
-            warm_start=warm_start)
+            warm_start=warm_start,
+            class_weight=class_weight)
 
         self.criterion = criterion
         self.max_depth = max_depth
