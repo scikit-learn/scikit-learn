@@ -672,7 +672,7 @@ def test_multiclass_classifier_warm_start():
     eta = .001
     alpha = .1
     n_samples = 20
-    tol = .1
+    tol = .01
     max_iter = 3000
     clf1 = SAGClassifier(eta0=eta, alpha=alpha,
                          max_iter=max_iter, tol=tol, random_state=77,
@@ -689,13 +689,14 @@ def test_multiclass_classifier_warm_start():
     clf2.fit(X, y)
     clf2.fit(X, y)
 
-    itrs = [13, 11, 12]
+    itrs = [65, 63, 66]
+    sp_itrs = [39, 63, 66]
 
     coef = []
     intercept = []
     coef2 = []
     intercept2 = []
-    for cl, it in zip(classes, itrs):
+    for cl, it, sp_it in zip(classes, itrs, sp_itrs):
         y_encoded = np.ones(n_samples)
         y_encoded[y != cl] = -1
 
@@ -703,7 +704,7 @@ def test_multiclass_classifier_warm_start():
                                             n_iter=it,
                                             dloss=log_dloss)
         spweights2, spintercept2 = sag_sparse(X, y_encoded, eta, alpha,
-                                              n_iter=it,
+                                              n_iter=sp_it,
                                               dloss=log_dloss, sparse=True)
         coef.append(spweights)
         intercept.append(spintercept)
