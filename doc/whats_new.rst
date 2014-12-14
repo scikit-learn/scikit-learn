@@ -162,6 +162,9 @@ Documentation improvements
 Bug fixes
 .........
 
+    - The function :func:`hierarchical.ward_tree` now returns the children in
+      the same order for both the structured and unstructured versions. By
+      `Matteo Visconti di Oleggio Castello`_.
     - The :class:`decomposition.PCA` now undoes whitening in its
      ``inverse_transform``. Also, its ``components_`` now always have unit
      length. By Michael Eickenberg.
@@ -3123,3 +3126,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Matt Terry: https://github.com/mrterry
 
 .. _Antony Lee: https://www.ocf.berkeley.edu/~antonyl/
+
+.. _Matteo Visconti di Oleggio Castello: http://www.mvdoc.me

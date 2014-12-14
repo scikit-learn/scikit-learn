@@ -2,7 +2,8 @@
 Several basic tests for hierarchical clustering procedures
 
 """
-# Authors: Vincent Michel, 2010, Gael Varoquaux 2012
+# Authors: Vincent Michel, 2010, Gael Varoquaux 2012,
+#          Matteo Visconti di Oleggio Castello 2014
 # License: BSD 3 clause
 from tempfile import mkdtemp
 import warnings
@@ -277,6 +278,28 @@ def test_connectivity_popagation():
     # If changes are not propagated correctly, fit crashes with an
     # IndexError
     ward.fit(X)
+
+
+def test_ward_tree_children_order():
+    """
+    Check that children are ordered in the same way for both structured and
+    unstructured versions of ward_tree.
+    """
+
+    # test on five random datasets
+    n, p = 10, 5
+    rnd = np.random.RandomState(0)
+
+    connectivity = np.ones((n, n))
+    for i in range(5):
+        X = .1 * rnd.normal(size=(n, p))
+        X -= 4 * np.arange(n)[:, np.newaxis]
+        X -= X.mean(axis=1)[:, np.newaxis]
+
+        out_unstructured = ward_tree(X)
+        out_structured = ward_tree(X, connectivity)
+
+        assert_array_equal(out_unstructured[0], out_structured[0])
 
 
 def test_connectivity_fixing_non_lil():
