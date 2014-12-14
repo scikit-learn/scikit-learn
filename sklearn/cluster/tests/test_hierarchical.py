@@ -283,6 +283,28 @@ def test_connectivity_propagation():
     ward.fit(X)
 
 
+def test_ward_tree_children_order():
+    """
+    Check that children are ordered in the same way for both structured and
+    unstructured versions of ward_tree.
+    """
+
+    # test on five random datasets
+    n, p = 10, 5
+    rnd = np.random.RandomState(0)
+
+    connectivity = np.ones((n, n))
+    for i in range(5):
+        X = .1 * rnd.normal(size=(n, p))
+        X -= 4 * np.arange(n)[:, np.newaxis]
+        X -= X.mean(axis=1)[:, np.newaxis]
+
+        out_unstructured = ward_tree(X)
+        out_structured = ward_tree(X, connectivity)
+
+        assert_array_equal(out_unstructured[0], out_structured[0])
+
+
 def test_ward_tree_distance():
     """
     Check that children are ordered in the same way for both structured and
@@ -306,19 +328,17 @@ def test_ward_tree_distance():
         out_unstructured = ward_tree(X, return_distance=True)
         out_structured = ward_tree(X, connectivity, return_distance=True)
 
-        # sort labels
-        merge_unstructured = np.asanyarray([np.sort(m)
-                                            for m in out_unstructured[0]])
-        merge_structured = np.asanyarray([np.sort(m)
-                                          for m in out_structured[0]])
+        # get children
+        children_unstructured = out_unstructured[0]
+        children_structured = out_structured[0]
 
         # sort clusters according to the same criterion
-        idx_unstructured = argsort(merge_unstructured, key=max)
-        idx_structured = argsort(merge_structured, key=max)
+        idx_unstructured = argsort(children_unstructured, key=max)
+        idx_structured = argsort(children_structured, key=max)
 
         # check if we got the same clusters
-        assert_array_equal(merge_unstructured[idx_unstructured],
-                           merge_structured[idx_structured])
+        assert_array_equal(children_unstructured[idx_unstructured],
+                           children_structured[idx_structured])
 
         # check if the distances are the same
         dist_unstructured = out_unstructured[-1]

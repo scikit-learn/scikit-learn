@@ -261,9 +261,6 @@ def ward_tree(X, connectivity=None, n_components=None, copy=None,
     children = [c[::-1] for c in children]
     children = np.array(children)  # return numpy array for efficient caching
 
-    # sort children to get consistent output with unstructured version
-    children = [np.sort(c) for c in children]
-
     if return_distance:
         # 2 is scaling factor to compare w/ unstructured version
         distances = (np.array(distances) * 2) ** 0.5
