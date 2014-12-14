@@ -157,6 +157,9 @@ Documentation improvements
 Bug fixes
 .........
 
+    - :class:`feature_selection.RFECV` now correctly handles cases when
+      ``step`` is not equal to 1. By `Nikolay Mayorov`_
+
     - The :class:`decomposition.PCA` now undoes whitening in its
      ``inverse_transform``. Also, its ``components_`` now always have unit
      length. By Michael Eickenberg.
