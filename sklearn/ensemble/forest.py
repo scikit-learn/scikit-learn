@@ -98,10 +98,10 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
                 cw_part = compute_class_weight('auto', classes_boot, y_boot)
                 # Expand class weights to cover all classes in original y
                 # (in case some were missing from the bootstrap sample)
-                cw_part = np.array([cw_part[np.argwhere(classes_boot == w)]
+                cw_part = np.array([cw_part[np.where(classes_boot == w)][0]
                                     if w in classes_boot
                                     else 0.
-                                    for w in classes_full], dtype=np.float64)
+                                    for w in classes_full])
                 # Expand weights over the original y for this output
                 cw_part = cw_part[np.searchsorted(classes_full, y_full)]
                 cw.append(cw_part)
