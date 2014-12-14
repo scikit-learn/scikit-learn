@@ -297,7 +297,7 @@ def test_ward_tree_children_order():
         X -= X.mean(axis=1)[:, np.newaxis]
 
         out_unstructured = ward_tree(X)
-        out_structured = ward_tree(X, connectivity)
+        out_structured = ward_tree(X, connectivity=connectivity)
 
         assert_array_equal(out_unstructured[0], out_structured[0])
 
