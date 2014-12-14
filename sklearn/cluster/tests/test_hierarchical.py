@@ -17,7 +17,10 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
+<<<<<<< HEAD
 from sklearn.utils.testing import clean_warning_registry, ignore_warnings
+=======
+>>>>>>> TST, test ward_tree_distance on known dataset
 
 from sklearn.cluster import Ward, WardAgglomeration, ward_tree
 from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration
@@ -31,6 +34,7 @@ from sklearn.cluster._hierarchical import average_merge, max_merge
 from sklearn.utils.fast_dict import IntFloatDict
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns
+
 
 def test_linkage_misc():
     # Misc tests on linkage
@@ -258,7 +262,7 @@ def test_scikit_vs_scipy():
     assert_raises(ValueError, _hc_cut, n_leaves + 1, children, n_leaves)
 
 
-def test_connectivity_popagation():
+def test_connectivity_propagation():
     """
     Check that connectivity in the ward tree is propagated correctly during
     merging.
@@ -279,15 +283,17 @@ def test_connectivity_popagation():
     ward.fit(X)
 
 
-def test_ward_tree_children_order():
+def test_ward_tree_distance():
     """
     Check that children are ordered in the same way for both structured and
     unstructured versions of ward_tree.
     """
 
     def argsort(x, key, **kwargs):
-        return sorted(range(len(x)), key=lambda e: key(x.__getitem__(e)), **kwargs)
+        return sorted(range(len(x)),
+                      key=lambda e: key(x.__getitem__(e)), **kwargs)
 
+    # test on five random datasets
     n, p = 10, 5
     rng = np.random.RandomState(0)
 
@@ -297,10 +303,57 @@ def test_ward_tree_children_order():
         X -= 4. * np.arange(n)[:, np.newaxis]
         X -= X.mean(axis=1)[:, np.newaxis]
 
-        out_unstructured = ward_tree(X)
-        out_structured = ward_tree(X, connectivity=connectivity)
+        out_unstructured = ward_tree(X, return_distance=True)
+        out_structured = ward_tree(X, connectivity, return_distance=True)
 
-        assert_array_equal(out_unstructured[0], out_structured[0])
+        # sort labels
+        merge_unstructured = np.asanyarray([np.sort(m)
+                                            for m in out_unstructured[0]])
+        merge_structured = np.asanyarray([np.sort(m)
+                                          for m in out_structured[0]])
+
+        # sort clusters according to the same criterion
+        idx_unstructured = argsort(merge_unstructured, key=max)
+        idx_structured = argsort(merge_structured, key=max)
+
+        # check if we got the same clusters
+        assert_array_equal(merge_unstructured[idx_unstructured],
+                           merge_structured[idx_structured])
+
+        # check if the distances are the same
+        dist_unstructured = out_unstructured[-1]
+        dist_structured = out_structured[-1]
+
+        assert_array_almost_equal(dist_unstructured, dist_structured)
+
+    # test on the following dataset where we know the truth
+    # taken from scipy/cluster/tests/hierarchy_test_data.py
+    X = np.array([[1.43054825, -7.5693489],
+                  [6.95887839, 6.82293382],
+                  [2.87137846, -9.68248579],
+                  [7.87974764, -6.05485803],
+                  [8.24018364, -6.09495602],
+                  [7.39020262, 8.54004355]])
+    # truth
+    linkage_X_ward = np.array([[3., 4., 0.36265956, 2.],
+                               [1., 5., 1.77045373, 2.],
+                               [0., 2., 2.55760419, 2.],
+                               [6., 8., 9.10208346, 4.],
+                               [7., 9., 24.7784379, 6.]])
+
+    n_samples, n_features = np.shape(X)
+    connectivity_X = np.ones((n_samples, n_samples))
+
+    out_X_unstructured = ward_tree(X, return_distance=True)
+    out_X_structured = ward_tree(X, connectivity_X, return_distance=True)
+
+    # check that the labels are the same
+    assert_array_equal(linkage_X_ward[:, :2], out_X_unstructured[0])
+    assert_array_equal(linkage_X_ward[:, :2], out_X_structured[0])
+
+    # check that the distances are correct
+    assert_array_almost_equal(linkage_X_ward[:, 2], out_X_unstructured[4])
+    assert_array_almost_equal(linkage_X_ward[:, 2], out_X_structured[4])
 
 
 def test_connectivity_fixing_non_lil():
