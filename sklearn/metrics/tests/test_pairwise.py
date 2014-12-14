@@ -19,6 +19,7 @@ from sklearn.metrics.pairwise import manhattan_distances
 from sklearn.metrics.pairwise import linear_kernel
 from sklearn.metrics.pairwise import chi2_kernel, additive_chi2_kernel
 from sklearn.metrics.pairwise import polynomial_kernel
+from sklearn.metrics.pairwise import matern_kernel
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.metrics.pairwise import sigmoid_kernel
 from sklearn.metrics.pairwise import cosine_similarity
@@ -178,7 +179,7 @@ def test_pairwise_kernels():
     Y = rng.random_sample((2, 4))
     # Test with all metrics that should be in PAIRWISE_KERNEL_FUNCTIONS.
     test_metrics = ["rbf", "sigmoid", "polynomial", "linear", "chi2",
-                    "additive_chi2"]
+                    "additive_chi2", "matern"]
     for metric in test_metrics:
         function = PAIRWISE_KERNEL_FUNCTIONS[metric]
         # Test with Y=None
@@ -415,7 +416,7 @@ def test_kernel_symmetry():
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
     for kernel in (linear_kernel, polynomial_kernel, rbf_kernel,
-                   sigmoid_kernel, cosine_similarity):
+                   matern_kernel, sigmoid_kernel, cosine_similarity):
         K = kernel(X, X)
         assert_array_almost_equal(K, K.T, 15)
 
@@ -425,7 +426,7 @@ def test_kernel_sparse():
     X = rng.random_sample((5, 4))
     X_sparse = csr_matrix(X)
     for kernel in (linear_kernel, polynomial_kernel, rbf_kernel,
-                   sigmoid_kernel, cosine_similarity):
+                   matern_kernel, sigmoid_kernel, cosine_similarity):
         K = kernel(X, X)
         K2 = kernel(X_sparse, X_sparse)
         assert_array_almost_equal(K, K2)
@@ -445,6 +446,30 @@ def test_rbf_kernel():
     K = rbf_kernel(X, X)
     # the diagonal elements of a rbf kernel are 1
     assert_array_almost_equal(K.flat[::6], np.ones(5))
+
+
+def test_matern_kernel():
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 4))
+    K = matern_kernel(X, X)
+    # the diagonal elements of a matern kernel are 1
+    assert_array_almost_equal(np.diag(K), np.ones(5))
+    # matern kernel for coef0==inf is equal to rbf kernel
+    K_rbf = rbf_kernel(X, X)
+    K = matern_kernel(X, X, coef0=np.inf)
+    assert_array_almost_equal(K, K_rbf)
+    # matern kernel for coef0==0.5 is equal to absolute exponential kernel
+    K_absexp = np.exp(-euclidean_distances(X, X, squared=False))
+    K = matern_kernel(X, X, coef0=0.5, gamma=1.0)
+    assert_array_almost_equal(K, K_absexp)
+    # test that special cases of matern kernel (coef0 in [0.5, 1.5, 2.5])
+    # result in nearly identical results as the general case for coef0 in
+    # [0.5 + tiny, 1.5 + tiny, 2.5 + tiny]
+    tiny = 1e-10
+    for coef0 in [0.5, 1.5, 2.5]:
+        K1 = matern_kernel(X, X, coef0=coef0)
+        K2 = matern_kernel(X, X, coef0=coef0 + tiny)
+        assert_array_almost_equal(K1, K2)
 
 
 def test_cosine_similarity():

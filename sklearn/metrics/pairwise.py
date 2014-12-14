@@ -827,7 +827,7 @@ def matern_kernel(X, Y=None, gamma=None, coef0=1.5):
         K *= np.sqrt(5) * gamma
         K = (1 + K + K ** 2 / 3.0) * np.exp(-K)
     else:  # general case; expensive to evaluate
-        K[K == 0.0] += 1e-10  # strict zeros would result in nan
+        K[K == 0.0] += np.finfo(float).eps  # strict zeros would result in nan
         tmp = (np.sqrt(2 * coef0) * gamma * K)
         K[:] = (2 ** (1 - coef0)) / scipy.special.gamma(coef0)
         K *= tmp ** coef0
