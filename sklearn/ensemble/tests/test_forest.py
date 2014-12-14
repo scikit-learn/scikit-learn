@@ -781,17 +781,22 @@ def test_class_weights():
         yield check_class_weights, name
 
 
-def check_class_weight_failure_multi_output(name):
-    """Test class_weight failure for multi-output"""
+def check_class_weight_auto_and_bootstrap_multi_output(name):
+    """Test class_weight works for multi-output"""
     ForestClassifier = FOREST_CLASSIFIERS[name]
     _y = np.vstack((y, np.array(y) * 2)).T
-    clf = ForestClassifier(class_weight='auto')
-    assert_raises(NotImplementedError, clf.fit, X, _y)
+    clf = ForestClassifier(class_weight='auto', random_state=0)
+    clf.fit(X, _y)
+    clf = ForestClassifier(class_weight=[{-1: 0.5, 1: 1.}, {-2: 1., 2: 1.}],
+                           random_state=0)
+    clf.fit(X, _y)
+    clf = ForestClassifier(class_weight='bootstrap', random_state=0)
+    clf.fit(X, _y)
 
 
-def test_class_weight_failure_multi_output():
+def test_class_weight_auto_and_bootstrap_multi_output():
     for name in FOREST_CLASSIFIERS:
-        yield check_class_weight_failure_multi_output, name
+        yield check_class_weight_auto_and_bootstrap_multi_output, name
 
 
 def check_warm_start(name, random_state=42):
