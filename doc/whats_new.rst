@@ -132,6 +132,9 @@ Enhancements
    - Add ``n_iter_`` attribute to estimators that accept a ``max_iter`` attribute
      in their constructor. By `Manoj Kumar`_.
 
+   - :func:`neighbors.kneighbors_graph` and :func:`radius_neighbors_graph`
+     support non-Euclidean metrics. By `Manoj Kumar`_
+
 Documentation improvements
 ..........................
 
