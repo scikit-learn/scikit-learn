@@ -166,6 +166,9 @@ Bug fixes
       the same order for both the structured and unstructured versions. By
       `Matteo Visconti di Oleggio Castello`_.
 
+    - :class:`feature_selection.RFECV` now correctly handles cases when
+      ``step`` is not equal to 1. By `Nikolay Mayorov`_
+
     - The :class:`decomposition.PCA` now undoes whitening in its
      ``inverse_transform``. Also, its ``components_`` now always have unit
      length. By Michael Eickenberg.

@@ -1166,6 +1166,7 @@ Estimators
    svm.LinearSVC
    svm.NuSVC
    svm.SVR
+   svm.LinearSVR
    svm.NuSVR
    svm.OneClassSVM
 
