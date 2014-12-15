@@ -12,10 +12,11 @@ from .hierarchical import (ward_tree, Ward, WardAgglomeration,
 from .k_means_ import k_means, KMeans, MiniBatchKMeans
 from .dbscan_ import dbscan, DBSCAN
 from .bicluster import SpectralBiclustering, SpectralCoclustering
-
+from .birch import Birch
 
 __all__ = ['AffinityPropagation',
            'AgglomerativeClustering',
+           'Birch',
            'DBSCAN',
            'KMeans',
            'FeatureAgglomeration',

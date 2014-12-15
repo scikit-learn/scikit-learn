@@ -53,6 +53,7 @@ from .regression import r2_score
 
 from .scorer import make_scorer
 from .scorer import SCORERS
+from .scorer import get_scorer
 
 # Deprecated in 0.16
 from .ranking import auc_score
@@ -73,6 +74,7 @@ __all__ = [
     'explained_variance_score',
     'f1_score',
     'fbeta_score',
+    'get_scorer',
     'hamming_loss',
     'hinge_loss',
     'homogeneity_completeness_v_measure',

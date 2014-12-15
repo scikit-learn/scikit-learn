@@ -63,6 +63,7 @@ Classes
 
    cluster.AffinityPropagation
    cluster.AgglomerativeClustering
+   cluster.Birch
    cluster.DBSCAN
    cluster.FeatureAgglomeration
    cluster.KMeans
@@ -732,6 +733,7 @@ details.
    :template: function.rst
 
    metrics.make_scorer
+   metrics.get_scorer
 
 Classification metrics
 ----------------------

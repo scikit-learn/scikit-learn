@@ -420,6 +420,22 @@ def check_clustering(name, Alg):
     assert_array_equal(pred, pred2)
 
 
+def check_clusterer_compute_labels_predict(name, Clusterer):
+    """Check that predict is invariant of compute_labels"""
+    X, y = make_blobs(n_samples=20, random_state=0)
+    clusterer = Clusterer()
+
+    if hasattr(clusterer, "compute_labels"):
+        # MiniBatchKMeans
+        if hasattr(clusterer, "random_state"):
+            clusterer.set_params(random_state=0)
+
+        X_pred1 = clusterer.fit(X).predict(X)
+        clusterer.set_params(compute_labels=False)
+        X_pred2 = clusterer.fit(X).predict(X)
+        assert_array_equal(X_pred1, X_pred2)
+
+
 def check_classifiers_one_label(name, Classifier):
     error_string_fit = "Classifier can't train when only one class is present."
     error_string_predict = ("Classifier can't predict when only one class is "
@@ -742,8 +758,8 @@ def check_class_weight_auto_classifiers(name, Classifier, X_train, y_train,
     classifier.set_params(class_weight='auto')
     classifier.fit(X_train, y_train)
     y_pred_auto = classifier.predict(X_test)
-    assert_greater(f1_score(y_test, y_pred_auto),
-                   f1_score(y_test, y_pred))
+    assert_greater(f1_score(y_test, y_pred_auto, average='weighted'),
+                   f1_score(y_test, y_pred, average='weighted'))
 
 
 def check_class_weight_auto_linear_classifier(name, Classifier):

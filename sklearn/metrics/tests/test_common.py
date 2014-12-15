@@ -107,6 +107,7 @@ CLASSIFICATION_METRICS = {
     "zero_one_loss": zero_one_loss,
     "unnormalized_zero_one_loss": partial(zero_one_loss, normalize=False),
 
+    # These are needed to test averaging
     "precision_score": precision_score,
     "recall_score": recall_score,
     "f1_score": f1_score,
@@ -336,6 +337,7 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = [
 ]
 
 
+@ignore_warnings
 def test_symmetry():
     """Test the symmetry of score and loss functions"""
     random_state = check_random_state(0)
@@ -366,6 +368,7 @@ def test_symmetry():
                     msg="%s seems to be symmetric" % name)
 
 
+@ignore_warnings
 def test_sample_order_invariance():
     random_state = check_random_state(0)
     y_true = random_state.randint(0, 2, size=(20, ))
@@ -382,6 +385,7 @@ def test_sample_order_invariance():
                                     % name)
 
 
+@ignore_warnings
 def test_sample_order_invariance_multilabel_and_multioutput():
     random_state = check_random_state(0)
 
@@ -421,6 +425,7 @@ def test_sample_order_invariance_multilabel_and_multioutput():
                                     % name)
 
 
+@ignore_warnings
 def test_format_invariance_with_1d_vectors():
     random_state = check_random_state(0)
     y1 = random_state.randint(0, 2, size=(20, ))
@@ -499,6 +504,7 @@ def test_format_invariance_with_1d_vectors():
             assert_raises(ValueError, metric, y1_row, y2_row)
 
 
+@ignore_warnings
 def test_invariance_string_vs_numbers_labels():
     """Ensure that classification metrics with string labels"""
     random_state = check_random_state(0)
@@ -627,6 +633,7 @@ def test_multioutput_regression_invariance_to_dimension_shuffling():
                                         "invariant" % name)
 
 
+@ignore_warnings
 def test_multilabel_representation_invariance():
     # Generate some data
     n_classes = 4

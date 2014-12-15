@@ -6,6 +6,7 @@
 
 import numpy as np
 import scipy.sparse as sp
+import warnings
 
 from abc import ABCMeta, abstractmethod
 
@@ -583,15 +584,22 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
         sample_weight : array-like, shape (n_samples,), optional
             Weights applied to individual samples.
-            If not provided, uniform weights are assumed.
+            If not provided, uniform weights are assumed. These weights will
+            be multiplied with class_weight (passed through the
+            contructor) if class_weight is specified
 
         Returns
         -------
         self : returns an instance of self.
         """
-        return self._fit(X, y, loss=self.loss,
-                         learning_rate=self.learning_rate, coef_init=coef_init,
-                         intercept_init=intercept_init,
+        if class_weight is not None:
+            warnings.warn("You are trying to set class_weight through the fit "
+                          "method, which will be deprecated in version "
+                          "v0.17 of scikit-learn. Pass the class_weight into "
+                          "the constructor instead.", DeprecationWarning)
+        return self._fit(X, y, alpha=self.alpha, C=1.0,
+                         loss=self.loss, learning_rate=self.learning_rate,
+                         coef_init=coef_init, intercept_init=intercept_init,
                          sample_weight=sample_weight)
 
 
@@ -603,6 +611,8 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     each sample at a time and the model is updated along the way with a
     decreasing strength schedule (aka learning rate). SGD allows minibatch
     (online/out-of-core) learning, see the partial_fit method.
+    For best results using the default learning rate schedule, the data should
+    have zero mean and unit variance.
 
     This implementation works with data represented as dense or sparse arrays
     of floating point values for the features. The model it fits can be
@@ -631,7 +641,7 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         The other losses are designed for regression but can be useful in
         classification as well; see SGDRegressor for a description.
 
-    penalty : str, 'l2' or 'l1' or 'elasticnet'
+    penalty : str, 'none', 'l2', 'l1', or 'elasticnet'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
         which is the standard regularizer for linear SVM models. 'l1' and
         'elasticnet' might bring sparsity to the model (feature selection)
@@ -679,10 +689,11 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         to 1.
 
     learning_rate : string, optional
-        The learning rate:
+        The learning rate schedule:
         constant: eta = eta0
         optimal: eta = 1.0 / (t + t0) [default]
         invscaling: eta = eta0 / pow(t, power_t)
+        where t0 is chosen by a heuristic proposed by Leon Bottou.
 
     eta0 : double
         The initial learning rate for the 'constant' or 'invscaling'
@@ -1091,7 +1102,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
         function used in SVR. 'squared_epsilon_insensitive' is the same but
         becomes squared loss past a tolerance of epsilon.
 
-    penalty : str, 'l2' or 'l1' or 'elasticnet'
+    penalty : str, 'none', 'l2', 'l1', or 'elasticnet'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
         which is the standard regularizer for linear SVM models. 'l1' and
         'elasticnet' might bring sparsity to the model (feature selection)

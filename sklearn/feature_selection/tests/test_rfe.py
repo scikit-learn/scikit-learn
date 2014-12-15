@@ -14,8 +14,8 @@ from sklearn.svm import SVC, SVR
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import ignore_warnings
 
-from sklearn.metrics.scorer import SCORERS
 from sklearn.metrics import make_scorer
+from sklearn.metrics import get_scorer
 
 
 def test_rfe_set_params():
@@ -97,7 +97,7 @@ def test_rfecv():
     assert_array_equal(X_r, iris.data)
 
     # Test using a scorer
-    scorer = SCORERS['accuracy']
+    scorer = get_scorer('accuracy')
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=5,
                   scoring=scorer)
     rfecv.fit(X, y)
@@ -111,6 +111,20 @@ def test_rfecv():
                   scoring=test_scorer)
     rfecv.fit(X, y)
     assert_array_equal(rfecv.grid_scores_, np.ones(len(rfecv.grid_scores_)))
+
+    # Same as the first two tests, but with step=2
+    rfecv = RFECV(estimator=SVC(kernel="linear"), step=2, cv=5)
+    rfecv.fit(X, y)
+    assert_equal(len(rfecv.grid_scores_), 6)
+    assert_equal(len(rfecv.ranking_), X.shape[1])
+    X_r = rfecv.transform(X)
+    assert_array_equal(X_r, iris.data)
+
+    rfecv_sparse = RFECV(estimator=SVC(kernel="linear"), step=2, cv=5)
+    X_sparse = sparse.csr_matrix(X)
+    rfecv_sparse.fit(X_sparse, y)
+    X_r_sparse = rfecv_sparse.transform(X_sparse)
+    assert_array_equal(X_r_sparse.toarray(), iris.data)
 
 
 def test_rfe_min_step():
@@ -134,4 +148,3 @@ def test_rfe_min_step():
     selector = RFE(estimator, step=5)
     sel = selector.fit(X,y)
     assert_equal(sel.support_.sum(), n_features // 2)
-
