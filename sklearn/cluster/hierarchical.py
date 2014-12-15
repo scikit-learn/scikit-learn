@@ -143,8 +143,12 @@ def ward_tree(X, connectivity=None, n_components=None, copy=None,
         is specified, elsewhere 'None' is returned.
 
     distances : 1D array, shape (n_nodes, )
-        The distance between the clusters. Only returned if return_distance is
-        set to True (for compatibility).
+        The distances between the centers of the nodes. For example,
+        `distances[i]` corresponds to a weighted euclidean distance between
+        the nodes `children[i, 1]` and `children[i, 2]`. If the nodes refer to
+        leaves of the tree, then `distances[i]` is their unweighted euclidean
+        distance.
+        Only returned if return_distance is set to True (for compatibility).
     """
     X = np.asarray(X)
     if X.ndim == 1:

@@ -326,7 +326,8 @@ def test_ward_tree_distance():
         X -= X.mean(axis=1)[:, np.newaxis]
 
         out_unstructured = ward_tree(X, return_distance=True)
-        out_structured = ward_tree(X, connectivity, return_distance=True)
+        out_structured = ward_tree(X, connectivity=connectivity,
+                                   return_distance=True)
 
         # get children
         children_unstructured = out_unstructured[0]
@@ -365,7 +366,8 @@ def test_ward_tree_distance():
     connectivity_X = np.ones((n_samples, n_samples))
 
     out_X_unstructured = ward_tree(X, return_distance=True)
-    out_X_structured = ward_tree(X, connectivity_X, return_distance=True)
+    out_X_structured = ward_tree(X, connectivity=connectivity_X,
+                                 return_distance=True)
 
     # check that the labels are the same
     assert_array_equal(linkage_X_ward[:, :2], out_X_unstructured[0])
