@@ -597,8 +597,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                           "method, which will be deprecated in version "
                           "v0.17 of scikit-learn. Pass the class_weight into "
                           "the constructor instead.", DeprecationWarning)
-        return self._fit(X, y, alpha=self.alpha, C=1.0,
-                         loss=self.loss, learning_rate=self.learning_rate,
+        return self._fit(X, y, loss=self.loss,
+                         learning_rate=self.learning_rate,
                          coef_init=coef_init, intercept_init=intercept_init,
                          sample_weight=sample_weight)
 
