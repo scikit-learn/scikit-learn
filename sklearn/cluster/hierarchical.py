@@ -678,8 +678,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         The number of clusters to find.
 
     connectivity : sparse matrix, optional
-        Connectivity matrix. Defines for each sample the neighboring
-        samples following a given structure of the data.
+        Connectivity matrix. Defines for each feature the neighboring
+        features following a given structure of the data.
         Default is None, i.e, the hierarchical clustering algorithm is
         unstructured.
 
@@ -700,21 +700,21 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     compute_full_tree : bool or 'auto', optional, default "auto"
         Stop early the construction of the tree at n_clusters. This is
         useful to decrease computation time if the number of clusters is
-        not small compared to the number of samples. This option is
+        not small compared to the number of features. This option is
         useful only when specifying a connectivity matrix. Note also that
         when varying the number of clusters and using caching, it may
         be advantageous to compute the full tree.
 
     linkage : {"ward", "complete", "average"}, optional, default "ward"
         Which linkage criterion to use. The linkage criterion determines which
-        distance to use between sets of observation. The algorithm will merge
+        distance to use between sets of features. The algorithm will merge
         the pairs of cluster that minimize this criterion.
 
         - ward minimizes the variance of the clusters being merged.
-        - average uses the average of the distances of each observation of
+        - average uses the average of the distances of each feature of
           the two sets.
         - complete or maximum linkage uses the maximum distances between
-          all observations of the two sets.
+          all features of the two sets.
 
     pooling_func : callable, default np.mean
         This combines the values of agglomerated features into a single
@@ -733,9 +733,9 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         The estimated number of connected components in the graph.
 
     children_ : array-like, shape (n_nodes, 2)
-        The children of each non-leaf node. Values less than `n_samples`
+        The children of each non-leaf node. Values less than `n_features`
         refer to leaves of the tree. A greater value `i` indicates a node with
-        children `children_[i - n_samples]`.
+        children `children_[i - n_features]`.
     """
 
     def fit(self, X, y=None, **params):
