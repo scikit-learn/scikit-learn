@@ -525,15 +525,13 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     n_clusters : int, default=2
         The number of clusters to find.
 
-    connectivity : int, array-like, callable, optional
+    connectivity : array-like, callable, optional
         Connectivity matrix. Defines for each sample the neighboring
         samples following a given structure of the data.
         This can be a connectivity matrix itself, a callable that transforms
         the data into a connectivity matrix, such as derived from
-        kneighbors_graph or an integer. If an integer is provided, then
-        each sample point is connected to its connectivity nearest neighbors
-        in Euclidean space. Default is None, i.e, the hierarchical clustering
-        algorithm is unstructured.
+        kneighbors_graph. Default is None, i.e, the
+        hierarchical clustering algorithm is unstructured.
 
     affinity : string or callable, default: "euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
@@ -636,10 +634,9 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         if self.connectivity is not None:
             if callable(self.connectivity):
                 connectivity = self.connectivity(X)
-            elif isinstance(connectivity, int):
-                connectivity = kneighbors_graph(
-                    X, n_neighbors=self.connectivity)
-            # Unnecessary check if an int is provided but we can live with it.
+            if not sparse.isspmatrix(connectivity) or not (
+                isinstance(connectivity, np.ndarray)):
+                connectivity = sparse.lil_matrix(connectivity)
             if (connectivity.shape[0] != X.shape[0] or
                     connectivity.shape[1] != X.shape[0]):
                 raise ValueError("`connectivity` does not have shape "
@@ -692,11 +689,13 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     n_clusters : int, default 2
         The number of clusters to find.
 
-    connectivity : sparse matrix, optional
+    connectivity : array-like, callable, optional
         Connectivity matrix. Defines for each feature the neighboring
         features following a given structure of the data.
-        Default is None, i.e, the hierarchical clustering algorithm is
-        unstructured.
+        This can be a connectivity matrix itself, a callable that transforms
+        the data into a connectivity matrix, such as derived from
+        kneighbors_graph. Default is None, i.e, the
+        hierarchical clustering algorithm is unstructured.
 
     affinity : string or callable, default "euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
@@ -861,14 +860,13 @@ class WardAgglomeration(AgglomerationTransform, Ward):
     n_clusters : int or ndarray
         The number of clusters.
 
-    connectivity : int, array-like, callable, optional, default None
+    connectivity : array-like, callable, optional
         Connectivity matrix. Defines for each sample the neighboring
         samples following a given structure of the data.
-        This can be a connectivity matrix itself, a callable that returns
-        a connectivity matrix or an integer. If an integer is provided,
-        then a kneighbors_graph is used by default.
-        Default is None, i.e, the hierarchical clustering algorithm is
-        unstructured.
+        This can be a connectivity matrix itself, a callable that transforms
+        the data into a connectivity matrix, such as derived from
+        kneighbors_graph. Default is None, i.e, the
+        hierarchical clustering algorithm is unstructured.
 
     memory : Instance of joblib.Memory or string, optional
         Used to cache the output of the computation of the tree.

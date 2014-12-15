@@ -340,12 +340,9 @@ def test_connectivity_callable():
     aglc1 = AgglomerativeClustering(connectivity=connectivity)
     aglc2 = AgglomerativeClustering(
         connectivity=partial(kneighbors_graph, n_neighbors=3))
-    aglc3 = AgglomerativeClustering(connectivity=3)
     aglc1.fit(X)
     aglc2.fit(X)
-    aglc3.fit(X)
     assert_array_equal(aglc1.labels_, aglc2.labels_)
-    assert_array_equal(aglc2.labels_, aglc3.labels_)
 
 
 if __name__ == '__main__':
