@@ -31,6 +31,7 @@ if sys.version_info[0] > 2:
 ###############################################################################
 # For non fully-connected graphs
 
+
 def _fix_connectivity(X, connectivity, n_components=None,
                       affinity="euclidean"):
     """
@@ -240,6 +241,8 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None):
 
     # Separate leaves in children (empty lists up to now)
     n_leaves = n_samples
+    # sort children to get consistent output with unstructured version
+    children = [c[::-1] for c in children]
     children = np.array(children)  # return numpy array for efficient caching
 
     return children, n_components, n_leaves, parent
