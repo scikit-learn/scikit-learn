@@ -7,6 +7,18 @@
 from .base import KNeighborsMixin, RadiusNeighborsMixin
 from .unsupervised import NearestNeighbors
 
+def _check_params(X, metric, p, metric_params):
+    """Check the validity of the input parameters"""
+    params = zip(['metric', 'p', 'metric_params'],
+                 [metric, p, metric_params])
+    est_params = X.get_params()
+    for param_name, func_param in params:
+        if func_param != est_params[param_name]:
+            raise ValueError(
+                "Got %s for %s, while the estimator has %s for "
+                "the same parameter." % (
+                    func_param, param_name, est_params[param_name]))
+
 
 def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
                      p=2, metric_params=None):
@@ -63,6 +75,8 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
         X = NearestNeighbors(
             n_neighbors, metric=metric, p=p, metric_params=metric_params
             ).fit(X)
+    else:
+        _check_params(X, metric, p, metric_params)
     return X.kneighbors_graph(X._fit_X, n_neighbors, mode=mode)
 
 
@@ -125,4 +139,6 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
             radius=radius, metric=metric, p=p,
             metric_params=metric_params
             ).fit(X)
+    else:
+        _check_params(X, metric, p, metric_params)
     return X.radius_neighbors_graph(X._fit_X, radius, mode)

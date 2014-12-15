@@ -892,6 +892,16 @@ def test_non_euclidean_kneighbors():
         nbrs1 = neighbors.NearestNeighbors(metric=metric, radius=radius).fit(X)
         assert_array_equal(nbrs_graph, nbrs1.radius_neighbors_graph(X).toarray())
 
+    # Raise error when wrong parameters are supplied,
+    X_nbrs = neighbors.NearestNeighbors(3, metric='manhattan')
+    X_nbrs.fit(X)
+    assert_raises(ValueError, neighbors.kneighbors_graph, X_nbrs, 3,
+                  metric='euclidean')
+    X_nbrs = neighbors.NearestNeighbors(radius=radius, metric='manhattan')
+    X_nbrs.fit(X)
+    assert_raises(ValueError, neighbors.radius_neighbors_graph, X_nbrs,
+                  radius, metric='euclidean')
+
 
 if __name__ == '__main__':
     import nose
