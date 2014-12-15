@@ -92,6 +92,7 @@ def _is_arraylike(x):
             hasattr(x, 'shape') or
             hasattr(x, '__array__'))
 
+
 def _num_samples(x):
     """Return number of samples in array-like x."""
     if not hasattr(x, '__len__') and not hasattr(x, 'shape'):

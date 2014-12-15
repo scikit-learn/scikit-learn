@@ -593,8 +593,8 @@ def test_cross_val_score_fit_params():
     DUMMY_STR = '42'
     DUMMY_OBJ = object()
     def assert_fit_params(clf):
-        """Function to that the values are passsed correctly to the classifier
-        arguments for non-array type
+        """Function to test that the values are passsed correctly to the
+        classifier arguments for non-array type
         """
         assert_equal(clf.dummy_int, DUMMY_INT)
         assert_equal(clf.dummy_str, DUMMY_STR)
