@@ -23,7 +23,7 @@ import scipy.sparse as sp
 
 from .base import is_classifier, clone
 from .utils import indexable, check_random_state, safe_indexing
-from .utils.validation import _num_samples, check_array
+from .utils.validation import _is_arraylike, _num_samples, check_array
 from .utils.multiclass import type_of_target
 from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
@@ -1379,12 +1379,13 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                           for k, v in parameters.items()))
         print("[CV] %s %s" % (msg, (64 - len(msg)) * '.'))
 
-    # Adjust lenght of sample weights
+    # Adjust length of sample weights
     n_samples = _num_samples(X)
     fit_params = fit_params if fit_params is not None else {}
     fit_params = dict([(k, (v.tocsr()[train] if sp.issparse(v)
                             else np.asarray(v)[train])
-                        if _num_samples(v) == n_samples else v)
+                        if _is_arraylike(v) and _num_samples(v) == n_samples
+                        else v)
                        for k, v in fit_params.items()])
 
     if parameters is not None:
