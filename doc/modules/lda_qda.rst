@@ -73,7 +73,13 @@ optimal shrinkage parameter in an analytic way following the lemma introduced
 by Ledoit and Wolf. Note that currently shrinkage only works when setting the
 ``solver`` parameter to 'lsqr' or 'eigen'.
 
-The ``shrinkage`` parameter can also be manually set between 0 and 1.
+The ``shrinkage`` parameter can also be manually set between 0 and 1. In
+particular, a value of 0 corresponds to no shrinkage (which means the empirical
+covariance matrix will be used) and a value of 1 corresponds to complete
+shrinkage (which means that the diagonal matrix of variances will be used as
+an estimate for the covariance matrix). Setting this parameter to a value
+between these two extrema will estimate a shrunk version of the covariance
+matrix.
 
 .. |shrinkage| image:: ../auto_examples/classification/images/plot_lda_001.png
         :target: ../auto_examples/classification/plot_lda.html
