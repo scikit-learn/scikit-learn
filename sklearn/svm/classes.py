@@ -2,7 +2,8 @@ import numpy as np
 
 from .base import _fit_liblinear, BaseSVC, BaseLibSVM
 from ..base import BaseEstimator, RegressorMixin
-from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin
+from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, \
+    LinearModel
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import check_array, check_X_y
 
@@ -74,26 +75,26 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         automatically adjust weights inversely proportional to
         class frequencies.
 
-    verbose : int, default: 0
+    verbose : int, (default=0)
         Enable verbose output. Note that this setting takes advantage of a
         per-process runtime setting in liblinear that, if enabled, may not work
         properly in a multithreaded context.
 
-    random_state : int seed, RandomState instance, or None (default)
+    random_state : int seed, RandomState instance, or None (default=None)
         The seed of the pseudo random number generator to use when
         shuffling the data.
 
-    max_iter : int, default 1000
+    max_iter : int, (default=1000)
         The maximum number of iterations to be run.
 
     Attributes
     ----------
     coef_ : array, shape = [n_features] if n_classes == 2 \
             else [n_classes, n_features]
-        Weights asigned to the features (coefficients in the primal
+        Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-        `coef_` is readonly property derived from `raw_coef_` that \
+        `coef_` is a readonly property derived from `raw_coef_` that \
         follows the internal memory layout of liblinear.
 
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
@@ -195,6 +196,146 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         return self
 
 
+class LinearSVR(LinearModel, RegressorMixin):
+    """Linear Support Vector Regression.
+
+    Similar to SVR with parameter kernel='linear', but implemented in terms of
+    liblinear rather than libsvm, so it has more flexibility in the choice of
+    penalties and loss functions and should scale better (to large numbers of
+    samples).
+
+    This class supports both dense and sparse input.
+
+    Parameters
+    ----------
+    C : float, optional (default=1.0)
+        Penalty parameter C of the error term. The penalty is a squared
+        l2 penalty. The bigger this parater, the less regularization is used.
+
+    loss : string, 'l1' or 'l2' (default='l2')
+        Specifies the loss function. 'l1' is the epsilon-insensitive loss
+        (standard SVR) while 'l2' is the squared epsilon-insensitive loss.
+
+    epsilon : float, optional (default=0.1)
+        Epsilon parameter in the epsilon-insensitive loss function. Note
+        that the value of this parameter depends on the scale of the target
+        variable y. If unsure, set epsilon=0.
+
+    dual : bool, (default=True)
+        Select the algorithm to either solve the dual or primal
+        optimization problem. Prefer dual=False when n_samples > n_features.
+
+    tol : float, optional (default=1e-4)
+        Tolerance for stopping criteria
+
+    fit_intercept : boolean, optional (default=True)
+        Whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    intercept_scaling : float, optional (default=1)
+        when self.fit_intercept is True, instance vector x becomes
+        [x, self.intercept_scaling],
+        i.e. a "synthetic" feature with constant value equals to
+        intercept_scaling is appended to the instance vector.
+        The intercept becomes intercept_scaling * synthetic feature weight
+        Note! the synthetic feature weight is subject to l1/l2 regularization
+        as all other features.
+        To lessen the effect of regularization on synthetic feature weight
+        (and therefore on the intercept) intercept_scaling has to be increased
+
+    verbose : int, (default=0)
+        Enable verbose output. Note that this setting takes advantage of a
+        per-process runtime setting in liblinear that, if enabled, may not work
+        properly in a multithreaded context.
+
+    random_state : int seed, RandomState instance, or None (default=None)
+        The seed of the pseudo random number generator to use when
+        shuffling the data.
+
+    max_iter : int, (default=1000)
+        The maximum number of iterations to be run.
+
+    Attributes
+    ----------
+    coef_ : array, shape = [n_features] if n_classes == 2 \
+            else [n_classes, n_features]
+        Weights assigned to the features (coefficients in the primal
+        problem). This is only available in the case of linear kernel.
+
+        `coef_` is a readonly property derived from `raw_coef_` that \
+        follows the internal memory layout of liblinear.
+
+    intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
+        Constants in decision function.
+
+
+    See also
+    --------
+    LinearSVC
+        Implementation of Support Vector Machine classifier using the
+        same library as this class (liblinear).
+
+    SVR
+        Implementation of Support Vector Machine regression using libsvm:
+        the kernel can be non-linear but its SMO algorithm does not
+        scale to large number of samples as LinearSVC does.
+
+    sklearn.linear_model.SGDRegressor
+        SGDRegressor can optimize the same cost function as LinearSVR
+        by adjusting the penalty and loss parameters. In addition it requires
+        less memory, allows incremental (online) learning, and implements
+        various loss functions and regularization regimes.
+    """
+
+
+    def __init__(self, epsilon=0.0, tol=1e-4, C=1.0, loss='l1', fit_intercept=True,
+                 intercept_scaling=1., dual=True, verbose=0, random_state=None,
+                 max_iter=1000):
+        self.tol = tol
+        self.C = C
+        self.epsilon = epsilon
+        self.fit_intercept = fit_intercept
+        self.intercept_scaling = intercept_scaling
+        self.verbose = verbose
+        self.random_state = random_state
+        self.max_iter = max_iter
+        self.dual = dual
+        self.loss = loss
+
+    def fit(self, X, y):
+        """Fit the model according to the given training data.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Training vector, where n_samples in the number of samples and
+            n_features is the number of features.
+
+        y : array-like, shape = [n_samples]
+            Target vector relative to X
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        if self.C < 0:
+            raise ValueError("Penalty term must be positive; got (C=%r)"
+                             % self.C)
+
+        X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64, order="C")
+        loss = {'l1': 'ei', 'l2' : 'se'}.get(self.loss)
+        self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
+            X, y, self.C, self.fit_intercept, self.intercept_scaling,
+            None, 'l2', self.dual, self.verbose,
+            self.max_iter, self.tol, self.random_state, loss=loss,
+            epsilon=self.epsilon)
+        self.coef_ = self.coef_.ravel()
+
+        return self
+
+
 class SVC(BaseSVC):
     """C-Support Vector Classification.
 
@@ -286,10 +427,10 @@ class SVC(BaseSVC):
         SVM section of the User Guide for details.
 
     coef_ : array, shape = [n_class-1, n_features]
-        Weights asigned to the features (coefficients in the primal
+        Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-        `coef_` is readonly property derived from `dual_coef_` and
+        `coef_` is a readonly property derived from `dual_coef_` and
         `support_vectors_`
 
     intercept_ : array, shape = [n_class * (n_class-1) / 2]
@@ -410,7 +551,7 @@ class NuSVC(BaseSVC):
         the SVM section of the User Guide for details.
 
     coef_ : array, shape = [n_class-1, n_features]
-        Weights asigned to the features (coefficients in the primal
+        Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
@@ -527,7 +668,7 @@ class SVR(BaseLibSVM, RegressorMixin):
         Coefficients of the support vector in the decision function.
 
     coef_ : array, shape = [1, n_features]
-        Weights asigned to the features (coefficients in the primal
+        Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
@@ -643,7 +784,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         Coefficients of the support vector in the decision function.
 
     coef_ : array, shape = [1, n_features]
-        Weights asigned to the features (coefficients in the primal
+        Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
@@ -753,7 +894,7 @@ class OneClassSVM(BaseLibSVM):
         Coefficient of the support vector in the decision function.
 
     coef_ : array, shape = [n_classes-1, n_features]
-        Weights asigned to the features (coefficients in the primal
+        Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and

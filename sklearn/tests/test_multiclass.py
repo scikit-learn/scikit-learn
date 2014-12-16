@@ -406,6 +406,16 @@ def test_ovo_exceptions():
     assert_raises(ValueError, ovo.predict, [])
 
 
+def test_ovo_fit_on_list():
+    # Test that OneVsOne fitting works with a list of targets and yields the
+    # same output as predict from an array
+    ovo = OneVsOneClassifier(LinearSVC(random_state=0))
+    prediction_from_array = ovo.fit(iris.data, iris.target).predict(iris.data)
+    prediction_from_list = ovo.fit(iris.data,
+                                   list(iris.target)).predict(iris.data)
+    assert_array_equal(prediction_from_array, prediction_from_list)
+
+
 def test_ovo_fit_predict():
     # A classifier which implements decision_function.
     ovo = OneVsOneClassifier(LinearSVC(random_state=0))

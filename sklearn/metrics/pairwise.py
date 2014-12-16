@@ -1,34 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-The :mod:`sklearn.metrics.pairwise` submodule implements utilities to evaluate
-pairwise distances, paired distances or affinity of sets of samples.
-
-This module contains both distance metrics and kernels. A brief summary is
-given on the two here.
-
-Distance metrics are a function d(a, b) such that d(a, b) < d(a, c) if objects
-a and b are considered "more similar" to objects a and c. Two objects exactly
-alike would have a distance of zero.
-One of the most popular examples is Euclidean distance.
-To be a 'true' metric, it must obey the following four conditions::
-
-    1. d(a, b) >= 0, for all a and b
-    2. d(a, b) == 0, if and only if a = b, positive definiteness
-    3. d(a, b) == d(b, a), symmetry
-    4. d(a, c) <= d(a, b) + d(b, c), the triangle inequality
-
-Kernels are measures of similarity, i.e. ``s(a, b) > s(a, c)``
-if objects ``a`` and ``b`` are considered "more similar" to objects
-``a`` and ``c``. A kernel must also be positive semi-definite.
-
-There are a number of ways to convert between a distance metric and a
-similarity measure, such as a kernel. Let D be the distance, and S be the
-kernel:
-
-    1. ``S = np.exp(-D * gamma)``, where one heuristic for choosing
-       ``gamma`` is ``1 / num_features``
-    2. ``S = 1. / (D / np.max(D))``
-"""
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
@@ -56,6 +26,30 @@ from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 
 
 # Utility Functions
+def _return_float_dtype(X, Y):
+    """
+    1. If dtype of X and Y is float32, then dtype float32 is returned.
+    2. Else dtype float is returned.
+    """
+    if not issparse(X) and not isinstance(X, np.ndarray):
+        X = np.asarray(X)
+
+    if Y is None:
+        Y_dtype = X.dtype
+    elif not issparse(Y) and not isinstance(Y, np.ndarray):
+        Y = np.asarray(Y)
+        Y_dtype = Y.dtype
+    else:
+        Y_dtype = Y.dtype
+
+    if X.dtype == Y_dtype == np.float32:
+        dtype = np.float32
+    else:
+        dtype = np.float
+
+    return X, Y, dtype
+
+
 def check_pairwise_arrays(X, Y):
     """ Set X and Y appropriately and checks inputs
 
@@ -85,22 +79,18 @@ def check_pairwise_arrays(X, Y):
         If Y was None, safe_Y will be a pointer to X.
 
     """
+    X, Y, dtype = _return_float_dtype(X, Y)
+
     if Y is X or Y is None:
-        X = Y = check_array(X, accept_sparse='csr')
+        X = Y = check_array(X, accept_sparse='csr', dtype=dtype)
     else:
-        X = check_array(X, accept_sparse='csr')
-        Y = check_array(Y, accept_sparse='csr')
+        X = check_array(X, accept_sparse='csr', dtype=dtype)
+        Y = check_array(Y, accept_sparse='csr', dtype=dtype)
     if X.shape[1] != Y.shape[1]:
         raise ValueError("Incompatible dimension for X and Y matrices: "
                          "X.shape[1] == %d while Y.shape[1] == %d" % (
                              X.shape[1], Y.shape[1]))
 
-    if not (X.dtype == Y.dtype == np.float32):
-        if Y is X:
-            X = Y = check_array(X, ['csr', 'csc', 'coo'], dtype=np.float)
-        else:
-            X = check_array(X, ['csr', 'csc', 'coo'], dtype=np.float)
-            Y = check_array(Y, ['csr', 'csc', 'coo'], dtype=np.float)
     return X, Y
 
 
@@ -339,11 +329,8 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
                                  min_indices]
 
             flags = values[chunk_x] > min_values
-            indices[chunk_x] = np.where(
-                flags, min_indices + chunk_y.start, indices[chunk_x])
-
-            values[chunk_x] = np.where(
-                flags, min_values, values[chunk_x])
+            indices[chunk_x][flags] = min_indices[flags] + chunk_y.start
+            values[chunk_x][flags] = min_values[flags]
 
     if metric == "euclidean" and not metric_kwargs.get("squared", False):
         np.sqrt(values, values)

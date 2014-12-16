@@ -12,13 +12,22 @@ Changelog
 New features
 ............
 
+
+   - Added :class:`svm.LinearSVR`. This class uses the liblinear implementation
+     of Support Vector Regression which is much faster for large
+     sample sizes than :class:`svm.SVR` with linear kernel. By 
+     `Fabian Pedregosa`_ and Qiang Luo.
+
    - Incremental fit for :class:`GaussianNB <naive_bayes.GaussianNB>`.
 
-   - Add ``sample_weight`` support to :class:`dummy.DummyClassifier`. By
+   - Add ``sample_weight`` support to :class:`dummy.DummyClassifier` and
+     :class:`dummy.DummyRegressor`. By
      `Arnaud Joly`_.
 
    - Add the :func:`metrics.label_ranking_average_precision_score` metrics. By
      `Arnaud Joly`_.
+
+   - Add the :func:`metrics.coverage_error` metrics. By `Arnaud Joly`_.
 
    - Added :class:`linear_model.LogisticRegressionCV`. By
      `Manoj Kumar`_, `Fabian Pedregosa`_, `Gael Varoquaux`_
@@ -40,6 +49,17 @@ New features
      and :class:`SGDRegressor <linear_model.SGDRegressor>` By
      `Danny Sullivan`_.
 
+   - Added :func:`cross_val_predict <cross_validation.cross_val_predict>`
+     function which computes cross-validated estimates. By `Luis Pedro Coelho`_
+
+   - Added :class:`linear_model.TheilSenRegressor`, a robust
+     generalized-median-based estimator. By `Florian Wilhelm`_.
+
+   - Added :func:`metrics.median_absolute_error`, a robust metric.
+     By `Gael Varoquaux`_ and `Florian Wilhelm`_.
+
+   - Add :class:`cluster.Birch`, an online clustering algorithm. By
+     `Manoj Kumar`_, `Alexandre Gramfort`_ and `Joel Nothman`_.
 
 Enhancements
 ............
@@ -64,11 +84,21 @@ Enhancements
      to `Rohit Sivaprasad`_), as well as evaluation metrics (by
      `Joel Nothman`_).
 
+   - Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score`.
+     By `Jatin Shah`.
+
+   - Add support for multiclass in `metrics.hinge_loss`. Added ``labels=None``
+     as optional paramter. By `Saurabh Jha`.
+
+   - Add ``sample_weight`` parameter to `metrics.hinge_loss`.
+     By `Saurabh Jha`.
+
    - Add ``multi_class="multinomial"`` option in
      :class:`linear_model.LogisticRegression` to implement a Logistic
      Regression solver that minimizes the cross-entropy or multinomial loss
-     instead of the default One-vs-Rest setting. By `Lars Buitinck`_ and
-     `Manoj Kumar`_.
+     instead of the default One-vs-Rest setting. Supports `lbfgs` and
+     `newton-cg` solvers. By `Lars Buitinck`_ and `Manoj Kumar`_. Solver option
+     `newton-cg` by Simon Wu.
 
    - ``DictVectorizer`` can now perform ``fit_transform`` on an iterable in a
      single pass, when giving the option ``sort=False``. By Dan Blanchard.
@@ -77,18 +107,66 @@ Enhancements
      configured to work with estimators that may fail and raise errors on
      individual folds. This option is controlled by the `error_score`
      parameter. This does not affect errors raised on re-fit. By
-	 `Michal Romaniuk`_.
+     `Michal Romaniuk`_.
 
    - Add ``digits`` parameter to `metrics.classification_report` to allow
      report to show different precision of floating point numbers. By
      `Ian Gilmore`_.
 
+   - Add a quantile prediction strategy to the :class:`dummy.DummyRegressor`.
+     By `Aaron Staple`_.
+
+   - Add ``handle_unknown`` option to :class:`preprocessing.OneHotEncoder` to
+     handle unknown categorical features more gracefully during transform.
+     By `Manoj Kumar`_.
+
+   - Added support for sparse input data to decision trees and their ensembles.
+     By `Fares Hedyati`_ and `Arnaud Joly`_.
+
+   - Optimized :class:`cluster.AffinityPropagation` by reducing the number of
+     memory allocations of large temporary data-structures. By `Antony Lee`_.
+
+   - Parellization of the computation of feature importances in random forest.
+     By `Olivier Grisel`_ and `Arnaud Joly`_.
+
+   - Add ``n_iter_`` attribute to estimators that accept a ``max_iter`` attribute
+     in their constructor. By `Manoj Kumar`_.
+
+   - :func:`neighbors.kneighbors_graph` and :func:`radius_neighbors_graph`
+     support non-Euclidean metrics. By `Manoj Kumar`_
+
 Documentation improvements
 ..........................
 
+   - Added example of using :class:`FeatureUnion` for heterogeneous input.
+     By `Matt Terry`_
+
+   - Documentation on scorers was improved, to highlight the handling of loss
+     functions. By `Matt Pico`_.
+
+   - A discrepancy between liblinear output and scikit-learn's wrappers
+     is now noted. By `Manoj Kumar`_.
+
+   - Improved documentation generation: examples referring to a class or
+     function are now shown in a gallery on the class/function's API reference
+     page. By `Joel Nothman`_.
+
+   - More explicit documentation of sample generators and of data
+     transformation. By `Joel Nothman`_.
+
+   - :class:`sklearn.neighbors.BallTree` and :class:`sklearn.neighbors.KDTree`
+     used to point to empty pages stating that they are aliases of BinaryTree.
+     This has been fixed to show the correct class docs. By `Manoj Kumar`_.
 
 Bug fixes
 .........
+
+    - The function :func:`hierarchical.ward_tree` now returns the children in
+      the same order for both the structured and unstructured versions. By
+      `Matteo Visconti di Oleggio Castello`_.
+
+    - :class:`feature_selection.RFECV` now correctly handles cases when
+      ``step`` is not equal to 1. By `Nikolay Mayorov`_
 
     - The :class:`decomposition.PCA` now undoes whitening in its
      ``inverse_transform``. Also, its ``components_`` now always have unit
@@ -114,6 +192,16 @@ Bug fixes
     - Pipeline object delegate the ``classes_`` attribute to the underlying
       estimator. It allows for instance to make bagging of a pipeline object.
       By `Arnaud Joly`_
+
+    - :class:`neighbors.NearestCentroid` now uses the median as the centroid
+      when metric is set to ``manhattan``. It was using the mean before.
+      By `Manoj Kumar`_
+
+    - Fix numerical stability issues in :class:`linear_model.SGDClassifier`
+      and :class:`linear_model.SGDRegressor` by clipping large gradients and
+      ensuring that weight decay rescaling is always positive (for large
+      l2 regularization and large learning rate values).
+      By `Olivier Grisel`_
 
 API changes summary
 -------------------
@@ -149,6 +237,21 @@ API changes summary
       for just one alpha.
       ``precompute="auto"`` is now deprecated and will be removed in 0.18
       By `Manoj Kumar`_.
+
+    - Expose ``positive`` option in :func:`linear_model.enet_path` and
+      :func:`linear_model.enet_path` which constrains coefficients to be
+      positive. By `Manoj Kumar`_.
+
+    - Users should now supply an explicit ``average`` parameter to
+      :func:`sklearn.metrics.f1_score`, :func:`sklearn.metrics.fbeta_score`,
+      :func:`sklearn.metrics.recall_score` and
+      :func:`sklearn.metrics.precision_score` when performing multiclass
+      or multilabel (i.e. not binary) classification. By `Joel Nothman`_.
+
+    - `scoring` parameter for cross validation now accepts `'f1_micro'`,
+      `'f1_macro'` or `'f1_weighted'`. `'f1'` is now for binary classification
+      only. Similar changes apply to `'precision'` and `'recall'`.
+      By `Joel Nothman`_.
 
 .. _changes_0_15_2:
 
@@ -190,7 +293,7 @@ Bug fixes
     running the tests. By `Joel Nothman`_.
 
   - Many documentation and website fixes by `Joel Nothman`_, `Lars Buitinck`_
-    and others.
+    `Matt Pico`_, and others.
 
 .. _changes_0_15_1:
 
@@ -3012,3 +3115,19 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Michal Romaniuk: https://github.com/romaniukm
 
 .. _Ian Gilmore: https://github.com/agileminor
+
+.. _Aaron Staple: https://github.com/staple
+
+.. _Luis Pedro Coelho: http://luispedro.org
+
+.. _Florian Wilhelm: https://github.com/FlorianWilhelm
+
+.. _Fares Hedyati: https://github.com/fareshedyati
+
+.. _Matt Pico: https://github.com/MattpSoftware
+
+.. _Matt Terry: https://github.com/mrterry
+
+.. _Antony Lee: https://www.ocf.berkeley.edu/~antonyl/
+
+.. _Matteo Visconti di Oleggio Castello: http://www.mvdoc.me

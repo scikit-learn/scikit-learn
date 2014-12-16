@@ -43,18 +43,32 @@ Funding
 -------
 
 `INRIA <http://inria.fr>`_ actively supports this project. It has
-provided funding for Fabian Pedregosa to work on this project full
-time in the period 2010-2012. It also hosts coding sprints and other
-events.
+provided funding for Fabian Pedregosa (2010-2012), Jaques Grobler
+(2012-2013) and Olivier Grisel (2013-2015) to work on this project
+full-time. It also hosts coding sprints and other events.
 
 .. image:: images/inria-logo.jpg
    :align: center
 
+`Paris-Saclay Center for Data Science <http://www.datascience-paris-saclay.fr>`_
+funded one year for a developer to work on the project full-time
+(2014-2015).
 
-`Google <http://code.google.com/opensource/>`_ sponsored David
-Cournapeau with a Summer of Code Scholarship in the summer of 2007,
-`Vlad Niculae`_ in 2011, and `Vlad Niculae`_ and Immanuel Bayer in 2012 . It also provided funding for sprints and events
-around scikit-learn. If
+.. image:: images/cds-logo.png
+   :align: center
+
+The following students were sponspored by `Google <http://code.google.com/opensource/>`_
+to work on scikit-learn through the
+`Google Summer of Code <http://en.wikipedia.org/wiki/Google_Summer_of_Code>`_
+programme.
+
+- 2007 - David Cournapeau
+- 2011 - `Vlad Niculae`_
+- 2012 - `Vlad Niculae`_, Immanuel Bayer.
+- 2013 - `Kemal Eren`_, Nicolas Trésegnie
+- 2014 - Hamzeh Alsalhi, Issam Laradji, Maheshakya Wijewardena, Manoj Kumar.
+
+It also provided funding for sprints and events around scikit-learn. If
 you would like to participate in the next Google Summer of code
 program, please see `this page
 <http://github.com/scikit-learn/scikit-learn/wiki/SummerOfCode>`_
@@ -131,9 +145,9 @@ The 2013' Paris international sprint
    :target: http://www.telecom-paristech.fr/
 
 
-.. |tinyclues| image:: http://www.tinyclues.com/item/50b77d01e4b0bff132989dfd?format=original
+.. |tinyclues| image:: http://www.tinyclues.com/static/img/logo.png
    :width: 150px
-   :target: http://www.tinyclues.fr
+   :target: http://www.tinyclues.com/
 
 
 .. |afpy| image:: http://www.afpy.org/logo.png

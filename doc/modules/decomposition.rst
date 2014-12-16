@@ -176,9 +176,9 @@ Kernel PCA
 ----------
 
 :class:`KernelPCA` is an extension of PCA which achieves non-linear
-dimensionality reduction through the use of kernels. It has many
-applications including denoising, compression and structured prediction
-(kernel dependency estimation). :class:`KernelPCA` supports both
+dimensionality reduction through the use of kernels (see :ref:`metrics`). It 
+has many applications including denoising, compression and structured 
+prediction (kernel dependency estimation). :class:`KernelPCA` supports both
 ``transform`` and ``inverse_transform``.
 
 .. figure:: ../auto_examples/decomposition/images/plot_kernel_pca_001.png

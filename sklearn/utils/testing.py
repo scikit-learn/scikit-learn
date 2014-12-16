@@ -70,11 +70,11 @@ except ImportError:
         assert_false(x in container, msg="%r in %r" % (x, container))
 
 try:
-    from nose.tools import assert_raises_regexp
+    from nose.tools import assert_raises_regex
 except ImportError:
     # for Py 2.6
-    def assert_raises_regexp(expected_exception, expected_regexp,
-                             callable_obj=None, *args, **kwargs):
+    def assert_raises_regex(expected_exception, expected_regexp,
+                            callable_obj=None, *args, **kwargs):
         """Helper function to check for message patterns in exceptions"""
 
         not_raised = False
@@ -83,13 +83,18 @@ except ImportError:
             not_raised = True
         except Exception as e:
             error_message = str(e)
-            if not re.compile(expected_regexp).match(error_message):
+            if not re.compile(expected_regexp).search(error_message):
                 raise AssertionError("Error message should match pattern "
                                      "%r. %r does not." %
                                      (expected_regexp, error_message))
         if not_raised:
             raise AssertionError("Should have raised %r" %
                                  expected_exception(expected_regexp))
+
+# assert_raises_regexp is deprecated in Python 3.4 in favor of
+# assert_raises_regex but lets keep the bacward compat in scikit-learn with
+# the old name for now
+assert_raises_regexp = assert_raises_regex
 
 
 def _assert_less(a, b, msg=None):
@@ -152,7 +157,7 @@ def assert_warns(warning_class, func, *args, **kw):
         if hasattr(np, 'VisibleDeprecationWarning'):
             # Filter out numpy-specific warnings in numpy >= 1.9
             w = [e for e in w
-                 if not e.category is np.VisibleDeprecationWarning]
+                 if e.category is not np.VisibleDeprecationWarning]
 
         # Verify some things
         if not len(w) > 0:
@@ -222,7 +227,7 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
         if not check_in_message(msg):
             raise AssertionError("The message received ('%s') for <%s> is "
                                  "not the one you expected ('%s')"
-                                 % (msg, func.__name__,  message
+                                 % (msg, func.__name__, message
                                     ))
     return result
 
@@ -241,7 +246,7 @@ def assert_no_warnings(func, *args, **kw):
         if hasattr(np, 'VisibleDeprecationWarning'):
             # Filter out numpy-specific warnings in numpy >= 1.9
             w = [e for e in w
-                 if not e.category is np.VisibleDeprecationWarning]
+                 if e.category is not np.VisibleDeprecationWarning]
 
         if len(w) > 0:
             raise AssertionError("Got warnings when calling %s: %s"
@@ -506,11 +511,12 @@ def all_estimators(include_meta_estimators=False, include_other=False,
     include_dont_test : boolean, default=False
         Whether to include "special" label estimator or test processors.
 
-    type_filter : string or None, default=None
+    type_filter : string, list of string,  or None, default=None
         Which kind of estimators should be returned. If None, no filter is
         applied and all estimators are returned.  Possible values are
         'classifier', 'regressor', 'cluster' and 'transformer' to get
-        estimators only of these specific types.
+        estimators only of these specific types, or a list of these to
+        get the estimators that fit at least one of the types.
 
     Returns
     -------
@@ -552,26 +558,29 @@ def all_estimators(include_meta_estimators=False, include_other=False,
     # possibly get rid of meta estimators
     if not include_meta_estimators:
         estimators = [c for c in estimators if not c[0] in META_ESTIMATORS]
+    if type_filter is not None:
+        if not isinstance(type_filter, list):
+            type_filter = [type_filter]
+        else:
+            type_filter = list(type_filter)  # copy
+        filtered_estimators = []
+        filters = {'classifier': ClassifierMixin,
+                   'regressor': RegressorMixin,
+                   'transformer': TransformerMixin,
+                   'cluster': ClusterMixin}
+        for name, mixin in filters.items():
+            if name in type_filter:
+                type_filter.remove(name)
+                filtered_estimators.extend([est for est in estimators
+                                            if issubclass(est[1], mixin)])
+        estimators = filtered_estimators
+        if type_filter:
+            raise ValueError("Parameter type_filter must be 'classifier', "
+                             "'regressor', 'transformer', 'cluster' or None, got"
+                             " %s." % repr(type_filter))
 
-    if type_filter == 'classifier':
-        estimators = [est for est in estimators
-                      if issubclass(est[1], ClassifierMixin)]
-    elif type_filter == 'regressor':
-        estimators = [est for est in estimators
-                      if issubclass(est[1], RegressorMixin)]
-    elif type_filter == 'transformer':
-        estimators = [est for est in estimators
-                      if issubclass(est[1], TransformerMixin)]
-    elif type_filter == 'cluster':
-        estimators = [est for est in estimators
-                      if issubclass(est[1], ClusterMixin)]
-    elif type_filter is not None:
-        raise ValueError("Parameter type_filter must be 'classifier', "
-                         "'regressor', 'transformer', 'cluster' or None, got"
-                         " %s." % repr(type_filter))
-
-    # We sort in order to have reproducible test failures
-    return sorted(estimators)
+    # drop duplicates, sort for reproducibility
+    return sorted(set(estimators))
 
 
 def set_random_state(estimator, random_state=0):

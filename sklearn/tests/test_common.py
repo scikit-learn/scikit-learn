@@ -22,8 +22,6 @@ from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import ignore_warnings
 
 import sklearn
-from sklearn.base import (ClassifierMixin, RegressorMixin,
-                          TransformerMixin, ClusterMixin)
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import make_classification
 
@@ -34,6 +32,7 @@ from sklearn.utils.estimator_checks import (
     check_regressors_classifiers_sparse_data,
     check_transformer,
     check_clustering,
+    check_clusterer_compute_labels_predict,
     check_regressors_int,
     check_regressors_train,
     check_regressors_pickle,
@@ -49,6 +48,7 @@ from sklearn.utils.estimator_checks import (
     check_class_weight_auto_classifiers,
     check_class_weight_auto_linear_classifier,
     check_estimators_overwrite_params,
+    check_estimators_partial_fit_n_features,
     check_cluster_overwrite_params,
     check_sparsify_binary_classifier,
     check_sparsify_multiclass_classifier,
@@ -85,9 +85,7 @@ def test_all_estimators():
 def test_estimators_sparse_data():
     # All estimators should either deal with sparse data or raise an
     # exception with type TypeError and an intelligible error message
-    estimators = all_estimators()
-    estimators = [(name, Estimator) for name, Estimator in estimators
-                  if issubclass(Estimator, (ClassifierMixin, RegressorMixin))]
+    estimators = all_estimators(type_filter=['classifier', 'regressor'])
     for name, Estimator in estimators:
         yield check_regressors_classifiers_sparse_data, name, Estimator
 
@@ -112,12 +110,8 @@ def test_transformers():
 
 def test_estimators_nan_inf():
     # Test that all estimators check their input for NaN's and infs
-    estimators = all_estimators()
-    estimators = [(name, E) for name, E in estimators
-                  if (issubclass(E, ClassifierMixin) or
-                      issubclass(E, RegressorMixin) or
-                      issubclass(E, TransformerMixin) or
-                      issubclass(E, ClusterMixin))]
+    estimators = all_estimators(type_filter=['classifier', 'regressor',
+                                             'transformer', 'cluster'])
     for name, Estimator in estimators:
         if name not in CROSS_DECOMPOSITION + ['Imputer']:
             yield check_estimators_nan_inf, name, Estimator
@@ -130,10 +124,12 @@ def test_clustering():
     for name, Alg in clustering:
         # test whether any classifier overwrites his init parameters during fit
         yield check_cluster_overwrite_params, name, Alg
+        yield check_clusterer_compute_labels_predict, name, Alg
         if name not in ('WardAgglomeration', "FeatureAgglomeration"):
             # this is clustering on the features
             # let's not test that here.
             yield check_clustering, name, Alg
+            yield check_estimators_partial_fit_n_features, name, Alg
 
 
 def test_classifiers():
@@ -146,6 +142,7 @@ def test_classifiers():
         yield check_classifiers_one_label, name, Classifier
         yield check_classifiers_classes, name, Classifier
         yield check_classifiers_pickle, name, Classifier
+        yield check_estimators_partial_fit_n_features, name, Classifier
         # basic consistency testing
         yield check_classifiers_train, name, Classifier
         if (name not in ["MultinomialNB", "LabelPropagation", "LabelSpreading"]
@@ -166,6 +163,7 @@ def test_regressors():
         # basic testing
         yield check_regressors_train, name, Regressor
         yield check_regressor_data_not_an_array, name, Regressor
+        yield check_estimators_partial_fit_n_features, name, Regressor
         # Test that estimators can be pickled, and once pickled
         # give the same answer as before.
         yield check_regressors_pickle, name, Regressor

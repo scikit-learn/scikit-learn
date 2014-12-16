@@ -240,16 +240,16 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
         All three solvers support both dense and sparse data.
 
-    tol: float
+    tol : float
         Precision of the solution.
 
-    verbose: int
+    verbose : int
         Verbosity level. Setting verbose > 0 will display additional information
         depending on the solver used.
 
     Returns
     -------
-    coef: array, shape = [n_features] or [n_targets, n_features]
+    coef : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).
 
     Notes
@@ -888,7 +888,7 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
     Parameters
     ----------
-    alphas: numpy array of shape [n_alphas]
+    alphas : numpy array of shape [n_alphas]
         Array of alpha values to try.
         Small positive values of alpha improve the conditioning of the
         problem and reduce the variance of the estimates.
@@ -908,9 +908,12 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    cv : cross-validation generator, optional
+    cv : integer or cross-validation generator, optional
         If None, Generalized Cross-Validation (efficient Leave-One-Out)
         will be used.
+        If an integer is passed, it is the number of folds for KFold cross
+        validation.  Specific cross-validation objects can be passed, see
+        sklearn.cross_validation module for the list of possible objects
 
     gcv_mode : {None, 'auto', 'svd', eigen'}, optional
         Flag indicating which strategy to use when performing
@@ -969,7 +972,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     Parameters
     ----------
-    alphas: numpy array of shape [n_alphas]
+    alphas : numpy array of shape [n_alphas]
         Array of alpha values to try.
         Small positive values of alpha improve the conditioning of the
         problem and reduce the variance of the estimates.

@@ -19,6 +19,7 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 # License: Simplified BSD
 
 from abc import ABCMeta, abstractmethod
+from functools import partial
 
 import numpy as np
 
@@ -342,8 +343,15 @@ SCORERS = dict(r2=r2_scorer,
                median_absolute_error=median_absolute_error_scorer,
                mean_absolute_error=mean_absolute_error_scorer,
                mean_squared_error=mean_squared_error_scorer,
-               accuracy=accuracy_scorer, f1=f1_scorer, roc_auc=roc_auc_scorer,
+               accuracy=accuracy_scorer, roc_auc=roc_auc_scorer,
                average_precision=average_precision_scorer,
-               precision=precision_scorer, recall=recall_scorer,
                log_loss=log_loss_scorer,
                adjusted_rand_score=adjusted_rand_scorer)
+
+for name, metric in [('precision', precision_score),
+                     ('recall', recall_score), ('f1', f1_score)]:
+    SCORERS[name] = make_scorer(metric)
+    for average in ['macro', 'micro', 'samples', 'weighted']:
+        qualified_name = '{0}_{1}'.format(name, average)
+        SCORERS[qualified_name] = make_scorer(partial(metric, pos_label=None,
+                                                      average=average))

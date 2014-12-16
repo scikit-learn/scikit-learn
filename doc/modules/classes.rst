@@ -63,6 +63,7 @@ Classes
 
    cluster.AffinityPropagation
    cluster.AgglomerativeClustering
+   cluster.Birch
    cluster.DBSCAN
    cluster.FeatureAgglomeration
    cluster.KMeans
@@ -176,6 +177,7 @@ Classes
 
    cross_validation.train_test_split
    cross_validation.cross_val_score
+   cross_validation.cross_val_predict
    cross_validation.permutation_test_score
    cross_validation.check_cv
 
@@ -199,6 +201,8 @@ Loaders
    :toctree: generated/
    :template: function.rst
 
+   datasets.clear_data_home
+   datasets.get_data_home
    datasets.fetch_20newsgroups
    datasets.fetch_20newsgroups_vectorized
    datasets.load_boston
@@ -211,6 +215,7 @@ Loaders
    datasets.load_lfw_people
    datasets.fetch_lfw_people
    datasets.load_linnerud
+   datasets.mldata_filename
    datasets.fetch_mldata
    datasets.fetch_olivetti_faces
    datasets.fetch_california_housing
@@ -219,6 +224,7 @@ Loaders
    datasets.load_sample_image
    datasets.load_sample_images
    datasets.load_svmlight_file
+   datasets.load_svmlight_files
    datasets.dump_svmlight_file
 
 Samples generator
@@ -659,6 +665,7 @@ From text
    linear_model.RidgeCV
    linear_model.SGDClassifier
    linear_model.SGDRegressor
+   linear_model.TheilSenRegressor
 
 .. autosummary::
    :toctree: generated/
@@ -726,6 +733,7 @@ details.
    :template: function.rst
 
    metrics.make_scorer
+   metrics.get_scorer
 
 Classification metrics
 ----------------------
@@ -782,6 +790,7 @@ details.
    :toctree: generated/
    :template: function.rst
 
+   metrics.coverage_error
    metrics.label_ranking_average_precision_score
 
 
@@ -830,6 +839,8 @@ further details.
 
 Pairwise metrics
 ----------------
+
+See the :ref:`metrics` section of the user guide for further details.
 
 .. automodule:: sklearn.metrics.pairwise
    :no-members:
@@ -1156,6 +1167,7 @@ Estimators
    svm.LinearSVC
    svm.NuSVC
    svm.SVR
+   svm.LinearSVR
    svm.NuSVR
    svm.OneClassSVM
 

@@ -16,6 +16,7 @@ the lower the better
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Noel Dawe <noel@dawe.me>
 #          Jatin Shah <jatindshah@gmail.com>
+#          Saurabh Jha <saurabh.jhaa@gmail.com>
 # License: BSD 3 clause
 
 from __future__ import division
@@ -474,7 +475,7 @@ def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
         return n_samples - score
 
 
-def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted',
+def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
              sample_weight=None):
     """Compute the F1 score, also known as balanced F-score or F-measure
 
@@ -503,7 +504,8 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted',
         If ``average`` is not ``None`` and the classification target is binary,
         only this class's scores will be returned.
 
-    average : string, [None, 'micro', 'macro', 'samples', 'weighted' (default)]
+    average : one of [None, 'micro', 'macro', 'samples', 'weighted']
+        This parameter is required for multiclass/multilabel targets.
         If ``None``, the scores for each class are returned. Otherwise,
         unless ``pos_label`` is given in binary classification, this
         determines the type of averaging performed on the data:
@@ -560,7 +562,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted',
 
 
 def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
-                average='weighted', sample_weight=None):
+                average='binary', sample_weight=None):
     """Compute the F-beta score
 
     The F-beta score is the weighted harmonic mean of precision and recall,
@@ -589,7 +591,8 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
         If ``average`` is not ``None`` and the classification target is binary,
         only this class's scores will be returned.
 
-    average : string, [None, 'micro', 'macro', 'samples', 'weighted' (default)]
+    average : one of [None, 'micro', 'macro', 'samples', 'weighted']
+        This parameter is required for multiclass/multilabel targets.
         If ``None``, the scores for each class are returned. Otherwise,
         unless ``pos_label`` is given in binary classification, this
         determines the type of averaging performed on the data:
@@ -821,13 +824,24 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     """
     average_options = (None, 'micro', 'macro', 'weighted', 'samples')
-    if average not in average_options:
+    if average not in average_options and average != 'binary':
         raise ValueError('average has to be one of ' +
                          str(average_options))
     if beta <= 0:
         raise ValueError("beta should be >0 in the F-beta score")
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+
+    if average == 'binary' and y_type != 'binary':
+        warnings.warn('The default `weighted` averaging is deprecated, '
+                      'and from version 0.18, use of precision, recall or '
+                      'F-score with multiclass or multilabel data will result '
+                      'in an exception. '
+                      'Please set an explicit value for `average`, one of '
+                      '%s. In cross validation use, for instance, '
+                      'scoring="f1_weighted" instead of scoring="f1".'
+                      % str(average_options), DeprecationWarning, stacklevel=2)
+        average = 'weighted'
 
     label_order = labels  # save this for later
     if labels is None:
@@ -851,7 +865,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     elif average == 'samples':
         raise ValueError("Sample-based precision, recall, fscore is "
-                         "not meaningful outside multilabel"
+                         "not meaningful outside multilabel "
                          "classification. See the accuracy_score instead.")
     else:
         lb = LabelEncoder()
@@ -884,11 +898,12 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     ### Select labels to keep ###
 
     if y_type == 'binary' and average is not None and pos_label is not None:
-        if label_order is not None and len(label_order) == 2:
+        if average != 'binary' and label_order is not None \
+           and len(label_order) == 2:
             warnings.warn('In the future, providing two `labels` values, as '
-                          'well as `average` will average over those '
-                          'labels. For now, please use `labels=None` with '
-                          '`pos_label` to evaluate precision, recall and '
+                          'well as `average!=`binary`` will average over '
+                          'those labels. For now, please use `labels=None` '
+                          'with `pos_label` to evaluate precision, recall and '
                           'F-score for the positive label only.',
                           FutureWarning)
         if pos_label not in labels:
@@ -953,7 +968,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
 
 def precision_score(y_true, y_pred, labels=None, pos_label=1,
-                    average='weighted', sample_weight=None):
+                    average='binary', sample_weight=None):
     """Compute the precision
 
     The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
@@ -978,7 +993,8 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
         If ``average`` is not ``None`` and the classification target is binary,
         only this class's scores will be returned.
 
-    average : string, [None, 'micro', 'macro', 'samples', 'weighted' (default)]
+    average : one of [None, 'micro', 'macro', 'samples', 'weighted']
+        This parameter is required for multiclass/multilabel targets.
         If ``None``, the scores for each class are returned. Otherwise,
         unless ``pos_label`` is given in binary classification, this
         determines the type of averaging performed on the data:
@@ -1035,7 +1051,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     return p
 
 
-def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted',
+def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
                  sample_weight=None):
     """Compute the recall
 
@@ -1060,7 +1076,8 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted',
         If ``average`` is not ``None`` and the classification target is binary,
         only this class's scores will be returned.
 
-    average : string, [None, 'micro', 'macro', 'samples', 'weighted' (default)]
+    average : one of [None, 'micro', 'macro', 'samples', 'weighted']
+        This parameter is required for multiclass/multilabel targets.
         If ``None``, the scores for each class are returned. Otherwise,
         unless ``pos_label`` is given in binary classification, this
         determines the type of averaging performed on the data:
@@ -1376,14 +1393,20 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None):
     return _weighted_sum(loss, sample_weight, normalize)
 
 
-def hinge_loss(y_true, pred_decision, pos_label=None, neg_label=None):
+def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     """Average hinge loss (non-regularized)
 
-    Assuming labels in y_true are encoded with +1 and -1, when a prediction
-    mistake is made, ``margin = y_true * pred_decision`` is always negative
-    (since the signs disagree), implying ``1 - margin`` is always greater than
-    1.  The cumulated hinge loss is therefore an upper bound of the number of
-    mistakes made by the classifier.
+    In binary class case, assuming labels in y_true are encoded with +1 and -1,
+    when a prediction mistake is made, ``margin = y_true * pred_decision`` is
+    always negative (since the signs disagree), implying ``1 - margin`` is
+    always greater than 1.  The cumulated hinge loss is therefore an upper
+    bound of the number of mistakes made by the classifier.
+
+    In multiclass case, the function expects that either all the labels are
+    included in y_true or an optional labels argument is provided which
+    contains all the labels. The multilabel margin is calculated according
+    to Crammer-Singer's method. As in the binary case, the cumulated hinge loss
+    is an upper bound of the number of mistakes made by the classifier.
 
     Parameters
     ----------
@@ -1394,6 +1417,12 @@ def hinge_loss(y_true, pred_decision, pos_label=None, neg_label=None):
     pred_decision : array, shape = [n_samples] or [n_samples, n_classes]
         Predicted decisions, as output by decision_function (floats).
 
+    labels : array, optional, default None
+        Contains all the labels for the problem. Used in multiclass hinge loss.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
     Returns
     -------
     loss : float
@@ -1402,6 +1431,16 @@ def hinge_loss(y_true, pred_decision, pos_label=None, neg_label=None):
     ----------
     .. [1] `Wikipedia entry on the Hinge loss
             <http://en.wikipedia.org/wiki/Hinge_loss>`_
+
+    .. [2] Koby Crammer, Yoram Singer. On the Algorithmic
+           Implementation of Multiclass Kernel-based Vector
+           Machines. Journal of Machine Learning Research 2,
+           (2001), 265-292
+
+    .. [3] 'L1 AND L2 Regularization for Multiclass Hinge Loss Models
+           by Robert C. Moore, John DeNero.
+           <http://www.ttic.edu/sigml/symposium2011/papers/
+           Moore+DeNero_Regularization.pdf>'
 
     Examples
     --------
@@ -1420,27 +1459,56 @@ def hinge_loss(y_true, pred_decision, pos_label=None, neg_label=None):
     >>> hinge_loss([-1, 1, 1], pred_decision)  # doctest: +ELLIPSIS
     0.30...
 
+    In the multiclass case:
+    >>> X = np.array([[0], [1], [2], [3]])
+    >>> Y = np.array([0, 1, 2, 3])
+    >>> labels = np.array([0, 1, 2, 3])
+    >>> est = svm.LinearSVC()
+    >>> est.fit(X, Y)
+    LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
+         intercept_scaling=1, loss='l2', max_iter=1000, multi_class='ovr',
+         penalty='l2', random_state=None, tol=0.0001, verbose=0)
+    >>> pred_decision = est.decision_function([[-1], [2], [3]])
+    >>> y_true = [0, 2, 3]
+    >>> hinge_loss(y_true, pred_decision, labels)  #doctest: +ELLIPSIS
+    0.56...
     """
-    # TODO: multi-class hinge-loss
-    check_consistent_length(y_true, pred_decision)
+    check_consistent_length(y_true, pred_decision, sample_weight)
+    pred_decision = check_array(pred_decision, ensure_2d=False)
     y_true = column_or_1d(y_true)
-    pred_decision = column_or_1d(pred_decision)
+    y_true_unique = np.unique(y_true)
+    if y_true_unique.size > 2:
+        if (labels is None and pred_decision.ndim > 1 and
+                (np.size(y_true_unique) != pred_decision.shape[1])):
+            raise ValueError("Please include all labels in y_true "
+                             "or pass labels as third argument")
+        if labels is None:
+            labels = y_true_unique
+        le = LabelEncoder()
+        le.fit(labels)
+        y_true = le.transform(y_true)
+        mask = np.ones_like(pred_decision, dtype=bool)
+        mask[np.arange(y_true.shape[0]), y_true] = False
+        margin = pred_decision[~mask]
+        margin -= np.max(pred_decision[mask].reshape(y_true.shape[0], -1),
+                         axis=1)
 
-    # the rest of the code assumes that positive and negative labels
-    # are encoded as +1 and -1 respectively
-    lbin = LabelBinarizer(neg_label=-1)
-    y_true = lbin.fit_transform(y_true)[:, 0]
+    else:
+        # Handles binary class case
+        # this code assumes that positive and negative labels
+        # are encoded as +1 and -1 respectively
+        pred_decision = column_or_1d(pred_decision)
+        pred_decision = np.ravel(pred_decision)
 
-    if len(lbin.classes_) > 2 or (pred_decision.ndim == 2
-                                  and pred_decision.shape[1] != 1):
-        raise ValueError("Multi-class hinge loss not supported")
-    pred_decision = np.ravel(pred_decision)
+        lbin = LabelBinarizer(neg_label=-1)
+        y_true = lbin.fit_transform(y_true)[:, 0]
 
-    try:
-        margin = y_true * pred_decision
-    except TypeError:
-        raise TypeError("pred_decision should be an array of floats.")
+        try:
+            margin = y_true * pred_decision
+        except TypeError:
+            raise TypeError("pred_decision should be an array of floats.")
+
     losses = 1 - margin
-    # The hinge doesn't penalize good enough predictions.
+    # The hinge_loss doesn't penalize good enough predictions.
     losses[losses <= 0] = 0
-    return np.mean(losses)
+    return np.average(losses, weights=sample_weight)

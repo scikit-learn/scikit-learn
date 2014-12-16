@@ -90,10 +90,10 @@ Classification
 :class:`DecisionTreeClassifier` is a class capable of performing multi-class
 classification on a dataset.
 
-As other classifiers, :class:`DecisionTreeClassifier` take as input two
-arrays: an array X of size ``[n_samples, n_features]`` holding the training
-samples, and an array Y of integer values, size ``[n_samples]``, holding
-the class labels for the training samples::
+As other classifiers, :class:`DecisionTreeClassifier` take as input two arrays:
+an array X, sparse or dense, of size ``[n_samples, n_features]``  holding the
+training samples, and an array Y of integer values, size ``[n_samples]``,
+holding the class labels for the training samples::
 
     >>> from sklearn import tree
     >>> X = [[0, 0], [1, 1]]
@@ -157,7 +157,7 @@ a PDF file (or any other supported file type) directly in Python::
 
 After being fitted, the model can then be used to predict new values::
 
-    >>> clf.predict(iris.data[0, :])
+    >>> clf.predict(iris.data[:1, :])
     array([0])
 
 .. figure:: ../auto_examples/tree/images/plot_iris_001.png
@@ -194,7 +194,6 @@ instead of integer values::
     >>> clf = clf.fit(X, y)
     >>> clf.predict([[1, 1]])
     array([ 0.5])
-
 
 .. topic:: Examples:
 
@@ -336,6 +335,13 @@ Tips on practical use
 
   * All decision trees use ``np.float32`` arrays internally.
     If training data is not in this format, a copy of the dataset will be made.
+
+  * If the input matrix X is very sparse, it is recommended to convert to sparse
+    ``csc_matrix` before calling fit and sparse ``csr_matrix`` before calling
+    predict. Training time can be orders of magnitude faster for a sparse
+    matrix input compared to a dense matrix when features have zero values in
+    most of the samples.
+
 
 
 .. _tree_algorithms:

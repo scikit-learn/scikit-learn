@@ -23,7 +23,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import check_skip_travis
 
-from sklearn.base import (clone, ClusterMixin)
+from sklearn.base import (clone, ClusterMixin, ClassifierMixin)
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
 from sklearn.lda import LDA
@@ -64,6 +64,9 @@ def set_fast_parameters(estimator):
         # NMF
         if estimator.max_iter is not None:
             estimator.set_params(max_iter=min(5, estimator.max_iter))
+        # LinearSVR
+        if estimator.__class__.__name__ == 'LinearSVR':
+            estimator.set_params(max_iter=20)
     if "n_resampling" in params:
         # randomized lasso
         estimator.set_params(n_resampling=5)
@@ -365,6 +368,24 @@ def check_transformer_pickle(name, Transformer):
     assert_array_almost_equal(pickled_X_pred, X_pred)
 
 
+def check_estimators_partial_fit_n_features(name, Alg):
+    # check if number of features changes between calls to partial_fit.
+    if not hasattr(Alg, 'partial_fit'):
+        return
+    X, y = make_blobs(n_samples=50, random_state=1)
+    X -= X.min()
+    with warnings.catch_warnings(record=True):
+        alg = Alg()
+    set_fast_parameters(alg)
+    if isinstance(alg, ClassifierMixin):
+        classes = np.unique(y)
+        alg.partial_fit(X, y, classes=classes)
+    else:
+        alg.partial_fit(X, y)
+
+    assert_raises(ValueError, alg.partial_fit, X[:, :-1], y)
+
+
 def check_clustering(name, Alg):
     X, y = make_blobs(n_samples=50, random_state=1)
     X, y = shuffle(X, y, random_state=7)
@@ -397,6 +418,22 @@ def check_clustering(name, Alg):
     with warnings.catch_warnings(record=True):
         pred2 = alg.fit_predict(X)
     assert_array_equal(pred, pred2)
+
+
+def check_clusterer_compute_labels_predict(name, Clusterer):
+    """Check that predict is invariant of compute_labels"""
+    X, y = make_blobs(n_samples=20, random_state=0)
+    clusterer = Clusterer()
+
+    if hasattr(clusterer, "compute_labels"):
+        # MiniBatchKMeans
+        if hasattr(clusterer, "random_state"):
+            clusterer.set_params(random_state=0)
+
+        X_pred1 = clusterer.fit(X).predict(X)
+        clusterer.set_params(compute_labels=False)
+        X_pred2 = clusterer.fit(X).predict(X)
+        assert_array_equal(X_pred1, X_pred2)
 
 
 def check_classifiers_one_label(name, Classifier):
@@ -721,8 +758,8 @@ def check_class_weight_auto_classifiers(name, Classifier, X_train, y_train,
     classifier.set_params(class_weight='auto')
     classifier.fit(X_train, y_train)
     y_pred_auto = classifier.predict(X_test)
-    assert_greater(f1_score(y_test, y_pred_auto),
-                   f1_score(y_test, y_pred))
+    assert_greater(f1_score(y_test, y_pred_auto, average='weighted'),
+                   f1_score(y_test, y_pred, average='weighted'))
 
 
 def check_class_weight_auto_linear_classifier(name, Classifier):
@@ -962,12 +999,12 @@ def check_non_transformer_estimators_n_iter(name, estimator, multi_output=False)
 def check_transformer_n_iter(name, estimator):
     if name in CROSS_DECOMPOSITION:
         # Check using default data
-        X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
+        X = [[0., 0., 1.], [1., 0., 0.], [2., 2., 2.], [2., 5., 4.]]
         y_ = [[0.1, -0.2], [0.9, 1.1], [0.1, -0.5], [0.3, -0.2]]
 
     else:
         X, y_ = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
-                          random_state=0, n_features=2, cluster_std=0.1)
+                           random_state=0, n_features=2, cluster_std=0.1)
         X -= X.min() - 0.1
     set_random_state(estimator, 0)
     estimator.fit(X, y_)

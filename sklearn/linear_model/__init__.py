@@ -32,6 +32,7 @@ from .perceptron import Perceptron
 from .randomized_l1 import (RandomizedLasso, RandomizedLogisticRegression,
                             lasso_stability_path)
 from .ransac import RANSACRegressor
+from .theil_sen import TheilSenRegressor
 
 __all__ = ['ARDRegression',
            'BayesianRidge',
@@ -69,6 +70,7 @@ __all__ = ['ARDRegression',
            'SGDClassifier',
            'SGDRegressor',
            'SquaredLoss',
+           'TheilSenRegressor',
            'enet_path',
            'lars_path',
            'lasso_path',

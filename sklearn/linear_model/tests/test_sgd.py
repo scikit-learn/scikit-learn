@@ -14,11 +14,12 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regexp
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn import linear_model, datasets, metrics
 from sklearn.base import clone
 from sklearn.linear_model import SGDClassifier, SGDRegressor
-from sklearn.preprocessing import LabelEncoder, scale
+from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
 
 
 class SparseSGDClassifier(SGDClassifier):
@@ -208,25 +209,18 @@ class CommonTest(object):
         assert_false(hasattr(clf, 'standard_coef_'))
 
     def test_late_onset_averaging_not_reached(self):
-        eta0 = .001
-        clf1 = self.factory(average=12, learning_rate="constant",
-                            eta0=eta0, n_iter=2)
-        clf2 = self.factory(learning_rate="constant", eta0=eta0, n_iter=2)
+        clf1 = self.factory(average=600)
+        clf2 = self.factory()
+        for _ in range(100):
+            if isinstance(clf1, SGDClassifier):
+                clf1.partial_fit(X, Y, classes=np.unique(Y))
+                clf2.partial_fit(X, Y, classes=np.unique(Y))
+            else:
+                clf1.partial_fit(X, Y)
+                clf2.partial_fit(X, Y)
 
-        clf1.fit(X, Y)
-        clf2.fit(X, Y)
-
-        assert_array_almost_equal(clf1.coef_, clf2.coef_)
-        assert_almost_equal(clf1.intercept_, clf1.intercept_)
-
-        clf1 = self.factory(average=13, learning_rate="constant",
-                            eta0=eta0, n_iter=2)
-        clf1.fit(X, Y)
-
-        assert_array_almost_equal(clf1.coef_, clf2.coef_,
-                                  decimal=16)
-        assert_almost_equal(clf1.intercept_, clf2.intercept_,
-                            decimal=16)
+        assert_array_almost_equal(clf1.coef_, clf2.coef_, decimal=16)
+        assert_almost_equal(clf1.intercept_, clf2.intercept_, decimal=16)
 
     def test_late_onset_averaging_reached(self):
         eta0 = .001
@@ -604,6 +598,37 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf = self.factory(alpha=0.1, n_iter=1000, class_weight=[0.5])
         clf.fit(X, Y)
 
+    def test_class_weight_warning(self):
+        """Tests that class_weight passed through fit raises warning.
+           This test should be removed after deprecating support for this"""
+
+        clf = self.factory()
+        warning_message = ("You are trying to set class_weight through the "
+                           "fit "
+                           "method, which will be deprecated in version "
+                           "v0.17 of scikit-learn. Pass the class_weight into "
+                           "the constructor instead.")
+        assert_warns_message(DeprecationWarning,
+                             warning_message,
+                             clf.fit, X4, Y4,
+                             class_weight=1)
+
+    def test_weights_multiplied(self):
+        """Tests that class_weight and sample_weight are multiplicative"""
+        class_weights = {1: .6, 2: .3}
+        sample_weights = np.random.random(Y4.shape[0])
+        multiplied_together = np.copy(sample_weights)
+        multiplied_together[Y4 == 1] *= class_weights[1]
+        multiplied_together[Y4 == 2] *= class_weights[2]
+
+        clf1 = self.factory(alpha=0.1, n_iter=20, class_weight=class_weights)
+        clf2 = self.factory(alpha=0.1, n_iter=20)
+
+        clf1.fit(X4, Y4, sample_weight=sample_weights)
+        clf2.fit(X4, Y4, sample_weight=multiplied_together)
+
+        assert_array_equal(clf1.coef_, clf2.coef_)
+
     def test_auto_weight(self):
         """Test class weights for imbalanced data"""
         # compute reference metrics on iris dataset that is quite balanced by
@@ -617,14 +642,16 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         y = y[idx]
         clf = self.factory(alpha=0.0001, n_iter=1000,
                            class_weight=None).fit(X, y)
-        assert_almost_equal(metrics.f1_score(y, clf.predict(X)), 0.96,
-                            decimal=1)
+        assert_almost_equal(metrics.f1_score(y, clf.predict(X),
+                                             average='weighted'),
+                            0.96, decimal=1)
 
         # make the same prediction using automated class_weight
         clf_auto = self.factory(alpha=0.0001, n_iter=1000,
                                 class_weight="auto").fit(X, y)
-        assert_almost_equal(metrics.f1_score(y, clf_auto.predict(X)), 0.96,
-                            decimal=1)
+        assert_almost_equal(metrics.f1_score(y, clf_auto.predict(X),
+                                             average='weighted'),
+                            0.96, decimal=1)
 
         # Make sure that in the balanced case it does not change anything
         # to use "auto"
@@ -641,19 +668,19 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf = self.factory(n_iter=1000, class_weight=None)
         clf.fit(X_imbalanced, y_imbalanced)
         y_pred = clf.predict(X)
-        assert_less(metrics.f1_score(y, y_pred), 0.96)
+        assert_less(metrics.f1_score(y, y_pred, average='weighted'), 0.96)
 
         # fit a model with auto class_weight enabled
         clf = self.factory(n_iter=1000, class_weight="auto")
         clf.fit(X_imbalanced, y_imbalanced)
         y_pred = clf.predict(X)
-        assert_greater(metrics.f1_score(y, y_pred), 0.96)
+        assert_greater(metrics.f1_score(y, y_pred, average='weighted'), 0.96)
 
         # fit another using a fit parameter override
         clf = self.factory(n_iter=1000, class_weight="auto")
         clf.fit(X_imbalanced, y_imbalanced)
         y_pred = clf.predict(X)
-        assert_greater(metrics.f1_score(y, y_pred), 0.96)
+        assert_greater(metrics.f1_score(y, y_pred, average='weighted'), 0.96)
 
     def test_sample_weights(self):
         """Test weights on individual samples"""
@@ -1074,26 +1101,57 @@ def test_l1_ratio():
 
 
 def test_underflow_or_overlow():
-    # Generate some weird data with unscaled features
-    rng = np.random.RandomState(42)
-    n_samples = 100
-    n_features = 10
+    with np.errstate(all='raise'):
+        # Generate some weird data with hugely unscaled features
+        rng = np.random.RandomState(0)
+        n_samples = 100
+        n_features = 10
 
-    X = rng.normal(size=(n_samples, n_features))
-    X[:, 0] *= 100
+        X = rng.normal(size=(n_samples, n_features))
+        X[:, :2] *= 1e300
+        assert_true(np.isfinite(X).all())
 
-    # Define a ground truth on the scaled data
-    ground_truth = rng.normal(size=n_features)
-    y = (np.dot(scale(X), ground_truth) > 0.).astype(np.int32)
-    assert_array_equal(np.unique(y), [0, 1])
+        # Use MinMaxScaler to scale the data without introducing a numerical
+        # instability (computing the standard deviation naively is not possible
+        # on this data)
+        X_scaled = MinMaxScaler().fit_transform(X)
+        assert_true(np.isfinite(X_scaled).all())
 
-    model = SGDClassifier(alpha=0.1, loss='squared_hinge', n_iter=500)
+        # Define a ground truth on the scaled data
+        ground_truth = rng.normal(size=n_features)
+        y = (np.dot(X_scaled, ground_truth) > 0.).astype(np.int32)
+        assert_array_equal(np.unique(y), [0, 1])
 
-    # smoke test: model is stable on scaled data
-    model.fit(scale(X), y)
+        model = SGDClassifier(alpha=0.1, loss='squared_hinge', n_iter=500)
 
-    # model is numerically unstable on unscaled data
-    msg_regxp = (r"Floating-point under-/overflow occurred at epoch #.*"
-                 " Scaling input data with StandardScaler or MinMaxScaler"
-                 " might help.")
-    assert_raises_regexp(ValueError, msg_regxp, model.fit, X, y)
+        # smoke test: model is stable on scaled data
+        model.fit(X_scaled, y)
+        assert_true(np.isfinite(model.coef_).all())
+
+        # model is numerically unstable on unscaled data
+        msg_regxp = (r"Floating-point under-/overflow occurred at epoch #.*"
+                     " Scaling input data with StandardScaler or MinMaxScaler"
+                     " might help.")
+        assert_raises_regexp(ValueError, msg_regxp, model.fit, X, y)
+
+
+def test_numerical_stability_large_gradient():
+    # Non regression test case for numerical stability on scaled problems
+    # where the gradient can still explode with some losses
+    model = SGDClassifier(loss='squared_hinge', n_iter=10, shuffle=True,
+                          penalty='elasticnet', l1_ratio=0.3, alpha=0.01,
+                          eta0=0.001, random_state=0)
+    with np.errstate(all='raise'):
+        model.fit(iris.data, iris.target)
+    assert_true(np.isfinite(model.coef_).all())
+
+
+def test_large_regularization():
+    # Non regression tests for numerical stability issues caused by large
+    # regularization parameters
+    for penalty in ['l2', 'l1', 'elasticnet']:
+        model = SGDClassifier(alpha=1000., learning_rate='constant', eta0=0.1,
+                              n_iter=5, penalty=penalty)
+        with np.errstate(all='raise'):
+            model.fit(iris.data, iris.target)
+        assert_array_almost_equal(model.coef_, np.zeros_like(model.coef_))

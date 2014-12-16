@@ -342,3 +342,63 @@ def count_nonzero(X, axis=None, sample_weight=None):
                                weights=weights)
     else:
         raise ValueError('Unsupported axis: {0}'.format(axis))
+
+
+def _get_median(data, n_zeros):
+    """Compute the median of data with n_zeros additional zeros.
+
+    This function is used to support sparse matrices; it modifies data in-place
+    """
+    n_elems = len(data) + n_zeros
+    if not n_elems:
+        return np.nan
+    n_negative = np.count_nonzero(data < 0)
+    middle, is_odd = divmod(n_elems, 2)
+    data.sort()
+
+    if is_odd:
+        return _get_elem_at_rank(middle, data, n_negative, n_zeros)
+
+    return (_get_elem_at_rank(middle - 1, data, n_negative, n_zeros) +
+            _get_elem_at_rank(middle, data, n_negative, n_zeros)) / 2.
+
+
+def _get_elem_at_rank(rank, data, n_negative, n_zeros):
+    """Find the value in data augmented with n_zeros for the given rank"""
+    if rank < n_negative:
+        return data[rank]
+    if rank - n_negative < n_zeros:
+        return 0
+    return data[rank - n_zeros]
+
+
+def csc_median_axis_0(X):
+    """Find the median across axis 0 of a CSC matrix.
+    It is equivalent to doing np.median(X, axis=0).
+
+    Parameters
+    ----------
+    X : CSC sparse matrix, shape (n_samples, n_features)
+        Input data.
+
+    Returns
+    -------
+    median : ndarray, shape (n_features,)
+        Median. 
+
+    """
+    if not isinstance(X, sp.csc_matrix):
+        raise TypeError("Expected matrix of CSC format, got %s" % X.format)
+
+    indptr = X.indptr
+    n_samples, n_features = X.shape
+    median = np.zeros(n_features)
+
+    for f_ind, (start, end) in enumerate(zip(indptr[:-1], indptr[1:])):
+
+        # Prevent modifying X in place
+        data = np.copy(X.data[start: end])
+        nz = n_samples - data.size
+        median[f_ind] = _get_median(data, nz)
+
+    return median

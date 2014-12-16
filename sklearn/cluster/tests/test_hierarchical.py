@@ -2,7 +2,8 @@
 Several basic tests for hierarchical clustering procedures
 
 """
-# Authors: Vincent Michel, 2010, Gael Varoquaux 2012
+# Authors: Vincent Michel, 2010, Gael Varoquaux 2012,
+#          Matteo Visconti di Oleggio Castello 2014
 # License: BSD 3 clause
 from tempfile import mkdtemp
 import warnings
@@ -34,8 +35,8 @@ from sklearn.utils.testing import assert_warns
 
 def test_linkage_misc():
     # Misc tests on linkage
-    rnd = np.random.RandomState(42)
-    X = rnd.normal(size=(5, 5))
+    rng = np.random.RandomState(42)
+    X = rng.normal(size=(5, 5))
     assert_raises(ValueError, AgglomerativeClustering(linkage='foo').fit, X)
     assert_raises(ValueError, linkage_tree, X, linkage='foo')
     assert_raises(ValueError, linkage_tree, X, connectivity=np.ones((4, 4)))
@@ -60,11 +61,11 @@ def test_structured_linkage_tree():
     """
     Check that we obtain the correct solution for structured linkage trees.
     """
-    rnd = np.random.RandomState(0)
+    rng = np.random.RandomState(0)
     mask = np.ones([10, 10], dtype=np.bool)
     # Avoiding a mask with only 'True' entries
     mask[4:7, 4:7] = 0
-    X = rnd.randn(50, 100)
+    X = rng.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
     for tree_builder in _TREE_BUILDERS.values():
         children, n_components, n_leaves, parent = \
@@ -84,8 +85,8 @@ def test_unstructured_linkage_tree():
     """
     Check that we obtain the correct solution for unstructured linkage trees.
     """
-    rnd = np.random.RandomState(0)
-    X = rnd.randn(50, 100)
+    rng = np.random.RandomState(0)
+    X = rng.randn(50, 100)
     for this_X in (X, X[0]):
         # With specified a number of clusters just for the sake of
         # raising a warning and testing the warning code
@@ -109,9 +110,9 @@ def test_height_linkage_tree():
     """
     Check that the height of the results of linkage tree is sorted.
     """
-    rnd = np.random.RandomState(0)
+    rng = np.random.RandomState(0)
     mask = np.ones([10, 10], dtype=np.bool)
-    X = rnd.randn(50, 100)
+    X = rng.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
     for linkage_func in _TREE_BUILDERS.values():
         children, n_nodes, n_leaves, parent = linkage_func(X.T, connectivity)
@@ -124,10 +125,10 @@ def test_agglomerative_clustering():
     Check that we obtain the correct number of clusters with
     agglomerative clustering.
     """
-    rnd = np.random.RandomState(0)
+    rng = np.random.RandomState(0)
     mask = np.ones([10, 10], dtype=np.bool)
     n_samples = 100
-    X = rnd.randn(n_samples, 50)
+    X = rng.randn(n_samples, 50)
     connectivity = grid_to_graph(*mask.shape)
     for linkage in ("ward", "complete", "average"):
         clustering = AgglomerativeClustering(n_clusters=10,
@@ -194,9 +195,9 @@ def test_ward_agglomeration():
     """
     Check that we obtain the correct solution in a simplistic case
     """
-    rnd = np.random.RandomState(0)
+    rng = np.random.RandomState(0)
     mask = np.ones([10, 10], dtype=np.bool)
-    X = rnd.randn(50, 100)
+    X = rng.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
     assert_warns(DeprecationWarning, WardAgglomeration)
 
@@ -234,15 +235,15 @@ def test_scikit_vs_scipy():
     """Test scikit linkage with full connectivity (i.e. unstructured) vs scipy
     """
     n, p, k = 10, 5, 3
-    rnd = np.random.RandomState(0)
+    rng = np.random.RandomState(0)
 
     # Not using a lil_matrix here, just to check that non sparse
     # matrices are well handled
     connectivity = np.ones((n, n))
     for linkage in _TREE_BUILDERS.keys():
         for i in range(5):
-            X = .1 * rnd.normal(size=(n, p))
-            X -= 4 * np.arange(n)[:, np.newaxis]
+            X = .1 * rng.normal(size=(n, p))
+            X -= 4. * np.arange(n)[:, np.newaxis]
             X -= X.mean(axis=1)[:, np.newaxis]
 
             out = hierarchy.linkage(X, method=linkage)
@@ -277,6 +278,28 @@ def test_connectivity_popagation():
     # If changes are not propagated correctly, fit crashes with an
     # IndexError
     ward.fit(X)
+
+
+def test_ward_tree_children_order():
+    """
+    Check that children are ordered in the same way for both structured and
+    unstructured versions of ward_tree.
+    """
+
+    # test on five random datasets
+    n, p = 10, 5
+    rng = np.random.RandomState(0)
+
+    connectivity = np.ones((n, n))
+    for i in range(5):
+        X = .1 * rng.normal(size=(n, p))
+        X -= 4. * np.arange(n)[:, np.newaxis]
+        X -= X.mean(axis=1)[:, np.newaxis]
+
+        out_unstructured = ward_tree(X)
+        out_structured = ward_tree(X, connectivity=connectivity)
+
+        assert_array_equal(out_unstructured[0], out_structured[0])
 
 
 def test_connectivity_fixing_non_lil():

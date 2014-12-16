@@ -5,6 +5,7 @@ and pairwise metrics and distance computations.
 
 from .ranking import auc
 from .ranking import average_precision_score
+from .ranking import coverage_error
 from .ranking import label_ranking_average_precision_score
 from .ranking import precision_recall_curve
 from .ranking import roc_auc_score
@@ -52,6 +53,7 @@ from .regression import r2_score
 
 from .scorer import make_scorer
 from .scorer import SCORERS
+from .scorer import get_scorer
 
 # Deprecated in 0.16
 from .ranking import auc_score
@@ -67,10 +69,12 @@ __all__ = [
     'completeness_score',
     'confusion_matrix',
     'consensus_score',
+    'coverage_error',
     'euclidean_distances',
     'explained_variance_score',
     'f1_score',
     'fbeta_score',
+    'get_scorer',
     'hamming_loss',
     'hinge_loss',
     'homogeneity_completeness_v_measure',

@@ -677,7 +677,6 @@ def test_grid_search_allows_nans():
     GridSearchCV(p, {'classifier__foo_param': [1, 2, 3]}, cv=2).fit(X, y)
 
 
-
 class FailingClassifier(BaseEstimator):
     """Classifier that raises a ValueError on fit()"""
 
@@ -717,6 +716,14 @@ def test_grid_search_failing_classifier():
     # Ensure that grid scores were set to zero as required for those fits
     # that are expected to fail.
     assert all(np.all(this_point.cv_validation_scores == 0.0)
+               for this_point in gs.grid_scores_
+               if this_point.parameters['parameter'] ==
+               FailingClassifier.FAILING_PARAMETER)
+
+    gs = GridSearchCV(clf, [{'parameter': [0, 1, 2]}], scoring='accuracy',
+                      refit=False, error_score=float('nan'))
+    assert_warns(FitFailedWarning, gs.fit, X, y)
+    assert all(np.all(np.isnan(this_point.cv_validation_scores))
                for this_point in gs.grid_scores_
                if this_point.parameters['parameter'] ==
                FailingClassifier.FAILING_PARAMETER)

@@ -22,7 +22,7 @@ from sklearn.utils.testing import ignore_warnings
 
 
 METRICS = {
-    'f1': f1_score,
+    'f1': partial(f1_score, average='micro'),
     'f1-by-sample': partial(f1_score, average='samples'),
     'accuracy': accuracy_score,
     'hamming': hamming_loss,

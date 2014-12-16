@@ -385,7 +385,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     n_resampling : int, optional, default=200
         Number of randomized models.
 
-    selection_threshold: float, optional, default=0.25
+    selection_threshold : float, optional, default=0.25
         The score above which features should be selected.
 
     fit_intercept : boolean, optional, default=True

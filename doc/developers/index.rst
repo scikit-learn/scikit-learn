@@ -42,6 +42,23 @@ extension in place::
 
     python setup.py build_ext --inplace
 
+
+Another option is to use the ``develop`` option if you change your code a lot
+and do not want to have to reinstall every time. This basically builds the
+extension in place and creates a link to the development directory (see
+<https://pythonhosted.org/setuptools/setuptools.html#development-mode>)::
+
+    python setup.py develop
+
+.. note::
+
+    if you decide to do that you have to rerun::
+
+        python setup.py build_ext --inplace
+
+    every time the source code of a compiled extension is
+    changed (for instance when switching branches or pulling changes from upstream).
+
 On Unix-like systems, you can simply type ``make`` in the top-level folder to
 build in-place and launch all the tests. Have a look at the ``Makefile`` for
 additional utilities.
@@ -577,7 +594,7 @@ multiple interfaces):
 
     Classification algorithms usually also offer a way to quantify certainty
     of a prediction, either using ``decision_function`` or ``predict_proba``::
-        
+
       probability = obj.predict_proba(data)
 
 :Transformer:
@@ -811,6 +828,11 @@ The easiest and recommended way to accomplish this is to
 **not do any parameter validation in ``__init__``**.
 All logic behind estimator parameters,
 like translating string arguments into functions, should be done in ``fit``.
+
+Also it is expected that parameters with trailing ``_`` are **not to be set
+inside the ``__init__`` method**. All and only the public attributes set by
+fit have a trailing ``_``. As a result the existence of parameters with
+trailing ``_`` is used to check if the estimator has been fitted.
 
 .. _cloning:
 

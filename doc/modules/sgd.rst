@@ -296,8 +296,9 @@ All of the above loss functions can be regarded as an upper bound on the
 misclassification error (Zero-one loss) as shown in the Figure below.
 
 .. figure:: ../auto_examples/linear_model/images/plot_sgd_loss_functions_001.png
-   :align: center
-   :scale: 75
+    :target: ../auto_examples/linear_model/plot_sgd_loss_functions.html
+    :align: center
+    :scale: 75
 
 Popular choices for the regularization term :math:`R` include:
 
@@ -310,8 +311,9 @@ The Figure below shows the contours of the different regularization terms
 in the parameter space when :math:`R(w) = 1`.
 
 .. figure:: ../auto_examples/linear_model/images/plot_sgd_penalties_001.png
-   :align: center
-   :scale: 75
+    :target: ../auto_examples/linear_model/plot_sgd_penalties.html
+    :align: center
+    :scale: 75
 
 SGD
 ---

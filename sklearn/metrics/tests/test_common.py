@@ -26,6 +26,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import coverage_error
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import fbeta_score
@@ -106,6 +107,7 @@ CLASSIFICATION_METRICS = {
     "zero_one_loss": zero_one_loss,
     "unnormalized_zero_one_loss": partial(zero_one_loss, normalize=False),
 
+    # These are needed to test averaging
     "precision_score": precision_score,
     "recall_score": recall_score,
     "f1_score": f1_score,
@@ -139,6 +141,8 @@ CLASSIFICATION_METRICS = {
 }
 
 THRESHOLDED_METRICS = {
+    "coverage_error": coverage_error,
+
     "log_loss": log_loss,
     "unnormalized_log_loss": partial(log_loss, normalize=False),
 
@@ -191,6 +195,8 @@ METRIC_UNDEFINED_MULTICLASS = [
 
     "roc_auc_score", "micro_roc_auc", "weighted_roc_auc",
     "macro_roc_auc",  "samples_roc_auc",
+
+    "coverage_error",
 ]
 
 # Metrics with an "average" argument
@@ -220,6 +226,8 @@ METRICS_WITH_POS_LABEL = [
 ]
 
 # Metrics with a "labels" argument
+# XXX: Handle multi_class metrics that has a labels argument as well as a
+# decision function argument. e.g hinge_loss
 METRICS_WITH_LABELS = [
     "confusion_matrix",
 
@@ -253,6 +261,8 @@ THRESHOLDED_MULTILABEL_METRICS = [
     "average_precision_score", "weighted_average_precision_score",
     "samples_average_precision_score", "micro_average_precision_score",
     "macro_average_precision_score",
+
+    "coverage_error",
 ]
 
 # Classification metrics with  "multilabel-indicator" and
@@ -280,8 +290,7 @@ MULTILABELS_METRICS = [
 
 # Regression metrics with "multioutput-continuous" format support
 MULTIOUTPUT_METRICS = [
-    "mean_absolute_error", "mean_squared_error", "median_absolute_error",
-    "r2_score",
+    "mean_absolute_error", "mean_squared_error", "r2_score",
 ]
 
 # Symmetric with respect to their input arguments y_true and y_pred
@@ -323,12 +332,12 @@ NOT_SYMMETRIC_METRICS = [
 METRICS_WITHOUT_SAMPLE_WEIGHT = [
     "confusion_matrix",
     "hamming_loss",
-    "hinge_loss",
     "matthews_corrcoef_score",
     "median_absolute_error",
 ]
 
 
+@ignore_warnings
 def test_symmetry():
     """Test the symmetry of score and loss functions"""
     random_state = check_random_state(0)
@@ -359,6 +368,7 @@ def test_symmetry():
                     msg="%s seems to be symmetric" % name)
 
 
+@ignore_warnings
 def test_sample_order_invariance():
     random_state = check_random_state(0)
     y_true = random_state.randint(0, 2, size=(20, ))
@@ -375,6 +385,7 @@ def test_sample_order_invariance():
                                     % name)
 
 
+@ignore_warnings
 def test_sample_order_invariance_multilabel_and_multioutput():
     random_state = check_random_state(0)
 
@@ -414,6 +425,7 @@ def test_sample_order_invariance_multilabel_and_multioutput():
                                     % name)
 
 
+@ignore_warnings
 def test_format_invariance_with_1d_vectors():
     random_state = check_random_state(0)
     y1 = random_state.randint(0, 2, size=(20, ))
@@ -492,6 +504,7 @@ def test_format_invariance_with_1d_vectors():
             assert_raises(ValueError, metric, y1_row, y2_row)
 
 
+@ignore_warnings
 def test_invariance_string_vs_numbers_labels():
     """Ensure that classification metrics with string labels"""
     random_state = check_random_state(0)
@@ -620,6 +633,7 @@ def test_multioutput_regression_invariance_to_dimension_shuffling():
                                         "invariant" % name)
 
 
+@ignore_warnings
 def test_multilabel_representation_invariance():
     # Generate some data
     n_classes = 4
@@ -969,6 +983,11 @@ def check_sample_weight_invariance(name, metric, y1, y2):
                 err_msg="%s sample_weight is not invariant "
                         "under scaling" % name)
 
+    # Check that if sample_weight.shape[0] != y_true.shape[0], it raised an
+    # error
+    assert_raises(Exception, metric, y1, y2,
+                  sample_weight=np.hstack([sample_weight, sample_weight]))
+
 
 def test_sample_weight_invariance(n_samples=50):
     random_state = check_random_state(0)
@@ -1045,3 +1064,5 @@ def test_sample_weight_invariance(n_samples=50):
         else:
             yield (check_sample_weight_invariance, name, metric, y_true,
                    y_pred)
+
+

@@ -991,6 +991,24 @@ def test_fscore_warnings():
                          'being set to 0.0 due to no true samples.')
 
 
+def test_prf_average_compat():
+    """Ensure warning if f1_score et al.'s average is implicit for multiclass
+    """
+    y_true = [1, 2, 3, 3]
+    y_pred = [1, 2, 3, 1]
+
+    for metric in [precision_score, recall_score, f1_score,
+                   partial(fbeta_score, beta=2)]:
+        score = assert_warns(DeprecationWarning, metric, y_true, y_pred)
+        score_weighted = assert_no_warnings(metric, y_true, y_pred,
+                                            average='weighted')
+        assert_equal(score, score_weighted,
+                     'average does not act like "weighted" by default')
+
+        # check binary passes without warning
+        assert_no_warnings(metric, [0, 1, 1], [0, 1, 0])
+
+
 @ignore_warnings  # sequence of sequences is deprecated
 def test__check_targets():
     """Check that _check_targets correctly merges target types, squeezes
@@ -1093,6 +1111,95 @@ def test_hinge_loss_binary():
     y_true = np.array([0, 2, 2, 0])
     pred_decision = np.array([-8.5, 0.5, 1.5, -0.3])
     assert_equal(hinge_loss(y_true, pred_decision), 1.2 / 4)
+
+
+def test_hinge_loss_multiclass():
+    pred_decision = np.array([
+        [0.36, -0.17, -0.58, -0.99],
+        [-0.54, -0.37, -0.48, -0.58],
+        [-1.45, -0.58, -0.38, -0.17],
+        [-0.54, -0.38, -0.48, -0.58],
+        [-2.36, -0.79, -0.27,  0.24],
+        [-1.45, -0.58, -0.38, -0.17]
+    ])
+    y_true = np.array([0, 1, 2, 1, 3, 2])
+    dummy_losses = np.array([
+        1 - pred_decision[0][0] + pred_decision[0][1],
+        1 - pred_decision[1][1] + pred_decision[1][2],
+        1 - pred_decision[2][2] + pred_decision[2][3],
+        1 - pred_decision[3][1] + pred_decision[3][2],
+        1 - pred_decision[4][3] + pred_decision[4][2],
+        1 - pred_decision[5][2] + pred_decision[5][3]
+    ])
+    dummy_losses[dummy_losses <= 0] = 0
+    dummy_hinge_loss = np.mean(dummy_losses)
+    assert_equal(hinge_loss(y_true, pred_decision),
+                 dummy_hinge_loss)
+
+
+def test_hinge_loss_multiclass_missing_labels_with_labels_none():
+    y_true = np.array([0, 1, 2, 2])
+    pred_decision = np.array([
+        [1.27, 0.034, -0.68, -1.40],
+        [-1.45, -0.58, -0.38, -0.17],
+        [-2.36, -0.79, -0.27,  0.24],
+        [-2.36, -0.79, -0.27,  0.24]
+    ])
+    error_message = ("Please include all labels in y_true "
+                     "or pass labels as third argument")
+    assert_raise_message(ValueError,
+                         error_message,
+                         hinge_loss, y_true, pred_decision)
+
+
+def test_hinge_loss_multiclass_with_missing_labels():
+    pred_decision = np.array([
+        [0.36, -0.17, -0.58, -0.99],
+        [-0.55, -0.38, -0.48, -0.58],
+        [-1.45, -0.58, -0.38, -0.17],
+        [-0.55, -0.38, -0.48, -0.58],
+        [-1.45, -0.58, -0.38, -0.17]
+    ])
+    y_true = np.array([0, 1, 2, 1, 2])
+    labels = np.array([0, 1, 2, 3])
+    dummy_losses = np.array([
+        1 - pred_decision[0][0] + pred_decision[0][1],
+        1 - pred_decision[1][1] + pred_decision[1][2],
+        1 - pred_decision[2][2] + pred_decision[2][3],
+        1 - pred_decision[3][1] + pred_decision[3][2],
+        1 - pred_decision[4][2] + pred_decision[4][3]
+    ])
+    dummy_losses[dummy_losses <= 0] = 0
+    dummy_hinge_loss = np.mean(dummy_losses)
+    assert_equal(hinge_loss(y_true, pred_decision, labels=labels),
+                 dummy_hinge_loss)
+
+
+def test_hinge_loss_multiclass_invariance_lists():
+    # Currently, invariance of string and integer labels cannot be tested
+    # in common invariance tests because invariance tests for multiclass
+    # decision functions is not implemented yet.
+    y_true = ['blue', 'green', 'red',
+              'green', 'white', 'red']
+    pred_decision = [
+        [0.36, -0.17, -0.58, -0.99],
+        [-0.55, -0.38, -0.48, -0.58],
+        [-1.45, -0.58, -0.38,  -0.17],
+        [-0.55, -0.38, -0.48, -0.58],
+        [-2.36, -0.79, -0.27,  0.24],
+        [-1.45, -0.58, -0.38,  -0.17]]
+    dummy_losses = np.array([
+        1 - pred_decision[0][0] + pred_decision[0][1],
+        1 - pred_decision[1][1] + pred_decision[1][2],
+        1 - pred_decision[2][2] + pred_decision[2][3],
+        1 - pred_decision[3][1] + pred_decision[3][2],
+        1 - pred_decision[4][3] + pred_decision[4][2],
+        1 - pred_decision[5][2] + pred_decision[5][3]
+    ])
+    dummy_losses[dummy_losses <= 0] = 0
+    dummy_hinge_loss = np.mean(dummy_losses)
+    assert_equal(hinge_loss(y_true, pred_decision),
+                 dummy_hinge_loss)
 
 
 def test_log_loss():

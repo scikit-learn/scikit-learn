@@ -478,7 +478,7 @@ class DPGMM(GMM):
         For a full derivation and description of the algorithm see
         doc/modules/dp-derivation.rst
         or
-        http://scikit-learn.org/stable/modules/dp-derivation.html#
+        http://scikit-learn.org/stable/modules/dp-derivation.html
 
         A initialization step is performed before entering the em
         algorithm. If you want to avoid this step, set the keyword
@@ -681,9 +681,6 @@ class VBGMM(DPGMM):
         X = np.asarray(X)
         if X.ndim == 1:
             X = X[:, np.newaxis]
-        z = np.zeros((X.shape[0], self.n_components))
-        p = np.zeros(self.n_components)
-        bound = np.zeros(X.shape[0])
         dg = digamma(self.gamma_) - digamma(np.sum(self.gamma_))
 
         if self.covariance_type not in ['full', 'tied', 'diag', 'spherical']:
