@@ -17,10 +17,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
-<<<<<<< HEAD
 from sklearn.utils.testing import clean_warning_registry, ignore_warnings
-=======
->>>>>>> TST, test ward_tree_distance on known dataset
 
 from sklearn.cluster import Ward, WardAgglomeration, ward_tree
 from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration
@@ -291,16 +288,16 @@ def test_ward_tree_children_order():
 
     # test on five random datasets
     n, p = 10, 5
-    rnd = np.random.RandomState(0)
+    rng = np.random.RandomState(0)
 
     connectivity = np.ones((n, n))
     for i in range(5):
-        X = .1 * rnd.normal(size=(n, p))
-        X -= 4 * np.arange(n)[:, np.newaxis]
+        X = .1 * rng.normal(size=(n, p))
+        X -= 4. * np.arange(n)[:, np.newaxis]
         X -= X.mean(axis=1)[:, np.newaxis]
 
         out_unstructured = ward_tree(X)
-        out_structured = ward_tree(X, connectivity)
+        out_structured = ward_tree(X, connectivity=connectivity)
 
         assert_array_equal(out_unstructured[0], out_structured[0])
 

@@ -87,8 +87,8 @@ def _fix_connectivity(X, connectivity, n_components=None,
 ###############################################################################
 # Hierarchical tree building functions
 
-def ward_tree(X, connectivity=None, n_components=None, copy=None,
-              n_clusters=None, return_distance=False):
+def ward_tree(X, connectivity=None, n_components=None, n_clusters=None, 
+              return_distance=False):
     """Ward clustering based on a Feature matrix.
 
     Recursively merges the pair of clusters that minimally increases
