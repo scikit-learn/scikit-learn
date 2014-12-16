@@ -143,12 +143,30 @@ def ward_tree(X, connectivity=None, n_components=None, copy=None,
         is specified, elsewhere 'None' is returned.
 
     distances : 1D array, shape (n_nodes, )
-        The distances between the centers of the nodes. For example,
-        `distances[i]` corresponds to a weighted euclidean distance between
+        Only returned if return_distance is set to True (for compatibility).
+        The distances between the centers of the nodes. `distances[i]`
+        corresponds to a weighted euclidean distance between
         the nodes `children[i, 1]` and `children[i, 2]`. If the nodes refer to
         leaves of the tree, then `distances[i]` is their unweighted euclidean
-        distance.
-        Only returned if return_distance is set to True (for compatibility).
+        distance. Distances are updated in the following way
+        (from scipy.hierarchy.linkage):
+
+        The new entry :math:`d(u,v)` is computed as follows,
+
+        .. math::
+
+           d(u,v) = \\sqrt{\\frac{|v|+|s|}
+                               {T}d(v,s)^2
+                        + \\frac{|v|+|t|}
+                               {T}d(v,t)^2
+                        - \\frac{|v|}
+                               {T}d(s,t)^2}
+
+        where :math:`u` is the newly joined cluster consisting of
+        clusters :math:`s` and :math:`t`, :math:`v` is an unused
+        cluster in the forest, :math:`T=|v|+|s|+|t|`, and
+        :math:`|*|` is the cardinality of its argument. This is also
+        known as the incremental algorithm.
     """
     X = np.asarray(X)
     if X.ndim == 1:
