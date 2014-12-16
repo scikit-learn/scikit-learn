@@ -234,7 +234,8 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
     parent = np.arange(n_nodes, dtype=np.intp)
     used_node = np.ones(n_nodes, dtype=bool)
     children = []
-    distances = []
+    if return_distance:
+        distances = []
 
     not_visited = np.empty(n_nodes, dtype=np.int8, order='C')
 
@@ -248,8 +249,8 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
         parent[i], parent[j] = k, k
         children.append((i, j))
         used_node[i] = used_node[j] = False
-        # store inertia value
-        distances.append(inert)
+        if return_distance:  # store inertia value
+            distances.append(inert)
 
         # update the moments
         moments_1[k] = moments_1[i] + moments_1[j]
