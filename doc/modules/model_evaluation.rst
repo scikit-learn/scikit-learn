@@ -1075,6 +1075,40 @@ Here is a small example of usage of this function::
     >>> label_ranking_average_precision_score(y_true, y_score) # doctest: +ELLIPSIS
     0.416...
 
+Ranking loss
+------------
+
+The :func:`label_ranking_loss` function computes the ranking loss which
+averages over the samples the number of label pairs that are incorrectly
+ordered, i.e. true labels have a lower score than false labels, weighted by the
+the inverse number of false and true labels. The lowest achievable
+ranking loss is zero.
+
+Formally, given a binary indicator matrix of the ground truth labels
+:math:`y \in \left\{0, 1\right\}^{n_\text{samples} \times n_\text{labels}}` and the
+score associated with each label
+:math:`\hat{f} \in \mathbb{R}^{n_\text{samples} \times n_\text{labels}}`,
+the ranking loss is defined as
+
+.. math::
+  \text{ranking\_loss}(y, \hat{f}) =  \frac{1}{n_{\text{samples}}}
+    \sum_{i=0}^{n_{\text{samples}} - 1} \frac{1}{|y_i|(n_\text{labels} - |y_i|)}
+    \left|\left\{(k, l): \hat{f}_{ik} < \hat{f}_{il}, y_{ik} = 1, y_{il} = 0 \right\}\right|
+
+where :math:`|\cdot|` is the :math:`\ell_0` norm or the cardinality of the set.
+
+Here is a small example of usage of this function::
+
+    >>> import numpy as np
+    >>> from sklearn.metrics import label_ranking_loss
+    >>> y_true = np.array([[1, 0, 0], [0, 0, 1]])
+    >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
+    >>> label_ranking_loss(y_true, y_score) # doctest: +ELLIPSIS
+    0.75...
+    >>> # With the following prediction, we have perfect and minimal loss
+    >>> y_score = np.array([[1.0, 0.1, 0.2], [0.1, 0.2, 0.9]])
+    >>> label_ranking_loss(y_true, y_score)
+    0.0
 
 .. _regression_metrics:
 
