@@ -67,19 +67,18 @@ def _fix_connectivity(X, connectivity, n_components=None,
                       "stopping the tree early." % n_components,
                       stacklevel=2)
         # XXX: Can we do without completing the matrix?
-        for i in xrange(n_components):
+        for i in xrange(1, n_components):
             idx_i = np.where(labels == i)[0]
             Xi = X[idx_i]
-            for j in xrange(i):
-                idx_j = np.where(labels == j)[0]
-                Xj = X[idx_j]
-                D = pairwise_distances(Xi, Xj, metric=affinity)
-                ii, jj = np.where(D == np.min(D))
-                ii = ii[0]
-                jj = jj[0]
-                connectivity[idx_i[ii], idx_j[jj]] = True
-                connectivity[idx_j[jj], idx_i[ii]] = True
-        n_components = 1
+            j = i - 1
+            idx_j = np.where(labels == j)[0]
+            Xj = X[idx_j]
+            D = pairwise_distances(Xi, Xj, metric=affinity)
+            ii, jj = np.where(D == np.min(D))
+            ii = ii[0]
+            jj = jj[0]
+            connectivity[idx_i[ii], idx_j[jj]] = True
+            connectivity[idx_j[jj], idx_i[ii]] = True
 
     return connectivity
 
