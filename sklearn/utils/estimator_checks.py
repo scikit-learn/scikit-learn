@@ -617,11 +617,14 @@ def check_estimators_partial_fit_n_features(name, Alg):
     with warnings.catch_warnings(record=True):
         alg = Alg()
     set_fast_parameters(alg)
-    if isinstance(alg, ClassifierMixin):
-        classes = np.unique(y)
-        alg.partial_fit(X, y, classes=classes)
-    else:
-        alg.partial_fit(X, y)
+    try:
+        if isinstance(alg, ClassifierMixin):
+            classes = np.unique(y)
+            alg.partial_fit(X, y, classes=classes)
+        else:
+            alg.partial_fit(X, y)
+    except NotImplementedError:
+        return
 
     assert_raises(ValueError, alg.partial_fit, X[:, :-1], y)
 

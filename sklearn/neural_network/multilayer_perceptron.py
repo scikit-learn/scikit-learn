@@ -519,7 +519,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         self : returns a trained MLP model.
         """
         if self.algorithm != 'sgd':
-            raise ValueError("only SGD algorithm supports partial fit")
+            raise NotImplementedError("only SGD algorithm supports partial fit")
 
         return self._fit(X, y, incremental=True)
 
