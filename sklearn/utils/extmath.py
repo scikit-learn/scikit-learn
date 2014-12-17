@@ -102,8 +102,7 @@ def _fast_dot(A, B):
                                  for x in [A, B]):
         warnings.warn('Data must be of same type. Supported types '
                       'are 32 and 64 bit float. '
-                      'Falling back to np.dot.', NonBLASDotWarning,
-                      stacklevel=2)
+                      'Falling back to np.dot.', NonBLASDotWarning)
         raise ValueError
 
     if min(A.shape) == 1 or min(B.shape) == 1 or A.ndim != 2 or B.ndim != 2:
