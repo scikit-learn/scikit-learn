@@ -307,11 +307,6 @@ def test_ward_tree_distance():
     Check that children are ordered in the same way for both structured and
     unstructured versions of ward_tree.
     """
-
-    def argsort(x, key, **kwargs):
-        return sorted(range(len(x)),
-                      key=lambda e: key(x.__getitem__(e)), **kwargs)
-
     # test on five random datasets
     n, p = 10, 5
     rng = np.random.RandomState(0)
@@ -330,13 +325,8 @@ def test_ward_tree_distance():
         children_unstructured = out_unstructured[0]
         children_structured = out_structured[0]
 
-        # sort clusters according to the same criterion
-        idx_unstructured = argsort(children_unstructured, key=max)
-        idx_structured = argsort(children_structured, key=max)
-
         # check if we got the same clusters
-        assert_array_equal(children_unstructured[idx_unstructured],
-                           children_structured[idx_structured])
+        assert_array_equal(children_unstructured, children_structured)
 
         # check if the distances are the same
         dist_unstructured = out_unstructured[-1]
