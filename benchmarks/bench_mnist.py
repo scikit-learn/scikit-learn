@@ -15,6 +15,7 @@ Example of output :
     ===========================
     Classifier               train-time   test-time   error-rat
     ------------------------------------------------------------
+    MultilayerPerceptron       1308.66s       0.31s       0.0184
     Nystroem-SVM                105.07s       0.91s       0.0227
     ExtraTrees                   48.20s       1.22s       0.0288
     RandomForest                 47.17s       1.21s       0.0304
