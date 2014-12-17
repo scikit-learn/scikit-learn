@@ -1343,7 +1343,7 @@ of two scores:
 - **b**: The mean distance between a sample and all other points in the *next
   nearest cluster*.
 
-The Silhoeutte Coefficient *s* for a single sample is then given as:
+The Silhouette Coefficient *s* for a single sample is then given as:
 
 .. math:: s = \frac{b - a}{max(a, b)}
 

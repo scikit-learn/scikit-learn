@@ -96,7 +96,7 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
 def silhouette_samples(X, labels, metric='euclidean', **kwds):
     """Compute the Silhouette Coefficient for each sample.
 
-    The Silhoeutte Coefficient is a measure of how well samples are clustered
+    The Silhouette Coefficient is a measure of how well samples are clustered
     with samples that are similar to themselves. Clustering models with a high
     Silhouette Coefficient are said to be dense, where samples in the same
     cluster are similar to each other, and well separated, where samples in
