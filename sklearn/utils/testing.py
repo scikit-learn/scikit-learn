@@ -233,9 +233,9 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
                 message_found = True
                 break
 
-        if not(message_found):
-            raise AssertionError("Did not receive the message you expected ('%s') "
-                                 "for <%s>."
+        if not message_found:
+            raise AssertionError("Did not receive the message you expected "
+                                 "('%s') for <%s>."
                                  % (message, func.__name__))
 
     return result
