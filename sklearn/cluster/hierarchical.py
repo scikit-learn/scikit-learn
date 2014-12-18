@@ -125,12 +125,11 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None):
     -------
     children : 2D array, shape (n_nodes, 2)
         The children of each non-leaf node. Values less than `n_samples`
-        refer to leaves of the tree. A value `i` greater than or equal to
-        `n_samples` is a non-leaf node and has children
-        `children_[i - n_samples]`.
-        The index refers to the height when two nodes are merged.
-        For instance, children_[0] refers to the nodes that were closest to
-        each other and hence were merged first and so on.
+        correspond to leaves of the tree which are the original samples.
+        A node `i` greater than or equal to `n_samples` is a non-leaf
+        node and has children `children_[i - n_samples]`. Alternatively
+        at the i-th iteration, children[i][0] and children[i][1]
+        are merged to form node `n_samples + i`
 
     n_components : int
         The number of connected components in the graph.
@@ -301,12 +300,11 @@ def linkage_tree(X, connectivity=None, n_components=None,
     -------
     children : 2D array, shape (n_nodes, 2)
         The children of each non-leaf node. Values less than `n_samples`
-        refer to leaves of the tree. A value `i` greater than or equal to
-        `n_samples` is a non-leaf node and has children
-        `children_[i - n_samples]`.
-        The index refers to the height when two nodes are merged.
-        For instance, children_[0] refers to the nodes that were closest to
-        each other and hence were merged first and so on.
+        correspond to leaves of the tree which are the original samples.
+        A node `i` greater than or equal to `n_samples` is a non-leaf
+        node and has children `children_[i - n_samples]`. Alternatively
+        at the i-th iteration, children[i][0] and children[i][1]
+        are merged to form node `n_samples + i`
 
     n_components : int
         The number of connected components in the graph.
@@ -589,12 +587,11 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
 
     children_ : array-like, shape (n_nodes, 2)
         The children of each non-leaf node. Values less than `n_samples`
-        refer to leaves of the tree. A value `i` greater than or equal to
-        `n_samples` is a non-leaf node and has children
-        `children_[i - n_samples]`.
-        The index refers to the height when two nodes are merged.
-        For instance, children_[0] refers to the nodes that were closest to
-        each other and hence were merged first and so on.
+        correspond to leaves of the tree which are the original samples.
+        A node `i` greater than or equal to `n_samples` is a non-leaf
+        node and has children `children_[i - n_samples]`. Alternatively
+        at the i-th iteration, children[i][0] and children[i][1]
+        are merged to form node `n_samples + i`
 
     """
 
@@ -749,13 +746,12 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         The estimated number of connected components in the graph.
 
     children_ : array-like, shape (n_nodes, 2)
-        The children of each non-leaf node. Values less than `n_samples`
-        refer to leaves of the tree. A value `i` greater than or equal to
-        `n_samples` is a non-leaf node and has children
-        `children_[i - n_features]`.
-        The index refers to the height when two nodes are merged.
-        For instance, children_[0] refers to the nodes that were closest to
-        each other and hence were merged first and so on.
+        The children of each non-leaf node. Values less than `n_features`
+        correspond to leaves of the tree which are the original samples.
+        A node `i` greater than or equal to `n_features` is a non-leaf
+        node and has children `children_[i - n_features]`. Alternatively
+        at the i-th iteration, children[i][0] and children[i][1]
+        are merged to form node `n_features + i`
     """
 
     def fit(self, X, y=None, **params):
@@ -892,13 +888,12 @@ class WardAgglomeration(AgglomerationTransform, Ward):
     Attributes
     ----------
     children_ : array-like, shape (n_nodes, 2)
-        The children of each non-leaf node. Values less than `n_samples`
-        refer to leaves of the tree. A value `i` greater than or equal to
-        `n_samples` is a non-leaf node and has children
-        `children_[i - n_features]`.
-        The index refers to the height when two nodes are merged.
-        For instance, children_[0] refers to the nodes that were closest to
-        each other and hence were merged first and so on.
+        The children of each non-leaf node. Values less than `n_features`
+        correspond to leaves of the tree which are the original samples.
+        A node `i` greater than or equal to `n_features` is a non-leaf
+        node and has children `children_[i - n_features]`. Alternatively
+        at the i-th iteration, children[i][0] and children[i][1]
+        are merged to form node `n_features + i`
 
     labels_ : array [n_features]
         cluster labels for each feature
