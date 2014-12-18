@@ -14,13 +14,15 @@ the index size grows.
 """
 
 import numpy as np
+from tempfile import gettempdir
 from time import time
+
 from sklearn.neighbors import NearestNeighbors
 from sklearn.neighbors.approximate import LSHForest
 from sklearn.datasets import make_blobs
-from joblib import Memory
+from sklearn.externals.joblib import Memory
 
-m = Memory(cachedir='/tmp')
+m = Memory(cachedir=gettempdir())
 
 
 @m.cache()
