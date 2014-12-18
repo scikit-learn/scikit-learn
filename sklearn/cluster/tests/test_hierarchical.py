@@ -152,7 +152,8 @@ def test_agglomerative_clustering():
         # tree building
         clustering.compute_full_tree = False
         clustering.fit(X)
-        np.testing.assert_array_equal(clustering.labels_, labels)
+        assert_almost_equal(normalized_mutual_info_score(
+                            clustering.labels_, labels), 1)
         clustering.connectivity = None
         clustering.fit(X)
         assert_true(np.size(np.unique(clustering.labels_)) == 10)
@@ -406,6 +407,32 @@ def test_connectivity_callable():
     aglc1.fit(X)
     aglc2.fit(X)
     assert_array_equal(aglc1.labels_, aglc2.labels_)
+
+
+def test_compute_full_tree():
+    """Test that the full tree is computed if n_clusters is small"""
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 2)
+    connectivity = kneighbors_graph(X, 5)
+
+    # When n_clusters is less, the full tree should be built
+    # that is the number of merges should be n_samples - 1
+    agc = AgglomerativeClustering(n_clusters=2, connectivity=connectivity)
+    agc.fit(X)
+    n_samples = X.shape[0]
+    n_nodes = agc.children_.shape[0]
+    assert_equal(n_nodes, n_samples - 1)
+
+    # When n_clusters is large, greater than max of 100 and 0.02 * n_samples.
+    # we should stop when there are n_clusters.
+    n_clusters = 101
+    X = rng.randn(200, 2)
+    connectivity = kneighbors_graph(X, 10)
+    agc = AgglomerativeClustering(n_clusters=n_clusters, connectivity=connectivity)
+    agc.fit(X)
+    n_samples = X.shape[0]
+    n_nodes = agc.children_.shape[0]
+    assert_equal(n_nodes, n_samples - n_clusters)
 
 
 if __name__ == '__main__':
