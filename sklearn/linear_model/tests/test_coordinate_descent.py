@@ -41,6 +41,12 @@ def test_lasso_zero():
     assert_array_almost_equal(pred, [0, 0, 0])
     assert_almost_equal(clf.dual_gap_, 0)
 
+    clf = Lasso(alpha=0.1, accelerated=True, selection='random').fit(X, y)
+    pred = clf.predict([[1], [2], [3]])
+    assert_array_almost_equal(clf.coef_, [0])
+    assert_array_almost_equal(pred, [0, 0, 0])
+    assert_almost_equal(clf.dual_gap_, 0)
+
 
 def test_lasso_toy():
     """
@@ -89,6 +95,7 @@ def test_lasso_toy():
     assert_array_almost_equal(clf.coef_, [.85])
     assert_array_almost_equal(pred, [1.7, 2.55, 3.4])
     assert_almost_equal(clf.dual_gap_, 0)
+
 
 def test_enet_toy():
     """
@@ -142,7 +149,16 @@ def test_enet_toy():
     assert_almost_equal(clf.dual_gap_, 0)
 
     # test accelerated coordinate descent
-    clf = ElasticNet(alpha=0.5, l1_ratio=0.3, accelerated=True, selection='random')
+    clf = ElasticNet(alpha=0.5, l1_ratio=0.3, accelerated=True,
+                     selection='random', precompute=False)
+    clf.fit(X, Y)
+    pred = clf.predict(T)
+    assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
+    assert_array_almost_equal(pred, [1.0163, 1.5245, 2.0327], decimal=3)
+    assert_almost_equal(clf.dual_gap_, 0)
+
+    clf = ElasticNet(alpha=0.5, l1_ratio=0.3, accelerated=True,
+                     selection='random', precompute=True)
     clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
@@ -345,7 +361,8 @@ def test_lasso_positive_constraint():
     lasso.fit(X, y)
     assert_true(min(lasso.coef_) >= 0)
 
-    lasso = Lasso(alpha=0.1, max_iter=1000, precompute=True, positive=True, accelerated=True)
+    lasso = Lasso(alpha=0.1, max_iter=1000, precompute=True, positive=True,
+                  accelerated=True, selection='random')
     lasso.fit(X, y)
     assert_true(min(lasso.coef_) >= 0)
 
@@ -380,7 +397,7 @@ def test_enet_cv_positive_constraint():
 def test_multi_task_lasso_and_enet():
     X, y, X_test, y_test = build_dataset()
     Y = np.c_[y, y]
-    #Y_test = np.c_[y_test, y_test]
+    # Y_test = np.c_[y_test, y_test]
     clf = MultiTaskLasso(alpha=1, tol=1e-8).fit(X, Y)
     assert_true(0 < clf.dual_gap_ < 1e-5)
     assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
@@ -476,6 +493,13 @@ def test_sparse_input_dtype_enet_and_lassocv():
     clf = LassoCV(n_alphas=5)
     clf.fit(sparse.csr_matrix(X), y)
     clf1 = LassoCV(n_alphas=5)
+    clf1.fit(sparse.csr_matrix(X, dtype=np.float32), y)
+    assert_almost_equal(clf.alpha_, clf1.alpha_, decimal=6)
+    assert_almost_equal(clf.coef_, clf1.coef_, decimal=6)
+
+    clf = LassoCV(n_alphas=5, accelerated=True, selection='cyclic')
+    clf.fit(sparse.csr_matrix(X), y)
+    clf1 = LassoCV(n_alphas=5, accelerated=True, selection='cyclic')
     clf1.fit(sparse.csr_matrix(X, dtype=np.float32), y)
     assert_almost_equal(clf.alpha_, clf1.alpha_, decimal=6)
     assert_almost_equal(clf.coef_, clf1.coef_, decimal=6)

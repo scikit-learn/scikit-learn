@@ -21,9 +21,6 @@ ctypedef np.uint32_t UINT32_t
 
 np.import_array()
 
-import pylab as plt
-
-
 # The following two functions are shamelessly copied from the tree code.
 
 cdef enum:
@@ -117,12 +114,13 @@ cdef extern from "cblas.h":
                              ) nogil
     double dasum "cblas_dasum"(int N, double *X, int incX) nogil
     void dger "cblas_dger"(CBLAS_ORDER Order, int M, int N, double alpha,
-                double *X, int incX, double *Y, int incY, double *A, int lda) nogil
+                           double *X, int incX, double *Y, int incY, double *A,
+                           int lda) nogil
     void dgemv "cblas_dgemv"(CBLAS_ORDER Order,
-                      CBLAS_TRANSPOSE TransA, int M, int N,
-                      double alpha, double *A, int lda,
-                      double *X, int incX, double beta,
-                      double *Y, int incY) nogil
+                             CBLAS_TRANSPOSE TransA, int M, int N,
+                             double alpha, double *A, int lda,
+                             double *X, int incX, double beta,
+                             double *Y, int incY) nogil
     double dnrm2 "cblas_dnrm2"(int N, double *X, int incX) nogil
     void dcopy "cblas_dcopy"(int N, double *X, int incX, double *Y, int incY) nogil
     void dscal "cblas_dscal"(int N, double alpha, double *X, int incX) nogil
@@ -131,25 +129,15 @@ cdef extern from "cblas.h":
 #####################################################################
 # Dense matrices
 
-
 # Function to compute the duality gap
-cdef double enet_duality_gap( # Data
-                        unsigned int n_samples,
-                        unsigned int n_features,
-                        unsigned int n_tasks,
-                        DOUBLE * X_data,
-                        DOUBLE * y_data,
-                        DOUBLE * R_data,
-                        DOUBLE * w_data,
-                        # Variables intended to be modified
-                        DOUBLE * XtA_data, 
-                        double * dual_norm_XtA,
-                        # Parameters
-                        double alpha,
-                        double beta,
-                        bint positive,
-                        ) nogil:
-    
+cdef double enet_duality_gap(  # Data
+        unsigned int n_samples, unsigned int n_features, unsigned int n_tasks,
+        DOUBLE * X_data, DOUBLE * y_data, DOUBLE * R_data, DOUBLE * w_data,
+        # Variables intended to be modified
+        DOUBLE * XtA_data, double * dual_norm_XtA,
+        # Parameters
+        double alpha, double beta, bint positive) nogil:
+
     cdef double R_norm2
     cdef double w_norm2
     cdef double ytA
@@ -158,14 +146,14 @@ cdef double enet_duality_gap( # Data
     cdef double const
     cdef double gap
     cdef unsigned int ii
-    
+
     # XtA = np.dot(X.T, R) - beta * w
     for ii in range(n_features):
         XtA_data[ii] = ddot(
             n_samples,
             X_data + ii * n_samples,
             1, R_data, 1) - beta * w_data[ii]
-            
+
     if positive:
         dual_norm_XtA[0] = max(n_features, XtA_data)
     else:
@@ -192,45 +180,41 @@ cdef double enet_duality_gap( # Data
                              1. / dual_norm_XtA[0])
     else:
         const = alpha * fmax(-1. / dual_norm_XtA[0],
-                         fmin(ytA / (alpha * R_norm2),
-                              1. / dual_norm_XtA[0]) )
-       
+                             fmin(ytA / (alpha * R_norm2),
+                                  1. / dual_norm_XtA[0]))
+
     l1_norm = dasum(n_features, w_data, 1)
 
     gap = 0.5 * (1 + const ** 2) * (R_norm2 + beta * w_norm2) \
           + alpha * l1_norm - const * ytA
-    
+
     return gap
 
 
 # Function to compute the primal value
-cdef double enet_primal_value( # Data
-                        unsigned int n_samples,
-                        unsigned int n_features,
-                        DOUBLE * R_data,
-                        DOUBLE * w_data,
-                        # Parameters
-                        double alpha,
-                        double beta,
-                        ) nogil:
-    
+cdef double enet_primal_value(  # Data
+        unsigned int n_samples, unsigned int n_features, DOUBLE * R_data,
+        DOUBLE * w_data,
+        # Parameters
+        double alpha, double beta) nogil:
+
     cdef double R_norm2
     cdef double w_norm2 = 0
     cdef double l1_norm
     cdef double fval
-    
+
     # R_norm2 = np.dot(R, R)
     R_norm2 = ddot(n_samples, R_data, 1,
                    R_data, 1)
 
     # w_norm2 = np.dot(w, w)
-    if beta>0:
+    if beta > 0:
         w_norm2 = ddot(n_features, w_data, 1,
                        w_data, 1)
-    
+
     l1_norm = dasum(n_features, w_data, 1)
 
-    fval = 0.5 * R_norm2 + alpha * l1_norm + 0.5 * beta * w_norm2 
+    fval = 0.5 * R_norm2 + alpha * l1_norm + 0.5 * beta * w_norm2
 
     return fval
 
@@ -264,22 +248,22 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef unsigned int n_tasks = y.strides[0] / sizeof(DOUBLE)
 
     # compute norms of the columns of X
-    cdef np.ndarray[DOUBLE, ndim=1] norm_cols_X = (X**2).sum(axis=0)
+    cdef np.ndarray[DOUBLE, ndim=1] norm_cols_X = (X ** 2).sum(axis=0)
 
     # initial value of the residuals
     cdef np.ndarray[DOUBLE, ndim=1] R = np.empty(n_samples)
 
     # additional variables
-    cdef np.ndarray[DOUBLE, ndim=1] we 
-    cdef np.ndarray[DOUBLE, ndim=1] wc 
+    cdef np.ndarray[DOUBLE, ndim=1] we
+    cdef np.ndarray[DOUBLE, ndim=1] wc
     cdef np.ndarray[DOUBLE, ndim=1] Re
-    cdef np.ndarray[DOUBLE, ndim=1] Rc 
+    cdef np.ndarray[DOUBLE, ndim=1] Rc
     if accelerated:
-        we = np.empty(n_features) # exploration variable
-        wc = np.zeros(n_features) # correction variable
-        Re = np.empty(n_samples)  # exploration variable's residuals
-        Rc = np.zeros(n_samples)  # correction variable's residuals 
-        
+        we = np.empty(n_features)  # exploration variable
+        wc = np.zeros(n_features)  # correction variable
+        Re = np.empty(n_samples)   # exploration variable's residuals
+        Rc = np.zeros(n_samples)   # correction variable's residuals
+
     cdef np.ndarray[DOUBLE, ndim=1] XtA = np.empty(n_features)
     cdef double tmp
     cdef double w_ii
@@ -291,14 +275,14 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef double gap = tol + 1.0
     cdef double d_w_tol = tol
     cdef double dual_norm_XtA
-    
+
     # initializing momentum parameter when accelerating
     cdef double theta0 = 1. / fmax(1., n_features)
     cdef double theta = theta0
     cdef double test_restart = 0
     cdef unsigned int nnz
     cdef unsigned int nnze
-    
+
     cdef unsigned int ii
     cdef unsigned int i
     cdef unsigned int n_iter
@@ -308,11 +292,12 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
     if accelerated and (not random):
         warnings.warn("Accelerated coordinate descent with cyclic variable"
-                     " selection may be slow and is discouraged.")
+                      "selection may lead to unexpected results and is"
+                      " discouraged.")
 
     if alpha == 0:
         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
-            " results and is discouraged.")
+                      " results and is discouraged.")
 
     with nogil:
 
@@ -328,25 +313,25 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             for ii in range(n_features):
                 we[ii] = w[ii]
 
-        ### scaling tolerance
+        # scaling tolerance
         # tol *= np.dot(y, y)
-        tol *= fmax(1e-15,ddot(n_samples, <DOUBLE*>y.data, n_tasks,
+        tol *= fmax(1e-15, ddot(n_samples, <DOUBLE*>y.data, n_tasks,
                     <DOUBLE*>y.data, n_tasks))
 
-        ### main loop
+        # main loop
         for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
             if not accelerated:
                 ###################
                 # Classical coordinate descent
-                
+
                 for f_iter in range(n_features):  # Loop over coordinates
                     if random:
                         ii = rand_int(n_features, rand_r_state)
                     else:
                         ii = f_iter
-                        
+
                     if norm_cols_X[ii] == 0.0:
                         continue
 
@@ -354,7 +339,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
                     # tmp = (X[:,ii]*R).sum() + norm_cols_X[ii] * w_ii
                     tmp = ddot(n_samples,
-                               <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)),
+                               <DOUBLE*>(X.data + ii * n_samples
+                                         * sizeof(DOUBLE)),
                                1, <DOUBLE*>R.data, 1) + norm_cols_X[ii] * w_ii
 
                     # soft thresholding
@@ -367,7 +353,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                     if w[ii] != w_ii:
                         # R -=  (w[ii]-w_ii) * X[:,ii] # Update residual
                         daxpy(n_samples, -w[ii] + w_ii,
-                              <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)),
+                              <DOUBLE*>(X.data + ii * n_samples
+                                        * sizeof(DOUBLE)),
                               1, <DOUBLE*>R.data, 1)
 
                     # update the maximum absolute coefficient update
@@ -378,11 +365,11 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                     if fabs(w[ii]) > w_max:
                         w_max = fabs(w[ii])
 
-            else: # accelerated
+            else:  # accelerated
                 ###################
                 # Accelerated Coordinate descent
                 # cf. Fercoq, O., & Richtárik, P. (2013). Accelerated, parallel
-                #  and proximal coordinate descent. arXiv preprint arXiv:1312.5799.
+                #  and proximal coordinate descent. arXiv preprint:1312.5799.
 
                 for f_iter in range(n_features):  # Loop over coordinates
                     if random:
@@ -396,55 +383,67 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                     we_ii = we[ii]  # Store previous value
                     wc_ii = wc[ii]
 
-                    # partial derivative at wd = (theta ** 2 * wc + we) and recall at we
-                    # tmp = (X[:,ii]*Rd).sum() + norm_cols_X[ii] * theta/theta0 * we_ii
-                    tmp = (theta ** 2) * ddot(n_samples,
-                                <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)),
-                                1, <DOUBLE*>Rc.data, 1) \
-                             + ddot(n_samples,
-                                <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)),
-                                1, <DOUBLE*>Re.data, 1) \
-                             + norm_cols_X[ii] * theta / theta0 * we_ii
+                    # partial derivative at wd = (theta ** 2 * wc + we)
+                    # and recall at we
+                    # tmp = (X[:,ii]*Rd).sum()
+                    #       + norm_cols_X[ii] * theta/theta0 * we_ii
+                    tmp = (theta ** 2) \
+                          * ddot(n_samples, <DOUBLE*>(X.data + ii * n_samples
+                                                      * sizeof(DOUBLE)),
+                                 1, <DOUBLE*>Rc.data, 1) \
+                          + ddot(n_samples, <DOUBLE*>(X.data + ii * n_samples
+                                                      * sizeof(DOUBLE)),
+                                 1, <DOUBLE*>Re.data, 1) \
+                          + norm_cols_X[ii] * theta / theta0 * we_ii
 
                     if positive and tmp < 0:
                         we[ii] = 0.0
                     else:
-                        we[ii] = (fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
+                        we[ii] = (fsign(tmp) * fmax(fabs(tmp) - alpha, 0)
                                  / (norm_cols_X[ii]*theta/theta0 + beta))
 
                     if we[ii] != we_ii:
-                        # Re -=  (we[ii]-we_ii) * X[:,ii] # Update exploration residual
+                        # Update exploration residual
+                        # Re -=  (we[ii]-we_ii) * X[:,ii]
                         daxpy(n_samples, -we[ii] + we_ii,
-                              <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)),
+                              <DOUBLE*>(X.data + ii * n_samples
+                                        * sizeof(DOUBLE)),
                               1, <DOUBLE*>Re.data, 1)
 
                         wc[ii] -= (we[ii] - we_ii) * (1-theta/theta0)/(theta**2)
-                        # Rc -=  (wc[ii]-wc_ii) * X[:,ii] # Update correction residual
+                        # Update correction residual
+                        # Rc -=  (wc[ii]-wc_ii) * X[:,ii]
                         daxpy(n_samples, -wc[ii] + wc_ii,
-                              <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)),
+                              <DOUBLE*>(X.data + ii * n_samples
+                                        * sizeof(DOUBLE)),
                               1, <DOUBLE*>Rc.data, 1)
 
-                    # update the test for restarting when minimizing a strongly convex functions
-                    eta = 1. / n_features 
+                    # update the test for restarting when minimizing
+                    # a strongly convex functions
+                    eta = 1. / n_features
                     # The formula for eta is inspired from
-                    #  Glasmachers, T., & Dogan, Ü. (2014). Coordinate Descent with Online
-                    #  Adaptation of Coordinate Frequencies. arXiv preprint arXiv:1401.3737.
+                    #  Glasmachers, T., & Dogan, Ü. (2014). Coordinate Descent
+                    #  with Online Adaptation of Coordinate Frequencies.
+                    #  arXiv preprint arXiv:1401.3737.
                     test_restart = (1-eta) * test_restart \
-                                   - eta * (we[ii]-we_ii)*( we[ii] - (theta**2 * wc_ii+we_ii) )
+                                   - eta * (we[ii] - we_ii) * \
+                                   ( we[ii] - (theta**2 * wc_ii+we_ii) )
 
                     # update the maximum absolute coefficient update
-                    d_w_ii = fabs((theta ** 2) * (wc[ii] - wc_ii) + (we[ii] - we_ii))
+                    d_w_ii = fabs((theta ** 2) * (wc[ii] - wc_ii)
+                                  + (we[ii] - we_ii))
                     if d_w_ii > d_w_max:
                         d_w_max = d_w_ii
 
                     # update theta
-                    theta = 0.5 * (sqrt((theta ** 4) + 4 * (theta ** 2)) - theta ** 2)
-
+                    theta = 0.5 * (sqrt((theta ** 4) + 4 * (theta ** 2))
+                                   - theta ** 2)
 
                 #######################
-                # Tricks to make accelerated coordinate descent efficient for the lasso
+                # Tricks to make accelerated coordinate descent efficient
+                # for the lasso
 
-                tmp = (theta ** 2)/(1-theta) 
+                tmp = ((theta ** 2)/(1-theta) if theta < 1 else theta0)
                 for ii in range(n_features):
                     w[ii] = tmp * wc[ii] + we[ii]
                     if fabs(w[ii]) > w_max:
@@ -462,8 +461,9 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
                 # if test_restart > 0: restart
                 # (improves behaviour in presence of strong convexity)
-                # cf. O’Donoghue, B., & Candes, E. (2012). Adaptive restart for accelerated
-                #  gradient schemes. Foundations of Computational Mathematics, 1-18.
+                # cf. O’Donoghue, B., & Candes, E. (2012). Adaptive restart
+                #  for accelerated gradient schemes. Foundations of
+                # Computational Mathematics, 1-18.
                 if test_restart>0:
                     for ii in range(n_features):
                         wc[ii] = 0
@@ -477,10 +477,12 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 # if nnze < nnz and F(we) < F(w) then w <- we
                 # (helps promoting sparsity to w)
                 elif (nnze < nnz) \
-                         and ( enet_primal_value(n_samples, n_features, <DOUBLE*>Re.data,
-                                            <DOUBLE*>we.data, alpha, beta) <
-                               enet_primal_value(n_samples, n_features, <DOUBLE*>R.data,
-                                            <DOUBLE*>w.data, alpha, beta)):
+                         and ( enet_primal_value(n_samples, n_features,
+                                    <DOUBLE*>Re.data, <DOUBLE*>we.data, alpha,
+                                    beta) <
+                               enet_primal_value(n_samples, n_features,
+                                    <DOUBLE*>R.data, <DOUBLE*>w.data, alpha,
+                                    beta) ):
                     for ii in range(n_features):
                         wc[ii] = 0
                         w[ii] = we[ii]
@@ -504,7 +506,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                                   <DOUBLE*>R.data, <DOUBLE*>w.data,
                                   <DOUBLE*>XtA.data, &dual_norm_XtA,
                                   alpha, beta, positive)
-                
+
                 if gap < tol:
                     # return if we reached desired tolerance
                     break
@@ -516,26 +518,15 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 # Sparse matrices
 
 # Function to compute the duality gap
-cdef double sparse_enet_duality_gap( # Data
-                        unsigned int n_samples,
-                        unsigned int n_features,
-                        unsigned int n_tasks,
-                        DOUBLE * X_data,
-                        int * X_indptr,
-                        int * X_indices,
-                        DOUBLE * X_mean_data,
-                        DOUBLE * y_data,
-                        DOUBLE * R_data,
-                        DOUBLE * w_data,
-                        # Variables intended to be modified
-                        DOUBLE * XtA_data, 
-                        double * dual_norm_XtA,
-                        # Parameters
-                        double alpha,
-                        double beta,
-                        bint positive,
-                        ) nogil:
-    
+cdef double sparse_enet_duality_gap(  # Data
+        unsigned int n_samples, unsigned int n_features, unsigned int n_tasks,
+        DOUBLE * X_data, int * X_indptr, int * X_indices, DOUBLE * X_mean_data,
+        DOUBLE * y_data, DOUBLE * R_data, DOUBLE * w_data,
+        # Variables intended to be modified
+        DOUBLE * XtA_data, double * dual_norm_XtA,
+        # Parameters
+        double alpha, double beta, bint positive) nogil:
+
     cdef double R_norm2
     cdef double R_sum
     cdef double w_norm2 = 0
@@ -561,12 +552,12 @@ cdef double sparse_enet_duality_gap( # Data
         dual_norm_XtA[0] = max(n_features, XtA_data)
     else:
         dual_norm_XtA[0] = abs_max(n_features, XtA_data)
-        
+
     # R_norm2 = np.dot(R, R)
     R_norm2 = ddot(n_samples, R_data, 1, R_data, 1)
-    
+
     # w_norm2 = np.dot(w, w)
-    if beta>0:
+    if beta > 0:
         w_norm2 = ddot(n_features, w_data, 1, w_data, 1)
  
     # ytA = np.dot(y.T, R)
@@ -584,9 +575,9 @@ cdef double sparse_enet_duality_gap( # Data
                              1. / dual_norm_XtA[0])
     else:
         const = alpha * fmax(-1. / dual_norm_XtA[0],
-                         fmin(ytA / (alpha * R_norm2),
-                              1. / dual_norm_XtA[0]) )
-       
+                             fmin(ytA / (alpha * R_norm2),
+                                  1. / dual_norm_XtA[0]))
+
     l1_norm = dasum(n_features, w_data, 1)
 
     gap = 0.5 * (1 + const ** 2) * (R_norm2 + beta * w_norm2) \
@@ -599,12 +590,12 @@ cdef double sparse_enet_duality_gap( # Data
 @cython.wraparound(False)
 @cython.cdivision(True)
 def sparse_enet_coordinate_descent(double[:] w,
-                            double alpha, double beta,
-                            double[:] X_data, int[:] X_indices,
-                            int[:] X_indptr, double[:] y,
-                            double[:] X_mean, int max_iter,
-                            double tol, object rng, bint random=0,
-                            bint positive=0, bint accelerated=0):
+                                   double alpha, double beta,
+                                   double[:] X_data, int[:] X_indices,
+                                   int[:] X_indptr, double[:] y,
+                                   double[:] X_mean, int max_iter,
+                                   double tol, object rng, bint random=0,
+                                   bint positive=0, bint accelerated=0):
     """Cython version of the coordinate descent algorithm for Elastic-Net
 
     We minimize:
@@ -628,21 +619,20 @@ def sparse_enet_coordinate_descent(double[:] w,
 
     # get the number of tasks indirectly, using strides
     cdef unsigned int n_tasks = y.strides[0] / sizeof(DOUBLE)
-    
+
     # initial value of the residuals
     cdef double[:] R = y.copy()
-    
+
     # additional variables for acceleration
     cdef double[:] we
     cdef double[:] wc
     cdef double[:] Re
     cdef double[:] Rc
     if accelerated:
-        we = np.empty(n_features) # exploration variable
-        wc = np.zeros(n_features) # correction variable
-        Re = np.empty(n_samples) # exploration variable's residuals
-        Rc = np.zeros(n_samples) # correction variable's residuals
-        
+        we = np.empty(n_features)  # exploration variable
+        wc = np.zeros(n_features)  # correction variable
+        Re = np.empty(n_samples)   # exploration variable's residuals
+        Rc = np.zeros(n_samples)   # correction variable's residuals
 
     cdef double[:] XtA = np.zeros(n_features)
 
@@ -668,21 +658,22 @@ def sparse_enet_coordinate_descent(double[:] w,
     cdef double test_restart = 0.
     cdef unsigned int nnz
     cdef unsigned int nnze
-    
+
     cdef unsigned int jj
     cdef unsigned int n_iter
     cdef unsigned int f_iter
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
     cdef bint center = False
-    
+
     if accelerated and (not random):
         warnings.warn("Accelerated coordinate descent with cyclic variable"
-                     " selection may be slow and is discouraged.")
+                      " selection may lead to unexpected results and is"
+                      " discouraged.")
 
     if alpha == 0:
         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
-            " results and is discouraged.")
+                      " results and is discouraged.")
 
     with nogil:
         # center = (X_mean != 0).any()
@@ -716,7 +707,7 @@ def sparse_enet_coordinate_descent(double[:] w,
                 we[ii] = w[ii]
 
         # tol *= np.dot(y, y)
-        tol *= fmax(1e-15,ddot(n_samples, <DOUBLE*>&y[0], 1, <DOUBLE*>&y[0], 1))
+        tol *= fmax(1e-15, ddot(n_samples, <DOUBLE*>&y[0], 1, <DOUBLE*>&y[0], 1))
 
         # main loop
         for n_iter in range(max_iter):
@@ -727,7 +718,7 @@ def sparse_enet_coordinate_descent(double[:] w,
             if not accelerated:
                 ###################
                 # Classical coordinate descent
-                
+
                 for f_iter in range(n_features):  # Loop over coordinates
                     if random:
                         ii = rand_int(n_features, rand_r_state)
@@ -780,12 +771,11 @@ def sparse_enet_coordinate_descent(double[:] w,
                     if w[ii] > w_max:
                         w_max = w[ii]
 
-
-            else: #accelerated
+            else:  # accelerated
                 ###################
                 # Accelerated Coordinate descent
                 # cf. Fercoq, O., & Richtárik, P. (2013). Accelerated, parallel
-                #  and proximal coordinate descent. arXiv preprint arXiv:1312.5799.
+                #  and proximal coordinate descent. arXiv preprint:1312.5799.
 
                 for f_iter in range(n_features):  # Loop over coordinates
                     if random:
@@ -799,13 +789,15 @@ def sparse_enet_coordinate_descent(double[:] w,
                     startptr = X_indptr[ii]
                     endptr = X_indptr[ii + 1]
                     we_ii = we[ii]  # Store previous value
-                    wc_ii = wc[ii] 
+                    wc_ii = wc[ii]
                     X_mean_ii = X_mean[ii]
 
-                    # compute partial derivative at wd = (theta ** 2 * wc + we) + recall at we
-                    # tmp = (X[:,ii]*Re).sum() 
+                    # compute partial derivative at wd = (theta ** 2 * wc + we)
+                    # and recall at we
+                    # tmp = (X[:,ii]*Re).sum()
                     # tmp2 = (X[:,ii]*Rc).sum()
-                    # tmp = (theta**2) * tmp2 + tmp + norm_cols_X[ii]* theta/theta0 * we_ii
+                    # tmp = (theta**2) * tmp2 + tmp \
+                    #       + norm_cols_X[ii]* theta/theta0 * we_ii
                     tmp = 0.0
                     tmp2 = 0.0
                     for jj in range(startptr, endptr):
@@ -829,10 +821,11 @@ def sparse_enet_coordinate_descent(double[:] w,
                         we[ii] = 0.0
                     else:
                         we[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
-                                / (norm_cols_X[ii] * theta / theta0 + beta)
+                                 / (norm_cols_X[ii] * theta / theta0 + beta)
 
                     if we[ii] != we_ii:
-                        # Re -=  (we[ii]-we_ii) * X[:,ii] # Update exploration residual
+                        # Update exploration residual
+                        # Re -=  (we[ii]-we_ii) * X[:,ii]
                         d_w_ii = we[ii] - we_ii
                         for jj in range(startptr, endptr):
                             Re[X_indices[jj]] -= X_data[jj] * d_w_ii
@@ -841,8 +834,10 @@ def sparse_enet_coordinate_descent(double[:] w,
                             for jj in range(n_samples):
                                 Re[jj] += X_mean_ii * d_w_ii
 
-                        # Rc -=  (wc[ii]-wc_ii) * X[:,ii] # Update correction residual
-                        d_w_ii = -(we[ii] - we_ii) * (1 - theta / theta0) / (theta**2)
+                        # Update correction residual
+                        # Rc -=  (wc[ii]-wc_ii) * X[:,ii]
+                        d_w_ii = -(we[ii] - we_ii) * (1 - theta / theta0) \
+                                 / (theta**2)
                         wc[ii] += d_w_ii
                         for jj in range(startptr, endptr):
                             Rc[X_indices[jj]] -= X_data[jj] * d_w_ii
@@ -851,27 +846,32 @@ def sparse_enet_coordinate_descent(double[:] w,
                             for jj in range(n_samples):
                                 Rc[jj] += X_mean_ii * d_w_ii
 
-                    # update the test for restarting when minimizing a strongly convex functions
+                    # update the test for restarting when minimizing
+                    # a strongly convex functions
                     eta = 1. / n_features
                     # The formula for eta is inspired from
-                    #  Glasmachers, T., & Dogan, Ü. (2014). Coordinate Descent with Online
-                    #  Adaptation of Coordinate Frequencies. arXiv preprint arXiv:1401.3737.
+                    #  Glasmachers, T., & Dogan, Ü. (2014). Coordinate Descent
+                    #  with Online Adaptation of Coordinate Frequencies.
+                    #  arXiv preprint arXiv:1401.3737.
                     test_restart = (1-eta) * test_restart - eta * \
-                                   (we[ii]-we_ii)*( we[ii] - (theta**2 * wc_ii + we_ii) )
-
+                                   (we[ii] - we_ii) * \
+                                   (we[ii] - (theta**2 * wc_ii + we_ii))
 
                     # update the maximum absolute coefficient update
-                    d_w_ii = fabs((theta ** 2) * (wc[ii] - wc_ii) + (we[ii] - we_ii))
+                    d_w_ii = fabs((theta ** 2) * (wc[ii] - wc_ii)
+                                  + (we[ii] - we_ii))
                     if d_w_ii > d_w_max:
                         d_w_max = d_w_ii
 
                     # update theta
-                    theta = 0.5 * (sqrt((theta ** 4) + 4. * (theta ** 2)) - theta ** 2)
+                    theta = 0.5 * (sqrt((theta ** 4) + 4. * (theta ** 2))
+                                   - theta ** 2)
 
                 #######################
-                # Tricks to make accelerated coordinate descent efficient for the lasso
+                # Tricks to make accelerated coordinate descent efficient
+                # for the lasso
 
-                tmp = (theta ** 2) / (1 - theta) 
+                tmp = ((theta ** 2)/(1-theta) if theta < 1 else theta0)
                 for ii in range(n_features):
                     w[ii] = tmp * wc[ii] + we[ii]
                     if fabs(w[ii]) > w_max:
@@ -889,8 +889,9 @@ def sparse_enet_coordinate_descent(double[:] w,
 
                 # if test_restart > 0: restart
                 # (improves behaviour in presence of strong convexity)
-                # cf. O’Donoghue, B., & Candes, E. (2012). Adaptive restart for accelerated
-                #  gradient schemes. Foundations of Computational Mathematics, 1-18.
+                # cf. O’Donoghue, B., & Candes, E. (2012). Adaptive restart for
+                #  accelerated gradient schemes. Foundations of Computational
+                # Mathematics, 1-18.
                 if test_restart > 0:
                     for ii in range(n_features):
                         wc[ii] = 0
@@ -903,10 +904,12 @@ def sparse_enet_coordinate_descent(double[:] w,
                 # if nnze < nnz and F(we) < F(w) then w <- we
                 # (helps promoting sparsity to w)
                 elif (nnze < nnz) \
-                         and ( enet_primal_value(n_samples, n_features, <DOUBLE*> &Re[0],
-                                            <DOUBLE*> &we[0], alpha, beta) <
-                               enet_primal_value(n_samples, n_features, <DOUBLE*> &R[0],
-                                            <DOUBLE*> &w[0], alpha, beta) ):
+                         and ( enet_primal_value(n_samples, n_features,
+                                    <DOUBLE*> &Re[0], <DOUBLE*> &we[0], alpha,
+                                    beta) <
+                               enet_primal_value(n_samples, n_features,
+                                    <DOUBLE*> &R[0], <DOUBLE*> &w[0], alpha,
+                                    beta) ):
                     for i in range(n_features):
                         wc[i] = 0
                         w[i] = we[i]
@@ -917,19 +920,22 @@ def sparse_enet_coordinate_descent(double[:] w,
 
             #######################
             # Termination criterion
-            
+
             if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
-                # the biggest coordinate update of this iteration was smaller than
-                # the tolerance: check the duality gap as ultimate stopping
+                # the biggest coordinate update of this iteration was smaller
+                # than the tolerance: check the duality gap as ultimate stopping
                 # criterion
 
                 gap = sparse_enet_duality_gap(n_samples, n_features, n_tasks,
-                                         <DOUBLE*> &X_data[0], <int*> &X_indptr[0],
-                                         <int*> &X_indices[0], <DOUBLE*> &X_mean[0],
-                                         <DOUBLE*> &y[0], <DOUBLE*> &R[0],
-                                         <DOUBLE*> &w[0], <DOUBLE*> &XtA[0],
-                                         &dual_norm_XtA,
-                                         alpha, beta, positive)
+                                              <DOUBLE*> &X_data[0],
+                                              <int*> &X_indptr[0],
+                                              <int*> &X_indices[0],
+                                              <DOUBLE*> &X_mean[0],
+                                              <DOUBLE*> &y[0], <DOUBLE*> &R[0],
+                                              <DOUBLE*> &w[0],
+                                              <DOUBLE*> &XtA[0],
+                                              &dual_norm_XtA,
+                                              alpha, beta, positive)
 
                 if gap < tol:
                     # return if we reached desired tolerance
@@ -942,21 +948,13 @@ def sparse_enet_coordinate_descent(double[:] w,
 # Precomputed Gram matrices
 
 # Function to compute the duality gap
-cdef double gram_enet_duality_gap( # Data
-                        unsigned int n_features,
-                        unsigned int n_tasks,
-                        DOUBLE * q_data,
-                        double y_norm2,
-                        DOUBLE * H_data,
-                        DOUBLE * w_data,
-                        # Variables intended to be modified
-                        DOUBLE * XtA_data, 
-                        double * dual_norm_XtA,
-                        # Parameters
-                        double alpha,
-                        double beta,
-                        bint positive,
-                        ) nogil:
+cdef double gram_enet_duality_gap(  # Data
+        unsigned int n_features, unsigned int n_tasks, DOUBLE * q_data,
+        double y_norm2, DOUBLE * H_data, DOUBLE * w_data,
+        # Variables intended to be modified
+        DOUBLE * XtA_data, double * dual_norm_XtA,
+        # Parameters
+        double alpha, double beta, bint positive) nogil:
 
     cdef double q_dot_w
     cdef double R_norm2
@@ -965,19 +963,19 @@ cdef double gram_enet_duality_gap( # Data
     cdef double const
     cdef double gap
     cdef double tmp
- 
+
     # q_dot_w = np.dot(w, q)
     # Note that increment in q is not 1 because the strides
     # vary if q is sliced from a 2-D array.
     q_dot_w = ddot(n_features, w_data, 1, q_data, n_tasks)
-    
+
     for ii in range(n_features):
         XtA_data[ii] = q_data[ii] - H_data[ii] - beta * w_data[ii]
     if positive:
         dual_norm_XtA[0] = max(n_features, XtA_data)
     else:
         dual_norm_XtA[0] = abs_max(n_features, XtA_data)
-        
+
     # tmp = np.sum(w * H)
     tmp = 0.0
     for ii in range(n_features):
@@ -985,7 +983,7 @@ cdef double gram_enet_duality_gap( # Data
     R_norm2 = y_norm2 + tmp - 2.0 * q_dot_w
 
     # w_norm2 = np.dot(w, w)
-    if beta>0:
+    if beta > 0:
         w_norm2 = ddot(n_features, w_data, 1, w_data, 1)
 
     # Determining the dual feasible point which is
@@ -996,13 +994,13 @@ cdef double gram_enet_duality_gap( # Data
         else:
             const = (y_norm2 - q_dot_w) / R_norm2
     elif positive:
-        const = alpha * fmin( (y_norm2 - q_dot_w) / (alpha * R_norm2),
+        const = alpha * fmin((y_norm2 - q_dot_w) / (alpha * R_norm2),
                              1. / dual_norm_XtA[0])
     else:
         const = alpha * fmax(-1. / dual_norm_XtA[0],
-                         fmin( (y_norm2 - q_dot_w) / (alpha * R_norm2),
-                              1. / dual_norm_XtA[0]) )
-        
+                             fmin((y_norm2 - q_dot_w) / (alpha * R_norm2),
+                                  1. / dual_norm_XtA[0]))
+
     l1_norm = dasum(n_features, w_data, 1)
 
     gap = 0.5 * (1 + const ** 2) * (R_norm2 + beta * w_norm2) \
@@ -1012,18 +1010,12 @@ cdef double gram_enet_duality_gap( # Data
 
 
 # Function to compute the primal value
-cdef double gram_enet_primal_value( # Data
-                        unsigned int n_features,
-                        unsigned int n_tasks,
-                        DOUBLE * q_data,
-                        double y_norm2,
-                        DOUBLE * H_data,
-                        DOUBLE * w_data,
-                        # Parameters
-                        double alpha,
-                        double beta,
-                        ) nogil:
-    
+cdef double gram_enet_primal_value(  # Data
+        unsigned int n_features, unsigned int n_tasks, DOUBLE * q_data,
+        double y_norm2, DOUBLE * H_data, DOUBLE * w_data,
+        # Parameters
+        double alpha, double beta) nogil:
+
     cdef double R_norm2
     cdef double w_norm2 = 0
     cdef double l1_norm
@@ -1039,13 +1031,13 @@ cdef double gram_enet_primal_value( # Data
     R_norm2 = y_norm2 + tmp - 2.0 * q_dot_w
 
     # w_norm2 = np.dot(w, w)
-    if beta>0:
+    if beta > 0:
         w_norm2 = ddot(n_features, w_data, 1,
                        w_data, 1)
-    
+
     l1_norm = dasum(n_features, w_data, 1)
 
-    fval = 0.5 * R_norm2 + alpha * l1_norm + 0.5 * beta * w_norm2 
+    fval = 0.5 * R_norm2 + alpha * l1_norm + 0.5 * beta * w_norm2
 
     return fval
 
@@ -1086,8 +1078,8 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
     cdef double[:] He
     cdef double[:] Hc
     if accelerated:
-        we = w.copy()             # exploration variable
-        wc = np.zeros(n_features) # correction variable
+        we = w.copy()              # exploration variable
+        wc = np.zeros(n_features)  # correction variable
         He = H.copy()
         Hc = np.zeros(n_features)
 
@@ -1108,7 +1100,7 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
     cdef double test_restart = 0
     cdef unsigned int nnz
     cdef unsigned int nnze
-    
+
     cdef unsigned int ii
     cdef unsigned int n_iter
     cdef unsigned int f_iter
@@ -1121,11 +1113,12 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
 
     if accelerated and (not random):
         warnings.warn("Accelerated coordinate descent with cyclic variable"
-                     " selection may be slow and is discouraged.")
+                      " selection may lead to unexpected results and is"
+                      " discouraged.")
 
     if alpha == 0:
         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
-            " results and is discouraged.")
+                      " results and is discouraged.")
 
     with nogil:
         for n_iter in range(max_iter):
@@ -1153,7 +1146,8 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
 
                     if w[ii] != w_ii:
                         # H +=  (w[ii] - w_ii) * Q[ii] # Update H = X.T X w
-                        daxpy(n_features, w[ii] - w_ii, Q_ptr + ii * n_features, 1,
+                        daxpy(n_features, w[ii] - w_ii,
+                              Q_ptr + ii * n_features, 1,
                               <DOUBLE*> &H[0], 1)
 
                     # update the maximum absolute coefficient update
@@ -1163,7 +1157,7 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
 
                     if fabs(w[ii]) > w_max:
                         w_max = fabs(w[ii])
-            else: #accelerated
+            else:  # accelerated
                 for f_iter in range(n_features):  # Loop over coordinates
                     if random:
                         ii = rand_int(n_features, rand_r_state)
@@ -1176,8 +1170,10 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
                     we_ii = we[ii]  # Store previous value
                     wc_ii = wc[ii]
 
-                    # partial derivative at wd = (theta ** 2 * wc + we) and recall at we
-                    tmp = q[ii] - (theta**2 * Hc[ii] + He[ii]) + Q[ii,ii]*theta/theta0 * we_ii
+                    # partial derivative at wd = (theta ** 2 * wc + we)
+                    # and recall at we
+                    tmp = q[ii] - (theta**2 * Hc[ii] + He[ii]) \
+                          + Q[ii, ii]*theta/theta0 * we_ii
 
                     if positive and tmp < 0:
                         we[ii] = 0.0
@@ -1187,30 +1183,36 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
 
                     if we[ii] != we_ii:
                         # He +=  (we[ii] - we_ii) * Q[ii] # Update He = X.T X we
-                        daxpy(n_features, we[ii] - we_ii, Q_ptr + ii * n_features, 1,
+                        daxpy(n_features, we[ii] - we_ii,
+                              Q_ptr + ii * n_features, 1,
                               <DOUBLE*> &He[0], 1)
 
                         wc[ii] -= (we[ii] - we_ii) * (1-theta/theta0)/(theta**2)
                         # Hc +=  (wc[ii] - wc_ii) * Q[ii] # Update Hc = X.T X wc
-                        daxpy(n_features, wc[ii] - wc_ii, Q_ptr + ii * n_features, 1,
+                        daxpy(n_features, wc[ii] - wc_ii,
+                              Q_ptr + ii * n_features, 1,
                               <DOUBLE*> &Hc[0], 1)
 
-                    # update the test for restarting when minimizing a strongly convex functions
-                    eta = 1. / n_features 
+                    # update the test for restarting when minimizing
+                    # a strongly convex functions
+                    eta = 1. / n_features
                     test_restart = (1-eta) * test_restart \
-                                   - eta * (we[ii]-we_ii)*( we[ii] - (theta**2 * wc_ii+we_ii) )
+                                   - eta * (we[ii] - we_ii) *
+                                     (we[ii] - (theta**2 * wc_ii+we_ii))
 
                     # update the maximum absolute coefficient update
-                    d_w_ii = fabs((theta ** 2) * (wc[ii] - wc_ii) + (we[ii] - we_ii))
+                    d_w_ii = fabs((theta ** 2) * (wc[ii] - wc_ii)
+                                  + (we[ii] - we_ii))
                     if d_w_ii > d_w_max:
                         d_w_max = d_w_ii
 
                     # update theta
-                    theta = 0.5 * (sqrt((theta ** 4) + 4. * (theta ** 2)) - theta ** 2)
+                    theta = 0.5 * (sqrt((theta ** 4) + 4. * (theta ** 2)) \
+                                   - theta ** 2)
 
-
-                # Tricks to make accelerated coordinate descent efficient for the lasso
-                tmp = (theta ** 2)/(1-theta) 
+                # Tricks to make accelerated coordinate descent efficient
+                # for the lasso
+                tmp = ((theta ** 2)/(1-theta) if theta < 1 else theta0)
                 for ii in range(n_features):
                     w[ii] = tmp * wc[ii] + we[ii]
                     if fabs(w[ii]) > w_max:
@@ -1242,20 +1244,18 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
                 # (helps promoting sparsity to w)
                 elif (nnze < nnz) \
                          and ( gram_enet_primal_value(n_features, n_tasks,
-                                                 <DOUBLE*> &q[0], y_norm2,
-                                                 <DOUBLE*> &He[0], <DOUBLE*> &we[0],
-                                                 alpha, beta) <
+                                    <DOUBLE*> &q[0], y_norm2, <DOUBLE*> &He[0],
+                                    <DOUBLE*> &we[0], alpha, beta) <
                                gram_enet_primal_value(n_features, n_tasks,
-                                                 <DOUBLE*> &q[0], y_norm2,
-                                                 <DOUBLE*> &H[0], <DOUBLE*> &w[0],
-                                                 alpha, beta) ):
+                                    <DOUBLE*> &q[0], y_norm2, <DOUBLE*> &H[0],
+                                    <DOUBLE*> &w[0], alpha, beta) ):
                     for ii in range(n_features):
                         wc[ii] = 0
                         w[ii] = we[ii]
                     for ii in range(n_features):
                         Hc[ii] = 0
                         H[ii] = He[ii]
-                    d_w_max = 10000 * w_max * d_w_tol  # we've made a big change
+                    d_w_max = 1000 * w_max * d_w_tol  # we've made a big change
 
             # Termination criterion
             if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
@@ -1264,10 +1264,10 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
                 # criterion
 
                 gap = gram_enet_duality_gap(n_features, n_tasks, <DOUBLE*> &q[0],
-                                       y_norm2, <DOUBLE*> &H[0],
-                                       <DOUBLE*> &w[0], <DOUBLE*> &XtA[0],
-                                       &dual_norm_XtA,
-                                       alpha, beta, positive)
+                                            y_norm2, <DOUBLE*> &H[0],
+                                            <DOUBLE*> &w[0], <DOUBLE*> &XtA[0],
+                                            &dual_norm_XtA,
+                                            alpha, beta, positive)
 
                 if gap < tol:
                     # return if we reached desired tolerance
@@ -1451,7 +1451,7 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
                     l21_norm += dnrm2(n_tasks, W_ptr + n_tasks * ii, 1)
 
                 gap += l1_reg * l21_norm - const * ry_sum + \
-                     0.5 * l2_reg * (1 + const ** 2) * (w_norm ** 2)
+                       0.5 * l2_reg * (1 + const ** 2) * (w_norm ** 2)
 
                 if gap < tol:
                     # return if we reached desired tolerance

@@ -190,7 +190,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     accelerated : bool, default False
         If set to True, runs the accelerated coordinate descent method
         instead of coordinate descent
-        
+
     Returns
     -------
     models : a list of models along the regularization path
@@ -515,8 +515,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random)
         elif isinstance(precompute, np.ndarray):
             model = cd_fast.enet_coordinate_descent_gram(
-                    coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
-                    tol, rng, random, positive, accelerated)
+                coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
+                tol, rng, random, positive, accelerated)
         elif precompute is False:
             model = cd_fast.enet_coordinate_descent(
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random,
@@ -660,7 +660,7 @@ class ElasticNet(LinearModel, RegressorMixin):
     accelerated : bool, default False
         If set to True, runs the accelerated coordinate descent method
         instead of coordinate descent
-        
+
     Attributes
     ----------
     coef_ : array, shape = (n_features,) | (n_targets, n_features)
@@ -787,7 +787,8 @@ class ElasticNet(LinearModel, RegressorMixin):
                           X_mean=X_mean, X_std=X_std, return_n_iter=True,
                           coef_init=coef_[k], max_iter=self.max_iter,
                           random_state=self.random_state,
-                          selection=self.selection, accelerated=self.accelerated)
+                          selection=self.selection,
+                          accelerated=self.accelerated)
             coef_[k] = this_coef[:, 0]
             dual_gaps_[k] = this_dual_gap[0]
             self.n_iter_.append(this_iter[0])
@@ -892,7 +893,7 @@ class Lasso(ElasticNet):
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when selection is set to
         'random'.
-        
+
     accelerated : bool, default False
         If set to True, runs the accelerated coordinate descent method
         instead of coordinate descent
@@ -1073,7 +1074,8 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
                  copy_X=True, cv=None, verbose=False, n_jobs=1,
-                 positive=False, random_state=None, selection='cyclic'):
+                 positive=False, random_state=None, selection='cyclic',
+                 accelerated=False):
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
@@ -1089,6 +1091,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
+        self.accelerated = accelerated
 
     def fit(self, X, y):
         """Fit linear model with coordinate descent
@@ -1320,6 +1323,10 @@ class LassoCV(LinearModelCV, RegressorMixin):
         a random feature to update. Useful only when selection is set to
         'random'.
 
+    accelerated : bool, default False
+        If set to True, runs the accelerated coordinate descent method
+        instead of coordinate descent
+
     Attributes
     ----------
     alpha_ : float
@@ -1366,13 +1373,15 @@ class LassoCV(LinearModelCV, RegressorMixin):
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
                  copy_X=True, cv=None, verbose=False, n_jobs=1,
-                 positive=False, random_state=None, selection='cyclic'):
+                 positive=False, random_state=None, selection='cyclic',
+                 accelerated=False):
         super(LassoCV, self).__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
             fit_intercept=fit_intercept, normalize=normalize,
             precompute=precompute, max_iter=max_iter, tol=tol, copy_X=copy_X,
             cv=cv, verbose=verbose, n_jobs=n_jobs, positive=positive,
-            random_state=random_state, selection=selection)
+            random_state=random_state, selection=selection,
+            accelerated=accelerated)
 
 
 class ElasticNetCV(LinearModelCV, RegressorMixin):
@@ -1446,6 +1455,10 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         a random feature to update. Useful only when selection is set to
         'random'.
 
+    accelerated : bool, default False
+        If set to True, runs the accelerated coordinate descent method
+        instead of coordinate descent
+
     Attributes
     ----------
     alpha_ : float
@@ -1509,7 +1522,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
                  fit_intercept=True, normalize=False, precompute='auto',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
                  verbose=0, n_jobs=1, positive=False, random_state=None,
-                 selection='cyclic'):
+                 selection='cyclic', accelerated=False):
         self.l1_ratio = l1_ratio
         self.eps = eps
         self.n_alphas = n_alphas
@@ -1526,6 +1539,8 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
+        self.accelerated = accelerated
+
 
 ###############################################################################
 # Multi Task ElasticNet and Lasso models (with joint feature selection)

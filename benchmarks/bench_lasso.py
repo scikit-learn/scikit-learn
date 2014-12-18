@@ -20,7 +20,7 @@ from sklearn.datasets.samples_generator import make_regression
 
 def compute_bench(alpha, n_samples, n_features, precompute):
     lasso_results = []
-    acceleratedcd_lasso_results = []
+    accelerated_cd_lasso_results = []
     lars_lasso_results = []
 
     it = 0
@@ -54,7 +54,7 @@ def compute_bench(alpha, n_samples, n_features, precompute):
                         selection='random')
             tstart = time()
             clf.fit(X, Y)
-            acceleratedcd_lasso_results.append(time() - tstart)
+            accelerated_cd_lasso_results.append(time() - tstart)
             
             gc.collect()
             print("- benchmarking LassoLars")
@@ -64,7 +64,7 @@ def compute_bench(alpha, n_samples, n_features, precompute):
             clf.fit(X, Y)
             lars_lasso_results.append(time() - tstart)
 
-    return lasso_results, acceleratedcd_lasso_results, lars_lasso_results
+    return lasso_results, accelerated_cd_lasso_results, lars_lasso_results
 
 
 if __name__ == '__main__':
@@ -75,8 +75,9 @@ if __name__ == '__main__':
 
     n_features = 10
     list_n_samples = np.linspace(100, 1000000, 5).astype(np.int)
-    lasso_results, acceleratedcd_lasso_results, lars_lasso_results = compute_bench(alpha, list_n_samples,
-                                            [n_features], precompute=True)
+    lasso_results, accelerated_cd_lasso_results, lars_lasso_results = \
+                   compute_bench(alpha, list_n_samples,
+                                 [n_features], precompute=True)
 
     pl.figure('scikit-learn LASSO benchmark results')
     pl.subplot(211)
@@ -94,11 +95,12 @@ if __name__ == '__main__':
 
     n_samples = 2000
     list_n_features = np.linspace(500, 3000, 5).astype(np.int)
-    lasso_results, acceleratedcd_lasso_results, lars_lasso_results = compute_bench(alpha, [n_samples],
-                                           list_n_features, precompute=False)
+    lasso_results, accelerated_cd_lasso_results, lars_lasso_results = \
+                   compute_bench(alpha, [n_samples],
+                                 list_n_features, precompute=False)
     pl.subplot(212)
     pl.plot(list_n_features, lasso_results, 'b-', label='Lasso')
-    pl.plot(list_n_features, acceleratedcd_lasso_results, 'g-',
+    pl.plot(list_n_features, accelerated_cd_lasso_results, 'g-',
                             label='LassoAcceleratedCD')
     pl.plot(list_n_features, lars_lasso_results, 'r-', label='LassoLars')
     pl.title('%d samples, alpha=%s' % (n_samples, alpha))
