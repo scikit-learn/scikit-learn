@@ -212,23 +212,32 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
             raise AssertionError("No warning raised when calling %s"
                                  % func.__name__)
 
-        if not w[0].category is warning_class:
-            raise AssertionError("First warning for %s is not a "
-                                 "%s( is %s)"
-                                 % (func.__name__, warning_class, w[0]))
+        found = [warning.category is warning_class for warning in w]
+        if not any(found):
+            raise AssertionError("No warning raised for %s with class "
+                                 "%s"
+                                 % (func.__name__, warning_class))
 
-        # substring will match, the entire message with typo won't
-        msg = w[0].message  # For Python 3 compatibility
-        msg = str(msg.args[0] if hasattr(msg, 'args') else msg)
-        if callable(message):  # add support for certain tests
-            check_in_message = message
-        else:
-            check_in_message = lambda msg: message in msg
-        if not check_in_message(msg):
-            raise AssertionError("The message received ('%s') for <%s> is "
-                                 "not the one you expected ('%s')"
-                                 % (msg, func.__name__, message
-                                    ))
+        message_found = False
+        # Checks the message of all warnings belong to warning_class
+        for index in [i for i, x in enumerate(found) if x]:
+            # substring will match, the entire message with typo won't
+            msg = w[index].message  # For Python 3 compatibility
+            msg = str(msg.args[0] if hasattr(msg, 'args') else msg)
+            if callable(message):  # add support for certain tests
+                check_in_message = message
+            else:
+                check_in_message = lambda msg: message in msg
+
+            if check_in_message(msg):
+                message_found = True
+                break
+
+        if not message_found:
+            raise AssertionError("Did not receive the message you expected "
+                                 "('%s') for <%s>."
+                                 % (message, func.__name__))
+
     return result
 
 
@@ -482,7 +491,8 @@ DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
              'LabelBinarizer', 'LabelEncoder', 'MultiLabelBinarizer',
              'TfidfTransformer', 'IsotonicRegression', 'OneHotEncoder',
              'RandomTreesEmbedding', 'FeatureHasher', 'DummyClassifier',
-             'DummyRegressor', 'TruncatedSVD', 'PolynomialFeatures']
+             'DummyRegressor', 'TruncatedSVD', 'PolynomialFeatures',
+             'GaussianRandomProjectionHash']
 
 
 def all_estimators(include_meta_estimators=False, include_other=False,
