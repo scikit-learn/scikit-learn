@@ -286,7 +286,7 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
 
     if return_distance:
         # 2 is scaling factor to compare w/ unstructured version
-        distances = np.sqrt(np.array(distances) * 2)
+        distances = np.sqrt(2. * np.array(distances))
         return children, n_components, n_leaves, parent, distances
     else:
         return children, n_components, n_leaves, parent
