@@ -87,7 +87,8 @@ def _fix_connectivity(X, connectivity, n_components=None,
 ###############################################################################
 # Hierarchical tree building functions
 
-def ward_tree(X, connectivity=None, n_components=None, n_clusters=None):
+def ward_tree(X, connectivity=None, n_components=None, n_clusters=None, 
+              return_distance=False):
     """Ward clustering based on a Feature matrix.
 
     Recursively merges the pair of clusters that minimally increases
@@ -121,6 +122,9 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None):
         limited use, and the 'parents' output should rather be used.
         This option is valid only when specifying a connectivity matrix.
 
+    return_distance: bool (optional)
+        If True, return the distance between the clusters.
+
     Returns
     -------
     children : 2D array, shape (n_nodes, 2)
@@ -137,6 +141,32 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None):
     parents : 1D array, shape (n_nodes, ) or None
         The parent of each node. Only returned when a connectivity matrix
         is specified, elsewhere 'None' is returned.
+
+    distances : 1D array, shape (n_nodes, )
+        Only returned if return_distance is set to True (for compatibility).
+        The distances between the centers of the nodes. `distances[i]`
+        corresponds to a weighted euclidean distance between
+        the nodes `children[i, 1]` and `children[i, 2]`. If the nodes refer to
+        leaves of the tree, then `distances[i]` is their unweighted euclidean
+        distance. Distances are updated in the following way
+        (from scipy.hierarchy.linkage):
+
+        The new entry :math:`d(u,v)` is computed as follows,
+
+        .. math::
+
+           d(u,v) = \\sqrt{\\frac{|v|+|s|}
+                               {T}d(v,s)^2
+                        + \\frac{|v|+|t|}
+                               {T}d(v,t)^2
+                        - \\frac{|v|}
+                               {T}d(s,t)^2}
+
+        where :math:`u` is the newly joined cluster consisting of
+        clusters :math:`s` and :math:`t`, :math:`v` is an unused
+        cluster in the forest, :math:`T=|v|+|s|+|t|`, and
+        :math:`|*|` is the cardinality of its argument. This is also
+        known as the incremental algorithm.
     """
     X = np.asarray(X)
     if X.ndim == 1:
@@ -156,7 +186,12 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None):
                           stacklevel=2)
         out = hierarchy.ward(X)
         children_ = out[:, :2].astype(np.intp)
-        return children_, 1, n_samples, None
+
+        if return_distance:
+            distances = out[:, 2]
+            return children_, 1, n_samples, None, distances
+        else:
+            return children_, 1, n_samples, None
 
     connectivity = _fix_connectivity(X, connectivity,
                                      n_components=n_components)
@@ -199,6 +234,8 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None):
     parent = np.arange(n_nodes, dtype=np.intp)
     used_node = np.ones(n_nodes, dtype=bool)
     children = []
+    if return_distance:
+        distances = []
 
     not_visited = np.empty(n_nodes, dtype=np.int8, order='C')
 
@@ -212,6 +249,8 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None):
         parent[i], parent[j] = k, k
         children.append((i, j))
         used_node[i] = used_node[j] = False
+        if return_distance:  # store inertia value
+            distances.append(inert)
 
         # update the moments
         moments_1[k] = moments_1[i] + moments_1[j]
@@ -245,7 +284,12 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None):
     children = [c[::-1] for c in children]
     children = np.array(children)  # return numpy array for efficient caching
 
-    return children, n_components, n_leaves, parent
+    if return_distance:
+        # 2 is scaling factor to compare w/ unstructured version
+        distances = np.sqrt(2. * np.array(distances))
+        return children, n_components, n_leaves, parent, distances
+    else:
+        return children, n_components, n_leaves, parent
 
 
 # average and complete linkage

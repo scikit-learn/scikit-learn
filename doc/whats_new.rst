@@ -64,6 +64,10 @@ New features
 Enhancements
 ............
 
+   - Add option ``return_distance`` in :func:`hierarchical.ward_tree`
+     to return distances between nodes for both structured and unstructured
+     versions of the algorithm. By `Matteo Visconti di Oleggio Castello`_.
+
    - Add support for sample weights in scorer objects.  Metrics with sample
      weight support will automatically benefit from it. By `Noel Dawe`_ and
      `Vlad Niculae`_.
