@@ -931,6 +931,7 @@ See the :ref:`metrics` section of the user guide for further details.
    naive_bayes.GaussianNB
    naive_bayes.MultinomialNB
    naive_bayes.BernoulliNB
+   naive_bayes.PoissonNB
 
 
 .. _neighbors_ref:

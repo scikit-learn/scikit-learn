@@ -11,10 +11,12 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
 
-from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
+from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB, \
+    PoissonNB
 
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -68,6 +70,30 @@ def test_discrete_prior():
         clf = cls().fit(X2, y2)
         assert_array_almost_equal(np.log(np.array([2, 2, 2]) / 6.0),
                                   clf.class_log_prior_, 8)
+
+
+def test_poissonnb():
+    clf = PoissonNB()
+    assert_raises(ValueError, clf.fit, -X2, y2)
+
+    y_pred = clf.fit(X2, y2).predict(X2)
+    assert_array_equal(y_pred, y2)
+
+
+def test_poissonnb_prior():
+    """Test whether class priors are properly set. """
+    Xp = X + np.array([2, 2])
+    clf = PoissonNB().fit(Xp, y)
+    assert_array_almost_equal(np.array([3, 3]) / 6.0,
+                              clf.class_prior_, 8)
+    clf.fit(X2, y2)
+    assert_array_almost_equal(clf.class_prior_.sum(), 1)
+
+    # Verify that np.log(clf.predict_proba(X)) gives the same results as
+    # clf.predict_log_proba(X)
+    y_pred_proba = clf.predict_proba(X2)
+    y_pred_log_proba = clf.predict_log_proba(X2)
+    assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
 
 
 def test_mnnb():
@@ -157,7 +183,7 @@ def test_gnb_partial_fit():
 def test_discretenb_pickle():
     """Test picklability of discrete naive Bayes classifiers"""
 
-    for cls in [BernoulliNB, MultinomialNB, GaussianNB]:
+    for cls in [BernoulliNB, MultinomialNB, GaussianNB, PoissonNB]:
         clf = cls().fit(X2, y2)
         y_pred = clf.predict(X2)
 
@@ -167,9 +193,7 @@ def test_discretenb_pickle():
 
         assert_array_equal(y_pred, clf.predict(X2))
 
-        if cls is not GaussianNB:
-            # TODO re-enable me when partial_fit is implemented for GaussianNB
-
+        if cls is not PoissonNB:
             # Test pickling of estimator trained with partial_fit
             clf2 = cls().partial_fit(X2[:3], y2[:3], classes=np.unique(y2))
             clf2.partial_fit(X2[3:], y2[3:])
@@ -181,7 +205,7 @@ def test_discretenb_pickle():
 
 def test_input_check_fit():
     """Test input checks for the fit method"""
-    for cls in [BernoulliNB, MultinomialNB, GaussianNB]:
+    for cls in [BernoulliNB, MultinomialNB, GaussianNB, PoissonNB]:
         # check shape consistency for number of samples at fit time
         assert_raises(ValueError, cls().fit, X2, y2[:-1])
 
@@ -216,9 +240,15 @@ def test_discretenb_predict_proba():
     """Test discrete NB classes' probability scores"""
 
     # The 100s below distinguish Bernoulli from multinomial.
-    # FIXME: write a test to show this.
     X_bernoulli = [[1, 100, 0], [0, 1, 0], [0, 100, 1]]
     X_multinomial = [[0, 1], [1, 3], [4, 0]]
+
+    # Confirm that the 100s above distinguish Bernoulli from multinomial
+    y = [0, 0, 1]
+    cls_b = BernoulliNB().fit(X_bernoulli, y)
+    cls_m = MultinomialNB().fit(X_bernoulli, y)
+    assert_not_equal(cls_b.predict(X_bernoulli)[-1],
+                     cls_m.predict(X_bernoulli)[-1])
 
     # test binary case (1-d output)
     y = [0, 0, 2]   # 2 is regression test for binary case, 02e673
@@ -352,3 +382,10 @@ def test_check_accuracy_on_digits():
 
     scores = cross_val_score(GaussianNB(), X_3v8, y_3v8, cv=10)
     assert_greater(scores.mean(), 0.86)
+
+    # Poisson NB
+    scores = cross_val_score(PoissonNB(), X, y, cv=10)
+    assert_greater(scores.mean(), 0.85)
+
+    scores = cross_val_score(PoissonNB(), X_3v8, y_3v8, cv=10)
+    assert_greater(scores.mean(), 0.95)

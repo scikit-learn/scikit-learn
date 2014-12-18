@@ -30,7 +30,7 @@ from .utils.multiclass import _check_partial_fit_first_call
 from .externals import six
 from .utils.fixes import in1d
 
-__all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB']
+__all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'PoissonNB']
 
 
 class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
@@ -333,16 +333,111 @@ class GaussianNB(BaseNB):
 
     def _joint_log_likelihood(self, X):
         X = check_array(X)
-        joint_log_likelihood = []
-        for i in range(np.size(self.classes_)):
+
+        joint_log_likelihood = np.zeros((np.shape(X)[0],
+                                         np.size(self.classes_)))
+        for i in range(len(self.classes_)):
             jointi = np.log(self.class_prior_[i])
             n_ij = - 0.5 * np.sum(np.log(2. * np.pi * self.sigma_[i, :]))
             n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) /
                                  (self.sigma_[i, :]), 1)
-            joint_log_likelihood.append(jointi + n_ij)
+            joint_log_likelihood[:, i] = jointi + n_ij
 
-        joint_log_likelihood = np.array(joint_log_likelihood).T
         return joint_log_likelihood
+
+
+class PoissonNB(BaseNB):
+    """
+    Poisson Naive Bayes (PoissonNB)
+
+    Attributes
+    ----------
+    class_prior_ : array, shape (n_classes,)
+        probability of each class.
+
+    class_count_ : array, shape (n_classes,)
+        number of training samples observed in each class.
+
+    lambda_ : array, shape (n_classes, n_features)
+        mean of each feature per class
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> X = np.array([[5, 2, 6, 1, 8, 1], [0, 0, 1, 3, 3, 1]]).T
+    >>> y = np.array([1, 1, 1, 2, 2, 2])
+    >>> from sklearn.naive_bayes import PoissonNB
+    >>> clf = PoissonNB()
+    >>> clf.fit(X, y)
+    PoissonNB()
+    >>> print(clf.predict(X))
+    [1 1 1 2 2 2]
+
+    References
+    ----------
+    T. D. Sanger. (1994) Probability Density Estimation for the Interpretation
+    of Neural Population Codes. J Neurophys. 76(4):2790-3 (Eq. 8)
+    http://jn.physiology.org/content/jn/76/4/2790.full.pdf
+    """
+
+    def fit(self, X, y):
+        """Fit Poisson Naive Bayes according to X, y
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training vectors, where n_samples is the number of samples
+            and n_features is the number of features. X expects non-negative
+            integers, although in practice non-integer values may also work.
+            Negative counts will result in a ValueError.
+
+        y : array-like, shape (n_samples,)
+            Target values.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        X, y = check_X_y(X, y)
+        PoissonNB._check_non_negative(X)
+
+        n_samples, n_features = X.shape
+
+        self.classes_ = unique_y = np.unique(y)
+        n_classes = unique_y.shape[0]
+
+        epsilon = 1e-9
+
+        self.lambda_ = np.zeros((n_classes, n_features))
+        self.class_prior_ = np.zeros(n_classes)
+
+        for i, y_i in enumerate(unique_y):
+            Xi = X[y == y_i, :]
+            self.lambda_[i, :] = np.mean(Xi, axis=0) + epsilon
+            self.class_prior_[i] = float(Xi.shape[0]) / n_samples
+
+        return self
+
+    def _joint_log_likelihood(self, X):
+        X = check_array(X)
+        PoissonNB._check_non_negative(X)
+
+        joint_log_likelihood = np.zeros((np.shape(X)[0],
+                                         np.size(self.classes_)))
+
+        for i in range(len(self.classes_)):
+            jointi = np.log(self.class_prior_[i])
+            n_ij = np.sum(X * np.log(self.lambda_[i, :]), axis=1)
+            n_ij -= np.sum(self.lambda_[i, :])
+            joint_log_likelihood[:, i] = jointi + n_ij
+
+        return joint_log_likelihood
+
+    @staticmethod
+    def _check_non_negative(X):
+        if np.any(X < 0.):
+            raise ValueError("Input X must be non-negative")
 
 
 class BaseDiscreteNB(BaseNB):

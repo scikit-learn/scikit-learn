@@ -83,7 +83,8 @@ classification. The likelihood of the features is assumed to be Gaussian:
 
 .. math::
 
-   P(x_i \mid y) &= \frac{1}{\sqrt{2\pi\sigma^2_y}} \exp\left(-\frac{(x_i - \mu_y)^2}{2\sigma^2_y}\right)
+   P(x_i \mid y) &= \frac{1}{\sqrt{2\pi\sigma^2_y}}
+   \exp\left(-\frac{(x_i - \mu_y)^2}{2\sigma^2_y}\right)
 
 The parameters :math:`\sigma_y` and :math:`\mu_y`
 are estimated using maximum likelihood.
@@ -96,6 +97,7 @@ are estimated using maximum likelihood.
     >>> print("Number of mislabeled points out of a total %d points : %d"
     ...       % (iris.data.shape[0],(iris.target != y_pred).sum()))
     Number of mislabeled points out of a total 150 points : 6
+
 
 .. _multinomial_naive_bayes:
 
@@ -176,6 +178,49 @@ It is advisable to evaluate both models, if time permits.
    `Spam filtering with Naive Bayes -- Which Naive Bayes?
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.61.5542>`_
    3rd Conf. on Email and Anti-Spam (CEAS).
+
+
+.. _poisson_naive_bayes:
+
+Poisson Naive Bayes
+-------------------
+
+:class:`PoissonNB` implements the naive Bayes algorithm for Poisson distributed
+features.  Poisson random variables typically arise when counting events of a
+rate process with underlying rate :math:`\lambda` during a finite interval.
+
+The likelihood is given by:
+
+.. math::
+
+    P(x_i \mid \lambda) = \frac{\lambda^{x_i} e^{-\lambda}}{x_i!}
+
+and can be thought of as the limit of a Bernoulli process with per-trial
+probability :math:`p = \lambda / n` as the number of trials `n` goes to
+infinity.
+
+.. math::
+
+        P(x_i \mid \lambda) = \lim_{n \to \infty} \binom{n}{x_i}
+        \left(\frac{\lambda}{n}\right)^{x_i}
+        \left(1-\frac{\lambda}{n}\right)^{n-x_i}
+
+.. topic:: References:
+
+ * T. D. Sanger (1994).
+   `Probability Density Estimation for the Interpretation of Neural Population Codes.
+   <http://jn.physiology.org/content/jn/76/4/2790.full.pdf>`_
+   J Neurophys. 76(4):2790-3
+
+ * S. Kim, H. Seo and H. Rim. (2003)
+   `Poisson naive Bayes for text classification with feature weighting.
+   <http://dl.acm.org/citation.cfm?id=1118940>`_
+   6th Workshop on Information retrieval with Asian languages 11:33-40
+
+ * W. J. Ma, et Al. (2006).
+   `Bayesian inference with probabilistic population codes
+   <http://psych.stanford.edu/~jlm/pdfs/Ma%20et%20al%20with%20figs.pdf>`_
+   Nat. Neurosci. 9:1432-1438
 
 
 Out-of-core naive Bayes model fitting
