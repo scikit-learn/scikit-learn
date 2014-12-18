@@ -23,7 +23,6 @@ from ..utils.sparsetools import connected_components
 
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
-from ..neighbors.graph import kneighbors_graph
 from ..utils.fast_dict import IntFloatDict
 
 if sys.version_info[0] > 2:
@@ -525,10 +524,10 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     n_clusters : int, default=2
         The number of clusters to find.
 
-    connectivity : array-like, callable, optional
+    connectivity : array-like or callable, optional
         Connectivity matrix. Defines for each sample the neighboring
         samples following a given structure of the data.
-        This can be a connectivity matrix itself, a callable that transforms
+        This can be a connectivity matrix itself or a callable that transforms
         the data into a connectivity matrix, such as derived from
         kneighbors_graph. Default is None, i.e, the
         hierarchical clustering algorithm is unstructured.
@@ -634,13 +633,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         if self.connectivity is not None:
             if callable(self.connectivity):
                 connectivity = self.connectivity(X)
-            if not sparse.isspmatrix(connectivity) or not (
-                isinstance(connectivity, np.ndarray)):
-                connectivity = sparse.lil_matrix(connectivity)
-            if (connectivity.shape[0] != X.shape[0] or
-                    connectivity.shape[1] != X.shape[0]):
-                raise ValueError("`connectivity` does not have shape "
-                                 "(n_samples, n_samples)")
+            connectivity = check_array(
+                connectivity, accept_sparse=['csr', 'coo', 'lil'])
 
         n_samples = len(X)
         compute_full_tree = self.compute_full_tree
@@ -689,10 +683,10 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     n_clusters : int, default 2
         The number of clusters to find.
 
-    connectivity : array-like, callable, optional
+    connectivity : array-like or callable, optional
         Connectivity matrix. Defines for each feature the neighboring
         features following a given structure of the data.
-        This can be a connectivity matrix itself, a callable that transforms
+        This can be a connectivity matrix itself or a callable that transforms
         the data into a connectivity matrix, such as derived from
         kneighbors_graph. Default is None, i.e, the
         hierarchical clustering algorithm is unstructured.
@@ -860,10 +854,10 @@ class WardAgglomeration(AgglomerationTransform, Ward):
     n_clusters : int or ndarray
         The number of clusters.
 
-    connectivity : array-like, callable, optional
+    connectivity : array-like or callable, optional
         Connectivity matrix. Defines for each sample the neighboring
         samples following a given structure of the data.
-        This can be a connectivity matrix itself, a callable that transforms
+        This can be a connectivity matrix itself or a callable that transforms
         the data into a connectivity matrix, such as derived from
         kneighbors_graph. Default is None, i.e, the
         hierarchical clustering algorithm is unstructured.
