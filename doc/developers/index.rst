@@ -885,7 +885,7 @@ The easiest way to achieve this is to put::
     self.classes_, y = np.unique(y, return_inverse=True)
 
 in ``fit``.
-This return a new ``y`` that contains class indexes, rather than labels,
+This returns a new ``y`` that contains class indexes, rather than labels,
 in the range [0, ``n_classes``).
 
 A classifier's ``predict`` method should return
