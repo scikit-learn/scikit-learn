@@ -283,9 +283,6 @@ class ChangedBehaviorWarning(UserWarning):
     pass
 
 
-iff_estimator_has_method = make_delegation_decorator('estimator')
-
-
 class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                       MetaEstimatorMixin)):
     """Base class for hyper parameter search with cross-validation."""
@@ -346,27 +343,27 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                           ChangedBehaviorWarning)
         return self.scorer_(self.best_estimator_, X, y)
 
-    @iff_estimator_has_method
+    @make_delegation_decorator('estimator')
     def predict(self, X):
         return self.best_estimator_.predict(X)
 
-    @iff_estimator_has_method
+    @make_delegation_decorator('estimator')
     def predict_proba(self, X):
         return self.best_estimator_.predict_proba(X)
 
-    @iff_estimator_has_method
+    @make_delegation_decorator('estimator')
     def predict_log_proba(self, X):
         return self.best_estimator_.predict_log_proba(X)
 
-    @iff_estimator_has_method
+    @make_delegation_decorator('estimator')
     def decision_function(self, X):
         return self.best_estimator_.decision_function(X)
 
-    @iff_estimator_has_method
+    @make_delegation_decorator('estimator')
     def transform(self, X):
         return self.best_estimator_.transform(X)
 
-    @iff_estimator_has_method
+    @make_delegation_decorator('estimator')
     def inverse_transform(self, Xt):
         return self.best_estimator_.transform(Xt)
 

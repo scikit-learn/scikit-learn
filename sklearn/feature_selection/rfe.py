@@ -19,9 +19,6 @@ from ..metrics.scorer import check_scoring
 from .base import SelectorMixin
 
 
-iff_estimator_has_method = make_delegation_decorator('estimator')
-
-
 class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     """Feature ranking with recursive feature elimination.
 
@@ -130,7 +127,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
             n_features_to_select = self.n_features_to_select
 
         if 0.0 < self.step < 1.0:
-            step = int(max(1, self.step * n_features))       
+            step = int(max(1, self.step * n_features))
         else:
             step = int(self.step)
         if step <= 0:
@@ -174,7 +171,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
         return self
 
-    @iff_estimator_has_method
+    @make_delegation_decorator('estimator')
     def predict(self, X):
         """Reduce X to the selected features and then predict using the
            underlying estimator.
@@ -191,7 +188,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         """
         return self.estimator_.predict(self.transform(X))
 
-    @iff_estimator_has_method
+    @make_delegation_decorator('estimator')
     def score(self, X, y):
         """Reduce X to the selected features and then return the score of the
            underlying estimator.
@@ -209,21 +206,21 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     def _get_support_mask(self):
         return self.support_
 
-    @iff_estimator_has_method
+    @make_delegation_decorator('estimator')
     def decision_function(self, X):
         return self.estimator_.decision_function(self.transform(X))
 
-    @iff_estimator_has_method
+    @make_delegation_decorator('estimator')
     def predict_proba(self, X):
         return self.estimator_.predict_proba(self.transform(X))
 
-    @iff_estimator_has_method
+    @make_delegation_decorator('estimator')
     def predict_log_proba(self, X):
         return self.estimator_.predict_log_proba(self.transform(X))
 
 
 class RFECV(RFE, MetaEstimatorMixin):
-    """Feature ranking with recursive feature elimination and cross-validated 
+    """Feature ranking with recursive feature elimination and cross-validated
     selection of the best number of features.
 
     Parameters
@@ -266,7 +263,7 @@ class RFECV(RFE, MetaEstimatorMixin):
     ----------
     n_features_ : int
         The number of selected features with cross-validation.
-    
+
     support_ : array of shape [n_features]
         The mask of selected features.
 
@@ -397,4 +394,3 @@ class RFECV(RFE, MetaEstimatorMixin):
         # here, the scores are normalized by len(cv)
         self.grid_scores_ = scores / len(cv)
         return self
-
