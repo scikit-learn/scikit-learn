@@ -3,14 +3,108 @@
 import numpy as np
 cimport numpy as np
 import warnings
-from libc.math cimport fmax, fabs
+from libc.math cimport fmax, fabs, exp, log
 from libc.time cimport time, time_t
 
 cdef extern from "sgd_fast_helpers.h":
     bint skl_isfinite(double) nogil
 
 from sklearn.utils.seq_dataset cimport SequentialDataset
-from .sgd_fast cimport LossFunction, Classification
+
+cdef class LossFunction:
+    """Base class for convex loss functions"""
+
+    cdef double loss(self, double p, double y) nogil:
+        """Evaluate the loss function.
+
+        Parameters
+        ----------
+        p : double
+            The prediction, p = w^T x
+        y : double
+            The true value (aka target)
+
+        Returns
+        -------
+        double
+            The loss evaluated at `p` and `y`.
+        """
+        pass
+
+    def dloss(self, double p, double y):
+        """Evaluate the derivative of the loss function with respect to
+        the prediction `p`.
+
+        Parameters
+        ----------
+        p : double
+            The prediction, p = w^T x
+        y : double
+            The true value (aka target)
+        Returns
+        -------
+        double
+            The derivative of the loss function with regards to `p`.
+        """
+        return self._dloss(p, y)
+
+    cdef double _dloss(self, double p, double y) nogil:
+        pass
+
+
+cdef class Regression(LossFunction):
+    """Base class for loss functions for regression"""
+
+    cdef double loss(self, double p, double y) nogil:
+        pass
+
+    cdef double _dloss(self, double p, double y) nogil:
+        pass
+
+cdef class Classification(LossFunction):
+    """Base class for loss functions for classification"""
+
+    cdef double loss(self, double p, double y) nogil:
+        return 0.
+
+    cdef double _dloss(self, double p, double y) nogil:
+        return 0.
+
+cdef class Log(Classification):
+    """Logistic regression loss for binary classification with y in {-1, 1}"""
+
+    cdef double loss(self, double p, double y) nogil:
+        cdef double z = p * y
+        # approximately equal and saves the computation of the log
+        if z > 18:
+            return exp(-z)
+        if z < -18:
+            return -z
+        return log(1.0 + exp(-z))
+
+    cdef double _dloss(self, double p, double y) nogil:
+        cdef double z = p * y
+        # approximately equal and saves the computation of the log
+        if z > 18.0:
+            return exp(-z) * -y
+        if z < -18.0:
+            return -y
+        return -y / (exp(z) + 1.0)
+
+    def __reduce__(self):
+        return Log, ()
+
+
+cdef class SquaredLoss(Regression):
+    """Squared loss traditional used in linear regression."""
+    cdef double loss(self, double p, double y) nogil:
+        return 0.5 * (p - y) * (p - y)
+
+    cdef double _dloss(self, double p, double y) nogil:
+        return p - y
+
+    def __reduce__(self):
+        return SquaredLoss, ()
 
 # This sparse implementation is taken from section 4.3 of "Minimizing Finite
 # Sums with the Stochastic Average Gradient" by

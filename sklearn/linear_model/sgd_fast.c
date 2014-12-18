@@ -700,8 +700,8 @@ struct __pyx_obj_7sklearn_5utils_11seq_dataset_SequentialDataset;
 struct __pyx_obj_7sklearn_5utils_11seq_dataset_ArrayDataset;
 struct __pyx_obj_7sklearn_5utils_11seq_dataset_CSRDataset;
 struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_LossFunction;
-struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_Classification;
 struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_Regression;
+struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_Classification;
 struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_ModifiedHuber;
 struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_Hinge;
 struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_SquaredHinge;
@@ -825,10 +825,12 @@ struct __pyx_obj_7sklearn_5utils_11seq_dataset_CSRDataset {
 };
 
 
-/* "sklearn/linear_model/sgd_fast.pxd":1
+/* "sklearn/linear_model/sgd_fast.pyx":45
+ * # ----------------------------------------
+ * 
  * cdef class LossFunction:             # <<<<<<<<<<<<<<
- *     cdef double loss(self, double p, double y) nogil
- *     cdef double _dloss(self, double p, double y) nogil
+ *     """Base class for convex loss functions"""
+ * 
  */
 struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_LossFunction {
   PyObject_HEAD
@@ -836,25 +838,26 @@ struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_LossFunction {
 };
 
 
-/* "sklearn/linear_model/sgd_fast.pxd":5
- *     cdef double _dloss(self, double p, double y) nogil
+/* "sklearn/linear_model/sgd_fast.pyx":88
  * 
- * cdef class Classification(LossFunction):             # <<<<<<<<<<<<<<
- *     pass
+ * 
+ * cdef class Regression(LossFunction):             # <<<<<<<<<<<<<<
+ *     """Base class for loss functions for regression"""
  * 
  */
-struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_Classification {
+struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_Regression {
   struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_LossFunction __pyx_base;
 };
 
 
-/* "sklearn/linear_model/sgd_fast.pxd":8
- *     pass
+/* "sklearn/linear_model/sgd_fast.pyx":98
  * 
- * cdef class Regression(LossFunction):             # <<<<<<<<<<<<<<
- *     pass
+ * 
+ * cdef class Classification(LossFunction):             # <<<<<<<<<<<<<<
+ *     """Base class for loss functions for classification"""
+ * 
  */
-struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_Regression {
+struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_Classification {
   struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_LossFunction __pyx_base;
 };
 
@@ -1042,20 +1045,6 @@ struct __pyx_vtabstruct_7sklearn_12linear_model_8sgd_fast_LossFunction {
 static struct __pyx_vtabstruct_7sklearn_12linear_model_8sgd_fast_LossFunction *__pyx_vtabptr_7sklearn_12linear_model_8sgd_fast_LossFunction;
 
 
-/* "sklearn/linear_model/sgd_fast.pyx":98
- * 
- * 
- * cdef class Classification(LossFunction):             # <<<<<<<<<<<<<<
- *     """Base class for loss functions for classification"""
- * 
- */
-
-struct __pyx_vtabstruct_7sklearn_12linear_model_8sgd_fast_Classification {
-  struct __pyx_vtabstruct_7sklearn_12linear_model_8sgd_fast_LossFunction __pyx_base;
-};
-static struct __pyx_vtabstruct_7sklearn_12linear_model_8sgd_fast_Classification *__pyx_vtabptr_7sklearn_12linear_model_8sgd_fast_Classification;
-
-
 /* "sklearn/linear_model/sgd_fast.pyx":88
  * 
  * 
@@ -1068,6 +1057,20 @@ struct __pyx_vtabstruct_7sklearn_12linear_model_8sgd_fast_Regression {
   struct __pyx_vtabstruct_7sklearn_12linear_model_8sgd_fast_LossFunction __pyx_base;
 };
 static struct __pyx_vtabstruct_7sklearn_12linear_model_8sgd_fast_Regression *__pyx_vtabptr_7sklearn_12linear_model_8sgd_fast_Regression;
+
+
+/* "sklearn/linear_model/sgd_fast.pyx":98
+ * 
+ * 
+ * cdef class Classification(LossFunction):             # <<<<<<<<<<<<<<
+ *     """Base class for loss functions for classification"""
+ * 
+ */
+
+struct __pyx_vtabstruct_7sklearn_12linear_model_8sgd_fast_Classification {
+  struct __pyx_vtabstruct_7sklearn_12linear_model_8sgd_fast_LossFunction __pyx_base;
+};
+static struct __pyx_vtabstruct_7sklearn_12linear_model_8sgd_fast_Classification *__pyx_vtabptr_7sklearn_12linear_model_8sgd_fast_Classification;
 
 
 /* "sklearn/linear_model/sgd_fast.pyx":108
@@ -1592,8 +1595,8 @@ static PyTypeObject *__pyx_ptype_7sklearn_5utils_11seq_dataset_CSRDataset = 0;
 
 /* Module declarations from 'sklearn.linear_model.sgd_fast' */
 static PyTypeObject *__pyx_ptype_7sklearn_12linear_model_8sgd_fast_LossFunction = 0;
-static PyTypeObject *__pyx_ptype_7sklearn_12linear_model_8sgd_fast_Classification = 0;
 static PyTypeObject *__pyx_ptype_7sklearn_12linear_model_8sgd_fast_Regression = 0;
+static PyTypeObject *__pyx_ptype_7sklearn_12linear_model_8sgd_fast_Classification = 0;
 static PyTypeObject *__pyx_ptype_7sklearn_12linear_model_8sgd_fast_ModifiedHuber = 0;
 static PyTypeObject *__pyx_ptype_7sklearn_12linear_model_8sgd_fast_Hinge = 0;
 static PyTypeObject *__pyx_ptype_7sklearn_12linear_model_8sgd_fast_SquaredHinge = 0;
@@ -1633,8 +1636,8 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_8sgd_fast_4_plain_sgd(CYTHON_U
 static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, Py_buffer *__pyx_v_info, int __pyx_v_flags); /* proto */
 static void __pyx_pf_5numpy_7ndarray_2__releasebuffer__(PyArrayObject *__pyx_v_self, Py_buffer *__pyx_v_info); /* proto */
 static PyObject *__pyx_tp_new_7sklearn_12linear_model_8sgd_fast_LossFunction(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
-static PyObject *__pyx_tp_new_7sklearn_12linear_model_8sgd_fast_Classification(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_tp_new_7sklearn_12linear_model_8sgd_fast_Regression(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
+static PyObject *__pyx_tp_new_7sklearn_12linear_model_8sgd_fast_Classification(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_tp_new_7sklearn_12linear_model_8sgd_fast_ModifiedHuber(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_tp_new_7sklearn_12linear_model_8sgd_fast_Hinge(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_tp_new_7sklearn_12linear_model_8sgd_fast_SquaredHinge(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
@@ -10028,73 +10031,6 @@ static PyTypeObject __pyx_type_7sklearn_12linear_model_8sgd_fast_LossFunction = 
   0, /*tp_finalize*/
   #endif
 };
-static struct __pyx_vtabstruct_7sklearn_12linear_model_8sgd_fast_Classification __pyx_vtable_7sklearn_12linear_model_8sgd_fast_Classification;
-
-static PyObject *__pyx_tp_new_7sklearn_12linear_model_8sgd_fast_Classification(PyTypeObject *t, PyObject *a, PyObject *k) {
-  struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_Classification *p;
-  PyObject *o = __pyx_tp_new_7sklearn_12linear_model_8sgd_fast_LossFunction(t, a, k);
-  if (unlikely(!o)) return 0;
-  p = ((struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_Classification *)o);
-  p->__pyx_base.__pyx_vtab = (struct __pyx_vtabstruct_7sklearn_12linear_model_8sgd_fast_LossFunction*)__pyx_vtabptr_7sklearn_12linear_model_8sgd_fast_Classification;
-  return o;
-}
-
-static PyTypeObject __pyx_type_7sklearn_12linear_model_8sgd_fast_Classification = {
-  PyVarObject_HEAD_INIT(0, 0)
-  "sklearn.linear_model.sgd_fast.Classification", /*tp_name*/
-  sizeof(struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_Classification), /*tp_basicsize*/
-  0, /*tp_itemsize*/
-  __pyx_tp_dealloc_7sklearn_12linear_model_8sgd_fast_LossFunction, /*tp_dealloc*/
-  0, /*tp_print*/
-  0, /*tp_getattr*/
-  0, /*tp_setattr*/
-  #if PY_MAJOR_VERSION < 3
-  0, /*tp_compare*/
-  #else
-  0, /*reserved*/
-  #endif
-  0, /*tp_repr*/
-  0, /*tp_as_number*/
-  0, /*tp_as_sequence*/
-  0, /*tp_as_mapping*/
-  0, /*tp_hash*/
-  0, /*tp_call*/
-  0, /*tp_str*/
-  0, /*tp_getattro*/
-  0, /*tp_setattro*/
-  0, /*tp_as_buffer*/
-  Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_VERSION_TAG|Py_TPFLAGS_CHECKTYPES|Py_TPFLAGS_HAVE_NEWBUFFER|Py_TPFLAGS_BASETYPE, /*tp_flags*/
-  "Base class for loss functions for classification", /*tp_doc*/
-  0, /*tp_traverse*/
-  0, /*tp_clear*/
-  0, /*tp_richcompare*/
-  0, /*tp_weaklistoffset*/
-  0, /*tp_iter*/
-  0, /*tp_iternext*/
-  0, /*tp_methods*/
-  0, /*tp_members*/
-  0, /*tp_getset*/
-  0, /*tp_base*/
-  0, /*tp_dict*/
-  0, /*tp_descr_get*/
-  0, /*tp_descr_set*/
-  0, /*tp_dictoffset*/
-  0, /*tp_init*/
-  0, /*tp_alloc*/
-  __pyx_tp_new_7sklearn_12linear_model_8sgd_fast_Classification, /*tp_new*/
-  0, /*tp_free*/
-  0, /*tp_is_gc*/
-  0, /*tp_bases*/
-  0, /*tp_mro*/
-  0, /*tp_cache*/
-  0, /*tp_subclasses*/
-  0, /*tp_weaklist*/
-  0, /*tp_del*/
-  0, /*tp_version_tag*/
-  #if PY_VERSION_HEX >= 0x030400a1
-  0, /*tp_finalize*/
-  #endif
-};
 static struct __pyx_vtabstruct_7sklearn_12linear_model_8sgd_fast_Regression __pyx_vtable_7sklearn_12linear_model_8sgd_fast_Regression;
 
 static PyObject *__pyx_tp_new_7sklearn_12linear_model_8sgd_fast_Regression(PyTypeObject *t, PyObject *a, PyObject *k) {
@@ -10149,6 +10085,73 @@ static PyTypeObject __pyx_type_7sklearn_12linear_model_8sgd_fast_Regression = {
   0, /*tp_init*/
   0, /*tp_alloc*/
   __pyx_tp_new_7sklearn_12linear_model_8sgd_fast_Regression, /*tp_new*/
+  0, /*tp_free*/
+  0, /*tp_is_gc*/
+  0, /*tp_bases*/
+  0, /*tp_mro*/
+  0, /*tp_cache*/
+  0, /*tp_subclasses*/
+  0, /*tp_weaklist*/
+  0, /*tp_del*/
+  0, /*tp_version_tag*/
+  #if PY_VERSION_HEX >= 0x030400a1
+  0, /*tp_finalize*/
+  #endif
+};
+static struct __pyx_vtabstruct_7sklearn_12linear_model_8sgd_fast_Classification __pyx_vtable_7sklearn_12linear_model_8sgd_fast_Classification;
+
+static PyObject *__pyx_tp_new_7sklearn_12linear_model_8sgd_fast_Classification(PyTypeObject *t, PyObject *a, PyObject *k) {
+  struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_Classification *p;
+  PyObject *o = __pyx_tp_new_7sklearn_12linear_model_8sgd_fast_LossFunction(t, a, k);
+  if (unlikely(!o)) return 0;
+  p = ((struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_Classification *)o);
+  p->__pyx_base.__pyx_vtab = (struct __pyx_vtabstruct_7sklearn_12linear_model_8sgd_fast_LossFunction*)__pyx_vtabptr_7sklearn_12linear_model_8sgd_fast_Classification;
+  return o;
+}
+
+static PyTypeObject __pyx_type_7sklearn_12linear_model_8sgd_fast_Classification = {
+  PyVarObject_HEAD_INIT(0, 0)
+  "sklearn.linear_model.sgd_fast.Classification", /*tp_name*/
+  sizeof(struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_Classification), /*tp_basicsize*/
+  0, /*tp_itemsize*/
+  __pyx_tp_dealloc_7sklearn_12linear_model_8sgd_fast_LossFunction, /*tp_dealloc*/
+  0, /*tp_print*/
+  0, /*tp_getattr*/
+  0, /*tp_setattr*/
+  #if PY_MAJOR_VERSION < 3
+  0, /*tp_compare*/
+  #else
+  0, /*reserved*/
+  #endif
+  0, /*tp_repr*/
+  0, /*tp_as_number*/
+  0, /*tp_as_sequence*/
+  0, /*tp_as_mapping*/
+  0, /*tp_hash*/
+  0, /*tp_call*/
+  0, /*tp_str*/
+  0, /*tp_getattro*/
+  0, /*tp_setattro*/
+  0, /*tp_as_buffer*/
+  Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_VERSION_TAG|Py_TPFLAGS_CHECKTYPES|Py_TPFLAGS_HAVE_NEWBUFFER|Py_TPFLAGS_BASETYPE, /*tp_flags*/
+  "Base class for loss functions for classification", /*tp_doc*/
+  0, /*tp_traverse*/
+  0, /*tp_clear*/
+  0, /*tp_richcompare*/
+  0, /*tp_weaklistoffset*/
+  0, /*tp_iter*/
+  0, /*tp_iternext*/
+  0, /*tp_methods*/
+  0, /*tp_members*/
+  0, /*tp_getset*/
+  0, /*tp_base*/
+  0, /*tp_dict*/
+  0, /*tp_descr_get*/
+  0, /*tp_descr_set*/
+  0, /*tp_dictoffset*/
+  0, /*tp_init*/
+  0, /*tp_alloc*/
+  __pyx_tp_new_7sklearn_12linear_model_8sgd_fast_Classification, /*tp_new*/
   0, /*tp_free*/
   0, /*tp_is_gc*/
   0, /*tp_bases*/
@@ -11077,16 +11080,6 @@ PyMODINIT_FUNC PyInit_sgd_fast(void)
   if (__Pyx_SetVtable(__pyx_type_7sklearn_12linear_model_8sgd_fast_LossFunction.tp_dict, __pyx_vtabptr_7sklearn_12linear_model_8sgd_fast_LossFunction) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 45; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   if (PyObject_SetAttrString(__pyx_m, "LossFunction", (PyObject *)&__pyx_type_7sklearn_12linear_model_8sgd_fast_LossFunction) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 45; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_ptype_7sklearn_12linear_model_8sgd_fast_LossFunction = &__pyx_type_7sklearn_12linear_model_8sgd_fast_LossFunction;
-  __pyx_vtabptr_7sklearn_12linear_model_8sgd_fast_Classification = &__pyx_vtable_7sklearn_12linear_model_8sgd_fast_Classification;
-  __pyx_vtable_7sklearn_12linear_model_8sgd_fast_Classification.__pyx_base = *__pyx_vtabptr_7sklearn_12linear_model_8sgd_fast_LossFunction;
-  __pyx_vtable_7sklearn_12linear_model_8sgd_fast_Classification.__pyx_base.loss = (double (*)(struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_LossFunction *, double, double))__pyx_f_7sklearn_12linear_model_8sgd_fast_14Classification_loss;
-  __pyx_vtable_7sklearn_12linear_model_8sgd_fast_Classification.__pyx_base._dloss = (double (*)(struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_LossFunction *, double, double))__pyx_f_7sklearn_12linear_model_8sgd_fast_14Classification__dloss;
-  __pyx_type_7sklearn_12linear_model_8sgd_fast_Classification.tp_base = __pyx_ptype_7sklearn_12linear_model_8sgd_fast_LossFunction;
-  if (PyType_Ready(&__pyx_type_7sklearn_12linear_model_8sgd_fast_Classification) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 98; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_type_7sklearn_12linear_model_8sgd_fast_Classification.tp_print = 0;
-  if (__Pyx_SetVtable(__pyx_type_7sklearn_12linear_model_8sgd_fast_Classification.tp_dict, __pyx_vtabptr_7sklearn_12linear_model_8sgd_fast_Classification) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 98; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  if (PyObject_SetAttrString(__pyx_m, "Classification", (PyObject *)&__pyx_type_7sklearn_12linear_model_8sgd_fast_Classification) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 98; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
-  __pyx_ptype_7sklearn_12linear_model_8sgd_fast_Classification = &__pyx_type_7sklearn_12linear_model_8sgd_fast_Classification;
   __pyx_vtabptr_7sklearn_12linear_model_8sgd_fast_Regression = &__pyx_vtable_7sklearn_12linear_model_8sgd_fast_Regression;
   __pyx_vtable_7sklearn_12linear_model_8sgd_fast_Regression.__pyx_base = *__pyx_vtabptr_7sklearn_12linear_model_8sgd_fast_LossFunction;
   __pyx_vtable_7sklearn_12linear_model_8sgd_fast_Regression.__pyx_base.loss = (double (*)(struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_LossFunction *, double, double))__pyx_f_7sklearn_12linear_model_8sgd_fast_10Regression_loss;
@@ -11097,6 +11090,16 @@ PyMODINIT_FUNC PyInit_sgd_fast(void)
   if (__Pyx_SetVtable(__pyx_type_7sklearn_12linear_model_8sgd_fast_Regression.tp_dict, __pyx_vtabptr_7sklearn_12linear_model_8sgd_fast_Regression) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 88; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   if (PyObject_SetAttrString(__pyx_m, "Regression", (PyObject *)&__pyx_type_7sklearn_12linear_model_8sgd_fast_Regression) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 88; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_ptype_7sklearn_12linear_model_8sgd_fast_Regression = &__pyx_type_7sklearn_12linear_model_8sgd_fast_Regression;
+  __pyx_vtabptr_7sklearn_12linear_model_8sgd_fast_Classification = &__pyx_vtable_7sklearn_12linear_model_8sgd_fast_Classification;
+  __pyx_vtable_7sklearn_12linear_model_8sgd_fast_Classification.__pyx_base = *__pyx_vtabptr_7sklearn_12linear_model_8sgd_fast_LossFunction;
+  __pyx_vtable_7sklearn_12linear_model_8sgd_fast_Classification.__pyx_base.loss = (double (*)(struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_LossFunction *, double, double))__pyx_f_7sklearn_12linear_model_8sgd_fast_14Classification_loss;
+  __pyx_vtable_7sklearn_12linear_model_8sgd_fast_Classification.__pyx_base._dloss = (double (*)(struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_LossFunction *, double, double))__pyx_f_7sklearn_12linear_model_8sgd_fast_14Classification__dloss;
+  __pyx_type_7sklearn_12linear_model_8sgd_fast_Classification.tp_base = __pyx_ptype_7sklearn_12linear_model_8sgd_fast_LossFunction;
+  if (PyType_Ready(&__pyx_type_7sklearn_12linear_model_8sgd_fast_Classification) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 98; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_type_7sklearn_12linear_model_8sgd_fast_Classification.tp_print = 0;
+  if (__Pyx_SetVtable(__pyx_type_7sklearn_12linear_model_8sgd_fast_Classification.tp_dict, __pyx_vtabptr_7sklearn_12linear_model_8sgd_fast_Classification) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 98; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyObject_SetAttrString(__pyx_m, "Classification", (PyObject *)&__pyx_type_7sklearn_12linear_model_8sgd_fast_Classification) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 98; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_ptype_7sklearn_12linear_model_8sgd_fast_Classification = &__pyx_type_7sklearn_12linear_model_8sgd_fast_Classification;
   __pyx_vtabptr_7sklearn_12linear_model_8sgd_fast_ModifiedHuber = &__pyx_vtable_7sklearn_12linear_model_8sgd_fast_ModifiedHuber;
   __pyx_vtable_7sklearn_12linear_model_8sgd_fast_ModifiedHuber.__pyx_base = *__pyx_vtabptr_7sklearn_12linear_model_8sgd_fast_Classification;
   __pyx_vtable_7sklearn_12linear_model_8sgd_fast_ModifiedHuber.__pyx_base.__pyx_base.loss = (double (*)(struct __pyx_obj_7sklearn_12linear_model_8sgd_fast_LossFunction *, double, double))__pyx_f_7sklearn_12linear_model_8sgd_fast_13ModifiedHuber_loss;

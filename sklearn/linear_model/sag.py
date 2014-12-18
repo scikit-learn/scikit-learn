@@ -11,7 +11,7 @@ from ..utils import ConvergenceWarning
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
-from .sgd_fast import Log, SquaredLoss
+from .sag_fast import Log, SquaredLoss
 from .sag_fast import sag_sparse, get_auto_eta
 
 MAX_INT = np.iinfo(np.int32).max
