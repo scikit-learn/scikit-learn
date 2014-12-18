@@ -3,7 +3,7 @@
 # Licence: BSD
 
 from operator import attrgetter
-from functools import partial, update_wrapper
+from functools import update_wrapper
 
 
 __all__ = ['make_delegation_decorator']
@@ -20,17 +20,6 @@ class _IffHasAttrDescriptor(object):
         out = lambda *args, **kwargs: self.fn(obj, *args, **kwargs)
         update_wrapper(out, self.fn)
         return out
-
-
-def _iff_attr_has_method(prefix, fn, name=None):
-    if not callable(fn):
-        return partial(_iff_attr_has_method, prefix, name=fn)
-    if name is None:
-        name = fn.__name__
-    attr = '%s.%s' % (prefix, name)
-    out = _IffHasAttrDescriptor(fn, attr)
-    update_wrapper(out, fn)
-    return out
 
 
 def make_delegation_decorator(prefix):
@@ -63,4 +52,4 @@ def make_delegation_decorator(prefix):
     >>> hasattr(MetaEst(HasNoPredict()), 'predict')
     False
     """
-    return partial(_iff_attr_has_method, prefix)
+    return lambda fn: _IffHasAttrDescriptor(fn, '%s.%s' % (prefix, fn.__name__))
