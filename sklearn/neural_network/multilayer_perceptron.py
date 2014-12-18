@@ -425,7 +425,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     def _fit_sgd(self, X, y, activations, deltas, coef_grads, intercept_grads,
                  layer_units, incremental):
-        prev_cost = np.inf
+        best_cost = np.inf
         cost_increase_count = 0
         n_samples = X.shape[0]
         batch_size = np.clip(self.batch_size, 1, n_samples)
@@ -464,20 +464,29 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                     print("Iteration %d, cost = %.8f" % (self.n_iter_,
                                                          self.cost_))
 
-                if self.cost_ > prev_cost:
-                    cost_increase_count += 1
-                    if cost_increase_count == 0.2 * self.max_iter:
-                        warnings.warn('Cost is increasing for more than 20%%'
-                                      ' of the iterations. Consider reducing'
-                                      ' learning_rate_init and preprocessing'
-                                      ' your data with StandardScaler or '
-                                      ' MinMaxScaler.'
-                                      % self.cost_, ConvergenceWarning)
-
-                elif prev_cost - self.cost_ < self.tol or incremental:
+                if incremental:
                     break
 
-                prev_cost = self.cost_
+                if self.cost_ > best_cost:
+                    cost_increase_count += 1
+
+                if (self.learning_rate == 'constant'
+                    and cost_increase_count >= 2):
+                        self.learning_rate_ /= 5
+                        if self.verbose:
+                            print("Training cost did not improve for 2"
+                                  " consecutive epochs: setting learning rate"
+                                  " to %f" % self.learning_rate_)
+                        # Try some more iterations with the new learning rate
+                        cost_increase_count = 0
+
+                elif np.abs(self.cost_ - best_cost) < self.tol:
+                    # Convergence detected with tolerance
+                    break
+
+                if self.cost_ < best_cost:
+                    cost_increase_count = 0
+                    best_cost = self.cost_
 
                 if self.n_iter_ == self.max_iter:
                     warnings.warn('SGD: Maximum iterations have reached and'
@@ -606,8 +615,9 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
         Base learning rate for weight updates.
 
         -'constant', as it stands,  keeps the learning rate
-         'learning_rate_init' constant throughout training.
-         learning_rate_ = learning_rate_init
+         'learning_rate_init' constant as long as the training keeps decreasing.
+         Each time 2 consecitive epochs fail to decrease the training cost,
+         the current learning rate is divided by 5.
 
         -'invscaling' gradually decreases the learning rate 'learning_rate_' at
           each time step 't' using an inverse scaling exponent of 'power_t'.
