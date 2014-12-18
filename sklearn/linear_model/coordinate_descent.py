@@ -502,16 +502,10 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         l1_reg = alpha * l1_ratio * n_samples
         l2_reg = alpha * (1.0 - l1_ratio) * n_samples
         if not multi_output and sparse.isspmatrix(X):
-            if accelerated is True:
-                model = cd_fast.sparse_enet_accelerated_coordinate_descent(
-                    coef_, l1_reg, l2_reg, X.data, X.indices,
-                    X.indptr, y, X_sparse_scaling,
-                    max_iter, tol, rng, random, positive)
-            else:
-                model = cd_fast.sparse_enet_coordinate_descent(
-                    coef_, l1_reg, l2_reg, X.data, X.indices,
-                    X.indptr, y, X_sparse_scaling,
-                    max_iter, tol, rng, random, positive)
+            model = cd_fast.sparse_enet_coordinate_descent(
+                coef_, l1_reg, l2_reg, X.data, X.indices,
+                X.indptr, y, X_sparse_scaling,
+                max_iter, tol, rng, random, positive, accelerated)
         elif multi_output:
             if accelerated is True:
                 warning.warn("Accelerated coordinate descent not "
@@ -520,23 +514,13 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             model = cd_fast.enet_coordinate_descent_multi_task(
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random)
         elif isinstance(precompute, np.ndarray):
-            if accelerated is True:
-                model = cd_fast.enet_accelerated_coordinate_descent_gram(
+            model = cd_fast.enet_coordinate_descent_gram(
                     coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
-                    tol, rng, random, positive)
-            else:
-                model = cd_fast.enet_coordinate_descent_gram(
-                    coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
-                    tol, rng, random, positive)
+                    tol, rng, random, positive, accelerated)
         elif precompute is False:
-            if accelerated is True:
-                model = cd_fast.enet_accelerated_coordinate_descent(
-                    coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random,
-                    positive)
-            else:
-                model = cd_fast.enet_coordinate_descent(
-                    coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random,
-                    positive)
+            model = cd_fast.enet_coordinate_descent(
+                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random,
+                positive, accelerated)
         else:
             raise ValueError("Precompute should be one of True, False, "
                              "'auto' or array-like")
