@@ -214,6 +214,12 @@ Bug fixes
       l2 regularization and large learning rate values).
       By `Olivier Grisel`_
 
+    - When `compute_full_tree` is set to "auto", the full tree is
+      built when n_clusters is high and is early stopped when n_clusters is
+      low, while the behavor should be vice-versa in
+      :class:`cluster.AgglomerativeClustering` (and friends).
+      This has been fixed By `Manoj Kumar`_
+
 API changes summary
 -------------------
 
