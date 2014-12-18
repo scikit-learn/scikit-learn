@@ -54,7 +54,7 @@ class MockClassifier(BaseEstimator):
     def fit(self, X, Y=None, sample_weight=None, class_prior=None,
             sparse_sample_weight=None, sparse_param=None, dummy_int=None,
             dummy_str=None, dummy_obj=None, callback=None):
-        """The dummy arguments are to test that this fit function can 
+        """The dummy arguments are to test that this fit function can
         accept non-array arguments through cross-validation, such as:
             - int
             - str (this is actually array-like)
@@ -82,18 +82,17 @@ class MockClassifier(BaseEstimator):
                         ' is {0}, should be {1}'.format(class_prior.shape[0],
                                                         len(np.unique(y))))
         if sparse_sample_weight is not None:
+            fmt = ('MockClassifier extra fit_param sparse_sample_weight'
+                   '.shape[0] is {0}, should be {1}')
             assert_true(sparse_sample_weight.shape[0] == X.shape[0],
-                        'MockClassifier extra fit_param sparse_sample_weight'
-                        '.shape[0] is {0}, should be {1}'
-                            .format(sparse_sample_weight.shape[0], X.shape[0]))
+                        fmt.format(sparse_sample_weight.shape[0], X.shape[0]))
         if sparse_param is not None:
+            fmt = ('MockClassifier extra fit_param sparse_param.shape '
+                   'is ({0}, {1}), should be ({2}, {3})')
             assert_true(sparse_param.shape == P_sparse.shape,
-                        'MockClassifier extra fit_param sparse_param.shape '
-                        'is ({0}, {1}), should be ({2}, {3})'
-                            .format(sparse_param.shape[0],
-                                    sparse_param.shape[1],
-                                    P_sparse.shape[0],
-                                    P_sparse.shape[1]))
+                        fmt.format(sparse_param.shape[0],
+                                   sparse_param.shape[1],
+                                   P_sparse.shape[0], P_sparse.shape[1]))
         return self
 
     def predict(self, T):
@@ -108,7 +107,7 @@ class MockClassifier(BaseEstimator):
 X = np.ones((10, 2))
 X_sparse = coo_matrix(X)
 W_sparse = coo_matrix((np.array([1]), (np.array([1]), np.array([0]))),
-                      shape=(10,1))
+                      shape=(10, 1))
 P_sparse = coo_matrix(np.eye(5))
 y = np.arange(10) // 2
 
@@ -592,6 +591,7 @@ def test_cross_val_score_fit_params():
     DUMMY_INT = 42
     DUMMY_STR = '42'
     DUMMY_OBJ = object()
+
     def assert_fit_params(clf):
         """Function to test that the values are passsed correctly to the
         classifier arguments for non-array type
@@ -691,9 +691,9 @@ def train_test_split_mock_pandas():
     X_train, X_test = cval.train_test_split(X_df)
     assert_true(isinstance(X_train, MockDataFrame))
     assert_true(isinstance(X_test, MockDataFrame))
-    X_train_array, X_test_array = cval.train_test_split(X_df, force_arrays=True)
-    assert_true(isinstance(X_train_array, np.ndarray))
-    assert_true(isinstance(X_test_array, np.ndarray))
+    X_train_arr, X_test_arr = cval.train_test_split(X_df, force_arrays=True)
+    assert_true(isinstance(X_train_arr, np.ndarray))
+    assert_true(isinstance(X_test_arr, np.ndarray))
 
 
 def test_cross_val_score_with_score_func_classification():

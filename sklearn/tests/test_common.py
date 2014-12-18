@@ -147,7 +147,8 @@ def test_classifiers():
         yield check_classifiers_train, name, Classifier
         if (name not in ["MultinomialNB", "LabelPropagation", "LabelSpreading"]
             # TODO some complication with -1 label
-                and name not in ["DecisionTreeClassifier", "ExtraTreeClassifier"]):
+                and name not in ["DecisionTreeClassifier",
+                                 "ExtraTreeClassifier"]):
                 # We don't raise a warning in these classifiers, as
                 # the column y interface is used by the forests.
 
@@ -362,9 +363,8 @@ def test_non_transformer_estimators_n_iter():
                     continue
 
                 # Tested in test_transformer_n_iter below
-                elif name in CROSS_DECOMPOSITION or (
-                    name in ['LinearSVC', 'LogisticRegression']
-                    ):
+                elif (name in CROSS_DECOMPOSITION or
+                      name in ['LinearSVC', 'LogisticRegression']):
                     continue
 
                 else:

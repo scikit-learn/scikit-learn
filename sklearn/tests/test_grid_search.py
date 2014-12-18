@@ -9,7 +9,6 @@ from sklearn.externals.six.moves import xrange
 from itertools import chain, product
 import pickle
 import sys
-import warnings
 
 import numpy as np
 import scipy.sparse as sp
