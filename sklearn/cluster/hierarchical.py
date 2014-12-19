@@ -433,7 +433,8 @@ def linkage_tree(X, connectivity=None, n_components=None,
     A = np.empty(n_nodes, dtype=object)
     inertia = list()
 
-    # XXX: can we avoid switching to lil
+    # LIL seems to the best format to access the rows quickly,
+    # without the numpy overhead of slicing CSR indices and data.
     connectivity = connectivity.tolil()
     # We are storing the graph in a list of IntFloatDict
     for ind, (data, row) in enumerate(zip(connectivity.data,
