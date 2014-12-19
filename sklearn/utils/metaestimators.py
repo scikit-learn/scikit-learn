@@ -13,6 +13,7 @@ class _IffHasAttrDescriptor(object):
     def __init__(self, fn, attr):
         self.fn = fn
         self.get_attr = attrgetter(attr)
+        update_wrapper(self, fn)
 
     def __get__(self, obj, type=None):
         self.get_attr(obj)
