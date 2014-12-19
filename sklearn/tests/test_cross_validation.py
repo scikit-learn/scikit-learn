@@ -653,7 +653,7 @@ def test_train_test_split():
     X = np.arange(100).reshape((10, 10))
     X_s = coo_matrix(X)
     y = range(10)
-    split = cval.train_test_split(X, X_s, y, force_arrays=True)
+    split = cval.train_test_split(X, X_s, y, allow_lists=False)
     X_train, X_test, X_s_train, X_s_test, y_train, y_test = split
     assert_array_equal(X_train, X_s_train.toarray())
     assert_array_equal(X_test, X_s_test.toarray())
@@ -691,7 +691,7 @@ def train_test_split_mock_pandas():
     X_train, X_test = cval.train_test_split(X_df)
     assert_true(isinstance(X_train, MockDataFrame))
     assert_true(isinstance(X_test, MockDataFrame))
-    X_train_arr, X_test_arr = cval.train_test_split(X_df, force_arrays=True)
+    X_train_arr, X_test_arr = cval.train_test_split(X_df, allow_lists=False)
     assert_true(isinstance(X_train_arr, np.ndarray))
     assert_true(isinstance(X_test_arr, np.ndarray))
 

@@ -1726,16 +1726,24 @@ def train_test_split(*arrays, **options):
     random_state = options.pop('random_state', None)
     dtype = options.pop('dtype', None)
     if dtype is not None:
-        warnings.warn("dtype option is ignored and will be removed in 0.18.")
+        warnings.warn("dtype option is ignored and will be removed in 0.18.",
+                      DeprecationWarning)
 
-    force_arrays = options.pop('force_arrays', False)
+    allow_nd = options.pop('allow_nd', None)
+    allow_lists = options.pop('allow_lists', None)
+
+    if allow_lists is not None:
+        warnings.warn("The allow_lists option is deprecated and will be "
+                      "assumed True in 0.18 and removed.", DeprecationWarning)
+
     if options:
         raise TypeError("Invalid parameters passed: %s" % str(options))
-    if force_arrays:
-        warnings.warn("The force_arrays option is deprecated and will be "
-                      "removed in 0.18.", DeprecationWarning)
-        arrays = [check_array(x, 'csr', ensure_2d=False,
-                              force_all_finite=False) if x is not None else x
+    if allow_nd is not None:
+        warnings.warn("The allow_nd option is deprecated and will be "
+                      "assumed True in 0.18 and removed.", DeprecationWarning)
+    if allow_lists is False or allow_nd is False:
+        arrays = [check_array(x, 'csr', allow_nd=allow_nd,
+                              force_all_finite=False, ensure_2d=False) if x is not None else x
                   for x in arrays]
 
     if test_size is None and train_size is None:
