@@ -433,17 +433,26 @@ def linkage_tree(X, connectivity=None, n_components=None,
     A = np.empty(n_nodes, dtype=object)
     inertia = list()
 
-    # XXX: can we avoid switching to lil
-    connectivity = connectivity.tolil()
     # We are storing the graph in a list of IntFloatDict
-    for ind, (data, row) in enumerate(zip(connectivity.data,
-                                          connectivity.rows)):
-        A[ind] = IntFloatDict(np.asarray(row, dtype=np.intp),
-                              np.asarray(data, dtype=np.float64))
-        # We keep only the upper triangular for the heap
+    rows = connectivity.row
+    cols = connectivity.col
+    data = connectivity.data
+
+    # Use startptr and endptr instead of using np.where
+    # to extract the respective colums.
+    startptr = 0
+    for ind in xrange(n_samples):
+        endptr = np.searchsorted(rows, ind + 1)
+        ind_cols = cols[startptr: endptr]
+        ind_data = data[startptr: endptr]
+        A[ind] = IntFloatDict(np.asarray(ind_cols, dtype=np.intp),
+                              ind_data)
+        # We keep the lower triangular for the heap.
         # Generator expressions are faster than arrays on the following
         inertia.extend(_hierarchical.WeightedEdge(d, ind, r)
-            for r, d in zip(row, data) if r < ind)
+            for r, d in zip(ind_cols, ind_data) if r < ind)
+        startptr = endptr
+
     del connectivity
 
     heapify(inertia)
