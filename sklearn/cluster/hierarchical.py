@@ -358,6 +358,12 @@ def linkage_tree(X, connectivity=None, n_components=None,
         The parent of each node. Only returned when a connectivity matrix
         is specified, elsewhere 'None' is returned.
 
+    distances : ndarray, shape (n_nodes,)
+        Returned when return_distance is set to True.
+
+        distances[i] refers to the distance between children[i][0] and
+        children[i][1] when they are merged.
+
     See also
     --------
     ward_tree : hierarchical clustering with ward linkage
