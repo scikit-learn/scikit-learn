@@ -302,12 +302,11 @@ def test_ward_tree_children_order():
         assert_array_equal(out_unstructured[0], out_structured[0])
 
 
-def test_ward_tree_distance():
-    """
-    Check that children are ordered in the same way for both structured and
-    unstructured versions of ward_tree.
-    """
-    # test on five random datasets
+def test_ward_linkage_tree_return_distance():
+    """Test return_distance option on linkage and ward trees"""
+
+    # test that return_distance when set true, gives same
+    # output on both structured and unstructured clustering.
     n, p = 10, 5
     rng = np.random.RandomState(0)
 
@@ -333,6 +332,18 @@ def test_ward_tree_distance():
         dist_structured = out_structured[-1]
 
         assert_array_almost_equal(dist_unstructured, dist_structured)
+
+        for linkage in ['average', 'complete']:
+            structured_items = linkage_tree(
+                X, connectivity, linkage=linkage, return_distance=True)[-1]
+            unstructured_items = linkage_tree(
+                X, linkage=linkage, return_distance=True)[-1]
+            structured_dist = structured_items[-1]
+            unstructured_dist = unstructured_items[-1]
+            structured_children = structured_items[0]
+            unstructured_children = unstructured_items[0]
+            assert_array_almost_equal(structured_dist, unstructured_dist)
+            assert_array_almost_equal(structured_children, unstructured_children)
 
     # test on the following dataset where we know the truth
     # taken from scipy/cluster/tests/hierarchy_test_data.py
@@ -394,25 +405,6 @@ def test_int_float_dict():
     # Complete smoke test
     max_merge(d, other, mask=np.ones(100, dtype=np.intp), n_a=1, n_b=1)
     average_merge(d, other, mask=np.ones(100, dtype=np.intp), n_a=1, n_b=1)
-
-
-def test_average_max_linkage_distances():
-    """Test that the linkage trees give same distance"""
-    rng = np.random.RandomState(0)
-    X = rng.randn(20, 5)
-    connectivity = np.ones((20, 20))
-
-    for linkage in ['average', 'complete']:
-        structured_items = linkage_tree(
-            X, connectivity, linkage=linkage, return_distance=True)[-1]
-        unstructured_items = linkage_tree(
-            X, linkage=linkage, return_distance=True)[-1]
-        structured_dist = structured_items[-1]
-        unstructured_dist = unstructured_items[-1]
-        structured_children = structured_items[0]
-        unstructured_children = unstructured_items[0]
-        assert_array_almost_equal(structured_dist, unstructured_dist)
-        assert_array_almost_equal(structured_children, unstructured_children)
 
 
 if __name__ == '__main__':
