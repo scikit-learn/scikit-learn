@@ -12,61 +12,7 @@ from scipy import linalg
 from .utils import check_X_y
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.metrics.pairwise import pairwise_kernels
-
-
-def _solve_dense_cholesky_kernel(K, y, alpha, sample_weight=1.0, copy=True):
-    if copy:
-        K = K.copy()
-
-    # dual_coef = inv(X X^t + alpha*Id) y
-    n_samples = K.shape[0]
-    n_targets = y.shape[1]
-
-    one_alpha = (alpha == alpha[0]).all()
-    has_sw = isinstance(sample_weight, np.ndarray) or sample_weight != 1.0
-
-    if has_sw:
-        sw = np.sqrt(sample_weight)
-        y = y * sw[:, np.newaxis]
-        K *= np.outer(sw, sw)
-
-    if one_alpha:
-        # Only one penalty, we can solve multi-target problems in one time.
-        K.flat[::n_samples + 1] += alpha[0]
-
-        try:
-            # XXX: Check if overwrite_a=True is ok when copy is False
-            dual_coef = linalg.solve(K, y, sym_pos=True, overwrite_a=True)
-        except np.linalg.LinAlgError:
-            warnings.warn("Singular matrix in solving dual problem. Using "
-                          "pseudo inverse instead.")
-            Kinv = linalg.pinv2(K)
-            dual_coef = np.dot(Kinv, y)
-
-        # K is expensive to compute and store in memory so change it back in
-        # case it was user-given.
-        K.flat[::n_samples + 1] -= alpha[0]
-
-        if has_sw:
-            dual_coef *= sw[:, np.newaxis]
-
-        return dual_coef
-    else:
-        # One penalty per target. We need to solve each target separately.
-        dual_coefs = np.empty([n_targets, n_samples])
-
-        for dual_coef, target, current_alpha in zip(dual_coefs, y.T, alpha):
-            K.flat[::n_samples + 1] += current_alpha
-
-            dual_coef[:] = linalg.solve(K, target, sym_pos=True,
-                                        overwrite_a=False).ravel()
-
-            K.flat[::n_samples + 1] -= current_alpha
-
-        if has_sw:
-            dual_coefs *= sw[np.newaxis, :]
-
-        return dual_coefs.T
+from sklearn.linear_model.ridge import _solve_cholesky_kernel
 
 
 class KernelRidge(BaseEstimator, RegressorMixin):
@@ -212,9 +158,9 @@ class KernelRidge(BaseEstimator, RegressorMixin):
             ravel = True
 
         copy = self.kernel == "precomputed"
-        self.dual_coef_ = _solve_dense_cholesky_kernel(K, y, alpha,
-                                                       sample_weight,
-                                                       copy)
+        self.dual_coef_ = _solve_cholesky_kernel(K, y, alpha,
+                                                 sample_weight,
+                                                 copy)
         if ravel:
             self.dual_coef_ = self.dual_coef_.ravel()
 
