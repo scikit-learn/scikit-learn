@@ -142,6 +142,10 @@ Enhancements
    - :func:`neighbors.kneighbors_graph` and :func:`radius_neighbors_graph`
      support non-Euclidean metrics. By `Manoj Kumar`_
 
+   - Parameter ``connectivity`` in :class:`cluster.AgglomerativeClustering`
+     and family now accept callables that return a connectivity matrix.
+     By `Manoj Kumar`_.
+
 Documentation improvements
 ..........................
 

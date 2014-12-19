@@ -568,11 +568,13 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     n_clusters : int, default=2
         The number of clusters to find.
 
-    connectivity : sparse matrix (optional)
+    connectivity : array-like or callable, optional
         Connectivity matrix. Defines for each sample the neighboring
         samples following a given structure of the data.
-        Default is None, i.e, the hierarchical clustering algorithm is
-        unstructured.
+        This can be a connectivity matrix itself or a callable that transforms
+        the data into a connectivity matrix, such as derived from
+        kneighbors_graph. Default is None, i.e, the
+        hierarchical clustering algorithm is unstructured.
 
     affinity : string or callable, default: "euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
@@ -671,11 +673,12 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
                                                        _TREE_BUILDERS.keys()))
         tree_builder = _TREE_BUILDERS[self.linkage]
 
-        if not self.connectivity is None:
-            if (self.connectivity.shape[0] != X.shape[0] or
-                    self.connectivity.shape[1] != X.shape[0]):
-                raise ValueError("`connectivity` does not have shape "
-                                 "(n_samples, n_samples)")
+        connectivity = self.connectivity
+        if self.connectivity is not None:
+            if callable(self.connectivity):
+                connectivity = self.connectivity(X)
+            connectivity = check_array(
+                connectivity, accept_sparse=['csr', 'coo', 'lil'])
 
         n_samples = len(X)
         compute_full_tree = self.compute_full_tree
@@ -696,7 +699,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             kwargs['linkage'] = self.linkage
             kwargs['affinity'] = self.affinity
         self.children_, self.n_components_, self.n_leaves_, parents = \
-            memory.cache(tree_builder)(X, self.connectivity,
+            memory.cache(tree_builder)(X, connectivity,
                                        n_components=self.n_components,
                                        n_clusters=n_clusters,
                                        **kwargs)
@@ -724,11 +727,13 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     n_clusters : int, default 2
         The number of clusters to find.
 
-    connectivity : sparse matrix, optional
+    connectivity : array-like or callable, optional
         Connectivity matrix. Defines for each feature the neighboring
         features following a given structure of the data.
-        Default is None, i.e, the hierarchical clustering algorithm is
-        unstructured.
+        This can be a connectivity matrix itself or a callable that transforms
+        the data into a connectivity matrix, such as derived from
+        kneighbors_graph. Default is None, i.e, the
+        hierarchical clustering algorithm is unstructured.
 
     affinity : string or callable, default "euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
@@ -893,11 +898,13 @@ class WardAgglomeration(AgglomerationTransform, Ward):
     n_clusters : int or ndarray
         The number of clusters.
 
-    connectivity : sparse matrix, optional
-        connectivity matrix. Defines for each feature the neighboring
-        features following a given structure of the data.
-        Default is None, i.e, the hierarchical agglomeration algorithm is
-        unstructured.
+    connectivity : array-like or callable, optional
+        Connectivity matrix. Defines for each sample the neighboring
+        samples following a given structure of the data.
+        This can be a connectivity matrix itself or a callable that transforms
+        the data into a connectivity matrix, such as derived from
+        kneighbors_graph. Default is None, i.e, the
+        hierarchical clustering algorithm is unstructured.
 
     memory : Instance of joblib.Memory or string, optional
         Used to cache the output of the computation of the tree.
