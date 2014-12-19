@@ -21,4 +21,6 @@ def test_delegated_docstring():
     assert_true("This is a mock delegated function"
                 in str(MockMetaEstimator.__dict__['func'].__doc__))
     assert_true("This is a mock delegated function"
+                in str(MockMetaEstimator.func.__doc__))
+    assert_true("This is a mock delegated function"
                 in str(MockMetaEstimator().func.__doc__))

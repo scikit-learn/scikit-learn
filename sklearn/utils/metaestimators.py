@@ -1,5 +1,6 @@
 """Utilities for meta-estimators"""
 # Author: Joel Nothman
+#         Andreas Mueller
 # Licence: BSD
 
 from operator import attrgetter
@@ -10,15 +11,31 @@ __all__ = ['make_delegation_decorator']
 
 
 class _IffHasAttrDescriptor(object):
+    """Implements a conditional propery using the descriptor protocol.
+
+    Using this class to create a decorator will raise an attribute error
+    if the ``attr`` is not present on the base object.
+
+    This allows ducktyping of the decorated method based on ``attr``.
+
+    See https://docs.python.org/3/howto/descriptor.html for an explanation of
+    descriptors.
+    """
     def __init__(self, fn, attr):
         self.fn = fn
         self.get_attr = attrgetter(attr)
+        # update the docstring of the descriptor
         update_wrapper(self, fn)
 
     def __get__(self, obj, type=None):
-        self.get_attr(obj)
+        # raise an AttributeError if the attribute is not present on the object
+        if obj is not None:
+            # delegate only on instances, not the classes.
+            # this is to allow access to the docstrings.
+            self.get_attr(obj)
         # lambda, but not partial, allows help() to work with update_wrapper
         out = lambda *args, **kwargs: self.fn(obj, *args, **kwargs)
+        # update the docstring of the returned function
         update_wrapper(out, self.fn)
         return out
 

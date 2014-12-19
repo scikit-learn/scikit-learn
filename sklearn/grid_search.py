@@ -345,26 +345,98 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
     @make_delegation_decorator('estimator')
     def predict(self, X):
+        """Call predict on the estimator with the best found parameters.
+
+        Only available if ``refit=True`` and the underlying estimator supports
+        ``predict``.
+
+        Parameters
+        -----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        """
         return self.best_estimator_.predict(X)
 
     @make_delegation_decorator('estimator')
     def predict_proba(self, X):
+        """Call predict_proba on the estimator with the best found parameters.
+
+        Only available if ``refit=True`` and the underlying estimator supports
+        ``predict_proba``.
+
+        Parameters
+        -----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        """
         return self.best_estimator_.predict_proba(X)
 
     @make_delegation_decorator('estimator')
     def predict_log_proba(self, X):
+        """Call predict_log_proba on the estimator with the best found parameters.
+
+        Only available if ``refit=True`` and the underlying estimator supports
+        ``predict_log_proba``.
+
+        Parameters
+        -----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        """
         return self.best_estimator_.predict_log_proba(X)
 
     @make_delegation_decorator('estimator')
     def decision_function(self, X):
+        """Call decision_function on the estimator with the best found parameters.
+
+        Only available if ``refit=True`` and the underlying estimator supports
+        ``decision_function``.
+
+        Parameters
+        -----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        """
         return self.best_estimator_.decision_function(X)
 
     @make_delegation_decorator('estimator')
     def transform(self, X):
+        """Call transform on the estimator with the best found parameters.
+
+        Only available if the underlying estimator supports ``transform`` and
+        ``refit=True``.
+
+        Parameters
+        -----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        """
         return self.best_estimator_.transform(X)
 
     @make_delegation_decorator('estimator')
     def inverse_transform(self, Xt):
+        """Call inverse_transform on the estimator with the best found parameters.
+
+        Only available if the underlying estimator implements ``inverse_transform`` and
+        ``refit=True``.
+
+        Parameters
+        -----------
+        Xt : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        """
         return self.best_estimator_.transform(Xt)
 
     def _fit(self, X, y, parameter_iterable):
