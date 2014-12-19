@@ -652,21 +652,36 @@ def test_train_test_split_errors():
 def test_train_test_split():
     X = np.arange(100).reshape((10, 10))
     X_s = coo_matrix(X)
-    y = range(10)
-    split = cval.train_test_split(X, X_s, y, allow_lists=False)
-    X_train, X_test, X_s_train, X_s_test, y_train, y_test = split
-    assert_array_equal(X_train, X_s_train.toarray())
-    assert_array_equal(X_test, X_s_test.toarray())
-    assert_array_equal(X_train[:, 0], y_train * 10)
-    assert_array_equal(X_test[:, 0], y_test * 10)
+    y = np.arange(10)
+
+    # simple test
     split = cval.train_test_split(X, y, test_size=None, train_size=.5)
     X_train, X_test, y_train, y_test = split
     assert_equal(len(y_test), len(y_train))
+    # test correspondence of X and y
+    assert_array_equal(X_train[:, 0], y_train * 10)
+    assert_array_equal(X_test[:, 0], y_test * 10)
 
-    split = cval.train_test_split(X, X_s, y)
+    # conversion of lists to arrays (deprecated?)
+    split = cval.train_test_split(X, X_s, y.tolist(), force_arrays=True)
+    X_train, X_test, X_s_train, X_s_test, y_train, y_test = split
+    assert_array_equal(X_train, X_s_train.toarray())
+    assert_array_equal(X_test, X_s_test.toarray())
+
+    # don't convert lists to anything else by default
+    split = cval.train_test_split(X, X_s, y.tolist())
     X_train, X_test, X_s_train, X_s_test, y_train, y_test = split
     assert_true(isinstance(y_train, list))
     assert_true(isinstance(y_test, list))
+
+    # allow nd-arrays
+    X_4d = np.arange(10 * 5 * 3 * 2).reshape(10, 5, 3, 2)
+    y_3d = np.arange(10 * 7 * 11).reshape(10, 7, 11)
+    split = cval.train_test_split(X_4d, y_3d)
+    assert_equal(split[0].shape, (7, 5, 3, 2))
+    assert_equal(split[1].shape, (3, 5, 3, 2))
+    assert_equal(split[2].shape, (7, 7, 11))
+    assert_equal(split[3].shape, (3, 7, 11))
 
 
 def train_test_split_pandas():

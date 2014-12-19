@@ -435,6 +435,18 @@ def test_refit():
     clf.fit(X, y)
 
 
+def test_gridsearch_nd():
+    """Pass X as list in GridSearchCV"""
+    X_4d = np.arange(10 * 5 * 3 * 2).reshape(10, 5, 3, 2)
+    y_3d = np.arange(10 * 7 * 11).reshape(10, 7, 11)
+    check_X = lambda x: x.shape[1:] == (5, 3, 2)
+    check_y = lambda x: x.shape[1:] == (7, 11)
+    clf = CheckingClassifier(check_X=check_X, check_y=check_y)
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]})
+    grid_search.fit(X_4d, y_3d).score(X, y)
+    assert_true(hasattr(grid_search, "grid_scores_"))
+
+
 def test_X_as_list():
     """Pass X as list in GridSearchCV"""
     X = np.arange(100).reshape(10, 10)
