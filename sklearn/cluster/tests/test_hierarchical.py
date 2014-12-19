@@ -396,6 +396,25 @@ def test_int_float_dict():
     average_merge(d, other, mask=np.ones(100, dtype=np.intp), n_a=1, n_b=1)
 
 
+def test_average_max_linkage_distances():
+    """Test that the linkage trees give same distance"""
+    rng = np.random.RandomState(0)
+    X = rng.randn(20, 5)
+    connectivity = np.ones((20, 20))
+
+    for linkage in ['average', 'complete']:
+        structured_items = linkage_tree(
+            X, connectivity, linkage=linkage, return_distance=True)[-1]
+        unstructured_items = linkage_tree(
+            X, linkage=linkage, return_distance=True)[-1]
+        structured_dist = structured_items[-1]
+        unstructured_dist = unstructured_items[-1]
+        structured_children = structured_items[0]
+        unstructured_children = unstructured_items[0]
+        assert_array_almost_equal(structured_dist, unstructured_dist)
+        assert_array_almost_equal(structured_children, unstructured_children)
+
+
 if __name__ == '__main__':
     import nose
     nose.run(argv=['', __file__])
