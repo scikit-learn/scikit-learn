@@ -12,6 +12,8 @@ Changelog
 New features
 ............
 
+   - The new :class:`neighbors.LSHForest` implements locality-sensitive hashing
+     for approximate nearest neighbors search. By `Maheshakya Wijewardena`_.
 
    - Added :class:`svm.LinearSVR`. This class uses the liblinear implementation
      of Support Vector Regression which is much faster for large
