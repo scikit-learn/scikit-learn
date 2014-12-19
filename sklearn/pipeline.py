@@ -18,7 +18,7 @@ from .base import BaseEstimator, TransformerMixin
 from .externals.joblib import Parallel, delayed
 from .externals import six
 from .utils import tosequence
-from .utils.metaestimators import make_delegation_decorator
+from .utils.metaestimators import if_delegate_has_method
 from .externals.six import iteritems
 
 __all__ = ['Pipeline', 'FeatureUnion']
@@ -142,7 +142,7 @@ class Pipeline(BaseEstimator):
         else:
             return self.steps[-1][-1].fit(Xt, y, **fit_params).transform(Xt)
 
-    @make_delegation_decorator('_final_estimator')
+    @if_delegate_has_method(delegate='_final_estimator')
     def predict(self, X):
         """Applies transforms to the data, and the predict method of the
         final estimator. Valid only if the final estimator implements
@@ -152,7 +152,7 @@ class Pipeline(BaseEstimator):
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].predict(Xt)
 
-    @make_delegation_decorator('_final_estimator')
+    @if_delegate_has_method(delegate='_final_estimator')
     def predict_proba(self, X):
         """Applies transforms to the data, and the predict_proba method of the
         final estimator. Valid only if the final estimator implements
@@ -162,7 +162,7 @@ class Pipeline(BaseEstimator):
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].predict_proba(Xt)
 
-    @make_delegation_decorator('_final_estimator')
+    @if_delegate_has_method(delegate='_final_estimator')
     def decision_function(self, X):
         """Applies transforms to the data, and the decision_function method of
         the final estimator. Valid only if the final estimator implements
@@ -172,14 +172,14 @@ class Pipeline(BaseEstimator):
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].decision_function(Xt)
 
-    @make_delegation_decorator('_final_estimator')
+    @if_delegate_has_method(delegate='_final_estimator')
     def predict_log_proba(self, X):
         Xt = X
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].predict_log_proba(Xt)
 
-    @make_delegation_decorator('_final_estimator')
+    @if_delegate_has_method(delegate='_final_estimator')
     def transform(self, X):
         """Applies transforms to the data, and the transform method of the
         final estimator. Valid only if the final estimator implements
@@ -189,7 +189,7 @@ class Pipeline(BaseEstimator):
             Xt = transform.transform(Xt)
         return Xt
 
-    @make_delegation_decorator('_final_estimator')
+    @if_delegate_has_method(delegate='_final_estimator')
     def inverse_transform(self, X):
         if X.ndim == 1:
             X = X[None, :]
@@ -198,7 +198,7 @@ class Pipeline(BaseEstimator):
             Xt = step.inverse_transform(Xt)
         return Xt
 
-    @make_delegation_decorator('_final_estimator')
+    @if_delegate_has_method(delegate='_final_estimator')
     def score(self, X, y=None):
         """Applies transforms to the data, and the score method of the
         final estimator. Valid only if the final estimator implements

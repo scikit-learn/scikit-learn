@@ -27,7 +27,7 @@ from .externals.joblib import Parallel, delayed
 from .externals import six
 from .utils import check_random_state
 from .utils.validation import _num_samples, indexable
-from .utils.metaestimators import make_delegation_decorator
+from .utils.metaestimators import if_delegate_has_method
 from .metrics.scorer import check_scoring
 
 
@@ -343,7 +343,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                           ChangedBehaviorWarning)
         return self.scorer_(self.best_estimator_, X, y)
 
-    @make_delegation_decorator('estimator')
+    @if_delegate_has_method(delegate='estimator')
     def predict(self, X):
         """Call predict on the estimator with the best found parameters.
 
@@ -359,7 +359,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         """
         return self.best_estimator_.predict(X)
 
-    @make_delegation_decorator('estimator')
+    @if_delegate_has_method(delegate='estimator')
     def predict_proba(self, X):
         """Call predict_proba on the estimator with the best found parameters.
 
@@ -375,7 +375,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         """
         return self.best_estimator_.predict_proba(X)
 
-    @make_delegation_decorator('estimator')
+    @if_delegate_has_method(delegate='estimator')
     def predict_log_proba(self, X):
         """Call predict_log_proba on the estimator with the best found parameters.
 
@@ -391,7 +391,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         """
         return self.best_estimator_.predict_log_proba(X)
 
-    @make_delegation_decorator('estimator')
+    @if_delegate_has_method(delegate='estimator')
     def decision_function(self, X):
         """Call decision_function on the estimator with the best found parameters.
 
@@ -407,7 +407,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         """
         return self.best_estimator_.decision_function(X)
 
-    @make_delegation_decorator('estimator')
+    @if_delegate_has_method(delegate='estimator')
     def transform(self, X):
         """Call transform on the estimator with the best found parameters.
 
@@ -423,7 +423,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         """
         return self.best_estimator_.transform(X)
 
-    @make_delegation_decorator('estimator')
+    @if_delegate_has_method(delegate='estimator')
     def inverse_transform(self, Xt):
         """Call inverse_transform on the estimator with the best found parameters.
 

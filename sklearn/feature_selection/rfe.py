@@ -8,7 +8,7 @@
 
 import numpy as np
 from ..utils import check_X_y, safe_sqr
-from ..utils.metaestimators import make_delegation_decorator
+from ..utils.metaestimators import if_delegate_has_method
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
@@ -171,7 +171,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
         return self
 
-    @make_delegation_decorator('estimator')
+    @if_delegate_has_method(delegate='estimator')
     def predict(self, X):
         """Reduce X to the selected features and then predict using the
            underlying estimator.
@@ -188,7 +188,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         """
         return self.estimator_.predict(self.transform(X))
 
-    @make_delegation_decorator('estimator')
+    @if_delegate_has_method(delegate='estimator')
     def score(self, X, y):
         """Reduce X to the selected features and then return the score of the
            underlying estimator.
@@ -206,15 +206,15 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     def _get_support_mask(self):
         return self.support_
 
-    @make_delegation_decorator('estimator')
+    @if_delegate_has_method(delegate='estimator')
     def decision_function(self, X):
         return self.estimator_.decision_function(self.transform(X))
 
-    @make_delegation_decorator('estimator')
+    @if_delegate_has_method(delegate='estimator')
     def predict_proba(self, X):
         return self.estimator_.predict_proba(self.transform(X))
 
-    @make_delegation_decorator('estimator')
+    @if_delegate_has_method(delegate='estimator')
     def predict_log_proba(self, X):
         return self.estimator_.predict_log_proba(self.transform(X))
 

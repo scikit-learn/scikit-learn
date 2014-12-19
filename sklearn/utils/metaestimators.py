@@ -7,7 +7,7 @@ from operator import attrgetter
 from functools import update_wrapper
 
 
-__all__ = ['make_delegation_decorator']
+__all__ = ['if_delegate_has_method']
 
 
 class _IffHasAttrDescriptor(object):
@@ -40,15 +40,15 @@ class _IffHasAttrDescriptor(object):
         return out
 
 
-def make_delegation_decorator(prefix):
+def if_delegate_has_method(delegate):
     """Create a decorator for methods that are delegated to a sub-estimator
 
     This enables ducktyping by hasattr returning True according to the
     sub-estimator.
 
-    >>> from sklearn.utils.metaestimators import make_delegation_decorator
+    >>> from sklearn.utils.metaestimators import if_delegate_has_method
     >>>
-    >>> iff_sub_est_has_attr = make_delegation_decorator('sub_est')
+    >>> iff_sub_est_has_attr = if_delegate_has_method(delegate='sub_est')
     >>>
     >>> class MetaEst(object):
     ...     def __init__(self, sub_est):
@@ -70,4 +70,4 @@ def make_delegation_decorator(prefix):
     >>> hasattr(MetaEst(HasNoPredict()), 'predict')
     False
     """
-    return lambda fn: _IffHasAttrDescriptor(fn, '%s.%s' % (prefix, fn.__name__))
+    return lambda fn: _IffHasAttrDescriptor(fn, '%s.%s' % (delegate, fn.__name__))

@@ -1,4 +1,4 @@
-from sklearn.utils.metaestimators import make_delegation_decorator
+from sklearn.utils.metaestimators import if_delegate_has_method
 from nose.tools import assert_true
 
 
@@ -11,7 +11,7 @@ class MockMetaEstimator(object):
     """This is a mock meta estimator"""
     a_prefix = Prefix()
 
-    @make_delegation_decorator("a_prefix")
+    @if_delegate_has_method(delegate="a_prefix")
     def func(self):
         """This is a mock delegated function"""
         pass
