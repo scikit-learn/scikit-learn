@@ -136,6 +136,21 @@ def test_unsupervised_radius_neighbors(n_samples=20, n_features=5,
                                       np.concatenate(list(results[i + 1][1])))
 
 
+def test_radius_neighbors_array_of_arrays():
+    """Ensure radius_neighbors will not return a 2d array
+
+    This might otherwise occur if all queries have same number of neighbors
+    """
+    neigh = neighbors.NearestNeighbors().fit([[0], [1]])
+    dist, ind = neigh.radius_neighbors([[0], [0]], 5)
+    assert_equal(dist.shape, (2,))
+    assert_equal(dist[0].shape, (2,))
+    assert_equal(dist[1].shape, (2,))
+    assert_equal(ind.shape, (2,))
+    assert_equal(ind[0].shape, (2,))
+    assert_equal(ind[1].shape, (2,))
+
+
 def test_kneighbors_classifier(n_samples=40,
                                n_features=5,
                                n_test_pts=10,

@@ -16,7 +16,7 @@ from sklearn.random_projection import sparse_random_matrix
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
-from sklearn.utils.validation import has_fit_parameter
+from sklearn.utils.validation import has_fit_parameter, SparseTypeError
 
 
 def test_as_float_array():
@@ -107,7 +107,8 @@ def test_check_array():
     # raise error on sparse inputs
     X = [[1, 2], [3, 4]]
     X_csr = sp.csr_matrix(X)
-    assert_raises(TypeError, check_array, X_csr)
+    assert_true(issubclass(SparseTypeError, TypeError))
+    assert_raises(SparseTypeError, check_array, X_csr)
     # ensure_2d
     X_array = check_array([0, 1, 2])
     assert_equal(X_array.ndim, 2)

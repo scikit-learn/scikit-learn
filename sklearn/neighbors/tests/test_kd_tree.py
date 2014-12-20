@@ -4,7 +4,8 @@ from sklearn.neighbors.kd_tree import (KDTree, NeighborsHeap,
                                        simultaneous_sort, kernel_norm,
                                        nodeheap_sort, DTYPE, ITYPE)
 from sklearn.neighbors.dist_metrics import DistanceMetric
-from sklearn.utils.testing import SkipTest, assert_allclose
+from sklearn.utils.testing import (SkipTest, assert_allclose, assert_warns,
+                                   assert_array_equal)
 
 V = np.random.random((3, 3))
 V = np.dot(V, V.T)
@@ -24,15 +25,15 @@ def brute_force_neighbors(X, Y, k, metric, **kwargs):
     return dist, ind
 
 
-def test_kd_tree_query():
+def test_kd_tree_kneighbors():
     np.random.seed(0)
     X = np.random.random((40, DIMENSION))
     Y = np.random.random((10, DIMENSION))
 
     def check_neighbors(dualtree, breadth_first, k, metric, kwargs):
         kdt = KDTree(X, leaf_size=1, metric=metric, **kwargs)
-        dist1, ind1 = kdt.query(Y, k, dualtree=dualtree,
-                                breadth_first=breadth_first)
+        dist1, ind1 = kdt.kneighbors(Y, k, dualtree=dualtree,
+                                     breadth_first=breadth_first)
         dist2, ind2 = brute_force_neighbors(X, Y, k, metric, **kwargs)
 
         # don't check indices here: if there are any duplicate distances,
@@ -48,7 +49,7 @@ def test_kd_tree_query():
                            k, metric, kwargs)
 
 
-def test_kd_tree_query_radius(n_samples=100, n_features=10):
+def test_kd_tree_radius_neighbors(n_samples=100, n_features=10):
     np.random.seed(0)
     X = 2 * np.random.random(size=(n_samples, n_features)) - 1
     query_pt = np.zeros(n_features, dtype=float)
@@ -58,7 +59,7 @@ def test_kd_tree_query_radius(n_samples=100, n_features=10):
     rad = np.sqrt(((X - query_pt) ** 2).sum(1))
 
     for r in np.linspace(rad[0], rad[-1], 100):
-        ind = kdt.query_radius(query_pt, r + eps)[0]
+        ind = kdt.radius_neighbors(query_pt, r + eps)[0]
         i = np.where(rad <= r + eps)[0]
 
         ind.sort()
@@ -67,7 +68,7 @@ def test_kd_tree_query_radius(n_samples=100, n_features=10):
         assert_array_almost_equal(i, ind)
 
 
-def test_kd_tree_query_radius_distance(n_samples=100, n_features=10):
+def test_kd_tree_radius_neighbors_distance(n_samples=100, n_features=10):
     np.random.seed(0)
     X = 2 * np.random.random(size=(n_samples, n_features)) - 1
     query_pt = np.zeros(n_features, dtype=float)
@@ -77,7 +78,8 @@ def test_kd_tree_query_radius_distance(n_samples=100, n_features=10):
     rad = np.sqrt(((X - query_pt) ** 2).sum(1))
 
     for r in np.linspace(rad[0], rad[-1], 100):
-        ind, dist = kdt.query_radius(query_pt, r + eps, return_distance=True)
+        dist, ind = kdt.radius_neighbors(query_pt, r + eps,
+                                         return_distance=True)
 
         ind = ind[0]
         dist = dist[0]
@@ -175,12 +177,12 @@ def test_kd_tree_pickle():
     np.random.seed(0)
     X = np.random.random((10, 3))
     kdt1 = KDTree(X, leaf_size=1)
-    ind1, dist1 = kdt1.query(X)
+    ind1, dist1 = kdt1.kneighbors(X)
 
     def check_pickle_protocol(protocol):
         s = pickle.dumps(kdt1, protocol=protocol)
         kdt2 = pickle.loads(s)
-        ind2, dist2 = kdt2.query(X)
+        ind2, dist2 = kdt2.kneighbors(X)
         assert_array_almost_equal(ind1, ind2)
         assert_array_almost_equal(dist1, dist2)
 
@@ -235,6 +237,29 @@ def test_simultaneous_sort(n_rows=10, n_pts=201):
 
     assert_array_almost_equal(dist, dist2)
     assert_array_almost_equal(ind, ind2)
+
+
+def _assert_array_of_arrays_equal(a, b):
+    assert_array_equal(a.shape, b.shape)
+    for a_entry, b_entry in zip(a, b):
+        assert_array_equal(a_entry, b_entry)
+
+
+def test_query_aliases():
+    X = np.random.random((10, 3))
+    tree = KDTree(X, 1)
+    assert_array_equal(tree.query(X, 2), tree.kneighbors(X, 2))
+
+    dist_actual, ind_actual = tree.radius_neighbors(X, .5,
+                                                    return_distance=True)
+    _assert_array_of_arrays_equal(tree.query_ball_point(X, .5), ind_actual)
+    _assert_array_of_arrays_equal(assert_warns(DeprecationWarning,
+                                               tree.query_radius, X, .5),
+                                  ind_actual)
+    ind, dist = assert_warns(DeprecationWarning,
+                             tree.query_radius, X, .5, return_distance=True)
+    _assert_array_of_arrays_equal(ind, ind_actual)
+    _assert_array_of_arrays_equal(dist, dist_actual)
 
 
 if __name__ == '__main__':

@@ -243,7 +243,7 @@ cdef NodeHeapData_t[::1] get_memview_NodeHeapData_1D(
 cdef NodeData_t[::1] get_memview_NodeData_1D(
                     np.ndarray[NodeData_t, ndim=1, mode='c'] X):
     return <NodeData_t[:X.shape[0]:1]> (<NodeData_t*> X.data)
-    
+
 ######################################################################
 
 
@@ -297,7 +297,7 @@ Query for k-nearest neighbors
     >>> np.random.seed(0)
     >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
     >>> tree = {BinaryTree}(X, leaf_size=2)              # doctest: +SKIP
-    >>> dist, ind = tree.query(X[0], k=3)                # doctest: +SKIP
+    >>> dist, ind = tree.kneighbors(X[0], k=3)           # doctest: +SKIP
     >>> print ind  # indices of 3 closest neighbors
     [0 3 1]
     >>> print dist  # distances to 3 closest neighbors
@@ -310,10 +310,10 @@ pickle operation: the tree needs not be rebuilt upon unpickling.
     >>> import pickle
     >>> np.random.seed(0)
     >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
-    >>> tree = {BinaryTree}(X, leaf_size=2)        # doctest: +SKIP
-    >>> s = pickle.dumps(tree)                     # doctest: +SKIP
-    >>> tree_copy = pickle.loads(s)                # doctest: +SKIP
-    >>> dist, ind = tree_copy.query(X[0], k=3)     # doctest: +SKIP
+    >>> tree = {BinaryTree}(X, leaf_size=2)          # doctest: +SKIP
+    >>> s = pickle.dumps(tree)                       # doctest: +SKIP
+    >>> tree_copy = pickle.loads(s)                  # doctest: +SKIP
+    >>> dist, ind = tree_copy.kneighbors(X[0], k=3)  # doctest: +SKIP
     >>> print ind  # indices of 3 closest neighbors
     [0 3 1]
     >>> print dist  # distances to 3 closest neighbors
@@ -325,9 +325,9 @@ Query for neighbors within a given radius
     >>> np.random.seed(0)
     >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
     >>> tree = {BinaryTree}(X, leaf_size=2)     # doctest: +SKIP
-    >>> print tree.query_radius(X[0], r=0.3, count_only=True)
+    >>> print tree.radius_neighbors(X[0], r=0.3, count_only=True)
     3
-    >>> ind = tree.query_radius(X[0], r=0.3)  # doctest: +SKIP
+    >>> ind = tree.radius_neighbors(X[0], r=0.3)  # doctest: +SKIP
     >>> print ind  # indices of neighbors within distance 0.3
     [3 0 1]
 
@@ -1228,8 +1228,19 @@ cdef class BinaryTree:
     def query(self, X, k=1, return_distance=True,
               dualtree=False, breadth_first=False,
               sort_results=True):
+        """Alias of kneighbors
+
+        This alias is maintained for compatibility with
+        scipy.spatial.KDTree.
         """
-        query(X, k=1, return_distance=True,
+        return self.kneighbors(X, k, return_distance, dualtree,
+                               breadth_first, sort_results)
+
+    def kneighbors(self, X, k=1, return_distance=True,
+                   dualtree=False, breadth_first=False,
+                   sort_results=True):
+        """
+        kneighbors(X, k=1, return_distance=True,
               dualtree=False, breadth_first=False)
 
         query the tree for the k nearest neighbors
@@ -1277,7 +1288,7 @@ cdef class BinaryTree:
             >>> np.random.seed(0)
             >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
             >>> tree = BinaryTree(X, leaf_size=2)    # doctest: +SKIP
-            >>> dist, ind = tree.query(X[0], k=3)    # doctest: +SKIP
+            >>> dist, ind = tree.kneighbors(X[0], k=3)    # doctest: +SKIP
             >>> print ind  # indices of 3 closest neighbors
             [0 3 1]
             >>> print dist  # distances to 3 closest neighbors
@@ -1350,12 +1361,34 @@ cdef class BinaryTree:
         else:
             return indices.reshape(X.shape[:X.ndim - 1] + (k,))
 
+    def query_ball_point(self, X, r):
+        """Alias of radius_neighbors
+
+        For compatibility with scipy.spatial.KDTree
+        """
+        return self.radius_neighbors(X, r)
+
     def query_radius(self, X, r, return_distance=False,
                      int count_only=False, int sort_results=False):
+        """Deprecated alias of radius_neighbors
         """
-        query_radius(self, X, r, count_only = False):
+        warnings.warn('query_radius is deprecated and will be removed in '
+                      'the future. Please use radius_neighbors.',
+                      DeprecationWarning)
+        out = self.radius_neighbors(X, r, return_distance, count_only,
+                                    sort_results)
+        if return_distance:
+            dist, ind = out
+            return ind, dist
+        return out
 
-        query the tree for neighbors within a radius r
+    def radius_neighbors(self, X, r, return_distance=False,
+                         int count_only=False, int sort_results=False):
+        """
+        radius_neighbors(self, X, r, count_only = False):
+
+        query the tree for neighbors within a radius r. This is also known
+        as a ball query or epsilon query.
 
         Parameters
         ----------
@@ -1392,15 +1425,15 @@ cdef class BinaryTree:
             each entry gives the number of neighbors within
             a distance r of the corresponding point.
 
+        dist : array of objects, shape = X.shape[:-1]
+            each element is a numpy double array
+            listing the distances corresponding to indices in i.
+
         ind : array of objects, shape = X.shape[:-1]
             each element is a numpy integer array listing the indices of
             neighbors of the corresponding point.  Note that unlike
             the results of a k-neighbors query, the returned neighbors
             are not sorted by distance by default.
-
-        dist : array of objects, shape = X.shape[:-1]
-            each element is a numpy double array
-            listing the distances corresponding to indices in i.
 
         Examples
         --------
@@ -1410,9 +1443,9 @@ cdef class BinaryTree:
         >>> np.random.seed(0)
         >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
         >>> tree = BinaryTree(X, leaf_size=2)     # doctest: +SKIP
-        >>> print tree.query_radius(X[0], r=0.3, count_only=True)
+        >>> print tree.radius_neighbors(X[0], r=0.3, count_only=True)
         3
-        >>> ind = tree.query_radius(X[0], r=0.3)  # doctest: +SKIP
+        >>> ind = tree.radius_neighbors(X[0], r=0.3)  # doctest: +SKIP
         >>> print ind  # indices of neighbors within distance 0.3
         [3 0 1]
         """
@@ -1491,8 +1524,8 @@ cdef class BinaryTree:
         if count_only:
             return counts_arr.reshape(X.shape[:X.ndim - 1])
         elif return_distance:
-            return (indices.reshape(X.shape[:X.ndim - 1]),
-                    distances.reshape(X.shape[:X.ndim - 1]))
+            return (distances.reshape(X.shape[:X.ndim - 1]),
+                    indices.reshape(X.shape[:X.ndim - 1]))
         else:
             return indices.reshape(X.shape[:X.ndim - 1])
 

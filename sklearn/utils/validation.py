@@ -116,8 +116,8 @@ def check_consistent_length(*arrays):
 
     uniques = np.unique([_num_samples(X) for X in arrays if X is not None])
     if len(uniques) > 1:
-        raise ValueError("Found arrays with inconsistent numbers of samples: %s"
-                         % str(uniques))
+        raise ValueError("Found arrays with inconsistent numbers of samples: "
+                         "%s" % str(uniques))
 
 
 def indexable(*iterables):
@@ -144,6 +144,10 @@ def indexable(*iterables):
             result.append(np.array(X))
     check_consistent_length(*result)
     return result
+
+
+class SparseTypeError(TypeError):
+    pass
 
 
 def _ensure_sparse_format(spmatrix, accept_sparse, dtype, order, copy,
@@ -182,9 +186,9 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, order, copy,
         Matrix that is ensured to have an allowed type.
     """
     if accept_sparse is None:
-        raise TypeError('A sparse matrix was passed, but dense '
-                        'data is required. Use X.toarray() to '
-                        'convert to a dense numpy array.')
+        raise SparseTypeError('A sparse matrix was passed, but dense '
+                              'data is required. Use X.toarray() to '
+                              'convert to a dense numpy array.')
     sparse_type = spmatrix.format
     if dtype is None:
         dtype = spmatrix.dtype
@@ -392,6 +396,7 @@ def check_random_state(seed):
         return seed
     raise ValueError('%r cannot be used to seed a numpy.random.RandomState'
                      ' instance' % seed)
+
 
 def has_fit_parameter(estimator, parameter):
     """ Checks whether the estimator's fit method supports the given parameter.

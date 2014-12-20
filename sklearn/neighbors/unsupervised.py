@@ -60,7 +60,7 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
       array([[2, 0]]...)
 
       >>> neigh.radius_neighbors([0, 0, 1.3], 0.4, return_distance=False)
-      array([[2]])
+      array([array([2])], dtype=object)
 
     See also
     --------
