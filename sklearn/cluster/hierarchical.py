@@ -689,7 +689,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             # Early stopping is likely to give a speed up only for
             # a large number of clusters. The actual threshold
             # implemented here is heuristic
-            compute_full_tree = self.n_clusters > max(100, .02 * n_samples)
+            compute_full_tree = self.n_clusters < max(100, .02 * n_samples)
         n_clusters = self.n_clusters
         if compute_full_tree:
             n_clusters = None
