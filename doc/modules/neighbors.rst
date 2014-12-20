@@ -125,7 +125,7 @@ have the same interface; we'll show an example of using the KD Tree here:
     >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> kdt = KDTree(X, leaf_size=30, metric='euclidean')
-    >>> kdt.query(X, k=2, return_distance=False)          # doctest: +ELLIPSIS
+    >>> kdt.kneighbors(X, k=2, return_distance=False)      # doctest: +ELLIPSIS
     array([[0, 1],
            [1, 0],
            [2, 1],
@@ -157,7 +157,8 @@ nearest neighbors of each query point, where :math:`k` is an integer value
 specified by the user.  :class:`RadiusNeighborsClassifier` implements learning
 based on the number of neighbors within a fixed radius :math:`r` of each
 training point, where :math:`r` is a floating-point value specified by
-the user.
+the user. Determining the neighbors within a specified radius of a query is
+also known as an *epsilon query* or *ball query*.
 
 The :math:`k`-neighbors classification in :class:`KNeighborsClassifier`
 is the more commonly used of the two techniques.  The

@@ -48,8 +48,8 @@ def test_ball_tree_query():
 
     def check_neighbors(dualtree, breadth_first, k, metric, kwargs):
         bt = BallTree(X, leaf_size=1, metric=metric, **kwargs)
-        dist1, ind1 = bt.query(Y, k, dualtree=dualtree,
-                               breadth_first=breadth_first)
+        dist1, ind1 = bt.kneighbors(Y, k, dualtree=dualtree,
+                                    breadth_first=breadth_first)
         dist2, ind2 = brute_force_neighbors(X, Y, k, metric, **kwargs)
 
         # don't check indices here: if there are any duplicate distances,
@@ -73,7 +73,7 @@ def test_ball_tree_query_boolean_metrics():
 
     def check_neighbors(metric):
         bt = BallTree(X, leaf_size=1, metric=metric)
-        dist1, ind1 = bt.query(Y, k)
+        dist1, ind1 = bt.kneighbors(Y, k)
         dist2, ind2 = brute_force_neighbors(X, Y, k, metric)
         assert_array_almost_equal(dist1, dist2)
 
@@ -89,7 +89,7 @@ def test_ball_tree_query_discrete_metrics():
 
     def check_neighbors(metric):
         bt = BallTree(X, leaf_size=1, metric=metric)
-        dist1, ind1 = bt.query(Y, k)
+        dist1, ind1 = bt.kneighbors(Y, k)
         dist2, ind2 = brute_force_neighbors(X, Y, k, metric)
         assert_array_almost_equal(dist1, dist2)
 
@@ -97,7 +97,7 @@ def test_ball_tree_query_discrete_metrics():
         yield check_neighbors, metric
 
 
-def test_ball_tree_query_radius(n_samples=100, n_features=10):
+def test_ball_tree_radius_neighbors(n_samples=100, n_features=10):
     np.random.seed(0)
     X = 2 * np.random.random(size=(n_samples, n_features)) - 1
     query_pt = np.zeros(n_features, dtype=float)
@@ -116,7 +116,7 @@ def test_ball_tree_query_radius(n_samples=100, n_features=10):
         assert_array_almost_equal(i, ind)
 
 
-def test_ball_tree_query_radius_distance(n_samples=100, n_features=10):
+def test_ball_tree_radius_neighbors_distance(n_samples=100, n_features=10):
     np.random.seed(0)
     X = 2 * np.random.random(size=(n_samples, n_features)) - 1
     query_pt = np.zeros(n_features, dtype=float)
@@ -305,7 +305,7 @@ def test_query_haversine():
     np.random.seed(0)
     X = 2 * np.pi * np.random.random((40, 2))
     bt = BallTree(X, leaf_size=1, metric='haversine')
-    dist1, ind1 = bt.query(X, k=5)
+    dist1, ind1 = bt.kneighbors(X, k=5)
     dist2, ind2 = brute_force_neighbors(X, X, k=5, metric='haversine')
 
     assert_array_almost_equal(dist1, dist2)
