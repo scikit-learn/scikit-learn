@@ -54,7 +54,8 @@ class Isomap(BaseEstimator, TransformerMixin):
 
         'D' : Dijkstra's algorithm.
 
-    neighbors_algorithm : string ['auto'|'brute'|'kd_tree'|'ball_tree']
+    neighbors_algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'} \
+                          or neighbors estimator, optional
         Algorithm to use for nearest neighbors search,
         passed to neighbors.NearestNeighbors instance.
 

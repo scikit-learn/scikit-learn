@@ -14,7 +14,7 @@ from scipy.sparse import csr_matrix, issparse
 
 from .ball_tree import BallTree
 from .kd_tree import KDTree
-from ..base import BaseEstimator
+from ..base import BaseEstimator, clone
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, _get_n_jobs, gen_even_slices
@@ -119,10 +119,14 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.metric_params = metric_params
         self.p = p
         self.n_jobs = n_jobs
+        # validate here as well as fit() for backwards compatibility
+        self._validate_params()
 
-        if algorithm not in ['auto', 'brute',
-                             'kd_tree', 'ball_tree']:
-            raise ValueError("unrecognized algorithm: '%s'" % algorithm)
+    def _validate_params(self):
+        if self.algorithm not in ['auto', 'brute',
+                                  'kd_tree', 'ball_tree'] \
+           and not hasattr(self.algorithm, 'fit'):
+            raise ValueError("unrecognized algorithm: '%s'" % self.algorithm)
 
         if algorithm == 'auto':
             if metric == 'precomputed':
@@ -130,30 +134,35 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             else:
                 alg_check = 'ball_tree'
         else:
-            alg_check = algorithm
+            alg_check = self.algorithm
 
-        if callable(metric):
-            if algorithm == 'kd_tree':
+        if hasattr(alg_check, 'fit'):
+            # metric is ignored
+            pass
+        elif callable(self.metric):
+            if self.algorithm == 'kd_tree':
                 # callable metric is only valid for brute force and ball_tree
                 raise ValueError(
                     "kd_tree algorithm does not support callable metric '%s'"
-                    % metric)
-        elif metric not in VALID_METRICS[alg_check]:
+                    % self.metric)
+        elif self.metric not in VALID_METRICS[alg_check]:
             raise ValueError("Metric '%s' not valid for algorithm '%s'"
-                             % (metric, algorithm))
+                             % (self.metric, self.algorithm))
 
         if self.metric_params is not None and 'p' in self.metric_params:
             warnings.warn("Parameter p is found in metric_params. "
                           "The corresponding parameter from __init__ "
                           "is ignored.", SyntaxWarning, stacklevel=3)
-            effective_p = metric_params['p']
+            effective_p = self.metric_params['p']
         else:
             effective_p = self.p
 
         if self.metric in ['wminkowski', 'minkowski'] and effective_p < 1:
-            raise ValueError("p must be greater than one for minkowski metric")
+                raise ValueError("p must be at least one for minkowski metric")
 
     def _fit(self, X):
+        self._validate_params()
+
         if self.metric_params is None:
             self.effective_metric_params_ = {}
         else:
@@ -232,9 +241,8 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         elif algorithm == 'brute':
             self._tree = None
         elif hasattr(algorithm, 'fit'):
-            # XXX: should we clone?
-            algorithm.fit(X)
-            self._tree = algorithm
+            self._tree = clone(algorithm)
+            self._tree.fit(X)
         else:
             raise ValueError("algorithm = '%s' not recognized"
                              % self.algorithm)
@@ -310,20 +318,14 @@ class KNeighborsMixin(object):
                [2]]...)
 
         """
-<<<<<<< HEAD
-        if self._fit_method is None:
-            raise NotFittedError("Must fit neighbors before querying.")
-=======
         if not hasattr(self, '_fit_X'):
             raise ValueError("must fit neighbors before querying")
 
         X = check_array(X, accept_sparse='csr')
->>>>>>> FIX/MAINT towards custom estimator as nearest neighbors algorithm
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
 
-<<<<<<< HEAD
         if X is not None:
             query_is_train = False
             X = check_array(X, accept_sparse='csr')
@@ -384,22 +386,6 @@ class KNeighborsMixin(object):
                 result = np.vstack(dist), np.vstack(neigh_ind)
             else:
                 result = np.vstack(result)
-=======
-        if self._tree is not None:
-            try:
-                return self._tree.kneighbors(X, n_neighbors,
-                                             return_distance=return_distance)
-            except SparseTypeError:
-                # XXX: should raise SparseTypeError
-                raise ValueError(
-                    "%s does not work with sparse matrices. Densify the data, "
-                    "or set algorithm='brute'" % self.algorithm)
-
-        # for efficiency, use squared euclidean distances
-        if self.effective_metric_ == 'euclidean':
-            dist = pairwise_distances(X, self._fit_X, 'euclidean',
-                                      squared=True)
->>>>>>> FIX/MAINT towards custom estimator as nearest neighbors algorithm
         else:
             dist = pairwise_distances(X, self._fit_X,
                                       self.effective_metric_,
@@ -555,7 +541,6 @@ class RadiusNeighborsMixin(object):
 
         Returns
         -------
-<<<<<<< HEAD
         dist : array, shape (n_samples,) of arrays
             Array representing the distances to each point, only present if
             return_distance=True. The distance values are computed according
@@ -565,14 +550,6 @@ class RadiusNeighborsMixin(object):
             An array of arrays of indices of the approximate nearest points
             from the population matrix that lie within a ball of size
             ``radius`` around the query points.
-=======
-        dist : array, shape (n_queries,) of 1d arrays
-            Array representing the euclidean distances to each point,
-            only present if return_distance=True.
-
-        ind : array, shape (n_queries,) of 1d arrays
-            Indices of the nearest points in the population matrix.
->>>>>>> FIX/MAINT towards custom estimator as nearest neighbors algorithm
 
         Examples
         --------
@@ -586,16 +563,11 @@ class RadiusNeighborsMixin(object):
         >>> neigh = NearestNeighbors(radius=1.6)
         >>> neigh.fit(samples) # doctest: +ELLIPSIS
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
-<<<<<<< HEAD
         >>> rng = neigh.radius_neighbors([[1., 1., 1.]])
         >>> print(np.asarray(rng[0][0])) # doctest: +ELLIPSIS
         [ 1.5  0.5]
         >>> print(np.asarray(rng[1][0])) # doctest: +ELLIPSIS
         [1 2]
-=======
-        >>> print(neigh.radius_neighbors([1., 1., 1.])) # doctest: +ELLIPSIS
-        (array([array([ 1.5,  0.5])]...), array([array([1, 2])]...)
->>>>>>> FIX/MAINT towards custom estimator as nearest neighbors algorithm
 
         The first array returned contains the distances to all points which
         are closer than 1.6, while the second array returned contains their
@@ -609,14 +581,8 @@ class RadiusNeighborsMixin(object):
         For efficiency, `radius_neighbors` returns arrays of objects, where
         each object is a 1D array of indices or distances.
         """
-<<<<<<< HEAD
         if self._fit_method is None:
             raise NotFittedError("Must fit neighbors before querying.")
-=======
-
-        if not hasattr(self, '_fit_X'):
-            raise ValueError("must fit neighbors before querying")
->>>>>>> FIX/MAINT towards custom estimator as nearest neighbors algorithm
 
         if X is not None:
             query_is_train = False
@@ -628,7 +594,6 @@ class RadiusNeighborsMixin(object):
         if radius is None:
             radius = self.radius
 
-<<<<<<< HEAD
         n_samples = X.shape[0]
         if self._fit_method == 'brute':
             # for efficiency, use squared euclidean distances
@@ -672,36 +637,6 @@ class RadiusNeighborsMixin(object):
                                               return_distance=return_distance)
             if return_distance:
                 results = results[::-1]
-=======
-        if self._tree is not None:
-            try:
-                return self._tree.radius_neighbors(
-                    X, radius, return_distance=return_distance)
-            except SparseTypeError:
-                # XXX: should probably raise SparseTypeError
-                raise ValueError(
-                    "%s does not work with sparse matrices. Densify the data, "
-                    "or set algorithm='brute'" % self.algorithm)
-
-        # for efficiency, use squared euclidean distances
-        if self.effective_metric_ == 'euclidean':
-            dist = pairwise_distances(X, self._fit_X, 'euclidean',
-                                      squared=True)
-            radius *= radius
-        else:
-            dist = pairwise_distances(X, self._fit_X,
-                                      self.effective_metric_,
-                                      **self.effective_metric_params_)
-        neigh_ind = self._array_of_arrays([np.where(d < radius)[0]
-                                           for d in dist])
-
-        if return_distance:
-            dist = [d[neigh_ind[i]]
-                    for i, d in enumerate(dist)]
-            if self.effective_metric_ == 'euclidean':
-                dist = [np.sqrt(d) for d in dist]
-            return self._array_of_arrays(dist), neigh_ind
->>>>>>> FIX/MAINT towards custom estimator as nearest neighbors algorithm
         else:
             return neigh_ind
 
