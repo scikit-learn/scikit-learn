@@ -14,7 +14,7 @@ from scipy.sparse import csr_matrix, issparse
 
 from .ball_tree import BallTree
 from .kd_tree import KDTree
-from ..base import BaseEstimator
+from ..base import BaseEstimator, clone
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, SparseTypeError
@@ -116,38 +116,47 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.metric = metric
         self.metric_params = metric_params
         self.p = p
+        # validate here as well as fit() for backwards compatibility
+        self._validate_params()
 
-        if algorithm not in ['auto', 'brute',
-                             'kd_tree', 'ball_tree']:
-            raise ValueError("unrecognized algorithm: '%s'" % algorithm)
+    def _validate_params(self):
+        if self.algorithm not in ['auto', 'brute',
+                                  'kd_tree', 'ball_tree'] \
+           and not hasattr(self.algorithm, 'fit'):
+            raise ValueError("unrecognized algorithm: '%s'" % self.algorithm)
 
-        if algorithm == 'auto':
+        if self.algorithm == 'auto':
             alg_check = 'ball_tree'
         else:
-            alg_check = algorithm
+            alg_check = self.algorithm
 
-        if callable(metric):
-            if algorithm == 'kd_tree':
+        if hasattr(alg_check, 'fit'):
+            # metric is ignored
+            pass
+        elif callable(self.metric):
+            if self.algorithm == 'kd_tree':
                 # callable metric is only valid for brute force and ball_tree
                 raise ValueError(
                     "kd_tree algorithm does not support callable metric '%s'"
-                    % metric)
-        elif metric not in VALID_METRICS[alg_check]:
+                    % self.metric)
+        elif self.metric not in VALID_METRICS[alg_check]:
             raise ValueError("Metric '%s' not valid for algorithm '%s'"
-                             % (metric, algorithm))
+                             % (self.metric, self.algorithm))
 
         if self.metric_params is not None and 'p' in self.metric_params:
             warnings.warn("Parameter p is found in metric_params. "
                           "The corresponding parameter from __init__ "
                           "is ignored.", SyntaxWarning, stacklevel=3)
-            effective_p = metric_params['p']
+            effective_p = self.metric_params['p']
         else:
             effective_p = self.p
 
         if self.metric in ['wminkowski', 'minkowski'] and effective_p < 1:
-            raise ValueError("p must be greater than one for minkowski metric")
+                raise ValueError("p must be at least one for minkowski metric")
 
     def _fit(self, X):
+        self._validate_params()
+
         if self.metric_params is None:
             self.effective_metric_params_ = {}
         else:
@@ -225,9 +234,8 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         elif algorithm == 'brute':
             self._tree = None
         elif hasattr(algorithm, 'fit'):
-            # XXX: should we clone?
-            algorithm.fit(X)
-            self._tree = algorithm
+            self._tree = clone(algorithm)
+            self._tree.fit(X)
         else:
             raise ValueError("algorithm = '%s' not recognized"
                              % self.algorithm)

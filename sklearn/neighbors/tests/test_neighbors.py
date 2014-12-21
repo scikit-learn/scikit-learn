@@ -15,6 +15,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn import neighbors, datasets
+from sklearn.datasets import make_blobs
 
 rng = np.random.RandomState(0)
 # load and shuffle iris dataset
@@ -905,7 +906,8 @@ def test_non_euclidean_kneighbors():
         nbrs_graph = neighbors.radius_neighbors_graph(
             X, radius, metric=metric).toarray()
         nbrs1 = neighbors.NearestNeighbors(metric=metric, radius=radius).fit(X)
-        assert_array_equal(nbrs_graph, nbrs1.radius_neighbors_graph(X).toarray())
+        assert_array_equal(nbrs_graph,
+                           nbrs1.radius_neighbors_graph(X).toarray())
 
     # Raise error when wrong parameters are supplied,
     X_nbrs = neighbors.NearestNeighbors(3, metric='manhattan')
@@ -916,6 +918,28 @@ def test_non_euclidean_kneighbors():
     X_nbrs.fit(X)
     assert_raises(ValueError, neighbors.radius_neighbors_graph, X_nbrs,
                   radius, metric='euclidean')
+
+
+@ignore_warnings
+def test_neighbors_estimator_as_algorithm():
+    centers = [[-10, -10], [10, 10]]
+    X, y = make_blobs(centers=centers)
+    assert_array_equal(np.unique(y), [0, 1])
+    algorithm = neighbors.LSHForest()
+    # not fitted should raise exception
+    assert_raises(Exception, algorithm.kneighbors, centers)
+
+    for cls in [neighbors.KNeighborsClassifier,
+                neighbors.RadiusNeighborsClassifier,
+                neighbors.KNeighborsRegressor,
+                neighbors.RadiusNeighborsRegressor]:
+        est = cls(algorithm=algorithm)
+        est.fit(X, y)
+        prediction = est.predict(centers)
+        assert_array_almost_equal(prediction, [0, 1])
+
+        # algorithm should have been cloned, hence still not fitted
+        assert_raises(Exception, algorithm.kneighbors, centers)
 
 
 if __name__ == '__main__':
