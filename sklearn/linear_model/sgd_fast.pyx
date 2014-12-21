@@ -662,7 +662,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
 
                 if average > 0 and average <= t:
                     # compute the average for the intercept and update the
-                    # average weights, this is done regardless as to whther
+                    # average weights, this is done regardless as to whether
                     # the update is 0
 
                     w.add_average(x_data_ptr, x_ind_ptr, xnnz,
