@@ -445,8 +445,12 @@ class RadiusNeighborsMixin(object):
         >>> neigh = NearestNeighbors(radius=1.6)
         >>> neigh.fit(samples) # doctest: +ELLIPSIS
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
-        >>> print(neigh.radius_neighbors([1., 1., 1.])) # doctest: +ELLIPSIS
-        (array([array([ 1.5,  0.5])]...), array([array([1, 2])]...)
+        >>> dist, ind = neigh.radius_neighbors([1., 1., 1.])
+        ...    # doctest: +ELLIPSIS
+        >>> dist[0]
+        array([ 1.5,  0.5])
+        >>> ind[0]
+        array([1, 2])
 
         The first array returned contains the distances to all points which
         are closer than 1.6, while the second array returned contains their

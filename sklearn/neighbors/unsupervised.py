@@ -64,8 +64,8 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
       ... #doctest: +ELLIPSIS
       array([[2, 0]]...)
 
-      >>> neigh.radius_neighbors([0, 0, 1.3], 0.4, return_distance=False)
-      array([array([2])], dtype=object)
+      >>> neigh.radius_neighbors([0, 0, 1.3], 0.4, return_distance=False)[0]
+      array([2])
 
     See also
     --------
