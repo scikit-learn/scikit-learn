@@ -23,7 +23,6 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.metrics import auc
-from sklearn.metrics import auc_score
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import coverage_error
 from sklearn.metrics import label_ranking_average_precision_score
