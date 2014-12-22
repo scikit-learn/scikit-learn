@@ -30,33 +30,44 @@ def _find_matching_indices(sorted_array, item, left_mask, right_mask):
     left_index = np.searchsorted(sorted_array, item & left_mask)
     right_index = np.searchsorted(sorted_array, item | right_mask,
                                   side='right')
-    return np.arange(left_index, right_index)
+    return left_index, right_index
 
 
 def _find_longest_prefix_match(bit_string_array, query, hash_size,
                                left_masks, right_masks):
     """Private function to find the longest prefix match for query.
 
+    Query may be an array of many hashes.
+
     Most significant bits are considered as the prefix.
     """
-    hi = hash_size
-    lo = 0
+    hi = np.empty_like(query, dtype=int)
+    hi.fill(hash_size)
+    lo = np.zeros_like(query, dtype=int)
+    res = np.empty_like(query, dtype=int)
 
-    if _find_matching_indices(bit_string_array, query, left_masks[hi],
-                              right_masks[hi]).shape[0] > 0:
-        return hi
+    left_idx, right_idx = _find_matching_indices(bit_string_array, query,
+                                                 left_masks[hi],
+                                                 right_masks[hi])
+    found = right_idx > left_idx
+    res[found] = lo[found] = hash_size
 
-    while lo < hi:
-        mid = (lo+hi) // 2
+    r = np.arange(query.shape[0])
+    kept = r[lo < hi]  # indices remaining in query mask
+    while kept.shape[0]:
+        mid = (lo.take(kept) + hi.take(kept)) // 2
 
-        k = _find_matching_indices(bit_string_array, query,
-                                   left_masks[mid],
-                                   right_masks[mid]).shape[0]
-        if k > 0:
-            lo = mid + 1
-            res = mid
-        else:
-            hi = mid
+        left_idx, right_idx = _find_matching_indices(bit_string_array,
+                                                     query.take(kept),
+                                                     left_masks[mid],
+                                                     right_masks[mid])
+        found = right_idx > left_idx
+        mid_found = mid[found]
+        lo[kept[found]] = mid_found + 1
+        res[kept[found]] = mid_found
+        hi[kept[~found]] = mid[~found]
+
+        kept = r[lo < hi]
 
     return res
 
@@ -174,7 +185,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
       >>> X_train = [[5, 5, 2], [21, 5, 5], [1, 1, 1], [8, 9, 1], [6, 10, 2]]
       >>> X_test = [[9, 1, 6], [3, 1, 10], [7, 10, 3]]
       >>> lshf = LSHForest()
-      >>> lshf.fit(X_train)
+      >>> lshf.fit(X_train)  # doctest: +NORMALIZE_WHITESPACE
       LSHForest(min_hash_match=4, n_candidates=50, n_estimators=10,
                 n_neighbors=5, radius=1.0, radius_cutoff_ratio=0.9,
                 random_state=None)
@@ -240,13 +251,14 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
                                                    len(set(candidates))
                                                    < n_neighbors):
 
+            left_mask = self._left_mask[max_depth]
+            right_mask = self._right_mask[max_depth]
             for i in range(self.n_estimators):
+                start, stop = _find_matching_indices(self.trees_[i],
+                                                     bin_queries[i],
+                                                     left_mask, right_mask)
                 candidates.extend(
-                    self.original_indices_[i][_find_matching_indices(
-                        self.trees_[i],
-                        bin_queries[i],
-                        self._left_mask[max_depth],
-                        self._right_mask[max_depth])].tolist())
+                    self.original_indices_[i][start:stop].tolist())
             max_depth = max_depth - 1
 
         candidates = np.unique(candidates)
@@ -283,14 +295,15 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
         while max_depth > self.min_hash_match and (ratio_within_radius
                                                    > threshold):
+            left_mask = self._left_mask[max_depth]
+            right_mask = self._right_mask[max_depth]
             candidates = []
             for i in range(self.n_estimators):
+                start, stop = _find_matching_indices(self.trees_[i],
+                                                     bin_queries[i],
+                                                     left_mask, right_mask)
                 candidates.extend(
-                    self.original_indices_[i][_find_matching_indices(
-                        self.trees_[i],
-                        bin_queries[i],
-                        self._left_mask[max_depth],
-                        self._right_mask[max_depth])].tolist())
+                    self.original_indices_[i][start:stop].tolist())
             candidates = np.setdiff1d(candidates, total_candidates)
             total_candidates = np.append(total_candidates, candidates)
             ranks, distances = self._compute_distances(query, candidates)
@@ -357,19 +370,18 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
     def _query(self, X):
         """Performs descending phase to find maximum depth."""
         # Calculate hashes of shape (n_samples, n_estimators, [hash_size])
-        bin_queries = np.asarray([hasher.transform(X)
+        bin_queries = np.asarray([hasher.transform(X)[:, 0]
                                   for hasher in self.hash_functions_])
         bin_queries = np.rollaxis(bin_queries, 1)
 
         # descend phase
         # XXX: would be great to vectorize or parallelise this:
-        depths = [[_find_longest_prefix_match(tree, bin_Xi, MAX_HASH_SIZE,
-                                              self._left_mask,
-                                              self._right_mask)
-                   for tree, bin_Xi in zip(self.trees_, bin_Xis)]
-                  for bin_Xis in bin_queries]
+        depths = [_find_longest_prefix_match(tree, tree_queries, MAX_HASH_SIZE,
+                                             self._left_mask, self._right_mask)
+                  for tree, tree_queries in zip(self.trees_,
+                                                np.rollaxis(bin_queries, 1))]
 
-        return bin_queries, np.max(depths, axis=1)
+        return bin_queries, np.max(depths, axis=0)
 
     def kneighbors(self, X, n_neighbors=None, return_distance=True):
         """
