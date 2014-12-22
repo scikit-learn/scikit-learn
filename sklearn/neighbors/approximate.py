@@ -1,8 +1,12 @@
 """Approximate nearest neighbor search"""
 # Author: Maheshakya Wijewardena <maheshakya.10@cse.mrt.ac.lk>
+#         Joel Nothman <joel.nothman@gmail.com>
 
 import numpy as np
 import warnings
+
+from scipy import sparse
+
 from .base import KNeighborsMixin, RadiusNeighborsMixin
 from ..base import BaseEstimator
 from ..utils.validation import check_array
@@ -165,15 +169,15 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
     Examples
     --------
-      >>> import numpy as np
       >>> from sklearn.neighbors import LSHForest
 
       >>> X_train = [[5, 5, 2], [21, 5, 5], [1, 1, 1], [8, 9, 1], [6, 10, 2]]
       >>> X_test = [[9, 1, 6], [3, 1, 10], [7, 10, 3]]
       >>> lshf = LSHForest()
       >>> lshf.fit(X_train)
-      LSHForest(min_hash_match=4, n_candidates=50, n_estimators=10, n_neighbors=5,
-           radius=1.0, radius_cutoff_ratio=0.9, random_state=None)
+      LSHForest(min_hash_match=4, n_candidates=50, n_estimators=10,
+                n_neighbors=5, radius=1.0, radius_cutoff_ratio=0.9,
+                random_state=None)
       >>> distances, indices = lshf.kneighbors(X_test, n_neighbors=2)
       >>> distances                                        # doctest: +ELLIPSIS
       array([[ 0.069...,  0.149...],
@@ -204,6 +208,9 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         Returns argsort of distances in the candidates
         array and sorted distances.
         """
+        if candidates.shape == (0,):
+            return np.empty(0, dtype=int), np.empty(0, dtype=float)
+
         distances = pairwise_distances(query, self._fit_X[candidates],
                                        metric='cosine')[0]
         distance_positions = np.argsort(distances)
@@ -319,7 +326,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
             Returns self.
         """
 
-        self._fit_X = check_array(X)
+        self._fit_X = check_array(X, accept_sparse='csr')
 
         # Creates a g(p,x) for each tree
         self.hash_functions_ = []
@@ -347,24 +354,22 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
         return self
 
-    def _query(self, query):
+    def _query(self, X):
         """Performs descending phase to find maximum depth."""
-        bin_queries = []
-        query = query.reshape((1, query.shape[0]))
+        # Calculate hashes of shape (n_samples, n_estimators, [hash_size])
+        bin_queries = np.asarray([hasher.transform(X)
+                                  for hasher in self.hash_functions_])
+        bin_queries = np.rollaxis(bin_queries, 1)
 
         # descend phase
-        max_depth = 0
-        for i in range(self.n_estimators):
-            bin_query = self.hash_functions_[i].transform(query)[0][0]
-            k = _find_longest_prefix_match(self.trees_[i], bin_query,
-                                           MAX_HASH_SIZE,
-                                           self._left_mask,
-                                           self._right_mask)
-            if k > max_depth:
-                max_depth = k
-            bin_queries.append(bin_query)
+        # XXX: would be great to vectorize or parallelise this:
+        depths = [[_find_longest_prefix_match(tree, bin_Xi, MAX_HASH_SIZE,
+                                              self._left_mask,
+                                              self._right_mask)
+                   for tree, bin_Xi in zip(self.trees_, bin_Xis)]
+                  for bin_Xis in bin_queries]
 
-        return bin_queries, query, max_depth
+        return bin_queries, np.max(depths, axis=1)
 
     def kneighbors(self, X, n_neighbors=None, return_distance=True):
         """
@@ -399,13 +404,13 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
 
-        X = check_array(X)
+        X = check_array(X, accept_sparse='csr')
 
         neighbors, distances = [], []
+        bin_queries, max_depth = self._query(X)
         for i in range(X.shape[0]):
-            bin_queries, query, max_depth = self._query(X[i])
-            neighs, dists = self._get_candidates(query, max_depth,
-                                                 bin_queries,
+            neighs, dists = self._get_candidates(X[i], max_depth[i],
+                                                 bin_queries[i],
                                                  n_neighbors)
             neighbors.append(neighs)
             distances.append(dists)
@@ -448,13 +453,13 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         if radius is None:
             radius = self.radius
 
-        X = check_array(X)
+        X = check_array(X, accept_sparse='csr')
 
         neighbors, distances = [], []
+        bin_queries, max_depth = self._query(X)
         for i in range(X.shape[0]):
-            bin_queries, query, max_depth = self._query(X[i])
-            neighs, dists = self._get_radius_neighbors(query, max_depth,
-                                                       bin_queries, radius)
+            neighs, dists = self._get_radius_neighbors(X[i], max_depth[i],
+                                                       bin_queries[i], radius)
             neighbors.append(neighs)
             distances.append(dists)
 
@@ -474,7 +479,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         X : array_like, shape (n_samples, n_features)
             New data point to be inserted into the LSH Forest.
         """
-        X = check_array(X)
+        X = check_array(X, accept_sparse='csr')
         if not hasattr(self, 'hash_functions_'):
             return self.fit(X)
 
@@ -499,6 +504,9 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
                                                             n_samples))
 
         # adds the entry into the input_array.
-        self._fit_X = np.row_stack((self._fit_X, X))
+        if sparse.issparse(X) or sparse.issparse(self._fit_X):
+            self._fit_X = sparse.vstack((self._fit_X, X))
+        else:
+            self._fit_X = np.row_stack((self._fit_X, X))
 
         return self
