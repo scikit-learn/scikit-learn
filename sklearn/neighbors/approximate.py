@@ -245,11 +245,11 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         """
         index_size = self._fit_X.shape[0]
         candidates = []
+        candidate_set = set()
         min_candidates = self.n_candidates * self.n_estimators
-        while max_depth > self.min_hash_match and (len(candidates)
-                                                   < min_candidates or
-                                                   len(set(candidates))
-                                                   < n_neighbors):
+        while (max_depth > self.min_hash_match and
+               (len(candidates) < min_candidates or
+                len(candidate_set) < n_neighbors)):
 
             left_mask = self._left_mask[max_depth]
             right_mask = self._right_mask[max_depth]
@@ -258,10 +258,11 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
                                                      bin_queries[i],
                                                      left_mask, right_mask)
                 candidates.extend(
-                    self.original_indices_[i][start:stop].tolist())
+                    self.original_indices_[i][start:stop])
             max_depth = max_depth - 1
+            candidate_set.update(candidates)
 
-        candidates = np.unique(candidates)
+        candidates = np.asarray(list(candidate_set))
         # For insufficient candidates, candidates are filled.
         # Candidates are filled from unselected indices uniformly.
         if candidates.shape[0] < n_neighbors:
@@ -293,8 +294,8 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         total_neighbors = np.array([], dtype=int)
         total_distances = np.array([], dtype=float)
 
-        while max_depth > self.min_hash_match and (ratio_within_radius
-                                                   > threshold):
+        while (max_depth > self.min_hash_match and
+               ratio_within_radius > threshold):
             left_mask = self._left_mask[max_depth]
             right_mask = self._right_mask[max_depth]
             candidates = []
@@ -375,7 +376,6 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         bin_queries = np.rollaxis(bin_queries, 1)
 
         # descend phase
-        # XXX: would be great to vectorize or parallelise this:
         depths = [_find_longest_prefix_match(tree, tree_queries, MAX_HASH_SIZE,
                                              self._left_mask, self._right_mask)
                   for tree, tree_queries in zip(self.trees_,
