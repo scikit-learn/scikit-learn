@@ -238,7 +238,7 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
     used_node = np.ones(n_nodes, dtype=bool)
     children = []
     if return_distance:
-        distances = []
+        distances = np.empty(n_nodes - n_samples)
 
     not_visited = np.empty(n_nodes, dtype=np.int8, order='C')
 
@@ -253,7 +253,7 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
         children.append((i, j))
         used_node[i] = used_node[j] = False
         if return_distance:  # store inertia value
-            distances.append(inert)
+            distances[k - n_samples] = inert
 
         # update the moments
         moments_1[k] = moments_1[i] + moments_1[j]
@@ -289,7 +289,7 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
 
     if return_distance:
         # 2 is scaling factor to compare w/ unstructured version
-        distances = np.sqrt(2. * np.array(distances))
+        distances = np.sqrt(2. * distances)
         return children, n_components, n_leaves, parent, distances
     else:
         return children, n_components, n_leaves, parent
@@ -297,7 +297,8 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
 
 # average and complete linkage
 def linkage_tree(X, connectivity=None, n_components=None,
-                 n_clusters=None, linkage='complete', affinity="euclidean"):
+                 n_clusters=None, linkage='complete', affinity="euclidean",
+                 return_distance=False):
     """Linkage agglomerative clustering based on a Feature matrix.
 
     The inertia matrix uses a Heapq-based representation.
@@ -340,6 +341,9 @@ def linkage_tree(X, connectivity=None, n_components=None,
         which metric to use. Can be "euclidean", "manhattan", or any
         distance know to paired distance (see metric.pairwise)
 
+    return_distance : bool, default False
+        whether or not to return the distances between the clusters.
+
     Returns
     -------
     children : 2D array, shape (n_nodes, 2)
@@ -359,6 +363,12 @@ def linkage_tree(X, connectivity=None, n_components=None,
     parents : 1D array, shape (n_nodes, ) or None
         The parent of each node. Only returned when a connectivity matrix
         is specified, elsewhere 'None' is returned.
+
+    distances : ndarray, shape (n_nodes,)
+        Returned when return_distance is set to True.
+
+        distances[i] refers to the distance between children[i][0] and
+        children[i][1] when they are merged.
 
     See also
     --------
@@ -409,6 +419,10 @@ def linkage_tree(X, connectivity=None, n_components=None,
             X = X[i, j]
         out = hierarchy.linkage(X, method=linkage, metric=affinity)
         children_ = out[:, :2].astype(np.int)
+
+        if return_distance:
+            distances = out[:, 2]
+            return children_, 1, n_samples, None, distances
         return children_, 1, n_samples, None
 
     connectivity = _fix_connectivity(X, connectivity,
@@ -435,6 +449,8 @@ def linkage_tree(X, connectivity=None, n_components=None,
         assert n_clusters <= n_samples
         n_nodes = 2 * n_samples - n_clusters
 
+    if return_distance:
+        distances = np.empty(n_nodes - n_samples)
     # create inertia heap and connection matrix
     A = np.empty(n_nodes, dtype=object)
     inertia = list()
@@ -469,6 +485,11 @@ def linkage_tree(X, connectivity=None, n_components=None,
                 break
         i = edge.a
         j = edge.b
+
+        if return_distance:
+            # store distances
+            distances[k - n_samples] = edge.weight
+
         parent[i] = parent[j] = k
         children.append((i, j))
         # Keep track of the number of elements per cluster
@@ -491,10 +512,13 @@ def linkage_tree(X, connectivity=None, n_components=None,
 
     # Separate leaves in children (empty lists up to now)
     n_leaves = n_samples
-    children = np.array(children)  # return numpy array for efficient caching
 
+    # # return numpy array for efficient caching
+    children = np.array(children)[:, ::-1]
+
+    if return_distance:
+        return children, n_components, n_leaves, parent, distances
     return children, n_components, n_leaves, parent
-
 
 # Matching names to tree-building strategies
 def _complete_linkage(*args, **kwargs):

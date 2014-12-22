@@ -303,12 +303,11 @@ def test_ward_tree_children_order():
         assert_array_equal(out_unstructured[0], out_structured[0])
 
 
-def test_ward_tree_distance():
-    """
-    Check that children are ordered in the same way for both structured and
-    unstructured versions of ward_tree.
-    """
-    # test on five random datasets
+def test_ward_linkage_tree_return_distance():
+    """Test return_distance option on linkage and ward trees"""
+
+    # test that return_distance when set true, gives same
+    # output on both structured and unstructured clustering.
     n, p = 10, 5
     rng = np.random.RandomState(0)
 
@@ -335,6 +334,20 @@ def test_ward_tree_distance():
 
         assert_array_almost_equal(dist_unstructured, dist_structured)
 
+        for linkage in ['average', 'complete']:
+            structured_items = linkage_tree(
+                X, connectivity=connectivity, linkage=linkage,
+                return_distance=True)[-1]
+            unstructured_items = linkage_tree(
+                X, linkage=linkage, return_distance=True)[-1]
+            structured_dist = structured_items[-1]
+            unstructured_dist = unstructured_items[-1]
+            structured_children = structured_items[0]
+            unstructured_children = unstructured_items[0]
+            assert_array_almost_equal(structured_dist, unstructured_dist)
+            assert_array_almost_equal(
+                structured_children, unstructured_children)
+
     # test on the following dataset where we know the truth
     # taken from scipy/cluster/tests/hierarchy_test_data.py
     X = np.array([[1.43054825, -7.5693489],
@@ -350,6 +363,20 @@ def test_ward_tree_distance():
                                [6., 8., 9.10208346, 4.],
                                [7., 9., 24.7784379, 6.]])
 
+    linkage_X_complete = np.array(
+        [[3., 4., 0.36265956, 2.],
+         [1., 5., 1.77045373, 2.],
+         [0., 2., 2.55760419, 2.],
+         [6., 8., 6.96742194, 4.],
+         [7., 9., 18.77445997, 6.]])
+
+    linkage_X_average = np.array(
+        [[3., 4., 0.36265956, 2.],
+         [1., 5., 1.77045373, 2.],
+         [0., 2., 2.55760419, 2.],
+         [6., 8., 6.55832839, 4.],
+         [7., 9., 15.44089605, 6.]])
+
     n_samples, n_features = np.shape(X)
     connectivity_X = np.ones((n_samples, n_samples))
 
@@ -364,6 +391,23 @@ def test_ward_tree_distance():
     # check that the distances are correct
     assert_array_almost_equal(linkage_X_ward[:, 2], out_X_unstructured[4])
     assert_array_almost_equal(linkage_X_ward[:, 2], out_X_structured[4])
+
+    linkage_options = ['complete', 'average']
+    X_linkage_truth = [linkage_X_complete, linkage_X_average]
+    for (linkage, X_truth) in zip(linkage_options, X_linkage_truth):
+        out_X_unstructured = linkage_tree(
+            X, return_distance=True, linkage=linkage)
+        out_X_structured = linkage_tree(
+            X, connectivity=connectivity_X, linkage=linkage,
+            return_distance=True)
+
+        # check that the labels are the same
+        assert_array_equal(X_truth[:, :2], out_X_unstructured[0])
+        assert_array_equal(X_truth[:, :2], out_X_structured[0])
+
+        # check that the distances are correct
+        assert_array_almost_equal(X_truth[:, 2], out_X_unstructured[4])
+        assert_array_almost_equal(X_truth[:, 2], out_X_structured[4])
 
 
 def test_connectivity_fixing_non_lil():
