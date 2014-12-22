@@ -385,8 +385,8 @@ def test_graphs():
 
 
 def test_sparse_input():
-    X1 = sp.rand(50, 100, random_state=0)
-    X2 = sp.rand(10, 100, random_state=1)
+    X1 = sp.rand(50, 100)
+    X2 = sp.rand(10, 100)
     forest_sparse = LSHForest(radius=1, random_state=0).fit(X1)
     forest_dense = LSHForest(radius=1, random_state=0).fit(X1.A)
 
