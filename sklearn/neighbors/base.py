@@ -197,9 +197,9 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         if n_samples == 0:
             raise ValueError("n_samples must be greater than 0")
 
-        if issparse(X):
+        if issparse(X) and not hasattr(self.algorithm, 'fit'):
             if self.algorithm not in ('auto', 'brute'):
-                warnings.warn("cannot use tree with sparse input: "
+                warnings.warn("cannot use binary tree with sparse input: "
                               "using brute force")
             if self.effective_metric_ not in VALID_METRICS_SPARSE['brute']:
                 raise ValueError("metric '%s' not valid for sparse input"
