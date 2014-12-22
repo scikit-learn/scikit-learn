@@ -16,6 +16,7 @@ from sklearn.utils.validation import check_random_state
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn import neighbors, datasets
 from sklearn.datasets import make_blobs
+from sklearn.base import BaseEstimator
 
 rng = np.random.RandomState(0)
 # load and shuffle iris dataset
@@ -920,8 +921,64 @@ def test_non_euclidean_kneighbors():
                   radius, metric='euclidean')
 
 
-@ignore_warnings
+class _MyAlgorithmBase(BaseEstimator):
+    def fit(self, X):
+        self._fitted = True
+
+    def _get_neighbors(self, X, param, return_distance):
+        dist = np.empty(len(X), dtype=object)
+        ind = np.empty(len(X), dtype=object)
+        for i in range(len(X)):
+            # distances all set to param to test that it is passed
+            dist[i] = np.array([param])
+            ind[i] = np.array([0], dtype=int)
+        if return_distance:
+            return dist, ind
+        return ind
+
+
+class MyRadiusAlgorithm(_MyAlgorithmBase):
+    def radius_neighbors(self, X, r, return_distance=True):
+        return self._get_neighbors(X, r, return_distance=return_distance)
+
+
+class MyKNNAlgorithm(_MyAlgorithmBase):
+    def kneighbors(self, X, k, return_distance=True):
+        return self._get_neighbors(X, k, return_distance=return_distance)
+
+
 def test_neighbors_estimator_as_algorithm():
+    alg = MyRadiusAlgorithm()
+    est = neighbors.NearestNeighbors(algorithm=alg)
+    est.fit([[0], [1]])
+    # check alg is a clone
+    assert not hasattr(alg, '_fitted')
+    for radius in [5, 100]:
+        # check algorithm is queried and parameter is passed
+        dist, ind = est.radius_neighbors([[0]], radius=radius,
+                                         return_distance=True)
+        assert_array_equal(dist[0][0], radius)
+
+    assert_array_equal(ind[0],
+                       est.radius_neighbors([[0]], return_distance=False)[0])
+
+    alg = MyKNNAlgorithm()
+    est = neighbors.NearestNeighbors(algorithm=alg)
+    est.fit([[0], [1]])
+    # check alg is a clone
+    assert not hasattr(alg, '_fitted')
+    for n_neighbors in [5, 100]:
+        # check algorithm is queried and parameter is passed
+        dist, ind = est.kneighbors([[0]], n_neighbors=n_neighbors,
+                                   return_distance=True)
+        assert_array_equal(dist[0][0], n_neighbors)
+
+    assert_array_equal(ind[0],
+                       est.kneighbors([[0]], return_distance=False)[0])
+
+
+@ignore_warnings
+def test_lshforest_as_algorithm():
     centers = [[-10, -10], [10, 10]]
     X, y = make_blobs(centers=centers)
     assert_array_equal(np.unique(y), [0, 1])

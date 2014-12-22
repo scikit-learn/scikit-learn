@@ -17,6 +17,7 @@ from sklearn.cluster.dbscan_ import DBSCAN
 from sklearn.cluster.dbscan_ import dbscan
 from .common import generate_clustered_data
 from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.neighbors import LSHForest
 
 
 n_clusters = 3
@@ -236,3 +237,8 @@ def test_weighted_dbscan():
     assert_array_equal(core1, core5)
     assert_array_equal(label1, label5)
     assert_array_equal(label1, est.labels_)
+
+
+def test_dbscan_estimator_as_algorithm():
+    # smoke test
+    DBSCAN(algorithm=LSHForest()).fit_predict(np.random.rand(100, 10))
