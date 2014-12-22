@@ -13,6 +13,8 @@ aforementioned settings. In general, speed up is increasing as
 the index size grows.
 """
 
+from __future__ import division
+
 import numpy as np
 from tempfile import gettempdir
 from time import time
@@ -26,12 +28,12 @@ m = Memory(cachedir=gettempdir())
 
 
 @m.cache()
-def make_data(n_samples, n_features, n_queries, seed=0):
+def make_data(n_samples, n_features, n_queries, random_state=0):
     """Create index and query data."""
     print('Generating random blob-ish data')
     X, _ = make_blobs(n_samples=n_samples + n_queries,
                       n_features=n_features, centers=100,
-                      shuffle=True, random_state=seed)
+                      shuffle=True, random_state=random_state)
 
     # Keep the last samples as held out query vectors: note since we used
     # shuffle=True we have ensured that index and query vectors are
@@ -45,18 +47,13 @@ def calc_exact_neighbors(X, queries, n_queries, n_neighbors):
     print ('Building NearestNeighbors for %d samples in %d dimensions' %
            (X.shape[0], X.shape[1]))
     nbrs = NearestNeighbors(algorithm='brute', metric='cosine').fit(X)
-    neighbors_list = []
     average_time = 0
 
-    for query in queries:
-        t0 = time()
-        neighbors = nbrs.kneighbors(query, n_neighbors=n_neighbors,
-                                    return_distance=False)
-        average_time += time() - t0
-        neighbors_list.append(neighbors)
-    average_time /= float(n_queries)
-
-    return neighbors_list, average_time
+    t0 = time()
+    neighbors = nbrs.kneighbors(queries, n_neighbors=n_neighbors,
+                                return_distance=False)
+    average_time = (time() - t0) / n_queries
+    return neighbors, average_time
 
 
 def calc_accuracy(X, queries, n_queries, n_neighbors, exact_neighbors,
@@ -70,18 +67,17 @@ def calc_accuracy(X, queries, n_queries, n_neighbors, exact_neighbors,
     lshf_build_time = time() - t0
     print('Done in %0.3fs' % lshf_build_time)
 
-    average_time_approx = 0
     accuracy = 0
 
-    for i, query in enumerate(queries):
-        t0 = time()
-        approx_neighbors = lshf.kneighbors(query, n_neighbors=n_neighbors,
-                                           return_distance=False)
-        average_time_approx += time() - t0
-        accuracy += np.in1d(approx_neighbors, exact_neighbors[i]).mean()
+    t0 = time()
+    approx_neighbors = lshf.kneighbors(queries, n_neighbors=n_neighbors,
+                                       return_distance=False)
+    average_time_approx = (time() - t0) / n_queries
 
-    average_time_approx /= float(n_queries)
-    accuracy /= float(n_queries)
+    for i in range(len(queries)):
+        accuracy += np.in1d(approx_neighbors[i], exact_neighbors[i]).mean()
+
+    accuracy /= n_queries
     speed_up = average_time_exact / average_time_approx
 
     print('Average time for lshf neighbor queries: %0.3fs' %
@@ -103,7 +99,7 @@ if __name__ == '__main__':
     n_neighbors = 10
 
     X_index, X_query = make_data(np.max(n_samples), n_features, n_queries,
-                                 seed=0)
+                                 random_state=0)
 
     params_list = [{'n_estimators': 3, 'n_candidates': 50},
                    {'n_estimators': 5, 'n_candidates': 70},
@@ -123,7 +119,7 @@ if __name__ == '__main__':
                    (params['n_estimators'], params['n_candidates']))
             speed_ups[i, j], accuracies[i, j] = calc_accuracy(
                 X_index[:sample_size], X_query, n_queries, n_neighbors,
-                exact_neighbors, average_time_exact, **params)
+                exact_neighbors, average_time_exact, random_state=0, **params)
             print ('')
         print ('==========================================================')
 
