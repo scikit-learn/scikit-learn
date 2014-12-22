@@ -19,6 +19,7 @@ from sklearn.cluster.dbscan_ import DBSCAN
 from sklearn.cluster.dbscan_ import dbscan
 from sklearn.cluster.tests.common import generate_clustered_data
 from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.neighbors import LSHForest
 
 
 n_clusters = 3
@@ -367,3 +368,8 @@ def test_dbscan_precomputed_metric_with_initial_rows_zero():
     labels = DBSCAN(eps=0.2, metric='precomputed',
                     min_samples=2).fit(matrix).labels_
     assert_array_equal(labels, [-1, -1,  0,  0,  0,  1,  1])
+
+
+def test_dbscan_estimator_as_algorithm():
+    # smoke test
+    DBSCAN(algorithm=LSHForest()).fit_predict(np.random.rand(100, 10))
