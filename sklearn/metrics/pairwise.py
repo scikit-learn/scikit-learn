@@ -531,8 +531,7 @@ def paired_euclidean_distances(X, Y):
     distances : ndarray (n_samples, )
     """
     X, Y = check_paired_arrays(X, Y)
-
-    return np.sqrt(((X - Y) ** 2).sum(axis=-1))
+    return row_norms(X - Y)
 
 
 def paired_manhattan_distances(X, Y):
@@ -549,7 +548,12 @@ def paired_manhattan_distances(X, Y):
     distances : ndarray (n_samples, )
     """
     X, Y = check_paired_arrays(X, Y)
-    return np.abs(X - Y).sum(axis=-1)
+    diff = X - Y
+    if issparse(diff):
+        diff.data = np.abs(diff.data)
+        return np.squeeze(np.array(diff.sum(axis=1)))
+    else:
+        return np.abs(diff).sum(axis=-1)
 
 
 def paired_cosine_distances(X, Y):
@@ -574,8 +578,8 @@ def paired_cosine_distances(X, Y):
     X, Y = check_paired_arrays(X, Y)
 
     X_normalized = normalize(X, copy=True)
-    X_normalized -= normalize(Y, copy=True)
-    return .5 * (X_normalized ** 2).sum(axis=-1)
+    X_normalized = X_normalized - normalize(Y, copy=True)
+    return .5 * row_norms(X_normalized, squared=True)
 
 
 PAIRED_DISTANCES = {

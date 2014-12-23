@@ -210,6 +210,8 @@ def test_paired_distances():
         S = paired_distances(X, Y, metric=metric)
         S2 = func(X, Y)
         assert_array_almost_equal(S, S2)
+        S3 = func(csr_matrix(X), csr_matrix(Y))
+        assert_array_almost_equal(S, S3)
         if metric in PAIRWISE_DISTANCE_FUNCTIONS:
             # Check the the pairwise_distances implementation
             # gives the same value
@@ -219,15 +221,13 @@ def test_paired_distances():
 
     # Check the callable implementation
     S = paired_distances(X, Y, metric='manhattan')
-    S2 = paired_distances(X, Y,
-        metric=lambda x, y: np.abs(x -y).sum(axis=0))
+    S2 = paired_distances(X, Y, metric=lambda x, y: np.abs(x - y).sum(axis=0))
     assert_array_almost_equal(S, S2)
 
     # Test that a value error is raised when the lengths of X and Y should not
     # differ
     Y = rng.random_sample((3, 4))
     assert_raises(ValueError, paired_distances, X, Y)
-
 
 
 def test_pairwise_distances_argmin_min():
