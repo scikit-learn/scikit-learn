@@ -12,7 +12,7 @@ import numpy as np
 
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
-from ..utils import check_random_state
+from ..utils import check_random_state, check_array
 from ..neighbors import NearestNeighbors
 
 
@@ -83,7 +83,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     if not eps > 0.0:
         raise ValueError("eps must be positive.")
 
-    X = np.asarray(X)
+    X = check_array(X, accept_sparse='csr')
 
     # If index order not given, create random order.
     random_state = check_random_state(random_state)
@@ -211,7 +211,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         params: dict
             Overwrite keywords from __init__.
         """
-        X = np.asarray(X)
+        X = check_array(X, accept_sparse='csr')
         clust = dbscan(X, **self.get_params())
         self.core_sample_indices_, self.labels_ = clust
         self.components_ = X[self.core_sample_indices_].copy()

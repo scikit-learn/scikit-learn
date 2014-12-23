@@ -8,8 +8,9 @@ import numpy as np
 from numpy.testing import assert_raises
 
 from scipy.spatial import distance
+from scipy import sparse
 
-from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_equal, assert_array_equal
 from sklearn.cluster.dbscan_ import DBSCAN, dbscan
 from .common import generate_clustered_data
 from sklearn.metrics.pairwise import pairwise_distances
@@ -63,6 +64,15 @@ def test_dbscan_feature():
 
     n_clusters_2 = len(set(labels)) - int(-1 in labels)
     assert_equal(n_clusters_2, n_clusters)
+
+
+def test_dbscan_sparse():
+    core_sparse, labels_sparse = dbscan(sparse.lil_matrix(X), eps=.8,
+                                        min_samples=10, random_state=0)
+    core_dense, labels_dense = dbscan(X, eps=.8, min_samples=10,
+                                      random_state=0)
+    assert_array_equal(core_dense, core_sparse)
+    assert_array_equal(labels_dense, labels_sparse)
 
 
 def test_dbscan_callable():
