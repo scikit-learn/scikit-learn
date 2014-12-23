@@ -16,6 +16,7 @@ from . import regression_models as regression
 from . import correlation_models as correlation
 
 MACHINE_EPSILON = np.finfo(np.double).eps
+DEFAULT_NUGGET = 10. * MACHINE_EPSILON
 
 
 def l1_cross_distances(X):
@@ -165,11 +166,11 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
     Attributes
     ----------
-    theta_ : array
+    `theta_`: array
         Specified theta OR the best set of autocorrelation parameters (the \
         sought maximizer of the reduced likelihood function).
 
-    reduced_likelihood_function_value_ : array
+    `reduced_likelihood_function_value_`: array
         The optimal reduced likelihood function value.
 
     Examples
@@ -221,7 +222,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                  storage_mode='full', verbose=False, theta0=1e-1,
                  thetaL=None, thetaU=None, optimizer='fmin_cobyla',
                  random_start=1, normalize=True,
-                 nugget=10. * MACHINE_EPSILON, random_state=None):
+                 nugget=DEFAULT_NUGGET, random_state=None):
 
         self.regr = regr
         self.corr = corr
@@ -263,12 +264,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         self.random_state = check_random_state(self.random_state)
 
         # Force data to 2D numpy.array
-        X = check_array(X)
+        X = array2d(X)
         y = np.asarray(y)
         self.y_ndim_ = y.ndim
         if y.ndim == 1:
             y = y[:, np.newaxis]
-        check_consistent_length(X, y)
+        X, y = check_arrays(X, y)
 
         # Check shapes of DOE & observations
         n_samples, n_features = X.shape
@@ -296,10 +297,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Calculate matrix of distances D between samples
         D, ij = l1_cross_distances(X)
-        if (np.min(np.sum(D, axis=1)) == 0.
-                and self.corr != correlation.pure_nugget):
-            raise Exception("Multiple input features cannot have the same"
-                            " target value.")
+        if self._repeated_samples_prohibited(D):
+            raise ValueError("Repeated samples (rows in X) are not allowed for noise-free models")
 
         # Regression matrix and parameters
         F = self.regr(X)
@@ -525,6 +524,14 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
                 return y
 
+    def _repeated_samples_prohibited(self, D):
+        """
+        Multiple input features are only allowed for noisy data
+        """
+        return self.nugget <= DEFAULT_NUGGET and np.min(
+            np.sum(D, axis=1)) == 0. and self.corr != correlation.pure_nugget
+
+
     def reduced_likelihood_function(self, theta=None):
         """
         This function determines the BLUP parameters and evaluates the reduced
@@ -586,9 +593,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         if D is None:
             # Light storage mode (need to recompute D, ij and F)
             D, ij = l1_cross_distances(self.X)
-            if (np.min(np.sum(D, axis=1)) == 0.
-                    and self.corr != correlation.pure_nugget):
-                raise Exception("Multiple X are not allowed")
+            if self._repeated_samples_prohibited(D):
+                raise ValueError("Repeated samples (rows in X) are not allowed for noise-free models")
             F = self.regr(self.X)
 
         # Set up R
@@ -874,7 +880,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         if np.any(self.nugget) < 0.:
             raise ValueError("nugget must be positive or zero.")
         if (n_samples is not None
-                and self.nugget.shape not in [(), (n_samples,)]):
+            and self.nugget.shape not in [(), (n_samples,)]):
             raise ValueError("nugget must be either a scalar "
                              "or array of length n_samples.")
 
