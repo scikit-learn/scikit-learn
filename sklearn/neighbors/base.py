@@ -586,10 +586,9 @@ class RadiusNeighborsMixin(object):
                 'or "distance" but got %s instead' % mode)
 
         n_neighbors = np.array([len(a) for a in A_ind])
-        n_nonzero = np.sum(n_neighbors)
-        if A_data is None:
-            A_data = np.ones(n_nonzero)
         A_ind = np.concatenate(list(A_ind))
+        if A_data is None:
+            A_data = np.ones(len(A_ind))
         A_indptr = np.concatenate((np.zeros(1, dtype=int),
                                    np.cumsum(n_neighbors)))
 
