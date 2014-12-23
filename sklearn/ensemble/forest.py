@@ -423,17 +423,14 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             cw = []
             for k in range(self.n_outputs_):
                 if self.class_weight in ['auto', 'bootstrap']:
-                    cw_part = compute_class_weight('auto',
-                                                   self.classes_[k],
-                                                   y_org[:, k])
+                    class_weight_k = 'auto'
                 elif self.n_outputs_ == 1:
-                    cw_part = compute_class_weight(self.class_weight,
-                                                   self.classes_[k],
-                                                   y_org[:, k])
+                    class_weight_k = self.class_weight
                 else:
-                    cw_part = compute_class_weight(self.class_weight[k],
-                                                   self.classes_[k],
-                                                   y_org[:, k])
+                    class_weight_k = self.class_weight[k]
+                cw_part = compute_class_weight(class_weight_k,
+                                               self.classes_[k],
+                                               y_org[:, k])
                 cw_part = cw_part[np.searchsorted(self.classes_[k],
                                                   y_org[:, k])]
                 cw.append(cw_part)
@@ -763,14 +760,15 @@ class RandomForestClassifier(ForestClassifier):
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
-        order as the columns of y. For multi-output, the weights of each
-        column of y will be multiplied together.
+        order as the columns of y.
 
         The "auto" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data.
 
         The "bootstrap" mode is the same as "auto" except that weights are
         computed based on the bootstrap sample for every tree grown.
+
+        For multi-output, the weights of each column of y will be multiplied.
 
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
@@ -1092,14 +1090,15 @@ class ExtraTreesClassifier(ForestClassifier):
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
-        order as the columns of y. For multi-output, the weights of each
-        column of y will be multiplied together.
+        order as the columns of y.
 
         The "auto" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data.
 
         The "bootstrap" mode is the same as "auto" except that weights are
         computed based on the bootstrap sample for every tree grown.
+
+        For multi-output, the weights of each column of y will be multiplied.
 
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.

@@ -235,7 +235,6 @@ def test_unfitted_feature_importances():
         yield check_unfitted_feature_importances, name
 
 
-
 def check_oob_score(name, X, y, n_estimators=20):
     """Check that oob prediction is a good estimation of the generalization
        error."""
@@ -712,7 +711,6 @@ def check_memory_layout(name, dtype):
         y = iris.target
         assert_array_equal(est.fit(X, y).predict(X), y)
 
-
     # Strided
     X = np.asarray(iris.data[::3], dtype=dtype)
     y = iris.target[::3]
@@ -757,6 +755,20 @@ def check_class_weights(name):
     clf2 = ForestClassifier(class_weight='auto', random_state=0)
     clf2.fit(iris.data, iris.target)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
+
+    # Make a multi-output problem with three copies of Iris
+    iris_multi = np.vstack((iris.target, iris.target, iris.target)).T
+    # Create user-defined weights that should balance over the outputs
+    clf3 = ForestClassifier(class_weight=[{0: 2., 1: 2., 2: 1.},
+                                          {0: 2., 1: 1., 2: 2.},
+                                          {0: 1., 1: 2., 2: 2.}],
+                            random_state=0)
+    clf3.fit(iris.data, iris_multi)
+    assert_almost_equal(clf2.feature_importances_, clf3.feature_importances_)
+    # Check against multi-output "auto" which should also have no effect
+    clf4 = ForestClassifier(class_weight='auto', random_state=0)
+    clf4.fit(iris.data, iris_multi)
+    assert_almost_equal(clf3.feature_importances_, clf4.feature_importances_)
 
     # Inflate importance of class 1, check against user-defined weights
     sample_weight = np.ones(iris.target.shape)

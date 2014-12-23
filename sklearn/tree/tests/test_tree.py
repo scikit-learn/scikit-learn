@@ -848,6 +848,54 @@ def test_sample_weight_invalid():
     assert_raises(ValueError, clf.fit, X, y, sample_weight=sample_weight)
 
 
+def check_class_weights(name):
+    """Check class_weights resemble sample_weights behavior."""
+    TreeClassifier = CLF_TREES[name]
+
+    # Iris is balanced, so no effect expected for using 'auto' weights
+    clf1 = TreeClassifier(random_state=0)
+    clf1.fit(iris.data, iris.target)
+    clf2 = TreeClassifier(class_weight='auto', random_state=0)
+    clf2.fit(iris.data, iris.target)
+    assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
+
+    # Make a multi-output problem with three copies of Iris
+    iris_multi = np.vstack((iris.target, iris.target, iris.target)).T
+    # Create user-defined weights that should balance over the outputs
+    clf3 = TreeClassifier(class_weight=[{0: 2., 1: 2., 2: 1.},
+                                        {0: 2., 1: 1., 2: 2.},
+                                        {0: 1., 1: 2., 2: 2.}],
+                          random_state=0)
+    clf3.fit(iris.data, iris_multi)
+    assert_almost_equal(clf2.feature_importances_, clf3.feature_importances_)
+    # Check against multi-output "auto" which should also have no effect
+    clf4 = TreeClassifier(class_weight='auto', random_state=0)
+    clf4.fit(iris.data, iris_multi)
+    assert_almost_equal(clf3.feature_importances_, clf4.feature_importances_)
+
+    # Inflate importance of class 1, check against user-defined weights
+    sample_weight = np.ones(iris.target.shape)
+    sample_weight[iris.target == 1] *= 100
+    class_weight = {0: 1., 1: 100., 2: 1.}
+    clf1 = TreeClassifier(random_state=0)
+    clf1.fit(iris.data, iris.target, sample_weight)
+    clf2 = TreeClassifier(class_weight=class_weight, random_state=0)
+    clf2.fit(iris.data, iris.target)
+    assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
+
+    # Check that sample_weight and class_weight are multiplicative
+    clf1 = TreeClassifier(random_state=0)
+    clf1.fit(iris.data, iris.target, sample_weight**2)
+    clf2 = TreeClassifier(class_weight=class_weight, random_state=0)
+    clf2.fit(iris.data, iris.target, sample_weight)
+    assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
+
+
+def test_class_weights():
+    for name in CLF_TREES:
+        yield check_class_weights, name
+
+
 def test_max_leaf_nodes():
     """Test greedy trees with max_depth + 1 leafs. """
     from sklearn.tree._tree import TREE_LEAF
@@ -988,7 +1036,7 @@ def check_sparse_input(tree, dataset, max_depth=None):
 
             if tree in CLF_TREES:
                 assert_array_almost_equal(s.predict_proba(X_sparse_test),
-                                                          y_proba)
+                                          y_proba)
                 assert_array_almost_equal(s.predict_log_proba(X_sparse_test),
                                           y_log_proba)
 
@@ -1078,6 +1126,7 @@ def check_sparse_criterion(tree, dataset):
                           "trees".format(tree))
         assert_array_almost_equal(s.predict(X), d.predict(X))
 
+
 def test_sparse_criterion():
     for tree, dataset in product(SPARSE_TREES,
                                  ["sparse-pos", "sparse-neg", "sparse-mix",
@@ -1104,7 +1153,7 @@ def check_explicit_sparse_zeros(tree, max_depth=3,
         n_nonzero_i = random_state.binomial(n_samples, 0.5)
         indices_i = random_state.permutation(samples)[:n_nonzero_i]
         indices.append(indices_i)
-        data_i = random_state.binomial(3, 0.5, size=(n_nonzero_i, ))  - 1
+        data_i = random_state.binomial(3, 0.5, size=(n_nonzero_i, )) - 1
         data.append(data_i)
         offset += n_nonzero_i
         indptr.append(offset)
@@ -1195,5 +1244,3 @@ def check_min_weight_leaf_split_level(name):
 def test_min_weight_leaf_split_level():
     for name in ALL_TREES:
         yield check_min_weight_leaf_split_level, name
-
-
