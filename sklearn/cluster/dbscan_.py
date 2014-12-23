@@ -4,6 +4,7 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 """
 
 # Author: Robert Layton <robertlayton@gmail.com>
+#         Joel Nothman <joel.nothman@gmail.com>
 #
 # License: BSD 3 clause
 
@@ -83,35 +84,32 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
         raise ValueError("eps must be positive.")
 
     X = np.asarray(X)
-    n = X.shape[0]
 
     # If index order not given, create random order.
     random_state = check_random_state(random_state)
-    index_order = random_state.permutation(n)
-
-    # check for known metric powers
-    distance_matrix = True
-    if metric == 'precomputed':
-        D = pairwise_distances(X, metric=metric)
-    else:
-        distance_matrix = False
-        neighbors_model = NearestNeighbors(radius=eps, algorithm=algorithm,
-                                           leaf_size=leaf_size,
-                                           metric=metric, p=p)
-        neighbors_model.fit(X)
 
     # Calculate neighborhood for all samples. This leaves the original point
     # in, which needs to be considered later (i.e. point i is the
     # neighborhood of point i. While True, its useless information)
-    neighborhoods = []
-    if distance_matrix:
+    if metric == 'precomputed':
+        D = pairwise_distances(X, metric=metric)
         neighborhoods = [np.where(x <= eps)[0] for x in D]
+    else:
+        neighbors_model = NearestNeighbors(radius=eps, algorithm=algorithm,
+                                           leaf_size=leaf_size,
+                                           metric=metric, p=p)
+        neighbors_model.fit(X)
+        neighborhoods = neighbors_model.radius_neighbors(X, eps,
+                                                         return_distance=False)
+        neighborhoods = np.array(neighborhoods)
+    n_neighbors = np.array([len(neighbors) for neighbors in neighborhoods])
 
     # Initially, all samples are noise.
-    labels = -np.ones(n, dtype=np.int)
+    labels = -np.ones(X.shape[0], dtype=np.int)
 
     # A list of all core samples found.
-    core_samples = []
+    core_samples = np.flatnonzero(n_neighbors > min_samples)
+    index_order = core_samples[random_state.permutation(core_samples.shape[0])]
 
     # label_num is the label given to the new cluster
     label_num = 0
@@ -123,51 +121,19 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
         if labels[index] != -1:
             continue
 
-        # get neighbors from neighborhoods or ballTree
-        index_neighborhood = []
-        if distance_matrix:
-            index_neighborhood = neighborhoods[index]
-        else:
-            index_neighborhood = neighbors_model.radius_neighbors(
-                X[index], eps, return_distance=False)[0]
-
-        # Too few samples to be core
-        if len(index_neighborhood) < min_samples:
-            continue
-
-        core_samples.append(index)
         labels[index] = label_num
+
         # candidates for new core samples in the cluster.
         candidates = [index]
-
         while len(candidates) > 0:
-            new_candidates = []
+            cand_neighbors = np.concatenate(np.take(neighborhoods, candidates,
+                                                    axis=0).tolist())
+            cand_neighbors = np.unique(cand_neighbors)
+            noise = cand_neighbors[labels.take(cand_neighbors) == -1]
+            labels[noise] = label_num
             # A candidate is a core point in the current cluster that has
             # not yet been used to expand the current cluster.
-            for c in candidates:
-                c_neighborhood = []
-                if distance_matrix:
-                    c_neighborhood = neighborhoods[c]
-                else:
-                    c_neighborhood = neighbors_model.radius_neighbors(
-                        X[c], eps, return_distance=False)[0]
-                noise = np.where(labels[c_neighborhood] == -1)[0]
-                noise = c_neighborhood[noise]
-                labels[noise] = label_num
-                for neighbor in noise:
-                    n_neighborhood = []
-                    if distance_matrix:
-                        n_neighborhood = neighborhoods[neighbor]
-                    else:
-                        n_neighborhood = neighbors_model.radius_neighbors(
-                            X[neighbor], eps, return_distance=False)[0]
-                    # check if its a core point as well
-                    if len(n_neighborhood) >= min_samples:
-                        # is new core point
-                        new_candidates.append(neighbor)
-                        core_samples.append(neighbor)
-            # Update candidates for next round of cluster expansion.
-            candidates = new_candidates
+            candidates = np.intersect1d(noise, core_samples)
         # Current cluster finished.
         # Next core point found will start a new cluster.
         label_num += 1
