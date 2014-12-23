@@ -261,8 +261,9 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-          'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
-          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
+          'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
+          'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath',
+          'sqeuclidean', 'yule']
 
         See the documentation for scipy.spatial.distance for details on these
         metrics.
@@ -384,8 +385,9 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-          'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
-          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
+          'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
+          'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath',
+          'sqeuclidean', 'yule']
 
         See the documentation for scipy.spatial.distance for details on these
         metrics.
@@ -678,7 +680,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     if gamma is None:
         gamma = 1.0 / X.shape[1]
 
-    K = linear_kernel(X, Y)
+    K = safe_sparse_dot(X, Y.T, dense_output=True)
     K *= gamma
     K += coef0
     K **= degree
@@ -707,7 +709,7 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     if gamma is None:
         gamma = 1.0 / X.shape[1]
 
-    K = linear_kernel(X, Y)
+    K = safe_sparse_dot(X, Y.T, dense_output=True)
     K *= gamma
     K += coef0
     np.tanh(K, K)   # compute tanh in-place
@@ -777,7 +779,7 @@ def cosine_similarity(X, Y=None):
     else:
         Y_normalized = normalize(Y, copy=True)
 
-    K = linear_kernel(X_normalized, Y_normalized)
+    K = safe_sparse_dot(X_normalized, Y_normalized.T, dense_output=True)
 
     return K
 
