@@ -511,6 +511,24 @@ def test_confusion_matrix_multiclass():
          string_type=True)
 
 
+def test_confusion_matrix_sample_weight():
+    """Test confusion matrix - case with sample_weight"""
+    y_true, y_pred, _ = make_prediction(binary=False)
+
+    weights = [.1] * 25 + [.2] * 25 + [.3] * 25
+
+    cm = confusion_matrix(y_true, y_pred, sample_weight=weights)
+
+    true_cm = (.1 * confusion_matrix(y_true[:25], y_pred[:25]) +
+               .2 * confusion_matrix(y_true[25:50], y_pred[25:50]) +
+               .3 * confusion_matrix(y_true[50:], y_pred[50:]))
+
+    assert_array_almost_equal(cm, true_cm)
+    assert_raises(
+        ValueError, confusion_matrix, y_true, y_pred,
+        sample_weight=weights[:-1])
+
+
 def test_confusion_matrix_multiclass_subset_labels():
     # Test confusion matrix - multi-class case with subset of labels
     y_true, y_pred, _ = make_prediction(binary=False)

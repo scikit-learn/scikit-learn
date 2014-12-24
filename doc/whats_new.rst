@@ -85,6 +85,9 @@ Enhancements
    - Speed up :func:`metrics.silhouette_score` by using vectorized operations.
      By `Manoj Kumar`_.
 
+   - Add ``sample_weight`` parameter to :func:`metrics.confusion_matrix`.
+     By `Bernardo Stein`_.
+
 
 Bug fixes
 .........
@@ -4013,3 +4016,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Philipp Dowling: https://github.com/phdowling
 
 .. _Imaculate: https://github.com/Imaculate
+
+.. _Bernardo Stein: https://github.com/DanielSidhion
