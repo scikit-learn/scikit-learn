@@ -148,6 +148,8 @@ Enhancements
      and family now accept callables that return a connectivity matrix.
      By `Manoj Kumar`_.
 
+   - Sparse support for :func:`paired_distances`. By `Joel Nothman`_.
+
 Documentation improvements
 ..........................
 
