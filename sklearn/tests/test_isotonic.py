@@ -245,6 +245,15 @@ def test_isotonic_regression_pickle():
     np.testing.assert_array_equal(ir.predict(x), ir2.predict(x))
 
 
+def test_isotonic_duplicate_min_entry():
+    x = [0, 0, 1]
+    y = [0, 0, 1]
+
+    ir = IsotonicRegression(increasing=True, out_of_bounds="clip")
+    ir.fit(x, y)
+    all_predictions_finite = np.all(np.isfinite(ir.predict(x)))
+    assert_true(all_predictions_finite)
+
 if __name__ == "__main__":
     import nose
     nose.run(argv=['', __file__])
