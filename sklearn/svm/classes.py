@@ -339,7 +339,7 @@ class LinearSVR(LinearModel, RegressorMixin):
 class SVC(BaseSVC):
     """C-Support Vector Classification.
 
-    The implementations is a based on libsvm. The fit time complexity
+    The implementation is based on libsvm. The fit time complexity
     is more than quadratic with the number of samples which makes it hard
     to scale to dataset with more than a couple of 10000 samples.
 
@@ -599,7 +599,7 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     The free parameters in the model are C and epsilon.
 
-    The implementations is a based on libsvm.
+    The implementation is based on libsvm.
 
     Parameters
     ----------
@@ -707,7 +707,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     the number of support vectors. However, unlike NuSVC, where nu
     replaces C, here nu replaces with the parameter epsilon of SVR.
 
-    The implementations is a based on libsvm.
+    The implementation is based on libsvm.
 
     Parameters
     ----------
