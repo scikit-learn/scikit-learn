@@ -12,12 +12,13 @@ import numpy as np
 
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
-from ..utils import check_random_state, check_array
+from ..utils import check_random_state, check_array, check_consistent_length
 from ..neighbors import NearestNeighbors
 
 
 def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
-           algorithm='auto', leaf_size=30, p=2, random_state=None):
+           algorithm='auto', leaf_size=30, p=2, sample_weight=None,
+           random_state=None):
     """Perform DBSCAN clustering from vector array or distance matrix.
 
     Parameters
@@ -32,8 +33,8 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
         as in the same neighborhood.
 
     min_samples: int, optional
-        The number of samples in a neighborhood for a point to be considered
-        as a core point.
+        The number of samples (or total weight) in a neighborhood for a point
+        to be considered as a core point.
 
     metric: string, or callable
         The metric to use when calculating distance between instances in a
@@ -57,6 +58,12 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     p: float, optional
         The power of the Minkowski metric to be used to calculate distance
         between points.
+
+    sample_weight : array, shape (n_samples,), optional
+        Weight of each sample, such that a sample with weight greater
+        than ``min_samples`` is automatically a core sample; a sample with
+        negative weight may inhibit its eps-neighbor from being core.
+        Note that weights are absolute, and default to 1.
 
     random_state: numpy.RandomState, optional
         The generator used to initialize the centers. Defaults to numpy.random.
@@ -84,6 +91,9 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
         raise ValueError("eps must be positive.")
 
     X = check_array(X, accept_sparse='csr')
+    if sample_weight is not None:
+        sample_weight = np.asarray(sample_weight)
+        check_consistent_length(X, sample_weight)
 
     # If index order not given, create random order.
     random_state = check_random_state(random_state)
@@ -102,7 +112,11 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
         neighborhoods = neighbors_model.radius_neighbors(X, eps,
                                                          return_distance=False)
         neighborhoods = np.array(neighborhoods)
-    n_neighbors = np.array([len(neighbors) for neighbors in neighborhoods])
+    if sample_weight is None:
+        n_neighbors = np.array([len(neighbors) for neighbors in neighborhoods])
+    else:
+        n_neighbors = np.array([np.sum(sample_weight[neighbors])
+                                for neighbors in neighborhoods])
 
     # Initially, all samples are noise.
     labels = -np.ones(X.shape[0], dtype=np.int)
@@ -153,8 +167,8 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         The maximum distance between two samples for them to be considered
         as in the same neighborhood.
     min_samples : int, optional
-        The number of samples in a neighborhood for a point to be considered
-        as a core point.
+        The number of samples (or total weight) in a neighborhood for a point
+        to be considered as a core point.
     metric : string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
@@ -199,20 +213,23 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         self.p = p
         self.random_state = random_state
 
-    def fit(self, X):
+    def fit(self, X, sample_weight=None):
         """Perform DBSCAN clustering from features or distance matrix.
 
         Parameters
         ----------
-        X: array [n_samples, n_samples] or [n_samples, n_features]
+        X: array (n_samples, n_samples) or (n_samples, n_features)
             Array of distances between samples, or a feature array.
             The array is treated as a feature array unless the metric is
             given as 'precomputed'.
-        params: dict
-            Overwrite keywords from __init__.
+        sample_weight : array, shape (n_samples,), optional
+            Weight of each sample, such that a sample with weight greater
+            than ``min_samples`` is automatically a core sample; a sample with
+            negative weight may inhibit its eps-neighbor from being core.
+            Note that weights are absolute, and default to 1.
         """
         X = check_array(X, accept_sparse='csr')
-        clust = dbscan(X, **self.get_params())
+        clust = dbscan(X, sample_weight=sample_weight, **self.get_params())
         self.core_sample_indices_, self.labels_ = clust
         self.components_ = X[self.core_sample_indices_].copy()
         return self

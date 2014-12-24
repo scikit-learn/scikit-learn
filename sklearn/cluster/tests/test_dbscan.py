@@ -10,8 +10,11 @@ from numpy.testing import assert_raises
 from scipy.spatial import distance
 from scipy import sparse
 
-from sklearn.utils.testing import assert_equal, assert_array_equal
-from sklearn.cluster.dbscan_ import DBSCAN, dbscan
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.cluster.dbscan_ import DBSCAN
+from sklearn.cluster.dbscan_ import dbscan
 from .common import generate_clustered_data
 from sklearn.metrics.pairwise import pairwise_distances
 
@@ -169,3 +172,60 @@ def test_pickle():
     obj = DBSCAN()
     s = pickle.dumps(obj)
     assert_equal(type(pickle.loads(s)), obj.__class__)
+
+
+def test_weighted_dbscan():
+    sample_weight = np.random.randint(0, 5, X.shape[0])
+
+    # ensure sample_weight is validated
+    assert_raises(ValueError, dbscan, [[0], [1]], sample_weight=[2])
+    assert_raises(ValueError, dbscan, [[0], [1]], sample_weight=[2, 3, 4])
+
+    # ensure sample_weight has an effect
+    assert_array_equal([], dbscan([[0], [1]], sample_weight=None,
+                                  min_samples=5)[0])
+    assert_array_equal([], dbscan([[0], [1]], sample_weight=[5, 5],
+                                  min_samples=5)[0])
+    assert_array_equal([0], dbscan([[0], [1]], sample_weight=[6, 5],
+                                   min_samples=5)[0])
+    assert_array_equal([0, 1], dbscan([[0], [1]], sample_weight=[6, 6],
+                                      min_samples=5)[0])
+
+    # points within eps of each other:
+    assert_array_equal([0, 1], dbscan([[0], [1]], eps=1.5,
+                                      sample_weight=[5, 1], min_samples=5)[0])
+    # and effect of non-positive and non-integer sample_weight:
+    assert_array_equal([], dbscan([[0], [1]], sample_weight=[5, 0],
+                                  eps=1.5, min_samples=5)[0])
+    assert_array_equal([0, 1], dbscan([[0], [1]], sample_weight=[5, 0.1],
+                                      eps=1.5, min_samples=5)[0])
+    assert_array_equal([0, 1], dbscan([[0], [1]], sample_weight=[6, 0],
+                                      eps=1.5, min_samples=5)[0])
+    assert_array_equal([], dbscan([[0], [1]], sample_weight=[6, -1],
+                                  eps=1.5, min_samples=5)[0])
+
+    # for non-negative sample_weight, cores should be identical to repetition
+    core1, label1 = dbscan(X, sample_weight=sample_weight, random_state=42)
+    assert_equal(len(label1), len(X))
+
+    X_repeated = np.repeat(X, sample_weight, axis=0)
+    core_repeated, label_repeated = dbscan(X_repeated)
+    core_repeated_mask = np.zeros(X_repeated.shape[0], dtype=bool)
+    core_repeated_mask[core_repeated] = True
+    core_mask = np.zeros(X.shape[0], dtype=bool)
+    core_mask[core1] = True
+    assert_array_equal(np.repeat(core_mask, sample_weight), core_repeated_mask)
+
+    # sample_weight should work with precomputed distance matrix
+    D = pairwise_distances(X)
+    core3, label3 = dbscan(D, sample_weight=sample_weight,
+                           metric='precomputed', random_state=42)
+    assert_array_equal(core1, core3)
+    assert_array_equal(label1, label3)
+
+    # sample_weight should work with estimator
+    est = DBSCAN(random_state=42).fit(X, sample_weight=sample_weight)
+    core4 = est.core_sample_indices_
+    label4 = est.labels_
+    assert_array_equal(core1, core4)
+    assert_array_equal(label1, label4)
