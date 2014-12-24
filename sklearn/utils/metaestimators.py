@@ -11,19 +11,19 @@ __all__ = ['if_delegate_has_method']
 
 
 class _IffHasAttrDescriptor(object):
-    """Implements a conditional propery using the descriptor protocol.
+    """Implements a conditional property using the descriptor protocol.
 
-    Using this class to create a decorator will raise an attribute error
-    if the ``attr`` is not present on the base object.
+    Using this class to create a decorator will raise an ``AttributeError``
+    if the ``attribute_name`` is not present on the base object.
 
-    This allows ducktyping of the decorated method based on ``attr``.
+    This allows ducktyping of the decorated method based on ``attribute_name``.
 
     See https://docs.python.org/3/howto/descriptor.html for an explanation of
     descriptors.
     """
-    def __init__(self, fn, attr):
+    def __init__(self, fn, attribute_name):
         self.fn = fn
-        self.get_attr = attrgetter(attr)
+        self.get_attribute = attrgetter(attribute_name)
         # update the docstring of the descriptor
         update_wrapper(self, fn)
 
@@ -32,7 +32,7 @@ class _IffHasAttrDescriptor(object):
         if obj is not None:
             # delegate only on instances, not the classes.
             # this is to allow access to the docstrings.
-            self.get_attr(obj)
+            self.get_attribute(obj)
         # lambda, but not partial, allows help() to work with update_wrapper
         out = lambda *args, **kwargs: self.fn(obj, *args, **kwargs)
         # update the docstring of the returned function
@@ -48,13 +48,12 @@ def if_delegate_has_method(delegate):
 
     >>> from sklearn.utils.metaestimators import if_delegate_has_method
     >>>
-    >>> iff_sub_est_has_attr = if_delegate_has_method(delegate='sub_est')
     >>>
     >>> class MetaEst(object):
     ...     def __init__(self, sub_est):
     ...         self.sub_est = sub_est
     ...
-    ...     @iff_sub_est_has_attr
+    ...     @if_delegate_has_method(delegate='sub_est')
     ...     def predict(self, X):
     ...         return self.sub_est.predict(X)
     ...
