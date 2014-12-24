@@ -576,10 +576,7 @@ def paired_cosine_distances(X, Y):
     euclidean distance if each sample is normalized to unit norm
     """
     X, Y = check_paired_arrays(X, Y)
-
-    X_normalized = normalize(X, copy=True)
-    X_normalized = X_normalized - normalize(Y, copy=True)
-    return .5 * row_norms(X_normalized, squared=True)
+    return .5 * row_norms(normalize(X) - normalize(Y), squared=True)
 
 
 PAIRED_DISTANCES = {
