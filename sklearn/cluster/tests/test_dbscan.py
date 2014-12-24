@@ -229,3 +229,10 @@ def test_weighted_dbscan():
     label4 = est.labels_
     assert_array_equal(core1, core4)
     assert_array_equal(label1, label4)
+
+    est = DBSCAN(random_state=42)
+    label5 = est.fit_predict(X, sample_weight=sample_weight)
+    core5 = est.core_sample_indices_
+    assert_array_equal(core1, core5)
+    assert_array_equal(label1, label5)
+    assert_array_equal(label1, est.labels_)

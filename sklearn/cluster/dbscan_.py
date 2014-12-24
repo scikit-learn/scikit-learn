@@ -233,3 +233,26 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         self.core_sample_indices_, self.labels_ = clust
         self.components_ = X[self.core_sample_indices_].copy()
         return self
+
+    def fit_predict(self, X, y=None, sample_weight=None):
+        """Performs clustering on X and returns cluster labels.
+
+        Parameters
+        ----------
+        X: array (n_samples, n_samples) or (n_samples, n_features)
+            Array of distances between samples, or a feature array.
+            The array is treated as a feature array unless the metric is
+            given as 'precomputed'.
+        sample_weight : array, shape (n_samples,), optional
+            Weight of each sample, such that a sample with weight greater
+            than ``min_samples`` is automatically a core sample; a sample with
+            negative weight may inhibit its eps-neighbor from being core.
+            Note that weights are absolute, and default to 1.
+
+        Returns
+        -------
+        y : ndarray, shape (n_samples,)
+            cluster labels
+        """
+        self.fit(X, sample_weight=sample_weight)
+        return self.labels_
