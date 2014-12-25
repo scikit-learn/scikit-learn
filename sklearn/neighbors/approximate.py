@@ -21,44 +21,42 @@ HASH_DTYPE = '>u4'
 MAX_HASH_SIZE = np.dtype(HASH_DTYPE).itemsize * 8
 
 
-def _find_matching_indices(sorted_array, item, left_mask, right_mask):
+def _find_matching_indices(tree, bin_X, left_mask, right_mask):
     """Finds indices in sorted array of integers.
 
     Most significant h bits in the binary representations of the
     integers are matched with the items' most significant h bits.
     """
-    left_index = np.searchsorted(sorted_array, item & left_mask)
-    right_index = np.searchsorted(sorted_array, item | right_mask,
+    left_index = np.searchsorted(tree, bin_X & left_mask)
+    right_index = np.searchsorted(tree, bin_X | right_mask,
                                   side='right')
     return left_index, right_index
 
 
-def _find_longest_prefix_match(bit_string_array, query, hash_size,
+def _find_longest_prefix_match(tree, bin_X, hash_size,
                                left_masks, right_masks):
-    """Private function to find the longest prefix match for query.
-
-    Query may be an array of many hashes.
+    """Find the longest prefix match in tree for each query in bin_X
 
     Most significant bits are considered as the prefix.
     """
-    hi = np.empty_like(query, dtype=int)
+    hi = np.empty_like(bin_X, dtype=np.intp)
     hi.fill(hash_size)
-    lo = np.zeros_like(query, dtype=int)
-    res = np.empty_like(query, dtype=int)
+    lo = np.zeros_like(bin_X, dtype=np.intp)
+    res = np.empty_like(bin_X, dtype=np.intp)
 
-    left_idx, right_idx = _find_matching_indices(bit_string_array, query,
+    left_idx, right_idx = _find_matching_indices(tree, bin_X,
                                                  left_masks[hi],
                                                  right_masks[hi])
     found = right_idx > left_idx
     res[found] = lo[found] = hash_size
 
-    r = np.arange(query.shape[0])
-    kept = r[lo < hi]  # indices remaining in query mask
+    r = np.arange(bin_X.shape[0])
+    kept = r[lo < hi]  # indices remaining in bin_X mask
     while kept.shape[0]:
         mid = (lo.take(kept) + hi.take(kept)) // 2
 
-        left_idx, right_idx = _find_matching_indices(bit_string_array,
-                                                     query.take(kept),
+        left_idx, right_idx = _find_matching_indices(tree,
+                                                     bin_X.take(kept),
                                                      left_masks[mid],
                                                      right_masks[mid])
         found = right_idx > left_idx
@@ -220,7 +218,8 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         array and sorted distances.
         """
         if candidates.shape == (0,):
-            return np.empty(0, dtype=int), np.empty(0, dtype=float)
+            # needed since _fit_X[np.array([])] doesn't work if _fit_X sparse
+            return np.empty(0, dtype=np.int), np.empty(0, dtype=float)
 
         distances = pairwise_distances(query, self._fit_X[candidates],
                                        metric='cosine')[0]
@@ -244,11 +243,14 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         distances.
         """
         index_size = self._fit_X.shape[0]
-        candidates = []
+        # Number of candidates considered including duplicates
+        # XXX: not sure whether this is being calculated correctly wrt
+        #      duplicates from different iterations through a single tree
+        n_candidates = 0
         candidate_set = set()
         min_candidates = self.n_candidates * self.n_estimators
         while (max_depth > self.min_hash_match and
-               (len(candidates) < min_candidates or
+               (n_candidates < min_candidates or
                 len(candidate_set) < n_neighbors)):
 
             left_mask = self._left_mask[max_depth]
@@ -257,12 +259,13 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
                 start, stop = _find_matching_indices(self.trees_[i],
                                                      bin_queries[i],
                                                      left_mask, right_mask)
-                candidates.extend(
-                    self.original_indices_[i][start:stop])
-            max_depth = max_depth - 1
-            candidate_set.update(candidates)
+                n_candidates += stop - start
+                candidate_set.update(
+                    self.original_indices_[i][start:stop].tolist())
+            max_depth -= 1
 
-        candidates = np.asarray(list(candidate_set))
+        candidates = np.fromiter(candidate_set, count=len(candidate_set),
+                                 dtype=np.intp)
         # For insufficient candidates, candidates are filled.
         # Candidates are filled from unselected indices uniformly.
         if candidates.shape[0] < n_neighbors:
