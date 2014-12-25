@@ -663,7 +663,7 @@ def test_train_test_split():
     assert_array_equal(X_test[:, 0], y_test * 10)
 
     # conversion of lists to arrays (deprecated?)
-    split = cval.train_test_split(X, X_s, y.tolist(), force_arrays=True)
+    split = cval.train_test_split(X, X_s, y.tolist(), allow_lists=False)
     X_train, X_test, X_s_train, X_s_test, y_train, y_test = split
     assert_array_equal(X_train, X_s_train.toarray())
     assert_array_equal(X_test, X_s_test.toarray())
