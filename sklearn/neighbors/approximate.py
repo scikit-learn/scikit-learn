@@ -333,7 +333,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
         Parameters
         ----------
-        X : array_like, shape (n_samples, n_features)
+        X : array_like or sparse (CSR) matrix, shape (n_samples, n_features)
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
 
@@ -392,7 +392,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
         Parameters
         ----------
-        X : array_like, shape (n_samples, n_features)
+        X : array_like or sparse (CSR) matrix, shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single query.
 
@@ -441,7 +441,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
         Parameters
         ----------
-        X : array_like, shape (n_samples, n_features)
+        X : array_like or sparse (CSR) matrix, shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single query.
 
@@ -491,7 +491,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
         Parameters
         ----------
-        X : array_like, shape (n_samples, n_features)
+        X : array_like or sparse (CSR) matrix, shape (n_samples, n_features)
             New data point to be inserted into the LSH Forest.
         """
         X = check_array(X, accept_sparse='csr')
