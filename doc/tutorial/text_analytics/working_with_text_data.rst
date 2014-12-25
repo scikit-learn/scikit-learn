@@ -64,7 +64,7 @@ For instance::
     % python fetch_data.py
 
 
-Loading the 20 newgroups dataset
+Loading the 20 newsgroups dataset
 --------------------------------
 
 The dataset is called "Twenty Newsgroups". Here is the official
