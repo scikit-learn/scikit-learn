@@ -23,20 +23,20 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
 
     Parameters
     ----------
-    X: array [n_samples, n_samples] or [n_samples, n_features]
-        Array of distances between samples, or a feature array.
-        The array is treated as a feature array unless the metric is given as
-        'precomputed'.
+    X : array or sparse (CSR) matrix of shape (n_samples, n_features), or \
+            array of shape (n_samples, n_samples)
+        A feature array, or array of distances between samples if
+        ``metric='precomputed'``.
 
-    eps: float, optional
+    eps : float, optional
         The maximum distance between two samples for them to be considered
         as in the same neighborhood.
 
-    min_samples: int, optional
+    min_samples : int, optional
         The number of samples (or total weight) in a neighborhood for a point
         to be considered as a core point.
 
-    metric: string, or callable
+    metric : string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
         the options allowed by metrics.pairwise.pairwise_distances for its
@@ -44,18 +44,18 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square.
 
-    algorithm: {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         The algorithm to be used by the NearestNeighbors module
         to compute pointwise distances and find nearest neighbors.
         See NearestNeighbors module documentation for details.
 
-    leaf_size: int, optional (default = 30)
+    leaf_size : int, optional (default = 30)
         Leaf size passed to BallTree or cKDTree. This can affect the speed
         of the construction and query, as well as the memory required
         to store the tree. The optimal value depends
         on the nature of the problem.
 
-    p: float, optional
+    p : float, optional
         The power of the Minkowski metric to be used to calculate distance
         between points.
 
@@ -65,12 +65,12 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
         negative weight may inhibit its eps-neighbor from being core.
         Note that weights are absolute, and default to 1.
 
-    random_state: numpy.RandomState, optional
+    random_state : numpy.RandomState, optional
         The generator used to initialize the centers. Defaults to numpy.random.
 
     Returns
     -------
-    core_samples: array [n_core_samples]
+    core_samples : array [n_core_samples]
         Indices of core samples.
 
     labels : array [n_samples]
@@ -99,7 +99,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     random_state = check_random_state(random_state)
 
     # Calculate neighborhood for all samples. This leaves the original point
-    # in, which needs to be considered later (i.e. point i is the
+    # in, which needs to be considered later (i.e. point i is in the
     # neighborhood of point i. While True, its useless information)
     if metric == 'precomputed':
         D = pairwise_distances(X, metric=metric)
@@ -218,10 +218,10 @@ class DBSCAN(BaseEstimator, ClusterMixin):
 
         Parameters
         ----------
-        X: array (n_samples, n_samples) or (n_samples, n_features)
-            Array of distances between samples, or a feature array.
-            The array is treated as a feature array unless the metric is
-            given as 'precomputed'.
+        X : array or sparse (CSR) matrix of shape (n_samples, n_features), or \
+                array of shape (n_samples, n_samples)
+            A feature array, or array of distances between samples if
+            ``metric='precomputed'``.
         sample_weight : array, shape (n_samples,), optional
             Weight of each sample, such that a sample with weight greater
             than ``min_samples`` is automatically a core sample; a sample with
@@ -239,10 +239,10 @@ class DBSCAN(BaseEstimator, ClusterMixin):
 
         Parameters
         ----------
-        X: array (n_samples, n_samples) or (n_samples, n_features)
-            Array of distances between samples, or a feature array.
-            The array is treated as a feature array unless the metric is
-            given as 'precomputed'.
+        X : array or sparse (CSR) matrix of shape (n_samples, n_features), or \
+                array of shape (n_samples, n_samples)
+            A feature array, or array of distances between samples if
+            ``metric='precomputed'``.
         sample_weight : array, shape (n_samples,), optional
             Weight of each sample, such that a sample with weight greater
             than ``min_samples`` is automatically a core sample; a sample with

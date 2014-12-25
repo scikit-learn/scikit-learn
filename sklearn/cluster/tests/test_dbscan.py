@@ -175,8 +175,6 @@ def test_pickle():
 
 
 def test_weighted_dbscan():
-    sample_weight = np.random.randint(0, 5, X.shape[0])
-
     # ensure sample_weight is validated
     assert_raises(ValueError, dbscan, [[0], [1]], sample_weight=[2])
     assert_raises(ValueError, dbscan, [[0], [1]], sample_weight=[2, 3, 4])
@@ -205,11 +203,13 @@ def test_weighted_dbscan():
                                   eps=1.5, min_samples=5)[0])
 
     # for non-negative sample_weight, cores should be identical to repetition
+    rng = np.random.RandomState(42)
+    sample_weight = rng.randint(0, 5, X.shape[0])
     core1, label1 = dbscan(X, sample_weight=sample_weight, random_state=42)
     assert_equal(len(label1), len(X))
 
     X_repeated = np.repeat(X, sample_weight, axis=0)
-    core_repeated, label_repeated = dbscan(X_repeated)
+    core_repeated, label_repeated = dbscan(X_repeated, random_state=42)
     core_repeated_mask = np.zeros(X_repeated.shape[0], dtype=bool)
     core_repeated_mask[core_repeated] = True
     core_mask = np.zeros(X.shape[0], dtype=bool)
