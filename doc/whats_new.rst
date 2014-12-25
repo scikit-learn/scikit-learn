@@ -150,6 +150,9 @@ Enhancements
 
    - Sparse support for :func:`paired_distances`. By `Joel Nothman`_.
 
+   - DBSCAN now supports sparse input and sample weights, and should be
+     faster in general. By `Joel Nothman`_.
+
 Documentation improvements
 ..........................
 
