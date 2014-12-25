@@ -93,7 +93,7 @@ then submit a "pull request" (PR):
 
         $ git clone git@github.com:YourLogin/scikit-learn.git
 
- 4. Create a branch to hold your changes::
+ 4. Create a branch to hold your changes:
 
         $ git checkout -b my-feature
 
