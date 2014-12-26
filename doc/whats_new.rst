@@ -281,6 +281,10 @@ API changes summary
       only. Similar changes apply to `'precision'` and `'recall'`.
       By `Joel Nothman`_.
 
+    - The ``fit_intercept``, ``normalize`` and ``return_models`` parameters in
+      :func:`linear_model.enet_path` and :func:`linear_model.lasso_path` have
+      been removed. They were deprecated since 0.14
+
 .. _changes_0_15_2:
 
 0.15.2
