@@ -227,6 +227,10 @@ Bug fixes
       :class:`cluster.AgglomerativeClustering` (and friends).
       This has been fixed By `Manoj Kumar`_
 
+    - Fix lazy centering of data in :func:`linear_model.enet_path` and
+      :func:`linear_model.lasso_path`. It was centered around one. It has
+      been changed to be centred around the origin. By `Manoj Kumar`_
+
 API changes summary
 -------------------
 

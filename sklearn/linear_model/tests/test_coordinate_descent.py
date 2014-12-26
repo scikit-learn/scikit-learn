@@ -585,6 +585,18 @@ def test_enet_path_positive():
         assert_true(np.all(pos_path_coef >= 0))
 
 
+def test_sparse_dense_descent_paths():
+    """
+    Test that dense and sparse input give the same input for descent paths.
+    """
+    X, y, _, _ = build_dataset(n_samples=50, n_features=20)
+    csr = sparse.csr_matrix(X)
+    for path in [enet_path, lasso_path]:
+        _, coefs, _ = path(X, y, fit_intercept=False)
+        _, sparse_coefs, _ = path(csr, y, fit_intercept=False)
+        assert_array_almost_equal(coefs, sparse_coefs)
+
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()

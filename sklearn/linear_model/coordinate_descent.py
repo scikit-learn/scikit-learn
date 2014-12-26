@@ -451,7 +451,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             # to be passed to the CD solver.
             X_sparse_scaling = params['X_mean'] / params['X_std']
         else:
-            X_sparse_scaling = np.ones(n_features)
+            X_sparse_scaling = np.zeros(n_features)
 
     X, y, X_mean, y_mean, X_std, precompute, Xy = \
         _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy=False)
