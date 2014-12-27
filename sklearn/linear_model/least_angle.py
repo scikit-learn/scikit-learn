@@ -502,15 +502,15 @@ class Lars(LinearModel, RegressorMixin):
     Attributes
     ----------
     alphas_ : array, shape (n_alphas + 1,) | list of n_targets such arrays
-        Maximum of covariances (in absolute value) at each iteration. \
-        ``n_alphas`` is either ``n_nonzero_coefs`` or ``n_features``, \
+        Maximum of covariances (in absolute value) at each iteration.
+        ``n_alphas`` is either ``n_nonzero_coefs`` or ``n_features``,
         whichever is smaller.
 
     active_ : list, length = n_alphas | list of n_targets such lists
         Indices of active variables at the end of the path.
 
     coef_path_ : array, shape (n_features, n_alphas + 1) \
-        | list of n_targets such arrays
+| list of n_targets such arrays
         The varying values of the coefficients along the path. It is not
         present if the ``fit_path`` parameter is ``False``.
 
@@ -577,7 +577,7 @@ class Lars(LinearModel, RegressorMixin):
             Target values.
 
         Xy : array-like, shape (n_samples,) or (n_samples, n_targets), \
-                optional
+optional
             Xy = np.dot(X.T, y) that can be precomputed. It is useful
             only when the Gram matrix is precomputed.
 
@@ -717,9 +717,9 @@ class LassoLars(Lars):
     ----------
     alphas_ : array, shape (n_alphas + 1,) | list of n_targets such arrays
         Maximum of covariances (in absolute value) at each iteration. \
-        ``n_alphas`` is either ``max_iter``, ``n_features``, or the number of \
-        nodes in the path with correlation greater than ``alpha``, whichever \
-        is smaller.
+``n_alphas`` is either ``max_iter``, ``n_features``, or the number of \
+nodes in the path with correlation greater than ``alpha``, whichever \
+is smaller.
 
     active_ : list, length = n_alphas | list of n_targets such lists
         Indices of active variables at the end of the path.

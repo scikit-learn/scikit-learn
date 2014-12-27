@@ -6,16 +6,25 @@
 
 import numpy as np
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_warns
-
 from sklearn import datasets
-from sklearn.covariance import empirical_covariance, EmpiricalCovariance, \
-    ShrunkCovariance, shrunk_covariance, \
-    LedoitWolf, ledoit_wolf, ledoit_wolf_shrinkage, OAS, oas
+
+from sklearn.utils.testing import (
+        assert_almost_equal,
+        assert_array_almost_equal,
+        assert_array_equal,
+        assert_raises,
+        assert_warns)
+
+from sklearn.covariance import (
+        empirical_covariance,
+        EmpiricalCovariance,
+        ShrunkCovariance,
+        shrunk_covariance,
+        LedoitWolf,
+        ledoit_wolf,
+        ledoit_wolf_shrinkage,
+        OAS,
+        oas)
 
 X = datasets.load_diabetes().data
 X_1d = X[:, 0]

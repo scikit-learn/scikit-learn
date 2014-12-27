@@ -451,7 +451,7 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
     >>> manhattan_distances(2, 3)#doctest:+ELLIPSIS
     array([[ 1.]])
     >>> manhattan_distances([[1, 2], [3, 4]],\
-         [[1, 2], [0, 3]])#doctest:+ELLIPSIS
+[[1, 2], [0, 3]])#doctest:+ELLIPSIS
     array([[ 0.,  2.],
            [ 4.,  4.]])
     >>> import numpy as np
@@ -986,7 +986,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
     Parameters
     ----------
     X : array [n_samples_a, n_samples_a] if metric == "precomputed", or, \
-             [n_samples_a, n_features] otherwise
+[n_samples_a, n_features] otherwise
         Array of pairwise distances between samples, or a feature array.
 
     Y : array [n_samples_b, n_features]
@@ -1146,7 +1146,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     Parameters
     ----------
     X : array [n_samples_a, n_samples_a] if metric == "precomputed", or, \
-             [n_samples_a, n_features] otherwise
+[n_samples_a, n_features] otherwise
         Array of pairwise kernels between samples, or a feature array.
 
     Y : array [n_samples_b, n_features]

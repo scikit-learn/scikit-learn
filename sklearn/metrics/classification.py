@@ -62,7 +62,7 @@ def _check_targets(y_true, y_pred):
     Returns
     -------
     type_true : one of {'multilabel-indicator', 'multilabel-sequences', \
-                        'multiclass', 'binary'}
+'multiclass', 'binary'}
         The type of the true target data, as output by
         ``utils.multiclass.type_of_target``
 
@@ -319,7 +319,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
     In the multilabel case with binary label indicators:
 
     >>> jaccard_similarity_score(np.array([[0, 1], [1, 1]]),\
-        np.ones((2, 2)))
+np.ones((2, 2)))
     0.75
     """
 
@@ -618,8 +618,8 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
 
     Returns
     -------
-    fbeta_score : float (if average is not None) or array of float, shape =\
-        [n_unique_labels]
+    fbeta_score : float (if average is not None) or array of float, shape = \
+[n_unique_labels]
         F-beta score of the positive class in binary classification or weighted
         average of the F-beta score of each class for the multiclass task.
 
@@ -781,17 +781,17 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     Returns
     -------
-    precision: float (if average is not None) or array of float, shape =\
-        [n_unique_labels]
+    precision: float (if average is not None) or array of float, shape = \
+[n_unique_labels]
 
-    recall: float (if average is not None) or array of float, , shape =\
-        [n_unique_labels]
+    recall: float (if average is not None) or array of float, , shape = \
+[n_unique_labels]
 
-    fbeta_score: float (if average is not None) or array of float, shape =\
-        [n_unique_labels]
+    fbeta_score: float (if average is not None) or array of float, shape = \
+[n_unique_labels]
 
-    support: int (if average is not None) or array of int, shape =\
-        [n_unique_labels]
+    support: int (if average is not None) or array of int, shape = \
+[n_unique_labels]
         The number of occurrences of each label in ``y_true``.
 
     References
@@ -1020,8 +1020,8 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
 
     Returns
     -------
-    precision : float (if average is not None) or array of float, shape =\
-        [n_unique_labels]
+    precision : float (if average is not None) or array of float, shape = \
+[n_unique_labels]
         Precision of the positive class in binary classification or weighted
         average of the precision of each class for the multiclass task.
 
@@ -1103,8 +1103,8 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
 
     Returns
     -------
-    recall : float (if average is not None) or array of float, shape =\
-        [n_unique_labels]
+    recall : float (if average is not None) or array of float, shape = \
+[n_unique_labels]
         Recall of the positive class in binary classification or weighted
         average of the recall of each class for the multiclass task.
 

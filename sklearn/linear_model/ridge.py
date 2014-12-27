@@ -938,10 +938,10 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     Attributes
     ----------
     cv_values_ : array, shape = [n_samples, n_alphas] or \
-        shape = [n_samples, n_targets, n_alphas], optional
-        Cross-validation values for each alpha (if `store_cv_values=True` and \
-        `cv=None`). After `fit()` has been called, this attribute will \
-        contain the mean squared errors (by default) or the values of the \
+[n_samples, n_targets, n_alphas], optional.
+        Cross-validation values for each alpha (if `store_cv_values=True` and
+        `cv=None`). After `fit()` has been called, this attribute will
+        contain the mean squared errors (by default) or the values of the
         `{loss,score}_func` function (if provided in the constructor).
 
     coef_ : array, shape = [n_features] or [n_targets, n_features]
@@ -972,6 +972,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     Parameters
     ----------
+
     alphas : numpy array of shape [n_alphas]
         Array of alpha values to try.
         Small positive values of alpha improve the conditioning of the
@@ -1004,11 +1005,11 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     Attributes
     ----------
     cv_values_ : array, shape = [n_samples, n_alphas] or \
-    shape = [n_samples, n_responses, n_alphas], optional
+shape = [n_samples, n_responses, n_alphas], optional
         Cross-validation values for each alpha (if `store_cv_values=True` and
-    `cv=None`). After `fit()` has been called, this attribute will contain \
-    the mean squared errors (by default) or the values of the \
-    `{loss,score}_func` function (if provided in the constructor).
+        `cv=None`). After `fit()` has been called, this attribute will contain
+        the mean squared errors (by default) or the values of the
+        `{loss,score}_func` function (if provided in the constructor).
 
     coef_ : array, shape = [n_features] or [n_targets, n_features]
         Weight vector(s).

@@ -271,8 +271,8 @@ class RandomizedLasso(BaseRandomizedLinearModel):
         Feature scores between 0 and 1.
 
     all_scores_ : array, shape = [n_features, n_reg_parameter]
-        Feature scores between 0 and 1 for all values of the regularization \
-        parameter. The reference article suggests ``scores_`` is the max of \
+        Feature scores between 0 and 1 for all values of the regularization
+        parameter. The reference article suggests ``scores_`` is the max of
         ``all_scores_``.
 
     Examples
@@ -439,11 +439,11 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
         Feature scores between 0 and 1.
 
     all_scores_ : array, shape = [n_features, n_reg_parameter]
-        Feature scores between 0 and 1 for all values of the regularization \
-        parameter. The reference article suggests ``scores_`` is the max \
+        Feature scores between 0 and 1 for all values of the regularization
+        parameter. The reference article suggests ``scores_`` is the max
         of ``all_scores_``.
 
-    Examples
+Examples
     --------
     >>> from sklearn.linear_model import RandomizedLogisticRegression
     >>> randomized_logistic = RandomizedLogisticRegression()

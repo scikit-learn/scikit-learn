@@ -25,8 +25,8 @@ from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration
 from sklearn.cluster.hierarchical import (_hc_cut, _TREE_BUILDERS,
                                           linkage_tree)
 from sklearn.feature_extraction.image import grid_to_graph
-from sklearn.metrics.pairwise import PAIRED_DISTANCES, cosine_distances,\
-    manhattan_distances
+from sklearn.metrics.pairwise import (
+        PAIRED_DISTANCES, cosine_distances, manhattan_distances)
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.neighbors.graph import kneighbors_graph
 from sklearn.cluster._hierarchical import average_merge, max_merge
