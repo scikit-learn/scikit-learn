@@ -182,9 +182,9 @@ def _solve_svd(X, y, alpha):
 
 def _deprecate_dense_cholesky(solver):
     if solver == 'dense_cholesky':
-        warnings.warn(DeprecationWarning("The name 'dense_cholesky' is "
-                                         "deprecated. Using 'cholesky' "
-                                         "instead. Changed in 0.15"))
+        warnings.warn(DeprecationWarning(
+            "The name 'dense_cholesky' is deprecated and will "
+            "be removed in 0.17. Use 'cholesky' instead. "))
         solver = 'cholesky'
 
     return solver

@@ -677,17 +677,13 @@ class Bootstrap(object):
     indices = True
 
     def __init__(self, n, n_iter=3, train_size=.5, test_size=None,
-                 random_state=None, n_bootstraps=None):
+                 random_state=None):
         # See, e.g., http://youtu.be/BzHz0J9a6k0?t=9m38s for a motivation
         # behind this deprecation
         warnings.warn("Bootstrap will no longer be supported as a " +
                       "cross-validation method as of version 0.15 and " +
                       "will be removed in 0.17", DeprecationWarning)
         self.n = n
-        if n_bootstraps is not None:  # pragma: no cover
-            warnings.warn("n_bootstraps was renamed to n_iter and will "
-                          "be removed in 0.16.", DeprecationWarning)
-            n_iter = n_bootstraps
         self.n_iter = n_iter
         if (isinstance(train_size, numbers.Real) and train_size >= 0.0
                 and train_size <= 1.0):

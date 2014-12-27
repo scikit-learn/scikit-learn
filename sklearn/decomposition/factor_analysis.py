@@ -68,9 +68,6 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
     max_iter : int
         Maximum number of iterations.
 
-    verbose : int | bool
-        Print verbose output.
-
     noise_variance_init : None | array, shape=(n_features,)
         The initial guess of the noise variance for each feature.
         If None, it defaults to np.ones(n_features)
@@ -124,7 +121,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         non-Gaussian latent variables.
     """
     def __init__(self, n_components=None, tol=1e-2, copy=True, max_iter=1000,
-                 verbose=0, noise_variance_init=None, svd_method='randomized',
+                 noise_variance_init=None, svd_method='randomized',
                  iterated_power=3, random_state=0):
         self.n_components = n_components
         self.copy = copy
@@ -134,13 +131,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
             raise ValueError('SVD method %s is not supported. Please consider'
                              ' the documentation' % svd_method)
         self.svd_method = svd_method
-        if verbose:
-            warnings.warn('The `verbose` parameter has been deprecated and '
-                          'will be removed in 0.16. To reduce verbosity '
-                          'silence Python warnings instead.',
-                          DeprecationWarning)
 
-        self.verbose = verbose
         self.noise_variance_init = noise_variance_init
         self.iterated_power = iterated_power
         self.random_state = random_state
