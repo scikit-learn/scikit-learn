@@ -1321,7 +1321,7 @@ imbalance, etc...
 :class:`DummyRegressor` also implements four simple rules of thumb for regression:
 
 - ``mean`` always predicts the mean of the training targets.
-- ``median`` always predicts the median of the training targests.
+- ``median`` always predicts the median of the training targets.
 - ``quantile`` always predicts a user provided quantile of the training targets.
 - ``constant`` always predicts a constant value that is provided by the user.
 
