@@ -15,13 +15,16 @@ import numpy as np
 from scipy import sparse
 
 from .base import BaseEstimator, TransformerMixin
-from .externals.joblib import Parallel, delayed
+from .externals.joblib import Parallel, delayed, Memory
 from .externals import six
 from .utils import tosequence
 from .utils.metaestimators import if_delegate_has_method
 from .externals.six import iteritems
 
 __all__ = ['Pipeline', 'FeatureUnion']
+
+# joblib memory object for caching functions in this module
+_memory = Memory('../.Pipeline', verbose=0)
 
 
 class Pipeline(BaseEstimator):
@@ -44,6 +47,17 @@ class Pipeline(BaseEstimator):
         chained, in the order in which they are chained, with the last object
         an estimator.
 
+    cache: boolean
+        Whether results from steps in the pipeline should be cached for future
+        computations. This will result in stages in the pipeline NOT BEING
+        CALLED if they have previously been passed the same input (even across
+        multiple program invokations). This can save significant computation
+        by only computing expensive tranforms one time, but will IGNORE changes
+        to the workings of any stage. It is therefore recommended only if
+        elements of the pipeline are stable code (e.g., classes in sklearn)
+        with functionality that will not change during development of your
+        program.
+
     Examples
     --------
     >>> from sklearn import svm
@@ -57,21 +71,48 @@ class Pipeline(BaseEstimator):
     >>> # ANOVA SVM-C
     >>> anova_filter = SelectKBest(f_regression, k=5)
     >>> clf = svm.SVC(kernel='linear')
-    >>> anova_svm = Pipeline([('anova', anova_filter), ('svc', clf)])
+    >>> steps = (('anova', anova_filter), ('svc', clf))
+    >>> anova_svm = Pipeline(steps)
     >>> # You can set the parameters using the names issued
     >>> # For instance, fit using a k of 10 in the SelectKBest
     >>> # and a parameter 'C' of the svm
     >>> anova_svm.set_params(anova__k=10, svc__C=.1).fit(X, y)
-    ...                                              # doctest: +ELLIPSIS
-    Pipeline(steps=[...])
+    ...                        # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    Pipeline(cache=False, steps=[...])
     >>> prediction = anova_svm.predict(X)
     >>> anova_svm.score(X, y)                        # doctest: +ELLIPSIS
     0.77...
+    >>> # we may want these results again in the future--let's
+    >>> # persistently cache them
+    >>> caching_anova_svm = Pipeline(steps, cache=False)
+    >>> caching_anova_svm.set_params(anova__k=10, svc__C=.1).fit(X, y)
+    ...                        # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    Pipeline(cache=False, steps=[...])
+    >>> prediction2 = caching_anova_svm.predict(X)
+    >>> all(prediction == prediction2)
+    True
+    >>> # now suppose we need to compute this somewhere else
+    >>> # in our code, or are running this program a separate time
+    >>> prediction3 = caching_anova_svm.predict(X)  # identical, but faster
+    >>> all(prediction == prediction3)
+    True
+    >>> # the cached results will be retrieved even if we construct a
+    >>> # new object, as long as the steps, parameters, and arguments
+    >>> # are the same
+    >>> caching_anova_svm2 = Pipeline(steps, cache=False)
+    >>> caching_anova_svm2.set_params(anova__k=10, svc__C=.1).fit(X, y)
+    ...                        # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    Pipeline(cache=False, steps=[...])
+    >>> prediction4 = caching_anova_svm2.predict(X)
+    >>> all(prediction == prediction4)
+    True
     """
 
     # BaseEstimator interface
 
-    def __init__(self, steps):
+    def __init__(self, steps, cache=False):
+        self.cache = cache
+
         self.named_steps = dict(steps)
         names, estimators = zip(*steps)
         if len(self.named_steps) != len(steps):
@@ -115,13 +156,17 @@ class Pipeline(BaseEstimator):
         for pname, pval in six.iteritems(fit_params):
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval
+
         Xt = X
-        for name, transform in self.steps[:-1]:
-            if hasattr(transform, "fit_transform"):
-                Xt = transform.fit_transform(Xt, y, **fit_params_steps[name])
-            else:
-                Xt = transform.fit(Xt, y, **fit_params_steps[name]) \
-                              .transform(Xt)
+        for i, step in enumerate(self.steps[:-1]):
+            name, transform = step
+            fit_params = fit_params_steps[name]
+            Xt, fitted = self._fit_transform(transform, Xt, y, **fit_params)
+
+            # store fitted estimator
+            self.steps[i] = (name, fitted)
+            self.named_steps[name] = fitted
+
         return Xt, fit_params_steps[self.steps[-1][0]]
 
     def fit(self, X, y=None, **fit_params):
@@ -129,7 +174,9 @@ class Pipeline(BaseEstimator):
         data, then fit the transformed data using the final estimator.
         """
         Xt, fit_params = self._pre_transform(X, y, **fit_params)
-        self.steps[-1][-1].fit(Xt, y, **fit_params)
+        lastEstimator = self._get_last_estimator()
+        estimator = self._fit(lastEstimator, Xt, y, **fit_params)
+        self._set_last_estimator(estimator)
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -137,57 +184,46 @@ class Pipeline(BaseEstimator):
         data, then use fit_transform on transformed data using the final
         estimator."""
         Xt, fit_params = self._pre_transform(X, y, **fit_params)
-        if hasattr(self.steps[-1][-1], 'fit_transform'):
-            return self.steps[-1][-1].fit_transform(Xt, y, **fit_params)
-        else:
-            return self.steps[-1][-1].fit(Xt, y, **fit_params).transform(Xt)
+        lastEstimator = self._get_last_estimator()
+        Xt, estimator = self._fit_transform(lastEstimator, Xt, y, **fit_params)
+        self._set_last_estimator(estimator)
+        return Xt
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict(self, X):
         """Applies transforms to the data, and the predict method of the
         final estimator. Valid only if the final estimator implements
         predict."""
-        Xt = X
-        for name, transform in self.steps[:-1]:
-            Xt = transform.transform(Xt)
-        return self.steps[-1][-1].predict(Xt)
+        Xt = self._transform_except_last_estimator(X)
+        return self._get_last_estimator().predict(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict_proba(self, X):
         """Applies transforms to the data, and the predict_proba method of the
         final estimator. Valid only if the final estimator implements
         predict_proba."""
-        Xt = X
-        for name, transform in self.steps[:-1]:
-            Xt = transform.transform(Xt)
-        return self.steps[-1][-1].predict_proba(Xt)
+        Xt = self._transform_except_last_estimator(X)
+        return self._get_last_estimator().predict_proba(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def decision_function(self, X):
         """Applies transforms to the data, and the decision_function method of
         the final estimator. Valid only if the final estimator implements
         decision_function."""
-        Xt = X
-        for name, transform in self.steps[:-1]:
-            Xt = transform.transform(Xt)
-        return self.steps[-1][-1].decision_function(Xt)
+        Xt = self._transform_except_last_estimator(X)
+        return self._get_last_estimator().decision_function(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict_log_proba(self, X):
-        Xt = X
-        for name, transform in self.steps[:-1]:
-            Xt = transform.transform(Xt)
-        return self.steps[-1][-1].predict_log_proba(Xt)
+        Xt = self._transform_except_last_estimator(X)
+        return self._get_last_estimator().predict_log_proba(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def transform(self, X):
         """Applies transforms to the data, and the transform method of the
         final estimator. Valid only if the final estimator implements
         transform."""
-        Xt = X
-        for name, transform in self.steps:
-            Xt = transform.transform(Xt)
-        return Xt
+        return self._apply_transform_steps(X, self.steps)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def inverse_transform(self, X):
@@ -203,14 +239,48 @@ class Pipeline(BaseEstimator):
         """Applies transforms to the data, and the score method of the
         final estimator. Valid only if the final estimator implements
         score."""
-        Xt = X
-        for name, transform in self.steps[:-1]:
-            Xt = transform.transform(Xt)
-        return self.steps[-1][-1].score(Xt, y)
+        Xt = self._transform_except_last_estimator(X)
+        return self._get_last_estimator().score(Xt, y)
+
+    def _apply_transform_steps(self, X, steps):
+        if not steps:
+            return X
+        if len(steps) == 1:
+            # ensure that we have an iterable of transforms
+            _, transform = steps[0]
+            transforms = [transform]
+        else:
+            _, transforms = zip(*steps)
+        if self.cache:
+            return _cached_apply_transforms(X, transforms)
+        return _apply_transforms(X, transforms)
+
+    def _transform_except_last_estimator(self, X):
+        return self._apply_transform_steps(X, self.steps[:-1])
+
+    def _fit(self, estimator, X, y, **fit_params):
+        if self.cache:
+            return _cached_fit(estimator, X, y, **fit_params)
+        return _fit(estimator, X, y, **fit_params)
+
+    def _fit_transform(self, transform, X, y, **fit_params):
+        if self.cache:
+            return _cached_fit_transform(transform, X, y, **fit_params)
+        return _fit_transform(transform, X, y, **fit_params)
+
+    def _get_last_estimator(self):
+        # each step is a (name, estimator) pair; we want the
+        # last element of the last step
+        return self.steps[-1][-1]
+
+    def _set_last_estimator(self, estimator):
+        name, _ = self.steps[-1]
+        self.steps[-1] = (name, estimator)
+        self.named_steps[name] = estimator
 
     @property
     def classes_(self):
-        return self.steps[-1][-1].classes_
+        return self._get_last_estimator().classes_
 
     @property
     def _pairwise(self):
@@ -250,16 +320,77 @@ def make_pipeline(*steps):
     --------
     >>> from sklearn.naive_bayes import GaussianNB
     >>> from sklearn.preprocessing import StandardScaler
-    >>> make_pipeline(StandardScaler(), GaussianNB())    # doctest: +NORMALIZE_WHITESPACE
-    Pipeline(steps=[('standardscaler',
-                     StandardScaler(copy=True, with_mean=True, with_std=True)),
-                    ('gaussiannb', GaussianNB())])
+    >>> make_pipeline(StandardScaler(), GaussianNB())
+    ...                     # doctest: +NORMALIZE_WHITESPACE
+    Pipeline(cache=False,
+         steps=[('standardscaler', StandardScaler(copy=True,
+            with_mean=True, with_std=True)),
+            ('gaussiannb', GaussianNB())])
 
     Returns
     -------
     p : Pipeline
     """
     return Pipeline(_name_estimators(steps))
+
+
+def _fit(estimator, X, y, **fit_params):
+    estimator.fit(X, y, **fit_params)
+    return estimator
+
+
+@_memory.cache
+def _cached_fit(estimator, X, y, **fit_params):
+    estimator.fit(X, y, **fit_params)
+    return estimator
+
+
+def _fit_transform(transformer, X, y, **fit_params):
+    if hasattr(transformer, 'fit_transform'):
+        X_transformed = transformer.fit_transform(X, y, **fit_params)
+        return X_transformed, transformer
+    else:
+        X_transformed = transformer.fit(X, y, **fit_params).transform(X)
+        return X_transformed, transformer
+
+
+@_memory.cache
+def _cached_fit_transform(transformer, X, y, **fit_params):
+    if hasattr(transformer, 'fit_transform'):
+        X_transformed = transformer.fit_transform(X, y, **fit_params)
+        return X_transformed, transformer
+    else:
+        X_transformed = transformer.fit(X, y, **fit_params).transform(X)
+        return X_transformed, transformer
+
+
+def _apply_transforms(X, transforms):
+    if not transforms:
+        return X
+    Xt = X
+    for t in transforms:
+        Xt = t.transform(Xt)
+    return Xt
+
+
+@_memory.cache
+def _cached_apply_transforms(X, transforms):
+    # if transforms is None or empty, just return X
+    if not transforms:
+        return X
+    # otherwise, recurse; implementing this recursively
+    # allows us to load cached results from as many
+    # previous stages as possible
+    Xt = _cached_apply_transforms(X, transforms[:-1])
+    return transforms[-1].transform(Xt)
+
+
+def _fit_transform_one(transformer, name, X, y, transformer_weights,
+                       **fit_params):
+    Xt, fitted_transformer = _fit_transform(transformer, X, y, **fit_params)
+    if transformer_weights is not None and name in transformer_weights:
+        return Xt * transformer_weights[name], fitted_transformer
+    return Xt, fitted_transformer
 
 
 def _fit_one_transformer(transformer, X, y):
@@ -271,24 +402,6 @@ def _transform_one(transformer, name, X, transformer_weights):
         # if we have a weight for this transformer, muliply output
         return transformer.transform(X) * transformer_weights[name]
     return transformer.transform(X)
-
-
-def _fit_transform_one(transformer, name, X, y, transformer_weights,
-                       **fit_params):
-    if transformer_weights is not None and name in transformer_weights:
-        # if we have a weight for this transformer, muliply output
-        if hasattr(transformer, 'fit_transform'):
-            X_transformed = transformer.fit_transform(X, y, **fit_params)
-            return X_transformed * transformer_weights[name], transformer
-        else:
-            X_transformed = transformer.fit(X, y, **fit_params).transform(X)
-            return X_transformed * transformer_weights[name], transformer
-    if hasattr(transformer, 'fit_transform'):
-        X_transformed = transformer.fit_transform(X, y, **fit_params)
-        return X_transformed, transformer
-    else:
-        X_transformed = transformer.fit(X, y, **fit_params).transform(X)
-        return X_transformed, transformer
 
 
 class FeatureUnion(BaseEstimator, TransformerMixin):

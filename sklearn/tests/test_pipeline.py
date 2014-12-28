@@ -394,3 +394,80 @@ def test_classes_property():
     assert_raises(AttributeError, getattr, clf, "classes_")
     clf.fit(X, y)
     assert_array_equal(clf.classes_, np.unique(y))
+
+
+def test_pipeline_methods_caching_one_stage():
+    """Test the various methods of the pipeline (pca + svm)
+    with caching enabled.
+    """
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
+    clf = SVC(probability=True, random_state=0)
+    steps = [('svc', clf)]
+    _evaluate_caching(X, y, steps)
+
+
+def test_pipeline_methods_caching_two_stages():
+    """Test the various methods of the pipeline (pca + svm)
+    with caching enabled.
+    """
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
+    clf = SVC(probability=True, random_state=0)
+    pca = PCA(n_components='mle', whiten=True)
+    steps = [('pca', pca), ('svc', clf)]
+    _evaluate_caching(X, y, steps)
+
+
+def test_pipeline_methods_caching_scaling_three_or_more_stages():
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
+    scaler = StandardScaler()
+    pca = RandomizedPCA(n_components=2, whiten=True)
+    clf = LogisticRegression(random_state=0)
+    steps = [('scale', scaler), ('pca', pca), ('classify', clf)]
+    _evaluate_caching(X, y, steps)
+
+
+def _evaluate_caching(X, y, steps):
+    """Utility function to ensure that Pipelines yield the same
+    results with and without caching
+    """
+    # get results without caching
+    pipe = Pipeline(steps)
+    pipe.fit(X, y)
+    predictions = pipe.predict(X)
+    prob_predictions = pipe.predict_proba(X)
+    log_prob_predictions = pipe.predict_log_proba(X)
+    scores = pipe.score(X, y)
+
+    # now create a pipeline with caching and and make sure
+    # that it yields the same results when initially computing things
+    pipe2 = Pipeline(steps)
+    pipe2.fit(X, y)
+    predictions2 = pipe2.predict(X)
+    prob_predictions2 = pipe2.predict_proba(X)
+    log_prob_predictions2 = pipe2.predict_log_proba(X)
+    scores2 = pipe2.score(X, y)
+
+    assert_array_almost_equal(predictions, predictions2)
+    assert_array_almost_equal(prob_predictions, prob_predictions2)
+    assert_array_almost_equal(log_prob_predictions, log_prob_predictions2)
+    assert_array_almost_equal(scores, scores2)
+
+    # now ensure that it still gets the correct answers when
+    # loading cached estimators / transforms
+    pipe3 = Pipeline(steps)
+    pipe3.fit(X, y)
+    predictions3 = pipe3.predict(X)
+    prob_predictions3 = pipe3.predict_proba(X)
+    log_prob_predictions3 = pipe3.predict_log_proba(X)
+    scores3 = pipe3.score(X, y)
+
+    assert_array_almost_equal(predictions, predictions3)
+    assert_array_almost_equal(prob_predictions, prob_predictions3)
+    assert_array_almost_equal(log_prob_predictions, log_prob_predictions3)
+    assert_array_almost_equal(scores, scores3)
