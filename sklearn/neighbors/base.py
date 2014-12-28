@@ -389,16 +389,24 @@ class KNeighborsMixin(object):
         n_nonzero = n_samples1 * n_neighbors
         A_indptr = np.arange(0, n_nonzero + 1, n_neighbors)
 
-        # construct CSR matrix representation of the k-NN graph
-        if mode == 'connectivity':
+        if mode == 'distance':
+            data, ind = self.kneighbors(
+                X, n_neighbors + 1, return_distance=True)
+
+            # Filter the points for which the first NN is the point itself.
+            # to skip later
+            skip_points = data[:, 0] == 0
+
+            A_data = np.empty((n_samples1, n_neighbors))
+            A_ind = np.empty_like(A_data)
+            A_data[skip_points, :] = data[skip_points, 1:]
+            A_data[~skip_points, :] = data[~skip_points, :-1]
+            A_ind[skip_points, :] = ind[skip_points, 1:]
+            A_ind[~skip_points, :] = ind[~skip_points, :-1]
+
+        elif mode == 'connectivity':
             A_data = np.ones((n_samples1, n_neighbors))
             A_ind = self.kneighbors(X, n_neighbors, return_distance=False)
-
-        elif mode == 'distance':
-            data, ind = self.kneighbors(X, n_neighbors + 1,
-                                        return_distance=True)
-            A_data, A_ind = data[:, 1:], ind[:, 1:]
-
         else:
             raise ValueError(
                 'Unsupported mode, must be one of "connectivity" '
