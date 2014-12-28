@@ -108,11 +108,24 @@ for (k, (C, gamma, clf)) in enumerate(classifiers):
 
 # plot the scores of the grid
 # grid_scores_ contains parameter settings and scores
-score_dict = grid.grid_scores_
+score_tuples = grid.grid_scores_
 
 # We extract just the scores
-scores = [x[1] for x in score_dict]
-scores = np.array(scores).reshape(len(C_range), len(gamma_range))
+scores = [x[1] for x in score_tuples]
+
+# Since the ordering of grid_scores_  depends on the order of the param_grid
+# dictionary which is arbitrary in python, we understand the ordering of the
+# parameters based on the successive values assigned to them (parameters).
+# This is needed in order to shape the scores for the heatmap plot
+
+# Initially assume parameters ordered by gamma, then by C
+shape = [len(gamma_range), len(C_range)]
+
+# If the successive values of gamma are not equal, our assumption is wrong
+if score_tuples[0][0]['gamma'] != score_tuples[1][0]['gamma']:
+    shape.reverse()
+
+scores = np.array(scores).reshape(*shape)
 
 # draw heatmap of accuracy as a function of gamma and C
 plt.figure(figsize=(8, 6))
