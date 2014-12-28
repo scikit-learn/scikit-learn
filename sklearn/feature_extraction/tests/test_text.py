@@ -770,7 +770,7 @@ def test_vectorizer_pipeline_grid_selection():
     assert_equal(grid_search.best_score_, 1.0)
     best_vectorizer = grid_search.best_estimator_.named_steps['vect']
     assert_equal(best_vectorizer.ngram_range, (1, 1))
-    assert_equal(best_vectorizer.norm, 'l2')
+    assert_equal(best_vectorizer.norm, 'l1')
     assert_false(best_vectorizer.fixed_vocabulary_)
 
 
