@@ -30,6 +30,7 @@ from .utils.validation import _num_samples, indexable
 from .utils.metaestimators import if_delegate_has_method
 from .metrics.scorer import check_scoring
 
+from collections import OrderedDict
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
            'ParameterSampler', 'RandomizedSearchCV']
@@ -79,7 +80,8 @@ class ParameterGrid(object):
             # wrap dictionary in a singleton list to support either dict
             # or list of dicts
             param_grid = [param_grid]
-        self.param_grid = param_grid
+        # Use OrderedDict to ensure keys are sorted for reproducibility
+        self.param_grid = [OrderedDict(d) for d in param_grid]
 
     def __iter__(self):
         """Iterate over the points in the grid.
@@ -91,8 +93,7 @@ class ParameterGrid(object):
             allowed values.
         """
         for p in self.param_grid:
-            # Always sort the keys of a dictionary, for reproducibility
-            items = sorted(p.items())
+            items = p.items()
             if not items:
                 yield {}
             else:
