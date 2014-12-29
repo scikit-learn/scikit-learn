@@ -11,7 +11,7 @@ import warnings
 
 from ..base import BaseEstimator
 from ..metrics import euclidean_distances
-from ..utils import check_random_state, check_array, ensure_symmetric
+from ..utils import check_random_state, check_array, check_symmetric
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..isotonic import IsotonicRegression
@@ -65,7 +65,7 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
         Number of iterations run.
 
     """
-    similarities = ensure_symmetric(similarities, raise_exception=True)
+    similarities = check_symmetric(similarities, raise_exception=True)
 
     n_samples = similarities.shape[0]
     random_state = check_random_state(random_state)

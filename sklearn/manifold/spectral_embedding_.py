@@ -13,7 +13,7 @@ from scipy.sparse.linalg import lobpcg
 
 from ..base import BaseEstimator
 from ..externals import six
-from ..utils import check_random_state, check_array, ensure_symmetric
+from ..utils import check_random_state, check_array, check_symmetric
 from ..utils.graph import graph_laplacian
 from ..utils.sparsetools import connected_components
 from ..utils.arpack import eigsh
@@ -183,7 +183,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
       Andrew V. Knyazev
       http://dx.doi.org/10.1137%2FS1064827500366124
     """
-    adjacency = ensure_symmetric(adjacency)
+    adjacency = check_symmetric(adjacency)
 
     try:
         from pyamg import smoothed_aggregation_solver
