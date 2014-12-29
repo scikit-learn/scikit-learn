@@ -27,7 +27,7 @@ warnings.simplefilter("always", DataConversionWarning)
 
 class NonBLASDotWarning(UserWarning):
     "A warning on implicit dispatch to numpy.dot"
-    pass
+
 
 class NotFittedError(ValueError, AttributeError):
     """
@@ -35,7 +35,6 @@ class NotFittedError(ValueError, AttributeError):
 
     Inherits from both ValueError and AttributeError to help exception handling
     """
-    pass
 
 
 # Silenced by default to reduce verbosity. Turn on at runtime for
