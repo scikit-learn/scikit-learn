@@ -385,6 +385,8 @@ def test_graphs():
 
 
 def test_sparse_input():
+    # note: Fixed random state in sp.rand is not supported in older scipy.
+    #       The test should succeed regardless.
     X1 = sp.rand(50, 100)
     X2 = sp.rand(10, 100)
     forest_sparse = LSHForest(radius=1, random_state=0).fit(X1)
