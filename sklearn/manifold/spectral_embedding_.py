@@ -213,7 +213,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         warnings.warn("Graph adjacency matrix should be symmetric. "
                       "Converted to be symmetric by average with its "
                       "transpose.")
-    adjacency = .5 * (adjacency + adjacency.T)
+        adjacency = .5 * (adjacency + adjacency.T)
 
     if not _graph_is_connected(adjacency):
         warnings.warn("Graph is not fully connected, spectral embedding"
