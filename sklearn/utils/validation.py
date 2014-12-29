@@ -404,3 +404,46 @@ def has_fit_parameter(estimator, parameter):
 
     """
     return parameter in getargspec(estimator.fit)[0]
+
+
+def ensure_symmetric(array, tol=1E-10, raise_warning=True,
+                     raise_exception=False):
+    """
+    Ensure that the array is symmetric two-dimensional array or sparse matrix,
+    returning a symmetrized version and optionally raising a warning or
+    exception if the input is not symmetric.
+
+    Parameters
+    ----------
+    array : object
+        Input object to check / convert
+    tol : float
+        Absolute tolerance for equivalence of arrays. Default = 1E-10.
+    raise_warning : boolean (default=True)
+        If True then raise a warning if conversion is required.
+    raise_exception : boolean (default=False)
+        If True then raise an exception if array is not symmetric.
+
+    Returns
+    -------
+    array_sym : object
+        Symmetrized version of the input array
+    """
+    if (array.ndim != 2) or (array.shape[0] != array.shape[1]):
+        raise ValueError("array must be 2-dimensional and symmetric")
+
+    if sp.issparse(array):
+        diff = (array - array.T).data
+        symmetric = np.all(abs(diff) < tol)
+    else:
+        symmetric = np.allclose(array, array.T, atol=tol)
+
+    if not symmetric:
+        if raise_exception:
+            raise ValueError("Array must be symmetric")
+        if raise_warning:
+            warnings.warn("Array is not symmetric, and will be converted "
+                          "to symmetric by average with its transpose.")
+        array = 0.5 * (array + array.T)
+
+    return array
