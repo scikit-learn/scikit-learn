@@ -409,7 +409,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
-        Ignored if ``max_samples_leaf`` is not None.
+        Ignored if ``max_leaf_nodes`` is not None.
 
     min_samples_split : int, optional (default=2)
         The minimum number of samples required to split an internal node.
@@ -626,7 +626,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
-        Ignored if ``max_samples_leaf`` is not None.
+        Ignored if ``max_leaf_nodes`` is not None.
 
     min_samples_split : int, optional (default=2)
         The minimum number of samples required to split an internal node.
