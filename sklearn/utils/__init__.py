@@ -168,7 +168,7 @@ def resample(*arrays, **options):
 
     Parameters
     ----------
-    `*arrays` : sequence of arrays or scipy.sparse matrices with same shape[0]
+    *arrays : sequence of arrays or scipy.sparse matrices with same shape[0]
 
     replace : boolean, True by default
         Implements resampling with replacement. If False, this will implement
@@ -183,8 +183,10 @@ def resample(*arrays, **options):
 
     Returns
     -------
-    Sequence of resampled views of the collections. The original arrays are
-    not impacted.
+    resampled_arrays : sequence of arrays or scipy.sparse matrices with same \
+    shape[0]
+        Sequence of resampled views of the collections. The original arrays are 
+        not impacted.
 
     Examples
     --------
@@ -275,7 +277,7 @@ def shuffle(*arrays, **options):
 
     Parameters
     ----------
-    `*arrays` : sequence of arrays or scipy.sparse matrices with same shape[0]
+    *arrays : sequence of arrays or scipy.sparse matrices with same shape[0]
 
     random_state : int or RandomState instance
         Control the shuffling for reproducible behavior.
@@ -286,8 +288,10 @@ def shuffle(*arrays, **options):
 
     Returns
     -------
-    Sequence of shuffled views of the collections. The original arrays are
-    not impacted.
+    shuffled_arrays : sequence of arrays or scipy.sparse matrices with same \
+    shape[0]
+        Sequence of shuffled views of the collections. The original arrays are
+        not impacted.
 
     Examples
     --------
@@ -335,6 +339,10 @@ def safe_sqr(X, copy=True):
     Parameters
     ----------
     X : array like, matrix, sparse matrix
+
+    copy : boolean, optional, default True
+        Whether to create a copy of X and operate on it or to perform
+        inplace computation (default behaviour).
 
     Returns
     -------

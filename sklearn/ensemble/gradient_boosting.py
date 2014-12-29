@@ -206,16 +206,24 @@ class LossFunction(six.with_metaclass(ABCMeta, object)):
         ----------
         tree : tree.Tree
             The tree object.
-        X : np.ndarray, shape=(n, m)
+        X : ndarray, shape=(n, m)
             The data array.
-        y : np.ndarray, shape=(n,)
+        y : ndarray, shape=(n,)
             The target labels.
-        residual : np.ndarray, shape=(n,)
+        residual : ndarray, shape=(n,)
             The residuals (usually the negative gradient).
-        y_pred : np.ndarray, shape=(n,):
+        y_pred : ndarray, shape=(n,)
             The predictions.
-        sample_weight : np.ndarray, shape=(n,):
+        sample_weight : ndarray, shape=(n,)
             The weight of each sample.
+        sample_mask : ndarray, shape=(n,)
+            The sample mask to be used.
+        learning_rate : float, default=0.1
+            learning rate shrinks the contribution of each tree by 
+            `learning_rate`.
+        k : int, default 0
+            The index of the estimator being updated.
+
         """
         # compute leaf for each sample in ``X``.
         terminal_regions = tree.apply(X)
@@ -312,8 +320,8 @@ class HuberLossFunction(RegressionLossFunction):
 
     M-Regression proposed in Friedman 2001.
 
-    See
-    ---
+    References
+    ----------
     J. Friedman, Greedy Function Approximation: A Gradient Boosting
     Machine, The Annals of Statistics, Vol. 29, No. 5, 2001.
     """
@@ -575,8 +583,8 @@ class ExponentialLoss(ClassificationLossFunction):
 
     Same loss as AdaBoost.
 
-    See
-    ---
+    References
+    ----------
     Greg Ridgeway, Generalized Boosted Models: A guide to the gbm package, 2007
     """
     def __init__(self, n_classes):

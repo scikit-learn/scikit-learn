@@ -31,13 +31,13 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
     Parameters
     ----------
     spectrum: array of shape (n)
-        data spectrum
-    rank: int,
-        tested rank value
-    n_samples: int,
-        number of samples
-    dim: int,
-        embedding/empirical dimension
+        Data spectrum.
+    rank: int
+        Tested rank value.
+    n_samples: int
+        Number of samples.
+    n_features: int
+        Number of features.
 
     Returns
     -------

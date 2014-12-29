@@ -96,6 +96,9 @@ class QDA(BaseEstimator, ClassifierMixin):
         store_covariances : boolean
             If True the covariance matrices are computed and stored in the
             `self.covariances_` attribute.
+        
+        tol : float, optional, default 1.0e-4
+            Threshold used for rank estimation.
         """
         X, y = check_X_y(X, y)
         self.classes_, y = np.unique(y, return_inverse=True)

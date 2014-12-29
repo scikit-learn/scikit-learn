@@ -57,6 +57,9 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         Useful for doing grid searches when an `RFE` object is passed as an
         argument to, e.g., a `sklearn.grid_search.GridSearchCV` object.
 
+    verbose : int, default=0
+        Controls verbosity of output.
+
     Attributes
     ----------
     n_features_ : int
@@ -66,8 +69,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         The mask of selected features.
 
     ranking_ : array of shape [n_features]
-        The feature ranking, such that `ranking_[i]` corresponds to the \
-        ranking position of the i-th feature. Selected (i.e., estimated \
+        The feature ranking, such that `ranking_[i]` corresponds to the
+        ranking position of the i-th feature. Selected (i.e., estimated
         best) features are assigned rank 1.
 
     estimator_ : object

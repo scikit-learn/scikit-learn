@@ -178,7 +178,16 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         must be square.
     random_state : numpy.RandomState, optional
         The generator used to shuffle the samples. Defaults to numpy.random.
-
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
+        The algorithm to be used by the NearestNeighbors module
+        to compute pointwise distances and find nearest neighbors.
+        See NearestNeighbors module documentation for details.
+    leaf_size : int, optional (default = 30)
+        Leaf size passed to BallTree or cKDTree. This can affect the speed
+        of the construction and query, as well as the memory required
+        to store the tree. The optimal value depends
+        on the nature of the problem.
+ 
     Attributes
     ----------
     core_sample_indices_ : array, shape = [n_core_samples]

@@ -62,7 +62,7 @@ def unique_labels(*ys):
 
     Parameters
     ----------
-    ys : array-likes,
+    *ys : array-likes,
 
     Returns
     -------
@@ -361,8 +361,8 @@ def class_distribution(y, sample_weight=None):
     sample_weight : array-like of shape = (n_samples,), optional
         Sample weights.
 
-    Return
-    ------
+    Returns
+    -------
     classes : list of size n_outputs of arrays of size (n_classes,)
         List of classes for each column.
 

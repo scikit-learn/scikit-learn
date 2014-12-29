@@ -318,7 +318,8 @@ class LinearRegression(LinearModel, RegressorMixin):
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
 
-    n_jobs : The number of jobs to use for the computation.
+    n_jobs : int, optional, default 1
+        The number of jobs to use for the computation.
         If -1 all CPUs are used. This will only provide speedup for
         n_targets > 1 and sufficient large problems.
 
@@ -355,8 +356,14 @@ class LinearRegression(LinearModel, RegressorMixin):
         ----------
         X : numpy array or sparse matrix of shape [n_samples,n_features]
             Training data
+
         y : numpy array of shape [n_samples, n_targets]
             Target values
+
+        n_jobs : int, optional, default 1
+            The number of jobs to use for the computation.
+            If -1 all CPUs are used. This will only provide speedup for
+            n_targets > 1 and sufficiently large problems.
 
         Returns
         -------

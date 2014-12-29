@@ -85,9 +85,12 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     verbose : int (default=0)
         Controls output verbosity.
 
-    return_path : bool, (optional=True)
+    return_path : bool, optional (default=True)
         If ``return_path==True`` returns the entire path, else returns only the
         last point of the path.
+
+    return_n_iter : bool, optional (default=False)
+        Whether to return the number of iterations.
 
     Returns
     --------
@@ -1248,15 +1251,18 @@ class LassoLarsIC(LassoLars):
     def fit(self, X, y, copy_X=True):
         """Fit the model using X, y as training data.
 
-        parameters
+        Parameters
         ----------
-        x : array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             training data.
 
         y : array-like, shape (n_samples,)
             target values.
+    
+        copy_X : boolean, optional, default True
+            If ``True``, X will be copied; else, it may be overwritten.
 
-        returns
+        Returns
         -------
         self : object
             returns an instance of self.

@@ -96,6 +96,9 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         Convergence tolerance: threshold to consider the system at steady
         state
 
+    n_neighbors : integer > 0
+        Parameter for knn kernel
+ 
     """
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
@@ -271,16 +274,16 @@ class LabelPropagation(BaseLabelPropagation):
         String identifier for kernel function to use.
         Only 'rbf' and 'knn' kernels are currently supported..
     gamma : float
-      parameter for rbf kernel
+        Parameter for rbf kernel
     n_neighbors : integer > 0
-      parameter for knn kernel
+        Parameter for knn kernel
     alpha : float
-      clamping factor
+        Clamping factor
     max_iter : float
-      change maximum number of iterations allowed
+        Change maximum number of iterations allowed
     tol : float
-      Convergence tolerance: threshold to consider the system at steady
-      state
+        Convergence tolerance: threshold to consider the system at steady
+        state
 
     Attributes
     ----------

@@ -149,7 +149,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
     tol : non-negative real, default 1e-06
         The tolerance used in the iterative algorithm.
 
-    copy : boolean
+    copy : boolean, default True
         Whether the deflation should be done on a copy. Let the default
         value to True unless you don't care about side effects.
 
@@ -359,7 +359,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             Training vectors, where n_samples in the number of samples and
             q is the number of response variables.
 
-        copy : boolean
+        copy : boolean, default True
             Whether to copy X and Y, or perform in-place normalization.
 
         Returns
@@ -397,7 +397,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             Training vectors, where n_samples in the number of samples and
             p is the number of predictors.
 
-        copy : boolean
+        copy : boolean, default True
             Whether to copy X and Y, or perform in-place normalization.
 
         Notes
@@ -429,7 +429,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             Training vectors, where n_samples in the number of samples and
             q is the number of response variables.
 
-        copy : boolean
+        copy : boolean, default True
             Whether to copy X and Y, or perform in-place normalization.
 
         Returns
@@ -450,14 +450,6 @@ class PLSRegression(_PLS):
 
     Parameters
     ----------
-    X : array-like of predictors, shape = [n_samples, p]
-        Training vectors, where n_samples in the number of samples and
-        p is the number of predictors.
-
-    Y : array-like of response, shape = [n_samples, q] or [n_samples]
-        Training vectors, where n_samples in the number of samples and
-        q is the number of response variables.
-
     n_components : int, (default 2)
         Number of components to keep.
 
@@ -580,16 +572,6 @@ class PLSCanonical(_PLS):
 
     Parameters
     ----------
-    X : array-like of predictors, shape = [n_samples, p]
-        Training vectors, where n_samples is the number of samples and
-        p is the number of predictors.
-
-    Y : array-like of response, shape = [n_samples, q]
-        Training vectors, where n_samples is the number of samples and
-        q is the number of response variables.
-
-    n_components : int, number of components to keep. (default 2).
-
     scale : boolean, scale data? (default True)
 
     algorithm : string, "nipals" or "svd"
@@ -606,6 +588,8 @@ class PLSCanonical(_PLS):
     copy : boolean, default True
         Whether the deflation should be done on a copy. Let the default
         value to True unless you don't care about side effect
+
+    n_components : int, number of components to keep. (default 2).
 
     Attributes
     ----------
@@ -704,20 +688,14 @@ class PLSSVD(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    X : array-like of predictors, shape = [n_samples, p]
-        Training vector, where n_samples is the number of samples and
-        p is the number of predictors. X will be centered before any analysis.
+    n_components : int, default 2
+        Number of components to keep.
 
-    Y : array-like of response, shape = [n_samples, q]
-        Training vector, where n_samples is the number of samples and
-        q is the number of response variables. X will be centered before any
-        analysis.
+    scale : boolean, default True
+        Whether to scale X and Y.
 
-    n_components : int, (default 2).
-        number of components to keep.
-
-    scale : boolean, (default True)
-        whether to scale X and Y.
+    copy : boolean, default True
+        Whether to copy X and Y, or perform in-place computations.
 
     Attributes
     ----------

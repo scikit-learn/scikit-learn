@@ -87,15 +87,16 @@ class _BasePCA(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training data, where n_samples is the number of samples and
             n_features is the number of features.
 
         Returns
         -------
-        self: object
+        self : object
             Returns the instance itself.
         """
+
 
     def transform(self, X, y=None):
         """Apply dimensionality reduction to X.
