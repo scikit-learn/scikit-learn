@@ -13,10 +13,19 @@ from sklearn.utils.estimator_checks import NotAnArray
 
 from sklearn.random_projection import sparse_random_matrix
 
+from sklearn.linear_model import ARDRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
-from sklearn.utils.validation import has_fit_parameter
+
+from sklearn.datasets import make_blobs
+from sklearn.utils import as_float_array, check_array
+from sklearn.utils.estimator_checks import NotAnArray
+from sklearn.utils.validation import (
+        NotFittedError,
+        has_fit_parameter,
+        _is_fitted,
+        check_is_fitted)
 
 
 def test_as_float_array():
@@ -201,6 +210,7 @@ def test_check_array():
     result = check_array(X_no_array)
     assert_true(isinstance(result, np.ndarray))
 
+
 def test_has_fit_parameter():
     assert_false(has_fit_parameter(KNeighborsClassifier, "sample_weight"))
     assert_true(has_fit_parameter(RandomForestRegressor, "sample_weight"))
@@ -236,3 +246,51 @@ def test_check_symmetric():
             assert_array_equal(output.toarray(), arr_sym)
         else:
             assert_array_equal(output, arr_sym)
+
+
+def test_is_fitted():
+    assert_raises(ValueError, _is_fitted, ARDRegression, "coef_")
+    assert_raises(ValueError, _is_fitted, SVR, "support_")
+
+    try:
+        assert_false(_is_fitted(ARDRegression(), "coef_"))
+        assert_false(_is_fitted(SVR(), "support_"))
+    except ValueError:
+        assert False, "_is_fitted check failed with incorrect result"
+
+    ard = ARDRegression().fit(*make_blobs())
+    svr = SVR().fit(*make_blobs())
+
+    assert_true(_is_fitted(ard, "coef_"))
+    assert_true(_is_fitted(svr, "support_"))
+
+
+def test_check_is_fitted():
+    assert_raises(ValueError, check_is_fitted, ARDRegression, "coef_")
+    assert_raises(ValueError, check_is_fitted, SVR, "support_")
+
+    ard = ARDRegression()
+    svr = SVR()
+
+    try:
+        assert_raises(NotFittedError, check_is_fitted, ard, "coef_")
+        assert_raises(NotFittedError, check_is_fitted, svr, "support_")
+    except ValueError:
+        assert False, "check_is_fitted failed with ValueError"
+
+    # NotFittedError is a subclass of ValueError and AttributeError
+    try:
+        check_is_fitted(ard, "coef_", "Random message %(name)s, %(name)s")
+    except ValueError as e:
+        assert_equal(str(e), "Random message ARDRegression, ARDRegression")
+
+    try:
+        check_is_fitted(svr, "support_", "Another message %(name)s, %(name)s")
+    except AttributeError as e:
+        assert_equal(str(e), "Another message SVR, SVR")
+
+    ard.fit(*make_blobs())
+    svr.fit(*make_blobs())
+
+    assert_equal(None, check_is_fitted(ard, "coef_"))
+    assert_equal(None, check_is_fitted(svr, "support_"))
