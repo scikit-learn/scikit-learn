@@ -1355,6 +1355,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         score = self.decision_function(X)
         try:
             return self.loss_._score_to_proba(score)
+        except NotFittedError as e:
+            raise
         except AttributeError:
             raise AttributeError('loss=%r does not support predict_proba' %
                                  self.loss)
@@ -1378,6 +1380,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         try:
             for score in self.staged_decision_function(X):
                 yield self.loss_._score_to_proba(score)
+        except NotFittedError as e:
+            raise
         except AttributeError:
             raise AttributeError('loss=%r does not support predict_proba' %
                                  self.loss)
