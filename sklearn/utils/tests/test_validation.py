@@ -2,12 +2,12 @@
 
 from tempfile import NamedTemporaryFile
 import numpy as np
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_warns
 import scipy.sparse as sp
 from nose.tools import assert_raises, assert_true, assert_false, assert_equal
 from itertools import product
 
-from sklearn.utils import as_float_array, check_array
+from sklearn.utils import as_float_array, check_array, check_symmetric
 
 from sklearn.utils.estimator_checks import NotAnArray
 
@@ -206,3 +206,32 @@ def test_has_fit_parameter():
     assert_true(has_fit_parameter(RandomForestRegressor, "sample_weight"))
     assert_true(has_fit_parameter(SVR, "sample_weight"))
     assert_true(has_fit_parameter(SVR(), "sample_weight"))
+
+
+def test_check_symmetric():
+    arr_sym = np.array([[0, 1], [1, 2]])
+    arr_bad = np.ones(2)
+    arr_asym = np.array([[0, 2], [0, 2]])
+
+    test_arrays = {'dense': arr_asym,
+                   'csr': sp.csr_matrix(arr_asym),
+                   'csc': sp.csc_matrix(arr_asym),
+                   'coo': sp.coo_matrix(arr_asym),
+                   'lil': sp.lil_matrix(arr_asym),
+                   'bsr': sp.bsr_matrix(arr_asym)}
+
+    # check error for bad inputs
+    assert_raises(ValueError, check_symmetric, arr_bad)
+
+    # check that asymmetric arrays are properly symmetrized
+    for arr_format, arr in test_arrays.items():
+        # Check for warnings and errors
+        assert_warns(UserWarning, check_symmetric, arr)
+        assert_raises(ValueError, check_symmetric, arr, raise_exception=True)
+
+        output = check_symmetric(arr, raise_warning=False)
+        if sp.issparse(output):
+            assert_equal(output.format, arr_format)
+            assert_array_equal(output.toarray(), arr_sym)
+        else:
+            assert_array_equal(output, arr_sym)
