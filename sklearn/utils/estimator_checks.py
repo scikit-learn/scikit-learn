@@ -981,7 +981,8 @@ def multioutput_estimator_convert_y_2d(name, y):
     return y
 
 
-def check_non_transformer_estimators_n_iter(name, estimator, multi_output=False):
+def check_non_transformer_estimators_n_iter(name, estimator, 
+                                            multi_output=False):
     # Check if all iterative solvers, run for more than one iteratiom
 
     iris = load_iris()

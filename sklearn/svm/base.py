@@ -382,7 +382,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     def _validate_for_predict(self, X):
         if not hasattr(self, "support_"):
-            raise ValueError("this %s has not been fitted yet"
+            raise ValueError("This %s has not been fitted yet"
                              % type(self).__name__)
         X = check_array(X, accept_sparse='csr', dtype=np.float64, order="C")
         if self._sparse and not sp.isspmatrix(X):
