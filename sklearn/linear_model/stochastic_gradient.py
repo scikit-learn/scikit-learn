@@ -554,7 +554,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         """
         if class_weight is not None:
             warnings.warn("You are trying to set class_weight through the fit "
-                          "method, which will be deprecated in version "
+                          "method, which is deprecated and will be removed in"
                           "v0.17 of scikit-learn. Pass the class_weight into "
                           "the constructor instead.", DeprecationWarning)
         return self._fit(X, y, alpha=self.alpha, C=1.0,

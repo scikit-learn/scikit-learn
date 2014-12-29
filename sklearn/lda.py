@@ -398,7 +398,8 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
         else:
             store_covariance = self.store_covariance
         if tol != 1.0e-4:
-            warnings.warn("'tol' was moved to __init__() method.",
+            warnings.warn("'tol' was moved to __init__() method in version"
+                          " 0.16 and will be removed from fit() in 0.18",
                           DeprecationWarning)
             self.tol = tol
         X, y = check_X_y(X, y)

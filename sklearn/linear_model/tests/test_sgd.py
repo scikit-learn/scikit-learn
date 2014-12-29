@@ -603,9 +603,8 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
            This test should be removed after deprecating support for this"""
 
         clf = self.factory()
-        warning_message = ("You are trying to set class_weight through the "
-                           "fit "
-                           "method, which will be deprecated in version "
+        warning_message = ("You are trying to set class_weight through the fit "
+                           "method, which is deprecated and will be removed in"
                            "v0.17 of scikit-learn. Pass the class_weight into "
                            "the constructor instead.")
         assert_warns_message(DeprecationWarning,
