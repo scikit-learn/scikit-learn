@@ -29,6 +29,8 @@ from ..utils import as_float_array, check_array
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils.fixes import sparse_lsqr
+from ..utils.validation import (
+        NotFittedError, _is_fitted, check_is_fitted)
 
 
 ###
@@ -132,6 +134,8 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
         C : array, shape = (n_samples,)
             Returns predicted values.
         """
+        check_is_fitted(self, "coef_")
+
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         return safe_sparse_dot(X, self.coef_.T,
                                dense_output=True) + self.intercept_
@@ -189,6 +193,10 @@ class LinearClassifierMixin(ClassifierMixin):
             case, confidence score for self.classes_[1] where >0 means this
             class would be predicted.
         """
+        if not _is_fitted(self, 'coef_') or self.coef_ is None:
+            raise NotFittedError("This %(name)s instance is not fitted"
+                                 "yet"%{'name':type(self).__name__})
+
         X = check_array(X, accept_sparse='csr')
 
         n_features = self.coef_.shape[1]
@@ -258,8 +266,8 @@ class SparseCoefMixin(object):
         -------
         self: estimator
         """
-        if not hasattr(self, "coef_"):
-            raise ValueError("Estimator must be fitted before densifying.")
+        msg = "Estimator, %(name)s, must be fitted before densifying."
+        check_is_fitted(self, "coef_",  msg=msg)
         if sp.issparse(self.coef_):
             self.coef_ = self.coef_.toarray()
         return self
@@ -288,8 +296,8 @@ class SparseCoefMixin(object):
         -------
         self: estimator
         """
-        if not hasattr(self, "coef_"):
-            raise ValueError("Estimator must be fitted before sparsifying.")
+        msg = "Estimator, %(name)s, must be fitted before sparsifying."
+        check_is_fitted(self, "coef_",  msg=msg)
         self.coef_ = sp.csr_matrix(self.coef_)
         return self
 

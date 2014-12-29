@@ -31,6 +31,8 @@ from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
 from ..utils import deprecated
 from ..utils.fixes import frombuffer_empty
+from ..utils.validation import check_is_fitted
+
 
 __all__ = ['CountVectorizer',
            'ENGLISH_STOP_WORDS',
@@ -238,7 +240,7 @@ class VectorizerMixin(object):
             raise ValueError('%s is not a valid tokenization scheme/analyzer' %
                              self.analyzer)
 
-    def _check_vocabulary(self):
+    def _validate_vocabulary(self):
         vocabulary = self.vocabulary
         if vocabulary is not None:
             if not isinstance(vocabulary, Mapping):
@@ -264,6 +266,14 @@ class VectorizerMixin(object):
         else:
             self.fixed_vocabulary_ = False
 
+    def _check_vocabulary(self):
+        """Check if vocabulary is empty or missing (not fit-ed)"""
+        msg="%(name)s - Vocabulary wasn't fitted."
+        check_is_fitted(self, 'vocabulary_', msg=msg),
+        
+        if len(self.vocabulary_) == 0:
+            raise ValueError("Vocabulary is empty")
+ 
     @property
     @deprecated("The `fixed_vocabulary` attribute is deprecated and will be "
                 "removed in 0.18.  Please use `fixed_vocabulary_` instead.")
@@ -780,7 +790,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         # We intentionally don't call the transform method to make
         # fit_transform overridable without unwanted side effects in
         # TfidfVectorizer.
-        self._check_vocabulary()
+        self._validate_vocabulary()
         max_df = self.max_df
         min_df = self.min_df
         max_features = self.max_features
@@ -830,10 +840,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             Document-term matrix.
         """
         if not hasattr(self, 'vocabulary_'):
-            self._check_vocabulary()
-
-        if not hasattr(self, 'vocabulary_') or len(self.vocabulary_) == 0:
-            raise ValueError("Vocabulary wasn't fitted or is empty!")
+            self._validate_vocabulary()
+ 
+        self._check_vocabulary()
 
         # use the same matrix-building strategy as fit_transform
         _, X = self._count_vocab(raw_documents, fixed_vocab=True)
@@ -853,6 +862,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         X_inv : list of arrays, len = n_samples
             List of arrays of terms.
         """
+        self._check_vocabulary()
+
         if sp.issparse(X):
             # We need CSR format for fast row manipulations.
             X = X.tocsr()
@@ -871,8 +882,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     def get_feature_names(self):
         """Array mapping from feature integer indices to feature name"""
-        if not hasattr(self, 'vocabulary_') or len(self.vocabulary_) == 0:
-            raise ValueError("Vocabulary wasn't fitted or is empty!")
+        self._check_vocabulary()
 
         return [t for t, i in sorted(six.iteritems(self.vocabulary_),
                                      key=itemgetter(1))]
@@ -992,8 +1002,8 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             X.data += 1
 
         if self.use_idf:
-            if not hasattr(self, "_idf_diag"):
-                raise ValueError("idf vector not fitted")
+            check_is_fitted(self, '_idf_diag', 'idf vector is not fitted')
+
             expected_n_features = self._idf_diag.shape[0]
             if n_features != expected_n_features:
                 raise ValueError("Input has n_features=%d while the model"
@@ -1271,5 +1281,7 @@ class TfidfVectorizer(CountVectorizer):
         X : sparse matrix, [n_samples, n_features]
             Tf-idf-weighted document-term matrix.
         """
+        check_is_fitted(self, '_tfidf', 'The tfidf vector is not fitted')
+
         X = super(TfidfVectorizer, self).transform(raw_documents)
         return self._tfidf.transform(X, copy=False)

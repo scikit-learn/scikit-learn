@@ -14,6 +14,7 @@ from ..base import TransformerMixin, ClusterMixin, BaseEstimator
 from ..externals.six.moves import xrange
 from ..utils import check_array
 from ..utils.extmath import row_norms, safe_sparse_dot
+from ..utils.validation import check_is_fitted, _is_fitted
 from .hierarchical import AgglomerativeClustering
 
 
@@ -511,14 +512,11 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
             return self._fit(X)
 
     def _check_fit(self, X):
-        is_fitted = hasattr(self, 'subcluster_centers_')
-
-        # Called by partial_fit, before fitting.
-        has_partial_fit = hasattr(self, 'partial_fit_')
-
         # Should raise an error if one does not fit before predicting.
-        if not has_partial_fit and not is_fitted:
-            raise ValueError("Fit training data before predicting")
+        m = "%(name)s clusterer is not yet fitted with the training data"
+        check_is_fitted(self, ['subcluster_centers_', 'partial_fit_'], m, any)
+
+        is_fitted = _is_fitted(self, 'subcluster_centers_')
 
         if is_fitted and X.shape[1] != self.subcluster_centers_.shape[1]:
             raise ValueError(

@@ -18,6 +18,7 @@ from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import (check_array, check_random_state, check_X_y)
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
+from ..utils.validation import check_is_fitted
 from ..externals import six
 
 from .sgd_fast import plain_sgd, average_sgd
@@ -728,6 +729,8 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
             average=average)
 
     def _check_proba(self):
+        check_is_fitted(self, "t_")
+
         if self.loss not in ("log", "modified_huber"):
             raise AttributeError("probability estimates are not available for"
                                  " loss=%r" % self.loss)
@@ -990,6 +993,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         array, shape (n_samples,)
            Predicted target values per element in X.
         """
+        check_is_fitted(self, ["t_", "coef_", "intercept_"], all_or_any=all)
+
         X = check_array(X, accept_sparse='csr')
 
         scores = safe_sparse_dot(X, self.coef_.T,

@@ -15,6 +15,7 @@ from scipy import linalg
 from ..base import BaseEstimator
 from ..utils import check_random_state
 from ..utils.extmath import logsumexp, pinvh
+from ..utils.validation import check_is_fitted
 from .. import cluster
 
 from sklearn.externals.six.moves import zip
@@ -296,6 +297,8 @@ class GMM(BaseEstimator):
             Posterior probabilities of each mixture component for each
             observation
         """
+        check_is_fitted(self, 'means_')
+
         X = np.asarray(X)
         if X.ndim == 1:
             X = X[:, np.newaxis]
@@ -372,6 +375,8 @@ class GMM(BaseEstimator):
         X : array_like, shape (n_samples, n_features)
             List of samples
         """
+        check_is_fitted(self, 'means_')
+
         if random_state is None:
             random_state = self.random_state
         random_state = check_random_state(random_state)

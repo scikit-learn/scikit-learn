@@ -13,6 +13,7 @@ import numpy as np
 from .base import BaseEstimator, ClassifierMixin
 from .externals.six.moves import xrange
 from .utils import check_array, check_X_y
+from .utils.validation import check_is_fitted
 
 __all__ = ['QDA']
 
@@ -141,6 +142,8 @@ class QDA(BaseEstimator, ClassifierMixin):
         return self
 
     def _decision_function(self, X):
+        check_is_fitted(self, 'classes_')
+
         X = check_array(X)
         norm2 = []
         for i in range(len(self.classes_)):

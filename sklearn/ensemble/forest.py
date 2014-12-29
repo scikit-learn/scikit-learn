@@ -59,7 +59,7 @@ from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, check_array
-from ..utils.validation import DataConversionWarning
+from ..utils.validation import DataConversionWarning, check_is_fitted
 from .base import BaseEnsemble, _partition_estimators
 
 __all__ = ["RandomForestClassifier",
@@ -151,6 +151,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             For each datapoint x in X and for each tree in the forest,
             return the index of the leaf x ends up in.
         """
+        check_is_fitted(self, 'n_outputs_')
+
         X = check_array(X, dtype=DTYPE, accept_sparse="csr")
         results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                            backend="threading")(
@@ -292,6 +294,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         -------
         feature_importances_ : array, shape = [n_features]
         """
+        check_is_fitted(self, 'n_outputs_')
+
         if self.estimators_ is None or len(self.estimators_) == 0:
             raise ValueError("Estimator not fitted, "
                              "call `fit` before `feature_importances_`.")
@@ -408,6 +412,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes.
         """
+        check_is_fitted(self, 'n_outputs_')
+
         # ensure_2d=False because there are actually unit test checking we fail
         # for 1d.
         X = check_array(X, ensure_2d=False, accept_sparse="csr")
@@ -447,6 +453,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
+        check_is_fitted(self, 'n_outputs_')
+
         # Check data
         X = check_array(X, dtype=DTYPE, accept_sparse="csr")
 
@@ -559,6 +567,8 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted values.
         """
+        check_is_fitted(self, 'n_outputs_')
+
         # Check data
         X = check_array(X, dtype=DTYPE, accept_sparse="csr")
 

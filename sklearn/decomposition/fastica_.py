@@ -17,6 +17,7 @@ from ..externals import six
 from ..externals.six import moves
 from ..utils import check_array, as_float_array, check_random_state
 from ..utils.extmath import fast_dot
+from ..utils.validation import check_is_fitted
 
 __all__ = ['fastica', 'FastICA']
 
@@ -530,6 +531,8 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
+        check_is_fitted(self, 'mixing_')
+
         X = check_array(X, copy=copy)
         if self.whiten:
             X -= self.mean_
@@ -551,6 +554,8 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_features)
         """
+        check_is_fitted(self, 'mixing_')
+
         if copy:
             X = X.copy()
         X = fast_dot(X, self.mixing_.T)

@@ -27,8 +27,9 @@ from .preprocessing import label_binarize
 from .utils import check_X_y, check_array
 from .utils.extmath import safe_sparse_dot, logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
-from .externals import six
 from .utils.fixes import in1d
+from .utils.validation import check_is_fitted
+from .externals import six
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB']
 
@@ -332,6 +333,8 @@ class GaussianNB(BaseNB):
         return self
 
     def _joint_log_likelihood(self, X):
+        check_is_fitted(self, "classes_")
+
         X = check_array(X)
         joint_log_likelihood = []
         for i in range(np.size(self.classes_)):
@@ -604,6 +607,8 @@ class MultinomialNB(BaseDiscreteNB):
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
+        check_is_fitted(self, "classes_")
+
         X = check_array(X, accept_sparse='csr')
         return (safe_sparse_dot(X, self.feature_log_prob_.T)
                 + self.class_log_prior_)
@@ -703,7 +708,8 @@ class BernoulliNB(BaseDiscreteNB):
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
-
+        check_is_fitted(self, "classes_")
+        
         X = check_array(X, accept_sparse='csr')
 
         if self.binarize is not None:

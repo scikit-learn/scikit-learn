@@ -61,7 +61,7 @@ from ..base import BaseEstimator, ClassifierMixin
 from ..metrics.pairwise import rbf_kernel
 from ..utils.graph import graph_laplacian
 from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_X_y
+from ..utils.validation import check_X_y, check_is_fitted
 from ..externals import six
 from ..neighbors.unsupervised import NearestNeighbors
 
@@ -168,6 +168,8 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
             Normalized probability distributions across
             class labels
         """
+        check_is_fitted(self, 'X_')
+
         if sparse.isspmatrix(X):
             X_2d = X
         else:
