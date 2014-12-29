@@ -408,10 +408,11 @@ def has_fit_parameter(estimator, parameter):
 
 def check_symmetric(array, tol=1E-10, raise_warning=True,
                     raise_exception=False):
-    """
-    Check that the array is symmetric two-dimensional array or sparse matrix,
-    returning a symmetrized version and optionally raising a warning or
-    exception if the input is not symmetric.
+    """Make sure that array is 2D, square and symmetric.
+
+    If the array is not symmetric, then a symmetrized version is returned.
+    Optionally, a warning or exception is raised if the matrix is not
+    symmetric.
 
     Parameters
     ----------
@@ -433,7 +434,8 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
         summed and zeros are eliminated.
     """
     if (array.ndim != 2) or (array.shape[0] != array.shape[1]):
-        raise ValueError("array must be 2-dimensional and square")
+        raise ValueError("array must be 2-dimensional and square. "
+                         "shape = {0}".format(array.shape))
 
     if sp.issparse(array):
         diff = (array - array.T).data
