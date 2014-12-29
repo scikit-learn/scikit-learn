@@ -1161,7 +1161,7 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
     Parameters
     ----------
     dim: integer, optional (default=1)
-        The size of the random  (matrix to generate.
+        The size of the random matrix to generate.
 
     alpha: float between 0 and 1, optional (default=0.95)
         The probability that a coefficient is non zero (see notes).
@@ -1172,9 +1172,20 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    largest_coef : float between 0 and 1, optional (default=0.9)
+        The value of the largest coefficient.
+
+    smallest_coef : float between 0 and 1, optional (default=0.1)
+        The value of the smallest coefficient.
+
+    norm_diag : boolean, optional (default=False)
+        Whether to normalize the output matrix to make the leading diagonal
+        elements all 1
+
     Returns
     -------
-    prec: array of shape = [dim, dim]
+    prec : sparse matrix of shape (dim, dim)
+        The generated matrix.
 
     Notes
     -----
@@ -1204,10 +1215,12 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
     prec = np.dot(chol.T, chol)
 
     if norm_diag:
-        d = np.diag(prec)
+        # Form the diagonal vector into a row matrix
+        d = np.diag(prec).reshape(1, prec.shape[0])
         d = 1. / np.sqrt(d)
-        prec *= d
-        prec *= d[:, np.newaxis]
+
+        prec *= d 
+        prec *= d.T
 
     return prec
 

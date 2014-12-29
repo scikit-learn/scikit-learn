@@ -170,6 +170,9 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     positive : bool, default False
         If set to True, forces coefficients to be positive.
 
+    return_n_iter : bool
+        whether to return the number of iterations or not.
+
     Returns
     -------
     alphas : array, shape (n_alphas,)
@@ -1186,6 +1189,17 @@ class LassoCV(LinearModelCV, RegressorMixin):
         a random feature to update. Useful only when selection is set to
         'random'.
 
+    fit_intercept : boolean, default True
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    normalize : boolean, optional, default False
+        If ``True``, the regressors X will be normalized before regression.
+
+    copy_X : boolean, optional, default True
+        If ``True``, X will be copied; else, it may be overwritten.
+
     Attributes
     ----------
     alpha_ : float
@@ -1311,6 +1325,17 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when selection is set to
         'random'.
+
+    fit_intercept : boolean
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    normalize : boolean, optional, default False
+        If ``True``, the regressors X will be normalized before regression.
+
+    copy_X : boolean, optional, default True
+        If ``True``, X will be copied; else, it may be overwritten.
 
     Attributes
     ----------

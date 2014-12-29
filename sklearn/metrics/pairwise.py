@@ -242,7 +242,7 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
         can be changed for fine-tuning. The larger the number, the larger the
         memory usage.
 
-    metric : string or callable
+    metric : string or callable, default 'euclidean'
         metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 
@@ -270,6 +270,9 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
 
     metric_kwargs : dict, optional
         Keyword arguments to pass to specified metric function.
+
+    axis : int, optional, default 1
+        Axis along which the argmin and distances are to be computed.
 
     Returns
     -------
@@ -355,7 +358,11 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
 
     Parameters
     ==========
-    X, Y : array-like
+    X : array-like
+        Arrays containing points. Respective shapes (n_samples1, n_features)
+        and (n_samples2, n_features)
+
+    Y : array-like
         Arrays containing points. Respective shapes (n_samples1, n_features)
         and (n_samples2, n_features)
 
@@ -394,6 +401,9 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
 
     metric_kwargs : dict
         keyword arguments to pass to specified metric function.
+
+    axis : int, optional, default 1
+        Axis along which the argmin and distances are to be computed.
 
     Returns
     =======
@@ -597,7 +607,11 @@ def paired_distances(X, Y, metric="euclidean", **kwds):
 
     Parameters
     ----------
-    X, Y : ndarray (n_samples, n_features)
+    X : ndarray (n_samples, n_features)
+        Array 1 for distance computation.
+
+    Y : ndarray (n_samples, n_features)
+        Array 2 for distance computation.
 
     metric : string or callable
         The metric to use when calculating distance between instances in a
@@ -667,11 +681,13 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
 
     Parameters
     ----------
-    X : array of shape (n_samples_1, n_features)
+    X : ndarray of shape (n_samples_1, n_features)
 
-    Y : array of shape (n_samples_2, n_features)
+    Y : ndarray of shape (n_samples_2, n_features)
 
-    degree : int
+    coef0 : int, default 1
+
+    degree : int, default 3
 
     Returns
     -------
@@ -696,11 +712,11 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
 
     Parameters
     ----------
-    X : array of shape (n_samples_1, n_features)
+    X : ndarray of shape (n_samples_1, n_features)
 
-    Y : array of shape (n_samples_2, n_features)
+    Y : ndarray of shape (n_samples_2, n_features)
 
-    degree : int
+    coef0 : int, default 1
 
     Returns
     -------

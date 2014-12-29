@@ -717,6 +717,12 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         hinge loss, 'lr' is the Logistic loss and 'ei' is the epsilon-insensitive
         loss.
 
+    epsilon : float, optional (default=0.1)
+        Epsilon parameter in the epsilon-insensitive loss function. Note
+        that the value of this parameter depends on the scale of the target
+        variable y. If unsure, set epsilon=0.
+
+
     Returns
     -------
     coef_ : ndarray, shape (n_features, n_features + 1)

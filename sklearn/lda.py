@@ -158,6 +158,12 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
     n_components : int, optional
         Number of components (< n_classes - 1) for dimensionality reduction.
 
+    store_covariance : bool, optional
+        Additionally compute class covariance matrix (default False).
+
+    tol : float, optional
+        Threshold used for rank estimation in SVD solver.
+
     Attributes
     ----------
     coef_ : array, shape (n_features,) or (n_classes, n_features)
@@ -391,6 +397,12 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
 
         y : array, shape (n_samples,)
             Target values.
+
+        store_covariance : bool, optional
+            Additionally compute class covariance matrix (default False).
+
+        tol : float, optional
+            Threshold used for rank estimation.
         """
         if store_covariance:
             warnings.warn("'store_covariance' was moved to the __init__()"

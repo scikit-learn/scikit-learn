@@ -99,6 +99,15 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
        To speed up the algorithm, accept only those bins with at least
        min_bin_freq points as seeds. If not defined, set to 1.
 
+    cluster_all : boolean, default True
+        If true, then all points are clustered, even those orphans that are
+        not within any kernel. Orphans are assigned to the nearest kernel.
+        If false, then orphans are given cluster label -1.
+
+    max_iterations : int, default 300
+        Maximum number of iterations, per seed point before the clustering
+        operation terminates (for that seed point), if has not converged yet.
+
     Returns
     -------
 

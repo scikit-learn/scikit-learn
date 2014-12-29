@@ -100,11 +100,14 @@ class _CFNode(object):
         Threshold needed for a new subcluster to enter a CFSubcluster.
 
     branching_factor : int
-       Maximum number of CF subclusters in each node.
+        Maximum number of CF subclusters in each node.
 
     is_leaf : bool
         We need to know if the CFNode is a leaf or not, in order to
         retrieve the final subclusters.
+
+    n_features : int
+        The number of features.
 
     Attributes
     ----------
@@ -248,10 +251,6 @@ class _CFSubcluster(object):
     linear_sum : ndarray, shape (n_features,), optional
         Sample. This is kept optional to allow initialization of empty
         subclusters.
-
-    index : int, optional
-        Index of the array in the original data. This enables to
-        retrieve the final subclusters.
 
     Attributes
     ----------
