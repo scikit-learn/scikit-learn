@@ -11,7 +11,7 @@ import warnings
 
 from ..base import BaseEstimator
 from ..metrics import euclidean_distances
-from ..utils import check_random_state, check_array
+from ..utils import check_random_state, check_array, check_symmetric
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..isotonic import IsotonicRegression
@@ -65,14 +65,10 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
         Number of iterations run.
 
     """
+    similarities = check_symmetric(similarities, raise_exception=True)
+
     n_samples = similarities.shape[0]
     random_state = check_random_state(random_state)
-
-    if similarities.shape[0] != similarities.shape[1]:
-        raise ValueError("similarities must be a square array (shape=%d)" %
-                         n_samples)
-    if not np.allclose(similarities, similarities.T):
-        raise ValueError("similarities must be symmetric")
 
     sim_flat = ((1 - np.tri(n_samples)) * similarities).ravel()
     sim_flat_w = sim_flat[sim_flat != 0]

@@ -13,8 +13,7 @@ from scipy.sparse.linalg import lobpcg
 
 from ..base import BaseEstimator
 from ..externals import six
-from ..utils import check_random_state
-from ..utils.validation import check_array
+from ..utils import check_random_state, check_array, check_symmetric
 from ..utils.graph import graph_laplacian
 from ..utils.sparsetools import connected_components
 from ..utils.arpack import eigsh
@@ -184,6 +183,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
       Andrew V. Knyazev
       http://dx.doi.org/10.1137%2FS1064827500366124
     """
+    adjacency = check_symmetric(adjacency)
 
     try:
         from pyamg import smoothed_aggregation_solver
@@ -205,15 +205,6 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     # Whether to drop the first eigenvector
     if drop_first:
         n_components = n_components + 1
-    # Check that the matrices given is symmetric
-    if ((not sparse.isspmatrix(adjacency) and
-         not np.all((adjacency - adjacency.T) < 1e-10)) or
-        (sparse.isspmatrix(adjacency) and
-         not np.all((adjacency - adjacency.T).data < 1e-10))):
-        warnings.warn("Graph adjacency matrix should be symmetric. "
-                      "Converted to be symmetric by average with its "
-                      "transpose.")
-        adjacency = .5 * (adjacency + adjacency.T)
 
     if not _graph_is_connected(adjacency):
         warnings.warn("Graph is not fully connected, spectral embedding"
