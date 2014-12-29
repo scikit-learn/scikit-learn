@@ -127,6 +127,15 @@ class Pipeline(BaseEstimator):
     def fit(self, X, y=None, **fit_params):
         """Fit all the transforms one after the other and transform the
         data, then fit the transformed data using the final estimator.
+
+        Parameters
+        ----------
+        X : iterable
+            Training data. Must fulfil input requirements of first step of the
+            pipeline.
+        y : iterable, default=None
+            Training targets. Must fulfil label requirements for all steps of
+            the pipeline.
         """
         Xt, fit_params = self._pre_transform(X, y, **fit_params)
         self.steps[-1][-1].fit(Xt, y, **fit_params)
@@ -135,7 +144,18 @@ class Pipeline(BaseEstimator):
     def fit_transform(self, X, y=None, **fit_params):
         """Fit all the transforms one after the other and transform the
         data, then use fit_transform on transformed data using the final
-        estimator."""
+        estimator.
+
+        Parameters
+        ----------
+        X : iterable
+            Training data. Must fulfil input requirements of first step of the
+            pipeline.
+
+        y : iterable, default=None
+            Training targets. Must fulfil label requirements for all steps of
+            the pipeline.
+        """
         Xt, fit_params = self._pre_transform(X, y, **fit_params)
         if hasattr(self.steps[-1][-1], 'fit_transform'):
             return self.steps[-1][-1].fit_transform(Xt, y, **fit_params)
@@ -146,7 +166,14 @@ class Pipeline(BaseEstimator):
     def predict(self, X):
         """Applies transforms to the data, and the predict method of the
         final estimator. Valid only if the final estimator implements
-        predict."""
+        predict.
+
+        Parameters
+        ----------
+        X : iterable
+            Data to predict on. Must fulfil input requirements of first step of
+            the pipeline.
+        """
         Xt = X
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
@@ -156,7 +183,14 @@ class Pipeline(BaseEstimator):
     def predict_proba(self, X):
         """Applies transforms to the data, and the predict_proba method of the
         final estimator. Valid only if the final estimator implements
-        predict_proba."""
+        predict_proba.
+
+        Parameters
+        ----------
+        X : iterable
+            Data to predict on. Must fulfil input requirements of first step of
+            the pipeline.
+        """
         Xt = X
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
@@ -166,7 +200,14 @@ class Pipeline(BaseEstimator):
     def decision_function(self, X):
         """Applies transforms to the data, and the decision_function method of
         the final estimator. Valid only if the final estimator implements
-        decision_function."""
+        decision_function.
+
+        Parameters
+        ----------
+        X : iterable
+            Data to predict on. Must fulfil input requirements of first step of
+            the pipeline.
+        """
         Xt = X
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
@@ -174,6 +215,16 @@ class Pipeline(BaseEstimator):
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict_log_proba(self, X):
+        """Applies transforms to the data, and the predict_log_proba method of
+        the final estimator. Valid only if the final estimator implements
+        predict_log_proba.
+
+        Parameters
+        ----------
+        X : iterable
+            Data to predict on. Must fulfil input requirements of first step of
+            the pipeline.
+        """
         Xt = X
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
@@ -183,7 +234,14 @@ class Pipeline(BaseEstimator):
     def transform(self, X):
         """Applies transforms to the data, and the transform method of the
         final estimator. Valid only if the final estimator implements
-        transform."""
+        transform.
+
+        Parameters
+        ----------
+        X : iterable
+            Data to predict on. Must fulfil input requirements of first step of
+            the pipeline.
+        """
         Xt = X
         for name, transform in self.steps:
             Xt = transform.transform(Xt)
@@ -191,6 +249,17 @@ class Pipeline(BaseEstimator):
 
     @if_delegate_has_method(delegate='_final_estimator')
     def inverse_transform(self, X):
+        """Applies inverse transform to the data.
+        Starts with the last step of the pipeline and applies ``inverse_transform`` in
+        inverse order of the pipeline steps.
+        Valid only if all steps of the pipeline implement inverse_transform.
+
+        Parameters
+        ----------
+        X : iterable
+            Data to inverse transform. Must fulfil output requirements of the
+            last step of the pipeline.
+        """
         if X.ndim == 1:
             X = X[None, :]
         Xt = X
@@ -202,7 +271,18 @@ class Pipeline(BaseEstimator):
     def score(self, X, y=None):
         """Applies transforms to the data, and the score method of the
         final estimator. Valid only if the final estimator implements
-        score."""
+        score.
+
+        Parameters
+        ----------
+        X : iterable
+            Training data. Must fulfil input requirements of first step of the
+            pipeline.
+
+        y : iterable, default=None
+            Training targets. Must fulfil label requirements for all steps of
+            the pipeline.
+        """
         Xt = X
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
