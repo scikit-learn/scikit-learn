@@ -416,7 +416,8 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
     Parameters
     ----------
     array : nd-array or sparse matrix
-        Input object to check / convert
+        Input object to check / convert. Must be two-dimensional and square,
+        otherwise a ValueError will be raised.
     tol : float
         Absolute tolerance for equivalence of arrays. Default = 1E-10.
     raise_warning : boolean (default=True)
@@ -426,13 +427,13 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
 
     Returns
     -------
-    array_sym : object
+    array_sym : ndarray or sparse matrix
         Symmetrized version of the input array, i.e. the average of array
         and array.transpose(). If sparse, then duplicate entries are first
         summed and zeros are eliminated.
     """
     if (array.ndim != 2) or (array.shape[0] != array.shape[1]):
-        raise ValueError("array must be 2-dimensional and symmetric")
+        raise ValueError("array must be 2-dimensional and square")
 
     if sp.issparse(array):
         diff = (array - array.T).data
