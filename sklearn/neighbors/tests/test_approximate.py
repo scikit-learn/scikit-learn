@@ -4,9 +4,10 @@ Locality Sensitive Hashing Forest module
 (sklearn.neighbors.LSHForest).
 """
 
-# Author: Maheshakya Wijewardena
+# Author: Maheshakya Wijewardena, Joel Nothman
 
 import numpy as np
+import scipy.sparse as sp
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
@@ -381,6 +382,30 @@ def test_graphs():
         assert_equal(kneighbors_graph.shape[1], n_samples)
         assert_equal(radius_neighbors_graph.shape[0], n_samples)
         assert_equal(radius_neighbors_graph.shape[1], n_samples)
+
+
+def test_sparse_input():
+    # note: Fixed random state in sp.rand is not supported in older scipy.
+    #       The test should succeed regardless.
+    X1 = sp.rand(50, 100)
+    X2 = sp.rand(10, 100)
+    forest_sparse = LSHForest(radius=1, random_state=0).fit(X1)
+    forest_dense = LSHForest(radius=1, random_state=0).fit(X1.A)
+
+    d_sparse, i_sparse = forest_sparse.kneighbors(X2, return_distance=True)
+    d_dense, i_dense = forest_dense.kneighbors(X2.A, return_distance=True)
+    assert_array_equal(d_sparse, d_dense)
+    assert_array_equal(i_sparse, i_dense)
+
+    d_sparse, i_sparse = forest_sparse.radius_neighbors(X2,
+                                                        return_distance=True)
+    d_dense, i_dense = forest_dense.radius_neighbors(X2.A,
+                                                     return_distance=True)
+    assert_equal(d_sparse.shape, d_dense.shape)
+    for a, b in zip(d_sparse, d_dense):
+        assert_array_equal(a, b)
+    for a, b in zip(i_sparse, i_dense):
+        assert_array_equal(a, b)
 
 
 if __name__ == "__main__":

@@ -1,8 +1,12 @@
 """Approximate nearest neighbor search"""
 # Author: Maheshakya Wijewardena <maheshakya.10@cse.mrt.ac.lk>
+#         Joel Nothman <joel.nothman@gmail.com>
 
 import numpy as np
 import warnings
+
+from scipy import sparse
+
 from .base import KNeighborsMixin, RadiusNeighborsMixin
 from ..base import BaseEstimator
 from ..utils.validation import check_array
@@ -17,42 +21,51 @@ HASH_DTYPE = '>u4'
 MAX_HASH_SIZE = np.dtype(HASH_DTYPE).itemsize * 8
 
 
-def _find_matching_indices(sorted_array, item, left_mask, right_mask):
+def _find_matching_indices(tree, bin_X, left_mask, right_mask):
     """Finds indices in sorted array of integers.
 
     Most significant h bits in the binary representations of the
     integers are matched with the items' most significant h bits.
     """
-    left_index = np.searchsorted(sorted_array, item & left_mask)
-    right_index = np.searchsorted(sorted_array, item | right_mask,
+    left_index = np.searchsorted(tree, bin_X & left_mask)
+    right_index = np.searchsorted(tree, bin_X | right_mask,
                                   side='right')
-    return np.arange(left_index, right_index)
+    return left_index, right_index
 
 
-def _find_longest_prefix_match(bit_string_array, query, hash_size,
+def _find_longest_prefix_match(tree, bin_X, hash_size,
                                left_masks, right_masks):
-    """Private function to find the longest prefix match for query.
+    """Find the longest prefix match in tree for each query in bin_X
 
     Most significant bits are considered as the prefix.
     """
-    hi = hash_size
-    lo = 0
+    hi = np.empty_like(bin_X, dtype=np.intp)
+    hi.fill(hash_size)
+    lo = np.zeros_like(bin_X, dtype=np.intp)
+    res = np.empty_like(bin_X, dtype=np.intp)
 
-    if _find_matching_indices(bit_string_array, query, left_masks[hi],
-                              right_masks[hi]).shape[0] > 0:
-        return hi
+    left_idx, right_idx = _find_matching_indices(tree, bin_X,
+                                                 left_masks[hi],
+                                                 right_masks[hi])
+    found = right_idx > left_idx
+    res[found] = lo[found] = hash_size
 
-    while lo < hi:
-        mid = (lo+hi) // 2
+    r = np.arange(bin_X.shape[0])
+    kept = r[lo < hi]  # indices remaining in bin_X mask
+    while kept.shape[0]:
+        mid = (lo.take(kept) + hi.take(kept)) // 2
 
-        k = _find_matching_indices(bit_string_array, query,
-                                   left_masks[mid],
-                                   right_masks[mid]).shape[0]
-        if k > 0:
-            lo = mid + 1
-            res = mid
-        else:
-            hi = mid
+        left_idx, right_idx = _find_matching_indices(tree,
+                                                     bin_X.take(kept),
+                                                     left_masks[mid],
+                                                     right_masks[mid])
+        found = right_idx > left_idx
+        mid_found = mid[found]
+        lo[kept[found]] = mid_found + 1
+        res[kept[found]] = mid_found
+        hi[kept[~found]] = mid[~found]
+
+        kept = r[lo < hi]
 
     return res
 
@@ -165,15 +178,15 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
     Examples
     --------
-      >>> import numpy as np
       >>> from sklearn.neighbors import LSHForest
 
       >>> X_train = [[5, 5, 2], [21, 5, 5], [1, 1, 1], [8, 9, 1], [6, 10, 2]]
       >>> X_test = [[9, 1, 6], [3, 1, 10], [7, 10, 3]]
       >>> lshf = LSHForest()
-      >>> lshf.fit(X_train)
-      LSHForest(min_hash_match=4, n_candidates=50, n_estimators=10, n_neighbors=5,
-           radius=1.0, radius_cutoff_ratio=0.9, random_state=None)
+      >>> lshf.fit(X_train)  # doctest: +NORMALIZE_WHITESPACE
+      LSHForest(min_hash_match=4, n_candidates=50, n_estimators=10,
+                n_neighbors=5, radius=1.0, radius_cutoff_ratio=0.9,
+                random_state=None)
       >>> distances, indices = lshf.kneighbors(X_test, n_neighbors=2)
       >>> distances                                        # doctest: +ELLIPSIS
       array([[ 0.069...,  0.149...],
@@ -204,6 +217,10 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         Returns argsort of distances in the candidates
         array and sorted distances.
         """
+        if candidates.shape == (0,):
+            # needed since _fit_X[np.array([])] doesn't work if _fit_X sparse
+            return np.empty(0, dtype=np.int), np.empty(0, dtype=float)
+
         distances = pairwise_distances(query, self._fit_X[candidates],
                                        metric='cosine')[0]
         distance_positions = np.argsort(distances)
@@ -226,23 +243,29 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         distances.
         """
         index_size = self._fit_X.shape[0]
-        candidates = []
+        # Number of candidates considered including duplicates
+        # XXX: not sure whether this is being calculated correctly wrt
+        #      duplicates from different iterations through a single tree
+        n_candidates = 0
+        candidate_set = set()
         min_candidates = self.n_candidates * self.n_estimators
-        while max_depth > self.min_hash_match and (len(candidates)
-                                                   < min_candidates or
-                                                   len(set(candidates))
-                                                   < n_neighbors):
+        while (max_depth > self.min_hash_match and
+               (n_candidates < min_candidates or
+                len(candidate_set) < n_neighbors)):
 
+            left_mask = self._left_mask[max_depth]
+            right_mask = self._right_mask[max_depth]
             for i in range(self.n_estimators):
-                candidates.extend(
-                    self.original_indices_[i][_find_matching_indices(
-                        self.trees_[i],
-                        bin_queries[i],
-                        self._left_mask[max_depth],
-                        self._right_mask[max_depth])].tolist())
-            max_depth = max_depth - 1
+                start, stop = _find_matching_indices(self.trees_[i],
+                                                     bin_queries[i],
+                                                     left_mask, right_mask)
+                n_candidates += stop - start
+                candidate_set.update(
+                    self.original_indices_[i][start:stop].tolist())
+            max_depth -= 1
 
-        candidates = np.unique(candidates)
+        candidates = np.fromiter(candidate_set, count=len(candidate_set),
+                                 dtype=np.intp)
         # For insufficient candidates, candidates are filled.
         # Candidates are filled from unselected indices uniformly.
         if candidates.shape[0] < n_neighbors:
@@ -274,16 +297,17 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         total_neighbors = np.array([], dtype=int)
         total_distances = np.array([], dtype=float)
 
-        while max_depth > self.min_hash_match and (ratio_within_radius
-                                                   > threshold):
+        while (max_depth > self.min_hash_match and
+               ratio_within_radius > threshold):
+            left_mask = self._left_mask[max_depth]
+            right_mask = self._right_mask[max_depth]
             candidates = []
             for i in range(self.n_estimators):
+                start, stop = _find_matching_indices(self.trees_[i],
+                                                     bin_queries[i],
+                                                     left_mask, right_mask)
                 candidates.extend(
-                    self.original_indices_[i][_find_matching_indices(
-                        self.trees_[i],
-                        bin_queries[i],
-                        self._left_mask[max_depth],
-                        self._right_mask[max_depth])].tolist())
+                    self.original_indices_[i][start:stop].tolist())
             candidates = np.setdiff1d(candidates, total_candidates)
             total_candidates = np.append(total_candidates, candidates)
             ranks, distances = self._compute_distances(query, candidates)
@@ -309,7 +333,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
         Parameters
         ----------
-        X : array_like, shape (n_samples, n_features)
+        X : array_like or sparse (CSR) matrix, shape (n_samples, n_features)
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
 
@@ -319,7 +343,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
             Returns self.
         """
 
-        self._fit_X = check_array(X)
+        self._fit_X = check_array(X, accept_sparse='csr')
 
         # Creates a g(p,x) for each tree
         self.hash_functions_ = []
@@ -347,24 +371,20 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
         return self
 
-    def _query(self, query):
+    def _query(self, X):
         """Performs descending phase to find maximum depth."""
-        bin_queries = []
-        query = query.reshape((1, query.shape[0]))
+        # Calculate hashes of shape (n_samples, n_estimators, [hash_size])
+        bin_queries = np.asarray([hasher.transform(X)[:, 0]
+                                  for hasher in self.hash_functions_])
+        bin_queries = np.rollaxis(bin_queries, 1)
 
         # descend phase
-        max_depth = 0
-        for i in range(self.n_estimators):
-            bin_query = self.hash_functions_[i].transform(query)[0][0]
-            k = _find_longest_prefix_match(self.trees_[i], bin_query,
-                                           MAX_HASH_SIZE,
-                                           self._left_mask,
-                                           self._right_mask)
-            if k > max_depth:
-                max_depth = k
-            bin_queries.append(bin_query)
+        depths = [_find_longest_prefix_match(tree, tree_queries, MAX_HASH_SIZE,
+                                             self._left_mask, self._right_mask)
+                  for tree, tree_queries in zip(self.trees_,
+                                                np.rollaxis(bin_queries, 1))]
 
-        return bin_queries, query, max_depth
+        return bin_queries, np.max(depths, axis=0)
 
     def kneighbors(self, X, n_neighbors=None, return_distance=True):
         """
@@ -372,7 +392,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
         Parameters
         ----------
-        X : array_like, shape (n_samples, n_features)
+        X : array_like or sparse (CSR) matrix, shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single query.
 
@@ -399,13 +419,13 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
 
-        X = check_array(X)
+        X = check_array(X, accept_sparse='csr')
 
         neighbors, distances = [], []
+        bin_queries, max_depth = self._query(X)
         for i in range(X.shape[0]):
-            bin_queries, query, max_depth = self._query(X[i])
-            neighs, dists = self._get_candidates(query, max_depth,
-                                                 bin_queries,
+            neighs, dists = self._get_candidates(X[i], max_depth[i],
+                                                 bin_queries[i],
                                                  n_neighbors)
             neighbors.append(neighs)
             distances.append(dists)
@@ -421,7 +441,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
         Parameters
         ----------
-        X : array_like, shape (n_samples, n_features)
+        X : array_like or sparse (CSR) matrix, shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single query.
 
@@ -448,13 +468,13 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         if radius is None:
             radius = self.radius
 
-        X = check_array(X)
+        X = check_array(X, accept_sparse='csr')
 
         neighbors, distances = [], []
+        bin_queries, max_depth = self._query(X)
         for i in range(X.shape[0]):
-            bin_queries, query, max_depth = self._query(X[i])
-            neighs, dists = self._get_radius_neighbors(query, max_depth,
-                                                       bin_queries, radius)
+            neighs, dists = self._get_radius_neighbors(X[i], max_depth[i],
+                                                       bin_queries[i], radius)
             neighbors.append(neighs)
             distances.append(dists)
 
@@ -471,10 +491,10 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
         Parameters
         ----------
-        X : array_like, shape (n_samples, n_features)
+        X : array_like or sparse (CSR) matrix, shape (n_samples, n_features)
             New data point to be inserted into the LSH Forest.
         """
-        X = check_array(X)
+        X = check_array(X, accept_sparse='csr')
         if not hasattr(self, 'hash_functions_'):
             return self.fit(X)
 
@@ -499,6 +519,9 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
                                                             n_samples))
 
         # adds the entry into the input_array.
-        self._fit_X = np.row_stack((self._fit_X, X))
+        if sparse.issparse(X) or sparse.issparse(self._fit_X):
+            self._fit_X = sparse.vstack((self._fit_X, X))
+        else:
+            self._fit_X = np.row_stack((self._fit_X, X))
 
         return self
