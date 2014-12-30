@@ -178,6 +178,15 @@ Documentation improvements
 
 Bug fixes
 .........
+    - Metaestimators now support ducktyping for the presence of ``decision_function``,
+      ``predict_proba`` and other methods. This fixes behavior of
+      :class:`grid_search.GridSearchCV`,
+      :class:`grid_search.RandomizedSearchCV`, :class:`pipeline.Pipeline`,
+      :class:`feature_selection.RFE`, :class:`feature_selection.RFECV` when nested.
+      By `Joel Nothman`_
+
+    - The ``scoring`` attribute of grid-search and cross-validation methods is no longer
+     ignored when a :class:`grid_search.GridSearchCV` is given as a base estimator. 
 
     - The function :func:`hierarchical.ward_tree` now returns the children in
       the same order for both the structured and unstructured versions. By
