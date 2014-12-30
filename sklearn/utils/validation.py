@@ -494,7 +494,7 @@ def _is_fitted(estimator, attributes, all_or_any=all):
     Example
     -------
     >>> from sklearn.svm import SVC
-    >>> _is_fitted(SVC(), "coef_")
+    >>> _is_fitted(SVC(), "support_")
     False
     """
     if not isinstance(estimator, BaseEstimator):
