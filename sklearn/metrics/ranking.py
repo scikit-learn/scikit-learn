@@ -15,12 +15,14 @@ the lower the better
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Noel Dawe <noel@dawe.me>
+#          Borja Rivier <borja.rivier@gmail.com>
 # License: BSD 3 clause
 
 from __future__ import division
 
 import warnings
 import numpy as np
+import scipy as sp
 from scipy.sparse import csr_matrix
 
 from ..preprocessing import LabelBinarizer
@@ -626,3 +628,202 @@ def coverage_error(y_true, y_score, sample_weight=None):
     coverage = coverage.filled(0)
 
     return np.average(coverage, weights=sample_weight)
+
+
+def _incomplete_beta_function(x, alpha, beta):
+    """Incomplete beta function
+    
+    Compute the following incomplete beta integral:
+    integral(t**(a-1) (1-t)**(b-1), t=0..x)
+    
+    Parameters
+    ----------
+    x : float in [0, 1]
+        Upper bound of the integral
+    
+    alpha : float in [0, +inf[
+        Parameter a in the formula
+    
+    beta : float in [0, +inf[
+        Parameter b in the formula
+    
+    Returns
+    -------
+    Incomplete beta function : float
+    
+    """
+    
+    if x > 1 or x < 0:
+        raise ValueError("Argument x should be between 0 and 1 ({0} provided)"\
+                        .format(x))
+    
+    if alpha < 0:
+        raise ValueError("Argument alpha should pe positive ({0} provided)"\
+                        .format(alpha))
+    
+    if beta < 0:
+        raise ValueError("Argument beta should pe positive ({0} provided)"\
+                        .format(beta))
+    
+    return sp.special.beta(alpha, beta) * sp.special.betainc(alpha, beta, x)
+
+
+def h_measure_score(y_true, y_score, pos_label=None, alpha=None, beta=None):
+    """Compute H-Measure from prediction scores
+
+    Computes the H-Measure from prediction scores in a binary classification
+    problem [1]. This implementations defines the relative severity of false
+    positives and false negatives using a beta distribution of parameters
+    alpha and beta.
+    More information can be found at http://www.hmeasure.net/.
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+        True targets of binary classification
+
+    y_score : array, shape = [n_samples]
+        Estimated probabilities or decision function
+
+    pos_label : int, optional (default=None)
+        The label of the positive class
+        
+    alpha : float in [0, +inf[, optional (default=None)
+        Parameter alpha in beta distribution. If None, value (pi_1 + 1) will
+        be used, where pi_1 is the proportion (in [0,1]) of the positive class
+        in y_true [2]
+    
+    beta : float in [0, +inf[, optional (default=None)
+        Parameter beta in beta distribution. If None, value (pi_0 + 1) will
+        be used, where pi_0 is the proportion (in [0,1]) of the negative class
+        in y_true [2]
+
+    Returns
+    -------
+    H-Measure : float in [0,1]
+
+    References
+    ----------
+    .. [1] `D. J. Hand, "Measuring classifier performance: a coherent alternative\
+        to the area under the ROC curve", Machine Learning, 77:103-123, 2009
+        <http://engr.case.edu/ray_soumya/mlrg/measuring_performance_hand.mlj09.\
+        pdf>`_
+        
+    .. [2] `D. J. Hand and C. Anagnostopoulos, "A better Beta for the H measure of
+        classification performance", arXiv preprint
+        <http://arxiv.org/pdf/1202.2564v2.pdf>`_
+
+    See also
+    --------
+    roc_curve : Compute Receiver operating characteristic (ROC)
+    
+    roc_auc_score : Area under the ROC curve
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import h_measure_score
+    >>> y_true = np.array([0, 0, 1, 1])
+    >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> h_measure_score(y_true, y_scores)
+    0.3413064705639679
+
+    """
+    
+    # ensure binary classification if pos_label is not specified
+    classes = np.unique(y_true)
+    if (pos_label is None and
+        not (np.all(classes == [0, 1]) or
+             np.all(classes == [-1, 1]) or
+             np.all(classes == [0]) or
+             np.all(classes == [-1]) or
+             np.all(classes == [1]))):
+        raise ValueError("Data is not binary and pos_label is not specified")
+    elif pos_label is None:
+        pos_label = 1.
+    
+    # make y_true a boolean vector
+    y_true = (y_true == pos_label)
+    
+    fpr, tpr, thres = roc_curve(y_true, y_score, 1)
+
+    # We estimate the priors of the two classes
+    pi_1 = np.true_divide(np.sum(y_true), len(y_true))
+    pi_0 = 1 - pi_1
+    
+    # If one of the parameters alpha and beta has not been provided then we
+    # default to the values as defined in [2]
+    if alpha is None or beta is None:
+        if not (alpha is None and beta is None):
+            warnings.warn("Either alpha or beta parameter has not been"
+                          "provided. Setting both to default.",
+                          UndefinedMetricWarning)
+        alpha = 1 + pi_1
+        beta = 1 + pi_0
+    
+    # We initialise the convex hull of the ROC curve
+    convex_hull_fpr = [0.0]
+    convex_hull_tpr = [0.0]
+    
+    # We have initialised the first point of the ROC convex hull, so we don't
+    # need to take the first point of the original ROC curve into account
+    fpr = fpr[1:]
+    tpr = tpr[1:]
+    
+    r_0j = 0
+    r_1j = 0
+    
+    while (True):
+        c_array = np.true_divide(fpr - r_1j, ((tpr - r_0j) + (fpr - r_1j)))
+        min_c = np.argmin(c_array)
+        convex_hull_fpr.append(fpr[min_c])
+        convex_hull_tpr.append(tpr[min_c])
+        
+        r_0j = tpr[min_c]
+        r_1j = fpr[min_c]
+        
+        if min_c == (len(fpr) - 1):
+            break
+        else:
+            fpr = fpr[(min_c+1):]
+            tpr = tpr[(min_c+1):]
+    
+    r1_j = np.array(convex_hull_fpr[:-1])
+    r1_jp = np.array(convex_hull_fpr[1:])
+    r0_j = np.array(convex_hull_tpr[:-1])
+    r0_jp = np.array(convex_hull_tpr[1:])
+    
+    # Compute scores using equation 14 in [1]
+    scores = np.true_divide(pi_1 * (r1_jp - r1_j),
+                            pi_0 * (r0_jp - r0_j) + pi_1 * (r1_jp - r1_j))
+
+    
+    scores = np.concatenate((np.array([0.0]), scores, np.array([1.0])))
+    
+    totalLoss = 0.0
+    
+    # We shift the scores to have two arrays of c(i) and c(i+1) in equation
+    # 16 in [1]
+    scores0 = scores[:-1]
+    scores1 = scores[1:]
+    
+    # We reappend the last point of the ROC convex hull that we removed a few
+    # lines earlier
+    r0_j = np.concatenate((r0_j, np.array([convex_hull_tpr[-1]])))
+    r1_j = np.concatenate((r1_j, np.array([convex_hull_fpr[-1]])))
+    
+    # We compute the sum in equation 16 in [1]
+    for sc0, sc1, r0i, r1i in zip(scores0, scores1, r0_j, r1_j):
+        totalLoss += (pi_0 * (1 - r0i) *
+                      (_incomplete_beta_function(sc1,alpha+1,beta) -
+                       _incomplete_beta_function(sc0,alpha+1,beta)) +
+                      pi_1 * r1i * (_incomplete_beta_function(sc1,alpha,beta+1) -
+                      _incomplete_beta_function(sc0,alpha,beta+1)))
+    
+    # We compute the H-Measure as defined in equation 17 in [1]
+    H_measure = (1.0 - totalLoss /
+                 (pi_0 * _incomplete_beta_function(pi_1,alpha+1,beta) + pi_1 *
+                  _incomplete_beta_function(1,alpha,beta+1) - pi_1 *
+                  _incomplete_beta_function(pi_1,alpha,beta+1)))
+    
+    return H_measure

@@ -752,6 +752,7 @@ details.
    metrics.confusion_matrix
    metrics.f1_score
    metrics.fbeta_score
+   metrics.h_measure_score
    metrics.hamming_loss
    metrics.hinge_loss
    metrics.jaccard_similarity_score
