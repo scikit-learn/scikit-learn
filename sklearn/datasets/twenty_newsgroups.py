@@ -63,20 +63,29 @@ else:
 logger = logging.getLogger(__name__)
 
 
-URL = ("http://people.csail.mit.edu/jrennie/"
-       "20Newsgroups/20news-bydate.tar.gz")
-ARCHIVE_NAME = "20news-bydate.tar.gz"
-CACHE_NAME = "20news-bydate.pkz"
-TRAIN_FOLDER = "20news-bydate-train"
-TEST_FOLDER = "20news-bydate-test"
-
-
-def download_20newsgroups(target_dir, cache_path):
+def download_20newsgroups(dataset, target_dir, cache_path):
     """Download the 20 newsgroups data and stored it as a zipped pickle."""
-    archive_path = os.path.join(target_dir, ARCHIVE_NAME)
-    train_path = os.path.join(target_dir, TRAIN_FOLDER)
-    test_path = os.path.join(target_dir, TEST_FOLDER)
-
+    
+    if dataset=='bydate':
+        url = ("http://people.csail.mit.edu/jrennie/"
+        "20Newsgroups/20news-bydate.tar.gz")
+        archive_path = os.path.join(target_dir, "20news-bydate.tar.gz")
+        train_path = os.path.join(target_dir, "20news-bydate-train")
+        test_path = os.path.join(target_dir, "20news-bydate-test")
+    elif dataset=='original':
+        url = ("http://people.csail.mit.edu/jrennie/"
+        "20Newsgroups/20news-19997.tar.gz")
+        archive_path = os.path.join(target_dir, "20news-19997.tar.gz")
+        data_path = os.path.join(target_dir, "20_newsgroups")
+    elif dataset=='preprocessed':
+        url = ("http://people.csail.mit.edu/jrennie/"
+        "20Newsgroups/20news-18828.tar.gz")
+        archive_path = os.path.join(target_dir, "20news-18828.tar.gz")
+        data_path = os.path.join(target_dir, "20news-18828")
+    else:
+        raise ValueError(
+	"dataset can only be 'bydate', 'original' or 'preprocessed', got '%s'" % dataset)
+    
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
 
@@ -86,8 +95,8 @@ def download_20newsgroups(target_dir, cache_path):
         logger.warn("Download was incomplete, downloading again.")
         os.remove(archive_path)
 
-    logger.warn("Downloading dataset from %s (14 MB)", URL)
-    opener = urlopen(URL)
+    logger.warn("Downloading dataset from %s", url)
+    opener = urlopen(url)
     open(archive_path, 'wb').write(opener.read())
 
     logger.info("Decompressing %s", archive_path)
@@ -95,14 +104,33 @@ def download_20newsgroups(target_dir, cache_path):
     os.remove(archive_path)
 
     # Store a zipped pickle
-    cache = dict(train=load_files(train_path, encoding='latin1'),
+    if dataset=='bydate':
+        cache = dict(train=load_files(train_path, encoding='latin1'),
                  test=load_files(test_path, encoding='latin1'))
+    else:
+        cache = load_files(data_path, encoding='latin1')
     compressed_content = codecs.encode(pickle.dumps(cache), 'zlib_codec')
     open(cache_path, 'wb').write(compressed_content)
 
     shutil.rmtree(target_dir)
     return cache
 
+
+def strip_newsgroup_from(text):
+    """
+    Given text in "news" format, strip the from line
+    """
+    good_lines = [line for line in text.split('\n')
+                  if line.find('From:')==-1]
+    return '\n'.join(good_lines)
+
+def strip_newsgroup_subject(text):
+    """
+    Given text in "news" format, strip the subject line
+    """
+    good_lines = [line for line in text.split('\n')
+                  if line.find('Subject:')==-1]
+    return '\n'.join(good_lines)
 
 def strip_newsgroup_header(text):
     """
@@ -148,15 +176,29 @@ def strip_newsgroup_footer(text):
         return text
 
 
-def fetch_20newsgroups(data_home=None, subset='train', categories=None,
+def fetch_20newsgroups(data_home=None, dataset='bydate', subset='train', categories=None,
                        shuffle=True, random_state=42,
                        remove=(),
                        download_if_missing=True):
-    """Load the filenames and data from the 20 newsgroups dataset.
+    """Load the filenames and data from different versions of the 20 newsgroups dataset.
 
     Parameters
     ----------
+    dataset: 'bydate' or 'original', 'preprocessed', optional
+        Select the dataset version.
+        More details @ http://people.csail.mit.edu/jrennie/20Newsgroups/
+        'bydate' (default) download the sorted by date version (18846 documents)
+        @ http://people.csail.mit.edu/jrennie/20Newsgroups/20news-bydate.tar.gz
+
+        'original' download the original version (19997 documents)
+        @ http://people.csail.mit.edu/jrennie/20Newsgroups/20news-19997.tar.gz
+
+        'preprocessed' download a preprocessed version where duplicates are removed
+        and only "From" and "Subject" headers exist (18828 documents)
+        @ http://people.csail.mit.edu/jrennie/20Newsgroups/20news-18828.tar.gz
+
     subset: 'train' or 'test', 'all', optional
+        Used only when dataset='bydate'.
         Select the dataset to load: 'train' for the training set, 'test'
         for the test set, 'all' for both, with shuffled ordering.
 
@@ -182,9 +224,11 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         instead of trying to download the data from the source site.
 
     remove: tuple
-        May contain any subset of ('headers', 'footers', 'quotes'). Each of
-        these are kinds of text that will be detected and removed from the
-        newsgroup posts, preventing classifiers from overfitting on
+        If dataset='bydate' or 'original', may contain any subset of
+        ('headers', 'footers', 'quotes'). If dataset='preprocessed', may
+        contain any subset of ('from', 'subject').
+        Each of these are kinds of text that will be detected and removed
+        from the newsgroup posts, preventing classifiers from overfitting on
         metadata.
 
         'headers' removes newsgroup headers, 'footers' removes blocks at the
@@ -193,10 +237,26 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
         'headers' follows an exact standard; the other filters are not always
         correct.
+
+        'from' valid only when dataset='preprocessed'.
+        Removes newsgroup from line
+
+        'subject' valid only when dataset='preprocessed'.
+        Removes newsgroup subject line
     """
 
+    if dataset=='bydate':
+        cache_name = "20news-bydate.pkz"
+    elif dataset=='original':
+        cache_name = "20news-19997.pkz"
+    elif dataset=='preprocessed':
+        cache_name = "20news-18828.pkz"
+    else:
+        raise ValueError(
+	"dataset can only be 'bydate', 'original' or 'preprocessed', got '%s'" % dataset)
+
     data_home = get_data_home(data_home=data_home)
-    cache_path = os.path.join(data_home, CACHE_NAME)
+    cache_path = os.path.join(data_home, cache_name)
     twenty_home = os.path.join(data_home, "20news_home")
     cache = None
     if os.path.exists(cache_path):
@@ -214,37 +274,46 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
     if cache is None:
         if download_if_missing:
-            cache = download_20newsgroups(target_dir=twenty_home,
+            cache = download_20newsgroups(dataset=dataset, target_dir=twenty_home,
                                           cache_path=cache_path)
         else:
             raise IOError('20Newsgroups dataset not found')
 
-    if subset in ('train', 'test'):
-        data = cache[subset]
-    elif subset == 'all':
-        data_lst = list()
-        target = list()
-        filenames = list()
-        for subset in ('train', 'test'):
-            data = cache[subset]
-            data_lst.extend(data.data)
-            target.extend(data.target)
-            filenames.extend(data.filenames)
+    if dataset=='bydate':
+        if subset in ('train', 'test'):
+	    data = cache[subset]
+        elif subset == 'all':
+	    data_lst = list()
+	    target = list()
+	    filenames = list()
+	    for subset in ('train', 'test'):
+	        data = cache[subset]
+	        data_lst.extend(data.data)
+	        target.extend(data.target)
+	        filenames.extend(data.filenames)
 
-        data.data = data_lst
-        data.target = np.array(target)
-        data.filenames = np.array(filenames)
-        data.description = 'the 20 newsgroups by date dataset'
+	    data.data = data_lst
+	    data.target = np.array(target)
+	    data.filenames = np.array(filenames)
+	    data.description = 'the 20 newsgroups by date dataset'
+        else:
+	    raise ValueError(
+	        "subset can only be 'train', 'test' or 'all', got '%s'" % subset)
     else:
-        raise ValueError(
-            "subset can only be 'train', 'test' or 'all', got '%s'" % subset)
+        data = cache
 
-    if 'headers' in remove:
-        data.data = [strip_newsgroup_header(text) for text in data.data]
-    if 'footers' in remove:
-        data.data = [strip_newsgroup_footer(text) for text in data.data]
-    if 'quotes' in remove:
-        data.data = [strip_newsgroup_quoting(text) for text in data.data]
+    if dataset in ('bydate','original'):
+        if 'headers' in remove:
+            data.data = [strip_newsgroup_header(text) for text in data.data]
+        if 'footers' in remove:
+            data.data = [strip_newsgroup_footer(text) for text in data.data]
+        if 'quotes' in remove:
+            data.data = [strip_newsgroup_quoting(text) for text in data.data]
+    else:
+        if 'from' in remove:
+            data.data = [strip_newsgroup_from(text) for text in data.data]
+        if 'subject' in remove:
+            data.data = [strip_newsgroup_subject(text) for text in data.data]
 
     if categories is not None:
         labels = [(data.target_names.index(cat), cat) for cat in categories]
@@ -276,8 +345,9 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     return data
 
 
-def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None):
-    """Load the 20 newsgroups dataset and transform it into tf-idf vectors.
+def fetch_20newsgroups_vectorized(dataset='bydate', subset="train", remove=(), data_home=None):
+    """Load from different versions of the 20 newsgroups dataset and transform
+       it into tf-idf vectors.
 
     This is a convenience function; the tf-idf transformation is done using the
     default settings for `sklearn.feature_extraction.text.Vectorizer`. For more
@@ -287,7 +357,21 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None):
     Parameters
     ----------
 
+    dataset: 'bydate' or 'original', 'preprocessed', optional
+        Select the dataset version.
+        More details @ http://people.csail.mit.edu/jrennie/20Newsgroups/
+        'bydate' (default) download the sorted by date version (18846 documents)
+        @ http://people.csail.mit.edu/jrennie/20Newsgroups/20news-bydate.tar.gz
+
+        'original' download the original version (19997 documents)
+        @ http://people.csail.mit.edu/jrennie/20Newsgroups/20news-19997.tar.gz
+
+        'preprocessed' download a preprocessed version where duplicates are removed
+        and only "From" and "Subject" headers exist (18828 documents)
+        @ http://people.csail.mit.edu/jrennie/20Newsgroups/20news-18828.tar.gz
+
     subset: 'train' or 'test', 'all', optional
+        Used only when dataset='bydate'.
         Select the dataset to load: 'train' for the training set, 'test'
         for the test set, 'all' for both, with shuffled ordering.
 
@@ -314,54 +398,86 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None):
         bunch.target_names: list, length [n_classes]
     """
     data_home = get_data_home(data_home=data_home)
-    filebase = '20newsgroup_vectorized'
+    filebase = '20newsgroup_vectorized'+'_'+dataset
     if remove:
         filebase += 'remove-' + ('-'.join(remove))
     target_file = os.path.join(data_home, filebase + ".pk")
 
     # we shuffle but use a fixed seed for the memoization
-    data_train = fetch_20newsgroups(data_home=data_home,
-                                    subset='train',
-                                    categories=None,
-                                    shuffle=True,
-                                    random_state=12,
-                                    remove=remove)
+    if dataset=='bydate':
+        data_train = fetch_20newsgroups(data_home=data_home,
+                                        dataset=dataset,
+                                        subset='train',
+                                        categories=None,
+                                        shuffle=True,
+                                        random_state=12,
+                                        remove=remove)
 
-    data_test = fetch_20newsgroups(data_home=data_home,
-                                   subset='test',
-                                   categories=None,
-                                   shuffle=True,
-                                   random_state=12,
-                                   remove=remove)
+        data_test = fetch_20newsgroups(data_home=data_home,
+                                       dataset=dataset,
+                                       subset='test',
+                                       categories=None,
+                                       shuffle=True,
+                                       random_state=12,
+                                       remove=remove)
 
-    if os.path.exists(target_file):
-        X_train, X_test = joblib.load(target_file)
+        if os.path.exists(target_file):
+            X_train, X_test = joblib.load(target_file)
+        else:
+            vectorizer = CountVectorizer(dtype=np.int16)
+            X_train = vectorizer.fit_transform(data_train.data).tocsr()
+            X_test = vectorizer.transform(data_test.data).tocsr()
+            joblib.dump((X_train, X_test), target_file, compress=9)
+
+        # the data is stored as int16 for compactness
+        # but normalize needs floats
+        X_train = X_train.astype(np.float64)
+        X_test = X_test.astype(np.float64)
+        normalize(X_train, copy=False)
+        normalize(X_test, copy=False)
+
+        target_names = data_train.target_names
+
+        if subset == "train":
+            data = X_train
+            target = data_train.target
+        elif subset == "test":
+            data = X_test
+            target = data_test.target
+        elif subset == "all":
+            data = sp.vstack((X_train, X_test)).tocsr()
+            target = np.concatenate((data_train.target, data_test.target))
+        else:
+            raise ValueError("%r is not a valid subset: should be one of "
+                             "['train', 'test', 'all']" % subset)
+    
+    elif dataset in ('original','preprocessed'):
+        data_all = fetch_20newsgroups(data_home=data_home,
+                                        dataset=dataset,
+                                        categories=None,
+                                        shuffle=True,
+                                        random_state=12,
+                                        remove=remove)
+
+        if os.path.exists(target_file):
+            X = joblib.load(target_file)
+        else:
+            vectorizer = CountVectorizer(dtype=np.int16)
+            X = vectorizer.fit_transform(data_all.data).tocsr()
+            joblib.dump(X, target_file, compress=9)
+
+        # the data is stored as int16 for compactness
+        # but normalize needs floats
+        X = X.astype(np.float64)
+        normalize(X, copy=False)
+
+        target_names = data_all.target_names
+
+        data = X
+        target = data_all.target
+
     else:
-        vectorizer = CountVectorizer(dtype=np.int16)
-        X_train = vectorizer.fit_transform(data_train.data).tocsr()
-        X_test = vectorizer.transform(data_test.data).tocsr()
-        joblib.dump((X_train, X_test), target_file, compress=9)
-
-    # the data is stored as int16 for compactness
-    # but normalize needs floats
-    X_train = X_train.astype(np.float64)
-    X_test = X_test.astype(np.float64)
-    normalize(X_train, copy=False)
-    normalize(X_test, copy=False)
-
-    target_names = data_train.target_names
-
-    if subset == "train":
-        data = X_train
-        target = data_train.target
-    elif subset == "test":
-        data = X_test
-        target = data_test.target
-    elif subset == "all":
-        data = sp.vstack((X_train, X_test)).tocsr()
-        target = np.concatenate((data_train.target, data_test.target))
-    else:
-        raise ValueError("%r is not a valid subset: should be one of "
-                         "['train', 'test', 'all']" % subset)
+        raise ValueError(
+	"dataset can only be 'bydate', 'original' or 'preprocessed', got '%s'" % dataset)
 
     return Bunch(data=data, target=target, target_names=target_names)
