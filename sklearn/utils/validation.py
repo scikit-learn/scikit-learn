@@ -30,10 +30,10 @@ class NonBLASDotWarning(UserWarning):
 
 
 class NotFittedError(ValueError, AttributeError):
-    """
-    Exception class to raise if estimator is used before fitting
+    """Exception class to raise if estimator is used before fitting
 
-    Inherits from both ValueError and AttributeError to help exception handling
+    This class inherits from both ValueError and AttributeError to help with
+    exception handling and backward compatibility.
     """
 
 
@@ -469,70 +469,42 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
     return array
 
 
-def _is_fitted(estimator, attributes, all_or_any=all):
-    """
-    Check if the estimator is fitted by verifying if the estimator has all
-    the passed attributes.
+def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
+    """Perform is_fitted validation for estimator.
+
+    Checks if the estimator is fitted by verifying the presence of 
+    "all_or_any" of the passed attributes and raises a NotFittedError with the
+    given message.
 
     Parameters
     ----------
-    estimator : An estimator instance or object, instance of BaseEstimator
-        estimator instance for which the check is performed. The estimator
-        class must inherit from BaseEstimator.
+    estimator : estimator instance.
+        estimator instance for which the check is performed.
 
     attributes : attribute name(s) given as string or a list/tuple of strings
         Eg. : ["coef_", "estimator_", ...], "coef_"
 
-    all_or_any : callable, {all, any}, optional, default all
-        Specify whether all or any of the given attributes must exist.
+    msg : string
+        The default error message is, "This %(name)s instance is not fitted
+        yet. Call 'fit' with appropriate arguments before using this method."
 
-    Return
-    ------
-    result : boolean
-        True if all the attributes exist, False otherwise
-
-    Example
-    -------
-    >>> from sklearn.svm import SVC
-    >>> _is_fitted(SVC(), "support_")
-    False
-    """
-    if not isinstance(estimator, BaseEstimator):
-        raise ValueError("Not an estimator inistance, %s"%(estimator))
-
-    if not isinstance(attributes, (list, tuple)):
-        attributes = [attributes]
-
-    return all_or_any([hasattr(estimator, attr) for attr in attributes])
-
-
-def check_is_fitted(estimator, attributes,
-                    msg="This %(name)s instance is not fitted yet.", 
-                    all_or_any=all):
-    """
-    Perform is_fitted validation for estimator
-
-    Check if the estimator is fitted by verifying if the estimator has all the
-    passed attributes and raises an AttributeError with the given message if
-    the estimator was not fitted.
-
-    Parameters
-    ----------
-    estimator : An estimator instance or object, instance of BaseEstimator
-        estimator instance for which the check is performed. The estimator
-        class must inherit from BaseEstimator.
-
-    attributes : attribute name(s) given as string or a list/tuple of strings
-        Eg. : ["coef_", "estimator_", ...], "coef_"
-
-    msg : string, optional, default "This %(name)s instance is not fitted yet."
         For custom messages if "%(name)s" is present in the message string,
         it is substituted for the estimator name.
 
         Eg. : "Estimator, %(name)s, must be fitted before sparsifying".
 
-    all_or_any : callable, {all, any}, optional, default all
+    all_or_any : callable, {all, any}, default all
         Specify whether all or any of the given attributes must exist.
     """
-    if not _is_fitted(estimator, attributes, all_or_any):
-        raise NotFittedError(msg%{'name':type(estimator).__name__})
+    if msg is None:
+        msg = ("This %(name)s instance is not fitted yet. Call 'fit' with "
+               "appropriate arguments before using this method.")
+
+    if not hasattr(estimator, 'fit'):
+        raise ValueError("%s is not an estimator instance." % (estimator))
+
+    if not isinstance(attributes, (list, tuple)):
+        attributes = [attributes]
+
+    if not all_or_any([hasattr(estimator, attr) for attr in attributes]):
+        raise NotFittedError(msg % {'name' : type(estimator).__name__})

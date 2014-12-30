@@ -29,8 +29,7 @@ from ..utils import as_float_array, check_array
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils.fixes import sparse_lsqr
-from ..utils.validation import (
-        NotFittedError, _is_fitted, check_is_fitted)
+from ..utils.validation import NotFittedError, check_is_fitted
 
 
 ###
@@ -193,7 +192,7 @@ class LinearClassifierMixin(ClassifierMixin):
             case, confidence score for self.classes_[1] where >0 means this
             class would be predicted.
         """
-        if not _is_fitted(self, 'coef_') or self.coef_ is None:
+        if not hasattr(self, 'coef_') or self.coef_ is None:
             raise NotFittedError("This %(name)s instance is not fitted"
                                  "yet"%{'name':type(self).__name__})
 

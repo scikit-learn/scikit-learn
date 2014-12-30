@@ -164,8 +164,6 @@ def check_transformers_unfitted(name, Transformer):
 
     with warnings.catch_warnings(record=True):
         transformer = Transformer()
-    if not hasattr(transformer, 'Transform'):
-        return
 
     assert_raises(NotFittedError, transformer.transform, X)
 
@@ -561,12 +559,18 @@ def check_estimators_unfitted(name, Estimator):
         est = Estimator()
 
     assert_raises(NotFittedError, est.predict, X)
-    
+ 
+    if hasattr(est, 'predict'):
+        assert_raises(NotFittedError, est.predict, X)
+
     if hasattr(est, 'decision_function'):
         assert_raises(NotFittedError, est.decision_function, X)
 
     if hasattr(est, 'predict_proba'):
         assert_raises(NotFittedError, est.predict_proba, X)
+    
+    if hasattr(est, 'predict_log_proba'):
+        assert_raises(NotFittedError, est.predict_log_proba, X)
 
 
 def check_classifiers_input_shapes(name, Classifier):

@@ -21,8 +21,8 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
-from sklearn.utils.validation import DataConversionWarning, NotFittedError
-
+from sklearn.utils.validation import DataConversionWarning
+from sklearn.utils.validation import NotFittedError
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
