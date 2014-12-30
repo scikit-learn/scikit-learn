@@ -236,7 +236,7 @@ def check_scoring(estimator, scoring=None, allow_none=False,
     elif hasattr(estimator, 'score'):
         return _passthrough_scorer
     elif allow_none:
-            return None
+        return None
     else:
         raise TypeError(
             "If no scoring is specified, the estimator passed should "
