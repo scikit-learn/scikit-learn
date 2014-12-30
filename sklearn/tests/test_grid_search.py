@@ -19,10 +19,10 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_false, assert_true
+from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
@@ -517,7 +517,7 @@ def test_gridsearch_no_predict():
     # test grid-search with an estimator without predict.
     # slight duplication of a test from KDE
     def custom_scoring(estimator, X):
-        return estimator.score(X) + 3
+        return estimator.score(X) + 1000
     X, _ = make_blobs(cluster_std=.1, random_state=1,
                       centers=[[0, 1], [1, 0], [0, 0]])
     search = GridSearchCV(KernelDensity(),
@@ -525,6 +525,7 @@ def test_gridsearch_no_predict():
                           scoring=custom_scoring)
     search.fit(X)
     assert_equal(search.best_params_['bandwidth'], .1)
+    assert_greater(search.best_score_, 1000)
 
 
 def test_param_sampler():
