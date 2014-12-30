@@ -40,7 +40,8 @@ from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
 from sklearn.svm import LinearSVC, SVC
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.cluster import KMeans, SpectralClustering
+from sklearn.cluster import KMeans
+from sklearn.neighbors import KernelDensity
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
@@ -512,14 +513,18 @@ def test_unsupervised_grid_search():
     assert_equal(grid_search.best_params_["n_clusters"], 4)
 
 
-def test_bad_estimator():
-    # test grid-search with clustering algorithm which doesn't support
-    # "predict"
-    sc = SpectralClustering()
-    grid_search = GridSearchCV(sc, param_grid=dict(gamma=[.1, 1, 10]),
-                               scoring='ari')
-    assert_raise_message(TypeError, "'score' or a 'predict'", grid_search.fit,
-                         [[1]])
+def test_gridsearch_no_predict():
+    # test grid-search with an estimator without predict.
+    # slight duplication of a test from KDE
+    def custom_scoring(estimator, X):
+        return estimator.score(X) + 3
+    X, _ = make_blobs(cluster_std=.1, random_state=1,
+                      centers=[[0, 1], [1, 0], [0, 0]])
+    search = GridSearchCV(KernelDensity(),
+                          param_grid=dict(bandwidth=[.01, .1, 1, 10]),
+                          scoring=custom_scoring)
+    search.fit(X)
+    assert_equal(search.best_params_['bandwidth'], .1)
 
 
 def test_param_sampler():
