@@ -276,11 +276,11 @@ class Pipeline(BaseEstimator):
         Parameters
         ----------
         X : iterable
-            Training data. Must fulfil input requirements of first step of the
+            Data to score. Must fulfil input requirements of first step of the
             pipeline.
 
         y : iterable, default=None
-            Training targets. Must fulfil label requirements for all steps of
+            Targets used for scoring. Must fulfil label requirements for all steps of
             the pipeline.
         """
         Xt = X
