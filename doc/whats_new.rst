@@ -186,7 +186,8 @@ Bug fixes
       By `Joel Nothman`_
 
     - The ``scoring`` attribute of grid-search and cross-validation methods is no longer
-     ignored when a :class:`grid_search.GridSearchCV` is given as a base estimator. 
+     ignored when a :class:`grid_search.GridSearchCV` is given as a base estimator or
+     the base estimator doesn't have predict.
 
     - The function :func:`hierarchical.ward_tree` now returns the children in
       the same order for both the structured and unstructured versions. By
