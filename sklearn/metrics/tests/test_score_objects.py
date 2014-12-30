@@ -12,7 +12,8 @@ from sklearn.utils.testing import assert_not_equal
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
                              log_loss, precision_score, recall_score)
 from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.metrics.scorer import check_scoring
+from sklearn.metrics.scorer import (check_scoring, _PredictScorer,
+                                    _passthrough_scorer)
 from sklearn.metrics import make_scorer, get_scorer, SCORERS
 from sklearn.svm import LinearSVC
 from sklearn.cluster import KMeans
@@ -82,6 +83,7 @@ def test_check_scoring():
     estimator = EstimatorWithFitAndScore()
     estimator.fit([[1]], [1])
     scorer = check_scoring(estimator)
+    assert_true(scorer is _passthrough_scorer)
     assert_almost_equal(scorer(estimator, [[1]], [1]), 1.0)
 
     estimator = EstimatorWithFitAndPredict()
@@ -94,10 +96,8 @@ def test_check_scoring():
     assert_almost_equal(scorer(estimator, [[1]], [1]), 1.0)
 
     estimator = EstimatorWithFit()
-    pattern = (r"The estimator passed should have a 'score'"
-               r" or a 'predict' method\. The estimator .* does not\.")
-    assert_raises_regexp(TypeError, pattern, check_scoring, estimator,
-                         "accuracy")
+    scorer = check_scoring(estimator, "accuracy")
+    assert_true(isinstance(scorer, _PredictScorer))
 
     estimator = EstimatorWithFit()
     scorer = check_scoring(estimator, allow_none=True)
