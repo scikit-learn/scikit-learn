@@ -628,6 +628,12 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     See also
     --------
     HashingVectorizer, TfidfVectorizer
+
+    Notes
+    -----
+    The ``stop_words_`` attribute can get large and increase the model size 
+    when pickling. This attribute is provided only for introspection and can
+    be safely removed using delattr or set to None before pickling.
     """
 
     def __init__(self, input='content', encoding='utf-8',
@@ -1158,6 +1164,15 @@ class TfidfVectorizer(CountVectorizer):
         The learned idf vector (global term weights)
         when ``use_idf`` is set to True, None otherwise.
 
+    stop_words_ : set
+        Terms that were ignored because they either:
+
+          - occurred in too many documents (`max_df`)
+          - occurred in too few documents (`min_df`)
+          - were cut off by feature selection (`max_features`).
+
+        This is only available if no vocabulary was given.
+ 
     See also
     --------
     CountVectorizer
@@ -1167,7 +1182,12 @@ class TfidfVectorizer(CountVectorizer):
     TfidfTransformer
         Apply Term Frequency Inverse Document Frequency normalization to a
         sparse matrix of occurrence counts.
-
+ 
+    Notes
+    -----
+    The ``stop_words_`` attribute can get large and increase the model size 
+    when pickling. This attribute is provided only for introspection and can
+    be safely removed using delattr or set to None before pickling.
     """
 
     def __init__(self, input='content', encoding='utf-8',

@@ -859,6 +859,29 @@ def test_pickling_vectorizer():
             orig.fit_transform(JUNK_FOOD_DOCS).toarray())
 
 
+def test_stop_words_removal():
+    """Ensure that deleting the stop_words_ attribute doesn't affect transform
+    """
+
+    fitted_vectorizers = (
+        TfidfVectorizer().fit(JUNK_FOOD_DOCS),
+        CountVectorizer(preprocessor=strip_tags).fit(JUNK_FOOD_DOCS),
+        CountVectorizer(strip_accents=strip_eacute).fit(JUNK_FOOD_DOCS)
+    )
+
+    for vect in fitted_vectorizers:
+        vect_transform = vect.transform(JUNK_FOOD_DOCS).toarray()
+
+        vect.stop_words_ = None
+        stop_None_transform = vect.transform(JUNK_FOOD_DOCS).toarray()
+
+        delattr(vect, 'stop_words_')
+        stop_del_transform = vect.transform(JUNK_FOOD_DOCS).toarray()
+
+        assert_array_equal(stop_None_transform, vect_transform)
+        assert_array_equal(stop_del_transform, vect_transform)
+
+
 def test_pickling_transformer():
     X = CountVectorizer().fit_transform(JUNK_FOOD_DOCS)
     orig = TfidfTransformer().fit(X)
