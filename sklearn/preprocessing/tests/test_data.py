@@ -70,6 +70,27 @@ def test_polynomial_features():
     assert_raises(ValueError, interact.transform, X[:, 1:])
 
 
+def test_polynomial_features_dtype():
+    """Check that PolynomialFeatures correctly returns the input dtype
+
+    This also checks for integer rounding where a float intermediary is used.
+    """
+
+    Xs = [np.arange(20, dtype=int),
+          np.arange(20, dtype=np.uint32),
+          np.arange(2, dtype=bool),
+          np.linspace(0, 10, 10)]
+    for X_row in Xs:
+        X = X_row[None, :]
+        # identity transformation
+        out = PolynomialFeatures(degree=1, include_bias=False).fit_transform(X)
+        assert_array_almost_equal(out, X)
+        assert_equal(out.dtype.kind, X.dtype.kind)
+        # in case identity is handled specially:
+        out = PolynomialFeatures(degree=2).fit_transform(X)
+        assert_equal(out.dtype.kind, X.dtype.kind)
+
+
 def test_scaler_1d():
     """Test scaling of dataset along single axis"""
     rng = np.random.RandomState(0)
@@ -725,6 +746,7 @@ def test_one_hot_encoder_sparse():
     # test negative input to transform
     enc.fit([[0], [1]])
     assert_raises(ValueError, enc.transform, [[0], [-1]])
+
 
 def test_one_hot_encoder_dense():
     """check for sparse=False"""
