@@ -214,6 +214,7 @@ def test_check_symmetric():
     arr_asym = np.array([[0, 2], [0, 2]])
 
     test_arrays = {'dense': arr_asym,
+                   'dok': sp.dok_matrix(arr_asym),
                    'csr': sp.csr_matrix(arr_asym),
                    'csc': sp.csc_matrix(arr_asym),
                    'coo': sp.coo_matrix(arr_asym),

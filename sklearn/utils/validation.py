@@ -438,8 +438,11 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
                          "shape = {0}".format(array.shape))
 
     if sp.issparse(array):
-        diff = (array - array.T).data
-        symmetric = np.all(abs(diff) < tol)
+        diff = array - array.T
+        # only csr, csc, and coo have `data` attribute
+        if diff.format not in ['csr', 'csc', 'coo']:
+            diff = diff.tocsr()
+        symmetric = np.all(abs(diff.data) < tol)
     else:
         symmetric = np.allclose(array, array.T, atol=tol)
 
