@@ -66,7 +66,7 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
 
 
 def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
-               min_bin_freq=1, cluster_all=True, max_iterations=300):
+               min_bin_freq=1, cluster_all=True, max_iter=300):
     """Perform mean shift clustering of data using a flat kernel.
 
     Parameters
@@ -104,7 +104,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
         not within any kernel. Orphans are assigned to the nearest kernel.
         If false, then orphans are given cluster label -1.
 
-    max_iterations : int, default 300
+    max_iter : int, default 300
         Maximum number of iterations, per seed point before the clustering
         operation terminates (for that seed point), if has not converged yet.
 
@@ -134,7 +134,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     center_intensity_dict = {}
     nbrs = NearestNeighbors(radius=bandwidth).fit(X)
 
-    # For each seed, climb gradient until convergence or max_iterations
+    # For each seed, climb gradient until convergence or max_iter
     for my_mean in seeds:
         completed_iterations = 0
         while True:
@@ -146,9 +146,9 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
                 break  # Depending on seeding strategy this condition may occur
             my_old_mean = my_mean  # save the old mean
             my_mean = np.mean(points_within, axis=0)
-            # If converged or at max_iterations, addS the cluster
+            # If converged or at max_iter, addS the cluster
             if (extmath.norm(my_mean - my_old_mean) < stop_thresh or
-                    completed_iterations == max_iterations):
+                    completed_iterations == max_iter):
                 center_intensity_dict[tuple(my_mean)] = len(points_within)
                 break
             completed_iterations += 1
