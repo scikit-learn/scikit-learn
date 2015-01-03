@@ -171,6 +171,20 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                 self.n_classes_.append(classes_k.shape[0])
 
             if self.class_weight is not None:
+                if isinstance(self.class_weight, six.string_types):
+                    if self.class_weight != "auto":
+                        raise ValueError('The only supported preset for '
+                                         'class_weight is "auto". Given "%s".'
+                                         % self.class_weight)
+                elif self.n_outputs_ > 1:
+                    if not hasattr(self.class_weight, "__iter__"):
+                        raise ValueError('For multi-output, class_weight '
+                                         'should be a list of dicts, or '
+                                         '"auto".')
+                    elif len(self.class_weight) != self.n_outputs_:
+                        raise ValueError("For multi-output, number of "
+                                         "elements in class_weight should "
+                                         "match number of outputs.")
                 cw = []
                 for k in range(self.n_outputs_):
                     if self.n_outputs_ == 1 or self.class_weight == 'auto':

@@ -811,6 +811,36 @@ def test_class_weight_auto_and_bootstrap_multi_output():
         yield check_class_weight_auto_and_bootstrap_multi_output, name
 
 
+def check_class_weight_errors(name):
+    """Test if class_weight raises errors and warnings when expected."""
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+    _y = np.vstack((y, np.array(y) * 2)).T
+
+    # Invalid preset string
+    clf = ForestClassifier(class_weight='the larch', random_state=0)
+    assert_raises(ValueError, clf.fit, X, y)
+    assert_raises(ValueError, clf.fit, X, _y)
+
+    # Warning warm_start with preset
+    clf = ForestClassifier(class_weight='auto', warm_start=True,
+                           random_state=0)
+    assert_warns(UserWarning, clf.fit, X, y)
+    assert_warns(UserWarning, clf.fit, X, _y)
+
+    # Not a list or preset for multi-output
+    clf = ForestClassifier(class_weight=1, random_state=0)
+    assert_raises(ValueError, clf.fit, X, _y)
+
+    # Incorrect length list for multi-output
+    clf = ForestClassifier(class_weight=[{-1: 0.5, 1: 1.}], random_state=0)
+    assert_raises(ValueError, clf.fit, X, _y)
+
+
+def test_class_weight_errors():
+    for name in FOREST_CLASSIFIERS:
+        yield check_class_weight_errors, name
+
+
 def check_warm_start(name, random_state=42):
     """Test if fitting incrementally with warm start gives a forest of the
     right size and the same results as a normal fit."""

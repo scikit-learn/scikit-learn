@@ -98,10 +98,10 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
                 cw_part = compute_class_weight('auto', classes_boot, y_boot)
                 # Expand class weights to cover all classes in original y
                 # (in case some were missing from the bootstrap sample)
-                cw_part = np.array([cw_part[np.where(classes_boot == w)][0]
-                                    if w in classes_boot
+                cw_part = np.array([cw_part[np.where(classes_boot == c)][0]
+                                    if c in classes_boot
                                     else 0.
-                                    for w in classes_full])
+                                    for c in classes_full])
                 # Expand weights over the original y for this output
                 cw_part = cw_part[np.searchsorted(classes_full, y_full)]
                 cw.append(cw_part)
@@ -418,23 +418,48 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             self.classes_.append(classes_k)
             self.n_classes_.append(classes_k.shape[0])
 
-        if (self.class_weight is not None and
-                (self.class_weight != 'bootstrap' or not self.bootstrap)):
-            cw = []
-            for k in range(self.n_outputs_):
-                if self.class_weight in ['auto', 'bootstrap']:
-                    class_weight_k = 'auto'
-                elif self.n_outputs_ == 1:
-                    class_weight_k = self.class_weight
-                else:
-                    class_weight_k = self.class_weight[k]
-                cw_part = compute_class_weight(class_weight_k,
-                                               self.classes_[k],
-                                               y_org[:, k])
-                cw_part = cw_part[np.searchsorted(self.classes_[k],
-                                                  y_org[:, k])]
-                cw.append(cw_part)
-            cw = np.prod(cw, axis=0, dtype=np.float64)
+        if self.class_weight is not None:
+            valid_presets = ['auto', 'bootstrap']
+            if isinstance(self.class_weight, six.string_types):
+                if self.class_weight not in valid_presets:
+                    raise ValueError('Valid presets for class_weight include '
+                                     '"auto" and "bootstrap". Given "%s".'
+                                     % self.class_weight)
+                if self.warm_start:
+                    warn('class_weight presets "auto" or "bootstrap" are '
+                         'not recommended for warm_start if the fitted data '
+                         'differs from the full dataset. In order to use '
+                         '"auto" weights, use compute_class_weight("auto", '
+                         'classes, y). In place of y you can use a large '
+                         'enough sample of the full training set target to '
+                         'properly estimate the class frequency '
+                         'distributions. Pass the resulting weights as the '
+                         'class_weight parameter.')
+            elif self.n_outputs_ > 1:
+                if not hasattr(self.class_weight, "__iter__"):
+                    raise ValueError("For multi-output, class_weight should "
+                                     "be a list of dicts, or a valid string.")
+                elif len(self.class_weight) != self.n_outputs_:
+                    raise ValueError("For multi-output, number of elements "
+                                     "in class_weight should match number of "
+                                     "outputs.")
+
+            if self.class_weight != 'bootstrap' or not self.bootstrap:
+                cw = []
+                for k in range(self.n_outputs_):
+                    if self.class_weight in valid_presets:
+                        class_weight_k = 'auto'
+                    elif self.n_outputs_ == 1:
+                        class_weight_k = self.class_weight
+                    else:
+                        class_weight_k = self.class_weight[k]
+                    cw_part = compute_class_weight(class_weight_k,
+                                                   self.classes_[k],
+                                                   y_org[:, k])
+                    cw_part = cw_part[np.searchsorted(self.classes_[k],
+                                                      y_org[:, k])]
+                    cw.append(cw_part)
+                cw = np.prod(cw, axis=0, dtype=np.float64)
 
         return y, cw
 

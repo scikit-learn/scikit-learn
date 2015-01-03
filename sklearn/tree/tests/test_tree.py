@@ -896,6 +896,30 @@ def test_class_weights():
         yield check_class_weights, name
 
 
+def check_class_weight_errors(name):
+    """Test if class_weight raises errors and warnings when expected."""
+    TreeClassifier = CLF_TREES[name]
+    _y = np.vstack((y, np.array(y) * 2)).T
+
+    # Invalid preset string
+    clf = TreeClassifier(class_weight='the larch', random_state=0)
+    assert_raises(ValueError, clf.fit, X, y)
+    assert_raises(ValueError, clf.fit, X, _y)
+
+    # Not a list or preset for multi-output
+    clf = TreeClassifier(class_weight=1, random_state=0)
+    assert_raises(ValueError, clf.fit, X, _y)
+
+    # Incorrect length list for multi-output
+    clf = TreeClassifier(class_weight=[{-1: 0.5, 1: 1.}], random_state=0)
+    assert_raises(ValueError, clf.fit, X, _y)
+
+
+def test_class_weight_errors():
+    for name in CLF_TREES:
+        yield check_class_weight_errors, name
+
+
 def test_max_leaf_nodes():
     """Test greedy trees with max_depth + 1 leafs. """
     from sklearn.tree._tree import TREE_LEAF
