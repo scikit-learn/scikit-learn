@@ -7,16 +7,16 @@ from ..base import TransformerMixin
 from ..externals import six
 from ..utils import safe_mask, check_array
 
+import warnings
 
 class _LearntSelectorMixin(TransformerMixin):
-    # Note because of the extra threshold parameter in transform, this does
-    # not naturally extend from SelectorMixin
     """Transformer mixin selecting features based on importance weights.
 
     This implementation can be mixin on any estimator that exposes a
     ``feature_importances_`` or ``coef_`` attribute to evaluate the relative
     importance of individual features for feature selection.
     """
+
     def transform(self, X, threshold=None):
         """Reduce X to its most important features.
 
@@ -69,6 +69,9 @@ class _LearntSelectorMixin(TransformerMixin):
                 threshold = getattr(self, "threshold", 1e-5)
             else:
                 threshold = getattr(self, "threshold", "mean")
+        else:
+            warnings.warn("The threshold parameter is deprecated since 0.15 and will be "
+                "removed in 0.18. Pass it to the constructor instead.", DeprecationWarning)
 
         if isinstance(threshold, six.string_types):
             if "*" in threshold:

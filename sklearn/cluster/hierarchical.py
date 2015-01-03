@@ -645,6 +645,15 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         value, and should accept an array of shape [M, N] and the keyword
         argument `axis=1`, and reduce it to an array of size [M].
 
+    threshold : string, float or None, optional (default=None)
+            The threshold value to use for feature selection. Features whose
+            importance is greater or equal are kept while the others are
+            discarded. If "median" (resp. "mean"), then the threshold value is
+            the median (resp. the mean) of the feature importances. A scaling
+            factor (e.g., "1.25*mean") may also be used. If None and if
+            available, the object attribute ``threshold`` is used. Otherwise,
+            "mean" is used by default.
+
     Attributes
     ----------
     labels_ : array [n_samples]
@@ -670,7 +679,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
                  memory=Memory(cachedir=None, verbose=0),
                  connectivity=None, n_components=None,
                  compute_full_tree='auto', linkage='ward',
-                 pooling_func=np.mean):
+                 pooling_func=np.mean, threshold=None):
         self.n_clusters = n_clusters
         self.memory = memory
         self.n_components = n_components
@@ -679,6 +688,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         self.linkage = linkage
         self.affinity = affinity
         self.pooling_func = pooling_func
+        self.threshold = threshold
 
     def fit(self, X):
         """Fit the hierarchical clustering on the data
@@ -914,7 +924,7 @@ class Ward(AgglomerativeClustering):
 
     def __init__(self, n_clusters=2, memory=Memory(cachedir=None, verbose=0),
                  connectivity=None, n_components=None,
-                 compute_full_tree='auto', pooling_func=np.mean):
+                 compute_full_tree='auto', pooling_func=np.mean, threshold=None):
 
         warnings.warn("The Ward class is deprecated since 0.14 and will be "
                       "removed in 0.17. Use the AgglomerativeClustering "
@@ -926,6 +936,7 @@ class Ward(AgglomerativeClustering):
         self.compute_full_tree = compute_full_tree
         self.affinity = "euclidean"
         self.pooling_func = pooling_func
+        self.threshold = threshold
 
 
 class WardAgglomeration(AgglomerationTransform, Ward):
@@ -1000,3 +1011,4 @@ class WardAgglomeration(AgglomerationTransform, Ward):
     @property
     def fit_predict(self):
         raise AttributeError
+
