@@ -903,6 +903,19 @@ def test_non_euclidean_kneighbors():
                   radius, metric='euclidean')
 
 
+def test_kneighbors_graph_distance_skip():
+    """Test that kneighbors_graph skip the first NN only if distance is zero"""
+    X_nbrs = neighbors.NearestNeighbors()
+    X_nbrs.fit([[0], [1]])
+    kng = X_nbrs.kneighbors_graph([[1], [.2]], 1, mode='distance')
+    assert_array_equal(
+        kng.toarray(), [[1., 0.], [0.2, 0.]])
+
+    kng = X_nbrs.kneighbors_graph([[0], [1]], 1, mode='distance')
+    assert_array_equal(
+        kng.toarray(), [[0., 1.], [1., 0.]])
+
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()

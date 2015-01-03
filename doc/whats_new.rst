@@ -231,6 +231,10 @@ Bug fixes
       :func:`linear_model.lasso_path`. It was centered around one. It has
       been changed to be centred around the origin. By `Manoj Kumar`_
 
+    - Fix :func:`neighbors.NearestNeighbors.kneighbors_graph` to prevent
+      skipping the first nearest neighbor when the queried data is not the
+      same as training data. By `Manoj Kumar`_
+
 API changes summary
 -------------------
 
