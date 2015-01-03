@@ -248,7 +248,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
 class KNeighborsMixin(object):
     """Mixin for k-neighbors searches"""
 
-    def kneighbors(self, X, n_neighbors=None, return_distance=True):
+    def kneighbors(self, X=None, n_neighbors=None, return_distance=True):
         """Finds the K-neighbors of a point.
 
         Returns distance
@@ -301,10 +301,25 @@ class KNeighborsMixin(object):
         if self._fit_method is None:
             raise NotFittedError("Must fit neighbors before querying.")
 
-        X = check_array(X, accept_sparse='csr')
-
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
+
+        query_is_train = True
+        if X is not None:
+            query_is_train = False
+            X = check_array(X, accept_sparse='csr')
+        else:
+            X = self._fit_X
+            # Include an extra neighbor in order to avoid marking the sample
+            # itself as the first neighbor.
+            if n_neighbors >= X.shape[0]:
+                raise ValueError(
+                    "The number of neighbors should be at least one less"
+                    "than the number of samples in the query data.")
+            n_neighbors += 1
+
+        n_samples, _ = X.shape
+        j = np.arange(n_samples)[:, None]
 
         if self._fit_method == 'brute':
             # for efficiency, use squared euclidean distances
@@ -316,11 +331,16 @@ class KNeighborsMixin(object):
                                           self.effective_metric_,
                                           **self.effective_metric_params_)
 
-            neigh_ind = argpartition(dist, n_neighbors - 1, axis=1)
+            neigh_ind = argpartition(dist, n_neighbors-1, axis=1)
             neigh_ind = neigh_ind[:, :n_neighbors]
             # argpartition doesn't guarantee sorted order, so we sort again
-            j = np.arange(neigh_ind.shape[0])[:, None]
             neigh_ind = neigh_ind[j, np.argsort(dist[j, neigh_ind])]
+
+            # We remove the indices mapping the sample to itself.
+            if query_is_train:
+                neigh_ind = np.reshape(
+                    neigh_ind[neigh_ind != j], (n_samples, n_neighbors-1))
+
             if return_distance:
                 if self.effective_metric_ == 'euclidean':
                     return np.sqrt(dist[j, neigh_ind]), neigh_ind
@@ -328,6 +348,7 @@ class KNeighborsMixin(object):
                     return dist[j, neigh_ind], neigh_ind
             else:
                 return neigh_ind
+
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
                 raise ValueError(
@@ -335,11 +356,25 @@ class KNeighborsMixin(object):
                     "or set algorithm='brute'" % self._fit_method)
             result = self._tree.query(X, n_neighbors,
                                       return_distance=return_distance)
+            if query_is_train:
+                if return_distance:
+                    dist, neigh_ind = result
+                else:
+                    neigh_ind = result
+                mask = neigh_ind != j
+                neigh_ind = np.reshape(
+                    neigh_ind[mask], (n_samples, n_neighbors-1))
+
+                if return_distance:
+                    dist = np.reshape(dist[mask], (n_samples, n_neighbors-1))
+                    return dist, neigh_ind
+                return neigh_ind
+
             return result
         else:
             raise ValueError("internal: _fit_method not recognized")
 
-    def kneighbors_graph(self, X, n_neighbors=None,
+    def kneighbors_graph(self, X=None, n_neighbors=None,
                          mode='connectivity'):
         """Computes the (weighted) graph of k-Neighbors for points in X
 
@@ -380,33 +415,39 @@ class KNeighborsMixin(object):
         --------
         NearestNeighbors.radius_neighbors_graph
         """
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
-
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
 
-        n_samples1 = X.shape[0]
+        # kneighbors does the None handling.
+        if X is not None:
+            X = check_array(X, accept_sparse='csr')
+            n_samples1 = X.shape[0]
+        else:
+            n_samples1 = self._fit_X.shape[0]
+
         n_samples2 = self._fit_X.shape[0]
         n_nonzero = n_samples1 * n_neighbors
         A_indptr = np.arange(0, n_nonzero + 1, n_neighbors)
 
         # construct CSR matrix representation of the k-NN graph
         if mode == 'connectivity':
-            A_data = np.ones((n_samples1, n_neighbors))
+            A_data = np.ones(n_samples1 * n_neighbors)
             A_ind = self.kneighbors(X, n_neighbors, return_distance=False)
 
         elif mode == 'distance':
-            data, ind = self.kneighbors(X, n_neighbors + 1,
-                                        return_distance=True)
-            A_data, A_ind = data[:, 1:], ind[:, 1:]
+            A_data, A_ind = self.kneighbors(X, n_neighbors, return_distance=True)
+            A_data = np.ravel(A_data)
 
         else:
             raise ValueError(
                 'Unsupported mode, must be one of "connectivity" '
                 'or "distance" but got "%s" instead' % mode)
 
-        return csr_matrix((A_data.ravel(), A_ind.ravel(), A_indptr),
-                          shape=(n_samples1, n_samples2))
+        kneighbors_graph = csr_matrix((
+            A_data, A_ind.ravel(), A_indptr),
+            shape=(n_samples1, n_samples2))
+
+        return kneighbors_graph
 
 
 class RadiusNeighborsMixin(object):

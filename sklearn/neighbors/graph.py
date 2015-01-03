@@ -4,6 +4,8 @@
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 
+import warnings
+
 from .base import KNeighborsMixin, RadiusNeighborsMixin
 from .unsupervised import NearestNeighbors
 
@@ -77,7 +79,13 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
             ).fit(X)
     else:
         _check_params(X, metric, p, metric_params)
-    return X.kneighbors_graph(X._fit_X, n_neighbors, mode=mode)
+    if mode == "connectivity":
+        warnings.warn("The behavior of marking each sample itself as the "
+                      "first nearest neighbor will be changed in 0.18",
+                      FutureWarning)
+        return X.kneighbors_graph(
+            X._fit_X, n_neighbors=n_neighbors, mode=mode)
+    return X.kneighbors_graph(X=None, n_neighbors=n_neighbors, mode=mode)
 
 
 def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',

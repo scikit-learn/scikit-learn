@@ -895,12 +895,57 @@ def test_non_euclidean_kneighbors():
     # Raise error when wrong parameters are supplied,
     X_nbrs = neighbors.NearestNeighbors(3, metric='manhattan')
     X_nbrs.fit(X)
-    assert_raises(ValueError, neighbors.kneighbors_graph, X_nbrs, 3,
+    assert_raises(ValueError, neighbors.kneighbors_graph, None, 3,
                   metric='euclidean')
     X_nbrs = neighbors.NearestNeighbors(radius=radius, metric='manhattan')
     X_nbrs.fit(X)
-    assert_raises(ValueError, neighbors.radius_neighbors_graph, X_nbrs,
+    assert_raises(ValueError, neighbors.radius_neighbors_graph, None,
                   radius, metric='euclidean')
+
+
+def test_kneighbors_graph_nearest_neighbors():
+    """Test kneighbors_graph method in NearestNeighbors"""
+    for algorithm in ["kd_tree", "ball_tree", "brute"]:
+
+        nn = neighbors.NearestNeighbors(n_neighbors=1, algorithm=algorithm)
+
+        X = [[0], [1]]
+        nn.fit(X)
+
+        # Do not do anything special to duplicates.
+        assert_array_equal(
+            nn.kneighbors_graph([[0], [1]]).A,
+            np.array([[1., 0.], [0., 1.]]))
+
+        assert_array_equal(
+            nn.kneighbors_graph([[2], [1]]).A,
+            np.array([[0., 1.], [0., 1.]]))
+
+        # Avoid marking sample to itself when X is None
+        assert_array_equal(
+            nn.kneighbors_graph().A,
+            np.array([[0., 1.], [1., 0.]]))
+
+        # Do not do anything special to duplicates.
+        assert_array_equal(
+            nn.kneighbors_graph([[0], [1]], mode='distance').A,
+            np.array([[0., 0.], [0., 0.]]))
+
+        assert_array_equal(
+            nn.kneighbors_graph([[2], [1]], mode='distance').A,
+            np.array([[0., 1.], [0., 0.]]))
+
+        # Avoid marking sample to itself when X is None
+        assert_array_equal(
+            nn.kneighbors_graph(mode='distance').A,
+            np.array([[0., 1.], [1., 0.]]))
+
+        X = [[0, 1], [0, 1], [1, 1]]
+        nn = neighbors.NearestNeighbors(n_neighbors=2, algorithm=algorithm)
+        nn.fit(X)
+        assert_array_equal(
+            nn.kneighbors_graph().A,
+            np.array([[0., 1., 1.], [1., 0., 1.], [1., 1., 0]]))
 
 
 if __name__ == '__main__':
