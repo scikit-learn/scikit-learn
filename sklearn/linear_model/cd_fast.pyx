@@ -434,14 +434,18 @@ def sparse_enet_coordinate_descent(double[:] w,
                 # criterion
 
                 # sparse X.T / dense R dot product
+                if center:
+                    R_sum = 0.0
+                    for jj in range(n_samples):
+                        R_sum += R[jj]
+
                 for ii in range(n_features):
                     X_T_R[ii] = 0.0
                     for jj in range(X_indptr[ii], X_indptr[ii + 1]):
                         X_T_R[ii] += X_data[jj] * R[X_indices[jj]]
-                    R_sum = 0.0
-                    for jj in range(n_samples):
-                        R_sum += R[jj]
-                    X_T_R[ii] -= X_mean[ii] * R_sum
+
+                    if center:
+                        X_T_R[ii] -= X_mean[ii] * R_sum
                     XtA[ii] = X_T_R[ii] - beta * w[ii]
 
                 if positive:
