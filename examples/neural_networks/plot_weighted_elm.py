@@ -44,7 +44,7 @@ n_samples_1 = 1000
 n_samples_2 = 100
 X = np.r_[1.5 * rng.randn(n_samples_1, 2),
           0.5 * rng.randn(n_samples_2, 2) + [2, 2]]
-y = [0] * (n_samples_1) + [1] * (n_samples_2)
+y = np.array([0] * (n_samples_1) + [1] * (n_samples_2))
 
 n_hidden = 100
 
