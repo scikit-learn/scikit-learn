@@ -1106,6 +1106,15 @@ def test_cross_val_predict():
     assert_raises(ValueError, cval.cross_val_predict, est, X, y, cv=bad_cv())
 
 
+def test_sparse_fit_params():
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    clf = MockClassifier()
+    fit_params = {'sparse_sample_weight': coo_matrix(np.eye(X.shape[0]))}
+    a = cval.cross_val_score(clf, X, y, fit_params=fit_params)
+    assert_array_equal(a, np.ones(3))
+
+
 def test_check_is_partition():
     p = np.arange(100)
     assert_true(cval._check_is_partition(p, 100))

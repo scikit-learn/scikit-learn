@@ -1185,8 +1185,10 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
     # Adjust length of sample weights
     n_samples = _num_samples(X)
     fit_params = fit_params if fit_params is not None else {}
-    fit_params = dict([(k, np.asarray(v)[train]
-                       if hasattr(v, '__len__') and len(v) == n_samples else v)
+    fit_params = dict([(k, (safe_indexing(v.tocsr(), train) if sp.issparse(v)
+                            else np.asarray(v)[train])
+                        if _is_arraylike(v) and _num_samples(v) == n_samples
+                        else v)
                        for k, v in fit_params.items()])
 
     X_train, y_train = _safe_split(estimator, X, y, train)
@@ -1378,7 +1380,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     # Adjust length of sample weights
     n_samples = _num_samples(X)
     fit_params = fit_params if fit_params is not None else {}
-    fit_params = dict([(k, (v.tocsr()[train] if sp.issparse(v)
+    fit_params = dict([(k, (safe_indexing(v.tocsr(), train) if sp.issparse(v)
                             else np.asarray(v)[train])
                         if _is_arraylike(v) and _num_samples(v) == n_samples
                         else v)
