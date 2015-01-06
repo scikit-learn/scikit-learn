@@ -608,8 +608,8 @@ def test_verbose_output():
     verbose_output.seek(0)
     header = verbose_output.readline().rstrip()
     # with OOB
-    true_header = ' '.join(['%10s'] + ['%16s'] * 3) % (
-        'Iter', 'Train Loss', 'OOB Improve', 'Remaining Time')
+    true_header = ' '.join(['%10s'] + ['%16s'] * 4) % (
+        'Iter', 'Train Loss', 'OOB Improve', 'Remaining Time', 'End Time')
     assert_equal(true_header, header)
 
     n_lines = sum(1 for l in verbose_output.readlines())
@@ -633,8 +633,8 @@ def test_more_verbose_output():
     verbose_output.seek(0)
     header = verbose_output.readline().rstrip()
     # no OOB
-    true_header = ' '.join(['%10s'] + ['%16s'] * 2) % (
-        'Iter', 'Train Loss', 'Remaining Time')
+    true_header = ' '.join(['%10s'] + ['%16s'] * 3) % (
+        'Iter', 'Train Loss', 'Remaining Time', 'End Time')
     assert_equal(true_header, header)
 
     n_lines = sum(1 for l in verbose_output.readlines())

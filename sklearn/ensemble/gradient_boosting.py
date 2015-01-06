@@ -24,7 +24,7 @@ from __future__ import print_function
 from __future__ import division
 from abc import ABCMeta, abstractmethod
 from warnings import warn
-from time import time
+from time import time, strftime, localtime
 
 import numbers
 import numpy as np
@@ -648,8 +648,8 @@ class VerboseReporter(object):
         if est.subsample < 1:
             header_fields.append('OOB Improve')
             verbose_fmt.append('{oob_impr:>16.4f}')
-        header_fields.append('Remaining Time')
-        verbose_fmt.append('{remaining_time:>16s}')
+        header_fields.extend(['Remaining Time', 'End Time'])
+        verbose_fmt.extend(['{remaining_time:>16s}', '{end_time:>16s}'])
 
         # print the header line
         print(('%10s ' + '%16s ' *
@@ -670,14 +670,18 @@ class VerboseReporter(object):
             oob_impr = est.oob_improvement_[j] if do_oob else 0
             remaining_time = ((est.n_estimators - (j + 1)) *
                               (time() - self.start_time) / float(i + 1))
-            if remaining_time > 60:
+            end_time = strftime("%d %b %H:%M", localtime(time() + remaining_time))
+            if remaining_time > 3600:
+                remaining_time = '{0:.2f}h'.format(remaining_time / 3600.0)
+            elif remaining_time > 60:
                 remaining_time = '{0:.2f}m'.format(remaining_time / 60.0)
             else:
                 remaining_time = '{0:.2f}s'.format(remaining_time)
             print(self.verbose_fmt.format(iter=j + 1,
                                           train_score=est.train_score_[j],
                                           oob_impr=oob_impr,
-                                          remaining_time=remaining_time))
+                                          remaining_time=remaining_time,
+                                          end_time=end_time))
             if self.verbose == 1 and ((i + 1) // (self.verbose_mod * 10) > 0):
                 # adjust verbose frequency (powers of 10)
                 self.verbose_mod *= 10
