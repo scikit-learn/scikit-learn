@@ -18,23 +18,19 @@ from sklearn.linear_model.ridge import _solve_cholesky_kernel
 class KernelRidge(BaseEstimator, RegressorMixin):
     """Kernelized ridge regression.
 
-    Kernelized ridge regression (KRR) combines ridge regression (linear least
+    Kernelized ridge regression (KRR) combines ridge regression (linear least 
     squares plus l2-norm regularization) with the kernel trick. It thus
     learns a linear function in the space induced by the respective kernel and
     the data. For non-linear kernels, this corresponds to a non-linear
     function in the original space.
 
-    The model learned by KRR is identical to support vector regression (SVR).
-    However, different loss functions are used (ridge versus  epsilon-
-    insensitive loss). In contrast to SVR, fitting a KRR can be done in closed-
-    form and is typically faster for medium-sized datasets. On the other hand,
-    the learned model is non-sparse and thus slower than SVR at prediction-time.
-
-    Using KRR with a linear kernel can be advisable over non-kernelized Ridge
-    in situations when the number of feature dimensions D is considerably larger
-    than the number of training datapoints N since the computational cost of 
-    solving the dual (kernelized) problem is O(N^3) while the standard Ridge
-    requires O(D^3).
+    The model learned by KRR is identical to support vector regression (SVR). 
+    However, different loss functions are used: KRR uses squared error loss 
+    combined with l2 regularization while support vector regression uses 
+    epsilon-insensitive loss.  In contrast to SVR, fitting a KRR model can be 
+    done in closed-form and is typically faster for medium-sized datasets. 
+    On the other  hand, the learned model is non-sparse and thus slower than 
+    SVR, which learns a sparse model for epsilon > 0, at prediction-time.
 
     This estimator has built-in support for multi-variate regression
     (i.e., when y is a 2d-array of shape [n_samples, n_targets]).
