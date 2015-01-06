@@ -46,15 +46,15 @@ from sklearn.learning_curve import learning_curve
 from sklearn.kernel_ridge import KernelRidge
 import matplotlib.pyplot as plt
 
-np.random.seed(0)
+rng = np.random.RandomState(0)
 
 #############################################################################
 # Generate sample data
-X = 5 * np.random.rand(10000, 1)
+X = 5 * rng.rand(10000, 1)
 y = np.sin(X).ravel()
 
 # Add noise to targets
-y[::5] += 3 * (0.5 - np.random.rand(X.shape[0]/5))
+y[::5] += 3 * (0.5 - rng.rand(X.shape[0]/5))
 
 X_plot = np.linspace(0, 5, 100000)[:, None]
 
@@ -118,9 +118,9 @@ plt.legend()
 plt.figure()
 
 # Generate sample data
-X = 5 * np.random.rand(10000, 1)
+X = 5 * rng.rand(10000, 1)
 y = np.sin(X).ravel()
-y[::5] += 3 * (0.5 - np.random.rand(X.shape[0]/5))
+y[::5] += 3 * (0.5 - rng.rand(X.shape[0]/5))
 sizes = np.logspace(1, 4, 7)
 for name, estimator in {"KRR": KernelRidge(kernel='rbf', alpha=1e-1, 
 	                                      gamma=1e+1),
