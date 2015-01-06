@@ -96,9 +96,9 @@ class KernelRidge(BaseEstimator, RegressorMixin):
     >>> from sklearn.kernel_ridge import KernelRidge
     >>> import numpy as np
     >>> n_samples, n_features = 10, 5
-    >>> np.random.seed(0)
-    >>> y = np.random.randn(n_samples)
-    >>> X = np.random.randn(n_samples, n_features)
+    >>> rng = np.random.RandomState(0)
+    >>> y = rng.randn(n_samples)
+    >>> X = rng.randn(n_samples, n_features)
     >>> clf = KernelRidge(alpha=1.0)
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
     KernelRidge(alpha=1.0, coef0=1, degree=3, gamma=None, kernel='linear',
