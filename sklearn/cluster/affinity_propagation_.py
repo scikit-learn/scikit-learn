@@ -10,7 +10,7 @@ clustering.
 import numpy as np
 
 from ..base import BaseEstimator, ClusterMixin
-from ..utils import as_float_array
+from ..utils import as_float_array, check_array
 from ..metrics import euclidean_distances
 from ..metrics import pairwise_distances_argmin
 
@@ -279,7 +279,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
             Data matrix or, if affinity is ``precomputed``, matrix of
             similarities / affinities.
         """
-        X = np.asarray(X)
+        X = check_array(X, accept_sparse='csr')
         if self.affinity == "precomputed":
             self.affinity_matrix_ = X
         elif self.affinity == "euclidean":
