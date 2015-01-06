@@ -593,7 +593,7 @@ def test_cross_val_score_fit_params():
     DUMMY_OBJ = object()
 
     def assert_fit_params(clf):
-        """Function to test that the values are passsed correctly to the
+        """Function to test that the values are passed correctly to the
         classifier arguments for non-array type
         """
         assert_equal(clf.dummy_int, DUMMY_INT)
@@ -1104,6 +1104,15 @@ def test_cross_val_predict():
             yield np.array([0, 1, 2, 3]), np.array([4, 5, 6, 7, 8])
 
     assert_raises(ValueError, cval.cross_val_predict, est, X, y, cv=bad_cv())
+
+
+def test_sparse_fit_params():
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    clf = MockClassifier()
+    fit_params = {'sparse_sample_weight': coo_matrix(np.eye(X.shape[0]))}
+    a = cval.cross_val_score(clf, X, y, fit_params=fit_params)
+    assert_array_equal(a, np.ones(3))
 
 
 def test_check_is_partition():
