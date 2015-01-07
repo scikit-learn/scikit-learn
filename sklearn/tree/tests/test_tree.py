@@ -1195,5 +1195,3 @@ def check_min_weight_leaf_split_level(name):
 def test_min_weight_leaf_split_level():
     for name in ALL_TREES:
         yield check_min_weight_leaf_split_level, name
-
-

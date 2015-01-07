@@ -327,8 +327,8 @@ class DPGMM(GMM):
             self.dof_ = 2 + X.shape[0] + n_features
             self.scale_ = (X.shape[0] + 1) * np.identity(n_features)
             for k in range(self.n_components):
-                    diff = X - self.means_[k]
-                    self.scale_ += np.dot(diff.T, z[:, k:k + 1] * diff)
+                diff = X - self.means_[k]
+                self.scale_ += np.dot(diff.T, z[:, k:k + 1] * diff)
             self.scale_ = pinvh(self.scale_)
             self.precs_ = self.dof_ * self.scale_
             self.det_scale_ = linalg.det(self.scale_)

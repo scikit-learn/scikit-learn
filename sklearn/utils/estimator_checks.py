@@ -293,9 +293,9 @@ def check_estimators_nan_inf(name, Estimator):
                     traceback.print_exc(file=sys.stdout)
                     raise e
             except Exception as exc:
-                    print(error_string_fit, Estimator, exc)
-                    traceback.print_exc(file=sys.stdout)
-                    raise exc
+                print(error_string_fit, Estimator, exc)
+                traceback.print_exc(file=sys.stdout)
+                raise exc
             else:
                 raise AssertionError(error_string_fit, Estimator)
             # actually fit
@@ -459,9 +459,9 @@ def check_classifiers_one_label(name, Classifier):
             else:
                 return
         except Exception as exc:
-                print(error_string_fit, Classifier, exc)
-                traceback.print_exc(file=sys.stdout)
-                raise exc
+            print(error_string_fit, Classifier, exc)
+            traceback.print_exc(file=sys.stdout)
+            raise exc
         # predict
         try:
             assert_array_equal(classifier.predict(X_test), y)
@@ -505,7 +505,7 @@ def check_classifiers_train(name, Classifier):
         assert_raises(ValueError, classifier.predict, X.T)
         if hasattr(classifier, "decision_function"):
             try:
-                # decision_function agrees with predict
+            # decision_function agrees with predict
                 decision = classifier.decision_function(X)
                 if n_classes is 2:
                     assert_equal(decision.shape, (n_samples,))

@@ -262,4 +262,3 @@ def test_chebyshev_metric():
     tsne = TSNE(verbose=2, metric="chebyshev")
     X = random_state.randn(5, 2)
     tsne.fit_transform(X)
-

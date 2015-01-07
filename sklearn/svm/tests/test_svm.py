@@ -464,13 +464,13 @@ def test_linearsvc_parameters():
     X, y = make_classification(n_samples=5, n_features=5)
 
     for dual, loss, penalty in params:
-            clf = svm.LinearSVC(penalty=penalty, loss=loss, dual=dual)
-            if (loss == 'l1' and penalty == 'l1') or (
-                loss == 'l1' and penalty == 'l2' and not dual) or (
-                penalty == 'l1' and dual):
-                assert_raises(ValueError, clf.fit, X, y)
-            else:
-                clf.fit(X, y)
+        clf = svm.LinearSVC(penalty=penalty, loss=loss, dual=dual)
+        if (loss == 'l1' and penalty == 'l1') or (
+            loss == 'l1' and penalty == 'l2' and not dual) or (
+            penalty == 'l1' and dual):
+            assert_raises(ValueError, clf.fit, X, y)
+        else:
+            clf.fit(X, y)
 
 
 def test_linearsvc():

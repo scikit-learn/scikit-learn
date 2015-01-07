@@ -196,8 +196,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                 class_prob = class_prior_
 
             elif self.strategy == "uniform":
-                    raise ValueError("Sparse target prediction is not "
-                                     "supported with the uniform strategy")
+                raise ValueError("Sparse target prediction is not "
+                                 "supported with the uniform strategy")
 
             elif self.strategy == "constant":
                 classes_ = [np.array([c]) for c in constant]

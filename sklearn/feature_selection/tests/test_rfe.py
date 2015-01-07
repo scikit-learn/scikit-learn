@@ -128,7 +128,7 @@ def test_rfecv():
 
 
 def test_rfe_min_step():
-    
+
     n_features = 10
     X, y = make_friedman1(n_samples=50, n_features=n_features, random_state=0)
     n_samples, n_features = X.shape

@@ -75,7 +75,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
     Returns
     -------
     An object with the following attributes:
-    
+
     data : numpy array of shape (400, 4096)
         Each row corresponds to a ravelled face image of original size 64 x 64 pixels.
 
@@ -87,7 +87,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
 
     DESCR : string
         Description of the modified Olivetti Faces Dataset.
- 
+
     Notes
     ------
 

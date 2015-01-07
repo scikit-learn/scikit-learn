@@ -433,7 +433,7 @@ class TSNE(BaseEstimator):
         else:
             if self.verbose:
                 print("[t-SNE] Computing pairwise distances...")
-            
+
             if self.metric == "euclidean":
                 distances = pairwise_distances(X, metric=self.metric, squared=True)
             else:

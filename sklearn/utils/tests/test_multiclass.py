@@ -290,17 +290,17 @@ def test_is_label_indicator_matrix():
                  np.asarray(example).ndim == 2 and
                  np.asarray(example).dtype.kind in 'biuf' and
                  np.asarray(example).shape[1] > 0)):
-                    examples_sparse = [sparse_matrix(example)
-                                       for sparse_matrix in [coo_matrix,
-                                                             csc_matrix,
-                                                             csr_matrix,
-                                                             dok_matrix,
-                                                             lil_matrix]]
-                    for exmpl_sparse in examples_sparse:
-                        sparse_assert_(is_label_indicator_matrix(exmpl_sparse),
-                                       msg=('is_label_indicator_matrix(%r)'
-                                       ' should be %s')
-                                       % (exmpl_sparse, sparse_exp))
+                examples_sparse = [sparse_matrix(example)
+                                   for sparse_matrix in [coo_matrix,
+                                                         csc_matrix,
+                                                         csr_matrix,
+                                                         dok_matrix,
+                                                         lil_matrix]]
+                for exmpl_sparse in examples_sparse:
+                    sparse_assert_(is_label_indicator_matrix(exmpl_sparse),
+                                   msg=('is_label_indicator_matrix(%r)'
+                                   ' should be %s')
+                                   % (exmpl_sparse, sparse_exp))
 
             # Densify sparse examples before testing
             if issparse(example):
