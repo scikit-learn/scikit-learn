@@ -1208,6 +1208,8 @@ def check_explicit_sparse_zeros(tree, max_depth=3,
     Xs = (X_test, X_sparse_test)
     for X1, X2 in product(Xs, Xs):
         assert_array_almost_equal(s.tree_.apply(X1), d.tree_.apply(X2))
+        assert_array_almost_equal(s.apply(X1), d.apply(X2))
+        assert_array_almost_equal(s.apply(X1), s.tree_.apply(X1))
         assert_array_almost_equal(s.predict(X1), d.predict(X2))
 
         if tree in CLF_TREES:
