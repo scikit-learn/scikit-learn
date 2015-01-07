@@ -505,7 +505,7 @@ def check_classifiers_train(name, Classifier):
         assert_raises(ValueError, classifier.predict, X.T)
         if hasattr(classifier, "decision_function"):
             try:
-                # decision_function agrees with predict:
+                # decision_function agrees with predict
                 decision = classifier.decision_function(X)
                 if n_classes is 2:
                     assert_equal(decision.shape, (n_samples,))
@@ -526,7 +526,7 @@ def check_classifiers_train(name, Classifier):
             except NotImplementedError:
                 pass
         if hasattr(classifier, "predict_proba"):
-            # predict_proba agrees with predict:
+            # predict_proba agrees with predict
             y_prob = classifier.predict_proba(X)
             assert_equal(y_prob.shape, (n_samples, n_classes))
             assert_array_equal(np.argmax(y_prob, axis=1), y_pred)
