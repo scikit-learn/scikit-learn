@@ -262,7 +262,9 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         "Learning to Find Pre-Images", G BakIr et al, 2004.
         """
         if not self.fit_inverse_transform:
-            raise NotFittedError("Inverse transform was not fitted.")
+            raise NotFittedError("The fit_inverse_transform parameter was not"
+                                 " set to True when instantiating and hence "
+                                 "the inverse transform is not available.")
 
         K = self._get_kernel(X, self.X_transformed_fit_)
 
