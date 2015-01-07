@@ -388,6 +388,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         return self.tree_.compute_feature_importances()
 
+    def apply(self, X):
+        X = check_array(X, dtype= DTYPE, accept_sparse="csr")
+        return self.tree_.apply(X)
+
 
 # =============================================================================
 # Public estimators
