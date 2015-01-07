@@ -685,9 +685,9 @@ def check_regressors_train(name, Regressor):
     regressor.fit(X.tolist(), y_.tolist())
     regressor.predict(X)
 
-      # TODO: find out why PLS and CCA fail. RANSAC is random
-      # and furthermore assumes the presence of outliers, hence
-      # skipped
+    # TODO: find out why PLS and CCA fail. RANSAC is random
+    # and furthermore assumes the presence of outliers, hence
+    # skipped
     if name not in ('PLSCanonical', 'CCA', 'RANSACRegressor'):
         assert_greater(regressor.score(X, y_), 0.5)
 
