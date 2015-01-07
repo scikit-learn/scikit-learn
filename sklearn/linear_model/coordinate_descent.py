@@ -538,7 +538,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         parameter vector (w in the cost function formula)
 
     sparse_coef_ : scipy.sparse matrix, shape = (n_features, 1) | \
-            (n_targets, n_features)
+(n_targets, n_features)
         ``sparse_coef_`` is a readonly property derived from ``coef_``
 
     intercept_ : float | array, shape = (n_targets,)
@@ -769,7 +769,7 @@ class Lasso(ElasticNet):
         parameter vector (w in the cost function formula)
 
     sparse_coef_ : scipy.sparse matrix, shape = (n_features, 1) | \
-            (n_targets, n_features)
+(n_targets, n_features)
         ``sparse_coef_`` is a readonly property derived from ``coef_``
 
     intercept_ : float | array, shape = (n_targets,)
@@ -1461,7 +1461,7 @@ class MultiTaskElasticNet(Lasso):
         Independent term in decision function.
 
     coef_ : array, shape = (n_tasks, n_features)
-        Parameter vector (W in the cost function formula). If a 1D y is \
+        Parameter vector (W in the cost function formula). If a 1D y is
         passed in at fit (non multi-task usage), ``coef_`` is then a 1D array
 
     n_iter_ : int

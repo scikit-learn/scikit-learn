@@ -2,8 +2,8 @@ import numpy as np
 
 from .base import _fit_liblinear, BaseSVC, BaseLibSVM
 from ..base import BaseEstimator, RegressorMixin
-from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, \
-    LinearModel
+from ..linear_model.base import (
+        LinearClassifierMixin, SparseCoefMixin, LinearModel)
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import check_array, check_X_y
 
@@ -41,7 +41,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     tol : float, optional (default=1e-4)
         Tolerance for stopping criteria
 
-    multi_class: string, 'ovr' or 'crammer_singer' (default='ovr')
+    multi_class : string, 'ovr' or 'crammer_singer' (default='ovr')
         Determines the multi-class strategy if `y` contains more than
         two classes.
         `ovr` trains n_classes one-vs-rest classifiers, while `crammer_singer`
@@ -90,12 +90,12 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     Attributes
     ----------
     coef_ : array, shape = [n_features] if n_classes == 2 \
-            else [n_classes, n_features]
+else [n_classes, n_features]
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-        `coef_` is a readonly property derived from `raw_coef_` that \
-        follows the internal memory layout of liblinear.
+        `coef_` is a readonly property derived from `raw_coef_` that
+         follows the internal memory layout of liblinear.
 
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
@@ -259,11 +259,11 @@ class LinearSVR(LinearModel, RegressorMixin):
     Attributes
     ----------
     coef_ : array, shape = [n_features] if n_classes == 2 \
-            else [n_classes, n_features]
+else [n_classes, n_features]
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-        `coef_` is a readonly property derived from `raw_coef_` that \
+        `coef_` is a readonly property derived from `raw_coef_` that
         follows the internal memory layout of liblinear.
 
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
@@ -420,12 +420,12 @@ class SVC(BaseSVC):
         number of support vector for each class.
 
     dual_coef_ : array, shape = [n_class-1, n_SV]
-        Coefficients of the support vector in the decision function. \
-        For multiclass, coefficient for all 1-vs-1 classifiers. \
-        The layout of the coefficients in the multiclass case is somewhat \
-        non-trivial. See the section about multi-class classification in the \
+        Coefficients of the support vector in the decision function.
+        For multiclass, coefficient for all 1-vs-1 classifiers.
+        The layout of the coefficients in the multiclass case is somewhat
+        non-trivial. See the section about multi-class classification in the
         SVM section of the User Guide for details.
-
+ 
     coef_ : array, shape = [n_class-1, n_features]
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
@@ -544,10 +544,10 @@ class NuSVC(BaseSVC):
         number of support vector for each class.
 
     dual_coef_ : array, shape = [n_class-1, n_SV]
-        Coefficients of the support vector in the decision function. \
-        For multiclass, coefficient for all 1-vs-1 classifiers. \
-        The layout of the coefficients in the multiclass case is somewhat \
-        non-trivial. See the section about multi-class classification in \
+        Coefficients of the support vector in the decision function.
+        For multiclass, coefficient for all 1-vs-1 classifiers.
+        The layout of the coefficients in the multiclass case is somewhat
+        non-trivial. See the section about multi-class classification in
         the SVM section of the User Guide for details.
 
     coef_ : array, shape = [n_class-1, n_features]

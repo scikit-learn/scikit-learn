@@ -32,7 +32,7 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
     Parameters
     ----------
     X : array [n_samples_a, n_samples_a] if metric == "precomputed", or, \
-             [n_samples_a, n_features] otherwise
+[n_samples_a, n_features] otherwise
         Array of pairwise distances between samples, or a feature array.
 
     labels : array, shape = [n_samples]
@@ -117,7 +117,7 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     Parameters
     ----------
     X : array [n_samples_a, n_samples_a] if metric == "precomputed", or, \
-             [n_samples_a, n_features] otherwise
+[n_samples_a, n_features] otherwise
         Array of pairwise distances between samples, or a feature array.
 
     labels : array, shape = [n_samples]

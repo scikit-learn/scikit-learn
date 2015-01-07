@@ -364,7 +364,7 @@ class MDS(BaseEstimator):
         Parameters
         ----------
         X : array, shape=[n_samples, n_features], or [n_samples, n_samples] \
-                if dissimilarity='precomputed'
+if dissimilarity='precomputed'
             Input data.
 
         init : {None or ndarray, shape (n_samples,)}, optional
@@ -381,7 +381,7 @@ class MDS(BaseEstimator):
         Parameters
         ----------
         X : array, shape=[n_samples, n_features], or [n_samples, n_samples] \
-                if dissimilarity='precomputed'
+if dissimilarity='precomputed'
             Input data.
 
         init : {None or ndarray, shape (n_samples,)}, optional

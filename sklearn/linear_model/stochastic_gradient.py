@@ -589,8 +589,8 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     Parameters
     ----------
     loss : str, 'hinge', 'log', 'modified_huber', 'squared_hinge',\
-                'perceptron', or a regression loss: 'squared_loss', 'huber',\
-                'epsilon_insensitive', or 'squared_epsilon_insensitive'
+'perceptron', or a regression loss: 'squared_loss', 'huber',\
+'epsilon_insensitive', or 'squared_epsilon_insensitive'
         The loss function to be used. Defaults to 'hinge', which gives a
         linear SVM.
         The 'log' loss gives logistic regression, a probabilistic classifier.
@@ -685,7 +685,7 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     Attributes
     ----------
     coef_ : array, shape (1, n_features) if n_classes == 2 else (n_classes,\
-            n_features)
+n_features)
         Weights assigned to the features.
 
     intercept_ : array, shape (1,) if n_classes == 2 else (n_classes,)
@@ -1102,7 +1102,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
     Parameters
     ----------
     loss : str, 'squared_loss', 'huber', 'epsilon_insensitive', \
-                or 'squared_epsilon_insensitive'
+or 'squared_epsilon_insensitive'
         The loss function to be used. Defaults to 'squared_loss' which refers
         to the ordinary least squares fit. 'huber' modifies 'squared_loss' to
         focus less on getting outliers correct by switching from squared to

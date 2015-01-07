@@ -579,7 +579,9 @@ class MultinomialNB(BaseDiscreteNB):
     ----------
     C.D. Manning, P. Raghavan and H. Schuetze (2008). Introduction to
     Information Retrieval. Cambridge University Press, pp. 234-265.
-    http://nlp.stanford.edu/IR-book/html/htmledition/naive-bayes-text-classification-1.html
+
+    http://nlp.stanford.edu/IR-book/html/htmledition/\
+naive-bayes-text-classification-1.html
     """
 
     def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):

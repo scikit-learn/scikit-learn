@@ -12,10 +12,10 @@ import numpy as np
 from scipy import stats
 from ..utils.extmath import weighted_mode
 
-from .base import \
-    _check_weights, _get_weights, \
-    NeighborsBase, KNeighborsMixin,\
-    RadiusNeighborsMixin, SupervisedIntegerMixin
+from .base import (
+        _check_weights, _get_weights,
+        NeighborsBase, KNeighborsMixin,
+        RadiusNeighborsMixin, SupervisedIntegerMixin)
 from ..base import ClassifierMixin
 from ..utils import check_array
 

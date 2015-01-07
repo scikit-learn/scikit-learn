@@ -143,8 +143,8 @@ class PCA(BaseEstimator, TransformerMixin):
         Components with maximum variance.
 
     explained_variance_ratio_ : array, [n_components]
-        Percentage of variance explained by each of the selected components. \
-        k is not set then all components are stored and the sum of explained \
+        Percentage of variance explained by each of the selected components.
+        k is not set then all components are stored and the sum of explained
         variances is equal to 1.0
 
     mean_ : array, [n_features]
@@ -499,8 +499,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         Components with maximum variance.
 
     explained_variance_ratio_ : array, [n_components]
-        Percentage of variance explained by each of the selected components. \
-        k is not set then all components are stored and the sum of explained \
+        Percentage of variance explained by each of the selected components.
+        k is not set then all components are stored and the sum of explained
         variances is equal to 1.0
 
     mean_ : array, [n_features]

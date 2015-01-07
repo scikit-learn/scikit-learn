@@ -24,7 +24,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     Parameters
     ----------
     X : array or sparse (CSR) matrix of shape (n_samples, n_features), or \
-            array of shape (n_samples, n_samples)
+array of shape (n_samples, n_samples)
         A feature array, or array of distances between samples if
         ``metric='precomputed'``.
 
@@ -219,7 +219,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         Parameters
         ----------
         X : array or sparse (CSR) matrix of shape (n_samples, n_features), or \
-                array of shape (n_samples, n_samples)
+array of shape (n_samples, n_samples)
             A feature array, or array of distances between samples if
             ``metric='precomputed'``.
         sample_weight : array, shape (n_samples,), optional
@@ -240,7 +240,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         Parameters
         ----------
         X : array or sparse (CSR) matrix of shape (n_samples, n_features), or \
-                array of shape (n_samples, n_samples)
+array of shape (n_samples, n_samples)
             A feature array, or array of distances between samples if
             ``metric='precomputed'``.
         sample_weight : array, shape (n_samples,), optional
