@@ -410,7 +410,7 @@ def load_boston():
     fdescr_name = join(module_path, 'descr', 'boston_house_prices.rst')
     with open(fdescr_name) as f:
         descr_text = f.read()
-    
+
     data_file_name = join(module_path, 'data', 'boston_house_prices.csv')
     with open(data_file_name) as f:
         data_file = csv.reader(f)

@@ -39,7 +39,7 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
                 X_pinv = linalg.pinv(X)   # compute once pinv(X)
             x_weights = np.dot(X_pinv, y_score)
         else:  # mode A
-        # Mode A regress each X column on y_score
+            # Mode A regress each X column on y_score
             x_weights = np.dot(X.T, y_score) / np.dot(y_score.T, y_score)
         # 1.2 Normalize u
         x_weights /= np.sqrt(np.dot(x_weights.T, x_weights))

@@ -169,7 +169,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         if X.shape[0] > X.shape[1]:
             Gram = np.dot(X.T, X)
     elif copy_Gram:
-            Gram = Gram.copy()
+        Gram = Gram.copy()
 
     if Xy is None:
         Cov = np.dot(X.T, y)

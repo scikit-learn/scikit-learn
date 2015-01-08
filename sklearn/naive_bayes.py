@@ -305,15 +305,15 @@ class GaussianNB(BaseNB):
             self.sigma_[:, :] -= epsilon
 
         classes = self.classes_
-        
+
         unique_y = np.unique(y)
         unique_y_in_classes = in1d(unique_y, classes)
-        
+
         if not np.all(unique_y_in_classes):
-             raise ValueError(
-                     "The target label(s) %s in y do not exist in the "
-                     "initial classes %s" % (y[~unique_y_in_classes], classes))
-       
+            raise ValueError(
+                    "The target label(s) %s in y do not exist in the "
+                    "initial classes %s" % (y[~unique_y_in_classes], classes))
+
         for y_i in unique_y:
             i = classes.searchsorted(y_i)
             X_i = X[y == y_i, :]
