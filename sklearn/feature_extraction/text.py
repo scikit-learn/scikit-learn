@@ -607,10 +607,12 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         A mapping of terms to feature indices.
 
     stop_words_ : set
-        Terms that were ignored because they either
-        - occurred in too many documents (`max_df`)
-        - occurred in too few documents (`min_df`)
-        - were cut off by feature selection (`max_features`).
+        Terms that were ignored because they either:
+
+          - occurred in too many documents (`max_df`)
+          - occurred in too few documents (`min_df`)
+          - were cut off by feature selection (`max_features`).
+
         This is only available if no vocabulary was given.
 
     See also
