@@ -13,9 +13,10 @@ Seeding is performed using a binning technique for scalability.
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 
-from collections import defaultdict
 import numpy as np
+import warnings
 
+from collections import defaultdict
 from ..externals import six
 from ..utils import extmath, check_random_state, gen_batches
 from ..utils.validation import check_is_fitted
@@ -66,7 +67,8 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
 
 
 def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
-               min_bin_freq=1, cluster_all=True, max_iter=300):
+               min_bin_freq=1, cluster_all=True, max_iter=300,
+               max_iterations=None):
     """Perform mean shift clustering of data using a flat kernel.
 
     Parameters
@@ -122,6 +124,13 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     See examples/cluster/plot_meanshift.py for an example.
 
     """
+    # FIXME To be removed in 0.18
+    if max_iterations is not None:
+        warnings.warn("The `max_iterations` parameter has been renamed to "
+                      "`max_iter` from version 0.16. The `max_iterations` "
+                      "parameter will be removed in 0.18", DeprecationWarning)
+        max_iter = max_iterations
+
     if bandwidth is None:
         bandwidth = estimate_bandwidth(X)
     if seeds is None:
