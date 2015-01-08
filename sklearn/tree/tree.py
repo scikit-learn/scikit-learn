@@ -163,7 +163,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             self.n_classes_ = []
 
             if self.class_weight is not None:
-                y_org = np.copy(y)
+                y_original = np.copy(y)
 
             for k in range(self.n_outputs_):
                 classes_k, y[:, k] = np.unique(y[:, k], return_inverse=True)
@@ -193,9 +193,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                         class_weight_k = self.class_weight[k]
                     cw_part = compute_class_weight(class_weight_k,
                                                    self.classes_[k],
-                                                   y_org[:, k])
+                                                   y_original[:, k])
                     cw_part = cw_part[np.searchsorted(self.classes_[k],
-                                                      y_org[:, k])]
+                                                      y_original[:, k])]
                     cw.append(cw_part)
                 cw = np.prod(cw, axis=0, dtype=np.float64)
 

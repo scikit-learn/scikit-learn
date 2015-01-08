@@ -406,8 +406,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         self.oob_score_ = oob_score / self.n_outputs_
 
-    def _validate_y_cw(self, y_org):
-        y = np.copy(y_org)
+    def _validate_y_cw(self, y_original):
+        y = np.copy(y_original)
         cw = None
 
         self.classes_ = []
@@ -455,9 +455,9 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
                         class_weight_k = self.class_weight[k]
                     cw_part = compute_class_weight(class_weight_k,
                                                    self.classes_[k],
-                                                   y_org[:, k])
+                                                   y_original[:, k])
                     cw_part = cw_part[np.searchsorted(self.classes_[k],
-                                                      y_org[:, k])]
+                                                      y_original[:, k])]
                     cw.append(cw_part)
                 cw = np.prod(cw, axis=0, dtype=np.float64)
 

@@ -136,6 +136,11 @@ Enhancements
    - Add ``n_iter_`` attribute to estimators that accept a ``max_iter`` attribute
      in their constructor. By `Manoj Kumar`_.
 
+   - Add ``class_weight`` parameter to automatically weight samples by class
+     frequency for :class:`ensemble.RandomForestClassifier`,
+     :class:`tree.DecisionTreeClassifier`, :class:`ensemble.ExtraTreesClassifier`
+     and :class:`tree.ExtraTreeClassifier`. By `Trevor Stephens`_.
+
 Documentation improvements
 ..........................
 
@@ -3123,3 +3128,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Matt Terry: https://github.com/mrterry
 
 .. _Antony Lee: https://www.ocf.berkeley.edu/~antonyl/
+
+.. _Trevor Stephens: http://trevorstephens.com/
