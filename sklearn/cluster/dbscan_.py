@@ -65,8 +65,8 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
         negative weight may inhibit its eps-neighbor from being core.
         Note that weights are absolute, and default to 1.
 
-    random_state : numpy.RandomState, optional
-        The generator used to initialize the centers. Defaults to numpy.random.
+    random_state: numpy.RandomState, optional
+        The generator used to shuffle the samples. Defaults to numpy.random.
 
     Returns
     -------
@@ -177,7 +177,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square.
     random_state : numpy.RandomState, optional
-        The generator used to initialize the centers. Defaults to numpy.random.
+        The generator used to shuffle the samples. Defaults to numpy.random.
 
     Attributes
     ----------
