@@ -1229,7 +1229,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     return report
 
 
-def hamming_loss(y_true, y_pred, classes=None):
+def hamming_loss(y_true, y_pred, classes=None, sample_weight=None):
     """Compute the average Hamming loss.
 
     The Hamming loss is the fraction of labels that are incorrectly predicted.
@@ -1244,6 +1244,9 @@ def hamming_loss(y_true, y_pred, classes=None):
 
     classes : array, shape = [n_labels], optional
         Integer array of labels.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
 
     Returns
     -------
@@ -1286,11 +1289,16 @@ def hamming_loss(y_true, y_pred, classes=None):
     >>> y_true = [2, 2, 3, 4]
     >>> hamming_loss(y_true, y_pred)
     0.25
+    >>> hamming_loss(y_true, y_pred, sample_weight=[1, 0, 1, 0])
+    0.5
 
     In the multilabel case with binary label indicators:
 
     >>> hamming_loss(np.array([[0, 1], [1, 1]]), np.zeros((2, 2)))
     0.75
+    >>> hamming_loss(np.array([[0, 1], [1, 1]]), np.zeros((2, 2)), sample_weight=[0.5, 1])
+    0.625
+
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
 
@@ -1299,12 +1307,21 @@ def hamming_loss(y_true, y_pred, classes=None):
     else:
         classes = np.asarray(classes)
 
+    if sample_weight is None:
+        sample_weight = np.ones(y_true.shape[0], dtype=np.int)
+    else:
+        sample_weight = np.asarray(sample_weight)
+
     if y_type.startswith('multilabel'):
-        n_differences = count_nonzero(y_true - y_pred)
+        a = y_true - y_pred
+        n_differences = sum([count_nonzero(a[i])*sample_weight[i]
+                            for i in xrange(a.shape[0])])
         return (n_differences / (y_true.shape[0] * len(classes)))
 
     elif y_type in ["binary", "multiclass"]:
-        return sp_hamming(y_true, y_pred)
+        score = accuracy_score(y_true, y_pred,
+                           sample_weight=sample_weight)
+        return 1 - score
     else:
         raise ValueError("{0} is not supported".format(y_type))
 
