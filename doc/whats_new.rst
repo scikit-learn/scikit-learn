@@ -12,20 +12,21 @@ Changelog
 New features
 ............
 
+   - The new :class:`neighbors.LSHForest` implements locality-sensitive hashing
+     for approximate nearest neighbors search. By `Maheshakya Wijewardena`_.
 
    - Added :class:`svm.LinearSVR`. This class uses the liblinear implementation
      of Support Vector Regression which is much faster for large
-     sample sizes than :class:`svm.SVR` with linear kernel. By 
+     sample sizes than :class:`svm.SVR` with linear kernel. By
      `Fabian Pedregosa`_ and Qiang Luo.
 
    - Incremental fit for :class:`GaussianNB <naive_bayes.GaussianNB>`.
 
-   - Add ``sample_weight`` support to :class:`dummy.DummyClassifier` and
-     :class:`dummy.DummyRegressor`. By
-     `Arnaud Joly`_.
+   - Added ``sample_weight`` support to :class:`dummy.DummyClassifier` and
+     :class:`dummy.DummyRegressor`. By `Arnaud Joly`_.
 
-   - Add the :func:`metrics.label_ranking_average_precision_score` metrics. By
-     `Arnaud Joly`_.
+   - Added the :func:`metrics.label_ranking_average_precision_score` metrics.
+     By `Arnaud Joly`_.
 
    - Add the :func:`metrics.coverage_error` metrics. By `Arnaud Joly`_.
 
@@ -37,9 +38,8 @@ New features
      trained forest model to grow additional trees incrementally. By
      `Laurent Direr`_.
 
-   - Add ``sample_weight`` support to :class:`ensemble.GradientBoostingClassifier` and
-     :class:`ensemble.GradientBoostingRegressor`. By
-     `Peter Prettenhofer`_.
+   - Added ``sample_weight`` support to :class:`ensemble.GradientBoostingClassifier` and
+     :class:`ensemble.GradientBoostingRegressor`. By `Peter Prettenhofer`_.
 
    - Added :class:`decomposition.IncrementalPCA`, an implementation of the PCA
      algorithm that supports out-of-core learning with a ``partial_fit``
@@ -61,8 +61,17 @@ New features
    - Add :class:`cluster.Birch`, an online clustering algorithm. By
      `Manoj Kumar`_, `Alexandre Gramfort`_ and `Joel Nothman`_.
 
+   - Added shrinkage support to :class:`lda.LDA` using two new solvers. By
+     `Clemens Brunner`_ and `Martin Billinger`_.
+
 Enhancements
 ............
+
+   - Add option ``return_distance`` in :func:`hierarchical.ward_tree`
+     to return distances between nodes for both structured and unstructured
+     versions of the algorithm. By `Matteo Visconti di Oleggio Castello`_.
+     The same option was added in :func:`hierarchical.linkage_tree`.
+     By `Manoj Kumar`_
 
    - Add support for sample weights in scorer objects.  Metrics with sample
      weight support will automatically benefit from it. By `Noel Dawe`_ and
@@ -120,10 +129,6 @@ Enhancements
      handle unknown categorical features more gracefully during transform.
      By `Manoj Kumar`_.
 
-   - Added option ``check_X_y`` to :func:`metrics.pairwise_distances_argmin_min`
-     that can give speed improvements by avoiding repeated checking when set to
-     False. By `Manoj Kumar`_.
-
    - Added support for sparse input data to decision trees and their ensembles.
      By `Fares Hedyati`_ and `Arnaud Joly`_.
 
@@ -135,6 +140,18 @@ Enhancements
 
    - Add ``n_iter_`` attribute to estimators that accept a ``max_iter`` attribute
      in their constructor. By `Manoj Kumar`_.
+
+   - :func:`neighbors.kneighbors_graph` and :func:`radius_neighbors_graph`
+     support non-Euclidean metrics. By `Manoj Kumar`_
+
+   - Parameter ``connectivity`` in :class:`cluster.AgglomerativeClustering`
+     and family now accept callables that return a connectivity matrix.
+     By `Manoj Kumar`_.
+
+   - Sparse support for :func:`paired_distances`. By `Joel Nothman`_.
+
+   - DBSCAN now supports sparse input and sample weights, and should be
+     faster in general. By `Joel Nothman`_.
 
    - Add ``class_weight`` parameter to automatically weight samples by class
      frequency for :class:`ensemble.RandomForestClassifier`,
@@ -166,6 +183,23 @@ Documentation improvements
 
 Bug fixes
 .........
+    - Metaestimators now support ducktyping for the presence of ``decision_function``,
+      ``predict_proba`` and other methods. This fixes behavior of
+      :class:`grid_search.GridSearchCV`,
+      :class:`grid_search.RandomizedSearchCV`, :class:`pipeline.Pipeline`,
+      :class:`feature_selection.RFE`, :class:`feature_selection.RFECV` when nested.
+      By `Joel Nothman`_
+
+    - The ``scoring`` attribute of grid-search and cross-validation methods is no longer
+     ignored when a :class:`grid_search.GridSearchCV` is given as a base estimator or
+     the base estimator doesn't have predict.
+
+    - The function :func:`hierarchical.ward_tree` now returns the children in
+      the same order for both the structured and unstructured versions. By
+      `Matteo Visconti di Oleggio Castello`_.
+
+    - :class:`feature_selection.RFECV` now correctly handles cases when
+      ``step`` is not equal to 1. By `Nikolay Mayorov`_
 
     - The :class:`decomposition.PCA` now undoes whitening in its
      ``inverse_transform``. Also, its ``components_`` now always have unit
@@ -201,6 +235,16 @@ Bug fixes
       ensuring that weight decay rescaling is always positive (for large
       l2 regularization and large learning rate values).
       By `Olivier Grisel`_
+
+    - When `compute_full_tree` is set to "auto", the full tree is
+      built when n_clusters is high and is early stopped when n_clusters is
+      low, while the behavor should be vice-versa in
+      :class:`cluster.AgglomerativeClustering` (and friends).
+      This has been fixed By `Manoj Kumar`_
+
+    - Fix lazy centering of data in :func:`linear_model.enet_path` and
+      :func:`linear_model.lasso_path`. It was centered around one. It has
+      been changed to be centred around the origin. By `Manoj Kumar`_
 
 API changes summary
 -------------------
@@ -251,6 +295,10 @@ API changes summary
       `'f1_macro'` or `'f1_weighted'`. `'f1'` is now for binary classification
       only. Similar changes apply to `'precision'` and `'recall'`.
       By `Joel Nothman`_.
+
+    - The ``fit_intercept``, ``normalize`` and ``return_models`` parameters in
+      :func:`linear_model.enet_path` and :func:`linear_model.lasso_path` have
+      been removed. They were deprecated since 0.14
 
 .. _changes_0_15_2:
 
@@ -3128,5 +3176,11 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Matt Terry: https://github.com/mrterry
 
 .. _Antony Lee: https://www.ocf.berkeley.edu/~antonyl/
+
+.. _Clemens Brunner: https://github.com/cle1109
+
+.. _Martin Billinger: https://github.com/kazemakase
+
+.. _Matteo Visconti di Oleggio Castello: http://www.mvdoc.me
 
 .. _Trevor Stephens: http://trevorstephens.com/

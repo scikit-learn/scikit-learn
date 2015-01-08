@@ -394,13 +394,13 @@ def test_sparse_regression():
 
         # Trained on sparse format
         sparse_classifier = AdaBoostRegressor(
-            base_estimator=CustomSVR(probability=True),
+            base_estimator=CustomSVR(),
             random_state=1
         ).fit(X_train_sparse, y_train)
 
         # Trained on dense format
         dense_classifier = dense_results = AdaBoostRegressor(
-            base_estimator=CustomSVR(probability=True),
+            base_estimator=CustomSVR(),
             random_state=1
         ).fit(X_train, y_train)
 

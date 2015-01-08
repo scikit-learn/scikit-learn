@@ -9,7 +9,6 @@ from sklearn.externals.six.moves import xrange
 from itertools import chain, product
 import pickle
 import sys
-import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -23,7 +22,6 @@ from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
@@ -41,7 +39,8 @@ from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
 from sklearn.svm import LinearSVC, SVC
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.cluster import KMeans, SpectralClustering
+from sklearn.cluster import KMeans
+from sklearn.neighbors import KernelDensity
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
@@ -436,6 +435,18 @@ def test_refit():
     clf.fit(X, y)
 
 
+def test_gridsearch_nd():
+    """Pass X as list in GridSearchCV"""
+    X_4d = np.arange(10 * 5 * 3 * 2).reshape(10, 5, 3, 2)
+    y_3d = np.arange(10 * 7 * 11).reshape(10, 7, 11)
+    check_X = lambda x: x.shape[1:] == (5, 3, 2)
+    check_y = lambda x: x.shape[1:] == (7, 11)
+    clf = CheckingClassifier(check_X=check_X, check_y=check_y)
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]})
+    grid_search.fit(X_4d, y_3d).score(X, y)
+    assert_true(hasattr(grid_search, "grid_scores_"))
+
+
 def test_X_as_list():
     """Pass X as list in GridSearchCV"""
     X = np.arange(100).reshape(10, 10)
@@ -501,14 +512,19 @@ def test_unsupervised_grid_search():
     assert_equal(grid_search.best_params_["n_clusters"], 4)
 
 
-def test_bad_estimator():
-    # test grid-search with clustering algorithm which doesn't support
-    # "predict"
-    sc = SpectralClustering()
-    grid_search = GridSearchCV(sc, param_grid=dict(gamma=[.1, 1, 10]),
-                               scoring='ari')
-    assert_raise_message(TypeError, "'score' or a 'predict'", grid_search.fit,
-                         [[1]])
+def test_gridsearch_no_predict():
+    # test grid-search with an estimator without predict.
+    # slight duplication of a test from KDE
+    def custom_scoring(estimator, X):
+        return 42 if estimator.bandwidth == .1 else 0
+    X, _ = make_blobs(cluster_std=.1, random_state=1,
+                      centers=[[0, 1], [1, 0], [0, 0]])
+    search = GridSearchCV(KernelDensity(),
+                          param_grid=dict(bandwidth=[.01, .1, 1]),
+                          scoring=custom_scoring)
+    search.fit(X)
+    assert_equal(search.best_params_['bandwidth'], .1)
+    assert_equal(search.best_score_, 42)
 
 
 def test_param_sampler():

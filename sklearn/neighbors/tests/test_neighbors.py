@@ -13,6 +13,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
+from sklearn.metrics.pairwise import pairwise_distances
 from sklearn import neighbors, datasets
 
 rng = np.random.RandomState(0)
@@ -866,6 +867,40 @@ def test_predict_sparse_ball_kd_tree():
     for model in [nbrs1, nbrs2]:
         model.fit(X, y)
         assert_raises(ValueError, model.predict, csr_matrix(X))
+
+
+def test_non_euclidean_kneighbors():
+    rng = np.random.RandomState(0)
+    X = rng.rand(5, 5)
+
+    # Find a reasonable radius.
+    dist_array = pairwise_distances(X).flatten()
+    np.sort(dist_array)
+    radius = dist_array[15]
+
+    # Test kneighbors_graph
+    for metric in ['manhattan', 'chebyshev']:
+        nbrs_graph = neighbors.kneighbors_graph(
+            X, 3, metric=metric).toarray()
+        nbrs1 = neighbors.NearestNeighbors(3, metric=metric).fit(X)
+        assert_array_equal(nbrs_graph, nbrs1.kneighbors_graph(X).toarray())
+
+    # Test radiusneighbors_graph
+    for metric in ['manhattan', 'chebyshev']:
+        nbrs_graph = neighbors.radius_neighbors_graph(
+            X, radius, metric=metric).toarray()
+        nbrs1 = neighbors.NearestNeighbors(metric=metric, radius=radius).fit(X)
+        assert_array_equal(nbrs_graph, nbrs1.radius_neighbors_graph(X).toarray())
+
+    # Raise error when wrong parameters are supplied,
+    X_nbrs = neighbors.NearestNeighbors(3, metric='manhattan')
+    X_nbrs.fit(X)
+    assert_raises(ValueError, neighbors.kneighbors_graph, X_nbrs, 3,
+                  metric='euclidean')
+    X_nbrs = neighbors.NearestNeighbors(radius=radius, metric='manhattan')
+    X_nbrs.fit(X)
+    assert_raises(ValueError, neighbors.radius_neighbors_graph, X_nbrs,
+                  radius, metric='euclidean')
 
 
 if __name__ == '__main__':

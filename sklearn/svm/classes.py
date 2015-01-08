@@ -339,7 +339,7 @@ class LinearSVR(LinearModel, RegressorMixin):
 class SVC(BaseSVC):
     """C-Support Vector Classification.
 
-    The implementations is a based on libsvm. The fit time complexity
+    The implementation is based on libsvm. The fit time complexity
     is more than quadratic with the number of samples which makes it hard
     to scale to dataset with more than a couple of 10000 samples.
 
@@ -599,7 +599,7 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     The free parameters in the model are C and epsilon.
 
-    The implementations is a based on libsvm.
+    The implementation is based on libsvm.
 
     Parameters
     ----------
@@ -631,10 +631,6 @@ class SVR(BaseLibSVM, RegressorMixin):
         independent term in kernel function. It is only significant
         in poly/sigmoid.
 
-    probability: boolean, optional (default=False)
-        Whether to enable probability estimates. This must be enabled prior
-        to calling `fit`, and will slow down that method.
-
     shrinking: boolean, optional (default=True)
         Whether to use the shrinking heuristic.
 
@@ -651,10 +647,6 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     max_iter : int, optional (default=-1)
         Hard limit on iterations within solver, or -1 for no limit.
-
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data for probability estimaton.
 
     Attributes
     ----------
@@ -688,8 +680,7 @@ class SVR(BaseLibSVM, RegressorMixin):
     >>> clf = SVR(C=1.0, epsilon=0.2)
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
     SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.2, gamma=0.0,
-        kernel='rbf', max_iter=-1, probability=False, random_state=None,
-        shrinking=True, tol=0.001, verbose=False)
+        kernel='rbf', max_iter=-1, shrinking=True, tol=0.001, verbose=False)
 
     See also
     --------
@@ -699,14 +690,14 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0, tol=1e-3,
-                 C=1.0, epsilon=0.1, shrinking=True, probability=False,
-                 cache_size=200, verbose=False, max_iter=-1,
-                 random_state=None):
+                 C=1.0, epsilon=0.1, shrinking=True, cache_size=200,
+                 verbose=False, max_iter=-1):
 
         super(SVR, self).__init__(
-            'epsilon_svr', kernel, degree, gamma, coef0, tol, C, 0., epsilon,
-            shrinking, probability, cache_size, None, verbose,
-            max_iter, random_state)
+            'epsilon_svr', kernel=kernel, degree=degree, gamma=gamma,
+            coef0=coef0, tol=tol, C=C, nu=0., epsilon=epsilon, verbose=verbose,
+            shrinking=shrinking, probability=False, cache_size=cache_size,
+            class_weight=None, max_iter=max_iter, random_state=None)
 
 
 class NuSVR(BaseLibSVM, RegressorMixin):
@@ -716,7 +707,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     the number of support vectors. However, unlike NuSVC, where nu
     replaces C, here nu replaces with the parameter epsilon of SVR.
 
-    The implementations is a based on libsvm.
+    The implementation is based on libsvm.
 
     Parameters
     ----------
@@ -747,10 +738,6 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         independent term in kernel function. It is only significant
         in poly/sigmoid.
 
-    probability: boolean, optional (default=False)
-        Whether to enable probability estimates. This must be enabled prior
-        to calling `fit`, and will slow down that method.
-
     shrinking: boolean, optional (default=True)
         Whether to use the shrinking heuristic.
 
@@ -767,10 +754,6 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
     max_iter : int, optional (default=-1)
         Hard limit on iterations within solver, or -1 for no limit.
-
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data for probability estimation.
 
     Attributes
     ----------
@@ -804,8 +787,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     >>> clf = NuSVR(C=1.0, nu=0.1)
     >>> clf.fit(X, y)  #doctest: +NORMALIZE_WHITESPACE
     NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.0, kernel='rbf',
-          max_iter=-1, nu=0.1, probability=False, random_state=None,
-          shrinking=True, tol=0.001, verbose=False)
+          max_iter=-1, nu=0.1, shrinking=True, tol=0.001, verbose=False)
 
     See also
     --------
@@ -818,13 +800,14 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     """
 
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
-                 gamma=0.0, coef0=0.0, shrinking=True,
-                 probability=False, tol=1e-3, cache_size=200,
-                 verbose=False, max_iter=-1, random_state=None):
+                 gamma=0.0, coef0=0.0, shrinking=True, tol=1e-3,
+                 cache_size=200, verbose=False, max_iter=-1):
 
         super(NuSVR, self).__init__(
-            'nu_svr', kernel, degree, gamma, coef0, tol, C, nu, 0., shrinking,
-            probability, cache_size, None, verbose, max_iter, random_state)
+            'nu_svr', kernel=kernel, degree=degree, gamma=gamma, coef0=coef0,
+            tol=tol, C=C, nu=nu, epsilon=0., shrinking=shrinking,
+            probability=False, cache_size=cache_size, class_weight=None,
+            verbose=verbose, max_iter=max_iter, random_state=None)
 
 
 class OneClassSVM(BaseLibSVM):

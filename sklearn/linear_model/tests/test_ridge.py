@@ -10,7 +10,6 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn import datasets
@@ -583,7 +582,6 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
 
     rng = np.random.RandomState(42)
 
-
     for n_samples, n_features in zip(n_sampless, n_featuress):
         X = rng.randn(n_samples, n_features)
         y = rng.randn(n_samples)
@@ -644,26 +642,6 @@ def test_sparse_design_with_sample_weights():
 
             assert_array_almost_equal(sparse_ridge.coef_, dense_ridge.coef_,
                                       decimal=6)
-
-
-def test_deprecation_warning_dense_cholesky():
-    """Tests if DeprecationWarning is raised at instantiation of estimators
-    and when ridge_regression is called"""
-
-    warning_class = DeprecationWarning
-    warning_message = ("The name 'dense_cholesky' is deprecated."
-                       " Using 'cholesky' instead")
-
-    X = np.ones([2, 3])
-    y = np.ones(2)
-    func1 = lambda: Ridge(solver='dense_cholesky').fit(X, y)
-    func2 = lambda: RidgeClassifier(solver='dense_cholesky').fit(X, y)
-    X = np.ones([3, 2])
-    y = np.zeros(3)
-    func3 = lambda: ridge_regression(X, y, alpha=1, solver='dense_cholesky')
-
-    for func in [func1, func2, func3]:
-        assert_warns_message(warning_class, warning_message, func)
 
 
 def test_raises_value_error_if_solver_not_supported():

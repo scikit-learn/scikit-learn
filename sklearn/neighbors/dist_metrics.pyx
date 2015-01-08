@@ -285,7 +285,7 @@ cdef class DistanceMetric:
 
     cdef DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size) except -1:
         """Compute the distance between vectors x1 and x2
-        
+
         This should be overridden in a base class.
         """
         return -999

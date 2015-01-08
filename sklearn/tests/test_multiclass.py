@@ -94,7 +94,7 @@ def test_ovr_fit_predict_sparse():
                                                        random_state=0)
 
         X_train, Y_train = X[:80], Y[:80]
-        X_test, Y_test = X[80:], Y[80:]
+        X_test = X[80:]
 
         clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
         Y_pred = clf.predict(X_test)
@@ -291,7 +291,7 @@ def test_ovr_multilabel_predict_proba():
                                                        return_indicator=True,
                                                        random_state=0)
         X_train, Y_train = X[:80], Y[:80]
-        X_test, Y_test = X[80:], Y[80:]
+        X_test = X[80:]
         clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
 
         # decision function only estimator. Fails in current implementation.
@@ -316,7 +316,7 @@ def test_ovr_single_label_predict_proba():
     base_clf = MultinomialNB(alpha=1)
     X, Y = iris.data, iris.target
     X_train, Y_train = X[:80], Y[:80]
-    X_test, Y_test = X[80:], Y[80:]
+    X_test = X[80:]
     clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
 
     # decision function only estimator. Fails in current implementation.
@@ -343,7 +343,7 @@ def test_ovr_multilabel_decision_function():
                                                    return_indicator=True,
                                                    random_state=0)
     X_train, Y_train = X[:80], Y[:80]
-    X_test, Y_test = X[80:], Y[80:]
+    X_test = X[80:]
     clf = OneVsRestClassifier(svm.SVC()).fit(X_train, Y_train)
     assert_array_equal((clf.decision_function(X_test) > 0).astype(int),
                        clf.predict(X_test))
@@ -354,7 +354,7 @@ def test_ovr_single_label_decision_function():
                                         n_features=20,
                                         random_state=0)
     X_train, Y_train = X[:80], Y[:80]
-    X_test, Y_test = X[80:], Y[80:]
+    X_test = X[80:]
     clf = OneVsRestClassifier(svm.SVC()).fit(X_train, Y_train)
     assert_array_equal(clf.decision_function(X_test).ravel() > 0,
                        clf.predict(X_test))
@@ -521,12 +521,13 @@ def test_ecoc_gridsearch():
     best_C = cv.best_estimator_.estimators_[0].C
     assert_true(best_C in Cs)
 
+
 @ignore_warnings
 def test_deprecated():
     base_estimator = DecisionTreeClassifier(random_state=0)
     X, Y = iris.data, iris.target
     X_train, Y_train = X[:80], Y[:80]
-    X_test, Y_test = X[80:], Y[80:]
+    X_test = X[80:]
 
     all_metas = [
         (OneVsRestClassifier, fit_ovr, predict_ovr, predict_proba_ovr),
@@ -545,10 +546,10 @@ def test_deprecated():
             meta_est = MetaEst(base_estimator).fit(X_train, Y_train)
             fitted_return = fit_func(base_estimator, X_train, Y_train)
 
-
         if len(fitted_return) == 2:
             estimators_, classes_or_lb = fitted_return
-            assert_almost_equal(predict_func(estimators_, classes_or_lb, X_test),
+            assert_almost_equal(predict_func(estimators_, classes_or_lb,
+                                             X_test),
                                 meta_est.predict(X_test))
 
             if proba_func is not None:

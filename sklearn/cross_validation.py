@@ -23,7 +23,7 @@ import scipy.sparse as sp
 
 from .base import is_classifier, clone
 from .utils import indexable, check_random_state, safe_indexing
-from .utils.validation import _num_samples, check_array
+from .utils.validation import _is_arraylike, _num_samples, check_array
 from .utils.multiclass import type_of_target
 from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
@@ -677,17 +677,13 @@ class Bootstrap(object):
     indices = True
 
     def __init__(self, n, n_iter=3, train_size=.5, test_size=None,
-                 random_state=None, n_bootstraps=None):
+                 random_state=None):
         # See, e.g., http://youtu.be/BzHz0J9a6k0?t=9m38s for a motivation
         # behind this deprecation
         warnings.warn("Bootstrap will no longer be supported as a " +
                       "cross-validation method as of version 0.15 and " +
                       "will be removed in 0.17", DeprecationWarning)
         self.n = n
-        if n_bootstraps is not None:  # pragma: no cover
-            warnings.warn("n_bootstraps was renamed to n_iter and will "
-                          "be removed in 0.16.", DeprecationWarning)
-            n_iter = n_bootstraps
         self.n_iter = n_iter
         if (isinstance(train_size, numbers.Real) and train_size >= 0.0
                 and train_size <= 1.0):
@@ -1075,6 +1071,16 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
 
 ##############################################################################
+def _index_param_value(X, v, indices):
+    """Private helper function for parameter value indexing."""
+    if not _is_arraylike(v) or _num_samples(v) != _num_samples(X):
+        # pass through: skip indexing
+        return v
+    if sp.issparse(v):
+        v = v.tocsr()
+    return safe_indexing(v, indices)
+
+
 def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
                       verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
     """Generate cross-validated estimates for each input data point
@@ -1187,11 +1193,9 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
         This is the value of the test parameter
     """
     # Adjust length of sample weights
-    n_samples = _num_samples(X)
     fit_params = fit_params if fit_params is not None else {}
-    fit_params = dict([(k, np.asarray(v)[train]
-                       if hasattr(v, '__len__') and len(v) == n_samples else v)
-                       for k, v in fit_params.items()])
+    fit_params = dict([(k, _index_param_value(X, v, train))
+                        for k, v in fit_params.items()])
 
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, _ = _safe_split(estimator, X, y, test, train)
@@ -1379,13 +1383,10 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                           for k, v in parameters.items()))
         print("[CV] %s %s" % (msg, (64 - len(msg)) * '.'))
 
-    # Adjust lenght of sample weights
-    n_samples = _num_samples(X)
+    # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
-    fit_params = dict([(k, (v.tocsr()[train] if sp.issparse(v)
-                            else np.asarray(v)[train])
-                        if _num_samples(v) == n_samples else v)
-                       for k, v in fit_params.items()])
+    fit_params = dict([(k, _index_param_value(X, v, train))
+                        for k, v in fit_params.items()])
 
     if parameters is not None:
         estimator.set_params(**parameters)
@@ -1725,16 +1726,24 @@ def train_test_split(*arrays, **options):
     random_state = options.pop('random_state', None)
     dtype = options.pop('dtype', None)
     if dtype is not None:
-        warnings.warn("dtype option is ignored and will be removed in 0.18.")
+        warnings.warn("dtype option is ignored and will be removed in 0.18.",
+                      DeprecationWarning)
 
-    force_arrays = options.pop('force_arrays', False)
+    allow_nd = options.pop('allow_nd', None)
+    allow_lists = options.pop('allow_lists', None)
+
+    if allow_lists is not None:
+        warnings.warn("The allow_lists option is deprecated and will be "
+                      "assumed True in 0.18 and removed.", DeprecationWarning)
+
     if options:
         raise TypeError("Invalid parameters passed: %s" % str(options))
-    if force_arrays:
-        warnings.warn("The force_arrays option is deprecated and will be "
-                      "removed in 0.18.", DeprecationWarning)
-        arrays = [check_array(x, 'csr', ensure_2d=False,
-                              force_all_finite=False) if x is not None else x
+    if allow_nd is not None:
+        warnings.warn("The allow_nd option is deprecated and will be "
+                      "assumed True in 0.18 and removed.", DeprecationWarning)
+    if allow_lists is False or allow_nd is False:
+        arrays = [check_array(x, 'csr', allow_nd=allow_nd,
+                              force_all_finite=False, ensure_2d=False) if x is not None else x
                   for x in arrays]
 
     if test_size is None and train_size is None:

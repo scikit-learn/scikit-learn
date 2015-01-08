@@ -47,6 +47,11 @@ def test_gnb():
     y_pred_log_proba = clf.predict_log_proba(X)
     assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
 
+    # Test whether label mismatch between target y and classes raises
+    # an Error
+    # FIXME Remove this test once the more general partial_fit tests are merged
+    assert_raises(ValueError, GaussianNB().partial_fit, X, y, classes=[0, 1])
+
 
 def test_gnb_prior():
     """Test whether class priors are properly set. """

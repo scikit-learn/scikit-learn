@@ -172,7 +172,7 @@ This might be made more clear by an example:
 
 Consider a three class problem with with class 0 having three support vectors
 :math:`v^{0}_0, v^{1}_0, v^{2}_0` and class 1 and 2 having two support vectors
-:math:`v^{0}_1, v^{1}_1` and :math:`v^{0}_1, v^{1}_1` respectively.  For each
+:math:`v^{0}_1, v^{1}_1` and :math:`v^{0}_2, v^{1}_2` respectively.  For each
 support vector :math:`v^{j}_i`, there are two dual coefficients.  Let's call
 the coefficient of support vector :math:`v^{j}_i` in the classifier between
 classes :math:`i` and :math:`k` :math:`\alpha^{j}_{i,k}`.
@@ -303,9 +303,8 @@ floating point values instead of integer values::
     >>> y = [0.5, 2.5]
     >>> clf = svm.SVR()
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
-    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3,
-    epsilon=0.1, gamma=0.0, kernel='rbf', max_iter=-1, probability=False,
-    random_state=None, shrinking=True, tol=0.001, verbose=False)
+    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.1, gamma=0.0,
+        kernel='rbf', max_iter=-1, shrinking=True, tol=0.001, verbose=False)
     >>> clf.predict([[1, 1]])
     array([ 1.5])
 

@@ -6,6 +6,7 @@
 
 import numpy as np
 import scipy.sparse as sp
+import warnings
 
 from abc import ABCMeta, abstractmethod
 
@@ -543,12 +544,19 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
         sample_weight : array-like, shape (n_samples,), optional
             Weights applied to individual samples.
-            If not provided, uniform weights are assumed.
+            If not provided, uniform weights are assumed. These weights will
+            be multiplied with class_weight (passed through the
+            contructor) if class_weight is specified
 
         Returns
         -------
         self : returns an instance of self.
         """
+        if class_weight is not None:
+            warnings.warn("You are trying to set class_weight through the fit "
+                          "method, which is deprecated and will be removed in"
+                          "v0.17 of scikit-learn. Pass the class_weight into "
+                          "the constructor instead.", DeprecationWarning)
         return self._fit(X, y, alpha=self.alpha, C=1.0,
                          loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init, intercept_init=intercept_init,

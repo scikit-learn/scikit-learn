@@ -325,20 +325,7 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
                                                 tol=1e-6,
                                                 fit_intercept=False)
 
-    # Check that the deprecated return_models=True yields the same coefs path
-    with ignore_warnings():
-        lasso_coef = np.zeros((w.shape[0], len(lars_alphas)))
-        iter_models = enumerate(linear_model.lasso_path(X, y,
-                                                        alphas=lars_alphas,
-                                                        tol=1e-6,
-                                                        return_models=True,
-                                                        fit_intercept=False))
-        for i, model in iter_models:
-            lasso_coef[:, i] = model.coef_
-
-    np.testing.assert_array_almost_equal(lars_coef, lasso_coef, decimal=1)
-    np.testing.assert_array_almost_equal(lars_coef, lasso_coef2, decimal=1)
-    np.testing.assert_array_almost_equal(lasso_coef, lasso_coef2, decimal=1)
+    assert_array_almost_equal(lars_coef, lasso_coef2, decimal=1)
 
 
 def test_lasso_lars_vs_lasso_cd_ill_conditioned2():

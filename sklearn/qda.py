@@ -48,13 +48,15 @@ class QDA(BaseEstimator, ClassifierMixin):
         Class priors (sum to 1).
 
     rotations_ : list of arrays
-        For each class an array of shape [n_samples, n_samples], the
-        rotation of the Gaussian distribution, i.e. its principal axis.
+        For each class k an array of shape [n_features, n_k], with
+        ``n_k = min(n_features, number of elements in class k)``
+        It is the rotation of the Gaussian distribution, i.e. its
+        principal axis.
 
-    scalings_ : array-like, shape = [n_classes, n_features]
-        Contains the scaling of the Gaussian
-        distributions along the principal axes for each
-        class, i.e. the variance in the rotated coordinate system.
+    scalings_ : list of arrays
+        For each class k an array of shape [n_k]. It contains the scaling
+        of the Gaussian distributions along its principal axes, i.e. the
+        variance in the rotated coordinate system.
 
     Examples
     --------
@@ -115,6 +117,9 @@ class QDA(BaseEstimator, ClassifierMixin):
             Xg = X[y == ind, :]
             meang = Xg.mean(0)
             means.append(meang)
+            if len(Xg) == 1:
+                raise ValueError('y has only 1 sample in class %s, covariance '
+                                 'is ill defined.' % str(self.classes_[ind]))
             Xgc = Xg - meang
             # Xgc = U * S * V.T
             U, S, Vt = np.linalg.svd(Xgc, full_matrices=False)
@@ -131,7 +136,7 @@ class QDA(BaseEstimator, ClassifierMixin):
         if store_covariances:
             self.covariances_ = cov
         self.means_ = np.asarray(means)
-        self.scalings_ = np.asarray(scalings)
+        self.scalings_ = scalings
         self.rotations_ = rotations
         return self
 
@@ -145,8 +150,8 @@ class QDA(BaseEstimator, ClassifierMixin):
             X2 = np.dot(Xm, R * (S ** (-0.5)))
             norm2.append(np.sum(X2 ** 2, 1))
         norm2 = np.array(norm2).T   # shape = [len(X), n_classes]
-        return (-0.5 * (norm2 + np.sum(np.log(self.scalings_), 1))
-                + np.log(self.priors_))
+        u = np.asarray([np.sum(np.log(s)) for s in self.scalings_])
+        return (-0.5 * (norm2 + u) + np.log(self.priors_))
 
     def decision_function(self, X):
         """Apply decision function to an array of samples.

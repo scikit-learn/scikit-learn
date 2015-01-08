@@ -55,9 +55,6 @@ from .scorer import make_scorer
 from .scorer import SCORERS
 from .scorer import get_scorer
 
-# Deprecated in 0.16
-from .ranking import auc_score
-
 __all__ = [
     'accuracy_score',
     'adjusted_mutual_info_score',

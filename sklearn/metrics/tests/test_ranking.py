@@ -23,7 +23,6 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.metrics import auc
-from sklearn.metrics import auc_score
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import coverage_error
 from sklearn.metrics import label_ranking_average_precision_score
@@ -132,10 +131,6 @@ def test_roc_curve():
     expected_auc = _auc(y_true, probas_pred)
     assert_array_almost_equal(roc_auc, expected_auc, decimal=2)
     assert_almost_equal(roc_auc, roc_auc_score(y_true, probas_pred))
-
-    assert_almost_equal(roc_auc,
-                        ignore_warnings(auc_score)(y_true, probas_pred))
-
     assert_equal(fpr.shape, tpr.shape)
     assert_equal(fpr.shape, thresholds.shape)
 
@@ -612,13 +607,6 @@ def test_score_scale_invariance():
     roc_auc = roc_auc_score(y_true, probas_pred)
     roc_auc_scaled = roc_auc_score(y_true, 100 * probas_pred)
     roc_auc_shifted = roc_auc_score(y_true, probas_pred - 10)
-    assert_equal(roc_auc, roc_auc_scaled)
-    assert_equal(roc_auc, roc_auc_shifted)
-
-    f = ignore_warnings(auc_score)
-    roc_auc = f(y_true, probas_pred)
-    roc_auc_scaled = f(y_true, 100 * probas_pred)
-    roc_auc_shifted = f(y_true, probas_pred - 10)
     assert_equal(roc_auc, roc_auc_scaled)
     assert_equal(roc_auc, roc_auc_shifted)
 

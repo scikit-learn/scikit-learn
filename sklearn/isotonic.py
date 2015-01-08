@@ -316,7 +316,10 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
                              .format(self.out_of_bounds))
 
         if self.out_of_bounds == "clip":
-            T = np.clip(T, self.X_min_, self.X_max_)
+            # XXX: Address scipy issue 4304 by adding a tiny value to 
+            # self.X_min_ during clipping
+            T = np.clip(T, self.X_min_ + np.finfo(float).resolution,
+                        self.X_max_)
         return self.f_(T)
 
     def fit_transform(self, X, y, sample_weight=None):

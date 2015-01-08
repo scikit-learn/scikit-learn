@@ -52,7 +52,21 @@ class MockClassifier(BaseEstimator):
         self.allow_nd = allow_nd
 
     def fit(self, X, Y=None, sample_weight=None, class_prior=None,
-            sparse_sample_weight=None, sparse_param=None):
+            sparse_sample_weight=None, sparse_param=None, dummy_int=None,
+            dummy_str=None, dummy_obj=None, callback=None):
+        """The dummy arguments are to test that this fit function can
+        accept non-array arguments through cross-validation, such as:
+            - int
+            - str (this is actually array-like)
+            - object
+            - function
+        """
+        self.dummy_int = dummy_int
+        self.dummy_str = dummy_str
+        self.dummy_obj = dummy_obj
+        if callback is not None:
+            callback(self)
+
         if self.allow_nd:
             X = X.reshape(len(X), -1)
         if X.ndim >= 3 and not self.allow_nd:
@@ -68,18 +82,17 @@ class MockClassifier(BaseEstimator):
                         ' is {0}, should be {1}'.format(class_prior.shape[0],
                                                         len(np.unique(y))))
         if sparse_sample_weight is not None:
+            fmt = ('MockClassifier extra fit_param sparse_sample_weight'
+                   '.shape[0] is {0}, should be {1}')
             assert_true(sparse_sample_weight.shape[0] == X.shape[0],
-                        'MockClassifier extra fit_param sparse_sample_weight'
-                        '.shape[0] is {0}, should be {1}'
-                            .format(sparse_sample_weight.shape[0], X.shape[0]))
+                        fmt.format(sparse_sample_weight.shape[0], X.shape[0]))
         if sparse_param is not None:
+            fmt = ('MockClassifier extra fit_param sparse_param.shape '
+                   'is ({0}, {1}), should be ({2}, {3})')
             assert_true(sparse_param.shape == P_sparse.shape,
-                        'MockClassifier extra fit_param sparse_param.shape '
-                        'is ({0}, {1}), should be ({2}, {3})'
-                            .format(sparse_param.shape[0],
-                                    sparse_param.shape[1],
-                                    P_sparse.shape[0],
-                                    P_sparse.shape[1]))
+                        fmt.format(sparse_param.shape[0],
+                                   sparse_param.shape[1],
+                                   P_sparse.shape[0], P_sparse.shape[1]))
         return self
 
     def predict(self, T):
@@ -94,7 +107,7 @@ class MockClassifier(BaseEstimator):
 X = np.ones((10, 2))
 X_sparse = coo_matrix(X)
 W_sparse = coo_matrix((np.array([1]), (np.array([1]), np.array([0]))),
-                      shape=(10,1))
+                      shape=(10, 1))
 P_sparse = coo_matrix(np.eye(5))
 y = np.arange(10) // 2
 
@@ -574,10 +587,27 @@ def test_cross_val_score_fit_params():
     clf = MockClassifier()
     n_samples = X.shape[0]
     n_classes = len(np.unique(y))
+
+    DUMMY_INT = 42
+    DUMMY_STR = '42'
+    DUMMY_OBJ = object()
+
+    def assert_fit_params(clf):
+        """Function to test that the values are passed correctly to the
+        classifier arguments for non-array type
+        """
+        assert_equal(clf.dummy_int, DUMMY_INT)
+        assert_equal(clf.dummy_str, DUMMY_STR)
+        assert_equal(clf.dummy_obj, DUMMY_OBJ)
+
     fit_params = {'sample_weight': np.ones(n_samples),
                   'class_prior': np.ones(n_classes) / n_classes,
                   'sparse_sample_weight': W_sparse,
-                  'sparse_param': P_sparse}
+                  'sparse_param': P_sparse,
+                  'dummy_int': DUMMY_INT,
+                  'dummy_str': DUMMY_STR,
+                  'dummy_obj': DUMMY_OBJ,
+                  'callback': assert_fit_params}
     cval.cross_val_score(clf, X, y, fit_params=fit_params)
 
 
@@ -622,21 +652,36 @@ def test_train_test_split_errors():
 def test_train_test_split():
     X = np.arange(100).reshape((10, 10))
     X_s = coo_matrix(X)
-    y = range(10)
-    split = cval.train_test_split(X, X_s, y, force_arrays=True)
-    X_train, X_test, X_s_train, X_s_test, y_train, y_test = split
-    assert_array_equal(X_train, X_s_train.toarray())
-    assert_array_equal(X_test, X_s_test.toarray())
-    assert_array_equal(X_train[:, 0], y_train * 10)
-    assert_array_equal(X_test[:, 0], y_test * 10)
+    y = np.arange(10)
+
+    # simple test
     split = cval.train_test_split(X, y, test_size=None, train_size=.5)
     X_train, X_test, y_train, y_test = split
     assert_equal(len(y_test), len(y_train))
+    # test correspondence of X and y
+    assert_array_equal(X_train[:, 0], y_train * 10)
+    assert_array_equal(X_test[:, 0], y_test * 10)
 
-    split = cval.train_test_split(X, X_s, y)
+    # conversion of lists to arrays (deprecated?)
+    split = cval.train_test_split(X, X_s, y.tolist(), allow_lists=False)
+    X_train, X_test, X_s_train, X_s_test, y_train, y_test = split
+    assert_array_equal(X_train, X_s_train.toarray())
+    assert_array_equal(X_test, X_s_test.toarray())
+
+    # don't convert lists to anything else by default
+    split = cval.train_test_split(X, X_s, y.tolist())
     X_train, X_test, X_s_train, X_s_test, y_train, y_test = split
     assert_true(isinstance(y_train, list))
     assert_true(isinstance(y_test, list))
+
+    # allow nd-arrays
+    X_4d = np.arange(10 * 5 * 3 * 2).reshape(10, 5, 3, 2)
+    y_3d = np.arange(10 * 7 * 11).reshape(10, 7, 11)
+    split = cval.train_test_split(X_4d, y_3d)
+    assert_equal(split[0].shape, (7, 5, 3, 2))
+    assert_equal(split[1].shape, (3, 5, 3, 2))
+    assert_equal(split[2].shape, (7, 7, 11))
+    assert_equal(split[3].shape, (3, 7, 11))
 
 
 def train_test_split_pandas():
@@ -661,9 +706,9 @@ def train_test_split_mock_pandas():
     X_train, X_test = cval.train_test_split(X_df)
     assert_true(isinstance(X_train, MockDataFrame))
     assert_true(isinstance(X_test, MockDataFrame))
-    X_train_array, X_test_array = cval.train_test_split(X_df, force_arrays=True)
-    assert_true(isinstance(X_train_array, np.ndarray))
-    assert_true(isinstance(X_test_array, np.ndarray))
+    X_train_arr, X_test_arr = cval.train_test_split(X_df, allow_lists=False)
+    assert_true(isinstance(X_train_arr, np.ndarray))
+    assert_true(isinstance(X_test_arr, np.ndarray))
 
 
 def test_cross_val_score_with_score_func_classification():
@@ -1059,6 +1104,15 @@ def test_cross_val_predict():
             yield np.array([0, 1, 2, 3]), np.array([4, 5, 6, 7, 8])
 
     assert_raises(ValueError, cval.cross_val_predict, est, X, y, cv=bad_cv())
+
+
+def test_sparse_fit_params():
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    clf = MockClassifier()
+    fit_params = {'sparse_sample_weight': coo_matrix(np.eye(X.shape[0]))}
+    a = cval.cross_val_score(clf, X, y, fit_params=fit_params)
+    assert_array_equal(a, np.ones(3))
 
 
 def test_check_is_partition():

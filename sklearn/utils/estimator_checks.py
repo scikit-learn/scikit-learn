@@ -293,9 +293,9 @@ def check_estimators_nan_inf(name, Estimator):
                     traceback.print_exc(file=sys.stdout)
                     raise e
             except Exception as exc:
-                    print(error_string_fit, Estimator, exc)
-                    traceback.print_exc(file=sys.stdout)
-                    raise exc
+                print(error_string_fit, Estimator, exc)
+                traceback.print_exc(file=sys.stdout)
+                raise exc
             else:
                 raise AssertionError(error_string_fit, Estimator)
             # actually fit
@@ -459,9 +459,9 @@ def check_classifiers_one_label(name, Classifier):
             else:
                 return
         except Exception as exc:
-                print(error_string_fit, Classifier, exc)
-                traceback.print_exc(file=sys.stdout)
-                raise exc
+            print(error_string_fit, Classifier, exc)
+            traceback.print_exc(file=sys.stdout)
+            raise exc
         # predict
         try:
             assert_array_equal(classifier.predict(X_test), y)
@@ -505,7 +505,7 @@ def check_classifiers_train(name, Classifier):
         assert_raises(ValueError, classifier.predict, X.T)
         if hasattr(classifier, "decision_function"):
             try:
-                # decision_function agrees with predict:
+            # decision_function agrees with predict
                 decision = classifier.decision_function(X)
                 if n_classes is 2:
                     assert_equal(decision.shape, (n_samples,))
@@ -526,7 +526,7 @@ def check_classifiers_train(name, Classifier):
             except NotImplementedError:
                 pass
         if hasattr(classifier, "predict_proba"):
-            # predict_proba agrees with predict:
+            # predict_proba agrees with predict
             y_prob = classifier.predict_proba(X)
             assert_equal(y_prob.shape, (n_samples, n_classes))
             assert_array_equal(np.argmax(y_prob, axis=1), y_pred)
@@ -559,7 +559,9 @@ def check_classifiers_input_shapes(name, Classifier):
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always", DataConversionWarning)
         classifier.fit(X, y[:, np.newaxis])
-    assert_equal(len(w), 1)
+    msg = "expected 1 DataConversionWarning, got: %s" % (
+        ", ".join([str(w_x) for w_x in w]))
+    assert_equal(len(w), 1, msg)
     assert_array_equal(y_pred, classifier.predict(X))
 
 
@@ -683,9 +685,9 @@ def check_regressors_train(name, Regressor):
     regressor.fit(X.tolist(), y_.tolist())
     regressor.predict(X)
 
-      # TODO: find out why PLS and CCA fail. RANSAC is random
-      # and furthermore assumes the presence of outliers, hence
-      # skipped
+    # TODO: find out why PLS and CCA fail. RANSAC is random
+    # and furthermore assumes the presence of outliers, hence
+    # skipped
     if name not in ('PLSCanonical', 'CCA', 'RANSACRegressor'):
         assert_greater(regressor.score(X, y_), 0.5)
 

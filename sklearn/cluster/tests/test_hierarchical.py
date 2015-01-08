@@ -2,9 +2,11 @@
 Several basic tests for hierarchical clustering procedures
 
 """
-# Authors: Vincent Michel, 2010, Gael Varoquaux 2012
+# Authors: Vincent Michel, 2010, Gael Varoquaux 2012,
+#          Matteo Visconti di Oleggio Castello 2014
 # License: BSD 3 clause
 from tempfile import mkdtemp
+from functools import partial
 import warnings
 
 import numpy as np
@@ -26,6 +28,7 @@ from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.metrics.pairwise import PAIRED_DISTANCES, cosine_distances,\
     manhattan_distances
 from sklearn.metrics.cluster import normalized_mutual_info_score
+from sklearn.neighbors.graph import kneighbors_graph
 from sklearn.cluster._hierarchical import average_merge, max_merge
 from sklearn.utils.fast_dict import IntFloatDict
 from sklearn.utils.testing import assert_array_equal
@@ -34,8 +37,8 @@ from sklearn.utils.testing import assert_warns
 
 def test_linkage_misc():
     # Misc tests on linkage
-    rnd = np.random.RandomState(42)
-    X = rnd.normal(size=(5, 5))
+    rng = np.random.RandomState(42)
+    X = rng.normal(size=(5, 5))
     assert_raises(ValueError, AgglomerativeClustering(linkage='foo').fit, X)
     assert_raises(ValueError, linkage_tree, X, linkage='foo')
     assert_raises(ValueError, linkage_tree, X, connectivity=np.ones((4, 4)))
@@ -60,11 +63,11 @@ def test_structured_linkage_tree():
     """
     Check that we obtain the correct solution for structured linkage trees.
     """
-    rnd = np.random.RandomState(0)
+    rng = np.random.RandomState(0)
     mask = np.ones([10, 10], dtype=np.bool)
     # Avoiding a mask with only 'True' entries
     mask[4:7, 4:7] = 0
-    X = rnd.randn(50, 100)
+    X = rng.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
     for tree_builder in _TREE_BUILDERS.values():
         children, n_components, n_leaves, parent = \
@@ -84,8 +87,8 @@ def test_unstructured_linkage_tree():
     """
     Check that we obtain the correct solution for unstructured linkage trees.
     """
-    rnd = np.random.RandomState(0)
-    X = rnd.randn(50, 100)
+    rng = np.random.RandomState(0)
+    X = rng.randn(50, 100)
     for this_X in (X, X[0]):
         # With specified a number of clusters just for the sake of
         # raising a warning and testing the warning code
@@ -109,9 +112,9 @@ def test_height_linkage_tree():
     """
     Check that the height of the results of linkage tree is sorted.
     """
-    rnd = np.random.RandomState(0)
+    rng = np.random.RandomState(0)
     mask = np.ones([10, 10], dtype=np.bool)
-    X = rnd.randn(50, 100)
+    X = rng.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
     for linkage_func in _TREE_BUILDERS.values():
         children, n_nodes, n_leaves, parent = linkage_func(X.T, connectivity)
@@ -124,10 +127,10 @@ def test_agglomerative_clustering():
     Check that we obtain the correct number of clusters with
     agglomerative clustering.
     """
-    rnd = np.random.RandomState(0)
+    rng = np.random.RandomState(0)
     mask = np.ones([10, 10], dtype=np.bool)
     n_samples = 100
-    X = rnd.randn(n_samples, 50)
+    X = rng.randn(n_samples, 50)
     connectivity = grid_to_graph(*mask.shape)
     for linkage in ("ward", "complete", "average"):
         clustering = AgglomerativeClustering(n_clusters=10,
@@ -149,7 +152,8 @@ def test_agglomerative_clustering():
         # tree building
         clustering.compute_full_tree = False
         clustering.fit(X)
-        np.testing.assert_array_equal(clustering.labels_, labels)
+        assert_almost_equal(normalized_mutual_info_score(
+                            clustering.labels_, labels), 1)
         clustering.connectivity = None
         clustering.fit(X)
         assert_true(np.size(np.unique(clustering.labels_)) == 10)
@@ -194,9 +198,9 @@ def test_ward_agglomeration():
     """
     Check that we obtain the correct solution in a simplistic case
     """
-    rnd = np.random.RandomState(0)
+    rng = np.random.RandomState(0)
     mask = np.ones([10, 10], dtype=np.bool)
-    X = rnd.randn(50, 100)
+    X = rng.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
     assert_warns(DeprecationWarning, WardAgglomeration)
 
@@ -234,15 +238,15 @@ def test_scikit_vs_scipy():
     """Test scikit linkage with full connectivity (i.e. unstructured) vs scipy
     """
     n, p, k = 10, 5, 3
-    rnd = np.random.RandomState(0)
+    rng = np.random.RandomState(0)
 
     # Not using a lil_matrix here, just to check that non sparse
     # matrices are well handled
     connectivity = np.ones((n, n))
     for linkage in _TREE_BUILDERS.keys():
         for i in range(5):
-            X = .1 * rnd.normal(size=(n, p))
-            X -= 4 * np.arange(n)[:, np.newaxis]
+            X = .1 * rng.normal(size=(n, p))
+            X -= 4. * np.arange(n)[:, np.newaxis]
             X -= X.mean(axis=1)[:, np.newaxis]
 
             out = hierarchy.linkage(X, method=linkage)
@@ -258,13 +262,11 @@ def test_scikit_vs_scipy():
     assert_raises(ValueError, _hc_cut, n_leaves + 1, children, n_leaves)
 
 
-def test_connectivity_popagation():
+def test_connectivity_propagation():
     """
     Check that connectivity in the ward tree is propagated correctly during
     merging.
     """
-    from sklearn.neighbors import kneighbors_graph
-
     X = np.array([(.014, .120), (.014, .099), (.014, .097),
                   (.017, .153), (.017, .153), (.018, .153),
                   (.018, .153), (.018, .153), (.018, .153),
@@ -277,6 +279,135 @@ def test_connectivity_popagation():
     # If changes are not propagated correctly, fit crashes with an
     # IndexError
     ward.fit(X)
+
+
+def test_ward_tree_children_order():
+    """
+    Check that children are ordered in the same way for both structured and
+    unstructured versions of ward_tree.
+    """
+
+    # test on five random datasets
+    n, p = 10, 5
+    rng = np.random.RandomState(0)
+
+    connectivity = np.ones((n, n))
+    for i in range(5):
+        X = .1 * rng.normal(size=(n, p))
+        X -= 4. * np.arange(n)[:, np.newaxis]
+        X -= X.mean(axis=1)[:, np.newaxis]
+
+        out_unstructured = ward_tree(X)
+        out_structured = ward_tree(X, connectivity=connectivity)
+
+        assert_array_equal(out_unstructured[0], out_structured[0])
+
+
+def test_ward_linkage_tree_return_distance():
+    """Test return_distance option on linkage and ward trees"""
+
+    # test that return_distance when set true, gives same
+    # output on both structured and unstructured clustering.
+    n, p = 10, 5
+    rng = np.random.RandomState(0)
+
+    connectivity = np.ones((n, n))
+    for i in range(5):
+        X = .1 * rng.normal(size=(n, p))
+        X -= 4. * np.arange(n)[:, np.newaxis]
+        X -= X.mean(axis=1)[:, np.newaxis]
+
+        out_unstructured = ward_tree(X, return_distance=True)
+        out_structured = ward_tree(X, connectivity=connectivity,
+                                   return_distance=True)
+
+        # get children
+        children_unstructured = out_unstructured[0]
+        children_structured = out_structured[0]
+
+        # check if we got the same clusters
+        assert_array_equal(children_unstructured, children_structured)
+
+        # check if the distances are the same
+        dist_unstructured = out_unstructured[-1]
+        dist_structured = out_structured[-1]
+
+        assert_array_almost_equal(dist_unstructured, dist_structured)
+
+        for linkage in ['average', 'complete']:
+            structured_items = linkage_tree(
+                X, connectivity=connectivity, linkage=linkage,
+                return_distance=True)[-1]
+            unstructured_items = linkage_tree(
+                X, linkage=linkage, return_distance=True)[-1]
+            structured_dist = structured_items[-1]
+            unstructured_dist = unstructured_items[-1]
+            structured_children = structured_items[0]
+            unstructured_children = unstructured_items[0]
+            assert_array_almost_equal(structured_dist, unstructured_dist)
+            assert_array_almost_equal(
+                structured_children, unstructured_children)
+
+    # test on the following dataset where we know the truth
+    # taken from scipy/cluster/tests/hierarchy_test_data.py
+    X = np.array([[1.43054825, -7.5693489],
+                  [6.95887839, 6.82293382],
+                  [2.87137846, -9.68248579],
+                  [7.87974764, -6.05485803],
+                  [8.24018364, -6.09495602],
+                  [7.39020262, 8.54004355]])
+    # truth
+    linkage_X_ward = np.array([[3., 4., 0.36265956, 2.],
+                               [1., 5., 1.77045373, 2.],
+                               [0., 2., 2.55760419, 2.],
+                               [6., 8., 9.10208346, 4.],
+                               [7., 9., 24.7784379, 6.]])
+
+    linkage_X_complete = np.array(
+        [[3., 4., 0.36265956, 2.],
+         [1., 5., 1.77045373, 2.],
+         [0., 2., 2.55760419, 2.],
+         [6., 8., 6.96742194, 4.],
+         [7., 9., 18.77445997, 6.]])
+
+    linkage_X_average = np.array(
+        [[3., 4., 0.36265956, 2.],
+         [1., 5., 1.77045373, 2.],
+         [0., 2., 2.55760419, 2.],
+         [6., 8., 6.55832839, 4.],
+         [7., 9., 15.44089605, 6.]])
+
+    n_samples, n_features = np.shape(X)
+    connectivity_X = np.ones((n_samples, n_samples))
+
+    out_X_unstructured = ward_tree(X, return_distance=True)
+    out_X_structured = ward_tree(X, connectivity=connectivity_X,
+                                 return_distance=True)
+
+    # check that the labels are the same
+    assert_array_equal(linkage_X_ward[:, :2], out_X_unstructured[0])
+    assert_array_equal(linkage_X_ward[:, :2], out_X_structured[0])
+
+    # check that the distances are correct
+    assert_array_almost_equal(linkage_X_ward[:, 2], out_X_unstructured[4])
+    assert_array_almost_equal(linkage_X_ward[:, 2], out_X_structured[4])
+
+    linkage_options = ['complete', 'average']
+    X_linkage_truth = [linkage_X_complete, linkage_X_average]
+    for (linkage, X_truth) in zip(linkage_options, X_linkage_truth):
+        out_X_unstructured = linkage_tree(
+            X, return_distance=True, linkage=linkage)
+        out_X_structured = linkage_tree(
+            X, connectivity=connectivity_X, linkage=linkage,
+            return_distance=True)
+
+        # check that the labels are the same
+        assert_array_equal(X_truth[:, :2], out_X_unstructured[0])
+        assert_array_equal(X_truth[:, :2], out_X_structured[0])
+
+        # check that the distances are correct
+        assert_array_almost_equal(X_truth[:, 2], out_X_unstructured[4])
+        assert_array_almost_equal(X_truth[:, 2], out_X_structured[4])
 
 
 def test_connectivity_fixing_non_lil():
@@ -308,6 +439,44 @@ def test_int_float_dict():
     # Complete smoke test
     max_merge(d, other, mask=np.ones(100, dtype=np.intp), n_a=1, n_b=1)
     average_merge(d, other, mask=np.ones(100, dtype=np.intp), n_a=1, n_b=1)
+
+
+def test_connectivity_callable():
+    rng = np.random.RandomState(0)
+    X = rng.rand(20, 5)
+    connectivity = kneighbors_graph(X, 3)
+    aglc1 = AgglomerativeClustering(connectivity=connectivity)
+    aglc2 = AgglomerativeClustering(
+        connectivity=partial(kneighbors_graph, n_neighbors=3))
+    aglc1.fit(X)
+    aglc2.fit(X)
+    assert_array_equal(aglc1.labels_, aglc2.labels_)
+
+
+def test_compute_full_tree():
+    """Test that the full tree is computed if n_clusters is small"""
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 2)
+    connectivity = kneighbors_graph(X, 5)
+
+    # When n_clusters is less, the full tree should be built
+    # that is the number of merges should be n_samples - 1
+    agc = AgglomerativeClustering(n_clusters=2, connectivity=connectivity)
+    agc.fit(X)
+    n_samples = X.shape[0]
+    n_nodes = agc.children_.shape[0]
+    assert_equal(n_nodes, n_samples - 1)
+
+    # When n_clusters is large, greater than max of 100 and 0.02 * n_samples.
+    # we should stop when there are n_clusters.
+    n_clusters = 101
+    X = rng.randn(200, 2)
+    connectivity = kneighbors_graph(X, 10)
+    agc = AgglomerativeClustering(n_clusters=n_clusters, connectivity=connectivity)
+    agc.fit(X)
+    n_samples = X.shape[0]
+    n_nodes = agc.children_.shape[0]
+    assert_equal(n_nodes, n_samples - n_clusters)
 
 
 if __name__ == '__main__':

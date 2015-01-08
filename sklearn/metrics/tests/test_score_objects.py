@@ -3,18 +3,22 @@ import pickle
 import numpy as np
 
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_not_equal
 
+from sklearn.base import BaseEstimator
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
                              log_loss, precision_score, recall_score)
 from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.metrics.scorer import check_scoring
+from sklearn.metrics.scorer import (check_scoring, _PredictScorer,
+                                    _passthrough_scorer)
 from sklearn.metrics import make_scorer, get_scorer, SCORERS
 from sklearn.svm import LinearSVC
+from sklearn.pipeline import make_pipeline
 from sklearn.cluster import KMeans
 from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import Ridge, LogisticRegression
@@ -47,7 +51,7 @@ class EstimatorWithoutFit(object):
     pass
 
 
-class EstimatorWithFit(object):
+class EstimatorWithFit(BaseEstimator):
     """Dummy estimator to test check_scoring"""
     def fit(self, X, y):
         return self
@@ -72,6 +76,12 @@ class EstimatorWithFitAndPredict(object):
         return self.y
 
 
+class DummyScorer(object):
+    """Dummy scorer that always returns 1."""
+    def __call__(self, est, X, y):
+        return 1
+
+
 def test_check_scoring():
     """Test all branches of check_scoring"""
     estimator = EstimatorWithoutFit()
@@ -82,6 +92,7 @@ def test_check_scoring():
     estimator = EstimatorWithFitAndScore()
     estimator.fit([[1]], [1])
     scorer = check_scoring(estimator)
+    assert_true(scorer is _passthrough_scorer)
     assert_almost_equal(scorer(estimator, [[1]], [1]), 1.0)
 
     estimator = EstimatorWithFitAndPredict()
@@ -94,14 +105,32 @@ def test_check_scoring():
     assert_almost_equal(scorer(estimator, [[1]], [1]), 1.0)
 
     estimator = EstimatorWithFit()
-    pattern = (r"The estimator passed should have a 'score'"
-               r" or a 'predict' method\. The estimator .* does not\.")
-    assert_raises_regexp(TypeError, pattern, check_scoring, estimator,
-                         "accuracy")
+    scorer = check_scoring(estimator, "accuracy")
+    assert_true(isinstance(scorer, _PredictScorer))
 
     estimator = EstimatorWithFit()
     scorer = check_scoring(estimator, allow_none=True)
     assert_true(scorer is None)
+
+
+def test_check_scoring_gridsearchcv():
+    # test that check_scoring works on GridSearchCV and pipeline.
+    # slightly redundant non-regression test.
+
+    grid = GridSearchCV(LinearSVC(), param_grid={'C': [.1, 1]})
+    scorer = check_scoring(grid, "f1")
+    assert_true(isinstance(scorer, _PredictScorer))
+
+    pipe = make_pipeline(LinearSVC())
+    scorer = check_scoring(pipe, "f1")
+    assert_true(isinstance(scorer, _PredictScorer))
+
+    # check that cross_val_score definitely calls the scorer
+    # and doesn't make any assumptions about the estimator apart from having a
+    # fit.
+    scores = cross_val_score(EstimatorWithFit(), [[1], [2], [3]], [1, 0, 1],
+                             scoring=DummyScorer())
+    assert_array_equal(scores, 1)
 
 
 def test_make_scorer():

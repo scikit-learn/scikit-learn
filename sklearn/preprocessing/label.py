@@ -34,6 +34,7 @@ __all__ = [
     'label_binarize',
     'LabelBinarizer',
     'LabelEncoder',
+    'MultiLabelBinarizer',
 ]
 
 

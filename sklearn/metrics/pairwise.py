@@ -215,8 +215,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
 
 
 def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
-                                  batch_size=500, metric_kwargs=None,
-                                  check_X_y=True):
+                                  batch_size=500, metric_kwargs=None):
     """Compute minimum distances between one point and a set of points.
 
     This function computes for each row in X, the index of the row of Y which
@@ -262,18 +261,15 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-          'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
-          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
+          'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
+          'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath',
+          'sqeuclidean', 'yule']
 
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
     metric_kwargs : dict, optional
         Keyword arguments to pass to specified metric function.
-
-    check_X_y : bool, default True
-        Whether or not to check X and y for shape, validity and dtype. Speed
-        improvements possible if set to False when called repeatedly.
 
     Returns
     -------
@@ -295,8 +291,7 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
     elif not callable(metric) and not isinstance(metric, str):
         raise ValueError("'metric' must be a string or a callable")
 
-    if check_X_y:
-        X, Y = check_pairwise_arrays(X, Y)
+    X, Y = check_pairwise_arrays(X, Y)
 
     if metric_kwargs is None:
         metric_kwargs = {}
@@ -390,8 +385,9 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-          'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
-          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
+          'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
+          'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath',
+          'sqeuclidean', 'yule']
 
         See the documentation for scipy.spatial.distance for details on these
         metrics.
@@ -535,8 +531,7 @@ def paired_euclidean_distances(X, Y):
     distances : ndarray (n_samples, )
     """
     X, Y = check_paired_arrays(X, Y)
-
-    return np.sqrt(((X - Y) ** 2).sum(axis=-1))
+    return row_norms(X - Y)
 
 
 def paired_manhattan_distances(X, Y):
@@ -553,7 +548,12 @@ def paired_manhattan_distances(X, Y):
     distances : ndarray (n_samples, )
     """
     X, Y = check_paired_arrays(X, Y)
-    return np.abs(X - Y).sum(axis=-1)
+    diff = X - Y
+    if issparse(diff):
+        diff.data = np.abs(diff.data)
+        return np.squeeze(np.array(diff.sum(axis=1)))
+    else:
+        return np.abs(diff).sum(axis=-1)
 
 
 def paired_cosine_distances(X, Y):
@@ -576,10 +576,7 @@ def paired_cosine_distances(X, Y):
     euclidean distance if each sample is normalized to unit norm
     """
     X, Y = check_paired_arrays(X, Y)
-
-    X_normalized = normalize(X, copy=True)
-    X_normalized -= normalize(Y, copy=True)
-    return .5 * (X_normalized ** 2).sum(axis=-1)
+    return .5 * row_norms(normalize(X) - normalize(Y), squared=True)
 
 
 PAIRED_DISTANCES = {
@@ -684,7 +681,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     if gamma is None:
         gamma = 1.0 / X.shape[1]
 
-    K = linear_kernel(X, Y)
+    K = safe_sparse_dot(X, Y.T, dense_output=True)
     K *= gamma
     K += coef0
     K **= degree
@@ -713,7 +710,7 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     if gamma is None:
         gamma = 1.0 / X.shape[1]
 
-    K = linear_kernel(X, Y)
+    K = safe_sparse_dot(X, Y.T, dense_output=True)
     K *= gamma
     K += coef0
     np.tanh(K, K)   # compute tanh in-place
@@ -783,7 +780,7 @@ def cosine_similarity(X, Y=None):
     else:
         Y_normalized = normalize(Y, copy=True)
 
-    K = linear_kernel(X_normalized, Y_normalized)
+    K = safe_sparse_dot(X_normalized, Y_normalized.T, dense_output=True)
 
     return K
 

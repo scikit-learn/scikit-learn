@@ -28,6 +28,7 @@ from .utils import check_X_y, check_array
 from .utils.extmath import safe_sparse_dot, logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
 from .externals import six
+from .utils.fixes import in1d
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB']
 
@@ -303,9 +304,18 @@ class GaussianNB(BaseNB):
             # Put epsilon back in each time
             self.sigma_[:, :] -= epsilon
 
-        class2idx = dict((cls, idx) for idx, cls in enumerate(self.classes_))
-        for y_i in np.unique(y):
-            i = class2idx[y_i]
+        classes = self.classes_
+
+        unique_y = np.unique(y)
+        unique_y_in_classes = in1d(unique_y, classes)
+
+        if not np.all(unique_y_in_classes):
+            raise ValueError(
+                    "The target label(s) %s in y do not exist in the "
+                    "initial classes %s" % (y[~unique_y_in_classes], classes))
+
+        for y_i in unique_y:
+            i = classes.searchsorted(y_i)
             X_i = X[y == y_i, :]
             N_i = X_i.shape[0]
 

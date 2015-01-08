@@ -1064,5 +1064,3 @@ def test_sample_weight_invariance(n_samples=50):
         else:
             yield (check_sample_weight_invariance, name, metric, y_true,
                    y_pred)
-
-

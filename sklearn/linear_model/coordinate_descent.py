@@ -104,10 +104,8 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
 
 
 def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
-               precompute='auto', Xy=None, fit_intercept=None,
-               normalize=None, copy_X=True, coef_init=None,
-               verbose=False, return_models=False, return_n_iter=False,
-               positive=False, **params):
+               precompute='auto', Xy=None, copy_X=True, coef_init=None,
+               verbose=False, return_n_iter=False, positive=False, **params):
     """Compute Lasso path with coordinate descent
 
     The Lasso optimization function varies for mono and multi-outputs.
@@ -156,14 +154,6 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
-    fit_intercept : bool
-        Fit or not an intercept.
-        WARNING : deprecated, will be removed in 0.16.
-
-    normalize : boolean, optional, default False
-        If ``True``, the regressors X will be normalized before regression.
-        WARNING : deprecated, will be removed in 0.16.
-
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
 
@@ -173,12 +163,6 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     verbose : bool or integer
         Amount of verbosity.
 
-    return_models : boolean, optional, default True
-        If ``True``, the function will return list of models. Setting it
-        to ``False`` will change the function output returning the values
-        of the alphas and the coefficients along the path. Returning the
-        model list will be removed in version 0.16.
-
     params : kwargs
         keyword arguments passed to the coordinate descent solver.
 
@@ -187,30 +171,19 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     Returns
     -------
-    models : a list of models along the regularization path
-        (Is returned if ``return_models`` is set ``True`` (default).
-
     alphas : array, shape (n_alphas,)
         The alphas along the path where models are computed.
-        (Is returned, along with ``coefs``, when ``return_models`` is set
-        to ``False``)
 
     coefs : array, shape (n_features, n_alphas) or
             (n_outputs, n_features, n_alphas)
         Coefficients along the path.
-        (Is returned, along with ``alphas``, when ``return_models`` is set
-        to ``False``).
 
     dual_gaps : array, shape (n_alphas,)
         The dual gaps at the end of the optimization for each alpha.
-        (Is returned, along with ``alphas``, when ``return_models`` is set
-        to ``False``).
 
     n_iters : array-like, shape (n_alphas,)
         The number of iterations taken by the coordinate descent optimizer to
         reach the specified tolerance for each alpha.
-        (Is returned, along with ``alphas``, when ``return_models`` is set
-        to ``False`` and ``return_n_iter`` is set to ``True``).
 
     Notes
     -----
@@ -225,11 +198,6 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     interpolation can be used to retrieve model coefficients between the
     values output by lars_path
 
-    Deprecation Notice: Setting ``return_models`` to ``False`` will make
-    the Lasso Path return an output in the style used by :func:`lars_path`.
-    This will be become the norm as of version 0.16. Leaving ``return_models``
-    set to `True` will let the function return a list of models as before.
-
     Examples
     ---------
 
@@ -238,8 +206,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     >>> X = np.array([[1, 2, 3.1], [2.3, 5.4, 4.3]]).T
     >>> y = np.array([1, 2, 3.1])
     >>> # Use lasso_path to compute a coefficient path
-    >>> _, coef_path, _ = lasso_path(X, y, alphas=[5., 1., .5],
-    ...                               fit_intercept=False)
+    >>> _, coef_path, _ = lasso_path(X, y, alphas=[5., 1., .5])
     >>> print(coef_path)
     [[ 0.          0.          0.46874778]
      [ 0.2159048   0.4425765   0.23689075]]
@@ -267,17 +234,13 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     """
     return enet_path(X, y, l1_ratio=1., eps=eps, n_alphas=n_alphas,
                      alphas=alphas, precompute=precompute, Xy=Xy,
-                     fit_intercept=fit_intercept, normalize=normalize,
                      copy_X=copy_X, coef_init=coef_init, verbose=verbose,
-                     return_models=return_models, positive=positive,
-                     **params)
+                     positive=positive, **params)
 
 
 def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
-              precompute='auto', Xy=None, fit_intercept=True,
-              normalize=False, copy_X=True, coef_init=None,
-              verbose=False, return_models=False, return_n_iter=False,
-              positive=False, **params):
+              precompute='auto', Xy=None, copy_X=True, coef_init=None,
+              verbose=False, return_n_iter=False, positive=False, **params):
     """Compute elastic net path with coordinate descent
 
     The elastic net optimization function varies for mono and multi-outputs.
@@ -334,14 +297,6 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
-    fit_intercept : bool
-        Fit or not an intercept.
-        WARNING : deprecated, will be removed in 0.16.
-
-    normalize : boolean, optional, default False
-        If ``True``, the regressors X will be normalized before regression.
-        WARNING : deprecated, will be removed in 0.16.
-
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
 
@@ -350,12 +305,6 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     verbose : bool or integer
         Amount of verbosity.
-
-    return_models : boolean, optional, default False
-        If ``True``, the function will return list of models. Setting it
-        to ``False`` will change the function output returning the values
-        of the alphas and the coefficients along the path. Returning the
-        model list will be removed in version 0.16.
 
     params : kwargs
         keyword arguments passed to the coordinate descent solver.
@@ -368,39 +317,24 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     Returns
     -------
-    models : a list of models along the regularization path
-        (Is returned if ``return_models`` is set ``True`` (default).
-
     alphas : array, shape (n_alphas,)
         The alphas along the path where models are computed.
-        (Is returned, along with ``coefs``, when ``return_models`` is set
-        to ``False``)
 
     coefs : array, shape (n_features, n_alphas) or
             (n_outputs, n_features, n_alphas)
         Coefficients along the path.
-        (Is returned, along with ``alphas``, when ``return_models`` is set
-        to ``False``).
 
     dual_gaps : array, shape (n_alphas,)
         The dual gaps at the end of the optimization for each alpha.
-        (Is returned, along with ``alphas``, when ``return_models`` is set
-        to ``False``).
 
     n_iters : array-like, shape (n_alphas,)
         The number of iterations taken by the coordinate descent optimizer to
         reach the specified tolerance for each alpha.
-        (Is returned, along with ``alphas``, when ``return_models`` is set
-        to ``False`` and ``return_n_iter`` is set to True).
+        (Is returned when ``return_n_iter`` is set to True).
 
     Notes
     -----
     See examples/plot_lasso_coordinate_descent_path.py for an example.
-
-    Deprecation Notice: Setting ``return_models`` to ``False`` will make
-    the Lasso Path return an output in the style used by :func:`lars_path`.
-    This will be become the norm as of version 0.15. Leaving ``return_models``
-    set to `True` will let the function return a list of models as before.
 
     See also
     --------
@@ -409,34 +343,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     ElasticNet
     ElasticNetCV
     """
-    if return_models:
-        warnings.warn("Use enet_path(return_models=False), as it returns the"
-                      " coefficients and alphas instead of just a list of"
-                      " models as previously `lasso_path`/`enet_path` did."
-                      " `return_models` will eventually be removed in 0.16,"
-                      " after which, returning alphas and coefs"
-                      " will become the norm.",
-                      DeprecationWarning, stacklevel=2)
-
-    if normalize is True:
-        warnings.warn("normalize param will be removed in 0.16."
-                      " Intercept fitting and feature normalization will be"
-                      " done in estimators.",
-                      DeprecationWarning, stacklevel=2)
-    else:
-        normalize = False
-
-    if fit_intercept is True or fit_intercept is None:
-        warnings.warn("fit_intercept param will be removed in 0.16."
-                      " Intercept fitting and feature normalization will be"
-                      " done in estimators.",
-                      DeprecationWarning, stacklevel=2)
-
-    if fit_intercept is None:
-        fit_intercept = True
-
-    X = check_array(X, 'csc', dtype=np.float64, order='F', copy=copy_X and
-                    fit_intercept)
+    X = check_array(X, 'csc', dtype=np.float64, order='F', copy=copy_X)
     n_samples, n_features = X.shape
 
     multi_output = False
@@ -451,10 +358,13 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             # to be passed to the CD solver.
             X_sparse_scaling = params['X_mean'] / params['X_std']
         else:
-            X_sparse_scaling = np.ones(n_features)
+            X_sparse_scaling = np.zeros(n_features)
 
+    # X should be normalized and fit already.
     X, y, X_mean, y_mean, X_std, precompute, Xy = \
-        _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy=False)
+        _pre_fit(X, y, Xy, precompute, normalize=False, fit_intercept=False,
+                 copy=False)
+
     if alphas is None:
         # No need to normalize of fit_intercept: it has been done
         # above
@@ -520,24 +430,6 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                           ' to increase the number of iterations',
                           ConvergenceWarning)
 
-        if return_models:
-            if not multi_output:
-                model = ElasticNet(
-                    alpha=alpha, l1_ratio=l1_ratio,
-                    fit_intercept=fit_intercept
-                    if sparse.isspmatrix(X) else False,
-                    precompute=precompute)
-            else:
-                model = MultiTaskElasticNet(
-                    alpha=alpha, l1_ratio=l1_ratio, fit_intercept=False)
-            model.dual_gap_ = dual_gaps[i]
-            model.coef_ = coefs[..., i]
-            model.n_iter_ = n_iters[i]
-            if (fit_intercept and not sparse.isspmatrix(X)) or multi_output:
-                model.fit_intercept = True
-                model._set_intercept(X_mean, y_mean, X_std)
-            models.append(model)
-
         if verbose:
             if verbose > 2:
                 print(model)
@@ -546,12 +438,9 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             else:
                 sys.stderr.write('.')
 
-    if return_models:
-        return models
-    elif return_n_iter:
+    if return_n_iter:
         return alphas, coefs, dual_gaps, n_iters
-    else:
-        return alphas, coefs, dual_gaps
+    return alphas, coefs, dual_gaps
 
 
 ###############################################################################
@@ -998,8 +887,6 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
                  copy=False)
 
     path_params = path_params.copy()
-    path_params['fit_intercept'] = False
-    path_params['normalize'] = False
     path_params['Xy'] = Xy
     path_params['X_mean'] = X_mean
     path_params['X_std'] = X_std
