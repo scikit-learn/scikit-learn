@@ -389,18 +389,18 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         return self.tree_.compute_feature_importances()
 
     def apply(self, X):
-    """
-    Returns the index of the leaf that each sample is predicted as. 
+        """
+        Returns the index of the leaf that each sample is predicted as. 
 
-    Parameters
-    ----------
-    X: array_like, shape = (n_samples, n_features)
-    Input Samples
+        Parameters
+        ----------
+        X: array_like, shape = (n_samples, n_features)
+        Input Samples
 
-    Returns
-    -------
-    X_leaves: array_like, shape = (n_samples,)
-    """
+        Returns
+        -------
+        X_leaves: array_like, shape = (n_samples,)
+        """
         X = check_array(X, dtype= DTYPE, accept_sparse="csr")
         return self.tree_.apply(X)
 
