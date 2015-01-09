@@ -689,7 +689,7 @@ class Bootstrap(object):
             n_iter = n_bootstraps
         self.n_iter = n_iter
         if (isinstance(train_size, numbers.Real) and train_size >= 0.0
-                and train_size <= 1.0):
+                and train_size < 1.0):
             self.train_size = int(ceil(train_size * n))
         elif isinstance(train_size, numbers.Integral):
             self.train_size = train_size
@@ -700,7 +700,7 @@ class Bootstrap(object):
             raise ValueError("train_size=%d should not be larger than n=%d" %
                              (self.train_size, n))
 
-        if isinstance(test_size, numbers.Real) and 0.0 <= test_size <= 1.0:
+        if isinstance(test_size, numbers.Real) and 0.0 <= test_size < 1.0:
             self.test_size = int(ceil(test_size * n))
         elif isinstance(test_size, numbers.Integral):
             self.test_size = test_size
