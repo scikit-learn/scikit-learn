@@ -331,23 +331,18 @@ class KNeighborsMixin(object):
                                           self.effective_metric_,
                                           **self.effective_metric_params_)
 
-            neigh_ind = argpartition(dist, n_neighbors-1, axis=1)
+            neigh_ind = argpartition(dist, n_neighbors - 1, axis=1)
             neigh_ind = neigh_ind[:, :n_neighbors]
             # argpartition doesn't guarantee sorted order, so we sort again
             neigh_ind = neigh_ind[j, np.argsort(dist[j, neigh_ind])]
 
-            # We remove the indices mapping the sample to itself.
-            if query_is_train:
-                neigh_ind = np.reshape(
-                    neigh_ind[neigh_ind != j], (n_samples, n_neighbors-1))
-
             if return_distance:
                 if self.effective_metric_ == 'euclidean':
-                    return np.sqrt(dist[j, neigh_ind]), neigh_ind
+                    result = np.sqrt(dist[j, neigh_ind]), neigh_ind
                 else:
-                    return dist[j, neigh_ind], neigh_ind
+                    result = dist[j, neigh_ind], neigh_ind
             else:
-                return neigh_ind
+                result = neigh_ind
 
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
@@ -356,23 +351,37 @@ class KNeighborsMixin(object):
                     "or set algorithm='brute'" % self._fit_method)
             result = self._tree.query(X, n_neighbors,
                                       return_distance=return_distance)
-            if query_is_train:
-                if return_distance:
-                    dist, neigh_ind = result
-                else:
-                    neigh_ind = result
-                mask = neigh_ind != j
-                neigh_ind = np.reshape(
-                    neigh_ind[mask], (n_samples, n_neighbors-1))
-
-                if return_distance:
-                    dist = np.reshape(dist[mask], (n_samples, n_neighbors-1))
-                    return dist, neigh_ind
-                return neigh_ind
-
-            return result
         else:
             raise ValueError("internal: _fit_method not recognized")
+
+        if query_is_train:
+            if return_distance:
+                dist, neigh_ind = result
+            else:
+                neigh_ind = result
+
+            # If the query data is the same as the indexed data, we would like
+            # to ignore the first nearest neighbor of every sample, i.e
+            # the sample itself.
+            sample_mask = neigh_ind != j
+
+            # Corner case: When the number of duplicates are more than the number
+            # of neighbors, the first NN will not be the sample, but a duplicate.
+            # In that case mask the first duplicate.
+            dup_gr_nbrs = np.all(sample_mask, axis=1)
+            if np.any(dup_gr_nbrs):
+                sample_mask[:, 0][dup_gr_nbrs] = False
+
+            neigh_ind = np.reshape(
+                neigh_ind[sample_mask], (n_samples, n_neighbors - 1))
+
+            if return_distance:
+                dist = np.reshape(dist[sample_mask], (n_samples, n_neighbors - 1))
+                return dist, neigh_ind
+            return neigh_ind
+
+        return result
+
 
     def kneighbors_graph(self, X=None, n_neighbors=None,
                          mode='connectivity'):
