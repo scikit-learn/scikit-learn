@@ -123,7 +123,7 @@ def _solve_cholesky(X, y, alpha, sample_weight=None):
         return coefs
 
 
-def _solve_cholesky_kernel(K, y, alpha, sample_weight=1.0, copy=False):
+def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
     # dual_coef = inv(X X^t + alpha*Id) y
     n_samples = K.shape[0]
     n_targets = y.shape[1]
@@ -131,7 +131,8 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=1.0, copy=False):
     if copy:
         K = K.copy()
 
-    one_alpha = (np.atleast_1d(alpha) == alpha[0]).all()
+    alpha = np.atleast_1d(alpha)
+    one_alpha = (alpha == alpha[0]).all()
     has_sw = isinstance(sample_weight, np.ndarray) \
         or sample_weight not in [1.0, None]
 
