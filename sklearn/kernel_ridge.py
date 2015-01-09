@@ -1,4 +1,4 @@
-"""The :mod:`sklearn.kernel_ridge` module implements kernel ridge regression."""
+"""Module :mod:`sklearn.kernel_ridge` implements kernel ridge regression."""
 
 # Authors: Mathieu Blondel <mathieu@mblondel.org>
 #          Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
@@ -18,19 +18,20 @@ from sklearn.linear_model.ridge import _solve_cholesky_kernel
 class KernelRidge(BaseEstimator, RegressorMixin):
     """Kernelized ridge regression.
 
-    Kernelized ridge regression (KRR) combines ridge regression (linear least 
+    Kernelized ridge regression (KRR) combines ridge regression (linear least
     squares plus l2-norm regularization) with the kernel trick. It thus
     learns a linear function in the space induced by the respective kernel and
     the data. For non-linear kernels, this corresponds to a non-linear
     function in the original space.
 
-    The model learned by KRR is identical to support vector regression (SVR). 
-    However, different loss functions are used: KRR uses squared error loss 
-    combined with l2 regularization while support vector regression uses 
-    epsilon-insensitive loss.  In contrast to SVR, fitting a KRR model can be 
-    done in closed-form and is typically faster for medium-sized datasets. 
-    On the other  hand, the learned model is non-sparse and thus slower than 
-    SVR, which learns a sparse model for epsilon > 0, at prediction-time.
+    The form of the model learned by KRR is identical to support vector
+    regression (SVR). However, different loss functions are used: KRR uses
+    squared error loss while support vector regression uses epsilon-insensitive
+    loss, both combined with l2 regularization. In contrast to SVR, fitting a
+    KRR model can be done in closed-form and is typically faster for
+    medium-sized datasets. On the other  hand, the learned model is non-sparse
+    and thus slower than SVR, which learns a sparse model for epsilon > 0, at
+    prediction-time.
 
     This estimator has built-in support for multi-variate regression
     (i.e., when y is a 2d-array of shape [n_samples, n_targets]).
@@ -72,7 +73,7 @@ class KernelRidge(BaseEstimator, RegressorMixin):
         Weight vector(s) in kernel space
 
     X_fit_ : {array-like, sparse matrix}, shape = [n_samples, n_features]
-        Training data, which is also required for prediction 
+        Training data, which is also required for prediction
 
     References
     ----------
@@ -123,7 +124,7 @@ class KernelRidge(BaseEstimator, RegressorMixin):
     def _pairwise(self):
         return self.kernel == "precomputed"
 
-    def fit(self, X, y=None, sample_weight=1.0):
+    def fit(self, X, y=None, sample_weight=None):
         """Fit Kernel Ridge regression model
 
         Parameters
@@ -135,7 +136,7 @@ class KernelRidge(BaseEstimator, RegressorMixin):
             Target values
 
         sample_weight : float or numpy array of shape [n_samples]
-            Individual weights for each sample
+            Individual weights for each sample, ignored if None is passed.
 
         Returns
         -------
