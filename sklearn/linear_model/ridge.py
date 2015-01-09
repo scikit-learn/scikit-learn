@@ -146,8 +146,11 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
         K.flat[::n_samples + 1] += alpha[0]
 
         try:
-            # XXX: Check if overwrite_a=True is ok when copy is False
-            dual_coef = linalg.solve(K, y, sym_pos=True, overwrite_a=True)
+            # Note: we must use overwrite_a=False in order to be able to
+            #       use the fall-back solution below in case a LinAlgError
+            #       is raised
+            dual_coef = linalg.solve(K, y, sym_pos=True,
+                                     overwrite_a=False)
         except np.linalg.LinAlgError:
             warnings.warn("Singular matrix in solving dual problem. Using "
                           "pseudo inverse instead.")
