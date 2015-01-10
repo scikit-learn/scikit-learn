@@ -56,13 +56,12 @@ leaf_class_colors.update(zip(range(np.max(y_reduced)), ['r', 'b']))
 
 new_classes = []
 for i in (1,2):
-    new_classes.append(np.array([np.sum(y[y_reduced == i] == 0), \
-                                        np.sum(y[y_reduced == i] == 1), \
-                                        np.sum(y[y_reduced == i] == 2) \
-                                    ]))
+    new_classes.append(np.array([np.sum(y[y_reduced == i] == 0),
+                                 np.sum(y[y_reduced == i] == 1),
+                                 np.sum(y[y_reduced == i] == 2)]))
 
 for i in xrange(np.max(y_reduced)):
-    plt.bar(index + i * bar_width, new_classes[i], bar_width, alpha=opacity, \
+    plt.bar(index + i * bar_width, new_classes[i], bar_width, alpha=opacity,
             color=leaf_class_colors[i], label="Leaf " +str(i + 1))
 
 plt.title("The assignment of each original class to new leaf index classes")
