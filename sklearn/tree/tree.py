@@ -147,7 +147,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         is_classification = isinstance(self, ClassifierMixin)
 
         y = np.atleast_1d(y)
-        cw = None
+        expanded_class_weight = None
 
         if y.ndim == 1:
             # reshape is necessary to preserve the data contiguity against vs
@@ -185,19 +185,21 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                         raise ValueError("For multi-output, number of "
                                          "elements in class_weight should "
                                          "match number of outputs.")
-                cw = []
+                expanded_class_weight = []
                 for k in range(self.n_outputs_):
                     if self.n_outputs_ == 1 or self.class_weight == 'auto':
                         class_weight_k = self.class_weight
                     else:
                         class_weight_k = self.class_weight[k]
-                    cw_part = compute_class_weight(class_weight_k,
-                                                   self.classes_[k],
-                                                   y_original[:, k])
-                    cw_part = cw_part[np.searchsorted(self.classes_[k],
-                                                      y_original[:, k])]
-                    cw.append(cw_part)
-                cw = np.prod(cw, axis=0, dtype=np.float64)
+                    weight_k = compute_class_weight(class_weight_k,
+                                                    self.classes_[k],
+                                                    y_original[:, k])
+                    weight_k = weight_k[np.searchsorted(self.classes_[k],
+                                                        y_original[:, k])]
+                    expanded_class_weight.append(weight_k)
+                expanded_class_weight = np.prod(expanded_class_weight,
+                                                axis=0,
+                                                dtype=np.float64)
 
         else:
             self.classes_ = [None] * self.n_outputs_
@@ -274,11 +276,11 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                  "number of samples=%d" %
                                  (len(sample_weight), n_samples))
 
-        if cw is not None:
+        if expanded_class_weight is not None:
             if sample_weight is not None:
-                sample_weight *= cw
+                sample_weight = np.copy(sample_weight) * expanded_class_weight
             else:
-                sample_weight = cw
+                sample_weight = expanded_class_weight
 
         # Set min_weight_leaf from min_weight_fraction_leaf
         if self.min_weight_fraction_leaf != 0. and sample_weight is not None:

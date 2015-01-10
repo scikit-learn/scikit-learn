@@ -88,25 +88,27 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         curr_sample_weight *= sample_counts
 
         if class_weight == 'bootstrap':
-            cw = [curr_sample_weight]
+            expanded_class_weight = [curr_sample_weight]
             for k in range(y.shape[1]):
                 y_full = y[:, k]
                 classes_full = np.unique(y_full)
                 y_boot = y_full[indices]
                 classes_boot = np.unique(y_boot)
                 # Get class weights for the bootstrap sample
-                cw_part = compute_class_weight('auto', classes_boot, y_boot)
+                weight_k = compute_class_weight('auto', classes_boot, y_boot)
                 # Expand class weights to cover all classes in original y
                 # (in case some were missing from the bootstrap sample)
-                cw_part = np.array([cw_part[np.where(classes_boot == c)][0]
-                                    if c in classes_boot
-                                    else 0.
-                                    for c in classes_full])
+                weight_k = np.array([weight_k[np.where(classes_boot == c)][0]
+                                     if c in classes_boot
+                                     else 0.
+                                     for c in classes_full])
                 # Expand weights over the original y for this output
-                cw_part = cw_part[np.searchsorted(classes_full, y_full)]
-                cw.append(cw_part)
+                weight_k = weight_k[np.searchsorted(classes_full, y_full)]
+                expanded_class_weight.append(weight_k)
             # Multiply all weights by sample & bootstrap weights
-            curr_sample_weight = np.prod(cw, axis=0, dtype=np.float64)
+            curr_sample_weight = np.prod(expanded_class_weight,
+                                         axis=0,
+                                         dtype=np.float64)
 
         tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
 
@@ -232,16 +234,16 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         self.n_outputs_ = y.shape[1]
 
-        y, cw = self._validate_y_cw(y)
+        y, expanded_class_weight = self._validate_y_class_weight(y)
 
         if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
-        if cw is not None:
+        if expanded_class_weight is not None:
             if sample_weight is not None:
-                sample_weight *= cw
+                sample_weight = np.copy(sample_weight) * expanded_class_weight
             else:
-                sample_weight = cw
+                sample_weight = expanded_class_weight
 
         # Check parameters
         self._validate_estimator()
@@ -306,7 +308,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
     def _set_oob_score(self, X, y):
         """Calculate out of bag predictions and score."""
 
-    def _validate_y_cw(self, y):
+    def _validate_y_class_weight(self, y):
         # Default implementation
         return y, None
 
@@ -406,9 +408,12 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         self.oob_score_ = oob_score / self.n_outputs_
 
-    def _validate_y_cw(self, y_original):
-        y = np.copy(y_original)
-        cw = None
+    def _validate_y_class_weight(self, y):
+        y = np.copy(y)
+        expanded_class_weight = None
+
+        if self.class_weight is not None:
+            y_original = np.copy(y)
 
         self.classes_ = []
         self.n_classes_ = []
@@ -445,7 +450,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
                                      "outputs.")
 
             if self.class_weight != 'bootstrap' or not self.bootstrap:
-                cw = []
+                expanded_class_weight = []
                 for k in range(self.n_outputs_):
                     if self.class_weight in valid_presets:
                         class_weight_k = 'auto'
@@ -453,15 +458,17 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
                         class_weight_k = self.class_weight
                     else:
                         class_weight_k = self.class_weight[k]
-                    cw_part = compute_class_weight(class_weight_k,
-                                                   self.classes_[k],
-                                                   y_original[:, k])
-                    cw_part = cw_part[np.searchsorted(self.classes_[k],
-                                                      y_original[:, k])]
-                    cw.append(cw_part)
-                cw = np.prod(cw, axis=0, dtype=np.float64)
+                    weight_k = compute_class_weight(class_weight_k,
+                                                    self.classes_[k],
+                                                    y_original[:, k])
+                    weight_k = weight_k[np.searchsorted(self.classes_[k],
+                                                        y_original[:, k])]
+                    expanded_class_weight.append(weight_k)
+                expanded_class_weight = np.prod(expanded_class_weight,
+                                                axis=0,
+                                                dtype=np.float64)
 
-        return y, cw
+        return y, expanded_class_weight
 
     def predict(self, X):
         """Predict class for X.
