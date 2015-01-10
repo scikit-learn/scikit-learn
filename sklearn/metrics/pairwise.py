@@ -954,7 +954,9 @@ PAIRWISE_DISTANCE_FUNCTIONS = {
     'euclidean': euclidean_distances,
     'l2': euclidean_distances,
     'l1': manhattan_distances,
-    'manhattan': manhattan_distances, }
+    'manhattan': manhattan_distances,
+    'precomputed': lambda x: x
+}
 
 
 def distance_metrics():

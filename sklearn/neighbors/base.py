@@ -321,6 +321,12 @@ class KNeighborsMixin(object):
         if self._fit_method is None:
             raise NotFittedError("Must fit neighbors before querying.")
 
+        X = check_array(X, accept_sparse='csr')
+
+        if self.effective_metric_ == 'precomputed' and \
+           X.shape[0] != X.shape[1]:
+            raise ValueError("Precomputed metric requires a square matrix.")
+
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
 
