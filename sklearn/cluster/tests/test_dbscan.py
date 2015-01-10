@@ -70,9 +70,8 @@ def test_dbscan_feature():
 
 def test_dbscan_sparse():
     core_sparse, labels_sparse = dbscan(sparse.lil_matrix(X), eps=.8,
-                                        min_samples=10, random_state=0)
-    core_dense, labels_dense = dbscan(X, eps=.8, min_samples=10,
-                                      random_state=0)
+                                        min_samples=10)
+    core_dense, labels_dense = dbscan(X, eps=.8, min_samples=10)
     assert_array_equal(core_dense, core_sparse)
     assert_array_equal(labels_dense, labels_sparse)
 
@@ -216,11 +215,11 @@ def test_weighted_dbscan():
     # for non-negative sample_weight, cores should be identical to repetition
     rng = np.random.RandomState(42)
     sample_weight = rng.randint(0, 5, X.shape[0])
-    core1, label1 = dbscan(X, sample_weight=sample_weight, random_state=42)
+    core1, label1 = dbscan(X, sample_weight=sample_weight)
     assert_equal(len(label1), len(X))
 
     X_repeated = np.repeat(X, sample_weight, axis=0)
-    core_repeated, label_repeated = dbscan(X_repeated, random_state=42)
+    core_repeated, label_repeated = dbscan(X_repeated)
     core_repeated_mask = np.zeros(X_repeated.shape[0], dtype=bool)
     core_repeated_mask[core_repeated] = True
     core_mask = np.zeros(X.shape[0], dtype=bool)
@@ -230,18 +229,18 @@ def test_weighted_dbscan():
     # sample_weight should work with precomputed distance matrix
     D = pairwise_distances(X)
     core3, label3 = dbscan(D, sample_weight=sample_weight,
-                           metric='precomputed', random_state=42)
+                           metric='precomputed')
     assert_array_equal(core1, core3)
     assert_array_equal(label1, label3)
 
     # sample_weight should work with estimator
-    est = DBSCAN(random_state=42).fit(X, sample_weight=sample_weight)
+    est = DBSCAN().fit(X, sample_weight=sample_weight)
     core4 = est.core_sample_indices_
     label4 = est.labels_
     assert_array_equal(core1, core4)
     assert_array_equal(label1, label4)
 
-    est = DBSCAN(random_state=42)
+    est = DBSCAN()
     label5 = est.fit_predict(X, sample_weight=sample_weight)
     core5 = est.core_sample_indices_
     assert_array_equal(core1, core5)
