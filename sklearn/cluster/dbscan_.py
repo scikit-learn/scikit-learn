@@ -34,7 +34,8 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
 
     min_samples : int, optional
         The number of samples (or total weight) in a neighborhood for a point
-        to be considered as a core point.
+        to be considered as a core point. This number is inclusive of the
+        core point.
 
     metric : string, or callable
         The metric to use when calculating distance between instances in a
@@ -122,7 +123,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     labels = -np.ones(X.shape[0], dtype=np.int)
 
     # A list of all core samples found.
-    core_samples = np.flatnonzero(n_neighbors > min_samples)
+    core_samples = np.flatnonzero(n_neighbors >= min_samples)
     index_order = core_samples[random_state.permutation(core_samples.shape[0])]
 
     # label_num is the label given to the new cluster
@@ -170,7 +171,8 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         as in the same neighborhood.
     min_samples : int, optional
         The number of samples (or total weight) in a neighborhood for a point
-        to be considered as a core point.
+        to be considered as a core point. This number is inclusive of the
+        core point.
     metric : string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
@@ -234,8 +236,8 @@ class DBSCAN(BaseEstimator, ClusterMixin):
             A feature array, or array of distances between samples if
             ``metric='precomputed'``.
         sample_weight : array, shape (n_samples,), optional
-            Weight of each sample, such that a sample with weight greater
-            than ``min_samples`` is automatically a core sample; a sample with
+            Weight of each sample, such that a sample with weight at least
+            ``min_samples`` is automatically a core sample; a sample with
             negative weight may inhibit its eps-neighbor from being core.
             Note that weights are absolute, and default to 1.
         """
@@ -260,8 +262,8 @@ class DBSCAN(BaseEstimator, ClusterMixin):
             A feature array, or array of distances between samples if
             ``metric='precomputed'``.
         sample_weight : array, shape (n_samples,), optional
-            Weight of each sample, such that a sample with weight greater
-            than ``min_samples`` is automatically a core sample; a sample with
+            Weight of each sample, such that a sample with weight at least
+            ``min_samples`` is automatically a core sample; a sample with
             negative weight may inhibit its eps-neighbor from being core.
             Note that weights are absolute, and default to 1.
 
