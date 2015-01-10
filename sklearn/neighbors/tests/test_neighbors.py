@@ -249,7 +249,6 @@ def test_kneighbors_classifier_predict_proba():
     assert_array_almost_equal(real_prob, y_prob)
 
 
-
 def test_radius_neighbors_classifier(n_samples=40,
                                      n_features=5,
                                      n_test_pts=10,
