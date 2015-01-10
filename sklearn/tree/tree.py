@@ -394,14 +394,25 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         Parameters
         ----------
-        X: array_like, shape = (n_samples, n_features)
-        Input Samples
+        X : array_like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         Returns
         -------
-        X_leaves: array_like, shape = (n_samples,)
+        X_leaves : array_like, shape = [n_samples,]
+            For each datapoint x in X, return the index of the leaf x 
+            ends up in.
         """
-        X = check_array(X, dtype= DTYPE, accept_sparse="csr")
+        if self.tree_ is None:
+            raise ValueError("Estimator not fitted, "
+                             "call `fit` before `apply`.")
+
+        X = check_array(X, dtype=DTYPE, accept_sparse="csr")
+        if issparse(X) and (X.indices.dtype != np.int32 or X.indptr.dtype != np.int32):
+            raise ValueError("No support for np.int64 index based "
+                             "sparse matrices")
         return self.tree_.apply(X)
 
 
