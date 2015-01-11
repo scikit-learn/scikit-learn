@@ -163,7 +163,6 @@ class _CFNode(object):
         """Remove a subcluster from a node and update it with the
         split subclusters.
         """
-        n_samples = len(self.subclusters_)
         ind = self.subclusters_.index(subcluster)
         self.subclusters_[ind] = new_subcluster1
         self.init_centroids_[ind] = new_subcluster1.centroid_
