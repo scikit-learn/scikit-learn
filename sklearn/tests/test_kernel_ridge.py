@@ -18,6 +18,16 @@ def test_kernel_ridge():
     assert_array_almost_equal(pred, pred2)
 
 
+def test_kernel_ridge_singula():
+    # alpha=0 causes a LinAlgError in computing the dual coeeficients,
+    # which causes a fall back to a lstsq solver. This is tested here.
+    # XXX: Other solvers than lsqr give different results for Ridge
+    pred = Ridge(alpha=0, fit_intercept=False, solver="lsqr").fit(X, y).predict(X)
+    pred2 = KernelRidge(kernel="linear", alpha=0).fit(X, y).predict(X)
+    # XXX: we are only equal within the first two decimals
+    assert_array_almost_equal(pred, pred2, decimal=2)
+
+
 def test_kernel_ridge_precomputed():
     for kernel in ["linear", "rbf", "poly", "cosine"]:
         K = pairwise_kernels(X, X, metric=kernel)
