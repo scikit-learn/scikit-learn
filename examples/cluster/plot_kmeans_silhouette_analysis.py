@@ -59,9 +59,9 @@ for n_clusters in range_n_clusters:
     # The silhouette_score gives the average value for all the samples.
     # This gives a perspective into the density and separation of the formed
     # clusters
-    print("For n_clusters = %d," % n_clusters,
-          "The average silhouette_score is :",
-          silhouette_score(X, cluster_labels))
+    silhouette_avg = silhouette_score(X, cluster_labels)
+    print("For n_clusters =", n_clusters,
+          "The average silhouette_score is :", silhouette_avg)
 
     # Compute the silhouette scores for each sample
     sample_silhouette_values = silhouette_samples(X, cluster_labels)
@@ -109,8 +109,9 @@ for n_clusters in range_n_clusters:
     ax1.set_title("The silhouette plot for the various clusters.")
     ax1.set_xlabel("The silhouette coefficient values")
     ax1.set_ylabel("Cluster label")
-    # A vertical line at x = 0.
-    ax1.axvline()
+    
+    # The vertical line for average silhoutte score of all the values
+    ax1.axvline(x = silhouette_avg, color = "red", linestyle = "--")
 
     ax1.set_yticks([])  # Clear the yaxis labels / ticks
     ax1.set_xticks([-0.1, 0, 0.2, 0.4, 0.6, 0.8, 1])
