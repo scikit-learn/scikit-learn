@@ -153,9 +153,8 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
                                      overwrite_a=False)
         except np.linalg.LinAlgError:
             warnings.warn("Singular matrix in solving dual problem. Using "
-                          "pseudo inverse instead.")
-            Kinv = linalg.pinv2(K)
-            dual_coef = np.dot(Kinv, y)
+                          "least-squares solution instead.")
+            dual_coef = linalg.lstsq(K, y)[0]
 
         # K is expensive to compute and store in memory so change it back in
         # case it was user-given.
