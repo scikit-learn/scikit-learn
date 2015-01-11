@@ -7,6 +7,7 @@ import numpy as np
 from scipy import linalg
 
 from ..utils.arpack import eigsh
+from ..utils.validation import check_is_fitted, NotFittedError
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_kernels
@@ -240,6 +241,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         -------
         X_new: array-like, shape (n_samples, n_components)
         """
+        check_is_fitted(self, 'X_fit_')
+
         K = self._centerer.transform(self._get_kernel(X, self.X_fit_))
         return np.dot(K, self.alphas_ / np.sqrt(self.lambdas_))
 
@@ -259,7 +262,9 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         "Learning to Find Pre-Images", G BakIr et al, 2004.
         """
         if not self.fit_inverse_transform:
-            raise ValueError("Inverse transform was not fitted!")
+            raise NotFittedError("The fit_inverse_transform parameter was not"
+                                 " set to True when instantiating and hence "
+                                 "the inverse transform is not available.")
 
         K = self._get_kernel(X, self.X_transformed_fit_)
 

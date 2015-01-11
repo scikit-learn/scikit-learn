@@ -18,6 +18,7 @@ import numpy as np
 
 from ..externals import six
 from ..utils import extmath, check_random_state, gen_batches
+from ..utils.validation import check_is_fitted
 from ..base import BaseEstimator, ClusterMixin
 from ..neighbors import NearestNeighbors
 from ..metrics.pairwise import pairwise_distances_argmin
@@ -330,4 +331,6 @@ class MeanShift(BaseEstimator, ClusterMixin):
         labels : array, shape [n_samples,]
             Index of the cluster each sample belongs to.
         """
+        check_is_fitted(self, "cluster_centers_")
+
         return pairwise_distances_argmin(X, self.cluster_centers_)

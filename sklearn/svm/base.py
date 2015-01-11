@@ -12,6 +12,7 @@ from ..preprocessing import LabelEncoder
 from ..utils import check_array, check_random_state, column_or_1d
 from ..utils import ConvergenceWarning, compute_class_weight
 from ..utils.extmath import safe_sparse_dot
+from ..utils.validation import check_is_fitted
 from ..externals import six
 
 
@@ -354,11 +355,12 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             Returns the decision function of the sample for each class
             in the model.
         """
+        # NOTE: _validate_for_predict contains check for is_fitted
+        # hence must be placed before any other attributes are used.
+        X = self._validate_for_predict(X)
         if self._sparse:
             raise NotImplementedError("Decision_function not supported for"
                                       " sparse SVM.")
-
-        X = self._validate_for_predict(X)
         X = self._compute_kernel(X)
 
         kernel = self.kernel
@@ -381,9 +383,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         return dec_func
 
     def _validate_for_predict(self, X):
-        if not hasattr(self, "support_"):
-            raise ValueError("this %s has not been fitted yet"
-                             % type(self).__name__)
+        check_is_fitted(self, 'support_')
+        
         X = check_array(X, accept_sparse='csr', dtype=np.float64, order="C")
         if self._sparse and not sp.isspmatrix(X):
             X = sp.csr_matrix(X)

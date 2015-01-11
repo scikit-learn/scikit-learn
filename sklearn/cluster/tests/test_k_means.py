@@ -168,11 +168,6 @@ def test_k_means_plus_plus_init():
     _check_fitted_model(km)
 
 
-def test_k_means_check_fitted():
-    km = KMeans(n_clusters=n_clusters, random_state=42)
-    assert_raises(AttributeError, km._check_fitted)
-
-
 def test_k_means_new_centers():
     # Explore the part of the code where a new center is reassigned
     X = np.array([[0, 0, 1, 1],

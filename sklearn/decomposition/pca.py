@@ -19,6 +19,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state, as_float_array
 from ..utils import check_array
 from ..utils.extmath import fast_dot, fast_logdet, randomized_svd
+from ..utils.validation import check_is_fitted
 
 
 def _assess_dimension_(spectrum, rank, n_samples, n_features):
@@ -380,6 +381,8 @@ class PCA(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
 
         """
+        check_is_fitted(self, 'mean_')
+
         X = check_array(X)
         if self.mean_ is not None:
             X = X - self.mean_
@@ -402,6 +405,8 @@ class PCA(BaseEstimator, TransformerMixin):
         -------
         X_original array-like, shape (n_samples, n_features)
         """
+        check_is_fitted(self, 'mean_')
+
         if self.whiten:
             return fast_dot(
                 X,
@@ -428,6 +433,8 @@ class PCA(BaseEstimator, TransformerMixin):
         ll: array, shape (n_samples,)
             Log-likelihood of each sample under the current model
         """
+        check_is_fitted(self, 'mean_')
+
         X = check_array(X)
         Xr = X - self.mean_
         n_features = X.shape[1]
@@ -619,6 +626,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
 
         """
+        check_is_fitted(self, 'mean_')
+
         X = check_array(X)
         if self.mean_ is not None:
             X = X - self.mean_
@@ -664,6 +673,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         If whitening is enabled, inverse_transform does not compute the
         exact inverse operation of transform.
         """
+        check_is_fitted(self, 'mean_')
+
         X_original = fast_dot(X, self.components_)
         if self.mean_ is not None:
             X_original = X_original + self.mean_

@@ -22,7 +22,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.validation import DataConversionWarning
-
+from sklearn.utils.validation import NotFittedError
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -417,8 +417,8 @@ def test_staged_predict_proba():
     X_train, y_train = X[:200], y[:200]
     X_test, y_test = X[200:], y[200:]
     clf = GradientBoostingClassifier(n_estimators=20)
-    # test raise ValueError if not fitted
-    assert_raises(ValueError, lambda X: np.fromiter(
+    # test raise NotFittedError if not fitted
+    assert_raises(NotFittedError, lambda X: np.fromiter(
         clf.staged_predict_proba(X), dtype=np.float64), X_test)
 
     clf.fit(X_train, y_train)

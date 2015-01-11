@@ -22,6 +22,7 @@ from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..utils.extmath import safe_sparse_dot
+from ..utils.validation import check_is_fitted
 from ..utils import ConvergenceWarning
 
 from . import cd_fast
@@ -688,6 +689,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         T : array, shape = (n_samples,)
             The predicted decision function
         """
+        check_is_fitted(self, 'n_iter_')
         if sparse.isspmatrix(X):
             return np.ravel(safe_sparse_dot(self.coef_, X.T, dense_output=True)
                             + self.intercept_)

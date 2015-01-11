@@ -21,6 +21,7 @@ from ..externals import six
 from ..externals.joblib import Memory, Parallel, delayed
 from ..utils import (as_float_array, check_random_state, check_X_y,
                      check_array, safe_mask, ConvergenceWarning)
+from ..utils.validation import check_is_fitted
 from .least_angle import lars_path, LassoLarsIC
 from .logistic import LogisticRegression
 
@@ -121,6 +122,8 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
 
     def get_support(self, indices=False):
         """Return a mask, or list, of the features/indices selected."""
+        check_is_fitted(self, 'scores_')
+
         mask = self.scores_ > self.selection_threshold
         return mask if not indices else np.where(mask)[0]
 

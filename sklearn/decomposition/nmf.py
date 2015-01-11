@@ -20,6 +20,7 @@ from scipy.optimize import nnls
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state, check_array
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
+from ..utils.validation import check_is_fitted
 
 
 def safe_vstack(Xs):
@@ -569,6 +570,8 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         data: array, [n_samples, n_components]
             Transformed data
         """
+        check_is_fitted(self, 'n_components_')
+
         X = check_array(X, accept_sparse='csc')
         Wt = np.zeros((self.n_components_, X.shape[0]))
         check_non_negative(X, "ProjectedGradientNMF.transform")

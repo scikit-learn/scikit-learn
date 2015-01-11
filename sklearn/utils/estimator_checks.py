@@ -31,7 +31,7 @@ from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
 from sklearn.svm.base import BaseLibSVM
 
-from sklearn.utils.validation import DataConversionWarning
+from sklearn.utils.validation import DataConversionWarning, NotFittedError
 from sklearn.cross_validation import train_test_split
 
 from sklearn.utils import shuffle
@@ -157,6 +157,15 @@ def check_transformer_data_not_an_array(name, Transformer):
     this_X = NotAnArray(X)
     this_y = NotAnArray(np.asarray(y))
     _check_transformer(name, Transformer, this_X, this_y)
+
+
+def check_transformers_unfitted(name, Transformer):
+    X, y = _boston_subset()
+
+    with warnings.catch_warnings(record=True):
+        transformer = Transformer()
+
+    assert_raises(NotFittedError, transformer.transform, X)
 
 
 def _check_transformer(name, Transformer, X, y):
@@ -537,6 +546,31 @@ def check_classifiers_train(name, Classifier):
             assert_raises(ValueError, classifier.predict_proba, X.T)
             # raises error on malformed input for predict_proba
             assert_raises(ValueError, classifier.predict_proba, X.T)
+
+
+def check_estimators_unfitted(name, Estimator):
+    """Check if NotFittedError is raised when calling predict and related
+    functions"""
+
+    # Common test for Regressors as well as Classifiers
+    X, y = _boston_subset()
+
+    with warnings.catch_warnings(record=True):
+        est = Estimator()
+
+    assert_raises(NotFittedError, est.predict, X)
+ 
+    if hasattr(est, 'predict'):
+        assert_raises(NotFittedError, est.predict, X)
+
+    if hasattr(est, 'decision_function'):
+        assert_raises(NotFittedError, est.decision_function, X)
+
+    if hasattr(est, 'predict_proba'):
+        assert_raises(NotFittedError, est.predict_proba, X)
+    
+    if hasattr(est, 'predict_log_proba'):
+        assert_raises(NotFittedError, est.predict_log_proba, X)
 
 
 def check_classifiers_input_shapes(name, Classifier):
@@ -981,7 +1015,8 @@ def multioutput_estimator_convert_y_2d(name, y):
     return y
 
 
-def check_non_transformer_estimators_n_iter(name, estimator, multi_output=False):
+def check_non_transformer_estimators_n_iter(name, estimator, 
+                                            multi_output=False):
     # Check if all iterative solvers, run for more than one iteratiom
 
     iris = load_iris()

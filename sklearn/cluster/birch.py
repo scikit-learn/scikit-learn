@@ -14,6 +14,7 @@ from ..base import TransformerMixin, ClusterMixin, BaseEstimator
 from ..externals.six.moves import xrange
 from ..utils import check_array
 from ..utils.extmath import row_norms, safe_sparse_dot
+from ..utils.validation import NotFittedError, check_is_fitted
 from .hierarchical import AgglomerativeClustering
 
 
@@ -517,8 +518,8 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         has_partial_fit = hasattr(self, 'partial_fit_')
 
         # Should raise an error if one does not fit before predicting.
-        if not has_partial_fit and not is_fitted:
-            raise ValueError("Fit training data before predicting")
+        if not (is_fitted or has_partial_fit):
+            raise NotFittedError("Fit training data before predicting")
 
         if is_fitted and X.shape[1] != self.subcluster_centers_.shape[1]:
             raise ValueError(
@@ -565,8 +566,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         X_trans : {array-like, sparse matrix}, shape (n_samples, n_clusters)
             Transformed data.
         """
-        if not hasattr(self, 'subcluster_centers_'):
-            raise ValueError("Fit training data before predicting")
+        check_is_fitted(self, 'subcluster_centers_')
         return euclidean_distances(X, self.subcluster_centers_)
 
     def _global_clustering(self, X=None):

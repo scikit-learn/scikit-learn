@@ -39,6 +39,7 @@ from ..utils import check_random_state, check_array, check_X_y, column_or_1d
 from ..utils import check_consistent_length
 from ..utils.extmath import logsumexp
 from ..utils.stats import _weighted_percentile
+from ..utils.validation import check_is_fitted, NotFittedError
 from ..externals import six
 from ..feature_selection.from_model import _LearntSelectorMixin
 
@@ -66,6 +67,8 @@ class QuantileEstimator(BaseEstimator):
             self.quantile = _weighted_percentile(y, sample_weight, self.alpha * 100.0)
 
     def predict(self, X):
+        check_is_fitted(self, 'quantile')
+
         y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.quantile)
         return y
@@ -80,6 +83,8 @@ class MeanEstimator(BaseEstimator):
             self.mean = np.average(y, weights=sample_weight)
 
     def predict(self, X):
+        check_is_fitted(self, 'mean')
+
         y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.mean)
         return y
@@ -103,6 +108,8 @@ class LogOddsEstimator(BaseEstimator):
         self.prior = self.scale * np.log(pos / neg)
 
     def predict(self, X):
+        check_is_fitted(self, 'prior')
+
         y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.prior)
         return y
@@ -124,6 +131,8 @@ class PriorProbabilityEstimator(BaseEstimator):
         self.priors = class_counts / class_counts.sum()
 
     def predict(self, X):
+        check_is_fitted(self, 'priors')
+
         y = np.empty((X.shape[0], self.priors.shape[0]), dtype=np.float64)
         y[:] = self.priors
         return y
@@ -143,6 +152,8 @@ class ZeroEstimator(BaseEstimator):
             self.n_classes = 1
 
     def predict(self, X):
+        check_is_fitted(self, 'n_classes')
+
         y = np.empty((X.shape[0], self.n_classes), dtype=np.float64)
         y.fill(0.0)
         return y
@@ -1038,8 +1049,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
     def _init_decision_function(self, X):
         """Check input and compute prediction of ``init``. """
         if self.estimators_ is None or len(self.estimators_) == 0:
-            raise ValueError("Estimator not fitted, call `fit` "
-                             "before making predictions`.")
+            raise NotFittedError("Estimator not fitted, call `fit`"
+                                 " before making predictions`.")
         if X.shape[1] != self.n_features:
             raise ValueError("X.shape[1] should be {0:d}, not {1:d}.".format(
                 self.n_features, X.shape[1]))
@@ -1110,8 +1121,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         feature_importances_ : array, shape = [n_features]
         """
         if self.estimators_ is None or len(self.estimators_) == 0:
-            raise ValueError("Estimator not fitted, "
-                             "call `fit` before `feature_importances_`.")
+            raise NotFittedError("Estimator not fitted, call `fit` before"
+                                 " `feature_importances_`.")
 
         total_sum = np.zeros((self.n_features, ), dtype=np.float64)
         for stage in self.estimators_:
@@ -1344,6 +1355,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         score = self.decision_function(X)
         try:
             return self.loss_._score_to_proba(score)
+        except NotFittedError as e:
+            raise
         except AttributeError:
             raise AttributeError('loss=%r does not support predict_proba' %
                                  self.loss)
@@ -1367,6 +1380,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         try:
             for score in self.staged_decision_function(X):
                 yield self.loss_._score_to_proba(score)
+        except NotFittedError as e:
+            raise
         except AttributeError:
             raise AttributeError('loss=%r does not support predict_proba' %
                                  self.loss)

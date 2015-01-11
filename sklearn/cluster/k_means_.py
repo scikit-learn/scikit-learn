@@ -26,6 +26,7 @@ from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import as_float_array
 from ..utils import gen_batches
+from ..utils.validation import check_is_fitted
 from ..utils.random import choice
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
@@ -764,10 +765,6 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         return X
 
-    def _check_fitted(self):
-        if not hasattr(self, "cluster_centers_"):
-            raise AttributeError("Model has not been trained yet.")
-
     def fit(self, X, y=None):
         """Compute k-means clustering.
 
@@ -825,7 +822,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         X_new : array, shape [n_samples, k]
             X transformed in the new space.
         """
-        self._check_fitted()
+        check_is_fitted(self, 'cluster_centers_') 
+
         X = self._check_test_data(X)
         return self._transform(X)
 
@@ -850,7 +848,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         labels : array, shape [n_samples,]
             Index of the cluster each sample belongs to.
         """
-        self._check_fitted()
+        check_is_fitted(self, 'cluster_centers_') 
+
         X = self._check_test_data(X)
         x_squared_norms = row_norms(X, squared=True)
         return _labels_inertia(X, x_squared_norms, self.cluster_centers_)[0]
@@ -868,7 +867,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         score : float
             Opposite of the value of X on the K-means objective.
         """
-        self._check_fitted()
+        check_is_fitted(self, 'cluster_centers_') 
+
         X = self._check_test_data(X)
         x_squared_norms = row_norms(X, squared=True)
         return -_labels_inertia(X, x_squared_norms, self.cluster_centers_)[1]
@@ -1411,6 +1411,7 @@ class MiniBatchKMeans(KMeans):
         labels : array, shape [n_samples,]
             Index of the cluster each sample belongs to.
         """
-        self._check_fitted()
+        check_is_fitted(self, 'cluster_centers_') 
+
         X = self._check_test_data(X)
         return self._labels_inertia_minibatch(X)[0]
