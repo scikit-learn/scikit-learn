@@ -18,7 +18,7 @@ def test_kernel_ridge():
     assert_array_almost_equal(pred, pred2)
 
 
-def test_kernel_ridge_singula():
+def test_kernel_ridge_singular_kernel():
     # alpha=0 causes a LinAlgError in computing the dual coeeficients,
     # which causes a fall back to a lstsq solver. This is tested here.
     # XXX: Other solvers than lsqr give different results for Ridge
