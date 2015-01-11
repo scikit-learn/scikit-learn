@@ -85,7 +85,7 @@ class Pipeline(BaseEstimator):
         for t in transforms:
             if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
                     hasattr(t, "transform")):
-                raise TypeError("All intermediate steps a the chain should "
+                raise TypeError("All intermediate steps of the chain should "
                                 "be transforms and implement fit and transform"
                                 " '%s' (type %s) doesn't)" % (t, type(t)))
 
