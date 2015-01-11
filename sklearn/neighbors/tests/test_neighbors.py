@@ -913,18 +913,27 @@ def test_kneighbors_graph_nearest_neighbors():
         nn.fit(X)
 
         # Do not do anything special to duplicates.
+        test_data = [[0], [1]]
         assert_array_equal(
-            nn.kneighbors_graph([[0], [1]]).A,
-            np.array([[1., 0.], [0., 1.]]))
+            nn.kneighbors_graph(test_data).A, [[1., 0.], [0., 1.]])
+        dist, ind = nn.kneighbors([[0], [1]])
+        assert_array_equal(dist, [[0], [0]])
+        assert_array_equal(ind, [[0], [1]])
 
+        test_data = [[2], [1]]
         assert_array_equal(
-            nn.kneighbors_graph([[2], [1]]).A,
-            np.array([[0., 1.], [0., 1.]]))
+            nn.kneighbors_graph(test_data).A, [[0., 1.], [0., 1.]])
+        dist, ind = nn.kneighbors(test_data)
+        assert_array_equal(dist, [[1], [0]])
+        assert_array_equal(ind, [[1], [1]])
 
         # Avoid marking sample to itself when X is None
         assert_array_equal(
             nn.kneighbors_graph().A,
             np.array([[0., 1.], [1., 0.]]))
+        dist, ind = nn.kneighbors()
+        assert_array_equal(dist, [[1], [1]])
+        assert_array_equal(ind, [[1], [0]])
 
         # Do not do anything special to duplicates.
         kng = nn.kneighbors_graph([[0], [1]], mode='distance')
@@ -956,6 +965,9 @@ def test_kneighbors_graph_nearest_neighbors():
         X = np.ones((3, 1))
         nn = neighbors.NearestNeighbors(n_neighbors=1)
         nn.fit(X)
+        dist, ind = nn.kneighbors()
+        assert_array_equal(dist, np.zeros((3, 1)))
+        assert_array_equal(ind, [[1], [0], [1]])
 
         kng = nn.kneighbors_graph(mode='distance')
         assert_array_equal(

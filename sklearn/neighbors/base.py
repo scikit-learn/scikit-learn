@@ -255,8 +255,11 @@ class KNeighborsMixin(object):
 
         Parameters
         ----------
-        X : array-like, last dimension same as that of fit data
+        X : array-like, last dimension same as that of fit data or None.
             The new point.
+            If not provided, X is assumed to be the same as the fit
+            data. In this case, for each data point in X, the first nearest
+            neighbor is NOT the data point itself.
 
         n_neighbors : int
             Number of neighbors to get (default is the value
@@ -304,22 +307,23 @@ class KNeighborsMixin(object):
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
 
-        query_is_train = True
         if X is not None:
             query_is_train = False
             X = check_array(X, accept_sparse='csr')
         else:
+            query_is_train = True
             X = self._fit_X
             # Include an extra neighbor in order to avoid marking the sample
             # itself as the first neighbor.
-            if n_neighbors >= X.shape[0]:
-                raise ValueError(
-                    "The number of neighbors should be at least one less"
-                    "than the number of samples in the query data.")
             n_neighbors += 1
 
+        train_size = self._fit_X.shape[0]
+        if n_neighbors > train_size:
+            raise ValueError(
+                "Expected n_neighbors <= %d. Got %d" % (train_size, n_neighbors)
+            )
         n_samples, _ = X.shape
-        j = np.arange(n_samples)[:, None]
+        sample_range = np.arange(n_samples)[:, None]
 
         if self._fit_method == 'brute':
             # for efficiency, use squared euclidean distances
@@ -334,13 +338,14 @@ class KNeighborsMixin(object):
             neigh_ind = argpartition(dist, n_neighbors - 1, axis=1)
             neigh_ind = neigh_ind[:, :n_neighbors]
             # argpartition doesn't guarantee sorted order, so we sort again
-            neigh_ind = neigh_ind[j, np.argsort(dist[j, neigh_ind])]
+            neigh_ind = neigh_ind[
+                sample_range, np.argsort(dist[sample_range, neigh_ind])]
 
             if return_distance:
                 if self.effective_metric_ == 'euclidean':
-                    result = np.sqrt(dist[j, neigh_ind]), neigh_ind
+                    result = np.sqrt(dist[sample_range, neigh_ind]), neigh_ind
                 else:
-                    result = dist[j, neigh_ind], neigh_ind
+                    result = dist[sample_range, neigh_ind], neigh_ind
             else:
                 result = neigh_ind
 
@@ -354,7 +359,10 @@ class KNeighborsMixin(object):
         else:
             raise ValueError("internal: _fit_method not recognized")
 
-        if query_is_train:
+        if not query_is_train:
+            return result
+
+        else:
             if return_distance:
                 dist, neigh_ind = result
             else:
@@ -363,14 +371,13 @@ class KNeighborsMixin(object):
             # If the query data is the same as the indexed data, we would like
             # to ignore the first nearest neighbor of every sample, i.e
             # the sample itself.
-            sample_mask = neigh_ind != j
+            sample_mask = neigh_ind != sample_range
 
             # Corner case: When the number of duplicates are more than the number
             # of neighbors, the first NN will not be the sample, but a duplicate.
             # In that case mask the first duplicate.
             dup_gr_nbrs = np.all(sample_mask, axis=1)
-            if np.any(dup_gr_nbrs):
-                sample_mask[:, 0][dup_gr_nbrs] = False
+            sample_mask[:, 0][dup_gr_nbrs] = False
 
             neigh_ind = np.reshape(
                 neigh_ind[sample_mask], (n_samples, n_neighbors - 1))
@@ -380,8 +387,6 @@ class KNeighborsMixin(object):
                 return dist, neigh_ind
             return neigh_ind
 
-        return result
-
 
     def kneighbors_graph(self, X=None, n_neighbors=None,
                          mode='connectivity'):
@@ -389,8 +394,10 @@ class KNeighborsMixin(object):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Sample data
+        X : array-like, last dimension same as that of fit data or None.
+            If not provided, X is assumed to be the same as the fit
+            data. In this case, for each data point in X, the first nearest
+            neighbor is NOT the data point itself.
 
         n_neighbors : int
             Number of neighbors for each sample.
