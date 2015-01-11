@@ -7,7 +7,6 @@ Several basic tests for hierarchical clustering procedures
 # License: BSD 3 clause
 from tempfile import mkdtemp
 from functools import partial
-import warnings
 
 import numpy as np
 from scipy import sparse
@@ -18,7 +17,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import clean_warning_registry, ignore_warnings
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.cluster import Ward, WardAgglomeration, ward_tree
 from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration
@@ -152,8 +151,8 @@ def test_agglomerative_clustering():
         # tree building
         clustering.compute_full_tree = False
         clustering.fit(X)
-        assert_almost_equal(normalized_mutual_info_score(
-                            clustering.labels_, labels), 1)
+        assert_almost_equal(normalized_mutual_info_score(clustering.labels_,
+                                                         labels), 1)
         clustering.connectivity = None
         clustering.fit(X)
         assert_true(np.size(np.unique(clustering.labels_)) == 10)
@@ -189,9 +188,9 @@ def test_agglomerative_clustering():
             affinity=affinity,
             linkage="complete")
         clustering2.fit(X)
-        assert_almost_equal(normalized_mutual_info_score(
-                            clustering2.labels_,
-                            clustering.labels_), 1)
+        assert_almost_equal(normalized_mutual_info_score(clustering2.labels_,
+                                                         clustering.labels_),
+                            1)
 
 
 def test_ward_agglomeration():
@@ -272,7 +271,7 @@ def test_connectivity_propagation():
                   (.018, .153), (.018, .153), (.018, .153),
                   (.018, .153), (.018, .153), (.018, .153),
                   (.018, .152), (.018, .149), (.018, .144),
-                  ])
+                 ])
     connectivity = kneighbors_graph(X, 10)
     ward = AgglomerativeClustering(
         n_clusters=4, connectivity=connectivity, linkage='ward')
@@ -472,7 +471,8 @@ def test_compute_full_tree():
     n_clusters = 101
     X = rng.randn(200, 2)
     connectivity = kneighbors_graph(X, 10)
-    agc = AgglomerativeClustering(n_clusters=n_clusters, connectivity=connectivity)
+    agc = AgglomerativeClustering(n_clusters=n_clusters,
+                                  connectivity=connectivity)
     agc.fit(X)
     n_samples = X.shape[0]
     n_nodes = agc.children_.shape[0]

@@ -44,8 +44,10 @@ class AgglomerationTransform(TransformerMixin):
             The pooled values for each feature cluster.
         """
         if pooling_func is not None:
-            warnings.warn("The pooling_func parameter is deprecated since 0.15 and will be "
-                "removed in 0.18. Pass it to the constructor instead.", DeprecationWarning)
+            warnings.warn("The pooling_func parameter is deprecated since 0.15 "
+                          "and will be removed in 0.18. "
+                          "Pass it to the constructor instead.",
+                          DeprecationWarning)
         else:
             pooling_func = self.pooling_func
         X = check_array(X)

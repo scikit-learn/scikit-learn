@@ -34,7 +34,6 @@ def test_mean_shift():
 
     ms = MeanShift(bandwidth=bandwidth)
     labels = ms.fit(X).labels_
-    cluster_centers = ms.cluster_centers_
     labels_unique = np.unique(labels)
     n_clusters_ = len(labels_unique)
     assert_equal(n_clusters_, n_clusters)
