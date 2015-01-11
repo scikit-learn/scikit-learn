@@ -49,9 +49,7 @@ from sklearn.utils.estimator_checks import (
     check_class_weight_auto_linear_classifier,
     check_estimators_overwrite_params,
     check_estimators_partial_fit_n_features,
-    check_cluster_overwrite_params,
-    check_sparsify_binary_classifier,
-    check_sparsify_multiclass_classifier,
+    check_sparsify_coefficients,
     check_classifier_data_not_an_array,
     check_regressor_data_not_an_array,
     check_transformer_data_not_an_array,
@@ -82,6 +80,25 @@ def test_all_estimators():
         yield check_parameters_default_constructible, name, Estimator
 
 
+def test_non_meta_estimators():
+    # input validation etc for non-meta estimators
+    # FIXME these should be done also for non-mixin estimators!
+    estimators = all_estimators(type_filter=['classifier', 'regressor',
+                                             'transformer', 'cluster'])
+    for name, Estimator in estimators:
+        if name not in CROSS_DECOMPOSITION + ['Imputer']:
+            # Test that all estimators check their input for NaN's and infs
+            yield check_estimators_nan_inf, name, Estimator
+
+        if (name not in ['CCA', '_CCA', 'PLSCanonical', 'PLSRegression',
+                         'PLSSVD', 'GaussianProcess']):
+            # FIXME!
+            # in particular GaussianProcess!
+            yield check_estimators_overwrite_params, name, Estimator
+        if hasattr(Estimator, 'sparsify'):
+            yield check_sparsify_coefficients, name, Estimator
+
+
 def test_estimators_sparse_data():
     # All estimators should either deal with sparse data or raise an
     # exception with type TypeError and an intelligible error message
@@ -108,22 +125,12 @@ def test_transformers():
             yield check_transformer, name, Transformer
 
 
-def test_estimators_nan_inf():
-    # Test that all estimators check their input for NaN's and infs
-    estimators = all_estimators(type_filter=['classifier', 'regressor',
-                                             'transformer', 'cluster'])
-    for name, Estimator in estimators:
-        if name not in CROSS_DECOMPOSITION + ['Imputer']:
-            yield check_estimators_nan_inf, name, Estimator
-
-
 def test_clustering():
     # test if clustering algorithms do something sensible
     # also test all shapes / shape errors
     clustering = all_estimators(type_filter='cluster')
     for name, Alg in clustering:
         # test whether any classifier overwrites his init parameters during fit
-        yield check_cluster_overwrite_params, name, Alg
         yield check_clusterer_compute_labels_predict, name, Alg
         if name not in ('WardAgglomeration', "FeatureAgglomeration"):
             # this is clustering on the features
@@ -279,18 +286,6 @@ def test_class_weight_auto_linear_classifiers():
         yield check_class_weight_auto_linear_classifier, name, Classifier
 
 
-def test_estimators_overwrite_params():
-    # test whether any classifier overwrites his init parameters during fit
-    for est_type in ["classifier", "regressor", "transformer"]:
-        estimators = all_estimators(type_filter=est_type)
-        for name, Estimator in estimators:
-            if (name not in ['CCA', '_CCA', 'PLSCanonical', 'PLSRegression',
-                             'PLSSVD', 'GaussianProcess']):
-                # FIXME!
-                # in particular GaussianProcess!
-                yield check_estimators_overwrite_params, name, Estimator
-
-
 @ignore_warnings
 def test_import_all_consistency():
     # Smoke test to check that any name in a __all__ list is actually defined
@@ -316,29 +311,6 @@ def test_root_import_all_completeness():
         if '.' in modname or modname.startswith('_') or modname in EXCEPTIONS:
             continue
         assert_in(modname, sklearn.__all__)
-
-
-def test_sparsify_estimators():
-    #Test if predict with sparsified estimators works.
-    #Tests regression, binary classification, and multi-class classification.
-    estimators = all_estimators()
-
-    # test regression and binary classification
-    for name, Estimator in estimators:
-        try:
-            Estimator.sparsify
-            yield check_sparsify_binary_classifier, name, Estimator
-        except:
-            pass
-
-    # test multiclass classification
-    classifiers = all_estimators(type_filter='classifier')
-    for name, Classifier in classifiers:
-        try:
-            Classifier.sparsify
-            yield check_sparsify_multiclass_classifier, name, Classifier
-        except:
-            pass
 
 
 def test_non_transformer_estimators_n_iter():

@@ -23,7 +23,8 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import check_skip_travis
 
-from sklearn.base import (clone, ClusterMixin, ClassifierMixin)
+from sklearn.base import (clone, ClusterMixin, ClassifierMixin, RegressorMixin,
+                          TransformerMixin)
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
 from sklearn.lda import LDA
@@ -41,6 +42,13 @@ from sklearn.datasets import load_iris, load_boston, make_blobs
 
 BOSTON = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
+
+
+def is_supervised(estimator):
+    return (isinstance(estimator, ClassifierMixin)
+            or isinstance(estimator, RegressorMixin)
+            # transformers can all take a y
+            or isinstance(estimator, TransformerMixin))
 
 
 def _boston_subset(n_samples=200):
@@ -813,7 +821,10 @@ def check_estimators_overwrite_params(name, Estimator):
     set_random_state(estimator)
 
     params = estimator.get_params()
-    estimator.fit(X, y)
+    if is_supervised(estimator):
+        estimator.fit(X, y)
+    else:
+        estimator.fit(X)
     new_params = estimator.get_params()
     for k, v in params.items():
         assert_false(np.any(new_params[k] != v),
@@ -822,47 +833,10 @@ def check_estimators_overwrite_params(name, Estimator):
                      % (name, k, v, new_params[k]))
 
 
-def check_cluster_overwrite_params(name, Clustering):
-    X, y = make_blobs(random_state=0, n_samples=9)
-    with warnings.catch_warnings(record=True):
-        # catch deprecation warnings
-        clustering = Clustering()
-    set_fast_parameters(clustering)
-    params = clustering.get_params()
-    clustering.fit(X)
-    new_params = clustering.get_params()
-    for k, v in params.items():
-        assert_false(np.any(new_params[k] != v),
-                     "Estimator %s changes its parameter %s"
-                     " from %s to %s during fit."
-                     % (name, k, v, new_params[k]))
-
-
-def check_sparsify_multiclass_classifier(name, Classifier):
+def check_sparsify_coefficients(name, Estimator):
     X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1],
                   [-1, -2], [2, 2], [-2, -2]])
     y = [1, 1, 1, 2, 2, 2, 3, 3, 3]
-    est = Classifier()
-
-    est.fit(X, y)
-    pred_orig = est.predict(X)
-
-    # test sparsify with dense inputs
-    est.sparsify()
-    assert_true(sparse.issparse(est.coef_))
-    pred = est.predict(X)
-    assert_array_equal(pred, pred_orig)
-
-    # pickle and unpickle with sparse coef_
-    est = pickle.loads(pickle.dumps(est))
-    assert_true(sparse.issparse(est.coef_))
-    pred = est.predict(X)
-    assert_array_equal(pred, pred_orig)
-
-
-def check_sparsify_binary_classifier(name, Estimator):
-    X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
-    y = [1, 1, 1, 2, 2, 2]
     est = Estimator()
 
     est.fit(X, y)
