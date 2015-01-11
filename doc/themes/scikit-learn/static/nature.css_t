@@ -294,7 +294,7 @@ div.buttonPrevious, div.buttonNext {
 
 div.buttonPrevious {
     border-top-right-radius: .8em;
-    right: 1;
+    left: 0;
 }
 
 div.buttonNext {
@@ -402,7 +402,7 @@ div.admonition p.admonition-title + p {
 }
 
 div.highlight{
-    background-color: white;
+    background: none;
 }
 
 div.highlight a {
@@ -476,12 +476,23 @@ div.highlight-python pre {
     clear: right !important;
 }
 
-tt {
+tt, code {
     background-color: #ecf0f3;
     color: #222;
     /* padding: 1px 2px; */
     font-size: 1.1em;
     font-family: monospace;
+    border: none;
+    padding: none;
+}
+
+a tt {
+	color: inherit;
+}
+
+
+a code {
+    color: inherit;
 }
 
 .viewcode-back {
@@ -624,65 +635,6 @@ div.sprint-wrapper:hover {
 }
 
 /*-----------------------The Examples Gallery-------------------------------*/
-
-/* ------- Fix maximum size of thumbnails in example gallery -------------- */
-div#examples.section .figure img {
-    max-width: 160px;
-    max-height: 160px;
-    display: block;
-    margin: auto;
-}
-
-div#examples.section .thumbnailContainer {
-    float: left;
-    width: 182px;
-    height: 242px;
-    overflow: auto;
-}
-
-/* Standard browsers hover */
-
-div#examples.section .figure:hover img ,
-div#examples.section .figure:focus img,
-div#examples.section .figure:active img{
-  z-index: 100;
-  /* --> Full image size */
-  /*width: 240px;*/
-  /*height: 132px;*/
-  -webkit-background-size: 240px 160px; /* Saf3-4 */
-  -moz-background-size: 240px 160px; /* FF3.6 */
-  background-size: 240px 160px; /* Opera, IE9, Saf5, Chrome, FF4 */
-  /* --> Half of height sutraction (Full image height - Thumbnail image height) */
-  margin-top: -0px;
-  /* IE6+IE7 does not hover because of z-index stacking context bug:
-     http://www.quirksmode.org/bugreports/archives/2006/01/Explorer_z_index_bug.html */
-  /* --> Thumbnail image size */
-  *width: 160px;
-  *height: 145px;
-  *margin-top: 0;
-  *margin-left: 0;
-}
-
-/* IE hover */
-
-.photos .photo:hover img,
-.photos .photo:focus img,
-.photos .photo:active img {
-  z-index: 100;
-  /* --> Full image size */
-  width: 240px;
-  height: 132px;
-  /* IE6+IE7 does not hover because of z-index stacking context bug:
-     http://www.quirksmode.org/bugreports/archives/2006/01/Explorer_z_index_bug.html */
-  /* --> Thumbnail image size */
-  *width: 160px;
-  *height: 145px;
-}
-
-/* The hover-effect for the examples gallery was adapted from Martin Michálek's
-/* example: http://www.vzhurudolu.cz/test/image-gallery-enlarge-on-hover/
-
-/*------------------------------------------------------------------------*/
 
 /* ------- Zoom plots to make them fit in layout -------------------------- */
 div.body img.align-center {
@@ -961,7 +913,7 @@ p.citing {
     background-color: #fff;
 }
 
-dl.class dt, dl.function dt {
+dl.class > dt, dl.function > dt, dl.method > dt {
     padding: 10px;
     background-color: #f8f8f8;
     color: #222;
@@ -1034,6 +986,15 @@ div.testimonial span.testimonial-author p{
     color: #808080;
 }
 
+#index-funding-logo-big {
+    padding: 0 7px 7px 7px;
+    max-height: 40px
+}
+
+#index-funding-logo-small {
+    padding: 0 7px 7px 7px;
+    max-height: 24px
+}
 
 .no-display {
   display: none;
@@ -1095,6 +1056,39 @@ div.navbar ul.dropdown-menu li a.btn {
 .navbar .btn-group.open .btn.dropdown-toggle {
   background-color: transparent;
   box-shadow: inset 0 0px 0 rgba(255,255,255,.2), 0 0px 0px rgba(0,0,0,.05);
+}
+
+a.btn.dropdown-toggle,  a.btn.dropdown-toggle:hover{
+  vertical-align: baseline;
+}
+
+li#other-versions {
+  position: absolute;
+  left: inherit;
+  right: inherit;
+  top: inherit;
+}
+
+#other-versions a.btn.dropdown-toggle {
+  margin-left: 0.5em;
+  padding: 4px 6px 4px 11px;
+}
+
+#other-versions .caret {
+  border-left: 5px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 8px solid black;
+  border-top: 0px;
+  margin-right: 5px;
+  margin-top: 0px;
+  vertical-align: middle;
+}
+
+#other-versions .dropdown-menu {
+  position: absolute;
+  right: -60%;
+  top: -805%;
+  left: initial;
 }
 
 .navbar .btn, .navbar .open>.btn, .navbar .btn:hover{

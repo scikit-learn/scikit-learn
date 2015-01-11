@@ -2,19 +2,21 @@
 Testing Recursive feature elimination
 """
 
-import warnings
-
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from nose.tools import assert_equal
 from scipy import sparse
 
 from sklearn.feature_selection.rfe import RFE, RFECV
-from sklearn.datasets import load_iris
+from sklearn.datasets import load_iris, make_friedman1
 from sklearn.metrics import zero_one_loss
-from sklearn.svm import SVC
+from sklearn.svm import SVC, SVR
 from sklearn.utils import check_random_state
-from sklearn.metrics.scorer import SCORERS
+from sklearn.utils.testing import ignore_warnings
+
+from sklearn.metrics import make_scorer
+from sklearn.metrics import get_scorer
+
 
 def test_rfe_set_params():
     generator = check_random_state(0)
@@ -69,39 +71,80 @@ def test_rfecv():
     y = list(iris.target)   # regression test: list should be supported
 
     # Test using the score function
-    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=3)
+    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=5)
     rfecv.fit(X, y)
     # non-regression test for missing worst feature:
     assert_equal(len(rfecv.grid_scores_), X.shape[1])
     assert_equal(len(rfecv.ranking_), X.shape[1])
     X_r = rfecv.transform(X)
 
+    # All the noisy variable were filtered out
+    assert_array_equal(X_r, iris.data)
+
     # same in sparse
-    rfecv_sparse = RFECV(estimator=SVC(kernel="linear"), step=1, cv=3)
+    rfecv_sparse = RFECV(estimator=SVC(kernel="linear"), step=1, cv=5)
     X_sparse = sparse.csr_matrix(X)
     rfecv_sparse.fit(X_sparse, y)
     X_r_sparse = rfecv_sparse.transform(X_sparse)
-
-    assert_equal(X_r.shape, iris.data.shape)
-    assert_array_almost_equal(X_r[:10], iris.data[:10])
-    assert_array_almost_equal(X_r_sparse.toarray(), X_r)
+    assert_array_equal(X_r_sparse.toarray(), iris.data)
 
     # Test using a customized loss function
-    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=3,
-                  loss_func=zero_one_loss)
-    with warnings.catch_warnings(record=True):
-        rfecv.fit(X, y)
+    scoring = make_scorer(zero_one_loss, greater_is_better=False)
+    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=5,
+                  scoring=scoring)
+    ignore_warnings(rfecv.fit)(X, y)
     X_r = rfecv.transform(X)
-
-    assert_equal(X_r.shape, iris.data.shape)
-    assert_array_almost_equal(X_r[:10], iris.data[:10])
+    assert_array_equal(X_r, iris.data)
 
     # Test using a scorer
-    scorer = SCORERS['accuracy']
-    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=3,
+    scorer = get_scorer('accuracy')
+    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=5,
                   scoring=scorer)
     rfecv.fit(X, y)
     X_r = rfecv.transform(X)
+    assert_array_equal(X_r, iris.data)
 
-    assert_equal(X_r.shape, iris.data.shape)
-    assert_array_almost_equal(X_r[:10], iris.data[:10])
+    # Test fix on grid_scores
+    def test_scorer(estimator, X, y):
+        return 1.0
+    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=5,
+                  scoring=test_scorer)
+    rfecv.fit(X, y)
+    assert_array_equal(rfecv.grid_scores_, np.ones(len(rfecv.grid_scores_)))
+
+    # Same as the first two tests, but with step=2
+    rfecv = RFECV(estimator=SVC(kernel="linear"), step=2, cv=5)
+    rfecv.fit(X, y)
+    assert_equal(len(rfecv.grid_scores_), 6)
+    assert_equal(len(rfecv.ranking_), X.shape[1])
+    X_r = rfecv.transform(X)
+    assert_array_equal(X_r, iris.data)
+
+    rfecv_sparse = RFECV(estimator=SVC(kernel="linear"), step=2, cv=5)
+    X_sparse = sparse.csr_matrix(X)
+    rfecv_sparse.fit(X_sparse, y)
+    X_r_sparse = rfecv_sparse.transform(X_sparse)
+    assert_array_equal(X_r_sparse.toarray(), iris.data)
+
+
+def test_rfe_min_step():
+
+    n_features = 10
+    X, y = make_friedman1(n_samples=50, n_features=n_features, random_state=0)
+    n_samples, n_features = X.shape
+    estimator = SVR(kernel="linear")
+
+    # Test when floor(step * n_features) <= 0
+    selector = RFE(estimator, step=0.01)
+    sel = selector.fit(X,y)
+    assert_equal(sel.support_.sum(), n_features // 2)
+
+    # Test when step is between (0,1) and floor(step * n_features) > 0
+    selector = RFE(estimator, step=0.20)
+    sel = selector.fit(X,y)
+    assert_equal(sel.support_.sum(), n_features // 2)
+
+    # Test when step is an integer
+    selector = RFE(estimator, step=5)
+    sel = selector.fit(X,y)
+    assert_equal(sel.support_.sum(), n_features // 2)

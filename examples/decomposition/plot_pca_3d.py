@@ -22,7 +22,7 @@ from sklearn.decomposition import PCA
 
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from scipy import stats
 
 
@@ -58,11 +58,11 @@ b /= norm
 ###############################################################################
 # Plot the figures
 def plot_figs(fig_num, elev, azim):
-    fig = pl.figure(fig_num, figsize=(4, 3))
-    pl.clf()
+    fig = plt.figure(fig_num, figsize=(4, 3))
+    plt.clf()
     ax = Axes3D(fig, rect=[0, 0, .95, 1], elev=elev, azim=azim)
 
-    ax.scatter(a[::10], b[::10], c[::10], c=density, marker='+', alpha=.4)
+    ax.scatter(a[::10], b[::10], c[::10], c=density[::10], marker='+', alpha=.4)
     Y = np.c_[a, b, c]
 
     # Using SciPy's SVD, this would be:
@@ -96,4 +96,4 @@ elev = 30
 azim = 20
 plot_figs(2, elev, azim)
 
-pl.show()
+plt.show()

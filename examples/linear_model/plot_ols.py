@@ -23,7 +23,7 @@ print(__doc__)
 # License: BSD 3 clause
 
 
-import pylab as pl
+import matplotlib.pyplot as plt
 import numpy as np
 from sklearn import datasets, linear_model
 
@@ -58,11 +58,11 @@ print("Residual sum of squares: %.2f"
 print('Variance score: %.2f' % regr.score(diabetes_X_test, diabetes_y_test))
 
 # Plot outputs
-pl.scatter(diabetes_X_test, diabetes_y_test,  color='black')
-pl.plot(diabetes_X_test, regr.predict(diabetes_X_test), color='blue',
-        linewidth=3)
+plt.scatter(diabetes_X_test, diabetes_y_test,  color='black')
+plt.plot(diabetes_X_test, regr.predict(diabetes_X_test), color='blue',
+         linewidth=3)
 
-pl.xticks(())
-pl.yticks(())
+plt.xticks(())
+plt.yticks(())
 
-pl.show()
+plt.show()

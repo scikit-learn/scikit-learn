@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2007-2009 Cournapeau David <cournape@gmail.com>
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
+# License: 3-clause BSD
 
 descr = """A set of python modules for machine learning and data mining"""
 
@@ -10,6 +11,7 @@ import os
 import shutil
 from distutils.command.clean import clean as Clean
 
+
 if sys.version_info[0] < 3:
     import __builtin__ as builtins
 else:
@@ -17,12 +19,16 @@ else:
 
 # This is a bit (!) hackish: we are setting a global variable so that the main
 # sklearn __init__ can detect if it is being loaded by the setup routine, to
-# avoid attempting to load components that aren't built yet.
+# avoid attempting to load components that aren't built yet:
+# the numpy distutils extensions that are used by scikit-learn to recursively
+# build the compiled extensions in sub-packages is based on the Python import
+# machinery.
 builtins.__SKLEARN_SETUP__ = True
 
 DISTNAME = 'scikit-learn'
 DESCRIPTION = 'A set of python modules for machine learning and data mining'
-LONG_DESCRIPTION = open('README.rst').read()
+with open('README.rst') as f:
+    LONG_DESCRIPTION = f.read()
 MAINTAINER = 'Andreas Mueller'
 MAINTAINER_EMAIL = 'amueller@ais.uni-bonn.de'
 URL = 'http://scikit-learn.org'
@@ -41,11 +47,15 @@ VERSION = sklearn.__version__
 # as it monkey-patches the 'setup' function
 
 # For some commands, use setuptools
-if len(set(('develop', 'release', 'bdist_egg', 'bdist_rpm',
-           'bdist_wininst', 'install_egg_info', 'build_sphinx',
-           'egg_info', 'easy_install', 'upload',
-           '--single-version-externally-managed',
-            )).intersection(sys.argv)) > 0:
+SETUPTOOLS_COMMANDS = set([
+    'develop', 'release', 'bdist_egg', 'bdist_rpm',
+    'bdist_wininst', 'install_egg_info', 'build_sphinx',
+    'egg_info', 'easy_install', 'upload', 'bdist_wheel',
+    '--single-version-externally-managed',
+])
+
+
+if len(SETUPTOOLS_COMMANDS.intersection(sys.argv)) > 0:
     import setuptools
     extra_setuptools_args = dict(
         zip_safe=False,  # the package can run out of an .egg file
@@ -56,8 +66,9 @@ else:
 
 ###############################################################################
 
+
 class CleanCommand(Clean):
-    description = "Remove build directories, and compiled file in the source tree"
+    description = "Remove build artifacts from the source tree"
 
     def run(self):
         Clean.run(self)
@@ -66,10 +77,12 @@ class CleanCommand(Clean):
         for dirpath, dirnames, filenames in os.walk('sklearn'):
             for filename in filenames:
                 if (filename.endswith('.so') or filename.endswith('.pyd')
-                             or filename.endswith('.dll')
-                             or filename.endswith('.pyc')):
+                        or filename.endswith('.dll')
+                        or filename.endswith('.pyc')):
                     os.unlink(os.path.join(dirpath, filename))
-
+            for dirname in dirnames:
+                if dirname == '__pycache__':
+                    shutil.rmtree(os.path.join(dirpath, dirname))
 
 
 ###############################################################################
@@ -118,6 +131,7 @@ def setup_package():
                                  'Programming Language :: Python :: 2.7',
                                  'Programming Language :: Python :: 3',
                                  'Programming Language :: Python :: 3.3',
+                                 'Programming Language :: Python :: 3.4',
                                  ],
                     cmdclass={'clean': CleanCommand},
                     **extra_setuptools_args)

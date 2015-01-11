@@ -41,6 +41,7 @@ import tarfile
 import pickle
 import shutil
 import re
+import codecs
 
 import numpy as np
 import scipy.sparse as sp
@@ -49,7 +50,6 @@ from .base import get_data_home
 from .base import Bunch
 from .base import load_files
 from ..utils import check_random_state
-from ..utils.fixes import in1d
 from ..feature_extraction.text import CountVectorizer
 from ..preprocessing import normalize
 from ..externals import joblib, six
@@ -80,10 +80,15 @@ def download_20newsgroups(target_dir, cache_path):
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
 
-    if not os.path.exists(archive_path):
-        logger.warn("Downloading dataset from %s (14 MB)", URL)
-        opener = urlopen(URL)
-        open(archive_path, 'wb').write(opener.read())
+    if os.path.exists(archive_path):
+        # Download is not complete as the .tar.gz file is removed after
+        # download.
+        logger.warn("Download was incomplete, downloading again.")
+        os.remove(archive_path)
+
+    logger.warn("Downloading dataset from %s (14 MB)", URL)
+    opener = urlopen(URL)
+    open(archive_path, 'wb').write(opener.read())
 
     logger.info("Decompressing %s", archive_path)
     tarfile.open(archive_path, "r:gz").extractall(path=target_dir)
@@ -92,7 +97,9 @@ def download_20newsgroups(target_dir, cache_path):
     # Store a zipped pickle
     cache = dict(train=load_files(train_path, encoding='latin1'),
                  test=load_files(test_path, encoding='latin1'))
-    open(cache_path, 'wb').write(pickle.dumps(cache).encode('zip'))
+    compressed_content = codecs.encode(pickle.dumps(cache), 'zlib_codec')
+    open(cache_path, 'wb').write(compressed_content)
+
     shutil.rmtree(target_dir)
     return cache
 
@@ -194,7 +201,11 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     cache = None
     if os.path.exists(cache_path):
         try:
-            cache = pickle.loads(open(cache_path, 'rb').read().decode('zip'))
+            with open(cache_path, 'rb') as f:
+                compressed_content = f.read()
+            uncompressed_content = codecs.decode(
+                compressed_content, 'zlib_codec')
+            cache = pickle.loads(uncompressed_content)
         except Exception as e:
             print(80 * '_')
             print('Cache loading failed')
@@ -240,7 +251,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         # Sort the categories to have the ordering of the labels
         labels.sort()
         labels, categories = zip(*labels)
-        mask = in1d(data.target, labels)
+        mask = np.in1d(data.target, labels)
         data.filenames = data.filenames[mask]
         data.target = data.target[mask]
         # searchsorted to have continuous labels

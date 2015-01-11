@@ -6,7 +6,7 @@ The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 # License: BSD 3 clause
 
 from ..base import BaseEstimator, RegressorMixin, TransformerMixin
-from ..utils import check_arrays
+from ..utils import check_array, check_consistent_length
 from ..externals import six
 
 import warnings
@@ -39,7 +39,7 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
                 X_pinv = linalg.pinv(X)   # compute once pinv(X)
             x_weights = np.dot(X_pinv, y_score)
         else:  # mode A
-        # Mode A regress each X column on y_score
+            # Mode A regress each X column on y_score
             x_weights = np.dot(X.T, y_score) / np.dot(y_score.T, y_score)
         # 1.2 Normalize u
         x_weights /= np.sqrt(np.dot(x_weights.T, x_weights))
@@ -67,7 +67,7 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
             break
         x_weights_old = x_weights
         ite += 1
-    return x_weights, y_weights
+    return x_weights, y_weights, ite
 
 
 def _svd_cross_product(X, Y):
@@ -128,16 +128,6 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         with two algo. (a) the inner loop of the original NIPALS algo. or (b) a
         SVD on residuals cross-covariance matrices.
 
-    Parameters
-    ----------
-    X : array-like of predictors, shape = [n_samples, p]
-        Training vectors, where n_samples in the number of samples and
-        p is the number of predictors.
-
-    Y : array-like of response, shape = [n_samples, q]
-        Training vectors, where n_samples in the number of samples and
-        q is the number of response variables.
-
     n_components : int, number of components to keep. (default 2).
 
     scale : boolean, scale data? (default True)
@@ -164,32 +154,36 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
 
     Attributes
     ----------
-    `x_weights_` : array, [p, n_components]
+    x_weights_ : array, [p, n_components]
         X block weights vectors.
 
-    `y_weights_` : array, [q, n_components]
+    y_weights_ : array, [q, n_components]
         Y block weights vectors.
 
-    `x_loadings_` : array, [p, n_components]
+    x_loadings_ : array, [p, n_components]
         X block loadings vectors.
 
-    `y_loadings_` : array, [q, n_components]
+    y_loadings_ : array, [q, n_components]
         Y block loadings vectors.
 
-    `x_scores_` : array, [n_samples, n_components]
+    x_scores_ : array, [n_samples, n_components]
         X scores.
 
-    `y_scores_` : array, [n_samples, n_components]
+    y_scores_ : array, [n_samples, n_components]
         Y scores.
 
-    `x_rotations_` : array, [p, n_components]
+    x_rotations_ : array, [p, n_components]
         X block to latents rotations.
 
-    `y_rotations_` : array, [q, n_components]
+    y_rotations_ : array, [q, n_components]
         Y block to latents rotations.
 
-    coefs: array, [p, q]
-        The coefficients of the linear model: Y = X coefs + Err
+    coef_: array, [p, q]
+        The coefficients of the linear model: Y = X coef_ + Err
+
+    n_iter_ : array-like
+        Number of iterations of the NIPALS inner loop for each
+        component. Not useful if the algorithm given is "svd".
 
     References
     ----------
@@ -225,25 +219,30 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         self.copy = copy
 
     def fit(self, X, Y):
-        # copy since this will contains the residuals (deflated) matrices
-        X, Y = check_arrays(X, Y, dtype=np.float, copy=self.copy,
-                            sparse_format='dense')
+        """Fit model to data.
 
-        if X.ndim != 2:
-            raise ValueError('X must be a 2D array')
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples in the number of samples and
+            n_features is the number of predictors.
+
+        Y : array-like of response, shape = [n_samples, n_targets]
+            Target vectors, where n_samples in the number of samples and
+            n_targets is the number of response variables.
+        """
+
+        # copy since this will contains the residuals (deflated) matrices
+        check_consistent_length(X, Y)
+        X = check_array(X, dtype=np.float, copy=self.copy)
+        Y = check_array(Y, dtype=np.float, copy=self.copy, ensure_2d=False)
         if Y.ndim == 1:
-            Y = Y.reshape((Y.size, 1))
-        if Y.ndim != 2:
-            raise ValueError('Y must be a 1D or a 2D array')
+            Y = Y[:, None]
 
         n = X.shape[0]
         p = X.shape[1]
         q = Y.shape[1]
 
-        if n != Y.shape[0]:
-            raise ValueError(
-                'Incompatible shapes: X has %s samples, while Y '
-                'has %s' % (X.shape[0], Y.shape[0]))
         if self.n_components < 1 or self.n_components > p:
             raise ValueError('invalid number of components')
         if self.algorithm not in ("svd", "nipals"):
@@ -267,15 +266,18 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         self.y_weights_ = np.zeros((q, self.n_components))
         self.x_loadings_ = np.zeros((p, self.n_components))
         self.y_loadings_ = np.zeros((q, self.n_components))
+        self.n_iter_ = []
 
         # NIPALS algo: outer loop, over components
         for k in range(self.n_components):
             #1) weights estimation (inner loop)
             # -----------------------------------
             if self.algorithm == "nipals":
-                x_weights, y_weights = _nipals_twoblocks_inner_loop(
-                    X=Xk, Y=Yk, mode=self.mode, max_iter=self.max_iter,
-                    tol=self.tol, norm_y_weights=self.norm_y_weights)
+                x_weights, y_weights, n_iter_ = \
+                    _nipals_twoblocks_inner_loop(
+                        X=Xk, Y=Yk, mode=self.mode, max_iter=self.max_iter,
+                        tol=self.tol, norm_y_weights=self.norm_y_weights)
+                self.n_iter_.append(n_iter_)
             elif self.algorithm == "svd":
                 x_weights, y_weights = _svd_cross_product(X=Xk, Y=Yk)
             # compute scores
@@ -323,11 +325,11 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         # U = Y C(Q'C)^-1 = YC* (W* : q x k matrix)
         self.x_rotations_ = np.dot(
             self.x_weights_,
-            linalg.inv(np.dot(self.x_loadings_.T, self.x_weights_)))
+            linalg.pinv(np.dot(self.x_loadings_.T, self.x_weights_)))
         if Y.shape[1] > 1:
             self.y_rotations_ = np.dot(
                 self.y_weights_,
-                linalg.inv(np.dot(self.y_loadings_.T, self.y_weights_)))
+                linalg.pinv(np.dot(self.y_loadings_.T, self.y_weights_)))
         else:
             self.y_rotations_ = np.ones(1)
 
@@ -338,8 +340,8 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             # Then express in function of X
             # Y = X W(P'W)^-1Q' + Err = XB + Err
             # => B = W*Q' (p x q)
-            self.coefs = np.dot(self.x_rotations_, self.y_loadings_.T)
-            self.coefs = (1. / self.x_std_.reshape((p, 1)) * self.coefs *
+            self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
+            self.coef_ = (1. / self.x_std_.reshape((p, 1)) * self.coef_ *
                           self.y_std_)
         return self
 
@@ -408,7 +410,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             X = np.asarray(X)
             Xc -= self.x_mean_
             Xc /= self.x_std_
-        Ypred = np.dot(Xc, self.coefs)
+        Ypred = np.dot(Xc, self.coef_)
         return Ypred + self.y_mean_
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -448,7 +450,7 @@ class PLSRegression(_PLS):
         Training vectors, where n_samples in the number of samples and
         p is the number of predictors.
 
-    Y : array-like of response, shape = [n_samples, q]
+    Y : array-like of response, shape = [n_samples, q] or [n_samples]
         Training vectors, where n_samples in the number of samples and
         q is the number of response variables.
 
@@ -471,32 +473,36 @@ class PLSRegression(_PLS):
 
     Attributes
     ----------
-    `x_weights_` : array, [p, n_components]
+    x_weights_ : array, [p, n_components]
         X block weights vectors.
 
-    `y_weights_` : array, [q, n_components]
+    y_weights_ : array, [q, n_components]
         Y block weights vectors.
 
-    `x_loadings_` : array, [p, n_components]
+    x_loadings_ : array, [p, n_components]
         X block loadings vectors.
 
-    `y_loadings_` : array, [q, n_components]
+    y_loadings_ : array, [q, n_components]
         Y block loadings vectors.
 
-    `x_scores_` : array, [n_samples, n_components]
+    x_scores_ : array, [n_samples, n_components]
         X scores.
 
-    `y_scores_` : array, [n_samples, n_components]
+    y_scores_ : array, [n_samples, n_components]
         Y scores.
 
-    `x_rotations_` : array, [p, n_components]
+    x_rotations_ : array, [p, n_components]
         X block to latents rotations.
 
-    `y_rotations_` : array, [q, n_components]
+    y_rotations_ : array, [q, n_components]
         Y block to latents rotations.
 
-    coefs: array, [p, q]
-        The coefficients of the linear model: Y = X coefs + Err
+    coef_: array, [p, q]
+        The coefficients of the linear model: Y = X coef_ + Err
+
+    n_iter_ : array-like
+        Number of iterations of the NIPALS inner loop for each
+        component.
 
     Notes
     -----
@@ -522,7 +528,7 @@ class PLSRegression(_PLS):
 
     Examples
     --------
-    >>> from sklearn.cross_decomposition import PLSCanonical, PLSRegression
+    >>> from sklearn.cross_decomposition import PLSRegression
     >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> pls2 = PLSRegression(n_components=2)
@@ -550,6 +556,13 @@ class PLSRegression(_PLS):
                       deflation_mode="regression", mode="A",
                       norm_y_weights=False, max_iter=max_iter, tol=tol,
                       copy=copy)
+
+    @property
+    def coefs(self):
+        DeprecationWarning("'coefs' attribute has been deprecated and will be "
+                           "removed in version 0.17. Use 'coef_' instead")
+        return self.coef_
+
 
 
 class PLSCanonical(_PLS):
@@ -591,29 +604,33 @@ class PLSCanonical(_PLS):
 
     Attributes
     ----------
-    `x_weights_` : array, shape = [p, n_components]
+    x_weights_ : array, shape = [p, n_components]
         X block weights vectors.
 
-    `y_weights_` : array, shape = [q, n_components]
+    y_weights_ : array, shape = [q, n_components]
         Y block weights vectors.
 
-    `x_loadings_` : array, shape = [p, n_components]
+    x_loadings_ : array, shape = [p, n_components]
         X block loadings vectors.
 
-    `y_loadings_` : array, shape = [q, n_components]
+    y_loadings_ : array, shape = [q, n_components]
         Y block loadings vectors.
 
-    `x_scores_` : array, shape = [n_samples, n_components]
+    x_scores_ : array, shape = [n_samples, n_components]
         X scores.
 
-    `y_scores_` : array, shape = [n_samples, n_components]
+    y_scores_ : array, shape = [n_samples, n_components]
         Y scores.
 
-    `x_rotations_` : array, shape = [p, n_components]
+    x_rotations_ : array, shape = [p, n_components]
         X block to latents rotations.
 
-    `y_rotations_` : array, shape = [q, n_components]
+    y_rotations_ : array, shape = [q, n_components]
         Y block to latents rotations.
+
+    n_iter_ : array-like
+        Number of iterations of the NIPALS inner loop for each
+        component. Not useful if the algorithm provided is "svd".
 
     Notes
     -----
@@ -633,14 +650,14 @@ class PLSCanonical(_PLS):
 
     This implementation provides the same results that the "plspm" package
     provided in the R language (R-project), using the function plsca(X, Y).
-    Results are equal or colinear with the function
+    Results are equal or collinear with the function
     ``pls(..., mode = "canonical")`` of the "mixOmics" package. The difference
     relies in the fact that mixOmics implementation does not exactly implement
     the Wold algorithm since it does not normalize y_weights to one.
 
     Examples
     --------
-    >>> from sklearn.cross_decomposition import PLSCanonical, PLSRegression
+    >>> from sklearn.cross_decomposition import PLSCanonical
     >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> plsca = PLSCanonical(n_components=2)
@@ -699,16 +716,16 @@ class PLSSVD(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `x_weights_` : array, [p, n_components]
+    x_weights_ : array, [p, n_components]
         X block weights vectors.
 
-    `y_weights_` : array, [q, n_components]
+    y_weights_ : array, [q, n_components]
         Y block weights vectors.
 
-    `x_scores_` : array, [n_samples, n_components]
+    x_scores_ : array, [n_samples, n_components]
         X scores.
 
-    `y_scores_` : array, [n_samples, n_components]
+    y_scores_ : array, [n_samples, n_components]
         Y scores.
 
     See also
@@ -724,19 +741,11 @@ class PLSSVD(BaseEstimator, TransformerMixin):
 
     def fit(self, X, Y):
         # copy since this will contains the centered data
-        X, Y = check_arrays(X, Y, dtype=np.float, copy=self.copy,
-                            sparse_format='dense')
+        check_consistent_length(X, Y)
+        X = check_array(X, dtype=np.float, copy=self.copy)
+        Y = check_array(Y, dtype=np.float, copy=self.copy)
 
-        n = X.shape[0]
         p = X.shape[1]
-
-        if X.ndim != 2:
-            raise ValueError('X must be a 2D array')
-
-        if n != Y.shape[0]:
-            raise ValueError(
-                'Incompatible shapes: X has %s samples, while Y '
-                'has %s' % (X.shape[0], Y.shape[0]))
 
         if self.n_components < 1 or self.n_components > p:
             raise ValueError('invalid number of components')

@@ -11,7 +11,7 @@ import warnings
 
 from ..base import BaseEstimator
 from ..metrics import euclidean_distances
-from ..utils import check_random_state, check_arrays
+from ..utils import check_random_state, check_array, check_symmetric
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..isotonic import IsotonicRegression
@@ -61,16 +61,14 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points)
 
+    n_iter : int
+        Number of iterations run.
+
     """
+    similarities = check_symmetric(similarities, raise_exception=True)
+
     n_samples = similarities.shape[0]
     random_state = check_random_state(random_state)
-
-    if similarities.shape[0] != similarities.shape[1]:
-        raise ValueError("similarities must be a square array (shape=%d)" %
-                         n_samples)
-    res = 100 * np.finfo(np.float).resolution
-    if np.any((similarities - similarities.T) > res):
-        raise ValueError("similarities must be symmetric")
 
     sim_flat = ((1 - np.tri(n_samples)) * similarities).ravel()
     sim_flat_w = sim_flat[sim_flat != 0]
@@ -118,7 +116,7 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
         X = 1. / n_samples * np.dot(B, X)
 
         dis = np.sqrt((X ** 2).sum(axis=1)).sum()
-        if verbose == 2:
+        if verbose >= 2:
             print('it: %d, stress %s' % (it, stress))
         if old_stress is not None:
             if(old_stress - stress / dis) < eps:
@@ -128,11 +126,12 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
                 break
         old_stress = stress / dis
 
-    return X, stress
+    return X, stress, it + 1
 
 
 def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
-           n_jobs=1, max_iter=300, verbose=0, eps=1e-3, random_state=None):
+           n_jobs=1, max_iter=300, verbose=0, eps=1e-3, random_state=None,
+           return_n_iter=False):
     """
     Computes multidimensional scaling using SMACOF (Scaling by Majorizing a
     Complicated Function) algorithm
@@ -199,6 +198,9 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
 
+    return_n_iter : bool
+        Whether or not to return the number of iterations.
+
     Returns
     -------
     X : ndarray (n_samples,n_components)
@@ -207,6 +209,10 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
     stress : float
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points)
+
+    n_iter : int
+        The number of iterations corresponding to the best stress.
+        Returned only if `return_n_iter` is set to True.
 
     Notes
     -----
@@ -220,7 +226,7 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
     hypothesis" Kruskal, J. Psychometrika, 29, (1964)
     """
 
-    similarities, = check_arrays(similarities, sparse_format='dense')
+    similarities = check_array(similarities)
     random_state = check_random_state(random_state)
 
     if hasattr(init, '__array__'):
@@ -236,13 +242,15 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
 
     if n_jobs == 1:
         for it in range(n_init):
-            pos, stress = _smacof_single(similarities, metric=metric,
-                                         n_components=n_components, init=init,
-                                         max_iter=max_iter, verbose=verbose,
-                                         eps=eps, random_state=random_state)
+            pos, stress, n_iter_ = _smacof_single(
+                similarities, metric=metric,
+                n_components=n_components, init=init,
+                max_iter=max_iter, verbose=verbose,
+                eps=eps, random_state=random_state)
             if best_stress is None or stress < best_stress:
                 best_stress = stress
                 best_pos = pos.copy()
+                best_iter = n_iter_
     else:
         seeds = random_state.randint(np.iinfo(np.int32).max, size=n_init)
         results = Parallel(n_jobs=n_jobs, verbose=max(verbose - 1, 0))(
@@ -251,11 +259,16 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
                 init=init, max_iter=max_iter, verbose=verbose, eps=eps,
                 random_state=seed)
             for seed in seeds)
-        positions, stress = zip(*results)
+        positions, stress, n_iters = zip(*results)
         best = np.argmin(stress)
         best_stress = stress[best]
         best_pos = positions[best]
-    return best_pos, best_stress
+        best_iter = n_iters[best]
+
+    if return_n_iter:
+        return best_pos, best_stress, best_iter
+    else:
+        return best_pos, best_stress
 
 
 class MDS(BaseEstimator):
@@ -307,10 +320,10 @@ class MDS(BaseEstimator):
 
     Attributes
     ----------
-    ``embedding_`` : array-like, shape [n_components, n_samples]
+    embedding_ : array-like, shape [n_components, n_samples]
         Stores the position of the dataset in the embedding space
 
-    ``stress_`` : float
+    stress_ : float
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points)
 
@@ -350,7 +363,8 @@ class MDS(BaseEstimator):
 
         Parameters
         ----------
-        X : array, shape=[n_samples, n_features]
+        X : array, shape=[n_samples, n_features], or [n_samples, n_samples] \
+                if dissimilarity='precomputed'
             Input data.
 
         init : {None or ndarray, shape (n_samples,)}, optional
@@ -366,7 +380,8 @@ class MDS(BaseEstimator):
 
         Parameters
         ----------
-        X : array, shape=[n_samples, n_features]
+        X : array, shape=[n_samples, n_features], or [n_samples, n_samples] \
+                if dissimilarity='precomputed'
             Input data.
 
         init : {None or ndarray, shape (n_samples,)}, optional
@@ -376,22 +391,23 @@ class MDS(BaseEstimator):
         """
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
             warnings.warn("The MDS API has changed. ``fit`` now constructs an"
-                          "dissimilarity matrix from data. To use a custom "
+                          " dissimilarity matrix from data. To use a custom "
                           "dissimilarity matrix, set "
                           "``dissimilarity=precomputed``.")
 
-        if self.dissimilarity is "precomputed":
+        if self.dissimilarity == "precomputed":
             self.dissimilarity_matrix_ = X
-        elif self.dissimilarity is "euclidean":
+        elif self.dissimilarity == "euclidean":
             self.dissimilarity_matrix_ = euclidean_distances(X)
         else:
             raise ValueError("Proximity must be 'precomputed' or 'euclidean'."
                              " Got %s instead" % str(self.dissimilarity))
 
-        self.embedding_, self.stress_ = smacof(
+        self.embedding_, self.stress_, self.n_iter_ = smacof(
             self.dissimilarity_matrix_, metric=self.metric,
             n_components=self.n_components, init=init, n_init=self.n_init,
             n_jobs=self.n_jobs, max_iter=self.max_iter, verbose=self.verbose,
-            eps=self.eps, random_state=self.random_state)
+            eps=self.eps, random_state=self.random_state,
+            return_n_iter=True)
 
         return self.embedding_

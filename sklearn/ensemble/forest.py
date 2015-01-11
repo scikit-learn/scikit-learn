@@ -34,144 +34,74 @@ Single and multi-output problems are both handled.
 
 # Authors: Gilles Louppe <g.louppe@gmail.com>
 #          Brian Holt <bdholt1@gmail.com>
+#          Joly Arnaud <arnaud.v.joly@gmail.com>
+#          Fares Hedayati <fares.hedayati@gmail.com>
+#
 # License: BSD 3 clause
 
 from __future__ import division
 
-import itertools
 import numpy as np
+
 from warnings import warn
 from abc import ABCMeta, abstractmethod
 
+import numpy as np
+from scipy.sparse import issparse
+
 from ..base import ClassifierMixin, RegressorMixin
-from ..externals.joblib import Parallel, delayed, cpu_count
+from ..externals.joblib import Parallel, delayed
 from ..externals import six
-from ..externals.six.moves import xrange
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..metrics import r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
 from ..tree._tree import DTYPE, DOUBLE
-from ..utils import array2d, check_random_state, check_arrays, safe_asarray
+from ..utils import check_random_state, check_array
 from ..utils.validation import DataConversionWarning
-from ..utils.fixes import bincount, unique
-
-
-from .base import BaseEnsemble
+from .base import BaseEnsemble, _partition_estimators
 
 __all__ = ["RandomForestClassifier",
            "RandomForestRegressor",
            "ExtraTreesClassifier",
-           "ExtraTreesRegressor"]
+           "ExtraTreesRegressor",
+           "RandomTreesEmbedding"]
 
 MAX_INT = np.iinfo(np.int32).max
 
 
-def _parallel_build_trees(n_trees, forest, X, y,
-                          sample_weight, seeds, verbose):
-    """Private function used to build a batch of trees within a job."""
-    trees = []
+def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
+                          verbose=0):
+    """Private function used to fit a single tree in parallel."""
+    if verbose > 1:
+        print("building tree %d of %d" % (tree_idx + 1, n_trees))
 
-    for i in range(n_trees):
-        random_state = check_random_state(seeds[i])
-        if verbose > 1:
-            print("building tree %d of %d" % (i + 1, n_trees))
-        seed = random_state.randint(MAX_INT)
-
-        tree = forest._make_estimator(append=False)
-        tree.set_params(random_state=check_random_state(seed))
-
-        if forest.bootstrap:
-            n_samples = X.shape[0]
-            if sample_weight is None:
-                curr_sample_weight = np.ones((n_samples,), dtype=np.float64)
-            else:
-                curr_sample_weight = sample_weight.copy()
-
-            indices = random_state.randint(0, n_samples, n_samples)
-            sample_counts = bincount(indices, minlength=n_samples)
-            curr_sample_weight *= sample_counts
-
-            tree.fit(X, y,
-                     sample_weight=curr_sample_weight,
-                     check_input=False)
-
-            tree.indices_ = sample_counts > 0.
-
+    if forest.bootstrap:
+        n_samples = X.shape[0]
+        if sample_weight is None:
+            curr_sample_weight = np.ones((n_samples,), dtype=np.float64)
         else:
-            tree.fit(X, y,
-                     sample_weight=sample_weight,
-                     check_input=False)
+            curr_sample_weight = sample_weight.copy()
 
-        trees.append(tree)
+        random_state = check_random_state(tree.random_state)
+        indices = random_state.randint(0, n_samples, n_samples)
+        sample_counts = np.bincount(indices, minlength=n_samples)
+        curr_sample_weight *= sample_counts
 
-    return trees
+        tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
 
-
-def _parallel_predict_proba(trees, X, n_classes, n_outputs):
-    """Private function used to compute a batch of predictions within a job."""
-    n_samples = X.shape[0]
-
-    if n_outputs == 1:
-        proba = np.zeros((n_samples, n_classes))
-
-        for tree in trees:
-            proba_tree = tree.predict_proba(X)
-
-            if n_classes == tree.n_classes_:
-                proba += proba_tree
-
-            else:
-                for j, c in enumerate(tree.classes_):
-                    proba[:, c] += proba_tree[:, j]
+        tree.indices_ = sample_counts > 0.
 
     else:
-        proba = []
+        tree.fit(X, y, sample_weight=sample_weight, check_input=False)
 
-        for k in xrange(n_outputs):
-            proba.append(np.zeros((n_samples, n_classes[k])))
-
-        for tree in trees:
-            proba_tree = tree.predict_proba(X)
-
-            for k in xrange(n_outputs):
-                if n_classes[k] == tree.n_classes_[k]:
-                    proba[k] += proba_tree[k]
-
-                else:
-                    for j, c in enumerate(tree.classes_[k]):
-                        proba[k][:, c] += proba_tree[k][:, j]
-
-    return proba
+    return tree
 
 
-def _parallel_predict_regression(trees, X):
-    """Private function used to compute a batch of predictions within a job."""
-    return sum(tree.predict(X) for tree in trees)
-
-
-def _partition_trees(forest):
-    """Private function used to partition trees between jobs."""
-    # Compute the number of jobs
-    if forest.n_jobs == -1:
-        n_jobs = min(cpu_count(), forest.n_estimators)
-
-    else:
-        n_jobs = min(forest.n_jobs, forest.n_estimators)
-
-    # Partition trees between jobs
-    n_trees = [forest.n_estimators // n_jobs] * n_jobs
-
-    for i in range(forest.n_estimators % n_jobs):
-        n_trees[i] += 1
-
-    starts = [0] * (n_jobs + 1)
-
-    for i in range(1, n_jobs + 1):
-        starts[i] = starts[i - 1] + n_trees[i - 1]
-
-    return n_jobs, n_trees, starts
+def _parallel_helper(obj, methodname, *args, **kwargs):
+    """Private helper to workaround Python 2 pickle limitations"""
+    return getattr(obj, methodname)(*args, **kwargs)
 
 
 class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
@@ -191,7 +121,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
                  oob_score=False,
                  n_jobs=1,
                  random_state=None,
-                 verbose=0):
+                 verbose=0,
+                 warm_start=False):
         super(BaseForest, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
@@ -201,21 +132,18 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         self.oob_score = oob_score
         self.n_jobs = n_jobs
         self.random_state = random_state
-
-        #self.n_features_ = None
-        #self.n_outputs_ = None
-        #self.classes_ = None
-        #self.n_classes_ = None
-
         self.verbose = verbose
+        self.warm_start = warm_start
 
     def apply(self, X):
         """Apply trees in the forest to X, return leaf indices.
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Input data.
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         Returns
         -------
@@ -223,20 +151,27 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             For each datapoint x in X and for each tree in the forest,
             return the index of the leaf x ends up in.
         """
-        X = array2d(X, dtype=DTYPE)
-        return np.array([est.tree_.apply(X) for est in self.estimators_]).T
+        X = check_array(X, dtype=DTYPE, accept_sparse="csr")
+        results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
+                           backend="threading")(
+            delayed(_parallel_helper)(tree.tree_, 'apply', X)
+            for tree in self.estimators_)
+
+        return np.array(results).T
 
     def fit(self, X, y, sample_weight=None):
         """Build a forest of trees from the training set (X, y).
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The training input samples.
+        X : array-like or sparse matrix of shape = [n_samples, n_features]
+            The training input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csc_matrix``.
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
-            The target values (integers that correspond to classes in
-            classification, real numbers in regression).
+            The target values (class labels in classification, real numbers in
+            regression).
 
         sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted. Splits
@@ -250,11 +185,14 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         self : object
             Returns self.
         """
-        random_state = check_random_state(self.random_state)
-
         # Convert data
-        X, = check_arrays(X, dtype=DTYPE, sparse_format="dense",
-                          check_ccontiguous=True)
+        # ensure_2d=False because there are actually unit test checking we fail
+        # for 1d. FIXME make this consistent in the future.
+        X = check_array(X, dtype=DTYPE, ensure_2d=False, accept_sparse="csc")
+        if issparse(X):
+            # Pre-sort indices to avoid that each individual tree of the
+            # ensemble sorts the indices.
+            X.sort_indices()
 
         # Remap output
         n_samples, self.n_features_ = X.shape
@@ -279,30 +217,53 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         # Check parameters
+        self._validate_estimator()
+
         if not self.bootstrap and self.oob_score:
             raise ValueError("Out of bag estimation only available"
                              " if bootstrap=True")
 
-        # Assign chunk of trees to jobs
-        n_jobs, n_trees, _ = _partition_trees(self)
+        random_state = check_random_state(self.random_state)
 
-        # Precalculate the random states
-        seeds = [random_state.randint(MAX_INT, size=i) for i in n_trees]
+        if not self.warm_start:
+            # Free allocated memory, if any
+            self.estimators_ = []
 
-        # Parallel loop
-        all_trees = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
-            delayed(_parallel_build_trees)(
-                n_trees[i],
-                self,
-                X,
-                y,
-                sample_weight,
-                seeds[i],
-                verbose=self.verbose)
-            for i in range(n_jobs))
+        n_more_estimators = self.n_estimators - len(self.estimators_)
 
-        # Reduce
-        self.estimators_ = list(itertools.chain(*all_trees))
+        if n_more_estimators < 0:
+            raise ValueError('n_estimators=%d must be larger or equal to '
+                             'len(estimators_)=%d when warm_start==True'
+                             % (self.n_estimators, len(self.estimators_)))
+
+        elif n_more_estimators == 0:
+            warn("Warm-start fitting without increasing n_estimators does not "
+                 "fit new trees.")
+        else:
+            if self.warm_start and len(self.estimators_) > 0:
+                # We draw from the random state to get the random state we
+                # would have got if we hadn't used a warm_start.
+                random_state.randint(MAX_INT, size=len(self.estimators_))
+
+            trees = []
+            for i in range(n_more_estimators):
+                tree = self._make_estimator(append=False)
+                tree.set_params(random_state=random_state.randint(MAX_INT))
+                trees.append(tree)
+
+            # Parallel loop: we use the threading backend as the Cython code
+            # for fitting the trees is internally releasing the Python GIL
+            # making threading always more efficient than multiprocessing in
+            # that case.
+            trees = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
+                             backend="threading")(
+                delayed(_parallel_build_trees)(
+                    t, self, X, y, sample_weight, i, len(trees),
+                    verbose=self.verbose)
+                for i, t in enumerate(trees))
+
+            # Collect newly grown trees
+            self.estimators_.extend(trees)
 
         if self.oob_score:
             self._set_oob_score(X, y)
@@ -335,8 +296,10 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             raise ValueError("Estimator not fitted, "
                              "call `fit` before `feature_importances_`.")
 
-        return sum(tree.feature_importances_
-                   for tree in self.estimators_) / self.n_estimators
+        all_importances = Parallel(n_jobs=self.n_jobs, backend="threading")(
+            delayed(getattr)(tree, 'feature_importances_')
+            for tree in self.estimators_)
+        return sum(all_importances) / self.n_estimators
 
 
 class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
@@ -356,7 +319,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
                  oob_score=False,
                  n_jobs=1,
                  random_state=None,
-                 verbose=0):
+                 verbose=0,
+                 warm_start=False):
 
         super(ForestClassifier, self).__init__(
             base_estimator,
@@ -366,33 +330,35 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose,
+            warm_start=warm_start)
 
     def _set_oob_score(self, X, y):
+        """Compute out-of-bag score"""
         n_classes_ = self.n_classes_
-        classes_ = self.classes_
         n_samples = y.shape[0]
 
         oob_decision_function = []
         oob_score = 0.0
         predictions = []
 
-        for k in xrange(self.n_outputs_):
-            predictions.append(np.zeros((n_samples,
-                                         n_classes_[k])))
+        for k in range(self.n_outputs_):
+            predictions.append(np.zeros((n_samples, n_classes_[k])))
 
+        sample_indices = np.arange(n_samples)
         for estimator in self.estimators_:
             mask = np.ones(n_samples, dtype=np.bool)
             mask[estimator.indices_] = False
-            p_estimator = estimator.predict_proba(X[mask, :])
+            mask_indices = sample_indices[mask]
+            p_estimator = estimator.predict_proba(X[mask_indices, :])
 
             if self.n_outputs_ == 1:
                 p_estimator = [p_estimator]
 
-            for k in xrange(self.n_outputs_):
-                predictions[k][mask, :] += p_estimator[k]
+            for k in range(self.n_outputs_):
+                predictions[k][mask_indices, :] += p_estimator[k]
 
-        for k in xrange(self.n_outputs_):
+        for k in range(self.n_outputs_):
             if (predictions[k].sum(axis=1) == 0).any():
                 warn("Some inputs do not have OOB scores. "
                      "This probably means too few trees were used "
@@ -401,8 +367,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             decision = (predictions[k] /
                         predictions[k].sum(axis=1)[:, np.newaxis])
             oob_decision_function.append(decision)
-            oob_score += np.mean((y[:, k] == classes_[k].take(
-                np.argmax(predictions[k], axis=1), axis=0)))
+            oob_score += np.mean(y[:, k] ==
+                                 np.argmax(predictions[k], axis=1), axis=0)
 
         if self.n_outputs_ == 1:
             self.oob_decision_function_ = oob_decision_function[0]
@@ -417,8 +383,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         self.classes_ = []
         self.n_classes_ = []
 
-        for k in xrange(self.n_outputs_):
-            classes_k, y[:, k] = unique(y[:, k], return_inverse=True)
+        for k in range(self.n_outputs_):
+            classes_k, y[:, k] = np.unique(y[:, k], return_inverse=True)
             self.classes_.append(classes_k)
             self.n_classes_.append(classes_k.shape[0])
 
@@ -432,24 +398,29 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix of shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         Returns
         -------
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes.
         """
-        n_samples = len(X)
+        # ensure_2d=False because there are actually unit test checking we fail
+        # for 1d.
+        X = check_array(X, ensure_2d=False, accept_sparse="csr")
         proba = self.predict_proba(X)
 
         if self.n_outputs_ == 1:
             return self.classes_.take(np.argmax(proba, axis=1), axis=0)
 
         else:
+            n_samples = proba[0].shape[0]
             predictions = np.zeros((n_samples, self.n_outputs_))
 
-            for k in xrange(self.n_outputs_):
+            for k in range(self.n_outputs_):
                 predictions[:, k] = self.classes_[k].take(np.argmax(proba[k],
                                                                     axis=1),
                                                           axis=0)
@@ -464,47 +435,46 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix of shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         Returns
         -------
         p : array of shape = [n_samples, n_classes], or a list of n_outputs
             such arrays if n_outputs > 1.
-            The class probabilities of the input samples. Classes are
-            ordered by arithmetical order.
+            The class probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
         """
         # Check data
-        if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
-            X = array2d(X, dtype=DTYPE)
+        X = check_array(X, dtype=DTYPE, accept_sparse="csr")
 
         # Assign chunk of trees to jobs
-        n_jobs, n_trees, starts = _partition_trees(self)
+        n_jobs, n_trees, starts = _partition_estimators(self.n_estimators,
+                                                        self.n_jobs)
 
         # Parallel loop
-        all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
-            delayed(_parallel_predict_proba)(
-                self.estimators_[starts[i]:starts[i + 1]],
-                X,
-                self.n_classes_,
-                self.n_outputs_)
-            for i in range(n_jobs))
+        all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                             backend="threading")(
+            delayed(_parallel_helper)(e, 'predict_proba', X)
+            for e in self.estimators_)
 
         # Reduce
         proba = all_proba[0]
 
         if self.n_outputs_ == 1:
-            for j in xrange(1, len(all_proba)):
+            for j in range(1, len(all_proba)):
                 proba += all_proba[j]
 
-            proba /= self.n_estimators
+            proba /= len(self.estimators_)
 
         else:
-            for j in xrange(1, len(all_proba)):
-                for k in xrange(self.n_outputs_):
+            for j in range(1, len(all_proba)):
+                for k in range(self.n_outputs_):
                     proba[k] += all_proba[j][k]
 
-            for k in xrange(self.n_outputs_):
+            for k in range(self.n_outputs_):
                 proba[k] /= self.n_estimators
 
         return proba
@@ -513,19 +483,22 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         """Predict class log-probabilities for X.
 
         The predicted class log-probabilities of an input sample is computed as
-        the mean predicted class log-probabilities of the trees in the forest.
+        the log of the mean predicted class probabilities of the trees in the
+        forest.
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix of shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         Returns
         -------
         p : array of shape = [n_samples, n_classes], or a list of n_outputs
             such arrays if n_outputs > 1.
-            The class log-probabilities of the input samples. Classes are
-            ordered by arithmetical order.
+            The class probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
         """
         proba = self.predict_proba(X)
 
@@ -533,7 +506,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             return np.log(proba)
 
         else:
-            for k in xrange(self.n_outputs_):
+            for k in range(self.n_outputs_):
                 proba[k] = np.log(proba[k])
 
             return proba
@@ -555,7 +528,8 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
                  oob_score=False,
                  n_jobs=1,
                  random_state=None,
-                 verbose=0):
+                 verbose=0,
+                 warm_start=False):
         super(ForestRegressor, self).__init__(
             base_estimator,
             n_estimators=n_estimators,
@@ -564,7 +538,8 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose,
+            warm_start=warm_start)
 
     def predict(self, X):
         """Predict regression target for X.
@@ -574,48 +549,53 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix of shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         Returns
         -------
-        y: array of shape = [n_samples] or [n_samples, n_outputs]
+        y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted values.
         """
         # Check data
-        if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
-            X = array2d(X, dtype=DTYPE)
+        X = check_array(X, dtype=DTYPE, accept_sparse="csr")
 
         # Assign chunk of trees to jobs
-        n_jobs, n_trees, starts = _partition_trees(self)
+        n_jobs, n_trees, starts = _partition_estimators(self.n_estimators,
+                                                        self.n_jobs)
 
         # Parallel loop
-        all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
-            delayed(_parallel_predict_regression)(
-                self.estimators_[starts[i]:starts[i + 1]], X)
-            for i in range(n_jobs))
+        all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                             backend="threading")(
+            delayed(_parallel_helper)(e, 'predict', X)
+            for e in self.estimators_)
 
         # Reduce
-        y_hat = sum(all_y_hat) / self.n_estimators
+        y_hat = sum(all_y_hat) / len(self.estimators_)
 
         return y_hat
 
     def _set_oob_score(self, X, y):
+        """Compute out-of-bag scores"""
         n_samples = y.shape[0]
 
         predictions = np.zeros((n_samples, self.n_outputs_))
         n_predictions = np.zeros((n_samples, self.n_outputs_))
 
+        sample_indices = np.arange(n_samples)
         for estimator in self.estimators_:
             mask = np.ones(n_samples, dtype=np.bool)
             mask[estimator.indices_] = False
-            p_estimator = estimator.predict(X[mask, :])
+            mask_indices = sample_indices[mask]
+            p_estimator = estimator.predict(X[mask_indices, :])
 
             if self.n_outputs_ == 1:
                 p_estimator = p_estimator[:, np.newaxis]
 
-            predictions[mask, :] += p_estimator
-            n_predictions[mask, :] += 1
+            predictions[mask_indices, :] += p_estimator
+            n_predictions[mask_indices, :] += 1
 
         if (n_predictions == 0).any():
             warn("Some inputs do not have OOB scores. "
@@ -632,7 +612,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
 
         self.oob_score_ = 0.0
 
-        for k in xrange(self.n_outputs_):
+        for k in range(self.n_outputs_):
             self.oob_score_ += r2_score(y[:, k],
                                         predictions[:, k])
 
@@ -658,21 +638,26 @@ class RandomForestClassifier(ForestClassifier):
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
-          - If int, then consider `max_features` features at each split.
-          - If float, then `max_features` is a percentage and
-            `int(max_features * n_features)` features are considered at each
-            split.
-          - If "auto", then `max_features=sqrt(n_features)`.
-          - If "sqrt", then `max_features=sqrt(n_features)`.
-          - If "log2", then `max_features=log2(n_features)`.
-          - If None, then `max_features=n_features`.
 
+        - If int, then consider `max_features` features at each split.
+        - If float, then `max_features` is a percentage and
+          `int(max_features * n_features)` features are considered at each
+          split.
+        - If "auto", then `max_features=sqrt(n_features)`.
+        - If "sqrt", then `max_features=sqrt(n_features)`.
+        - If "log2", then `max_features=log2(n_features)`.
+        - If None, then `max_features=n_features`.
+
+        Note: the search for a split does not stop until at least one
+        valid partition of the node samples is found, even if it requires to
+        effectively inspect more than ``max_features`` features.
         Note: this parameter is tree-specific.
 
     max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
+        Ignored if ``max_leaf_nodes`` is not None.
         Note: this parameter is tree-specific.
 
     min_samples_split : integer, optional (default=2)
@@ -683,6 +668,18 @@ class RandomForestClassifier(ForestClassifier):
         The minimum number of samples in newly created leaves.  A split is
         discarded if after the split, one of the leaves would contain less then
         ``min_samples_leaf`` samples.
+        Note: this parameter is tree-specific.
+
+    min_weight_fraction_leaf : float, optional (default=0.)
+        The minimum weighted fraction of the input samples required to be at a
+        leaf node.
+        Note: this parameter is tree-specific.
+
+    max_leaf_nodes : int or None, optional (default=None)
+        Grow trees with ``max_leaf_nodes`` in best-first fashion.
+        Best nodes are defined as relative reduction in impurity.
+        If None then unlimited number of leaf nodes.
+        If not None then ``max_depth`` will be ignored.
         Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=True)
@@ -705,26 +702,31 @@ class RandomForestClassifier(ForestClassifier):
     verbose : int, optional (default=0)
         Controls the verbosity of the tree building process.
 
+    warm_start : bool, optional (default=False)
+        When set to ``True``, reuse the solution of the previous call to fit
+        and add more estimators to the ensemble, otherwise, just fit a whole
+        new forest.
+
     Attributes
     ----------
-    `estimators_`: list of DecisionTreeClassifier
+    estimators_ : list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
 
-    `classes_`: array of shape = [n_classes] or a list of such arrays
+    classes_ : array of shape = [n_classes] or a list of such arrays
         The classes labels (single output problem), or a list of arrays of
         class labels (multi-output problem).
 
-    `n_classes_`: int or list
+    n_classes_ : int or list
         The number of classes (single output problem), or a list containing the
         number of classes for each output (multi-output problem).
 
-    `feature_importances_` : array of shape = [n_features]
+    feature_importances_ : array of shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
-    `oob_score_` : float
+    oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
 
-    `oob_decision_function_` : array of shape = [n_samples, n_classes]
+    oob_decision_function_ : array of shape = [n_samples, n_classes]
         Decision function computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
@@ -745,42 +747,36 @@ class RandomForestClassifier(ForestClassifier):
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
                  max_features="auto",
+                 max_leaf_nodes=None,
                  bootstrap=True,
                  oob_score=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
-                 min_density=None,
-                 compute_importances=None):
+                 warm_start=False):
         super(RandomForestClassifier, self).__init__(
             base_estimator=DecisionTreeClassifier(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
-                              "min_samples_leaf", "max_features",
+                              "min_samples_leaf", "min_weight_fraction_leaf",
+                              "max_features", "max_leaf_nodes",
                               "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose,
+            warm_start=warm_start)
 
         self.criterion = criterion
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
+        self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_features = max_features
-
-        if min_density is not None:
-            warn("The min_density parameter is deprecated as of version 0.14 "
-                 "and will be removed in 0.16.", DeprecationWarning)
-
-        if compute_importances is not None:
-            warn("Setting compute_importances is no longer required as "
-                 "version 0.14. Variable importances are now computed on the "
-                 "fly when accessing the feature_importances_ attribute. "
-                 "This parameter will be removed in 0.16.",
-                 DeprecationWarning)
+        self.max_leaf_nodes = max_leaf_nodes
 
 
 class RandomForestRegressor(ForestRegressor):
@@ -802,21 +798,26 @@ class RandomForestRegressor(ForestRegressor):
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
-          - If int, then consider `max_features` features at each split.
-          - If float, then `max_features` is a percentage and
-            `int(max_features * n_features)` features are considered at each
-            split.
-          - If "auto", then `max_features=n_features`.
-          - If "sqrt", then `max_features=sqrt(n_features)`.
-          - If "log2", then `max_features=log2(n_features)`.
-          - If None, then `max_features=n_features`.
 
+        - If int, then consider `max_features` features at each split.
+        - If float, then `max_features` is a percentage and
+          `int(max_features * n_features)` features are considered at each
+          split.
+        - If "auto", then `max_features=n_features`.
+        - If "sqrt", then `max_features=sqrt(n_features)`.
+        - If "log2", then `max_features=log2(n_features)`.
+        - If None, then `max_features=n_features`.
+
+        Note: the search for a split does not stop until at least one
+        valid partition of the node samples is found, even if it requires to
+        effectively inspect more than ``max_features`` features.
         Note: this parameter is tree-specific.
 
     max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
+        Ignored if ``max_leaf_nodes`` is not None.
         Note: this parameter is tree-specific.
 
     min_samples_split : integer, optional (default=2)
@@ -827,6 +828,18 @@ class RandomForestRegressor(ForestRegressor):
         The minimum number of samples in newly created leaves.  A split is
         discarded if after the split, one of the leaves would contain less then
         ``min_samples_leaf`` samples.
+        Note: this parameter is tree-specific.
+
+    min_weight_fraction_leaf : float, optional (default=0.)
+        The minimum weighted fraction of the input samples required to be at a
+        leaf node.
+        Note: this parameter is tree-specific.
+
+    max_leaf_nodes : int or None, optional (default=None)
+        Grow trees with ``max_leaf_nodes`` in best-first fashion.
+        Best nodes are defined as relative reduction in impurity.
+        If None then unlimited number of leaf nodes.
+        If not None then ``max_depth`` will be ignored.
         Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=True)
@@ -849,18 +862,23 @@ class RandomForestRegressor(ForestRegressor):
     verbose : int, optional (default=0)
         Controls the verbosity of the tree building process.
 
+    warm_start : bool, optional (default=False)
+        When set to ``True``, reuse the solution of the previous call to fit
+        and add more estimators to the ensemble, otherwise, just fit a whole
+        new forest.
+
     Attributes
     ----------
-    `estimators_`: list of DecisionTreeRegressor
+    estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
 
-    `feature_importances_` : array of shape = [n_features]
+    feature_importances_ : array of shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
-    `oob_score_` : float
+    oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
 
-    `oob_prediction_` : array of shape = [n_samples]
+    oob_prediction_ : array of shape = [n_samples]
         Prediction computed with out-of-bag estimate on the training set.
 
     References
@@ -878,42 +896,36 @@ class RandomForestRegressor(ForestRegressor):
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
                  max_features="auto",
+                 max_leaf_nodes=None,
                  bootstrap=True,
                  oob_score=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
-                 min_density=None,
-                 compute_importances=None):
+                 warm_start=False):
         super(RandomForestRegressor, self).__init__(
             base_estimator=DecisionTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
-                              "min_samples_leaf", "max_features",
+                              "min_samples_leaf", "min_weight_fraction_leaf",
+                              "max_features", "max_leaf_nodes",
                               "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose,
+            warm_start=warm_start)
 
         self.criterion = criterion
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
+        self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_features = max_features
-
-        if min_density is not None:
-            warn("The min_density parameter is deprecated as of version 0.14 "
-                 "and will be removed in 0.16.", DeprecationWarning)
-
-        if compute_importances is not None:
-            warn("Setting compute_importances is no longer required as "
-                 "version 0.14. Variable importances are now computed on the "
-                 "fly when accessing the feature_importances_ attribute. "
-                 "This parameter will be removed in 0.16.",
-                 DeprecationWarning)
+        self.max_leaf_nodes = max_leaf_nodes
 
 
 class ExtraTreesClassifier(ForestClassifier):
@@ -936,21 +948,26 @@ class ExtraTreesClassifier(ForestClassifier):
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
-          - If int, then consider `max_features` features at each split.
-          - If float, then `max_features` is a percentage and
-            `int(max_features * n_features)` features are considered at each
-            split.
-          - If "auto", then `max_features=sqrt(n_features)`.
-          - If "sqrt", then `max_features=sqrt(n_features)`.
-          - If "log2", then `max_features=log2(n_features)`.
-          - If None, then `max_features=n_features`.
 
+        - If int, then consider `max_features` features at each split.
+        - If float, then `max_features` is a percentage and
+          `int(max_features * n_features)` features are considered at each
+          split.
+        - If "auto", then `max_features=sqrt(n_features)`.
+        - If "sqrt", then `max_features=sqrt(n_features)`.
+        - If "log2", then `max_features=log2(n_features)`.
+        - If None, then `max_features=n_features`.
+
+        Note: the search for a split does not stop until at least one
+        valid partition of the node samples is found, even if it requires to
+        effectively inspect more than ``max_features`` features.
         Note: this parameter is tree-specific.
 
     max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
+        Ignored if ``max_leaf_nodes`` is not None.
         Note: this parameter is tree-specific.
 
     min_samples_split : integer, optional (default=2)
@@ -961,6 +978,18 @@ class ExtraTreesClassifier(ForestClassifier):
         The minimum number of samples in newly created leaves.  A split is
         discarded if after the split, one of the leaves would contain less then
         ``min_samples_leaf`` samples.
+        Note: this parameter is tree-specific.
+
+    min_weight_fraction_leaf : float, optional (default=0.)
+        The minimum weighted fraction of the input samples required to be at a
+        leaf node.
+        Note: this parameter is tree-specific.
+
+    max_leaf_nodes : int or None, optional (default=None)
+        Grow trees with ``max_leaf_nodes`` in best-first fashion.
+        Best nodes are defined as relative reduction in impurity.
+        If None then unlimited number of leaf nodes.
+        If not None then ``max_depth`` will be ignored.
         Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=False)
@@ -983,26 +1012,31 @@ class ExtraTreesClassifier(ForestClassifier):
     verbose : int, optional (default=0)
         Controls the verbosity of the tree building process.
 
+    warm_start : bool, optional (default=False)
+        When set to ``True``, reuse the solution of the previous call to fit
+        and add more estimators to the ensemble, otherwise, just fit a whole
+        new forest.
+
     Attributes
     ----------
-    `estimators_`: list of DecisionTreeClassifier
+    estimators_ : list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
 
-    `classes_`: array of shape = [n_classes] or a list of such arrays
+    classes_ : array of shape = [n_classes] or a list of such arrays
         The classes labels (single output problem), or a list of arrays of
         class labels (multi-output problem).
 
-    `n_classes_`: int or list
+    n_classes_ : int or list
         The number of classes (single output problem), or a list containing the
         number of classes for each output (multi-output problem).
 
-    `feature_importances_` : array of shape = [n_features]
+    feature_importances_ : array of shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
-    `oob_score_` : float
+    oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
 
-    `oob_decision_function_` : array of shape = [n_samples, n_classes]
+    oob_decision_function_ : array of shape = [n_samples, n_classes]
         Decision function computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
@@ -1026,42 +1060,35 @@ class ExtraTreesClassifier(ForestClassifier):
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
                  max_features="auto",
+                 max_leaf_nodes=None,
                  bootstrap=False,
                  oob_score=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
-                 min_density=None,
-                 compute_importances=None):
+                 warm_start=False):
         super(ExtraTreesClassifier, self).__init__(
             base_estimator=ExtraTreeClassifier(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
-                              "min_samples_leaf", "max_features",
-                              "random_state"),
+                              "min_samples_leaf", "min_weight_fraction_leaf",
+                              "max_features", "max_leaf_nodes", "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose,
+            warm_start=warm_start)
 
         self.criterion = criterion
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
+        self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_features = max_features
-
-        if min_density is not None:
-            warn("The min_density parameter is deprecated as of version 0.14 "
-                 "and will be removed in 0.16.", DeprecationWarning)
-
-        if compute_importances is not None:
-            warn("Setting compute_importances is no longer required as "
-                 "version 0.14. Variable importances are now computed on the "
-                 "fly when accessing the feature_importances_ attribute. "
-                 "This parameter will be removed in 0.16.",
-                 DeprecationWarning)
+        self.max_leaf_nodes = max_leaf_nodes
 
 
 class ExtraTreesRegressor(ForestRegressor):
@@ -1084,21 +1111,26 @@ class ExtraTreesRegressor(ForestRegressor):
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
-          - If int, then consider `max_features` features at each split.
-          - If float, then `max_features` is a percentage and
-            `int(max_features * n_features)` features are considered at each
-            split.
-          - If "auto", then `max_features=n_features`.
-          - If "sqrt", then `max_features=sqrt(n_features)`.
-          - If "log2", then `max_features=log2(n_features)`.
-          - If None, then `max_features=n_features`.
 
+        - If int, then consider `max_features` features at each split.
+        - If float, then `max_features` is a percentage and
+          `int(max_features * n_features)` features are considered at each
+          split.
+        - If "auto", then `max_features=n_features`.
+        - If "sqrt", then `max_features=sqrt(n_features)`.
+        - If "log2", then `max_features=log2(n_features)`.
+        - If None, then `max_features=n_features`.
+
+        Note: the search for a split does not stop until at least one
+        valid partition of the node samples is found, even if it requires to
+        effectively inspect more than ``max_features`` features.
         Note: this parameter is tree-specific.
 
     max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
+        Ignored if ``max_leaf_nodes`` is not None.
         Note: this parameter is tree-specific.
 
     min_samples_split : integer, optional (default=2)
@@ -1109,6 +1141,18 @@ class ExtraTreesRegressor(ForestRegressor):
         The minimum number of samples in newly created leaves.  A split is
         discarded if after the split, one of the leaves would contain less then
         ``min_samples_leaf`` samples.
+        Note: this parameter is tree-specific.
+
+    min_weight_fraction_leaf : float, optional (default=0.)
+        The minimum weighted fraction of the input samples required to be at a
+        leaf node.
+        Note: this parameter is tree-specific.
+
+    max_leaf_nodes : int or None, optional (default=None)
+        Grow trees with ``max_leaf_nodes`` in best-first fashion.
+        Best nodes are defined as relative reduction in impurity.
+        If None then unlimited number of leaf nodes.
+        If not None then ``max_depth`` will be ignored.
         Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=False)
@@ -1132,18 +1176,23 @@ class ExtraTreesRegressor(ForestRegressor):
     verbose : int, optional (default=0)
         Controls the verbosity of the tree building process.
 
+    warm_start : bool, optional (default=False)
+        When set to ``True``, reuse the solution of the previous call to fit
+        and add more estimators to the ensemble, otherwise, just fit a whole
+        new forest.
+
     Attributes
     ----------
-    `estimators_`: list of DecisionTreeRegressor
+    estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
 
-    `feature_importances_` : array of shape = [n_features]
+    feature_importances_ : array of shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
-    `oob_score_` : float
+    oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
 
-    `oob_prediction_` : array of shape = [n_samples]
+    oob_prediction_ : array of shape = [n_samples]
         Prediction computed with out-of-bag estimate on the training set.
 
     References
@@ -1163,42 +1212,36 @@ class ExtraTreesRegressor(ForestRegressor):
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
                  max_features="auto",
+                 max_leaf_nodes=None,
                  bootstrap=False,
                  oob_score=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
-                 min_density=None,
-                 compute_importances=None):
+                 warm_start=False):
         super(ExtraTreesRegressor, self).__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
-                              "min_samples_leaf", "max_features",
+                              "min_samples_leaf", "min_weight_fraction_leaf",
+                              "max_features", "max_leaf_nodes",
                               "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose,
+            warm_start=warm_start)
 
         self.criterion = criterion
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
+        self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_features = max_features
-
-        if min_density is not None:
-            warn("The min_density parameter is deprecated as of version 0.14 "
-                 "and will be removed in 0.16.", DeprecationWarning)
-
-        if compute_importances is not None:
-            warn("Setting compute_importances is no longer required as "
-                 "version 0.14. Variable importances are now computed on the "
-                 "fly when accessing the feature_importances_ attribute. "
-                 "This parameter will be removed in 0.16.",
-                 DeprecationWarning)
+        self.max_leaf_nodes = max_leaf_nodes
 
 
 class RandomTreesEmbedding(BaseForest):
@@ -1207,10 +1250,12 @@ class RandomTreesEmbedding(BaseForest):
     An unsupervised transformation of a dataset to a high-dimensional
     sparse representation. A datapoint is coded according to which leaf of
     each tree it is sorted into. Using a one-hot encoding of the leaves,
-    this leads to a binary coding with as many ones as trees in the forest.
+    this leads to a binary coding with as many ones as there are trees in
+    the forest.
 
-    The dimensionality of the resulting representation is approximately
-    ``n_estimators * 2 ** max_depth``.
+    The dimensionality of the resulting representation is
+    ``n_out <= n_estimators * max_leaf_nodes``. If ``max_leaf_nodes == None``,
+    the number of leaf nodes is at most ``n_estimators * 2 ** max_depth``.
 
     Parameters
     ----------
@@ -1218,17 +1263,32 @@ class RandomTreesEmbedding(BaseForest):
         Number of trees in the forest.
 
     max_depth : int
-        Maximum depth of each tree.
+        The maximum depth of each tree. If None, then nodes are expanded until
+        all leaves are pure or until all leaves contain less than
+        min_samples_split samples.
+        Ignored if ``max_leaf_nodes`` is not None.
 
     min_samples_split : integer, optional (default=2)
         The minimum number of samples required to split an internal node.
-        Note: this parameter is tree-specific.
 
     min_samples_leaf : integer, optional (default=1)
         The minimum number of samples in newly created leaves.  A split is
         discarded if after the split, one of the leaves would contain less then
         ``min_samples_leaf`` samples.
-        Note: this parameter is tree-specific.
+
+    min_weight_fraction_leaf : float, optional (default=0.)
+        The minimum weighted fraction of the input samples required to be at a
+        leaf node.
+
+    max_leaf_nodes : int or None, optional (default=None)
+        Grow trees with ``max_leaf_nodes`` in best-first fashion.
+        Best nodes are defined as relative reduction in impurity.
+        If None then unlimited number of leaf nodes.
+        If not None then ``max_depth`` will be ignored.
+
+    sparse_output : bool, optional (default=True)
+        Whether or not to return a sparse CSR matrix, as default behavior,
+        or to return a dense array compatible with dense pipeline operators.
 
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
@@ -1243,9 +1303,14 @@ class RandomTreesEmbedding(BaseForest):
     verbose : int, optional (default=0)
         Controls the verbosity of the tree building process.
 
+    warm_start : bool, optional (default=False)
+        When set to ``True``, reuse the solution of the previous call to fit
+        and add more estimators to the ensemble, otherwise, just fit a whole
+        new forest.
+
     Attributes
     ----------
-    `estimators_`: list of DecisionTreeClassifier
+    estimators_ : list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
 
     References
@@ -1263,64 +1328,86 @@ class RandomTreesEmbedding(BaseForest):
                  max_depth=5,
                  min_samples_split=2,
                  min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
+                 max_leaf_nodes=None,
+                 sparse_output=True,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
-                 min_density=None):
+                 warm_start=False):
         super(RandomTreesEmbedding, self).__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
-                              "min_samples_leaf", "max_features",
+                              "min_samples_leaf", "min_weight_fraction_leaf",
+                              "max_features", "max_leaf_nodes",
                               "random_state"),
             bootstrap=False,
             oob_score=False,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose,
+            warm_start=warm_start)
 
         self.criterion = 'mse'
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
+        self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_features = 1
+        self.max_leaf_nodes = max_leaf_nodes
+        self.sparse_output = sparse_output
 
-        if min_density is not None:
-            warn("The min_density parameter is deprecated as of version 0.14 "
-                 "and will be removed in 0.16.", DeprecationWarning)
-
-    def _set_oob_score(*args):
+    def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by tree embedding")
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_weight=None):
         """Fit estimator.
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
-            Input data used to build forests.
+        X : array-like or sparse matrix, shape=(n_samples, n_features)
+            The input samples. Use ``dtype=np.float32`` for maximum
+            efficiency. Sparse matrices are also supported, use sparse
+            ``csc_matrix`` for maximum efficieny.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+
         """
-        self.fit_transform(X, y)
+        self.fit_transform(X, y, sample_weight=sample_weight)
         return self
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, sample_weight=None):
         """Fit estimator and transform dataset.
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
-            Input data used to build forests.
+        X : array-like or sparse matrix, shape=(n_samples, n_features)
+            Input data used to build forests. Use ``dtype=np.float32`` for
+            maximum efficiency.
 
         Returns
         -------
-        X_transformed: sparse matrix, shape=(n_samples, n_out)
+        X_transformed : sparse matrix, shape=(n_samples, n_out)
             Transformed dataset.
         """
-        X = safe_asarray(X)
+        # ensure_2d=False because there are actually unit test checking we fail
+        # for 1d.
+        X = check_array(X, accept_sparse=['csc'], ensure_2d=False)
+        if issparse(X):
+            # Pre-sort indices to avoid that each individual tree of the
+            # ensemble sorts the indices.
+            X.sort_indices()
+
         rnd = check_random_state(self.random_state)
         y = rnd.uniform(size=X.shape[0])
-        super(RandomTreesEmbedding, self).fit(X, y)
-        self.one_hot_encoder_ = OneHotEncoder()
+        super(RandomTreesEmbedding, self).fit(X, y,
+                                              sample_weight=sample_weight)
+
+        self.one_hot_encoder_ = OneHotEncoder(sparse=self.sparse_output)
         return self.one_hot_encoder_.fit_transform(self.apply(X))
 
     def transform(self, X):
@@ -1328,12 +1415,14 @@ class RandomTreesEmbedding(BaseForest):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
-            Input data to be transformed.
+        X : array-like or sparse matrix, shape=(n_samples, n_features)
+            Input data to be transformed. Use ``dtype=np.float32`` for maximum
+            efficiency. Sparse matrices are also supported, use sparse
+            ``csr_matrix`` for maximum efficieny.
 
         Returns
         -------
-        X_transformed: sparse matrix, shape=(n_samples, n_out)
+        X_transformed : sparse matrix, shape=(n_samples, n_out)
             Transformed dataset.
         """
         return self.one_hot_encoder_.transform(self.apply(X))

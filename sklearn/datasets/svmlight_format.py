@@ -25,8 +25,10 @@ import scipy.sparse as sp
 from ._svmlight_format import _load_svmlight_file
 from .. import __version__
 from ..externals import six
-from ..utils import atleast2d_or_csr
 from ..externals.six import u, b
+from ..externals.six.moves import range, zip
+from ..utils import check_array
+from ..utils.fixes import frombuffer_empty
 
 
 def load_svmlight_file(f, n_features=None, dtype=np.float64,
@@ -72,7 +74,7 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
     n_features: int or None
         The number of features to use. If None, it will be inferred. This
         argument is useful to load several files that are subsets of a
-        bigger sliced dataset: each subset might not have example of
+        bigger sliced dataset: each subset might not have examples of
         every feature, hence the inferred shape might vary from one
         slice to another.
 
@@ -107,6 +109,21 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
     --------
     load_svmlight_files: similar function for loading multiple files in this
     format, enforcing the same number of features/columns on all of them.
+
+    Examples
+    --------
+    To use joblib.Memory to cache the svmlight file::
+
+        from sklearn.externals.joblib import Memory
+        from sklearn.datasets import load_svmlight_file
+        mem = Memory("./mycache")
+
+        @mem.cache
+        def get_data():
+            data = load_svmlight_file("mysvmlightfile")
+            return data[0], data[1]
+
+        X, y = get_data()
     """
     return tuple(load_svmlight_files([f], n_features, dtype, multilabel,
                                      zero_based, query_id))
@@ -131,10 +148,24 @@ def _gen_open(f):
 
 def _open_and_load(f, dtype, multilabel, zero_based, query_id):
     if hasattr(f, "read"):
-        return _load_svmlight_file(f, dtype, multilabel, zero_based, query_id)
+        actual_dtype, data, ind, indptr, labels, query = \
+            _load_svmlight_file(f, dtype, multilabel, zero_based, query_id)
     # XXX remove closing when Python 2.7+/3.1+ required
-    with closing(_gen_open(f)) as f:
-        return _load_svmlight_file(f, dtype, multilabel, zero_based, query_id)
+    else:
+        with closing(_gen_open(f)) as f:
+            actual_dtype, data, ind, indptr, labels, query = \
+                _load_svmlight_file(f, dtype, multilabel, zero_based, query_id)
+
+    # convert from array.array, give data the right dtype
+    if not multilabel:
+        labels = frombuffer_empty(labels, np.float64)
+    data = frombuffer_empty(data, actual_dtype)
+    indices = frombuffer_empty(ind, np.intc)
+    indptr = np.frombuffer(indptr, dtype=np.intc)   # never empty
+    query = frombuffer_empty(query, np.intc)
+
+    data = np.asarray(data, dtype=dtype)    # no-op for float{32,64}
+    return data, indices, indptr, labels, query
 
 
 def load_svmlight_files(files, n_features=None, dtype=np.float64,
@@ -167,6 +198,10 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
         The number of features to use. If None, it will be inferred from the
         maximum column index occurring in any of the files.
 
+        This can be set to a higher value than the actual number of features
+        in any of the input files, but setting it to a lower value will cause
+        an exception to be raised.
+
     multilabel: boolean, optional
         Samples may have several labels each (see
         http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
@@ -192,8 +227,8 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
     ..., Xn, yn, qn] where (Xi, yi, qi) is the result from
     load_svmlight_file(files[i])
 
-    Rationale
-    ---------
+    Notes
+    -----
     When fitting a model to a matrix X_train and evaluating it against a
     matrix X_test, it is essential that X_train and X_test have the same
     number of features (X_train.shape[1] == X_test.shape[1]). This may not
@@ -212,8 +247,13 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
             indices = ind[1]
             indices -= 1
 
+    n_f = max(ind[1].max() for ind in r) + 1
     if n_features is None:
-        n_features = max(ind[1].max() for ind in r) + 1
+        n_features = n_f
+    elif n_features < n_f:
+        raise ValueError("n_features was set to {},"
+                         " but input file contains {} features"
+                         .format(n_features, n_f))
 
     result = []
     for data, indices, indptr, y, query_values in r:
@@ -253,8 +293,14 @@ def _dump_svmlight(X, y, f, one_based, comment, query_id):
         f.writelines(b("# %s\n" % line) for line in comment.splitlines())
 
     for i in range(X.shape[0]):
-        s = " ".join([value_pattern % (j + one_based, X[i, j])
-                      for j in X[i].nonzero()[is_sp]])
+        if is_sp:
+            span = slice(X.indptr[i], X.indptr[i + 1])
+            row = zip(X.indices[span], X.data[span])
+        else:
+            nz = X[i] != 0
+            row = zip(np.where(nz)[0], X[i, nz])
+
+        s = " ".join(value_pattern % (j + one_based, x) for j, x in row)
         if query_id is not None:
             feat = (y[i], query_id[i], s)
         else:
@@ -318,7 +364,7 @@ def dump_svmlight_file(X, y, f, zero_based=True, comment=None, query_id=None):
         raise ValueError("expected y of shape (n_samples,), got %r"
                          % (y.shape,))
 
-    Xval = atleast2d_or_csr(X)
+    Xval = check_array(X, accept_sparse='csr')
     if Xval.shape[0] != y.shape[0]:
         raise ValueError("X.shape[0] and y.shape[0] should be the same, got"
                          " %r and %r instead." % (Xval.shape[0], y.shape[0]))

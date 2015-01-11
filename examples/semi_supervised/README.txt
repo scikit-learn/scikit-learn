@@ -3,4 +3,4 @@
 Semi Supervised Classification
 ------------------------------
 
-Examples concerning the :mod:`sklearn.semi_supervised` package.
+Examples concerning the :mod:`sklearn.semi_supervised` module.

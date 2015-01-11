@@ -8,7 +8,6 @@ import numpy as np
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_array_equal
 
 from sklearn.cluster.affinity_propagation_ import AffinityPropagation
 from sklearn.cluster.affinity_propagation_ import affinity_propagation

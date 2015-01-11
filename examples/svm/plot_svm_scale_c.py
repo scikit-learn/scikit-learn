@@ -85,7 +85,7 @@ print(__doc__)
 
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn.svm import LinearSVC
 from sklearn.cross_validation import ShuffleSplit
@@ -121,7 +121,7 @@ colors = ['b', 'g', 'r', 'c']
 
 for fignum, (clf, cs, X, y) in enumerate(clf_sets):
     # set up the plot for each regressor
-    pl.figure(fignum, figsize=(9, 10))
+    plt.figure(fignum, figsize=(9, 10))
 
     for k, train_size in enumerate(np.linspace(0.3, 0.7, 3)[::-1]):
         param_grid = dict(C=cs)
@@ -138,14 +138,14 @@ for fignum, (clf, cs, X, y) in enumerate(clf_sets):
                   ]
 
         for subplotnum, (scaler, name) in enumerate(scales):
-            pl.subplot(2, 1, subplotnum + 1)
-            pl.xlabel('C')
-            pl.ylabel('CV Score')
+            plt.subplot(2, 1, subplotnum + 1)
+            plt.xlabel('C')
+            plt.ylabel('CV Score')
             grid_cs = cs * float(scaler)  # scale the C's
-            pl.semilogx(grid_cs, scores, label="fraction %.2f" %
-                        train_size)
-            pl.title('scaling=%s, penalty=%s, loss=%s' %
-                     (name, clf.penalty, clf.loss))
+            plt.semilogx(grid_cs, scores, label="fraction %.2f" %
+                         train_size)
+            plt.title('scaling=%s, penalty=%s, loss=%s' %
+                      (name, clf.penalty, clf.loss))
 
-    pl.legend(loc="best")
-pl.show()
+    plt.legend(loc="best")
+plt.show()

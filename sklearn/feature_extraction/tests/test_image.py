@@ -256,10 +256,9 @@ def test_extract_patches_strided():
     expected_views = expected_views_1D + expected_views_2D + expected_views_3D
     last_patches = last_patch_1D + last_patch_2D + last_patch_3D
 
-    for (image_shape, patch_size, patch_step,
-         expected_view, last_patch) in zip(
-             image_shapes, patch_sizes, patch_steps, expected_views,
-             last_patches):
+    for (image_shape, patch_size, patch_step, expected_view,
+         last_patch) in zip(image_shapes, patch_sizes, patch_steps,
+                            expected_views, last_patches):
         image = np.arange(np.prod(image_shape)).reshape(image_shape)
         patches = extract_patches(image, patch_shape=patch_size,
                                   extraction_step=patch_step)
@@ -282,6 +281,14 @@ def test_extract_patches_square():
     patches = extract_patches(lena, patch_shape=p)
     assert_true(patches.shape == (expected_n_patches[0], expected_n_patches[1],
                                   p, p))
+
+
+def test_width_patch():
+    # width and height of the patch should be less than the image
+    x = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    assert_raises(ValueError, extract_patches_2d, x, (4, 1))
+    assert_raises(ValueError, extract_patches_2d, x, (1, 4))
+
 
 if __name__ == '__main__':
     import nose

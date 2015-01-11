@@ -22,6 +22,7 @@ pip-log.txt
 scikit_learn.egg-info/
 .coverage
 coverage
+*.py,cover
 tags
 covtype.data.gz
 20news-18828/
@@ -35,6 +36,8 @@ samples
 doc/coverages
 doc/samples
 *.prof
+.tox/
+.coverage
 
 lfw_preprocessed/
 nips2010_pdf/

@@ -10,7 +10,7 @@ import numpy as np
 from scipy.sparse import issparse, csc_matrix
 
 from ..base import TransformerMixin
-from ..utils import array2d, atleast2d_or_csr, safe_mask
+from ..utils import check_array, safe_mask
 from ..externals import six
 
 
@@ -71,11 +71,11 @@ class SelectorMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
         X_r : array of shape [n_samples, n_selected_features]
             The input samples with only the selected features.
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
         mask = self.get_support()
         if len(mask) != X.shape[1]:
             raise ValueError("X has a different shape than during fitting.")
-        return atleast2d_or_csr(X)[:, safe_mask(X, mask)]
+        return check_array(X, accept_sparse='csr')[:, safe_mask(X, mask)]
 
     def inverse_transform(self, X):
         """
@@ -104,7 +104,7 @@ class SelectorMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
             return Xt
 
         support = self.get_support()
-        X = array2d(X)
+        X = check_array(X)
         if support.sum() != X.shape[1]:
             raise ValueError("X has a different shape than during fitting.")
 

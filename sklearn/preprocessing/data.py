@@ -4,27 +4,25 @@
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 # License: BSD 3 clause
 
+from itertools import chain, combinations
 import numbers
-import warnings
 
 import numpy as np
 from scipy import sparse
-from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_arrays
-from ..utils import atleast2d_or_csc
-from ..utils import array2d
-from ..utils import atleast2d_or_csr
-from ..utils import safe_asarray
-from ..utils import warn_if_not_float
 
-from ..utils.sparsefuncs import inplace_csr_row_normalize_l1
-from ..utils.sparsefuncs import inplace_csr_row_normalize_l2
-from ..utils.sparsefuncs import inplace_csr_column_scale
-from ..utils.sparsefuncs import mean_variance_axis0
+from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
+from ..utils import check_array
+from ..utils import warn_if_not_float
+from ..utils.extmath import row_norms
+from ..utils.fixes import combinations_with_replacement as combinations_w_r
+from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
+                                      inplace_csr_row_normalize_l2)
+from ..utils.sparsefuncs import (inplace_column_scale, mean_variance_axis)
 
 zip = six.moves.zip
 map = six.moves.map
+range = six.moves.range
 
 __all__ = [
     'Binarizer',
@@ -32,7 +30,6 @@ __all__ = [
     'MinMaxScaler',
     'Normalizer',
     'OneHotEncoder',
-    'Scaler',
     'StandardScaler',
     'add_dummy_feature',
     'binarize',
@@ -126,9 +123,9 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
             copy = False
         if copy:
             X = X.copy()
-        _, var = mean_variance_axis0(X)
+        _, var = mean_variance_axis(X, axis=0)
         var[var == 0.0] = 1.0
-        inplace_csr_column_scale(X, 1 / np.sqrt(var))
+        inplace_column_scale(X, 1 / np.sqrt(var))
     else:
         X = np.asarray(X)
         warn_if_not_float(X, estimator='The scale function')
@@ -173,10 +170,10 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `min_` : ndarray, shape (n_features,)
+    min_ : ndarray, shape (n_features,)
         Per feature adjustment for minimum.
 
-    `scale_` : ndarray, shape (n_features,)
+    scale_ : ndarray, shape (n_features,)
         Per feature relative scaling of the data.
     """
 
@@ -193,7 +190,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
             The data used to compute the per-feature minimum and maximum
             used for later scaling along the features axis.
         """
-        X = check_arrays(X, sparse_format="dense", copy=self.copy)[0]
+        X = check_array(X, copy=self.copy, ensure_2d=False)
         warn_if_not_float(X, estimator=self)
         feature_range = self.feature_range
         if feature_range[0] >= feature_range[1]:
@@ -202,7 +199,10 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         data_min = np.min(X, axis=0)
         data_range = np.max(X, axis=0) - data_min
         # Do not scale constant features
-        data_range[data_range == 0.0] = 1.0
+        if isinstance(data_range, np.ndarray):
+            data_range[data_range == 0.0] = 1.0
+        elif data_range == 0.:
+            data_range = 1.
         self.scale_ = (feature_range[1] - feature_range[0]) / data_range
         self.min_ = feature_range[0] - data_min * self.scale_
         self.data_range = data_range
@@ -217,7 +217,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         X : array-like with shape [n_samples, n_features]
             Input data that will be transformed.
         """
-        X = check_arrays(X, sparse_format="dense", copy=self.copy)[0]
+        X = check_array(X, copy=self.copy, ensure_2d=False)
         X *= self.scale_
         X += self.min_
         return X
@@ -230,7 +230,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         X : array-like with shape [n_samples, n_features]
             Input data that will be transformed.
         """
-        X = check_arrays(X, sparse_format="dense", copy=self.copy)[0]
+        X = check_array(X, copy=self.copy, ensure_2d=False)
         X -= self.min_
         X /= self.scale_
         return X
@@ -278,10 +278,10 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `mean_` : array of floats with shape [n_features]
+    mean_ : array of floats with shape [n_features]
         The mean value for each feature in the training set.
 
-    `std_` : array of floats with shape [n_features]
+    std_ : array of floats with shape [n_features]
         The standard deviation for each feature in the training set.
 
     See also
@@ -307,7 +307,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
         """
-        X = check_arrays(X, copy=self.copy, sparse_format="csr")[0]
+        X = check_array(X, accept_sparse='csr', copy=self.copy, ensure_2d=False)
         if warn_if_not_float(X, estimator=self):
             X = X.astype(np.float)
         if sparse.issparse(X):
@@ -318,7 +318,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             self.mean_ = None
 
             if self.with_std:
-                var = mean_variance_axis0(X)[1]
+                var = mean_variance_axis(X, axis=0)[1]
                 self.std_ = np.sqrt(var)
                 self.std_[var == 0.0] = 1.0
             else:
@@ -338,7 +338,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             The data used to scale along the features axis.
         """
         copy = copy if copy is not None else self.copy
-        X = check_arrays(X, copy=copy, sparse_format="csr")[0]
+        X = check_array(X, accept_sparse='csr', copy=copy, ensure_2d=False)
         if warn_if_not_float(X, estimator=self):
             X = X.astype(np.float)
         if sparse.issparse(X):
@@ -347,7 +347,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                     "Cannot center sparse matrices: pass `with_mean=False` "
                     "instead. See docstring for motivation and alternatives.")
             if self.std_ is not None:
-                inplace_csr_column_scale(X, 1 / self.std_)
+                inplace_column_scale(X, 1 / self.std_)
         else:
             if self.with_mean:
                 X -= self.mean_
@@ -375,7 +375,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             if copy:
                 X = X.copy()
             if self.std_ is not None:
-                inplace_csr_column_scale(X, self.std_)
+                inplace_column_scale(X, self.std_)
         else:
             X = np.asarray(X)
             if copy:
@@ -387,15 +387,112 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         return X
 
 
-class Scaler(StandardScaler):
-    def __init__(self, copy=True, with_mean=True, with_std=True):
-        warnings.warn("Scaler was renamed to StandardScaler. The old name "
-                      " will be removed in 0.15.", DeprecationWarning)
-        super(Scaler, self).__init__(copy, with_mean, with_std)
+class PolynomialFeatures(BaseEstimator, TransformerMixin):
+    """Generate polynomial and interaction features.
+
+    Generate a new feature matrix consisting of all polynomial combinations
+    of the features with degree less than or equal to the specified degree.
+    For example, if an input sample is two dimensional and of the form
+    [a, b], the degree-2 polynomial features are [1, a, b, a^2, ab, b^2].
+
+    Parameters
+    ----------
+    degree : integer
+        The degree of the polynomial features. Default = 2.
+
+    interaction_only : boolean, default = False
+        If true, only interaction features are produced: features that are
+        products of at most ``degree`` *distinct* input features (so not
+        ``x[1] ** 2``, ``x[0] * x[2] ** 3``, etc.).
+
+    include_bias : boolean
+        If True (default), then include a bias column, the feature in which
+        all polynomial powers are zero (i.e. a column of ones - acts as an
+        intercept term in a linear model).
+
+    Examples
+    --------
+    >>> X = np.arange(6).reshape(3, 2)
+    >>> X
+    array([[0, 1],
+           [2, 3],
+           [4, 5]])
+    >>> poly = PolynomialFeatures(2)
+    >>> poly.fit_transform(X)
+    array([[ 1,  0,  1,  0,  0,  1],
+           [ 1,  2,  3,  4,  6,  9],
+           [ 1,  4,  5, 16, 20, 25]])
+    >>> poly = PolynomialFeatures(interaction_only=True)
+    >>> poly.fit_transform(X)
+    array([[ 1,  0,  1,  0],
+           [ 1,  2,  3,  6],
+           [ 1,  4,  5, 20]])
+
+    Attributes
+    ----------
+
+    powers_ :
+         powers_[i, j] is the exponent of the jth input in the ith output.
+
+    Notes
+    -----
+    Be aware that the number of features in the output array scales
+    polynomially in the number of features of the input array, and
+    exponentially in the degree. High degrees can cause overfitting.
+
+    See :ref:`examples/linear_model/plot_polynomial_interpolation.py
+    <example_linear_model_plot_polynomial_interpolation.py>`
+    """
+    def __init__(self, degree=2, interaction_only=False, include_bias=True):
+        self.degree = degree
+        self.interaction_only = interaction_only
+        self.include_bias = include_bias
+
+    @staticmethod
+    def _power_matrix(n_features, degree, interaction_only, include_bias):
+        """Compute the matrix of polynomial powers"""
+        comb = (combinations if interaction_only else combinations_w_r)
+        start = int(not include_bias)
+        combn = chain.from_iterable(comb(range(n_features), i)
+                                    for i in range(start, degree + 1))
+        powers = np.vstack(np.bincount(c, minlength=n_features) for c in combn)
+        return powers
+
+    def fit(self, X, y=None):
+        """
+        Compute the polynomial feature combinations
+        """
+        n_samples, n_features = check_array(X).shape
+        self.powers_ = self._power_matrix(n_features, self.degree,
+                                          self.interaction_only,
+                                          self.include_bias)
+        return self
+
+    def transform(self, X, y=None):
+        """Transform data to polynomial features
+
+        Parameters
+        ----------
+        X : array with shape [n_samples, n_features]
+            The data to transform, row by row.
+
+        Returns
+        -------
+        XP : np.ndarray shape [n_samples, NP]
+            The matrix of features, where NP is the number of polynomial
+            features generated from the combination of inputs.
+        """
+        X = check_array(X)
+        n_samples, n_features = X.shape
+
+        if n_features != self.powers_.shape[1]:
+            raise ValueError("X shape does not match training shape")
+
+        return (X[:, None, :] ** self.powers_).prod(-1)
 
 
 def normalize(X, norm='l2', axis=1, copy=True):
-    """Normalize a dataset along any axis
+    """Scale input vectors individually to unit norm (vector length).
 
     Parameters
     ----------
@@ -433,7 +530,7 @@ def normalize(X, norm='l2', axis=1, copy=True):
     else:
         raise ValueError("'%d' is not a supported axis" % axis)
 
-    X = check_arrays(X, sparse_format=sparse_format, copy=copy)[0]
+    X = check_array(X, sparse_format, copy=copy)
     warn_if_not_float(X, 'The normalize function')
     if axis == 0:
         X = X.T
@@ -445,12 +542,12 @@ def normalize(X, norm='l2', axis=1, copy=True):
             inplace_csr_row_normalize_l2(X)
     else:
         if norm == 'l1':
-            norms = np.abs(X).sum(axis=1)[:, np.newaxis]
+            norms = np.abs(X).sum(axis=1)
             norms[norms == 0.0] = 1.0
         elif norm == 'l2':
-            norms = np.sqrt(np.sum(X ** 2, axis=1))[:, np.newaxis]
+            norms = row_norms(X)
             norms[norms == 0.0] = 1.0
-        X /= norms
+        X /= norms[:, np.newaxis]
 
     if axis == 0:
         X = X.T
@@ -459,7 +556,7 @@ def normalize(X, norm='l2', axis=1, copy=True):
 
 
 class Normalizer(BaseEstimator, TransformerMixin):
-    """Normalize samples individually to unit norm
+    """Normalize samples individually to unit norm.
 
     Each sample (i.e. each row of the data matrix) with at least one
     non zero component is rescaled independently of other samples so
@@ -506,7 +603,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
         This method is just there to implement the usual API and hence
         work in pipelines.
         """
-        atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
         return self
 
     def transform(self, X, y=None, copy=None):
@@ -519,7 +616,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
             in CSR format to avoid an un-necessary copy.
         """
         copy = copy if copy is not None else self.copy
-        atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
         return normalize(X, norm=self.norm, axis=1, copy=copy)
 
 
@@ -548,12 +645,7 @@ def binarize(X, threshold=0.0, copy=True):
     using the ``Transformer`` API (e.g. as part of a preprocessing
     :class:`sklearn.pipeline.Pipeline`)
     """
-    sparse_format = "csr"  # We force sparse format to be either csr or csc.
-    if hasattr(X, "format"):
-        if X.format in ["csr", "csc"]:
-            sparse_format = X.format
-
-    X = check_arrays(X, sparse_format=sparse_format, copy=copy)[0]
+    X = check_array(X, accept_sparse=['csr', 'csc'], copy=copy)
     if sparse.issparse(X):
         if threshold < 0:
             raise ValueError('Cannot binarize a sparse matrix with threshold '
@@ -615,7 +707,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
         This method is just there to implement the usual API and hence
         work in pipelines.
         """
-        atleast2d_or_csr(X)
+        check_array(X, accept_sparse='csr')
         return self
 
     def transform(self, X, y=None, copy=None):
@@ -654,7 +746,7 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         -------
         self : returns an instance of self.
         """
-        K = array2d(K)
+        K = check_array(K)
         n_samples = K.shape[0]
         self.K_fit_rows_ = np.sum(K, axis=0) / n_samples
         self.K_fit_all_ = self.K_fit_rows_.sum() / n_samples
@@ -672,7 +764,7 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         -------
         K_new : numpy array of shape [n_samples1, n_samples2]
         """
-        K = array2d(K)
+        K = check_array(K)
         if copy:
             K = K.copy()
 
@@ -714,7 +806,7 @@ def add_dummy_feature(X, value=1.0):
     array([[ 1.,  0.,  1.],
            [ 1.,  1.,  0.]])
     """
-    X = safe_asarray(X)
+    X = check_array(X, accept_sparse=['csc', 'csr', 'coo'])
     n_samples, n_features = X.shape
     shape = (n_samples, n_features + 1)
     if sparse.issparse(X):
@@ -769,7 +861,7 @@ def _transform_selected(X, transform, selected="all", copy=True):
     if selected == "all":
         return transform(X)
 
-    X = atleast2d_or_csc(X, copy=copy)
+    X = check_array(X, accept_sparse='csc', copy=copy)
 
     if len(selected) == 0:
         return X
@@ -830,19 +922,26 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     dtype : number type, default=np.float
         Desired dtype of output.
 
+    sparse : boolean, default=True
+        Will return sparse matrix if set True else will return an array.
+
+    handle_unknown : str, 'error' or 'ignore'
+        Whether to raise an error or ignore if a unknown categorical feature is
+        present during transform.
+
     Attributes
     ----------
-    `active_features_` : array
+    active_features_ : array
         Indices for active features, meaning values that actually occur
         in the training set. Only available when n_values is ``'auto'``.
 
-    `feature_indices_` : array of shape (n_features,)
+    feature_indices_ : array of shape (n_features,)
         Indices to feature ranges.
         Feature ``i`` in the original data is mapped to features
         from ``feature_indices_[i]`` to ``feature_indices_[i+1]``
         (and then potentially masked by `active_features_` afterwards)
 
-    `n_values_` : array of shape (n_features,)
+    n_values_ : array of shape (n_features,)
         Maximum number of values per feature.
 
     Examples
@@ -856,7 +955,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], \
 [1, 0, 2]])  # doctest: +ELLIPSIS
     OneHotEncoder(categorical_features='all', dtype=<... 'float'>,
-           n_values='auto')
+           handle_unknown='error', n_values='auto', sparse=True)
     >>> enc.n_values_
     array([2, 3, 4])
     >>> enc.feature_indices_
@@ -872,10 +971,12 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
       encoding of dictionary items or strings.
     """
     def __init__(self, n_values="auto", categorical_features="all",
-                 dtype=np.float):
+                 dtype=np.float, sparse=True, handle_unknown='error'):
         self.n_values = n_values
         self.categorical_features = categorical_features
         self.dtype = dtype
+        self.sparse = sparse
+        self.handle_unknown = handle_unknown
 
     def fit(self, X, y=None):
         """Fit OneHotEncoder to X.
@@ -894,13 +995,16 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     def _fit_transform(self, X):
         """Assumes X contains only categorical features."""
-        X = check_arrays(X, sparse_format='dense', dtype=np.int)[0]
+        X = check_array(X, dtype=np.int)
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
         n_samples, n_features = X.shape
         if self.n_values == 'auto':
             n_values = np.max(X, axis=0) + 1
         elif isinstance(self.n_values, numbers.Integral):
+            if (np.max(X, axis=0) >= self.n_values).any():
+                raise ValueError("Feature out of bounds for n_values=%d"
+                                 % self.n_values)
             n_values = np.empty(n_features, dtype=np.int)
             n_values.fill(self.n_values)
         else:
@@ -913,6 +1017,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             if n_values.ndim < 1 or n_values.shape[0] != X.shape[1]:
                 raise ValueError("Shape mismatch: if n_values is an array,"
                                  " it has to be of shape (n_features,).")
+
         self.n_values_ = n_values
         n_values = np.hstack([[0], n_values])
         indices = np.cumsum(n_values)
@@ -932,7 +1037,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             out = out[:, active_features]
             self.active_features_ = active_features
 
-        return out
+        return out if self.sparse else out.toarray()
 
     def fit_transform(self, X, y=None):
         """Fit OneHotEncoder to X, then transform X.
@@ -944,8 +1049,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                    self.categorical_features, copy=True)
 
     def _transform(self, X):
-        """Asssumes X contains only categorical features."""
-        X = check_arrays(X, sparse_format='dense', dtype=np.int)[0]
+        """Assumes X contains only categorical features."""
+        X = check_array(X, dtype=np.int)
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
         n_samples, n_features = X.shape
@@ -956,20 +1061,30 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                              " Expected %d, got %d."
                              % (indices.shape[0] - 1, n_features))
 
-        n_values_check = np.max(X, axis=0) + 1
-        if (n_values_check > self.n_values_).any():
-            raise ValueError("Feature out of bounds. Try setting n_values.")
+        # We use only those catgorical features of X that are known using fit.
+        # i.e lesser than n_values_ using mask.
+        # This means, if self.handle_unknown is "ignore", the row_indices and
+        # col_indices corresponding to the unknown categorical feature are ignored.
+        mask = (X < self.n_values_).ravel()
+        if np.any(~mask):
+            if self.handle_unknown not in ['error', 'ignore']:
+                raise ValueError("handle_unknown should be either error or "
+                                 "unknown got %s" % self.handle_unknown)
+            if self.handle_unknown == 'error':
+                raise ValueError("unknown categorical feature present %s "
+                                 "during transform." % X[~mask])
 
-        column_indices = (X + indices[:-1]).ravel()
+        column_indices = (X + indices[:-1]).ravel()[mask]
         row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
-                                n_features)
-        data = np.ones(n_samples * n_features)
+                                n_features)[mask]
+        data = np.ones(np.sum(mask))
         out = sparse.coo_matrix((data, (row_indices, column_indices)),
                                 shape=(n_samples, indices[-1]),
                                 dtype=self.dtype).tocsr()
         if self.n_values == 'auto':
             out = out[:, self.active_features_]
-        return out
+
+        return out if self.sparse else out.toarray()
 
     def transform(self, X):
         """Transform X using one-hot encoding.
@@ -981,7 +1096,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        X_out : sparse matrix, dtype=int
+        X_out : sparse matrix if sparse=True else a 2-d array, dtype=int
             Transformed input.
         """
         return _transform_selected(X, self._transform,

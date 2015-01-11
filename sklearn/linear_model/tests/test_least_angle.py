@@ -1,4 +1,3 @@
-import warnings
 from nose.tools import assert_equal
 
 import numpy as np
@@ -9,7 +8,9 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
-
+from sklearn.utils.testing import ignore_warnings, assert_warns_message
+from sklearn.utils.testing import assert_no_warnings, assert_warns
+from sklearn.utils import ConvergenceWarning
 from sklearn import linear_model, datasets
 
 diabetes = datasets.load_diabetes()
@@ -27,24 +28,27 @@ def test_simple():
     from sklearn.externals.six.moves import cStringIO as StringIO
     import sys
     old_stdout = sys.stdout
-    sys.stdout = StringIO()
+    try:
+        sys.stdout = StringIO()
 
-    alphas_, active, coef_path_ = linear_model.lars_path(
-        diabetes.data, diabetes.target, method="lar", verbose=10)
+        alphas_, active, coef_path_ = linear_model.lars_path(
+            diabetes.data, diabetes.target, method="lar", verbose=10)
 
-    sys.stdout = old_stdout
+        sys.stdout = old_stdout
 
-    for (i, coef_) in enumerate(coef_path_.T):
-        res = y - np.dot(X, coef_)
-        cov = np.dot(X.T, res)
-        C = np.max(abs(cov))
-        eps = 1e-3
-        ocur = len(cov[C - eps < abs(cov)])
-        if i < X.shape[1]:
-            assert_true(ocur == i + 1)
-        else:
-            # no more than max_pred variables can go into the active set
-            assert_true(ocur == X.shape[1])
+        for (i, coef_) in enumerate(coef_path_.T):
+            res = y - np.dot(X, coef_)
+            cov = np.dot(X.T, res)
+            C = np.max(abs(cov))
+            eps = 1e-3
+            ocur = len(cov[C - eps < abs(cov)])
+            if i < X.shape[1]:
+                assert_true(ocur == i + 1)
+            else:
+                # no more than max_pred variables can go into the active set
+                assert_true(ocur == X.shape[1])
+    finally:
+        sys.stdout = old_stdout
 
 
 def test_simple_precomputed():
@@ -112,7 +116,8 @@ def test_collinearity():
                   [1., 1., 0]])
     y = np.array([1., 0., 0])
 
-    _, _, coef_path_ = linear_model.lars_path(X, y, alpha_min=0.01)
+    f = ignore_warnings
+    _, _, coef_path_ = f(linear_model.lars_path)(X, y, alpha_min=0.01)
     assert_true(not np.isnan(coef_path_).any())
     residual = np.dot(X, coef_path_[:, -1]) - y
     assert_less((residual ** 2).sum(), 1.)  # just make sure it's bounded
@@ -178,16 +183,9 @@ def test_no_path_all_precomputed():
 
 def test_singular_matrix():
     # Test when input is a singular matrix
-    # In this test the "drop for good strategy" of lars_path is necessary
-    # to give a good answer
     X1 = np.array([[1, 1.], [1., 1.]])
     y1 = np.array([1, 1])
-    with warnings.catch_warnings(record=True) as warning_list:
-        warnings.simplefilter("always", UserWarning)
-        alphas, active, coef_path = linear_model.lars_path(X1, y1)
-    assert_true(len(warning_list) > 0)
-    assert_true('Dropping a regressor' in warning_list[0].message.args[0])
-
+    alphas, active, coef_path = linear_model.lars_path(X1, y1)
     assert_array_almost_equal(coef_path.T, [[0, 0], [1, 0]])
 
 
@@ -215,7 +213,7 @@ def test_rank_deficient_design():
         coef_cd_ = coord_descent.fit(X, y).coef_
         obj_cd = ((1. / (2. * 3.)) * linalg.norm(y - np.dot(X, coef_cd_)) ** 2
                   + .1 * linalg.norm(coef_cd_, 1))
-        assert_array_almost_equal(obj_lars, obj_cd)
+        assert_less(obj_lars, obj_cd * (1. + 1e-8))
 
 
 def test_lasso_lars_vs_lasso_cd(verbose=False):
@@ -232,15 +230,15 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
             continue
         lasso_cd.alpha = a
         lasso_cd.fit(X, y)
-        error = np.linalg.norm(c - lasso_cd.coef_)
+        error = linalg.norm(c - lasso_cd.coef_)
         assert_less(error, 0.01)
 
     # similar test, with the classifiers
-    for alpha in np.linspace(1e-2, 1 - 1e-2):
+    for alpha in np.linspace(1e-2, 1 - 1e-2, 20):
         clf1 = linear_model.LassoLars(alpha=alpha, normalize=False).fit(X, y)
         clf2 = linear_model.Lasso(alpha=alpha, tol=1e-8,
                                   normalize=False).fit(X, y)
-        err = np.linalg.norm(clf1.coef_ - clf2.coef_)
+        err = linalg.norm(clf1.coef_ - clf2.coef_)
         assert_less(err, 1e-3)
 
     # same test, with normalized data
@@ -253,7 +251,7 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
             continue
         lasso_cd.alpha = a
         lasso_cd.fit(X, y)
-        error = np.linalg.norm(c - lasso_cd.coef_)
+        error = linalg.norm(c - lasso_cd.coef_)
         assert_less(error, 0.01)
 
 
@@ -270,7 +268,7 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
         lasso_cd = linear_model.Lasso(fit_intercept=False, tol=1e-8)
         lasso_cd.alpha = alphas[-1]
         lasso_cd.fit(X, y)
-        error = np.linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
+        error = linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
         assert_less(error, 0.01)
 
     alphas_min = [10, 0.9, 1e-4]
@@ -282,7 +280,7 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
                                       tol=1e-8)
         lasso_cd.alpha = alphas[-1]
         lasso_cd.fit(X, y)
-        error = np.linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
+        error = linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
         assert_less(error, 0.01)
 
 
@@ -292,7 +290,7 @@ def test_lasso_lars_path_length():
     lasso.fit(X, y)
     lasso2 = linear_model.LassoLars(alpha=lasso.alphas_[2])
     lasso2.fit(X, y)
-    np.testing.assert_array_equal(lasso.alphas_[:3], lasso2.alphas_)
+    assert_array_almost_equal(lasso.alphas_[:3], lasso2.alphas_)
     # Also check that the sequence of alphas is always decreasing
     assert_true(np.all(np.diff(lasso.alphas_) < 0))
 
@@ -307,7 +305,7 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
     rng = np.random.RandomState(42)
 
     # Generate data
-    n, m = 80, 100
+    n, m = 70, 100
     k = 5
     X = rng.randn(n, m)
     w = np.zeros((m, 1))
@@ -319,48 +317,44 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
     sigma = 0.2
     y += sigma * rng.rand(*y.shape)
     y = y.squeeze()
+    lars_alphas, _, lars_coef = linear_model.lars_path(X, y, method='lasso')
 
-    with warnings.catch_warnings(record=True) as warning_list:
-        warnings.simplefilter("always", UserWarning)
-        lars_alphas, _, lars_coef = linear_model.lars_path(X, y,
-                                                           method='lasso')
-
-    assert_true(len(warning_list) > 0)
-    assert_true(('Dropping a regressor' in warning_list[0].message.args[0])
-                or ('Early stopping' in warning_list[0].message.args[0]))
 
     _, lasso_coef2, _ = linear_model.lasso_path(X, y,
-                                                alphas=lars_alphas, tol=1e-6,
-                                                return_models=False,
+                                                alphas=lars_alphas,
+                                                tol=1e-6,
                                                 fit_intercept=False)
 
-    lasso_coef = np.zeros((w.shape[0], len(lars_alphas)))
-    for i, model in enumerate(linear_model.lasso_path(X, y, alphas=lars_alphas,
-                                               tol=1e-6, fit_intercept=False)):
-        lasso_coef[:, i] = model.coef_
-
-    np.testing.assert_array_almost_equal(lars_coef, lasso_coef, decimal=1)
-    np.testing.assert_array_almost_equal(lars_coef, lasso_coef2, decimal=1)
-    np.testing.assert_array_almost_equal(lasso_coef, lasso_coef2, decimal=1)
+    assert_array_almost_equal(lars_coef, lasso_coef2, decimal=1)
 
 
-def test_lars_drop_for_good():
-    # Create an ill-conditioned situation in which the LARS has to good
+def test_lasso_lars_vs_lasso_cd_ill_conditioned2():
+    # Create an ill-conditioned situation in which the LARS has to go
     # far in the path to converge, and check that LARS and coordinate
     # descent give the same answers
-    X = [[10,     10,  0],
+    # Note it used to be the case that Lars had to use the drop for good
+    # strategy for this but this is no longer the case with the
+    # equality_tolerance checks
+    X = [[1e20,  1e20,  0],
          [-1e-32,  0,  0],
          [1,       1,  1]]
-    y = [100, -100, 1]
-    lars = linear_model.LassoLars(.001, normalize=False)
-    lars_coef_ = lars.fit(X, y).coef_
-    lars_obj = ((1. / (2. * 3.)) * linalg.norm(y - np.dot(X, lars_coef_)) ** 2
-                + .1 * linalg.norm(lars_coef_, 1))
-    coord_descent = linear_model.Lasso(.001, tol=1e-10, normalize=False)
+    y = [10, 10, 1]
+    alpha = .0001
+
+    def objective_function(coef):
+        return (1. / (2. * len(X)) * linalg.norm(y - np.dot(X, coef)) ** 2
+                + alpha * linalg.norm(coef, 1))
+
+    lars = linear_model.LassoLars(alpha=alpha, normalize=False)
+    assert_warns(ConvergenceWarning, lars.fit, X, y)
+    lars_coef_ = lars.coef_
+    lars_obj = objective_function(lars_coef_)
+
+    coord_descent = linear_model.Lasso(alpha=alpha, tol=1e-10, normalize=False)
     cd_coef_ = coord_descent.fit(X, y).coef_
-    cd_obj = ((1. / (2. * 3.)) * linalg.norm(y - np.dot(X, cd_coef_)) ** 2
-              + .1 * linalg.norm(cd_coef_, 1))
-    assert_array_almost_equal(lars_obj / cd_obj, 1.0, decimal=3)
+    cd_obj = objective_function(cd_coef_)
+
+    assert_less(lars_obj, cd_obj * (1. + 1e-8))
 
 
 def test_lars_add_features():
@@ -451,6 +445,15 @@ def test_lasso_lars_ic():
     # test error on unknown IC
     lars_broken = linear_model.LassoLarsIC('<unknown>')
     assert_raises(ValueError, lars_broken.fit, X, y)
+
+
+def test_no_warning_for_zero_mse():
+    """LassoLarsIC should not warn for log of zero MSE."""
+    y = np.arange(10, dtype=float)
+    X = y.reshape(-1, 1)
+    lars = linear_model.LassoLarsIC(normalize=False)
+    assert_no_warnings(lars.fit, X, y)
+    assert_true(np.any(np.isinf(lars.criterion_)))
 
 
 if __name__ == '__main__':

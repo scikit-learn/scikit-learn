@@ -16,14 +16,10 @@ from scipy import linalg
 from scipy.spatial.distance import cdist
 
 from ..externals.six.moves import xrange
-from ..utils import check_random_state, deprecated
-from ..utils.extmath import norm, logsumexp, pinvh
+from ..utils import check_random_state
+from ..utils.extmath import logsumexp, pinvh, squared_norm
 from .. import cluster
 from .gmm import GMM
-
-
-def sqnorm(v):
-    return norm(v) ** 2
 
 
 def digamma(x):
@@ -168,13 +164,13 @@ class DPGMM(GMM):
     n_components : int
         Number of mixture components.
 
-    `weights_` : array, shape (`n_components`,)
+    weights_ : array, shape (`n_components`,)
         Mixing weights for each mixture component.
 
-    `means_` : array, shape (`n_components`, `n_features`)
+    means_ : array, shape (`n_components`, `n_features`)
         Mean parameters for each mixture component.
 
-    `precs_` : array
+    precs_ : array
         Precision (inverse covariance) parameters for each mixture
         component.  The shape depends on `covariance_type`::
 
@@ -183,7 +179,7 @@ class DPGMM(GMM):
             (`n_components`, `n_features`)                if 'diag',
             (`n_components`, `n_features`, `n_features`)  if 'full'
 
-    `converged_` : bool
+    converged_ : bool
         True when convergence was reached in fit(), False otherwise.
 
     See Also
@@ -221,11 +217,6 @@ class DPGMM(GMM):
     def _set_covars(self, covars):
         raise NotImplementedError("""The variational algorithm does
         not support setting the covariance parameters.""")
-
-    @deprecated("DPGMM.eval was renamed to DPGMM.score_samples in 0.14 and "
-                "will be  removed in 0.16.")
-    def eval(self, X):
-        return self.score_samples(X)
 
     def score_samples(self, X):
         """Return the likelihood of the data under the model.
@@ -336,8 +327,8 @@ class DPGMM(GMM):
             self.dof_ = 2 + X.shape[0] + n_features
             self.scale_ = (X.shape[0] + 1) * np.identity(n_features)
             for k in range(self.n_components):
-                    diff = X - self.means_[k]
-                    self.scale_ += np.dot(diff.T, z[:, k:k + 1] * diff)
+                diff = X - self.means_[k]
+                self.scale_ += np.dot(diff.T, z[:, k:k + 1] * diff)
             self.scale_ = pinvh(self.scale_)
             self.precs_ = self.dof_ * self.scale_
             self.det_scale_ = linalg.det(self.scale_)
@@ -412,7 +403,7 @@ class DPGMM(GMM):
     def _bound_means(self):
         "The variational lower bound for the mean parameters"
         logprior = 0.
-        logprior -= 0.5 * sqnorm(self.means_)
+        logprior -= 0.5 * squared_norm(self.means_)
         logprior -= 0.5 * self.means_.shape[1] * self.n_components
         return logprior
 
@@ -485,7 +476,9 @@ class DPGMM(GMM):
         algorithm.
 
         For a full derivation and description of the algorithm see
-        doc/dp-derivation/dp-derivation.tex
+        doc/modules/dp-derivation.rst
+        or
+        http://scikit-learn.org/stable/modules/dp-derivation.html
 
         A initialization step is performed before entering the em
         algorithm. If you want to avoid this step, set the keyword
@@ -626,13 +619,13 @@ class VBGMM(DPGMM):
     n_components : int (read-only)
         Number of mixture components.
 
-    `weights_` : array, shape (`n_components`,)
+    weights_ : array, shape (`n_components`,)
         Mixing weights for each mixture component.
 
-    `means_` : array, shape (`n_components`, `n_features`)
+    means_ : array, shape (`n_components`, `n_features`)
         Mean parameters for each mixture component.
 
-    `precs_` : array
+    precs_ : array
         Precision (inverse covariance) parameters for each mixture
         component.  The shape depends on `covariance_type`::
 
@@ -641,7 +634,7 @@ class VBGMM(DPGMM):
             (`n_components`, `n_features`)                if 'diag',
             (`n_components`, `n_features`, `n_features`)  if 'full'
 
-    `converged_` : bool
+    converged_ : bool
         True when convergence was reached in fit(), False
         otherwise.
 
@@ -660,11 +653,6 @@ class VBGMM(DPGMM):
             thresh=thresh, verbose=verbose, min_covar=min_covar,
             n_iter=n_iter, params=params, init_params=init_params)
         self.alpha = float(alpha) / n_components
-
-    @deprecated("VBGMM.eval was renamed to VBGMM.score_samples in 0.14 and"
-                " will be removed in 0.16.")
-    def eval(self, X):
-        return self.score_samples(X)
 
     def score_samples(self, X):
         """Return the likelihood of the data under the model.
@@ -693,9 +681,6 @@ class VBGMM(DPGMM):
         X = np.asarray(X)
         if X.ndim == 1:
             X = X[:, np.newaxis]
-        z = np.zeros((X.shape[0], self.n_components))
-        p = np.zeros(self.n_components)
-        bound = np.zeros(X.shape[0])
         dg = digamma(self.gamma_) - digamma(np.sum(self.gamma_))
 
         if self.covariance_type not in ['full', 'tied', 'diag', 'spherical']:

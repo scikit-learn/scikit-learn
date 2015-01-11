@@ -3,7 +3,7 @@ Contributing code
 =================
 
 **Note: This document is just to get started, visit [**Contributing
-page**](http://scikit-learn.org/stable/developers/index.html#coding-guidelines)
+page**](http://scikit-learn.org/stable/developers/index.html)
 for the full contributor's guide. Please be sure to read it carefully to make
 the code review process go as smoothly as possible and maximize the
 likelihood of your contribution being merged.**
@@ -22,6 +22,7 @@ GitHub:
 2. Clone this copy to your local disk:
 
           $ git clone git@github.com:YourLogin/scikit-learn.git
+          $ cd scikit-learn
 
 3. Create a branch to hold your changes:
 
@@ -127,8 +128,9 @@ be placed in _build/html/ and are viewable in a web browser. See the
 README file in the doc/ directory for more information.
 
 For building the documentation, you will need
-[sphinx](http://sphinx.pocoo.org/) and
-[matplotlib](http://matplotlib.sourceforge.net/).
+[sphinx](http://sphinx.pocoo.org/),
+[matplotlib](http://matplotlib.sourceforge.net/), and
+[pillow](http://pillow.readthedocs.org/en/latest/).
 
 When you are writing documentation, it is important to keep a good
 compromise between mathematical and algorithmic details, and give

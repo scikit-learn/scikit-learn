@@ -1,8 +1,13 @@
+.. _combining_estimators:
+
+===============================================
+Pipeline and FeatureUnion: combining estimators
+===============================================
+
 .. _pipeline:
 
-==============================
 Pipeline: chaining estimators
-==============================
+=============================
 
 .. currentmodule:: sklearn.pipeline
 
@@ -17,13 +22,13 @@ and classification. :class:`Pipeline` serves two purposes here:
     **Joint parameter selection**: You can :ref:`grid search <grid_search>`
     over parameters of all estimators in the pipeline at once.
 
-For estimators to be usable within a pipeline, all except the last one need to have
-a ``transform`` function. Otherwise, the dataset can not be passed through this
-estimator.
+All estimators in a pipeline, except the last one, must be transformers
+(i.e. must have a ``transform`` method).
+The last estimator may be any type (transformer, classifier, etc.).
 
 
 Usage
-=====
+-----
 
 The :class:`Pipeline` is build using a list of ``(key, value)`` pairs, where
 the ``key`` a string containing the name you want to give this step and ``value``
@@ -41,7 +46,21 @@ is an estimator object::
         probability=False, random_state=None, shrinking=True, tol=0.001,
         verbose=False))])
 
-The estimators of the pipeline are stored as a list in the ``steps`` attribute::
+The utility function :func:`make_pipeline` is a shorthand
+for constructing pipelines;
+it takes a variable number of estimators and returns a pipeline,
+filling in the names automatically::
+
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.naive_bayes import MultinomialNB
+    >>> from sklearn.preprocessing import Binarizer
+    >>> make_pipeline(Binarizer(), MultinomialNB()) # doctest: +NORMALIZE_WHITESPACE
+    Pipeline(steps=[('binarizer', Binarizer(copy=True, threshold=0.0)),
+                    ('multinomialnb', MultinomialNB(alpha=1.0,
+                                                    class_prior=None,
+                                                    fit_prior=True))])
+
+The estimators of a pipeline are stored as a list in the ``steps`` attribute::
 
     >>> clf.steps[0]
     ('reduce_dim', PCA(copy=True, n_components=None, whiten=False))
@@ -71,15 +90,19 @@ This is particularly important for doing grid searches::
 
 .. topic:: Examples:
 
- * :ref:`example_feature_selection_pipeline.py`
- * :ref:`example_grid_search_text_feature_extraction.py`
+ * :ref:`example_feature_selection_feature_selection_pipeline.py`
+ * :ref:`example_model_selection_grid_search_text_feature_extraction.py`
  * :ref:`example_plot_digits_pipe.py`
  * :ref:`example_plot_kernel_approximation.py`
  * :ref:`example_svm_plot_svm_anova.py`
 
+.. topic:: See also:
+
+ * :ref:`grid_search`
+
 
 Notes
-=====
+-----
 
 Calling ``fit`` on the pipeline is the same as calling ``fit`` on
 each estimator in turn, ``transform`` the input and pass it on to the next step.
@@ -91,9 +114,8 @@ pipeline.
 
 .. _feature_union:
 
-==========================================
-FeatureUnion: Combining feature extractors
-==========================================
+FeatureUnion: composite feature spaces
+======================================
 
 .. currentmodule:: sklearn.pipeline
 
@@ -117,7 +139,7 @@ responsibility.)
 
 
 Usage
-=====
+-----
 
 A :class:`FeatureUnion` is built using a list of ``(key, value)`` pairs,
 where the ``key`` is the name you want to give to a given transformation
@@ -137,8 +159,11 @@ and ``value`` is an estimator object::
         n_components=None, remove_zero_eig=False, tol=0))],
         transformer_weights=None)
 
+Like pipelines, feature unions have a shorthand constructor called
+:func:`make_union` that does require manual naming of the components.
 
                                                                        
 .. topic:: Examples:
 
  * :ref:`example_feature_stacker.py`
+ * :ref:`example_hetero_feature_union.py`

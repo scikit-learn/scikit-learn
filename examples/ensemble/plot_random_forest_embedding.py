@@ -24,8 +24,8 @@ decision boundary obtained by BernoulliNB in the transformed
 space with an ExtraTreesClassifier forests learned on the
 original data.
 """
-import pylab as pl
 import numpy as np
+import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_circles
 from sklearn.ensemble import RandomTreesEmbedding, ExtraTreesClassifier
@@ -54,15 +54,15 @@ trees.fit(X, y)
 
 
 # scatter plot of original and reduced data
-fig = pl.figure(figsize=(9, 8))
+fig = plt.figure(figsize=(9, 8))
 
-ax = pl.subplot(221)
+ax = plt.subplot(221)
 ax.scatter(X[:, 0], X[:, 1], c=y, s=50)
 ax.set_title("Original Data (2d)")
 ax.set_xticks(())
 ax.set_yticks(())
 
-ax = pl.subplot(222)
+ax = plt.subplot(222)
 ax.scatter(X_reduced[:, 0], X_reduced[:, 1], c=y, s=50)
 ax.set_title("PCA reduction (2d) of transformed data (%dd)" %
              X_transformed.shape[1])
@@ -80,7 +80,7 @@ xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
 transformed_grid = hasher.transform(np.c_[xx.ravel(), yy.ravel()])
 y_grid_pred = nb.predict_proba(transformed_grid)[:, 1]
 
-ax = pl.subplot(223)
+ax = plt.subplot(223)
 ax.set_title("Naive Bayes on Transformed data")
 ax.pcolormesh(xx, yy, y_grid_pred.reshape(xx.shape))
 ax.scatter(X[:, 0], X[:, 1], c=y, s=50)
@@ -92,7 +92,7 @@ ax.set_yticks(())
 # transform grid using ExtraTreesClassifier
 y_grid_pred = trees.predict_proba(np.c_[xx.ravel(), yy.ravel()])[:, 1]
 
-ax = pl.subplot(224)
+ax = plt.subplot(224)
 ax.set_title("ExtraTrees predictions")
 ax.pcolormesh(xx, yy, y_grid_pred.reshape(xx.shape))
 ax.scatter(X[:, 0], X[:, 1], c=y, s=50)
@@ -101,5 +101,5 @@ ax.set_xlim(-1.4, 1.4)
 ax.set_xticks(())
 ax.set_yticks(())
 
-pl.tight_layout()
-pl.show()
+plt.tight_layout()
+plt.show()

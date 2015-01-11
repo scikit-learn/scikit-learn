@@ -52,7 +52,7 @@ make regarding the distribution of :math:`P(x_i \mid y)`.
 
 In spite of their apparently over-simplified assumptions, naive Bayes
 classifiers have worked quite well in many real-world situations, famously
-document classification and spam filtering. They requires a small amount
+document classification and spam filtering. They require a small amount
 of training data to estimate the necessary parameters. (For theoretical
 reasons why naive Bayes works well, and on which types of data it does, see
 the references below.)
@@ -83,7 +83,7 @@ classification. The likelihood of the features is assumed to be Gaussian:
 
 .. math::
 
-   P(x_i \mid y) &= \frac{1}{\sqrt{2\pi\sigma^2_y}} \exp\left(-\frac{ (x_i - \mu_y)^2}{2\pi\sigma^2_y}\right)
+   P(x_i \mid y) &= \frac{1}{\sqrt{2\pi\sigma^2_y}} \exp\left(-\frac{(x_i - \mu_y)^2}{2\sigma^2_y}\right)
 
 The parameters :math:`\sigma_y` and :math:`\mu_y`
 are estimated using maximum likelihood.
@@ -93,8 +93,9 @@ are estimated using maximum likelihood.
     >>> from sklearn.naive_bayes import GaussianNB
     >>> gnb = GaussianNB()
     >>> y_pred = gnb.fit(iris.data, iris.target).predict(iris.data)
-    >>> print("Number of mislabeled points : %d" % (iris.target != y_pred).sum())
-    Number of mislabeled points : 6
+    >>> print("Number of mislabeled points out of a total %d points : %d"
+    ...       % (iris.data.shape[0],(iris.target != y_pred).sum()))
+    Number of mislabeled points out of a total 150 points : 6
 
 .. _multinomial_naive_bayes:
 
@@ -149,7 +150,7 @@ The decision rule for Bernoulli naive Bayes is based on
 
 .. math::
 
-    P(x_i \mid y) = P(i \mid y) x_i \times (1 - P(i \mid y)) (1 - x_i)
+    P(x_i \mid y) = P(i \mid y) x_i + (1 - P(i \mid y)) (1 - x_i)
 
 which differs from multinomial NB's rule
 in that it explicitly penalizes the non-occurrence of a feature :math:`i`
@@ -180,15 +181,19 @@ It is advisable to evaluate both models, if time permits.
 Out-of-core naive Bayes model fitting
 -------------------------------------
 
-Discrete naive Bayes models can be used to tackle large scale text
-classification problems for which the full training set might not fit in
-memory. To handle this case both :class:`MultinomialNB` and
-:class:`BernoulliNB` expose a ``partial_fit`` method that can be used
+Naive Bayes models can be used to tackle large scale classification problems
+for which the full training set might not fit in memory. To handle this case,
+:class:`MultinomialNB`, :class:`BernoulliNB`, and :class:`GaussianNB`
+expose a ``partial_fit`` method that can be used
 incrementally as done with other classifiers as demonstrated in
-:ref:`example_applications_plot_out_of_core_classification.py`.
+:ref:`example_applications_plot_out_of_core_classification.py`. Both discrete
+classifiers support sample weighting; :class:`GaussianNB` does not.
 
 Contrary to the ``fit`` method, the first call to ``partial_fit`` needs to be
 passed the list of all the expected class labels.
+
+For an overview of available strategies in scikit-learn, see also the
+:ref:`out-of-core learning <scaling_strategies>` documentation.
 
 note::
 

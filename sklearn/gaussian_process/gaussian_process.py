@@ -1,28 +1,21 @@
-from __future__ import print_function
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 #         (mostly translation, see implementation details)
 # Licence: BSD 3 clause
 
+from __future__ import print_function
+
 import numpy as np
-from scipy import linalg, optimize, rand
+from scipy import linalg, optimize
 
 from ..base import BaseEstimator, RegressorMixin
 from ..metrics.pairwise import manhattan_distances
-from ..utils import array2d, check_random_state
+from ..utils import check_random_state, check_array, check_consistent_length
 from . import regression_models as regression
 from . import correlation_models as correlation
 
 MACHINE_EPSILON = np.finfo(np.double).eps
-if hasattr(linalg, 'solve_triangular'):
-    # only in scipy since 0.9
-    solve_triangular = linalg.solve_triangular
-else:
-    # slower, but works
-    def solve_triangular(x, y, lower=True):
-        return linalg.solve(x, y)
 
 
 def l1_cross_distances(X):
@@ -46,9 +39,9 @@ def l1_cross_distances(X):
         The indices i and j of the vectors in X associated to the cross-
         distances in D: D[k] = np.abs(X[ij[k, 0]] - Y[ij[k, 1]]).
     """
-    X = array2d(X)
+    X = check_array(X)
     n_samples, n_features = X.shape
-    n_nonzero_cross_dist = n_samples * (n_samples - 1) / 2
+    n_nonzero_cross_dist = n_samples * (n_samples - 1) // 2
     ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int)
     D = np.zeros((n_nonzero_cross_dist, n_features))
     ll_1 = 0
@@ -59,7 +52,7 @@ def l1_cross_distances(X):
         ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
         D[ll_0:ll_1] = np.abs(X[k] - X[(k + 1):n_samples])
 
-    return D, ij.astype(np.int)
+    return D, ij
 
 
 class GaussianProcess(BaseEstimator, RegressorMixin):
@@ -172,11 +165,11 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
     Attributes
     ----------
-    `theta_`: array
+    theta_ : array
         Specified theta OR the best set of autocorrelation parameters (the \
         sought maximizer of the reduced likelihood function).
 
-    `reduced_likelihood_function_value_`: array
+    reduced_likelihood_function_value_ : array
         The optimal reduced likelihood function value.
 
     Examples
@@ -255,8 +248,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             observations were made.
 
         y : double array_like
-            An array with shape (n_samples, ) with the observations of the
-            scalar output to be predicted.
+            An array with shape (n_samples, ) or shape (n_samples, n_targets)
+            with the observations of the output to be predicted.
 
         Returns
         -------
@@ -270,17 +263,16 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         self.random_state = check_random_state(self.random_state)
 
         # Force data to 2D numpy.array
-        X = array2d(X)
-        y = np.asarray(y).ravel()[:, np.newaxis]
+        X = check_array(X)
+        y = np.asarray(y)
+        self.y_ndim_ = y.ndim
+        if y.ndim == 1:
+            y = y[:, np.newaxis]
+        check_consistent_length(X, y)
 
         # Check shapes of DOE & observations
-        n_samples_X, n_features = X.shape
-        n_samples_y = y.shape[0]
-
-        if n_samples_X != n_samples_y:
-            raise ValueError("X and y must have the same number of rows.")
-        else:
-            n_samples = n_samples_X
+        n_samples, n_features = X.shape
+        _, n_targets = y.shape
 
         # Run input checks
         self._check_params(n_samples)
@@ -307,7 +299,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         if (np.min(np.sum(D, axis=1)) == 0.
                 and self.corr != correlation.pure_nugget):
             raise Exception("Multiple input features cannot have the same"
-                            " value.")
+                            " target value.")
 
         # Regression matrix and parameters
         F = self.regr(X)
@@ -406,26 +398,32 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         Returns
         -------
-        y : array_like
-            An array with shape (n_eval, ) with the Best Linear Unbiased
+        y : array_like, shape (n_samples, ) or (n_samples, n_targets)
+            An array with shape (n_eval, ) if the Gaussian Process was trained
+            on an array of shape (n_samples, ) or an array with shape
+            (n_eval, n_targets) if the Gaussian Process was trained on an array
+            of shape (n_samples, n_targets) with the Best Linear Unbiased
             Prediction at x.
 
         MSE : array_like, optional (if eval_MSE == True)
-            An array with shape (n_eval, ) with the Mean Squared Error at x.
+            An array with shape (n_eval, ) or (n_eval, n_targets) as with y,
+            with the Mean Squared Error at x.
         """
 
         # Check input shapes
-        X = array2d(X)
-        n_eval, n_features_X = X.shape
+        X = check_array(X)
+        n_eval, _ = X.shape
         n_samples, n_features = self.X.shape
+        n_samples_y, n_targets = self.y.shape
 
         # Run input checks
         self._check_params(n_samples)
 
-        if n_features_X != n_features:
+        if X.shape[1] != n_features:
             raise ValueError(("The number of features in X (X.shape[1] = %d) "
-                             "should match the sample size used for fit() "
-                             "which is %d.") % (n_features_X, n_features))
+                              "should match the number of features used "
+                              "for fit() "
+                              "which is %d.") % (X.shape[1], n_features))
 
         if batch_size is None:
             # No memory management
@@ -449,7 +447,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             y_ = np.dot(f, self.beta) + np.dot(r, self.gamma)
 
             # Predictor
-            y = (self.y_mean + self.y_std * y_).ravel()
+            y = (self.y_mean + self.y_std * y_).reshape(n_eval, n_targets)
+
+            if self.y_ndim_ == 1:
+                y = y.ravel()
 
             # Mean Squared Error
             if eval_MSE:
@@ -466,22 +467,27 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                     self.Ft = par['Ft']
                     self.G = par['G']
 
-                rt = solve_triangular(self.C, r.T, lower=True)
+                rt = linalg.solve_triangular(self.C, r.T, lower=True)
 
                 if self.beta0 is None:
                     # Universal Kriging
-                    u = solve_triangular(self.G.T,
-                                         np.dot(self.Ft.T, rt) - f.T)
+                    u = linalg.solve_triangular(self.G.T,
+                                                np.dot(self.Ft.T, rt) - f.T)
                 else:
                     # Ordinary Kriging
-                    u = np.zeros(y.shape)
+                    u = np.zeros((n_targets, n_eval))
 
-                MSE = self.sigma2 * (1. - (rt ** 2.).sum(axis=0)
-                                     + (u ** 2.).sum(axis=0))
+                MSE = np.dot(self.sigma2.reshape(n_targets, 1),
+                             (1. - (rt ** 2.).sum(axis=0)
+                              + (u ** 2.).sum(axis=0))[np.newaxis, :])
+                MSE = np.sqrt((MSE ** 2.).sum(axis=0) / n_targets)
 
                 # Mean Squared Error might be slightly negative depending on
                 # machine precision: force to zero!
                 MSE[MSE < 0.] = 0.
+
+                if self.y_ndim_ == 1:
+                    MSE = MSE.ravel()
 
                 return y, MSE
 
@@ -598,7 +604,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             return reduced_likelihood_function_value, par
 
         # Get generalized least squares solution
-        Ft = solve_triangular(C, F, lower=True)
+        Ft = linalg.solve_triangular(C, F, lower=True)
         try:
             Q, G = linalg.qr(Ft, econ=True)
         except:
@@ -622,10 +628,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 # Ft is too ill conditioned, get out (try different theta)
                 return reduced_likelihood_function_value, par
 
-        Yt = solve_triangular(C, self.y, lower=True)
+        Yt = linalg.solve_triangular(C, self.y, lower=True)
         if self.beta0 is None:
             # Universal Kriging
-            beta = solve_triangular(G, np.dot(Q.T, Yt))
+            beta = linalg.solve_triangular(G, np.dot(Q.T, Yt))
         else:
             # Ordinary Kriging
             beta = np.array(self.beta0)
@@ -640,7 +646,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         reduced_likelihood_function_value = - sigma2.sum() * detR
         par['sigma2'] = sigma2 * self.y_std ** 2.
         par['beta'] = beta
-        par['gamma'] = solve_triangular(C.T, rho)
+        par['gamma'] = linalg.solve_triangular(C.T, rho)
         par['C'] = C
         par['Ft'] = Ft
         par['G'] = G
@@ -695,9 +701,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
             constraints = []
             for i in range(self.theta0.size):
-                constraints.append(lambda log10t:
+                constraints.append(lambda log10t, i=i:
                                    log10t[i] - np.log10(self.thetaL[0, i]))
-                constraints.append(lambda log10t:
+                constraints.append(lambda log10t, i=i:
                                    np.log10(self.thetaU[0, i]) - log10t[i])
 
             for k in range(self.random_start):
@@ -709,8 +715,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                     # Generate a random starting point log10-uniformly
                     # distributed between bounds
                     log10theta0 = np.log10(self.thetaL) \
-                        + rand(self.theta0.size).reshape(self.theta0.shape) \
-                        * np.log10(self.thetaU / self.thetaL)
+                        + self.random_state.rand(self.theta0.size).reshape(
+                            self.theta0.shape) * np.log10(self.thetaU
+                                                          / self.thetaL)
                     theta0 = 10. ** log10theta0
 
                 # Run Cobyla
@@ -724,9 +731,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                     raise ve
 
                 optimal_theta = 10. ** log10_optimal_theta
-                optimal_minus_rlf_value, optimal_par = \
+                optimal_rlf_value, optimal_par = \
                     self.reduced_likelihood_function(theta=optimal_theta)
-                optimal_rlf_value = - optimal_minus_rlf_value
 
                 # Compare the new optimizer to the best previous one
                 if k > 0:
@@ -761,9 +767,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             # Initialize under isotropy assumption
             if verbose:
                 print("Initialize under isotropy assumption...")
-            self.theta0 = array2d(self.theta0.min())
-            self.thetaL = array2d(self.thetaL.min())
-            self.thetaU = array2d(self.thetaU.max())
+            self.theta0 = check_array(self.theta0.min())
+            self.thetaL = check_array(self.thetaL.min())
+            self.thetaU = check_array(self.thetaU.max())
             theta_iso, optimal_rlf_value_iso, par_iso = \
                 self._arg_max_reduced_likelihood_function()
             optimal_theta = theta_iso + np.zeros(theta0.shape)
@@ -774,15 +780,16 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             for i in self.random_state.permutation(theta0.size):
                 if verbose:
                     print("Proceeding along dimension %d..." % (i + 1))
-                self.theta0 = array2d(theta_iso)
-                self.thetaL = array2d(thetaL[0, i])
-                self.thetaU = array2d(thetaU[0, i])
+                self.theta0 = check_array(theta_iso)
+                self.thetaL = check_array(thetaL[0, i])
+                self.thetaU = check_array(thetaU[0, i])
 
                 def corr_cut(t, d):
-                    return corr(array2d(np.hstack([optimal_theta[0][0:i],
-                                                   t[0],
-                                                   optimal_theta[0][(i + 1)::]]
-                                                  )), d)
+                    return corr(check_array(np.hstack([optimal_theta[0][0:i],
+                                                       t[0],
+                                                       optimal_theta[0][(i +
+                                                                         1)::]])),
+                                d)
 
                 self.corr = corr_cut
                 optimal_theta[0, i], optimal_rlf_value, optimal_par = \
@@ -815,7 +822,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Check regression weights if given (Ordinary Kriging)
         if self.beta0 is not None:
-            self.beta0 = array2d(self.beta0)
+            self.beta0 = check_array(self.beta0)
             if self.beta0.shape[1] != 1:
                 # Force to column vector
                 self.beta0 = self.beta0.T
@@ -835,12 +842,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                              "'light', %s was given." % self.storage_mode)
 
         # Check correlation parameters
-        self.theta0 = array2d(self.theta0)
+        self.theta0 = check_array(self.theta0)
         lth = self.theta0.size
 
         if self.thetaL is not None and self.thetaU is not None:
-            self.thetaL = array2d(self.thetaL)
-            self.thetaU = array2d(self.thetaU)
+            self.thetaL = check_array(self.thetaL)
+            self.thetaU = check_array(self.thetaU)
             if self.thetaL.size != lth or self.thetaU.size != lth:
                 raise ValueError("theta0, thetaL and thetaU must have the "
                                  "same length.")

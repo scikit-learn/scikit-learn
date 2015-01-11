@@ -14,21 +14,21 @@ from abc import ABCMeta, abstractmethod
 from collections import Mapping, namedtuple, Sized
 from functools import partial, reduce
 from itertools import product
-import numbers
 import operator
-import time
 import warnings
 
 import numpy as np
 
 from .base import BaseEstimator, is_classifier, clone
 from .base import MetaEstimatorMixin
-from .cross_validation import check_cv
-from .externals.joblib import Parallel, delayed, logger
+from .cross_validation import _check_cv as check_cv
+from .cross_validation import _fit_and_score
+from .externals.joblib import Parallel, delayed
 from .externals import six
-from .utils import safe_mask, check_random_state
-from .utils.validation import _num_samples, check_arrays
-from .metrics.scorer import _deprecate_loss_and_score_funcs
+from .utils import check_random_state
+from .utils.validation import _num_samples, indexable
+from .utils.metaestimators import if_delegate_has_method
+from .metrics.scorer import check_scoring
 
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
@@ -76,9 +76,8 @@ class ParameterGrid(object):
 
     def __init__(self, param_grid):
         if isinstance(param_grid, Mapping):
-            # wrap dictionary in a singleton list
-            # XXX Why? The behavior when passing a list is undocumented,
-            # but not doing this breaks one of the tests.
+            # wrap dictionary in a singleton list to support either dict
+            # or list of dicts
             param_grid = [param_grid]
         self.param_grid = param_grid
 
@@ -183,8 +182,8 @@ class ParameterSampler(object):
         return self.n_iter
 
 
-def fit_grid_point(X, y, base_estimator, parameters, train, test, scorer,
-                   verbose, loss_func=None, **fit_params):
+def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
+                   verbose, error_score='raise', **fit_params):
     """Run fit on one set of parameters.
 
     Parameters
@@ -195,11 +194,11 @@ def fit_grid_point(X, y, base_estimator, parameters, train, test, scorer,
     y : array-like or None
         Targets for input data.
 
-    base_estimator : estimator object
+    estimator : estimator object
         This estimator will be cloned and then fitted.
 
     parameters : dict
-        Parameters to be set on base_estimator clone for this grid point.
+        Parameters to be set on estimator for this grid point.
 
     train : ndarray, dtype int or bool
         Boolean mask or indices for training set.
@@ -217,6 +216,11 @@ def fit_grid_point(X, y, base_estimator, parameters, train, test, scorer,
     **fit_params : kwargs
         Additional parameter passed to the fit function of the estimator.
 
+    error_score : 'raise' (default) or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised. If a numeric value is given,
+        FitFailedWarning is raised. This parameter does not affect the refit
+        step, which will always raise the error.
 
     Returns
     -------
@@ -229,66 +233,10 @@ def fit_grid_point(X, y, base_estimator, parameters, train, test, scorer,
     n_samples_test : int
         Number of test samples in this split.
     """
-    if verbose > 1:
-        start_time = time.time()
-        msg = '%s' % (', '.join('%s=%s' % (k, v)
-                      for k, v in parameters.items()))
-        print("[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.'))
-
-    # update parameters of the classifier after a copy of its base structure
-    clf = clone(base_estimator)
-    clf.set_params(**parameters)
-
-    if hasattr(base_estimator, 'kernel') and callable(base_estimator.kernel):
-        # cannot compute the kernel values with custom function
-        raise ValueError("Cannot use a custom kernel function. "
-                         "Precompute the kernel matrix instead.")
-
-    if not hasattr(X, "shape"):
-        if getattr(base_estimator, "_pairwise", False):
-            raise ValueError("Precomputed kernels or affinity matrices have "
-                             "to be passed as arrays or sparse matrices.")
-        X_train = [X[idx] for idx in train]
-        X_test = [X[idx] for idx in test]
-    else:
-        if getattr(base_estimator, "_pairwise", False):
-            # X is a precomputed square kernel matrix
-            if X.shape[0] != X.shape[1]:
-                raise ValueError("X should be a square kernel matrix")
-            X_train = X[np.ix_(train, train)]
-            X_test = X[np.ix_(test, train)]
-        else:
-            X_train = X[safe_mask(X, train)]
-            X_test = X[safe_mask(X, test)]
-
-    if y is not None:
-        y_test = y[safe_mask(y, test)]
-        y_train = y[safe_mask(y, train)]
-        clf.fit(X_train, y_train, **fit_params)
-
-        if scorer is not None:
-            this_score = scorer(clf, X_test, y_test)
-        else:
-            this_score = clf.score(X_test, y_test)
-    else:
-        clf.fit(X_train, **fit_params)
-        if scorer is not None:
-            this_score = scorer(clf, X_test)
-        else:
-            this_score = clf.score(X_test)
-
-    if not isinstance(this_score, numbers.Number):
-        raise ValueError("scoring must return a number, got %s (%s)"
-                         " instead." % (str(this_score), type(this_score)))
-
-    if verbose > 2:
-        msg += ", score=%f" % this_score
-    if verbose > 1:
-        end_msg = "%s -%s" % (msg,
-                              logger.short_format_time(time.time() -
-                                                       start_time))
-        print("[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
-    return this_score, parameters, _num_samples(X_test)
+    score, n_samples_test, _ = _fit_and_score(estimator, X, y, scorer, train,
+                                              test, verbose, parameters,
+                                              fit_params, error_score)
+    return score, parameters, n_samples_test
 
 
 def _check_param_grid(param_grid):
@@ -331,19 +279,22 @@ class _CVScoreTuple (namedtuple('_CVScoreTuple',
             self.parameters)
 
 
+class ChangedBehaviorWarning(UserWarning):
+    pass
+
+
 class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                       MetaEstimatorMixin)):
     """Base class for hyper parameter search with cross-validation."""
 
     @abstractmethod
-    def __init__(self, estimator, scoring=None, loss_func=None,
-                 score_func=None, fit_params=None, n_jobs=1, iid=True,
-                 refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs'):
+    def __init__(self, estimator, scoring=None,
+                 fit_params=None, n_jobs=1, iid=True,
+                 refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
+                 error_score='raise'):
 
         self.scoring = scoring
         self.estimator = estimator
-        self.loss_func = loss_func
-        self.score_func = score_func
         self.n_jobs = n_jobs
         self.fit_params = fit_params if fit_params is not None else {}
         self.iid = iid
@@ -351,12 +302,13 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.cv = cv
         self.verbose = verbose
         self.pre_dispatch = pre_dispatch
-        self._check_estimator()
+        self.error_score = error_score
 
     def score(self, X, y=None):
-        """Returns the score on the given test data and labels, if the search
-        estimator has been refit. The ``score`` function of the best estimator
-        is used, or the ``scoring`` parameter where unavailable.
+        """Returns the score on the given data, if the estimator has been refit
+
+        This uses the score defined by ``scoring`` where provided, and the
+        ``best_estimator_.score`` method otherwise.
 
         Parameters
         ----------
@@ -372,66 +324,136 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         -------
         score : float
 
+        Notes
+        -----
+         * The long-standing behavior of this method changed in version 0.16.
+         * It no longer uses the metric provided by ``estimator.score`` if the
+           ``scoring`` parameter was set when fitting.
+
         """
-        if hasattr(self.best_estimator_, 'score'):
-            return self.best_estimator_.score(X, y)
         if self.scorer_ is None:
             raise ValueError("No score function explicitly defined, "
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
+        if self.scoring is not None and hasattr(self.best_estimator_, 'score'):
+            warnings.warn("The long-standing behavior to use the estimator's "
+                          "score function in {0}.score has changed. The "
+                          "scoring parameter is now used."
+                          "".format(self.__class__.__name__),
+                          ChangedBehaviorWarning)
         return self.scorer_(self.best_estimator_, X, y)
 
-    @property
-    def predict(self):
-        return self.best_estimator_.predict
+    @if_delegate_has_method(delegate='estimator')
+    def predict(self, X):
+        """Call predict on the estimator with the best found parameters.
 
-    @property
-    def predict_proba(self):
-        return self.best_estimator_.predict_proba
+        Only available if ``refit=True`` and the underlying estimator supports
+        ``predict``.
 
-    @property
-    def decision_function(self):
-        return self.best_estimator_.decision_function
+        Parameters
+        -----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
 
-    @property
-    def transform(self):
-        return self.best_estimator_.transform
+        """
+        return self.best_estimator_.predict(X)
 
-    def _check_estimator(self):
-        """Check that estimator can be fitted and score can be computed."""
-        if (not hasattr(self.estimator, 'fit') or
-                not (hasattr(self.estimator, 'predict')
-                     or hasattr(self.estimator, 'score'))):
-            raise TypeError("estimator should a be an estimator implementing"
-                            " 'fit' and 'predict' or 'score' methods,"
-                            " %s (type %s) was passed" %
-                            (self.estimator, type(self.estimator)))
-        if (self.scoring is None and self.loss_func is None and self.score_func
-                is None):
-            if not hasattr(self.estimator, 'score'):
-                raise TypeError(
-                    "If no scoring is specified, the estimator passed "
-                    "should have a 'score' method. The estimator %s "
-                    "does not." % self.estimator)
+    @if_delegate_has_method(delegate='estimator')
+    def predict_proba(self, X):
+        """Call predict_proba on the estimator with the best found parameters.
+
+        Only available if ``refit=True`` and the underlying estimator supports
+        ``predict_proba``.
+
+        Parameters
+        -----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        """
+        return self.best_estimator_.predict_proba(X)
+
+    @if_delegate_has_method(delegate='estimator')
+    def predict_log_proba(self, X):
+        """Call predict_log_proba on the estimator with the best found parameters.
+
+        Only available if ``refit=True`` and the underlying estimator supports
+        ``predict_log_proba``.
+
+        Parameters
+        -----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        """
+        return self.best_estimator_.predict_log_proba(X)
+
+    @if_delegate_has_method(delegate='estimator')
+    def decision_function(self, X):
+        """Call decision_function on the estimator with the best found parameters.
+
+        Only available if ``refit=True`` and the underlying estimator supports
+        ``decision_function``.
+
+        Parameters
+        -----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        """
+        return self.best_estimator_.decision_function(X)
+
+    @if_delegate_has_method(delegate='estimator')
+    def transform(self, X):
+        """Call transform on the estimator with the best found parameters.
+
+        Only available if the underlying estimator supports ``transform`` and
+        ``refit=True``.
+
+        Parameters
+        -----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        """
+        return self.best_estimator_.transform(X)
+
+    @if_delegate_has_method(delegate='estimator')
+    def inverse_transform(self, Xt):
+        """Call inverse_transform on the estimator with the best found parameters.
+
+        Only available if the underlying estimator implements ``inverse_transform`` and
+        ``refit=True``.
+
+        Parameters
+        -----------
+        Xt : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        """
+        return self.best_estimator_.transform(Xt)
 
     def _fit(self, X, y, parameter_iterable):
         """Actual fitting,  performing the search over parameters."""
 
         estimator = self.estimator
         cv = self.cv
+        self.scorer_ = check_scoring(self.estimator, scoring=self.scoring)
 
         n_samples = _num_samples(X)
-        X, y = check_arrays(X, y, allow_lists=True, sparse_format='csr')
-
-        self.scorer_ = _deprecate_loss_and_score_funcs(
-            self.loss_func, self.score_func, self.scoring)
+        X, y = indexable(X, y)
 
         if y is not None:
             if len(y) != n_samples:
                 raise ValueError('Target variable (y) has a different number '
                                  'of samples (%i) than data (X: %i samples)'
                                  % (len(y), n_samples))
-            y = np.asarray(y)
         cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
 
         if self.verbose > 0:
@@ -447,10 +469,12 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         out = Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose,
-            pre_dispatch=pre_dispatch)(
-                delayed(fit_grid_point)(
-                    X, y, base_estimator, parameters, train, test,
-                    self.scorer_, self.verbose, **self.fit_params)
+            pre_dispatch=pre_dispatch
+        )(
+            delayed(_fit_and_score)(clone(base_estimator), X, y, self.scorer_,
+                                    train, test, self.verbose, parameters,
+                                    self.fit_params, return_parameters=True,
+                                    error_score=self.error_score)
                 for parameters in parameter_iterable
                 for train, test in cv)
 
@@ -464,7 +488,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             n_test_samples = 0
             score = 0
             all_scores = []
-            for this_score, parameters, this_n_test_samples in \
+            for this_score, this_n_test_samples, _, parameters in \
                     out[grid_start:grid_start + n_folds]:
                 all_scores.append(this_score)
                 if self.iid:
@@ -533,8 +557,8 @@ class GridSearchCV(BaseSearchCV):
     fit_params : dict, optional
         Parameters to pass to the fit method.
 
-    n_jobs : int, optional
-        Number of jobs to run in parallel (default 1).
+    n_jobs : int, default 1
+        Number of jobs to run in parallel.
 
     pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel
@@ -553,23 +577,30 @@ class GridSearchCV(BaseSearchCV):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    iid : boolean, optional
+    iid : boolean, default=True
         If True, the data is assumed to be identically distributed across
         the folds, and the loss minimized is the total loss per sample,
         and not the mean loss across the folds.
 
-    cv : integer or cross-validation generator, optional
-        If an integer is passed, it is the number of folds (default 3).
+    cv : integer or cross-validation generator, default=3
+        If an integer is passed, it is the number of folds.
         Specific cross-validation objects can be passed, see
         sklearn.cross_validation module for the list of possible objects
 
-    refit : boolean
+    refit : boolean, default=True
         Refit the best estimator with the entire dataset.
         If "False", it is impossible to make predictions using
         this GridSearchCV instance after fitting.
 
     verbose : integer
         Controls the verbosity: the higher, the more messages.
+
+    error_score : 'raise' (default) or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised. If a numeric value is given,
+        FitFailedWarning is raised. This parameter does not affect the refit
+        step, which will always raise the error.
+
 
     Examples
     --------
@@ -580,18 +611,19 @@ class GridSearchCV(BaseSearchCV):
     >>> clf = grid_search.GridSearchCV(svr, parameters)
     >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    GridSearchCV(cv=None,
-           estimator=SVC(C=1.0, cache_size=..., class_weight=..., coef0=..., degree=..., gamma=...,
-       kernel='rbf', max_iter=-1, probability=False, random_state=None,
-       shrinking=True, tol=..., verbose=False),
-           fit_params={}, iid=..., loss_func=..., n_jobs=1,
-           param_grid=..., pre_dispatch=..., refit=..., score_func=...,
+    GridSearchCV(cv=None, error_score=...,
+           estimator=SVC(C=1.0, cache_size=..., class_weight=..., coef0=...,
+                         degree=..., gamma=..., kernel='rbf', max_iter=-1,
+                         probability=False, random_state=None, shrinking=True,
+                         tol=..., verbose=False),
+           fit_params={}, iid=..., n_jobs=1,
+           param_grid=..., pre_dispatch=..., refit=...,
            scoring=..., verbose=...)
 
 
     Attributes
     ----------
-    `grid_scores_` : list of named tuples
+    grid_scores_ : list of named tuples
         Contains scores for all parameter combinations in param_grid.
         Each entry corresponds to one parameter setting.
         Each named tuple has the attributes:
@@ -601,16 +633,20 @@ class GridSearchCV(BaseSearchCV):
               cross-validation folds
             * ``cv_validation_scores``, the list of scores for each fold
 
-    `best_estimator_` : estimator
+    best_estimator_ : estimator
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
-        on the left out data.
+        on the left out data. Not available if refit=False.
 
-    `best_score_` : float
+    best_score_ : float
         Score of best_estimator on the left out data.
 
-    `best_params_` : dict
+    best_params_ : dict
         Parameter setting that gave the best results on the hold out data.
+
+    scorer_ : function
+        Scorer function used on the held out data to choose the best
+        parameters for the model.
 
     Notes
     ------
@@ -635,18 +671,23 @@ class GridSearchCV(BaseSearchCV):
         for fitting a GridSearchCV instance and an evaluation set for
         its final evaluation.
 
+    :func:`sklearn.metrics.make_scorer`:
+        Make a scorer from a performance metric or loss function.
+
     """
 
     def __init__(self, estimator, param_grid, scoring=None, loss_func=None,
                  score_func=None, fit_params=None, n_jobs=1, iid=True,
-                 refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs'):
+                 refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
+                 error_score='raise'):
+
         super(GridSearchCV, self).__init__(
-            estimator, scoring, loss_func, score_func, fit_params, n_jobs, iid,
-            refit, cv, verbose, pre_dispatch)
+            estimator, scoring, fit_params, n_jobs, iid,
+            refit, cv, verbose, pre_dispatch, error_score)
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, y=None):
         """Run fit with all sets of parameters.
 
         Parameters
@@ -661,10 +702,6 @@ class GridSearchCV(BaseSearchCV):
             None for unsupervised learning.
 
         """
-        if params:
-            warnings.warn("Additional parameters to GridSearchCV are ignored!"
-                          " The params argument will be removed in 0.15.",
-                          DeprecationWarning)
         return self._fit(X, y, ParameterGrid(self.param_grid))
 
 
@@ -703,8 +740,8 @@ class RandomizedSearchCV(BaseSearchCV):
     fit_params : dict, optional
         Parameters to pass to the fit method.
 
-    n_jobs : int, optional
-        Number of jobs to run in parallel (default 1).
+    n_jobs : int, default=1
+        Number of jobs to run in parallel.
 
     pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel
@@ -723,7 +760,7 @@ class RandomizedSearchCV(BaseSearchCV):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    iid : boolean, optional
+    iid : boolean, default=True
         If True, the data is assumed to be identically distributed across
         the folds, and the loss minimized is the total loss per sample,
         and not the mean loss across the folds.
@@ -733,7 +770,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Specific cross-validation objects can be passed, see
         sklearn.cross_validation module for the list of possible objects
 
-    refit : boolean
+    refit : boolean, default=True
         Refit the best estimator with the entire dataset.
         If "False", it is impossible to make predictions using
         this RandomizedSearchCV instance after fitting.
@@ -741,10 +778,16 @@ class RandomizedSearchCV(BaseSearchCV):
     verbose : integer
         Controls the verbosity: the higher, the more messages.
 
+    error_score : 'raise' (default) or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised. If a numeric value is given,
+        FitFailedWarning is raised. This parameter does not affect the refit
+        step, which will always raise the error.
+
 
     Attributes
     ----------
-    `grid_scores_` : list of named tuples
+    grid_scores_ : list of named tuples
         Contains scores for all parameter combinations in param_grid.
         Each entry corresponds to one parameter setting.
         Each named tuple has the attributes:
@@ -754,15 +797,15 @@ class RandomizedSearchCV(BaseSearchCV):
               cross-validation folds
             * ``cv_validation_scores``, the list of scores for each fold
 
-    `best_estimator_` : estimator
+    best_estimator_ : estimator
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
-        on the left out data.
+        on the left out data. Not available if refit=False.
 
-    `best_score_` : float
+    best_score_ : float
         Score of best_estimator on the left out data.
 
-    `best_params_` : dict
+    best_params_ : dict
         Parameter setting that gave the best results on the hold out data.
 
     Notes
@@ -791,7 +834,8 @@ class RandomizedSearchCV(BaseSearchCV):
 
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
                  fit_params=None, n_jobs=1, iid=True, refit=True, cv=None,
-                 verbose=0, pre_dispatch='2*n_jobs', random_state=None):
+                 verbose=0, pre_dispatch='2*n_jobs', random_state=None,
+                 error_score='raise'):
 
         self.param_distributions = param_distributions
         self.n_iter = n_iter
@@ -799,7 +843,7 @@ class RandomizedSearchCV(BaseSearchCV):
         super(RandomizedSearchCV, self).__init__(
             estimator=estimator, scoring=scoring, fit_params=fit_params,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
-            pre_dispatch=pre_dispatch)
+            pre_dispatch=pre_dispatch, error_score=error_score)
 
     def fit(self, X, y=None):
         """Run fit on the estimator with randomly drawn parameters.

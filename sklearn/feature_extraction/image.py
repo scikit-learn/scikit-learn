@@ -15,8 +15,8 @@ import numpy as np
 from scipy import sparse
 from numpy.lib.stride_tricks import as_strided
 
-from ..utils.fixes import in1d
-from ..utils import array2d, check_random_state
+from ..utils import check_array, check_random_state
+from ..utils.fixes import astype
 from ..base import BaseEstimator
 
 __all__ = ['PatchExtractor',
@@ -68,8 +68,8 @@ def _mask_edges_weights(mask, edges, weights=None):
     """Apply a mask to edges (weighted or not)"""
     inds = np.arange(mask.size)
     inds = inds[mask.ravel()]
-    ind_mask = np.logical_and(in1d(edges[0], inds),
-                              in1d(edges[1], inds))
+    ind_mask = np.logical_and(np.in1d(edges[0], inds),
+                              np.in1d(edges[1], inds))
     edges = edges[:, ind_mask]
     if weights is not None:
         weights = weights[ind_mask]
@@ -108,7 +108,8 @@ def _to_graph(n_x, n_y, n_z, mask=None, img=None,
         n_voxels = diag.size
     else:
         if mask is not None:
-            mask = mask.astype(np.bool)
+            mask = astype(mask, dtype=np.bool, copy=False)
+            mask = np.asarray(mask, dtype=np.bool)
             edges = _mask_edges_weights(mask, edges)
             n_voxels = np.sum(mask)
         else:
@@ -125,7 +126,7 @@ def _to_graph(n_x, n_y, n_z, mask=None, img=None,
                               (n_voxels, n_voxels),
                               dtype=dtype)
     if return_as is np.ndarray:
-        return graph.todense()
+        return graph.toarray()
     return return_as(graph)
 
 
@@ -146,6 +147,15 @@ def img_to_graph(img, mask=None, return_as=sparse.coo_matrix, dtype=None):
     dtype: None or dtype, optional
         The data of the returned sparse matrix. By default it is the
         dtype of img
+
+    Notes
+    =====
+    For sklearn versions 0.14.1 and prior, return_as=np.ndarray was handled
+    by returning a dense np.matrix instance.  Going forward, np.ndarray
+    returns an np.ndarray, as expected.
+
+    For compatibility, user code relying on this method should wrap its
+    calls in ``np.asarray`` to avoid type issues.
     """
     img = np.atleast_3d(img)
     n_x, n_y, n_z = img.shape
@@ -173,6 +183,15 @@ def grid_to_graph(n_x, n_y, n_z=1, mask=None, return_as=sparse.coo_matrix,
         The class to use to build the returned adjacency matrix.
     dtype: dtype, optional, default int
         The data of the returned sparse matrix. By default it is int
+
+    Notes
+    =====
+    For sklearn versions 0.14.1 and prior, return_as=np.ndarray was handled
+    by returning a dense np.matrix instance.  Going forward, np.ndarray
+    returns an np.ndarray, as expected.
+
+    For compatibility, user code relying on this method should wrap its
+    calls in ``np.asarray`` to avoid type issues.
     """
     return _to_graph(n_x, n_y, n_z, mask=mask, return_as=return_as,
                      dtype=dtype)
@@ -262,7 +281,7 @@ def extract_patches(arr, patch_shape=8, extraction_step=1):
     slices = [slice(None, None, st) for st in extraction_step]
     indexing_strides = arr[slices].strides
 
-    patch_indices_shape = ((np.array(arr.shape) - np.array(patch_shape)) /
+    patch_indices_shape = ((np.array(arr.shape) - np.array(patch_shape)) //
                            np.array(extraction_step)) + 1
 
     shape = tuple(list(patch_indices_shape) + list(patch_shape))
@@ -330,7 +349,15 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     i_h, i_w = image.shape[:2]
     p_h, p_w = patch_size
 
-    image = array2d(image)
+    if p_h > i_h:
+        raise ValueError("Height of the patch should be less than the height"
+                         " of the image.")
+
+    if p_w > i_w:
+        raise ValueError("Width of the patch should be less than the width"
+                         " of the image.")
+
+    image = check_array(image, allow_nd=True)
     image = image.reshape((i_h, i_w, -1))
     n_colors = image.shape[-1]
 
@@ -453,7 +480,7 @@ class PatchExtractor(BaseEstimator):
         X = np.reshape(X, (n_images, i_h, i_w, -1))
         n_channels = X.shape[-1]
         if self.patch_size is None:
-            patch_size = i_h / 10, i_w / 10
+            patch_size = i_h // 10, i_w // 10
         else:
             patch_size = self.patch_size
 

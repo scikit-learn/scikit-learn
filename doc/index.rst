@@ -12,6 +12,7 @@
     tutorial/index
     user_guide
     auto_examples/index
+    faq
     support
     whats_new
     presentations
@@ -61,8 +62,7 @@
 
     </h2>
     <blockquote>
-    <p>Identifying to which set of categories a new observation belong
-    to.</p>
+    <p>Identifying to which category an object belongs to.</p>
     <div class="box-links">
     <strong>Applications</strong>: Spam detection, Image recognition.</br>
     <strong>Algorithms</strong>:&nbsp;
@@ -92,7 +92,7 @@
 
     </h2>
     <blockquote>
-    <p>Predicting a continuous value for a new example.</p>
+    <p>Predicting a continuous-valued attribute associated with an object.</p>
     <div class="box-links">
     <strong>Applications</strong>: Drug response, Stock prices.</br>
     <strong>Algorithms</strong>:&nbsp;
@@ -161,7 +161,7 @@
     <strong>Applications</strong>: Visualization, Increased efficiency</br>
     <strong>Algorithms</strong>:&nbsp;
 
-:ref:`PCA<PCA>`, :ref:`Isomap<isomap>`, :ref:`non-negative matrix factorization<NMF>`.
+:ref:`PCA<PCA>`, :ref:`feature selection<feature_selection>`, :ref:`non-negative matrix factorization<NMF>`.
 
 .. raw:: html
 
@@ -252,16 +252,22 @@
                 <li><em>On-going development:</em>
                 <a href="whats_new.html"><em>What's new</em> (changelog)</a>
                 </li>
+                <li><em>July 2014.</em> scikit-learn 0.15.0 is available for download (<a href="whats_new.html">Changelog</a>).
+                </li>
+                <li><em>July 14-20th, 2014: international sprint.</em>
+                During this week-long sprint, we gathered 18 of the core
+                contributors in Paris.
+                We want to thank our sponsors:
+                <a href="http://www.campus-paris-saclay.fr/en/Idex-Paris-Saclay/Les-Lidex/Paris-Saclay-Center-for-Data-Science">
+                Paris-Saclay Center for Data Science</a>
+                & <a href="https://digicosme.lri.fr">Digicosme</a> and our
+                hosts <a href="http://lapaillasse.org">La Paillasse</a>,
+                <a href="http://www.criteo.com/">Criteo</a>,
+                <a href="http://www.inria.fr/">Inria</a>,
+                and <a href="http://www.tinyclues.com/">tinyclues</a>.
+                </li>
                 <li><em>August 2013.</em> scikit-learn 0.14 is available for download (<a href="whats_new.html">Changelog</a>).
                 </li>
-                <li><em>July 22-28th, 2013: international sprint.</em>
-                During this week-long sprint, we gathered most of the core
-                developers in Paris.
-                We want to thank our sponsors, our
-                hosts <a href="http://www.telecom-paristech.fr/">Télécom ParisTech</a>
-                and <a href="http://www.tinyclues.com/">tinyclues</a>, and
-                donations that helped fund this event.
-
                 </ul>
             </div>
 
@@ -269,6 +275,8 @@
             <div class="span4">
                 <h4>Community</h4>
                 <ul>
+                <li><em>About us</em> See <a href="about.html">authors</a> # scikit-learn</li>
+                <li><em>More Machine Learning</em> Find <a href="related_projects.html">related projects</a></li>
                 <li><em>Questions?</em> See <a href="http://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a> # scikit-learn</li>
                 <li><em>Mailing list:</em> <a href="https://lists.sourceforge.net/lists/listinfo/scikit-learn-general">scikit-learn-general@lists.sourceforge.net</a></li>
                 <li><em>IRC:</em> #scikit-learn @ <a href="http://webchat.freenode.net/">freenode</a></li>
@@ -292,9 +300,21 @@
                 <div id="testimonials_carousel" class="carousel slide">
                     <div class="carousel-inner">
                         <div class="active item">
-                          <img src="_images/inria.jpg" class="thumbnail" />
+                          <img src="_images/inria.png" class="thumbnail" />
                           <p>
                           <em>"We use scikit-learn to support leading-edge basic research [...]"</em>
+                          </p>
+                        </div>
+                        <div class="item">
+                          <img src="_images/spotify.png" class="thumbnail" />
+                          <p>
+                          <em>"I think it's the most well-designed ML package I've seen so far."</em>
+                          </p>
+                        </div>
+                        <div class="item">
+                          <img src="_images/change-logo.png" class="thumbnail" />
+                          <p>
+                          <em>"scikit-learn's ease-of-use, performance and overall variety of algorithms implemented has proved invaluable [...]."</em>
                           </p>
                         </div>
                         <div class="item">
@@ -333,11 +353,34 @@
 
         </div>
     </div>
+
+    <!--Bottom of index page contributions logos-->
+    <div class="container index-upper" >
+	<div class="row-fluid">
+	  <div class="footer">
+	      <div class="span4">
+	        Generous funding provided by INRIA, Google and others.
+	      </div>
+	      <div class="span4">
+   	         <a class="reference internal" href="about.html#funding" style="text-decoration: none" >
+    	           <img id="index-funding-logo-big" src="_static/img/inria-small.png" title="INRIA">
+	           <img id="index-funding-logo-small" src="_static/img/google.png" title="Google">
+	           <!--Due to Télécom ParisTech's logo text being smaller, a style has been added to improve readability-->
+	           <img id="index-funding-logo-small" src="_static/img/telecom.png" title="Télécom ParisTech" style="max-height: 36px">
+	           <img id="index-funding-logo-small" src="_static/img/FNRS-logo.png" title="FNRS">
+	         </a>
+	     </div>
+	     <div class="span4">
+	        <a class="reference internal" href="about.html#funding">
+	           More information on our contributors
+	        </a>
+	     </div>
+	  </div>
+	</div>
+      </div>
     </div>
 
 
     <script>
       $('#testimonials_carousel').carousel()
     </script>
-
-

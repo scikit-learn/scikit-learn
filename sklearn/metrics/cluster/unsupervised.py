@@ -19,6 +19,8 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
     sample.  The Silhouette Coefficient for a sample is ``(b - a) / max(a,
     b)``.  To clarify, ``b`` is the distance between a sample and the nearest
     cluster that the sample is not a part of.
+    Note that Silhouette Coefficent is only defined if number of labels
+    is 2 <= n_labels <= n_samples - 1.
 
     This function returns the mean Silhouette Coefficient over all samples.
     To obtain the values for each sample, use :func:`silhouette_samples`.
@@ -34,7 +36,7 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
         Array of pairwise distances between samples, or a feature array.
 
     labels : array, shape = [n_samples]
-             label values for each sample
+         Predicted labels for each sample.
 
     metric : string, or callable
         The metric to use when calculating distance between instances in a
@@ -74,6 +76,13 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
            <http://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
 
     """
+    n_labels = len(np.unique(labels))
+    n_samples = X.shape[0]
+    if not 2 <= n_labels <= n_samples-1:
+        raise ValueError("Number of labels is %d "
+                         "but should be more than 2"
+                         "and less than n_samples - 1" % n_labels)
+
     if sample_size is not None:
         random_state = check_random_state(random_state)
         indices = random_state.permutation(X.shape[0])[:sample_size]
@@ -87,7 +96,7 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
 def silhouette_samples(X, labels, metric='euclidean', **kwds):
     """Compute the Silhouette Coefficient for each sample.
 
-    The Silhoeutte Coefficient is a measure of how well samples are clustered
+    The Silhouette Coefficient is a measure of how well samples are clustered
     with samples that are similar to themselves. Clustering models with a high
     Silhouette Coefficient are said to be dense, where samples in the same
     cluster are similar to each other, and well separated, where samples in
@@ -97,6 +106,8 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     distance (``a``) and the mean nearest-cluster distance (``b``) for each
     sample.  The Silhouette Coefficient for a sample is ``(b - a) / max(a,
     b)``.
+    Note that Silhouette Coefficent is only defined if number of labels
+    is 2 <= n_labels <= n_samples - 1.
 
     This function returns the Silhouette Coefficient for each sample.
 

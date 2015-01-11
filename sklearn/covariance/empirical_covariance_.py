@@ -16,12 +16,16 @@ import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator
-from ..utils import array2d
+from ..utils import check_array
 from ..utils.extmath import fast_logdet, pinvh
 
 
 def log_likelihood(emp_cov, precision):
-    """Computes the log_likelihood of the data
+    """Computes the sample mean of the log_likelihood under a covariance model
+
+    computes the empirical expected log-likelihood (accounting for the
+    normalization terms and scaling), allowing for universal comparison (beyond
+    this software package)
 
     Parameters
     ----------
@@ -30,12 +34,21 @@ def log_likelihood(emp_cov, precision):
 
     precision : 2D ndarray (n_features, n_features)
         The precision matrix of the covariance model to be tested
+
+    Returns
+    -------
+    sample mean of the log-likelihood
     """
-    return -np.sum(emp_cov * precision) + fast_logdet(precision)
+    p = precision.shape[0]
+    log_likelihood_ = - np.sum(emp_cov * precision) + fast_logdet(precision)
+    log_likelihood_ -= p * np.log(2 * np.pi)
+    log_likelihood_ /= 2.
+    return log_likelihood_
 
 
 def empirical_covariance(X, assume_centered=False):
     """Computes the Maximum likelihood covariance estimator
+
 
     Parameters
     ----------
@@ -84,10 +97,10 @@ class EmpiricalCovariance(BaseEstimator):
 
     Attributes
     ----------
-    `covariance_` : 2D ndarray, shape (n_features, n_features)
+    covariance_ : 2D ndarray, shape (n_features, n_features)
         Estimated covariance matrix
 
-    `precision_` : 2D ndarray, shape (n_features, n_features)
+    precision_ : 2D ndarray, shape (n_features, n_features)
         Estimated pseudo-inverse matrix.
         (stored only if store_precision is True)
 
@@ -109,7 +122,7 @@ class EmpiricalCovariance(BaseEstimator):
             is computed.
 
         """
-        covariance = array2d(covariance)
+        covariance = check_array(covariance)
         # set covariance
         self.covariance_ = covariance
         # set precision
@@ -123,7 +136,7 @@ class EmpiricalCovariance(BaseEstimator):
 
         Returns
         -------
-        `precision_` : array-like,
+        precision_ : array-like,
             The precision matrix associated to the current covariance object.
 
         """

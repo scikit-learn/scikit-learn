@@ -12,8 +12,7 @@ import numpy as np
 
 from .base import BaseEstimator, ClassifierMixin
 from .externals.six.moves import xrange
-from .utils.fixes import unique
-from .utils import check_arrays, array2d, column_or_1d
+from .utils import check_array, check_X_y
 
 __all__ = ['QDA']
 
@@ -39,23 +38,25 @@ class QDA(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    `covariances_` : list of array-like, shape = [n_features, n_features]
+    covariances_ : list of array-like, shape = [n_features, n_features]
         Covariance matrices of each class.
 
-    `means_` : array-like, shape = [n_classes, n_features]
+    means_ : array-like, shape = [n_classes, n_features]
         Class means.
 
-    `priors_` : array-like, shape = [n_classes]
+    priors_ : array-like, shape = [n_classes]
         Class priors (sum to 1).
 
-    `rotations_` : list of arrays
-        For each class an array of shape [n_samples, n_samples], the
-        rotation of the Gaussian distribution, i.e. its principal axis.
+    rotations_ : list of arrays
+        For each class k an array of shape [n_features, n_k], with
+        ``n_k = min(n_features, number of elements in class k)``
+        It is the rotation of the Gaussian distribution, i.e. its
+        principal axis.
 
-    `scalings_` : array-like, shape = [n_classes, n_features]
-        Contains the scaling of the Gaussian
-        distributions along the principal axes for each
-        class, i.e. the variance in the rotated coordinate system.
+    scalings_ : list of arrays
+        For each class k an array of shape [n_k]. It contains the scaling
+        of the Gaussian distributions along its principal axes, i.e. the
+        variance in the rotated coordinate system.
 
     Examples
     --------
@@ -95,9 +96,8 @@ class QDA(BaseEstimator, ClassifierMixin):
             If True the covariance matrices are computed and stored in the
             `self.covariances_` attribute.
         """
-        X, y = check_arrays(X, y)
-        y = column_or_1d(y, warn=True)
-        self.classes_, y = unique(y, return_inverse=True)
+        X, y = check_X_y(X, y)
+        self.classes_, y = np.unique(y, return_inverse=True)
         n_samples, n_features = X.shape
         n_classes = len(self.classes_)
         if n_classes < 2:
@@ -117,6 +117,9 @@ class QDA(BaseEstimator, ClassifierMixin):
             Xg = X[y == ind, :]
             meang = Xg.mean(0)
             means.append(meang)
+            if len(Xg) == 1:
+                raise ValueError('y has only 1 sample in class %s, covariance '
+                                 'is ill defined.' % str(self.classes_[ind]))
             Xgc = Xg - meang
             # Xgc = U * S * V.T
             U, S, Vt = np.linalg.svd(Xgc, full_matrices=False)
@@ -133,12 +136,12 @@ class QDA(BaseEstimator, ClassifierMixin):
         if store_covariances:
             self.covariances_ = cov
         self.means_ = np.asarray(means)
-        self.scalings_ = np.asarray(scalings)
+        self.scalings_ = scalings
         self.rotations_ = rotations
         return self
 
     def _decision_function(self, X):
-        X = array2d(X)
+        X = check_array(X)
         norm2 = []
         for i in range(len(self.classes_)):
             R = self.rotations_[i]
@@ -147,8 +150,8 @@ class QDA(BaseEstimator, ClassifierMixin):
             X2 = np.dot(Xm, R * (S ** (-0.5)))
             norm2.append(np.sum(X2 ** 2, 1))
         norm2 = np.array(norm2).T   # shape = [len(X), n_classes]
-        return (-0.5 * (norm2 + np.sum(np.log(self.scalings_), 1))
-                + np.log(self.priors_))
+        u = np.asarray([np.sum(np.log(s)) for s in self.scalings_])
+        return (-0.5 * (norm2 + u) + np.log(self.priors_))
 
     def decision_function(self, X):
         """Apply decision function to an array of samples.

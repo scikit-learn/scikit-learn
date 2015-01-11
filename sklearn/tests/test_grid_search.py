@@ -9,35 +9,44 @@ from sklearn.externals.six.moves import xrange
 from itertools import chain, product
 import pickle
 import sys
-import warnings
 
 import numpy as np
 import scipy.sparse as sp
 
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_no_warnings
+from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
 from scipy.stats import distributions
 
+from sklearn.externals.six.moves import zip
 from sklearn.base import BaseEstimator
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
 from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
-                                 ParameterGrid, ParameterSampler)
+                                 ParameterGrid, ParameterSampler,
+                                 ChangedBehaviorWarning)
 from sklearn.svm import LinearSVC, SVC
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.cluster import KMeans, SpectralClustering
+from sklearn.cluster import KMeans
+from sklearn.neighbors import KernelDensity
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
-from sklearn.cross_validation import KFold, StratifiedKFold
+from sklearn.cross_validation import KFold, StratifiedKFold, FitFailedWarning
+from sklearn.preprocessing import Imputer
+from sklearn.pipeline import Pipeline
 
 
 # Neither of the following two estimators inherit from BaseEstimator,
@@ -57,37 +66,6 @@ class MockClassifier(object):
     predict_proba = predict
     decision_function = predict
     transform = predict
-
-    def score(self, X=None, Y=None):
-        if self.foo_param > 1:
-            score = 1.
-        else:
-            score = 0.
-        return score
-
-    def get_params(self, deep=False):
-        return {'foo_param': self.foo_param}
-
-    def set_params(self, **params):
-        self.foo_param = params['foo_param']
-        return self
-
-
-class MockListClassifier(object):
-    """Dummy classifier to test the cross-validation.
-
-    Checks that GridSearchCV didn't convert X to array.
-    """
-    def __init__(self, foo_param=0):
-        self.foo_param = foo_param
-
-    def fit(self, X, Y):
-        assert_true(len(X) == len(Y))
-        assert_true(isinstance(X, list))
-        return self
-
-    def predict(self, T):
-        return T.shape[0]
 
     def score(self, X=None, Y=None):
         if self.foo_param > 1:
@@ -170,13 +148,14 @@ def test_grid_search():
     assert_raises(ValueError, grid_search.fit, X, y)
 
 
+@ignore_warnings
 def test_grid_search_no_score():
     # Test grid-search on classifier that has no score function.
     clf = LinearSVC(random_state=0)
     X, y = make_blobs(random_state=0, centers=2)
     Cs = [.1, 1, 10]
     clf_no_score = LinearSVCNoScore(random_state=0)
-    grid_search = GridSearchCV(clf, {'C': Cs})
+    grid_search = GridSearchCV(clf, {'C': Cs}, scoring='accuracy')
     grid_search.fit(X, y)
 
     grid_search_no_score = GridSearchCV(clf_no_score, {'C': Cs},
@@ -190,8 +169,39 @@ def test_grid_search_no_score():
     assert_equal(grid_search.score(X, y), grid_search_no_score.score(X, y))
 
     # giving no scoring function raises an error
-    assert_raise_message(TypeError, "no scoring",
-                         GridSearchCV, clf_no_score, {'C': Cs})
+    grid_search_no_score = GridSearchCV(clf_no_score, {'C': Cs})
+    assert_raise_message(TypeError, "no scoring", grid_search_no_score.fit,
+                         [[1]])
+
+
+def test_grid_search_score_method():
+    X, y = make_classification(n_samples=100, n_classes=2, flip_y=.2,
+                               random_state=0)
+    clf = LinearSVC(random_state=0)
+    grid = {'C': [.1]}
+
+    search_no_scoring = GridSearchCV(clf, grid, scoring=None).fit(X, y)
+    search_accuracy = GridSearchCV(clf, grid, scoring='accuracy').fit(X, y)
+    search_no_score_method_auc = GridSearchCV(LinearSVCNoScore(), grid,
+                                              scoring='roc_auc').fit(X, y)
+    search_auc = GridSearchCV(clf, grid, scoring='roc_auc').fit(X, y)
+
+    # Check warning only occurs in situation where behavior changed:
+    # estimator requires score method to compete with scoring parameter
+    score_no_scoring = assert_no_warnings(search_no_scoring.score, X, y)
+    score_accuracy = assert_warns(ChangedBehaviorWarning,
+                                  search_accuracy.score, X, y)
+    score_no_score_auc = assert_no_warnings(search_no_score_method_auc.score,
+                                            X, y)
+    score_auc = assert_warns(ChangedBehaviorWarning,
+                             search_auc.score, X, y)
+    # ensure the test is sane
+    assert_true(score_auc < 1.0)
+    assert_true(score_accuracy < 1.0)
+    assert_not_equal(score_auc, score_accuracy)
+
+    assert_almost_equal(score_accuracy, score_no_scoring)
+    assert_almost_equal(score_auc, score_no_score_auc)
 
 
 def test_trivial_grid_scores():
@@ -350,43 +360,6 @@ def test_grid_search_sparse_scoring():
     assert_array_equal(y_pred, y_pred3)
 
 
-def test_deprecated_score_func():
-    # test that old deprecated way of passing a score / loss function is still
-    # supported
-    X, y = make_classification(n_samples=200, n_features=100, random_state=0)
-    clf = LinearSVC(random_state=0)
-    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, scoring="f1")
-    cv.fit(X[:180], y[:180])
-    y_pred = cv.predict(X[180:])
-    C = cv.best_estimator_.C
-
-    clf = LinearSVC(random_state=0)
-    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, score_func=f1_score)
-    with warnings.catch_warnings(record=True):
-        # catch deprecation warning
-        cv.fit(X[:180], y[:180])
-    y_pred_func = cv.predict(X[180:])
-    C_func = cv.best_estimator_.C
-
-    assert_array_equal(y_pred, y_pred_func)
-    assert_equal(C, C_func)
-
-    # test loss where greater is worse
-    def f1_loss(y_true_, y_pred_):
-        return -f1_score(y_true_, y_pred_)
-
-    clf = LinearSVC(random_state=0)
-    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, loss_func=f1_loss)
-    with warnings.catch_warnings(record=True):
-        # catch deprecation warning
-        cv.fit(X[:180], y[:180])
-    y_pred_loss = cv.predict(X[180:])
-    C_loss = cv.best_estimator_.C
-
-    assert_array_equal(y_pred, y_pred_loss)
-    assert_equal(C, C_loss)
-
-
 def test_grid_search_precomputed_kernel():
     """Test that grid search works when the input features are given in the
     form of a precomputed kernel matrix """
@@ -462,16 +435,65 @@ def test_refit():
     clf.fit(X, y)
 
 
+def test_gridsearch_nd():
+    """Pass X as list in GridSearchCV"""
+    X_4d = np.arange(10 * 5 * 3 * 2).reshape(10, 5, 3, 2)
+    y_3d = np.arange(10 * 7 * 11).reshape(10, 7, 11)
+    check_X = lambda x: x.shape[1:] == (5, 3, 2)
+    check_y = lambda x: x.shape[1:] == (7, 11)
+    clf = CheckingClassifier(check_X=check_X, check_y=check_y)
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]})
+    grid_search.fit(X_4d, y_3d).score(X, y)
+    assert_true(hasattr(grid_search, "grid_scores_"))
+
+
 def test_X_as_list():
     """Pass X as list in GridSearchCV"""
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
 
-    clf = MockListClassifier()
+    clf = CheckingClassifier(check_X=lambda x: isinstance(x, list))
     cv = KFold(n=len(X), n_folds=3)
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
     grid_search.fit(X.tolist(), y).score(X, y)
     assert_true(hasattr(grid_search, "grid_scores_"))
+
+
+def test_y_as_list():
+    """Pass y as list in GridSearchCV"""
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+
+    clf = CheckingClassifier(check_y=lambda x: isinstance(x, list))
+    cv = KFold(n=len(X), n_folds=3)
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
+    grid_search.fit(X, y.tolist()).score(X, y)
+    assert_true(hasattr(grid_search, "grid_scores_"))
+
+
+def test_pandas_input():
+    # check cross_val_score doesn't destroy pandas dataframe
+    types = [(MockDataFrame, MockDataFrame)]
+    try:
+        from pandas import Series, DataFrame
+        types.append((DataFrame, Series))
+    except ImportError:
+        pass
+
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+
+    for InputFeatureType, TargetType in types:
+        # X dataframe, y series
+        X_df, y_ser = InputFeatureType(X), TargetType(y)
+        check_df = lambda x: isinstance(x, InputFeatureType)
+        check_series = lambda x: isinstance(x, TargetType)
+        clf = CheckingClassifier(check_X=check_df, check_y=check_series)
+
+        grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]})
+        grid_search.fit(X_df, y_ser).score(X_df, y_ser)
+        grid_search.predict(X_df)
+        assert_true(hasattr(grid_search, "grid_scores_"))
 
 
 def test_unsupervised_grid_search():
@@ -490,13 +512,19 @@ def test_unsupervised_grid_search():
     assert_equal(grid_search.best_params_["n_clusters"], 4)
 
 
-def test_bad_estimator():
-    # test grid-search with clustering algorithm which doesn't support
-    # "predict"
-    sc = SpectralClustering()
-    assert_raises(TypeError, GridSearchCV, sc,
-                  param_grid=dict(gamma=[.1, 1, 10]),
-                  scoring='ari')
+def test_gridsearch_no_predict():
+    # test grid-search with an estimator without predict.
+    # slight duplication of a test from KDE
+    def custom_scoring(estimator, X):
+        return 42 if estimator.bandwidth == .1 else 0
+    X, _ = make_blobs(cluster_std=.1, random_state=1,
+                      centers=[[0, 1], [1, 0], [0, 0]])
+    search = GridSearchCV(KernelDensity(),
+                          param_grid=dict(bandwidth=[.01, .1, 1]),
+                          scoring=custom_scoring)
+    search.fit(X)
+    assert_equal(search.best_params_['bandwidth'], .1)
+    assert_equal(search.best_score_, 42)
 
 
 def test_param_sampler():
@@ -543,7 +571,7 @@ def test_randomized_search_grid_scores():
 
     # Check the consistency with the best_score_ and best_params_ attributes
     sorted_grid_scores = list(sorted(search.grid_scores_,
-                            key=lambda x: x.mean_validation_score))
+                              key=lambda x: x.mean_validation_score))
     best_score = sorted_grid_scores[-1].mean_validation_score
     assert_equal(search.best_score_, best_score)
 
@@ -573,8 +601,8 @@ def test_grid_search_score_consistency():
                 if score == "f1":
                     correct_score = f1_score(y[test], clf.predict(X[test]))
                 elif score == "roc_auc":
-                    correct_score = roc_auc_score(y[test],
-                                              clf.decision_function(X[test]))
+                    dec = clf.decision_function(X[test])
+                    correct_score = roc_auc_score(y[test], dec)
                 assert_almost_equal(correct_score, scores[i])
                 i += 1
 
@@ -642,3 +670,91 @@ def test_grid_search_with_multioutput_data():
                 correct_score = est.score(X[test], y[test])
                 assert_almost_equal(correct_score,
                                     cv_validation_scores[i])
+
+
+def test_predict_proba_disabled():
+    """Test predict_proba when disabled on estimator."""
+    X = np.arange(20).reshape(5, -1)
+    y = [0, 0, 1, 1, 1]
+    clf = SVC(probability=False)
+    gs = GridSearchCV(clf, {}, cv=2).fit(X, y)
+    assert_false(hasattr(gs, "predict_proba"))
+
+
+def test_grid_search_allows_nans():
+    """ Test GridSearchCV with Imputer """
+    X = np.arange(20, dtype=np.float64).reshape(5, -1)
+    X[2, :] = np.nan
+    y = [0, 0, 1, 1, 1]
+    p = Pipeline([
+        ('imputer', Imputer(strategy='mean', missing_values='NaN')),
+        ('classifier', MockClassifier()),
+    ])
+    GridSearchCV(p, {'classifier__foo_param': [1, 2, 3]}, cv=2).fit(X, y)
+
+
+class FailingClassifier(BaseEstimator):
+    """Classifier that raises a ValueError on fit()"""
+
+    FAILING_PARAMETER = 2
+
+    def __init__(self, parameter=None):
+        self.parameter = parameter
+
+    def fit(self, X, y=None):
+        if self.parameter == FailingClassifier.FAILING_PARAMETER:
+            raise ValueError("Failing classifier failed as required")
+
+    def predict(self, X):
+        return np.zeros(X.shape[0])
+
+
+def test_grid_search_failing_classifier():
+    """GridSearchCV with on_error != 'raise'
+
+    Ensures that a warning is raised and score reset where appropriate.
+    """
+
+    X, y = make_classification(n_samples=20, n_features=10, random_state=0)
+
+    clf = FailingClassifier()
+
+    # refit=False because we only want to check that errors caused by fits
+    # to individual folds will be caught and warnings raised instead. If
+    # refit was done, then an exception would be raised on refit and not
+    # caught by grid_search (expected behavior), and this would cause an
+    # error in this test.
+    gs = GridSearchCV(clf, [{'parameter': [0, 1, 2]}], scoring='accuracy',
+                      refit=False, error_score=0.0)
+
+    assert_warns(FitFailedWarning, gs.fit, X, y)
+
+    # Ensure that grid scores were set to zero as required for those fits
+    # that are expected to fail.
+    assert all(np.all(this_point.cv_validation_scores == 0.0)
+               for this_point in gs.grid_scores_
+               if this_point.parameters['parameter'] ==
+               FailingClassifier.FAILING_PARAMETER)
+
+    gs = GridSearchCV(clf, [{'parameter': [0, 1, 2]}], scoring='accuracy',
+                      refit=False, error_score=float('nan'))
+    assert_warns(FitFailedWarning, gs.fit, X, y)
+    assert all(np.all(np.isnan(this_point.cv_validation_scores))
+               for this_point in gs.grid_scores_
+               if this_point.parameters['parameter'] ==
+               FailingClassifier.FAILING_PARAMETER)
+
+
+def test_grid_search_failing_classifier_raise():
+    """GridSearchCV with on_error == 'raise' raises the error"""
+
+    X, y = make_classification(n_samples=20, n_features=10, random_state=0)
+
+    clf = FailingClassifier()
+
+    # refit=False because we want to test the behaviour of the grid search part
+    gs = GridSearchCV(clf, [{'parameter': [0, 1, 2]}], scoring='accuracy',
+                      refit=False, error_score='raise')
+
+    # FailingClassifier issues a ValueError so this is what we look for.
+    assert_raises(ValueError, gs.fit, X, y)

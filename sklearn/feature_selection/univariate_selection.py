@@ -1,26 +1,21 @@
-# -*- coding: utf-8 -*-
 """Univariate features selection."""
 
 # Authors: V. Michel, B. Thirion, G. Varoquaux, A. Gramfort, E. Duchesnay.
-#          L. Buitinck
+#          L. Buitinck, A. Joly
 # License: BSD 3 clause
 
 
-from abc import ABCMeta, abstractmethod
-from warnings import warn
-from functools import reduce
-
 import numpy as np
+import warnings
+
 from scipy import special, stats
 from scipy.sparse import issparse
 
 from ..base import BaseEstimator
 from ..preprocessing import LabelBinarizer
-from ..utils import (array2d, as_float_array,
-                     atleast2d_or_csr, check_arrays, safe_asarray, safe_sqr,
+from ..utils import (as_float_array, check_array, check_X_y, safe_sqr,
                      safe_mask)
-from ..utils.extmath import safe_sparse_dot
-from ..externals import six
+from ..utils.extmath import norm, safe_sparse_dot
 from .base import SelectorMixin
 
 
@@ -92,14 +87,13 @@ def f_oneway(*args):
 
     """
     n_classes = len(args)
-    args = [safe_asarray(a) for a in args]
+    args = [as_float_array(a) for a in args]
     n_samples_per_class = np.array([a.shape[0] for a in args])
     n_samples = np.sum(n_samples_per_class)
-    ss_alldata = reduce(lambda x, y: x + y,
-                        [safe_sqr(a).sum(axis=0) for a in args])
-    sums_args = [a.sum(axis=0) for a in args]
-    square_of_sums_alldata = safe_sqr(reduce(lambda x, y: x + y, sums_args))
-    square_of_sums_args = [safe_sqr(s) for s in sums_args]
+    ss_alldata = sum(safe_sqr(a).sum(axis=0) for a in args)
+    sums_args = [np.asarray(a.sum(axis=0)) for a in args]
+    square_of_sums_alldata = sum(sums_args) ** 2
+    square_of_sums_args = [s ** 2 for s in sums_args]
     sstot = ss_alldata - square_of_sums_alldata / float(n_samples)
     ssbn = 0.
     for k, _ in enumerate(args):
@@ -110,6 +104,10 @@ def f_oneway(*args):
     dfwn = n_samples - n_classes
     msb = ssbn / float(dfbn)
     msw = sswn / float(dfwn)
+    constant_features_idx = np.where(msw == 0.)[0]
+    if (np.nonzero(msb)[0].size != msb.size and constant_features_idx.size):
+        warnings.warn("Features %s are constant." % constant_features_idx,
+                      UserWarning)
     f = msb / msw
     # flatten matrix to vector in sparse case
     f = np.asarray(f).ravel()
@@ -136,7 +134,7 @@ def f_classif(X, y):
     pval : array, shape = [n_features,]
         The set of p-values.
     """
-    X, y = check_arrays(X, y)
+    X, y = check_X_y(X, y, ['csr', 'csc', 'coo'])
     args = [X[safe_mask(X, y == k)] for k in np.unique(y)]
     return f_oneway(*args)
 
@@ -150,7 +148,7 @@ def _chisquare(f_obs, f_exp):
     f_obs = np.asarray(f_obs, dtype=np.float64)
 
     k = len(f_obs)
-    # Reuse f_obs for χ² statistics
+    # Reuse f_obs for chi-squared statistics
     chisq = f_obs
     chisq -= f_exp
     chisq **= 2
@@ -160,14 +158,14 @@ def _chisquare(f_obs, f_exp):
 
 
 def chi2(X, y):
-    """Compute χ² (chi-squared) statistic for each class/feature combination.
+    """Compute chi-squared statistic for each class/feature combination.
 
     This score can be used to select the n_features features with the
-    highest values for the χ² (chi-square) statistic from X, which must
+    highest values for the test chi-squared statistic from X, which must
     contain booleans or frequencies (e.g., term counts in document
     classification), relative to the classes.
 
-    Recall that the χ² statistic measures dependence between stochastic
+    Recall that the chi-square test measures dependence between stochastic
     variables, so using this function "weeds out" the features that are the
     most likely to be independent of class and therefore irrelevant for
     classification.
@@ -194,7 +192,7 @@ def chi2(X, y):
 
     # XXX: we might want to do some of the following in logspace instead for
     # numerical stability.
-    X = atleast2d_or_csr(X)
+    X = check_array(X, accept_sparse='csr')
     if np.any((X.data if issparse(X) else X) < 0):
         raise ValueError("Input X must be non-negative.")
 
@@ -204,8 +202,8 @@ def chi2(X, y):
 
     observed = safe_sparse_dot(Y.T, X)          # n_classes * n_features
 
-    feature_count = array2d(X.sum(axis=0))
-    class_prob = array2d(Y.mean(axis=0))
+    feature_count = check_array(X.sum(axis=0))
+    class_prob = check_array(Y.mean(axis=0))
     expected = np.dot(class_prob.T, feature_count)
 
     return _chisquare(observed, expected)
@@ -244,8 +242,7 @@ def f_regression(X, y, center=True):
     """
     if issparse(X) and center:
         raise ValueError("center=True only allowed for dense data")
-    X, y = check_arrays(X, y, dtype=np.float)
-    y = y.ravel()
+    X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float)
     if center:
         y = y - np.mean(y)
         X = X.copy('F')  # faster in fortran
@@ -253,72 +250,72 @@ def f_regression(X, y, center=True):
 
     # compute the correlation
     corr = safe_sparse_dot(y, X)
+    # XXX could use corr /= row_norms(X.T) here, but the test doesn't pass
     corr /= np.asarray(np.sqrt(safe_sqr(X).sum(axis=0))).ravel()
-    corr /= np.asarray(np.sqrt(safe_sqr(y).sum())).ravel()
+    corr /= norm(y)
 
     # convert to p-value
-    dof = y.size - 2
-    F = corr ** 2 / (1 - corr ** 2) * dof
-    pv = stats.f.sf(F, 1, dof)
+    degrees_of_freedom = y.size - (2 if center else 1)
+    F = corr ** 2 / (1 - corr ** 2) * degrees_of_freedom
+    pv = stats.f.sf(F, 1, degrees_of_freedom)
     return F, pv
 
 
 ######################################################################
 # Base classes
 
-class _BaseFilter(six.with_metaclass(ABCMeta, BaseEstimator,
-                                     SelectorMixin)):
+class _BaseFilter(BaseEstimator, SelectorMixin):
+    """Initialize the univariate feature selection.
+
+    Parameters
+    ----------
+    score_func : callable
+        Function taking two arrays X and y, and returning a pair of arrays
+        (scores, pvalues).
+    """
 
     def __init__(self, score_func):
-        """ Initialize the univariate feature selection.
+        self.score_func = score_func
+
+    def fit(self, X, y):
+        """Run score function on (X, y) and get the appropriate features.
 
         Parameters
         ----------
-        score_func : callable
-            Function taking two arrays X and y, and returning a pair of arrays
-            (scores, pvalues).
+        X : array-like, shape = [n_samples, n_features]
+            The training input samples.
+
+        y : array-like, shape = [n_samples]
+            The target values (class labels in classification, real numbers in
+            regression).
+
+        Returns
+        -------
+        self : object
+            Returns self.
         """
-        if not callable(score_func):
-            raise TypeError(
-                "The score function should be a callable, %s (%s) "
-                "was passed." % (score_func, type(score_func)))
-        self.score_func = score_func
+        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'])
 
-    @abstractmethod
-    def fit(self, X, y):
-        """Run score function on (X, y) and get the appropriate features."""
+        if not callable(self.score_func):
+            raise TypeError("The score function should be a callable, %s (%s) "
+                            "was passed."
+                            % (self.score_func, type(self.score_func)))
 
+        self._check_params(X, y)
 
-class _PvalueFilter(_BaseFilter):
-    def fit(self, X, y):
-        """Evaluate the score function on samples X with outputs y.
-
-        Records and selects features according to the p-values output by the
-        score function.
-        """
         self.scores_, self.pvalues_ = self.score_func(X, y)
         self.scores_ = np.asarray(self.scores_)
         self.pvalues_ = np.asarray(self.pvalues_)
         return self
 
-
-class _ScoreFilter(_BaseFilter):
-    def fit(self, X, y):
-        """Evaluate the score function on samples X with outputs y.
-
-        Records and selects features according to their scores.
-        """
-        self.scores_, self.pvalues_ = self.score_func(X, y)
-        self.scores_ = np.asarray(self.scores_)
-        self.pvalues_ = np.asarray(self.pvalues_)
-        return self
+    def _check_params(self, X, y):
+        pass
 
 
 ######################################################################
 # Specific filters
 ######################################################################
-
-class SelectPercentile(_ScoreFilter):
+class SelectPercentile(_BaseFilter):
     """Select features according to a percentile of the highest scores.
 
     Parameters
@@ -332,10 +329,10 @@ class SelectPercentile(_ScoreFilter):
 
     Attributes
     ----------
-    `scores_` : array-like, shape=(n_features,)
+    scores_ : array-like, shape=(n_features,)
         Scores of features.
 
-    `pvalues_` : array-like, shape=(n_features,)
+    pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores.
 
     Notes
@@ -346,35 +343,34 @@ class SelectPercentile(_ScoreFilter):
     """
 
     def __init__(self, score_func=f_classif, percentile=10):
-        if not 0 <= percentile <= 100:
-            raise ValueError("percentile should be >=0, <=100; got %r"
-                             % percentile)
-        self.percentile = percentile
         super(SelectPercentile, self).__init__(score_func)
+        self.percentile = percentile
+
+    def _check_params(self, X, y):
+        if not 0 <= self.percentile <= 100:
+            raise ValueError("percentile should be >=0, <=100; got %r"
+                             % self.percentile)
 
     def _get_support_mask(self):
-        percentile = self.percentile
-        if percentile > 100:
-            raise ValueError("percentile should be between 0 and 100"
-                             " (%f given)" % (percentile))
         # Cater for NaNs
-        if percentile == 100:
+        if self.percentile == 100:
             return np.ones(len(self.scores_), dtype=np.bool)
-        elif percentile == 0:
+        elif self.percentile == 0:
             return np.zeros(len(self.scores_), dtype=np.bool)
-        scores = _clean_nans(self.scores_)
 
-        alpha = stats.scoreatpercentile(scores, 100 - percentile)
-        mask = scores > alpha
-        ties = np.where(scores == alpha)[0]
+        scores = _clean_nans(self.scores_)
+        treshold = stats.scoreatpercentile(scores,
+                                           100 - self.percentile)
+        mask = scores > treshold
+        ties = np.where(scores == treshold)[0]
         if len(ties):
-            max_feats = len(scores) * percentile // 100
+            max_feats = len(scores) * self.percentile // 100
             kept_ties = ties[:max_feats - mask.sum()]
             mask[kept_ties] = True
         return mask
 
 
-class SelectKBest(_ScoreFilter):
+class SelectKBest(_BaseFilter):
     """Select features according to the k highest scores.
 
     Parameters
@@ -389,10 +385,10 @@ class SelectKBest(_ScoreFilter):
 
     Attributes
     ----------
-    `scores_` : array-like, shape=(n_features,)
+    scores_ : array-like, shape=(n_features,)
         Scores of features.
 
-    `pvalues_` : array-like, shape=(n_features,)
+    pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores.
 
     Notes
@@ -403,32 +399,31 @@ class SelectKBest(_ScoreFilter):
     """
 
     def __init__(self, score_func=f_classif, k=10):
-        self.k = k
         super(SelectKBest, self).__init__(score_func)
+        self.k = k
+
+    def _check_params(self, X, y):
+        if not (self.k == "all" or 0 <= self.k <= X.shape[1]):
+            raise ValueError("k should be >=0, <= n_features; got %r."
+                             "Use k='all' to return all features."
+                             % self.k)
 
     def _get_support_mask(self):
-        k = self.k
-        if k == 'all':
+        if self.k == 'all':
             return np.ones(self.scores_.shape, dtype=bool)
-        if k > len(self.scores_):
-            raise ValueError("Cannot select %d features among %d. "
-                             "Use k='all' to return all features."
-                             % (k, len(self.scores_)))
+        elif self.k == 0:
+            return np.zeros(self.scores_.shape, dtype=bool)
+        else:
+            scores = _clean_nans(self.scores_)
+            mask = np.zeros(scores.shape, dtype=bool)
 
-        scores = _clean_nans(self.scores_)
-        # XXX This should be refactored; we're getting an array of indices
-        # from argsort, which we transform to a mask, which we probably
-        # transform back to indices later.
-        mask = np.zeros(scores.shape, dtype=bool)
-
-        # Request a stable sort. Mergesort takes more memory (~40MB per
-        # megafeature on x86-64), but blows heapsort out of the water in
-        # terms of speed.
-        mask[np.argsort(scores, kind="mergesort")[-k:]] = 1
-        return mask
+            # Request a stable sort. Mergesort takes more memory (~40MB per
+            # megafeature on x86-64).
+            mask[np.argsort(scores, kind="mergesort")[-self.k:]] = 1
+            return mask
 
 
-class SelectFpr(_PvalueFilter):
+class SelectFpr(_BaseFilter):
     """Filter: Select the pvalues below alpha based on a FPR test.
 
     FPR test stands for False Positive Rate test. It controls the total
@@ -445,23 +440,22 @@ class SelectFpr(_PvalueFilter):
 
     Attributes
     ----------
-    `scores_` : array-like, shape=(n_features,)
+    scores_ : array-like, shape=(n_features,)
         Scores of features.
 
-    `pvalues_` : array-like, shape=(n_features,)
+    pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores.
     """
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
-        self.alpha = alpha
         super(SelectFpr, self).__init__(score_func)
+        self.alpha = alpha
 
     def _get_support_mask(self):
-        alpha = self.alpha
-        return self.pvalues_ < alpha
+        return self.pvalues_ < self.alpha
 
 
-class SelectFdr(_PvalueFilter):
+class SelectFdr(_BaseFilter):
     """Filter: Select the p-values for an estimated false discovery rate
 
     This uses the Benjamini-Hochberg procedure. ``alpha`` is the target false
@@ -479,16 +473,16 @@ class SelectFdr(_PvalueFilter):
 
     Attributes
     ----------
-    `scores_` : array-like, shape=(n_features,)
+    scores_ : array-like, shape=(n_features,)
         Scores of features.
 
-    `pvalues_` : array-like, shape=(n_features,)
+    pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores.
     """
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
-        self.alpha = alpha
         super(SelectFdr, self).__init__(score_func)
+        self.alpha = alpha
 
     def _get_support_mask(self):
         alpha = self.alpha
@@ -497,7 +491,7 @@ class SelectFdr(_PvalueFilter):
         return self.pvalues_ <= threshold
 
 
-class SelectFwe(_PvalueFilter):
+class SelectFwe(_BaseFilter):
     """Filter: Select the p-values corresponding to Family-wise error rate
 
     Parameters
@@ -511,20 +505,19 @@ class SelectFwe(_PvalueFilter):
 
     Attributes
     ----------
-    `scores_` : array-like, shape=(n_features,)
+    scores_ : array-like, shape=(n_features,)
         Scores of features.
 
-    `pvalues_` : array-like, shape=(n_features,)
+    pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores.
     """
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
-        self.alpha = alpha
         super(SelectFwe, self).__init__(score_func)
+        self.alpha = alpha
 
     def _get_support_mask(self):
-        alpha = self.alpha
-        return (self.pvalues_ < alpha / len(self.pvalues_))
+        return (self.pvalues_ < self.alpha / len(self.pvalues_))
 
 
 ######################################################################
@@ -533,7 +526,7 @@ class SelectFwe(_PvalueFilter):
 
 # TODO this class should fit on either p-values or scores,
 # depending on the mode.
-class GenericUnivariateSelect(_PvalueFilter):
+class GenericUnivariateSelect(_BaseFilter):
     """Univariate feature selector with configurable strategy.
 
     Parameters
@@ -550,10 +543,10 @@ class GenericUnivariateSelect(_PvalueFilter):
 
     Attributes
     ----------
-    `scores_` : array-like, shape=(n_features,)
+    scores_ : array-like, shape=(n_features,)
         Scores of features.
 
-    `pvalues_` : array-like, shape=(n_features,)
+    pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores.
     """
 
@@ -561,27 +554,35 @@ class GenericUnivariateSelect(_PvalueFilter):
                         'k_best':       SelectKBest,
                         'fpr':          SelectFpr,
                         'fdr':          SelectFdr,
-                        'fwe':          SelectFwe,
-                        }
+                        'fwe':          SelectFwe}
 
     def __init__(self, score_func=f_classif, mode='percentile', param=1e-5):
-        if mode not in self._selection_modes:
-            raise ValueError(
-                "The mode passed should be one of %s, %r, (type %s) "
-                "was passed." % (
-                    self._selection_modes.keys(),
-                    mode, type(mode)))
         super(GenericUnivariateSelect, self).__init__(score_func)
         self.mode = mode
         self.param = param
 
-    def _get_support_mask(self):
-        selector = self._selection_modes[self.mode](lambda x: x)
-        selector.pvalues_ = self.pvalues_
-        selector.scores_ = self.scores_
+    def _make_selector(self):
+        selector = self._selection_modes[self.mode](score_func=self.score_func)
+
         # Now perform some acrobatics to set the right named parameter in
         # the selector
         possible_params = selector._get_param_names()
         possible_params.remove('score_func')
         selector.set_params(**{possible_params[0]: self.param})
+
+        return selector
+
+    def _check_params(self, X, y):
+        if self.mode not in self._selection_modes:
+            raise ValueError("The mode passed should be one of %s, %r,"
+                             " (type %s) was passed."
+                             % (self._selection_modes.keys(), self.mode,
+                                type(self.mode)))
+
+        self._make_selector()._check_params(X, y)
+
+    def _get_support_mask(self):
+        selector = self._make_selector()
+        selector.pvalues_ = self.pvalues_
+        selector.scores_ = self.scores_
         return selector._get_support_mask()

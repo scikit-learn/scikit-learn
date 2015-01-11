@@ -1,27 +1,26 @@
 from __future__ import division
-import warnings
 
 import numpy as np
 import scipy.sparse as sp
 
 from sklearn.metrics import euclidean_distances
 
-from sklearn.random_projection import (
-    johnson_lindenstrauss_min_dim,
-    gaussian_random_matrix,
-    sparse_random_matrix,
-    SparseRandomProjection,
-    GaussianRandomProjection)
+from sklearn.random_projection import johnson_lindenstrauss_min_dim
+from sklearn.random_projection import gaussian_random_matrix
+from sklearn.random_projection import sparse_random_matrix
+from sklearn.random_projection import SparseRandomProjection
+from sklearn.random_projection import GaussianRandomProjection
 
-from sklearn.utils.testing import (
-    assert_less,
-    assert_raises,
-    assert_raise_message,
-    assert_array_equal,
-    assert_equal,
-    assert_almost_equal,
-    assert_in,
-    assert_array_almost_equal)
+from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_in
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_warns
+from sklearn.utils import DataDimensionalityWarning
 
 all_sparse_random_matrix = [sparse_random_matrix]
 all_dense_random_matrix = [gaussian_random_matrix]
@@ -39,8 +38,8 @@ def make_sparse_random_data(n_samples, n_features, n_nonzeros):
     rng = np.random.RandomState(0)
     data_coo = sp.coo_matrix(
         (rng.randn(n_nonzeros),
-        (rng.randint(n_samples, size=n_nonzeros),
-         rng.randint(n_features, size=n_nonzeros))),
+         (rng.randint(n_samples, size=n_nonzeros),
+          rng.randint(n_features, size=n_nonzeros))),
         shape=(n_samples, n_features))
     return data_coo.toarray(), data_coo.tocsr()
 
@@ -338,8 +337,18 @@ def test_warning_n_components_greater_than_n_features():
     data, _ = make_sparse_random_data(5, n_features, int(n_features / 4))
 
     for RandomProjection in all_RandomProjection:
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            RandomProjection(n_components=n_features + 1).fit(data)
-            assert_equal(len(w), 1)
-            assert issubclass(w[-1].category, UserWarning)
+        assert_warns(DataDimensionalityWarning,
+                     RandomProjection(n_components=n_features + 1).fit, data)
+
+
+def test_works_with_sparse_data():
+    n_features = 20
+    data, _ = make_sparse_random_data(5, n_features, int(n_features / 4))
+
+    for RandomProjection in all_RandomProjection:
+        rp_dense = RandomProjection(n_components=3,
+                                    random_state=1).fit(data)
+        rp_sparse = RandomProjection(n_components=3,
+                                     random_state=1).fit(sp.csr_matrix(data))
+        assert_array_almost_equal(densify(rp_dense.components_),
+                                  densify(rp_sparse.components_))

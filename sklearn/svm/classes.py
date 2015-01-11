@@ -1,11 +1,15 @@
-from .base import BaseLibLinear, BaseSVC, BaseLibSVM
-from ..base import RegressorMixin
-from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin
+import numpy as np
+
+from .base import _fit_liblinear, BaseSVC, BaseLibSVM
+from ..base import BaseEstimator, RegressorMixin
+from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, \
+    LinearModel
 from ..feature_selection.from_model import _LearntSelectorMixin
+from ..utils import check_array, check_X_y
 
 
-class LinearSVC(BaseLibLinear, LinearClassifierMixin, _LearntSelectorMixin,
-                SparseCoefMixin):
+class LinearSVC(BaseEstimator, LinearClassifierMixin,
+                _LearntSelectorMixin, SparseCoefMixin):
     """Linear Support Vector Classification.
 
     Similar to SVC with parameter kernel='linear', but implemented in terms of
@@ -71,27 +75,29 @@ class LinearSVC(BaseLibLinear, LinearClassifierMixin, _LearntSelectorMixin,
         automatically adjust weights inversely proportional to
         class frequencies.
 
-    verbose : int, default: 0
+    verbose : int, (default=0)
         Enable verbose output. Note that this setting takes advantage of a
         per-process runtime setting in liblinear that, if enabled, may not work
         properly in a multithreaded context.
 
-    random_state : int seed, RandomState instance, or None (default)
+    random_state : int seed, RandomState instance, or None (default=None)
         The seed of the pseudo random number generator to use when
         shuffling the data.
 
+    max_iter : int, (default=1000)
+        The maximum number of iterations to be run.
 
     Attributes
     ----------
-    `coef_` : array, shape = [n_features] if n_classes == 2 \
+    coef_ : array, shape = [n_features] if n_classes == 2 \
             else [n_classes, n_features]
-        Weights asigned to the features (coefficients in the primal
+        Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-        `coef_` is readonly property derived from `raw_coef_` that \
+        `coef_` is a readonly property derived from `raw_coef_` that \
         follows the internal memory layout of liblinear.
 
-    `intercept_` : array, shape = [1] if n_classes == 2 else [n_classes]
+    intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
     Notes
@@ -103,6 +109,10 @@ class LinearSVC(BaseLibLinear, LinearClassifierMixin, _LearntSelectorMixin,
 
     The underlying implementation (liblinear) uses a sparse internal
     representation for the data that will incur a memory copy.
+
+    Predict output may not match that of standalone liblinear in certain
+    cases. See :ref:`differences from liblinear <liblinear_differences>`
+    in the narrative documentation.
 
     **References:**
     `LIBLINEAR: A Library for Large Linear Classification
@@ -125,30 +135,211 @@ class LinearSVC(BaseLibLinear, LinearClassifierMixin, _LearntSelectorMixin,
 
     sklearn.linear_model.SGDClassifier
         SGDClassifier can optimize the same cost function as LinearSVC
-        by adjusting the penalty and loss parameters. Furthermore
-        SGDClassifier is scalable to large number of samples as it uses
-        a Stochastic Gradient Descent optimizer.
-
-        Finally SGDClassifier can fit both dense and sparse data without
-        memory copy if the input is C-contiguous or CSR.
+        by adjusting the penalty and loss parameters. In addition it requires
+        less memory, allows incremental (online) learning, and implements
+        various loss functions and regularization regimes.
 
     """
 
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
                  multi_class='ovr', fit_intercept=True, intercept_scaling=1,
-                 class_weight=None, verbose=0, random_state=None):
-        super(LinearSVC, self).__init__(
-            penalty=penalty, loss=loss, dual=dual, tol=tol, C=C,
-            multi_class=multi_class, fit_intercept=fit_intercept,
-            intercept_scaling=intercept_scaling,
-            class_weight=class_weight, verbose=verbose,
-            random_state=random_state)
+                 class_weight=None, verbose=0, random_state=None, max_iter=1000):
+        self.penalty = penalty
+        self.loss = loss
+        self.dual = dual
+        self.tol = tol
+        self.C = C
+        self.multi_class = multi_class
+        self.fit_intercept = fit_intercept
+        self.intercept_scaling = intercept_scaling
+        self.class_weight = class_weight
+        self.verbose = verbose
+        self.random_state = random_state
+        self.max_iter = max_iter
+
+    def fit(self, X, y):
+        """Fit the model according to the given training data.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Training vector, where n_samples in the number of samples and
+            n_features is the number of features.
+
+        y : array-like, shape = [n_samples]
+            Target vector relative to X
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        if self.C < 0:
+            raise ValueError("Penalty term must be positive; got (C=%r)"
+                             % self.C)
+
+        X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64, order="C")
+        self.classes_ = np.unique(y)
+        self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
+            X, y, self.C, self.fit_intercept, self.intercept_scaling,
+            self.class_weight, self.penalty, self.dual, self.verbose,
+            self.max_iter, self.tol, self.random_state, self.multi_class,
+            self.loss
+            )
+
+        if self.multi_class == "crammer_singer" and len(self.classes_) == 2:
+            self.coef_ = (self.coef_[1] - self.coef_[0]).reshape(1, -1)
+            if self.fit_intercept:
+                intercept = self.intercept_[1] - self.intercept_[0]
+                self.intercept_ = np.array([intercept])
+
+        return self
+
+
+class LinearSVR(LinearModel, RegressorMixin):
+    """Linear Support Vector Regression.
+
+    Similar to SVR with parameter kernel='linear', but implemented in terms of
+    liblinear rather than libsvm, so it has more flexibility in the choice of
+    penalties and loss functions and should scale better (to large numbers of
+    samples).
+
+    This class supports both dense and sparse input.
+
+    Parameters
+    ----------
+    C : float, optional (default=1.0)
+        Penalty parameter C of the error term. The penalty is a squared
+        l2 penalty. The bigger this parater, the less regularization is used.
+
+    loss : string, 'l1' or 'l2' (default='l2')
+        Specifies the loss function. 'l1' is the epsilon-insensitive loss
+        (standard SVR) while 'l2' is the squared epsilon-insensitive loss.
+
+    epsilon : float, optional (default=0.1)
+        Epsilon parameter in the epsilon-insensitive loss function. Note
+        that the value of this parameter depends on the scale of the target
+        variable y. If unsure, set epsilon=0.
+
+    dual : bool, (default=True)
+        Select the algorithm to either solve the dual or primal
+        optimization problem. Prefer dual=False when n_samples > n_features.
+
+    tol : float, optional (default=1e-4)
+        Tolerance for stopping criteria
+
+    fit_intercept : boolean, optional (default=True)
+        Whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    intercept_scaling : float, optional (default=1)
+        when self.fit_intercept is True, instance vector x becomes
+        [x, self.intercept_scaling],
+        i.e. a "synthetic" feature with constant value equals to
+        intercept_scaling is appended to the instance vector.
+        The intercept becomes intercept_scaling * synthetic feature weight
+        Note! the synthetic feature weight is subject to l1/l2 regularization
+        as all other features.
+        To lessen the effect of regularization on synthetic feature weight
+        (and therefore on the intercept) intercept_scaling has to be increased
+
+    verbose : int, (default=0)
+        Enable verbose output. Note that this setting takes advantage of a
+        per-process runtime setting in liblinear that, if enabled, may not work
+        properly in a multithreaded context.
+
+    random_state : int seed, RandomState instance, or None (default=None)
+        The seed of the pseudo random number generator to use when
+        shuffling the data.
+
+    max_iter : int, (default=1000)
+        The maximum number of iterations to be run.
+
+    Attributes
+    ----------
+    coef_ : array, shape = [n_features] if n_classes == 2 \
+            else [n_classes, n_features]
+        Weights assigned to the features (coefficients in the primal
+        problem). This is only available in the case of linear kernel.
+
+        `coef_` is a readonly property derived from `raw_coef_` that \
+        follows the internal memory layout of liblinear.
+
+    intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
+        Constants in decision function.
+
+
+    See also
+    --------
+    LinearSVC
+        Implementation of Support Vector Machine classifier using the
+        same library as this class (liblinear).
+
+    SVR
+        Implementation of Support Vector Machine regression using libsvm:
+        the kernel can be non-linear but its SMO algorithm does not
+        scale to large number of samples as LinearSVC does.
+
+    sklearn.linear_model.SGDRegressor
+        SGDRegressor can optimize the same cost function as LinearSVR
+        by adjusting the penalty and loss parameters. In addition it requires
+        less memory, allows incremental (online) learning, and implements
+        various loss functions and regularization regimes.
+    """
+
+
+    def __init__(self, epsilon=0.0, tol=1e-4, C=1.0, loss='l1', fit_intercept=True,
+                 intercept_scaling=1., dual=True, verbose=0, random_state=None,
+                 max_iter=1000):
+        self.tol = tol
+        self.C = C
+        self.epsilon = epsilon
+        self.fit_intercept = fit_intercept
+        self.intercept_scaling = intercept_scaling
+        self.verbose = verbose
+        self.random_state = random_state
+        self.max_iter = max_iter
+        self.dual = dual
+        self.loss = loss
+
+    def fit(self, X, y):
+        """Fit the model according to the given training data.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Training vector, where n_samples in the number of samples and
+            n_features is the number of features.
+
+        y : array-like, shape = [n_samples]
+            Target vector relative to X
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        if self.C < 0:
+            raise ValueError("Penalty term must be positive; got (C=%r)"
+                             % self.C)
+
+        X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64, order="C")
+        loss = {'l1': 'ei', 'l2' : 'se'}.get(self.loss)
+        self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
+            X, y, self.C, self.fit_intercept, self.intercept_scaling,
+            None, 'l2', self.dual, self.verbose,
+            self.max_iter, self.tol, self.random_state, loss=loss,
+            epsilon=self.epsilon)
+        self.coef_ = self.coef_.ravel()
+
+        return self
 
 
 class SVC(BaseSVC):
     """C-Support Vector Classification.
 
-    The implementations is a based on libsvm. The fit time complexity
+    The implementation is based on libsvm. The fit time complexity
     is more than quadratic with the number of samples which makes it hard
     to scale to dataset with more than a couple of 10000 samples.
 
@@ -178,7 +369,7 @@ class SVC(BaseSVC):
         Ignored by all other kernels.
 
     gamma : float, optional (default=0.0)
-        Kernel coefficient for 'rbf', 'poly' and 'sigm'.
+        Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
         If gamma is 0.0 then 1/n_features will be used instead.
 
     coef0 : float, optional (default=0.0)
@@ -219,30 +410,30 @@ class SVC(BaseSVC):
 
     Attributes
     ----------
-    `support_` : array-like, shape = [n_SV]
+    support_ : array-like, shape = [n_SV]
         Index of support vectors.
 
-    `support_vectors_` : array-like, shape = [n_SV, n_features]
+    support_vectors_ : array-like, shape = [n_SV, n_features]
         Support vectors.
 
-    `n_support_` : array-like, dtype=int32, shape = [n_class]
+    n_support_ : array-like, dtype=int32, shape = [n_class]
         number of support vector for each class.
 
-    `dual_coef_` : array, shape = [n_class-1, n_SV]
+    dual_coef_ : array, shape = [n_class-1, n_SV]
         Coefficients of the support vector in the decision function. \
         For multiclass, coefficient for all 1-vs-1 classifiers. \
         The layout of the coefficients in the multiclass case is somewhat \
         non-trivial. See the section about multi-class classification in the \
         SVM section of the User Guide for details.
 
-    `coef_` : array, shape = [n_class-1, n_features]
-        Weights asigned to the features (coefficients in the primal
+    coef_ : array, shape = [n_class-1, n_features]
+        Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
-        `coef_` is readonly property derived from `dual_coef_` and
+        `coef_` is a readonly property derived from `dual_coef_` and
         `support_vectors_`
 
-    `intercept_` : array, shape = [n_class * (n_class-1) / 2]
+    intercept_ : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
     Examples
@@ -343,30 +534,30 @@ class NuSVC(BaseSVC):
 
     Attributes
     ----------
-    `support_` : array-like, shape = [n_SV]
+    support_ : array-like, shape = [n_SV]
         Index of support vectors.
 
-    `support_vectors_` : array-like, shape = [n_SV, n_features]
+    support_vectors_ : array-like, shape = [n_SV, n_features]
         Support vectors.
 
-    `n_support_` : array-like, dtype=int32, shape = [n_class]
+    n_support_ : array-like, dtype=int32, shape = [n_class]
         number of support vector for each class.
 
-    `dual_coef_` : array, shape = [n_class-1, n_SV]
+    dual_coef_ : array, shape = [n_class-1, n_SV]
         Coefficients of the support vector in the decision function. \
         For multiclass, coefficient for all 1-vs-1 classifiers. \
         The layout of the coefficients in the multiclass case is somewhat \
         non-trivial. See the section about multi-class classification in \
         the SVM section of the User Guide for details.
 
-    `coef_` : array, shape = [n_class-1, n_features]
-        Weights asigned to the features (coefficients in the primal
+    coef_ : array, shape = [n_class-1, n_features]
+        Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`
 
-    `intercept_` : array, shape = [n_class * (n_class-1) / 2]
+    intercept_ : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
     Examples
@@ -408,7 +599,7 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     The free parameters in the model are C and epsilon.
 
-    The implementations is a based on libsvm.
+    The implementation is based on libsvm.
 
     Parameters
     ----------
@@ -440,10 +631,6 @@ class SVR(BaseLibSVM, RegressorMixin):
         independent term in kernel function. It is only significant
         in poly/sigmoid.
 
-    probability: boolean, optional (default=False)
-        Whether to enable probability estimates. This must be enabled prior
-        to calling `fit`, and will slow down that method.
-
     shrinking: boolean, optional (default=True)
         Whether to use the shrinking heuristic.
 
@@ -461,29 +648,25 @@ class SVR(BaseLibSVM, RegressorMixin):
     max_iter : int, optional (default=-1)
         Hard limit on iterations within solver, or -1 for no limit.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data for probability estimaton.
-
     Attributes
     ----------
-    `support_` : array-like, shape = [n_SV]
+    support_ : array-like, shape = [n_SV]
         Index of support vectors.
 
-    `support_vectors_` : array-like, shape = [nSV, n_features]
+    support_vectors_ : array-like, shape = [nSV, n_features]
         Support vectors.
 
-    `dual_coef_` : array, shape = [n_classes-1, n_SV]
+    dual_coef_ : array, shape = [1, n_SV]
         Coefficients of the support vector in the decision function.
 
-    `coef_` : array, shape = [n_classes-1, n_features]
-        Weights asigned to the features (coefficients in the primal
+    coef_ : array, shape = [1, n_features]
+        Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`
 
-    `intercept_` : array, shape = [n_class * (n_class-1) / 2]
+    intercept_ : array, shape = [1]
         Constants in decision function.
 
     Examples
@@ -497,8 +680,7 @@ class SVR(BaseLibSVM, RegressorMixin):
     >>> clf = SVR(C=1.0, epsilon=0.2)
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
     SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.2, gamma=0.0,
-        kernel='rbf', max_iter=-1, probability=False, random_state=None,
-        shrinking=True, tol=0.001, verbose=False)
+        kernel='rbf', max_iter=-1, shrinking=True, tol=0.001, verbose=False)
 
     See also
     --------
@@ -508,14 +690,14 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0, tol=1e-3,
-                 C=1.0, epsilon=0.1, shrinking=True, probability=False,
-                 cache_size=200, verbose=False, max_iter=-1,
-                 random_state=None):
+                 C=1.0, epsilon=0.1, shrinking=True, cache_size=200,
+                 verbose=False, max_iter=-1):
 
         super(SVR, self).__init__(
-            'epsilon_svr', kernel, degree, gamma, coef0, tol, C, 0., epsilon,
-            shrinking, probability, cache_size, None, verbose,
-            max_iter, random_state)
+            'epsilon_svr', kernel=kernel, degree=degree, gamma=gamma,
+            coef0=coef0, tol=tol, C=C, nu=0., epsilon=epsilon, verbose=verbose,
+            shrinking=shrinking, probability=False, cache_size=cache_size,
+            class_weight=None, max_iter=max_iter, random_state=None)
 
 
 class NuSVR(BaseLibSVM, RegressorMixin):
@@ -525,7 +707,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     the number of support vectors. However, unlike NuSVC, where nu
     replaces C, here nu replaces with the parameter epsilon of SVR.
 
-    The implementations is a based on libsvm.
+    The implementation is based on libsvm.
 
     Parameters
     ----------
@@ -556,10 +738,6 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         independent term in kernel function. It is only significant
         in poly/sigmoid.
 
-    probability: boolean, optional (default=False)
-        Whether to enable probability estimates. This must be enabled prior
-        to calling `fit`, and will slow down that method.
-
     shrinking: boolean, optional (default=True)
         Whether to use the shrinking heuristic.
 
@@ -577,29 +755,25 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     max_iter : int, optional (default=-1)
         Hard limit on iterations within solver, or -1 for no limit.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data for probability estimation.
-
     Attributes
     ----------
-    `support_` : array-like, shape = [n_SV]
+    support_ : array-like, shape = [n_SV]
         Index of support vectors.
 
-    `support_vectors_` : array-like, shape = [nSV, n_features]
+    support_vectors_ : array-like, shape = [nSV, n_features]
         Support vectors.
 
-    `dual_coef_` : array, shape = [n_classes-1, n_SV]
+    dual_coef_ : array, shape = [1, n_SV]
         Coefficients of the support vector in the decision function.
 
-    `coef_` : array, shape = [n_classes-1, n_features]
-        Weights asigned to the features (coefficients in the primal
+    coef_ : array, shape = [1, n_features]
+        Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`
 
-    `intercept_` : array, shape = [n_class * (n_class-1) / 2]
+    intercept_ : array, shape = [1]
         Constants in decision function.
 
     Examples
@@ -613,8 +787,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     >>> clf = NuSVR(C=1.0, nu=0.1)
     >>> clf.fit(X, y)  #doctest: +NORMALIZE_WHITESPACE
     NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.0, kernel='rbf',
-          max_iter=-1, nu=0.1, probability=False, random_state=None,
-          shrinking=True, tol=0.001, verbose=False)
+          max_iter=-1, nu=0.1, shrinking=True, tol=0.001, verbose=False)
 
     See also
     --------
@@ -627,13 +800,14 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     """
 
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
-                 gamma=0.0, coef0=0.0, shrinking=True,
-                 probability=False, tol=1e-3, cache_size=200,
-                 verbose=False, max_iter=-1, random_state=None):
+                 gamma=0.0, coef0=0.0, shrinking=True, tol=1e-3,
+                 cache_size=200, verbose=False, max_iter=-1):
 
         super(NuSVR, self).__init__(
-            'nu_svr', kernel, degree, gamma, coef0, tol, C, nu, 0., shrinking,
-            probability, cache_size, None, verbose, max_iter, random_state)
+            'nu_svr', kernel=kernel, degree=degree, gamma=gamma, coef0=coef0,
+            tol=tol, C=C, nu=nu, epsilon=0., shrinking=shrinking,
+            probability=False, cache_size=cache_size, class_weight=None,
+            verbose=verbose, max_iter=max_iter, random_state=None)
 
 
 class OneClassSVM(BaseLibSVM):
@@ -658,16 +832,17 @@ class OneClassSVM(BaseLibSVM):
         vectors. Should be in the interval (0, 1]. By default 0.5
         will be taken.
 
-    degree : int, optional
-        Degree of kernel function. Significant only in poly, rbf, sigmoid.
+    degree : int, optional (default=3)
+        Degree of the polynomial kernel function ('poly').
+        Ignored by all other kernels.
 
     gamma : float, optional (default=0.0)
-        kernel coefficient for rbf and poly, if gamma is 0.0 then 1/n_features
-        will be taken.
+        Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
+        If gamma is 0.0 then 1/n_features will be used instead.
 
-    coef0 : float, optional
-        Independent term in kernel function. It is only significant in
-        poly/sigmoid.
+    coef0 : float, optional (default=0.0)
+        Independent term in kernel function.
+        It is only significant in 'poly' and 'sigmoid'.
 
     tol : float, optional
         Tolerance for stopping criterion.
@@ -692,23 +867,23 @@ class OneClassSVM(BaseLibSVM):
 
     Attributes
     ----------
-    `support_` : array-like, shape = [n_SV]
+    support_ : array-like, shape = [n_SV]
         Index of support vectors.
 
-    `support_vectors_` : array-like, shape = [nSV, n_features]
+    support_vectors_ : array-like, shape = [nSV, n_features]
         Support vectors.
 
-    `dual_coef_` : array, shape = [n_classes-1, n_SV]
+    dual_coef_ : array, shape = [n_classes-1, n_SV]
         Coefficient of the support vector in the decision function.
 
-    `coef_` : array, shape = [n_classes-1, n_features]
-        Weights asigned to the features (coefficients in the primal
+    coef_ : array, shape = [n_classes-1, n_features]
+        Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`
 
-    `intercept_` : array, shape = [n_classes-1]
+    intercept_ : array, shape = [n_classes-1]
         Constants in decision function.
 
     """

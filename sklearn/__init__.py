@@ -13,7 +13,31 @@ machine-learning as a versatile tool for science and engineering.
 See http://scikit-learn.org for complete documentation.
 """
 import sys
-__version__ = '0.15-git'
+import re
+import warnings
+
+
+# Make sure that DeprecationWarning within this package always gets printed
+warnings.filterwarnings('always', category=DeprecationWarning,
+                        module='^{0}\.'.format(re.escape(__name__)))
+
+# PEP0440 compatible formatted version, see:
+# https://www.python.org/dev/peps/pep-0440/
+#
+# Generic release markers:
+#   X.Y
+#   X.Y.Z   # For bugfix releases
+#
+# Admissible pre-release markers:
+#   X.YaN   # Alpha release
+#   X.YbN   # Beta release
+#   X.YrcN  # Release Candidate
+#   X.Y     # Final release
+#
+# Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
+#
+__version__ = '0.16.dev'
+
 
 try:
     # This variable is injected in the __builtins__ by the build
@@ -30,44 +54,23 @@ if __SKLEARN_SETUP__:
 else:
     from . import __check_build
     from .base import clone
+    __check_build  # avoid flakes unused variable error
 
-    def test(*args, **kwargs):
-        import warnings
-        # Not using a DeprecationWarning, as they are turned off by
-        # default
-        warnings.warn("""sklearn.test() is no longer supported to run the
-scikit-learn test suite.
-
-After installation, you can launch the test suite from outside the
-source directory (you will need to have nosetests installed)::
-
-   $ nosetests --exe sklearn
-
-See the web page http://scikit-learn.org/stable/install.html#testing
-for more information.
-
-This function, `sklearn.test()` does not do anything. It does not run
-the tests and will be removed in release 0.16.
-""", stacklevel=2)
-
-    # The following line is useful so that nosetests doesn't consider
-    # "test" as a test function
-    test.__test__ = False
-
-    __all__ = ['cross_validation', 'cluster', 'covariance',
-               'datasets', 'decomposition', 'feature_extraction',
-               'feature_selection', 'semi_supervised',
-               'gaussian_process', 'grid_search', 'hmm', 'lda', 'linear_model',
-               'metrics', 'mixture', 'naive_bayes', 'neighbors', 'pipeline',
-               'preprocessing', 'qda', 'svm', 'clone',
-               'cross_decomposition',
-               'isotonic', 'pls']
+    __all__ = ['cluster', 'covariance', 'cross_decomposition',
+               'cross_validation', 'datasets', 'decomposition', 'dummy',
+               'ensemble', 'externals', 'feature_extraction',
+               'feature_selection', 'gaussian_process', 'grid_search', 'hmm',
+               'isotonic', 'kernel_approximation', 'lda', 'learning_curve',
+               'linear_model', 'manifold', 'metrics', 'mixture', 'multiclass',
+               'naive_bayes', 'neighbors', 'neural_network', 'pipeline',
+               'preprocessing', 'qda', 'random_projection', 'semi_supervised',
+               'svm', 'tree',
+               # Non-modules:
+               'clone']
 
 
 def setup_module(module):
-    """Fixture for the tests to assure globally controllable seeding of RNGs
-    """
-
+    """Fixture for the tests to assure globally controllable seeding of RNGs"""
     import os
     import numpy as np
     import random

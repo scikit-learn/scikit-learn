@@ -1,7 +1,6 @@
 from sklearn.utils.testing import (assert_array_equal, assert_equal,
                                    assert_raises)
 
-import numpy as np
 from scipy.sparse import bsr_matrix, csc_matrix, csr_matrix
 
 from sklearn.feature_selection import VarianceThreshold

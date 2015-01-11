@@ -1,7 +1,6 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
-
 from collections import Sequence
 
 import numpy as np
@@ -9,21 +8,22 @@ from scipy.sparse import issparse
 import warnings
 
 from .murmurhash import murmurhash3_32
-from .validation import (as_float_array, check_arrays, safe_asarray,
-                         assert_all_finite, array2d, atleast2d_or_csc,
-                         atleast2d_or_csr, warn_if_not_float,
-                         check_random_state, column_or_1d)
+from .validation import (as_float_array,
+                         assert_all_finite, warn_if_not_float,
+                         check_random_state, column_or_1d, check_array,
+                         check_consistent_length, check_X_y, indexable,
+                         check_symmetric)
 from .class_weight import compute_class_weight
-from sklearn.utils.sparsetools import minimum_spanning_tree
+from ..externals.joblib import cpu_count
 
 
-__all__ = ["murmurhash3_32", "as_float_array", "check_arrays", "safe_asarray",
-           "assert_all_finite", "array2d", "atleast2d_or_csc",
-           "atleast2d_or_csr", "warn_if_not_float", "check_random_state",
-           "compute_class_weight",  "minimum_spanning_tree", "column_or_1d"]
-
-# Make sure that DeprecationWarning get printed
-warnings.simplefilter("always", DeprecationWarning)
+__all__ = ["murmurhash3_32", "as_float_array",
+           "assert_all_finite", "check_array",
+           "warn_if_not_float",
+           "check_random_state",
+           "compute_class_weight",
+           "column_or_1d", "safe_indexing",
+           "check_consistent_length", "check_X_y", 'indexable']
 
 
 class deprecated(object):
@@ -133,6 +133,33 @@ def safe_mask(X, mask):
     return mask
 
 
+def safe_indexing(X, indices):
+    """Return items or rows from X using indices.
+
+    Allows simple indexing of lists or arrays.
+
+    Parameters
+    ----------
+    X : array-like, sparse-matrix, list.
+        Data from which to sample rows or items.
+
+    indices : array-like, list
+        Indices according to which X will be subsampled.
+    """
+    if hasattr(X, "iloc"):
+        # Pandas Dataframes and Series
+        return X.iloc[indices]
+    elif hasattr(X, "shape"):
+        if hasattr(X, 'take') and (hasattr(indices, 'dtype') and
+                                   indices.dtype.kind == 'i'):
+            # This is often substantially faster than X[indices]
+            return X.take(indices, axis=0)
+        else:
+            return X[indices]
+    else:
+        return [X[idx] for idx in indices]
+
+
 def resample(*arrays, **options):
     """Resample arrays or sparse matrices in a consistent way
 
@@ -216,7 +243,9 @@ def resample(*arrays, **options):
         raise ValueError("Cannot sample %d out of arrays with dim %d" % (
             max_n_samples, n_samples))
 
-    arrays = check_arrays(*arrays, sparse_format='csr')
+    check_consistent_length(*arrays)
+    arrays = [check_array(x, accept_sparse='csr', ensure_2d=False,
+                          allow_nd=True) for x in arrays]
 
     if replace:
         indices = random_state.randint(0, n_samples, size=(max_n_samples,))
@@ -311,7 +340,7 @@ def safe_sqr(X, copy=True):
     -------
     X ** 2 : element wise square
     """
-    X = safe_asarray(X)
+    X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
     if issparse(X):
         if copy:
             X = X.copy()
@@ -324,8 +353,36 @@ def safe_sqr(X, copy=True):
     return X
 
 
-def gen_even_slices(n, n_packs):
+def gen_batches(n, batch_size):
+    """Generator to create slices containing batch_size elements, from 0 to n.
+
+    The last slice may contain less than batch_size elements, when batch_size
+    does not divide n.
+
+    Examples
+    --------
+    >>> from sklearn.utils import gen_batches
+    >>> list(gen_batches(7, 3))
+    [slice(0, 3, None), slice(3, 6, None), slice(6, 7, None)]
+    >>> list(gen_batches(6, 3))
+    [slice(0, 3, None), slice(3, 6, None)]
+    >>> list(gen_batches(2, 3))
+    [slice(0, 2, None)]
+    """
+    start = 0
+    for _ in range(int(n // batch_size)):
+        end = start + batch_size
+        yield slice(start, end)
+        start = end
+    if start < n:
+        yield slice(start, n)
+
+
+def gen_even_slices(n, n_packs, n_samples=None):
     """Generator to create n_packs slices going up to n.
+
+    Pass n_samples when the slices are to be used for sparse matrix indexing;
+    slicing off-the-end raises an exception, while it works for NumPy arrays.
 
     Examples
     --------
@@ -346,8 +403,49 @@ def gen_even_slices(n, n_packs):
             this_n += 1
         if this_n > 0:
             end = start + this_n
+            if n_samples is not None:
+                end = min(n_samples, end)
             yield slice(start, end, None)
             start = end
+
+
+def _get_n_jobs(n_jobs):
+    """Get number of jobs for the computation.
+
+    This function reimplements the logic of joblib to determine the actual
+    number of jobs depending on the cpu count. If -1 all CPUs are used.
+    If 1 is given, no parallel computing code is used at all, which is useful
+    for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are used.
+    Thus for n_jobs = -2, all CPUs but one are used.
+
+    Parameters
+    ----------
+    n_jobs : int
+        Number of jobs stated in joblib convention.
+
+    Returns
+    -------
+    n_jobs : int
+        The actual number of jobs as positive integer.
+
+    Examples
+    --------
+    >>> from sklearn.utils import _get_n_jobs
+    >>> _get_n_jobs(4)
+    4
+    >>> jobs = _get_n_jobs(-2)
+    >>> assert jobs == max(cpu_count() - 1, 1)
+    >>> _get_n_jobs(0)
+    Traceback (most recent call last):
+    ...
+    ValueError: Parameter n_jobs == 0 has no meaning.
+    """
+    if n_jobs < 0:
+        return max(cpu_count() + 1 + n_jobs, 1)
+    elif n_jobs == 0:
+        raise ValueError('Parameter n_jobs == 0 has no meaning.')
+    else:
+        return n_jobs
 
 
 def tosequence(x):
@@ -360,5 +458,9 @@ def tosequence(x):
         return list(x)
 
 
-class ConvergenceWarning(Warning):
-    "Custom warning to capture convergence problems"
+class ConvergenceWarning(UserWarning):
+    """Custom warning to capture convergence problems"""
+
+
+class DataDimensionalityWarning(UserWarning):
+    """Custom warning to notify potential issues with data dimensionality"""

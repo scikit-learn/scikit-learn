@@ -91,19 +91,12 @@
 # --------------------
 # This implementation uses the common object-oriented approach of having an
 # abstract base class which is extended by the KDTree and BallTree
-# specializations.  Unfortunately, Cython does not currently support
-# polymorphism, so implementing dual tree queries would require rewriting
-# identical implementations of the base algorithm for each subclass.
+# specializations.
 #
-# Because of this deficiency, we use a bit of a hack here: the BinaryTree
-# "base class" is defined here and then explicitly included in the BallTree
-# and KDTree pyx files.  These files include implementations of the
-# "abstract" methods.  The KDTree and BallTree classes are then explicit
-# copies of each separate BinaryTree class definition.
-#
-# Hackish?  Yes.  But it leads to fast execution without the need to duplicate
-# the code in two places.
-#
+# The BinaryTree "base class" is defined here and then subclassed in the BallTree
+# and KDTree pyx files. These files include implementations of the
+# "abstract" methods.
+
 # Necessary Helper Functions
 # --------------------------
 # These are the names and descriptions of the "abstract" functions which are
@@ -155,7 +148,7 @@ from sklearn.utils.lgamma cimport lgamma
 
 import numpy as np
 import warnings
-from ..utils import array2d
+from ..utils import check_array
 
 from typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
 from typedefs import DTYPE, ITYPE
@@ -250,7 +243,7 @@ cdef NodeHeapData_t[::1] get_memview_NodeHeapData_1D(
 cdef NodeData_t[::1] get_memview_NodeData_1D(
                     np.ndarray[NodeData_t, ndim=1, mode='c'] X):
     return <NodeData_t[:X.shape[0]:1]> (<NodeData_t*> X.data)
-    
+
 ######################################################################
 
 
@@ -358,7 +351,7 @@ Compute a two-point auto-correlation function
     >>> tree.two_point_correlation(X, r)
     array([ 30,  62, 278, 580, 820])
 
-""".format(**DOC_DICT)
+"""
 
 
 ######################################################################
@@ -1002,7 +995,6 @@ VALID_METRIC_IDS = get_valid_metric_ids(VALID_METRICS)
 ######################################################################
 # Binary Tree class
 cdef class BinaryTree:
-    __doc__ = CLASS_DOC
 
     cdef np.ndarray data_arr
     cdef np.ndarray idx_array_arr
@@ -1240,7 +1232,7 @@ cdef class BinaryTree:
         query(X, k=1, return_distance=True,
               dualtree=False, breadth_first=False)
 
-        query the treeree for the k nearest neighbors
+        query the tree for the k nearest neighbors
 
         Parameters
         ----------
@@ -1292,7 +1284,7 @@ cdef class BinaryTree:
             [ 0.          0.19662693  0.29473397]
         """
         # XXX: we should allow X to be a pre-built tree.
-        X = array2d(X, dtype=DTYPE, order='C')
+        X = check_array(X, dtype=DTYPE, order='C')
 
         if X.shape[X.ndim - 1] != self.data.shape[1]:
             raise ValueError("query data dimension must "
@@ -1439,7 +1431,7 @@ cdef class BinaryTree:
         cdef DTYPE_t* pt
 
         # validate X and prepare for query
-        X = array2d(X, dtype=DTYPE, order='C')
+        X = check_array(X, dtype=DTYPE, order='C')
 
         if X.shape[X.ndim - 1] != self.data.shape[1]:
             raise ValueError("query data dimension must "
@@ -1504,7 +1496,7 @@ cdef class BinaryTree:
         else:
             return indices.reshape(X.shape[:X.ndim - 1])
 
-    def kernel_density(BinaryTree self, X, h, kernel='gaussian',
+    def kernel_density(self, X, h, kernel='gaussian',
                        atol=0, rtol=1E-8,
                        breadth_first=True, return_log=False):
         """
@@ -1589,7 +1581,7 @@ cdef class BinaryTree:
         cdef DTYPE_t log_knorm = _log_kernel_norm(h_c, n_features, kernel_c)
 
         # validate X and prepare for query
-        X = array2d(X, dtype=DTYPE, order='C')
+        X = check_array(X, dtype=DTYPE, order='C')
 
         if X.shape[X.ndim - 1] != n_features:
             raise ValueError("query data dimension must "
@@ -1692,7 +1684,7 @@ cdef class BinaryTree:
         cdef ITYPE_t i
 
         # validate X and prepare for query
-        X = array2d(X, dtype=DTYPE, order='C')
+        X = check_array(X, dtype=DTYPE, order='C')
 
         if X.shape[X.ndim - 1] != self.data.shape[1]:
             raise ValueError("query data dimension must "
@@ -1703,7 +1695,7 @@ cdef class BinaryTree:
 
         # prepare r for query
         r = np.asarray(r, dtype=DTYPE, order='C')
-        r = np.atleast_1d(r).astype(DTYPE)
+        r = np.atleast_1d(r)
         if r.ndim != 1:
             raise ValueError("r must be a 1-dimensional array")
         i_rsort = np.argsort(r)
@@ -1729,7 +1721,7 @@ cdef class BinaryTree:
 
         return count
 
-    cdef int _query_single_depthfirst(BinaryTree self, ITYPE_t i_node,
+    cdef int _query_single_depthfirst(self, ITYPE_t i_node,
                                       DTYPE_t* pt, ITYPE_t i_pt,
                                       NeighborsHeap heap,
                                       DTYPE_t reduced_dist_LB) except -1:
@@ -1781,7 +1773,7 @@ cdef class BinaryTree:
                                               reduced_dist_LB_1)
         return 0
 
-    cdef int _query_single_breadthfirst(BinaryTree self, DTYPE_t* pt,
+    cdef int _query_single_breadthfirst(self, DTYPE_t* pt,
                                         ITYPE_t i_pt,
                                         NeighborsHeap heap,
                                         NodeHeap nodeheap) except -1:
@@ -1831,7 +1823,7 @@ cdef class BinaryTree:
                     nodeheap.push(nodeheap_item)
         return 0
 
-    cdef int _query_dual_depthfirst(BinaryTree self, ITYPE_t i_node1,
+    cdef int _query_dual_depthfirst(self, ITYPE_t i_node1,
                                     BinaryTree other, ITYPE_t i_node2,
                                     DTYPE_t[::1] bounds,
                                     NeighborsHeap heap,
@@ -1933,7 +1925,7 @@ cdef class BinaryTree:
                                             bounds, heap, reduced_dist_LB1)
         return 0
 
-    cdef int _query_dual_breadthfirst(BinaryTree self, BinaryTree other,
+    cdef int _query_dual_breadthfirst(self, BinaryTree other,
                                       NeighborsHeap heap,
                                       NodeHeap nodeheap) except -1:
         """Non-recursive dual-tree k-neighbors query, breadth-first"""
@@ -2018,7 +2010,7 @@ cdef class BinaryTree:
                     nodeheap.push(nodeheap_item)
         return 0
 
-    cdef ITYPE_t _query_radius_single(BinaryTree self,
+    cdef ITYPE_t _query_radius_single(self,
                                       ITYPE_t i_node,
                                       DTYPE_t* pt, DTYPE_t r,
                                       ITYPE_t* indices,

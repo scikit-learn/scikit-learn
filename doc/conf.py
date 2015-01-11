@@ -12,6 +12,7 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+from __future__ import print_function
 import sys
 import os
 from sklearn.externals.six import u
@@ -21,6 +22,8 @@ from sklearn.externals.six import u
 # is relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
 sys.path.insert(0, os.path.abspath('sphinxext'))
+
+from github_link import make_linkcode_resolve
 
 # -- General configuration ---------------------------------------------------
 
@@ -34,7 +37,8 @@ except:
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['gen_rst',
               'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
-              'sphinx.ext.pngmath', 'numpy_ext.numpydoc'
+              'sphinx.ext.pngmath', 'numpy_ext.numpydoc',
+              'sphinx.ext.linkcode',
               ]
 
 autosummary_generate = True
@@ -61,14 +65,14 @@ master_doc = 'index'
 
 # General information about the project.
 project = u('scikit-learn')
-copyright = u('2010 - 2013, scikit-learn developers (BSD License)')
+copyright = u('2010 - 2014, scikit-learn developers (BSD License)')
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-version = '0.15-git'
+version = '0.16-git'
 # The full version, including alpha/beta/rc tags.
 import sklearn
 release = sklearn.__version__
@@ -123,7 +127,7 @@ html_theme = 'scikit-learn'
 # documentation.
 html_theme_options = {'oldversion': False, 'collapsiblesidebar': True,
                       'google_analytics': True, 'surveybanner': False,
-                      'sprintbanner' : True}
+                      'sprintbanner': True}
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ['themes']
@@ -224,3 +228,15 @@ latex_preamble = r"""
 #latex_use_modindex = True
 
 trim_doctests_flags = True
+
+
+def setup(app):
+    # to hide/show the prompt in code examples:
+    app.add_javascript('js/copybutton.js')
+
+
+# The following is used by sphinx.ext.linkcode to provide links to github
+linkcode_resolve = make_linkcode_resolve('sklearn',
+                                         u'https://github.com/scikit-learn/'
+                                         'scikit-learn/blob/{revision}/'
+                                         '{package}/{path}#L{lineno}')

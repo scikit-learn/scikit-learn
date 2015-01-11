@@ -9,7 +9,7 @@ It will plot the decision boundaries for each class.
 print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from sklearn import datasets
 from sklearn.neighbors import NearestCentroid
@@ -44,13 +44,13 @@ for shrinkage in [None, 0.1]:
 
     # Put the result into a color plot
     Z = Z.reshape(xx.shape)
-    pl.figure()
-    pl.pcolormesh(xx, yy, Z, cmap=cmap_light)
+    plt.figure()
+    plt.pcolormesh(xx, yy, Z, cmap=cmap_light)
 
     # Plot also the training points
-    pl.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold)
-    pl.title("3-Class classification (shrink_threshold=%r)"
-             % shrinkage)
-    pl.axis('tight')
+    plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold)
+    plt.title("3-Class classification (shrink_threshold=%r)"
+              % shrinkage)
+    plt.axis('tight')
 
-pl.show()
+plt.show()

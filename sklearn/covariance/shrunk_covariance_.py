@@ -19,10 +19,9 @@ import numpy as np
 
 from .empirical_covariance_ import empirical_covariance, EmpiricalCovariance
 from ..externals.six.moves import xrange
-from ..utils import array2d
+from ..utils import check_array
 
 
-###############################################################################
 # ShrunkCovariance estimator
 
 def shrunk_covariance(emp_cov, shrinkage=0.1):
@@ -52,7 +51,7 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
     where mu = trace(cov) / n_features
 
     """
-    emp_cov = array2d(emp_cov)
+    emp_cov = check_array(emp_cov)
     n_features = emp_cov.shape[0]
 
     mu = np.trace(emp_cov) / n_features
@@ -76,10 +75,10 @@ class ShrunkCovariance(EmpiricalCovariance):
 
     Attributes
     ----------
-    `covariance_` : array-like, shape (n_features, n_features)
+    covariance_ : array-like, shape (n_features, n_features)
         Estimated covariance matrix
 
-    `precision_` : array-like, shape (n_features, n_features)
+    precision_ : array-like, shape (n_features, n_features)
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
@@ -141,7 +140,6 @@ class ShrunkCovariance(EmpiricalCovariance):
         return self
 
 
-###############################################################################
 # Ledoit-Wolf estimator
 
 def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
@@ -333,14 +331,14 @@ class LedoitWolf(EmpiricalCovariance):
 
     Attributes
     ----------
-    `covariance_` : array-like, shape (n_features, n_features)
+    covariance_ : array-like, shape (n_features, n_features)
         Estimated covariance matrix
 
-    `precision_` : array-like, shape (n_features, n_features)
+    precision_ : array-like, shape (n_features, n_features)
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
-    `shrinkage_` : float, 0 <= shrinkage <= 1
+    shrinkage_ : float, 0 <= shrinkage <= 1
         Coefficient in the convex combination used for the computation
         of the shrunk estimate.
 
@@ -399,7 +397,6 @@ class LedoitWolf(EmpiricalCovariance):
         return self
 
 
-###############################################################################
 # OAS estimator
 
 def oas(X, assume_centered=False):
@@ -494,14 +491,14 @@ class OAS(EmpiricalCovariance):
 
     Attributes
     ----------
-    `covariance_` : array-like, shape (n_features, n_features)
+    covariance_ : array-like, shape (n_features, n_features)
         Estimated covariance matrix.
 
-    `precision_` : array-like, shape (n_features, n_features)
+    precision_ : array-like, shape (n_features, n_features)
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
-    `shrinkage_` : float, 0 <= shrinkage <= 1
+    shrinkage_ : float, 0 <= shrinkage <= 1
       coefficient in the convex combination used for the computation
       of the shrunk estimate.
 
@@ -521,6 +518,7 @@ class OAS(EmpiricalCovariance):
     Chen et al., IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
 
     """
+
     def fit(self, X, y=None):
         """ Fits the Oracle Approximating Shrinkage covariance model
         according to the given training data and parameters.

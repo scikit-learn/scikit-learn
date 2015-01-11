@@ -42,6 +42,23 @@ extension in place::
 
     python setup.py build_ext --inplace
 
+
+Another option is to use the ``develop`` option if you change your code a lot
+and do not want to have to reinstall every time. This basically builds the
+extension in place and creates a link to the development directory (see
+<https://pythonhosted.org/setuptools/setuptools.html#development-mode>)::
+
+    python setup.py develop
+
+.. note::
+
+    if you decide to do that you have to rerun::
+
+        python setup.py build_ext --inplace
+
+    every time the source code of a compiled extension is
+    changed (for instance when switching branches or pulling changes from upstream).
+
 On Unix-like systems, you can simply type ``make`` in the top-level folder to
 build in-place and launch all the tests. Have a look at the ``Makefile`` for
 additional utilities.
@@ -100,8 +117,8 @@ email to the mailing list in order to get more visibility.
 .. note::
 
   In the above setup, your ``origin`` remote repository points to
-  YourLogin/scikit-learn.git. If you wish to `fetch/merge` from the main
-  repository instead of your `forked` one, you will need to add another remote
+  YourLogin/scikit-learn.git. If you wish to fetch/merge from the main
+  repository instead of your forked one, you will need to add another remote
   to use instead of ``origin``. If we choose the name ``upstream`` for it, the
   command will be::
 
@@ -214,8 +231,9 @@ and are viewable in a web browser. See the README file in the doc/ directory
 for more information.
 
 For building the documentation, you will need `sphinx
-<http://sphinx.pocoo.org/>`_ and `matplotlib
-<http://matplotlib.sourceforge.net/>`_.
+<http://sphinx.pocoo.org/>`_,
+`matplotlib <http://matplotlib.sourceforge.net/>`_ and
+`pillow <http://pillow.readthedocs.org/en/latest/>`_.
 
 **When you are writing documentation**, it is important to keep a good
 compromise between mathematical and algorithmic details, and give
@@ -242,7 +260,7 @@ Finally, any math and equations, followed by references,
 can be added to further the documentation. Not starting the
 documentation with the maths makes it more friendly towards
 users that are just interested in what the feature will do, as
-opposed to how it works `under the hood`.
+opposed to how it works "under the hood".
 
 
 .. warning:: **Sphinx version**
@@ -372,7 +390,7 @@ In addition, we add the following guidelines:
       that is implemented in ``sklearn.foo.bar.baz``,
       the test should import it from ``sklearn.foo``.
 
-    * **Please don't use `import *` in any case**. It is considered harmful
+    * **Please don't use ``import *`` in any case**. It is considered harmful
       by the `official Python recommendations
       <http://docs.python.org/howto/doanddont.html#from-module-import>`_.
       It makes the code harder to read as the origin of symbols is no
@@ -396,15 +414,14 @@ Input validation
 
 The module :mod:`sklearn.utils` contains various functions for doing input
 validation and conversion. Sometimes, ``np.asarray`` suffices for validation;
-do `not` use ``np.asanyarray`` or ``np.atleast_2d``, since those let NumPy's
+do *not* use ``np.asanyarray`` or ``np.atleast_2d``, since those let NumPy's
 ``np.matrix`` through, which has a different API
 (e.g., ``*`` means dot product on ``np.matrix``,
 but Hadamard product on ``np.ndarray``).
 
-In other cases, be sure to call :func:`safe_asarray`, :func:`atleast2d_or_csr`,
-:func:`as_float_array` or :func:`array2d` on any array-like argument passed to a
-scikit-learn API function. The exact function to use depends mainly on whether
-``scipy.sparse`` matrices must be accepted.
+In other cases, be sure to call :func:`check_array` on any array-like argument
+passed to a scikit-learn API function. The exact parameters to use depends
+mainly on whether and which ``scipy.sparse`` matrices must be accepted.
 
 For more information, refer to the :ref:`developers-utils` page.
 
@@ -490,7 +507,7 @@ E.g., if the function ``zero_one`` is renamed to ``zero_one_loss``,
 we add the decorator ``deprecated`` (from ``sklearn.utils``)
 to ``zero_one`` and call ``zero_one_loss`` from that function::
 
-    from ..utils import check_arrays, deprecated
+    from ..utils import deprecated
 
     def zero_one_loss(y_true, y_pred, normalize=True):
         # actual implementation
@@ -545,24 +562,6 @@ cross-compatibility and is included in scikit-learn as
 ``sklearn.externals.six``.
 
 
-Python 3.x support
-------------------
-
-All scikit-learn code should work unchanged in both Python 2.[67]
-and 3.2 or newer. Since Python 3.x is not backwards compatible,
-that may require changes to code and it certainly requires testing
-on both 2.6 or 2.7, and 3.2 or newer.
-
-For most numerical algorithms, Python 3.x support is easy:
-just remember that ``print`` is a function and
-integer division is written ``//``.
-String handling has been overhauled, though, as have parts of
-the Python standard library.
-The `six <http://pythonhosted.org/six/>`_ package helps with
-cross-compability and is included in scikit-learn as
-``sklearn.externals.six``.
-
-
 APIs of scikit-learn objects
 ============================
 
@@ -595,7 +594,7 @@ multiple interfaces):
 
     Classification algorithms usually also offer a way to quantify certainty
     of a prediction, either using ``decision_function`` or ``predict_proba``::
-        
+
       probability = obj.predict_proba(data)
 
 :Transformer:
@@ -652,22 +651,24 @@ an estimator without passing any arguments to it. The arguments should all
 correspond to hyperparameters describing the model or the optimisation
 problem the estimator tries to solve. These initial arguments (or parameters)
 are always remembered by the estimator.
-Also note that they should not be documented under the `Attributes` section,
-but rather under the `Parameters` section for that estimator.
+Also note that they should not be documented under the "Attributes" section,
+but rather under the "Parameters" section for that estimator.
 
 In addition, **every keyword argument accepted by ``__init__`` should
 correspond to an attribute on the instance**. Scikit-learn relies on this to
 find the relevant attributes to set on an estimator when doing model selection.
 
-To summarize, a `__init__` should look like::
+To summarize, an ``__init__`` should look like::
 
     def __init__(self, param1=1, param2=2):
         self.param1 = param1
         self.param2 = param2
 
-There should be no logic, and the parameters should not be changed.
-The corresponding logic should be put where the parameters are used. The
-following is wrong::
+There should be no logic, not even input validation,
+and the parameters should not be changed.
+The corresponding logic should be put where the parameters are used,
+typically in ``fit``.
+The following is wrong::
 
     def __init__(self, param1=1, param2=2, param3=3):
         # WRONG: parameters should not be modified
@@ -678,8 +679,9 @@ following is wrong::
         # the argument in the constructor
         self.param3 = param2
 
-Scikit-learn relies on this mechanism to introspect objects to set
-their parameters by cross-validation.
+The reason for postponing the validation is that the same validation
+would have to be performed in ``set_params``,
+which is used in algorithms like ``GridSearchCV``.
 
 Fitting
 ^^^^^^^
@@ -737,8 +739,8 @@ Estimated Attributes
 
 Attributes that have been estimated from the data must always have a name
 ending with trailing underscore, for example the coefficients of
-some regression estimator would be stored in a `coef_` attribute after
-`fit()` has been called.
+some regression estimator would be stored in a ``coef_`` attribute after
+``fit`` has been called.
 
 The last-mentioned attributes are expected to be overridden when
 you call ``fit`` a second time without taking any previous value into
@@ -782,10 +784,7 @@ E.g., here's a custom classifier::
   ...         return self
   ...     def predict(self, X):
   ...         return np.repeat(self.classes_[self.majority_], len(X))
-  ...     # doctest: +SKIP
 
-.. We don't run the above "doctest" because it requires a recent NumPy and we
-   don't want users to import from sklearn.utils.fixes.
 
 get_params and set_params
 -------------------------
@@ -829,6 +828,11 @@ The easiest and recommended way to accomplish this is to
 **not do any parameter validation in ``__init__``**.
 All logic behind estimator parameters,
 like translating string arguments into functions, should be done in ``fit``.
+
+Also it is expected that parameters with trailing ``_`` are **not to be set
+inside the ``__init__`` method**. All and only the public attributes set by
+fit have a trailing ``_``. As a result the existence of parameters with
+trailing ``_`` is used to check if the estimator has been fitted.
 
 .. _cloning:
 
@@ -878,12 +882,11 @@ should match the order in which ``predict_proba``, ``predict_log_proba``
 and ``decision_function`` return their values.
 The easiest way to achieve this is to put::
 
-    self.classes_, y = unique(y, return_inverse=True)
+    self.classes_, y = np.unique(y, return_inverse=True)
 
 in ``fit``.
-This return a new ``y`` that contains class indexes, rather than labels,
+This returns a new ``y`` that contains class indexes, rather than labels,
 in the range [0, ``n_classes``).
-``unique`` is available in ``sklearn.utils.fixes``.
 
 A classifier's ``predict`` method should return
 arrays containing class labels from ``classes_``.

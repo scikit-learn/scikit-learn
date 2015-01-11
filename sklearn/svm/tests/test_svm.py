@@ -4,7 +4,6 @@ Testing for Support Vector Machine module (sklearn.svm)
 TODO: remove hard coded numerical results when possible
 """
 
-import warnings
 import numpy as np
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
                            assert_almost_equal)
@@ -16,8 +15,9 @@ from sklearn.datasets.samples_generator import make_classification
 from sklearn.metrics import f1_score
 from sklearn.utils import check_random_state
 from sklearn.utils import ConvergenceWarning
-from sklearn.utils.fixes import unique
-from sklearn.utils.testing import assert_greater, assert_less
+from sklearn.utils.testing import assert_greater, assert_in, assert_less
+from sklearn.utils.testing import assert_raises_regexp, assert_warns
+
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -46,9 +46,7 @@ def test_libsvm_parameters():
 
 
 def test_libsvm_iris():
-    """
-    Check consistency on dataset iris.
-    """
+    """Check consistency on dataset iris."""
 
     # shuffle the dataset so that labels are not ordered
     for k in ('linear', 'rbf'):
@@ -72,6 +70,15 @@ def test_libsvm_iris():
                                        kernel='linear',
                                        random_seed=0)
     assert_greater(np.mean(pred == iris.target), .95)
+
+    # If random_seed >= 0, the libsvm rng is seeded (by calling `srand`), hence
+    # we should get deteriministic results (assuming that there is no other
+    # thread calling this wrapper calling `srand` concurrently).
+    pred2 = svm.libsvm.cross_validation(iris.data,
+                                       iris.target.astype(np.float64), 5,
+                                       kernel='linear',
+                                       random_seed=0)
+    assert_array_equal(pred, pred2)
 
 
 def test_single_sample_1d():
@@ -167,13 +174,31 @@ def test_svr():
     diabetes = datasets.load_diabetes()
     for clf in (svm.NuSVR(kernel='linear', nu=.4, C=1.0),
                 svm.NuSVR(kernel='linear', nu=.4, C=10.),
-                svm.SVR(kernel='linear', C=10.)):
+                svm.SVR(kernel='linear', C=10.),
+                svm.LinearSVR(C=10.),
+                svm.LinearSVR(C=10.),
+                ):
         clf.fit(diabetes.data, diabetes.target)
         assert_greater(clf.score(diabetes.data, diabetes.target), 0.02)
 
     # non-regression test; previously, BaseLibSVM would check that
     # len(np.unique(y)) < 2, which must only be done for SVC
     svm.SVR().fit(diabetes.data, np.ones(len(diabetes.data)))
+    svm.LinearSVR().fit(diabetes.data, np.ones(len(diabetes.data)))
+
+
+def test_linearsvr():
+    # check that SVR(kernel='linear') and LinearSVC() give
+    # comparable results
+    diabetes = datasets.load_diabetes()
+    lsvr = svm.LinearSVR(C=1e3).fit(diabetes.data, diabetes.target)
+    score1 = lsvr.score(diabetes.data, diabetes.target)
+
+    svr = svm.SVR(kernel='linear', C=1e3).fit(diabetes.data, diabetes.target)
+    score2 = svr.score(diabetes.data, diabetes.target)
+
+    assert np.linalg.norm(lsvr.coef_ - svr.coef_) / np.linalg.norm(svr.coef_) < .1
+    assert np.abs(score1 - score2) < 0.1
 
 
 def test_svr_errors():
@@ -294,11 +319,11 @@ def test_decision_function():
     clf.fit(X, Y)
     dec = np.dot(X, clf.coef_.T) + clf.intercept_
     prediction = clf.predict(X)
-    assert_array_almost_equal(dec, clf.decision_function(X))
+    assert_array_almost_equal(dec.ravel(), clf.decision_function(X))
     assert_array_almost_equal(
         prediction,
-        clf.classes_[(clf.decision_function(X) > 0).astype(np.int).ravel()])
-    expected = np.array([[-1.], [-0.66], [-1.], [0.66], [1.], [1.]])
+        clf.classes_[(clf.decision_function(X) > 0).astype(np.int)])
+    expected = np.array([-1., -0.66, -1., 0.66, 1., 1.])
     assert_array_almost_equal(clf.decision_function(X), expected, 2)
 
 
@@ -357,8 +382,8 @@ def test_auto_weight():
     X, y = iris.data[:, :2], iris.target + 1
     unbalanced = np.delete(np.arange(y.size), np.where(y > 2)[0][::2])
 
-    classes, y_ind = unique(y[unbalanced], return_inverse=True)
-    class_weights = compute_class_weight('auto', classes, y_ind)
+    classes = np.unique(y[unbalanced])
+    class_weights = compute_class_weight('auto', classes, y[unbalanced])
     assert_true(np.argmax(class_weights) == 2)
 
     for clf in (svm.SVC(kernel='linear'), svm.LinearSVC(random_state=0),
@@ -367,8 +392,9 @@ def test_auto_weight():
         y_pred = clf.fit(X[unbalanced], y[unbalanced]).predict(X)
         clf.set_params(class_weight='auto')
         y_pred_balanced = clf.fit(X[unbalanced], y[unbalanced],).predict(X)
-        assert_true(metrics.f1_score(y, y_pred)
-                    <= metrics.f1_score(y, y_pred_balanced))
+        assert_true(metrics.f1_score(y, y_pred, average='weighted')
+                    <= metrics.f1_score(y, y_pred_balanced,
+                                        average='weighted'))
 
 
 def test_bad_input():
@@ -417,6 +443,16 @@ def test_bad_input():
     assert_raises(ValueError, clf.predict, Xt)
 
 
+def test_sparse_precomputed():
+    clf = svm.SVC(kernel='precomputed')
+    sparse_gram = sparse.csr_matrix([[1, 0], [0, 1]])
+    try:
+        clf.fit(sparse_gram, [0, 1])
+        assert not "reached"
+    except TypeError as e:
+        assert_in("Sparse precomputed", str(e))
+
+
 def test_linearsvc_parameters():
     """
     Test possible parameter combinations in LinearSVC
@@ -425,18 +461,16 @@ def test_linearsvc_parameters():
     params = [(dual, loss, penalty) for dual in [True, False]
               for loss in ['l1', 'l2', 'lr'] for penalty in ['l1', 'l2']]
 
+    X, y = make_classification(n_samples=5, n_features=5)
+
     for dual, loss, penalty in params:
-            if loss == 'l1' and penalty == 'l1':
-                assert_raises(ValueError, svm.LinearSVC, penalty=penalty,
-                              loss=loss, dual=dual)
-            elif loss == 'l1' and penalty == 'l2' and not dual:
-                assert_raises(ValueError, svm.LinearSVC, penalty=penalty,
-                              loss=loss, dual=dual)
-            elif penalty == 'l1' and dual:
-                assert_raises(ValueError, svm.LinearSVC, penalty=penalty,
-                              loss=loss, dual=dual)
-            else:
-                svm.LinearSVC(penalty=penalty, loss=loss, dual=dual)
+        clf = svm.LinearSVC(penalty=penalty, loss=loss, dual=dual)
+        if (loss == 'l1' and penalty == 'l1') or (
+            loss == 'l1' and penalty == 'l2' and not dual) or (
+            penalty == 'l1' and dual):
+            assert_raises(ValueError, clf.fit, X, y)
+        else:
+            clf.fit(X, y)
 
 
 def test_linearsvc():
@@ -490,7 +524,6 @@ def test_linearsvc_crammer_singer():
     assert_array_almost_equal(dec_func, cs_clf.decision_function(iris.data))
 
 
-
 def test_crammer_singer_binary():
     """Test Crammer-Singer formulation in the binary case"""
     X, y = make_classification(n_classes=2, random_state=0)
@@ -499,8 +532,7 @@ def test_crammer_singer_binary():
         acc = svm.LinearSVC(fit_intercept=fit_intercept,
                             multi_class="crammer_singer",
                             random_state=0).fit(X, y).score(X, y)
-        assert_almost_equal(acc, 0.68)
-
+        assert_greater(acc, 0.9)
 
 
 def test_linearsvc_iris():
@@ -655,14 +687,19 @@ def test_svc_bad_kernel():
 def test_timeout():
     a = svm.SVC(kernel=lambda x, y: np.dot(x, y.T), probability=True,
                 random_state=0, max_iter=1)
-    with warnings.catch_warnings(record=True) as foo:
-        # Hackish way to reset the  warning counter
-        from sklearn.svm import base
-        base.__warningregistry__ = {}
-        warnings.simplefilter("always")
-        a.fit(X, Y)
-        assert_equal(len(foo), 1, msg=foo)
-        assert_equal(foo[0].category, ConvergenceWarning, msg=foo[0].category)
+    assert_warns(ConvergenceWarning, a.fit, X, Y)
+
+
+def test_unfitted():
+    X = "foo!"      # input validation not required when SVM not fitted
+
+    clf = svm.SVC()
+    assert_raises_regexp(Exception, r".*\bSVC\b.*\bnot\b.*\bfitted\b",
+                         clf.predict, X)
+
+    clf = svm.NuSVR()
+    assert_raises_regexp(Exception, r".*\bNuSVR\b.*\bnot\b.*\bfitted\b",
+                         clf.predict, X)
 
 
 def test_consistent_proba():
@@ -671,6 +708,27 @@ def test_consistent_proba():
     a = svm.SVC(probability=True, max_iter=1, random_state=0)
     proba_2 = a.fit(X, Y).predict_proba(X)
     assert_array_almost_equal(proba_1, proba_2)
+
+
+def test_linear_svc_convergence_warnings():
+    """Test that warnings are raised if model does not converge"""
+
+    lsvc = svm.LinearSVC(max_iter=2, verbose=1)
+    assert_warns(ConvergenceWarning, lsvc.fit, X, Y)
+    assert_equal(lsvc.n_iter_, 2)
+
+
+def test_svr_coef_sign():
+    """Test that SVR(kernel="linear") has coef_ with the right sign."""
+    # Non-regression test for #2933.
+    X = np.random.RandomState(21).randn(10, 3)
+    y = np.random.RandomState(12).randn(10)
+
+    for svr in [svm.SVR(kernel='linear'), svm.NuSVR(kernel='linear'),
+                svm.LinearSVR()]:
+        svr.fit(X, y)
+        assert_array_almost_equal(svr.predict(X),
+                                  np.dot(X, svr.coef_.ravel()) + svr.intercept_)
 
 
 if __name__ == '__main__':

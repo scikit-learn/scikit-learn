@@ -1,14 +1,14 @@
-# Author: Lars Buitinck <L.J.Buitinck@uva.nl>
+# Authors: Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Dan Blanchard <dblanchard@ets.org>
 # License: BSD 3 clause
 
 from random import Random
 import numpy as np
 import scipy.sparse as sp
 
-from nose.tools import assert_equal
-from nose.tools import assert_true
-from nose.tools import assert_false
 from numpy.testing import assert_array_equal
+from sklearn.utils.testing import (assert_equal, assert_in,
+                                   assert_false, assert_true)
 
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_selection import SelectKBest, chi2
@@ -21,19 +21,27 @@ def test_dictvectorizer():
 
     for sparse in (True, False):
         for dtype in (int, np.float32, np.int16):
-            v = DictVectorizer(sparse=sparse, dtype=dtype)
-            X = v.fit_transform(D)
+            for sort in (True, False):
+                for iterable in (True, False):
+                    v = DictVectorizer(sparse=sparse, dtype=dtype, sort=sort)
+                    X = v.fit_transform(iter(D) if iterable else D)
 
-            assert_equal(sp.issparse(X), sparse)
-            assert_equal(X.shape, (3, 5))
-            assert_equal(X.sum(), 14)
-            assert_equal(v.inverse_transform(X), D)
+                    assert_equal(sp.issparse(X), sparse)
+                    assert_equal(X.shape, (3, 5))
+                    assert_equal(X.sum(), 14)
+                    assert_equal(v.inverse_transform(X), D)
 
-            if sparse:
-                # CSR matrices can't be compared for equality
-                assert_array_equal(X.A, v.transform(D).A)
-            else:
-                assert_array_equal(X, v.transform(D))
+                    if sparse:
+                        # CSR matrices can't be compared for equality
+                        assert_array_equal(X.A, v.transform(iter(D) if iterable
+                                                            else D).A)
+                    else:
+                        assert_array_equal(X, v.transform(iter(D) if iterable
+                                                          else D))
+
+                    if sort:
+                        assert_equal(v.feature_names_,
+                                     sorted(v.feature_names_))
 
 
 def test_feature_selection():
@@ -83,6 +91,11 @@ def test_unseen_or_no_features():
         if sparse:
             X = X.toarray()
         assert_array_equal(X, np.zeros((1, 2)))
+
+        try:
+            v.transform([])
+        except ValueError as e:
+            assert_in("empty", str(e))
 
 
 def test_deterministic_vocabulary():

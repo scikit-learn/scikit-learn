@@ -3,11 +3,10 @@ from io import BytesIO
 import numpy as np
 import scipy.sparse
 
-import warnings
-
 from sklearn.datasets import load_digits
 from sklearn.cross_validation import cross_val_score
 
+from sklearn.externals.six.moves import zip
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -47,6 +46,11 @@ def test_gnb():
     y_pred_proba = clf.predict_proba(X)
     y_pred_log_proba = clf.predict_log_proba(X)
     assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
+
+    # Test whether label mismatch between target y and classes raises
+    # an Error
+    # FIXME Remove this test once the more general partial_fit tests are merged
+    assert_raises(ValueError, GaussianNB().partial_fit, X, y, classes=[0, 1])
 
 
 def test_gnb_prior():
@@ -135,6 +139,20 @@ def check_partial_fit(cls):
 def test_discretenb_partial_fit():
     for cls in [MultinomialNB, BernoulliNB]:
         yield check_partial_fit, cls
+
+
+def test_gnb_partial_fit():
+    clf = GaussianNB().fit(X, y)
+    clf_pf = GaussianNB().partial_fit(X, y, np.unique(y))
+    assert_array_almost_equal(clf.theta_, clf_pf.theta_)
+    assert_array_almost_equal(clf.sigma_, clf_pf.sigma_)
+    assert_array_almost_equal(clf.class_prior_, clf_pf.class_prior_)
+
+    clf_pf2 = GaussianNB().partial_fit(X[0::2, :], y[0::2], np.unique(y))
+    clf_pf2.partial_fit(X[1::2], y[1::2])
+    assert_array_almost_equal(clf.theta_, clf_pf2.theta_)
+    assert_array_almost_equal(clf.sigma_, clf_pf2.sigma_)
+    assert_array_almost_equal(clf.class_prior_, clf_pf2.class_prior_)
 
 
 def test_discretenb_pickle():
@@ -253,27 +271,6 @@ def test_discretenb_provide_prior():
                       classes=[0, 1, 1])
 
 
-def test_deprecated_fit_param():
-    warnings.simplefilter("always", DeprecationWarning)
-    try:
-        for cls in [BernoulliNB, MultinomialNB]:
-            clf = cls()
-            with warnings.catch_warnings(record=True) as w:
-                clf.fit([[0], [1], [2]], [0, 1, 1], class_prior=[0.5, 0.5])
-
-            # Passing class_prior as a fit param should raise a deprecation
-            # warning
-            assert_equal(len(w), 1)
-            assert_equal(w[0].category, DeprecationWarning)
-
-            with warnings.catch_warnings(record=True):
-                # Inconsistent number of classes with prior
-                assert_raises(ValueError, clf.fit, [[0], [1], [2]], [0, 1, 2],
-                              class_prior=[0.5, 0.5])
-    finally:
-        warnings.filters.pop(0)
-
-
 def test_sample_weight_multiclass():
     for cls in [BernoulliNB, MultinomialNB]:
         # check shape consistency for number of samples at fit time
@@ -293,7 +290,7 @@ def check_sample_weight_multiclass(cls):
     clf = cls().fit(X, y, sample_weight=sample_weight)
     assert_array_equal(clf.predict(X), [0, 1, 1, 2])
 
-    # Check wample weight using the partial_fit method
+    # Check sample weight using the partial_fit method
     clf = cls()
     clf.partial_fit(X[:2], y[:2], classes=[0, 1, 2],
                     sample_weight=sample_weight[:2])
@@ -329,8 +326,8 @@ def test_coef_intercept_shape():
 
 def test_check_accuracy_on_digits():
     # Non regression test to make sure that any further refactoring / optim
-    # of the NB models do not harm the performance on a non linearly separable
-    # dataset
+    # of the NB models do not harm the performance on a slightly non-linearly
+    # separable dataset
     digits = load_digits()
     X, y = digits.data, digits.target
     binary_3v8 = np.logical_or(digits.target == 3, digits.target == 8)
@@ -338,21 +335,21 @@ def test_check_accuracy_on_digits():
 
     # Multinomial NB
     scores = cross_val_score(MultinomialNB(alpha=10), X, y, cv=10)
-    assert_greater(scores.mean(), 0.90)
+    assert_greater(scores.mean(), 0.86)
 
     scores = cross_val_score(MultinomialNB(alpha=10), X_3v8, y_3v8, cv=10)
-    assert_greater(scores.mean(), 0.95)
+    assert_greater(scores.mean(), 0.94)
 
     # Bernoulli NB
     scores = cross_val_score(BernoulliNB(alpha=10), X > 4, y, cv=10)
-    assert_greater(scores.mean(), 0.85)
+    assert_greater(scores.mean(), 0.83)
 
     scores = cross_val_score(BernoulliNB(alpha=10), X_3v8 > 4, y_3v8, cv=10)
-    assert_greater(scores.mean(), 0.94)
+    assert_greater(scores.mean(), 0.92)
 
     # Gaussian NB
     scores = cross_val_score(GaussianNB(), X, y, cv=10)
-    assert_greater(scores.mean(), 0.81)
+    assert_greater(scores.mean(), 0.77)
 
     scores = cross_val_score(GaussianNB(), X_3v8, y_3v8, cv=10)
     assert_greater(scores.mean(), 0.86)

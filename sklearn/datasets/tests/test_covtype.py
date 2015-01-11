@@ -17,7 +17,7 @@ def test_fetch():
         data1 = fetch(shuffle=True, random_state=42)
     except IOError as e:
         if e.errno == errno.ENOENT:
-            raise SkipTest()
+            raise SkipTest("Covertype dataset can not be loaded.")
 
     data2 = fetch(shuffle=True, random_state=37)
 

@@ -43,6 +43,10 @@ def transform(raw_X, Py_ssize_t n_features, dtype):
 
     for x in raw_X:
         for f, v in x:
+            value = v
+            if value == 0:
+                continue
+
             if isinstance(f, unicode):
                 f = f.encode("utf-8")
             # Need explicit type check because Murmurhash does not propagate
@@ -53,7 +57,6 @@ def transform(raw_X, Py_ssize_t n_features, dtype):
 
             array.resize_smart(indices, len(indices) + 1)
             indices[len(indices) - 1] = abs(h) % n_features
-            value = v
             value *= (h >= 0) * 2 - 1
             values[size] = value
             size += 1
@@ -69,6 +72,6 @@ def transform(raw_X, Py_ssize_t n_features, dtype):
 
     if len(indices):
         indices_a = np.frombuffer(indices, dtype=np.int32)
-    else:
+    else:       # workaround for NumPy < 1.7.0
         indices_a = np.empty(0, dtype=np.int32)
     return (indices_a, np.frombuffer(indptr, dtype=np.int32), values[:size])

@@ -1,5 +1,3 @@
-import warnings
-
 from nose.tools import assert_true
 from nose.tools import assert_equal
 
@@ -106,8 +104,6 @@ def test_spectral_embedding_callable_affinity(seed=36):
                                random_state=np.random.RandomState(seed))
     embed_rbf = se_rbf.fit_transform(S)
     embed_callable = se_callable.fit_transform(S)
-    embed_rbf = se_rbf.fit_transform(S)
-    embed_callable = se_callable.fit_transform(S)
     assert_array_almost_equal(
         se_callable.affinity_matrix_, se_rbf.affinity_matrix_)
     assert_array_almost_equal(kern, se_rbf.affinity_matrix_)
@@ -120,7 +116,7 @@ def test_spectral_embedding_amg_solver(seed=36):
     try:
         from pyamg import smoothed_aggregation_solver
     except ImportError:
-        raise SkipTest
+        raise SkipTest("pyagm not available.")
 
     se_amg = SpectralEmbedding(n_components=2, affinity="nearest_neighbors",
                                eigen_solver="amg", n_neighbors=5,

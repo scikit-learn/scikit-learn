@@ -1,4 +1,3 @@
-import warnings
 from itertools import product
 
 import numpy as np
@@ -11,7 +10,10 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
+from sklearn.metrics.pairwise import pairwise_distances
 from sklearn import neighbors, datasets
 
 rng = np.random.RandomState(0)
@@ -200,6 +202,13 @@ def test_kneighbors_classifier_predict_proba():
     cls.fit(X, y.astype(str))
     y_prob = cls.predict_proba(X)
     assert_array_equal(real_prob, y_prob)
+    # Check that it works with weights='distance'
+    cls = neighbors.KNeighborsClassifier(
+        n_neighbors=2, p=1, weights='distance')
+    cls.fit(X, y)
+    y_prob = cls.predict_proba(np.array([[0, 2, 0], [2, 2, 2]]))
+    real_prob = np.array([[0, 1, 0], [0, 0.4, 0.6]])
+    assert_array_almost_equal(real_prob, y_prob)
 
 
 def test_radius_neighbors_classifier(n_samples=40,
@@ -756,7 +765,7 @@ def test_neighbors_badargs():
                       nbrs.predict,
                       X)
         assert_raises(ValueError,
-                      nbrs.fit,
+                      ignore_warnings(nbrs.fit),
                       Xsparse, y)
         nbrs = cls()
         assert_raises(ValueError,
@@ -778,17 +787,6 @@ def test_neighbors_badargs():
     assert_raises(ValueError,
                   nbrs.radius_neighbors_graph,
                   X, mode='blah')
-
-
-def test_neighbors_deprecation_arg():
-    """Test that passing the deprecated parameter will cause a
-    warning to be raised, as well as not crash the estimator."""
-    for cls in (neighbors.KNeighborsClassifier,
-                neighbors.KNeighborsRegressor):
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            cls(warn_on_equidistant=True)
-            assert_equal(len(w), 1)
 
 
 def test_neighbors_metrics(n_samples=20, n_features=3,
@@ -813,9 +811,9 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
 
     test = rng.rand(n_query_pts, n_features)
 
-    for metric, kwds in metrics:
+    for metric, metric_params in metrics:
         results = []
-
+        p = metric_params.pop('p', 2)
         for algorithm in algorithms:
             # KD tree doesn't support all metrics
             if (algorithm == 'kd_tree' and
@@ -823,12 +821,13 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
                 assert_raises(ValueError,
                               neighbors.NearestNeighbors,
                               algorithm=algorithm,
-                              metric=metric, **kwds)
+                              metric=metric, metric_params=metric_params)
                 continue
 
             neigh = neighbors.NearestNeighbors(n_neighbors=n_neighbors,
                                                algorithm=algorithm,
-                                               metric=metric, **kwds)
+                                               metric=metric, p=p,
+                                               metric_params=metric_params)
             neigh.fit(X)
             results.append(neigh.kneighbors(test, return_distance=True))
 
@@ -850,6 +849,58 @@ def test_callable_metric():
     dist2, ind2 = nbrs2.kneighbors(X)
 
     assert_array_almost_equal(dist1, dist2)
+
+
+def test_metric_params_interface():
+    assert_warns(DeprecationWarning, neighbors.KNeighborsClassifier,
+                 metric='wminkowski', w=np.ones(10))
+    assert_warns(SyntaxWarning, neighbors.KNeighborsClassifier,
+                 metric_params={'p': 3})
+
+
+def test_predict_sparse_ball_kd_tree():
+    rng = np.random.RandomState(0)
+    X = rng.rand(5, 5)
+    y = rng.randint(0, 2, 5)
+    nbrs1 = neighbors.KNeighborsClassifier(1, algorithm='kd_tree')
+    nbrs2 = neighbors.KNeighborsRegressor(1, algorithm='ball_tree')
+    for model in [nbrs1, nbrs2]:
+        model.fit(X, y)
+        assert_raises(ValueError, model.predict, csr_matrix(X))
+
+
+def test_non_euclidean_kneighbors():
+    rng = np.random.RandomState(0)
+    X = rng.rand(5, 5)
+
+    # Find a reasonable radius.
+    dist_array = pairwise_distances(X).flatten()
+    np.sort(dist_array)
+    radius = dist_array[15]
+
+    # Test kneighbors_graph
+    for metric in ['manhattan', 'chebyshev']:
+        nbrs_graph = neighbors.kneighbors_graph(
+            X, 3, metric=metric).toarray()
+        nbrs1 = neighbors.NearestNeighbors(3, metric=metric).fit(X)
+        assert_array_equal(nbrs_graph, nbrs1.kneighbors_graph(X).toarray())
+
+    # Test radiusneighbors_graph
+    for metric in ['manhattan', 'chebyshev']:
+        nbrs_graph = neighbors.radius_neighbors_graph(
+            X, radius, metric=metric).toarray()
+        nbrs1 = neighbors.NearestNeighbors(metric=metric, radius=radius).fit(X)
+        assert_array_equal(nbrs_graph, nbrs1.radius_neighbors_graph(X).toarray())
+
+    # Raise error when wrong parameters are supplied,
+    X_nbrs = neighbors.NearestNeighbors(3, metric='manhattan')
+    X_nbrs.fit(X)
+    assert_raises(ValueError, neighbors.kneighbors_graph, X_nbrs, 3,
+                  metric='euclidean')
+    X_nbrs = neighbors.NearestNeighbors(radius=radius, metric='manhattan')
+    X_nbrs.fit(X)
+    assert_raises(ValueError, neighbors.radius_neighbors_graph, X_nbrs,
+                  radius, metric='euclidean')
 
 
 if __name__ == '__main__':

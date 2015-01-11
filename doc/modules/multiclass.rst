@@ -7,10 +7,14 @@ Multiclass and multilabel algorithms
 
 .. currentmodule:: sklearn.multiclass
 
-The :mod:`sklearn.multiclass` module implements *meta-estimators* to perform
-``multiclass`` and ``multilabel`` classification. Those meta-estimators are
-meant to turn a binary classifier or a regressor into a multi-class/label
-classifier.
+.. warning::
+    All classifiers in scikit-learn do multiclass classification
+    out-of-the-box. You don't need to use the :mod:`sklearn.multiclass` module
+    unless you want to experiment with different multiclass strategies.
+
+The :mod:`sklearn.multiclass` module implements *meta-estimators* to solve
+``multiclass`` and ``multilabel`` classification problems
+by decomposing such problems into binary classification problems.
 
   - **Multiclass classification** means a classification task with more than
     two classes; e.g., classify a set of images of fruits which may be oranges,
@@ -25,11 +29,12 @@ classifier.
     education at the same time or none of these.
 
   - **Multioutput-multiclass classification** and **multi-task classification**
-    means that an estimators have to handle
-    jointly several classification tasks. This is a generalization
+    means that a single estimator has to handle
+    several joint classification tasks. This is a generalization
     of the multi-label classification task, where the set of classification
     problem is restricted to binary classification, and of the multi-class
-    classification task. *The output format is a 2d numpy array.*
+    classification task. *The output format is a 2d numpy array or sparse 
+    matrix.*
 
     The set of labels can be different for each output variable.
     For instance a sample could be assigned "pear" for an output variable that
@@ -44,21 +49,22 @@ classifier.
     classification task with different model formulations. For
     more information, see the relevant estimator documentation.
 
-Estimators in this module are meta-estimators. For example, it is possible to
-use these estimators to turn a binary classifier or a regressor into a
-multiclass classifier. It is also possible to use these estimators with
-multiclass estimators in the hope that their generalization error or runtime
-performance improves.
+All scikit-learn classifiers are capable of multiclass classification,
+but the meta-estimators offered by :mod:`sklearn.multiclass`
+permit changing the way they handle more than two classes
+because this may have an effect on classifier performance
+(either in terms of generalization error or required computational resources).
 
-You don't need to use these estimators unless you want to experiment with
-different multiclass strategies: all classifiers in scikit-learn support
-multiclass classification out-of-the-box. Below is a summary of the
-classifiers supported by scikit-learn grouped by strategy:
+Below is a summary of the classifiers supported by scikit-learn
+grouped by strategy; you don't need the meta-estimators in this class
+if you're using one of these unless you want custom multiclass behavior:
 
   - Inherently multiclass: :ref:`Naive Bayes <naive_bayes>`,
     :class:`sklearn.lda.LDA`,
     :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
-    :ref:`Nearest Neighbors <neighbors>`.
+    :ref:`Nearest Neighbors <neighbors>`,
+    setting "multi_class=multinomial" in
+    :class:`sklearn.linear_model.LogisticRegression`.
   - One-Vs-One: :class:`sklearn.svm.SVC`.
   - One-Vs-All: all linear models except :class:`sklearn.svm.SVC`.
 
@@ -66,52 +72,38 @@ Some estimators also support multioutput-multiclass classification
 tasks :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
 :ref:`Nearest Neighbors <neighbors>`.
 
-
 .. warning::
 
-    For the moment, no metric supports the multioutput-multiclass
-    classification task.
+    At present, no metric in :mod:`sklearn.metrics`
+    supports the multioutput-multiclass classification task.
 
 Multilabel classification format
 ================================
 
-In multilabel learning, the joint set of binary classification task
-is expressed with either a sequence of sequences or a label binary indicator
-array.
+In multilabel learning, the joint set of binary classification tasks is
+expressed with label binary indicator array: each sample is one row of a 2d
+array of shape (n_samples, n_classes) with binary values: the one, i.e. the non
+zero elements, corresponds to the subset of labels. An array such as
+``np.array([[1, 0, 0], [0, 1, 1], [0, 0, 0]])`` represents label 0 in the first
+sample, labels 1 and 2 in the second sample, and no labels in the third sample.
 
-In the sequence of sequences format, each set of labels is represented as
-a sequence of integer, e.g. ``[0]``, ``[1, 2]``. An empty set of labels is
-then expressed as ``[]``, and a set of samples as ``[[0], [1, 2], []]``.
-In the label indicator format, each sample is one row of a 2d array of
-shape (n_samples, n_classes) with binary values: the one, i.e. the non zero
-elements, corresponds to the subset of labels. Our previous example is
-therefore expressed as ``np.array([[1, 0, 0], [0, 1, 1], [0, 0, 0])``
-and an empty set of labels would be represented by a row of zero elements.
-
-
-In the preprocessing module, the transformer
-:class:`sklearn.preprocessing.label_binarize` and the function
-:func:`sklearn.preprocessing.LabelBinarizer`
-can help you to convert the sequence of sequences format to the label
-indicator format.
+Producing multilabel data as a list of sets of labels may be more intuitive.
+The transformer :class:`MultiLabelBinarizer <preprocessing.MultiLabelBinarizer>`
+will convert between a collection of collections of labels and the indicator
+format.
 
   >>> from sklearn.datasets import make_multilabel_classification
-  >>> from sklearn.preprocessing import LabelBinarizer
-  >>> X, Y = make_multilabel_classification(n_samples=5, random_state=0)
+  >>> from sklearn.preprocessing import MultiLabelBinarizer
+  >>> X, Y = make_multilabel_classification(n_samples=5, random_state=0,
+  ...                                       return_indicator=False)
   >>> Y
-  ([0, 1, 2], [4, 1, 0, 2], [4, 0, 1], [1, 0], [3, 2])
-  >>> LabelBinarizer().fit_transform(Y)
-  array([[1, 1, 1, 0, 0],
-         [1, 1, 1, 0, 1],
-         [1, 1, 0, 0, 1],
-         [1, 1, 0, 0, 0],
-         [0, 0, 1, 1, 0]])
-
-.. warning::
-
-    - The sequence of sequences format will disappear in a near future.
-    - All estimators or functions support both multilabel format.
-
+  [[2, 3, 4], [2], [0, 1, 3], [0, 1, 2, 3, 4], [0, 1, 2]]
+  >>> MultiLabelBinarizer().fit_transform(Y)
+  array([[0, 0, 1, 1, 1],
+         [0, 0, 1, 0, 0],
+         [1, 1, 0, 1, 0],
+         [1, 1, 1, 1, 1],
+         [1, 1, 1, 0, 0]])
 
 One-Vs-The-Rest
 ===============
@@ -149,11 +141,11 @@ Multilabel learning
 -------------------
 
 :class:`OneVsRestClassifier` also supports multilabel classification.
-To use this feature, feed the classifier a list of tuples containing
-target labels, like in the example below.
+To use this feature, feed the classifier an indicator matrix, in which cell
+[i, j] indicates the presence of label j in sample i.
 
 
-.. figure:: ../auto_examples/images/plot_multilabel_1.png
+.. figure:: ../auto_examples/images/plot_multilabel_001.png
     :target: ../auto_examples/plot_multilabel.html
     :align: center
     :scale: 75%
@@ -169,13 +161,13 @@ One-Vs-One
 
 :class:`OneVsOneClassifier` constructs one classifier per pair of classes.
 At prediction time, the class which received the most votes is selected.
-Since it requires to fit `n_classes * (n_classes - 1) / 2` classifiers,
+Since it requires to fit ``n_classes * (n_classes - 1) / 2`` classifiers,
 this method is usually slower than one-vs-the-rest, due to its
 O(n_classes^2) complexity. However, this method may be advantageous for
 algorithms such as kernel algorithms which don't scale well with
-`n_samples`. This is because each individual learning problem only involves
+``n_samples``. This is because each individual learning problem only involves
 a small subset of the data whereas, with one-vs-the-rest, the complete
-dataset is used `n_classes` times.
+dataset is used ``n_classes`` times.
 
 Multiclass learning
 -------------------
@@ -216,7 +208,7 @@ At fitting time, one binary classifier per bit in the code book is fitted.
 At prediction time, the classifiers are used to project new points in the
 class space and the class closest to the points is chosen.
 
-In :class:`OutputCodeClassifier`, the `code_size` attribute allows the user to
+In :class:`OutputCodeClassifier`, the ``code_size`` attribute allows the user to
 control the number of classifiers which will be used. It is a percentage of the
 total number of classes.
 

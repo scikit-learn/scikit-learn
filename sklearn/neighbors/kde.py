@@ -7,7 +7,8 @@ Kernel Density Estimation
 import numpy as np
 from scipy.special import gammainc
 from ..base import BaseEstimator
-from ..utils import array2d, check_random_state
+from ..utils import check_array, check_random_state
+from ..utils.extmath import row_norms
 from .ball_tree import BallTree, DTYPE
 from .kd_tree import KDTree
 
@@ -109,7 +110,7 @@ class KernelDensity(BaseEstimator):
         else:
             raise ValueError("invalid algorithm: '{0}'".format(algorithm))
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Fit the Kernel Density model on the data.
 
         Parameters
@@ -119,7 +120,7 @@ class KernelDensity(BaseEstimator):
             corresponds to a single data point.
         """
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
-        X = array2d(X, order='C', dtype=DTYPE)
+        X = check_array(X, order='C', dtype=DTYPE)
 
         kwargs = self.metric_params
         if kwargs is None:
@@ -140,13 +141,13 @@ class KernelDensity(BaseEstimator):
 
         Returns
         -------
-        density : ndarray
-            The array of log(density) evaluations.  This has shape X.shape[:-1]
+        density : ndarray, shape (n_samples,)
+            The array of log(density) evaluations.
         """
         # The returned density is normalized to the number of points.
         # For it to be a probability, we must scale it.  For this reason
         # we'll also scale atol.
-        X = array2d(X, order='C', dtype=DTYPE)
+        X = check_array(X, order='C', dtype=DTYPE)
         N = self.tree_.data.shape[0]
         atol_N = self.atol * N
         log_density = self.tree_.kernel_density(
@@ -155,8 +156,8 @@ class KernelDensity(BaseEstimator):
         log_density -= np.log(N)
         return log_density
 
-    def score(self, X):
-        """Compute the log probability under the model.
+    def score(self, X, y=None):
+        """Compute the total log probability under the model.
 
         Parameters
         ----------
@@ -166,8 +167,8 @@ class KernelDensity(BaseEstimator):
 
         Returns
         -------
-        logprob : array_like, shape (n_samples,)
-            Log probabilities of each data point in X.
+        logprob : float
+            Total log-likelihood of the data in X.
         """
         return np.sum(self.score_samples(X))
 
@@ -199,7 +200,7 @@ class KernelDensity(BaseEstimator):
         i = rng.randint(data.shape[0], size=n_samples)
 
         if self.kernel == 'gaussian':
-            return rng.normal(data[i], self.bandwidth)
+            return np.atleast_2d(rng.normal(data[i], self.bandwidth))
 
         elif self.kernel == 'tophat':
             # we first draw points from a d-dimensional normal distribution,
@@ -207,7 +208,7 @@ class KernelDensity(BaseEstimator):
             # d-dimensional tophat distribution.
             dim = data.shape[1]
             X = rng.normal(size=(n_samples, dim))
-            s_sq = (X ** 2).sum(1)
+            s_sq = row_norms(X, squared=True)
             correction = (gammainc(0.5 * dim, 0.5 * s_sq) ** (1. / dim)
                           * self.bandwidth / np.sqrt(s_sq))
             return data[i] + X * correction[:, np.newaxis]

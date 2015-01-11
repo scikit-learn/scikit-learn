@@ -15,7 +15,8 @@ from ..metrics.pairwise import pairwise_kernels
 class KernelPCA(BaseEstimator, TransformerMixin):
     """Kernel Principal component analysis (KPCA)
 
-    Non-linear dimensionality reduction through the use of kernels.
+    Non-linear dimensionality reduction through the use of kernels (see
+    :ref:`metrics`).
 
     Parameters
     ----------
@@ -27,7 +28,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         Default: "linear"
 
     degree : int, default=3
-        Degree for poly, rbf and sigmoid kernels. Ignored by other kernels.
+        Degree for poly kernels. Ignored by other kernels.
 
     gamma : float, optional
         Kernel coefficient for rbf and poly kernels. Default: 1/n_features.
@@ -74,13 +75,16 @@ class KernelPCA(BaseEstimator, TransformerMixin):
     Attributes
     ----------
 
-    `lambdas_`, `alphas_`:
-        Eigenvalues and eigenvectors of the centered kernel matrix
+    lambdas_ :
+        Eigenvalues of the centered kernel matrix
 
-    `dual_coef_`:
+    alphas_ :
+        Eigenvectors of the centered kernel matrix
+
+    dual_coef_ :
         Inverse transform matrix
 
-    `X_transformed_fit_`:
+    X_transformed_fit_ :
         Projection of the fitted data on the kernel principal components
 
     References

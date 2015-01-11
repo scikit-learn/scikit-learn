@@ -34,7 +34,7 @@ The disadvantages of support vector machines include:
       calculated using an expensive five-fold cross-validation
       (see :ref:`Scores and probabilities <scores_probabilities>`, below).
 
-The support vector machines in scikit-learn support both dens
+The support vector machines in scikit-learn support both dense
 (``numpy.ndarray`` and convertible to that by ``numpy.asarray``) and
 sparse (any ``scipy.sparse``) sample vectors as input. However, to use
 an SVM to make predictions for sparse data, it must have been fit on such
@@ -51,7 +51,7 @@ Classification
 capable of performing multi-class classification on a dataset.
 
 
-.. figure:: ../auto_examples/svm/images/plot_iris_1.png
+.. figure:: ../auto_examples/svm/images/plot_iris_001.png
    :target: ../auto_examples/svm/plot_iris.html
    :align: center
 
@@ -67,8 +67,8 @@ assumed to be linear. It also lacks some of the members of
 
 As other classifiers, :class:`SVC`, :class:`NuSVC` and
 :class:`LinearSVC` take as input two arrays: an array X of size ``[n_samples,
-n_features]`` holding the training samples, and an array Y of integer values,
-size ``[n_samples]``, holding the class labels for the training samples::
+n_features]`` holding the training samples, and an array y of class labels
+(strings or integers), size ``[n_samples]``::
 
 
     >>> from sklearn import svm
@@ -129,8 +129,8 @@ two classes, only one model is trained::
     >>> lin_clf = svm.LinearSVC()
     >>> lin_clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
     LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-    intercept_scaling=1, loss='l2', multi_class='ovr', penalty='l2',
-    random_state=None, tol=0.0001, verbose=0)
+    intercept_scaling=1, loss='l2', max_iter=1000, multi_class='ovr',
+    penalty='l2', random_state=None, tol=0.0001, verbose=0)
     >>> dec = lin_clf.decision_function([[1]])
     >>> dec.shape[1]
     4
@@ -142,7 +142,7 @@ Note that the :class:`LinearSVC` also implements an alternative multi-class
 strategy, the so-called multi-class SVM formulated by Crammer and Singer, by
 using the option ``multi_class='crammer_singer'``. This method is consistent,
 which is not true for one-vs-rest classification.
-In practice, on-vs-rest classification is usually preferred, since the results
+In practice, one-vs-rest classification is usually preferred, since the results
 are mostly similar, but the runtime is significantly less.
 
 For "one-vs-rest" :class:`LinearSVC` the attributes ``coef_`` and ``intercept_``
@@ -172,11 +172,11 @@ This might be made more clear by an example:
 
 Consider a three class problem with with class 0 having three support vectors
 :math:`v^{0}_0, v^{1}_0, v^{2}_0` and class 1 and 2 having two support vectors
-:math:`v^{0}_1, v^{1}_1` and :math:`v^{0}_1, v^{1}_1` respectively.  For each
+:math:`v^{0}_1, v^{1}_1` and :math:`v^{0}_2, v^{1}_2` respectively.  For each
 support vector :math:`v^{j}_i`, there are two dual coefficients.  Let's call
 the coefficient of support vector :math:`v^{j}_i` in the classifier between
-classes `i` and `k` :math:`\alpha^{j}_{i,k}`.  Then ``dual_coef_`` looks like
-this:
+classes :math:`i` and :math:`k` :math:`\alpha^{j}_{i,k}`.
+Then ``dual_coef_`` looks like this:
 
 +------------------------+------------------------+------------------+
 |:math:`\alpha^{0}_{0,1}`|:math:`\alpha^{0}_{0,2}`|Coefficients      |
@@ -243,7 +243,7 @@ classes or certain individual samples keywords ``class_weight`` and
 ``{class_label : value}``, where value is a floating point number > 0
 that sets the parameter ``C`` of class ``class_label`` to ``C * value``.
 
-.. figure:: ../auto_examples/svm/images/plot_separating_hyperplane_unbalanced_1.png
+.. figure:: ../auto_examples/svm/images/plot_separating_hyperplane_unbalanced_001.png
    :target: ../auto_examples/svm/plot_separating_hyperplane_unbalanced.html
    :align: center
    :scale: 75
@@ -255,7 +255,7 @@ that sets the parameter ``C`` of class ``class_label`` to ``C * value``.
 set the parameter ``C`` for the i-th example to ``C * sample_weight[i]``.
 
 
-.. figure:: ../auto_examples/svm/images/plot_weighted_samples_1.png
+.. figure:: ../auto_examples/svm/images/plot_weighted_samples_001.png
    :target: ../auto_examples/svm/plot_weighted_samples.html
    :align: center
    :scale: 75
@@ -287,8 +287,12 @@ Vector Regression depends only on a subset of the training data,
 because the cost function for building the model ignores any training
 data close to the model prediction.
 
-There are two flavors of Support Vector Regression: :class:`SVR` and
-:class:`NuSVR`.
+There are three different implementations of Support Vector Regression: 
+:class:`SVR`, :class:`NuSVR` and :class:`LinearSVR`. :class:`LinearSVR` 
+provides a faster implementation than :class:`SVR` but only considers
+linear kernels, while :class:`NuSVR` implements a slightly different
+formulation than :class:`SVR` and :class:`LinearSVR`. See
+:ref:`svm_implementation_details` for further details.
 
 As with classification classes, the fit method will take as
 argument vectors X, y, only that in this case y is expected to have
@@ -299,9 +303,8 @@ floating point values instead of integer values::
     >>> y = [0.5, 2.5]
     >>> clf = svm.SVR()
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
-    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3,
-    epsilon=0.1, gamma=0.0, kernel='rbf', max_iter=-1, probability=False,
-    random_state=None, shrinking=True, tol=0.001, verbose=False)
+    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.1, gamma=0.0,
+        kernel='rbf', max_iter=-1, shrinking=True, tol=0.001, verbose=False)
     >>> clf.predict([[1, 1]])
     array([ 1.5])
 
@@ -309,6 +312,8 @@ floating point values instead of integer values::
 .. topic:: Examples:
 
  * :ref:`example_svm_plot_svm_regression.py`
+
+
 
 .. _svm_outlier_detection:
 
@@ -325,7 +330,7 @@ will only take as input an array X, as there are no class labels.
 
 See, section :ref:`outlier_detection` for more details on this usage.
 
-.. figure:: ../auto_examples/svm/images/plot_oneclass_1.png
+.. figure:: ../auto_examples/svm/images/plot_oneclass_001.png
    :target: ../auto_examples/svm/plot_oneclass.html
    :align: center
    :scale: 75
@@ -365,7 +370,7 @@ Tips on Practical Use
     :class:`NuSVR`, if the data passed to certain methods is not C-ordered
     contiguous, and double precision, it will be copied before calling the
     underlying C implementation. You can check whether a give numpy array is
-    C-contiguous by inspecting its `flags` attribute.
+    C-contiguous by inspecting its ``flags`` attribute.
 
     For :class:`LinearSVC` (and :class:`LogisticRegression
     <sklearn.linear_model.LogisticRegression>`) any input passed as a numpy
@@ -424,14 +429,14 @@ The *kernel function* can be any of the following:
 
   * linear: :math:`\langle x, x'\rangle`.
 
-  * polynomial: :math:`(\gamma \langle x, x'\rangle + r)^d`. `d` is specified by
-    keyword ``degree``, `r` by ``coef0``.
+  * polynomial: :math:`(\gamma \langle x, x'\rangle + r)^d`.
+    :math:`d` is specified by keyword ``degree``, :math:`r` by ``coef0``.
 
   * rbf: :math:`\exp(-\gamma |x-x'|^2)`. :math:`\gamma` is
     specified by keyword ``gamma``, must be greater than 0.
 
-  * sigmoid (:math:`\tanh(\gamma \langle x,x'\rangle + r)`), where `r` is specified by
-    ``coef0``.
+  * sigmoid (:math:`\tanh(\gamma \langle x,x'\rangle + r)`),
+    where :math:`r` is specified by ``coef0``.
 
 Different kernels are specified by keyword kernel at initialization::
 
@@ -486,7 +491,7 @@ Using the Gram matrix
 ~~~~~~~~~~~~~~~~~~~~~
 
 Set ``kernel='precomputed'`` and pass the Gram matrix instead of X in the fit
-method. At the moment, the kernel values between `all` training vectors and the
+method. At the moment, the kernel values between *all* training vectors and the
 test vectors must be provided.
 
     >>> import numpy as np
@@ -516,7 +521,7 @@ correctly.  ``gamma`` defines how much influence a single training example has.
 The larger ``gamma`` is, the closer other examples must be to be affected.
 
 Proper choice of ``C`` and ``gamma`` is critical to the SVM's performance.  One
-is advised to use :class:`GridSearchCV` with ``C`` and ``gamma`` spaced
+is advised to use :class:`sklearn.grid_search.GridSearchCV` with ``C`` and ``gamma`` spaced
 exponentially far apart to choose good values.
 
 .. topic:: Examples:
@@ -537,7 +542,7 @@ margin), since in general the larger the margin the lower the
 generalization error of the classifier.
 
 
-.. figure:: ../auto_examples/svm/images/plot_separating_hyperplane_1.png
+.. figure:: ../auto_examples/svm/images/plot_separating_hyperplane_001.png
    :align: center
    :scale: 75
 
@@ -569,10 +574,10 @@ Its dual is
    & 0 \leq \alpha_i \leq C, i=1, ..., l
 
 where :math:`e` is the vector of all ones, :math:`C > 0` is the upper bound,
-:math:`Q` is an `n` by `n` positive semidefinite matrix, :math:`Q_{ij} \equiv
-K(x_i, x_j)` and :math:`\phi (x_i)^T \phi (x)` is the kernel. Here training
-vectors are mapped into a higher (maybe infinite) dimensional space by the
-function :math:`\phi`.
+:math:`Q` is an :math:`n` by :math:`n` positive semidefinite matrix,
+:math:`Q_{ij} \equiv K(x_i, x_j)` and :math:`\phi (x_i)^T \phi (x)`
+is the kernel. Here training vectors are mapped into a higher (maybe infinite)
+dimensional space by the function :math:`\phi`.
 
 
 The decision function is:
@@ -587,9 +592,9 @@ The decision function is:
 
 .. TODO multiclass case ?/
 
-This parameters can be accessed through the members `dual_coef\_`
-which holds the product :math:`y_i \alpha_i`, `support_vectors\_` which
-holds the support vectors, and `intercept\_` which holds the independent
+This parameters can be accessed through the members ``dual_coef_`
+which holds the product :math:`y_i \alpha_i`, ``support_vectors_`` which
+holds the support vectors, and ``intercept_`` which holds the independent
 term :math:`-\rho` :
 
 .. topic:: References:
@@ -614,9 +619,10 @@ support vectors and training errors. The parameter :math:`\nu \in (0,
 1]` is an upper bound on the fraction of training errors and a lower
 bound of the fraction of support vectors.
 
-It can be shown that the `\nu`-SVC formulation is a reparametrization
-of the `C`-SVC and therefore mathematically equivalent.
+It can be shown that the :math:`\nu`-SVC formulation is a reparametrization
+of the :math:`C`-SVC and therefore mathematically equivalent.
 
+.. _svm_implementation_details:
 
 Implementation details
 ======================
