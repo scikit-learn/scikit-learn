@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.datasets import make_classification
 from sklearn.linear_model import Ridge
 from sklearn.kernel_ridge import KernelRidge
+from sklearn.metrics.pairwise import pairwise_kernels
 
 from sklearn.utils.testing import assert_array_almost_equal
 
@@ -18,18 +19,32 @@ def test_kernel_ridge():
 
 
 def test_kernel_ridge_precomputed():
-    K = np.dot(X, X.T)
-    pred = KernelRidge(kernel="linear").fit(X, y).predict(X)
-    pred2 = KernelRidge(kernel="precomputed").fit(K, y).predict(K)
-    assert_array_almost_equal(pred, pred2)
+    for kernel in ["linear", "rbf", "poly", "cosine"]:
+        K = pairwise_kernels(X, X, metric=kernel)
+        pred = KernelRidge(kernel=kernel).fit(X, y).predict(X)
+        pred2 = KernelRidge(kernel="precomputed").fit(K, y).predict(K)
+        assert_array_almost_equal(pred, pred2)
 
 
-def test_kernel_ridge_precomputed_sample_weight():
+def test_kernel_ridge_precomputed_kernel_unchanged():
     K = np.dot(X, X.T)
     K2 = K.copy()
-    sw = np.ones(X.shape[0]) / float(X.shape[0])
-    KernelRidge(kernel="precomputed").fit(K, y, sample_weight=sw)
+    KernelRidge(kernel="precomputed").fit(K, y)
     assert_array_almost_equal(K, K2)
+
+
+def test_kernel_ridge_sample_weights():
+    K = np.dot(X, X.T)  # precomputed kernel
+    sw = np.random.RandomState(0).rand(X.shape[0])
+
+    pred = Ridge(alpha=1,
+                 fit_intercept=False).fit(X, y, sample_weight=sw).predict(X)
+    pred2 = KernelRidge(kernel="linear",
+                        alpha=1).fit(X, y, sample_weight=sw).predict(X)
+    pred3 = KernelRidge(kernel="precomputed",
+                        alpha=1).fit(K, y, sample_weight=sw).predict(K)
+    assert_array_almost_equal(pred, pred2)
+    assert_array_almost_equal(pred, pred3)
 
 
 def test_kernel_ridge_multi_output():
