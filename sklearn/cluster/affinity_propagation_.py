@@ -150,11 +150,11 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
                            != n_samples)
             if (not unconverged and (K > 0)) or (it == max_iter):
                 if verbose:
-                    print "Converged after %d iterations." % it
+                    print("Converged after %d iterations." % it)
                 break
     else:
         if verbose:
-            print "Did not converge"
+            print("Did not converge")
 
     I = np.where(np.diag(A + R) > 0)[0]
     K = I.size  # Identify exemplars

@@ -407,7 +407,7 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
     centers = _init_centroids(X, n_clusters, init, random_state=random_state,
                               x_squared_norms=x_squared_norms)
     if verbose:
-        print "Initialization complete"
+        print("Initialization complete")
 
     # Allocate memory to store the distances for each sample to its
     # closer center for reallocation in case of ties
@@ -430,7 +430,7 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
             centers = _k_means._centers_dense(X, labels, n_clusters, distances)
 
         if verbose:
-            print "Iteration %2d, inertia %.3f" % (i, inertia)
+            print("Iteration %2d, inertia %.3f" % (i, inertia))
 
         if best_inertia is None or inertia < best_inertia:
             best_labels = labels.copy()
@@ -439,7 +439,7 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
 
         if squared_norm(centers_old - centers) <= tol:
             if verbose:
-                print "Converged at iteration %d" % i
+                print("Converged at iteration %d" % i)
             break
     return best_labels, best_inertia, best_centers, i + 1
 
@@ -1033,7 +1033,7 @@ def _mini_batch_convergence(model, iteration_idx, n_iter, tol,
             ' mean batch inertia: %f, ewa inertia: %f ' % (
                 iteration_idx + 1, n_iter, batch_inertia,
                 ewa_inertia))
-        print progress_msg
+        print(progress_msg)
 
     # Early stopping based on absolute tolerance on squared change of
     # centers position (using EWA smoothing)
@@ -1333,7 +1333,7 @@ class MiniBatchKMeans(KMeans):
             Sum of squared distances of points to nearest cluster.
         """
         if self.verbose:
-            print 'Computing label assignment and total inertia'
+            print('Computing label assignment and total inertia')
         x_squared_norms = row_norms(X, squared=True)
         slices = gen_batches(X.shape[0], self.batch_size)
         results = [_labels_inertia(X[s], x_squared_norms[s],
