@@ -110,3 +110,22 @@ def test_paper_example():
         assert_almost_equal(score, silhouette_score(D, np.array(labels),
                                                     metric='precomputed'),
                             decimal=2)
+
+
+def test_sample_weight():
+    n_samples = 10
+    rng = np.random.RandomState(0)
+    X = rng.rand(n_samples, 2)
+    sample_weight = rng.randint(3, size=n_samples)
+    # Ensure both the 0 and multiple cases are handled
+    assert np.any(sample_weight == 2)
+    assert np.any(sample_weight == 0)
+    y = rng.randint(2, size=n_samples)
+    X_repeated = np.repeat(X, sample_weight, axis=0)
+    y_repeated = np.repeat(y, sample_weight, axis=0)
+    repeated_input = silhouette_samples(X_repeated, y_repeated)
+    weighed_s = silhouette_samples(X, y, sample_weight=sample_weight)
+    repeated_output = np.repeat(weighed_s, sample_weight, axis=0)
+    assert_almost_equal(repeated_input, repeated_output)
+    assert_almost_equal(silhouette_score(X_repeated, y_repeated),
+                        silhouette_score(X, y, sample_weight=sample_weight))

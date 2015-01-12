@@ -1,6 +1,7 @@
 """ Unsupervised evaluation metrics. """
 
 # Authors: Robert Layton <robertlayton@gmail.com>
+#          Joel Nothman <joel.nothman@gmail.com>
 #
 # License: BSD 3 clause
 
@@ -11,7 +12,7 @@ from ..pairwise import pairwise_distances
 
 
 def silhouette_score(X, labels, metric='euclidean', sample_size=None,
-                     random_state=None, **kwds):
+                     sample_weight=None, random_state=None, **kwds):
     """Compute the mean Silhouette Coefficient of all samples.
 
     The Silhouette Coefficient is calculated using the mean intra-cluster
@@ -50,6 +51,12 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
     sample_size : int or None
         The size of the sample to use when computing the Silhouette
         Coefficient. If ``sample_size is None``, no sampling is used.
+        Note this does not take ``sample_weight`` into account.
+
+    sample_weight : array, shape = [n_samples], optional
+        The weight for each sample, where samples would usually be weighted 1.
+        Thus intra-cluster distance for point i will incorporate a
+        zero-distance with weight ``sample_weight[i] - 1``.
 
     random_state : integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
@@ -91,10 +98,15 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
             X, labels = X[indices].T[indices].T, labels[indices]
         else:
             X, labels = X[indices], labels[indices]
-    return np.mean(silhouette_samples(X, labels, metric=metric, **kwds))
+        if sample_weight is not None:
+            sample_weight = sample_weight[indices]
+    return np.average(silhouette_samples(X, labels, metric=metric,
+                                         sample_weight=sample_weight, **kwds),
+                      weights=sample_weight)
 
 
-def silhouette_samples(X, labels, metric='euclidean', **kwds):
+def silhouette_samples(X, labels, metric='euclidean', sample_weight=None,
+                       **kwds):
     """Compute the Silhouette Coefficient for each sample.
 
     The Silhouette Coefficient is a measure of how well samples are clustered
@@ -132,6 +144,11 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
         allowed by :func:`sklearn.metrics.pairwise.pairwise_distances`. If X is
         the distance array itself, use "precomputed" as the metric.
 
+    sample_weight : array, shape = [n_samples], optional
+        The weight for each sample, where samples would usually be weighted 1.
+        Thus intra-cluster distance for point i will incorporate a
+        zero-distance with weight ``sample_weight[i] - 1``.
+
     `**kwds` : optional keyword parameters
         Any further parameters are passed directly to the distance function.
         If using a ``scipy.spatial.distance`` metric, the parameters are still
@@ -156,6 +173,9 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     """
     check_array(labels)
     distances = pairwise_distances(X, metric=metric, **kwds)
+    if sample_weight is not None:
+        # weight each column
+        distances = distances * sample_weight
     X, labels = check_X_y(X, labels)
     n = labels.shape[0]
 
@@ -172,7 +192,7 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
                                          axis=-1)
 
     # Calculate distance between each point and co-clustered points
-    cluster_sizes = np.bincount(labels)
+    cluster_sizes = np.bincount(labels, weights=sample_weight)
     intra_cluster = (sum_distances[np.arange(n), labels] /
                      (cluster_sizes[labels] - 1))
     intra_cluster[cluster_sizes[labels] == 1] = 0
