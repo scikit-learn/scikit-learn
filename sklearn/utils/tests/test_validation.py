@@ -1,29 +1,28 @@
 """Tests for input validation functions"""
 
 from tempfile import NamedTemporaryFile
+from itertools import product
+
 import numpy as np
 from numpy.testing import assert_array_equal, assert_warns
 import scipy.sparse as sp
 from nose.tools import assert_raises, assert_true, assert_false, assert_equal
-from itertools import product
 
+from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
-
 from sklearn.utils.estimator_checks import NotAnArray
-
 from sklearn.random_projection import sparse_random_matrix
-
 from sklearn.linear_model import ARDRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
-
 from sklearn.datasets import make_blobs
 from sklearn.utils.validation import (
     NotFittedError,
     has_fit_parameter,
-    check_is_fitted)
+    check_is_fitted,
+    check_consistent_length)
 
 from sklearn.utils.testing import assert_raise_message
 
@@ -337,3 +336,21 @@ def test_check_is_fitted():
 
     assert_equal(None, check_is_fitted(ard, "coef_"))
     assert_equal(None, check_is_fitted(svr, "support_"))
+
+
+def test_check_consistent_length():
+    check_consistent_length([1], [2], [3], [4], [5])
+    check_consistent_length([[1, 2], [[1, 2]]], [1, 2], ['a', 'b'])
+    check_consistent_length([1], (2,), np.array([3]), sp.csr_matrix((1, 2)))
+    assert_raises_regexp(ValueError, 'inconsistent numbers of samples',
+                         check_consistent_length, [1, 2], [1])
+    assert_raises_regexp(TypeError, 'got <\w+ \'int\'>',
+                         check_consistent_length, [1, 2], 1)
+    assert_raises_regexp(TypeError, 'got <\w+ \'object\'>',
+                         check_consistent_length, [1, 2], object())
+
+    assert_raises(TypeError, check_consistent_length, [1, 2], np.array(1))
+    # Despite ensembles having __len__ they must raise TypeError
+    assert_raises_regexp(TypeError, 'estimator', check_consistent_length,
+                         [1, 2], RandomForestRegressor())
+    # XXX: We should have a test with a string, but what is correct behaviour?

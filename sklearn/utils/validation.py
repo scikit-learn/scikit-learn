@@ -104,11 +104,16 @@ def _is_arraylike(x):
 
 def _num_samples(x):
     """Return number of samples in array-like x."""
+    if hasattr(x, 'fit'):
+        # Don't get num_samples from an ensembles length!
+        raise TypeError('Expected sequence or array-like, got '
+                        'estimator %s' % x)
     if not hasattr(x, '__len__') and not hasattr(x, 'shape'):
         if hasattr(x, '__array__'):
             x = np.asarray(x)
         else:
-            raise TypeError("Expected sequence or array-like, got %r" % x)
+            raise TypeError("Expected sequence or array-like, got %s" %
+                            type(x))
     if hasattr(x, 'shape'):
         if len(x.shape) == 0:
             raise TypeError("Singleton array %r cannot be considered"
@@ -165,8 +170,8 @@ def check_consistent_length(*arrays):
 
     uniques = np.unique([_num_samples(X) for X in arrays if X is not None])
     if len(uniques) > 1:
-        raise ValueError("Found arrays with inconsistent numbers of samples: %s"
-                         % str(uniques))
+        raise ValueError("Found arrays with inconsistent numbers of samples: "
+                         "%s" % str(uniques))
 
 
 def indexable(*iterables):
