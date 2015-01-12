@@ -328,11 +328,6 @@ class KNeighborsMixin(object):
 
         X = check_array(X, accept_sparse='csr')
 
-        if self.effective_metric_ == 'precomputed' and \
-           X.shape[1] != self._fit_X.shape[0]:
-            raise ValueError("Precomputed metric requires shape "
-                             "(n_queries, n_indexed).")
-
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
 
@@ -585,11 +580,6 @@ class RadiusNeighborsMixin(object):
         else:
             query_is_train = True
             X = self._fit_X
-
-        if self.effective_metric_ == 'precomputed' and \
-           X.shape[1] != self._fit_X.shape[0]:
-            raise ValueError("Precomputed metric requires shape "
-                             "(n_queries, n_indexed).")
 
         if radius is None:
             radius = self.radius
