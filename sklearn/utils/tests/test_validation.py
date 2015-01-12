@@ -24,7 +24,8 @@ from sklearn.utils.estimator_checks import NotAnArray
 from sklearn.utils.validation import (
         NotFittedError,
         has_fit_parameter,
-        check_is_fitted)
+        check_is_fitted,
+        check_consistent_length)
 
 
 def test_as_float_array():
@@ -274,6 +275,21 @@ def test_check_is_fitted():
 
     ard.fit(*make_blobs())
     svr.fit(*make_blobs())
- 
+
     assert_equal(None, check_is_fitted(ard, "coef_"))
     assert_equal(None, check_is_fitted(svr, "support_"))
+
+
+def test_check_consistent_length():
+    check_consistent_length([1], [2], [3], [4], [5])
+    check_consistent_length([[1, 2], [[1, 2]]], [1, 2], ['a', 'b'])
+    check_consistent_length([1], (2,), np.array([3]), sp.csr_matrix((1, 2)))
+    assert_raises(ValueError, check_consistent_length, [1, 2], [1])
+    assert_raises(TypeError, check_consistent_length, [1, 2], 1)
+    assert_raises(TypeError, check_consistent_length, [1, 2], object())
+    # XXX: Should this throw a TypeError?
+    assert_raises(IndexError, check_consistent_length, [1, 2], np.array(1))
+    # Despite ensembles having __len__ they must raise TypeError
+    assert_raises(TypeError, check_consistent_length,
+                  [1, 2], RandomForestRegressor())
+    # XXX: We should have a test with a string, but what is correct behaviour
