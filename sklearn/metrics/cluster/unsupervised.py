@@ -6,7 +6,7 @@
 
 import numpy as np
 
-from ...utils import check_random_state
+from ...utils import check_random_state, check_array, check_X_y
 from ..pairwise import pairwise_distances
 
 
@@ -154,66 +154,35 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
        <http://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
 
     """
+    check_array(labels)
     distances = pairwise_distances(X, metric=metric, **kwds)
+    X, labels = check_X_y(X, labels)
     n = labels.shape[0]
-    A = np.array([_intra_cluster_distance(distances[i], labels, i)
-                  for i in range(n)])
-    B = np.array([_nearest_cluster_distance(distances[i], labels, i)
-                  for i in range(n)])
-    sil_samples = (B - A) / np.maximum(A, B)
-    return sil_samples
 
+    # relabel to range [0, #labels - 1]:
+    unique_labels, labels = np.unique(labels, return_inverse=True)
+    n_labels = len(unique_labels)
 
-def _intra_cluster_distance(distances_row, labels, i):
-    """Calculate the mean intra-cluster distance for sample i.
+    # calculate sum of distances between each point and each cluster:
+    sum_distances = np.zeros((n, n_labels))
+    # Shorthand available from numpy 1.8.0:
+    # np.add.at(sum_distances.T, labels, distances)
+    for label in range(n_labels):
+        sum_distances[:, label] = np.sum(distances[:, labels == label],
+                                         axis=-1)
 
-    Parameters
-    ----------
-    distances_row : array, shape = [n_samples]
-        Pairwise distance matrix between sample i and each sample.
+    # Calculate distance between each point and co-clustered points
+    cluster_sizes = np.bincount(labels)
+    intra_cluster = (sum_distances[np.arange(n), labels] /
+                     (cluster_sizes[labels] - 1))
+    intra_cluster[cluster_sizes[labels] == 1] = 0
 
-    labels : array, shape = [n_samples]
-        label values for each sample
+    # Calculate minimum distance between each point and another cluster
+    sum_distances[np.arange(n), labels] = np.inf
+    mean_distances = sum_distances / cluster_sizes
+    nearest_cluster = np.min(mean_distances, axis=1)
 
-    i : int
-        Sample index being calculated. It is excluded from calculation and
-        used to determine the current label
-
-    Returns
-    -------
-    a : float
-        Mean intra-cluster distance for sample i
-    """
-    mask = labels == labels[i]
-    mask[i] = False
-    if not np.any(mask):
-        # cluster of size 1
-        return 0
-    a = np.mean(distances_row[mask])
-    return a
-
-
-def _nearest_cluster_distance(distances_row, labels, i):
-    """Calculate the mean nearest-cluster distance for sample i.
-
-    Parameters
-    ----------
-    distances_row : array, shape = [n_samples]
-        Pairwise distance matrix between sample i and each sample.
-
-    labels : array, shape = [n_samples]
-        label values for each sample
-
-    i : int
-        Sample index being calculated. It is used to determine the current
-        label.
-
-    Returns
-    -------
-    b : float
-        Mean nearest-cluster distance for sample i
-    """
-    label = labels[i]
-    b = np.min([np.mean(distances_row[labels == cur_label])
-               for cur_label in set(labels) if not cur_label == label])
-    return b
+    sil_samples = ((nearest_cluster - intra_cluster) /
+                   np.maximum(intra_cluster, nearest_cluster))
+    # nan values are for clusters of size 1, and should be 0
+    return np.nan_to_num(sil_samples)
