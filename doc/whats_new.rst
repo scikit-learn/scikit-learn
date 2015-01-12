@@ -295,6 +295,10 @@ API changes summary
       :func:`linear_model.enet_path` and :func:`linear_model.lasso_path` have
       been removed. They were deprecated since 0.14
 
+    - From now onwards, all estimators will uniformly raise ``NotFittedError``
+      (:class:`utils.validation.NotFittedError`), when any of the ``predict`` 
+      like methods are called before the model is fit. By `Raghav R V`_.
+
 .. _changes_0_15_2:
 
 0.15.2
@@ -3177,3 +3181,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Martin Billinger: https://github.com/kazemakase
 
 .. _Matteo Visconti di Oleggio Castello: http://www.mvdoc.me
+
+.. _Raghav R V: https://github.com/ragv
