@@ -102,41 +102,59 @@ def test_unsupervised_inputs():
         assert_array_almost_equal(ind1, ind2)
 
 
-def test_unsupervised_precomputed():
+def test_precomputed():
     """Tests unsupervised NearestNeighbors with a distance matrix."""
-    X = rng.random_sample((3, 4))  # Must not be square for tests below.
-    D = metrics.pairwise_distances(X, metric='euclidean')
-    for method in ['kneighbors', 'radius_neighbors']:
+    # Note: smaller samples may result in spurious test success
+    X = rng.random_sample((10, 4))
+    Y = rng.random_sample((3, 4))
+    DXX = metrics.pairwise_distances(X, metric='euclidean')
+    DYX = metrics.pairwise_distances(Y, X, metric='euclidean')
+    for method in ['kneighbors']:
+        # TODO: also test radius_neighbors, but requires different assertion
+
         # As a feature matrix (n_samples by n_features)
         nbrs_X = neighbors.NearestNeighbors(n_neighbors=3)
         nbrs_X.fit(X)
-        dist_X, ind_X = getattr(nbrs_X, method)(X)
+        dist_X, ind_X = getattr(nbrs_X, method)(Y)
 
         # As a dense distance matrix (n_samples by n_samples)
         nbrs_D = neighbors.NearestNeighbors(n_neighbors=3, algorithm='brute',
                                             metric='precomputed')
-        nbrs_D.fit(D)
-        dist_D, ind_D = getattr(nbrs_D, method)(D)
+        nbrs_D.fit(DXX)
+        dist_D, ind_D = getattr(nbrs_D, method)(DYX)
         assert_array_almost_equal(dist_X, dist_D)
         assert_array_almost_equal(ind_X, ind_D)
 
         # Check auto works too
         nbrs_D = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
                                             metric='precomputed')
-        nbrs_D.fit(D)
-        dist_D, ind_D = getattr(nbrs_D, method)(D)
+        nbrs_D.fit(DXX)
+        dist_D, ind_D = getattr(nbrs_D, method)(DYX)
         assert_array_almost_equal(dist_X, dist_D)
         assert_array_almost_equal(ind_X, ind_D)
 
         # Test pickling to ensure lambda didn't get stored
         pickled_nbrs = pickle.dumps(nbrs_D)
-        unpickled_nbrs = pickle.loads(pickled_nbrs)
-        unpickled_dist_D, unpickled_ind_D = getattr(unpickled_nbrs, method)(D)
-        assert_array_almost_equal(unpickled_dist_D, dist_D)
-        assert_array_almost_equal(unpickled_ind_D, ind_D)
+        restored_nbrs = pickle.loads(pickled_nbrs)
+        restored_dist_D, restored_ind_D = getattr(restored_nbrs, method)(DYX)
+        assert_array_almost_equal(restored_dist_D, dist_D)
+        assert_array_almost_equal(restored_ind_D, ind_D)
 
-        # Must raise a ValueError if the matrix is not square
+        # Must raise a ValueError if the matrix is not of correct shape
         assert_raises(ValueError, getattr(nbrs_D, method), X)
+
+    target = np.arange(X.shape[0])
+    for Est in (neighbors.KNeighborsClassifier,
+                neighbors.RadiusNeighborsClassifier,
+                neighbors.KNeighborsRegressor,
+                neighbors.RadiusNeighborsRegressor):
+        print(Est)
+        est = Est(metric='euclidean')
+        est.radius = est.n_neighbors = 1
+        pred_X = est.fit(X, target).predict(Y)
+        est.metric = 'precomputed'
+        pred_D = est.fit(DXX, target).predict(DYX)
+        assert_array_almost_equal(pred_X, pred_D)
 
 
 def test_unsupervised_radius_neighbors(n_samples=20, n_features=5,
