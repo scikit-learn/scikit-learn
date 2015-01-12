@@ -133,13 +133,6 @@ def test_precomputed():
         assert_array_almost_equal(dist_X, dist_D)
         assert_array_almost_equal(ind_X, ind_D)
 
-        # Test pickling to ensure lambda didn't get stored
-        pickled_nbrs = pickle.dumps(nbrs_D)
-        restored_nbrs = pickle.loads(pickled_nbrs)
-        restored_dist_D, restored_ind_D = getattr(restored_nbrs, method)(DYX)
-        assert_array_almost_equal(restored_dist_D, dist_D)
-        assert_array_almost_equal(restored_ind_D, ind_D)
-
         # Must raise a ValueError if the matrix is not of correct shape
         assert_raises(ValueError, getattr(nbrs_D, method), X)
 
