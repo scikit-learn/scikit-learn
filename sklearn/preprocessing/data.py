@@ -907,7 +907,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     The input to this transformer should be a matrix of integers, denoting
     the values taken on by categorical (discrete) features. The output will be
-    a sparse matrix were each column corresponds to one possible value of one
+    a sparse matrix where each column corresponds to one possible value of one
     feature. It is assumed that input features take on values in the range
     [0, n_values).
 
