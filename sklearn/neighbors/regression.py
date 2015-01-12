@@ -130,8 +130,8 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
 
         Parameters
         ----------
-        X : array or matrix, shape = [n_samples, n_features]
-
+        X : array of shape [n_samples, n_features]
+            A 2-D array representing the test points.
 
         Returns
         -------
@@ -267,7 +267,8 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 
         Parameters
         ----------
-        X : array or matrix, shape = [n_samples, n_features]
+        X : array of shape [n_samples, n_features]
+            A 2-D array representing the test points.
 
         Returns
         -------

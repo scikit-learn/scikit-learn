@@ -277,7 +277,8 @@ class KNeighborsMixin(object):
 
         Parameters
         ----------
-        X : array-like, last dimension same as that of fit data, optional
+        X : array-like, shape (n_query, n_features), \
+                or (n_query, n_indexed) if metric == 'precomputed'
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
@@ -328,8 +329,9 @@ class KNeighborsMixin(object):
         X = check_array(X, accept_sparse='csr')
 
         if self.effective_metric_ == 'precomputed' and \
-           X.shape[0] != X.shape[1]:
-            raise ValueError("Precomputed metric requires a square matrix.")
+           X.shape[1] != self._fit_X.shape[0]:
+            raise ValueError("Precomputed metric requires shape "
+                             "(n_queries, n_indexed).")
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
@@ -432,7 +434,8 @@ class KNeighborsMixin(object):
 
         Parameters
         ----------
-        X : array-like, last dimension same as that of fit data, optional
+        X : array-like, shape (n_query, n_features), \
+                or (n_query, n_indexed) if metric == 'precomputed'
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
@@ -584,8 +587,9 @@ class RadiusNeighborsMixin(object):
             X = self._fit_X
 
         if self.effective_metric_ == 'precomputed' and \
-           X.shape[0] != X.shape[1]:
-            raise ValueError("Precomputed metric requires a square matrix.")
+           X.shape[1] != self._fit_X.shape[0]:
+            raise ValueError("Precomputed metric requires shape "
+                             "(n_queries, n_indexed).")
 
         if radius is None:
             radius = self.radius
@@ -741,7 +745,8 @@ class SupervisedFloatMixin(object):
         Parameters
         ----------
         X : {array-like, sparse matrix, BallTree, KDTree}
-            Training data. If array or matrix, shape = [n_samples, n_features]
+            Training data. If array or matrix, shape [n_samples, n_features],
+            or [n_samples, n_samples] if metric='precomputed'.
 
         y : {array-like, sparse matrix}
             Target values, array of float values, shape = [n_samples]
@@ -760,7 +765,8 @@ class SupervisedIntegerMixin(object):
         Parameters
         ----------
         X : {array-like, sparse matrix, BallTree, KDTree}
-            Training data. If array or matrix, shape = [n_samples, n_features]
+            Training data. If array or matrix, shape [n_samples, n_features],
+            or [n_samples, n_samples] if metric='precomputed'.
 
         y : {array-like, sparse matrix}
             Target values of shape = [n_samples] or [n_samples, n_outputs]
@@ -801,6 +807,7 @@ class UnsupervisedMixin(object):
         Parameters
         ----------
         X : {array-like, sparse matrix, BallTree, KDTree}
-            Training data. If array or matrix, shape = [n_samples, n_features]
+            Training data. If array or matrix, shape [n_samples, n_features],
+            or [n_samples, n_samples] if metric='precomputed'.
         """
         return self._fit(X)
