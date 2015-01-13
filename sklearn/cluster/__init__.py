@@ -14,6 +14,7 @@ from .k_means_ import k_means, KMeans, MiniBatchKMeans
 from .dbscan_ import dbscan, DBSCAN
 from .bicluster import SpectralBiclustering, SpectralCoclustering
 from .birch import Birch
+from .gaussian_factors import gaussian_factors, GaussianFactors
 
 __all__ = ['AffinityPropagation',
            'AgglomerativeClustering',
@@ -21,12 +22,14 @@ __all__ = ['AffinityPropagation',
            'DBSCAN',
            'KMeans',
            'FeatureAgglomeration',
+           'GaussianFactors',
            'MeanShift',
            'MiniBatchKMeans',
            'SpectralClustering',
            'Ward',
            'WardAgglomeration',
            'affinity_propagation',
+           'gaussian_factors',
            'dbscan',
            'estimate_bandwidth',
            'get_bin_seeds',
