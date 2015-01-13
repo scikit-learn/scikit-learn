@@ -13,6 +13,7 @@ from .utils import check_X_y
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.metrics.pairwise import pairwise_kernels
 from sklearn.linear_model.ridge import _solve_cholesky_kernel
+from sklearn.utils.validation import NotFittedError, check_is_fitted
 
 
 class KernelRidge(BaseEstimator, RegressorMixin):
@@ -178,5 +179,6 @@ class KernelRidge(BaseEstimator, RegressorMixin):
         C : array, shape = [n_samples] or [n_samples, n_targets]
             Returns predicted values.
         """
+        check_is_fitted(self, ["X_fit_", "dual_coef_"])
         K = self._get_kernel(X, self.X_fit_)
         return np.dot(K, self.dual_coef_)
