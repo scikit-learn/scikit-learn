@@ -105,12 +105,14 @@ def _num_samples(x):
     """Return number of samples in array-like x."""
     if hasattr(x, 'fit'):
         # Don't get num_samples from an ensembles length!
-        raise TypeError('Expected dataset, but found estimator {0}'.format(x))
+        raise TypeError('Expected sequence or array-like, got '
+                        'estimator %s' % x)
     if not hasattr(x, '__len__') and not hasattr(x, 'shape'):
         if hasattr(x, '__array__'):
             x = np.asarray(x)
         else:
-            raise TypeError("Expected sequence or array-like, got %r" % x)
+            raise TypeError("Expected sequence or array-like, got %s" %
+                            type(x))
     return x.shape[0] if hasattr(x, 'shape') else len(x)
 
 
