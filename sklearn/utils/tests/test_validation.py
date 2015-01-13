@@ -284,9 +284,9 @@ def test_check_consistent_length():
     check_consistent_length([1], (2,), np.array([3]), sp.csr_matrix((1, 2)))
     assert_raises_regexp(ValueError, 'inconsistent numbers of samples',
                          check_consistent_length, [1, 2], [1])
-    assert_raises_regexp(TypeError, 'got <type \'int\'>',
+    assert_raises_regexp(TypeError, 'got <\w+ \'int\'>',
                          check_consistent_length, [1, 2], 1)
-    assert_raises_regexp(TypeError, 'got <type \'object\'>',
+    assert_raises_regexp(TypeError, 'got <\w+ \'object\'>',
                          check_consistent_length, [1, 2], object())
     # XXX: Should this throw a TypeError?
     assert_raises(IndexError, check_consistent_length, [1, 2], np.array(1))
