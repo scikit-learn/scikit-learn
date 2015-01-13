@@ -1,6 +1,6 @@
 import numpy as np
 
-from sklearn.datasets import make_classification
+from sklearn.datasets import make_regression
 from sklearn.linear_model import Ridge
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.metrics.pairwise import pairwise_kernels
@@ -8,7 +8,7 @@ from sklearn.metrics.pairwise import pairwise_kernels
 from sklearn.utils.testing import assert_array_almost_equal
 
 
-X, y = make_classification(n_classes=2, random_state=0)
+X, y = make_regression(n_features=10)
 Y = np.array([y, y]).T
 
 
@@ -19,13 +19,11 @@ def test_kernel_ridge():
 
 
 def test_kernel_ridge_singular_kernel():
-    # alpha=0 causes a LinAlgError in computing the dual coeeficients,
-    # which causes a fall back to a lstsq solver. This is tested here.
-    # XXX: Other solvers than lsqr give different results for Ridge
-    pred = Ridge(alpha=0, fit_intercept=False, solver="lsqr").fit(X, y).predict(X)
+    # alpha=0 causes a LinAlgError in computing the dual coefficients,
+    # which causes a fallback to a lstsq solver. This is tested here.
+    pred = Ridge(alpha=0, fit_intercept=False).fit(X, y).predict(X)
     pred2 = KernelRidge(kernel="linear", alpha=0).fit(X, y).predict(X)
-    # XXX: we are only equal within the first two decimals
-    assert_array_almost_equal(pred, pred2, decimal=2)
+    assert_array_almost_equal(pred, pred2)
 
 
 def test_kernel_ridge_precomputed():
