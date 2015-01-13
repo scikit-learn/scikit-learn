@@ -14,6 +14,7 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy import linalg
 from ..utils import arpack
+from ..utils.validation import check_is_fitted
 
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
 
@@ -365,6 +366,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         -------
         x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
+        check_is_fitted(self, 'x_mean_')
         # Normalize
         if copy:
             Xc = (np.asarray(X) - self.x_mean_) / self.x_std_
@@ -403,6 +405,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         This call requires the estimation of a p x q matrix, which may
         be an issue in high dimensional space.
         """
+        check_is_fitted(self, 'x_mean_')
         # Normalize
         if copy:
             Xc = (np.asarray(X) - self.x_mean_)
@@ -433,6 +436,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         -------
         x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
+        check_is_fitted(self, 'x_mean_')
         return self.fit(X, y, **fit_params).transform(X, y)
 
 
@@ -559,6 +563,7 @@ class PLSRegression(_PLS):
 
     @property
     def coefs(self):
+        check_is_fitted(self, 'coef_')
         DeprecationWarning("'coefs' attribute has been deprecated and will be "
                            "removed in version 0.17. Use 'coef_' instead")
         return self.coef_
@@ -773,6 +778,7 @@ class PLSSVD(BaseEstimator, TransformerMixin):
 
     def transform(self, X, Y=None):
         """Apply the dimension reduction learned on the train data."""
+        check_is_fitted(self, 'x_mean_')
         Xr = (X - self.x_mean_) / self.x_std_
         x_scores = np.dot(Xr, self.x_weights_)
         if Y is not None:

@@ -18,6 +18,7 @@ from scipy.spatial.distance import cdist
 from ..externals.six.moves import xrange
 from ..utils import check_random_state
 from ..utils.extmath import logsumexp, pinvh, squared_norm
+from ..utils.validation import check_is_fitted
 from .. import cluster
 from .gmm import GMM
 
@@ -242,6 +243,8 @@ class DPGMM(GMM):
             Posterior probabilities of each mixture component for each
             observation
         """
+        check_is_fitted(self, 'gamma_')
+
         X = np.asarray(X)
         if X.ndim == 1:
             X = X[:, np.newaxis]
@@ -452,10 +455,11 @@ class DPGMM(GMM):
 
     def lower_bound(self, X, z):
         """returns a lower bound on model evidence based on X and membership"""
+        check_is_fitted(self, 'means_')
+        
         if self.covariance_type not in ['full', 'tied', 'diag', 'spherical']:
             raise NotImplementedError("This ctype is not implemented: %s"
                                       % self.covariance_type)
-
         X = np.asarray(X)
         if X.ndim == 1:
             X = X[:, np.newaxis]
@@ -678,6 +682,8 @@ class VBGMM(DPGMM):
             Posterior probabilities of each mixture component for each
             observation
         """
+        check_is_fitted(self, 'gamma_')
+
         X = np.asarray(X)
         if X.ndim == 1:
             X = X[:, np.newaxis]

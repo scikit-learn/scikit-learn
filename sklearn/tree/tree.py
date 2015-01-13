@@ -26,6 +26,7 @@ from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..externals import six
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import check_array, check_random_state, compute_class_weight
+from ..utils.validation import NotFittedError, check_is_fitted
 
 
 from ._tree import Criterion
@@ -363,7 +364,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         n_samples, n_features = X.shape
 
         if self.tree_ is None:
-            raise Exception("Tree not initialized. Perform a fit first")
+            raise NotFittedError("Tree not initialized. Perform a fit first")
 
         if self.n_features_ != n_features:
             raise ValueError("Number of features of the model must "
@@ -409,8 +410,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         feature_importances_ : array, shape = [n_features]
         """
         if self.tree_ is None:
-            raise ValueError("Estimator not fitted, "
-                             "call `fit` before `feature_importances_`.")
+            raise NotFittedError("Estimator not fitted, call `fit` before"
+                                 " `feature_importances_`.")
 
         return self.tree_.compute_feature_importances()
 
@@ -585,6 +586,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
+        check_is_fitted(self, 'n_outputs_')
         X = check_array(X, dtype=DTYPE, accept_sparse="csr")
         if issparse(X) and (X.indices.dtype != np.intc or
                             X.indptr.dtype != np.intc):
@@ -594,7 +596,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         n_samples, n_features = X.shape
 
         if self.tree_ is None:
-            raise Exception("Tree not initialized. Perform a fit first.")
+            raise NotFittedError("Tree not initialized. Perform a fit first.")
 
         if self.n_features_ != n_features:
             raise ValueError("Number of features of the model must "

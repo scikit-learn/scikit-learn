@@ -51,12 +51,12 @@ for score in scores:
     print()
 
     clf = GridSearchCV(SVC(C=1), tuned_parameters, cv=5,
-                       scoring='%_weighted' % score)
+                       scoring='%s_weighted' % score)
     clf.fit(X_train, y_train)
 
     print("Best parameters set found on development set:")
     print()
-    print(clf.best_estimator_)
+    print(clf.best_params_)
     print()
     print("Grid scores on development set:")
     print()

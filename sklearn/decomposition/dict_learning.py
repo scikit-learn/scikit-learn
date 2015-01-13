@@ -19,6 +19,7 @@ from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals.six.moves import zip
 from ..utils import check_array, check_random_state, gen_even_slices
 from ..utils.extmath import randomized_svd, row_norms
+from ..utils.validation import check_is_fitted
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
 
@@ -749,6 +750,8 @@ class SparseCodingMixin(TransformerMixin):
             Transformed data
 
         """
+        check_is_fitted(self, 'components_') 
+
         # XXX : kwargs is not documented
         X = check_array(X)
         n_samples, n_features = X.shape

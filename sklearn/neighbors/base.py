@@ -20,6 +20,7 @@ from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array
 from ..utils.fixes import argpartition
 from ..utils.validation import DataConversionWarning
+from ..utils.validation import NotFittedError
 from ..externals import six
 
 
@@ -298,7 +299,7 @@ class KNeighborsMixin(object):
 
         """
         if self._fit_method is None:
-            raise ValueError("must fit neighbors before querying")
+            raise NotFittedError("Must fit neighbors before querying.")
 
         X = check_array(X, accept_sparse='csr')
 
@@ -463,9 +464,8 @@ class RadiusNeighborsMixin(object):
         For efficiency, `radius_neighbors` returns arrays of objects, where
         each object is a 1D array of indices or distances.
         """
-
         if self._fit_method is None:
-            raise ValueError("must fit neighbors before querying")
+            raise NotFittedError("Must fit neighbors before querying.")
 
         X = check_array(X, accept_sparse='csr')
 

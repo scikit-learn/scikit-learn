@@ -19,6 +19,7 @@ from ..utils.fixes import combinations_with_replacement as combinations_w_r
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale, mean_variance_axis)
+from ..utils.validation import check_is_fitted
 
 zip = six.moves.zip
 map = six.moves.map
@@ -217,6 +218,8 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         X : array-like with shape [n_samples, n_features]
             Input data that will be transformed.
         """
+        check_is_fitted(self, 'scale_')
+
         X = check_array(X, copy=self.copy, ensure_2d=False)
         X *= self.scale_
         X += self.min_
@@ -230,6 +233,8 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         X : array-like with shape [n_samples, n_features]
             Input data that will be transformed.
         """
+        check_is_fitted(self, 'scale_')
+
         X = check_array(X, copy=self.copy, ensure_2d=False)
         X -= self.min_
         X /= self.scale_
@@ -337,6 +342,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         X : array-like with shape [n_samples, n_features]
             The data used to scale along the features axis.
         """
+        check_is_fitted(self, 'std_')
+
         copy = copy if copy is not None else self.copy
         X = check_array(X, accept_sparse='csr', copy=copy, ensure_2d=False)
         if warn_if_not_float(X, estimator=self):
@@ -363,6 +370,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         X : array-like with shape [n_samples, n_features]
             The data used to scale along the features axis.
         """
+        check_is_fitted(self, 'std_')
+
         copy = copy if copy is not None else self.copy
         if sparse.issparse(X):
             if self.with_mean:
@@ -482,6 +491,8 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
             The matrix of features, where NP is the number of polynomial
             features generated from the combination of inputs.
         """
+        check_is_fitted(self, 'powers_')
+
         X = check_array(X)
         n_samples, n_features = X.shape
 
@@ -764,6 +775,8 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         -------
         K_new : numpy array of shape [n_samples1, n_samples2]
         """
+        check_is_fitted(self, 'K_fit_all_')
+
         K = check_array(K)
         if copy:
             K = K.copy()
@@ -894,7 +907,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     The input to this transformer should be a matrix of integers, denoting
     the values taken on by categorical (discrete) features. The output will be
-    a sparse matrix were each column corresponds to one possible value of one
+    a sparse matrix where each column corresponds to one possible value of one
     feature. It is assumed that input features take on values in the range
     [0, n_values).
 

@@ -17,6 +17,7 @@ from .base import BaseEstimator
 from .base import TransformerMixin
 from .utils import check_array, check_random_state, as_float_array
 from .utils.extmath import safe_sparse_dot
+from .utils.validation import check_is_fitted
 from .metrics.pairwise import pairwise_kernels
 
 
@@ -89,6 +90,8 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
+        check_is_fitted(self, 'random_weights_')
+
         X = check_array(X, accept_sparse='csr')
         projection = safe_sparse_dot(X, self.random_weights_)
         projection += self.random_offset_
@@ -173,6 +176,8 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
+        check_is_fitted(self, 'random_weights_')
+
         X = as_float_array(X, copy=True)
         X = check_array(X, copy=False)
         if (X < 0).any():
@@ -268,6 +273,9 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
             Whether the return value is an array of sparse matrix depends on
             the type of the input X.
         """
+        msg = ("%(name)s is not fitted. Call fit to set the parameters before"
+               " calling transform")
+        check_is_fitted(self, "sample_interval_", msg=msg)
 
         X = check_array(X, accept_sparse='csr')
         sparse = sp.issparse(X)
@@ -477,11 +485,13 @@ class Nystroem(BaseEstimator, TransformerMixin):
         X_transformed : array, shape=(n_samples, n_components)
             Transformed data.
         """
+        check_is_fitted(self, 'components_')
 
+        kernel_params = self._get_kernel_params()
         embedded = pairwise_kernels(X, self.components_,
                                     metric=self.kernel,
                                     filter_params=True,
-                                    **self._get_kernel_params())
+                                    **kernel_params)
         return np.dot(embedded, self.normalization_.T)
 
     def _get_kernel_params(self):

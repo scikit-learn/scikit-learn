@@ -87,7 +87,7 @@ def _fix_connectivity(X, connectivity, n_components=None,
 ###############################################################################
 # Hierarchical tree building functions
 
-def ward_tree(X, connectivity=None, n_components=None, n_clusters=None, 
+def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
               return_distance=False):
     """Ward clustering based on a Feature matrix.
 
@@ -203,8 +203,8 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None,
     else:
         if n_clusters > n_samples:
             raise ValueError('Cannot provide more clusters than samples. '
-                '%i n_clusters was asked, and there are %i samples.'
-                % (n_clusters, n_samples))
+                             '%i n_clusters was asked, and there are %i samples.'
+                             % (n_clusters, n_samples))
         n_nodes = 2 * n_samples - n_clusters
 
     # create inertia matrix
@@ -381,7 +381,7 @@ def linkage_tree(X, connectivity=None, n_components=None,
 
     linkage_choices = {'complete': _hierarchical.max_merge,
                        'average': _hierarchical.average_merge,
-                       }
+                      }
     try:
         join_func = linkage_choices[linkage]
     except KeyError:
@@ -466,7 +466,7 @@ def linkage_tree(X, connectivity=None, n_components=None,
         # We keep only the upper triangular for the heap
         # Generator expressions are faster than arrays on the following
         inertia.extend(_hierarchical.WeightedEdge(d, ind, r)
-            for r, d in zip(row, data) if r < ind)
+                       for r, d in zip(row, data) if r < ind)
     del connectivity
 
     heapify(inertia)
@@ -843,8 +843,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         if not (len(X.shape) == 2 and X.shape[0] > 0):
             raise ValueError('At least one sample is required to fit the '
-                'model. A data matrix of shape %s was given.'
-                % (X.shape, ))
+                             'model. A data matrix of shape %s was given.'
+                             % (X.shape, ))
         return AgglomerativeClustering.fit(self, X.T, **params)
 
     @property

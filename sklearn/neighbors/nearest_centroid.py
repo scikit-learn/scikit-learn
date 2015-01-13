@@ -16,7 +16,7 @@ from ..base import BaseEstimator, ClassifierMixin
 from ..externals.six.moves import xrange
 from ..metrics.pairwise import pairwise_distances
 from ..preprocessing import LabelEncoder
-from ..utils.validation import check_array, check_X_y
+from ..utils.validation import check_array, check_X_y, check_is_fitted
 from ..utils.sparsefuncs import csc_median_axis_0
 
 
@@ -182,8 +182,8 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         be the distance matrix between the data to be predicted and
         ``self.centroids_``.
         """
+        check_is_fitted(self, 'centroids_')
+
         X = check_array(X, accept_sparse='csr')
-        if not hasattr(self, "centroids_"):
-            raise AttributeError("Model has not been trained yet.")
         return self.classes_[pairwise_distances(
             X, self.centroids_, metric=self.metric).argmin(axis=1)]

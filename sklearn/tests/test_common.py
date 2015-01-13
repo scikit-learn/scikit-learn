@@ -16,7 +16,7 @@ from sklearn.externals.six import PY3
 from sklearn.externals.six.moves import zip
 from sklearn.utils.testing import assert_false, clean_warning_registry
 from sklearn.utils.testing import all_estimators
-from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_greater 
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import ignore_warnings
@@ -38,7 +38,9 @@ from sklearn.utils.estimator_checks import (
     check_regressors_pickle,
     check_transformer_sparse_data,
     check_transformer_pickle,
+    check_transformers_unfitted,
     check_estimators_nan_inf,
+    check_estimators_unfitted,
     check_classifiers_one_label,
     check_classifiers_train,
     check_classifiers_classes,
@@ -106,6 +108,7 @@ def test_transformers():
         if name not in ['AdditiveChi2Sampler', 'Binarizer', 'Normalizer']:
             # basic tests
             yield check_transformer, name, Transformer
+            yield check_transformers_unfitted, name, Transformer
 
 
 def test_estimators_nan_inf():
@@ -154,6 +157,8 @@ def test_classifiers():
 
             # test if classifiers can cope with y.shape = (n_samples, 1)
             yield check_classifiers_input_shapes, name, Classifier
+        # test if NotFittedError is raised
+        yield check_estimators_unfitted, name, Classifier
 
 
 def test_regressors():
@@ -171,6 +176,8 @@ def test_regressors():
         if name != 'CCA':
             # check that the regressor handles int input
             yield check_regressors_int, name, Regressor
+        # Test if NotFittedError is raised
+        yield check_estimators_unfitted, name, Regressor
 
 
 def test_configure():

@@ -26,6 +26,7 @@ from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import as_float_array
 from ..utils import gen_batches
+from ..utils.validation import check_is_fitted
 from ..utils.random import choice
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
@@ -247,7 +248,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
     """
     if n_init <= 0:
         raise ValueError("Invalid number of initializations."
-             " n_init=%d must be bigger than zero." % n_init)
+                         " n_init=%d must be bigger than zero." % n_init)
     random_state = check_random_state(random_state)
 
     best_inertia = np.infty
@@ -407,7 +408,7 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
     centers = _init_centroids(X, n_clusters, init, random_state=random_state,
                               x_squared_norms=x_squared_norms)
     if verbose:
-        print('Initialization complete')
+        print("Initialization complete")
 
     # Allocate memory to store the distances for each sample to its
     # closer center for reallocation in case of ties
@@ -430,7 +431,7 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
             centers = _k_means._centers_dense(X, labels, n_clusters, distances)
 
         if verbose:
-            print('Iteration %2d, inertia %.3f' % (i, inertia))
+            print("Iteration %2d, inertia %.3f" % (i, inertia))
 
         if best_inertia is None or inertia < best_inertia:
             best_labels = labels.copy()
@@ -764,10 +765,6 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         return X
 
-    def _check_fitted(self):
-        if not hasattr(self, "cluster_centers_"):
-            raise AttributeError("Model has not been trained yet.")
-
     def fit(self, X, y=None):
         """Compute k-means clustering.
 
@@ -825,7 +822,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         X_new : array, shape [n_samples, k]
             X transformed in the new space.
         """
-        self._check_fitted()
+        check_is_fitted(self, 'cluster_centers_') 
+
         X = self._check_test_data(X)
         return self._transform(X)
 
@@ -850,7 +848,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         labels : array, shape [n_samples,]
             Index of the cluster each sample belongs to.
         """
-        self._check_fitted()
+        check_is_fitted(self, 'cluster_centers_') 
+
         X = self._check_test_data(X)
         x_squared_norms = row_norms(X, squared=True)
         return _labels_inertia(X, x_squared_norms, self.cluster_centers_)[0]
@@ -868,7 +867,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         score : float
             Opposite of the value of X on the K-means objective.
         """
-        self._check_fitted()
+        check_is_fitted(self, 'cluster_centers_') 
+
         X = self._check_test_data(X)
         x_squared_norms = row_norms(X, squared=True)
         return -_labels_inertia(X, x_squared_norms, self.cluster_centers_)[1]
@@ -1046,7 +1046,7 @@ def _mini_batch_convergence(model, iteration_idx, n_iter, tol,
     # Early stopping heuristic due to lack of improvement on smoothed inertia
     ewa_inertia_min = context.get('ewa_inertia_min')
     no_improvement = context.get('no_improvement', 0)
-    if (ewa_inertia_min is None or ewa_inertia < ewa_inertia_min):
+    if ewa_inertia_min is None or ewa_inertia < ewa_inertia_min:
         no_improvement = 0
         ewa_inertia_min = ewa_inertia
     else:
@@ -1411,6 +1411,7 @@ class MiniBatchKMeans(KMeans):
         labels : array, shape [n_samples,]
             Index of the cluster each sample belongs to.
         """
-        self._check_fitted()
+        check_is_fitted(self, 'cluster_centers_') 
+
         X = self._check_test_data(X)
         return self._labels_inertia_minibatch(X)[0]
