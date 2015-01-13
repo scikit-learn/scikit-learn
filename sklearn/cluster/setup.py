@@ -36,6 +36,13 @@ def configuration(parent_package='', top_path=None):
         **blas_info
     )
 
+    config.add_extension('_gaussian_factors',
+                         sources=['_gaussian_factors.c'],
+                         language="c",
+                         include_dirs=[numpy.get_include()],
+                         libraries=libraries)
+
+
     return config
 
 if __name__ == '__main__':
