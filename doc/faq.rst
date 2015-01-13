@@ -31,6 +31,10 @@ No. As a rule we only add well-established algorithms. A rule of thumb is at lea
 technique that provides a clear-cut improvement (e.g. an enhanced  data
 structure or efficient approximation) on a widely-used method will also be
 considered for inclusion.
+Your implementation doesn't need to be in scikit-learn to be used together
+with scikit-learn tools, though. Implement your favorite algorithm
+in a scikit-learn compatible way, upload it to github and we will list
+it under :ref:`related_projects`.
 
 Can I add this classical algorithm from the 80s?
 ---------------------------------------------------
