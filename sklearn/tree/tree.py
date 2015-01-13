@@ -279,7 +279,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         if expanded_class_weight is not None:
             if sample_weight is not None:
-                sample_weight = np.copy(sample_weight) * expanded_class_weight
+                sample_weight = sample_weight * expanded_class_weight
             else:
                 sample_weight = expanded_class_weight
 

@@ -87,24 +87,27 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         sample_counts = np.bincount(indices, minlength=n_samples)
         curr_sample_weight *= sample_counts
 
-        if class_weight == 'bootstrap':
+        if class_weight == 'subsample':
+
             expanded_class_weight = [curr_sample_weight]
+
             for k in range(y.shape[1]):
                 y_full = y[:, k]
                 classes_full = np.unique(y_full)
-                y_boot = y_full[indices]
+                y_boot = y[indices, k]
                 classes_boot = np.unique(y_boot)
-                # Get class weights for the bootstrap sample
-                weight_k = compute_class_weight('auto', classes_boot, y_boot)
-                # Expand class weights to cover all classes in original y
-                # (in case some were missing from the bootstrap sample)
-                weight_k = np.array([weight_k[np.where(classes_boot == c)][0]
-                                     if c in classes_boot
-                                     else 0.
-                                     for c in classes_full])
+
+                # Get class weights for the bootstrap sample, covering all
+                # classes in case some were missing from the bootstrap sample
+                weight_k = np.choose(
+                    np.searchsorted(classes_boot, classes_full),
+                    compute_class_weight('auto', classes_boot, y_boot),
+                    mode='clip')
+
                 # Expand weights over the original y for this output
                 weight_k = weight_k[np.searchsorted(classes_full, y_full)]
                 expanded_class_weight.append(weight_k)
+
             # Multiply all weights by sample & bootstrap weights
             curr_sample_weight = np.prod(expanded_class_weight,
                                          axis=0,
@@ -243,7 +246,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         if expanded_class_weight is not None:
             if sample_weight is not None:
-                sample_weight = np.copy(sample_weight) * expanded_class_weight
+                sample_weight = sample_weight * expanded_class_weight
             else:
                 sample_weight = expanded_class_weight
 
@@ -428,14 +431,14 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             self.n_classes_.append(classes_k.shape[0])
 
         if self.class_weight is not None:
-            valid_presets = ['auto', 'bootstrap']
+            valid_presets = ('auto', 'subsample')
             if isinstance(self.class_weight, six.string_types):
                 if self.class_weight not in valid_presets:
                     raise ValueError('Valid presets for class_weight include '
-                                     '"auto" and "bootstrap". Given "%s".'
+                                     '"auto" and "subsample". Given "%s".'
                                      % self.class_weight)
                 if self.warm_start:
-                    warn('class_weight presets "auto" or "bootstrap" are '
+                    warn('class_weight presets "auto" or "subsample" are '
                          'not recommended for warm_start if the fitted data '
                          'differs from the full dataset. In order to use '
                          '"auto" weights, use compute_class_weight("auto", '
@@ -453,7 +456,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
                                      "in class_weight should match number of "
                                      "outputs.")
 
-            if self.class_weight != 'bootstrap' or not self.bootstrap:
+            if self.class_weight != 'subsample' or not self.bootstrap:
                 expanded_class_weight = []
                 for k in range(self.n_outputs_):
                     if self.class_weight in valid_presets:
@@ -797,7 +800,7 @@ class RandomForestClassifier(ForestClassifier):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest.
 
-    class_weight : dict, list of dicts, "auto", "bootstrap" or None, optional
+    class_weight : dict, list of dicts, "auto", "subsample" or None, optional
 
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
@@ -807,7 +810,7 @@ class RandomForestClassifier(ForestClassifier):
         The "auto" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data.
 
-        The "bootstrap" mode is the same as "auto" except that weights are
+        The "subsample" mode is the same as "auto" except that weights are
         computed based on the bootstrap sample for every tree grown.
 
         For multi-output, the weights of each column of y will be multiplied.
@@ -1127,7 +1130,7 @@ class ExtraTreesClassifier(ForestClassifier):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest.
 
-    class_weight : dict, list of dicts, "auto", "bootstrap" or None, optional
+    class_weight : dict, list of dicts, "auto", "subsample" or None, optional
 
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
@@ -1137,7 +1140,7 @@ class ExtraTreesClassifier(ForestClassifier):
         The "auto" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data.
 
-        The "bootstrap" mode is the same as "auto" except that weights are
+        The "subsample" mode is the same as "auto" except that weights are
         computed based on the bootstrap sample for every tree grown.
 
         For multi-output, the weights of each column of y will be multiplied.

@@ -802,7 +802,7 @@ def check_class_weight_auto_and_bootstrap_multi_output(name):
     clf = ForestClassifier(class_weight=[{-1: 0.5, 1: 1.}, {-2: 1., 2: 1.}],
                            random_state=0)
     clf.fit(X, _y)
-    clf = ForestClassifier(class_weight='bootstrap', random_state=0)
+    clf = ForestClassifier(class_weight='subsample', random_state=0)
     clf.fit(X, _y)
 
 
