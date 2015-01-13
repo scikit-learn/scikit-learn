@@ -64,6 +64,11 @@ New features
    - Added shrinkage support to :class:`lda.LDA` using two new solvers. By
      `Clemens Brunner`_ and `Martin Billinger`_.
 
+   - Added :class:`kernel_ridge.KernelRidge`, an implementation of
+     kernelized ridge regression.
+     By `Mathieu Blondel`_ and `Jan Hendrik Metzen`_.
+
+
 Enhancements
 ............
 
@@ -301,7 +306,7 @@ API changes summary
       been removed. They were deprecated since 0.14
 
     - From now onwards, all estimators will uniformly raise ``NotFittedError``
-      (:class:`utils.validation.NotFittedError`), when any of the ``predict`` 
+      (:class:`utils.validation.NotFittedError`), when any of the ``predict``
       like methods are called before the model is fit. By `Raghav R V`_.
 
 .. _changes_0_15_2:
@@ -3190,3 +3195,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Raghav R V: https://github.com/ragv
 
 .. _Trevor Stephens: http://trevorstephens.com/
+
+.. _Jan Hendrik Metzen: https://jmetzen.github.io/
