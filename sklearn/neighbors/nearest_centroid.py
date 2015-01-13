@@ -118,7 +118,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         # Number of clusters in each class.
         nk = np.zeros(n_classes)
 
-        for cur_class in y_ind:
+        for cur_class in range(n_classes):
             center_mask = y_ind == cur_class
             nk[cur_class] = np.sum(center_mask)
             if is_X_sparse:
