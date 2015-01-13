@@ -25,7 +25,7 @@ from scipy.sparse import issparse
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..externals import six
 from ..feature_selection.from_model import _LearntSelectorMixin
-from ..utils import check_array, check_random_state
+from ..utils import check_array, check_random_state, compute_class_weight
 from ..utils.validation import NotFittedError, check_is_fitted
 
 
@@ -81,7 +81,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                  min_weight_fraction_leaf,
                  max_features,
                  max_leaf_nodes,
-                 random_state):
+                 random_state,
+                 class_weight=None):
         self.criterion = criterion
         self.splitter = splitter
         self.max_depth = max_depth
@@ -91,6 +92,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.max_features = max_features
         self.random_state = random_state
         self.max_leaf_nodes = max_leaf_nodes
+        self.class_weight = class_weight
 
         self.n_features_ = None
         self.n_outputs_ = None
@@ -146,6 +148,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         is_classification = isinstance(self, ClassifierMixin)
 
         y = np.atleast_1d(y)
+        expanded_class_weight = None
 
         if y.ndim == 1:
             # reshape is necessary to preserve the data contiguity against vs
@@ -160,10 +163,44 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             self.classes_ = []
             self.n_classes_ = []
 
+            if self.class_weight is not None:
+                y_original = np.copy(y)
+
             for k in range(self.n_outputs_):
                 classes_k, y[:, k] = np.unique(y[:, k], return_inverse=True)
                 self.classes_.append(classes_k)
                 self.n_classes_.append(classes_k.shape[0])
+
+            if self.class_weight is not None:
+                if isinstance(self.class_weight, six.string_types):
+                    if self.class_weight != "auto":
+                        raise ValueError('The only supported preset for '
+                                         'class_weight is "auto". Given "%s".'
+                                         % self.class_weight)
+                elif self.n_outputs_ > 1:
+                    if not hasattr(self.class_weight, "__iter__"):
+                        raise ValueError('For multi-output, class_weight '
+                                         'should be a list of dicts, or '
+                                         '"auto".')
+                    elif len(self.class_weight) != self.n_outputs_:
+                        raise ValueError("For multi-output, number of "
+                                         "elements in class_weight should "
+                                         "match number of outputs.")
+                expanded_class_weight = []
+                for k in range(self.n_outputs_):
+                    if self.n_outputs_ == 1 or self.class_weight == 'auto':
+                        class_weight_k = self.class_weight
+                    else:
+                        class_weight_k = self.class_weight[k]
+                    weight_k = compute_class_weight(class_weight_k,
+                                                    self.classes_[k],
+                                                    y_original[:, k])
+                    weight_k = weight_k[np.searchsorted(self.classes_[k],
+                                                        y_original[:, k])]
+                    expanded_class_weight.append(weight_k)
+                expanded_class_weight = np.prod(expanded_class_weight,
+                                                axis=0,
+                                                dtype=np.float64)
 
         else:
             self.classes_ = [None] * self.n_outputs_
@@ -239,6 +276,12 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                 raise ValueError("Number of weights=%d does not match "
                                  "number of samples=%d" %
                                  (len(sample_weight), n_samples))
+
+        if expanded_class_weight is not None:
+            if sample_weight is not None:
+                sample_weight = sample_weight * expanded_class_weight
+            else:
+                sample_weight = expanded_class_weight
 
         # Set min_weight_leaf from min_weight_fraction_leaf
         if self.min_weight_fraction_leaf != 0. and sample_weight is not None:
@@ -428,6 +471,21 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
 
+    class_weight : dict, list of dicts, "auto" or None, optional
+                   (default=None)
+        Weights associated with classes in the form ``{class_label: weight}``.
+        If not given, all classes are supposed to have weight one. For
+        multi-output problems, a list of dicts can be provided in the same
+        order as the columns of y.
+
+        The "auto" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data.
+
+        For multi-output, the weights of each column of y will be multiplied.
+
+        Note that these weights will be multiplied with sample_weight (passed
+        through the fit method) if sample_weight is specified.
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -497,7 +555,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                  min_weight_fraction_leaf=0.,
                  max_features=None,
                  random_state=None,
-                 max_leaf_nodes=None):
+                 max_leaf_nodes=None,
+                 class_weight=None):
         super(DecisionTreeClassifier, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -507,6 +566,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
+            class_weight=class_weight,
             random_state=random_state)
 
     def predict_proba(self, X):
@@ -751,7 +811,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                  min_weight_fraction_leaf=0.,
                  max_features="auto",
                  random_state=None,
-                 max_leaf_nodes=None):
+                 max_leaf_nodes=None,
+                 class_weight=None):
         super(ExtraTreeClassifier, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -761,6 +822,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
+            class_weight=class_weight,
             random_state=random_state)
 
 

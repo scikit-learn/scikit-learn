@@ -773,6 +773,8 @@ def check_class_weight_classifiers(name, Classifier):
             classifier = Classifier(class_weight=class_weight)
         if hasattr(classifier, "n_iter"):
             classifier.set_params(n_iter=100)
+        if hasattr(classifier, "min_weight_fraction_leaf"):
+            classifier.set_params(min_weight_fraction_leaf=0.01)
 
         set_random_state(classifier)
         classifier.fit(X_train, y_train)
