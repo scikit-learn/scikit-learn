@@ -1,8 +1,28 @@
+.. _related_projects:
+
 =====================================
 Related Projects
 =====================================
 
 Below is a list of sister-projects, extensions and domain specific packages.
+
+Related Packages
+----------------
+Other packages useful for data analysis and machine learning.
+
+- `Pandas <http://pandas.pydata.org>`_ Tools for working with heterogeneous and
+  columnar data, relational queries, time series and basic statistics.
+
+- `sklearn_pandas <https://github.com/paulgb/sklearn-pandas/>`_ bridge for
+  scikit-learn pipelines and pandas data frame with dedicated transformers.
+
+- `theano <http://deeplearning.net/software/theano/>`_ A CPU/GPU array
+  processing framework geared towards deep learning research.
+
+- `Statsmodel <http://statsmodels.sourceforge.net/>`_ Estimating and analysing
+  statistical models. More focused on statistical tests and less on prediction
+  than scikit-learn.
+
 
 Extensions and Algorithms
 -------------------------
@@ -22,25 +42,28 @@ Libraries that provide a scikit-learn like interface and can be used with scikit
 - `PyStruct <https://pystruct.githup.io>`_ General conditional random fields
   and structured prediction.
 
+- `py-earth <https://github.com/jcrudy/py-earth>`_ Multivariate adaptive regression splines
 
-Related Packages
-----------------
-Other packages useful for data analysis and machine learning.
+- `sklearn-compiledtrees <https://github.com/ajtulloch/sklearn-compiledtrees/>`_
+  generate a C++ implementation of the predict function for decision trees (and
+  ensembles) trained by sklearn. Useful for latency-sensitive production
+  environments.
 
-- `Pandas <http://pandas.pydata.org>`_ Tools for working with heterogeneous and
-  columnar data, relational queries, time series and basic statistics.
+- `lda <https://github.com/ariddell/lda/>`_: fast implementation of Latent
+  Dirichlet Allocation in Cython.
 
-- `theano <http://deeplearning.net/software/theano/>`_ A CPU/GPU array
-  processing framework geared towards deep learning research.
+- `Sparse Filtering <https://github.com/jmetzen/sparse-filtering>`_
+  Unsupervised feature learning based on sparse-filtering
 
-- `Statsmodel <http://statsmodels.sourceforge.net/>`_ Estimating and analysing
-  statistical models. More focused on statistical tests and less on prediction
-  than scikit-learn.
+- `Kernel Regression <https://github.com/jmetzen/kernel_regression>`_
+  Implementation of Nadaraya-Watson kernel regression with automatic bandwidth
+  selection
 
 
 Domain Specific Packages
 -------------------------
 - `scikit-image <http://scikit-image.org/>`_ Image processing and computer vision in python.
+- `Natural language toolkit (nltk) <http://www.nltk.org/>`_ Natual language processing and some machine learning.
 - `NiLearn <https://nilearn.github.io/>`_ Machine learning for neuro-imaging.
 - `AstroML <http://www.astroml.org/>`_  Machine learning for astronomy.
 
