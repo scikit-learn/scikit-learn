@@ -13,10 +13,14 @@ Example of output :
     [..]
     Classification performance:
     ===========================
-    Classifier               train-time   test-time   error-rate
+    Classifier               train-time   test-time   error-rat
     ------------------------------------------------------------
-    Nystroem-SVM                115.31s       1.23s       0.0227
-    ExtraTrees                   55.90s       1.27s       0.0288
+    Nystroem-SVM                105.07s       0.91s       0.0227
+    ExtraTrees                   48.20s       1.22s       0.0288
+    RandomForest                 47.17s       1.21s       0.0304
+    SampledRBF-SVM              140.45s       0.84s       0.0486
+    CART                         22.84s       0.16s       0.1214
+    dummy                         0.01s       0.02s       0.8973
 
 """
 from __future__ import division, print_function
