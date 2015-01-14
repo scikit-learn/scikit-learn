@@ -11,8 +11,7 @@ Libraries that provide a scikit-learn like interface and can be used with scikit
 - `pylearn2 <http://deeplearning.net/software/pylearn2/>`_ A deep learning and
   neural network library build on theano with scikit-learn like interface.
 
-- `Lightning <https://github.com/mblondel/lightning>`_ fast linear models, a
-  drop in replacement for LinearSVC and SGDClassifier.
+- `lightning <http://www.mblondel.org/lightning/>`_ fast state-of-the-art linear model solvers (SDCA, AdaGrad, SVRG, SAG, etc...).
 
 - `Seqlearn <https://github.com/larsmans/seqlearn>`_  An implementation of
   linear chain conditional random fields respecting the scikit-learn interface.
