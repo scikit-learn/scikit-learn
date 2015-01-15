@@ -305,30 +305,32 @@ def _kernel_update(old_cluster_center, points, bandwidth, kernel, gamma):
     variable.
     """
 
-    implemented_kernels = ['flat', 'rbf', 'epanechnikov', 'biweight']
-    if kernel not in implemented_kernels:
-        raise ValueError("Unknown kernel, please use one of: %s" %
-                         ", ".join(implemented_kernels))
-
     # The flat kernel gives all points within range equal weight
     # No extra calculations needed
     if kernel == 'flat':
-        return np.mean(points, axis=0)
+        weighted_mean = np.mean(points, axis=0)
 
-    # Define the weights function for each kernel
-    if kernel == 'rbf':
-        compute_weights = lambda p, b: np.exp(-1 * gamma * (p ** 2))
+    else:
+        # Define the weights function for each kernel
+        if kernel == 'rbf':
+            compute_weights = lambda p, b: np.exp(-1 * gamma * (p ** 2))
 
-    if kernel == 'epanechnikov':
-        compute_weights = lambda p, b: 1.0 - (p ** 2 / b ** 2)
+        elif kernel == 'epanechnikov':
+            compute_weights = lambda p, b: 1.0 - (p ** 2 / b ** 2)
 
-    if kernel == 'biweight':
-        compute_weights = lambda p, b: (1.0 - (p ** 2 / b ** 2)) ** 2
+        elif kernel == 'biweight':
+            compute_weights = lambda p, b: (1.0 - (p ** 2 / b ** 2)) ** 2
 
-    # Compute new mean
-    distances = euclidean_distances(points, old_cluster_center)
-    weights = compute_weights(distances, bandwidth)
-    weighted_mean = np.sum(points * weights, axis=0) / np.sum(weights)
+        else:
+            implemented_kernels = ['flat', 'rbf', 'epanechnikov', 'biweight']
+            raise ValueError("Unknown kernel, please use one of: %s" %
+                             ", ".join(implemented_kernels))
+
+        # Compute new mean
+        distances = euclidean_distances(points, old_cluster_center)
+        weights = compute_weights(distances, bandwidth)
+        weighted_mean = np.sum(points * weights, axis=0) / np.sum(weights)
+
     return weighted_mean
 
 
