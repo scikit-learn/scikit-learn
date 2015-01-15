@@ -1503,7 +1503,7 @@ class RandomTreesEmbedding(BaseForest):
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             The input samples. Use ``dtype=np.float32`` for maximum
             efficiency. Sparse matrices are also supported, use sparse
-            ``csc_matrix`` for maximum efficieny.
+            ``csc_matrix`` for maximum efficiency.
 
         Returns
         -------
@@ -1552,7 +1552,7 @@ class RandomTreesEmbedding(BaseForest):
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             Input data to be transformed. Use ``dtype=np.float32`` for maximum
             efficiency. Sparse matrices are also supported, use sparse
-            ``csr_matrix`` for maximum efficieny.
+            ``csr_matrix`` for maximum efficiency.
 
         Returns
         -------

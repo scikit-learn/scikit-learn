@@ -498,7 +498,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         The underlying Tree object.
 
     max_features_ : int,
-        The infered value of max_features.
+        The inferred value of max_features.
 
     classes_ : array of shape = [n_classes] or a list of such arrays
         The classes labels (single output problem),
@@ -718,7 +718,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The underlying Tree object.
 
     max_features_ : int,
-        The infered value of max_features.
+        The inferred value of max_features.
 
     feature_importances_ : array of shape = [n_features]
         The feature importances.

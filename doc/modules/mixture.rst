@@ -123,7 +123,7 @@ which latent component (if one has access to this information it gets
 very easy to fit a separate Gaussian distribution to each set of
 points). `Expectation-maximization
 <http://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm>`_
-is a well-fundamented statistical
+is a well-founded statistical
 algorithm to get around this problem by an iterative process. First
 one assumes random components (randomly centered on data points,
 learned from k-means, or even just normally distributed around the

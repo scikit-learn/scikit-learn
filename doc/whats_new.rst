@@ -238,13 +238,13 @@ Bug fixes
 
     - When `compute_full_tree` is set to "auto", the full tree is
       built when n_clusters is high and is early stopped when n_clusters is
-      low, while the behavor should be vice-versa in
+      low, while the behavior should be vice-versa in
       :class:`cluster.AgglomerativeClustering` (and friends).
       This has been fixed By `Manoj Kumar`_
 
     - Fix lazy centering of data in :func:`linear_model.enet_path` and
       :func:`linear_model.lasso_path`. It was centered around one. It has
-      been changed to be centred around the origin. By `Manoj Kumar`_
+      been changed to be centered around the origin. By `Manoj Kumar`_
 
 API changes summary
 -------------------

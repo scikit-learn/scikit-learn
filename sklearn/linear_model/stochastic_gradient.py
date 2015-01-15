@@ -1183,7 +1183,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
     Attributes
     ----------
     coef_ : array, shape (n_features,)
-        Weights asigned to the features.
+        Weights assigned to the features.
 
     intercept_ : array, shape (1,)
         The intercept term.

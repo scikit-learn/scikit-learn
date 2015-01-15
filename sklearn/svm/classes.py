@@ -5,7 +5,7 @@ from ..base import BaseEstimator, RegressorMixin
 from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, \
     LinearModel
 from ..feature_selection.from_model import _LearntSelectorMixin
-from ..utils import check_array, check_X_y
+from ..utils import check_X_y
 
 
 class LinearSVC(BaseEstimator, LinearClassifierMixin,
@@ -210,7 +210,7 @@ class LinearSVR(LinearModel, RegressorMixin):
     ----------
     C : float, optional (default=1.0)
         Penalty parameter C of the error term. The penalty is a squared
-        l2 penalty. The bigger this parater, the less regularization is used.
+        l2 penalty. The bigger this parameter, the less regularization is used.
 
     loss : string, 'l1' or 'l2' (default='l2')
         Specifies the loss function. 'l1' is the epsilon-insensitive loss
@@ -288,7 +288,6 @@ class LinearSVR(LinearModel, RegressorMixin):
         various loss functions and regularization regimes.
     """
 
-
     def __init__(self, epsilon=0.0, tol=1e-4, C=1.0, loss='l1', fit_intercept=True,
                  intercept_scaling=1., dual=True, verbose=0, random_state=None,
                  max_iter=1000):
@@ -325,7 +324,7 @@ class LinearSVR(LinearModel, RegressorMixin):
                              % self.C)
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64, order="C")
-        loss = {'l1': 'ei', 'l2' : 'se'}.get(self.loss)
+        loss = {'l1': 'ei', 'l2': 'se'}.get(self.loss)
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
             None, 'l2', self.dual, self.verbose,

@@ -182,7 +182,7 @@ prediction that was obtained for that element when it was in the test set. Only
 cross-validation strategies that assign all elements to a test set exactly once
 can be used (otherwise, an exception is raised).
 
-These prediction can then be used to evalute the classifier::
+These prediction can then be used to evaluate the classifier::
 
   >>> predicted = cross_validation.cross_val_predict(clf, iris.data,
   ...                                                iris.target, cv=10)

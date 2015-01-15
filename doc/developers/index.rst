@@ -276,7 +276,7 @@ Testing and improving test coverage
 ------------------------------------
 
 High-quality `unit testing <http://en.wikipedia.org/wiki/Unit_testing>`_
-is a corner-stone of the sciki-learn development process. For this
+is a corner-stone of the scikit-learn development process. For this
 purpose, we use the `nose <http://nose.readthedocs.org/en/latest/>`_
 package. The tests are functions appropriately names, located in `tests`
 subdirectories, that check the validity of the algorithms and the
