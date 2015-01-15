@@ -23,9 +23,7 @@ import warnings
 import numpy as np
 from scipy.sparse import csr_matrix
 
-from ..preprocessing import LabelBinarizer
 from ..utils import check_consistent_length
-from ..utils import deprecated
 from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.fixes import isclose
@@ -580,7 +578,7 @@ def coverage_error(y_true, y_score, sample_weight=None):
     """Coverage error measure
 
     Compute how far we need to go through the ranked scores to cover all
-    true labels. The best value is equal to the average the number
+    true labels. The best value is equal to the average number
     of labels in ``y_true` per sample.
 
     Ties in `y_scores` are broken by giving maximal rank that would have
