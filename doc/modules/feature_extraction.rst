@@ -474,6 +474,74 @@ feature extractor with a classifier:
  * :ref:`example_model_selection_grid_search_text_feature_extraction.py`
 
 
+LDA/LSI topic weighting
+-----------------------
+
+Given a large collection of text documents, it is often useful
+to extract latent topics from the text to represent each document
+in a lower dimension. A topic is an underlying abstract concept or theme 
+a document is written about. Instead of a Bag of Words representation,
+we can remember the document as it is about a particular topic, such as "sports" or "movies". 
+Intuitively, if a document is about a certain topic, one would make assumptions
+about the frequencies of some particular words to appear in this document. 
+For example, "BMW" and "Toyota" will appear more often in documents about cars, 
+and "JavaScript" and "Node.js" will appear more often in documents about web development. 
+A document typically covers multiple topics to different degrees. Therefore, given
+a set of extracted topics, we can represent each document as a set of probabilities
+over these topics.
+
+Latent Dirichlet allocation (LDA) is a statistical model to discover latent topics
+from a set of documents. It is a generative model to explain how a set of documents
+are created assuming that each word's creation is attributable to one of the document's
+topics. The model is then fit to the observed set of documents to learn the model parameters.
+For more on LDA, refer to the paper: `Latent Dirichlet allocation <http://machinelearning.wustl.edu/mlpapers/paper_files/BleiNJ03.pdf>`_.
+
+Latent Semantic Analysis (LSA), also known as Latent Semantic Indexing (LSI), is a retrieval
+method that uses a linear algebra technique called singular value decomposition (SVD) to
+identify patterns and relationships among keywords and topics. For more on LSI, refer to the paper:
+`An introduction to latent semantic analysis <http://lsa.colorado.edu/papers/dp1.LSAintro.pdf>`_.
+
+The LDA/LSI topic extaction process is implemented by the :class:`text.LdaVectorizer`
+and :class:`text.LsiVectorizer` classes. These two classes perform directly on text documents, 
+and each combines text vectorization and topic modeling in a single model. Both classes are built
+upon the `gensim Python libaray <http://radimrehurek.com/gensim/>`_, so installation of gensim is
+required.
+
+Let's take an example using the 20 newsgroups text dataset included in scikit-learn::
+  
+  >>> from sklearn.datasets import fetch_20newsgroups
+  >>> newsgroups_train = fetch_20newsgroups(subset='train')
+  
+An example to define a :class:`text.LdaVectorizer` object is::
+
+  >>> from sklearn.feature_extraction.text import LDAVectorizer
+  >>> lda_vec = LdaVectorizer(num_topics=20, min_df=10)
+  >>> lda_vec   # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  LdaVectorizer(alpha=None, analyzer=u'word', binary=False, charset=None,
+         charset_error=None, chunksize=2000, decay=0.5,
+         decode_error=u'strict', distributed=False,
+         dtype=<type 'numpy.int64'>, encoding=u'utf-8', eta=None,
+         input=u'content', log_file=u'lda_topics.log', lowercase=True,
+         max_df=1.0, max_features=None, min_df=10, ngram_range=(1, 1),
+         num_topics=20, passes=1, preprocessor=None, stop_words=u'english',
+         strip_accents=None, token_pattern=u'(?u)\\b\\w\\w+\\b',
+         tokenizer=None, update_every=1, vocabulary=None)
+
+We can then feed a set of documents to this vectorizer, and turn the documents into a sparse matrix containing
+all the topic weights. In the above example, we set the number of topics to be 20. As a result,
+each document will be transformed into a vector of 20 elements, each of which is the weight this
+document has on the corresponding topic::
+
+  >>> lda_weights = lda_vec.fit_transform(newsgroups_train.data) 
+  >>> lda_weights   # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  <11314x20 sparse matrix of type '<type 'numpy.float64'>'
+          with 73663 stored elements in Compressed Sparse Row format>
+
+The usage of :class:`text.LsiVectorizer` is identical to the above. Both classes also write down
+the discovered topics using keyword representation into log files.
+
+
 Decoding text files
 -------------------
 Text is made of characters, but files are made of bytes. These bytes represent
