@@ -286,7 +286,7 @@ def check_X_y(X, y, accept_sparse=None, dtype=None, order=None, copy=False,
 
     Checks X and y for consistent length, enforces X 2d and y 1d.
     Standard input checks are only applied to y. For multi-label y,
-    set multi_ouput=True to allow 2d and sparse y.
+    set multi_output=True to allow 2d and sparse y.
 
     Parameters
     ----------

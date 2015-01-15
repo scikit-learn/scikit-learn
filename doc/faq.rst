@@ -50,7 +50,7 @@ See :ref:`adding_graphical_models`.
 
 Will you add graphical models or sequence prediction to scikit-learn?
 ------------------------------------------------------------------------
-Not in the forseeable future. 
+Not in the foreseeable future. 
 scikit-learn tries to provide a unified API for the basic tasks in machine
 learning, with pipelines and meta-algorithms like grid search to tie
 everything together. The required concepts, APIs, algorithms and

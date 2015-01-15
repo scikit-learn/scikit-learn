@@ -830,7 +830,7 @@ clusters (labels) and the samples are mapped to the global label of the nearest 
 
 **Birch or MiniBatchKMeans?**
 
- - Birch does not scale very well to high dimensionsal data. As a rule of thumb if
+ - Birch does not scale very well to high dimensional data. As a rule of thumb if
    ``n_features`` is greater than twenty, it is generally better to use MiniBatchKMeans.
  - If the number of instances of data needs to be reduced, or if one wants a
    large number of subclusters either as a preprocessing step or otherwise,

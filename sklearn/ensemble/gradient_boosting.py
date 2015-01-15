@@ -1155,7 +1155,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         loss function to be optimized. 'deviance' refers to
         deviance (= logistic regression) for classification
         with probabilistic outputs. For loss 'exponential' gradient
-        boosting recoveres the AdaBoost algorithm.
+        boosting recovers the AdaBoost algorithm.
 
     learning_rate : float, optional (default=0.1)
         learning rate shrinks the contribution of each tree by `learning_rate`.

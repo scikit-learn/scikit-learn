@@ -131,10 +131,10 @@ class Pipeline(BaseEstimator):
         Parameters
         ----------
         X : iterable
-            Training data. Must fulfil input requirements of first step of the
+            Training data. Must fulfill input requirements of first step of the
             pipeline.
         y : iterable, default=None
-            Training targets. Must fulfil label requirements for all steps of
+            Training targets. Must fulfill label requirements for all steps of
             the pipeline.
         """
         Xt, fit_params = self._pre_transform(X, y, **fit_params)
@@ -149,11 +149,11 @@ class Pipeline(BaseEstimator):
         Parameters
         ----------
         X : iterable
-            Training data. Must fulfil input requirements of first step of the
+            Training data. Must fulfill input requirements of first step of the
             pipeline.
 
         y : iterable, default=None
-            Training targets. Must fulfil label requirements for all steps of
+            Training targets. Must fulfill label requirements for all steps of
             the pipeline.
         """
         Xt, fit_params = self._pre_transform(X, y, **fit_params)
@@ -171,7 +171,7 @@ class Pipeline(BaseEstimator):
         Parameters
         ----------
         X : iterable
-            Data to predict on. Must fulfil input requirements of first step of
+            Data to predict on. Must fulfill input requirements of first step of
             the pipeline.
         """
         Xt = X
@@ -188,7 +188,7 @@ class Pipeline(BaseEstimator):
         Parameters
         ----------
         X : iterable
-            Data to predict on. Must fulfil input requirements of first step of
+            Data to predict on. Must fulfill input requirements of first step of
             the pipeline.
         """
         Xt = X
@@ -205,7 +205,7 @@ class Pipeline(BaseEstimator):
         Parameters
         ----------
         X : iterable
-            Data to predict on. Must fulfil input requirements of first step of
+            Data to predict on. Must fulfill input requirements of first step of
             the pipeline.
         """
         Xt = X
@@ -222,7 +222,7 @@ class Pipeline(BaseEstimator):
         Parameters
         ----------
         X : iterable
-            Data to predict on. Must fulfil input requirements of first step of
+            Data to predict on. Must fulfill input requirements of first step of
             the pipeline.
         """
         Xt = X
@@ -239,7 +239,7 @@ class Pipeline(BaseEstimator):
         Parameters
         ----------
         X : iterable
-            Data to predict on. Must fulfil input requirements of first step of
+            Data to predict on. Must fulfill input requirements of first step of
             the pipeline.
         """
         Xt = X
@@ -257,7 +257,7 @@ class Pipeline(BaseEstimator):
         Parameters
         ----------
         X : iterable
-            Data to inverse transform. Must fulfil output requirements of the
+            Data to inverse transform. Must fulfill output requirements of the
             last step of the pipeline.
         """
         if X.ndim == 1:
@@ -276,11 +276,11 @@ class Pipeline(BaseEstimator):
         Parameters
         ----------
         X : iterable
-            Data to score. Must fulfil input requirements of first step of the
+            Data to score. Must fulfill input requirements of first step of the
             pipeline.
 
         y : iterable, default=None
-            Targets used for scoring. Must fulfil label requirements for all steps of
+            Targets used for scoring. Must fulfill label requirements for all steps of
             the pipeline.
         """
         Xt = X

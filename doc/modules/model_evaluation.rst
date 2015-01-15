@@ -285,7 +285,7 @@ Where available, you should select among these using the ``average`` parameter.
   are nonetheless important, macro-averaging may be a means of highlighting
   their performance. On the other hand, the assumption that all classes are
   equally important is often untrue, such that macro-averaging will
-  over-emphasise the typically low performance on an infrequent class.
+  over-emphasize the typically low performance on an infrequent class.
 * ``"weighted"`` accounts for class imbalance by computing the average of
   binary metrics in which each class's score is weighted by its presence in the
   true data sample.

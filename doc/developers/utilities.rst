@@ -36,7 +36,7 @@ should be used when applicable.
 
 - :func:`check_X_y`: check that X and y have consistent length, calls
   check_array on X, and column_or_1d on y. For multilabel classification or
-  multitarget regression, specify multi_ouput=True, in which case check_array
+  multitarget regression, specify multi_output=True, in which case check_array
   will be called on y.
 
 - :func:`indexable`: check that all input arrays have consistent length and can

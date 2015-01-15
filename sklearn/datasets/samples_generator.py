@@ -1244,7 +1244,7 @@ def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
 
     References
     ----------
-    .. [1] S. Marsland, "Machine Learning: An Algorithmic Perpsective",
+    .. [1] S. Marsland, "Machine Learning: An Algorithmic Perspective",
            Chapter 10, 2009.
            http://www-ist.massey.ac.nz/smarsland/Code/10/lle.py
     """
