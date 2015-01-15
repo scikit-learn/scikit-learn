@@ -317,8 +317,7 @@ def _kernel_update(old_cluster_center, points, bandwidth, kernel, gamma):
 
     # Define the weights function for each kernel
     if kernel == 'rbf':
-        compute_weights = lambda p, b: np.exp(-1 * gamma *
-                                              (p ** 2 / b ** 2))
+        compute_weights = lambda p, b: np.exp(-1 * gamma * (p ** 2))
 
     if kernel == 'epanechnikov':
         compute_weights = lambda p, b: 1.0 - (p ** 2 / b ** 2)
