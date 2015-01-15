@@ -31,10 +31,9 @@ Libraries that provide a scikit-learn like interface and can be used with scikit
 - `pylearn2 <http://deeplearning.net/software/pylearn2/>`_ A deep learning and
   neural network library build on theano with scikit-learn like interface.
 
-- `lightning <http://www.mblondel.org/lightning/>`_ fast state-of-the-art linear model solvers (SDCA, AdaGrad, SVRG, SAG, etc...).
+- `lightning <http://www.mblondel.org/lightning/>`_ Fast state-of-the-art linear model solvers (SDCA, AdaGrad, SVRG, SAG, etc...).
 
-- `Seqlearn <https://github.com/larsmans/seqlearn>`_  An implementation of
-  linear chain conditional random fields respecting the scikit-learn interface.
+- `Seqlearn <https://github.com/larsmans/seqlearn>`_  Sequence classification using HMMs or structured perceptron.
 
 - `HMMLearn <https://github.com/hmmlearn/hmmlearn>`_ Implementation of hidden
   markov models that was previously part of scikit-learn.
@@ -45,11 +44,11 @@ Libraries that provide a scikit-learn like interface and can be used with scikit
 - `py-earth <https://github.com/jcrudy/py-earth>`_ Multivariate adaptive regression splines
 
 - `sklearn-compiledtrees <https://github.com/ajtulloch/sklearn-compiledtrees/>`_
-  generate a C++ implementation of the predict function for decision trees (and
+  Generate a C++ implementation of the predict function for decision trees (and
   ensembles) trained by sklearn. Useful for latency-sensitive production
   environments.
 
-- `lda <https://github.com/ariddell/lda/>`_: fast implementation of Latent
+- `lda <https://github.com/ariddell/lda/>`_: Fast implementation of Latent
   Dirichlet Allocation in Cython.
 
 - `Sparse Filtering <https://github.com/jmetzen/sparse-filtering>`_
@@ -67,6 +66,6 @@ Domain Specific Packages
 - `NiLearn <https://nilearn.github.io/>`_ Machine learning for neuro-imaging.
 - `AstroML <http://www.astroml.org/>`_  Machine learning for astronomy.
 
-Sniplets and tidbits
+Snippets and tidbits
 ---------------------
 The `wiki <https://github.com/scikit-learn/scikit-learn/wiki/Third-party-projects-and-code-snippets>`_ has more!
