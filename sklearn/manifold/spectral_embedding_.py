@@ -239,7 +239,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         # orders-of-magnitude speedup over simply using keyword which='LA'
         # in standard mode.
         try:
-            laplacian = -laplacian
+            laplacian *= -1
             lambdas, diffusion_map = eigsh(laplacian, k=n_components,
                                            sigma=1.0, which='LM',
                                            tol=eigen_tol)
@@ -247,7 +247,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         except RuntimeError:
             # When submatrices are exactly singular, an LU decomposition
             # in arpack fails. We fallback to lobpcg
-            laplacian = -laplacian
+            laplacian *= -1
             eigen_solver = "lobpcg"
 
     if eigen_solver == 'amg':
