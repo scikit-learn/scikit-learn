@@ -19,7 +19,7 @@ the fact that `p` is defining an eps-embedding with good probability
 as defined by:
 
 .. math::
-   (1 - eps) ||u - v||^2 < ||p(u) - p(v)||^2 < (1 + eps) ||u - v||^2
+   (1 - eps) \|u - v\|^2 < \|p(u) - p(v)\|^2 < (1 + eps) \|u - v\|^2
 
 Where u and v are any rows taken from a dataset of shape [n_samples,
 n_features] and p is a projection by a random Gaussian N(0, 1) matrix
@@ -29,7 +29,7 @@ The minimum number of components to guarantees the eps-embedding is
 given by:
 
 .. math::
-   n_components >= 4 log(n_samples) / (eps^2 / 2 - eps^3 / 3)
+   n\_components >= 4 log(n\_samples) / (eps^2 / 2 - eps^3 / 3)
 
 
 The first plot shows that with an increasing number of samples ``n_samples``,
