@@ -110,6 +110,8 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     scaling using the ``Transformer`` API (e.g. as part of a preprocessing
     :class:`sklearn.pipeline.Pipeline`)
     """
+    X = check_array(X, accept_sparse='csr', copy=copy, ensure_2d=False)
+    warn_if_not_float(X, estimator='The scale function')
     if sparse.issparse(X):
         if with_mean:
             raise ValueError(
@@ -118,7 +120,6 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         if axis != 0:
             raise ValueError("Can only scale sparse matrix on axis=0, "
                              " got axis=%d" % axis)
-        warn_if_not_float(X, estimator='The scale function')
         if not sparse.isspmatrix_csr(X):
             X = X.tocsr()
             copy = False
@@ -129,7 +130,6 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         inplace_column_scale(X, 1 / np.sqrt(var))
     else:
         X = np.asarray(X)
-        warn_if_not_float(X, estimator='The scale function')
         mean_, std_ = _mean_and_std(
             X, axis, with_mean=with_mean, with_std=with_std)
         if copy:
@@ -312,7 +312,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
         """
-        X = check_array(X, accept_sparse='csr', copy=self.copy, ensure_2d=False)
+        X = check_array(X, accept_sparse='csr', copy=self.copy,
+                        ensure_2d=False)
         if warn_if_not_float(X, estimator=self):
             X = X.astype(np.float)
         if sparse.issparse(X):
