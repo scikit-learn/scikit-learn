@@ -220,7 +220,7 @@ class LossFunction(six.with_metaclass(ABCMeta, object)):
             The sample mask to be used.
         learning_rate : float, default=0.1
             learning rate shrinks the contribution of each tree by 
-            `learning_rate`.
+            ``learning_rate``.
         k : int, default 0
             The index of the estimator being updated.
 

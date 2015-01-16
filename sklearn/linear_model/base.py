@@ -194,7 +194,7 @@ class LinearClassifierMixin(ClassifierMixin):
         """
         if not hasattr(self, 'coef_') or self.coef_ is None:
             raise NotFittedError("This %(name)s instance is not fitted"
-                                 "yet"%{'name':type(self).__name__})
+                                 "yet" % {'name': type(self).__name__})
 
         X = check_array(X, accept_sparse='csr')
 
@@ -266,7 +266,7 @@ class SparseCoefMixin(object):
         self: estimator
         """
         msg = "Estimator, %(name)s, must be fitted before densifying."
-        check_is_fitted(self, "coef_",  msg=msg)
+        check_is_fitted(self, "coef_", msg=msg)
         if sp.issparse(self.coef_):
             self.coef_ = self.coef_.toarray()
         return self
@@ -296,7 +296,7 @@ class SparseCoefMixin(object):
         self: estimator
         """
         msg = "Estimator, %(name)s, must be fitted before sparsifying."
-        check_is_fitted(self, "coef_",  msg=msg)
+        check_is_fitted(self, "coef_", msg=msg)
         self.coef_ = sp.csr_matrix(self.coef_)
         return self
 
@@ -359,11 +359,6 @@ class LinearRegression(LinearModel, RegressorMixin):
 
         y : numpy array of shape [n_samples, n_targets]
             Target values
-
-        n_jobs : int, optional, default 1
-            The number of jobs to use for the computation.
-            If -1 all CPUs are used. This will only provide speedup for
-            n_targets > 1 and sufficiently large problems.
 
         Returns
         -------

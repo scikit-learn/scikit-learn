@@ -643,7 +643,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     pooling_func : callable, default=np.mean
         This combines the values of agglomerated features into a single
         value, and should accept an array of shape [M, N] and the keyword
-        argument `axis=1`, and reduce it to an array of size [M].
+        argument ``axis=1``, and reduce it to an array of size [M].
 
     Attributes
     ----------
@@ -702,7 +702,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
                              "work with euclidean distances." %
                              (self.affinity, ))
 
-        if not self.linkage in _TREE_BUILDERS:
+        if self.linkage not in _TREE_BUILDERS:
             raise ValueError("Unknown linkage type %s."
                              "Valid options are %s" % (self.linkage,
                                                        _TREE_BUILDERS.keys()))

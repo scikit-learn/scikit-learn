@@ -69,7 +69,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         The mask of selected features.
 
     ranking_ : array of shape [n_features]
-        The feature ranking, such that `ranking_[i]` corresponds to the
+        The feature ranking, such that ``ranking_[i]`` corresponds to the
         ranking position of the i-th feature. Selected (i.e., estimated
         best) features are assigned rank 1.
 
