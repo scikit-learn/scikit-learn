@@ -228,7 +228,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
                              .format(self.out_of_bounds))
 
         bounds_error = self.out_of_bounds == "raise"
-        self.f_ = interpolate.interp1d(X, y, kind='linear',
+        self.f_ = interpolate.interp1d(X, y, kind='slinear',
                                        bounds_error=bounds_error)
 
     def _build_y(self, X, y, sample_weight):
