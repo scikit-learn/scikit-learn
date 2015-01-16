@@ -499,6 +499,32 @@ def test_kneighbors_regressor_multioutput(n_samples=40,
         assert_true(np.all(np.abs(y_pred - y_target) < 0.3))
 
 
+def test_kneighbors_regressor_zeros(n_samples=40,
+                                    n_features=5,
+                                    n_test_pts=10,
+                                    n_neighbors=3,
+                                    random_state=0):
+    """Test k-neighbors regression with zero distances"""
+    rng = np.random.RandomState(random_state)
+    X = 2 * rng.rand(n_samples, n_features) - 1
+    X[-1] = X[0]  # Replicate a point
+    y = np.sqrt((X ** 2).sum(1))
+    y /= y.max()
+
+    y_target = y[:n_test_pts]
+
+    weight_func = _weight_func
+
+    for algorithm in ALGORITHMS:
+        for weights in ['uniform', 'distance', weight_func]:
+            knn = neighbors.KNeighborsRegressor(n_neighbors=n_neighbors,
+                                                weights=weights,
+                                                algorithm=algorithm)
+            knn.fit(X, y)
+            y_pred = knn.predict(X[:n_test_pts])
+            assert_true(np.all(abs(y_pred - y_target) < 0.3))
+
+
 def test_radius_neighbors_regressor(n_samples=40,
                                     n_features=3,
                                     n_test_pts=10,
