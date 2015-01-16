@@ -423,12 +423,21 @@ def pinvh(a, cond=None, rcond=None, lower=True):
     ----------
     a : array, shape (N, N)
         Real symmetric or complex hermetian matrix to be pseudo-inverted
-    cond, rcond : float or None
+
+    cond : float or None, default None
         Cutoff for 'small' eigenvalues.
         Singular values smaller than rcond * largest_eigenvalue are considered
         zero.
 
         If None or -1, suitable machine precision is used.
+
+    rcond : float or None, default None (deprecated)
+        Cutoff for 'small' eigenvalues.
+        Singular values smaller than rcond * largest_eigenvalue are considered
+        zero.
+
+        If None or -1, suitable machine precision is used.
+ 
     lower : boolean
         Whether the pertinent array data is taken from the lower or upper
         triangle of a. (Default: lower)
@@ -529,9 +538,10 @@ def svd_flip(u, v, u_based_decision=True):
 
     Parameters
     ----------
-    u, v : arrays
-        The output of `linalg.svd` or `sklearn.utils.extmath.randomized_svd`,
-        with matching inner dimensions so one can compute `np.dot(u * s, v)`.
+    u, v : ndarray
+        u and v are the output of `linalg.svd` or 
+        `sklearn.utils.extmath.randomized_svd`, with matching inner dimensions
+        so one can compute `np.dot(u * s, v)`.
 
     u_based_decision : boolean, (default=True)
         If True, use the columns of u as the basis for sign flipping. Otherwise,

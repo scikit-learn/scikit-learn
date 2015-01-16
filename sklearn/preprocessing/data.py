@@ -86,7 +86,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         If True, scale the data to unit variance (or equivalently,
         unit standard deviation).
 
-    copy : boolean, optional, default is True
+    copy : boolean, optional, default True
         set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix and if axis is 1).
@@ -165,7 +165,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     feature_range: tuple (min, max), default=(0, 1)
         Desired range of transformed data.
 
-    copy : boolean, optional, default is True
+    copy : boolean, optional, default True
         Set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array).
 
@@ -275,7 +275,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         If True, scale the data to unit variance (or equivalently,
         unit standard deviation).
 
-    copy : boolean, optional, default is True
+    copy : boolean, optional, default True
         If False, try to avoid a copy and do inplace scaling instead.
         This is not guaranteed to always work inplace; e.g. if the data is
         not a NumPy array or scipy.sparse CSR matrix, a copy may still be
@@ -521,7 +521,7 @@ def normalize(X, norm='l2', axis=1, copy=True):
         axis used to normalize the data along. If 1, independently normalize
         each sample, otherwise (if 0) normalize each feature.
 
-    copy : boolean, optional, default is True
+    copy : boolean, optional, default True
         set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix and if axis is 1).
@@ -589,7 +589,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
     norm : 'l1' or 'l2', optional ('l2' by default)
         The norm to use to normalize each non zero sample.
 
-    copy : boolean, optional, default is True
+    copy : boolean, optional, default True
         set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix).
@@ -646,7 +646,7 @@ def binarize(X, threshold=0.0, copy=True):
         Feature values below or equal to this are replaced by 0, above it by 1.
         Threshold may not be less than 0 for operations on sparse matrices.
 
-    copy : boolean, optional, default is True
+    copy : boolean, optional, default True
         set to False to perform inplace binarization and avoid a copy
         (if the input is already a numpy array or a scipy.sparse CSR / CSC
         matrix and if axis is 1).
@@ -696,7 +696,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
         Feature values below or equal to this are replaced by 0, above it by 1.
         Threshold may not be less than 0 for operations on sparse matrices.
 
-    copy : boolean, optional, default is True
+    copy : boolean, optional, default True
         set to False to perform inplace binarization and avoid a copy (if
         the input is already a numpy array or a scipy.sparse CSR matrix).
 
@@ -771,6 +771,9 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         ----------
         K : numpy array of shape [n_samples1, n_samples2]
             Kernel matrix.
+
+        copy : boolean, optional, default True
+            Set to False to perform inplace computation.
 
         Returns
         -------

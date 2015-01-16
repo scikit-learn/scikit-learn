@@ -771,8 +771,7 @@ class _RidgeGCV(LinearModel):
         cv_values = np.zeros((n_samples * n_y, len(self.alphas)))
         C = []
 
-        scorer = check_scoring(self, scoring=self.scoring, allow_none=True,
-                               score_overrides_loss=True)
+        scorer = check_scoring(self, scoring=self.scoring, allow_none=True)
         error = scorer is None
 
         for i, alpha in enumerate(self.alphas):

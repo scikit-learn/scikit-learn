@@ -127,34 +127,39 @@ class DPGMM(GMM):
 
     Parameters
     ----------
-    n_components: int, optional
-        Number of mixture components. Defaults to 1.
+    n_components: int, default 1
+        Number of mixture components.
 
-    covariance_type: string, optional
+    covariance_type: string, default 'diag'
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
-        Defaults to 'diag'.
 
-    alpha: float, optional
+    alpha: float, default 1
         Real number representing the concentration parameter of
         the dirichlet process. Intuitively, the Dirichlet Process
         is as likely to start a new cluster for a point as it is
         to add that point to a cluster with alpha elements. A
         higher alpha means more clusters, as the expected number
-        of clusters is ``alpha*log(N)``. Defaults to 1.
+        of clusters is ``alpha*log(N)``.
 
-    thresh : float, optional
+    thresh : float, default 1e-2
         Convergence threshold.
-    n_iter : int, optional
+
+    n_iter : int, default 10
         Maximum number of iterations to perform before convergence.
-    params : string, optional
+
+    params : string, default 'wmc' 
         Controls which parameters are updated in the training
         process.  Can contain any combination of 'w' for weights,
-        'm' for means, and 'c' for covars.  Defaults to 'wmc'.
-    init_params : string, optional
+        'm' for means, and 'c' for covars.
+
+    init_params : string, default 'wmc' 
         Controls which parameters are updated in the initialization
         process.  Can contain any combination of 'w' for weights,
         'm' for means, and 'c' for covars.  Defaults to 'wmc'.
+
+    verbose : boolean, default False
+        Controls output verbosity.
 
     Attributes
     ----------
@@ -595,21 +600,37 @@ class VBGMM(DPGMM):
 
     Parameters
     ----------
-    n_components: int, optional
-        Number of mixture components. Defaults to 1.
+    n_components: int, default 1
+        Number of mixture components.
 
-    covariance_type: string, optional
+    covariance_type: string, default 'diag'
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
-        Defaults to 'diag'.
 
-    alpha: float, optional
+    alpha: float, default 1
         Real number representing the concentration parameter of
         the dirichlet distribution. Intuitively, the higher the
         value of alpha the more likely the variational mixture of
-        Gaussians model will use all components it can. Defaults
-        to 1.
+        Gaussians model will use all components it can.
 
+    thresh : float, default 1e-2
+        Convergence threshold.
+
+    n_iter : int, default 10
+        Maximum number of iterations to perform before convergence.
+
+    params : string, default 'wmc'
+        Controls which parameters are updated in the training
+        process.  Can contain any combination of 'w' for weights,
+        'm' for means, and 'c' for covars.
+
+    init_params : string, default 'wmc'
+        Controls which parameters are updated in the initialization
+        process.  Can contain any combination of 'w' for weights,
+        'm' for means, and 'c' for covars.  Defaults to 'wmc'.
+
+    verbose : boolean, default False
+        Controls output verbosity.
 
     Attributes
     ----------

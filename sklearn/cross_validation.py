@@ -1327,7 +1327,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         The target variable to try to predict in the case of
         supervised learning.
 
-    scoring : callable
+    scorer : callable
         A scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 

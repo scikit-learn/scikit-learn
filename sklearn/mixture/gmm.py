@@ -69,7 +69,7 @@ def sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
     mean : array_like, shape (n_features,)
         Mean of the distribution.
 
-    covars : array_like, optional
+    covar : array_like, optional
         Covariance of the distribution. The shape depends on `covariance_type`:
             scalar if 'spherical',
             (n_features) if 'diag',

@@ -140,10 +140,10 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     adjacency : array-like or sparse matrix, shape: (n_samples, n_samples)
         The adjacency matrix of the graph to embed.
 
-    n_components : integer, optional
+    n_components : integer, optional, default 8
         The dimension of the projection subspace.
 
-    eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
+    eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}, default None
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities.
@@ -163,6 +163,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         connected graph, but for spectral clustering, this should be kept as
         False to retain the first eigenvector.
 
+    norm_laplacian : bool, optional, default=True
+        If True, then compute normalized Laplacian.
+ 
     Returns
     -------
     embedding : array, shape=(n_samples, n_components)

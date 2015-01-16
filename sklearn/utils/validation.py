@@ -76,6 +76,9 @@ def as_float_array(X, copy=True, force_all_finite=True):
         If True, a copy of X will be created. If False, a copy may still be
         returned if X's dtype is not a floating point type.
 
+    force_all_finite : boolean (default=True)
+        Whether to raise an error on np.inf and np.nan in X.
+
     Returns
     -------
     XT : {array, sparse matrix}
@@ -118,7 +121,7 @@ def check_consistent_length(*arrays):
 
     Parameters
     ----------
-    arrays : list or tuple of input objects.
+    *arrays : list or tuple of input objects.
         Objects that will be checked for consistent length.
     """
 
@@ -137,7 +140,7 @@ def indexable(*iterables):
 
     Parameters
     ----------
-    iterables : lists, dataframes, arrays, sparse matrices
+    *iterables : lists, dataframes, arrays, sparse matrices
         List of objects to ensure sliceability.
     """
     result = []
@@ -350,6 +353,9 @@ def column_or_1d(y, warn=False):
     ----------
     y : array-like
 
+    warn : boolean, default False
+       To control display of warnings. 
+
     Returns
     -------
     y : array
@@ -404,8 +410,8 @@ def check_random_state(seed):
 def has_fit_parameter(estimator, parameter):
     """Checks whether the estimator's fit method supports the given parameter.
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sklearn.svm import SVC
     >>> has_fit_parameter(SVC(), "sample_weight")
     True

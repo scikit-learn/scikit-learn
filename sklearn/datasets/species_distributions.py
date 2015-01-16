@@ -86,6 +86,7 @@ def _load_csv(F):
     ----------
     F : file object
         CSV file open in byte mode.
+
     Returns
     -------
     rec : np.ndarray
