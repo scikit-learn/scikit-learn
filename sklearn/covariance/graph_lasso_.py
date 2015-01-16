@@ -241,7 +241,7 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
     except FloatingPointError as e:
         e.args = (e.args[0]
                   + '. The system is too ill-conditioned for this solver',)
-        raise e
+        raise
 
     if return_costs:
         if return_n_iter:

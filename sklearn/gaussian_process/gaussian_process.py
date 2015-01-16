@@ -731,7 +731,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                                              iprint=0)
                 except ValueError as ve:
                     print("Optimization failed. Try increasing the ``nugget``")
-                    raise ve
+                    raise
 
                 optimal_theta = 10. ** log10_optimal_theta
                 optimal_rlf_value, optimal_par = \
