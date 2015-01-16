@@ -116,7 +116,7 @@ def _is_32bit():
     return struct.calcsize('P') * 8 == 32
 
 
-def check_regressors_classifiers_sparse_data(name, Estimator):
+def check_estimator_sparse_data(name, Estimator):
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10)
     X[X < .8] = 0
@@ -124,12 +124,19 @@ def check_regressors_classifiers_sparse_data(name, Estimator):
     y = (4 * rng.rand(40)).astype(np.int)
     # catch deprecation warnings
     with warnings.catch_warnings():
-        estimator = Estimator()
+        if name in ['Scaler', 'StandardScaler']:
+            estimator = Estimator(with_mean=False)
+        else:
+            estimator = Estimator()
     set_fast_parameters(estimator)
     # fit and predict
     try:
-        estimator.fit(X, y)
-        estimator.predict(X)
+        if is_supervised(estimator):
+            estimator.fit(X, y)
+        else:
+            estimator.fit(X)
+        if hasattr(estimator, "predict"):
+            estimator.predict(X)
         if hasattr(estimator, 'predict_proba'):
             estimator.predict_proba(X)
     except TypeError as e:
@@ -243,38 +250,6 @@ def _check_transformer(name, Transformer, X, y):
         if hasattr(X, 'T'):
             # If it's not an array, it does not have a 'T' property
             assert_raises(ValueError, transformer.transform, X.T)
-
-
-def check_transformer_sparse_data(name, Transformer):
-    rng = np.random.RandomState(0)
-    X = rng.rand(40, 10)
-    X[X < .8] = 0
-    X = sparse.csr_matrix(X)
-    y = (4 * rng.rand(40)).astype(np.int)
-    # catch deprecation warnings
-    with warnings.catch_warnings(record=True):
-        if name in ['Scaler', 'StandardScaler']:
-            transformer = Transformer(with_mean=False)
-        else:
-            transformer = Transformer()
-
-    set_fast_parameters(transformer)
-
-    # fit
-    try:
-        transformer.fit(X, y)
-    except TypeError as e:
-        if not 'sparse' in repr(e):
-            print("Estimator %s doesn't seem to fail gracefully on "
-                  "sparse data: error message state explicitly that "
-                  "sparse input is not supported if this is not the case."
-                  % name)
-            raise
-    except Exception:
-        print("Estimator %s doesn't seem to fail gracefully on "
-              "sparse data: it should raise a TypeError if sparse input "
-              "is explicitly not supported." % name)
-        raise
 
 
 def check_estimators_nan_inf(name, Estimator):
@@ -567,7 +542,7 @@ def check_estimators_unfitted(name, Estimator):
         est = Estimator()
 
     assert_raises(NotFittedError, est.predict, X)
- 
+
     if hasattr(est, 'predict'):
         assert_raises(NotFittedError, est.predict, X)
 
@@ -576,7 +551,7 @@ def check_estimators_unfitted(name, Estimator):
 
     if hasattr(est, 'predict_proba'):
         assert_raises(NotFittedError, est.predict_proba, X)
-    
+
     if hasattr(est, 'predict_log_proba'):
         assert_raises(NotFittedError, est.predict_log_proba, X)
 
@@ -991,7 +966,7 @@ def multioutput_estimator_convert_y_2d(name, y):
     return y
 
 
-def check_non_transformer_estimators_n_iter(name, estimator, 
+def check_non_transformer_estimators_n_iter(name, estimator,
                                             multi_output=False):
     # Check if all iterative solvers, run for more than one iteratiom
 

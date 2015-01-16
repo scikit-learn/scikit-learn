@@ -240,7 +240,12 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         X = check_array(X, accept_sparse='csr')
         clust = dbscan(X, sample_weight=sample_weight, **self.get_params())
         self.core_sample_indices_, self.labels_ = clust
-        self.components_ = X[self.core_sample_indices_].copy()
+        if len(self.core_sample_indices_):
+            # fix for scipy sparse indexing issue
+            self.components_ = X[self.core_sample_indices_].copy()
+        else:
+            # no core samples
+            self.components_ = np.empty((0, X.shape[1]))
         return self
 
     def fit_predict(self, X, y=None, sample_weight=None):

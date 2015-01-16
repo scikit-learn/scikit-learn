@@ -16,7 +16,7 @@ from sklearn.externals.six import PY3
 from sklearn.externals.six.moves import zip
 from sklearn.utils.testing import assert_false, clean_warning_registry
 from sklearn.utils.testing import all_estimators
-from sklearn.utils.testing import assert_greater 
+from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import ignore_warnings
@@ -29,14 +29,13 @@ from sklearn.cross_validation import train_test_split
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.utils.estimator_checks import (
     check_parameters_default_constructible,
-    check_regressors_classifiers_sparse_data,
+    check_estimator_sparse_data,
     check_transformer,
     check_clustering,
     check_clusterer_compute_labels_predict,
     check_regressors_int,
     check_regressors_train,
     check_regressors_pickle,
-    check_transformer_sparse_data,
     check_transformer_pickle,
     check_transformers_unfitted,
     check_estimators_nan_inf,
@@ -100,13 +99,9 @@ def test_non_meta_estimators():
         if hasattr(Estimator, 'sparsify'):
             yield check_sparsify_coefficients, name, Estimator
 
-
-def test_estimators_sparse_data():
-    # All estimators should either deal with sparse data or raise an
-    # exception with type TypeError and an intelligible error message
-    estimators = all_estimators(type_filter=['classifier', 'regressor'])
-    for name, Estimator in estimators:
-        yield check_regressors_classifiers_sparse_data, name, Estimator
+        yield check_estimator_sparse_data, name, Estimator
+        if name not in CROSS_DECOMPOSITION + ['Imputer']:
+            yield check_estimators_nan_inf, name, Estimator
 
 
 def test_transformers():
@@ -116,7 +111,6 @@ def test_transformers():
     for name, Transformer in transformers:
         # All transformers should either deal with sparse data or raise an
         # exception with type TypeError and an intelligible error message
-        yield check_transformer_sparse_data, name, Transformer
         yield check_transformer_pickle, name, Transformer
         if name not in ['AdditiveChi2Sampler', 'Binarizer', 'Normalizer',
                         'PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']:
