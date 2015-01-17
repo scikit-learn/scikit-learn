@@ -331,6 +331,58 @@ def test_matthews_corrcoef_nan():
     assert_equal(matthews_corrcoef([0, 0], [0, 1]), 0.0)
 
 
+def test_matthews_corrcoef_against_numpy_corrcoef():
+    rng = np.random.RandomState(0)
+    y_true = rng.randint(0, 2, size=20)
+    y_pred = rng.randint(0, 2, size=20)
+
+    assert_almost_equal(matthews_corrcoef(y_true, y_pred),
+                        np.corrcoef(y_true, y_pred)[0, 1], 10)
+
+
+def test_matthews_corrcoef():
+    rng = np.random.RandomState(0)
+    y_true = ["a" if i == 0 else "b" for i in rng.randint(0, 2, size=20)]
+
+    # corrcoef of same vectors must be 1
+    assert_almost_equal(matthews_corrcoef(y_true, y_true), 1.0)
+
+    # corrcoef, when the two vectors are opposites of each other, should be -1
+    y_true_inv = ["b" if i == "a" else "a" for i in y_true]
+
+    assert_almost_equal(matthews_corrcoef(y_true, y_true_inv), -1)
+    y_true_inv2 = label_binarize(y_true, ["a", "b"]) * -1
+    assert_almost_equal(matthews_corrcoef(y_true, y_true_inv2), -1)
+
+    # For the zero vector case, the corrcoef cannot be calculated and should
+    # result in a RuntimeWarning
+    mcc = assert_warns_message(RuntimeWarning, 'invalid value encountered',
+                               matthews_corrcoef, [0, 0, 0, 0], [0, 0, 0, 0])
+
+    # But will output 0
+    assert_almost_equal(mcc, 0.)
+
+    # And also for any other vector with 0 variance
+    mcc = assert_warns_message(RuntimeWarning, 'invalid value encountered',
+                               matthews_corrcoef, y_true,
+                               rng.randint(-100, 100) * np.ones(20, dtype=int))
+
+    # But will output 0
+    assert_almost_equal(mcc, 0.)
+
+    # These two vectors have 0 correlation and hence mcc should be 0
+    y_1 = [1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1]
+    y_2 = [1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1]
+    assert_almost_equal(matthews_corrcoef(y_1, y_2), 0.)
+
+    # Check that sample weight is able to selectively exclude
+    mask = [1] * 10 + [0] * 10
+    # Now the first half of the vector elements are alone given a weight of 1
+    # and hence the mcc will not be a perfect 0 as in the previous case
+    assert_raises(AssertionError, assert_almost_equal,
+                  matthews_corrcoef(y_1, y_2, sample_weight=mask), 0.)
+
+
 def test_precision_recall_f1_score_multiclass():
     # Test Precision Recall and F1 Score for multiclass classification task
     y_true, y_pred, _ = make_prediction(binary=False)

@@ -73,6 +73,9 @@ Enhancements
    - :class:`multiclass.OneVsOneClassifier` and :class:`multiclass.OneVsRestClassifier`
      now support ``partial_fit``. By `Asish Panda`_ and `Philipp Dowling`_.
 
+   - Add ``sample_weight`` parameter to :func:`metrics.matthews_corrcoef`.
+     By `Jatin Shah`_ and `Raghav R V`_.
+
 Bug fixes
 .........
 
@@ -3925,7 +3928,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Matteo Visconti di Oleggio Castello: http://www.mvdoc.me
 
-.. _Raghav R V: https://github.com/ragv
+.. _Raghav R V: https://github.com/rvraghav93
 
 .. _Trevor Stephens: http://trevorstephens.com/
 
