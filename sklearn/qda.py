@@ -37,6 +37,13 @@ class QDA(BaseEstimator, ClassifierMixin):
         Regularizes the covariance estimate as
         ``(1-reg_param)*Sigma + reg_param*np.eye(n_features)``
 
+    store_covariances : boolean
+        If True the covariance matrices are computed and stored in the
+        `self.covariances_` attribute.
+
+    tol : float, optional, default 1.0e-4
+        Threshold used for rank estimation.
+
     Attributes
     ----------
     covariances_ : list of array-like, shape = [n_features, n_features]
@@ -67,7 +74,7 @@ class QDA(BaseEstimator, ClassifierMixin):
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = QDA()
     >>> clf.fit(X, y)
-    QDA(priors=None, reg_param=0.0)
+    QDA(priors=None, reg_param=0.0, store_covariances=False, tol=0.0001)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -76,9 +83,12 @@ class QDA(BaseEstimator, ClassifierMixin):
     sklearn.lda.LDA: Linear discriminant analysis
     """
 
-    def __init__(self, priors=None, reg_param=0.):
+    def __init__(self, priors=None, reg_param=0., store_covariances=False,
+                 tol=1.0e-4):
         self.priors = np.asarray(priors) if priors is not None else None
         self.reg_param = reg_param
+        self.store_covariances = store_covariances
+        self.tol = tol
 
     def fit(self, X, y, store_covariances=False, tol=1.0e-4):
         """
@@ -100,6 +110,22 @@ class QDA(BaseEstimator, ClassifierMixin):
         tol : float, optional, default 1.0e-4
             Threshold used for rank estimation.
         """
+        if store_covariances:
+            warnings.warn("The store_covariances parameter in fit is deprecated"
+                          "and will be removed in 0.17. It has been moved from"
+                          "the fit method to the QDA class constructor.",
+                          DeprecationWarning, stacklevel=2)
+            store_covariances = store_covariances
+        else:
+            store_covariances = self.store_covariances
+        if tol != 1.0e-4:
+            warnings.warn("The tol parameter in fit is deprecated and will be"
+                          "removed in 0.17. It has been moved from the fit"
+                          "method to the QDA class constructor.",
+                          DeprecationWarning, stacklevel=2)
+            tol = tol
+        else:
+            tol = self.tol
         X, y = check_X_y(X, y)
         self.classes_, y = np.unique(y, return_inverse=True)
         n_samples, n_features = X.shape
