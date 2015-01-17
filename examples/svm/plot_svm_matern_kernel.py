@@ -10,7 +10,7 @@ Support Vector Regression with four different variants of the Matern kernel
 is compared on a (discontinuous) step-function:
  * The Matern kernel for coef0==1.5, learning a once differentiable function
  * The Matern kernel for coef0==2.5, learning a twice differentiable function
- * The Matern kernel for coef0==3.5, learning a three-times differentiable 
+ * The Matern kernel for coef0==3.5, learning a three-times differentiable
    function
  * The absolute-exponential kernel which corresponds to a Matern kernel
    with coef0==0.5
@@ -31,10 +31,12 @@ print(__doc__)
 from functools import partial
 
 import numpy as np
+
+import matplotlib.pyplot as plt
+
 from sklearn.svm import NuSVR
 from sklearn.metrics.pairwise import matern_kernel
 
-import matplotlib.pyplot as plt
 
 np.random.seed(0)
 

@@ -11,6 +11,7 @@
 # License: BSD 3 clause
 
 import itertools
+import math
 
 import numpy as np
 from scipy.spatial import distance
@@ -508,11 +509,9 @@ def cosine_distances(X, Y=None):
 
     Parameters
     ----------
-    X : array_like, sparse matrix
-        with shape (n_samples_X, n_features).
+    X : array_like, sparse matrix, shape (n_samples_X, n_features).
 
-    Y : array_like, sparse matrix (optional)
-        with shape (n_samples_Y, n_features).
+    Y : array_like, sparse matrix (optional), shape (n_samples_Y, n_features).
 
     Returns
     -------
@@ -613,10 +612,10 @@ def paired_distances(X, Y, metric="euclidean", **kwds):
 
     Parameters
     ----------
-    X : ndarray (n_samples, n_features)
+    X : array, shape (n_samples, n_features)
         Array 1 for distance computation.
 
-    Y : ndarray (n_samples, n_features)
+    Y : array, shape (n_samples, n_features)
         Array 2 for distance computation.
 
     metric : string or callable
@@ -631,7 +630,7 @@ def paired_distances(X, Y, metric="euclidean", **kwds):
 
     Returns
     -------
-    distances : ndarray (n_samples, )
+    distances : array, shape (n_samples, )
 
     Examples
     --------
@@ -667,13 +666,13 @@ def linear_kernel(X, Y=None):
 
     Parameters
     ----------
-    X : array of shape (n_samples_1, n_features)
+    X : array, shape (n_samples_X, n_features)
 
-    Y : array of shape (n_samples_2, n_features)
+    Y : array, shape (n_samples_Y, n_features)
 
     Returns
     -------
-    Gram matrix : array of shape (n_samples_1, n_samples_2)
+    Gram matrix : array, shape (n_samples_X, n_samples_Y)
     """
     X, Y = check_pairwise_arrays(X, Y)
     return safe_sparse_dot(X, Y.T, dense_output=True)
@@ -687,9 +686,9 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples_1, n_features)
+    X : array, shape (n_samples_X, n_features)
 
-    Y : ndarray of shape (n_samples_2, n_features)
+    Y : array, shape (n_samples_Y, n_features)
 
     coef0 : int, default 1
 
@@ -697,7 +696,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
 
     Returns
     -------
-    Gram matrix : array of shape (n_samples_1, n_samples_2)
+    Gram matrix : array, shape (n_samples_X, n_samples_Y)
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
@@ -718,15 +717,15 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples_1, n_features)
+    X : array, shape (n_samples_X, n_features)
 
-    Y : ndarray of shape (n_samples_2, n_features)
+    Y : array, shape (n_samples_Y, n_features)
 
     coef0 : int, default 1
 
     Returns
     -------
-    Gram matrix: array of shape (n_samples_1, n_samples_2)
+    Gram matrix: array, shape (n_samples_X, n_samples_Y)
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
@@ -749,15 +748,15 @@ def rbf_kernel(X, Y=None, gamma=None):
 
     Parameters
     ----------
-    X : array of shape (n_samples_X, n_features)
+    X : array, shape (n_samples_X, n_features)
 
-    Y : array of shape (n_samples_Y, n_features)
+    Y : array, shape (n_samples_Y, n_features)
 
     gamma : float
 
     Returns
     -------
-    kernel_matrix : array of shape (n_samples_X, n_samples_Y)
+    kernel_matrix : array, shape (n_samples_X, n_samples_Y)
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
@@ -785,19 +784,19 @@ def matern_kernel(X, Y=None, gamma=None, coef0=1.5):
 
     Parameters
     ----------
-    X : array of shape (n_samples_X, n_features)
+    X : array, shape (n_samples_X, n_features)
 
-    Y : array of shape (n_samples_Y, n_features)
+    Y : array, shape (n_samples_Y, n_features)
 
     gamma : float
 
     coef0 : float>0.0 (the parameter nu)
         The parameter nu controlling the smoothness of the learned function.
-        The smaller coef0, the less smooth the approximated function is. 
-        For nu=inf, the kernel becomes equivalent to the RBF kernel and for 
-        nu=0.5 to the absolute exponential kernel. Important intermediate 
-        values are nu=1.5 (once differentiable functions) and nu=2.5 
-        (twice differentiable functions). Note that values of nu not in 
+        The smaller coef0, the less smooth the approximated function is.
+        For nu=inf, the kernel becomes equivalent to the RBF kernel and for
+        nu=0.5 to the absolute exponential kernel. Important intermediate
+        values are nu=1.5 (once differentiable functions) and nu=2.5
+        (twice differentiable functions). Note that values of nu not in
         [0.5, 1.5, 2.5, inf] incur a considerably higher computational cost
         (appr. 10 times higher) since they require to evaluate the modified
         Bessel function.
@@ -805,7 +804,7 @@ def matern_kernel(X, Y=None, gamma=None, coef0=1.5):
 
     Returns
     -------
-    kernel_matrix : array of shape (n_samples_X, n_samples_Y)
+    kernel_matrix : array, shape (n_samples_X, n_samples_Y)
     """
     if coef0 == np.inf:  # fall back to rbf-kernel
         return rbf_kernel(X, Y, gamma)
@@ -819,17 +818,17 @@ def matern_kernel(X, Y=None, gamma=None, coef0=1.5):
     K = euclidean_distances(X, Y, squared=False)
     if coef0 == 0.5:
         K *= -gamma
-        np.exp(K, K) # exponentiate K in-place
+        np.exp(K, K)  # exponentiate K in-place
     elif coef0 == 1.5:
-        K *= np.sqrt(3) * gamma
-        K = (1 + K) * np.exp(-K)
+        K *= math.sqrt(3) * gamma
+        K = (1. + K) * np.exp(-K)
     elif coef0 == 2.5:
-        K *= np.sqrt(5) * gamma
-        K = (1 + K + K ** 2 / 3.0) * np.exp(-K)
+        K *= math.sqrt(5) * gamma
+        K = (1. + K + K ** 2 / 3.0) * np.exp(-K)
     else:  # general case; expensive to evaluate
         K[K == 0.0] += np.finfo(float).eps  # strict zeros would result in nan
-        tmp = (np.sqrt(2 * coef0) * gamma * K)
-        K[:] = (2 ** (1 - coef0)) / scipy.special.gamma(coef0)
+        tmp = (math.sqrt(2 * coef0) * gamma * K)
+        K.fill((2 ** (1. - coef0)) / scipy.special.gamma(coef0))
         K *= tmp ** coef0
         K *= scipy.special.kv(coef0, tmp)
     return K
@@ -847,16 +846,13 @@ def cosine_similarity(X, Y=None):
 
     Parameters
     ----------
-    X : array_like, sparse matrix
-        with shape (n_samples_X, n_features).
+    X : array_like, sparse matrix, shape (n_samples_X, n_features).
 
-    Y : array_like, sparse matrix (optional)
-        with shape (n_samples_Y, n_features).
+    Y : array_like, sparse matrix (optional), shape (n_samples_Y, n_features).
 
     Returns
     -------
-    kernel matrix : array
-        An array with shape (n_samples_X, n_samples_Y).
+    kernel matrix : array, shape (n_samples_X, n_samples_Y).
     """
     # to avoid recursive import
 
@@ -894,13 +890,13 @@ def additive_chi2_kernel(X, Y=None):
 
     Parameters
     ----------
-    X : array-like of shape (n_samples_X, n_features)
+    X : array, shape (n_samples_X, n_features)
 
-    Y : array of shape (n_samples_Y, n_features)
+    Y : array, shape (n_samples_Y, n_features)
 
     Returns
     -------
-    kernel_matrix : array of shape (n_samples_X, n_samples_Y)
+    kernel_matrix : array, shape (n_samples_X, n_samples_Y)
 
     References
     ----------
@@ -947,16 +943,16 @@ def chi2_kernel(X, Y=None, gamma=1.):
 
     Parameters
     ----------
-    X : array-like of shape (n_samples_X, n_features)
+    X : array, shape (n_samples_X, n_features)
 
-    Y : array of shape (n_samples_Y, n_features)
+    Y : array, shape (n_samples_Y, n_features)
 
     gamma : float, default=1.
         Scaling parameter of the chi2 kernel.
 
     Returns
     -------
-    kernel_matrix : array of shape (n_samples_X, n_samples_Y)
+    kernel_matrix : array, shape (n_samples_X, n_samples_Y)
 
     References
     ----------
@@ -1111,11 +1107,11 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
 
     Parameters
     ----------
-    X : array [n_samples_a, n_samples_a] if metric == "precomputed", or, \
-             [n_samples_a, n_features] otherwise
+    X : array, shape (n_samples_a, n_samples_a) if metric == "precomputed", \
+                     (n_samples_a, n_features) otherwise
         Array of pairwise distances between samples, or a feature array.
 
-    Y : array [n_samples_b, n_features]
+    Y : array, shape (n_samples_b, n_features)
         A second feature array only if X has shape [n_samples_a, n_features].
 
     metric : string, or callable
@@ -1146,7 +1142,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
 
     Returns
     -------
-    D : array [n_samples_a, n_samples_a] or [n_samples_a, n_samples_b]
+    D : array, shape (n_samples_a, n_samples_a) or (n_samples_a, n_samples_b)
         A distance matrix D such that D_{i, j} is the distance between the
         ith and jth vectors of the given matrix X, if Y is None.
         If Y is not None, then D_{i, j} is the distance between the ith array
@@ -1212,6 +1208,7 @@ def kernel_metrics():
       'rbf'             sklearn.pairwise.rbf_kernel
       'sigmoid'         sklearn.pairwise.sigmoid_kernel
       'cosine'          sklearn.pairwise.cosine_similarity
+      'matern'          sklearn.pairwise.matern_kernel
       ===============   ========================================
     """
     return PAIRWISE_KERNEL_FUNCTIONS
@@ -1247,12 +1244,12 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     kernel between the arrays from both X and Y.
 
     Valid values for metric are::
-        ['rbf', 'sigmoid', 'polynomial', 'poly', 'linear', 'cosine']
+        ['rbf', 'sigmoid', 'polynomial', 'poly', 'linear', 'cosine', 'matern']
 
     Parameters
     ----------
-    X : array [n_samples_a, n_samples_a] if metric == "precomputed", or, \
-             [n_samples_a, n_features] otherwise
+    X : array, shape (n_samples_a, n_samples_a) if metric == "precomputed", \
+                     (n_samples_a, n_features) otherwise
         Array of pairwise kernels between samples, or a feature array.
 
     Y : array [n_samples_b, n_features]
@@ -1286,7 +1283,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
 
     Returns
     -------
-    K : array [n_samples_a, n_samples_a] or [n_samples_a, n_samples_b]
+    K : array, shape (n_samples_a, n_samples_a) or (n_samples_a, n_samples_b)
         A kernel matrix K such that K_{i, j} is the kernel between the
         ith and jth vectors of the given matrix X, if Y is None.
         If Y is not None, then K_{i, j} is the kernel between the ith array

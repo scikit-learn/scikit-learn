@@ -22,15 +22,15 @@ print(__doc__)
 
 import numpy as np
 
-from sklearn.metrics.pairwise import matern_kernel
-
 import matplotlib.pyplot as plt
+
+from sklearn.metrics.pairwise import matern_kernel
 
 d = np.linspace(-4, 4, 500)[:, None]
 
 for coef0 in [0.5, 1.5, 2.5, np.inf]:
-	K = matern_kernel(d, [[0.0]], gamma=1, coef0=coef0)
-	plt.plot(d[:, 0], K[:, 0], label=coef0)
+    K = matern_kernel(d, [[0.0]], gamma=1, coef0=coef0)
+    plt.plot(d[:, 0], K[:, 0], label=coef0)
 
 plt.xlabel("distance")
 plt.ylabel("covariance")
