@@ -74,6 +74,7 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
 
     Examples
     --------
+      >>> import numpy as np
       >>> from sklearn.neighbors import NearestNeighbors
       >>> samples = [[0, 0, 2], [1, 0, 0], [0, 0, 1]]
 
@@ -85,8 +86,9 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
       ... #doctest: +ELLIPSIS
       array([[2, 0]]...)
 
-      >>> neigh.radius_neighbors([0, 0, 1.3], 0.4, return_distance=False)
-      array([[2]])
+      >>> rng = neigh.radius_neighbors([0, 0, 1.3], 0.4, return_distance=False)
+      >>> np.asarray(rng[0][0])
+      array(2)
 
     See also
     --------

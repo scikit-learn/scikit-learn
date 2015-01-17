@@ -81,7 +81,8 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
         _check_params(X, metric, p, metric_params)
     if mode == "connectivity":
         warnings.warn("The behavior of marking each sample itself as the "
-                      "first nearest neighbor will be changed in 0.18",
+                      "first nearest neighbor has been deprecated since 0.16 "
+                      "and will be removed in 0.18",
                       FutureWarning)
         return X.kneighbors_graph(
             X._fit_X, n_neighbors=n_neighbors, mode=mode)
@@ -149,4 +150,11 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
             ).fit(X)
     else:
         _check_params(X, metric, p, metric_params)
-    return X.radius_neighbors_graph(X._fit_X, radius, mode)
+
+    if mode == "connectivity":
+        warnings.warn("The behavior of marking each sample itself as the "
+                      "first nearest neighbor has been deprecated since 0.16 "
+                      "and will be removed in 0.18",
+                      FutureWarning)
+        return X.radius_neighbors_graph(X._fit_X, radius, mode)
+    return X.radius_neighbors_graph(None, radius, mode)
