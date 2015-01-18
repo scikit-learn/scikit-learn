@@ -314,6 +314,21 @@ def test_radius_neighbors_classifier_zero_distance():
             assert_array_equal(correct_labels1, clf.predict(z1))
 
 
+def test_radius_neighbors_boundary_handling():
+    """ Test whether points lying on boundary are handled consistently """
+
+    X = np.array([[1.0, 1.0], [1.5, 1.5], [3.0, 4.0], [3.01, 4.01]])
+    radius = 5.0
+
+    correct_neighbors = np.array([[0, 1, 2]])
+
+    for algorithm in ALGORITHMS:
+         nbrs = neighbors.NearestNeighbors(radius=radius, 
+                                           algorithm=algorithm).fit(X) 
+         ind = nbrs.radius_neighbors([0.0, 0.0], return_distance=False)
+         assert_array_equal(correct_neighbors[0], ind[0])
+
+
 def test_RadiusNeighborsClassifier_multioutput():
     """Test k-NN classifier on multioutput data"""
     rng = check_random_state(0)
