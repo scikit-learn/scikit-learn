@@ -569,15 +569,15 @@ class RadiusNeighborsMixin(object):
                                           self.effective_metric_,
                                           **self.effective_metric_params_)
 
-            neigh_ind_list = [np.where(d < radius)[0] for d in dist]
+            neigh_ind_list = [np.where(d <= radius)[0] for d in dist]
 
             # See https://github.com/numpy/numpy/issues/5456
             # if you want to understand why this is initialized this way.
             neigh_ind = np.empty(n_samples, dtype='object')
             neigh_ind[:] = neigh_ind_list
-            dist_array = np.empty(n_samples, dtype='object')
 
             if return_distance:
+                dist_array = np.empty(n_samples, dtype='object')
                 if self.effective_metric_ == 'euclidean':
                     dist_list = [np.sqrt(d[neigh_ind[i]])
                                  for i, d in enumerate(dist)]
