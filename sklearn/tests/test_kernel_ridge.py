@@ -4,6 +4,7 @@ from sklearn.datasets import make_regression
 from sklearn.linear_model import Ridge
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.metrics.pairwise import pairwise_kernels
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.utils.testing import assert_array_almost_equal
 
@@ -22,7 +23,9 @@ def test_kernel_ridge_singular_kernel():
     # alpha=0 causes a LinAlgError in computing the dual coefficients,
     # which causes a fallback to a lstsq solver. This is tested here.
     pred = Ridge(alpha=0, fit_intercept=False).fit(X, y).predict(X)
-    pred2 = KernelRidge(kernel="linear", alpha=0).fit(X, y).predict(X)
+    kr = KernelRidge(kernel="linear", alpha=0)
+    ignore_warnings(kr.fit)(X, y)
+    pred2 = kr.predict(X)
     assert_array_almost_equal(pred, pred2)
 
 
