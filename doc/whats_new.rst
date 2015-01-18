@@ -164,7 +164,10 @@ Enhancements
      and :class:`tree.ExtraTreeClassifier`. By `Trevor Stephens`_.
 
    - :class:`grid_search.RandomizedSearchCV` now does sampling without
-     replacement if all parameters are given as lists. by `Andreas Mueller`_.
+     replacement if all parameters are given as lists. By `Andreas Mueller`_.
+
+   - Parallelized calculation of :func:`pairwise_distances` is now supported
+     for scipy metrics and custom callables. By `Joel Nothman`_.
 
 Documentation improvements
 ..........................
