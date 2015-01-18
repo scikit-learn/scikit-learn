@@ -6,6 +6,7 @@ import numpy as np
 
 from ..utils import check_random_state, check_array
 from ..utils.validation import check_is_fitted
+from ..utils.extmath import fast_dot
 from ..linear_model import ridge_regression
 from ..base import BaseEstimator, TransformerMixin
 from .dict_learning import dict_learning, dict_learning_online
@@ -163,6 +164,24 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         s[s == 0] = 1
         U /= s
         return U
+
+    def inverse_transform(self, X):
+        """Transform data back to its original space, i.e.,
+        return an input X_original whose transform would be X.
+        Note that the returned X_original will only be approximate given
+        the lossiness of dimensionality reduction by SparsePCA.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_components)
+            New data, where n_samples is the number of samples
+            and n_components is the number of components.
+
+        Returns
+        -------
+        X_original array-like, shape (n_samples, n_features)
+        """
+        return fast_dot(X, self.components_)
 
 
 class MiniBatchSparsePCA(SparsePCA):

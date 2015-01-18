@@ -71,6 +71,38 @@ def test_fit_transform():
     assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)
 
 
+def test_inversetransform():
+    """Test that the projection of data can be inverted"""
+    rng = np.random.RandomState(0)
+    n, p = 50, 3
+    X = rng.randn(n, p)  # spherical data
+    X[:, 1] *= .00001  # make middle component relatively small
+    X += [5, 4, 3]  # make a large mean
+
+    for method in ['lars', 'cd']:
+        # check that we can find the approximate original data from the
+        # transformed signal
+        spca = SparsePCA(n_components=2, alpha=0.01, method=method)
+        spca.fit(X)
+        Y = spca.transform(X)
+        Y_inverse1 = spca.inverse_transform(Y)
+
+        # this back-projection similar to original data?
+        assert_true(np.all(np.abs(Y_inverse1 - X) < 1.1))
+
+        # same as above with bigger alpha (i.e., sparser components)
+        spca = SparsePCA(n_components=2, alpha=0.7, method=method)
+        spca.fit(X)
+        Y = spca.transform(X)
+        Y_inverse2 = spca.inverse_transform(Y)
+
+        # this back-projection similar to original data?
+        assert_true(np.all(np.abs(Y_inverse2 - X) < 1.1))
+
+        # both back-projections into original space similar to each other?
+        assert_array_almost_equal(Y_inverse1, Y_inverse2, decimal=1)
+
+
 @if_not_mac_os()
 def test_fit_transform_parallel():
     alpha = 1
