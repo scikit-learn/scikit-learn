@@ -163,6 +163,9 @@ Enhancements
      :class:`tree.DecisionTreeClassifier`, :class:`ensemble.ExtraTreesClassifier`
      and :class:`tree.ExtraTreeClassifier`. By `Trevor Stephens`_.
 
+   - :class:`grid_search.RandomizedSearchCV` now does sampling without
+     replacement if all parameters are given as lists. by `Andreas Mueller`_.
+
 Documentation improvements
 ..........................
 
