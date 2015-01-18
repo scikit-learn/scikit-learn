@@ -14,7 +14,7 @@ import warnings
 
 import numpy as np
 from scipy import linalg
-from six import string_types
+from .externals.six import string_types
 
 from .base import BaseEstimator, TransformerMixin
 from .linear_model.base import LinearClassifierMixin

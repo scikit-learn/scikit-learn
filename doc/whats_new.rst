@@ -64,6 +64,11 @@ New features
    - Added shrinkage support to :class:`lda.LDA` using two new solvers. By
      `Clemens Brunner`_ and `Martin Billinger`_.
 
+   - Added :class:`kernel_ridge.KernelRidge`, an implementation of
+     kernelized ridge regression.
+     By `Mathieu Blondel`_ and `Jan Hendrik Metzen`_.
+
+
 Enhancements
 ............
 
@@ -157,6 +162,12 @@ Enhancements
      frequency for :class:`ensemble.RandomForestClassifier`,
      :class:`tree.DecisionTreeClassifier`, :class:`ensemble.ExtraTreesClassifier`
      and :class:`tree.ExtraTreeClassifier`. By `Trevor Stephens`_.
+
+   - :class:`grid_search.RandomizedSearchCV` now does sampling without
+     replacement if all parameters are given as lists. By `Andreas Mueller`_.
+
+   - Parallelized calculation of :func:`pairwise_distances` is now supported
+     for scipy metrics and custom callables. By `Joel Nothman`_.
 
 Documentation improvements
 ..........................
@@ -301,7 +312,7 @@ API changes summary
       been removed. They were deprecated since 0.14
 
     - From now onwards, all estimators will uniformly raise ``NotFittedError``
-      (:class:`utils.validation.NotFittedError`), when any of the ``predict`` 
+      (:class:`utils.validation.NotFittedError`), when any of the ``predict``
       like methods are called before the model is fit. By `Raghav R V`_.
 
 .. _changes_0_15_2:
@@ -3190,3 +3201,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Raghav R V: https://github.com/ragv
 
 .. _Trevor Stephens: http://trevorstephens.com/
+
+.. _Jan Hendrik Metzen: https://jmetzen.github.io/

@@ -123,14 +123,18 @@ def _solve_cholesky(X, y, alpha, sample_weight=None):
         return coefs
 
 
-def _solve_cholesky_kernel(K, y, alpha, sample_weight=None):
+def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
     # dual_coef = inv(X X^t + alpha*Id) y
     n_samples = K.shape[0]
     n_targets = y.shape[1]
 
-    one_alpha = np.array_equal(alpha, len(alpha) * [alpha[0]])
+    if copy:
+        K = K.copy()
 
-    has_sw = sample_weight is not None
+    alpha = np.atleast_1d(alpha)
+    one_alpha = (alpha == alpha[0]).all()
+    has_sw = isinstance(sample_weight, np.ndarray) \
+        or sample_weight not in [1.0, None]
 
     if has_sw:
         sw = np.sqrt(np.atleast_1d(sample_weight))
@@ -141,7 +145,16 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None):
         # Only one penalty, we can solve multi-target problems in one time.
         K.flat[::n_samples + 1] += alpha[0]
 
-        dual_coef = linalg.solve(K, y, sym_pos=True, overwrite_a=True)
+        try:
+            # Note: we must use overwrite_a=False in order to be able to
+            #       use the fall-back solution below in case a LinAlgError
+            #       is raised
+            dual_coef = linalg.solve(K, y, sym_pos=True,
+                                     overwrite_a=False)
+        except np.linalg.LinAlgError:
+            warnings.warn("Singular matrix in solving dual problem. Using "
+                          "least-squares solution instead.")
+            dual_coef = linalg.lstsq(K, y)[0]
 
         # K is expensive to compute and store in memory so change it back in
         # case it was user-given.
@@ -454,7 +467,7 @@ class Ridge(_BaseRidge, RegressorMixin):
 
     See also
     --------
-    RidgeClassifier, RidgeCV
+    RidgeClassifier, RidgeCV, KernelRidge
 
     Examples
     --------
