@@ -6,7 +6,7 @@ from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
                           dok_matrix, lil_matrix)
 
 from sklearn import metrics
-from sklearn.cross_validation import train_test_split
+from sklearn.cross_validation import train_test_split, cross_val_score
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
@@ -148,6 +148,21 @@ def test_precomputed():
         est.metric = 'precomputed'
         pred_D = est.fit(DXX, target).predict(DYX)
         assert_array_almost_equal(pred_X, pred_D)
+
+
+def test_precomputed_cross_validation():
+    # Ensure array is split correctly
+    rng = np.random.RandomState(0)
+    X = rng.rand(20, 2)
+    D = pairwise_distances(X, metric='euclidean')
+    y = rng.randint(3, size=20)
+    for Est in (neighbors.KNeighborsClassifier,
+                neighbors.RadiusNeighborsClassifier,
+                neighbors.KNeighborsRegressor,
+                neighbors.RadiusNeighborsRegressor):
+        metric_score = cross_val_score(Est(), X, y)
+        precomp_score = cross_val_score(Est(metric='precomputed'), D, y)
+        assert_array_equal(metric_score, precomp_score)
 
 
 def test_unsupervised_radius_neighbors(n_samples=20, n_features=5,
