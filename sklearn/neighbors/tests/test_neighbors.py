@@ -903,8 +903,41 @@ def test_non_euclidean_kneighbors():
                   radius, metric='euclidean')
 
 
-def test_kneighbors_graph_nearest_neighbors():
-    """Test kneighbors_graph method in NearestNeighbors"""
+def check_object_arrays(nparray, list_check):
+    for ind, ele in enumerate(nparray):
+        assert_array_equal(ele, list_check[ind])
+
+
+def test_k_and_radius_neighbors_train_is_not_query():
+    """Test kneighbors et.al when query is not training data"""
+
+    for algorithm in ALGORITHMS:
+
+        nn = neighbors.NearestNeighbors(n_neighbors=1, algorithm=algorithm)
+
+        X = [[0], [1]]
+        nn.fit(X)
+        test_data = [[2], [1]]
+        assert_array_equal(
+            nn.kneighbors_graph(test_data).A, [[0., 1.], [0., 1.]])
+        assert_array_equal(
+            nn.kneighbors_graph([[2], [1]], mode='distance').A,
+            np.array([[0., 1.], [0., 0.]]))
+
+        dist, ind = nn.kneighbors(test_data)
+        assert_array_equal(dist, [[1], [0]])
+        assert_array_equal(ind, [[1], [1]])
+
+        dist, ind = nn.radius_neighbors([[2], [1]], radius=1.5)
+        check_object_arrays(dist, [[1], [1, 0]])
+        check_object_arrays(ind, [[1], [0, 1]])
+
+        rng = nn.radius_neighbors_graph([[2], [1]], radius=1.5)
+        assert_array_equal(rng.A, [[0, 1], [1, 1]])
+
+
+def test_k_and_radius_neighbors_X_None():
+    """Test kneighbors et.al when query is None"""
     for algorithm in ALGORITHMS:
 
         nn = neighbors.NearestNeighbors(n_neighbors=1, algorithm=algorithm)
@@ -912,22 +945,6 @@ def test_kneighbors_graph_nearest_neighbors():
         X = [[0], [1]]
         nn.fit(X)
 
-        # Do not do anything special to duplicates.
-        test_data = [[0], [1]]
-        assert_array_equal(
-            nn.kneighbors_graph(test_data).A, [[1., 0.], [0., 1.]])
-        dist, ind = nn.kneighbors([[0], [1]])
-        assert_array_equal(dist, [[0], [0]])
-        assert_array_equal(ind, [[0], [1]])
-
-        test_data = [[2], [1]]
-        assert_array_equal(
-            nn.kneighbors_graph(test_data).A, [[0., 1.], [0., 1.]])
-        dist, ind = nn.kneighbors(test_data)
-        assert_array_equal(dist, [[1], [0]])
-        assert_array_equal(ind, [[1], [1]])
-
-        # Avoid marking sample to itself when X is None
         assert_array_equal(
             nn.kneighbors_graph().A,
             np.array([[0., 1.], [1., 0.]]))
@@ -935,24 +952,22 @@ def test_kneighbors_graph_nearest_neighbors():
         assert_array_equal(dist, [[1], [1]])
         assert_array_equal(ind, [[1], [0]])
 
-        # Do not do anything special to duplicates.
-        kng = nn.kneighbors_graph([[0], [1]], mode='distance')
-        assert_array_equal(
-            kng.A,
-            np.array([[0., 0.], [0., 0.]]))
-        assert_array_equal(kng.data, [0., 0.])
-        assert_array_equal(kng.indices, [0, 1])
-
-        assert_array_equal(
-            nn.kneighbors_graph([[2], [1]], mode='distance').A,
-            np.array([[0., 1.], [0., 0.]]))
-
-        # Avoid marking sample to itself when X is None
         kng = nn.kneighbors_graph(mode='distance')
         assert_array_equal(
             kng.A, np.array([[0., 1.], [1., 0.]]))
         assert_array_equal(kng.data, [1., 1.])
         assert_array_equal(kng.indices, [1, 0])
+
+        dist, ind = nn.radius_neighbors(None, radius=1.5)
+        check_object_arrays(dist, [[1], [1]])
+        check_object_arrays(ind, [[1], [0]])
+
+        rng = nn.radius_neighbors_graph(None, radius=1.5)
+        assert_array_equal(rng.A, [[0, 1], [1, 0]])
+        rng = nn.radius_neighbors_graph(None, radius=1.5, mode='distance')
+        assert_array_equal(rng.A, [[0, 1], [1, 0]])
+        assert_array_equal(rng.data, [1, 1])
+        assert_array_equal(rng.indices, [1, 0])
 
         X = [[0, 1], [0, 1], [1, 1]]
         nn = neighbors.NearestNeighbors(n_neighbors=2, algorithm=algorithm)
@@ -979,50 +994,33 @@ def test_kneighbors_graph_nearest_neighbors():
             np.array([[0., 1., 0.], [1., 0., 0.], [0., 1., 0.]]))
 
 
-def test_radius_nearest_neighbors_graph():
-    """Test radius_neighbors_graph in NearestNeighbors"""
+def test_k_and_radius_neighbors_duplicates():
+    """Test behavior of kneighbors when duplicates are present in query"""
 
     for algorithm in ALGORITHMS:
-        nn = neighbors.NearestNeighbors(radius=5.0, algorithm=algorithm)
+        nn = neighbors.NearestNeighbors(n_neighbors=1, algorithm=algorithm)
         nn.fit([[0], [1]])
 
-        def check_object_arrays(nparray, list_check):
-            for ind, ele in enumerate(nparray):
-                assert_array_equal(ele, list_check[ind])
+        # Do not do anything special to duplicates.
+        kng = nn.kneighbors_graph([[0], [1]], mode='distance')
+        assert_array_equal(
+            kng.A,
+            np.array([[0., 0.], [0., 0.]]))
+        assert_array_equal(kng.data, [0., 0.])
+        assert_array_equal(kng.indices, [0, 1])
 
         # Test that radius_neighbors does not do anything special to duplicates.
-        dist, ind = nn.radius_neighbors([[0], [1]])
+        dist, ind = nn.radius_neighbors([[0], [1]], radius=1.5)
         check_object_arrays(dist, [[0, 1], [1, 0]])
         check_object_arrays(ind, [[0, 1], [0, 1]])
 
-        dist, ind = nn.radius_neighbors([[2], [1]], radius=1.5)
-        check_object_arrays(dist, [[1], [1, 0]])
-        check_object_arrays(ind, [[1], [0, 1]])
-
-        # Check None option
-        dist, ind = nn.radius_neighbors(None)
-        check_object_arrays(dist, [[1], [1]])
-        check_object_arrays(ind, [[1], [0]])
-
-        # Test that radius_neighbors does not do anything special to duplicates.
         rng = nn.radius_neighbors_graph([[0], [1]], radius=1.5)
         assert_array_equal(rng.A, np.ones((2, 2)))
 
-        rng = nn.radius_neighbors_graph([[2], [1]], radius=1.5)
-        assert_array_equal(rng.A, [[0, 1], [1, 1]])
-
-        rng = nn.radius_neighbors_graph(None)
-        assert_array_equal(rng.A, [[0, 1], [1, 0]])
-
-        rng = nn.radius_neighbors_graph([[0], [1]], mode='distance')
+        rng = nn.radius_neighbors_graph([[0], [1]], radius=1.5, mode='distance')
         assert_array_equal(rng.A, [[0, 1], [1, 0]])
         assert_array_equal(rng.indices, [0, 1, 0, 1])
         assert_array_equal(rng.data, [0, 1, 1, 0])
-
-        rng = nn.radius_neighbors_graph(None, mode='distance')
-        assert_array_equal(rng.A, [[0, 1], [1, 0]])
-        assert_array_equal(rng.data, [1, 1])
-        assert_array_equal(rng.indices, [1, 0])
 
 
 if __name__ == '__main__':

@@ -320,7 +320,8 @@ class KNeighborsMixin(object):
         train_size = self._fit_X.shape[0]
         if n_neighbors > train_size:
             raise ValueError(
-                "Expected n_neighbors <= %d. Got %d" % (train_size, n_neighbors)
+                "Expected n_neighbors <= %d. Got %d" %
+                (train_size, n_neighbors)
             )
         n_samples, _ = X.shape
         sample_range = np.arange(n_samples)[:, None]
@@ -363,18 +364,19 @@ class KNeighborsMixin(object):
             return result
 
         else:
+            # If the query data is the same as the indexed data, we would like
+            # to ignore the first nearest neighbor of every sample, i.e
+            # the sample itself.
             if return_distance:
                 dist, neigh_ind = result
             else:
                 neigh_ind = result
 
-            # If the query data is the same as the indexed data, we would like
-            # to ignore the first nearest neighbor of every sample, i.e
-            # the sample itself.
             sample_mask = neigh_ind != sample_range
 
-            # Corner case: When the number of duplicates are more than the number
-            # of neighbors, the first NN will not be the sample, but a duplicate.
+            # Corner case: When the number of duplicates are more
+            # than the number of neighbors, the first NN will not
+            # be the sample, but a duplicate.
             # In that case mask the first duplicate.
             dup_gr_nbrs = np.all(sample_mask, axis=1)
             sample_mask[:, 0][dup_gr_nbrs] = False
@@ -383,7 +385,8 @@ class KNeighborsMixin(object):
                 neigh_ind[sample_mask], (n_samples, n_neighbors - 1))
 
             if return_distance:
-                dist = np.reshape(dist[sample_mask], (n_samples, n_neighbors - 1))
+                dist = np.reshape(
+                    dist[sample_mask], (n_samples, n_neighbors - 1))
                 return dist, neigh_ind
             return neigh_ind
 
@@ -589,6 +592,9 @@ class RadiusNeighborsMixin(object):
         if not query_is_train:
             return results
         else:
+            # If the query data is the same as the indexed data, we would like
+            # to ignore the first nearest neighbor of every sample, i.e
+            # the sample itself.
             if return_distance:
                 dist, neigh_ind = results
             else:
@@ -596,10 +602,6 @@ class RadiusNeighborsMixin(object):
 
             for ind, ind_neighbor in enumerate(neigh_ind):
                 mask = ind_neighbor != ind
-                # Corner case if the number of duplicates is more than the number
-                # of neighbors, then mask the first neighbor.
-                if np.all(mask):
-                    mask[0] = False
 
                 neigh_ind[ind] = ind_neighbor[mask]
                 if return_distance:
@@ -651,12 +653,8 @@ class RadiusNeighborsMixin(object):
         --------
         kneighbors_graph
         """
-        # radius_neighbors does the None handling.
         if X is not None:
-            X = check_array(X, accept_sparse='csr')
-            n_samples1 = X.shape[0]
-        else:
-            n_samples1 = self._fit_X.shape[0]
+            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
         n_samples2 = self._fit_X.shape[0]
         if radius is None:
@@ -676,6 +674,7 @@ class RadiusNeighborsMixin(object):
                 'Unsupported mode, must be one of "connectivity", '
                 'or "distance" but got %s instead' % mode)
 
+        n_samples1 = A_ind.shape[0]
         n_neighbors = np.array([len(a) for a in A_ind])
         A_ind = np.concatenate(list(A_ind))
         if A_data is None:
