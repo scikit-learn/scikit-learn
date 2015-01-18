@@ -266,6 +266,11 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
                              % self.algorithm)
         return self
 
+    @property
+    def _pairwise(self):
+        # For cross-validation routines to split data correctly
+        return self.metric == 'precomputed'
+
 
 class KNeighborsMixin(object):
     """Mixin for k-neighbors searches"""
