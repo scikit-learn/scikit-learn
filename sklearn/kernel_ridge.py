@@ -4,16 +4,13 @@
 #          Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD 3 clause
 
-import warnings
-
 import numpy as np
-from scipy import linalg
 
 from .utils import check_X_y
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.metrics.pairwise import pairwise_kernels
 from sklearn.linear_model.ridge import _solve_cholesky_kernel
-from sklearn.utils.validation import NotFittedError, check_is_fitted
+from sklearn.utils.validation import check_is_fitted
 
 
 class KernelRidge(BaseEstimator, RegressorMixin):
