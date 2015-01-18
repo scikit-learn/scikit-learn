@@ -85,7 +85,6 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
                                    n_jobs=n_jobs)
         self.C = C
         self.loss = loss
-        self.alpha = 1.0
 
     def partial_fit(self, X, y, classes=None):
         """Fit linear model with Passive Aggressive algorithm.
@@ -111,7 +110,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         self : returns an instance of self.
         """
         lr = "pa1" if self.loss == "hinge" else "pa2"
-        return self._partial_fit(X, y,
+        return self._partial_fit(X, y, alpha=1.0, C=self.C,
                                  loss="hinge", learning_rate=lr, n_iter=1,
                                  classes=classes, sample_weight=None,
                                  coef_init=None, intercept_init=None)
@@ -142,7 +141,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         self : returns an instance of self.
         """
         lr = "pa1" if self.loss == "hinge" else "pa2"
-        return self._fit(X, y,
+        return self._fit(X, y, alpha=1.0, C=self.C,
                          loss="hinge", learning_rate=lr,
                          coef_init=coef_init, intercept_init=intercept_init)
 
@@ -227,7 +226,6 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
                                   warm_start=warm_start)
         self.C = C
         self.loss = loss
-        self.alpha = 1.0
 
     def partial_fit(self, X, y):
         """Fit linear model with Passive Aggressive algorithm.
@@ -245,7 +243,8 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         self : returns an instance of self.
         """
         lr = "pa1" if self.loss == "epsilon_insensitive" else "pa2"
-        return self._partial_fit(X, y, loss="epsilon_insensitive",
+        return self._partial_fit(X, y, alpha=1.0, C=self.C,
+                                 loss="epsilon_insensitive",
                                  learning_rate=lr, n_iter=1,
                                  sample_weight=None,
                                  coef_init=None, intercept_init=None)
@@ -272,6 +271,8 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         self : returns an instance of self.
         """
         lr = "pa1" if self.loss == "epsilon_insensitive" else "pa2"
-        return self._fit(X, y, loss="epsilon_insensitive", learning_rate=lr,
+        return self._fit(X, y, alpha=1.0, C=self.C,
+                         loss="epsilon_insensitive",
+                         learning_rate=lr,
                          coef_init=coef_init,
                          intercept_init=intercept_init)
