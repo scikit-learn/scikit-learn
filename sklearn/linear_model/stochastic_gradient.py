@@ -218,7 +218,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                                                dtype=np.float64,
                                                order="C")
 
-    def _partial_fit(self, X, y, coef_init, intercept_init, average_coef_init,
+    def _partial_fit(self, X, y, alpha, C, coef_init, intercept_init, average_coef_init,
                      average_intercept_init, loss, learning_rate, n_iter,
                      pos_weight, neg_weight, sample_weight):
         """Fit a X and y"""
@@ -262,7 +262,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         if not self.average > 0:
             standard_coef, standard_intercept = \
                 plain_sgd(coef_init, intercept_init, loss_function,
-                          penalty_type, self.alpha, self.C, self.l1_ratio,
+                          penalty_type, alpha, C, self.l1_ratio,
                           dataset, n_iter, int(self.fit_intercept),
                           int(self.verbose), int(self.shuffle), seed,
                           pos_weight, neg_weight,
@@ -278,7 +278,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                 average_sgd(coef_init, intercept_init, average_coef_init,
                             average_intercept_init,
                             loss_function, penalty_type,
-                            self.alpha, self.C, self.l1_ratio, dataset,
+                            alpha, C, self.l1_ratio, dataset,
                             n_iter, int(self.fit_intercept),
                             int(self.verbose), int(self.shuffle),
                             seed, pos_weight, neg_weight,
@@ -348,7 +348,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         self.classes_ = None
         self.n_jobs = int(n_jobs)
 
-    def _partial_fit(self, X, y, loss, learning_rate, n_iter,
+    def _partial_fit(self, X, y, alpha, C, loss, learning_rate, n_iter,
                      classes, sample_weight,
                      coef_init, intercept_init):
         X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C")
@@ -374,10 +374,10 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
         # delegate to concrete training procedure
         if n_classes > 2:
-            self._fit_multiclass(X, y, loss=loss, learning_rate=learning_rate,
+            self._fit_multiclass(X, y, alpha, C, loss=loss, learning_rate=learning_rate,
                                  sample_weight=sample_weight, n_iter=n_iter)
         elif n_classes == 2:
-            self._fit_binary(X, y, loss=loss, learning_rate=learning_rate,
+            self._fit_binary(X, y, alpha, C, loss=loss, learning_rate=learning_rate,
                              sample_weight=sample_weight, n_iter=n_iter)
         else:
             raise ValueError("The number of class labels must be "
@@ -385,7 +385,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
         return self
 
-    def _fit(self, X, y, loss, learning_rate, coef_init=None,
+    def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
              intercept_init=None, sample_weight=None):
         if hasattr(self, "classes_"):
             self.classes_ = None
@@ -415,13 +415,13 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         # Clear iteration count for multiple call to fit.
         self.t_ = None
 
-        self._partial_fit(X, y, loss, learning_rate, self.n_iter,
+        self._partial_fit(X, y, alpha, C, loss, learning_rate, self.n_iter,
                           classes, sample_weight, coef_init, intercept_init)
 
         return self
 
-    def _fit_binary(self, X, y, loss, learning_rate, n_iter, sample_weight):
-        coefs, intercepts = self._fit_class(X, y, self.classes_[1],
+    def _fit_binary(self, X, y, alpha, C, loss, learning_rate, n_iter, sample_weight):
+        coefs, intercepts = self._fit_class(X, y, self.classes_[1], alpha, C,
                                             loss, learning_rate, n_iter,
                                             self._expanded_class_weight[1],
                                             self._expanded_class_weight[0],
@@ -444,7 +444,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
             # intercept is a float, need to convert it to an array of length 1
             self.intercept_ = np.atleast_1d(intercepts["standard"])
 
-    def _fit_class(self, X, y, target_class, loss, learning_rate, n_iter,
+    def _fit_class(self, X, y, target_class, alpha, C, loss, learning_rate, n_iter,
                    pos_weight, neg_weight, sample_weight):
         """Fit a classifier on target class. """
 
@@ -476,7 +476,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                 average_intercept_init = None
 
         return super(BaseSGDClassifier,
-                     self)._partial_fit(X, y_encoded, coef_init,
+                     self)._partial_fit(X, y_encoded, alpha, C, coef_init,
                                         intercept_init, average_coef_init,
                                         average_intercept_init,
                                         loss, learning_rate, n_iter,
@@ -484,7 +484,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                                         neg_weight,
                                         sample_weight)
 
-    def _fit_multiclass(self, X, y, loss, learning_rate, n_iter,
+    def _fit_multiclass(self, X, y, alpha, C, loss, learning_rate, n_iter,
                         sample_weight):
         """Fit a multi-class classifier by combining binary classifiers
 
@@ -495,8 +495,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         result = Parallel(n_jobs=self.n_jobs, backend="threading",
                           verbose=self.verbose)(
             delayed(multiprocess_method)(self, "_fit_class",
-                                         (X, y, cl, loss, learning_rate,
-                                          n_iter,
+                                         (X, y, cl, alpha, C,
+                                          loss, learning_rate, n_iter,
                                           self._expanded_class_weight[i], 1.,
                                           sample_weight))
             for i, cl in enumerate(self.classes_))
@@ -558,7 +558,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                              "estimate the class frequency distributions. "
                              "Pass the resulting weights as the class_weight "
                              "parameter.")
-        return self._partial_fit(X, y, loss=self.loss,
+        return self._partial_fit(X, y, self.alpha, C=1.0, loss=self.loss,
                                  learning_rate=self.learning_rate,
                                  n_iter=1, classes=classes,
                                  sample_weight=sample_weight, coef_init=None,
@@ -597,7 +597,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                           "method, which will be deprecated in version "
                           "v0.17 of scikit-learn. Pass the class_weight into "
                           "the constructor instead.", DeprecationWarning)
-        return self._fit(X, y, loss=self.loss,
+        return self._fit(X, y, self.alpha, C=1.0, loss=self.loss,
                          learning_rate=self.learning_rate,
                          coef_init=coef_init, intercept_init=intercept_init,
                          sample_weight=sample_weight)
@@ -906,7 +906,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                                                warm_start=warm_start,
                                                average=average)
 
-    def _partial_fit(self, X, y, loss, learning_rate, n_iter, sample_weight,
+    def _partial_fit(self, X, y, alpha, C, loss, learning_rate, n_iter, sample_weight,
                      coef_init, intercept_init):
         X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
         y = y.astype(np.float64)
@@ -943,7 +943,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
             average_intercept_init = None
 
         coefs, intercepts = super(BaseSGDRegressor,
-                                  self)._partial_fit(X, y, coef_init,
+                                  self)._partial_fit(X, y, alpha, C, coef_init,
                                                      intercept_init,
                                                      average_coef_init,
                                                      average_intercept_init,
@@ -984,11 +984,12 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        return self._partial_fit(X, y, self.loss, self.learning_rate, n_iter=1,
+        return self._partial_fit(X, y, alpha=self.alpha, C=1.0, loss=self.loss,
+                                 learning_rate=self.learning_rate, n_iter=1,
                                  sample_weight=sample_weight, coef_init=None,
                                  intercept_init=None)
 
-    def _fit(self, X, y, loss, learning_rate, coef_init=None, intercept_init=None,
+    def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None, intercept_init=None,
              sample_weight=None):
         if self.warm_start and self.coef_ is not None:
             if coef_init is None:
@@ -1008,8 +1009,9 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         # Clear iteration count for multiple call to fit.
         self.t_ = None
 
-        return self._partial_fit(X, y, loss, learning_rate, self.n_iter,
-                                 sample_weight, coef_init, intercept_init)
+        return self._partial_fit(X, y, alpha, C, loss, learning_rate,
+                                 self.n_iter, sample_weight, coef_init,
+                                 intercept_init)
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
             sample_weight=None):
@@ -1036,7 +1038,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        return self._fit(X, y, self.loss, self.learning_rate,
+        return self._fit(X, y, alpha=self.alpha, C=1.0, loss=self.loss,
+                         learning_rate=self.learning_rate,
                          coef_init=coef_init, intercept_init=intercept_init,
                          sample_weight=sample_weight)
 
