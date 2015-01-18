@@ -33,6 +33,7 @@ from .randomized_l1 import (RandomizedLasso, RandomizedLogisticRegression,
                             lasso_stability_path)
 from .ransac import RANSACRegressor
 from .theil_sen import TheilSenRegressor
+from .constrained_regression import ConstrainedRegression, ShapleyRegression
 
 __all__ = ['ARDRegression',
            'BayesianRidge',
@@ -79,4 +80,6 @@ __all__ = ['ARDRegression',
            'orthogonal_mp',
            'orthogonal_mp_gram',
            'ridge_regression',
-           'RANSACRegressor']
+           'RANSACRegressor',
+           'ConstrainedRegression',
+           'ShapleyRegression']
