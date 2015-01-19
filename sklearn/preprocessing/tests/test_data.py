@@ -25,6 +25,8 @@ from sklearn.preprocessing.data import OneHotEncoder
 from sklearn.preprocessing.data import StandardScaler
 from sklearn.preprocessing.data import scale
 from sklearn.preprocessing.data import MinMaxScaler
+from sklearn.preprocessing.data import RobustScaler
+from sklearn.preprocessing.data import robust_scale
 from sklearn.preprocessing.data import add_dummy_feature
 from sklearn.preprocessing.data import PolynomialFeatures
 
@@ -455,6 +457,96 @@ def test_scale_function_without_centering():
     assert_array_almost_equal(X_csr_scaled_std, X_scaled.std(axis=0))
 
 
+def test_robust_scaler_2d_arrays():
+    """Test robust scaling of 2d array along first axis"""
+    rng = np.random.RandomState(0)
+    X = rng.randn(4, 5)
+    X[:, 0] = 0.0  # first feature is always of zero
+
+    scaler = RobustScaler()
+    X_scaled = scaler.fit(X).transform(X, copy=True)
+
+    assert_array_almost_equal(np.median(X_scaled, axis=0), 5 * [0.0])
+    assert_array_almost_equal(X_scaled.std(axis=0)[0], 0)
+
+
+def test_robust_scaler_iris():
+    X = iris.data
+    scaler = RobustScaler(interquartile_scale=1.0)
+    X_trans = scaler.fit_transform(X)
+    assert_array_almost_equal(np.median(X_trans, axis=0), 0)
+    X_trans_inv = scaler.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_trans_inv)
+    q = np.percentile(X_trans, q=(25, 75), axis=0)
+    iqr = q[1] - q[0]
+    assert_array_almost_equal(iqr, 1)
+
+
+def test_robust_scale_axis1():
+    X = iris.data
+    X_trans = robust_scale(X, interquartile_scale=1.0, axis=1)
+    assert_array_almost_equal(np.median(X_trans, axis=1), 0)
+    q = np.percentile(X_trans, q=(25, 75), axis=1)
+    iqr = q[1] - q[0]
+    assert_array_almost_equal(iqr, 1)
+
+
+def test_robust_scaler_iqr_scale():
+    """Does iqr scaling achieve approximately std= 1 on Gaussian data?"""
+    rng = np.random.RandomState(42)
+    X = rng.randn(10000, 4)  # need lots of samples
+    scaler = RobustScaler()
+    X_trans = scaler.fit_transform(X)
+    assert_array_almost_equal(X_trans.std(axis=0), 1,  decimal=2)
+
+
+def test_robust_scale_iqr_errors():
+    """Check that invalid arguments yield ValueError"""
+    rng = np.random.RandomState(42)
+    X = rng.randn(4, 5)
+    assert_raises(ValueError, RobustScaler(interquartile_scale="foo").fit, X)
+    # TODO: for some reason assert_raise doesn't test this correctly
+    did_raise = False
+    try:
+        robust_scale(X, interquartile_scale="foo")
+    except ValueError:
+        did_raise = True
+    assert(did_raise)
+
+
+def test_robust_scaler_zero_variance_features():
+    """Check min max scaler on toy data with zero variance features"""
+    X = [[0., 1., +0.5],
+         [0., 1., -0.1],
+         [0., 1., +1.1]]
+
+    scaler = RobustScaler(interquartile_scale=1.0)
+    X_trans = scaler.fit_transform(X)
+
+    # NOTE: for such a small sample size, what we expect in the third column
+    # depends HEAVILY on the method used to calculate quantiles. The values
+    # here were calculated to fit the quantiles produces by np.percentile
+    # using numpy 1.9 Calculating quantiles with
+    # scipy.stats.mstats.scoreatquantile or scipy.stats.mstats.mquantiles
+    # would yield very different results!
+    X_expected = [[0., 0., +0.0],
+                  [0., 0., -1.0],
+                  [0., 0., +1.0]]
+    assert_array_almost_equal(X_trans, X_expected)
+    X_trans_inv = scaler.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_trans_inv)
+
+    # make sure new data gets transformed correctly
+    X_new = [[+0., 2., 0.5],
+             [-1., 1., 0.0],
+             [+0., 1., 1.5]]
+    X_trans_new = scaler.transform(X_new)
+    X_expected_new = [[+0., 1., +0.],
+                      [-1., 0., -0.83333],
+                      [+0., 0., +1.66667]]
+    assert_array_almost_equal(X_trans_new, X_expected_new, decimal=3)
+
+
 def test_warning_scaling_integers():
     """Check warning when scaling integer data"""
     X = np.array([[1, 2, 0],
@@ -466,6 +558,8 @@ def test_warning_scaling_integers():
     assert_warns_message(UserWarning, w, scale, X)
     assert_warns_message(UserWarning, w, StandardScaler().fit, X)
     assert_warns_message(UserWarning, w, MinMaxScaler().fit, X)
+    assert_warns_message(UserWarning, w, robust_scale, X)
+    assert_warns_message(UserWarning, w, RobustScaler().fit, X)
 
 
 def test_normalizer_l1():

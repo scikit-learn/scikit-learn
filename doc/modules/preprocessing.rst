@@ -145,6 +145,16 @@ full formula is::
 
     X_scaled = X_std / (max - min) + min
 
+
+Scaling data with outliers
+--------------------------
+If your data contains many outliers, scaling using the mean and variance
+of the data does sometimes not work very well. In these cases, you can use
+:func:`robust_scale` and :class:`RobustScaler` as drop-in replacements
+instead, which use more robust estimates for the center and range of your
+data.
+
+
 .. topic:: References:
 
   Further discussion on the importance of centering and scaling data is

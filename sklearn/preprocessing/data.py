@@ -397,6 +397,259 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         return X
 
 
+class RobustScaler(BaseEstimator, TransformerMixin):
+    """Standardize features by removing the median and scaling to IQR.
+
+    Centering and scaling happen independently on each feature (or each
+    sample, depending on the `axis` argument) by computing the relevant
+    statistics on the samples in the training set. Median and  interquartile
+    range are then stored to be used on later data using the `transform`
+    method.
+
+    Standardization of a dataset is a common requirement for many
+    machine learning estimators. Typically this is done by removing the mean
+    and scaling to unit variance. However, outliers can often influence the
+    sample mean / variance in a negative way. In such cases, the median and
+    the interquartile range often give better results.
+
+    Parameters
+    ----------
+    interquartile_scale: float or string in  ["normal" (default), ],
+           The interquartile range is divided by this factor. If
+           `interquartile_scale` is "normal", the data is scaled so it
+           approximately reaches unit variance. This converge assumes Gaussian
+           input data and will need a large number of samples.
+
+    with_centering : boolean, True by default
+        If True, center the data before scaling.
+        This does not work (and will raise an exception) when attempted on
+        sparse matrices, because centering them entails building a dense
+        matrix which in common use cases is likely to be too large to fit in
+        memory.
+
+    with_scaling : boolean, True by default
+        If True, scale the data to interquartile range.
+
+    copy : boolean, optional, default is True
+        If False, try to avoid a copy and do inplace scaling instead.
+        This is not guaranteed to always work inplace; e.g. if the data is
+        not a NumPy array or scipy.sparse CSR matrix, a copy may still be
+        returned.
+
+    Attributes
+    ----------
+    `center_` : array of floats
+        The median value for each feature in the training set, unless axis=1,
+        in which case it contains the median value for each sample
+
+    `scale_` : array of floats
+        The (scaled) interquartile range for each feature in the training set,
+        unless axis=1, in which case it contains the median value for each
+        sample.
+
+    See also
+    --------
+    :class:`sklearn.preprocessing.StandardScaler` to perform centering
+    and scaling using mean and variance.
+
+    :class:`sklearn.decomposition.RandomizedPCA` with `whiten=True`
+    to further remove the linear correlation across features.
+    """
+
+    def __init__(self, interquartile_scale="normal", with_centering=True,
+                 with_scaling=True, copy=True):
+        self.interquartile_scale = interquartile_scale
+        self.with_centering = with_centering
+        self.with_scaling = with_scaling
+        self.copy = copy
+
+    def _check_array(self, X, copy):
+        """Makes sure centering is not enabled for sparse matrices."""
+        X = check_array(X, accept_sparse=('csr', 'csc'),
+                        copy=copy, ensure_2d=False)
+        if warn_if_not_float(X, estimator=self):
+            X = X.astype(np.float)
+        if sparse.issparse(X):
+            if self.with_centering:
+                raise ValueError(
+                    "Cannot center sparse matrices: use `with_centering=False`"
+                    " instead. See docstring for motivation and alternatives.")
+        return X
+
+    def _handle_zeros_in_scale(self, scale):
+        ''' Makes sure that whenever scale is zero, we handle it correctly.
+
+        This happens in most scalers when we have constant features.'''
+        # if we are fitting on 1D arrays, scale might be a scalar
+        if np.isscalar(scale):
+            if scale == 0:
+                scale = 1.
+        elif isinstance(scale, np.ndarray):
+            scale[scale == 0.0] = 1.0
+            scale[-np.isfinite(scale)] = 1.0
+        return scale
+
+    def fit(self, X, y=None, copy=None):
+        """Compute the mean and std to be used for later scaling.
+
+        Parameters
+        ----------
+        X : array-like or CSR matrix with shape [n_samples, n_features]
+            The data used to compute the mean and standard deviation
+            used for later scaling along the features axis.
+        """
+        if sparse.issparse(X):
+            raise TypeError("RobustScaler cannot be fitted on sparse inputs")
+
+        if not np.isreal(self.interquartile_scale):
+            if self.interquartile_scale != "normal":
+                raise ValueError("Unknown interquartile_scale value.")
+            else:
+                iqr_scale = 1.34898
+        else:
+            iqr_scale = self.interquartile_scale
+
+        if copy is None:
+            copy = self.copy
+
+        self.center_ = None
+        self.scale_ = None
+        X = self._check_array(X, copy)
+        if self.with_centering:
+            self.center_ = np.median(X, axis=0)
+
+        if self.with_scaling:
+            q = np.percentile(X, (25, 75), axis=0)
+            self.scale_ = (q[1] - q[0]) / iqr_scale
+            if np.isscalar(self.scale_):
+                if self.scale_ == 0:
+                    self.scale_ = 1.
+            else:
+                self.scale_[self.scale_ == 0.0] = 1.0
+                self.scale_[-np.isfinite(self.scale_)] = 1.0
+        return self
+
+    def transform(self, X, y=None, copy=None):
+        """Perform standardization by centering and scaling
+
+        Parameters
+        ----------
+        X : array-like or CSR matrix.
+            The data used to scale along the specified axis.
+        """
+        if copy is None:
+            copy = self.copy
+        X = self._check_array(X, copy)
+        if sparse.issparse(X):
+            if self.with_scaling:
+                if X.shape[0] == 1:
+                    inplace_row_scale(X, 1.0 / self.scale_)
+                elif self.axis == 0:
+                    inplace_column_scale(X, 1.0 / self.scale_)
+        else:
+            if copy:
+                X = X.copy()
+            if self.with_centering:
+                X -= self.center_
+            if self.with_scaling:
+                X /= self.scale_
+        return X
+
+    def inverse_transform(self, X, copy=None):
+        """Scale back the data to the original representation
+
+        Parameters
+        ----------
+        X : array-like or CSR matrix.
+            The data used to scale along the specified axis.
+        """
+        if self.with_centering:
+            check_is_fitted(self, 'center_')
+        if self.with_scaling:
+            check_is_fitted(self, 'scale_')
+        if copy is None:
+            copy = self.copy
+        X = self._check_array(X, copy)
+        if sparse.issparse(X):
+            if self.with_scaling:
+                if X.shape[0] == 1:
+                    inplace_row_scale(X, self.scale_)
+                else:
+                    inplace_column_scale(X, self.scale_)
+        else:
+            if copy:
+                X = X.copy()
+
+            if self.with_scaling:
+                X *= self.scale_
+            if self.with_centering:
+                X += self.center_
+        return X
+
+
+def robust_scale(X, interquartile_scale="normal", axis=0, with_centering=True,
+                 with_scaling=True, copy=True):
+    """Standardize a dataset along any axis
+
+    Center to the median and component wise scale
+    according to the interquartile range.
+
+    Parameters
+    ----------
+    X : array-like or CSR matrix.
+        The data to center and scale.
+
+    interquartile_scale: float or string in  ["normal" (default), ],
+           The interquartile range is divided by this factor. If
+           `interquartile_scale` is "normal", the data is scaled so it
+           approximately reaches unit variance. This converge assumes Gaussian
+           input data and will need a large number of samples.
+
+    axis : int (0 by default)
+        axis used to compute the medians and IQR along. If 0,
+        independently scale each feature, otherwise (if 1) scale
+        each sample.
+
+    with_centering : boolean, True by default
+        If True, center the data before scaling.
+
+    with_scaling : boolean, True by default
+        If True, scale the data to unit variance (or equivalently,
+        unit standard deviation).
+
+    copy : boolean, optional, default is True
+        set to False to perform inplace row normalization and avoid a
+        copy (if the input is already a numpy array or a scipy.sparse
+        CSR matrix and if axis is 1).
+
+    Notes
+    -----
+    This implementation will refuse to center scipy.sparse matrices
+    since it would make them non-sparse and would potentially crash the
+    program with memory exhaustion problems.
+
+    Instead the caller is expected to either set explicitly
+    `with_centering=False` (in that case, only variance scaling will be
+    performed on the features of the CSR matrix) or to call `X.toarray()`
+    if he/she expects the materialized dense array to fit in memory.
+
+    To avoid memory copy the caller should pass a CSR matrix.
+
+    See also
+    --------
+    :class:`sklearn.preprocessing.RobustScaler` to perform centering and
+    scaling using the ``Transformer`` API (e.g. as part of a preprocessing
+    :class:`sklearn.pipeline.Pipeline`)
+    """
+    s = RobustScaler(interquartile_scale=interquartile_scale,
+                     with_centering=with_centering, with_scaling=with_scaling,
+                     copy=copy)
+    if axis == 0:
+        return s.fit_transform(X)
+    else:
+        return s.fit_transform(X.T).T
+
+
 class PolynomialFeatures(BaseEstimator, TransformerMixin):
     """Generate polynomial and interaction features.
 
