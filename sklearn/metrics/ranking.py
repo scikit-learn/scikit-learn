@@ -730,6 +730,14 @@ def h_measure_score(y_true, y_score, pos_label=None, alpha=None, beta=None):
 
     """
     
+    if len(np.unique(y_true)) != 2:
+        raise ValueError("Only one class present in y_true. ROC AUC score "
+                         "is not defined in that case.")
+    
+    check_consistent_length(y_true, y_score)
+    y_true = column_or_1d(y_true)
+    y_score = column_or_1d(y_score)
+    
     # ensure binary classification if pos_label is not specified
     classes = np.unique(y_true)
     if (pos_label is None and
@@ -746,6 +754,14 @@ def h_measure_score(y_true, y_score, pos_label=None, alpha=None, beta=None):
     y_true = (y_true == pos_label)
     
     fpr, tpr, thres = roc_curve(y_true, y_score, 1)
+    
+    if fpr[0] != 0 or tpr[0] != 0:
+        fpr = np.concatenate([[0], fpr])
+        tpr = np.concatenate([[0], tpr])
+    
+    if fpr[-1] != 1 or tpr[-1] != 1:
+        fpr = np.concatenate([fpr, [1]])
+        tpr = np.concatenate([tpr, [1]])
 
     # We estimate the priors of the two classes
     pi_1 = np.true_divide(np.sum(y_true), len(y_true))

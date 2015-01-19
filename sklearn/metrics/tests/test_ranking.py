@@ -29,6 +29,7 @@ from sklearn.metrics import label_ranking_average_precision_score
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
+from sklearn.metrics import h_measure_score
 
 from sklearn.metrics.base import UndefinedMetricWarning
 
@@ -897,3 +898,39 @@ def test_coverage_tie_handling():
     assert_almost_equal(coverage_error([[1, 0, 1]], [[0.25, 0.5, 0.5]]), 3)
     assert_almost_equal(coverage_error([[1, 1, 0]], [[0.25, 0.5, 0.5]]), 3)
     assert_almost_equal(coverage_error([[1, 1, 1]], [[0.25, 0.5, 0.5]]), 3)
+
+
+
+def test_h_measure():
+    y_true = [0, 1]
+    y_score = [0, 1]
+    h_measure = h_measure_score(y_true, y_score)
+    assert_almost_equal(h_measure, 1.)
+
+    y_true = [0, 1]
+    y_score = [1, 0]
+    h_measure = h_measure_score(y_true, y_score)
+    assert_almost_equal(h_measure, 0.)
+
+    y_true = [1, 0]
+    y_score = [1, 1]
+    h_measure = h_measure_score(y_true, y_score)
+    assert_almost_equal(h_measure, 0.)
+
+    y_true = [1, 0]
+    y_score = [1, 0]
+    h_measure = h_measure_score(y_true, y_score)
+    assert_almost_equal(h_measure, 1.)
+
+    y_true = [1, 0]
+    y_score = [0.5, 0.5]
+    h_measure = h_measure_score(y_true, y_score)
+    assert_almost_equal(h_measure, 0.)
+
+    y_true = [0, 0]
+    y_score = [0.25, 0.75]
+    assert_raises(ValueError, h_measure_score, y_true, y_score)
+
+    y_true = [1, 1]
+    y_score = [0.25, 0.75]
+    assert_raises(ValueError, h_measure_score, y_true, y_score)
