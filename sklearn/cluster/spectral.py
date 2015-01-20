@@ -452,3 +452,88 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     @property
     def _pairwise(self):
         return self.affinity == "precomputed"
+
+
+def spectral_clustering_path(affinity, n_clusters=range(2, 4),
+                             eigen_solver=None, random_state=None,
+                             n_init=10, n_jobs=1,
+                             eigen_tol=0.0, assign_labels='kmeans'):
+    """Apply clustering with successive values of k to a projection to the
+    normalized laplacian.
+
+    This function avoid computing the spectral embedding at each step.
+
+    Parameters
+    -----------
+    affinity : array-like or sparse matrix, shape: (n_samples, n_samples)
+        The affinity matrix describing the relationship of the samples to
+        embed. **Must be symmetric**.
+
+        Possible examples:
+          - adjacency matrix of a graph,
+          - heat kernel of the pairwise distance matrix of the samples,
+          - symmetric k-nearest neighbours connectivity matrix of the samples.
+
+    n_clusters : array-like, optional, shape: n_clusters
+        Number of clusters to extract at each iteration.
+
+    eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
+        The eigenvalue decomposition strategy to use. AMG requires pyamg
+        to be installed. It can be faster on very large, sparse problems,
+        but may also lead to instabilities
+
+    random_state : int seed, RandomState instance, or None (default)
+        A pseudo random number generator used for the initialization
+        of the lobpcg eigen vectors decomposition when eigen_solver == 'amg'
+        and by the K-Means initialization.
+
+    n_init : int, optional, default: 10
+        Number of time the k-means algorithm will be run with different
+        centroid seeds. The final results will be the best output of
+        n_init consecutive runs in terms of inertia.
+
+    n_jobs : int
+        The number of jobs to use for kmeans computation.
+
+    eigen_tol : float, optional, default: 0.0
+        Stopping criterion for eigendecomposition of the Laplacian matrix
+        when using arpack eigen_solver.
+
+    assign_labels : {'kmeans', 'discretize'}, default: 'kmeans'
+        The strategy to use to assign labels in the embedding
+        space.  There are two ways to assign labels after the laplacian
+        embedding.  k-means can be applied and is a popular choice. But it can
+        also be sensitive to initialization. Discretization is another
+        approach which is less sensitive to random initialization. See
+        the 'Multiclass spectral clustering' paper referenced below for
+        more details on the discretization approach.
+
+    Returns
+    -------
+    labels : array of integers, shape: (n_samples, n_clusters)
+        The labels of the clusters.
+    """
+    if assign_labels not in ('kmeans', 'discretize'):
+        raise ValueError("The 'assign_labels' parameter should be "
+                         "'kmeans' or 'discretize', but '%s' was given"
+                         % assign_labels)
+
+    n_components = np.max(n_clusters)
+
+    random_state = check_random_state(random_state)
+
+    maps = spectral_embedding(affinity, n_components=n_components,
+                              eigen_solver=eigen_solver,
+                              random_state=random_state,
+                              eigen_tol=eigen_tol, drop_first=False)
+
+    labels = []
+    for k in n_clusters:
+        if assign_labels == 'kmeans':
+            _, k_means_labels, _ = k_means(maps[:, :k], k, random_state=random_state,
+                                           n_init=n_init, n_jobs=n_jobs)
+            labels.append(k_means_labels.T)
+        else:
+            labels.append(discretize(maps[:, :k], random_state=random_state).T)
+
+    return np.array(labels)

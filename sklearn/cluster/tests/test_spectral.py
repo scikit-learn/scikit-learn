@@ -15,12 +15,15 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_warns_message
 
 from sklearn.cluster import SpectralClustering, spectral_clustering
+from sklearn.cluster import spectral_clustering_path
 from sklearn.cluster.spectral import spectral_embedding
 from sklearn.cluster.spectral import discretize
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics import adjusted_rand_score
 from sklearn.metrics.pairwise import kernel_metrics, rbf_kernel
 from sklearn.datasets.samples_generator import make_blobs
+
+from collections import defaultdict
 
 
 def test_spectral_clustering():
@@ -194,3 +197,31 @@ def test_discretize(seed=8):
                                                        n_class + 1))
             y_pred = discretize(y_true_noisy, random_state)
             assert_greater(adjusted_rand_score(y_true, y_pred), 0.8)
+
+
+def test_spectral_clustering_path():
+    S = np.array([[1.0, 1.0, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0],
+                  [1.0, 1.0, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0],
+                  [0.5, 0.5, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+                  [0.5, 0.5, 1.0, 1.0, 0.1, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.1, 1.0, 1.0, 0.5, 0.5],
+                  [0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.5, 0.5],
+                  [0.0, 0.0, 0.0, 0.0, 0.5, 0.5, 1.0, 1.0],
+                  [0.0, 0.0, 0.0, 0.0, 0.5, 0.5, 1.0, 1.0]])
+
+    for eigen_solver in ('arpack', 'lobpcg'):
+        for assign_labels in ('kmeans', 'discretize'):
+            for mat in (S, sparse.csr_matrix(S)):
+                labels = spectral_clustering_path(mat, n_clusters=(2, 4),
+                                                  eigen_solver=eigen_solver,
+                                                  assign_labels=assign_labels)
+
+                for i in (0, 1):
+                    remap_labels = defaultdict()
+                    remap_labels.default_factory = remap_labels.__len__
+                    labels[i, :] = [remap_labels[label] for label in labels[i, :]]
+
+                assert_array_equal(labels[0, :], [0, 0, 0, 0, 1, 1, 1, 1])
+                assert_array_equal(labels[1, :], [0, 0, 1, 1, 2, 2, 3, 3])
+
+                del labels
