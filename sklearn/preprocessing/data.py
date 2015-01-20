@@ -512,8 +512,6 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         if copy is None:
             copy = self.copy
 
-        self.center_ = None
-        self.scale_ = None
         X = self._check_array(X, copy)
         if self.with_centering:
             self.center_ = np.median(X, axis=0)
@@ -537,6 +535,10 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         X : array-like or CSR matrix.
             The data used to scale along the specified axis.
         """
+        if self.with_centering:
+            check_is_fitted(self, 'center_')
+        if self.with_scaling:
+            check_is_fitted(self, 'scale_')
         if copy is None:
             copy = self.copy
         X = self._check_array(X, copy)
