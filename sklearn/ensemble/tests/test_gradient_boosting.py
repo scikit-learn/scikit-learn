@@ -23,6 +23,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.validation import DataConversionWarning
 from sklearn.utils.validation import NotFittedError
+from sklearn.cross_validation import StratifiedKFold
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -974,6 +975,52 @@ def test_non_uniform_weights_toy_edge_case_clf():
         gb = GradientBoostingClassifier(n_estimators=5)
         gb.fit(X, y, sample_weight=sample_weight)
         assert_array_equal(gb.predict([[1, 0]]), [1])
+
+
+def test_class_weights():
+    """Check class_weights resemble sample_weights behavior."""
+    for train_index, test_index in StratifiedKFold(iris.target, n_folds=2,
+                                                   random_state=0):
+
+        # Iris is balanced, so no effect expected for using 'auto' weights
+        clf1 = GradientBoostingClassifier(random_state=0)
+        clf1.fit(iris.data[train_index], iris.target[train_index])
+        clf2 = GradientBoostingClassifier(class_weight='auto', random_state=0)
+        clf2.fit(iris.data[train_index], iris.target[train_index])
+        assert_array_almost_equal(clf1.predict(iris.data[test_index]),
+                                  clf2.predict(iris.data[test_index]))
+
+        # Inflate importance of class 1, check against user-defined weights
+        sample_weight = np.ones(iris.target[train_index].shape)
+        sample_weight[iris.target[train_index] == 1] *= 100
+        class_weight = {0: 1., 1: 100., 2: 1.}
+        clf1 = GradientBoostingClassifier(random_state=0)
+        clf1.fit(iris.data[train_index], iris.target[train_index],
+                 sample_weight)
+        clf2 = GradientBoostingClassifier(class_weight=class_weight,
+                                          random_state=0)
+        clf2.fit(iris.data[train_index], iris.target[train_index])
+        assert_array_almost_equal(clf1.predict(iris.data[test_index]),
+                                  clf2.predict(iris.data[test_index]))
+
+        # Check that sample_weight and class_weight are multiplicative
+        clf1 = GradientBoostingClassifier(random_state=0)
+        clf1.fit(iris.data[train_index], iris.target[train_index],
+                 sample_weight**2)
+        clf2 = GradientBoostingClassifier(class_weight=class_weight,
+                                          random_state=0)
+        clf2.fit(iris.data[train_index], iris.target[train_index],
+                 sample_weight)
+        assert_array_almost_equal(clf1.predict(iris.data[test_index]),
+                                  clf2.predict(iris.data[test_index]))
+
+
+def check_class_weight_errors():
+    """Test if class_weight raises errors and warnings when expected."""
+
+    # Invalid preset string
+    clf = GradientBoostingClassifier(class_weight='the larch', random_state=0)
+    assert_raises(ValueError, clf.fit, iris.data, iris.target)
 
 
 if __name__ == "__main__":

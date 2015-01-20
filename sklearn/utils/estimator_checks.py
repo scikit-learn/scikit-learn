@@ -31,6 +31,8 @@ from sklearn.lda import LDA
 from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
 from sklearn.svm.base import BaseLibSVM
+from sklearn.ensemble import AdaBoostClassifier, BaggingClassifier
+from sklearn.tree import DecisionTreeClassifier
 
 from sklearn.utils.validation import DataConversionWarning, NotFittedError
 from sklearn.cross_validation import train_test_split
@@ -758,6 +760,9 @@ def check_class_weight_classifiers(name, Classifier):
             classifier.set_params(n_iter=100)
         if hasattr(classifier, "min_weight_fraction_leaf"):
             classifier.set_params(min_weight_fraction_leaf=0.01)
+        if isinstance(classifier, (BaggingClassifier, AdaBoostClassifier)):
+            classifier.set_params(base_estimator=DecisionTreeClassifier(
+                class_weight=class_weight, min_weight_fraction_leaf=0.01))
 
         set_random_state(classifier)
         classifier.fit(X_train, y_train)
