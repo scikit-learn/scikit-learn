@@ -100,8 +100,6 @@ def test_non_meta_estimators():
             yield check_sparsify_coefficients, name, Estimator
 
         yield check_estimator_sparse_data, name, Estimator
-        if name not in CROSS_DECOMPOSITION + ['Imputer']:
-            yield check_estimators_nan_inf, name, Estimator
 
 
 def test_transformers():
