@@ -126,6 +126,7 @@ class ShrunkCovariance(EmpiricalCovariance):
             Returns self.
 
         """
+        X = check_array(X)
         # Not calling the parent object to fit, to avoid a potential
         # matrix inversion when setting the precision
         if self.assume_centered:
@@ -181,12 +182,11 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
         return 0.
     if X.ndim == 1:
         X = np.reshape(X, (1, -1))
+
+    if X.shape[0] == 1:
         warnings.warn("Only one sample available. "
                       "You may want to reshape your data array")
-        n_samples = 1
-        n_features = X.size
-    else:
-        n_samples, n_features = X.shape
+    n_samples, n_features = X.shape
 
     # optionaly center data
     if not assume_centered:
@@ -384,6 +384,7 @@ class LedoitWolf(EmpiricalCovariance):
         """
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)
+        X = check_array(X)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
@@ -536,6 +537,7 @@ class OAS(EmpiricalCovariance):
             Returns self.
 
         """
+        X = check_array(X)
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)
         if self.assume_centered:

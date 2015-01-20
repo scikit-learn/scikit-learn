@@ -243,7 +243,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     This algorithm solves the normalized cut for k=2: it is a
     normalized spectral clustering.
     """
-    if not assign_labels in ('kmeans', 'discretize'):
+    if assign_labels not in ('kmeans', 'discretize'):
         raise ValueError("The 'assign_labels' parameter should be "
                          "'kmeans' or 'discretize', but '%s' was given"
                          % assign_labels)
@@ -415,7 +415,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
             OR, if affinity==`precomputed`, a precomputed affinity
             matrix of shape (n_samples, n_samples)
         """
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                        dtype=np.float64)
         if X.shape[0] == X.shape[1] and self.affinity != "precomputed":
             warnings.warn("The spectral clustering API has changed. ``fit``"
                           "now constructs an affinity matrix from data. To use"

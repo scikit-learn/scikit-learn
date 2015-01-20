@@ -389,6 +389,7 @@ class MDS(BaseEstimator):
             if ndarray, initialize the SMACOF algorithm with this array.
 
         """
+        X = check_array(X)
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
             warnings.warn("The MDS API has changed. ``fit`` now constructs an"
                           " dissimilarity matrix from data. To use a custom "

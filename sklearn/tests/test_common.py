@@ -24,12 +24,14 @@ from sklearn.utils.testing import ignore_warnings
 import sklearn
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import make_classification
+from sklearn.cluster.bicluster import BiclusterMixin
 
 from sklearn.cross_validation import train_test_split
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.utils.estimator_checks import (
     check_parameters_default_constructible,
     check_estimator_sparse_data,
+    check_estimators_dtypes,
     check_transformer,
     check_clustering,
     check_clusterer_compute_labels_predict,
@@ -85,19 +87,22 @@ def test_all_estimators():
 
 def test_non_meta_estimators():
     # input validation etc for non-meta estimators
-    # FIXME these should be done also for non-mixin estimators!
-    estimators = all_estimators(type_filter=['classifier', 'regressor',
-                                             'transformer', 'cluster'])
+    estimators = all_estimators()
     for name, Estimator in estimators:
+        if issubclass(Estimator, BiclusterMixin):
+            continue
+        if name.endswith("HMM") or name.startswith("_"):
+            continue
         if name not in CROSS_DECOMPOSITION:
+            yield check_estimators_dtypes, name, Estimator
             yield check_fit_score_takes_y, name, Estimator
             yield check_pipeline_consistency, name, Estimator
+
         if name not in CROSS_DECOMPOSITION + ['Imputer']:
             # Test that all estimators check their input for NaN's and infs
             yield check_estimators_nan_inf, name, Estimator
 
-        if (name not in ['CCA', '_CCA', 'PLSCanonical', 'PLSRegression',
-                         'PLSSVD', 'GaussianProcess']):
+        if name not in CROSS_DECOMPOSITION + ['GaussianProcess']:
             # FIXME!
             # in particular GaussianProcess!
             yield check_estimators_overwrite_params, name, Estimator

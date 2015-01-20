@@ -15,7 +15,7 @@ from scipy.stats import chi2
 
 from . import empirical_covariance, EmpiricalCovariance
 from ..utils.extmath import fast_logdet, pinvh
-from ..utils import check_random_state
+from ..utils import check_random_state, check_array
 
 
 # Minimum Covariance Determinant
@@ -605,6 +605,7 @@ class MinCovDet(EmpiricalCovariance):
             Returns self.
 
         """
+        X = check_array(X)
         random_state = check_random_state(self.random_state)
         n_samples, n_features = X.shape
         # check that the empirical covariance is full rank

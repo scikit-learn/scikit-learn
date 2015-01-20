@@ -322,7 +322,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
             max_depth = max_depth - 1
         return total_neighbors, total_distances
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Fit the LSH forest on the data.
 
         This creates binary hashes of input data points by getting the

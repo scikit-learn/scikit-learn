@@ -14,7 +14,7 @@ import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator
-from ..utils import check_random_state
+from ..utils import check_random_state, check_array
 from ..utils.extmath import logsumexp
 from ..utils.validation import check_is_fitted
 from .. import cluster
@@ -306,7 +306,7 @@ class GMM(BaseEstimator):
         """
         check_is_fitted(self, 'means_')
 
-        X = np.asarray(X)
+        X = check_array(X)
         if X.ndim == 1:
             X = X[:, np.newaxis]
         if X.size == 0:
@@ -428,7 +428,7 @@ class GMM(BaseEstimator):
             corresponds to a single data point.
         """
         # initialization step
-        X = np.asarray(X, dtype=np.float)
+        X = np.asarray(X, dtype=np.float64)
         if X.ndim == 1:
             X = X[:, np.newaxis]
         if X.shape[0] < self.n_components:
