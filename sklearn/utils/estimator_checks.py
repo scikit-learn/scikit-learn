@@ -140,7 +140,7 @@ def check_estimator_sparse_data(name, Estimator):
         if hasattr(estimator, 'predict_proba'):
             estimator.predict_proba(X)
     except TypeError as e:
-        if not 'sparse' in repr(e):
+        if 'sparse' not in repr(e):
             print("Estimator %s doesn't seem to fail gracefully on "
                   "sparse data: error message state explicitly that "
                   "sparse input is not supported if this is not the case."
@@ -280,7 +280,7 @@ def check_estimators_nan_inf(name, Estimator):
                 else:
                     estimator.fit(X_train, y)
             except ValueError as e:
-                if not 'inf' in repr(e) and not 'NaN' in repr(e):
+                if 'inf' not in repr(e) and 'NaN' not in repr(e):
                     print(error_string_fit, Estimator, e)
                     traceback.print_exc(file=sys.stdout)
                     raise e
@@ -303,7 +303,7 @@ def check_estimators_nan_inf(name, Estimator):
                 try:
                     estimator.predict(X_train)
                 except ValueError as e:
-                    if not 'inf' in repr(e) and not 'NaN' in repr(e):
+                    if 'inf' not in repr(e) and 'NaN' not in repr(e):
                         print(error_string_predict, Estimator, e)
                         traceback.print_exc(file=sys.stdout)
                         raise e
@@ -318,7 +318,7 @@ def check_estimators_nan_inf(name, Estimator):
                 try:
                     estimator.transform(X_train)
                 except ValueError as e:
-                    if not 'inf' in repr(e) and not 'NaN' in repr(e):
+                    if 'inf' not in repr(e) and 'NaN' not in repr(e):
                         print(error_string_transform, Estimator, e)
                         traceback.print_exc(file=sys.stdout)
                         raise e
@@ -444,7 +444,7 @@ def check_classifiers_one_label(name, Classifier):
         try:
             classifier.fit(X_train, y)
         except ValueError as e:
-            if not 'class' in repr(e):
+            if 'class' not in repr(e):
                 print(error_string_fit, Classifier, e)
                 traceback.print_exc(file=sys.stdout)
                 raise e
@@ -479,6 +479,7 @@ def check_classifiers_train(name, Classifier):
         if name in ['BernoulliNB', 'MultinomialNB']:
             X -= X.min()
         set_fast_parameters(classifier)
+        set_random_state(classifier)
         # raises error on malformed input for fit
         assert_raises(ValueError, classifier.fit, X, y[:-1])
 
@@ -497,7 +498,7 @@ def check_classifiers_train(name, Classifier):
         assert_raises(ValueError, classifier.predict, X.T)
         if hasattr(classifier, "decision_function"):
             try:
-            # decision_function agrees with predict
+                # decision_function agrees with predict
                 decision = classifier.decision_function(X)
                 if n_classes is 2:
                     assert_equal(decision.shape, (n_samples,))
