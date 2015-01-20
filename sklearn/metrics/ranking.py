@@ -726,7 +726,7 @@ def h_measure_score(y_true, y_score, pos_label=None, alpha=None, beta=None):
     >>> y_true = np.array([0, 0, 1, 1])
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> h_measure_score(y_true, y_scores)
-    0.3413064705639679
+    0.5
 
     """
     
