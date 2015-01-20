@@ -184,7 +184,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     n_clusters : integer, optional
         Number of clusters to extract.
 
-    n_components : integer, optional, default is k
+    n_components : integer, optional, default is n_clusters
         Number of eigen vectors to use for the spectral embedding
 
     eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
@@ -458,8 +458,8 @@ def spectral_clustering_path(affinity, n_clusters=range(2, 4),
                              eigen_solver=None, random_state=None,
                              n_init=10, n_jobs=1,
                              eigen_tol=0.0, assign_labels='kmeans'):
-    """Apply clustering with successive values of k to a projection to the
-    normalized laplacian.
+    """Apply clustering with successive values of n_clusters to a projection to
+    the normalized laplacian.
 
     This function avoid computing the spectral embedding at each step.
 
