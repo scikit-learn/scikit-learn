@@ -181,6 +181,10 @@ Documentation improvements
      used to point to empty pages stating that they are aliases of BinaryTree.
      This has been fixed to show the correct class docs. By `Manoj Kumar`_.
 
+   - Added silhouette plots for analysis of KMeans clustering using
+     :func:`metrics.silhouette_samples` and :func:`metrics.silhouette_score`.
+     See :ref:`examples_cluster_plot_kmeans_silhouette_analysis.py`
+
 Bug fixes
 .........
     - Metaestimators now support ducktyping for the presence of ``decision_function``,
@@ -301,7 +305,7 @@ API changes summary
       been removed. They were deprecated since 0.14
 
     - From now onwards, all estimators will uniformly raise ``NotFittedError``
-      (:class:`utils.validation.NotFittedError`), when any of the ``predict`` 
+      (:class:`utils.validation.NotFittedError`), when any of the ``predict``
       like methods are called before the model is fit. By `Raghav R V`_.
 
 .. _changes_0_15_2:
