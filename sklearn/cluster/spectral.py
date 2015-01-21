@@ -461,7 +461,7 @@ def spectral_clustering_path(affinity, n_clusters=range(2, 4),
     """Apply clustering with successive values of n_clusters to a projection to
     the normalized laplacian.
 
-    This function avoid computing the spectral embedding at each step.
+    This function avoids computing the spectral embedding at each step.
 
     Parameters
     -----------
