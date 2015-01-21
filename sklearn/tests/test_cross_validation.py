@@ -926,6 +926,8 @@ def test_bootstrap_errors():
 @ignore_warnings
 def test_bootstrap_test_sizes():
     assert_equal(cval.Bootstrap(10, test_size=0.2).test_size, 2)
+    assert_equal(cval.Bootstrap(10, test_size=1).test_size, 1)
+    assert_equal(cval.Bootstrap(10, train_size=1.).train_size, 10)
     assert_equal(cval.Bootstrap(10, test_size=2).test_size, 2)
     assert_equal(cval.Bootstrap(10, test_size=None).test_size, 5)
 
