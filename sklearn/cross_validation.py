@@ -410,10 +410,10 @@ class StratifiedKFold(_BaseKFold):
         min_labels = np.min(label_counts)
         if self.n_folds > min_labels:
             warnings.warn(("The least populated class in y has only %d"
-                          " members, which is too few. The minimum"
-                          " number of labels for any class cannot"
-                          " be less than n_folds=%d."
-                          % (min_labels, self.n_folds)), Warning)
+                           " members, which is too few. The minimum"
+                           " number of labels for any class cannot"
+                           " be less than n_folds=%d."
+                           % (min_labels, self.n_folds)), Warning)
 
         # don't want to use the same seed in each label's shuffle
         if self.shuffle:
@@ -1250,7 +1250,7 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
     fit_params = dict([(k, _index_param_value(X, v, train))
-                        for k, v in fit_params.items()])
+                      for k, v in fit_params.items()])
 
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, _ = _safe_split(estimator, X, y, test, train)
@@ -1441,7 +1441,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
     fit_params = dict([(k, _index_param_value(X, v, train))
-                        for k, v in fit_params.items()])
+                      for k, v in fit_params.items()])
 
     if parameters is not None:
         estimator.set_params(**parameters)
@@ -1798,7 +1798,8 @@ def train_test_split(*arrays, **options):
                       "assumed True in 0.18 and removed.", DeprecationWarning)
     if allow_lists is False or allow_nd is False:
         arrays = [check_array(x, 'csr', allow_nd=allow_nd,
-                              force_all_finite=False, ensure_2d=False) if x is not None else x
+                              force_all_finite=False, ensure_2d=False)
+                  if x is not None else x
                   for x in arrays]
 
     if test_size is None and train_size is None:
