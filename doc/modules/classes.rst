@@ -580,7 +580,7 @@ From text
 
 .. _kernel_ridge_ref:
 
-:mod:`sklearn.kernel_ridge` Kernelized Ridge Regression
+:mod:`sklearn.kernel_ridge` Kernel Ridge Regression
 ========================================================
 
 .. automodule:: sklearn.kernel_ridge
