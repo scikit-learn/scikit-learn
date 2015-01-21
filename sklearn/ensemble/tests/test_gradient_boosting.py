@@ -1015,13 +1015,26 @@ def test_class_weights():
                                   clf2.predict(iris.data[test_index]))
 
 
+def check_class_weight_subsample():
+    """Test class_weight works for subsample option"""
+    clf = GradientBoostingClassifier(subsample=0.8, class_weight='subsample',
+                                     random_state=0)
+    clf.fit(iris.data, iris.target)
+    clf = GradientBoostingClassifier(subsample=1.0, class_weight='subsample',
+                                     random_state=0)
+    clf.fit(iris.data, iris.target)
+
+
 def check_class_weight_errors():
     """Test if class_weight raises errors and warnings when expected."""
 
     # Invalid preset string
     clf = GradientBoostingClassifier(class_weight='the larch', random_state=0)
     assert_raises(ValueError, clf.fit, iris.data, iris.target)
-
+    # Warning warm_start with preset
+    clf = GradientBoostingClassifier(class_weight='auto', warm_start=True,
+                                     random_state=0)
+    assert_warns(UserWarning, clf.fit, iris.data, iris.target)
 
 if __name__ == "__main__":
     import nose

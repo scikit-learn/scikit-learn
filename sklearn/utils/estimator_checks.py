@@ -758,11 +758,15 @@ def check_class_weight_classifiers(name, Classifier):
             classifier = Classifier(class_weight=class_weight)
         if hasattr(classifier, "n_iter"):
             classifier.set_params(n_iter=100)
+        # The below attributes are set because the dataset is noisy and
+        # tree-based classifiers are not regularized
         if hasattr(classifier, "min_weight_fraction_leaf"):
             classifier.set_params(min_weight_fraction_leaf=0.01)
         if isinstance(classifier, (BaggingClassifier, AdaBoostClassifier)):
             classifier.set_params(base_estimator=DecisionTreeClassifier(
-                class_weight=class_weight, min_weight_fraction_leaf=0.01))
+                max_depth=1, min_weight_fraction_leaf=0.01))
+            if hasattr(classifier, "learning_rate"):
+                classifier.set_params(learning_rate=0.1)
 
         set_random_state(classifier)
         classifier.fit(X_train, y_train)

@@ -749,6 +749,27 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         loss = self.loss_
         original_y = y
 
+        if self.class_weight == 'subsample':
+            indices = np.where(sample_mask)
+
+            classes_full = np.unique(y)
+            y_subsample = y[indices]
+            classes_subsample = np.unique(y_subsample)
+
+            # Get class weights for the subsample, covering all classes in
+            # case some were missing from the subsample
+            expanded_class_weight = np.choose(
+                np.searchsorted(classes_subsample, classes_full),
+                compute_class_weight('auto', classes_subsample, y_subsample),
+                mode='clip')
+
+            # Expand weights over the original y for this class
+            expanded_class_weight = expanded_class_weight[
+                np.searchsorted(classes_full, y)]
+
+            # Multiply all weights by sample & bootstrap weights
+            sample_weight = sample_weight * expanded_class_weight
+
         for k in range(loss.K):
             if loss.is_multi_class:
                 y = np.array(original_y == k, dtype=np.float64)
@@ -1255,13 +1276,17 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         and add more estimators to the ensemble, otherwise, just erase the
         previous solution.
 
-    class_weight : dict, "auto", or None, optional (default=None)
+    class_weight : dict, "auto", "subsample" or None, optional
 
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one.
 
         The "auto" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data.
+
+        The "subsample" mode is the same as "auto" except that weights are
+        computed based on the bootstrap or sub-sample for every tree grown as
+        defined by the ``max_features`` and/or ``bootstrap`` options.
 
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
@@ -1310,22 +1335,38 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
     _SUPPORTED_LOSS = ('deviance', 'exponential')
 
-    def __init__(self, loss='deviance', learning_rate=0.1, n_estimators=100,
-                 subsample=1.0, min_samples_split=2,
-                 min_samples_leaf=1, min_weight_fraction_leaf=0.,
-                 max_depth=3, init=None, random_state=None,
-                 max_features=None, verbose=0,
-                 max_leaf_nodes=None, warm_start=False, class_weight=None):
+    def __init__(self,
+                 loss='deviance',
+                 learning_rate=0.1,
+                 n_estimators=100,
+                 subsample=1.0,
+                 min_samples_split=2,
+                 min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
+                 max_depth=3,
+                 init=None,
+                 random_state=None,
+                 max_features=None,
+                 verbose=0,
+                 max_leaf_nodes=None,
+                 warm_start=False,
+                 class_weight=None):
 
         super(GradientBoostingClassifier, self).__init__(
-            loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
+            loss=loss,
+            learning_rate=learning_rate,
+            n_estimators=n_estimators,
             min_samples_split=min_samples_split,
             min_samples_leaf=min_samples_leaf,
             min_weight_fraction_leaf=min_weight_fraction_leaf,
-            max_depth=max_depth, init=init, subsample=subsample,
+            max_depth=max_depth,
+            init=init,
+            subsample=subsample,
             max_features=max_features,
-            random_state=random_state, verbose=verbose,
-            max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
+            random_state=random_state,
+            verbose=verbose,
+            max_leaf_nodes=max_leaf_nodes,
+            warm_start=warm_start,
             class_weight=class_weight)
 
     def _validate_y_class_weight(self, y):
@@ -1337,10 +1378,11 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         self.n_classes_ = len(self.classes_)
 
         if self.class_weight is not None:
+            valid_presets = ('auto', 'subsample')
             if isinstance(self.class_weight, six.string_types):
-                if self.class_weight != 'auto':
-                    raise ValueError('The only supported preset for '
-                                     'class_weight is "auto". Given "%s".'
+                if self.class_weight not in valid_presets:
+                    raise ValueError('Valid presets for class_weight include '
+                                     '"auto" and "subsample". Given "%s".'
                                      % self.class_weight)
                 if self.warm_start:
                     warn('class_weight preset "auto" is not recommended for '
@@ -1351,11 +1393,11 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
                          'training set target to properly estimate the class '
                          'frequency distributions. Pass the resulting '
                          'weights as the class_weight parameter.')
-
-            expanded_class_weight = compute_class_weight(
-                self.class_weight, self.classes_, y_original)
-            expanded_class_weight = expanded_class_weight[
-                np.searchsorted(self.classes_, y_original)]
+            if self.class_weight != 'subsample':
+                expanded_class_weight = compute_class_weight(
+                    self.class_weight, self.classes_, y_original)
+                expanded_class_weight = expanded_class_weight[
+                    np.searchsorted(self.classes_, y_original)]
 
         return y, expanded_class_weight
 
@@ -1586,22 +1628,39 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     _SUPPORTED_LOSS = ('ls', 'lad', 'huber', 'quantile')
 
-    def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
-                 subsample=1.0, min_samples_split=2,
-                 min_samples_leaf=1, min_weight_fraction_leaf=0.,
-                 max_depth=3, init=None, random_state=None,
-                 max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
+    def __init__(self,
+                 loss='ls',
+                 learning_rate=0.1,
+                 n_estimators=100,
+                 subsample=1.0,
+                 min_samples_split=2,
+                 min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
+                 max_depth=3,
+                 init=None,
+                 random_state=None,
+                 max_features=None,
+                 alpha=0.9,
+                 verbose=0,
+                 max_leaf_nodes=None,
                  warm_start=False):
 
         super(GradientBoostingRegressor, self).__init__(
-            loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
+            loss=loss,
+            learning_rate=learning_rate,
+            n_estimators=n_estimators,
             min_samples_split=min_samples_split,
             min_samples_leaf=min_samples_leaf,
             min_weight_fraction_leaf=min_weight_fraction_leaf,
-            max_depth=max_depth, init=init, subsample=subsample,
+            max_depth=max_depth,
+            init=init,
+            subsample=subsample,
             max_features=max_features,
-            random_state=random_state, alpha=alpha, verbose=verbose,
-            max_leaf_nodes=max_leaf_nodes, warm_start=warm_start)
+            random_state=random_state,
+            alpha=alpha,
+            verbose=verbose,
+            max_leaf_nodes=max_leaf_nodes,
+            warm_start=warm_start)
 
     def predict(self, X):
         """Predict regression target for X.

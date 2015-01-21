@@ -154,8 +154,12 @@ Enhancements
      faster in general. By `Joel Nothman`_.
 
    - Add ``class_weight`` parameter to automatically weight samples by class
-     frequency for :class:`ensemble.RandomForestClassifier`,
-     :class:`tree.DecisionTreeClassifier`, :class:`ensemble.ExtraTreesClassifier`
+     frequency for :class:`ensemble.AdaBoostClassifier`,
+     :class:`ensemble.BaggingClassifier`,
+     :class:`ensemble.ExtraTreesClassifier`,
+     :class:`ensemble.GradientBoostingClassifier`,
+     :class:`ensemble.RandomForestClassifier`,
+     :class:`tree.DecisionTreeClassifier`,
      and :class:`tree.ExtraTreeClassifier`. By `Trevor Stephens`_.
 
 Documentation improvements
