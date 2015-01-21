@@ -37,11 +37,10 @@ from .forest import BaseForest
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..tree.tree import BaseDecisionTree
 from ..tree._tree import DTYPE
-from ..utils import check_array, check_X_y, check_random_state
+from ..utils import check_array, check_X_y
+from ..utils import check_random_state, compute_class_weight
 from ..metrics import accuracy_score, r2_score
-from sklearn.utils.validation import (
-        has_fit_parameter,
-        check_is_fitted)
+from sklearn.utils.validation import has_fit_parameter, check_is_fitted
 
 __all__ = [
     'AdaBoostClassifier',
@@ -62,6 +61,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                  n_estimators=50,
                  estimator_params=tuple(),
                  learning_rate=1.,
+                 class_weight=None,
                  random_state=None):
 
         super(BaseWeightBoosting, self).__init__(
@@ -70,6 +70,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             estimator_params=estimator_params)
 
         self.learning_rate = learning_rate
+        self.class_weight = class_weight
         self.random_state = random_state
 
     def fit(self, X, y, sample_weight=None):
@@ -110,6 +111,24 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             accept_sparse = ['csr', 'csc']
 
         X, y = check_X_y(X, y, accept_sparse=accept_sparse, dtype=dtype)
+
+        if self.class_weight is not None:
+            if isinstance(self.class_weight, six.string_types):
+                if self.class_weight != 'auto':
+                    raise ValueError('The only supported preset for '
+                                     'class_weight is "auto". Given "%s".'
+                                     % self.class_weight)
+
+            classes = np.unique(y)
+            expanded_class_weight = compute_class_weight(self.class_weight,
+                                                         classes,
+                                                         y)
+            expanded_class_weight = expanded_class_weight[
+                np.searchsorted(classes, y)]
+            if sample_weight is None:
+                sample_weight = expanded_class_weight
+            else:
+                sample_weight = expanded_class_weight * sample_weight
 
         if sample_weight is None:
             # Initialize weights to 1 / n_samples
@@ -271,6 +290,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         return X
 
+
 def _samme_proba(estimator, n_classes, X):
     """Calculate algorithm 4, step 2, equation c) of Zhu et al [1].
 
@@ -312,6 +332,17 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     n_estimators : integer, optional (default=50)
         The maximum number of estimators at which boosting is terminated.
         In case of perfect fit, the learning procedure is stopped early.
+
+    class_weight : dict, "auto", or None, optional (default=None)
+
+        Weights associated with classes in the form ``{class_label: weight}``.
+        If not given, all classes are supposed to have weight one.
+
+        The "auto" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data.
+
+        Note that these weights will be multiplied with sample_weight (passed
+        through the fit method) if sample_weight is specified.
 
     learning_rate : float, optional (default=1.)
         Learning rate shrinks the contribution of each classifier by
@@ -368,6 +399,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                  base_estimator=None,
                  n_estimators=50,
                  learning_rate=1.,
+                 class_weight=None,
                  algorithm='SAMME.R',
                  random_state=None):
 
@@ -375,6 +407,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             base_estimator=base_estimator,
             n_estimators=n_estimators,
             learning_rate=learning_rate,
+            class_weight=class_weight,
             random_state=random_state)
 
         self.algorithm = algorithm
@@ -750,7 +783,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             outputs is the same of that of the `classes_` attribute.
         """
         check_is_fitted(self, "n_classes_")
-        
+
         n_classes = self.n_classes_
         X = self._validate_X_predict(X)
 

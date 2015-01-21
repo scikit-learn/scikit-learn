@@ -35,8 +35,8 @@ from .base import BaseEnsemble
 from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
-from ..utils import check_random_state, check_array, check_X_y, column_or_1d
-from ..utils import check_consistent_length
+from ..utils import check_random_state, compute_class_weight, column_or_1d
+from ..utils import check_array, check_X_y, check_consistent_length
 from ..utils.extmath import logsumexp
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted, NotFittedError
@@ -64,7 +64,8 @@ class QuantileEstimator(BaseEstimator):
         if sample_weight is None:
             self.quantile = stats.scoreatpercentile(y, self.alpha * 100.0)
         else:
-            self.quantile = _weighted_percentile(y, sample_weight, self.alpha * 100.0)
+            self.quantile = _weighted_percentile(y, sample_weight,
+                                                 self.alpha * 100.0)
 
     def predict(self, X):
         check_is_fitted(self, 'quantile')
@@ -219,7 +220,7 @@ class LossFunction(six.with_metaclass(ABCMeta, object)):
         sample_mask : ndarray, shape=(n,)
             The sample mask to be used.
         learning_rate : float, default=0.1
-            learning rate shrinks the contribution of each tree by 
+            learning rate shrinks the contribution of each tree by
             ``learning_rate``.
         k : int, default 0
             The index of the estimator being updated.
@@ -269,7 +270,7 @@ class LeastSquaresError(RegressionLossFunction):
             return np.mean((y - pred.ravel()) ** 2.0)
         else:
             return (1.0 / sample_weight.sum()) * \
-              np.sum(sample_weight * ((y - pred.ravel()) ** 2.0))
+                np.sum(sample_weight * ((y - pred.ravel()) ** 2.0))
 
     def negative_gradient(self, y, pred, **kargs):
         return y - pred.ravel()
@@ -299,7 +300,7 @@ class LeastAbsoluteError(RegressionLossFunction):
             return np.abs(y - pred.ravel()).mean()
         else:
             return (1.0 / sample_weight.sum()) * \
-              np.sum(sample_weight * np.abs(y - pred.ravel()))
+                np.sum(sample_weight * np.abs(y - pred.ravel()))
 
     def negative_gradient(self, y, pred, **kargs):
         """1.0 if y - pred > 0.0 else -1.0"""
@@ -311,8 +312,10 @@ class LeastAbsoluteError(RegressionLossFunction):
         """LAD updates terminal regions to median estimates. """
         terminal_region = np.where(terminal_regions == leaf)[0]
         sample_weight = sample_weight.take(terminal_region, axis=0)
-        diff = y.take(terminal_region, axis=0) - pred.take(terminal_region, axis=0)
-        tree.value[leaf, 0, 0] = _weighted_percentile(diff, sample_weight, percentile=50)
+        diff = (y.take(terminal_region, axis=0) -
+                pred.take(terminal_region, axis=0))
+        tree.value[leaf, 0, 0] = _weighted_percentile(diff, sample_weight,
+                                                      percentile=50)
 
 
 class HuberLossFunction(RegressionLossFunction):
@@ -342,7 +345,8 @@ class HuberLossFunction(RegressionLossFunction):
             if sample_weight is None:
                 gamma = stats.scoreatpercentile(np.abs(diff), self.alpha * 100)
             else:
-                gamma = _weighted_percentile(np.abs(diff), sample_weight, self.alpha * 100)
+                gamma = _weighted_percentile(np.abs(diff), sample_weight,
+                                             self.alpha * 100)
 
         gamma_mask = np.abs(diff) <= gamma
         if sample_weight is None:
@@ -350,7 +354,8 @@ class HuberLossFunction(RegressionLossFunction):
             lin_loss = np.sum(gamma * (np.abs(diff[~gamma_mask]) - gamma / 2.0))
             loss = (sq_loss + lin_loss) / y.shape[0]
         else:
-            sq_loss = np.sum(0.5 * sample_weight[gamma_mask] * diff[gamma_mask] ** 2.0)
+            sq_loss = np.sum(0.5 * sample_weight[gamma_mask] *
+                             diff[gamma_mask] ** 2.0)
             lin_loss = np.sum(gamma * sample_weight[~gamma_mask] *
                               (np.abs(diff[~gamma_mask]) - gamma / 2.0))
             loss = (sq_loss + lin_loss) / sample_weight.sum()
@@ -362,7 +367,8 @@ class HuberLossFunction(RegressionLossFunction):
         if sample_weight is None:
             gamma = stats.scoreatpercentile(np.abs(diff), self.alpha * 100)
         else:
-            gamma = _weighted_percentile(np.abs(diff), sample_weight, self.alpha * 100)
+            gamma = _weighted_percentile(np.abs(diff), sample_weight,
+                                         self.alpha * 100)
         gamma_mask = np.abs(diff) <= gamma
         residual = np.zeros((y.shape[0],), dtype=np.float64)
         residual[gamma_mask] = diff[gamma_mask]
@@ -440,7 +446,8 @@ class ClassificationLossFunction(six.with_metaclass(ABCMeta, LossFunction)):
 
         If the loss does not support probabilites raises AttributeError.
         """
-        raise TypeError('%s does not support predict_proba' % type(self).__name__)
+        raise TypeError('%s does not support predict_proba' %
+                        type(self).__name__)
 
     @abstractmethod
     def _score_to_decision(self, score):
@@ -474,7 +481,8 @@ class BinomialDeviance(ClassificationLossFunction):
             return -2.0 * np.mean((y * pred) - np.logaddexp(0.0, pred))
         else:
             return (-2.0 / sample_weight.sum() *
-                    np.sum(sample_weight * ((y * pred) - np.logaddexp(0.0, pred))))
+                    np.sum(sample_weight * ((y * pred) -
+                                            np.logaddexp(0.0, pred))))
 
     def negative_gradient(self, y, pred, **kargs):
         """Compute the residual (= negative gradient). """
@@ -496,7 +504,8 @@ class BinomialDeviance(ClassificationLossFunction):
         sample_weight = sample_weight.take(terminal_region, axis=0)
 
         numerator = np.sum(sample_weight * residual)
-        denominator = np.sum(sample_weight * (y - residual) * (1 - y + residual))
+        denominator = np.sum(sample_weight * (y - residual) *
+                             (1 - y + residual))
 
         if denominator == 0.0:
             tree.value[leaf, 0, 0] = 0.0
@@ -603,7 +612,7 @@ class ExponentialLoss(ClassificationLossFunction):
             return np.mean(np.exp(-(2. * y - 1.) * pred))
         else:
             return (1.0 / sample_weight.sum()) * \
-              np.sum(sample_weight * np.exp(-(2 * y - 1) * pred))
+                np.sum(sample_weight * np.exp(-(2 * y - 1) * pred))
 
     def negative_gradient(self, y, pred, **kargs):
         y_ = -(2. * y - 1.)
@@ -711,7 +720,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                  min_samples_leaf, min_weight_fraction_leaf,
                  max_depth, init, subsample, max_features,
                  random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False):
+                 warm_start=False, class_weight=None):
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -728,6 +737,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         self.verbose = verbose
         self.max_leaf_nodes = max_leaf_nodes
         self.warm_start = warm_start
+        self.class_weight = class_weight
 
         self.estimators_ = np.empty((0, 0), dtype=np.object)
 
@@ -738,6 +748,27 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         assert sample_mask.dtype == np.bool
         loss = self.loss_
         original_y = y
+
+        if self.class_weight == 'subsample':
+            indices = np.where(sample_mask)
+
+            classes_full = np.unique(y)
+            y_subsample = y[indices]
+            classes_subsample = np.unique(y_subsample)
+
+            # Get class weights for the subsample, covering all classes in
+            # case some were missing from the subsample
+            expanded_class_weight = np.choose(
+                np.searchsorted(classes_subsample, classes_full),
+                compute_class_weight('auto', classes_subsample, y_subsample),
+                mode='clip')
+
+            # Expand weights over the original y for this class
+            expanded_class_weight = expanded_class_weight[
+                np.searchsorted(classes_full, y)]
+
+            # Multiply all weights by sample & bootstrap weights
+            sample_weight = sample_weight * expanded_class_weight
 
         for k in range(loss.K):
             if loss.is_multi_class:
@@ -944,7 +975,14 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         check_consistent_length(X, y, sample_weight)
 
-        y = self._validate_y(y)
+        y, expanded_class_weight = self._validate_y_class_weight(y)
+
+        # Apply class_weights to sample weights
+        if expanded_class_weight is not None:
+            if sample_weight is not None:
+                sample_weight = sample_weight * expanded_class_weight
+            else:
+                sample_weight = expanded_class_weight
 
         random_state = check_random_state(self.random_state)
         self._check_params()
@@ -1141,11 +1179,12 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         importances = total_sum / len(self.estimators_)
         return importances
 
-    def _validate_y(self, y):
+    def _validate_y_class_weight(self, y):
         self.n_classes_ = 1
 
         # Default implementation
-        return y
+        return y, None
+
 
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     """Gradient Boosting for classification.
@@ -1237,6 +1276,21 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         and add more estimators to the ensemble, otherwise, just erase the
         previous solution.
 
+    class_weight : dict, "auto", "subsample" or None, optional
+
+        Weights associated with classes in the form ``{class_label: weight}``.
+        If not given, all classes are supposed to have weight one.
+
+        The "auto" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data.
+
+        The "subsample" mode is the same as "auto" except that weights are
+        computed based on the bootstrap or sub-sample for every tree grown as
+        defined by the ``max_features`` and/or ``bootstrap`` options.
+
+        Note that these weights will be multiplied with sample_weight (passed
+        through the fit method) if sample_weight is specified.
+
     Attributes
     ----------
     feature_importances_ : array, shape = [n_features]
@@ -1281,27 +1335,71 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
     _SUPPORTED_LOSS = ('deviance', 'exponential')
 
-    def __init__(self, loss='deviance', learning_rate=0.1, n_estimators=100,
-                 subsample=1.0, min_samples_split=2,
-                 min_samples_leaf=1, min_weight_fraction_leaf=0.,
-                 max_depth=3, init=None, random_state=None,
-                 max_features=None, verbose=0,
-                 max_leaf_nodes=None, warm_start=False):
+    def __init__(self,
+                 loss='deviance',
+                 learning_rate=0.1,
+                 n_estimators=100,
+                 subsample=1.0,
+                 min_samples_split=2,
+                 min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
+                 max_depth=3,
+                 init=None,
+                 random_state=None,
+                 max_features=None,
+                 verbose=0,
+                 max_leaf_nodes=None,
+                 warm_start=False,
+                 class_weight=None):
 
         super(GradientBoostingClassifier, self).__init__(
-            loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
+            loss=loss,
+            learning_rate=learning_rate,
+            n_estimators=n_estimators,
             min_samples_split=min_samples_split,
             min_samples_leaf=min_samples_leaf,
             min_weight_fraction_leaf=min_weight_fraction_leaf,
-            max_depth=max_depth, init=init, subsample=subsample,
+            max_depth=max_depth,
+            init=init,
+            subsample=subsample,
             max_features=max_features,
-            random_state=random_state, verbose=verbose,
-            max_leaf_nodes=max_leaf_nodes, warm_start=warm_start)
+            random_state=random_state,
+            verbose=verbose,
+            max_leaf_nodes=max_leaf_nodes,
+            warm_start=warm_start,
+            class_weight=class_weight)
 
-    def _validate_y(self, y):
+    def _validate_y_class_weight(self, y):
+        expanded_class_weight = None
+        if self.class_weight is not None:
+            y_original = np.copy(y)
+
         self.classes_, y = np.unique(y, return_inverse=True)
         self.n_classes_ = len(self.classes_)
-        return y
+
+        if self.class_weight is not None:
+            valid_presets = ('auto', 'subsample')
+            if isinstance(self.class_weight, six.string_types):
+                if self.class_weight not in valid_presets:
+                    raise ValueError('Valid presets for class_weight include '
+                                     '"auto" and "subsample". Given "%s".'
+                                     % self.class_weight)
+                if self.warm_start:
+                    warn('class_weight preset "auto" is not recommended for '
+                         'warm_start if the fitted data differs from the '
+                         'full dataset. In order to use "auto" weights, use '
+                         'compute_class_weight("auto", classes, y). In place '
+                         'of y you can use a large enough sample of the full '
+                         'training set target to properly estimate the class '
+                         'frequency distributions. Pass the resulting '
+                         'weights as the class_weight parameter.')
+            if self.class_weight != 'subsample':
+                expanded_class_weight = compute_class_weight(
+                    self.class_weight, self.classes_, y_original)
+                expanded_class_weight = expanded_class_weight[
+                    np.searchsorted(self.classes_, y_original)]
+
+        return y, expanded_class_weight
 
     def predict(self, X):
         """Predict class for X.
@@ -1339,7 +1437,6 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         for score in self.staged_decision_function(X):
             decisions = self.loss_._score_to_decision(score)
             yield self.classes_.take(decisions, axis=0)
-
 
     def predict_proba(self, X):
         """Predict class probabilities for X.
@@ -1531,22 +1628,39 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     _SUPPORTED_LOSS = ('ls', 'lad', 'huber', 'quantile')
 
-    def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
-                 subsample=1.0, min_samples_split=2,
-                 min_samples_leaf=1, min_weight_fraction_leaf=0.,
-                 max_depth=3, init=None, random_state=None,
-                 max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
+    def __init__(self,
+                 loss='ls',
+                 learning_rate=0.1,
+                 n_estimators=100,
+                 subsample=1.0,
+                 min_samples_split=2,
+                 min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
+                 max_depth=3,
+                 init=None,
+                 random_state=None,
+                 max_features=None,
+                 alpha=0.9,
+                 verbose=0,
+                 max_leaf_nodes=None,
                  warm_start=False):
 
         super(GradientBoostingRegressor, self).__init__(
-            loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
+            loss=loss,
+            learning_rate=learning_rate,
+            n_estimators=n_estimators,
             min_samples_split=min_samples_split,
             min_samples_leaf=min_samples_leaf,
             min_weight_fraction_leaf=min_weight_fraction_leaf,
-            max_depth=max_depth, init=init, subsample=subsample,
+            max_depth=max_depth,
+            init=init,
+            subsample=subsample,
             max_features=max_features,
-            random_state=random_state, alpha=alpha, verbose=verbose,
-            max_leaf_nodes=max_leaf_nodes, warm_start=warm_start)
+            random_state=random_state,
+            alpha=alpha,
+            verbose=verbose,
+            max_leaf_nodes=max_leaf_nodes,
+            warm_start=warm_start)
 
     def predict(self, X):
         """Predict regression target for X.
