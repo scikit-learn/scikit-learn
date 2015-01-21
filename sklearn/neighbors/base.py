@@ -93,7 +93,8 @@ def _get_weights(dist, weights):
                 else:
                     dist[point_dist_i] = 1. / point_dist
         else:
-            dist = 1. / dist
+            with np.errstate(divide='ignore'):
+                dist = 1. / dist
             inf_mask = np.isinf(dist)
             inf_row = np.any(inf_mask, axis=1)
             dist[inf_row] = inf_mask[inf_row]
