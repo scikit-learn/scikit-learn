@@ -68,6 +68,10 @@ New features
      kernelized ridge regression.
      By `Mathieu Blondel`_ and `Jan Hendrik Metzen`_.
 
+   - Added :class:`cross_validation.PredefinedSplit` cross-validation
+     for fixed user-provided cross-validation folds.
+     By `untom <https://github.com/untom>`_.
+
 
 Enhancements
 ............
