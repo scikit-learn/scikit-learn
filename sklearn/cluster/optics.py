@@ -216,7 +216,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
     """
 
     def __init__(self, eps=0.5, min_samples=5): #, metric='euclidean'):
-        self.eps = eps
+        self.eps_prime = eps
+        self.eps = eps * 10.0
         self.min_samples = min_samples
         # self.metric = metric
         self.processed = False
@@ -236,7 +237,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.labels_ = tree._cluster_id[:]
         self._is_core = tree._is_core[:]
         self._ordered_list = tree._ordered_list[:]
-        _ExtractDBSCAN(self,self.eps) # need to be scaled; extraction needs to be < eps
+        _ExtractDBSCAN(self,self.eps_prime) # need to be scaled; extraction needs to be < eps
         self.core_samples = self._index[self._is_core[:] > 0]
         self.n_clusters = max(self._cluster_id)
         self.processed = True
@@ -248,11 +249,14 @@ class OPTICS(BaseEstimator, ClusterMixin):
             if epsPrime > self.eps:
                 print('Specify an epsilon smaller than ' + self.eps)
             else:
+                self.eps_prime = epsPrime
                 _ExtractDBSCAN(self,epsPrime)
                 self.labels_ = self._cluster_id[:]
                 self.core_samples = self._index[self._is_core[:] == True]
                 self.labels_ = self._cluster_id[:]
                 self.n_clusters = max(self._cluster_id)
+                if epsPrime > (self.eps * 0.11):
+                    print("Warning, eps is close to epsPrime: output may be unstable")
                 return self.core_samples, self.labels_
         else:
             print("Run fit method first")
