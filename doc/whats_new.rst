@@ -168,7 +168,7 @@ Enhancements
      and :class:`tree.ExtraTreeClassifier`. By `Trevor Stephens`_.
 
    - :class:`grid_search.RandomizedSearchCV` now does sampling without
-     replacement if all parameters are given as lists. By `Andreas Mueller`_.
+     replacement if all parameters are given as lists. By `Andreas Müller`_.
 
    - Parallelized calculation of :func:`pairwise_distances` is now supported
      for scipy metrics and custom callables. By `Joel Nothman`_.
@@ -322,6 +322,10 @@ API changes summary
     - From now onwards, all estimators will uniformly raise ``NotFittedError``
       (:class:`utils.validation.NotFittedError`), when any of the ``predict``
       like methods are called before the model is fit. By `Raghav R V`_.
+
+    - Input data validation was refactored for more consistent input
+      validation. The ``check_arrays`` function was replaced by ``check_array``
+      and ``check_X_y``. By `Andreas Müller`_.
 
 .. _changes_0_15_2:
 
