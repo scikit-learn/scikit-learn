@@ -319,7 +319,7 @@ def test_n_parameters():
 def test_1d_1component():
     """
     Test all of the covariance_types return the same BIC score for
-    1-dimensional, 1 compoenet fits.
+    1-dimensional, 1 component fits.
     """
     n_samples, n_dim, n_components = 100, 1, 1
     X = rng.randn(n_samples, n_dim)

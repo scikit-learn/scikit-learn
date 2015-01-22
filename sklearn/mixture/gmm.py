@@ -14,7 +14,7 @@ from scipy import linalg
 
 from ..base import BaseEstimator
 from ..utils import check_random_state
-from ..utils.extmath import logsumexp, pinvh
+from ..utils.extmath import logsumexp
 from ..utils.validation import check_is_fitted
 from .. import cluster
 
@@ -238,7 +238,7 @@ class GMM(BaseEstimator):
         self.params = params
         self.init_params = init_params
 
-        if not covariance_type in ['spherical', 'tied', 'diag', 'full']:
+        if covariance_type not in ['spherical', 'tied', 'diag', 'full']:
             raise ValueError('Invalid value for covariance_type: %s' %
                              covariance_type)
 
@@ -578,7 +578,7 @@ def _log_multivariate_normal_density_spherical(X, means, covars):
 
 def _log_multivariate_normal_density_tied(X, means, covars):
     """Compute Gaussian log-density at X for a tied model"""
-    cv = np.tile(covars,(means.shape[0],1,1))
+    cv = np.tile(covars, (means.shape[0], 1, 1))
     return _log_multivariate_normal_density_full(X, means, cv)
 
 
@@ -698,10 +698,12 @@ def _covar_mstep_tied(gmm, X, responsibilities, weighted_X_sum, norm,
                       min_covar):
     # Eq. 15 from K. Murphy, "Fitting a Conditional Linear Gaussian
     # Distribution"
-    n_features = X.shape[1]
     avg_X2 = np.dot(X.T, X)
     avg_means2 = np.dot(gmm.means_.T, weighted_X_sum)
-    return (avg_X2 - avg_means2) / X.shape[0] + min_covar * np.eye(n_features) 
+    out = avg_X2 - avg_means2
+    out *= 1. / X.shape[0]
+    out.flat[::len(out) + 1] += min_covar
+    return out
 
 _covar_mstep_funcs = {'spherical': _covar_mstep_spherical,
                       'diag': _covar_mstep_diag,

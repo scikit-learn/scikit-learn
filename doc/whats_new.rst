@@ -285,6 +285,9 @@ Bug fixes
       :class:`sklearn.neighbors.NearestNeighbors` and family, when the query
       data is not the same as fit data. By `Manoj Kumar`_.
 
+    - Fix log-density calculation in the :class:`mixture.GMM` with
+      tied covariance. By `Will Dawson`_
+
 API changes summary
 -------------------
 
@@ -3253,3 +3256,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Jan Hendrik Metzen: https://jmetzen.github.io/
 
 .. _Cathy Deng: https://github.com/cathydeng
+
+.. _Will Dawson: http://dawsonresearch.com
