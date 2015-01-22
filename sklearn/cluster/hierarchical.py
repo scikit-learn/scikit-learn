@@ -438,9 +438,12 @@ def linkage_tree(X, connectivity=None, n_components=None,
 
     # FIXME We compute all the distances, while we could have only computed
     # the "interesting" distances
-    distances = paired_distances(X[connectivity.row],
-                                 X[connectivity.col],
-                                 metric=affinity)
+    if affinity == 'precomputed':
+        distances = np.array([X[i][j] for i,j in zip(connectivity.row, connectivity.col)])
+    else:
+        distances = paired_distances(X[connectivity.row],
+                                     X[connectivity.col],
+                                     metric=affinity)
     connectivity.data = distances
 
     if n_clusters is None:
