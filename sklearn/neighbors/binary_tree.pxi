@@ -1350,8 +1350,8 @@ cdef class BinaryTree:
         else:
             return indices.reshape(X.shape[:X.ndim - 1] + (k,))
 
-    def query_radius(self, X, r, return_distance=False,
-                     int count_only=False, int sort_results=False):
+    def query_radius(self, X, r, bint return_distance=False,
+                     bint count_only=False, bint sort_results=False):
         """
         query_radius(self, X, r, count_only = False):
 
@@ -1476,9 +1476,7 @@ cdef class BinaryTree:
                                                   return_distance)
             pt += n_features
 
-            if count_only:
-                pass
-            else:
+            if not count_only:
                 if sort_results:
                     _simultaneous_sort(&dist_arr_i[0], &idx_arr_i[0],
                                        counts[i])
