@@ -436,11 +436,14 @@ def linkage_tree(X, connectivity=None, n_components=None,
     connectivity.data = connectivity.data[diag_mask]
     del diag_mask
 
-    # FIXME We compute all the distances, while we could have only computed
-    # the "interesting" distances
-    distances = paired_distances(X[connectivity.row],
-                                 X[connectivity.col],
-                                 metric=affinity)
+    if affinity == 'precomputed':
+        distances = X[connectivity.row, connectivity.col]
+    else:
+        # FIXME We compute all the distances, while we could have only computed
+        # the "interesting" distances
+        distances = paired_distances(X[connectivity.row],
+                                     X[connectivity.col],
+                                     metric=affinity)
     connectivity.data = distances
 
     if n_clusters is None:
