@@ -350,6 +350,20 @@ def test_neighbors_regressors_zero_distance():
             assert_array_almost_equal(corr_labels, knn.predict(z))
 
 
+def test_radius_neighbors_boundary_handling():
+    """Test whether points lying on boundary are handled consistently"""
+
+    X = np.array([[1.5], [3.0], [3.01]])
+    radius = 3.0
+
+    for algorithm in ALGORITHMS:
+        nbrs = neighbors.NearestNeighbors(radius=radius,
+                                          algorithm=algorithm).fit(X)
+        results = nbrs.radius_neighbors([0.0], return_distance=False)
+        assert_equal(results.shape, (1,))
+        assert_equal(results.dtype, object)
+        assert_array_equal(results[0], [0, 1])
+
 
 def test_RadiusNeighborsClassifier_multioutput():
     """Test k-NN classifier on multioutput data"""
