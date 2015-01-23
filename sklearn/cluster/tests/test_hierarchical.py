@@ -11,6 +11,7 @@ from functools import partial
 import numpy as np
 from scipy import sparse
 from scipy.cluster import hierarchy
+from scipy.spatial.distance import pdist, squareform
 
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_raises
@@ -50,6 +51,7 @@ def test_linkage_misc():
 
     # test hiearchical clustering on a precomputed distances matrix
     dis = cosine_distances(X)
+
     res = linkage_tree(dis, affinity="precomputed")
     assert_array_equal(res[0], linkage_tree(X, affinity="cosine")[0])
 
@@ -191,6 +193,22 @@ def test_agglomerative_clustering():
         assert_almost_equal(normalized_mutual_info_score(clustering2.labels_,
                                                          clustering.labels_),
                             1)
+
+    # Test that using a distance matrix (affinity = 'precomputed') has same results
+    # (with connectivity constraints)
+    clustering = AgglomerativeClustering(
+            n_clusters=10,
+            connectivity=connectivity,
+            linkage="complete")
+    clustering.fit(X)
+    X_dist = squareform(pdist(X))
+    clustering2 = AgglomerativeClustering(
+            n_clusters=10,
+            connectivity=connectivity,
+            affinity='precomputed',
+            linkage="complete")
+    clustering2.fit(X_dist)
+    assert_array_equal(clustering.labels_, clustering2.labels_)
 
 
 def test_ward_agglomeration():
