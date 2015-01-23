@@ -25,7 +25,7 @@ from sklearn.cluster.hierarchical import (_hc_cut, _TREE_BUILDERS,
                                           linkage_tree)
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.metrics.pairwise import PAIRED_DISTANCES, cosine_distances,\
-    manhattan_distances
+    manhattan_distances, pairwise_distances
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.neighbors.graph import kneighbors_graph
 from sklearn.cluster._hierarchical import average_merge, max_merge
@@ -50,6 +50,7 @@ def test_linkage_misc():
 
     # test hiearchical clustering on a precomputed distances matrix
     dis = cosine_distances(X)
+
     res = linkage_tree(dis, affinity="precomputed")
     assert_array_equal(res[0], linkage_tree(X, affinity="cosine")[0])
 
@@ -191,6 +192,20 @@ def test_agglomerative_clustering():
         assert_almost_equal(normalized_mutual_info_score(clustering2.labels_,
                                                          clustering.labels_),
                             1)
+
+    # Test that using a distance matrix (affinity = 'precomputed') has same
+    # results (with connectivity constraints)
+    clustering = AgglomerativeClustering(n_clusters=10,
+                                         connectivity=connectivity,
+                                         linkage="complete")
+    clustering.fit(X)
+    X_dist = pairwise_distances(X)
+    clustering2 = AgglomerativeClustering(n_clusters=10,
+                                          connectivity=connectivity,
+                                          affinity='precomputed',
+                                          linkage="complete")
+    clustering2.fit(X_dist)
+    assert_array_equal(clustering.labels_, clustering2.labels_)
 
 
 def test_ward_agglomeration():

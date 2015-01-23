@@ -102,7 +102,7 @@ Enhancements
      to `Rohit Sivaprasad`_), as well as evaluation metrics (by
      `Joel Nothman`_).
 
-   - Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score`.
+    Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score`.
      By `Jatin Shah`.
 
    - Add support for multiclass in `metrics.hinge_loss`. Added ``labels=None``
@@ -264,6 +264,10 @@ Bug fixes
     - Fix lazy centering of data in :func:`linear_model.enet_path` and
       :func:`linear_model.lasso_path`. It was centered around one. It has
       been changed to be centered around the origin. By `Manoj Kumar`_
+
+    - Fix handling of precomputed affinity matrices in
+      :class:`cluster.AgglomerativeClustering` when using connectivity
+      constraints. By `Cathy Deng`_
 
 API changes summary
 -------------------
@@ -3215,3 +3219,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Trevor Stephens: http://trevorstephens.com/
 
 .. _Jan Hendrik Metzen: https://jmetzen.github.io/
+
+.. _Cathy Deng: https://github.com/cathydeng
