@@ -10,10 +10,11 @@
 # Imports #
 
 import sys
+import copy
 import scipy
 import numpy as np
 from sklearn.neighbors import BallTree
-from ..base import BaseEstimator, ClusterMixin
+from sklearn.base import BaseEstimator, ClusterMixin
 
 # algo class #
 class setOfObjects(BallTree):
@@ -216,7 +217,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
     """
 
     def __init__(self, eps=0.5, min_samples=5): #, metric='euclidean'):
-        self.eps_prime = eps
+        self.eps_prime = copy.deepcopy(eps)
         self.eps = eps * 10.0
         self.min_samples = min_samples
         # self.metric = metric
@@ -234,11 +235,11 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self._reachability = tree._reachability[:]
         self._core_dist = tree._core_dist[:]
         self._cluster_id = tree._cluster_id[:]
-        self.labels_ = tree._cluster_id[:]
         self._is_core = tree._is_core[:]
         self._ordered_list = tree._ordered_list[:]
         _ExtractDBSCAN(self,self.eps_prime) # need to be scaled; extraction needs to be < eps
-        self.core_samples = self._index[self._is_core[:] > 0]
+        self.labels_ = self._cluster_id[:]
+        self.core_samples = self._index[self._is_core[:] == True]
         self.n_clusters = max(self._cluster_id)
         self.processed = True
         return self.core_samples, self.labels_
@@ -290,6 +291,7 @@ def _ExtractDBSCAN(SetOfObjects, epsilon_prime):
                 # This is only needed for compatibility for repeated scans.
                 # -1 is Noise points
                 SetOfObjects._cluster_id[entry] = -1
+                SetOfObjects._is_core[entry] = 0
         else:
             SetOfObjects._cluster_id[entry] = cluster_id
             if SetOfObjects._core_dist[entry] <= epsilon_prime:
