@@ -6,6 +6,7 @@ Several basic tests for hierarchical clustering procedures
 #          Matteo Visconti di Oleggio Castello 2014
 # License: BSD 3 clause
 from tempfile import mkdtemp
+import shutil
 from functools import partial
 
 import numpy as np
@@ -137,13 +138,17 @@ def test_agglomerative_clustering():
                                              linkage=linkage)
         clustering.fit(X)
         # test caching
-        clustering = AgglomerativeClustering(
-            n_clusters=10, connectivity=connectivity,
-            memory=mkdtemp(),
-            linkage=linkage)
-        clustering.fit(X)
-        labels = clustering.labels_
-        assert_true(np.size(np.unique(labels)) == 10)
+        try:
+            tempdir = mkdtemp()
+            clustering = AgglomerativeClustering(
+                n_clusters=10, connectivity=connectivity,
+                memory=tempdir,
+                linkage=linkage)
+            clustering.fit(X)
+            labels = clustering.labels_
+            assert_true(np.size(np.unique(labels)) == 10)
+        finally:
+            shutil.rmtree(tempdir)
         # Turn caching off now
         clustering = AgglomerativeClustering(
             n_clusters=10, connectivity=connectivity, linkage=linkage)
