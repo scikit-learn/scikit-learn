@@ -37,6 +37,7 @@ from ..base import RegressorMixin
 from ..utils import check_random_state, check_array, check_X_y, column_or_1d
 from ..utils import check_consistent_length
 from ..utils.extmath import logsumexp
+from ..utils.fixes import expit
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted, NotFittedError
 from ..externals import six
@@ -477,7 +478,7 @@ class BinomialDeviance(ClassificationLossFunction):
 
     def negative_gradient(self, y, pred, **kargs):
         """Compute the residual (= negative gradient). """
-        return y - 1.0 / (1.0 + np.exp(-pred.ravel()))
+        return y - expit(pred.ravel())
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
                                 residual, pred, sample_weight):
