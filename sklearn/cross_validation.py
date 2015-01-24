@@ -687,11 +687,11 @@ class Bootstrap(object):
                       "will be removed in 0.17", DeprecationWarning)
         self.n = n
         self.n_iter = n_iter
-        if (isinstance(train_size, numbers.Real) and train_size >= 0.0
+        if isinstance(train_size, numbers.Integral):
+            self.train_size = train_size
+        elif (isinstance(train_size, numbers.Real) and train_size >= 0.0
                 and train_size <= 1.0):
             self.train_size = int(ceil(train_size * n))
-        elif isinstance(train_size, numbers.Integral):
-            self.train_size = train_size
         else:
             raise ValueError("Invalid value for train_size: %r" %
                              train_size)
@@ -699,10 +699,10 @@ class Bootstrap(object):
             raise ValueError("train_size=%d should not be larger than n=%d" %
                              (self.train_size, n))
 
-        if isinstance(test_size, numbers.Real) and 0.0 <= test_size <= 1.0:
-            self.test_size = int(ceil(test_size * n))
-        elif isinstance(test_size, numbers.Integral):
+        if isinstance(test_size, numbers.Integral):
             self.test_size = test_size
+        elif isinstance(test_size, numbers.Real) and 0.0 <= test_size <= 1.0:
+            self.test_size = int(ceil(test_size * n))
         elif test_size is None:
             self.test_size = self.n - self.train_size
         else:
