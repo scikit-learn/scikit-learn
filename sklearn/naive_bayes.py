@@ -437,6 +437,8 @@ class BaseDiscreteNB(BaseNB):
         if sample_weight is not None:
             Y *= check_array(sample_weight).T
 
+        class_prior = self.class_prior
+
         # Count raw events from data before updating the class log prior
         # and feature log probas
         self._count(X, Y)
@@ -446,7 +448,7 @@ class BaseDiscreteNB(BaseNB):
         # calls to partial_fit and prior any call to predict[_[log_]proba]
         # to avoid computing the smooth log probas at each call to partial fit
         self._update_feature_log_prob()
-        self._update_class_log_prior()
+        self._update_class_log_prior(class_prior=class_prior)
         return self
 
     def fit(self, X, y, sample_weight=None):
