@@ -68,6 +68,9 @@ New features
      kernelized ridge regression.
      By `Mathieu Blondel`_ and `Jan Hendrik Metzen`_.
 
+   - All solvers in :class:`linear_model.Ridge` now support `sample_weight`.
+     By `Mathieu Blondel`_.
+
    - Added :class:`cross_validation.PredefinedSplit` cross-validation
      for fixed user-provided cross-validation folds.
      By `untom <https://github.com/untom>`_.
