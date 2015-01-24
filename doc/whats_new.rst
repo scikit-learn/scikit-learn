@@ -437,6 +437,9 @@ Highlights
    - Added :class:`linear_model.RANSACRegressor` for robust regression
      models.
 
+   - Added dimensionality reduction with :class:`manifold.TSNE` which can be
+     used to visualize high-dimensional data.
+
 
 Changelog
 ---------
@@ -482,6 +485,8 @@ New features
 
    - Added :class:`linear_model.MultiTaskElasticNetCV` and
      :class:`linear_model.MultiTaskLassoCV`. By `Manoj Kumar`_.
+
+   - Added :class:`manifold.TSNE`. By Alexander Fabisch.
 
 Enhancements
 ............
