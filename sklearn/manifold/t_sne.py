@@ -442,7 +442,7 @@ class TSNE(BaseEstimator):
         # Degrees of freedom of the Student's t-distribution. The suggestion
         # alpha = n_components - 1 comes from "Learning a Parametric Embedding
         # by Preserving Local Structure" Laurens van der Maaten, 2009.
-        alpha = self.n_components - 1.0
+        alpha = max(self.n_components - 1.0, 1)
         n_samples = X.shape[0]
         self.training_data_ = X
 

@@ -262,3 +262,12 @@ def test_chebyshev_metric():
     tsne = TSNE(verbose=2, metric="chebyshev")
     X = random_state.randn(5, 2)
     tsne.fit_transform(X)
+
+
+def test_reduction_to_one_component():
+    """t-SNE should allow reduction to one component (issue #4154)."""
+    random_state = check_random_state(0)
+    tsne = TSNE(n_components=1)
+    X = random_state.randn(5, 2)
+    X_embedded = tsne.fit_transform(X)
+    assert(np.all(np.isfinite(X_embedded)))
