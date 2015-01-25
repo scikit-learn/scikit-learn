@@ -105,7 +105,7 @@ Enhancements
      to `Rohit Sivaprasad`_), as well as evaluation metrics (by
      `Joel Nothman`_).
 
-    Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score`.
+   - Add ``sample_weight`` parameter to `metrics.jaccard_similarity_score`.
      By `Jatin Shah`.
 
    - Add support for multiclass in `metrics.hinge_loss`. Added ``labels=None``
