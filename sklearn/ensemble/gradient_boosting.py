@@ -23,7 +23,6 @@ The module structure is the following:
 from __future__ import print_function
 from __future__ import division
 from abc import ABCMeta, abstractmethod
-from warnings import warn
 from time import time
 
 import numbers
@@ -38,6 +37,7 @@ from ..base import RegressorMixin
 from ..utils import check_random_state, check_array, check_X_y, column_or_1d
 from ..utils import check_consistent_length
 from ..utils.extmath import logsumexp
+from ..utils.fixes import expit
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted, NotFittedError
 from ..externals import six
@@ -219,8 +219,8 @@ class LossFunction(six.with_metaclass(ABCMeta, object)):
         sample_mask : ndarray, shape=(n,)
             The sample mask to be used.
         learning_rate : float, default=0.1
-            learning rate shrinks the contribution of each tree by 
-            ``learning_rate``.
+            learning rate shrinks the contribution of each tree by
+             ``learning_rate``.
         k : int, default 0
             The index of the estimator being updated.
 
@@ -268,8 +268,8 @@ class LeastSquaresError(RegressionLossFunction):
         if sample_weight is None:
             return np.mean((y - pred.ravel()) ** 2.0)
         else:
-            return (1.0 / sample_weight.sum()) * \
-              np.sum(sample_weight * ((y - pred.ravel()) ** 2.0))
+            return (1.0 / sample_weight.sum() *
+                    np.sum(sample_weight * ((y - pred.ravel()) ** 2.0)))
 
     def negative_gradient(self, y, pred, **kargs):
         return y - pred.ravel()
@@ -298,8 +298,8 @@ class LeastAbsoluteError(RegressionLossFunction):
         if sample_weight is None:
             return np.abs(y - pred.ravel()).mean()
         else:
-            return (1.0 / sample_weight.sum()) * \
-              np.sum(sample_weight * np.abs(y - pred.ravel()))
+            return (1.0 / sample_weight.sum() *
+                    np.sum(sample_weight * np.abs(y - pred.ravel())))
 
     def negative_gradient(self, y, pred, **kargs):
         """1.0 if y - pred > 0.0 else -1.0"""
@@ -478,7 +478,7 @@ class BinomialDeviance(ClassificationLossFunction):
 
     def negative_gradient(self, y, pred, **kargs):
         """Compute the residual (= negative gradient). """
-        return y - 1.0 / (1.0 + np.exp(-pred.ravel()))
+        return y - expit(pred.ravel())
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
                                 residual, pred, sample_weight):
@@ -602,8 +602,8 @@ class ExponentialLoss(ClassificationLossFunction):
         if sample_weight is None:
             return np.mean(np.exp(-(2. * y - 1.) * pred))
         else:
-            return (1.0 / sample_weight.sum()) * \
-              np.sum(sample_weight * np.exp(-(2 * y - 1) * pred))
+            return (1.0 / sample_weight.sum() *
+                    np.sum(sample_weight * np.exp(-(2 * y - 1) * pred)))
 
     def negative_gradient(self, y, pred, **kargs):
         y_ = -(2. * y - 1.)
@@ -1147,6 +1147,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         # Default implementation
         return y
 
+
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     """Gradient Boosting for classification.
 
@@ -1333,13 +1334,12 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Returns
         -------
-        y : array of shape = [n_samples]
+        y : generator of array of shape = [n_samples]
             The predicted value of the input samples.
         """
         for score in self.staged_decision_function(X):
             decisions = self.loss_._score_to_decision(score)
             yield self.classes_.take(decisions, axis=0)
-
 
     def predict_proba(self, X):
         """Predict class probabilities for X.
@@ -1363,7 +1363,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         score = self.decision_function(X)
         try:
             return self.loss_._score_to_proba(score)
-        except NotFittedError as e:
+        except NotFittedError:
             raise
         except AttributeError:
             raise AttributeError('loss=%r does not support predict_proba' %
@@ -1382,13 +1382,13 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Returns
         -------
-        y : array of shape = [n_samples]
+        y : generator of array of shape = [n_samples]
             The predicted value of the input samples.
         """
         try:
             for score in self.staged_decision_function(X):
                 yield self.loss_._score_to_proba(score)
-        except NotFittedError as e:
+        except NotFittedError:
             raise
         except AttributeError:
             raise AttributeError('loss=%r does not support predict_proba' %
@@ -1576,7 +1576,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
         Returns
         -------
-        y : array of shape = [n_samples]
+        y : generator of array of shape = [n_samples]
             The predicted value of the input samples.
         """
         for y in self.staged_decision_function(X):

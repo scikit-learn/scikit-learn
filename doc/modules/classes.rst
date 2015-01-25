@@ -167,6 +167,7 @@ Classes
    cross_validation.LeaveOneOut
    cross_validation.LeavePLabelOut
    cross_validation.LeavePOut
+   cross_validation.PredefinedSplit
    cross_validation.StratifiedKFold
    cross_validation.ShuffleSplit
    cross_validation.StratifiedShuffleSplit
@@ -580,7 +581,7 @@ From text
 
 .. _kernel_ridge_ref:
 
-:mod:`sklearn.kernel_ridge` Kernelized Ridge Regression
+:mod:`sklearn.kernel_ridge` Kernel Ridge Regression
 ========================================================
 
 .. automodule:: sklearn.kernel_ridge

@@ -23,7 +23,8 @@ import scipy.sparse as sp
 
 from .base import is_classifier, clone
 from .utils import indexable, check_random_state, safe_indexing
-from .utils.validation import _is_arraylike, _num_samples, check_array
+from .utils.validation import (_is_arraylike, _num_samples,
+                               check_array, column_or_1d)
 from .utils.multiclass import type_of_target
 from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
@@ -39,6 +40,7 @@ __all__ = ['Bootstrap',
            'ShuffleSplit',
            'StratifiedKFold',
            'StratifiedShuffleSplit',
+           'PredefinedSplit',
            'check_cv',
            'cross_val_score',
            'cross_val_predict',
@@ -408,10 +410,10 @@ class StratifiedKFold(_BaseKFold):
         min_labels = np.min(label_counts)
         if self.n_folds > min_labels:
             warnings.warn(("The least populated class in y has only %d"
-                          " members, which is too few. The minimum"
-                          " number of labels for any class cannot"
-                          " be less than n_folds=%d."
-                          % (min_labels, self.n_folds)), Warning)
+                           " members, which is too few. The minimum"
+                           " number of labels for any class cannot"
+                           " be less than n_folds=%d."
+                           % (min_labels, self.n_folds)), Warning)
 
         # don't want to use the same seed in each label's shuffle
         if self.shuffle:
@@ -685,11 +687,11 @@ class Bootstrap(object):
                       "will be removed in 0.17", DeprecationWarning)
         self.n = n
         self.n_iter = n_iter
-        if (isinstance(train_size, numbers.Real) and train_size >= 0.0
+        if isinstance(train_size, numbers.Integral):
+            self.train_size = train_size
+        elif (isinstance(train_size, numbers.Real) and train_size >= 0.0
                 and train_size <= 1.0):
             self.train_size = int(ceil(train_size * n))
-        elif isinstance(train_size, numbers.Integral):
-            self.train_size = train_size
         else:
             raise ValueError("Invalid value for train_size: %r" %
                              train_size)
@@ -697,10 +699,10 @@ class Bootstrap(object):
             raise ValueError("train_size=%d should not be larger than n=%d" %
                              (self.train_size, n))
 
-        if isinstance(test_size, numbers.Real) and 0.0 <= test_size <= 1.0:
-            self.test_size = int(ceil(test_size * n))
-        elif isinstance(test_size, numbers.Integral):
+        if isinstance(test_size, numbers.Integral):
             self.test_size = test_size
+        elif isinstance(test_size, numbers.Real) and 0.0 <= test_size <= 1.0:
+            self.test_size = int(ceil(test_size * n))
         elif test_size is None:
             self.test_size = self.n - self.train_size
         else:
@@ -1070,6 +1072,59 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         return self.n_iter
 
 
+class PredefinedSplit(_PartitionIterator):
+    """Predefined split cross validation iterator
+
+    Splits the data into training/test set folds according to a predefined
+    scheme. Each sample can be assigned to at most one test set fold, as
+    specified by the user through the ``test_fold`` parameter.
+
+    Parameters
+    ----------
+    test_fold : "array-like, shape (n_samples,)
+        test_fold[i] gives the test set fold of sample i. A value of -1
+        indicates that the corresponding sample is not part of any test set
+        folds, but will instead always be put into the training fold.
+
+    Examples
+    --------
+    >>> from sklearn.cross_validation import PredefinedSplit
+    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
+    >>> y = np.array([0, 0, 1, 1])
+    >>> ps = PredefinedSplit(test_fold=[0, 1, -1, 1])
+    >>> len(ps)
+    2
+    >>> print(ps)       # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    sklearn.cross_validation.PredefinedSplit(test_fold=[ 0  1 -1  1])
+    >>> for train_index, test_index in ps:
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
+    ...    X_train, X_test = X[train_index], X[test_index]
+    ...    y_train, y_test = y[train_index], y[test_index]
+    TRAIN: [1 2 3] TEST: [0]
+    TRAIN: [0 2] TEST: [1 3]
+    """
+
+    def __init__(self, test_fold, indices=None):
+        super(PredefinedSplit, self).__init__(len(test_fold), indices)
+        self.test_fold = np.array(test_fold, dtype=np.int)
+        self.test_fold = column_or_1d(self.test_fold)
+        self.unique_folds = np.unique(self.test_fold)
+        self.unique_folds = self.unique_folds[self.unique_folds != -1]
+
+    def _iter_test_indices(self):
+        for f in self.unique_folds:
+            yield np.where(self.test_fold == f)[0]
+
+    def __repr__(self):
+        return '%s.%s(test_fold=%s)' % (
+            self.__class__.__module__,
+            self.__class__.__name__,
+            self.test_fold)
+
+    def __len__(self):
+        return len(self.unique_folds)
+
+
 ##############################################################################
 def _index_param_value(X, v, indices):
     """Private helper function for parameter value indexing."""
@@ -1195,7 +1250,7 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
     fit_params = dict([(k, _index_param_value(X, v, train))
-                        for k, v in fit_params.items()])
+                      for k, v in fit_params.items()])
 
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, _ = _safe_split(estimator, X, y, test, train)
@@ -1386,7 +1441,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
     fit_params = dict([(k, _index_param_value(X, v, train))
-                        for k, v in fit_params.items()])
+                      for k, v in fit_params.items()])
 
     if parameters is not None:
         estimator.set_params(**parameters)
@@ -1743,7 +1798,8 @@ def train_test_split(*arrays, **options):
                       "assumed True in 0.18 and removed.", DeprecationWarning)
     if allow_lists is False or allow_nd is False:
         arrays = [check_array(x, 'csr', allow_nd=allow_nd,
-                              force_all_finite=False, ensure_2d=False) if x is not None else x
+                              force_all_finite=False, ensure_2d=False)
+                  if x is not None else x
                   for x in arrays]
 
     if test_size is None and train_size is None:

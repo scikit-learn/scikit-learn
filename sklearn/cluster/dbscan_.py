@@ -140,6 +140,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
         # candidates for new core samples in the cluster.
         candidates = [index]
         while len(candidates) > 0:
+            # The tolist() is needed for NumPy 1.6.
             cand_neighbors = np.concatenate(np.take(neighborhoods, candidates,
                                                     axis=0).tolist())
             cand_neighbors = np.unique(cand_neighbors)
@@ -147,7 +148,8 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
             labels[noise] = label_num
             # A candidate is a core point in the current cluster that has
             # not yet been used to expand the current cluster.
-            candidates = np.intersect1d(noise, core_samples)
+            candidates = np.intersect1d(noise, core_samples,
+                                        assume_unique=True)
         # Current cluster finished.
         # Next core point found will start a new cluster.
         label_num += 1
@@ -202,7 +204,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
 
     Notes
     -----
-    See examples/plot_dbscan.py for an example.
+    See examples/cluster/plot_dbscan.py for an example.
 
     References
     ----------

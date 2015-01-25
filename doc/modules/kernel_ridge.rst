@@ -1,13 +1,13 @@
 .. _kernel_ridge:
 
 ===========================
-Kernelized ridge regression
+Kernel ridge regression
 ===========================
 
 .. currentmodule:: sklearn.kernel_ridge
 
-Kernelized ridge regression (KRR) [M2012]_ combines :ref:`ridge_regression` 
-(linear least squares plus l2-norm regularization) with the kernel trick. It 
+Kernel ridge regression (KRR) [M2012]_ combines :ref:`ridge_regression`
+(linear least squares with l2-norm regularization) with the kernel trick. It
 thus learns a linear function in the space induced by the respective kernel and
 the data. For non-linear kernels, this corresponds to a non-linear
 function in the original space.
@@ -16,9 +16,9 @@ The form of the model learned by :class:`KernelRidge` is identical to support
 vector regression (:class:`SVR`). However, different loss functions are used:
 KRR uses squared error loss while support vector regression uses
 :math:`\epsilon`-insensitive loss, both combined with l2 regularization.  In
-contrast to :class:`SVR`, fitting :class:`KernelRidge` can be done in 
-closed-form and is typically faster for medium-sized datasets. On the other 
-hand, the learned model is non-sparse and thus slower than SVR, which learns 
+contrast to :class:`SVR`, fitting :class:`KernelRidge` can be done in
+closed-form and is typically faster for medium-sized datasets. On the other
+hand, the learned model is non-sparse and thus slower than SVR, which learns
 a sparse model for :math:`\epsilon > 0`, at prediction-time.
 
 The following figure compares :class:`KernelRidge` and :class:`SVR` on

@@ -89,23 +89,13 @@ def _solve_lsqr(X, y, alpha, max_iter=None, tol=1e-3):
     return coefs
 
 
-def _solve_cholesky(X, y, alpha, sample_weight=None):
+def _solve_cholesky(X, y, alpha):
     # w = inv(X^t X + alpha*Id) * X.T y
     n_samples, n_features = X.shape
     n_targets = y.shape[1]
 
-    has_sw = sample_weight is not None
-
-    if has_sw:
-        sample_weight = sample_weight * np.ones(n_samples)
-        sample_weight_matrix = sparse.dia_matrix((sample_weight, 0),
-            shape=(n_samples, n_samples))
-        weighted_X = safe_sparse_dot(sample_weight_matrix, X)
-        A = safe_sparse_dot(weighted_X.T, X, dense_output=True)
-        Xy = safe_sparse_dot(weighted_X.T, y, dense_output=True)
-    else:
-        A = safe_sparse_dot(X.T, X, dense_output=True)
-        Xy = safe_sparse_dot(X.T, y, dense_output=True)
+    A = safe_sparse_dot(X.T, X, dense_output=True)
+    Xy = safe_sparse_dot(X.T, y, dense_output=True)
 
     one_alpha = np.array_equal(alpha, len(alpha) * [alpha[0]])
 
@@ -137,6 +127,8 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
         or sample_weight not in [1.0, None]
 
     if has_sw:
+        # Unlike other solvers, we need to support sample_weight directly
+        # because K might be a pre-computed kernel.
         sw = np.sqrt(np.atleast_1d(sample_weight))
         y = y * sw[:, np.newaxis]
         K *= np.outer(sw, sw)
@@ -201,6 +193,18 @@ def _deprecate_dense_cholesky(solver):
         solver = 'cholesky'
 
     return solver
+
+
+def _rescale_data(X, y, sample_weight):
+    """Rescale data so as to support sample_weight"""
+    n_samples = X.shape[0]
+    sample_weight = sample_weight * np.ones(n_samples)
+    sample_weight = np.sqrt(sample_weight)
+    sw_matrix = sparse.dia_matrix((sample_weight, 0),
+                                  shape=(n_samples, n_samples))
+    X = safe_sparse_dot(sw_matrix, X)
+    y = safe_sparse_dot(sw_matrix, y)
+    return X, y
 
 
 def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
@@ -307,11 +311,8 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         if np.atleast_1d(sample_weight).ndim > 1:
             raise ValueError("Sample weights must be 1D array or scalar")
 
-        if solver != "cholesky":
-            warnings.warn("sample_weight and class_weight not"
-                          " supported in %s, fall back to "
-                          "cholesky." % solver)
-            solver = 'cholesky'
+        # Sample weight can be implemented via a simple rescaling.
+        X, y = _rescale_data(X, y, sample_weight)
 
     # There should be either 1 or n_targets penalties
     alpha = np.asarray(alpha).ravel()
@@ -336,8 +337,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         if n_features > n_samples:
             K = safe_sparse_dot(X, X.T, dense_output=True)
             try:
-                dual_coef = _solve_cholesky_kernel(K, y, alpha,
-                                                         sample_weight)
+                dual_coef = _solve_cholesky_kernel(K, y, alpha)
 
                 coef = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
             except linalg.LinAlgError:
@@ -346,7 +346,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
         else:
             try:
-                coef = _solve_cholesky(X, y, alpha, sample_weight)
+                coef = _solve_cholesky(X, y, alpha)
             except linalg.LinAlgError:
                 # use SVD solver if matrix is singular
                 solver = 'svd'

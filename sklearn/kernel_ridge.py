@@ -6,18 +6,18 @@
 
 import numpy as np
 
+from .base import BaseEstimator, RegressorMixin
+from .metrics.pairwise import pairwise_kernels
+from .linear_model.ridge import _solve_cholesky_kernel
 from .utils import check_X_y
-from sklearn.base import BaseEstimator, RegressorMixin
-from sklearn.metrics.pairwise import pairwise_kernels
-from sklearn.linear_model.ridge import _solve_cholesky_kernel
-from sklearn.utils.validation import check_is_fitted
+from .utils.validation import check_is_fitted
 
 
 class KernelRidge(BaseEstimator, RegressorMixin):
-    """Kernelized ridge regression.
+    """Kernel ridge regression.
 
-    Kernelized ridge regression (KRR) combines ridge regression (linear least
-    squares plus l2-norm regularization) with the kernel trick. It thus
+    Kernel ridge regression (KRR) combines ridge regression (linear least
+    squares with l2-norm regularization) with the kernel trick. It thus
     learns a linear function in the space induced by the respective kernel and
     the data. For non-linear kernels, this corresponds to a non-linear
     function in the original space.
@@ -82,7 +82,7 @@ class KernelRidge(BaseEstimator, RegressorMixin):
     See also
     --------
     Ridge
-        Linear, non-kernelized least squares with l2 regularization.
+        Linear ridge regression.
     SVR
         Support Vector Regression implemented using libsvm.
 
