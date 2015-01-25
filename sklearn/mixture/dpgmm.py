@@ -18,6 +18,7 @@ from scipy.spatial.distance import cdist
 from ..externals.six.moves import xrange
 from ..utils import check_random_state
 from ..utils.extmath import logsumexp, pinvh, squared_norm
+from ..utils.validation import check_is_fitted
 from .. import cluster
 from .gmm import GMM
 
@@ -126,34 +127,39 @@ class DPGMM(GMM):
 
     Parameters
     ----------
-    n_components: int, optional
-        Number of mixture components. Defaults to 1.
+    n_components: int, default 1
+        Number of mixture components.
 
-    covariance_type: string, optional
+    covariance_type: string, default 'diag'
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
-        Defaults to 'diag'.
 
-    alpha: float, optional
+    alpha: float, default 1
         Real number representing the concentration parameter of
         the dirichlet process. Intuitively, the Dirichlet Process
         is as likely to start a new cluster for a point as it is
         to add that point to a cluster with alpha elements. A
         higher alpha means more clusters, as the expected number
-        of clusters is ``alpha*log(N)``. Defaults to 1.
+        of clusters is ``alpha*log(N)``.
 
-    thresh : float, optional
+    thresh : float, default 1e-2
         Convergence threshold.
-    n_iter : int, optional
+
+    n_iter : int, default 10
         Maximum number of iterations to perform before convergence.
-    params : string, optional
+
+    params : string, default 'wmc' 
         Controls which parameters are updated in the training
         process.  Can contain any combination of 'w' for weights,
-        'm' for means, and 'c' for covars.  Defaults to 'wmc'.
-    init_params : string, optional
+        'm' for means, and 'c' for covars.
+
+    init_params : string, default 'wmc' 
         Controls which parameters are updated in the initialization
         process.  Can contain any combination of 'w' for weights,
         'm' for means, and 'c' for covars.  Defaults to 'wmc'.
+
+    verbose : boolean, default False
+        Controls output verbosity.
 
     Attributes
     ----------
@@ -242,6 +248,8 @@ class DPGMM(GMM):
             Posterior probabilities of each mixture component for each
             observation
         """
+        check_is_fitted(self, 'gamma_')
+
         X = np.asarray(X)
         if X.ndim == 1:
             X = X[:, np.newaxis]
@@ -327,8 +335,8 @@ class DPGMM(GMM):
             self.dof_ = 2 + X.shape[0] + n_features
             self.scale_ = (X.shape[0] + 1) * np.identity(n_features)
             for k in range(self.n_components):
-                    diff = X - self.means_[k]
-                    self.scale_ += np.dot(diff.T, z[:, k:k + 1] * diff)
+                diff = X - self.means_[k]
+                self.scale_ += np.dot(diff.T, z[:, k:k + 1] * diff)
             self.scale_ = pinvh(self.scale_)
             self.precs_ = self.dof_ * self.scale_
             self.det_scale_ = linalg.det(self.scale_)
@@ -452,10 +460,11 @@ class DPGMM(GMM):
 
     def lower_bound(self, X, z):
         """returns a lower bound on model evidence based on X and membership"""
+        check_is_fitted(self, 'means_')
+        
         if self.covariance_type not in ['full', 'tied', 'diag', 'spherical']:
             raise NotImplementedError("This ctype is not implemented: %s"
                                       % self.covariance_type)
-
         X = np.asarray(X)
         if X.ndim == 1:
             X = X[:, np.newaxis]
@@ -591,21 +600,37 @@ class VBGMM(DPGMM):
 
     Parameters
     ----------
-    n_components: int, optional
-        Number of mixture components. Defaults to 1.
+    n_components: int, default 1
+        Number of mixture components.
 
-    covariance_type: string, optional
+    covariance_type: string, default 'diag'
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
-        Defaults to 'diag'.
 
-    alpha: float, optional
+    alpha: float, default 1
         Real number representing the concentration parameter of
         the dirichlet distribution. Intuitively, the higher the
         value of alpha the more likely the variational mixture of
-        Gaussians model will use all components it can. Defaults
-        to 1.
+        Gaussians model will use all components it can.
 
+    thresh : float, default 1e-2
+        Convergence threshold.
+
+    n_iter : int, default 10
+        Maximum number of iterations to perform before convergence.
+
+    params : string, default 'wmc'
+        Controls which parameters are updated in the training
+        process.  Can contain any combination of 'w' for weights,
+        'm' for means, and 'c' for covars.
+
+    init_params : string, default 'wmc'
+        Controls which parameters are updated in the initialization
+        process.  Can contain any combination of 'w' for weights,
+        'm' for means, and 'c' for covars.  Defaults to 'wmc'.
+
+    verbose : boolean, default False
+        Controls output verbosity.
 
     Attributes
     ----------
@@ -678,6 +703,8 @@ class VBGMM(DPGMM):
             Posterior probabilities of each mixture component for each
             observation
         """
+        check_is_fitted(self, 'gamma_')
+
         X = np.asarray(X)
         if X.ndim == 1:
             X = X[:, np.newaxis]

@@ -144,7 +144,7 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
 
             ncut_value = 2.0 * (n_samples - S.sum())
             if ((abs(ncut_value - last_objective_value) < eps) or
-               (n_iter > n_iter_max)):
+                    (n_iter > n_iter_max)):
                 has_converged = True
             else:
                 # otherwise calculate rotation and continue

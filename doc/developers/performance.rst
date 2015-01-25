@@ -31,7 +31,7 @@ Python, Cython or C/C++?
 In general, the scikit-learn project emphasizes the **readability** of
 the source code to make it easy for the project users to dive into the
 source code so as to understand how the algorithm behaves on their data
-but also for ease of maintanability (by the developers).
+but also for ease of maintainability (by the developers).
 
 When implementing a new algorithm is thus recommended to **start
 implementing it in Python using Numpy and Scipy** by taking care of avoiding

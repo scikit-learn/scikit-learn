@@ -19,6 +19,7 @@ from ..utils.fixes import combinations_with_replacement as combinations_w_r
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale, mean_variance_axis)
+from ..utils.validation import check_is_fitted
 
 zip = six.moves.zip
 map = six.moves.map
@@ -85,7 +86,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         If True, scale the data to unit variance (or equivalently,
         unit standard deviation).
 
-    copy : boolean, optional, default is True
+    copy : boolean, optional, default True
         set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix and if axis is 1).
@@ -109,6 +110,8 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     scaling using the ``Transformer`` API (e.g. as part of a preprocessing
     :class:`sklearn.pipeline.Pipeline`)
     """
+    X = check_array(X, accept_sparse='csr', copy=copy, ensure_2d=False)
+    warn_if_not_float(X, estimator='The scale function')
     if sparse.issparse(X):
         if with_mean:
             raise ValueError(
@@ -117,7 +120,6 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         if axis != 0:
             raise ValueError("Can only scale sparse matrix on axis=0, "
                              " got axis=%d" % axis)
-        warn_if_not_float(X, estimator='The scale function')
         if not sparse.isspmatrix_csr(X):
             X = X.tocsr()
             copy = False
@@ -128,7 +130,6 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         inplace_column_scale(X, 1 / np.sqrt(var))
     else:
         X = np.asarray(X)
-        warn_if_not_float(X, estimator='The scale function')
         mean_, std_ = _mean_and_std(
             X, axis, with_mean=with_mean, with_std=with_std)
         if copy:
@@ -164,7 +165,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     feature_range: tuple (min, max), default=(0, 1)
         Desired range of transformed data.
 
-    copy : boolean, optional, default is True
+    copy : boolean, optional, default True
         Set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array).
 
@@ -217,6 +218,8 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         X : array-like with shape [n_samples, n_features]
             Input data that will be transformed.
         """
+        check_is_fitted(self, 'scale_')
+
         X = check_array(X, copy=self.copy, ensure_2d=False)
         X *= self.scale_
         X += self.min_
@@ -230,6 +233,8 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         X : array-like with shape [n_samples, n_features]
             Input data that will be transformed.
         """
+        check_is_fitted(self, 'scale_')
+
         X = check_array(X, copy=self.copy, ensure_2d=False)
         X -= self.min_
         X /= self.scale_
@@ -270,7 +275,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         If True, scale the data to unit variance (or equivalently,
         unit standard deviation).
 
-    copy : boolean, optional, default is True
+    copy : boolean, optional, default True
         If False, try to avoid a copy and do inplace scaling instead.
         This is not guaranteed to always work inplace; e.g. if the data is
         not a NumPy array or scipy.sparse CSR matrix, a copy may still be
@@ -307,7 +312,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
         """
-        X = check_array(X, accept_sparse='csr', copy=self.copy, ensure_2d=False)
+        X = check_array(X, accept_sparse='csr', copy=self.copy,
+                        ensure_2d=False)
         if warn_if_not_float(X, estimator=self):
             X = X.astype(np.float)
         if sparse.issparse(X):
@@ -337,6 +343,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         X : array-like with shape [n_samples, n_features]
             The data used to scale along the features axis.
         """
+        check_is_fitted(self, 'std_')
+
         copy = copy if copy is not None else self.copy
         X = check_array(X, accept_sparse='csr', copy=copy, ensure_2d=False)
         if warn_if_not_float(X, estimator=self):
@@ -363,6 +371,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         X : array-like with shape [n_samples, n_features]
             The data used to scale along the features axis.
         """
+        check_is_fitted(self, 'std_')
+
         copy = copy if copy is not None else self.copy
         if sparse.issparse(X):
             if self.with_mean:
@@ -482,6 +492,8 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
             The matrix of features, where NP is the number of polynomial
             features generated from the combination of inputs.
         """
+        check_is_fitted(self, 'powers_')
+
         X = check_array(X)
         n_samples, n_features = X.shape
 
@@ -509,7 +521,7 @@ def normalize(X, norm='l2', axis=1, copy=True):
         axis used to normalize the data along. If 1, independently normalize
         each sample, otherwise (if 0) normalize each feature.
 
-    copy : boolean, optional, default is True
+    copy : boolean, optional, default True
         set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix and if axis is 1).
@@ -577,7 +589,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
     norm : 'l1' or 'l2', optional ('l2' by default)
         The norm to use to normalize each non zero sample.
 
-    copy : boolean, optional, default is True
+    copy : boolean, optional, default True
         set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix).
@@ -634,7 +646,7 @@ def binarize(X, threshold=0.0, copy=True):
         Feature values below or equal to this are replaced by 0, above it by 1.
         Threshold may not be less than 0 for operations on sparse matrices.
 
-    copy : boolean, optional, default is True
+    copy : boolean, optional, default True
         set to False to perform inplace binarization and avoid a copy
         (if the input is already a numpy array or a scipy.sparse CSR / CSC
         matrix and if axis is 1).
@@ -684,7 +696,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
         Feature values below or equal to this are replaced by 0, above it by 1.
         Threshold may not be less than 0 for operations on sparse matrices.
 
-    copy : boolean, optional, default is True
+    copy : boolean, optional, default True
         set to False to perform inplace binarization and avoid a copy (if
         the input is already a numpy array or a scipy.sparse CSR matrix).
 
@@ -760,10 +772,15 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         K : numpy array of shape [n_samples1, n_samples2]
             Kernel matrix.
 
+        copy : boolean, optional, default True
+            Set to False to perform inplace computation.
+
         Returns
         -------
         K_new : numpy array of shape [n_samples1, n_samples2]
         """
+        check_is_fitted(self, 'K_fit_all_')
+
         K = check_array(K)
         if copy:
             K = K.copy()
@@ -894,7 +911,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     The input to this transformer should be a matrix of integers, denoting
     the values taken on by categorical (discrete) features. The output will be
-    a sparse matrix were each column corresponds to one possible value of one
+    a sparse matrix where each column corresponds to one possible value of one
     feature. It is assumed that input features take on values in the range
     [0, n_values).
 

@@ -4,9 +4,6 @@ from sklearn.externals.six.moves import cPickle
 
 dumps, loads = cPickle.dumps, cPickle.loads
 
-import re
-import warnings
-
 import numpy as np
 from scipy import sparse
 
@@ -15,7 +12,6 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns_message
 
 from sklearn.cluster import SpectralClustering, spectral_clustering
@@ -43,7 +39,7 @@ def test_spectral_clustering():
                                            affinity='precomputed',
                                            eigen_solver=eigen_solver,
                                            assign_labels=assign_labels
-                                           ).fit(mat)
+                                          ).fit(mat)
                 labels = model.labels_
                 if labels[0] == 0:
                     labels = 1 - labels
@@ -137,7 +133,7 @@ def test_affinities():
     # on OSX and Linux
     X, y = make_blobs(n_samples=20, random_state=0,
                       centers=[[1, 1], [-1, -1]], cluster_std=0.01
-                      )
+                     )
     # nearest neighbors affinity
     sp = SpectralClustering(n_clusters=2, affinity='nearest_neighbors',
                             random_state=0)
@@ -189,8 +185,8 @@ def test_discretize(seed=8):
             y_true = np.array(y_true, np.float)
             # noise class assignment matrix
             y_indicator = sparse.coo_matrix((np.ones(n_samples),
-                                            (np.arange(n_samples),
-                                             y_true)),
+                                             (np.arange(n_samples),
+                                              y_true)),
                                             shape=(n_samples,
                                                    n_class + 1))
             y_true_noisy = (y_indicator.toarray()

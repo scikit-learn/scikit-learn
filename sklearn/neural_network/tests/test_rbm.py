@@ -104,7 +104,7 @@ def test_fit_gibbs():
     X = np.array([[0.], [1.]])
     rbm1 = BernoulliRBM(n_components=2, batch_size=2,
                         n_iter=42, random_state=rng)
-                        # you need that much iters
+    # you need that much iters
     rbm1.fit(X)
     assert_almost_equal(rbm1.components_,
                         np.array([[0.02649814], [0.02009084]]), decimal=4)

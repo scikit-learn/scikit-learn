@@ -17,6 +17,7 @@ from ..externals import six
 from ..externals.six import moves
 from ..utils import check_array, as_float_array, check_random_state
 from ..utils.extmath import fast_dot
+from ..utils.validation import check_is_fitted
 
 __all__ = ['fastica', 'FastICA']
 
@@ -27,15 +28,19 @@ def _gs_decorrelation(w, W, j):
 
     Parameters
     ----------
-    w: array of shape(n), to be orthogonalized
+    w : ndarray of shape(n)
+        Array to be orthogonalized
 
-    W: array of shape(p, n), null space definition
+    W : ndarray of shape(p, n)
+        Null space definition
 
-    j: int < p
+    j : int < p
+        The no of (from the first) rows of Null space W wrt which w is
+        orthogonalized.
 
-    caveats
-    -------
-    assumes that W is orthogonal
+    Notes
+    -----
+    Assumes that W is orthogonal
     w changed in place
     """
     w -= np.dot(np.dot(w, W[:j].T), W[:j])
@@ -530,6 +535,8 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
+        check_is_fitted(self, 'mixing_')
+
         X = check_array(X, copy=copy)
         if self.whiten:
             X -= self.mean_
@@ -551,6 +558,8 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_features)
         """
+        check_is_fitted(self, 'mixing_')
+
         if copy:
             X = X.copy()
         X = fast_dot(X, self.mixing_.T)

@@ -12,6 +12,8 @@ at which the fixe is no longer needed.
 
 import inspect
 import warnings
+import sys
+import functools
 
 import numpy as np
 import scipy.sparse as sp
@@ -314,3 +316,22 @@ if sp_version < (0, 15):
     from ._scipy_sparse_lsqr_backport import lsqr as sparse_lsqr
 else:
     from scipy.sparse.linalg import lsqr as sparse_lsqr
+
+
+if sys.version_info < (2, 7, 0):
+    # partial cannot be pickled in Python 2.6
+    # http://bugs.python.org/issue1398
+    class partial(object):
+        def __init__(self, func, *args, **keywords):
+            functools.update_wrapper(self, func)
+            self.func = func
+            self.args = args
+            self.keywords = keywords
+
+        def __call__(self, *args, **keywords):
+            args = self.args + args
+            kwargs = self.keywords.copy()
+            kwargs.update(keywords)
+            return self.func(*args, **kwargs)
+else:
+    from functools import partial

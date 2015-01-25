@@ -1,28 +1,10 @@
+.. _related_projects:
+
 =====================================
 Related Projects
 =====================================
 
 Below is a list of sister-projects, extensions and domain specific packages.
-
-Extensions and Algorithms
--------------------------
-Libraries that provide a scikit-learn like interface and can be used with scikit-learn tools.
-
-- `pylearn2 <http://deeplearning.net/software/pylearn2/>`_ A deep learning and
-  neural network library build on theano with scikit-learn like interface.
-
-- `Lightning <https://github.com/mblondel/lightning>`_ fast linear models, a
-  drop in replacement for LinearSVC and SGDClassifier.
-
-- `Seqlearn <https://github.com/larsmans/seqlearn>`_  An implementation of
-  linear chain conditional random fields respecting the scikit-learn interface.
-
-- `HMMLearn <https://github.com/hmmlearn/hmmlearn>`_ Implementation of hidden
-  markov models that was previously part of scikit-learn.
-
-- `PyStruct <https://pystruct.githup.io>`_ General conditional random fields
-  and structured prediction.
-
 
 Related Packages
 ----------------
@@ -30,6 +12,9 @@ Other packages useful for data analysis and machine learning.
 
 - `Pandas <http://pandas.pydata.org>`_ Tools for working with heterogeneous and
   columnar data, relational queries, time series and basic statistics.
+
+- `sklearn_pandas <https://github.com/paulgb/sklearn-pandas/>`_ bridge for
+  scikit-learn pipelines and pandas data frame with dedicated transformers.
 
 - `theano <http://deeplearning.net/software/theano/>`_ A CPU/GPU array
   processing framework geared towards deep learning research.
@@ -39,12 +24,48 @@ Other packages useful for data analysis and machine learning.
   than scikit-learn.
 
 
+Extensions and Algorithms
+-------------------------
+Libraries that provide a scikit-learn like interface and can be used with scikit-learn tools.
+
+- `pylearn2 <http://deeplearning.net/software/pylearn2/>`_ A deep learning and
+  neural network library build on theano with scikit-learn like interface.
+
+- `lightning <http://www.mblondel.org/lightning/>`_ Fast state-of-the-art linear model solvers (SDCA, AdaGrad, SVRG, SAG, etc...).
+
+- `Seqlearn <https://github.com/larsmans/seqlearn>`_  Sequence classification using HMMs or structured perceptron.
+
+- `HMMLearn <https://github.com/hmmlearn/hmmlearn>`_ Implementation of hidden
+  markov models that was previously part of scikit-learn.
+
+- `PyStruct <https://pystruct.githup.io>`_ General conditional random fields
+  and structured prediction.
+
+- `py-earth <https://github.com/jcrudy/py-earth>`_ Multivariate adaptive regression splines
+
+- `sklearn-compiledtrees <https://github.com/ajtulloch/sklearn-compiledtrees/>`_
+  Generate a C++ implementation of the predict function for decision trees (and
+  ensembles) trained by sklearn. Useful for latency-sensitive production
+  environments.
+
+- `lda <https://github.com/ariddell/lda/>`_: Fast implementation of Latent
+  Dirichlet Allocation in Cython.
+
+- `Sparse Filtering <https://github.com/jmetzen/sparse-filtering>`_
+  Unsupervised feature learning based on sparse-filtering
+
+- `Kernel Regression <https://github.com/jmetzen/kernel_regression>`_
+  Implementation of Nadaraya-Watson kernel regression with automatic bandwidth
+  selection
+
+
 Domain Specific Packages
 -------------------------
 - `scikit-image <http://scikit-image.org/>`_ Image processing and computer vision in python.
+- `Natural language toolkit (nltk) <http://www.nltk.org/>`_ Natual language processing and some machine learning.
 - `NiLearn <https://nilearn.github.io/>`_ Machine learning for neuro-imaging.
 - `AstroML <http://www.astroml.org/>`_  Machine learning for astronomy.
 
-Sniplets and tidbits
+Snippets and tidbits
 ---------------------
 The `wiki <https://github.com/scikit-learn/scikit-learn/wiki/Third-party-projects-and-code-snippets>`_ has more!

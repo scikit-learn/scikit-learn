@@ -201,8 +201,7 @@ def _passthrough_scorer(estimator, *args, **kwargs):
     return estimator.score(*args, **kwargs)
 
 
-def check_scoring(estimator, scoring=None, allow_none=False,
-                  score_overrides_loss=False):
+def check_scoring(estimator, scoring=None, allow_none=False):
     """Determine scorer from user options.
 
     A TypeError will be thrown if the estimator cannot be scored.
@@ -231,20 +230,16 @@ def check_scoring(estimator, scoring=None, allow_none=False,
     if not hasattr(estimator, 'fit'):
         raise TypeError("estimator should a be an estimator implementing "
                         "'fit' method, %r was passed" % estimator)
-    elif hasattr(estimator, 'predict') and has_scoring:
+    elif has_scoring:
         return get_scorer(scoring)
     elif hasattr(estimator, 'score'):
         return _passthrough_scorer
-    elif not has_scoring:
-        if allow_none:
-            return None
+    elif allow_none:
+        return None
+    else:
         raise TypeError(
             "If no scoring is specified, the estimator passed should "
             "have a 'score' method. The estimator %r does not." % estimator)
-    else:
-        raise TypeError(
-            "The estimator passed should have a 'score' or a 'predict' "
-            "method. The estimator %r does not." % estimator)
 
 
 def make_scorer(score_func, greater_is_better=True, needs_proba=False,

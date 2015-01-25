@@ -1062,23 +1062,17 @@ def _eigs(A, k=6, M=None, sigma=None, which='LM', v0=None, ncv=None,
 
     Parameters
     ----------
-    A : An N x N matrix, array, sparse matrix, or LinearOperator representing
-        the operation A * x, where A is a real or complex square matrix.
-    k : integer
+    A : An N x N matrix, array, sparse matrix, or LinearOperator representing \
+    the operation A * x, where A is a real or complex square matrix.
+
+    k : int, default 6
         The number of eigenvalues and eigenvectors desired.
         `k` must be smaller than N. It is not possible to compute all
         eigenvectors of a matrix.
 
-    Returns
-    -------
-    w : array
-        Array of k eigenvalues.
-    v : array
-        An array of `k` eigenvectors.
-        ``v[:, i]`` is the eigenvector corresponding to the eigenvalue w[i].
+    return_eigenvectors : boolean, default True
+        Whether to return the eigenvectors along with the eigenvalues.
 
-    Other Parameters
-    ----------------
     M : An N x N matrix, array, sparse matrix, or LinearOperator representing
         the operation M*x for the generalized eigenvalue problem
           ``A * x = w * M * x``
@@ -1092,6 +1086,7 @@ def _eigs(A, k=6, M=None, sigma=None, which='LM', v0=None, ncv=None,
         iterative solver for a general linear operator.  Alternatively,
         the user can supply the matrix or operator Minv, which gives
         x = Minv * b = M^-1 * b
+
     sigma : real or complex
         Find eigenvalues near sigma using shift-invert mode.  This requires
         an operator to compute the solution of the linear system
@@ -1111,11 +1106,14 @@ def _eigs(A, k=6, M=None, sigma=None, which='LM', v0=None, ncv=None,
             w'[i] = 1/2i * [ 1/(w[i]-sigma) - 1/(w[i]-conj(sigma)) ]
          * If A is complex,
             w'[i] = 1/(w[i]-sigma)
+
     v0 : array
         Starting vector for iteration.
+
     ncv : integer
         The number of Lanczos vectors generated
         `ncv` must be greater than `k`; it is recommended that ``ncv > 2*k``.
+
     which : string ['LM' | 'SM' | 'LR' | 'SR' | 'LI' | 'SI']
         Which `k` eigenvectors and eigenvalues to find:
          - 'LM' : largest magnitude
@@ -1128,19 +1126,33 @@ def _eigs(A, k=6, M=None, sigma=None, which='LM', v0=None, ncv=None,
         (see discussion in 'sigma', above).  ARPACK is generally better
         at finding large values than small values.  If small eigenvalues are
         desired, consider using shift-invert mode for better performance.
+
     maxiter : integer
         Maximum number of Arnoldi update iterations allowed
+
     tol : float
         Relative accuracy for eigenvalues (stopping criterion)
         The default value of 0 implies machine precision.
+
     return_eigenvectors : boolean
         Return eigenvectors (True) in addition to eigenvalues
+
     Minv : N x N matrix, array, sparse matrix, or linear operator
         See notes in M, above.
+        
     OPinv : N x N matrix, array, sparse matrix, or linear operator
         See notes in sigma, above.
     OPpart : 'r' or 'i'.
         See notes in sigma, above
+
+    Returns
+    -------
+    w : array
+        Array of k eigenvalues.
+
+    v : array
+        An array of `k` eigenvectors.
+        ``v[:, i]`` is the eigenvector corresponding to the eigenvalue w[i].
 
     Raises
     ------
@@ -1287,16 +1299,6 @@ def _eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None, ncv=None,
         `k` must be smaller than N. It is not possible to compute all
         eigenvectors of a matrix.
 
-    Returns
-    -------
-    w : array
-        Array of k eigenvalues
-    v : array
-       An array of k eigenvectors
-       The v[i] is the eigenvector corresponding to the eigenvector w[i]
-
-    Other Parameters
-    ----------------
     M : An N x N matrix, array, sparse matrix, or linear operator representing
         the operation M * x for the generalized eigenvalue problem
           ``A * x = w * M * x``.
@@ -1337,7 +1339,7 @@ def _eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None, ncv=None,
         it is recommended that ncv > 2*k
     which : string ['LM' | 'SM' | 'LA' | 'SA' | 'BE']
         If A is a complex hermitian matrix, 'BE' is invalid.
-        Which `k` eigenvectors and eigenvalues to find:
+        Which `k` eigenvectors and eigenvalues to find
          - 'LM' : Largest (in magnitude) eigenvalues
          - 'SM' : Smallest (in magnitude) eigenvalues
          - 'LA' : Largest (algebraic) eigenvalues
@@ -1380,6 +1382,14 @@ def _eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None, ncv=None,
         The choice of mode will affect which eigenvalues are selected by
         the keyword 'which', and can also impact the stability of
         convergence (see [2] for a discussion)
+
+    Returns
+    -------
+    w : array
+        Array of k eigenvalues
+    v : array
+        An array of k eigenvectors
+        The v[i] is the eigenvector corresponding to the eigenvector w[i]
 
     Raises
     ------

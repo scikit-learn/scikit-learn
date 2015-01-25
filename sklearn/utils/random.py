@@ -224,8 +224,8 @@ def random_choice_csc(n_samples, classes, class_probability=None,
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    Return
-    ------
+    Returns
+    -------
     random_matrix : sparse csc matrix of size (n_samples, n_outputs)
 
     """

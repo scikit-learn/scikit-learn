@@ -243,7 +243,7 @@ cdef NodeHeapData_t[::1] get_memview_NodeHeapData_1D(
 cdef NodeData_t[::1] get_memview_NodeData_1D(
                     np.ndarray[NodeData_t, ndim=1, mode='c'] X):
     return <NodeData_t[:X.shape[0]:1]> (<NodeData_t*> X.data)
-    
+
 ######################################################################
 
 

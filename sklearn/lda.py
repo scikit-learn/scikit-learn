@@ -14,13 +14,14 @@ import warnings
 
 import numpy as np
 from scipy import linalg
-from six import string_types
+from .externals.six import string_types
 
 from .base import BaseEstimator, TransformerMixin
 from .linear_model.base import LinearClassifierMixin
 from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
 from .utils.multiclass import unique_labels
 from .utils import check_array, check_X_y
+from .utils.validation import check_is_fitted
 from .preprocessing import StandardScaler
 
 
@@ -156,6 +157,12 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
 
     n_components : int, optional
         Number of components (< n_classes - 1) for dimensionality reduction.
+
+    store_covariance : bool, optional
+        Additionally compute class covariance matrix (default False).
+
+    tol : float, optional
+        Threshold used for rank estimation in SVD solver.
 
     Attributes
     ----------
@@ -375,7 +382,7 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
         rank = np.sum(S > tol * S[0])
         self.scalings_ = np.dot(scalings, V.T[:, :rank])
         coef = np.dot(self.means_ - self.xbar_, self.scalings_)
-        self.intercept_ = (-0.5 * np.sum(coef**2, axis=1)
+        self.intercept_ = (-0.5 * np.sum(coef ** 2, axis=1)
                            + np.log(self.priors_))
         self.coef_ = np.dot(coef, self.scalings_.T)
         self.intercept_ -= np.dot(self.xbar_, self.coef_.T)
@@ -441,6 +448,8 @@ class LDA(BaseEstimator, LinearClassifierMixin, TransformerMixin):
         X_new : array, shape (n_samples, n_components)
             Transformed data.
         """
+        check_is_fitted(self, ['xbar_', 'scalings_'], all_or_any=any)
+
         X = check_array(X)
         if self.solver == 'lsqr':
             raise NotImplementedError("transform not implemented for 'lsqr' "

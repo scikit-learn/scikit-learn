@@ -41,8 +41,6 @@ Single and multi-output problems are both handled.
 
 from __future__ import division
 
-import numpy as np
-
 from warnings import warn
 from abc import ABCMeta, abstractmethod
 
@@ -58,8 +56,8 @@ from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
 from ..tree._tree import DTYPE, DOUBLE
-from ..utils import check_random_state, check_array
-from ..utils.validation import DataConversionWarning
+from ..utils import check_random_state, check_array, compute_class_weight
+from ..utils.validation import DataConversionWarning, check_is_fitted
 from .base import BaseEnsemble, _partition_estimators
 
 __all__ = ["RandomForestClassifier",
@@ -72,7 +70,7 @@ MAX_INT = np.iinfo(np.int32).max
 
 
 def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
-                          verbose=0):
+                          verbose=0, class_weight=None):
     """Private function used to fit a single tree in parallel."""
     if verbose > 1:
         print("building tree %d of %d" % (tree_idx + 1, n_trees))
@@ -88,6 +86,32 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         indices = random_state.randint(0, n_samples, n_samples)
         sample_counts = np.bincount(indices, minlength=n_samples)
         curr_sample_weight *= sample_counts
+
+        if class_weight == 'subsample':
+
+            expanded_class_weight = [curr_sample_weight]
+
+            for k in range(y.shape[1]):
+                y_full = y[:, k]
+                classes_full = np.unique(y_full)
+                y_boot = y[indices, k]
+                classes_boot = np.unique(y_boot)
+
+                # Get class weights for the bootstrap sample, covering all
+                # classes in case some were missing from the bootstrap sample
+                weight_k = np.choose(
+                    np.searchsorted(classes_boot, classes_full),
+                    compute_class_weight('auto', classes_boot, y_boot),
+                    mode='clip')
+
+                # Expand weights over the original y for this output
+                weight_k = weight_k[np.searchsorted(classes_full, y_full)]
+                expanded_class_weight.append(weight_k)
+
+            # Multiply all weights by sample & bootstrap weights
+            curr_sample_weight = np.prod(expanded_class_weight,
+                                         axis=0,
+                                         dtype=np.float64)
 
         tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
 
@@ -122,7 +146,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
-                 warm_start=False):
+                 warm_start=False,
+                 class_weight=None):
         super(BaseForest, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
@@ -134,6 +159,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         self.random_state = random_state
         self.verbose = verbose
         self.warm_start = warm_start
+        self.class_weight = class_weight
 
     def apply(self, X):
         """Apply trees in the forest to X, return leaf indices.
@@ -151,6 +177,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             For each datapoint x in X and for each tree in the forest,
             return the index of the leaf x ends up in.
         """
+        check_is_fitted(self, 'n_outputs_')
+
         X = check_array(X, dtype=DTYPE, accept_sparse="csr")
         results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                            backend="threading")(
@@ -211,10 +239,16 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         self.n_outputs_ = y.shape[1]
 
-        y = self._validate_y(y)
+        y, expanded_class_weight = self._validate_y_class_weight(y)
 
         if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
+
+        if expanded_class_weight is not None:
+            if sample_weight is not None:
+                sample_weight = sample_weight * expanded_class_weight
+            else:
+                sample_weight = expanded_class_weight
 
         # Check parameters
         self._validate_estimator()
@@ -259,7 +293,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
                              backend="threading")(
                 delayed(_parallel_build_trees)(
                     t, self, X, y, sample_weight, i, len(trees),
-                    verbose=self.verbose)
+                    verbose=self.verbose, class_weight=self.class_weight)
                 for i, t in enumerate(trees))
 
             # Collect newly grown trees
@@ -279,9 +313,9 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
     def _set_oob_score(self, X, y):
         """Calculate out of bag predictions and score."""
 
-    def _validate_y(self, y):
+    def _validate_y_class_weight(self, y):
         # Default implementation
-        return y
+        return y, None
 
     @property
     def feature_importances_(self):
@@ -292,6 +326,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         -------
         feature_importances_ : array, shape = [n_features]
         """
+        check_is_fitted(self, 'n_outputs_')
+
         if self.estimators_ is None or len(self.estimators_) == 0:
             raise ValueError("Estimator not fitted, "
                              "call `fit` before `feature_importances_`.")
@@ -299,7 +335,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         all_importances = Parallel(n_jobs=self.n_jobs, backend="threading")(
             delayed(getattr)(tree, 'feature_importances_')
             for tree in self.estimators_)
-        return sum(all_importances) / self.n_estimators
+
+        return sum(all_importances) / len(self.estimators_)
 
 
 class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
@@ -320,7 +357,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
-                 warm_start=False):
+                 warm_start=False,
+                 class_weight=None):
 
         super(ForestClassifier, self).__init__(
             base_estimator,
@@ -331,7 +369,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
-            warm_start=warm_start)
+            warm_start=warm_start,
+            class_weight=class_weight)
 
     def _set_oob_score(self, X, y):
         """Compute out-of-bag score"""
@@ -377,8 +416,12 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         self.oob_score_ = oob_score / self.n_outputs_
 
-    def _validate_y(self, y):
+    def _validate_y_class_weight(self, y):
         y = np.copy(y)
+        expanded_class_weight = None
+
+        if self.class_weight is not None:
+            y_original = np.copy(y)
 
         self.classes_ = []
         self.n_classes_ = []
@@ -388,7 +431,52 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             self.classes_.append(classes_k)
             self.n_classes_.append(classes_k.shape[0])
 
-        return y
+        if self.class_weight is not None:
+            valid_presets = ('auto', 'subsample')
+            if isinstance(self.class_weight, six.string_types):
+                if self.class_weight not in valid_presets:
+                    raise ValueError('Valid presets for class_weight include '
+                                     '"auto" and "subsample". Given "%s".'
+                                     % self.class_weight)
+                if self.warm_start:
+                    warn('class_weight presets "auto" or "subsample" are '
+                         'not recommended for warm_start if the fitted data '
+                         'differs from the full dataset. In order to use '
+                         '"auto" weights, use compute_class_weight("auto", '
+                         'classes, y). In place of y you can use a large '
+                         'enough sample of the full training set target to '
+                         'properly estimate the class frequency '
+                         'distributions. Pass the resulting weights as the '
+                         'class_weight parameter.')
+            elif self.n_outputs_ > 1:
+                if not hasattr(self.class_weight, "__iter__"):
+                    raise ValueError("For multi-output, class_weight should "
+                                     "be a list of dicts, or a valid string.")
+                elif len(self.class_weight) != self.n_outputs_:
+                    raise ValueError("For multi-output, number of elements "
+                                     "in class_weight should match number of "
+                                     "outputs.")
+
+            if self.class_weight != 'subsample' or not self.bootstrap:
+                expanded_class_weight = []
+                for k in range(self.n_outputs_):
+                    if self.class_weight in valid_presets:
+                        class_weight_k = 'auto'
+                    elif self.n_outputs_ == 1:
+                        class_weight_k = self.class_weight
+                    else:
+                        class_weight_k = self.class_weight[k]
+                    weight_k = compute_class_weight(class_weight_k,
+                                                    self.classes_[k],
+                                                    y_original[:, k])
+                    weight_k = weight_k[np.searchsorted(self.classes_[k],
+                                                        y_original[:, k])]
+                    expanded_class_weight.append(weight_k)
+                expanded_class_weight = np.prod(expanded_class_weight,
+                                                axis=0,
+                                                dtype=np.float64)
+
+        return y, expanded_class_weight
 
     def predict(self, X):
         """Predict class for X.
@@ -408,6 +496,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes.
         """
+        check_is_fitted(self, 'n_outputs_')
+
         # ensure_2d=False because there are actually unit test checking we fail
         # for 1d.
         X = check_array(X, ensure_2d=False, accept_sparse="csr")
@@ -447,6 +537,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
+        check_is_fitted(self, 'n_outputs_')
+
         # Check data
         X = check_array(X, dtype=DTYPE, accept_sparse="csr")
 
@@ -559,6 +651,8 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted values.
         """
+        check_is_fitted(self, 'n_outputs_')
+
         # Check data
         X = check_array(X, dtype=DTYPE, accept_sparse="csr")
 
@@ -707,6 +801,24 @@ class RandomForestClassifier(ForestClassifier):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest.
 
+    class_weight : dict, list of dicts, "auto", "subsample" or None, optional
+
+        Weights associated with classes in the form ``{class_label: weight}``.
+        If not given, all classes are supposed to have weight one. For
+        multi-output problems, a list of dicts can be provided in the same
+        order as the columns of y.
+
+        The "auto" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data.
+
+        The "subsample" mode is the same as "auto" except that weights are
+        computed based on the bootstrap sample for every tree grown.
+
+        For multi-output, the weights of each column of y will be multiplied.
+
+        Note that these weights will be multiplied with sample_weight (passed
+        through the fit method) if sample_weight is specified.
+
     Attributes
     ----------
     estimators_ : list of DecisionTreeClassifier
@@ -755,7 +867,8 @@ class RandomForestClassifier(ForestClassifier):
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
-                 warm_start=False):
+                 warm_start=False,
+                 class_weight=None):
         super(RandomForestClassifier, self).__init__(
             base_estimator=DecisionTreeClassifier(),
             n_estimators=n_estimators,
@@ -768,7 +881,8 @@ class RandomForestClassifier(ForestClassifier):
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
-            warm_start=warm_start)
+            warm_start=warm_start,
+            class_weight=class_weight)
 
         self.criterion = criterion
         self.max_depth = max_depth
@@ -1017,6 +1131,24 @@ class ExtraTreesClassifier(ForestClassifier):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest.
 
+    class_weight : dict, list of dicts, "auto", "subsample" or None, optional
+
+        Weights associated with classes in the form ``{class_label: weight}``.
+        If not given, all classes are supposed to have weight one. For
+        multi-output problems, a list of dicts can be provided in the same
+        order as the columns of y.
+
+        The "auto" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data.
+
+        The "subsample" mode is the same as "auto" except that weights are
+        computed based on the bootstrap sample for every tree grown.
+
+        For multi-output, the weights of each column of y will be multiplied.
+
+        Note that these weights will be multiplied with sample_weight (passed
+        through the fit method) if sample_weight is specified.
+
     Attributes
     ----------
     estimators_ : list of DecisionTreeClassifier
@@ -1068,7 +1200,8 @@ class ExtraTreesClassifier(ForestClassifier):
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
-                 warm_start=False):
+                 warm_start=False,
+                 class_weight=None):
         super(ExtraTreesClassifier, self).__init__(
             base_estimator=ExtraTreeClassifier(),
             n_estimators=n_estimators,
@@ -1080,7 +1213,8 @@ class ExtraTreesClassifier(ForestClassifier):
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
-            warm_start=warm_start)
+            warm_start=warm_start,
+            class_weight=class_weight)
 
         self.criterion = criterion
         self.max_depth = max_depth
@@ -1369,7 +1503,7 @@ class RandomTreesEmbedding(BaseForest):
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             The input samples. Use ``dtype=np.float32`` for maximum
             efficiency. Sparse matrices are also supported, use sparse
-            ``csc_matrix`` for maximum efficieny.
+            ``csc_matrix`` for maximum efficiency.
 
         Returns
         -------
@@ -1418,7 +1552,7 @@ class RandomTreesEmbedding(BaseForest):
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             Input data to be transformed. Use ``dtype=np.float32`` for maximum
             efficiency. Sparse matrices are also supported, use sparse
-            ``csr_matrix`` for maximum efficieny.
+            ``csr_matrix`` for maximum efficiency.
 
         Returns
         -------

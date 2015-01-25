@@ -778,11 +778,12 @@ by black points below.
 Birch
 =====
 
-The :class:`Birch` builds a tree called the Characteristic Feature Tree(CFT) for
-the given data. The data is essentially lossy compressed to a set of Characteristic
-Feature nodes (CF Nodes). The CF Nodes have a number of subclusters called
-Characteristic Feature subclusters (CF Subclusters) and these CF Subclusters
-located in the non-terminal CF Nodes can have CF Nodes as children. 
+The :class:`Birch` builds a tree called the Characteristic Feature Tree (CFT)
+for the given data. The data is essentially lossy compressed to a set of
+Characteristic Feature nodes (CF Nodes). The CF Nodes have a number of
+subclusters called Characteristic Feature subclusters (CF Subclusters)
+and these CF Subclusters located in the non-terminal CF Nodes
+can have CF Nodes as children.
 
 The CF Subclusters hold the necessary information for clustering which prevents
 the need to hold the entire input data in memory. This information includes:
@@ -804,7 +805,7 @@ from the leaves of the CFT. This reduced data can be further processed by feedin
 it into a global clusterer. This global clusterer can be set by ``n_clusters``.
 If ``n_clusters`` is set to None, the subclusters from the leaves are directly
 read off, otherwise a global clustering step labels these subclusters into global
-clusters(labels) and the samples are mapped to the global label of the nearest subcluster.
+clusters (labels) and the samples are mapped to the global label of the nearest subcluster.
 
 **Algorithm description:**
 
@@ -829,7 +830,7 @@ clusters(labels) and the samples are mapped to the global label of the nearest s
 
 **Birch or MiniBatchKMeans?**
 
- - Birch does not scale very well to high dimensionsal data. As a rule of thumb if
+ - Birch does not scale very well to high dimensional data. As a rule of thumb if
    ``n_features`` is greater than twenty, it is generally better to use MiniBatchKMeans.
  - If the number of instances of data needs to be reduced, or if one wants a
    large number of subclusters either as a preprocessing step or otherwise,
@@ -859,6 +860,7 @@ the user is advised
  * Roberto Perdisci
    JBirch - Java implementation of BIRCH clustering algorithm
    https://code.google.com/p/jbirch/
+
 
 .. _clustering_evaluation:
 

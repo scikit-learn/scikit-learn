@@ -14,6 +14,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..externals import six
+from ..base import BaseEstimator
 from inspect import getargspec
 
 
@@ -26,7 +27,14 @@ warnings.simplefilter("always", DataConversionWarning)
 
 class NonBLASDotWarning(UserWarning):
     "A warning on implicit dispatch to numpy.dot"
-    pass
+
+
+class NotFittedError(ValueError, AttributeError):
+    """Exception class to raise if estimator is used before fitting
+
+    This class inherits from both ValueError and AttributeError to help with
+    exception handling and backward compatibility.
+    """
 
 
 # Silenced by default to reduce verbosity. Turn on at runtime for
@@ -67,6 +75,9 @@ def as_float_array(X, copy=True, force_all_finite=True):
     copy : bool, optional
         If True, a copy of X will be created. If False, a copy may still be
         returned if X's dtype is not a floating point type.
+
+    force_all_finite : boolean (default=True)
+        Whether to raise an error on np.inf and np.nan in X.
 
     Returns
     -------
@@ -110,7 +121,7 @@ def check_consistent_length(*arrays):
 
     Parameters
     ----------
-    arrays : list or tuple of input objects.
+    *arrays : list or tuple of input objects.
         Objects that will be checked for consistent length.
     """
 
@@ -129,7 +140,7 @@ def indexable(*iterables):
 
     Parameters
     ----------
-    iterables : lists, dataframes, arrays, sparse matrices
+    *iterables : lists, dataframes, arrays, sparse matrices
         List of objects to ensure sliceability.
     """
     result = []
@@ -278,7 +289,7 @@ def check_X_y(X, y, accept_sparse=None, dtype=None, order=None, copy=False,
 
     Checks X and y for consistent length, enforces X 2d and y 1d.
     Standard input checks are only applied to y. For multi-label y,
-    set multi_ouput=True to allow 2d and sparse y.
+    set multi_output=True to allow 2d and sparse y.
 
     Parameters
     ----------
@@ -342,6 +353,9 @@ def column_or_1d(y, warn=False):
     ----------
     y : array-like
 
+    warn : boolean, default False
+       To control display of warnings. 
+
     Returns
     -------
     y : array
@@ -394,10 +408,10 @@ def check_random_state(seed):
                      ' instance' % seed)
 
 def has_fit_parameter(estimator, parameter):
-    """ Checks whether the estimator's fit method supports the given parameter.
+    """Checks whether the estimator's fit method supports the given parameter.
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sklearn.svm import SVC
     >>> has_fit_parameter(SVC(), "sample_weight")
     True
@@ -459,3 +473,44 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
             array = 0.5 * (array + array.T)
 
     return array
+
+
+def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
+    """Perform is_fitted validation for estimator.
+
+    Checks if the estimator is fitted by verifying the presence of 
+    "all_or_any" of the passed attributes and raises a NotFittedError with the
+    given message.
+
+    Parameters
+    ----------
+    estimator : estimator instance.
+        estimator instance for which the check is performed.
+
+    attributes : attribute name(s) given as string or a list/tuple of strings
+        Eg. : ["coef_", "estimator_", ...], "coef_"
+
+    msg : string
+        The default error message is, "This %(name)s instance is not fitted
+        yet. Call 'fit' with appropriate arguments before using this method."
+
+        For custom messages if "%(name)s" is present in the message string,
+        it is substituted for the estimator name.
+
+        Eg. : "Estimator, %(name)s, must be fitted before sparsifying".
+
+    all_or_any : callable, {all, any}, default all
+        Specify whether all or any of the given attributes must exist.
+    """
+    if msg is None:
+        msg = ("This %(name)s instance is not fitted yet. Call 'fit' with "
+               "appropriate arguments before using this method.")
+
+    if not hasattr(estimator, 'fit'):
+        raise ValueError("%s is not an estimator instance." % (estimator))
+
+    if not isinstance(attributes, (list, tuple)):
+        attributes = [attributes]
+
+    if not all_or_any([hasattr(estimator, attr) for attr in attributes]):
+        raise NotFittedError(msg % {'name' : type(estimator).__name__})

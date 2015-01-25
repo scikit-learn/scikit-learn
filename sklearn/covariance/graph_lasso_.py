@@ -260,28 +260,31 @@ class GraphLasso(EmpiricalCovariance):
 
     Parameters
     ----------
-    alpha : positive float, optional
+    alpha : positive float, default 0.01
         The regularization parameter: the higher alpha, the more
         regularization, the sparser the inverse covariance.
 
-    cov_init : 2D array (n_features, n_features), optional
-        The initial guess for the covariance.
-
-    mode : {'cd', 'lars'}
+    mode : {'cd', 'lars'}, default 'cd'
         The Lasso solver to use: coordinate descent or LARS. Use LARS for
         very sparse underlying graphs, where p > n. Elsewhere prefer cd
         which is more numerically stable.
 
-    tol : positive float, optional
+    tol : positive float, default 1e-4
         The tolerance to declare convergence: if the dual gap goes below
         this value, iterations are stopped.
 
-    max_iter : integer, optional
+    max_iter : integer, default 100
         The maximum number of iterations.
 
-    verbose : boolean, optional
+    verbose : boolean, default False
         If verbose is True, the objective function and dual gap are
         plotted at each iteration.
+
+    assume_centered : boolean, default False
+        If True, data are not centered before computation.
+        Useful when working with data whose mean is almost, but not exactly
+        zero.
+        If False, data are centered before computation.
 
     Attributes
     ----------
@@ -450,6 +453,13 @@ class GraphLassoCV(GraphLasso):
     verbose: boolean, optional
         If verbose is True, the objective function and duality gap are
         printed at each iteration.
+
+    assume_centered : Boolean
+        If True, data are not centered before computation.
+        Useful when working with data whose mean is almost, but not exactly
+        zero.
+        If False, data are centered before computation.
+
 
     Attributes
     ----------

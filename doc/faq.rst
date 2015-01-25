@@ -31,6 +31,10 @@ No. As a rule we only add well-established algorithms. A rule of thumb is at lea
 technique that provides a clear-cut improvement (e.g. an enhanced  data
 structure or efficient approximation) on a widely-used method will also be
 considered for inclusion.
+Your implementation doesn't need to be in scikit-learn to be used together
+with scikit-learn tools, though. Implement your favorite algorithm
+in a scikit-learn compatible way, upload it to github and we will list
+it under :ref:`related_projects`.
 
 Can I add this classical algorithm from the 80s?
 ---------------------------------------------------
@@ -46,7 +50,7 @@ See :ref:`adding_graphical_models`.
 
 Will you add graphical models or sequence prediction to scikit-learn?
 ------------------------------------------------------------------------
-Not in the forseeable future. 
+Not in the foreseeable future. 
 scikit-learn tries to provide a unified API for the basic tasks in machine
 learning, with pipelines and meta-algorithms like grid search to tie
 everything together. The required concepts, APIs, algorithms and
