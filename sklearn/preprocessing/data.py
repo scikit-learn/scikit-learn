@@ -231,11 +231,20 @@ class MinMaxScaler(BaseScaler):
         self.scalefactor_ = data_range / (feature_range[1] - feature_range[0])
         self.center_ = data_min - feature_range[0] * self.scalefactor_
 
-        self.scale_ = (feature_range[1] - feature_range[0]) / data_range
-        self.min_ = feature_range[0] - data_min * self.scale_
-        self.data_range = data_range
-        self.data_min = data_min
+        # pre 0.17-
+        self._scale = (feature_range[1] - feature_range[0]) / data_range
+        self._min = feature_range[0] - data_min * self.scale_
         return self
+
+    @property
+    def min_(self):
+        check_is_fitted(self, 'center_')
+        return self._min
+
+    @property
+    def scale_(self):
+        check_is_fitted(self, 'scalefactor_')
+        return self._scale
 
 
 class StandardScaler(BaseScaler):
