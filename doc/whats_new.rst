@@ -272,6 +272,10 @@ Bug fixes
       :class:`cluster.AgglomerativeClustering` when using connectivity
       constraints. By `Cathy Deng`_
 
+    - Correct ``partial_fit`` handling of ``class_prior`` for
+      :class:`sklearn.naive_bayes.MultinomialNB` and
+      :class:`sklearn.naive_bayes.BernoulliNB`. By `Trevor Stephens`_.
+
 API changes summary
 -------------------
 
