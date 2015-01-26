@@ -276,6 +276,10 @@ Bug fixes
       :class:`sklearn.naive_bayes.MultinomialNB` and
       :class:`sklearn.naive_bayes.BernoulliNB`. By `Trevor Stephens`_.
 
+    - Fixed a crash in :func:`metrics.precision_recall_fscore_support`
+      when using unsorted ``labels`` in the multi-label setting.
+      By `Andreas Müller`_.
+
 API changes summary
 -------------------
 
