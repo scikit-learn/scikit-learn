@@ -1004,3 +1004,35 @@ def check_transformer_n_iter(name, estimator):
             assert_greater(iter_, 1)
     else:
         assert_greater(estimator.n_iter_, 1)
+
+
+@ignore_warnings
+def check_fit_reset(name, Estimator):
+    X1, y1 = make_blobs(n_samples=50, n_features=2, center_box=(-200, -150),
+                        centers=2, random_state=0)
+    X2, y2 = make_blobs(n_samples=100, n_features=3, center_box=(-1, 1),
+                        centers=1, random_state=1)
+    X3, y3 = make_blobs(n_samples=200, n_features=4, center_box=(-100, -50),
+                        centers=5, random_state=2)
+    X4, y4 = make_blobs(n_samples=150, n_features=5, center_box=(50, 100),
+                        centers=10, random_state=3)
+
+    estimator_1 = Estimator()
+    estimator_2 = Estimator()
+
+    set_fast_parameters(estimator_1)
+    set_fast_parameters(estimator_2)
+
+    set_random_state(estimator_1)
+    set_random_state(estimator_2)
+
+    _fit(estimator_1, X1, y1)
+    _fit(estimator_2, X3, y3)
+    assert_not_same_model(estimator_1, estimator_2)
+
+    _fit(estimator_2, X4, y4)
+    assert_not_same_model(estimator_1, estimator_2)
+
+    _fit(estimator_1, X2, y2)
+    _fit(estimator_2, X2, y2)
+    assert_same_model(estimator_1, estimator_2)
