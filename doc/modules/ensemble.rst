@@ -898,3 +898,89 @@ averaged.
  .. [HTF2009] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical Learning Ed. 2", Springer, 2009.
 
  .. [R2007] G. Ridgeway, "Generalized Boosted Models: A guide to the gbm package", 2007
+
+
+.. _ensemble_classifier:
+
+EnsembleClassifier
+========================
+
+Majority Rule Class Labels
+---------------------------
+
+
+The idea behind the ensemble classifier implementation is to combine conceptually different machine learning classifiers and use a majority vote rule to predict the class labels. Such a classifier can be useful for a set of equally well performing model in order to balance out their individual weaknesses.
+
+
+E.g., if the prediction for a sample is
+
+- classifier 1 -> class 1
+- classifier 2 -> class 1
+- classifier 3 -> class 2
+
+the ensemble classifier would classify the sample as "class 1" based on the majority class label.
+
+Usage
+..........................
+
+The following example shows how to fit the majority rule classifier:
+
+    >>> from sklearn import datasets
+    >>> from sklearn import cross_validation
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> from sklearn.naive_bayes import GaussianNB 
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> import numpy as np
+
+    >>> np.random.seed(123)
+
+    >>> iris = datasets.load_iris()
+    >>> X, y = iris.data[:, 1:3], iris.target
+
+    >>> clf1 = LogisticRegression()
+    >>> clf2 = RandomForestClassifier()
+    >>> clf3 = GaussianNB()
+
+    >>> eclf = EnsembleClassifier(clfs=[clf1, clf2, clf3], weights=[1,1,1])
+
+    >>> for clf, label in zip([clf1, clf2, clf3, eclf], ['Logistic Regression', 'Random Forest', 'naive Bayes', 'Ensemble']):
+        scores = cross_validation.cross_val_score(clf, X, y, cv=5, scoring='accuracy')
+        print("Accuracy: %0.2f (+/- %0.2f) [%s]" % (scores.mean(), scores.std(), label))
+
+::
+
+    Accuracy: 0.90 (+/- 0.05) [Logistic Regression]   
+    Accuracy: 0.92 (+/- 0.05) [Random Forest]  
+    Accuracy: 0.91 (+/- 0.04) [naive Bayes]  
+    Accuracy: 0.95 (+/- 0.03) [Ensemble]  
+
+
+Weighted Average Probabilities
+------------------------------
+
+
+Specific weights can be assigned to each classifier via the ``weights`` parameter. When weights are provided, the predicted class probabilities for each classifier are collected, multiplied by the classifier weight, and averaged. The final class label is then derived from the class label with the highest average probability.
+
+To illustrate this with a simple example, let's assume we have 3 classifiers and a 3-class classification problems where we assign equal weights to all classifiers: w1=1, w2=1, w3=1.
+
+The weighted average probabilities for a sample would then be calculated as follows:
+
+
+================  ==========    ==========      ==========
+classifier        class 1       class 2         class 3 
+================  ==========    ==========      ==========
+classifier 1	  w1 * 0.2      w1 * 0.5        w1 * 0.3
+classifier 2	  w2 * 0.6      w2 * 0.3        w2 * 0.1
+classifier 3      w3 * 0.3      w3 * 0.4        w3 * 0.3
+weighted average  0.37	        0.4             0.3
+================  ==========    ==========      ==========
+
+Here, the predicted class label is 2, since it has the highest average probability.
+
+Usage
+..........................
+
+In order to predict the class labels based on the predicted class-probabilities (scikit-learn estimators in the EnsembleClassifier must support ``predict_proba`` method), class weights can be provided as iterator to the ``weights`` parameter:
+
+    >>> eclf = EnsembleClassifier(clfs=[clf1, clf2, clf3], weights=[1,1,1])
+
