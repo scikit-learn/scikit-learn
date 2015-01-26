@@ -34,11 +34,10 @@ MAX_INT = np.iinfo(np.int32).max
 
 
 def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
-                               seeds, verbose):
+                               max_samples, seeds, verbose):
     """Private function used to build a batch of estimators within a job."""
     # Retrieve settings
     n_samples, n_features = X.shape
-    max_samples = ensemble.max_samples
     max_features = ensemble.max_features
 
     if (not isinstance(max_samples, (numbers.Integral, np.integer)) and
@@ -249,6 +248,35 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         self : object
             Returns self.
         """
+        return self._fit(X, y, self.max_samples, sample_weight)
+
+    def _fit(self, X, y, max_samples, sample_weight=None):
+        """Build a Bagging ensemble of estimators from the training
+           set (X, y).
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
+            The training input samples. Sparse matrices are accepted only if
+            they are supported by the base estimator.
+
+        y : array-like, shape = [n_samples]
+            The target values (class labels in classification, real numbers in
+            regression).
+
+        max_samples : int or float, optional (default=None)
+            Argument to use instead of self.max_samples.
+
+        sample_weight : array-like, shape = [n_samples] or None
+            Sample weights. If None, then samples are equally weighted.
+            Note that this is supported only if the base estimator supports
+            sample weighting.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
         random_state = check_random_state(self.random_state)
 
         # Convert data
@@ -261,9 +289,8 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         # Check parameters
         self._validate_estimator()
 
-        if isinstance(self.max_samples, (numbers.Integral, np.integer)):
-            max_samples = self.max_samples
-        else:  # float
+        # if max_samples is float:
+        if not isinstance(max_samples, (numbers.Integral, np.integer)):
             max_samples = int(self.max_samples * X.shape[0])
 
         if not (0 < max_samples <= X.shape[0]):
@@ -324,6 +351,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
                 X,
                 y,
                 sample_weight,
+                max_samples,
                 seeds[starts[i]:starts[i + 1]],
                 verbose=self.verbose)
             for i in range(n_jobs))

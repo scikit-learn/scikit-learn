@@ -221,6 +221,7 @@ Loaders
    datasets.fetch_olivetti_faces
    datasets.fetch_california_housing
    datasets.fetch_covtype
+   datasets.fetch_kddcup99
    datasets.fetch_rcv1
    datasets.load_mlcomp
    datasets.load_sample_image
@@ -351,6 +352,7 @@ Samples generator
    ensemble.ExtraTreesRegressor
    ensemble.GradientBoostingClassifier
    ensemble.GradientBoostingRegressor
+   ensemble.IsolationForest
    ensemble.RandomForestClassifier
    ensemble.RandomTreesEmbedding
    ensemble.RandomForestRegressor
