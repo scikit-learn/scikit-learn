@@ -13,6 +13,7 @@ import numpy as np
 from sklearn.gaussian_process import GaussianProcess
 from sklearn.gaussian_process import regression_models as regression
 from sklearn.gaussian_process import correlation_models as correlation
+from sklearn.datasets import make_regression
 from sklearn.utils.testing import assert_greater
 
 
@@ -71,8 +72,8 @@ def test_2d(regr=regression.constant, corr=correlation.squared_exponential,
 
     assert_true(np.allclose(y_pred, y) and np.allclose(MSE, 0.))
 
-    assert_true(np.all(gp.theta_ >= thetaL)) # Lower bounds of hyperparameters
-    assert_true(np.all(gp.theta_ <= thetaU)) # Upper bounds of hyperparameters
+    assert_true(np.all(gp.theta_ >= thetaL))  # Lower bounds of hyperparameters
+    assert_true(np.all(gp.theta_ <= thetaU))  # Upper bounds of hyperparameters
 
 
 def test_2d_2d(regr=regression.constant, corr=correlation.squared_exponential,
@@ -165,3 +166,19 @@ def test_random_starts():
         rlf = gp.reduced_likelihood_function()[0]
         assert_greater(rlf, best_likelihood - np.finfo(np.float32).eps)
         best_likelihood = rlf
+
+
+def test_mse_solving():
+    # test the MSE estimate to be sane.
+    # non-regression test for ignoring off-diagonals of feature covariance,
+    # testing with nugget that renders covariance useless, only
+    # using the mean function, with low effective rank of data
+    gp = GaussianProcess(corr='absolute_exponential', theta0=1e-4,
+                         thetaL=1e-12, thetaU=1e-2, nugget=1e-2,
+                         optimizer='Welch', regr="linear", random_state=0)
+
+    X, y = make_regression(n_informative=3, n_features=60, noise=50,
+                           random_state=0, effective_rank=1)
+
+    gp.fit(X, y)
+    assert_greater(1000, gp.predict(X, eval_MSE=True)[1].mean())
