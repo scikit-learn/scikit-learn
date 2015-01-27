@@ -91,8 +91,9 @@ def get_valid_metric_ids(L):
     >>> sorted(L)
     ['cityblock', 'euclidean', 'l1', 'l2', 'manhattan']
     """
-    return [key for (key, val) in METRIC_MAPPING.items()
-            if (val.__name__ in L) or (val in L)]
+    return [key for key in METRIC_MAPPING
+            if (METRIC_MAPPING[key].__name__ in L)
+                or (METRIC_MAPPING[key] in L)]
 
 
 ######################################################################
