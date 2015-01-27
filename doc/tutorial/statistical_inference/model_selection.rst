@@ -140,19 +140,19 @@ parameters to maximize the cross-validation score. This object takes an
 estimator during the construction and exposes an estimator API::
 
     >>> from sklearn.grid_search import GridSearchCV
-    >>> gammas = np.logspace(-6, -1, 10)
-    >>> clf = GridSearchCV(estimator=svc, param_grid=dict(gamma=gammas),
+    >>> Cs = np.logspace(-6, -1, 10)
+    >>> clf = GridSearchCV(estimator=svc, param_grid=dict(C=Cs),
     ...                    n_jobs=-1)
     >>> clf.fit(X_digits[:1000], y_digits[:1000])        # doctest: +ELLIPSIS
     GridSearchCV(cv=None,...
     >>> clf.best_score_                                  # doctest: +ELLIPSIS
-    0.924...
-    >>> clf.best_estimator_.gamma == 1e-6
-    True
+    0.925...
+    >>> clf.best_estimator_.C                            # doctest: +ELLIPSIS
+    0.0077...
 
     >>> # Prediction performance on test set is not as good as on train set
-    >>> clf.score(X_digits[1000:], y_digits[1000:])
-    0.94228356336260977
+    >>> clf.score(X_digits[1000:], y_digits[1000:])      # doctest: +ELLIPSIS
+    0.943...
 
 
 By default, the :class:`GridSearchCV` uses a 3-fold cross-validation. However,
@@ -165,7 +165,7 @@ a stratified 3-fold.
 
         >>> cross_validation.cross_val_score(clf, X_digits, y_digits)
         ...                                                  # doctest: +ELLIPSIS
-        array([ 0.935...,  0.958...,  0.937...])
+        array([ 0.938...,  0.963...,  0.944...])
 
     Two cross-validation loops are performed in parallel: one by the
     :class:`GridSearchCV` estimator to set ``gamma`` and the other one by
