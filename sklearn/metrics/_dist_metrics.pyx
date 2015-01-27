@@ -26,7 +26,7 @@ cdef inline np.ndarray _buffer_to_ndarray(const DTYPE_t* x, np.npy_intp n):
 
 
 from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
-cdef DTYPE_t INF = np.inf
+from numpy.math cimport INFINITY, isinf
 
 from scipy.sparse import csr_matrix, issparse
 from ..utils._typedefs cimport DTYPE_t, ITYPE_t, DTYPECODE
@@ -546,7 +546,7 @@ cdef class ChebyshevDistance(DistanceMetric):
            [6.928..., 0....   ]])
     """
     def __init__(self):
-        self.p = INF
+        self.p = INFINITY
 
     cdef inline DTYPE_t dist(self, const DTYPE_t* x1, const DTYPE_t* x2,
                              ITYPE_t size) nogil except -1:
