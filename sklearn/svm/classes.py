@@ -39,7 +39,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         optimization problem. Prefer dual=False when n_samples > n_features.
 
     tol : float, optional (default=1e-4)
-        Tolerance for stopping criteria
+        Tolerance for stopping criteria.
 
     multi_class: string, 'ovr' or 'crammer_singer' (default='ovr')
         Determines the multi-class strategy if `y` contains more than
@@ -58,7 +58,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         (e.g. data is expected to be already centered).
 
     intercept_scaling : float, optional (default=1)
-        when self.fit_intercept is True, instance vector x becomes
+        When self.fit_intercept is True, instance vector x becomes
         [x, self.intercept_scaling],
         i.e. a "synthetic" feature with constant value equals to
         intercept_scaling is appended to the instance vector.
@@ -226,7 +226,7 @@ class LinearSVR(LinearModel, RegressorMixin):
         optimization problem. Prefer dual=False when n_samples > n_features.
 
     tol : float, optional (default=1e-4)
-        Tolerance for stopping criteria
+        Tolerance for stopping criteria.
 
     fit_intercept : boolean, optional (default=True)
         Whether to calculate the intercept for this model. If set
@@ -234,7 +234,7 @@ class LinearSVR(LinearModel, RegressorMixin):
         (e.g. data is expected to be already centered).
 
     intercept_scaling : float, optional (default=1)
-        when self.fit_intercept is True, instance vector x becomes
+        When self.fit_intercept is True, instance vector x becomes
         [x, self.intercept_scaling],
         i.e. a "synthetic" feature with constant value equals to
         intercept_scaling is appended to the instance vector.
@@ -242,7 +242,7 @@ class LinearSVR(LinearModel, RegressorMixin):
         Note! the synthetic feature weight is subject to l1/l2 regularization
         as all other features.
         To lessen the effect of regularization on synthetic feature weight
-        (and therefore on the intercept) intercept_scaling has to be increased
+        (and therefore on the intercept) intercept_scaling has to be increased.
 
     verbose : int, (default=0)
         Enable verbose output. Note that this setting takes advantage of a
@@ -345,8 +345,8 @@ class SVC(BaseSVC):
     The multiclass support is handled according to a one-vs-one scheme.
 
     For details on the precise mathematical formulation of the provided
-    kernel functions and how `gamma`, `coef0` and `degree` affect each,
-    see the corresponding section in the narrative documentation:
+    kernel functions and how `gamma`, `coef0` and `degree` affect each
+    other, see the corresponding section in the narrative documentation:
     :ref:`svm_kernels`.
 
     .. The narrative documentation is available at http://scikit-learn.org/
@@ -386,7 +386,7 @@ class SVC(BaseSVC):
         Tolerance for stopping criterion.
 
     cache_size : float, optional
-        Specify the size of the kernel cache (in MB)
+        Specify the size of the kernel cache (in MB).
 
     class_weight : {dict, 'auto'}, optional
         Set the parameter C of class i to class_weight[i]*C for
@@ -410,13 +410,13 @@ class SVC(BaseSVC):
     Attributes
     ----------
     support_ : array-like, shape = [n_SV]
-        Index of support vectors.
+        Indices of support vectors.
 
     support_vectors_ : array-like, shape = [n_SV, n_features]
         Support vectors.
 
     n_support_ : array-like, dtype=int32, shape = [n_class]
-        number of support vector for each class.
+        Number of support vectors for each class.
 
     dual_coef_ : array, shape = [n_class-1, n_SV]
         Coefficients of the support vector in the decision function. \
@@ -430,7 +430,7 @@ class SVC(BaseSVC):
         problem). This is only available in the case of linear kernel.
 
         `coef_` is a readonly property derived from `dual_coef_` and
-        `support_vectors_`
+        `support_vectors_`.
 
     intercept_ : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
@@ -495,15 +495,15 @@ class NuSVC(BaseSVC):
          used to precompute the kernel matrix.
 
     degree : int, optional (default=3)
-        degree of kernel function
-        is significant only in poly, rbf, sigmoid
+        Degree of kernel function
+        is significant only in poly, rbf, sigmoid.
 
     gamma : float, optional (default=0.0)
-        kernel coefficient for rbf and poly, if gamma is 0.0 then 1/n_features
+        Kernel coefficient for rbf and poly, if gamma is 0.0 then 1/n_features
         will be taken.
 
     coef0 : float, optional (default=0.0)
-        independent term in kernel function. It is only significant
+        Independent term in kernel function. It is only significant
         in poly/sigmoid.
 
     probability: boolean, optional (default=False)
@@ -517,7 +517,7 @@ class NuSVC(BaseSVC):
         Tolerance for stopping criterion.
 
     cache_size : float, optional
-        Specify the size of the kernel cache (in MB)
+        Specify the size of the kernel cache (in MB).
 
     verbose : bool, default: False
         Enable verbose output. Note that this setting takes advantage of a
@@ -534,13 +534,13 @@ class NuSVC(BaseSVC):
     Attributes
     ----------
     support_ : array-like, shape = [n_SV]
-        Index of support vectors.
+        Indices of support vectors.
 
     support_vectors_ : array-like, shape = [n_SV, n_features]
         Support vectors.
 
     n_support_ : array-like, dtype=int32, shape = [n_class]
-        number of support vector for each class.
+        Number of support vector for each class.
 
     dual_coef_ : array, shape = [n_class-1, n_SV]
         Coefficients of the support vector in the decision function. \
@@ -554,7 +554,7 @@ class NuSVC(BaseSVC):
         problem). This is only available in the case of linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
-        `support_vectors_`
+        `support_vectors_`.
 
     intercept_ : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
@@ -594,7 +594,7 @@ class NuSVC(BaseSVC):
 
 
 class SVR(BaseLibSVM, RegressorMixin):
-    """epsilon-Support Vector Regression.
+    """Epsilon-Support Vector Regression.
 
     The free parameters in the model are C and epsilon.
 
@@ -603,10 +603,10 @@ class SVR(BaseLibSVM, RegressorMixin):
     Parameters
     ----------
     C : float, optional (default=1.0)
-        penalty parameter C of the error term.
+        Penalty parameter C of the error term.
 
     epsilon : float, optional (default=0.1)
-         epsilon in the epsilon-SVR model. It specifies the epsilon-tube
+         Epsilon in the epsilon-SVR model. It specifies the epsilon-tube
          within which no penalty is associated in the training loss function
          with points predicted within a distance epsilon from the actual
          value.
@@ -619,11 +619,11 @@ class SVR(BaseLibSVM, RegressorMixin):
          used to precompute the kernel matrix.
 
     degree : int, optional (default=3)
-        degree of kernel function
-        is significant only in poly, rbf, sigmoid
+        Degree of kernel function
+        is significant only in poly, rbf, sigmoid.
 
     gamma : float, optional (default=0.0)
-        kernel coefficient for rbf and poly, if gamma is 0.0 then 1/n_features
+        Kernel coefficient for rbf and poly, if gamma is 0.0 then 1/n_features
         will be taken.
 
     coef0 : float, optional (default=0.0)
@@ -637,7 +637,7 @@ class SVR(BaseLibSVM, RegressorMixin):
         Tolerance for stopping criterion.
 
     cache_size : float, optional
-        Specify the size of the kernel cache (in MB)
+        Specify the size of the kernel cache (in MB).
 
     verbose : bool, default: False
         Enable verbose output. Note that this setting takes advantage of a
@@ -650,7 +650,7 @@ class SVR(BaseLibSVM, RegressorMixin):
     Attributes
     ----------
     support_ : array-like, shape = [n_SV]
-        Index of support vectors.
+        Indices of support vectors.
 
     support_vectors_ : array-like, shape = [nSV, n_features]
         Support vectors.
@@ -663,7 +663,7 @@ class SVR(BaseLibSVM, RegressorMixin):
         problem). This is only available in the case of linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
-        `support_vectors_`
+        `support_vectors_`.
 
     intercept_ : array, shape = [1]
         Constants in decision function.
@@ -704,19 +704,19 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
     Similar to NuSVC, for regression, uses a parameter nu to control
     the number of support vectors. However, unlike NuSVC, where nu
-    replaces C, here nu replaces with the parameter epsilon of SVR.
+    replaces C, here nu replaces the parameter epsilon of epsilon-SVR.
 
     The implementation is based on libsvm.
 
     Parameters
     ----------
     C : float, optional (default=1.0)
-        penalty parameter C of the error term.
+        Penalty parameter C of the error term.
 
     nu : float, optional
         An upper bound on the fraction of training errors and a lower bound of
         the fraction of support vectors. Should be in the interval (0, 1].  By
-        default 0.5 will be taken.  Only available if impl='nu_svc'.
+        default 0.5 will be taken.
 
     kernel : string, optional (default='rbf')
          Specifies the kernel type to be used in the algorithm.
@@ -726,15 +726,15 @@ class NuSVR(BaseLibSVM, RegressorMixin):
          used to precompute the kernel matrix.
 
     degree : int, optional (default=3)
-        degree of kernel function
-        is significant only in poly, rbf, sigmoid
+        Degree of kernel function
+        is significant only in poly, rbf, sigmoid.
 
     gamma : float, optional (default=0.0)
-        kernel coefficient for rbf and poly, if gamma is 0.0 then 1/n_features
+        Kernel coefficient for rbf and poly, if gamma is 0.0 then 1/n_features
         will be taken.
 
     coef0 : float, optional (default=0.0)
-        independent term in kernel function. It is only significant
+        Independent term in kernel function. It is only significant
         in poly/sigmoid.
 
     shrinking: boolean, optional (default=True)
@@ -744,7 +744,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         Tolerance for stopping criterion.
 
     cache_size : float, optional
-        Specify the size of the kernel cache (in MB)
+        Specify the size of the kernel cache (in MB).
 
     verbose : bool, default: False
         Enable verbose output. Note that this setting takes advantage of a
@@ -757,7 +757,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     Attributes
     ----------
     support_ : array-like, shape = [n_SV]
-        Index of support vectors.
+        Indices of support vectors.
 
     support_vectors_ : array-like, shape = [nSV, n_features]
         Support vectors.
@@ -770,7 +770,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         problem). This is only available in the case of linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
-        `support_vectors_`
+        `support_vectors_`.
 
     intercept_ : array, shape = [1]
         Constants in decision function.
@@ -810,7 +810,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
 
 class OneClassSVM(BaseLibSVM):
-    """Unsupervised Outliers Detection.
+    """Unsupervised Outlier Detection.
 
     Estimate the support of a high-dimensional distribution.
 
@@ -850,7 +850,7 @@ class OneClassSVM(BaseLibSVM):
         Whether to use the shrinking heuristic.
 
     cache_size : float, optional
-        Specify the size of the kernel cache (in MB)
+        Specify the size of the kernel cache (in MB).
 
     verbose : bool, default: False
         Enable verbose output. Note that this setting takes advantage of a
@@ -867,13 +867,13 @@ class OneClassSVM(BaseLibSVM):
     Attributes
     ----------
     support_ : array-like, shape = [n_SV]
-        Index of support vectors.
+        Indices of support vectors.
 
     support_vectors_ : array-like, shape = [nSV, n_features]
         Support vectors.
 
     dual_coef_ : array, shape = [n_classes-1, n_SV]
-        Coefficient of the support vector in the decision function.
+        Coefficients of the support vectors in the decision function.
 
     coef_ : array, shape = [n_classes-1, n_features]
         Weights assigned to the features (coefficients in the primal
