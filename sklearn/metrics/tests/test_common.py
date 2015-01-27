@@ -1064,3 +1064,26 @@ def test_sample_weight_invariance(n_samples=50):
         else:
             yield (check_sample_weight_invariance, name, metric, y_true,
                    y_pred)
+
+
+def test_no_averaging_labels():
+    # test labels argument when not using averaging
+    # in multi-class and multi-label cases
+    y_true_multilabel = np.array([[1, 1, 0, 0], [1, 1, 0, 0]])
+    y_pred_multilabel = np.array([[0, 0, 1, 1], [0, 1, 1, 0]])
+    y_true_multiclass = np.array([1, 2, 3])
+    y_pred_multiclass = np.array([1, 3, 4])
+    labels = np.array([4, 1, 2, 3])
+    _, inverse_labels = np.unique(labels, return_inverse=True)
+
+    for name in METRICS_WITH_AVERAGING:
+        for y_true, y_pred in [[y_true_multiclass, y_pred_multiclass],
+                               [y_true_multilabel, y_pred_multilabel]]:
+            if name not in MULTILABELS_METRICS and y_pred.shape[1] > 0:
+                continue
+
+            metric = ALL_METRICS[name]
+
+            score_labels = metric(y_true, y_pred, labels=labels, average=None)
+            score = metric(y_true, y_pred, average=None)
+            assert_array_equal(score_labels, score[inverse_labels])

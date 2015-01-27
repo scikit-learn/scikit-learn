@@ -847,7 +847,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     if labels is None:
         labels = unique_labels(y_true, y_pred)
     else:
-        labels = np.asarray(labels)
+        labels = np.sort(labels)
 
     ### Calculate tp_sum, pred_sum, true_sum ###
 

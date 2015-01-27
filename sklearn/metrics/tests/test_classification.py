@@ -303,6 +303,20 @@ def test_precision_recall_f1_score_multiclass():
     assert_array_equal(s, [24, 20, 31])
 
 
+def test_precision_refcall_f1_score_multilabel_unordered_labels():
+    # test that labels need not be sorted in the multilabel case
+    y_true = np.array([[1, 1, 0, 0]])
+    y_pred = np.array([[0, 0, 1, 1]])
+    for average in ['samples', 'micro', 'macro', 'weighted', None]:
+        p, r, f, s = precision_recall_fscore_support(
+            y_true, y_pred, labels=[4, 1, 2, 3], warn_for=[], average=average)
+        assert_array_equal(p, 0)
+        assert_array_equal(r, 0)
+        assert_array_equal(f, 0)
+        if average is None:
+            assert_array_equal(s, [0, 1, 1, 0])
+
+
 def test_precision_recall_f1_score_multiclass_pos_label_none():
     """Test Precision Recall and F1 Score for multiclass classification task
 
