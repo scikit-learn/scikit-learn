@@ -9,7 +9,6 @@ from cython cimport final
 np.import_array()  # required in order to use C-API
 
 
-# First, define a function to get an ndarray from a memory buffer
 cdef extern from "arrayobject.h":
     object PyArray_SimpleNewFromData(int nd, np.npy_intp* dims,
                                      int typenum, void* data)

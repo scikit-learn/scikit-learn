@@ -659,8 +659,7 @@ cdef class NodeHeap:
         cdef NodeHeapData_t *new_data_ptr
         cdef ITYPE_t i
         cdef ITYPE_t size = self.data.shape[0]
-        cdef np.ndarray new_data_arr = np.zeros(new_size,
-                                                dtype=NodeHeapData)
+        cdef np.ndarray new_data_arr = np.zeros(new_size, dtype=NodeHeapData)
         cdef NodeHeapData_t[::1] new_data = new_data_arr
 
         if size > 0 and new_size > 0:
@@ -828,6 +827,7 @@ cdef class BinaryTree:
         self.data_arr = check_array(data, dtype=DTYPE, order='C')
         if self.data_arr.size == 0:
             raise ValueError("X is an empty array")
+        self.data = self.data_arr
 
         n_samples = self.data_arr.shape[0]
         n_features = self.data_arr.shape[1]
@@ -927,6 +927,12 @@ cdef class BinaryTree:
         self.idx_array_arr = state[1]
         self.node_data_arr = state[2]
         self.node_bounds_arr = state[3]
+
+        self.data = self.data_arr
+        self.idx_array = self.idx_array_arr
+        self.node_data = self.node_data_arr
+        self.node_bounds = self.node_bounds_arr
+
         self.leaf_size = state[4]
         self.n_levels = state[5]
         self.n_nodes = state[6]
