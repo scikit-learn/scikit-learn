@@ -18,6 +18,8 @@ VALID_METRICS = ['EuclideanDistance', 'ManhattanDistance',
 # Inherit KDTree from BinaryTree
 include "binary_tree.pxi"
 
+from numpy.math cimport isinf
+
 cdef class KDTree(BinaryTree):
     __doc__ = CLASS_DOC.format(**DOC_DICT)
     pass
@@ -57,8 +59,8 @@ cdef int init_node(BinaryTree tree, ITYPE_t i_node,
 
     # determine Node bounds
     for j in range(n_features):
-        lower_bounds[j] = INF
-        upper_bounds[j] = -INF
+        lower_bounds[j] = INFINITY
+        upper_bounds[j] = -INFINITY
 
     # Compute the actual data range.  At build time, this is slightly
     # slower than using the previously-computed bounds of the parent node,
@@ -68,7 +70,7 @@ cdef int init_node(BinaryTree tree, ITYPE_t i_node,
         for j in range(n_features):
             lower_bounds[j] = fmin(lower_bounds[j], data_row[j])
             upper_bounds[j] = fmax(upper_bounds[j], data_row[j])
-        if tree.dist_metric.p == INF:
+        if isinf(tree.dist_metric.p) == 1:
             rad = fmax(rad, 0.5 * (upper_bounds[j] - lower_bounds[j]))
         else:
             rad += pow(0.5 * abs(upper_bounds[j] - lower_bounds[j]),
@@ -90,7 +92,7 @@ cdef DTYPE_t min_rdist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt) except -1:
     cdef DTYPE_t d, d_lo, d_hi, rdist=0.0
     cdef ITYPE_t j
 
-    if tree.dist_metric.p == INF:
+    if isinf(tree.dist_metric.p) == 1:
         for j in range(n_features):
             d_lo = tree.node_bounds[0, i_node, j] - pt[j]
             d_hi = pt[j] - tree.node_bounds[1, i_node, j]
@@ -109,7 +111,7 @@ cdef DTYPE_t min_rdist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt) except -1:
 
 cdef DTYPE_t min_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt) except -1:
     """Compute the minimum distance between a point and a node"""
-    if tree.dist_metric.p == INF:
+    if isinf(tree.dist_metric.p) == 1:
         return min_rdist(tree, i_node, pt)
     else:
         return pow(min_rdist(tree, i_node, pt), 1. / tree.dist_metric.p)
@@ -123,7 +125,7 @@ cdef DTYPE_t max_rdist(BinaryTree tree,
     cdef DTYPE_t d, d_lo, d_hi, rdist=0.0
     cdef ITYPE_t j
 
-    if tree.dist_metric.p == INF:
+    if isinf(tree.dist_metric.p) == 1:
         for j in range(n_features):
             rdist = fmax(rdist, fabs(pt[j] - tree.node_bounds[0, i_node, j]))
             rdist = fmax(rdist, fabs(pt[j] - tree.node_bounds[1, i_node, j]))
@@ -138,7 +140,7 @@ cdef DTYPE_t max_rdist(BinaryTree tree,
 
 cdef DTYPE_t max_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt) except -1:
     """Compute the maximum distance between a point and a node"""
-    if tree.dist_metric.p == INF:
+    if isinf(tree.dist_metric.p) == 1:
         return max_rdist(tree, i_node, pt)
     else:
         return pow(max_rdist(tree, i_node, pt), 1. / tree.dist_metric.p)
@@ -155,7 +157,7 @@ cdef inline int min_max_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt,
     min_dist[0] = 0.0
     max_dist[0] = 0.0
 
-    if tree.dist_metric.p == INF:
+    if isinf(tree.dist_metric.p) == 1:
         for j in range(n_features):
             d_lo = tree.node_bounds[0, i_node, j] - pt[j]
             d_hi = pt[j] - tree.node_bounds[1, i_node, j]
@@ -190,7 +192,7 @@ cdef inline DTYPE_t min_rdist_dual(BinaryTree tree1, ITYPE_t i_node1,
     cdef DTYPE_t zero = 0.0
     cdef ITYPE_t j
 
-    if tree1.dist_metric.p == INF:
+    if isinf(tree1.dist_metric.p) == 1:
         for j in range(n_features):
             d1 = (tree1.node_bounds[0, i_node1, j]
                   - tree2.node_bounds[1, i_node2, j])
@@ -229,7 +231,7 @@ cdef inline DTYPE_t max_rdist_dual(BinaryTree tree1, ITYPE_t i_node1,
     cdef DTYPE_t zero = 0.0
     cdef ITYPE_t j
 
-    if tree1.dist_metric.p == INF:
+    if isinf(tree1.dist_metric.p) == 1:
         for j in range(n_features):
             rdist = fmax(rdist, fabs(tree1.node_bounds[0, i_node1, j]
                                      - tree2.node_bounds[1, i_node2, j]))

@@ -44,9 +44,8 @@ cdef inline np.ndarray _buffer_to_ndarray(DTYPE_t* x, np.npy_intp n):
     return PyArray_SimpleNewFromData(1, &n, DTYPECODE, <void*>x)
 
 
-# some handy constants
 from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
-cdef DTYPE_t INF = np.inf
+from numpy.math cimport INFINITY, isinf
 
 from typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, DTYPECODE
 from typedefs import DTYPE, ITYPE
@@ -497,7 +496,7 @@ cdef class ChebyshevDistance(DistanceMetric):
        D(x, y) = max_i (|x_i - y_i|)
     """
     def __init__(self):
-        self.p = INF
+        self.p = INFINITY
 
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:

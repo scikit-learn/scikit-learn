@@ -144,6 +144,7 @@
 cimport cython
 cimport numpy as np
 from libc.math cimport fabs, sqrt, exp, cos, pow, log
+from numpy.math cimport PI, INFINITY
 from sklearn.utils.lgamma cimport lgamma
 
 import numpy as np
@@ -157,9 +158,6 @@ from dist_metrics cimport (DistanceMetric, euclidean_dist, euclidean_rdist,
                            euclidean_dist_to_rdist, euclidean_rdist_to_dist)
 
 # some handy constants
-cdef DTYPE_t INF = np.inf
-cdef DTYPE_t NEG_INF = -np.inf
-cdef DTYPE_t PI = np.pi
 cdef DTYPE_t ROOT_2PI = sqrt(2 * PI)
 cdef DTYPE_t LOG_PI = log(PI)
 cdef DTYPE_t LOG_2PI = log(2 * PI)
@@ -359,15 +357,15 @@ Compute a two-point auto-correlation function
 cdef DTYPE_t logaddexp(DTYPE_t x1, DTYPE_t x2):
     """logaddexp(x1, x2) -> log(exp(x1) + exp(x2))"""
     cdef DTYPE_t a = fmax(x1, x2)
-    if a == NEG_INF:
-        return NEG_INF
+    if a == -INFINITY:
+        return -INFINITY
     else:
         return a + log(exp(x1 - a) + exp(x2 - a))
 
 cdef DTYPE_t logsubexp(DTYPE_t x1, DTYPE_t x2):
     """logsubexp(x1, x2) -> log(exp(x1) - exp(x2))"""
     if x1 <= x2:
-        return NEG_INF
+        return -INFINITY
     else:
         return x1 + log(1 - exp(x2 - x1))
 
@@ -401,7 +399,7 @@ cdef inline DTYPE_t log_tophat_kernel(DTYPE_t dist, DTYPE_t h):
     if dist < h:
         return 0.0
     else:
-        return NEG_INF
+        return -INFINITY
 
 
 cdef inline DTYPE_t log_epanechnikov_kernel(DTYPE_t dist, DTYPE_t h):
@@ -409,7 +407,7 @@ cdef inline DTYPE_t log_epanechnikov_kernel(DTYPE_t dist, DTYPE_t h):
     if dist < h:
         return log(1.0 - (dist * dist) / (h * h))
     else:
-        return NEG_INF
+        return -INFINITY
 
 
 cdef inline DTYPE_t log_exponential_kernel(DTYPE_t dist, DTYPE_t h):
@@ -422,7 +420,7 @@ cdef inline DTYPE_t log_linear_kernel(DTYPE_t dist, DTYPE_t h):
     if dist < h:
         return log(1 - dist / h)
     else:
-        return NEG_INF
+        return -INFINITY
 
 
 cdef inline DTYPE_t log_cosine_kernel(DTYPE_t dist, DTYPE_t h):
@@ -430,7 +428,7 @@ cdef inline DTYPE_t log_cosine_kernel(DTYPE_t dist, DTYPE_t h):
     if dist < h:
         return log(cos(0.5 * PI * dist / h))
     else:
-        return NEG_INF
+        return -INFINITY
 
 
 cdef inline DTYPE_t compute_log_kernel(DTYPE_t dist, DTYPE_t h,
