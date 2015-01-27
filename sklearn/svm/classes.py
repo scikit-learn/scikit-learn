@@ -410,7 +410,7 @@ class SVC(BaseSVC):
     Attributes
     ----------
     support_ : array-like, shape = [n_SV]
-        Index of support vectors.
+        Indeces of support vectors.
 
     support_vectors_ : array-like, shape = [n_SV, n_features]
         Support vectors.
@@ -534,7 +534,7 @@ class NuSVC(BaseSVC):
     Attributes
     ----------
     support_ : array-like, shape = [n_SV]
-        Index of support vectors.
+        Indeces of support vectors.
 
     support_vectors_ : array-like, shape = [n_SV, n_features]
         Support vectors.
@@ -650,7 +650,7 @@ class SVR(BaseLibSVM, RegressorMixin):
     Attributes
     ----------
     support_ : array-like, shape = [n_SV]
-        Index of support vectors.
+        Indeces of support vectors.
 
     support_vectors_ : array-like, shape = [nSV, n_features]
         Support vectors.
@@ -757,7 +757,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     Attributes
     ----------
     support_ : array-like, shape = [n_SV]
-        Index of support vectors.
+        Indeces of support vectors.
 
     support_vectors_ : array-like, shape = [nSV, n_features]
         Support vectors.
@@ -867,7 +867,7 @@ class OneClassSVM(BaseLibSVM):
     Attributes
     ----------
     support_ : array-like, shape = [n_SV]
-        Indexes of support vectors.
+        Indeces of support vectors.
 
     support_vectors_ : array-like, shape = [nSV, n_features]
         Support vectors.
