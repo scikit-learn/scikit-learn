@@ -366,6 +366,9 @@ class TSNE(BaseEstimator):
     training_data_ : array-like, shape (n_samples, n_features)
         Stores the training data.
 
+    kl_divergence_ : float
+        Kullback-Leibler divergence after optimization.
+
     Examples
     --------
 
@@ -435,7 +438,8 @@ class TSNE(BaseEstimator):
                 print("[t-SNE] Computing pairwise distances...")
 
             if self.metric == "euclidean":
-                distances = pairwise_distances(X, metric=self.metric, squared=True)
+                distances = pairwise_distances(X, metric=self.metric,
+                                               squared=True)
             else:
                 distances = pairwise_distances(X, metric=self.metric)
 
@@ -479,31 +483,33 @@ class TSNE(BaseEstimator):
 
         # Early exaggeration
         P *= self.early_exaggeration
-        params, error, it = _gradient_descent(
+        params, kl_divergence, it = _gradient_descent(
             _kl_divergence, params, it=0, n_iter=50, momentum=0.5,
             min_grad_norm=0.0, min_error_diff=0.0,
             learning_rate=self.learning_rate, verbose=self.verbose,
             args=[P, alpha, n_samples, self.n_components])
-        params, error, it = _gradient_descent(
+        params, kl_divergence, it = _gradient_descent(
             _kl_divergence, params, it=it + 1, n_iter=100, momentum=0.8,
             min_grad_norm=0.0, min_error_diff=0.0,
             learning_rate=self.learning_rate, verbose=self.verbose,
             args=[P, alpha, n_samples, self.n_components])
         if self.verbose:
-            print("[t-SNE] Error after %d iterations with early "
-                  "exaggeration: %f" % (it + 1, error))
+            print("[t-SNE] KL divergence after %d iterations with early "
+                  "exaggeration: %f" % (it + 1, kl_divergence))
 
         # Final optimization
         P /= self.early_exaggeration
-        params, error, it = _gradient_descent(
+        params, kl_divergence, it = _gradient_descent(
             _kl_divergence, params, it=it + 1, n_iter=self.n_iter,
             momentum=0.8, learning_rate=self.learning_rate,
             verbose=self.verbose, args=[P, alpha, n_samples,
                                         self.n_components])
         if self.verbose:
-            print("[t-SNE] Error after %d iterations: %f" % (it + 1, error))
+            print("[t-SNE] Error after %d iterations: %f"
+                  % (it + 1, kl_divergence))
 
         X_embedded = params.reshape(n_samples, self.n_components)
+        self.kl_divergence_ = kl_divergence
 
         return X_embedded
 
