@@ -745,7 +745,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         The strength of recall versus precision in the F-score.
 
     labels : array
-        Integer array of labels.
+        Sorted array of labels.
 
     pos_label : str or int, 1 by default
         If ``average`` is not ``None`` and the classification target is binary,
