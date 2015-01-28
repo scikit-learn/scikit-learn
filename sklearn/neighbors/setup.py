@@ -27,9 +27,4 @@ def configuration(parent_package='', top_path=None):
                                                     'numpy')],
                          libraries=libraries)
 
-    config.add_extension('typedefs',
-                         sources=['typedefs.c'],
-                         include_dirs=[numpy.get_include()],
-                         libraries=libraries)
-
     return config

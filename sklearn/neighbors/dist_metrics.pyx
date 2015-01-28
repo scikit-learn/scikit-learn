@@ -42,8 +42,7 @@ cdef inline np.ndarray _buffer_to_ndarray(DTYPE_t* x, np.npy_intp n):
 from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
 from numpy.math cimport INFINITY, isinf
 
-from typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, DTYPECODE
-from typedefs import DTYPE, ITYPE
+include "typedefs.pxi"
 
 
 ######################################################################

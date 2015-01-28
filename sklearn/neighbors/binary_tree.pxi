@@ -152,7 +152,7 @@ import warnings
 from ..utils import check_array
 
 from typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
-from typedefs import DTYPE, ITYPE
+include "typedefs.pxi"
 
 from dist_metrics cimport (DistanceMetric, euclidean_dist, euclidean_rdist,
                            euclidean_dist_to_rdist, euclidean_rdist_to_dist)

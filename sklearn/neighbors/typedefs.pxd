@@ -1,5 +1,6 @@
 #!python
 cimport numpy as np
+import numpy as np
 
 # Floating point/data type
 ctypedef np.float64_t DTYPE_t  # WARNING: should match DTYPE in typedefs.pyx
