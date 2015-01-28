@@ -201,6 +201,19 @@ def test_radius_neighbors():
     assert_true(np.all(np.less_equal(np.sort(distances_exact[0]),
                                      np.sort(distances_approx[0]))))
 
+    # Check that boundary handling is consistent with NearestNeighbors
+    X_train = np.array([[5.0, 5.0, 2.0], [21.0, 5.0, 5.0], [1.0, 1.0, 1.0]])
+
+    lshf = LSHForest(min_hash_match=0, n_candidates=6).fit(X_train)
+    nbrs = NearestNeighbors(algorithm='brute', metric='cosine').fit(X_train)
+
+    ind_approx = lshf.radius_neighbors([0.0, 0.0, 0.0], radius=1, return_distance=False)
+    ind_exact = nbrs.radius_neighbors([0.0, 0.0, 0.0], radius=1,  return_distance=False)
+    assert_array_equal(np.sort(ind_approx[0]), ind_exact[0])
+
+    ind_approx = lshf.radius_neighbors([0.0, 0.0, 0.0], radius=0.99, return_distance=False)
+    ind_exact = nbrs.radius_neighbors([0.0, 0.0, 0.0], radius=0.99,  return_distance=False)
+    assert_array_equal(np.sort(ind_approx[0]), ind_exact[0])
 
 def test_distances():
     """Checks whether returned neighbors are from closest to farthest."""
