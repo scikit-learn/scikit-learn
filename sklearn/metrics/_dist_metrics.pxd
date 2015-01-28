@@ -46,6 +46,8 @@ cdef class DistanceMetric:
     cdef DTYPE_t p
     cdef DTYPE_t[::1] vec
     cdef DTYPE_t[:, ::1] mat
+    cdef DTYPE_t* vec_ptr
+    cdef DTYPE_t* mat_ptr
     cdef ITYPE_t size
     cdef object func
     cdef object kwargs
