@@ -280,6 +280,11 @@ Bug fixes
       when using unsorted ``labels`` in the multi-label setting.
       By `Andreas Müller`_.
 
+    - Avoid skipping the first nearest neighbor in the methods ``radius_neighbors``,
+      ``kneighbors``, ``kneighbors_graph`` and ``radius_neighbors_graph`` in
+      :class:`sklearn.neighbors.NearestNeighbors` and family, when the query
+      data is not the same as fit data. By `Manoj Kumar`_.
+
 API changes summary
 -------------------
 
@@ -341,6 +346,17 @@ API changes summary
     - Input data validation was refactored for more consistent input
       validation. The ``check_arrays`` function was replaced by ``check_array``
       and ``check_X_y``. By `Andreas Müller`_.
+
+    - Allow ``X=None`` in the methods ``radius_neighbors``, ``kneighbors``,
+      ``kneighbors_graph`` and ``radius_neighbors_graph`` in
+      :class:`sklearn.neighbors.NearestNeighbors` and family. If set to None,
+      then for every sample this avoids setting the sample itself as the
+      first nearest neighbor. By `Manoj Kumar`_.
+
+    - Add parameter ``include_self`` in :func:`neighbors.kneighbors_graph`
+      and :func:`neighbors.radius_neighbors_graph` which has to be explicitly
+      set by the user. If set to True, then the sample itself is considered
+      as the first nearest neighbor.
 
 .. _changes_0_15_2:
 
