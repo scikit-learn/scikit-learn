@@ -11,6 +11,13 @@ def configuration(parent_package="", top_path=None):
         libraries.append("m")
 
     config.add_extension(
+        "_binary_tree",
+        sources=["_binary_tree.pyx"],
+        include_dirs=[numpy.get_include()],
+        libraries=libraries,
+    )
+
+    config.add_extension(
         "_ball_tree",
         sources=["_ball_tree.pyx"],
         include_dirs=[numpy.get_include()],

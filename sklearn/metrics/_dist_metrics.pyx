@@ -2,9 +2,17 @@
 # written for the scikit-learn project
 # License: BSD
 
+from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
 import numpy as np
 cimport numpy as np
 from cython cimport final
+from numpy.math cimport INFINITY
+from ..utils._typedefs cimport DTYPE_t, ITYPE_t, DTYPECODE
+
+from scipy.sparse import issparse
+from ..utils._typedefs import DTYPE, ITYPE
+from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
+from ..utils import check_array
 
 np.import_array()  # required in order to use C-API
 
@@ -24,14 +32,6 @@ cdef inline np.ndarray _buffer_to_ndarray(const DTYPE_t* x, np.npy_intp n):
     return PyArray_SimpleNewFromData(1, &n, DTYPECODE, <void*>x)
 
 
-from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
-from numpy.math cimport INFINITY, isinf
-
-from scipy.sparse import csr_matrix, issparse
-from ..utils._typedefs cimport DTYPE_t, ITYPE_t, DTYPECODE
-from ..utils._typedefs import DTYPE, ITYPE
-from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
-from ..utils import check_array
 
 ######################################################################
 # newObj function
@@ -81,7 +81,7 @@ BOOL_METRICS = [
     "sokalsneath",
 ]
 
-def get_valid_metric_ids(L):
+cdef list get_valid_metric_ids(list L):
     """Given an iterable of metric class names or class identifiers,
     return a list of metric IDs which map to those classes.
 

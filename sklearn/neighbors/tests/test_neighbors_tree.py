@@ -7,23 +7,16 @@ import numpy as np
 import pytest
 
 from sklearn.metrics import DistanceMetric
-from sklearn.neighbors._ball_tree import (
-    BallTree,
+from sklearn.neighbors._binary_tree import (
     kernel_norm,
-    DTYPE,
-    ITYPE,
-    NeighborsHeap as NeighborsHeapBT,
-    simultaneous_sort as simultaneous_sort_bt,
-    nodeheap_sort as nodeheap_sort_bt,
+    NeighborsHeap,
+    simultaneous_sort,
+    nodeheap_sort,
 )
-from sklearn.neighbors._kd_tree import (
-    KDTree,
-    NeighborsHeap as NeighborsHeapKDT,
-    simultaneous_sort as simultaneous_sort_kdt,
-    nodeheap_sort as nodeheap_sort_kdt,
-)
+from sklearn.neighbors import BallTree, KDTree
 
 from sklearn.utils import check_random_state
+from sklearn.utils._typedefs import DTYPE, ITYPE
 from numpy.testing import assert_array_almost_equal, assert_allclose
 
 rng = np.random.RandomState(42)
@@ -157,8 +150,7 @@ def test_neighbor_tree_two_point(Cls, dualtree, n_samples=100, n_features=3):
     assert_array_almost_equal(counts, counts_true)
 
 
-@pytest.mark.parametrize("NeighborsHeap", [NeighborsHeapBT, NeighborsHeapKDT])
-def test_neighbors_heap(NeighborsHeap, n_pts=5, n_nbrs=10):
+def test_neighbors_heap(n_pts=5, n_nbrs=10):
     heap = NeighborsHeap(n_pts, n_nbrs)
     rng = check_random_state(0)
 
@@ -178,8 +170,7 @@ def test_neighbors_heap(NeighborsHeap, n_pts=5, n_nbrs=10):
         assert_array_almost_equal(i_in[:n_nbrs], i_heap[row])
 
 
-@pytest.mark.parametrize("nodeheap_sort", [nodeheap_sort_bt, nodeheap_sort_kdt])
-def test_node_heap(nodeheap_sort, n_nodes=50):
+def test_node_heap(n_nodes=50):
     rng = check_random_state(0)
     vals = rng.random_sample(n_nodes).astype(DTYPE, copy=False)
 
@@ -190,10 +181,7 @@ def test_node_heap(nodeheap_sort, n_nodes=50):
     assert_array_almost_equal(vals[i1], vals2)
 
 
-@pytest.mark.parametrize(
-    "simultaneous_sort", [simultaneous_sort_bt, simultaneous_sort_kdt]
-)
-def test_simultaneous_sort(simultaneous_sort, n_rows=10, n_pts=201):
+def test_simultaneous_sort(n_rows=10, n_pts=201):
     rng = check_random_state(0)
     dist = rng.random_sample((n_rows, n_pts)).astype(DTYPE, copy=False)
     ind = (np.arange(n_pts) + np.zeros((n_rows, 1))).astype(ITYPE, copy=False)
