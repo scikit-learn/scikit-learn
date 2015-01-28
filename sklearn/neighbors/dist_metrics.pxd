@@ -10,6 +10,8 @@ from libc.math cimport fabs, sqrt, exp, cos, pow
 from typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
 include "typedefs.pxi"
 
+cdef public list get_valid_metric_ids(list)
+
 ######################################################################
 # Inline distance functions
 #

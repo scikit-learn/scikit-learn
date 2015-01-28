@@ -7,8 +7,14 @@
 # written for the scikit-learn project
 # License: BSD
 
+from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
 import numpy as np
 cimport numpy as np
+from numpy.math cimport INFINITY, isinf
+
+from typedefs cimport DTYPECODE
+include "typedefs.pxi"
+
 np.import_array()  # required in order to use C-API
 
 
@@ -38,11 +44,6 @@ cdef inline np.ndarray _buffer_to_ndarray(DTYPE_t* x, np.npy_intp n):
     # Note: this Segfaults unless np.import_array() is called above
     return PyArray_SimpleNewFromData(1, &n, DTYPECODE, <void*>x)
 
-
-from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
-from numpy.math cimport INFINITY, isinf
-
-include "typedefs.pxi"
 
 
 ######################################################################
@@ -82,7 +83,7 @@ METRIC_MAPPING = {'euclidean': EuclideanDistance,
                   'pyfunc': PyFuncDistance}
 
 
-def get_valid_metric_ids(L):
+cdef public list get_valid_metric_ids(list L):
     """Given an iterable of metric class names or class identifiers,
     return a list of metric IDs which map to those classes.
 
