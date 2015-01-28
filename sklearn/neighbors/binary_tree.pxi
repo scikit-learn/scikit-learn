@@ -474,23 +474,15 @@ def kernel_norm(h, d, kernel, return_log=False):
 
 ######################################################################
 # Tree Utility Routines
-cdef inline void swap(DITYPE_t* arr, ITYPE_t i1, ITYPE_t i2):
+cdef inline void swap(DITYPE_t* arr, ITYPE_t i, ITYPE_t j):
     """swap the values at index i1 and i2 of arr"""
-    cdef DITYPE_t tmp = arr[i1]
-    arr[i1] = arr[i2]
-    arr[i2] = tmp
+    arr[i], arr[j] = arr[j], arr[i]
 
 
-cdef inline void dual_swap(DTYPE_t* darr, ITYPE_t* iarr,
-                           ITYPE_t i1, ITYPE_t i2):
+cdef inline void dual_swap(DTYPE_t* darr, ITYPE_t* iarr, ITYPE_t i, ITYPE_t j):
     """swap the values at inex i1 and i2 of both darr and iarr"""
-    cdef DTYPE_t dtmp = darr[i1]
-    darr[i1] = darr[i2]
-    darr[i2] = dtmp
-
-    cdef ITYPE_t itmp = iarr[i1]
-    iarr[i1] = iarr[i2]
-    iarr[i2] = itmp
+    darr[i], darr[j] = darr[j], darr[i]
+    iarr[i], iarr[j] = iarr[j], iarr[i]
 
 
 cdef class NeighborsHeap:
