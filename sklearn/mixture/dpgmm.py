@@ -148,12 +148,12 @@ class DPGMM(GMM):
     n_iter : int, default 10
         Maximum number of iterations to perform before convergence.
 
-    params : string, default 'wmc' 
+    params : string, default 'wmc'
         Controls which parameters are updated in the training
         process.  Can contain any combination of 'w' for weights,
         'm' for means, and 'c' for covars.
 
-    init_params : string, default 'wmc' 
+    init_params : string, default 'wmc'
         Controls which parameters are updated in the initialization
         process.  Can contain any combination of 'w' for weights,
         'm' for means, and 'c' for covars.  Defaults to 'wmc'.
@@ -283,7 +283,7 @@ class DPGMM(GMM):
         self.gamma_.T[1] = 1. + sz
         self.gamma_.T[2].fill(0)
         for i in range(self.n_components - 2, -1, -1):
-            self.gamma_[i, 2] = self.gamma_[i + 1, 2] + sz[i]
+            self.gamma_[i, 2] = self.gamma_[i + 1, 2] + sz[i + 1]
         self.gamma_.T[2] += self.alpha
 
     def _update_means(self, X, z):
@@ -461,7 +461,7 @@ class DPGMM(GMM):
     def lower_bound(self, X, z):
         """returns a lower bound on model evidence based on X and membership"""
         check_is_fitted(self, 'means_')
-        
+
         if self.covariance_type not in ['full', 'tied', 'diag', 'spherical']:
             raise NotImplementedError("This ctype is not implemented: %s"
                                       % self.covariance_type)
