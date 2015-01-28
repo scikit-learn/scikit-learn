@@ -815,7 +815,8 @@ cdef class NodeHeap:
 
     cdef int resize(self, ITYPE_t new_size) except -1:
         """Resize the heap to be either larger or smaller"""
-        cdef NodeHeapData_t *data_ptr, *new_data_ptr
+        cdef NodeHeapData_t *data_ptr
+        cdef NodeHeapData_t *new_data_ptr
         cdef ITYPE_t i
         cdef ITYPE_t size = self.data.shape[0]
         cdef np.ndarray new_data_arr = np.zeros(new_size, dtype=NodeHeapData)
