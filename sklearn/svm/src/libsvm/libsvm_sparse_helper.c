@@ -265,6 +265,27 @@ int csr_copy_predict (npy_intp *data_size, char *data, npy_intp *index_size,
     return 0;
 }
 
+int csr_copy_predict_values (npy_intp *data_size, char *data, npy_intp *index_size,
+                char *index, npy_intp *intptr_size, char *intptr, struct svm_csr_model *model,
+                char *dec_values) {
+    struct svm_csr_node **predict_nodes;
+    npy_intp i;
+    int m = model->nr_class;
+
+    predict_nodes = csr_to_libsvm((double *) data, (int *) index,
+                                  (int *) intptr, intptr_size[0]-1);
+
+    if (predict_nodes == NULL)
+        return -1;
+    for(i=0; i < intptr_size[0] - 1; ++i) {
+        svm_csr_predict_values(model, predict_nodes[i],
+                               ((double *) dec_values) + i*m);
+        free(predict_nodes[i]);
+    }
+    free(predict_nodes);
+
+    return 0;
+}
 
 int csr_copy_predict_proba (npy_intp *data_size, char *data, npy_intp *index_size,
 		char *index, npy_intp *intptr_size, char *intptr, struct svm_csr_model *model,

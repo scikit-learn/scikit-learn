@@ -73,6 +73,16 @@ def test_svc():
                               sp_clf.predict_proba(T2), 4)
 
 
+def test_kernels():
+    kernels = ["poly", "rbf", "sigmoid"]
+    for target in [iris.target % 2, iris.target]:
+        for k in kernels:
+            sp_clf = svm.SVC(kernel=k).fit(iris.data, target)
+            clf = svm.SVC(kernel=k).fit(iris.data.todense(), target)
+            assert_array_almost_equal(clf.decision_function(iris.data.todense()),
+                                      sp_clf.decision_function(iris.data))
+
+
 def test_unsorted_indices():
     # test that the result with sorted and unsorted indices in csr is the same
     # we use a subset of digits as iris, blobs or make_classification didn't
@@ -126,6 +136,33 @@ def test_svc_iris():
             clf.predict(iris.data.toarray()), sp_clf.predict(iris.data))
         if k == 'linear':
             assert_array_almost_equal(clf.coef_, sp_clf.coef_.toarray())
+
+
+def test_sparse_decision_function():
+    """
+    Test decision_function
+
+    Sanity check, test that decision_function implemented in python
+    returns the same as the one in libsvm
+
+    """
+    # multi class:
+    clf = svm.SVC(kernel='linear', C=0.1).fit(iris.data, iris.target)
+
+    dec = safe_sparse_dot(iris.data, clf.coef_.T) + clf.intercept_
+
+    assert_array_almost_equal(dec, clf.decision_function(iris.data))
+
+    # binary:
+    clf.fit(X, Y)
+    dec = np.dot(X, clf.coef_.T) + clf.intercept_
+    prediction = clf.predict(X)
+    assert_array_almost_equal(dec, clf.decision_function(X))
+    assert_array_almost_equal(
+        prediction,
+        clf.classes_[(clf.decision_function(X) > 0).astype(np.int).ravel()])
+    expected = np.array([[-1.], [-0.66], [-1.], [0.66], [1.], [1.]])
+    assert_array_almost_equal(clf.decision_function(X), expected, 2)
 
 
 def test_error():
