@@ -248,15 +248,17 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
 class KNeighborsMixin(object):
     """Mixin for k-neighbors searches"""
 
-    def kneighbors(self, X, n_neighbors=None, return_distance=True):
+    def kneighbors(self, X=None, n_neighbors=None, return_distance=True):
         """Finds the K-neighbors of a point.
 
         Returns distance
 
         Parameters
         ----------
-        X : array-like, last dimension same as that of fit data
-            The new point.
+        X : array-like, last dimension same as that of fit data, optional
+            The query point or points.
+            If not provided, neighbors of each indexed point are returned.
+            In this case, the query point is not considered its own neighbor.
 
         n_neighbors : int
             Number of neighbors to get (default is the value
@@ -301,10 +303,27 @@ class KNeighborsMixin(object):
         if self._fit_method is None:
             raise NotFittedError("Must fit neighbors before querying.")
 
-        X = check_array(X, accept_sparse='csr')
-
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
+
+        if X is not None:
+            query_is_train = False
+            X = check_array(X, accept_sparse='csr')
+        else:
+            query_is_train = True
+            X = self._fit_X
+            # Include an extra neighbor to account for the sample itself being
+            # returned, which is removed later
+            n_neighbors += 1
+
+        train_size = self._fit_X.shape[0]
+        if n_neighbors > train_size:
+            raise ValueError(
+                "Expected n_neighbors <= %d. Got %d" %
+                (train_size, n_neighbors)
+            )
+        n_samples, _ = X.shape
+        sample_range = np.arange(n_samples)[:, None]
 
         if self._fit_method == 'brute':
             # for efficiency, use squared euclidean distances
@@ -319,15 +338,17 @@ class KNeighborsMixin(object):
             neigh_ind = argpartition(dist, n_neighbors - 1, axis=1)
             neigh_ind = neigh_ind[:, :n_neighbors]
             # argpartition doesn't guarantee sorted order, so we sort again
-            j = np.arange(neigh_ind.shape[0])[:, None]
-            neigh_ind = neigh_ind[j, np.argsort(dist[j, neigh_ind])]
+            neigh_ind = neigh_ind[
+                sample_range, np.argsort(dist[sample_range, neigh_ind])]
+
             if return_distance:
                 if self.effective_metric_ == 'euclidean':
-                    return np.sqrt(dist[j, neigh_ind]), neigh_ind
+                    result = np.sqrt(dist[sample_range, neigh_ind]), neigh_ind
                 else:
-                    return dist[j, neigh_ind], neigh_ind
+                    result = dist[sample_range, neigh_ind], neigh_ind
             else:
-                return neigh_ind
+                result = neigh_ind
+
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
                 raise ValueError(
@@ -335,18 +356,49 @@ class KNeighborsMixin(object):
                     "or set algorithm='brute'" % self._fit_method)
             result = self._tree.query(X, n_neighbors,
                                       return_distance=return_distance)
-            return result
         else:
             raise ValueError("internal: _fit_method not recognized")
 
-    def kneighbors_graph(self, X, n_neighbors=None,
+        if not query_is_train:
+            return result
+
+        else:
+            # If the query data is the same as the indexed data, we would like
+            # to ignore the first nearest neighbor of every sample, i.e
+            # the sample itself.
+            if return_distance:
+                dist, neigh_ind = result
+            else:
+                neigh_ind = result
+
+            sample_mask = neigh_ind != sample_range
+
+            # Corner case: When the number of duplicates are more
+            # than the number of neighbors, the first NN will not
+            # be the sample, but a duplicate.
+            # In that case mask the first duplicate.
+            dup_gr_nbrs = np.all(sample_mask, axis=1)
+            sample_mask[:, 0][dup_gr_nbrs] = False
+
+            neigh_ind = np.reshape(
+                neigh_ind[sample_mask], (n_samples, n_neighbors - 1))
+
+            if return_distance:
+                dist = np.reshape(
+                    dist[sample_mask], (n_samples, n_neighbors - 1))
+                return dist, neigh_ind
+            return neigh_ind
+
+    def kneighbors_graph(self, X=None, n_neighbors=None,
                          mode='connectivity'):
         """Computes the (weighted) graph of k-Neighbors for points in X
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Sample data
+        X : array-like, last dimension same as that of fit data, optional
+            The query point or points.
+            If not provided, neighbors of each indexed point are returned.
+            In this case, the query point is not considered its own neighbor.
 
         n_neighbors : int
             Number of neighbors for each sample.
@@ -380,47 +432,55 @@ class KNeighborsMixin(object):
         --------
         NearestNeighbors.radius_neighbors_graph
         """
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
-
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
 
-        n_samples1 = X.shape[0]
+        # kneighbors does the None handling.
+        if X is not None:
+            X = check_array(X, accept_sparse='csr')
+            n_samples1 = X.shape[0]
+        else:
+            n_samples1 = self._fit_X.shape[0]
+
         n_samples2 = self._fit_X.shape[0]
         n_nonzero = n_samples1 * n_neighbors
         A_indptr = np.arange(0, n_nonzero + 1, n_neighbors)
 
         # construct CSR matrix representation of the k-NN graph
         if mode == 'connectivity':
-            A_data = np.ones((n_samples1, n_neighbors))
+            A_data = np.ones(n_samples1 * n_neighbors)
             A_ind = self.kneighbors(X, n_neighbors, return_distance=False)
 
         elif mode == 'distance':
-            data, ind = self.kneighbors(X, n_neighbors + 1,
-                                        return_distance=True)
-            A_data, A_ind = data[:, 1:], ind[:, 1:]
+            A_data, A_ind = self.kneighbors(
+                X, n_neighbors, return_distance=True)
+            A_data = np.ravel(A_data)
 
         else:
             raise ValueError(
                 'Unsupported mode, must be one of "connectivity" '
                 'or "distance" but got "%s" instead' % mode)
 
-        return csr_matrix((A_data.ravel(), A_ind.ravel(), A_indptr),
-                          shape=(n_samples1, n_samples2))
+        kneighbors_graph = csr_matrix((A_data, A_ind.ravel(), A_indptr),
+                                      shape=(n_samples1, n_samples2))
+
+        return kneighbors_graph
 
 
 class RadiusNeighborsMixin(object):
     """Mixin for radius-based neighbors searches"""
 
-    def radius_neighbors(self, X, radius=None, return_distance=True):
+    def radius_neighbors(self, X=None, radius=None, return_distance=True):
         """Finds the neighbors within a given radius of a point or points.
 
         Returns indices of and distances to the neighbors of each point.
 
         Parameters
         ----------
-        X : array-like, last dimension same as that of fit data
-            The new point or points
+        X : array-like, (n_samples, n_features), optional
+            The query point or points.
+            If not provided, neighbors of each indexed point are returned.
+            In this case, the query point is not considered its own neighbor.
 
         radius : float
             Limiting distance of neighbors to return.
@@ -444,13 +504,17 @@ class RadiusNeighborsMixin(object):
         class from an array representing our data set and ask who's
         the closest point to [1,1,1]
 
+        >>> import numpy as np
         >>> samples = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
         >>> from sklearn.neighbors import NearestNeighbors
         >>> neigh = NearestNeighbors(radius=1.6)
         >>> neigh.fit(samples) # doctest: +ELLIPSIS
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
-        >>> print(neigh.radius_neighbors([1., 1., 1.])) # doctest: +ELLIPSIS
-        (array([[ 1.5,  0.5]]...), array([[1, 2]]...)
+        >>> rng = neigh.radius_neighbors([1., 1., 1.])
+        >>> print(np.asarray(rng[0][0])) # doctest: +ELLIPSIS
+        [ 1.5  0.5]
+        >>> print(np.asarray(rng[1][0])) # doctest: +ELLIPSIS
+        [1 2]
 
         The first array returned contains the distances to all points which
         are closer than 1.6, while the second array returned contains their
@@ -467,11 +531,17 @@ class RadiusNeighborsMixin(object):
         if self._fit_method is None:
             raise NotFittedError("Must fit neighbors before querying.")
 
-        X = check_array(X, accept_sparse='csr')
+        if X is not None:
+            query_is_train = False
+            X = check_array(X, accept_sparse='csr')
+        else:
+            query_is_train = True
+            X = self._fit_X
 
         if radius is None:
             radius = self.radius
 
+        n_samples = X.shape[0]
         if self._fit_method == 'brute':
             # for efficiency, use squared euclidean distances
             if self.effective_metric_ == 'euclidean':
@@ -482,30 +552,28 @@ class RadiusNeighborsMixin(object):
                 dist = pairwise_distances(X, self._fit_X,
                                           self.effective_metric_,
                                           **self.effective_metric_params_)
-            neigh_ind = [np.where(d < radius)[0] for d in dist]
 
-            # if there are the same number of neighbors for each point,
-            # we can do a normal array.  Otherwise, we return an object
-            # array with elements that are numpy arrays
-            try:
-                neigh_ind = np.asarray(neigh_ind, dtype=int)
-                dtype_F = float
-            except ValueError:
-                neigh_ind = np.asarray(neigh_ind, dtype='object')
-                dtype_F = object
+            neigh_ind_list = [np.where(d < radius)[0] for d in dist]
+
+            # See https://github.com/numpy/numpy/issues/5456
+            # if you want to understand why this is initialized this way.
+            neigh_ind = np.empty(n_samples, dtype='object')
+            neigh_ind[:] = neigh_ind_list
+            dist_array = np.empty(n_samples, dtype='object')
 
             if return_distance:
                 if self.effective_metric_ == 'euclidean':
-                    dist = np.array([np.sqrt(d[neigh_ind[i]])
-                                     for i, d in enumerate(dist)],
-                                    dtype=dtype_F)
+                    dist_list = [np.sqrt(d[neigh_ind[i]])
+                                 for i, d in enumerate(dist)]
                 else:
-                    dist = np.array([d[neigh_ind[i]]
-                                     for i, d in enumerate(dist)],
-                                    dtype=dtype_F)
-                return dist, neigh_ind
+                    dist_list = [d[neigh_ind[i]]
+                                 for i, d in enumerate(dist)]
+                dist_array[:] = dist_list
+
+                results = dist_array, neigh_ind
             else:
-                return neigh_ind
+                results = neigh_ind
+
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
                 raise ValueError(
@@ -514,14 +582,33 @@ class RadiusNeighborsMixin(object):
             results = self._tree.query_radius(X, radius,
                                               return_distance=return_distance)
             if return_distance:
-                ind, dist = results
-                return dist, ind
-            else:
-                return results
+                results = results[::-1]
         else:
             raise ValueError("internal: _fit_method not recognized")
 
-    def radius_neighbors_graph(self, X, radius=None, mode='connectivity'):
+        if not query_is_train:
+            return results
+        else:
+            # If the query data is the same as the indexed data, we would like
+            # to ignore the first nearest neighbor of every sample, i.e
+            # the sample itself.
+            if return_distance:
+                dist, neigh_ind = results
+            else:
+                neigh_ind = results
+
+            for ind, ind_neighbor in enumerate(neigh_ind):
+                mask = ind_neighbor != ind
+
+                neigh_ind[ind] = ind_neighbor[mask]
+                if return_distance:
+                    dist[ind] = dist[ind][mask]
+
+            if return_distance:
+                return dist, neigh_ind
+            return neigh_ind
+
+    def radius_neighbors_graph(self, X=None, radius=None, mode='connectivity'):
         """Computes the (weighted) graph of Neighbors for points in X
 
         Neighborhoods are restricted the points at a distance lower than
@@ -529,8 +616,10 @@ class RadiusNeighborsMixin(object):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Sample data
+        X : array-like, shape = [n_samples, n_features], optional
+            The query point or points.
+            If not provided, neighbors of each indexed point are returned.
+            In this case, the query point is not considered its own neighbor.
 
         radius : float
             Radius of neighborhoods.
@@ -563,13 +652,12 @@ class RadiusNeighborsMixin(object):
         --------
         kneighbors_graph
         """
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        if X is not None:
+            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 
+        n_samples2 = self._fit_X.shape[0]
         if radius is None:
             radius = self.radius
-
-        n_samples1 = X.shape[0]
-        n_samples2 = self._fit_X.shape[0]
 
         # construct CSR matrix representation of the NN graph
         if mode == 'connectivity':
@@ -585,6 +673,7 @@ class RadiusNeighborsMixin(object):
                 'Unsupported mode, must be one of "connectivity", '
                 'or "distance" but got %s instead' % mode)
 
+        n_samples1 = A_ind.shape[0]
         n_neighbors = np.array([len(a) for a in A_ind])
         A_ind = np.concatenate(list(A_ind))
         if A_data is None:
