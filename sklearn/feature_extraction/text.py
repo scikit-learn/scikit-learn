@@ -1618,15 +1618,13 @@ class LdaVectorizer(CountVectorizer):
 
         # initialize a CountVectorizer object
         super(LdaVectorizer, self).__init__(
-            input=input, charset=charset, charset_error=charset_error,
-            encoding=encoding, decode_error=decode_error,
+            input=input, encoding=encoding, decode_error=decode_error,
             strip_accents=strip_accents, lowercase=lowercase,
-            preprocessor=preprocessor, tokenizer=tokenizer, analyzer=analyzer,
+            preprocessor=preprocessor, tokenizer=tokenizer,
             stop_words=stop_words, token_pattern=token_pattern,
-            ngram_range=ngram_range, max_df=max_df, min_df=min_df,
-            max_features=max_features, vocabulary=vocabulary, binary=False,
-            dtype=dtype)
-
+            ngram_range=ngram_range, analyzer=analyzer,
+            max_df=max_df, min_df=min_df, max_features=max_features,
+            vocabulary=vocabulary, binary=False, dtype=dtype)
         self.num_topics = num_topics
         self.distributed = distributed
         self.chunksize = chunksize
@@ -1927,16 +1925,13 @@ class LsiVectorizer(CountVectorizer):
 
         # initialize a CountVectorizer object
         super(LsiVectorizer, self).__init__(
-            input=input, charset=charset, charset_error=charset_error,
-            encoding=encoding, decode_error=decode_error,
+            input=input,  encoding=encoding, decode_error=decode_error,
             strip_accents=strip_accents, lowercase=lowercase,
             preprocessor=preprocessor, tokenizer=tokenizer,
-            analyzer=analyzer,
             stop_words=stop_words, token_pattern=token_pattern,
-            ngram_range=ngram_range, max_df=max_df, min_df=min_df,
-            max_features=max_features, vocabulary=vocabulary,
-            binary=False, dtype=dtype)
-
+            ngram_range=ngram_range, analyzer=analyzer,
+            max_df=max_df, min_df=min_df, max_features=max_features,
+            vocabulary=vocabulary, binary=False, dtype=dtype)
         self.num_topics = num_topics
         self.distributed = distributed
         self.chunksize = chunksize
