@@ -259,7 +259,7 @@ def test_verbose():
 def test_chebyshev_metric():
     """t-SNE should allow metrics that cannot be squared (issue #3526)."""
     random_state = check_random_state(0)
-    tsne = TSNE(verbose=2, metric="chebyshev")
+    tsne = TSNE(metric="chebyshev")
     X = random_state.randn(5, 2)
     tsne.fit_transform(X)
 

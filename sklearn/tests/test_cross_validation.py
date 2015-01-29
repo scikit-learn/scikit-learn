@@ -27,7 +27,6 @@ from sklearn.datasets import make_regression
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_digits
 from sklearn.datasets import load_iris
-from sklearn.metrics import accuracy_score
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import precision_score
@@ -574,9 +573,11 @@ def test_cross_val_score_mask():
     svm = SVC(kernel="linear")
     iris = load_iris()
     X, y = iris.data, iris.target
-    cv_indices = cval.KFold(len(y), 5, indices=True)
+    with warnings.catch_warnings(record=True):
+        cv_indices = cval.KFold(len(y), 5, indices=True)
     scores_indices = cval.cross_val_score(svm, X, y, cv=cv_indices)
-    cv_masks = cval.KFold(len(y), 5, indices=False)
+    with warnings.catch_warnings(record=True):
+        cv_masks = cval.KFold(len(y), 5, indices=False)
     scores_masks = cval.cross_val_score(svm, X, y, cv=cv_masks)
     assert_array_equal(scores_indices, scores_masks)
 
@@ -682,7 +683,8 @@ def test_train_test_split():
     assert_array_equal(X_test[:, 0], y_test * 10)
 
     # conversion of lists to arrays (deprecated?)
-    split = cval.train_test_split(X, X_s, y.tolist(), allow_lists=False)
+    with warnings.catch_warnings(record=True):
+        split = cval.train_test_split(X, X_s, y.tolist(), allow_lists=False)
     X_train, X_test, X_s_train, X_s_test, y_train, y_test = split
     assert_array_equal(X_train, X_s_train.toarray())
     assert_array_equal(X_test, X_s_test.toarray())
