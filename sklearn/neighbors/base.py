@@ -255,11 +255,10 @@ class KNeighborsMixin(object):
 
         Parameters
         ----------
-        X : array-like, last dimension same as that of fit data or None.
-            The new point.
-            If not provided, X is assumed to be the same as the fit
-            data. In this case, for each data point in X, the first nearest
-            neighbor is NOT the data point itself.
+        X : array-like, last dimension same as that of fit data, optional
+            The query point or points.
+            If not provided, neighbors of each indexed point are returned.
+            In this case, the query point is not considered its own neighbor.
 
         n_neighbors : int
             Number of neighbors to get (default is the value
@@ -390,17 +389,16 @@ class KNeighborsMixin(object):
                 return dist, neigh_ind
             return neigh_ind
 
-
     def kneighbors_graph(self, X=None, n_neighbors=None,
                          mode='connectivity'):
         """Computes the (weighted) graph of k-Neighbors for points in X
 
         Parameters
         ----------
-        X : array-like, last dimension same as that of fit data or None.
-            If not provided, X is assumed to be the same as the fit
-            data. In this case, for each data point in X, the first nearest
-            neighbor is NOT the data point itself.
+        X : array-like, last dimension same as that of fit data, optional
+            The query point or points.
+            If not provided, neighbors of each indexed point are returned.
+            In this case, the query point is not considered its own neighbor.
 
         n_neighbors : int
             Number of neighbors for each sample.
@@ -454,7 +452,8 @@ class KNeighborsMixin(object):
             A_ind = self.kneighbors(X, n_neighbors, return_distance=False)
 
         elif mode == 'distance':
-            A_data, A_ind = self.kneighbors(X, n_neighbors, return_distance=True)
+            A_data, A_ind = self.kneighbors(
+                X, n_neighbors, return_distance=True)
             A_data = np.ravel(A_data)
 
         else:
@@ -462,9 +461,8 @@ class KNeighborsMixin(object):
                 'Unsupported mode, must be one of "connectivity" '
                 'or "distance" but got "%s" instead' % mode)
 
-        kneighbors_graph = csr_matrix((
-            A_data, A_ind.ravel(), A_indptr),
-            shape=(n_samples1, n_samples2))
+        kneighbors_graph = csr_matrix((A_data, A_ind.ravel(), A_indptr),
+                                      shape=(n_samples1, n_samples2))
 
         return kneighbors_graph
 
@@ -479,11 +477,10 @@ class RadiusNeighborsMixin(object):
 
         Parameters
         ----------
-        X : array-like, last dimension same as that of fit data
-            The new point or points.
-            If not provided, X is assumed to be the same as the fit
-            data. In this case, for each data point in X, the first nearest
-            neighbor is NOT the data point itself.
+        X : array-like, (n_samples, n_features), optional
+            The query point or points.
+            If not provided, neighbors of each indexed point are returned.
+            In this case, the query point is not considered its own neighbor.
 
         radius : float
             Limiting distance of neighbors to return.
@@ -567,10 +564,10 @@ class RadiusNeighborsMixin(object):
             if return_distance:
                 if self.effective_metric_ == 'euclidean':
                     dist_list = [np.sqrt(d[neigh_ind[i]])
-                        for i, d in enumerate(dist)]
+                                 for i, d in enumerate(dist)]
                 else:
                     dist_list = [d[neigh_ind[i]]
-                        for i, d in enumerate(dist)]
+                                 for i, d in enumerate(dist)]
                 dist_array[:] = dist_list
 
                 results = dist_array, neigh_ind
@@ -611,7 +608,7 @@ class RadiusNeighborsMixin(object):
                 return dist, neigh_ind
             return neigh_ind
 
-    def radius_neighbors_graph(self, X, radius=None, mode='connectivity'):
+    def radius_neighbors_graph(self, X=None, radius=None, mode='connectivity'):
         """Computes the (weighted) graph of Neighbors for points in X
 
         Neighborhoods are restricted the points at a distance lower than
@@ -619,8 +616,10 @@ class RadiusNeighborsMixin(object):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Sample data
+        X : array-like, shape = [n_samples, n_features], optional
+            The query point or points.
+            If not provided, neighbors of each indexed point are returned.
+            In this case, the query point is not considered its own neighbor.
 
         radius : float
             Radius of neighborhoods.

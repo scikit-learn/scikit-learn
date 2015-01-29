@@ -26,11 +26,12 @@ def _query_include_self(X, include_self, mode):
     """Return the query based on include_self param"""
     # Done to preserve backward compatibility.
     if include_self is None:
-        warnings.warn(
-            "include_self will be set to False, i.e the first NN of each "
-            "sample will not be the sample itself unless explicitly set "
-            "from version 0.18", DeprecationWarning)
         if mode == "connectivity":
+            warnings.warn(
+                "include_self will be set to False, i.e the first NN of each "
+                "sample will not be the sample itself unless explicitly set "
+                "from version 0.18. Set include_self=True is this is "
+                "not sought.", DeprecationWarning)
             query = X._fit_X
         else:
             query = None
@@ -65,10 +66,11 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
         The default distance is 'euclidean' ('minkowski' metric with the p
         param equal to 2.)
 
-    include_self: bool, default None
+    include_self: bool, default backward-compatible.
         Whether or not to mark each sample as the first nearest neighbor to
-        itself. The default behavior will be changed to False from
-        version 0.18.
+        itself. This is set to True for mode='connectivity' and False
+        for mode='distance' to preserve backward compatibilty. This will be
+        set to False from version 0.18.
 
     p : int, default 2
         Power parameter for the Minkowski metric. When p = 1, this is
@@ -137,8 +139,9 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
 
     include_self: bool, default None
         Whether or not to mark each sample as the first nearest neighbor to
-        itself. The default behavior will be changed to False from
-        version 0.18.
+        itself. This is set to True for mode='connectivity' and False
+        for mode='distance' to preserve backward compatibilty. This will be
+        set to False from version 0.18.
 
     p : int, default 2
         Power parameter for the Minkowski metric. When p = 1, this is
