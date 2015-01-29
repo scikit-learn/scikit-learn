@@ -1369,6 +1369,28 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             raise AttributeError('loss=%r does not support predict_proba' %
                                  self.loss)
 
+    def predict_log_proba(self, X):
+        """Predict class log-probabilities for X.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Raises
+        ------
+        AttributeError
+            If the ``loss`` does not support probabilities.
+
+        Returns
+        -------
+        p : array of shape = [n_samples]
+            The class log-probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
+        """
+        proba = self.predict_proba(X)
+        return np.log(proba)
+
     def staged_predict_proba(self, X):
         """Predict class probabilities at each stage for X.
 
